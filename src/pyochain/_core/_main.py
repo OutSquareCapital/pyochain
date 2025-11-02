@@ -157,6 +157,36 @@ class MappingWrapper[K, V](CommonBase[dict[K, V]]):
     ) -> LazyDict[KU, VU]:
         raise NotImplementedError
 
+    def apply[**P, KU, VU](
+        self,
+        func: Callable[Concatenate[dict[K, V], P], dict[KU, VU]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> LazyDict[KU, VU]:
+        """
+        Apply a function to the underlying dict and return a Dict of the result.
+        Allow to pass user defined functions that transform the dict while retaining the Dict wrapper.
+
+        Args:
+            func: Function to apply to the underlying dict.
+            *args: Positional arguments to pass to the function.
+            **kwargs: Keyword arguments to pass to the function.
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> def invert_dict(d: dict[K, V]) -> dict[V, K]:
+        ...     return {v: k for k, v in d.items()}
+        >>> pc.Dict({'a': 1, 'b': 2}).apply(invert_dict).unwrap()
+        {1: 'a', 2: 'b'}
+
+        ```
+        """
+
+        def _(data: dict[K, V]) -> dict[KU, VU]:
+            return func(data, *args, **kwargs)
+
+        return self._new(_)
+
 
 class Wrapper[T](CommonBase[T]):
     """

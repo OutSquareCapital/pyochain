@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping
-from typing import Any, Concatenate
+from typing import Any
 
 from .._core import SupportsKeysAndGetItem
-from ._exprs import IntoExpr, compute_exprs
+from ._exprs import ExprDict
 from ._filters import FilterDict
 from ._groups import GroupsDict
 from ._iter import IterDict
@@ -22,109 +22,9 @@ class DictCommonMethods[K, V](
     JoinsDict[K, V],
     FilterDict[K, V],
     GroupsDict[K, V],
+    ExprDict[K, V],
 ):
-    def select(
-        self: DictCommonMethods[str, Any], *exprs: IntoExpr
-    ) -> LazyDict[str, Any]:
-        """
-        Select and alias fields from the dict based on expressions and/or strings.
-
-        Navigate nested fields using the `pyochain.key` function.
-
-        - Chain `key.key()` calls to access nested fields.
-        - Use `key.apply()` to transform values.
-        - Use `key.alias()` to rename fields in the resulting dict.
-
-        Args:
-            *exprs: Expressions or strings to select and alias fields from the dictionary.
-
-        ```python
-        >>> import pyochain as pc
-        >>> data = {
-        ...     "name": "Alice",
-        ...     "age": 30,
-        ...     "scores": {"eng": [85, 90, 95], "math": [80, 88, 92]},
-        ... }
-        >>> scores_expr = pc.key("scores")  # save an expression for reuse
-        >>> pc.Dict(data).select(
-        ...     pc.key("name").alias("student_name"),
-        ...     "age",  # shorthand for pc.key("age")
-        ...     scores_expr.key("math").alias("math_scores"),
-        ...     scores_expr.key("eng")
-        ...     .apply(lambda v: pc.Seq(v).mean())
-        ...     .alias("average_eng_score"),
-        ... ).unwrap()
-        {'student_name': 'Alice', 'age': 30, 'math_scores': [80, 88, 92], 'average_eng_score': 90}
-
-        ```
-        """
-
-        def _select(data: dict[str, Any]) -> dict[str, Any]:
-            return compute_exprs(exprs, data, {})
-
-        return self._new(_select)
-
-    def with_fields(
-        self: DictCommonMethods[str, Any], *exprs: IntoExpr
-    ) -> LazyDict[str, Any]:
-        """
-        Merge aliased expressions into the root dict (overwrite on collision).
-
-        Args:
-            *exprs: Expressions to merge into the root dictionary.
-
-        ```python
-        >>> import pyochain as pc
-        >>> data = {
-        ...     "name": "Alice",
-        ...     "age": 30,
-        ...     "scores": {"eng": [85, 90, 95], "math": [80, 88, 92]},
-        ... }
-        >>> scores_expr = pc.key("scores")  # save an expression for reuse
-        >>> pc.Dict(data).with_fields(
-        ...     scores_expr.key("eng")
-        ...     .apply(lambda v: pc.Seq(v).mean())
-        ...     .alias("average_eng_score"),
-        ... ).unwrap()
-        {'name': 'Alice', 'age': 30, 'scores': {'eng': [85, 90, 95], 'math': [80, 88, 92]}, 'average_eng_score': 90}
-
-        ```
-        """
-
-        def _with_fields(data: dict[str, Any]) -> dict[str, Any]:
-            return compute_exprs(exprs, data, data.copy())
-
-        return self._new(_with_fields)
-
-    def apply[**P, KU, VU](
-        self,
-        func: Callable[Concatenate[dict[K, V], P], dict[KU, VU]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> LazyDict[KU, VU]:
-        """
-        Apply a function to the underlying dict and return a Dict of the result.
-        Allow to pass user defined functions that transform the dict while retaining the Dict wrapper.
-
-        Args:
-            func: Function to apply to the underlying dict.
-            *args: Positional arguments to pass to the function.
-            **kwargs: Keyword arguments to pass to the function.
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> def invert_dict(d: dict[K, V]) -> dict[V, K]:
-        ...     return {v: k for k, v in d.items()}
-        >>> pc.Dict({'a': 1, 'b': 2}).apply(invert_dict).unwrap()
-        {1: 'a', 2: 'b'}
-
-        ```
-        """
-
-        def _(data: dict[K, V]) -> dict[KU, VU]:
-            return func(data, *args, **kwargs)
-
-        return self._new(_)
+    pass
 
 
 class Dict[K, V](DictCommonMethods[K, V]):

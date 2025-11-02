@@ -2,11 +2,14 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import Any, Self, TypeIs
+from typing import TYPE_CHECKING, Any, Self, TypeIs
 
 import cytoolz as cz
 
-from .._core import Pipeable
+from .._core import MappingWrapper, Pipeable
+
+if TYPE_CHECKING:
+    from ._main import LazyDict
 
 
 @dataclass(slots=True)
@@ -114,3 +117,74 @@ def compute_exprs(
             current = op(current)
         data_out[e.name] = current
     return data_out
+
+
+class ExprDict[K, V](MappingWrapper[K, V]):
+    def select(self: ExprDict[str, Any], *exprs: IntoExpr) -> LazyDict[str, Any]:
+        """
+        Select and alias fields from the dict based on expressions and/or strings.
+
+        Navigate nested fields using the `pyochain.key` function.
+
+        - Chain `key.key()` calls to access nested fields.
+        - Use `key.apply()` to transform values.
+        - Use `key.alias()` to rename fields in the resulting dict.
+
+        Args:
+            *exprs: Expressions or strings to select and alias fields from the dictionary.
+
+        ```python
+        >>> import pyochain as pc
+        >>> data = {
+        ...     "name": "Alice",
+        ...     "age": 30,
+        ...     "scores": {"eng": [85, 90, 95], "math": [80, 88, 92]},
+        ... }
+        >>> scores_expr = pc.key("scores")  # save an expression for reuse
+        >>> pc.Dict(data).select(
+        ...     pc.key("name").alias("student_name"),
+        ...     "age",  # shorthand for pc.key("age")
+        ...     scores_expr.key("math").alias("math_scores"),
+        ...     scores_expr.key("eng")
+        ...     .apply(lambda v: pc.Seq(v).mean())
+        ...     .alias("average_eng_score"),
+        ... ).unwrap()
+        {'student_name': 'Alice', 'age': 30, 'math_scores': [80, 88, 92], 'average_eng_score': 90}
+
+        ```
+        """
+
+        def _select(data: dict[str, Any]) -> dict[str, Any]:
+            return compute_exprs(exprs, data, {})
+
+        return self._new(_select)
+
+    def with_fields(self: ExprDict[str, Any], *exprs: IntoExpr) -> LazyDict[str, Any]:
+        """
+        Merge aliased expressions into the root dict (overwrite on collision).
+
+        Args:
+            *exprs: Expressions to merge into the root dictionary.
+
+        ```python
+        >>> import pyochain as pc
+        >>> data = {
+        ...     "name": "Alice",
+        ...     "age": 30,
+        ...     "scores": {"eng": [85, 90, 95], "math": [80, 88, 92]},
+        ... }
+        >>> scores_expr = pc.key("scores")  # save an expression for reuse
+        >>> pc.Dict(data).with_fields(
+        ...     scores_expr.key("eng")
+        ...     .apply(lambda v: pc.Seq(v).mean())
+        ...     .alias("average_eng_score"),
+        ... ).unwrap()
+        {'name': 'Alice', 'age': 30, 'scores': {'eng': [85, 90, 95], 'math': [80, 88, 92]}, 'average_eng_score': 90}
+
+        ```
+        """
+
+        def _with_fields(data: dict[str, Any]) -> dict[str, Any]:
+            return compute_exprs(exprs, data, data.copy())
+
+        return self._new(_with_fields)
