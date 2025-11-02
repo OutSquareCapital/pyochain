@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable, Mapping
 from typing import Any, Concatenate
 
-from .._core import SupportsKeysAndGetItem
+from .._core import SupportsKeysAndGetItem, dict_repr
 from ._exprs import IntoExpr, compute_exprs
 from ._filters import FilterDict
 from ._groups import GroupsDict
@@ -24,69 +24,6 @@ class DictCommonMethods[K, V](
     GroupsDict[K, V],
 ):
     def __repr__(self) -> str:
-        def dict_repr(
-            v: Mapping[Any, Any] | list[Any] | str,
-            depth: int = 0,
-            max_depth: int = 3,
-            max_items: int = 6,
-            max_str: int = 80,
-            indent: int = 2,
-        ) -> str:
-            pad = " " * (depth * indent)
-            if depth > max_depth:
-                return "…"
-            match v:
-                case Mapping():
-                    items: list[tuple[str, Any]] = list(v.items())
-                    shown: list[tuple[str, Any]] = items[:max_items]
-                    if (
-                        all(
-                            not isinstance(val, dict) and not isinstance(val, list)
-                            for _, val in shown
-                        )
-                        and len(shown) <= 2
-                    ):
-                        body = ", ".join(
-                            f"{k!r}: {dict_repr(val, depth + 1)}" for k, val in shown
-                        )
-                        if len(items) > max_items:
-                            body += ", …"
-                        return "{" + body + "}"
-                    lines: list[str] = []
-                    for k, val in shown:
-                        lines.append(
-                            f"{pad}{' ' * indent}{k!r}: {dict_repr(val, depth + 1, max_depth, max_items, max_str, indent)}"
-                        )
-                    if len(items) > max_items:
-                        lines.append(f"{pad}{' ' * indent}…")
-                    return "{\n" + ",\n".join(lines) + f"\n{pad}" + "}"
-
-                case list():
-                    elems: list[Any] = v[:max_items]
-                    if (
-                        all(
-                            isinstance(x, (int, float, str, bool, type(None)))
-                            for x in elems
-                        )
-                        and len(elems) <= 4
-                    ):
-                        body = ", ".join(dict_repr(x, depth + 1) for x in elems)
-                        if len(v) > max_items:
-                            body += ", …"
-                        return "[" + body + "]"
-                    lines = [
-                        f"{pad}{' ' * indent}{dict_repr(x, depth + 1, max_depth, max_items, max_str, indent)}"
-                        for x in elems
-                    ]
-                    if len(v) > max_items:
-                        lines.append(f"{pad}{' ' * indent}…")
-                    return "[\n" + ",\n".join(lines) + f"\n{pad}" + "]"
-
-                case str():
-                    return repr(v if len(v) <= max_str else v[:max_str] + "…")
-                case _:
-                    return repr(v)
-
         return f"{self.into(dict_repr)}"
 
     def select(
@@ -314,6 +251,8 @@ class LazyDict[K, V](DictCommonMethods[K, V]):
         return LazyDict(new_chained_node)
 
     def collect(self) -> Dict[K, V]:
+        """
+        Evaluate all lazy operations and return a Dict with the result."""
         return Dict(self._node())
 
     def unwrap(self) -> dict[K, V]:

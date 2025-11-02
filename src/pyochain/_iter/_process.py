@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 import cytoolz as cz
 import more_itertools as mit
 
-from .._core import IterWrapper, Peeked
+from .._core import IterWrapper, peek, peekn
 
 if TYPE_CHECKING:
     from ._main import Iter
@@ -155,13 +155,7 @@ class BaseProcess[T](IterWrapper[T]):
 
         ```
         """
-
-        def _peekn(data: Iterable[T]) -> Iterator[T]:
-            peeked = Peeked(*cz.itertoolz.peekn(n, data))
-            print(f"Peeked {n} values: {peeked.value}")
-            return peeked.sequence
-
-        return self._lazy(_peekn)
+        return self._lazy(peekn, n)
 
     def peek(self) -> Iter[T]:
         """
@@ -174,13 +168,7 @@ class BaseProcess[T](IterWrapper[T]):
 
         ```
         """
-
-        def _peek(data: Iterable[T]) -> Iterator[T]:
-            peeked = Peeked(*cz.itertoolz.peek(data))
-            print(f"Peeked value: {peeked.value}")
-            return peeked.sequence
-
-        return self._lazy(_peek)
+        return self._lazy(peek)
 
     def merge_sorted(
         self, *others: Iterable[T], sort_on: Callable[[T], Any] | None = None

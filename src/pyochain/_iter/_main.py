@@ -298,15 +298,9 @@ class Iter[T](
         ...     .struct(lambda d: d.drop("Continent").unwrap())
         ...     .into(list)
         ... )  # doctest: +NORMALIZE_WHITESPACE
-        {
-        'America': [
-            {'Name': 'Alice', 'City': 'New York'},
-            {'Name': 'Charlie', 'City': 'New York'}
-        ],
-        'Europe': [
-            {'Name': 'David', 'City': 'Paris'}
-        ]
-        }
+        {'America': [{'City': 'New York', 'Name': 'Alice'},
+                    {'City': 'New York', 'Name': 'Charlie'}],
+        'Europe': [{'City': 'Paris', 'Name': 'David'}]}
 
         ```
         """

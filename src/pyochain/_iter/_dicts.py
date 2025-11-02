@@ -135,19 +135,12 @@ class BaseDict[T](IterWrapper[T]):
         ... ]
         >>> pc.Iter.from_(names).group_by(len).sort()
         ... # doctest: +NORMALIZE_WHITESPACE
-        {
-            3: ['Bob', 'Dan'],
-            5: ['Alice', 'Edith', 'Frank'],
-            7: ['Charlie']
-        }
+        {3: ['Bob', 'Dan'], 5: ['Alice', 'Edith', 'Frank'], 7: ['Charlie']}
         >>>
         >>> iseven = lambda x: x % 2 == 0
         >>> pc.Iter.from_([1, 2, 3, 4, 5, 6, 7, 8]).group_by(iseven)
         ... # doctest: +NORMALIZE_WHITESPACE
-        {
-            False: [1, 3, 5, 7],
-            True: [2, 4, 6, 8]
-        }
+        {False: [1, 3, 5, 7], True: [2, 4, 6, 8]}
 
         ```
         Non-callable keys imply grouping on a member.
@@ -159,15 +152,8 @@ class BaseDict[T](IterWrapper[T]):
         ... ]
         >>> pc.Iter.from_(data).group_by("gender").sort()
         ... # doctest: +NORMALIZE_WHITESPACE
-        {
-            'F': [
-                {'name': 'Alice', 'gender': 'F'}
-            ],
-            'M': [
-                {'name': 'Bob', 'gender': 'M'},
-                {'name': 'Charlie', 'gender': 'M'}
-            ]
-        }
+        {'F': [{'gender': 'F', 'name': 'Alice'}],
+        'M': [{'gender': 'M', 'name': 'Bob'}, {'gender': 'M', 'name': 'Charlie'}]}
 
         ```
         """
