@@ -298,7 +298,7 @@ class Iter[T](
         ...     .struct(lambda d: d.drop("Continent").unwrap())
         ...     .into(list)
         ... )  # doctest: +NORMALIZE_WHITESPACE
-        Dict({
+        {
         'America': [
             {'Name': 'Alice', 'City': 'New York'},
             {'Name': 'Charlie', 'City': 'New York'}
@@ -306,7 +306,7 @@ class Iter[T](
         'Europe': [
             {'Name': 'David', 'City': 'Paris'}
         ]
-        })
+        }
 
         ```
         """
