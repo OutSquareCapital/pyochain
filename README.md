@@ -6,6 +6,10 @@
 
 Manipulate data through composable chains of operations, enhancing readability and reducing boilerplate.
 
+## Notice on Stability ⚠️
+
+`pyochain` is currently in early development (< 1.0), and the API may undergo significant changes multiple times before reaching a stable 1.0 release.
+
 ## Installation
 
 ```bash
