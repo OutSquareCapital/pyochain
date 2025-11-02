@@ -307,13 +307,13 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         ... }
         >>> p_data = pc.Dict(data)
         >>>
-        >>> p_data.prune().unwrap()
+        >>> p_data.drop_nones().unwrap()
         {'a': 1, 'e': {'g': 2}, 'h': [1], 'i': 0}
         >>>
-        >>> p_data.prune().unwrap()
+        >>> p_data.drop_nones().unwrap()
         {'a': 1, 'e': {'g': 2}, 'h': [1], 'i': 0}
         >>>
-        >>> p_data.prune(remove_empty=False).unwrap()
+        >>> p_data.drop_nones(remove_empty=False).unwrap()
         {'a': 1, 'b': None, 'c': {}, 'd': [], 'e': {'f': None, 'g': 2}, 'h': [1, None, {}], 'i': 0}
 
         ```
