@@ -34,7 +34,7 @@ class GroupsDict[K, V](MappingWrapper[K, V]):
 
             return cz.dicttoolz.valmap(dict, cz.itertoolz.groupby(_, data.items()))
 
-        return self.apply(_group_by_value)
+        return self._new(_group_by_value)
 
     def group_by_key[G](self, func: Callable[[K], G]) -> Dict[G, dict[K, V]]:
         """
@@ -58,7 +58,7 @@ class GroupsDict[K, V](MappingWrapper[K, V]):
 
             return cz.dicttoolz.valmap(dict, cz.itertoolz.groupby(_, data.items()))
 
-        return self.apply(_group_by_key)
+        return self._new(_group_by_key)
 
     def group_by_key_agg[G, R](
         self,
@@ -118,7 +118,7 @@ class GroupsDict[K, V](MappingWrapper[K, V]):
             groups = cz.itertoolz.groupby(_key_func, data.items())
             return cz.dicttoolz.valmap(_agg_func, groups)
 
-        return self.apply(_group_by_key_agg)
+        return self._new(_group_by_key_agg)
 
     def group_by_value_agg[G, R](
         self,
@@ -172,4 +172,4 @@ class GroupsDict[K, V](MappingWrapper[K, V]):
             groups = cz.itertoolz.groupby(_key_func, data.items())
             return cz.dicttoolz.valmap(_agg_func, groups)
 
-        return self.apply(_group_by_value_agg)
+        return self._new(_group_by_value_agg)

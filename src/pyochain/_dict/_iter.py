@@ -47,7 +47,7 @@ class IterDict[K, V](MappingWrapper[K, V]):
 
             return cz.dicttoolz.valmap(_, data)
 
-        return self.apply(_itr)
+        return self._new(_itr)
 
     def iter_keys(self) -> Iter[K]:
         """

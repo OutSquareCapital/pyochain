@@ -28,7 +28,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
 
         ```
         """
-        return self.apply(partial(cz.dicttoolz.keyfilter, predicate))
+        return self._new(partial(cz.dicttoolz.keyfilter, predicate))
 
     def filter_values(self, predicate: Callable[[V], bool]) -> Dict[K, V]:
         """
@@ -47,7 +47,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
 
         ```
         """
-        return self.apply(partial(cz.dicttoolz.valfilter, predicate))
+        return self._new(partial(cz.dicttoolz.valfilter, predicate))
 
     def filter_items(
         self,
@@ -73,7 +73,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
 
         ```
         """
-        return self.apply(partial(cz.dicttoolz.itemfilter, predicate))
+        return self._new(partial(cz.dicttoolz.itemfilter, predicate))
 
     def filter_kv(
         self,
@@ -105,7 +105,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
 
             return cz.dicttoolz.itemfilter(_, data)
 
-        return self.apply(_filter_kv)
+        return self._new(_filter_kv)
 
     def filter_attr[U](self, attr: str, dtype: type[U] = object) -> Dict[K, U]:
         """
@@ -133,7 +133,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
 
             return cz.dicttoolz.valfilter(has_attr, data)
 
-        return self.apply(_filter_attr)
+        return self._new(_filter_attr)
 
     def filter_type[R](self, typ: type[R]) -> Dict[K, R]:
         """
@@ -157,7 +157,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
 
             return cz.dicttoolz.valfilter(_, data)
 
-        return self.apply(_filter_type)
+        return self._new(_filter_type)
 
     def filter_callable(self) -> Dict[K, Callable[..., Any]]:
         """
@@ -179,7 +179,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
 
             return cz.dicttoolz.valfilter(_, data)
 
-        return self.apply(_filter_callable)
+        return self._new(_filter_callable)
 
     def filter_subclass[U: type[Any], R](
         self: FilterDict[K, U], parent: type[R], keep_parent: bool = True
@@ -219,7 +219,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
 
             return cz.dicttoolz.valfilter(_, data)
 
-        return self.apply(_filter_subclass)
+        return self._new(_filter_subclass)
 
     def intersect_keys(self, *others: Mapping[K, V]) -> Dict[K, V]:
         """
@@ -245,7 +245,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
                 self_keys.intersection_update(other.keys())
             return {k: data[k] for k in self_keys}
 
-        return self.apply(_intersect_keys)
+        return self._new(_intersect_keys)
 
     def diff_keys(self, *others: Mapping[K, V]) -> Dict[K, V]:
         """
@@ -271,4 +271,4 @@ class FilterDict[K, V](MappingWrapper[K, V]):
                 self_keys.difference_update(other.keys())
             return {k: data[k] for k in self_keys}
 
-        return self.apply(_diff_keys)
+        return self._new(_diff_keys)

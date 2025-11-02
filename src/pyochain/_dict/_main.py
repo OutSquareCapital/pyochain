@@ -190,7 +190,7 @@ class Dict[K, V](
         def _select(data: dict[str, Any]) -> dict[str, Any]:
             return compute_exprs(exprs, data, {})
 
-        return self.apply(_select)
+        return self._new(_select)
 
     def with_fields(self: Dict[str, Any], *exprs: IntoExpr) -> Dict[str, Any]:
         """
@@ -220,7 +220,7 @@ class Dict[K, V](
         def _with_fields(data: dict[str, Any]) -> dict[str, Any]:
             return compute_exprs(exprs, data, data.copy())
 
-        return self.apply(_with_fields)
+        return self._new(_with_fields)
 
     def equals_to(self, other: Self | Mapping[Any, Any]) -> bool:
         """

@@ -33,7 +33,7 @@ class JoinsDict[K, V](MappingWrapper[K, V]):
         def _inner_join(data: Mapping[K, V]) -> dict[K, tuple[V, W]]:
             return {k: (v, other[k]) for k, v in data.items() if k in other}
 
-        return self.apply(_inner_join)
+        return self._new(_inner_join)
 
     def left_join[W](self, other: Mapping[K, W]) -> Dict[K, tuple[V, W | None]]:
         """
@@ -56,7 +56,7 @@ class JoinsDict[K, V](MappingWrapper[K, V]):
         def _left_join(data: Mapping[K, V]) -> dict[K, tuple[V, W | None]]:
             return {k: (v, other.get(k)) for k, v in data.items()}
 
-        return self.apply(_left_join)
+        return self._new(_left_join)
 
     def diff(self, other: Mapping[K, V]) -> Dict[K, tuple[V | None, V | None]]:
         """
@@ -77,9 +77,7 @@ class JoinsDict[K, V](MappingWrapper[K, V]):
         ```
         """
 
-        def _diff(
-            data: Mapping[K, V], other: Mapping[K, V]
-        ) -> dict[K, tuple[V | None, V | None]]:
+        def _diff(data: Mapping[K, V]) -> dict[K, tuple[V | None, V | None]]:
             all_keys: set[K] = data.keys() | other.keys()
             diffs: dict[K, tuple[V | None, V | None]] = {}
             for key in all_keys:
@@ -89,7 +87,7 @@ class JoinsDict[K, V](MappingWrapper[K, V]):
                     diffs[key] = (self_val, other_val)
             return diffs
 
-        return self.apply(_diff, other)
+        return self._new(_diff)
 
     def merge(self, *others: Mapping[K, V]) -> Dict[K, V]:
         """
@@ -108,7 +106,11 @@ class JoinsDict[K, V](MappingWrapper[K, V]):
 
         ```
         """
-        return self.apply(cz.dicttoolz.merge, *others)
+
+        def _merge(data: Mapping[K, V]) -> dict[K, V]:
+            return cz.dicttoolz.merge(data, *others)
+
+        return self._new(_merge)
 
     def merge_with(
         self, *others: Mapping[K, V], func: Callable[[Iterable[V]], V]
@@ -134,4 +136,4 @@ class JoinsDict[K, V](MappingWrapper[K, V]):
         def _merge_with(data: Mapping[K, V]) -> dict[K, V]:
             return cz.dicttoolz.merge_with(func, data, *others)
 
-        return self.apply(_merge_with)
+        return self._new(_merge_with)

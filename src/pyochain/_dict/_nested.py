@@ -88,7 +88,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
 
             return cz.dicttoolz.valmap(_, data)
 
-        return self.apply(_struct)
+        return self._new(_struct)
 
     def flatten(
         self: NestedDict[str, Any], sep: str = ".", max_depth: int | None = None
@@ -132,7 +132,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
                     items.append((new_key, v))
             return dict(items)
 
-        return self.apply(_flatten)
+        return self._new(_flatten)
 
     def unpivot(
         self: NestedDict[str, Mapping[str, Any]],
@@ -164,7 +164,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
                     out.setdefault(ckey, {})[rkey] = val
             return out
 
-        return self.apply(_unpivot)
+        return self._new(_unpivot)
 
     def with_nested_key(self, *keys: K, value: V) -> Dict[K, V]:
         """
@@ -187,7 +187,11 @@ class NestedDict[K, V](MappingWrapper[K, V]):
 
         ```
         """
-        return self.apply(cz.dicttoolz.assoc_in, keys, value=value)
+
+        def _with_nested_key(data: dict[K, V]) -> dict[K, V]:
+            return cz.dicttoolz.assoc_in(data, keys, value=value)
+
+        return self._new(_with_nested_key)
 
     def schema(self, max_depth: int = 1) -> Dict[str, Any]:
         """
@@ -241,7 +245,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
 
             return _recurse_schema(data, 0)
 
-        return self.apply(_schema)
+        return self._new(_schema)
 
     def pluck[U: str | int](self: NestedDict[U, Any], *keys: str) -> Dict[U, Any]:
         """
@@ -266,7 +270,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         def _pluck(data: Mapping[U, Any]) -> dict[U, Any]:
             return cz.dicttoolz.valmap(getter, data)
 
-        return self.apply(_pluck)
+        return self._new(_pluck)
 
     def get_in(self, *keys: K, default: Any = None) -> Any:
         """
@@ -340,4 +344,4 @@ class NestedDict[K, V](MappingWrapper[K, V]):
             result = _prune_recursive(data, remove_empty, predicate)
             return result if isinstance(result, dict) else dict()
 
-        return self.apply(_apply_prune)
+        return self._new(_apply_prune)

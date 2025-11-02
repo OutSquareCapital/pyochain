@@ -123,6 +123,14 @@ class IterWrapper[T](CommonBase[Iterable[T]]):
 class MappingWrapper[K, V](CommonBase[dict[K, V]]):
     _data: dict[K, V]
 
+    def _new[KU, VU](self, func: Callable[[dict[K, V]], dict[KU, VU]]) -> Dict[KU, VU]:
+        from .._dict import Dict
+
+        def _(data: dict[K, V]) -> Dict[KU, VU]:
+            return Dict(func(data))
+
+        return self.into(_)
+
     def apply[**P, KU, VU](
         self,
         func: Callable[Concatenate[dict[K, V], P], dict[KU, VU]],
@@ -147,9 +155,11 @@ class MappingWrapper[K, V](CommonBase[dict[K, V]]):
 
         ```
         """
-        from .._dict import Dict
 
-        return Dict(self.into(func, *args, **kwargs))
+        def _(data: dict[K, V]) -> dict[KU, VU]:
+            return func(data, *args, **kwargs)
+
+        return self._new(_)
 
 
 class Wrapper[T](CommonBase[T]):

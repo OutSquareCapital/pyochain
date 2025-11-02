@@ -33,7 +33,7 @@ class MapDict[K, V](MappingWrapper[K, V]):
 
         ```
         """
-        return self.apply(partial(cz.dicttoolz.keymap, func))
+        return self._new(partial(cz.dicttoolz.keymap, func))
 
     def map_values[T](self, func: Callable[[V], T]) -> Dict[K, T]:
         """
@@ -52,7 +52,7 @@ class MapDict[K, V](MappingWrapper[K, V]):
 
         ```
         """
-        return self.apply(partial(cz.dicttoolz.valmap, func))
+        return self._new(partial(cz.dicttoolz.valmap, func))
 
     def map_items[KR, VR](
         self,
@@ -73,7 +73,7 @@ class MapDict[K, V](MappingWrapper[K, V]):
 
         ```
         """
-        return self.apply(partial(cz.dicttoolz.itemmap, func))
+        return self._new(partial(cz.dicttoolz.itemmap, func))
 
     def map_kv[KR, VR](
         self,
@@ -99,7 +99,7 @@ class MapDict[K, V](MappingWrapper[K, V]):
 
             return cz.dicttoolz.itemmap(_, data)
 
-        return self.apply(_map_kv)
+        return self._new(_map_kv)
 
     def invert(self) -> Dict[V, list[K]]:
         """
@@ -119,7 +119,7 @@ class MapDict[K, V](MappingWrapper[K, V]):
                 inverted[v].append(k)
             return dict(inverted)
 
-        return self.apply(_invert)
+        return self._new(_invert)
 
     def implode(self) -> Dict[K, list[V]]:
         """
@@ -139,4 +139,4 @@ class MapDict[K, V](MappingWrapper[K, V]):
 
             return cz.dicttoolz.valmap(_, data)
 
-        return self.apply(_implode)
+        return self._new(_implode)

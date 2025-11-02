@@ -44,7 +44,7 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
                 func(k, v, *args, **kwargs)
             return data
 
-        return self.apply(_for_each)
+        return self._new(_for_each)
 
     def update_in(
         self, *keys: K, func: Callable[[V], V], default: V | None = None
@@ -80,7 +80,11 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
 
         ```
         """
-        return self.apply(cz.dicttoolz.update_in, keys, func, default=default)
+
+        def _update_in(data: dict[K, V]) -> dict[K, V]:
+            return cz.dicttoolz.update_in(data, keys, func, default=default)
+
+        return self._new(_update_in)
 
     def with_key(self, key: K, value: V) -> Dict[K, V]:
         """
@@ -102,7 +106,11 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
 
         ```
         """
-        return self.apply(cz.dicttoolz.assoc, key, value)
+
+        def _with_key(data: dict[K, V]) -> dict[K, V]:
+            return cz.dicttoolz.assoc(data, key, value)
+
+        return self._new(_with_key)
 
     def drop(self, *keys: K) -> Dict[K, V]:
         """
@@ -125,7 +133,11 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
 
         ```
         """
-        return self.apply(cz.dicttoolz.dissoc, *keys)
+
+        def _drop(data: dict[K, V]) -> dict[K, V]:
+            return cz.dicttoolz.dissoc(data, *keys)
+
+        return self._new(_drop)
 
     def rename(self, mapping: Mapping[K, K]) -> Dict[K, V]:
         """
@@ -148,7 +160,7 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
         def _rename(data: dict[K, V]) -> dict[K, V]:
             return {mapping.get(k, k): v for k, v in data.items()}
 
-        return self.apply(_rename)
+        return self._new(_rename)
 
     def sort(self, reverse: bool = False) -> Dict[K, V]:
         """
@@ -168,7 +180,7 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
         def _sort(data: dict[K, V]) -> dict[K, V]:
             return dict(sorted(data.items(), reverse=reverse))
 
-        return self.apply(_sort)
+        return self._new(_sort)
 
     def sort_values[U: SupportsRichComparison[Any]](
         self: ProcessDict[K, U], reverse: bool = False
@@ -189,4 +201,4 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
         def _sort_values(data: dict[K, U]) -> dict[K, U]:
             return dict(sorted(data.items(), key=lambda item: item[1], reverse=reverse))
 
-        return self.apply(_sort_values)
+        return self._new(_sort_values)
