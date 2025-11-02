@@ -67,7 +67,3 @@ def test_performance_iter_map(iterations: int) -> None:
 
     _assert_equals()
     _run_test()
-
-
-if __name__ == "__main__":
-    test_performance_iter_map(500)
