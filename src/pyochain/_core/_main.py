@@ -27,12 +27,12 @@ class CommonBase[T](ABC, Pipeable):
     The pipe unwrap method must be implemented to allow piping functions that transform the underlying data type, whilst retaining the wrapper.
     """
 
-    _data: T
+    _inner: T
 
-    __slots__ = ("_data",)
+    __slots__ = ("_inner",)
 
     def __init__(self, data: T) -> None:
-        self._data = data
+        self._inner = data
 
     @abstractmethod
     def apply[**P](
@@ -64,7 +64,7 @@ class CommonBase[T](ABC, Pipeable):
 
         This is a terminal operation.
         """
-        return self._data
+        return self._inner
 
     def into[**P, R](
         self,
@@ -88,7 +88,7 @@ class CommonBase[T](ABC, Pipeable):
 
 
 class IterWrapper[T](CommonBase[Iterable[T]]):
-    _data: Iterable[T]
+    _inner: Iterable[T]
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.unwrap().__repr__()})"
@@ -121,7 +121,7 @@ class IterWrapper[T](CommonBase[Iterable[T]]):
 
 
 class MappingWrapper[K, V](CommonBase[dict[K, V]]):
-    _data: dict[K, V]
+    _inner: dict[K, V]
 
     def _new[KU, VU](self, func: Callable[[dict[K, V]], dict[KU, VU]]) -> Dict[KU, VU]:
         from .._dict import Dict
