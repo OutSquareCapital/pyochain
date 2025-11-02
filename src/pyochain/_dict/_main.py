@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
-from typing import Any, Self
+from collections.abc import Callable, Iterable, Mapping
+from typing import Any, Concatenate
 
 from .._core import SupportsKeysAndGetItem
 from ._exprs import IntoExpr, compute_exprs
@@ -14,7 +14,7 @@ from ._nested import NestedDict
 from ._process import ProcessDict
 
 
-class Dict[K, V](
+class DictCommonMethods[K, V](
     ProcessDict[K, V],
     IterDict[K, V],
     NestedDict[K, V],
@@ -23,12 +23,6 @@ class Dict[K, V](
     FilterDict[K, V],
     GroupsDict[K, V],
 ):
-    """
-    Wrapper for Python dictionaries with chainable methods.
-    """
-
-    __slots__ = ()
-
     def __repr__(self) -> str:
         def dict_repr(
             v: Mapping[Any, Any] | list[Any] | str,
@@ -93,7 +87,127 @@ class Dict[K, V](
                 case _:
                     return repr(v)
 
-        return f"{self.__class__.__name__}({dict_repr(self.unwrap())})"
+        return f"{self.into(dict_repr)}"
+
+    def select(
+        self: DictCommonMethods[str, Any], *exprs: IntoExpr
+    ) -> LazyDict[str, Any]:
+        """
+        Select and alias fields from the dict based on expressions and/or strings.
+
+        Navigate nested fields using the `pyochain.key` function.
+
+        - Chain `key.key()` calls to access nested fields.
+        - Use `key.apply()` to transform values.
+        - Use `key.alias()` to rename fields in the resulting dict.
+
+        Args:
+            *exprs: Expressions or strings to select and alias fields from the dictionary.
+
+        ```python
+        >>> import pyochain as pc
+        >>> data = {
+        ...     "name": "Alice",
+        ...     "age": 30,
+        ...     "scores": {"eng": [85, 90, 95], "math": [80, 88, 92]},
+        ... }
+        >>> scores_expr = pc.key("scores")  # save an expression for reuse
+        >>> pc.Dict(data).select(
+        ...     pc.key("name").alias("student_name"),
+        ...     "age",  # shorthand for pc.key("age")
+        ...     scores_expr.key("math").alias("math_scores"),
+        ...     scores_expr.key("eng")
+        ...     .apply(lambda v: pc.Seq(v).mean())
+        ...     .alias("average_eng_score"),
+        ... ).unwrap()
+        {'student_name': 'Alice', 'age': 30, 'math_scores': [80, 88, 92], 'average_eng_score': 90}
+
+        ```
+        """
+
+        def _select(data: dict[str, Any]) -> dict[str, Any]:
+            return compute_exprs(exprs, data, {})
+
+        return self._new(_select)
+
+    def with_fields(
+        self: DictCommonMethods[str, Any], *exprs: IntoExpr
+    ) -> LazyDict[str, Any]:
+        """
+        Merge aliased expressions into the root dict (overwrite on collision).
+
+        Args:
+            *exprs: Expressions to merge into the root dictionary.
+
+        ```python
+        >>> import pyochain as pc
+        >>> data = {
+        ...     "name": "Alice",
+        ...     "age": 30,
+        ...     "scores": {"eng": [85, 90, 95], "math": [80, 88, 92]},
+        ... }
+        >>> scores_expr = pc.key("scores")  # save an expression for reuse
+        >>> pc.Dict(data).with_fields(
+        ...     scores_expr.key("eng")
+        ...     .apply(lambda v: pc.Seq(v).mean())
+        ...     .alias("average_eng_score"),
+        ... ).unwrap()
+        {'name': 'Alice', 'age': 30, 'scores': {'eng': [85, 90, 95], 'math': [80, 88, 92]}, 'average_eng_score': 90}
+
+        ```
+        """
+
+        def _with_fields(data: dict[str, Any]) -> dict[str, Any]:
+            return compute_exprs(exprs, data, data.copy())
+
+        return self._new(_with_fields)
+
+    def apply[**P, KU, VU](
+        self,
+        func: Callable[Concatenate[dict[K, V], P], dict[KU, VU]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> LazyDict[KU, VU]:
+        """
+        Apply a function to the underlying dict and return a Dict of the result.
+        Allow to pass user defined functions that transform the dict while retaining the Dict wrapper.
+
+        Args:
+            func: Function to apply to the underlying dict.
+            *args: Positional arguments to pass to the function.
+            **kwargs: Keyword arguments to pass to the function.
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> def invert_dict(d: dict[K, V]) -> dict[V, K]:
+        ...     return {v: k for k, v in d.items()}
+        >>> pc.Dict({'a': 1, 'b': 2}).apply(invert_dict).unwrap()
+        {1: 'a', 2: 'b'}
+
+        ```
+        """
+
+        def _(data: dict[K, V]) -> dict[KU, VU]:
+            return func(data, *args, **kwargs)
+
+        return self._new(_)
+
+
+class Dict[K, V](DictCommonMethods[K, V]):
+    """
+    Wrapper for Python dictionaries with chainable methods.
+    """
+
+    __slots__ = ()
+
+    def lazy(self) -> LazyDict[K, V]:
+        """
+        Convert to a LazyDict for lazy evaluation of operations.
+
+        Returns:
+            A LazyDict instance wrapping the current Dict.
+        """
+        return LazyDict(self.unwrap())
 
     @staticmethod
     def from_[G, I](
@@ -153,98 +267,6 @@ class Dict[K, V](
         """
         return Dict(obj.__dict__)
 
-    def select(self: Dict[str, Any], *exprs: IntoExpr) -> Dict[str, Any]:
-        """
-        Select and alias fields from the dict based on expressions and/or strings.
-
-        Navigate nested fields using the `pyochain.key` function.
-
-        - Chain `key.key()` calls to access nested fields.
-        - Use `key.apply()` to transform values.
-        - Use `key.alias()` to rename fields in the resulting dict.
-
-        Args:
-            *exprs: Expressions or strings to select and alias fields from the dictionary.
-
-        ```python
-        >>> import pyochain as pc
-        >>> data = {
-        ...     "name": "Alice",
-        ...     "age": 30,
-        ...     "scores": {"eng": [85, 90, 95], "math": [80, 88, 92]},
-        ... }
-        >>> scores_expr = pc.key("scores")  # save an expression for reuse
-        >>> pc.Dict(data).select(
-        ...     pc.key("name").alias("student_name"),
-        ...     "age",  # shorthand for pc.key("age")
-        ...     scores_expr.key("math").alias("math_scores"),
-        ...     scores_expr.key("eng")
-        ...     .apply(lambda v: pc.Seq(v).mean())
-        ...     .alias("average_eng_score"),
-        ... ).unwrap()
-        {'student_name': 'Alice', 'age': 30, 'math_scores': [80, 88, 92], 'average_eng_score': 90}
-
-        ```
-        """
-
-        def _select(data: dict[str, Any]) -> dict[str, Any]:
-            return compute_exprs(exprs, data, {})
-
-        return self._new(_select)
-
-    def with_fields(self: Dict[str, Any], *exprs: IntoExpr) -> Dict[str, Any]:
-        """
-        Merge aliased expressions into the root dict (overwrite on collision).
-
-        Args:
-            *exprs: Expressions to merge into the root dictionary.
-
-        ```python
-        >>> import pyochain as pc
-        >>> data = {
-        ...     "name": "Alice",
-        ...     "age": 30,
-        ...     "scores": {"eng": [85, 90, 95], "math": [80, 88, 92]},
-        ... }
-        >>> scores_expr = pc.key("scores")  # save an expression for reuse
-        >>> pc.Dict(data).with_fields(
-        ...     scores_expr.key("eng")
-        ...     .apply(lambda v: pc.Seq(v).mean())
-        ...     .alias("average_eng_score"),
-        ... ).unwrap()
-        {'name': 'Alice', 'age': 30, 'scores': {'eng': [85, 90, 95], 'math': [80, 88, 92]}, 'average_eng_score': 90}
-
-        ```
-        """
-
-        def _with_fields(data: dict[str, Any]) -> dict[str, Any]:
-            return compute_exprs(exprs, data, data.copy())
-
-        return self._new(_with_fields)
-
-    def equals_to(self, other: Self | Mapping[Any, Any]) -> bool:
-        """
-        Check if two records are equal based on their data.
-
-        Args:
-            other: Another Dict or mapping to compare against.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> d1 = pc.Dict({"a": 1, "b": 2})
-        >>> d2 = pc.Dict({"a": 1, "b": 2})
-        >>> d3 = pc.Dict({"a": 1, "b": 3})
-        >>> d1.equals_to(d2)
-        True
-        >>> d1.equals_to(d3)
-        False
-
-        ```
-        """
-        other_data = other.unwrap() if isinstance(other, Dict) else other
-        return self.unwrap() == other_data
-
     def pivot(self, *indices: int) -> Dict[Any, Any]:
         """
         Pivot a nested dictionary by rearranging the key levels according to order.
@@ -266,3 +288,25 @@ class Dict[K, V](
         """
 
         return self.to_arrays().rearrange(*indices).to_records()
+
+
+class LazyDict[K, V](DictCommonMethods[K, V]):
+    _node: Callable[[], dict[K, V]]
+    __slots__ = ("_node",)
+
+    def __init__(self, data: dict[K, V] | Callable[[], dict[K, V]]) -> None:
+        self._node = lambda: data() if callable(data) else data
+
+    def collect(self) -> Dict[K, V]:
+        return Dict(self._node())
+
+    def unwrap(self) -> dict[K, V]:
+        """
+        Unwrap and return the underlying dictionary.
+        Returns:
+            The underlying dictionary.
+
+        Note:
+            This forces evaluation of all lazy operations.
+        """
+        return self.collect().unwrap()

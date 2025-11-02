@@ -20,7 +20,9 @@ def _measure(func: Tested, iterations: int) -> float:
 
 
 def test_performance_iter_map(iterations: int) -> None:
-    def _add_measure(data: pc.Dict[str, float], func: Tested) -> pc.Dict[str, float]:
+    def _add_measure(
+        data: pc.LazyDict[str, float], func: Tested
+    ) -> pc.LazyDict[str, float]:
         return data.with_key(func.__name__, _measure(func, iterations))
 
     def square(x: int) -> int:
@@ -57,6 +59,7 @@ def test_performance_iter_map(iterations: int) -> None:
     def _run_test():
         return (
             pc.Dict[str, float]({})
+            .lazy()
             .pipe(_add_measure, _iter_map)
             .pipe(_add_measure, _built_in_map)
             .pipe(_add_measure, _for_loop)

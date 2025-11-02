@@ -91,7 +91,7 @@ class CommonBase[T](ABC, Pipeable):
         Check if two records are equal based on their data.
 
         Args:
-            other: Another instance or data to compare against.
+            other: Another instance or corresponding underlying data to compare against.
 
         Example:
         ```python

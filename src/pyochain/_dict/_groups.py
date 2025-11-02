@@ -8,11 +8,11 @@ import cytoolz as cz
 from .._core import MappingWrapper
 
 if TYPE_CHECKING:
-    from ._main import Dict
+    from ._main import Dict, LazyDict
 
 
 class GroupsDict[K, V](MappingWrapper[K, V]):
-    def group_by_value[G](self, func: Callable[[V], G]) -> Dict[G, dict[K, V]]:
+    def group_by_value[G](self, func: Callable[[V], G]) -> LazyDict[G, dict[K, V]]:
         """
         Group dict items into sub-dictionaries based on a function of the value.
 
@@ -36,7 +36,7 @@ class GroupsDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_group_by_value)
 
-    def group_by_key[G](self, func: Callable[[K], G]) -> Dict[G, dict[K, V]]:
+    def group_by_key[G](self, func: Callable[[K], G]) -> LazyDict[G, dict[K, V]]:
         """
         Group dict items into sub-dictionaries based on a function of the key.
 
@@ -64,7 +64,7 @@ class GroupsDict[K, V](MappingWrapper[K, V]):
         self,
         key_func: Callable[[K], G],
         agg_func: Callable[[Dict[K, V]], R],
-    ) -> Dict[G, R]:
+    ) -> LazyDict[G, R]:
         """
         Group by key function, then apply aggregation function to each sub-dict.
 
@@ -72,7 +72,7 @@ class GroupsDict[K, V](MappingWrapper[K, V]):
             key_func: Function to determine the group for each key.
             agg_func: Function to aggregate each sub-dictionary.
 
-        This avoids materializing intermediate `Dict` objects if you only need
+        This avoids materializing intermediate `dict` objects if you only need
         an aggregated result for each group.
         ```python
         >>> import pyochain as pc
@@ -124,7 +124,7 @@ class GroupsDict[K, V](MappingWrapper[K, V]):
         self,
         value_func: Callable[[V], G],
         agg_func: Callable[[Dict[K, V]], R],
-    ) -> Dict[G, R]:
+    ) -> LazyDict[G, R]:
         """
         Group by value function, then apply aggregation function to each sub-dict.
 
@@ -132,7 +132,7 @@ class GroupsDict[K, V](MappingWrapper[K, V]):
             value_func: Function to determine the group for each value.
             agg_func: Function to aggregate each sub-dictionary.
 
-        This avoids materializing intermediate `Dict` objects if you only need
+        This avoids materializing intermediate `dict` objects if you only need
         an aggregated result for each group.
         ```python
         >>> import pyochain as pc

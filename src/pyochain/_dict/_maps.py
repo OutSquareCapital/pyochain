@@ -10,13 +10,13 @@ import cytoolz as cz
 from .._core import MappingWrapper
 
 if TYPE_CHECKING:
-    from ._main import Dict
+    from ._main import LazyDict
 
 
 class MapDict[K, V](MappingWrapper[K, V]):
-    def map_keys[T](self, func: Callable[[K], T]) -> Dict[T, V]:
+    def map_keys[T](self, func: Callable[[K], T]) -> LazyDict[T, V]:
         """
-        Return a Dict with keys transformed by func.
+        Return keys transformed by func.
 
         Args:
             func: Function to apply to each key in the dictionary.
@@ -35,9 +35,9 @@ class MapDict[K, V](MappingWrapper[K, V]):
         """
         return self._new(partial(cz.dicttoolz.keymap, func))
 
-    def map_values[T](self, func: Callable[[V], T]) -> Dict[K, T]:
+    def map_values[T](self, func: Callable[[V], T]) -> LazyDict[K, T]:
         """
-        Return a Dict with values transformed by func.
+        Return values transformed by func.
 
         Args:
             func: Function to apply to each value in the dictionary.
@@ -57,7 +57,7 @@ class MapDict[K, V](MappingWrapper[K, V]):
     def map_items[KR, VR](
         self,
         func: Callable[[tuple[K, V]], tuple[KR, VR]],
-    ) -> Dict[KR, VR]:
+    ) -> LazyDict[KR, VR]:
         """
         Transform (key, value) pairs using a function that takes a (key, value) tuple.
 
@@ -78,7 +78,7 @@ class MapDict[K, V](MappingWrapper[K, V]):
     def map_kv[KR, VR](
         self,
         func: Callable[[K, V], tuple[KR, VR]],
-    ) -> Dict[KR, VR]:
+    ) -> LazyDict[KR, VR]:
         """
         Transform (key, value) pairs using a function that takes key and value as separate arguments.
 
@@ -101,7 +101,7 @@ class MapDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_map_kv)
 
-    def invert(self) -> Dict[V, list[K]]:
+    def invert(self) -> LazyDict[V, list[K]]:
         """
         Invert the dictionary, grouping keys by common (and hashable) values.
         ```python
@@ -121,7 +121,7 @@ class MapDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_invert)
 
-    def implode(self) -> Dict[K, list[V]]:
+    def implode(self) -> LazyDict[K, list[V]]:
         """
         Nest all the values in lists.
         syntactic sugar for map_values(lambda v: [v])

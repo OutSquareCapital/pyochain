@@ -1,4 +1,3 @@
-from ._depreciation import deprecated
 from ._main import CommonBase, IterWrapper, MappingWrapper, Pipeable, Wrapper
 from ._protocols import (
     Peeked,
@@ -9,7 +8,6 @@ from ._protocols import (
 )
 
 __all__ = [
-    "deprecated",
     "MappingWrapper",
     "CommonBase",
     "IterWrapper",
