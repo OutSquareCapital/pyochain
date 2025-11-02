@@ -13,18 +13,13 @@ if TYPE_CHECKING:
 
 
 def _prune_recursive(
-    data: dict[Any, Any] | list[Any],
-    remove_empty: bool = True,
-    predicate: Callable[[Any, Any], bool] | None = None,
+    data: dict[Any, Any] | list[Any], remove_empty: bool = True
 ) -> dict[Any, Any] | list[Any] | None:
     match data:
         case dict():
             pruned_dict: dict[Any, Any] = {}
             for k, v in data.items():
-                if predicate and predicate(k, v):
-                    continue
-
-                pruned_v = _prune_recursive(v, remove_empty, predicate)
+                pruned_v = _prune_recursive(v, remove_empty)
 
                 is_empty = remove_empty and (pruned_v is None or pruned_v in ({}, []))
                 if not is_empty:
@@ -32,9 +27,7 @@ def _prune_recursive(
             return pruned_dict if pruned_dict or not remove_empty else None
 
         case list():
-            pruned_list = [
-                _prune_recursive(item, remove_empty, predicate) for item in data
-            ]
+            pruned_list = [_prune_recursive(item, remove_empty) for item in data]
             if remove_empty:
                 pruned_list = [
                     item
@@ -291,23 +284,14 @@ class NestedDict[K, V](MappingWrapper[K, V]):
 
         return self.into(_get_in)
 
-    def prune(
-        self,
-        remove_empty: bool = True,
-        predicate: Callable[[K, V], bool] | None = None,
-    ) -> LazyDict[K, V]:
+    def drop_nones(self, remove_empty: bool = True) -> LazyDict[K, V]:
         """
-        Recursively prune empty values from the dictionary.
+        Recursively drop None values from the dictionary.
 
-        Optionally apply a predicate to determine which key-value pairs to remove.
-
-        If it returns True, the element is removed.
-
-        The value passed is the one *after* any potential recursive pruning.
+        Options to also remove empty dicts and lists.
 
         Args:
             remove_empty: If True (default), removes `None`, `{}` and `[]`.
-            predicate: Optional function `(key, value) -> bool`.
 
         Example:
         ```python
@@ -326,17 +310,17 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         >>> p_data.prune().unwrap()
         {'a': 1, 'e': {'g': 2}, 'h': [1], 'i': 0}
         >>>
-        >>> p_data.prune(predicate=lambda k, v: v == 0).unwrap()
-        {'a': 1, 'e': {'g': 2}, 'h': [1]}
+        >>> p_data.prune().unwrap()
+        {'a': 1, 'e': {'g': 2}, 'h': [1], 'i': 0}
         >>>
-        >>> p_data.prune(remove_empty=False, predicate=lambda k, v: v == 0).unwrap()
-        {'a': 1, 'b': None, 'c': {}, 'd': [], 'e': {'f': None, 'g': 2}, 'h': [1, None, {}]}
+        >>> p_data.prune(remove_empty=False).unwrap()
+        {'a': 1, 'b': None, 'c': {}, 'd': [], 'e': {'f': None, 'g': 2}, 'h': [1, None, {}], 'i': 0}
 
         ```
         """
 
         def _apply_prune(data: dict[K, V]) -> dict[Any, Any]:
-            result = _prune_recursive(data, remove_empty, predicate)
+            result = _prune_recursive(data, remove_empty)
             return result if isinstance(result, dict) else dict()
 
         return self._new(_apply_prune)
