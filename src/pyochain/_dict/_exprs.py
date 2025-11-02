@@ -106,7 +106,7 @@ def _expr_identity(obj: Any) -> TypeIs[Expr]:
 type IntoExpr = Expr | str
 
 
-def compute_exprs(
+def _compute_exprs(
     exprs: Iterable[IntoExpr], data_in: dict[str, Any], data_out: dict[str, Any]
 ) -> dict[str, Any]:
     for e in exprs:
@@ -155,7 +155,7 @@ class ExprDict[K, V](MappingWrapper[K, V]):
         """
 
         def _select(data: dict[str, Any]) -> dict[str, Any]:
-            return compute_exprs(exprs, data, {})
+            return _compute_exprs(exprs, data, {})
 
         return self._new(_select)
 
@@ -185,6 +185,6 @@ class ExprDict[K, V](MappingWrapper[K, V]):
         """
 
         def _with_fields(data: dict[str, Any]) -> dict[str, Any]:
-            return compute_exprs(exprs, data, data.copy())
+            return _compute_exprs(exprs, data, data.copy())
 
         return self._new(_with_fields)
