@@ -146,15 +146,11 @@ class IterWrapper[T](CommonBase[Iterable[T]]):
 class MappingWrapper[K, V](CommonBase[dict[K, V]]):
     _inner: dict[K, V]
 
+    @abstractmethod
     def _new[KU, VU](
         self, func: Callable[[dict[K, V]], dict[KU, VU]]
     ) -> LazyDict[KU, VU]:
-        from .._dict import LazyDict
-
-        def _(data: dict[K, V]) -> LazyDict[KU, VU]:
-            return LazyDict(func(data))
-
-        return self.into(_)
+        raise NotImplementedError
 
 
 class Wrapper[T](CommonBase[T]):
