@@ -1,4 +1,4 @@
-from ._format import Peeked, dict_repr, peek, peekn
+from ._format import Peeked, peek, peekn
 from ._main import CommonBase, IterWrapper, MappingWrapper, Pipeable, Wrapper
 from ._protocols import (
     SizedIterable,
@@ -8,7 +8,6 @@ from ._protocols import (
 )
 
 __all__ = [
-    "dict_repr",
     "MappingWrapper",
     "CommonBase",
     "IterWrapper",

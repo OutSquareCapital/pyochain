@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable, Mapping
 from typing import Any, Concatenate
 
-from .._core import SupportsKeysAndGetItem, dict_repr
+from .._core import SupportsKeysAndGetItem
 from ._exprs import IntoExpr, compute_exprs
 from ._filters import FilterDict
 from ._groups import GroupsDict
@@ -23,9 +23,6 @@ class DictCommonMethods[K, V](
     FilterDict[K, V],
     GroupsDict[K, V],
 ):
-    def __repr__(self) -> str:
-        return f"{self.into(dict_repr)}"
-
     def select(
         self: DictCommonMethods[str, Any], *exprs: IntoExpr
     ) -> LazyDict[str, Any]:

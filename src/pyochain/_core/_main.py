@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from typing import TYPE_CHECKING, Any, Concatenate, Self
 
+from ._format import dict_repr
+
 if TYPE_CHECKING:
     from .._dict import LazyDict
     from .._iter import Iter, Seq
@@ -145,6 +147,9 @@ class IterWrapper[T](CommonBase[Iterable[T]]):
 
 class MappingWrapper[K, V](CommonBase[dict[K, V]]):
     _inner: dict[K, V]
+
+    def __repr__(self) -> str:
+        return f"{self.into(dict_repr)}"
 
     @abstractmethod
     def _new[KU, VU](
