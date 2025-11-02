@@ -5,7 +5,7 @@ from collections.abc import Callable, Iterable, Iterator, Sequence
 from typing import TYPE_CHECKING, Any, Concatenate, Self
 
 if TYPE_CHECKING:
-    from .._dict import Dict
+    from .._dict import LazyDict
     from .._iter import Iter, Seq
 
 
@@ -86,6 +86,29 @@ class CommonBase[T](ABC, Pipeable):
         """
         return func(self.unwrap(), *args, **kwargs)
 
+    def equals_to(self, other: Self | T) -> bool:
+        """
+        Check if two records are equal based on their data.
+
+        Args:
+            other: Another instance or data to compare against.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> d1 = pc.Dict({"a": 1, "b": 2})
+        >>> d2 = pc.Dict({"a": 1, "b": 2})
+        >>> d3 = pc.Dict({"a": 1, "b": 3})
+        >>> d1.equals_to(d2)
+        True
+        >>> d1.equals_to(d3)
+        False
+
+        ```
+        """
+        other_data = other.unwrap() if isinstance(other, self.__class__) else other
+        return self.unwrap() == other_data
+
 
 class IterWrapper[T](CommonBase[Iterable[T]]):
     _inner: Iterable[T]
@@ -123,43 +146,15 @@ class IterWrapper[T](CommonBase[Iterable[T]]):
 class MappingWrapper[K, V](CommonBase[dict[K, V]]):
     _inner: dict[K, V]
 
-    def _new[KU, VU](self, func: Callable[[dict[K, V]], dict[KU, VU]]) -> Dict[KU, VU]:
-        from .._dict import Dict
+    def _new[KU, VU](
+        self, func: Callable[[dict[K, V]], dict[KU, VU]]
+    ) -> LazyDict[KU, VU]:
+        from .._dict import LazyDict
 
-        def _(data: dict[K, V]) -> Dict[KU, VU]:
-            return Dict(func(data))
+        def _(data: dict[K, V]) -> LazyDict[KU, VU]:
+            return LazyDict(func(data))
 
         return self.into(_)
-
-    def apply[**P, KU, VU](
-        self,
-        func: Callable[Concatenate[dict[K, V], P], dict[KU, VU]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Dict[KU, VU]:
-        """
-        Apply a function to the underlying dict and return a Dict of the result.
-        Allow to pass user defined functions that transform the dict while retaining the Dict wrapper.
-
-        Args:
-            func: Function to apply to the underlying dict.
-            *args: Positional arguments to pass to the function.
-            **kwargs: Keyword arguments to pass to the function.
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> def invert_dict(d: dict[K, V]) -> dict[V, K]:
-        ...     return {v: k for k, v in d.items()}
-        >>> pc.Dict({'a': 1, 'b': 2}).apply(invert_dict).unwrap()
-        {1: 'a', 2: 'b'}
-
-        ```
-        """
-
-        def _(data: dict[K, V]) -> dict[KU, VU]:
-            return func(data, *args, **kwargs)
-
-        return self._new(_)
 
 
 class Wrapper[T](CommonBase[T]):
