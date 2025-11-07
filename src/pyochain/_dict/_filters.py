@@ -9,11 +9,11 @@ import cytoolz as cz
 from .._core import MappingWrapper
 
 if TYPE_CHECKING:
-    from ._main import LazyDict
+    from ._main import Dict
 
 
 class FilterDict[K, V](MappingWrapper[K, V]):
-    def filter_keys(self, predicate: Callable[[K], bool]) -> LazyDict[K, V]:
+    def filter_keys(self, predicate: Callable[[K], bool]) -> Dict[K, V]:
         """
         Return keys that satisfy predicate.
 
@@ -30,7 +30,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         """
         return self._new(partial(cz.dicttoolz.keyfilter, predicate))
 
-    def filter_values(self, predicate: Callable[[V], bool]) -> LazyDict[K, V]:
+    def filter_values(self, predicate: Callable[[V], bool]) -> Dict[K, V]:
         """
         Return items whose values satisfy predicate.
 
@@ -49,7 +49,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         """
         return self._new(partial(cz.dicttoolz.valfilter, predicate))
 
-    def filter_items(self, predicate: Callable[[tuple[K, V]], bool]) -> LazyDict[K, V]:
+    def filter_items(self, predicate: Callable[[tuple[K, V]], bool]) -> Dict[K, V]:
         """
         Filter items by predicate applied to (key, value) tuples.
 
@@ -72,7 +72,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         """
         return self._new(partial(cz.dicttoolz.itemfilter, predicate))
 
-    def filter_kv(self, predicate: Callable[[K, V], bool]) -> LazyDict[K, V]:
+    def filter_kv(self, predicate: Callable[[K, V], bool]) -> Dict[K, V]:
         """
         Filter items by predicate applied to unpacked (key, value) tuples.
 
@@ -101,7 +101,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_filter_kv)
 
-    def filter_attr[U](self, attr: str, dtype: type[U] = object) -> LazyDict[K, U]:
+    def filter_attr[U](self, attr: str, dtype: type[U] = object) -> Dict[K, U]:
         """
         Filter values that have a given attribute.
 
@@ -129,7 +129,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_filter_attr)
 
-    def filter_type[R](self, typ: type[R]) -> LazyDict[K, R]:
+    def filter_type[R](self, typ: type[R]) -> Dict[K, R]:
         """
         Filter values by type.
 
@@ -153,7 +153,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_filter_type)
 
-    def filter_callable(self) -> LazyDict[K, Callable[..., Any]]:
+    def filter_callable(self) -> Dict[K, Callable[..., Any]]:
         """
         Filter values that are callable.
         ```python
@@ -177,7 +177,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
 
     def filter_subclass[U: type[Any], R](
         self: FilterDict[K, U], parent: type[R], keep_parent: bool = True
-    ) -> LazyDict[K, type[R]]:
+    ) -> Dict[K, type[R]]:
         """
         Filter values that are subclasses of a given parent class.
 
@@ -215,7 +215,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_filter_subclass)
 
-    def intersect_keys(self, *others: Mapping[K, V]) -> LazyDict[K, V]:
+    def intersect_keys(self, *others: Mapping[K, V]) -> Dict[K, V]:
         """
         Keep only keys present in self and all others mappings.
 
@@ -241,7 +241,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_intersect_keys)
 
-    def diff_keys(self, *others: Mapping[K, V]) -> LazyDict[K, V]:
+    def diff_keys(self, *others: Mapping[K, V]) -> Dict[K, V]:
         """
         Keep only keys present in self but not in others mappings.
 

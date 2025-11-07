@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Concatenate, Self
 from ._format import dict_repr
 
 if TYPE_CHECKING:
-    from .._dict import LazyDict
+    from .._dict import Dict
     from .._iter import Iter, Seq
 
 
@@ -152,9 +152,7 @@ class MappingWrapper[K, V](CommonBase[dict[K, V]]):
         return f"{self.into(dict_repr)}"
 
     @abstractmethod
-    def _new[KU, VU](
-        self, func: Callable[[dict[K, V]], dict[KU, VU]]
-    ) -> LazyDict[KU, VU]:
+    def _new[KU, VU](self, func: Callable[[dict[K, V]], dict[KU, VU]]) -> Dict[KU, VU]:
         raise NotImplementedError
 
     def apply[**P, KU, VU](
@@ -162,7 +160,7 @@ class MappingWrapper[K, V](CommonBase[dict[K, V]]):
         func: Callable[Concatenate[dict[K, V], P], dict[KU, VU]],
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> LazyDict[KU, VU]:
+    ) -> Dict[KU, VU]:
         """
         Apply a function to the underlying dict and return a Dict of the result.
         Allow to pass user defined functions that transform the dict while retaining the Dict wrapper.

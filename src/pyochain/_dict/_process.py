@@ -8,7 +8,7 @@ import cytoolz as cz
 from .._core import MappingWrapper, SupportsRichComparison
 
 if TYPE_CHECKING:
-    from ._main import LazyDict
+    from ._main import Dict
 
 
 class ProcessDict[K, V](MappingWrapper[K, V]):
@@ -17,7 +17,7 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
         func: Callable[Concatenate[K, V, P], Any],
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> LazyDict[K, V]:
+    ) -> Dict[K, V]:
         """
         Apply a function to each key-value pair in the dict for side effects.
 
@@ -48,7 +48,7 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
 
     def update_in(
         self, *keys: K, func: Callable[[V], V], default: V | None = None
-    ) -> LazyDict[K, V]:
+    ) -> Dict[K, V]:
         """
         Update value in a (potentially) nested dictionary.
 
@@ -86,7 +86,7 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_update_in)
 
-    def with_key(self, key: K, value: V) -> LazyDict[K, V]:
+    def with_key(self, key: K, value: V) -> Dict[K, V]:
         """
         Return a new Dict with key set to value.
 
@@ -112,7 +112,7 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_with_key)
 
-    def drop(self, *keys: K) -> LazyDict[K, V]:
+    def drop(self, *keys: K) -> Dict[K, V]:
         """
         Return a new Dict with given keys removed.
 
@@ -139,7 +139,7 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_drop)
 
-    def rename(self, mapping: Mapping[K, K]) -> LazyDict[K, V]:
+    def rename(self, mapping: Mapping[K, K]) -> Dict[K, V]:
         """
         Return a new Dict with keys renamed according to the mapping.
 
@@ -162,7 +162,7 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_rename)
 
-    def sort(self, reverse: bool = False) -> LazyDict[K, V]:
+    def sort(self, reverse: bool = False) -> Dict[K, V]:
         """
         Sort the dictionary by its keys and return a new Dict.
 
@@ -184,7 +184,7 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
 
     def sort_values[U: SupportsRichComparison[Any]](
         self: ProcessDict[K, U], reverse: bool = False
-    ) -> LazyDict[K, U]:
+    ) -> Dict[K, U]:
         """
         Sort the dictionary by its values and return a new Dict.
 

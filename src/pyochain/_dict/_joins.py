@@ -8,11 +8,11 @@ import cytoolz as cz
 from .._core import MappingWrapper
 
 if TYPE_CHECKING:
-    from ._main import LazyDict
+    from ._main import Dict
 
 
 class JoinsDict[K, V](MappingWrapper[K, V]):
-    def inner_join[W](self, other: Mapping[K, W]) -> LazyDict[K, tuple[V, W]]:
+    def inner_join[W](self, other: Mapping[K, W]) -> Dict[K, tuple[V, W]]:
         """
         Performs an inner join with another mapping based on keys.
 
@@ -35,7 +35,7 @@ class JoinsDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_inner_join)
 
-    def left_join[W](self, other: Mapping[K, W]) -> LazyDict[K, tuple[V, W | None]]:
+    def left_join[W](self, other: Mapping[K, W]) -> Dict[K, tuple[V, W | None]]:
         """
         Performs a left join with another mapping based on keys.
 
@@ -58,7 +58,7 @@ class JoinsDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_left_join)
 
-    def diff(self, other: Mapping[K, V]) -> LazyDict[K, tuple[V | None, V | None]]:
+    def diff(self, other: Mapping[K, V]) -> Dict[K, tuple[V | None, V | None]]:
         """
         Returns a dict of the differences between this dict and another.
 
@@ -89,7 +89,7 @@ class JoinsDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_diff)
 
-    def merge(self, *others: Mapping[K, V]) -> LazyDict[K, V]:
+    def merge(self, *others: Mapping[K, V]) -> Dict[K, V]:
         """
         Merge other dicts into this one.
 
@@ -114,7 +114,7 @@ class JoinsDict[K, V](MappingWrapper[K, V]):
 
     def merge_with(
         self, *others: Mapping[K, V], func: Callable[[Iterable[V]], V]
-    ) -> LazyDict[K, V]:
+    ) -> Dict[K, V]:
         """
         Merge dicts using a function to combine values for duplicate keys.
 

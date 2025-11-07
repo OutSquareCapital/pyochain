@@ -9,7 +9,7 @@ import cytoolz as cz
 from .._core import MappingWrapper, Pipeable
 
 if TYPE_CHECKING:
-    from ._main import LazyDict
+    from ._main import Dict
 
 
 @dataclass(slots=True)
@@ -120,7 +120,7 @@ def _compute_exprs(
 
 
 class ExprDict[K, V](MappingWrapper[K, V]):
-    def select(self: ExprDict[str, Any], *exprs: IntoExpr) -> LazyDict[str, Any]:
+    def select(self: ExprDict[str, Any], *exprs: IntoExpr) -> Dict[str, Any]:
         """
         Select and alias fields from the dict based on expressions and/or strings.
 
@@ -159,7 +159,7 @@ class ExprDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_select)
 
-    def with_fields(self: ExprDict[str, Any], *exprs: IntoExpr) -> LazyDict[str, Any]:
+    def with_fields(self: ExprDict[str, Any], *exprs: IntoExpr) -> Dict[str, Any]:
         """
         Merge aliased expressions into the root dict (overwrite on collision).
 

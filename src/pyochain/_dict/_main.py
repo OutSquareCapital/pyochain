@@ -34,22 +34,8 @@ class Dict[K, V](DictCommonMethods[K, V]):
 
     __slots__ = ()
 
-    def _new[KU, VU](
-        self, func: Callable[[dict[K, V]], dict[KU, VU]]
-    ) -> LazyDict[KU, VU]:
-        def node() -> dict[KU, VU]:
-            return func(self.unwrap())
-
-        return LazyDict(node)
-
-    def lazy(self) -> LazyDict[K, V]:
-        """
-        Convert to a LazyDict for lazy evaluation of operations.
-
-        Returns:
-            A LazyDict instance wrapping the current Dict.
-        """
-        return LazyDict(self.unwrap())
+    def _new[KU, VU](self, func: Callable[[dict[K, V]], dict[KU, VU]]) -> Dict[KU, VU]:
+        return Dict(func(self.unwrap()))
 
     @staticmethod
     def from_[G, I](
@@ -130,35 +116,3 @@ class Dict[K, V](DictCommonMethods[K, V]):
         """
 
         return self.to_arrays().rearrange(*indices).to_records()
-
-
-class LazyDict[K, V](DictCommonMethods[K, V]):
-    _node: Callable[[], dict[K, V]]
-    __slots__ = ("_node",)
-
-    def __init__(self, data: dict[K, V] | Callable[[], dict[K, V]]) -> None:
-        self._node = lambda: data() if callable(data) else data
-
-    def _new[KU, VU](
-        self, func: Callable[[dict[K, V]], dict[KU, VU]]
-    ) -> LazyDict[KU, VU]:
-        def new_chained_node() -> dict[KU, VU]:
-            return func(self._node())
-
-        return LazyDict(new_chained_node)
-
-    def collect(self) -> Dict[K, V]:
-        """
-        Evaluate all lazy operations and return a Dict with the result."""
-        return Dict(self._node())
-
-    def unwrap(self) -> dict[K, V]:
-        """
-        Unwrap and return the underlying dictionary.
-        Returns:
-            The underlying dictionary.
-
-        Note:
-            This forces evaluation of all lazy operations.
-        """
-        return self.collect().unwrap()

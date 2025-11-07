@@ -9,7 +9,7 @@ import cytoolz as cz
 from .._core import MappingWrapper
 
 if TYPE_CHECKING:
-    from ._main import Dict, LazyDict
+    from ._main import Dict
 
 
 def _prune_recursive(
@@ -48,7 +48,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         func: Callable[Concatenate[Dict[K, U], P], R],
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> LazyDict[K, R]:
+    ) -> Dict[K, R]:
         """
         Apply a function to each value after wrapping it in a Dict.
 
@@ -83,7 +83,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
 
     def flatten(
         self: NestedDict[str, Any], sep: str = ".", max_depth: int | None = None
-    ) -> LazyDict[str, Any]:
+    ) -> Dict[str, Any]:
         """
         Flatten a nested dictionary, concatenating keys with the specified separator.
 
@@ -127,7 +127,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
 
     def unpivot(
         self: NestedDict[str, Mapping[str, Any]],
-    ) -> LazyDict[str, dict[str, Any]]:
+    ) -> Dict[str, dict[str, Any]]:
         """
         Unpivot a nested dictionary by swapping rows and columns.
 
@@ -154,7 +154,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_unpivot)
 
-    def with_nested_key(self, *keys: K, value: V) -> LazyDict[K, V]:
+    def with_nested_key(self, *keys: K, value: V) -> Dict[K, V]:
         """
         Set a nested key path and return a new Dict with new, potentially nested, key value pair.
 
@@ -181,7 +181,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_with_nested_key)
 
-    def schema(self, max_depth: int = 1) -> LazyDict[str, Any]:
+    def schema(self, max_depth: int = 1) -> Dict[str, Any]:
         """
         Return the schema of the dictionary up to a maximum depth.
 
@@ -235,7 +235,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_schema)
 
-    def pluck[U: str | int](self: NestedDict[U, Any], *keys: str) -> LazyDict[U, Any]:
+    def pluck[U: str | int](self: NestedDict[U, Any], *keys: str) -> Dict[U, Any]:
         """
         Extract values from nested dictionaries using a sequence of keys.
 
@@ -284,7 +284,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
 
         return self.into(_get_in)
 
-    def drop_nones(self, remove_empty: bool = True) -> LazyDict[K, V]:
+    def drop_nones(self, remove_empty: bool = True) -> Dict[K, V]:
         """
         Recursively drop None values from the dictionary.
 

@@ -9,7 +9,7 @@ from .._core import MappingWrapper
 
 if TYPE_CHECKING:
     from .._iter import Iter, Seq
-    from ._main import LazyDict
+    from ._main import Dict
 
 
 class IterDict[K, V](MappingWrapper[K, V]):
@@ -18,7 +18,7 @@ class IterDict[K, V](MappingWrapper[K, V]):
         func: Callable[Concatenate[Iter[U], P], R],
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> LazyDict[K, R]:
+    ) -> Dict[K, R]:
         """
         Apply a function to each value after wrapping it in an Iter.
 
