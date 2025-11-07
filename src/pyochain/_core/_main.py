@@ -151,9 +151,10 @@ class MappingWrapper[K, V](CommonBase[dict[K, V]]):
     def __repr__(self) -> str:
         return f"{self.into(dict_repr)}"
 
-    @abstractmethod
     def _new[KU, VU](self, func: Callable[[dict[K, V]], dict[KU, VU]]) -> Dict[KU, VU]:
-        raise NotImplementedError
+        from .._dict import Dict
+
+        return Dict(func(self.unwrap()))
 
     def apply[**P, KU, VU](
         self,

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Iterable, Mapping
 from typing import Any
 
 from .._core import SupportsKeysAndGetItem
@@ -33,9 +33,6 @@ class Dict[K, V](DictCommonMethods[K, V]):
     """
 
     __slots__ = ()
-
-    def _new[KU, VU](self, func: Callable[[dict[K, V]], dict[KU, VU]]) -> Dict[KU, VU]:
-        return Dict(func(self.unwrap()))
 
     @staticmethod
     def from_[G, I](
