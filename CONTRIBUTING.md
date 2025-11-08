@@ -90,5 +90,5 @@ uv sync --dev
 ## Testing
 
 ```bash
-uv run tests/doctests.py
+uv run -m tests.main
 ```

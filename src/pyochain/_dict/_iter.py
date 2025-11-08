@@ -51,7 +51,7 @@ class IterDict[K, V](MappingWrapper[K, V]):
 
     def iter_keys(self) -> Iter[K]:
         """
-        Return a Iter of the dict's keys.
+        Return an Iter of the dict's keys.
         ```python
         >>> import pyochain as pc
         >>> pc.Dict({1: 2}).iter_keys().into(list)
@@ -85,7 +85,7 @@ class IterDict[K, V](MappingWrapper[K, V]):
 
     def iter_items(self) -> Iter[tuple[K, V]]:
         """
-        Return a Iter of the dict's items.
+        Return an Iter of the dict's items.
         ```python
         >>> import pyochain as pc
         >>> pc.Dict({1: 2}).iter_items().into(list)

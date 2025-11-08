@@ -4,7 +4,6 @@ from collections.abc import Iterable, Mapping
 from typing import Any
 
 from .._core import SupportsKeysAndGetItem
-from ._exprs import ExprDict
 from ._filters import FilterDict
 from ._groups import GroupsDict
 from ._iter import IterDict
@@ -22,7 +21,6 @@ class DictCommonMethods[K, V](
     JoinsDict[K, V],
     FilterDict[K, V],
     GroupsDict[K, V],
-    ExprDict[K, V],
 ):
     pass
 

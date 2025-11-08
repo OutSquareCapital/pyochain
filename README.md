@@ -35,7 +35,6 @@ The full API reference can be found at:
 ### Inspirations
 
 * **Rust's language and  Rust `Iterator` Trait:** Emulate naming conventions (`from_()`, `into()`) and leverage concepts from Rust's powerful iterator traits (method chaining, lazy evaluation) to bring similar expressiveness to Python.
-* **Polars API:** The powerful expression API for `pyochain.Dict` (`select`, `with_fields`, `key`) mimics the expressive power of Polars for selecting, transforming, and reshaping nested dictionary data.
 * **Python iterators libraries:** Libraries like `rolling`, `cytoolz`, and `more-itertools` provided ideas, inspiration, and implementations for many of the iterator methods.
 * **PyFunctional:** Although not directly used (because I started writing pyochain before discovering it), also shares similar goals and ideas.
 
@@ -71,8 +70,6 @@ But `Dict` can work also as well as on "irregular" structures (e.g., `dict[Any, 
 
 * `pluck` to extract multiple fields at once.
 * `flatten` to collapse nested structures into a single level.
-* `schema` to infer the structure of the data by recursively analyzing keys and value types.
-* `pyochain.key` expressions to compute/retrieve/select/create new fields from existing nested data in a declarative way.
 
 #### `Wrapper[T]`
 
@@ -115,39 +112,6 @@ result = (
 Each method and class make extensive use of generics, type hints, and overloads (when necessary) to ensure type safety and improve developer experience.
 
 Since there's much less need for intermediate variables, the developper don't have to annotate them as much, whilst still keeping a type-safe codebase.
-
-### Expressions for Dict ``pyochain.key``
-
-Compute new fields from existing nested data with key() and Expr.apply(), either selecting a new dict or merging into the root.
-
-```python
-import pyochain as pc
-
-# Build a compact view
-data = pc.Dict(
-    {
-        "user": {"name": "Alice", "age": 30},
-        "scores": {"math": 18, "eng": 15},
-    }
-)
-
-view = data.select(
-    pc.key("user").key("name"),
-    pc.key("scores").key("math"),
-    pc.key("scores").key("eng"),
-    pc.key("user").key("age").apply(lambda x: x >= 18).alias("is_adult"),
-)
-# {"name": "Alice", "math": 18, "eng": 15, "is_adult": True}
-merged = data.with_fields(
-    pc.key("scores").key("math").apply(lambda x: x * 10).alias("math_x10")
-)
-# {
-#   'user': {'name': 'Alice', 'age': 30},
-#   'scores': {'math': 18, 'eng': 15},
-#   'math_x10': 180
-# }
-
-```
 
 ### Convenience mappers: itr and struct
 
