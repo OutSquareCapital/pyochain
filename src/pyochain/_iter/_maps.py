@@ -64,19 +64,29 @@ class BaseMap[T](IterWrapper[T]):
 
     @overload
     def flat_map[U, R](
-        self: IterWrapper[Iterable[Iterable[Iterable[U]]]],
-        func: Callable[[T], Iterable[Iterable[R]]],
-    ) -> Iter[Iterable[Iterable[R]]]: ...
-    @overload
-    def flat_map[U, R](
-        self: IterWrapper[Iterable[Iterable[U]]], func: Callable[[T], Iterable[R]]
-    ) -> Iter[Iterable[R]]: ...
-    @overload
-    def flat_map[U, R](
-        self: IterWrapper[Iterable[U]], func: Callable[[T], R]
+        self: IterWrapper[Iterable[U]],
+        func: Callable[[U], R],
     ) -> Iter[R]: ...
+    @overload
+    def flat_map[U, R](
+        self: IterWrapper[Iterator[U]], func: Callable[[U], R]
+    ) -> Iter[R]: ...
+    @overload
+    def flat_map[U, R](
+        self: IterWrapper[Sequence[U]], func: Callable[[U], R]
+    ) -> Iter[R]: ...
+    @overload
+    def flat_map[U, R](
+        self: IterWrapper[list[U]], func: Callable[[U], R]
+    ) -> Iter[R]: ...
+    @overload
+    def flat_map[U, R](
+        self: IterWrapper[tuple[U, ...]], func: Callable[[U], R]
+    ) -> Iter[R]: ...
+    @overload
+    def flat_map[R](self: IterWrapper[range], func: Callable[[int], R]) -> Iter[R]: ...
     def flat_map[U: Iterable[Any], R](
-        self: IterWrapper[U], func: Callable[[T], R]
+        self: IterWrapper[U], func: Callable[[Any], R]
     ) -> Iter[Any]:
         """
         Map each element through func and flatten the result by one level.
@@ -281,14 +291,18 @@ class BaseMap[T](IterWrapper[T]):
         return self._lazy(mit.ichunked, n)
 
     @overload
-    def flatten[U](
-        self: IterWrapper[Iterable[Iterable[Iterable[U]]]],
-    ) -> Iter[Iterable[Iterable[U]]]: ...
-    @overload
-    def flatten[U](self: IterWrapper[Iterable[Iterable[U]]]) -> Iter[Iterable[U]]: ...
-    @overload
     def flatten[U](self: IterWrapper[Iterable[U]]) -> Iter[U]: ...
-    def flatten(self: IterWrapper[Iterable[Any]]) -> Iter[Any]:
+    @overload
+    def flatten[U](self: IterWrapper[Iterator[U]]) -> Iter[U]: ...
+    @overload
+    def flatten[U](self: IterWrapper[Sequence[U]]) -> Iter[U]: ...
+    @overload
+    def flatten[U](self: IterWrapper[list[U]]) -> Iter[U]: ...
+    @overload
+    def flatten[U](self: IterWrapper[tuple[U, ...]]) -> Iter[U]: ...
+    @overload
+    def flatten(self: IterWrapper[range]) -> Iter[int]: ...
+    def flatten[U: Iterable[Any]](self: IterWrapper[U]) -> Iter[Any]:
         """
         Flatten one level of nesting and return a new Iterable wrapper.
 
