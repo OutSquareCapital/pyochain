@@ -188,3 +188,59 @@ class ExprDict[K, V](MappingWrapper[K, V]):
             return _compute_exprs(exprs, data, data.copy())
 
         return self._new(_with_fields)
+
+    def schema(self, max_depth: int = 1) -> Dict[str, Any]:
+        """
+        Return the schema of the dictionary up to a maximum depth.
+
+        Args:
+            max_depth: Maximum depth to inspect. Nested dicts beyond this depth are marked as 'dict'.
+
+        When the max depth is reached, nested dicts are marked as 'dict'.
+
+        For lists, only the first element is inspected.
+
+        ```python
+        >>> import pyochain as pc
+        >>> # Depth 2: we see up to level2
+        >>> data = {
+        ...     "level1": {"level2": {"level3": {"key": "value"}}},
+        ...     "other_key": 123,
+        ...     "list_key": [{"sub_key": "sub_value"}],
+        ... }
+        >>> pc.Dict(data).schema(max_depth=1).unwrap()
+        {'level1': 'dict', 'other_key': 'int', 'list_key': 'list'}
+        >>> pc.Dict(data).schema(max_depth=2).unwrap()
+        {'level1': {'level2': 'dict'}, 'other_key': 'int', 'list_key': 'dict'}
+        >>>
+        >>> # Depth 3: we see up to level3
+        >>> pc.Dict(data).schema(max_depth=3).unwrap()
+        {'level1': {'level2': {'level3': 'dict'}}, 'other_key': 'int', 'list_key': {'sub_key': 'str'}}
+
+        ```
+        """
+
+        def _schema(data: dict[Any, Any]) -> Any:
+            def _recurse_schema(
+                node: dict[Any, Any] | list[Any] | str, current_depth: int
+            ) -> Any:
+                match node:
+                    case dict():
+                        if current_depth >= max_depth:
+                            return "dict"
+                        return {
+                            k: _recurse_schema(v, current_depth + 1)
+                            for k, v in node.items()
+                        }
+                    case list():
+                        if current_depth >= max_depth:
+                            return type(node).__name__
+                        return _recurse_schema(
+                            cz.itertoolz.first(node), current_depth + 1
+                        )
+                    case _:
+                        return type(node).__name__
+
+            return _recurse_schema(data, 0)
+
+        return self._new(_schema)

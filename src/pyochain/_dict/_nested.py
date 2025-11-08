@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping
 from functools import partial
 from typing import TYPE_CHECKING, Any, Concatenate, TypeIs
 
@@ -12,14 +12,14 @@ if TYPE_CHECKING:
     from ._main import Dict
 
 
-def _prune_recursive(
+def _drop_nones(
     data: dict[Any, Any] | list[Any], remove_empty: bool = True
 ) -> dict[Any, Any] | list[Any] | None:
     match data:
         case dict():
             pruned_dict: dict[Any, Any] = {}
             for k, v in data.items():
-                pruned_v = _prune_recursive(v, remove_empty)
+                pruned_v = _drop_nones(v, remove_empty)
 
                 is_empty = remove_empty and (pruned_v is None or pruned_v in ({}, []))
                 if not is_empty:
@@ -27,7 +27,7 @@ def _prune_recursive(
             return pruned_dict if pruned_dict or not remove_empty else None
 
         case list():
-            pruned_list = [_prune_recursive(item, remove_empty) for item in data]
+            pruned_list = [_drop_nones(item, remove_empty) for item in data]
             if remove_empty:
                 pruned_list = [
                     item
@@ -181,60 +181,6 @@ class NestedDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_with_nested_key)
 
-    def schema(self, max_depth: int = 1) -> Dict[str, Any]:
-        """
-        Return the schema of the dictionary up to a maximum depth.
-
-        Args:
-            max_depth: Maximum depth to inspect. Nested dicts beyond this depth are marked as 'dict'.
-
-        When the max depth is reached, nested dicts are marked as 'dict'.
-        For lists, only the first element is inspected.
-        ```python
-        >>> import pyochain as pc
-        >>> # Depth 2: we see up to level2
-        >>> data = {
-        ...     "level1": {"level2": {"level3": {"key": "value"}}},
-        ...     "other_key": 123,
-        ...     "list_key": [{"sub_key": "sub_value"}],
-        ... }
-        >>> pc.Dict(data).schema(max_depth=1).unwrap()
-        {'level1': 'dict', 'other_key': 'int', 'list_key': 'list'}
-        >>> pc.Dict(data).schema(max_depth=2).unwrap()
-        {'level1': {'level2': 'dict'}, 'other_key': 'int', 'list_key': 'dict'}
-        >>>
-        >>> # Depth 3: we see up to level3
-        >>> pc.Dict(data).schema(max_depth=3).unwrap()
-        {'level1': {'level2': {'level3': 'dict'}}, 'other_key': 'int', 'list_key': {'sub_key': 'str'}}
-
-        ```
-        """
-
-        def _schema(data: dict[Any, Any]) -> Any:
-            def _recurse_schema(
-                node: dict[Any, Any] | Sequence[Any], current_depth: int
-            ) -> Any:
-                match node:
-                    case dict():
-                        if current_depth >= max_depth:
-                            return "dict"
-                        return {
-                            k: _recurse_schema(v, current_depth + 1)
-                            for k, v in node.items()
-                        }
-                    case Sequence():
-                        if current_depth >= max_depth:
-                            return type(node).__name__
-                        return _recurse_schema(
-                            cz.itertoolz.first(node), current_depth + 1
-                        )
-                    case _:
-                        return type(node).__name__
-
-            return _recurse_schema(data, 0)
-
-        return self._new(_schema)
-
     def pluck[U: str | int](self: NestedDict[U, Any], *keys: str) -> Dict[U, Any]:
         """
         Extract values from nested dictionaries using a sequence of keys.
@@ -319,8 +265,8 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         ```
         """
 
-        def _apply_prune(data: dict[K, V]) -> dict[Any, Any]:
-            result = _prune_recursive(data, remove_empty)
+        def _apply_drop_nones(data: dict[K, V]) -> dict[Any, Any]:
+            result = _drop_nones(data, remove_empty)
             return result if isinstance(result, dict) else dict()
 
-        return self._new(_apply_prune)
+        return self._new(_apply_drop_nones)
