@@ -12,7 +12,7 @@ plugins:
           options:
             members_order: source
             inherited_members: true
-            show_inheritance: true
+
             show_signature_annotations: true
             separate_signature: true
             line_length: 88
@@ -22,13 +22,14 @@ plugins:
             show_overloads: true
             filters:
               - "!^_"
+          options.extra:
+            show_inheritance: true
 nav:
   - Home: index.md
   - Reference:
       - Iter: reference/iter.md
       - Dict: reference/dict.md
       - Seq: reference/seq.md
-      - Key: reference/expr.md
 
 theme:
   name: material
