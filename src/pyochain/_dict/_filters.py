@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from functools import partial
-from typing import TYPE_CHECKING, Any, TypeGuard
+from typing import TYPE_CHECKING, Any, TypeIs, overload
 
 import cytoolz as cz
 
@@ -13,7 +13,13 @@ if TYPE_CHECKING:
 
 
 class FilterDict[K, V](MappingWrapper[K, V]):
-    def filter_keys(self, predicate: Callable[[K], bool]) -> Dict[K, V]:
+    @overload
+    def filter_keys[U](self, predicate: Callable[[K], TypeIs[U]]) -> Dict[U, V]: ...
+    @overload
+    def filter_keys(self, predicate: Callable[[K], bool]) -> Dict[K, V]: ...
+    def filter_keys[U](
+        self, predicate: Callable[[K], bool | TypeIs[U]]
+    ) -> Dict[K, V] | Dict[U, V]:
         """
         Return keys that satisfy predicate.
 
@@ -30,7 +36,13 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         """
         return self._new(partial(cz.dicttoolz.keyfilter, predicate))
 
-    def filter_values(self, predicate: Callable[[V], bool]) -> Dict[K, V]:
+    @overload
+    def filter_values[U](self, predicate: Callable[[V], TypeIs[U]]) -> Dict[K, U]: ...
+    @overload
+    def filter_values(self, predicate: Callable[[V], bool]) -> Dict[K, V]: ...
+    def filter_values[U](
+        self, predicate: Callable[[V], bool] | Callable[[V], TypeIs[U]]
+    ) -> Dict[K, V] | Dict[K, U]:
         """
         Return items whose values satisfy predicate.
 
@@ -122,19 +134,19 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         """
 
         def _filter_attr(data: dict[K, V]) -> dict[K, U]:
-            def has_attr(x: V) -> TypeGuard[U]:
+            def has_attr(x: object) -> TypeIs[U]:
                 return hasattr(x, attr)
 
             return cz.dicttoolz.valfilter(has_attr, data)
 
         return self._new(_filter_attr)
 
-    def filter_type[R](self, typ: type[R]) -> Dict[K, R]:
+    def filter_type[R](self, dtype: type[R]) -> Dict[K, R]:
         """
         Filter values by type.
 
         Args:
-            typ: Type to filter values by.
+            dtype: Type to filter values by.
         Example:
         ```python
         >>> import pyochain as pc
@@ -146,34 +158,12 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         """
 
         def _filter_type(data: dict[K, V]) -> dict[K, R]:
-            def _(x: V) -> TypeGuard[R]:
-                return isinstance(x, typ)
+            def _(x: object) -> TypeIs[R]:
+                return isinstance(x, dtype)
 
             return cz.dicttoolz.valfilter(_, data)
 
         return self._new(_filter_type)
-
-    def filter_callable(self) -> Dict[K, Callable[..., Any]]:
-        """
-        Filter values that are callable.
-        ```python
-        >>> import pyochain as pc
-        >>> def foo():
-        ...     pass
-        >>> data = {1: "one", 2: "two", 3: foo, 4: print}
-        >>> pc.Dict(data).filter_callable().map_values(lambda x: x.__name__).unwrap()
-        {3: 'foo', 4: 'print'}
-
-        ```
-        """
-
-        def _filter_callable(data: dict[K, V]) -> dict[K, Callable[..., Any]]:
-            def _(x: V) -> TypeGuard[Callable[..., Any]]:
-                return callable(x)
-
-            return cz.dicttoolz.valfilter(_, data)
-
-        return self._new(_filter_callable)
 
     def filter_subclass[U: type[Any], R](
         self: FilterDict[K, U], parent: type[R], keep_parent: bool = True
@@ -205,7 +195,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         """
 
         def _filter_subclass(data: dict[K, U]) -> dict[K, type[R]]:
-            def _(x: type[Any]) -> TypeGuard[type[R]]:
+            def _(x: type[Any]) -> TypeIs[type[R]]:
                 if keep_parent:
                     return issubclass(x, parent)
                 else:

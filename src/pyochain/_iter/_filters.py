@@ -3,7 +3,7 @@ from __future__ import annotations
 import itertools
 from collections.abc import Callable, Generator, Iterable, Iterator
 from functools import partial
-from typing import TYPE_CHECKING, Any, TypeGuard
+from typing import TYPE_CHECKING, Any, TypeIs, overload
 
 import cytoolz as cz
 import more_itertools as mit
@@ -15,7 +15,11 @@ if TYPE_CHECKING:
 
 
 class BaseFilter[T](IterWrapper[T]):
-    def filter(self, func: Callable[[T], bool]) -> Iter[T]:
+    @overload
+    def filter[U](self, func: Callable[[T], TypeIs[U]]) -> Iter[U]: ...
+    @overload
+    def filter(self, func: Callable[[T], bool]) -> Iter[T]: ...
+    def filter[U](self, func: Callable[[T], bool | TypeIs[U]]) -> Iter[T] | Iter[U]:
         """
         Return an iterator yielding those items of iterable for which function is true.
 
@@ -131,7 +135,7 @@ class BaseFilter[T](IterWrapper[T]):
         """
 
         def check(data: Iterable[Any]) -> Generator[U, None, None]:
-            def _(x: Any) -> TypeGuard[U]:
+            def _(x: Any) -> TypeIs[U]:
                 return hasattr(x, attr)
 
             return (x for x in data if _(x))
@@ -450,12 +454,12 @@ class BaseFilter[T](IterWrapper[T]):
 
         return self._lazy(_filter_subclass)
 
-    def filter_type[R](self, typ: type[R]) -> Iter[R]:
+    def filter_type[R](self, dtype: type[R]) -> Iter[R]:
         """
         Return elements that are instances of the given type.
 
         Args:
-            typ: Type to check against.
+            dtype: Type to check against.
         Example:
         ```python
         >>> import pyochain as pc
@@ -466,29 +470,9 @@ class BaseFilter[T](IterWrapper[T]):
         """
 
         def _filter_type(data: Iterable[T]) -> Generator[R, None, None]:
-            return (x for x in data if isinstance(x, typ))
+            return (x for x in data if isinstance(x, dtype))
 
         return self._lazy(_filter_type)
-
-    def filter_callable(self) -> Iter[Callable[..., Any]]:
-        """
-        Return only elements that are callable.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter.from_([len, 42, str, None, list]).filter_callable().into(list)
-        [<built-in function len>, <class 'str'>, <class 'list'>]
-
-        ```
-        """
-
-        def _filter_callable(
-            data: Iterable[T],
-        ) -> Generator[Callable[..., Any], None, None]:
-            return (x for x in data if callable(x))
-
-        return self._lazy(_filter_callable)
 
     def filter_map[R](self, func: Callable[[T], R]) -> Iter[R]:
         """
