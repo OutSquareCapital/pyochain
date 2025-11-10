@@ -33,6 +33,10 @@ class CommonMethods[T](BaseAgg[T], BaseEager[T], BaseDict[T]):
     pass
 
 
+def _convert_data[T](data: Iterable[T] | T, *more_data: T) -> Iterable[T]:
+    return data if cz.itertoolz.isiterable(data) else (data, *more_data)
+
+
 class Iter[T](
     BaseBool[T],
     BaseFilter[T],
@@ -150,13 +154,7 @@ class Iter[T](
         ```
         """
 
-        def _convert_data() -> Sequence[Any]:
-            if cz.itertoolz.isiterable(data):
-                return data
-            else:
-                return (data, *more_data)
-
-        return Iter(iter(_convert_data()))
+        return Iter(iter(_convert_data(data, *more_data)))
 
     @staticmethod
     def unfold[S, V](seed: S, generator: Callable[[S], tuple[V, S] | None]) -> Iter[V]:
@@ -411,10 +409,7 @@ class Seq[T](CommonMethods[T]):
         ```
 
         """
-        if cz.itertoolz.isiterable(data):
-            return Seq(data)
-        else:
-            return Seq((data, *more_data))
+        return Seq(_convert_data(data, *more_data))  # type: ignore[return-value]
 
     def iter(self) -> Iter[T]:
         """

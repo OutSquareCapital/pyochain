@@ -18,7 +18,6 @@ dev = [
     "mkdocstrings>=0.30.1",
     "mkdocstrings-python>=1.18.2",
     "polars>=1.33.1",
-    "ruff>=0.14.1",
     "rolling @ git+https://github.com/OutSquareCapital/rolling.git@add-type-stubs",
     "cytoolz-stubs",
 ]
