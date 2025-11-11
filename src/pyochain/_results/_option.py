@@ -19,15 +19,16 @@ class Option[T](ABC):
             `True` if the option is a `Some` variant, `False` otherwise.
 
         Example:
-            ```python
-            >>> from pyochain._results import Some, NONE, Option
-            >>> x: Option[int] = Some(2)
-            >>> x.is_some()
-            True
-            >>> y: Option[int] = NONE
-            >>> y.is_some()
-            False
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> x: Option[int] = pc.Some(2)
+        >>> x.is_some()
+        True
+        >>> y: Option[int] = pc.NONE
+        >>> y.is_some()
+        False
+
+        ```
         """
         ...
 
@@ -40,15 +41,16 @@ class Option[T](ABC):
             `True` if the option is a `_None` variant, `False` otherwise.
 
         Example:
-            ```python
-            >>> from pyochain._results import Some, NONE, Option
-            >>> x: Option[int] = Some(2)
-            >>> x.is_none()
-            False
-            >>> y: Option[int] = NONE
-            >>> y.is_none()
-            True
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> x: Option[int] = pc.Some(2)
+        >>> x.is_none()
+        False
+        >>> y: Option[int] = pc.NONE
+        >>> y.is_none()
+        True
+
+        ```
         """
         ...
 
@@ -64,19 +66,20 @@ class Option[T](ABC):
             OptionUnwrapError: If the option is `None`.
 
         Example:
-            ```python
-            >>> from pyochain._results import Some
-            >>> Some("car").unwrap()
-            'car'
-            ```
-            ```python
-            >>> from pyochain._results import NONE
-            >>> NONE.unwrap()
-            Traceback (most recent call last):
-                ...
-            pyochain._results._option.OptionUnwrapError: called `unwrap` on a `None`
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some("car").unwrap()
+        'car'
 
-            ```
+        ```
+        ```python
+        >>> import pyochain as pc
+        >>> pc.NONE.unwrap()
+        Traceback (most recent call last):
+            ...
+        pyochain._results._option.OptionUnwrapError: called `unwrap` on a `None`
+
+        ```
         """
         ...
 
@@ -95,15 +98,16 @@ class Option[T](ABC):
             OptionUnwrapError: If the result is `None`.
 
         Example:
-            ```python
-            >>> from pyochain._results import Some, NONE
-            >>> Some("value").expect("fruits are healthy")
-            'value'
-            >>> NONE.expect("fruits are healthy")
-            Traceback (most recent call last):
-                ...
-            pyochain._results._option.OptionUnwrapError: fruits are healthy (called `expect` on a `None`)
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some("value").expect("fruits are healthy")
+        'value'
+        >>> pc.NONE.expect("fruits are healthy")
+        Traceback (most recent call last):
+            ...
+        pyochain._results._option.OptionUnwrapError: fruits are healthy (called `expect` on a `None`)
+
+        ```
         """
         if self.is_some():
             return self.unwrap()
@@ -121,13 +125,14 @@ class Option[T](ABC):
             The contained `Some` value or the provided default.
 
         Example:
-            ```python
-            >>> from pyochain._results import Some, NONE
-            >>> Some("car").unwrap_or("bike")
-            'car'
-            >>> NONE.unwrap_or("bike")
-            'bike'
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some("car").unwrap_or("bike")
+        'car'
+        >>> pc.NONE.unwrap_or("bike")
+        'bike'
+
+        ```
         """
         return self.unwrap() if self.is_some() else default
 
@@ -142,14 +147,15 @@ class Option[T](ABC):
             The contained `Some` value or the result of the function.
 
         Example:
-            ```python
-            >>> from pyochain._results import Some, NONE
-            >>> k = 10
-            >>> Some(4).unwrap_or_else(lambda: 2 * k)
-            4
-            >>> NONE.unwrap_or_else(lambda: 2 * k)
-            20
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> k = 10
+        >>> pc.Some(4).unwrap_or_else(lambda: 2 * k)
+        4
+        >>> pc.NONE.unwrap_or_else(lambda: 2 * k)
+        20
+
+        ```
         """
         return self.unwrap() if self.is_some() else f()
 
@@ -165,13 +171,14 @@ class Option[T](ABC):
             A new `Option` with the mapped value if `Some`, otherwise `None`.
 
         Example:
-            ```python
-            >>> from pyochain._results import Some, NONE
-            >>> Some("Hello, World!").map(len)
-            Some(value=13)
-            >>> NONE.map(len)
-            NONE
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some("Hello, World!").map(len)
+        Some(value=13)
+        >>> pc.NONE.map(len)
+        NONE
+
+        ```
         """
         if self.is_some():
             return Some(f(self.unwrap()))
@@ -189,21 +196,22 @@ class Option[T](ABC):
             The result of the function if `Some`, otherwise `None`.
 
         Example:
-            ```python
-            >>> from pyochain._results import Some, NONE, Option
-            >>> def sq(x: int) -> Option[int]:
-            ...     return Some(x * x)
-            >>> def nope(x: int) -> Option[int]:
-            ...     return NONE
-            >>> Some(2).and_then(sq).and_then(sq)
-            Some(value=16)
-            >>> Some(2).and_then(sq).and_then(nope)
-            NONE
-            >>> Some(2).and_then(nope).and_then(sq)
-            NONE
-            >>> NONE.and_then(sq).and_then(sq)
-            NONE
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> def sq(x: int) -> Option[int]:
+        ...     return Some(x * x)
+        >>> def nope(x: int) -> Option[int]:
+        ...     return pc.NONE
+        >>> pc.Some(2).and_then(sq).and_then(sq)
+        Some(value=16)
+        >>> pc.Some(2).and_then(sq).and_then(nope)
+        NONE
+        >>> pc.Some(2).and_then(nope).and_then(sq)
+        NONE
+        >>> pc.NONE.and_then(sq).and_then(sq)
+        NONE
+
+        ```
         """
         if self.is_some():
             return f(self.unwrap())
@@ -220,19 +228,20 @@ class Option[T](ABC):
             The original `Option` if it is `Some`, otherwise the result of the function.
 
         Example:
-            ```python
-            >>> from pyochain._results import Some, NONE, Option
-            >>> def nobody() -> Option[str]:
-            ...     return NONE
-            >>> def vikings() -> Option[str]:
-            ...     return Some("vikings")
-            >>> Some("barbarians").or_else(vikings)
-            Some(value='barbarians')
-            >>> NONE.or_else(vikings)
-            Some(value='vikings')
-            >>> NONE.or_else(nobody)
-            NONE
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> def nobody() -> Option[str]:
+        ...     return pc.NONE
+        >>> def vikings() -> Option[str]:
+        ...     return Some("vikings")
+        >>> pc.Some("barbarians").or_else(vikings)
+        Some(value='barbarians')
+        >>> pc.NONE.or_else(vikings)
+        Some(value='vikings')
+        >>> pc.NONE.or_else(nobody)
+        NONE
+
+        ```
         """
         return self if self.is_some() else f()
 
@@ -261,6 +270,9 @@ class Some[T](Option[T]):
 
 @dataclass(slots=True)
 class _None(Option[Any]):
+    def __repr__(self) -> str:
+        return "NONE"
+
     def is_some(self) -> TypeIs[Some[Any]]:  # type: ignore[misc]
         """Returns `False` for `None`."""
         return False

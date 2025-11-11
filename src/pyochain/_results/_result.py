@@ -22,15 +22,16 @@ class Result[T, E](ABC):
             `True` if the result is an `Ok` variant, `False` otherwise.
 
         Example:
-            ```python
-            >>> from pyochain._results import Ok, Err, Result
-            >>> x: Result[int, str] = Ok(2)
-            >>> x.is_ok()
-            True
-            >>> y: Result[int, str] = Err("Some error message")
-            >>> y.is_ok()
-            False
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> x: pc.Result[int, str] = pc.Ok(2)
+        >>> x.is_ok()
+        True
+        >>> y: pc.Result[int, str] = pc.Err("Some error message")
+        >>> y.is_ok()
+        False
+
+        ```
 
         """
         ...
@@ -44,15 +45,16 @@ class Result[T, E](ABC):
             `True` if the result is an `Err` variant, `False` otherwise.
 
         Example:
-            ```python
-            >>> from pyochain._results import Ok, Err, Result
-            >>> x: Result[int, str] = Ok(2)
-            >>> x.is_err()
-            False
-            >>> y: Result[int, str] = Err("Some error message")
-            >>> y.is_err()
-            True
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> x: pc.Result[int, str] = pc.Ok(2)
+        >>> x.is_err()
+        False
+        >>> y: pc.Result[int, str] = pc.Err("Some error message")
+        >>> y.is_err()
+        True
+
+        ```
 
         """
         ...
@@ -69,18 +71,20 @@ class Result[T, E](ABC):
             ResultUnwrapError: If the result is `Err`.
 
         Example:
-            ```python
-            >>> from pyochain._results import Ok
-            >>> Ok(2).unwrap()
-            2
-            ```
-            ```python
-            >>> from pyochain._results import Err
-            >>> Err("emergency failure").unwrap()
-            Traceback (most recent call last):
-                ...
-            pyochain._results._result.ResultUnwrapError: called `unwrap` on Err: 'emergency failure'
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Ok(2).unwrap()
+        2
+
+        ```
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Err("emergency failure").unwrap()
+        Traceback (most recent call last):
+            ...
+        pyochain._results._result.ResultUnwrapError: called `unwrap` on Err: 'emergency failure'
+
+        ```
 
         """
         ...
@@ -97,18 +101,20 @@ class Result[T, E](ABC):
             ResultUnwrapError: If the result is `Ok`.
 
         Example:
-            ```python
-            >>> from pyochain._results import Err
-            >>> Err("emergency failure").unwrap_err()
-            'emergency failure'
-            ```
-            ```python
-            >>> from pyochain._results import Ok
-            >>> Ok(2).unwrap_err()
-            Traceback (most recent call last):
-                ...
-            pyochain._results._result.ResultUnwrapError: called `unwrap_err` on Ok
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Err("emergency failure").unwrap_err()
+        'emergency failure'
+
+        ```
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Ok(2).unwrap_err()
+        Traceback (most recent call last):
+            ...
+        pyochain._results._result.ResultUnwrapError: called `unwrap_err` on Ok
+
+        ```
 
         """
         ...
@@ -126,14 +132,15 @@ class Result[T, E](ABC):
             The result of applying the appropriate function.
 
         Example:
-            ```python
-            >>> from pyochain._results import Ok, Err
-            >>> k = 21
-            >>> Ok("foo").map_or_else(lambda e: k * 2, len)
-            3
-            >>> Err("bar").map_or_else(lambda e: k * 2, len)
-            42
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> k = 21
+        >>> pc.Ok("foo").map_or_else(lambda e: k * 2, len)
+        3
+        >>> pc.Err("bar").map_or_else(lambda e: k * 2, len)
+        42
+
+        ```
 
         """
         if self.is_ok():
@@ -155,15 +162,16 @@ class Result[T, E](ABC):
             ResultUnwrapError: If the result is `Err`.
 
         Example:
-            ```python
-            >>> from pyochain._results import Ok, Err
-            >>> Ok(2).expect("No error")
-            2
-            >>> Err("emergency failure").expect("Testing expect")
-            Traceback (most recent call last):
-                ...
-            pyochain._results._result.ResultUnwrapError: Testing expect: emergency failure
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Ok(2).expect("No error")
+        2
+        >>> pc.Err("emergency failure").expect("Testing expect")
+        Traceback (most recent call last):
+            ...
+        pyochain._results._result.ResultUnwrapError: Testing expect: emergency failure
+
+        ```
 
         """
         if self.is_ok():
@@ -185,15 +193,16 @@ class Result[T, E](ABC):
             ResultUnwrapError: If the result is `Ok`.
 
         Example:
-            ```python
-            >>> from pyochain._results import Ok, Err
-            >>> Err("emergency failure").expect_err("Testing expect_err")
-            'emergency failure'
-            >>> Ok(10).expect_err("Testing expect_err")
-            Traceback (most recent call last):
-                ...
-            pyochain._results._result.ResultUnwrapError: Testing expect_err: expected Err, got Ok(10)
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Err("emergency failure").expect_err("Testing expect_err")
+        'emergency failure'
+        >>> pc.Ok(10).expect_err("Testing expect_err")
+        Traceback (most recent call last):
+            ...
+        pyochain._results._result.ResultUnwrapError: Testing expect_err: expected Err, got Ok(10)
+
+        ```
 
         """
         if self.is_err():
@@ -211,13 +220,14 @@ class Result[T, E](ABC):
             The contained `Ok` value or the provided default.
 
         Example:
-            ```python
-            >>> from pyochain._results import Ok, Err
-            >>> Ok(2).unwrap_or(10)
-            2
-            >>> Err("error").unwrap_or(10)
-            10
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Ok(2).unwrap_or(10)
+        2
+        >>> pc.Err("error").unwrap_or(10)
+        10
+
+        ```
 
         """
         return self.unwrap() if self.is_ok() else default
@@ -233,13 +243,14 @@ class Result[T, E](ABC):
             T: The contained `Ok` value or the result of the function.
 
         Example:
-            ```python
-            >>> from pyochain._results import Ok, Err
-            >>> Ok(2).unwrap_or_else(len)
-            2
-            >>> Err("foo").unwrap_or_else(len)
-            3
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Ok(2).unwrap_or_else(len)
+        2
+        >>> pc.Err("foo").unwrap_or_else(len)
+        3
+
+        ```
 
         """
         return self.unwrap() if self.is_ok() else op(self.unwrap_err())
@@ -256,13 +267,14 @@ class Result[T, E](ABC):
             A new `Result` with the mapped value if `Ok`, otherwise the original `Err`.
 
         Example:
-            ```python
-            >>> from pyochain._results import Ok, Err
-            >>> Ok(2).map(lambda x: x * 2)
-            Ok(value=4)
-            >>> Err("error").map(lambda x: x * 2)
-            Err(error='error')
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Ok(2).map(lambda x: x * 2)
+        Ok(value=4)
+        >>> pc.Err("error").map(lambda x: x * 2)
+        Err(error='error')
+
+        ```
 
         """
         if self.is_ok():
@@ -281,13 +293,14 @@ class Result[T, E](ABC):
             A new `Result` with the mapped error if `Err`, otherwise the original `Ok`.
 
         Example:
-            ```python
-            >>> from pyochain._results import Ok, Err
-            >>> Ok(2).map_err(len)
-            Ok(value=2)
-            >>> Err("foo").map_err(len)
-            Err(error=3)
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Ok(2).map_err(len)
+        Ok(value=2)
+        >>> pc.Err("foo").map_err(len)
+        Err(error=3)
+
+        ```
 
         """
         if self.is_err():
@@ -306,15 +319,16 @@ class Result[T, E](ABC):
             The result of the function if `Ok`, otherwise the original `Err`.
 
         Example:
-            ```python
-            >>> from pyochain._results import Ok, Err, Result
-            >>> def to_str(x: int) -> Result[str, str]:
-            ...     return Ok(str(x))
-            >>> Ok(2).and_then(to_str)
-            Ok(value='2')
-            >>> Err("error").and_then(to_str)
-            Err(error='error')
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> def to_str(x: int) -> Result[str, str]:
+        ...     return Ok(str(x))
+        >>> pc.Ok(2).and_then(to_str)
+        Ok(value='2')
+        >>> pc.Err("error").and_then(to_str)
+        Err(error='error')
+
+        ```
 
         """
         if self.is_ok():
@@ -333,15 +347,16 @@ class Result[T, E](ABC):
             The original `Ok` value, or the result of the function if `Err`.
 
         Example:
-            ```python
-            >>> from pyochain._results import Ok, Err, Result
-            >>> def fallback(e: str) -> Result[int, str]:
-            ...     return Ok(len(e))
-            >>> Ok(2).or_else(fallback)
-            Ok(value=2)
-            >>> Err("foo").or_else(fallback)
-            Ok(value=3)
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> def fallback(e: str) -> Result[int, str]:
+        ...     return Ok(len(e))
+        >>> pc.Ok(2).or_else(fallback)
+        Ok(value=2)
+        >>> pc.Err("foo").or_else(fallback)
+        Ok(value=3)
+
+        ```
 
         """
         return self if self.is_ok() else op(self.unwrap_err())
@@ -352,16 +367,17 @@ class Result[T, E](ABC):
         `Ok(v)` becomes `Some(v)`, and `Err(e)` becomes `None`.
 
         Returns:
-            An `Option` containing the `Ok` value, or `None` if the result is `Err`.
+            Option[T]: An `Option` containing the `Ok` value, or `None` if the result is `Err`.
 
         Example:
-            ```python
-            >>> from pyochain._results import Ok, Err
-            >>> Ok(2).ok()
-            Some(value=2)
-            >>> Err("error").ok()
-            NONE
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Ok(2).ok()
+        Some(value=2)
+        >>> pc.Err("error").ok()
+        NONE
+
+        ```
 
         """
         if self.is_ok():
@@ -377,13 +393,14 @@ class Result[T, E](ABC):
             An `Option` containing the `Err` value, or `None` if the result is `Ok`.
 
         Example:
-            ```python
-            >>> from pyochain._results import Ok, Err
-            >>> Ok(2).err()
-            NONE
-            >>> Err("error").err()
-            Some(value='error')
-            ```
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Ok(2).err()
+        NONE
+        >>> pc.Err("error").err()
+        Some(value='error')
+
+        ```
 
         """
         if self.is_err():
@@ -464,15 +481,6 @@ class Wrapper[T](CommonBase[T]):
 
     This class is intended for use with other types/implementations that do not support the fluent/functional style.
     This allow the use of a consistent code style across the code base.
-
-    Example:
-        ```python
-        >>> from pyochain._results import Wrapper
-        >>> def add(a: int, b: int) -> int:
-        ...     return a + b
-        >>> Wrapper(5).apply(add, b=10).into(lambda x: x * 2)
-        30
-        ```
 
     """
 
