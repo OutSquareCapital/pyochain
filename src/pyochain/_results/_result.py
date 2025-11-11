@@ -16,74 +16,155 @@ class Result[T, E](ABC):
     @abstractmethod
     def is_ok(self) -> TypeIs[Ok[T, E]]:  # type: ignore[misc]
         """
-        Returns True if the result is Ok.
+        Returns `True` if the result is `Ok`.
 
-        Equivalent to Rust's Result::is_ok().
+        Returns:
+            `True` if the result is an `Ok` variant, `False` otherwise.
+
+        Example:
+            ```python
+            >>> from pyochain._results import Ok, Err, Result
+            >>> x: Result[int, str] = Ok(2)
+            >>> x.is_ok()
+            True
+            >>> y: Result[int, str] = Err("Some error message")
+            >>> y.is_ok()
+            False
+            ```
+
         """
         ...
 
     @abstractmethod
     def is_err(self) -> TypeIs[Err[T, E]]:  # type: ignore[misc]
         """
-        Returns True if the result is Err.
+        Returns `True` if the result is `Err`.
 
-        Equivalent to Rust's Result::is_err().
+        Returns:
+            `True` if the result is an `Err` variant, `False` otherwise.
+
+        Example:
+            ```python
+            >>> from pyochain._results import Ok, Err, Result
+            >>> x: Result[int, str] = Ok(2)
+            >>> x.is_err()
+            False
+            >>> y: Result[int, str] = Err("Some error message")
+            >>> y.is_err()
+            True
+            ```
+
         """
         ...
 
     @abstractmethod
     def unwrap(self) -> T:
         """
-        Returns the contained Ok value, or raises ResultUnwrapError if the result is Err.
+        Returns the contained `Ok` value.
 
-        Equivalent to Rust's Result::unwrap().
+        Returns:
+            The contained `Ok` value.
+
+        Raises:
+            ResultUnwrapError: If the result is `Err`.
+
+        Example:
+            ```python
+            >>> from pyochain._results import Ok
+            >>> Ok(2).unwrap()
+            2
+            ```
+            ```python
+            >>> from pyochain._results import Err
+            >>> Err("emergency failure").unwrap()
+            Traceback (most recent call last):
+                ...
+            pyochain._results._result.ResultUnwrapError: called `unwrap` on Err: 'emergency failure'
+            ```
+
         """
         ...
 
     @abstractmethod
     def unwrap_err(self) -> E:
         """
-        Returns the contained Err value, or raises ResultUnwrapError if the result is Ok.
+        Returns the contained `Err` value.
 
-        Equivalent to Rust's Result::unwrap_err().
+        Returns:
+            The contained `Err` value.
+
+        Raises:
+            ResultUnwrapError: If the result is `Ok`.
+
+        Example:
+            ```python
+            >>> from pyochain._results import Err
+            >>> Err("emergency failure").unwrap_err()
+            'emergency failure'
+            ```
+            ```python
+            >>> from pyochain._results import Ok
+            >>> Ok(2).unwrap_err()
+            Traceback (most recent call last):
+                ...
+            pyochain._results._result.ResultUnwrapError: called `unwrap_err` on Ok
+            ```
+
         """
         ...
 
-    def map_or_else[U](self, ok: Callable[[T], U], err: Callable[[E], U]) -> U:
+    def map_or_else[U](self, err: Callable[[E], U], ok: Callable[[T], U]) -> U:
         """
-        Pattern matches on the result, calling ok if Ok, or err if Err.
+        Maps a `Result[T, E]` to `U` by applying a fallback function to a contained `Err` value,
+        or a default function to a contained `Ok` value.
 
         Args:
-            ok: Callable to handle the Ok value.
-            err: Callable to handle the Err value.
+            err: The function to apply to the `Err` value.
+            ok: The function to apply to the `Ok` value.
 
         Returns:
-            The result of the called function.
+            The result of applying the appropriate function.
 
-        Equivalent to Rust's Result::map_or_else()
+        Example:
+            ```python
+            >>> from pyochain._results import Ok, Err
+            >>> k = 21
+            >>> Ok("foo").map_or_else(lambda e: k * 2, len)
+            3
+            >>> Err("bar").map_or_else(lambda e: k * 2, len)
+            42
+            ```
+
         """
-        match self.is_ok():
-            case True:
-                return ok(self.unwrap())
-            case False:
-                return err(self.unwrap_err())
-            case _:
-                raise RuntimeError("unreachable")
+        if self.is_ok():
+            return ok(self.unwrap())
+        return err(self.unwrap_err())
 
     def expect(self, msg: str) -> T:
         """
-        Returns the contained Ok value, or raises ResultUnwrapError with a custom message if the result is Err.
+        Returns the contained `Ok` value.
+        Raises an exception with a provided message if the value is an `Err`.
 
         Args:
-            msg: The message to display if the result is Err.
+            msg: The message to include in the exception if the result is `Err`.
 
         Returns:
-            The contained Ok value.
+            The contained `Ok` value.
 
         Raises:
-            ResultUnwrapError: If the result is Err, with the provided message and error.
+            ResultUnwrapError: If the result is `Err`.
 
-        Equivalent to Rust's Result::expect().
+        Example:
+            ```python
+            >>> from pyochain._results import Ok, Err
+            >>> Ok(2).expect("No error")
+            2
+            >>> Err("emergency failure").expect("Testing expect")
+            Traceback (most recent call last):
+                ...
+            pyochain._results._result.ResultUnwrapError: Testing expect: emergency failure
+            ```
+
         """
         if self.is_ok():
             return self.unwrap()
@@ -91,18 +172,29 @@ class Result[T, E](ABC):
 
     def expect_err(self, msg: str) -> E:
         """
-        Returns the contained Err value, or raises ResultUnwrapError with a custom message if the result is Ok.
+        Returns the contained `Err` value.
+        Raises an exception with a provided message if the value is an `Ok`.
 
         Args:
-            msg: The message to display if the result is Ok.
+            msg: The message to include in the exception if the result is `Ok`.
 
         Returns:
-            The contained Err value.
+            The contained `Err` value.
 
         Raises:
-            ResultUnwrapError: If the result is Ok, with the provided message and value.
+            ResultUnwrapError: If the result is `Ok`.
 
-        Equivalent to Rust's Result::expect_err().
+        Example:
+            ```python
+            >>> from pyochain._results import Ok, Err
+            >>> Err("emergency failure").expect_err("Testing expect_err")
+            'emergency failure'
+            >>> Ok(10).expect_err("Testing expect_err")
+            Traceback (most recent call last):
+                ...
+            pyochain._results._result.ResultUnwrapError: Testing expect_err: expected Err, got Ok(10)
+            ```
+
         """
         if self.is_err():
             return self.unwrap_err()
@@ -110,101 +202,167 @@ class Result[T, E](ABC):
 
     def unwrap_or(self, default: T) -> T:
         """
-        Returns the contained Ok value or a provided default.
+        Returns the contained `Ok` value or a provided default.
 
         Args:
-            default: The value to return if the result is Err.
+            default: The value to return if the result is `Err`.
 
         Returns:
-            The contained Ok value or the default.
+            The contained `Ok` value or the provided default.
 
-        Equivalent to Rust's Result::unwrap_or().
+        Example:
+            ```python
+            >>> from pyochain._results import Ok, Err
+            >>> Ok(2).unwrap_or(10)
+            2
+            >>> Err("error").unwrap_or(10)
+            10
+            ```
+
         """
         return self.unwrap() if self.is_ok() else default
 
-    def unwrap_or_else(self, f: Callable[[E], T]) -> T:
+    def unwrap_or_else(self, op: Callable[[E], T]) -> T:
         """
-        Returns the contained Ok value or computes it from a function if Err.
+        Returns the contained `Ok` value or computes it from a function.
 
         Args:
-            f: Callable that takes the Err value and returns a T.
+            op: A function that takes the `Err` value and returns a default value.
 
         Returns:
-            The contained Ok value or the result of f(error).
+            T: The contained `Ok` value or the result of the function.
 
-        Equivalent to Rust's Result::unwrap_or_else().
-        """
-        return self.unwrap() if self.is_ok() else f(self.unwrap_err())
+        Example:
+            ```python
+            >>> from pyochain._results import Ok, Err
+            >>> Ok(2).unwrap_or_else(len)
+            2
+            >>> Err("foo").unwrap_or_else(len)
+            3
+            ```
 
-    def map[U](self, f: Callable[[T], U]) -> Result[U, E]:
         """
-        Maps a Result[T, E] to Result[U, E] by applying a function to a contained Ok value, leaving Err untouched.
+        return self.unwrap() if self.is_ok() else op(self.unwrap_err())
+
+    def map[U](self, op: Callable[[T], U]) -> Result[U, E]:
+        """
+        Maps a `Result[T, E]` to `Result[U, E]` by applying a function to a contained `Ok` value,
+        leaving an `Err` value untouched.
 
         Args:
-            f: Callable to apply to the Ok value.
+            op: The function to apply to the `Ok` value.
 
         Returns:
-            Result[U, E]: Ok(f(value)) if Ok, otherwise Err(error).
+            A new `Result` with the mapped value if `Ok`, otherwise the original `Err`.
 
-        Equivalent to Rust's Result::map().
+        Example:
+            ```python
+            >>> from pyochain._results import Ok, Err
+            >>> Ok(2).map(lambda x: x * 2)
+            Ok(value=4)
+            >>> Err("error").map(lambda x: x * 2)
+            Err(error='error')
+            ```
+
         """
         if self.is_ok():
-            return Ok(f(self.unwrap()))
+            return Ok(op(self.unwrap()))
         return cast(Result[U, E], self)
 
-    def map_err[F](self, f: Callable[[E], F]) -> Result[T, F]:
+    def map_err[F](self, op: Callable[[E], F]) -> Result[T, F]:
         """
-        Maps a Result[T, E] to Result[T, F] by applying a function to a contained Err value, leaving Ok untouched.
+        Maps a `Result[T, E]` to `Result[T, F]` by applying a function to a contained `Err` value,
+        leaving an `Ok` value untouched.
 
         Args:
-            f: Callable to apply to the Err value.
+            op: The function to apply to the `Err` value.
 
         Returns:
-            Result[T, F]: Err(f(error)) if Err, otherwise Ok(value).
+            A new `Result` with the mapped error if `Err`, otherwise the original `Ok`.
 
-        Equivalent to Rust's Result::map_err().
+        Example:
+            ```python
+            >>> from pyochain._results import Ok, Err
+            >>> Ok(2).map_err(len)
+            Ok(value=2)
+            >>> Err("foo").map_err(len)
+            Err(error=3)
+            ```
+
         """
         if self.is_err():
-            return Err(f(self.unwrap_err()))
+            return Err(op(self.unwrap_err()))
         return cast(Result[T, F], self)
 
-    def and_then[U](self, f: Callable[[T], Result[U, E]]) -> Result[U, E]:
+    def and_then[U](self, op: Callable[[T], Result[U, E]]) -> Result[U, E]:
         """
-        Calls f if the result is Ok, otherwise returns Err.
+        Calls a function if the result is `Ok`, otherwise returns the `Err` value.
+        This is often used for chaining operations that might fail.
 
         Args:
-            f: Callable that takes the Ok value and returns a Result.
+            op: The function to call with the `Ok` value.
 
         Returns:
-            Result[U, E]: The result of f(value) if Ok, otherwise Err(error).
+            The result of the function if `Ok`, otherwise the original `Err`.
 
-        Equivalent to Rust's Result::and_then().
+        Example:
+            ```python
+            >>> from pyochain._results import Ok, Err, Result
+            >>> def to_str(x: int) -> Result[str, str]:
+            ...     return Ok(str(x))
+            >>> Ok(2).and_then(to_str)
+            Ok(value='2')
+            >>> Err("error").and_then(to_str)
+            Err(error='error')
+            ```
+
         """
         if self.is_ok():
-            return f(self.unwrap())
+            return op(self.unwrap())
         return cast(Result[U, E], self)
 
-    def or_else(self, f: Callable[[E], Result[T, E]]) -> Result[T, E]:
+    def or_else(self, op: Callable[[E], Result[T, E]]) -> Result[T, E]:
         """
-        Calls f if the result is Err, otherwise returns Ok.
+        Calls a function if the result is `Err`, otherwise returns the `Ok` value.
+        This is often used for handling errors by trying an alternative operation.
 
         Args:
-            f: Callable that takes the Err value and returns a Result.
+            op: The function to call with the `Err` value.
 
         Returns:
-            Result[T, E]: self if Ok, otherwise the result of f(error).
+            The original `Ok` value, or the result of the function if `Err`.
 
-        Equivalent to Rust's Result::or_else().
+        Example:
+            ```python
+            >>> from pyochain._results import Ok, Err, Result
+            >>> def fallback(e: str) -> Result[int, str]:
+            ...     return Ok(len(e))
+            >>> Ok(2).or_else(fallback)
+            Ok(value=2)
+            >>> Err("foo").or_else(fallback)
+            Ok(value=3)
+            ```
+
         """
-        return self if self.is_ok() else f(self.unwrap_err())
+        return self if self.is_ok() else op(self.unwrap_err())
 
     def ok(self) -> Option[T]:
         """
-        Converts the Result into an Option, mapping Ok(v) to Some(v) and Err(e) to None.
+        Converts from `Result[T, E]` to `Option[T]`.
+        `Ok(v)` becomes `Some(v)`, and `Err(e)` becomes `None`.
 
         Returns:
-            Option[T]: Some(value) if Ok, otherwise None.
-        Equivalent to Rust's Result::ok().
+            An `Option` containing the `Ok` value, or `None` if the result is `Err`.
+
+        Example:
+            ```python
+            >>> from pyochain._results import Ok, Err
+            >>> Ok(2).ok()
+            Some(value=2)
+            >>> Err("error").ok()
+            NONE
+            ```
+
         """
         if self.is_ok():
             return Some(self.unwrap())
@@ -212,11 +370,21 @@ class Result[T, E](ABC):
 
     def err(self) -> Option[E]:
         """
-        Converts the Result into an Option, mapping Err(e) to Some(e) and Ok(v) to None.
+        Converts from `Result[T, E]` to `Option[E]`.
+        `Err(e)` becomes `Some(e)`, and `Ok(v)` becomes `None`.
 
         Returns:
-            Option[E]: Some(error) if Err, otherwise None.
-        Equivalent to Rust's Result::err().
+            An `Option` containing the `Err` value, or `None` if the result is `Ok`.
+
+        Example:
+            ```python
+            >>> from pyochain._results import Ok, Err
+            >>> Ok(2).err()
+            NONE
+            >>> Err("error").err()
+            Some(value='error')
+            ```
+
         """
         if self.is_err():
             return Some(self.unwrap_err())
@@ -228,40 +396,30 @@ class Ok[T, E](Result[T, E]):
     value: T
 
     def is_ok(self) -> TypeIs[Ok[T, E]]:  # type: ignore[misc]
-        """
-        Always returns True for Ok.
-
-        Equivalent to Rust's Result::is_ok().
-        """
+        """Returns `True` for `Ok`."""
         return True
 
     def is_err(self) -> TypeIs[Err[T, E]]:  # type: ignore[misc]
-        """
-        Always returns False for Ok.
-
-        Equivalent to Rust's Result::is_err().
-        """
+        """Returns `False` for `Ok`."""
         return False
 
     def unwrap(self) -> T:
         """
-        Returns the contained Ok value.
+        Returns the contained `Ok` value.
 
         Returns:
             The contained value.
 
-        Equivalent to Rust's Result::unwrap() for Ok.
         """
         return self.value
 
     def unwrap_err(self) -> Never:
         """
-        Raises ResultUnwrapError because there is no error value.
+        Raises `ResultUnwrapError` because there is no error value.
 
         Raises:
-            ResultUnwrapError: Always, since Ok contains no error.
+            ResultUnwrapError: Always, since `Ok` contains no error.
 
-        Equivalent to Rust's Result::unwrap_err() for Ok.
         """
         raise ResultUnwrapError("called `unwrap_err` on Ok")
 
@@ -271,29 +429,20 @@ class Err[T, E](Result[T, E]):
     error: E
 
     def is_ok(self) -> TypeIs[Ok[T, E]]:  # type: ignore[misc]
-        """
-        Always returns False for Err.
-
-        Equivalent to Rust's Result::is_ok().
-        """
+        """Returns `False` for `Err`."""
         return False
 
     def is_err(self) -> TypeIs[Err[T, E]]:  # type: ignore[misc]
-        """
-        Always returns True for Err.
-
-        Equivalent to Rust's Result::is_err().
-        """
+        """Returns `True` for `Err`."""
         return True
 
     def unwrap(self) -> Never:
         """
-        Raises ResultUnwrapError because there is no Ok value.
+        Raises `ResultUnwrapError` because there is no `Ok` value.
 
         Raises:
-            ResultUnwrapError: Always, since Err contains no value.
+            ResultUnwrapError: Always, since `Err` contains no value.
 
-        Equivalent to Rust's Result::unwrap() for Err.
         """
         raise ResultUnwrapError(f"called `unwrap` on Err: {self.error!r}")
 
@@ -304,7 +453,6 @@ class Err[T, E](Result[T, E]):
         Returns:
             The contained error value.
 
-        Equivalent to Rust's Result::unwrap_err() for Err.
         """
         return self.error
 
@@ -316,6 +464,16 @@ class Wrapper[T](CommonBase[T]):
 
     This class is intended for use with other types/implementations that do not support the fluent/functional style.
     This allow the use of a consistent code style across the code base.
+
+    Example:
+        ```python
+        >>> from pyochain._results import Wrapper
+        >>> def add(a: int, b: int) -> int:
+        ...     return a + b
+        >>> Wrapper(5).apply(add, b=10).into(lambda x: x * 2)
+        30
+        ```
+
     """
 
     def apply[**P, R](
