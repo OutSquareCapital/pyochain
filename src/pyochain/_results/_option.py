@@ -3,7 +3,10 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Never, TypeIs
+from typing import TYPE_CHECKING, Any, Never, TypeIs
+
+if TYPE_CHECKING:
+    from ._result import Result
 
 
 class OptionUnwrapError(RuntimeError): ...
@@ -15,8 +18,10 @@ class Option[T](ABC):
         """
         Returns `True` if the option is a `Some` value.
 
+        Uses `TypeIs[Some[T]]` for more precise type narrowing.
+
         Returns:
-            `True` if the option is a `Some` variant, `False` otherwise.
+            bool: `True` if the option is a `Some` variant, `False` otherwise.
 
         Example:
         ```python
@@ -37,8 +42,10 @@ class Option[T](ABC):
         """
         Returns `True` if the option is a `None` value.
 
+        Uses `TypeIs[_None]` for more precise type narrowing.
+
         Returns:
-            `True` if the option is a `_None` variant, `False` otherwise.
+            bool: `True` if the option is a `_None` variant, `False` otherwise.
 
         Example:
         ```python
@@ -60,7 +67,7 @@ class Option[T](ABC):
         Returns the contained `Some` value.
 
         Returns:
-            The contained `Some` value.
+            T: The contained `Some` value.
 
         Raises:
             OptionUnwrapError: If the option is `None`.
@@ -86,13 +93,14 @@ class Option[T](ABC):
     def expect(self, msg: str) -> T:
         """
         Returns the contained `Some` value.
+
         Raises an exception with a provided message if the value is `None`.
 
         Args:
-            msg: The message to include in the exception if the result is `None`.
+            msg (str): The message to include in the exception if the result is `None`.
 
         Returns:
-            The contained `Some` value.
+            T: The contained `Some` value.
 
         Raises:
             OptionUnwrapError: If the result is `None`.
@@ -119,10 +127,10 @@ class Option[T](ABC):
         Returns the contained `Some` value or a provided default.
 
         Args:
-            default: The value to return if the result is `None`.
+            default (T): The value to return if the result is `None`.
 
         Returns:
-            The contained `Some` value or the provided default.
+            T: The contained `Some` value or the provided default.
 
         Example:
         ```python
@@ -141,10 +149,10 @@ class Option[T](ABC):
         Returns the contained `Some` value or computes it from a function.
 
         Args:
-            f: A function that returns a default value if the result is `None`.
+            f (Callable[[], T]): A function that returns a default value if the result is `None`.
 
         Returns:
-            The contained `Some` value or the result of the function.
+            T: The contained `Some` value or the result of the function.
 
         Example:
         ```python
@@ -165,10 +173,10 @@ class Option[T](ABC):
         leaving a `None` value untouched.
 
         Args:
-            f: The function to apply to the `Some` value.
+            f (Callable[[T], U]): The function to apply to the `Some` value.
 
         Returns:
-            A new `Option` with the mapped value if `Some`, otherwise `None`.
+            Option[U]: A new `Option` with the mapped value if `Some`, otherwise `None`.
 
         Example:
         ```python
@@ -180,20 +188,17 @@ class Option[T](ABC):
 
         ```
         """
-        if self.is_some():
-            return Some(f(self.unwrap()))
-        return NONE
+        return Some(f(self.unwrap())) if self.is_some() else NONE
 
     def and_then[U](self, f: Callable[[T], Option[U]]) -> Option[U]:
         """
         Calls a function if the option is `Some`, otherwise returns `None`.
-        Some languages call this operation flatmap.
 
         Args:
-            f: The function to call with the `Some` value.
+            f (Callable[[T], Option[U]]): The function to call with the `Some` value.
 
         Returns:
-            The result of the function if `Some`, otherwise `None`.
+            Option[U]: The result of the function if `Some`, otherwise `None`.
 
         Example:
         ```python
@@ -213,19 +218,17 @@ class Option[T](ABC):
 
         ```
         """
-        if self.is_some():
-            return f(self.unwrap())
-        return NONE
+        return f(self.unwrap()) if self.is_some() else NONE
 
     def or_else(self, f: Callable[[], Option[T]]) -> Option[T]:
         """
         Returns the option if it contains a value, otherwise calls a function and returns the result.
 
         Args:
-            f: The function to call if the option is `None`.
+            f (Callable[[], Option[T]]): The function to call if the option is `None`.
 
         Returns:
-            The original `Option` if it is `Some`, otherwise the result of the function.
+            Option[T]: The original `Option` if it is `Some`, otherwise the result of the function.
 
         Example:
         ```python
@@ -245,9 +248,181 @@ class Option[T](ABC):
         """
         return self if self.is_some() else f()
 
+    def zip[U](self, other: Option[U]) -> Option[tuple[T, U]]:
+        """
+        Returns an Option containing a tuple of the values if both options are Some, otherwise returns NONE.
+
+        Args:
+            other (Option[U]): The other option to zip with.
+
+        Returns:
+            Option[tuple[T, U]]: Some((self, other)) if both are Some, otherwise NONE.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some(1).zip(pc.Some('a'))
+        Some(value=(1, 'a'))
+        >>> pc.Some(1).zip(pc.NONE)
+        NONE
+        >>> pc.NONE.zip(pc.Some('a'))
+        NONE
+
+        ```
+        """
+        if self.is_some() and other.is_some():
+            return Some((self.unwrap(), other.unwrap()))
+        return NONE
+
+    def zip_with[U, R](self, other: Option[U], f: Callable[[T, U], R]) -> Option[R]:
+        """
+
+        Zips `self` and another `Option` with function `f`.
+
+        If `self` is `Some(s)` and other is `Some(o)`, this method returns `Some(f(s, o))`.
+
+        Otherwise, `NONE` is returned.
+
+        Args:
+            other (pc.Option[U]): The second option.
+            f (Callable[[T, U], R]): The function to apply to the unwrapped values.
+        Returns:
+            pc.Option[R]: The resulting option after applying the function.
+        Examples:
+        ```python
+        >>> from dataclasses import dataclass
+        >>> import pyochain as pc
+        >>>
+        >>> @dataclass
+        ... class Point:
+        ...     x: float
+        ...     y: float
+        >>>
+        >>> x = pc.Some(17.5)
+        >>> y = pc.Some(42.7)
+        >>> x.zip_with(y, Point)
+        Some(value=Point(x=17.5, y=42.7))
+        >>> x.zip_with(pc.NONE, Point)
+        NONE
+
+        ```
+        """
+        if self.is_some() and other.is_some():
+            return Some(f(self.unwrap(), other.unwrap()))
+        return NONE
+
+    def ok_or[E](self, err: E) -> Result[T, E]:
+        """
+        Converts the option to a Result, mapping Some(v) to Ok(v) and NONE to Err(err).
+
+        Args:
+            err (E): The error value to use if the option is NONE.
+
+        Returns:
+            Result[T, E]: Ok(v) if Some(v), otherwise Err(err).
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some(1).ok_or('fail')
+        Ok(value=1)
+        >>> pc.NONE.ok_or('fail')
+        Err(error='fail')
+
+        ```
+        """
+        from ._result import Err, Ok
+
+        return Ok(self.unwrap()) if self.is_some() else Err(err)
+
+    def ok_or_else[E](self, err: Callable[[], E]) -> Result[T, E]:
+        """
+        Converts the option to a Result, mapping Some(v) to Ok(v) and NONE to Err(err()).
+
+        Args:
+            err (Callable[[], E]): A function returning the error value if the option is NONE.
+
+        Returns:
+            Result[T, E]: Ok(v) if Some(v), otherwise Err(err()).
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some(1).ok_or_else(lambda: 'fail')
+        Ok(value=1)
+        >>> pc.NONE.ok_or_else(lambda: 'fail')
+        Err(error='fail')
+
+        ```
+        """
+        from ._result import Err, Ok
+
+        return Ok(self.unwrap()) if self.is_some() else Err(err())
+
+    def map_or[U](self, default: U, f: Callable[[T], U]) -> U:
+        """
+        Returns the result of applying a function to the contained value if Some, otherwise returns the default value.
+
+        Args:
+            default (U): The default value to return if NONE.
+            f (Callable[[T], U]): The function to apply to the contained value.
+
+        Returns:
+            U: The result of f(self.unwrap()) if Some, otherwise default.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some(2).map_or(0, lambda x: x * 10)
+        20
+        >>> pc.NONE.map_or(0, lambda x: x * 10)
+        0
+
+        ```
+        """
+        return f(self.unwrap()) if self.is_some() else default
+
+    def map_or_else[U](self, default: Callable[[], U], f: Callable[[T], U]) -> U:
+        """
+        Returns the result of applying a function to the contained value if Some, otherwise computes a default value.
+
+        Args:
+            default (Callable[[], U]): A function returning the default value if NONE.
+            f (Callable[[T], U]): The function to apply to the contained value.
+
+        Returns:
+            U: The result of f(self.unwrap()) if Some, otherwise default().
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some(2).map_or_else(lambda: 0, lambda x: x * 10)
+        20
+        >>> pc.NONE.map_or_else(lambda: 0, lambda x: x * 10)
+        0
+
+        ```
+        """
+        return f(self.unwrap()) if self.is_some() else default()
+
 
 @dataclass(slots=True)
 class Some[T](Option[T]):
+    """
+    Option variant representing the presence of a value.
+
+    Args:
+        value (T): The contained value.
+
+    Example:
+    ```python
+    >>> import pyochain as pc
+    >>> pc.Some(42)
+    Some(value=42)
+
+    ```
+    """
+
     value: T
 
     def is_some(self) -> TypeIs[Some[T]]:  # type: ignore[misc]
@@ -263,13 +438,25 @@ class Some[T](Option[T]):
         Returns the contained value.
 
         Returns:
-            The contained value.
+            T: The contained value.
         """
         return self.value
 
 
 @dataclass(slots=True)
 class _None(Option[Any]):
+    """
+    Option variant representing the absence of a value.
+
+    Example:
+    ```python
+    >>> import pyochain as pc
+    >>> pc.NONE
+    NONE
+
+    ```
+    """
+
     def __repr__(self) -> str:
         return "NONE"
 

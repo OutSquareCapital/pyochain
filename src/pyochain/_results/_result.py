@@ -18,8 +18,10 @@ class Result[T, E](ABC):
         """
         Returns `True` if the result is `Ok`.
 
+        Uses `TypeIs[Ok[T, E]]` for more precise type narrowing.
+
         Returns:
-            `True` if the result is an `Ok` variant, `False` otherwise.
+            bool: `True` if the result is an `Ok` variant, `False` otherwise.
 
         Example:
         ```python
@@ -32,7 +34,6 @@ class Result[T, E](ABC):
         False
 
         ```
-
         """
         ...
 
@@ -41,8 +42,10 @@ class Result[T, E](ABC):
         """
         Returns `True` if the result is `Err`.
 
+        Use `TypeIs[Err[T, E]]` for more precise type narrowing.
+
         Returns:
-            `True` if the result is an `Err` variant, `False` otherwise.
+            bool: `True` if the result is an `Err` variant, `False` otherwise.
 
         Example:
         ```python
@@ -55,7 +58,6 @@ class Result[T, E](ABC):
         True
 
         ```
-
         """
         ...
 
@@ -65,7 +67,7 @@ class Result[T, E](ABC):
         Returns the contained `Ok` value.
 
         Returns:
-            The contained `Ok` value.
+            T: The contained `Ok` value.
 
         Raises:
             ResultUnwrapError: If the result is `Err`.
@@ -85,7 +87,6 @@ class Result[T, E](ABC):
         pyochain._results._result.ResultUnwrapError: called `unwrap` on Err: 'emergency failure'
 
         ```
-
         """
         ...
 
@@ -95,7 +96,7 @@ class Result[T, E](ABC):
         Returns the contained `Err` value.
 
         Returns:
-            The contained `Err` value.
+            E: The contained `Err` value.
 
         Raises:
             ResultUnwrapError: If the result is `Ok`.
@@ -115,7 +116,6 @@ class Result[T, E](ABC):
         pyochain._results._result.ResultUnwrapError: called `unwrap_err` on Ok
 
         ```
-
         """
         ...
 
@@ -125,11 +125,11 @@ class Result[T, E](ABC):
         or a default function to a contained `Ok` value.
 
         Args:
-            err: The function to apply to the `Err` value.
-            ok: The function to apply to the `Ok` value.
+            err (Callable[[E], U]): The function to apply to the `Err` value.
+            ok (Callable[[T], U]): The function to apply to the `Ok` value.
 
         Returns:
-            The result of applying the appropriate function.
+            U: The result of applying the appropriate function.
 
         Example:
         ```python
@@ -141,11 +141,8 @@ class Result[T, E](ABC):
         42
 
         ```
-
         """
-        if self.is_ok():
-            return ok(self.unwrap())
-        return err(self.unwrap_err())
+        return ok(self.unwrap()) if self.is_ok() else err(self.unwrap_err())
 
     def expect(self, msg: str) -> T:
         """
@@ -153,10 +150,10 @@ class Result[T, E](ABC):
         Raises an exception with a provided message if the value is an `Err`.
 
         Args:
-            msg: The message to include in the exception if the result is `Err`.
+            msg (str): The message to include in the exception if the result is `Err`.
 
         Returns:
-            The contained `Ok` value.
+            T: The contained `Ok` value.
 
         Raises:
             ResultUnwrapError: If the result is `Err`.
@@ -172,7 +169,6 @@ class Result[T, E](ABC):
         pyochain._results._result.ResultUnwrapError: Testing expect: emergency failure
 
         ```
-
         """
         if self.is_ok():
             return self.unwrap()
@@ -187,7 +183,7 @@ class Result[T, E](ABC):
             msg: The message to include in the exception if the result is `Ok`.
 
         Returns:
-            The contained `Err` value.
+            E: The contained `Err` value.
 
         Raises:
             ResultUnwrapError: If the result is `Ok`.
@@ -203,7 +199,6 @@ class Result[T, E](ABC):
         pyochain._results._result.ResultUnwrapError: Testing expect_err: expected Err, got Ok(10)
 
         ```
-
         """
         if self.is_err():
             return self.unwrap_err()
@@ -217,7 +212,7 @@ class Result[T, E](ABC):
             default: The value to return if the result is `Err`.
 
         Returns:
-            The contained `Ok` value or the provided default.
+            T: The contained `Ok` value or the provided default.
 
         Example:
         ```python
@@ -228,7 +223,6 @@ class Result[T, E](ABC):
         10
 
         ```
-
         """
         return self.unwrap() if self.is_ok() else default
 
@@ -251,7 +245,6 @@ class Result[T, E](ABC):
         3
 
         ```
-
         """
         return self.unwrap() if self.is_ok() else op(self.unwrap_err())
 
@@ -264,7 +257,7 @@ class Result[T, E](ABC):
             op: The function to apply to the `Ok` value.
 
         Returns:
-            A new `Result` with the mapped value if `Ok`, otherwise the original `Err`.
+            Result[U, E]: A new `Result` with the mapped value if `Ok`, otherwise the original `Err`.
 
         Example:
         ```python
@@ -275,11 +268,8 @@ class Result[T, E](ABC):
         Err(error='error')
 
         ```
-
         """
-        if self.is_ok():
-            return Ok(op(self.unwrap()))
-        return cast(Result[U, E], self)
+        return Ok(op(self.unwrap())) if self.is_ok() else cast(Result[U, E], self)
 
     def map_err[F](self, op: Callable[[E], F]) -> Result[T, F]:
         """
@@ -287,10 +277,10 @@ class Result[T, E](ABC):
         leaving an `Ok` value untouched.
 
         Args:
-            op: The function to apply to the `Err` value.
+            op (Callable[[E], F]): The function to apply to the `Err` value.
 
         Returns:
-            A new `Result` with the mapped error if `Err`, otherwise the original `Ok`.
+            Result[T, F]: A new `Result` with the mapped error if `Err`, otherwise the original `Ok`.
 
         Example:
         ```python
@@ -301,11 +291,8 @@ class Result[T, E](ABC):
         Err(error=3)
 
         ```
-
         """
-        if self.is_err():
-            return Err(op(self.unwrap_err()))
-        return cast(Result[T, F], self)
+        return Err(op(self.unwrap_err())) if self.is_err() else cast(Result[T, F], self)
 
     def and_then[U](self, op: Callable[[T], Result[U, E]]) -> Result[U, E]:
         """
@@ -313,10 +300,10 @@ class Result[T, E](ABC):
         This is often used for chaining operations that might fail.
 
         Args:
-            op: The function to call with the `Ok` value.
+            op (Callable[[T], Result[U, E]]): The function to call with the `Ok` value.
 
         Returns:
-            The result of the function if `Ok`, otherwise the original `Err`.
+            Result[U, E]: The result of the function if `Ok`, otherwise the original `Err`.
 
         Example:
         ```python
@@ -329,22 +316,20 @@ class Result[T, E](ABC):
         Err(error='error')
 
         ```
-
         """
-        if self.is_ok():
-            return op(self.unwrap())
-        return cast(Result[U, E], self)
+        return op(self.unwrap()) if self.is_ok() else cast(Result[U, E], self)
 
     def or_else(self, op: Callable[[E], Result[T, E]]) -> Result[T, E]:
         """
         Calls a function if the result is `Err`, otherwise returns the `Ok` value.
+
         This is often used for handling errors by trying an alternative operation.
 
         Args:
-            op: The function to call with the `Err` value.
+            op (Callable[[E], Result[T, E]]): The function to call with the `Err` value.
 
         Returns:
-            The original `Ok` value, or the result of the function if `Err`.
+            Result[T, E]: The original `Ok` value, or the result of the function if `Err`.
 
         Example:
         ```python
@@ -357,13 +342,13 @@ class Result[T, E](ABC):
         Ok(value=3)
 
         ```
-
         """
         return self if self.is_ok() else op(self.unwrap_err())
 
     def ok(self) -> Option[T]:
         """
         Converts from `Result[T, E]` to `Option[T]`.
+
         `Ok(v)` becomes `Some(v)`, and `Err(e)` becomes `None`.
 
         Returns:
@@ -378,19 +363,17 @@ class Result[T, E](ABC):
         NONE
 
         ```
-
         """
-        if self.is_ok():
-            return Some(self.unwrap())
-        return NONE
+        return Some(self.unwrap()) if self.is_ok() else NONE
 
     def err(self) -> Option[E]:
         """
         Converts from `Result[T, E]` to `Option[E]`.
+
         `Err(e)` becomes `Some(e)`, and `Ok(v)` becomes `None`.
 
         Returns:
-            An `Option` containing the `Err` value, or `None` if the result is `Ok`.
+            Option[E]: An `Option` containing the `Err` value, or `None` if the result is `Ok`.
 
         Example:
         ```python
@@ -401,11 +384,107 @@ class Result[T, E](ABC):
         Some(value='error')
 
         ```
+        """
+        return Some(self.unwrap_err()) if self.is_err() else NONE
 
+    def is_ok_and(self, pred: Callable[[T], bool]) -> bool:
+        """
+        Returns True if the result is Ok and the predicate is true for the contained value.
+
+        Args:
+            pred (Callable[[T], bool]): Predicate function to apply to the Ok value.
+
+        Returns:
+            bool: True if Ok and pred(value) is true, False otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Ok(2).is_ok_and(lambda x: x > 1)
+        True
+        >>> pc.Ok(0).is_ok_and(lambda x: x > 1)
+        False
+        >>> pc.Err("err").is_ok_and(lambda x: x > 1)
+        False
+
+        ```
+        """
+        return self.is_ok() and pred(self.unwrap())
+
+    def is_err_and(self, pred: Callable[[E], bool]) -> bool:
+        """
+        Returns True if the result is Err and the predicate is true for the error value.
+
+        Args:
+            pred (Callable[[E], bool]): Predicate function to apply to the Err value.
+
+        Returns:
+            bool: True if Err and pred(error) is true, False otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Err("foo").is_err_and(lambda e: len(e) == 3)
+        True
+        >>> pc.Err("bar").is_err_and(lambda e: e == "baz")
+        False
+        >>> pc.Ok(2).is_err_and(lambda e: True)
+        False
+
+        ```
+        """
+        return self.is_err() and pred(self.unwrap_err())
+
+    def map_or[U](self, default: U, f: Callable[[T], U]) -> U:
+        """
+        Applies a function to the Ok value if present, otherwise returns the default value.
+
+        Args:
+            default (U): Value to return if the result is Err.
+            f (Callable[[T], U]): Function to apply to the Ok value.
+
+        Returns:
+            U: Result of f(value) if Ok, otherwise default.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Ok(2).map_or(10, lambda x: x * 2)
+        4
+        >>> pc.Err("err").map_or(10, lambda x: x * 2)
+        10
+
+        ```
+        """
+        return f(self.unwrap()) if self.is_ok() else default
+
+    def transpose(self: Result[Option[T], E]) -> Option[Result[T, E]]:
+        """
+        Transposes a Result containing an Option into an Option containing a Result.
+
+        `Ok(Some(v)) -> Some(Ok(v)), Ok(NONE) -> NONE, Err(e) -> Some(Err(e))`
+
+        Returns:
+            Option[Result[T, E]]: Option containing a Result or NONE.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Ok(pc.Some(2)).transpose()
+        Some(value=Ok(value=2))
+        >>> pc.Ok(pc.NONE).transpose()
+        NONE
+        >>> pc.Err("err").transpose()
+        Some(value=Err(error='err'))
+
+        ```
         """
         if self.is_err():
-            return Some(self.unwrap_err())
-        return NONE
+            return Some(Err(self.unwrap_err()))
+        opt = self.unwrap()
+        if opt.is_none():
+            return NONE
+        return Some(Ok(opt.unwrap()))
 
 
 @dataclass(slots=True)
@@ -425,7 +504,7 @@ class Ok[T, E](Result[T, E]):
         Returns the contained `Ok` value.
 
         Returns:
-            The contained value.
+            T: The contained value.
 
         """
         return self.value
@@ -433,6 +512,8 @@ class Ok[T, E](Result[T, E]):
     def unwrap_err(self) -> Never:
         """
         Raises `ResultUnwrapError` because there is no error value.
+
+        Is not expected to be called on `Ok`.
 
         Raises:
             ResultUnwrapError: Always, since `Ok` contains no error.
@@ -457,6 +538,8 @@ class Err[T, E](Result[T, E]):
         """
         Raises `ResultUnwrapError` because there is no `Ok` value.
 
+        Is not expected to be called on `Err`.
+
         Raises:
             ResultUnwrapError: Always, since `Err` contains no value.
 
@@ -468,7 +551,7 @@ class Err[T, E](Result[T, E]):
         Returns the contained error value.
 
         Returns:
-            The contained error value.
+            E: The contained error value.
 
         """
         return self.error
@@ -477,9 +560,11 @@ class Err[T, E](Result[T, E]):
 class Wrapper[T](CommonBase[T]):
     """
     A generic Wrapper for any type.
+
     The pipe into method is implemented to return a Wrapper of the result type.
 
     This class is intended for use with other types/implementations that do not support the fluent/functional style.
+
     This allow the use of a consistent code style across the code base.
 
     """
