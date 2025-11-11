@@ -34,7 +34,7 @@ class IterDict[K, V](MappingWrapper[K, V]):
         ...     "numbers1": [1, 2, 3],
         ...     "numbers2": [4, 5, 6],
         ... }
-        >>> pc.Dict(data).itr(lambda v: v.repeat(5).flatten().sum()).unwrap()
+        >>> pc.Dict(data).itr(lambda v: v.repeat(5).flatten().sum()).inner()
         {'numbers1': 30, 'numbers2': 75}
 
         ```
@@ -112,7 +112,7 @@ class IterDict[K, V](MappingWrapper[K, V]):
         ...     "a": {"b": 1, "c": 2},
         ...     "d": {"e": {"f": 3}},
         ... }
-        >>> pc.Dict(data).to_arrays().unwrap()
+        >>> pc.Dict(data).to_arrays().inner()
         [['a', 'b', 1], ['a', 'c', 2], ['d', 'e', 'f', 3]]
 
         ```

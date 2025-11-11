@@ -22,7 +22,7 @@ class GroupsDict[K, V](MappingWrapper[K, V]):
         ```python
         >>> import pyochain as pc
         >>> d = {"a": 1, "b": 2, "c": 3, "d": 2}
-        >>> pc.Dict(d).group_by_value(lambda v: v % 2).unwrap()
+        >>> pc.Dict(d).group_by_value(lambda v: v % 2).inner()
         {1: {'a': 1, 'c': 3}, 0: {'b': 2, 'd': 2}}
 
         ```
@@ -46,7 +46,7 @@ class GroupsDict[K, V](MappingWrapper[K, V]):
         ```python
         >>> import pyochain as pc
         >>> d = {"user_1": 10, "user_2": 20, "admin_1": 100}
-        >>> pc.Dict(d).group_by_key(lambda k: k.split("_")[0]).unwrap()
+        >>> pc.Dict(d).group_by_key(lambda k: k.split("_")[0]).inner()
         {'user': {'user_1': 10, 'user_2': 20}, 'admin': {'admin_1': 100}}
 
         ```
@@ -81,7 +81,7 @@ class GroupsDict[K, V](MappingWrapper[K, V]):
         >>> pc.Dict(data).group_by_key_agg(
         ...     key_func=lambda k: k.split("_")[0],
         ...     agg_func=lambda d: d.iter_values().sum(),
-        ... ).unwrap()
+        ... ).inner()
         {'user': 30, 'admin': 100}
         >>>
         >>> data_files = {
@@ -101,7 +101,7 @@ class GroupsDict[K, V](MappingWrapper[K, V]):
         >>>
         >>> pc.Dict(data_files).group_by_key_agg(
         ...     key_func=lambda k: k.split(".")[-1], agg_func=get_stats
-        ... ).sort().unwrap()
+        ... ).sort().inner()
         {'log': {'count': 2, 'total_size': 25, 'max_size': 20, 'files': ['file_b.log', 'file_d.log']}, 'txt': {'count': 2, 'total_size': 150, 'max_size': 100, 'files': ['file_a.txt', 'file_c.txt']}}
 
         ```
@@ -141,7 +141,7 @@ class GroupsDict[K, V](MappingWrapper[K, V]):
         >>> pc.Dict(data).group_by_value_agg(
         ...     value_func=lambda grade: grade,
         ...     agg_func=lambda d: d.iter_keys().count(),
-        ... ).unwrap()
+        ... ).inner()
         {'A': 2, 'B': 1}
         >>> # Second example
         >>> sales_data = {
@@ -155,7 +155,7 @@ class GroupsDict[K, V](MappingWrapper[K, V]):
         >>> pc.Dict(sales_data).group_by_value_agg(
         ...     value_func=lambda category: category,
         ...     agg_func=lambda d: d.iter_keys().sort().first(),
-        ... ).sort().unwrap()
+        ... ).sort().inner()
         {'Clothing': 'store_4', 'Electronics': 'store_1', 'Groceries': 'store_2'}
 
         ```

@@ -24,7 +24,7 @@ class JoinsDict[K, V](MappingWrapper[K, V]):
         >>> import pyochain as pc
         >>> d1 = {"a": 1, "b": 2}
         >>> d2 = {"b": 10, "c": 20}
-        >>> pc.Dict(d1).inner_join(d2).unwrap()
+        >>> pc.Dict(d1).inner_join(d2).inner()
         {'b': (2, 10)}
 
         ```
@@ -47,7 +47,7 @@ class JoinsDict[K, V](MappingWrapper[K, V]):
         >>> import pyochain as pc
         >>> d1 = {"a": 1, "b": 2}
         >>> d2 = {"b": 10, "c": 20}
-        >>> pc.Dict(d1).left_join(d2).unwrap()
+        >>> pc.Dict(d1).left_join(d2).inner()
         {'a': (1, None), 'b': (2, 10)}
 
         ```
@@ -71,7 +71,7 @@ class JoinsDict[K, V](MappingWrapper[K, V]):
         >>> import pyochain as pc
         >>> d1 = {"a": 1, "b": 2, "c": 3}
         >>> d2 = {"b": 2, "c": 4, "d": 5}
-        >>> pc.Dict(d1).diff(d2).sort().unwrap()
+        >>> pc.Dict(d1).diff(d2).sort().inner()
         {'a': (1, None), 'c': (3, 4), 'd': (None, 5)}
 
         ```
@@ -98,10 +98,10 @@ class JoinsDict[K, V](MappingWrapper[K, V]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({1: "one"}).merge({2: "two"}).unwrap()
+        >>> pc.Dict({1: "one"}).merge({2: "two"}).inner()
         {1: 'one', 2: 'two'}
         >>> # Later dictionaries have precedence
-        >>> pc.Dict({1: 2, 3: 4}).merge({3: 3, 4: 4}).unwrap()
+        >>> pc.Dict({1: 2, 3: 4}).merge({3: 3, 4: 4}).inner()
         {1: 2, 3: 3, 4: 4}
 
         ```
@@ -125,9 +125,9 @@ class JoinsDict[K, V](MappingWrapper[K, V]):
         A key may occur in more than one dict, and all values mapped from the key will be passed to the function as a list, such as func([val1, val2, ...]).
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({1: 1, 2: 2}).merge_with({1: 10, 2: 20}, func=sum).unwrap()
+        >>> pc.Dict({1: 1, 2: 2}).merge_with({1: 10, 2: 20}, func=sum).inner()
         {1: 11, 2: 22}
-        >>> pc.Dict({1: 1, 2: 2}).merge_with({2: 20, 3: 30}, func=max).unwrap()
+        >>> pc.Dict({1: 1, 2: 2}).merge_with({2: 20, 3: 30}, func=max).inner()
         {1: 1, 2: 20, 3: 30}
 
         ```

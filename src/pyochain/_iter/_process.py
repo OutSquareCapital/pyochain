@@ -239,8 +239,8 @@ class BaseProcess[T](IterWrapper[T]):
             number, elements() will ignore it.
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_("ABCABC").elements().sort().unwrap()
-        ['A', 'A', 'B', 'B', 'C', 'C']
+        >>> pc.Iter.from_("ABCABC").elements().sort()
+        Seq(['A', 'A', 'B', 'B', 'C', 'C'])
 
         ```
         Knuth's example for prime factors of 1836:  2**2 * 3**3 * 17**1

@@ -64,7 +64,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         ...     "person1": {"name": "Alice", "age": 30, "city": "New York"},
         ...     "person2": {"name": "Bob", "age": 25, "city": "Los Angeles"},
         ... }
-        >>> pc.Dict(data).struct(lambda d: d.map_keys(str.upper).drop("AGE").unwrap())
+        >>> pc.Dict(data).struct(lambda d: d.map_keys(str.upper).drop("AGE").inner())
         ... # doctest: +NORMALIZE_WHITESPACE
         {'person1': {'CITY': 'New York', 'NAME': 'Alice'},
         'person2': {'CITY': 'Los Angeles', 'NAME': 'Bob'}}
@@ -96,11 +96,11 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         ...     "config": {"params": {"retries": 3, "timeout": 30}, "mode": "fast"},
         ...     "version": 1.0,
         ... }
-        >>> pc.Dict(data).flatten().unwrap()
+        >>> pc.Dict(data).flatten().inner()
         {'config.params.retries': 3, 'config.params.timeout': 30, 'config.mode': 'fast', 'version': 1.0}
-        >>> pc.Dict(data).flatten(sep="_").unwrap()
+        >>> pc.Dict(data).flatten(sep="_").inner()
         {'config_params_retries': 3, 'config_params_timeout': 30, 'config_mode': 'fast', 'version': 1.0}
-        >>> pc.Dict(data).flatten(max_depth=1).unwrap()
+        >>> pc.Dict(data).flatten(max_depth=1).inner()
         {'config.params': {'retries': 3, 'timeout': 30}, 'config.mode': 'fast', 'version': 1.0}
 
         ```
@@ -170,7 +170,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         ... }
         >>> pc.Dict(purchase).with_nested_key(
         ...     "order", "costs", value=[0.25, 1.00]
-        ... ).unwrap()
+        ... ).inner()
         {'name': 'Alice', 'order': {'items': ['Apple', 'Orange'], 'costs': [0.25, 1.0]}, 'credit card': '5555-1234-1234-1234'}
 
         ```
@@ -193,7 +193,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         ...     "person1": {"name": "Alice", "age": 30},
         ...     "person2": {"name": "Bob", "age": 25},
         ... }
-        >>> pc.Dict(data).pluck("name").unwrap()
+        >>> pc.Dict(data).pluck("name").inner()
         {'person1': 'Alice', 'person2': 'Bob'}
 
         ```
@@ -253,13 +253,13 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         ... }
         >>> p_data = pc.Dict(data)
         >>>
-        >>> p_data.drop_nones().unwrap()
+        >>> p_data.drop_nones().inner()
         {'a': 1, 'e': {'g': 2}, 'h': [1], 'i': 0}
         >>>
-        >>> p_data.drop_nones().unwrap()
+        >>> p_data.drop_nones().inner()
         {'a': 1, 'e': {'g': 2}, 'h': [1], 'i': 0}
         >>>
-        >>> p_data.drop_nones(remove_empty=False).unwrap()
+        >>> p_data.drop_nones(remove_empty=False).inner()
         {'a': 1, 'b': None, 'c': {}, 'd': [], 'e': {'f': None, 'g': 2}, 'h': [1, None, {}], 'i': 0}
 
         ```

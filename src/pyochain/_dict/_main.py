@@ -59,9 +59,9 @@ class Dict[K, V](DictCommonMethods[K, V]):
         ...     def __getitem__(self, key):
         ...         return self._data[key]
         >>>
-        >>> pc.Dict.from_(MyMapping()).unwrap()
+        >>> pc.Dict.from_(MyMapping()).inner()
         {1: 'a', 2: 'b', 3: 'c'}
-        >>> pc.Dict.from_([("d", "e"), ("f", "g")]).unwrap()
+        >>> pc.Dict.from_([("d", "e"), ("f", "g")]).inner()
         {'d': 'e', 'f': 'g'}
 
         ```
@@ -83,7 +83,7 @@ class Dict[K, V](DictCommonMethods[K, V]):
         ...         self.name = name
         ...         self.age = age
         >>> person = Person("Alice", 30)
-        >>> pc.Dict.from_object(person).unwrap()
+        >>> pc.Dict.from_object(person).inner()
         {'name': 'Alice', 'age': 30}
 
         ```
@@ -106,7 +106,7 @@ class Dict[K, V](DictCommonMethods[K, V]):
         ```python
         >>> import pyochain as pc
         >>> d = {"A": {"X": 1, "Y": 2}, "B": {"X": 3, "Y": 4}}
-        >>> pc.Dict(d).pivot(1, 0).unwrap()
+        >>> pc.Dict(d).pivot(1, 0).inner()
         {'X': {'A': 1, 'B': 3}, 'Y': {'A': 2, 'B': 4}}
         """
 

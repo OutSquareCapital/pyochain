@@ -31,7 +31,7 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
         >>> import pyochain as pc
         >>> pc.Dict({"a": 1, "b": 2}).for_each(
         ...     lambda k, v: print(f"Key: {k}, Value: {v}")
-        ... ).unwrap()
+        ... ).inner()
         Key: a, Value: 1
         Key: b, Value: 2
         {'a': 1, 'b': 2}
@@ -63,19 +63,19 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
         ```python
         >>> import pyochain as pc
         >>> inc = lambda x: x + 1
-        >>> pc.Dict({"a": 0}).update_in("a", func=inc).unwrap()
+        >>> pc.Dict({"a": 0}).update_in("a", func=inc).inner()
         {'a': 1}
         >>> transaction = {
         ...     "name": "Alice",
         ...     "purchase": {"items": ["Apple", "Orange"], "costs": [0.50, 1.25]},
         ...     "credit card": "5555-1234-1234-1234",
         ... }
-        >>> pc.Dict(transaction).update_in("purchase", "costs", func=sum).unwrap()
+        >>> pc.Dict(transaction).update_in("purchase", "costs", func=sum).inner()
         {'name': 'Alice', 'purchase': {'items': ['Apple', 'Orange'], 'costs': 1.75}, 'credit card': '5555-1234-1234-1234'}
         >>> # updating a value when k0 is not in d
-        >>> pc.Dict({}).update_in(1, 2, 3, func=str, default="bar").unwrap()
+        >>> pc.Dict({}).update_in(1, 2, 3, func=str, default="bar").inner()
         {1: {2: {3: 'bar'}}}
-        >>> pc.Dict({1: "foo"}).update_in(2, 3, 4, func=inc, default=0).unwrap()
+        >>> pc.Dict({1: "foo"}).update_in(2, 3, 4, func=inc, default=0).inner()
         {1: 'foo', 2: {3: {4: 1}}}
 
         ```
@@ -97,11 +97,11 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
         Does not modify the initial dictionary.
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({"x": 1}).with_key("x", 2).unwrap()
+        >>> pc.Dict({"x": 1}).with_key("x", 2).inner()
         {'x': 2}
-        >>> pc.Dict({"x": 1}).with_key("y", 3).unwrap()
+        >>> pc.Dict({"x": 1}).with_key("y", 3).inner()
         {'x': 1, 'y': 3}
-        >>> pc.Dict({}).with_key("x", 1).unwrap()
+        >>> pc.Dict({}).with_key("x", 1).inner()
         {'x': 1}
 
         ```
@@ -122,13 +122,13 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
         New dict has d[key] deleted for each supplied key.
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({"x": 1, "y": 2}).drop("y").unwrap()
+        >>> pc.Dict({"x": 1, "y": 2}).drop("y").inner()
         {'x': 1}
-        >>> pc.Dict({"x": 1, "y": 2}).drop("y", "x").unwrap()
+        >>> pc.Dict({"x": 1, "y": 2}).drop("y", "x").inner()
         {}
-        >>> pc.Dict({"x": 1}).drop("y").unwrap()  # Ignores missing keys
+        >>> pc.Dict({"x": 1}).drop("y").inner()  # Ignores missing keys
         {'x': 1}
-        >>> pc.Dict({1: 2, 3: 4}).drop(1).unwrap()
+        >>> pc.Dict({1: 2, 3: 4}).drop(1).inner()
         {3: 4}
 
         ```
@@ -151,7 +151,7 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
         >>> import pyochain as pc
         >>> d = {"a": 1, "b": 2, "c": 3}
         >>> mapping = {"b": "beta", "c": "gamma"}
-        >>> pc.Dict(d).rename(mapping).unwrap()
+        >>> pc.Dict(d).rename(mapping).inner()
         {'a': 1, 'beta': 2, 'gamma': 3}
 
         ```
@@ -171,7 +171,7 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({"b": 2, "a": 1}).sort().unwrap()
+        >>> pc.Dict({"b": 2, "a": 1}).sort().inner()
         {'a': 1, 'b': 2}
 
         ```
@@ -192,7 +192,7 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
             reverse: Whether to sort in descending order. Defaults to False.
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({"a": 2, "b": 1}).sort_values().unwrap()
+        >>> pc.Dict({"a": 2, "b": 1}).sort_values().inner()
         {'b': 1, 'a': 2}
 
         ```

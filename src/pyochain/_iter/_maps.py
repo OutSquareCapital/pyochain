@@ -219,10 +219,10 @@ class BaseMap[T](IterWrapper[T]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2]).repeat(2).collect().unwrap()
-        [(1, 2), (1, 2)]
-        >>> pc.Iter.from_([1, 2]).repeat(3, list).collect().unwrap()
-        [[1, 2], [1, 2], [1, 2]]
+        >>> pc.Iter.from_([1, 2]).repeat(2).collect()
+        Seq([(1, 2), (1, 2)])
+        >>> pc.Iter.from_([1, 2]).repeat(3, list).collect()
+        Seq([[1, 2], [1, 2], [1, 2]])
 
         ```
         """

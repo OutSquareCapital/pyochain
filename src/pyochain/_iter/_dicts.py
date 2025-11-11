@@ -23,11 +23,11 @@ class BaseDict[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> keys = ["a", "b", "c"]
         >>> values = [1, 2, 3]
-        >>> pc.Iter.from_(values).with_keys(keys).unwrap()
+        >>> pc.Iter.from_(values).with_keys(keys).inner()
         {'a': 1, 'b': 2, 'c': 3}
         >>> # This is equivalent to:
         >>> pc.Iter.from_(keys).zip(values).pipe(
-        ...     lambda x: pc.Dict(x.into(dict)).unwrap()
+        ...     lambda x: pc.Dict(x.into(dict)).inner()
         ... )
         {'a': 1, 'b': 2, 'c': 3}
 
@@ -51,11 +51,11 @@ class BaseDict[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> keys = [1, 2, 3]
         >>> values = ["a", "b", "c"]
-        >>> pc.Iter.from_(keys).with_values(values).unwrap()
+        >>> pc.Iter.from_(keys).with_values(values).inner()
         {1: 'a', 2: 'b', 3: 'c'}
         >>> # This is equivalent to:
         >>> pc.Iter.from_(keys).zip(values).pipe(
-        ...     lambda x: pc.Dict(x.into(dict)).unwrap()
+        ...     lambda x: pc.Dict(x.into(dict)).inner()
         ... )
         {1: 'a', 2: 'b', 3: 'c'}
 
@@ -90,9 +90,9 @@ class BaseDict[T](IterWrapper[T]):
         ...     return pc.Iter.from_(data).reduce(add)
         >>>
         >>> data = pc.Seq([1, 2, 3, 4, 5])
-        >>> data.iter().reduce_by(is_even, add).unwrap()
+        >>> data.iter().reduce_by(is_even, add).inner()
         {False: 9, True: 6}
-        >>> data.iter().group_by(is_even).map_values(group_reduce).unwrap()
+        >>> data.iter().group_by(is_even).map_values(group_reduce).inner()
         {False: 9, True: 6}
 
         ```
@@ -102,9 +102,9 @@ class BaseDict[T](IterWrapper[T]):
 
         Simple Examples:
         ```python
-        >>> pc.Iter.from_([1, 2, 3, 4, 5]).reduce_by(is_even, add).unwrap()
+        >>> pc.Iter.from_([1, 2, 3, 4, 5]).reduce_by(is_even, add).inner()
         {False: 9, True: 6}
-        >>> pc.Iter.from_([1, 2, 3, 4, 5]).reduce_by(is_even, mul).unwrap()
+        >>> pc.Iter.from_([1, 2, 3, 4, 5]).reduce_by(is_even, mul).inner()
         {False: 15, True: 8}
 
         ```
@@ -170,7 +170,7 @@ class BaseDict[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> data = ["cat", "cat", "ox", "pig", "pig", "cat"]
-        >>> pc.Iter.from_(data).frequencies().unwrap()
+        >>> pc.Iter.from_(data).frequencies().inner()
         {'cat': 3, 'ox': 1, 'pig': 2}
 
         ```
@@ -191,11 +191,11 @@ class BaseDict[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_(["cat", "mouse", "dog"]).count_by(len).unwrap()
+        >>> pc.Iter.from_(["cat", "mouse", "dog"]).count_by(len).inner()
         {3: 2, 5: 1}
         >>> def iseven(x):
         ...     return x % 2 == 0
-        >>> pc.Iter.from_([1, 2, 3]).count_by(iseven).unwrap()
+        >>> pc.Iter.from_([1, 2, 3]).count_by(iseven).inner()
         {False: 2, True: 1}
 
         ```
@@ -219,7 +219,7 @@ class BaseDict[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> arrays = [["a", "b", 1], ["a", "c", 2], ["d", 3]]
-        >>> pc.Seq(arrays).to_records().unwrap()
+        >>> pc.Seq(arrays).to_records().inner()
         {'a': {'b': 1, 'c': 2}, 'd': 3}
 
         ```

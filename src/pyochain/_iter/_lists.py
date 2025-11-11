@@ -278,8 +278,8 @@ class BaseList[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> data = ({"A", "B"}, {"B", "C"}, {"B", "D"})
-        >>> pc.Iter.from_(data).unique_to_each().collect().unwrap()
-        [['A'], ['C'], ['D']]
+        >>> pc.Iter.from_(data).unique_to_each().collect()
+        Seq([['A'], ['C'], ['D']])
 
         ```
 
@@ -288,8 +288,8 @@ class BaseList[T](IterWrapper[T]):
         Input order is preserved:
         ```python
         >>> data = ("mississippi", "missouri")
-        >>> pc.Iter.from_(data).unique_to_each().collect().unwrap()
-        [['p', 'p'], ['o', 'u', 'r']]
+        >>> pc.Iter.from_(data).unique_to_each().collect()
+        Seq([['p', 'p'], ['o', 'u', 'r']])
 
         ```
 

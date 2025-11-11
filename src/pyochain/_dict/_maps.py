@@ -25,10 +25,10 @@ class MapDict[K, V](MappingWrapper[K, V]):
         >>> import pyochain as pc
         >>> pc.Dict({"Alice": [20, 15, 30], "Bob": [10, 35]}).map_keys(
         ...     str.lower
-        ... ).unwrap()
+        ... ).inner()
         {'alice': [20, 15, 30], 'bob': [10, 35]}
         >>>
-        >>> pc.Dict({1: "a"}).map_keys(str).unwrap()
+        >>> pc.Dict({1: "a"}).map_keys(str).inner()
         {'1': 'a'}
 
         ```
@@ -44,10 +44,10 @@ class MapDict[K, V](MappingWrapper[K, V]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({"Alice": [20, 15, 30], "Bob": [10, 35]}).map_values(sum).unwrap()
+        >>> pc.Dict({"Alice": [20, 15, 30], "Bob": [10, 35]}).map_values(sum).inner()
         {'Alice': 65, 'Bob': 45}
         >>>
-        >>> pc.Dict({1: 1}).map_values(lambda v: v + 1).unwrap()
+        >>> pc.Dict({1: 1}).map_values(lambda v: v + 1).inner()
         {1: 2}
 
         ```
@@ -68,7 +68,7 @@ class MapDict[K, V](MappingWrapper[K, V]):
         >>> import pyochain as pc
         >>> pc.Dict({"Alice": 10, "Bob": 20}).map_items(
         ...     lambda kv: (kv[0].upper(), kv[1] * 2)
-        ... ).unwrap()
+        ... ).inner()
         {'ALICE': 20, 'BOB': 40}
 
         ```
@@ -87,7 +87,7 @@ class MapDict[K, V](MappingWrapper[K, V]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({1: 2}).map_kv(lambda k, v: (k + 1, v * 10)).unwrap()
+        >>> pc.Dict({1: 2}).map_kv(lambda k, v: (k + 1, v * 10)).inner()
         {2: 20}
 
         ```
@@ -107,7 +107,7 @@ class MapDict[K, V](MappingWrapper[K, V]):
         ```python
         >>> import pyochain as pc
         >>> d = {"a": 1, "b": 2, "c": 1}
-        >>> pc.Dict(d).invert().unwrap()
+        >>> pc.Dict(d).invert().inner()
         {1: ['a', 'c'], 2: ['b']}
 
         ```
@@ -127,7 +127,7 @@ class MapDict[K, V](MappingWrapper[K, V]):
         syntactic sugar for map_values(lambda v: [v])
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({1: 2, 3: 4}).implode().unwrap()
+        >>> pc.Dict({1: 2, 3: 4}).implode().inner()
         {1: [2], 3: [4]}
 
         ```
