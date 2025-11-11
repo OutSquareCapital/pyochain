@@ -1,5 +1,5 @@
 from ._format import Peeked, peek, peekn
-from ._main import CommonBase, IterWrapper, MappingWrapper, Pipeable, Wrapper
+from ._main import CommonBase, IterWrapper, MappingWrapper, Pipeable
 from ._protocols import (
     SizedIterable,
     SupportsAllComparisons,
@@ -11,7 +11,6 @@ __all__ = [
     "MappingWrapper",
     "CommonBase",
     "IterWrapper",
-    "Wrapper",
     "SupportsAllComparisons",
     "SupportsRichComparison",
     "SupportsKeysAndGetItem",
