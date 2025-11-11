@@ -9,6 +9,7 @@ from collections.abc import (
     Sequence,
 )
 from typing import TYPE_CHECKING, Any, Concatenate, overload, override
+from warnings import deprecated
 
 import cytoolz as cz
 
@@ -58,10 +59,29 @@ class Iter[T](
     - To instantiate from an eager Sequence (like a list or set), use the `from_` class method.
     """
 
-    __slots__ = ("_data",)
+    __slots__ = "_inner"
 
     def __init__(self, data: Iterator[T] | Generator[T, Any, Any]) -> None:
-        self._data = data
+        self._inner = data
+
+    def next(self) -> T:
+        """
+        Return the next element from the iterator.
+        Returns:
+            T: The next element in the iterator.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> it = pc.Iter.from_([1, 2, 3])
+        >>> it.next()
+        1
+        >>> it.next()
+        2
+
+        ```
+        """
+        return next(self.inner())
 
     @staticmethod
     def from_count(start: int = 0, step: int = 1) -> Iter[int]:
@@ -137,19 +157,19 @@ class Iter[T](
         >>> import pyochain as pc
         >>> data: tuple[int, ...] = (1, 2, 3)
         >>> iterator = pc.Iter.from_(data)
-        >>> iterator.unwrap().__class__.__name__
+        >>> iterator.inner().__class__.__name__
         'tuple_iterator'
         >>> mapped = iterator.map(lambda x: x * 2)
-        >>> mapped.unwrap().__class__.__name__
+        >>> mapped.inner().__class__.__name__
         'map'
-        >>> mapped.collect(tuple).unwrap()
-        (2, 4, 6)
+        >>> mapped.collect(tuple)
+        Seq((2, 4, 6))
         >>> # iterator is now exhausted
-        >>> iterator.collect().unwrap()
-        []
+        >>> iterator.collect()
+        Seq([])
         >>> # Creating from unpacked values
-        >>> pc.Iter.from_(1, 2, 3).collect(tuple).unwrap()
-        (1, 2, 3)
+        >>> pc.Iter.from_(1, 2, 3).collect(tuple)
+        Seq((1, 2, 3))
 
         ```
         """
@@ -280,22 +300,32 @@ class Iter[T](
         >>>
         >>> def to_title(d: pc.Dict[str, Any]) -> pc.Dict[str, Any]:
         ...     return d.map_keys(lambda k: k.title())
-        >>> def is_young(d: pc.Dict[str, Any]) -> bool:
-        ...     return d.unwrap().get("Age", 0) < 30
-        >>> def set_continent(d: pc.Dict[str, Any], value: str) -> dict[str, Any]:
-        ...     return d.with_key("Continent", value).unwrap()
         >>>
-        >>> pc.Iter.from_(data).struct(to_title).filter_false(is_young).map(
-        ...     lambda d: d.drop("Age").with_key("Continent", "NA")
-        ... ).map_if(
-        ...     lambda d: d.unwrap().get("City") == "Paris",
-        ...     lambda d: set_continent(d, "Europe"),
-        ...     lambda d: set_continent(d, "America"),
-        ... ).group_by(lambda d: d.get("Continent")).map_values(
-        ...     lambda d: pc.Iter.from_(d)
-        ...     .struct(lambda d: d.drop("Continent").unwrap())
-        ...     .into(list)
-        ... )  # doctest: +NORMALIZE_WHITESPACE
+        >>> def is_young(d: pc.Dict[str, Any]) -> bool:
+        ...     return d.inner().get("Age", 0) < 30
+        >>>
+        >>> def set_continent(d: pc.Dict[str, Any], value: str) -> dict[str, Any]:
+        ...     return d.with_key("Continent", value).inner()
+        >>>
+        >>> def grouped_data():
+        ...     return (
+        ...         pc.Iter.from_(data)
+        ...         .struct(to_title)
+        ...         .filter_false(is_young)
+        ...         .map(lambda d: d.drop("Age").with_key("Continent", "NA"))
+        ...         .map_if(
+        ...             lambda d: d.inner().get("City") == "Paris",
+        ...             lambda d: set_continent(d, "Europe"),
+        ...             lambda d: set_continent(d, "America"),
+        ...         )
+        ...         .group_by(lambda d: d.get("Continent"))
+        ...         .map_values(
+        ...             lambda d: pc.Iter.from_(d)
+        ...             .struct(lambda d: d.drop("Continent").inner())
+        ...             .into(list)
+        ...         )
+        ...     )
+        >>> grouped_data()  # doctest: +NORMALIZE_WHITESPACE
         {'America': [{'City': 'New York', 'Name': 'Alice'},
                     {'City': 'New York', 'Name': 'Charlie'}],
         'Europe': [{'City': 'Paris', 'Name': 'David'}]}
@@ -347,28 +377,32 @@ class Iter[T](
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_(range(5)).collect().unwrap()
-        [0, 1, 2, 3, 4]
+        >>> pc.Iter.from_(range(5)).collect()
+        Seq([0, 1, 2, 3, 4])
 
         ```
         """
         return self._eager(factory)
 
     @override
+    @deprecated("Use .inner() instead")
     def unwrap(self) -> Iterator[T]:
+        return self._inner  # type: ignore[return-value]
+
+    @override
+    def inner(self) -> Iterator[T]:
         """
         Unwrap and return the underlying Iterator.
 
         ```python
         >>> import pyochain as pc
-        >>> iterator = pc.Iter.from_([1, 2, 3])
-        >>> unwrapped = iterator.unwrap()
-        >>> list(unwrapped)
+        >>> iterator = pc.Iter.from_([1, 2, 3]).inner()
+        >>> list(iterator)
         [1, 2, 3]
 
         ```
         """
-        return self._data  # type: ignore[return-value]
+        return self._inner  # type: ignore[return-value]
 
 
 class Seq[T](CommonMethods[T]):
@@ -378,10 +412,10 @@ class Seq[T](CommonMethods[T]):
     Provides a subset of pyochain.Iter methods with eager evaluation, and is the return type of pyochain.Iter.collect().
     """
 
-    __slots__ = ("_data",)
+    __slots__ = "_inner"
 
     def __init__(self, data: Sequence[T]) -> None:
-        self._data = data
+        self._inner = data
 
     @overload
     @staticmethod
@@ -401,10 +435,10 @@ class Seq[T](CommonMethods[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq.from_([1, 2, 3]).unwrap()
-        [1, 2, 3]
-        >>> pc.Seq.from_(1, 2).unwrap()
-        (1, 2)
+        >>> pc.Seq.from_([1, 2, 3])
+        Seq([1, 2, 3])
+        >>> pc.Seq.from_(1, 2)
+        Seq((1, 2))
 
         ```
 
@@ -447,15 +481,20 @@ class Seq[T](CommonMethods[T]):
         return self._eager(func, *args, **kwargs)
 
     @override
-    def unwrap(self) -> Sequence[T]:
+    def inner(self) -> Sequence[T]:
         """
         Unwrap and return the underlying Sequence.
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).unwrap()
+        >>> pc.Seq([1, 2, 3]).inner()
         [1, 2, 3]
 
         ```
         """
-        return self._data  # type: ignore[return-value]
+        return self._inner  # type: ignore[return-value]
+
+    @override
+    @deprecated("Use .inner() instead")
+    def unwrap(self) -> Sequence[T]:
+        return self._inner  # type: ignore[return-value]

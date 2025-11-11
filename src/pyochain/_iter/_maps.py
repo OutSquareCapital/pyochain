@@ -277,8 +277,8 @@ class BaseMap[T](IterWrapper[T]):
         elements as necessary.
         ```python
         >>> import pyochain as pc
-        >>> all_chunks = pc.Iter.from_count().ichunked(4).unwrap()
-        >>> c_1, c_2, c_3 = next(all_chunks), next(all_chunks), next(all_chunks)
+        >>> all_chunks = pc.Iter.from_count().ichunked(4)
+        >>> c_1, c_2, c_3 = all_chunks.next(), all_chunks.next(), all_chunks.next()
         >>> list(c_2)  # c_1's elements have been cached; c_3's haven't been
         [4, 5, 6, 7]
         >>> list(c_1)
