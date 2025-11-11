@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from typing import TYPE_CHECKING, Any, Concatenate, Self
+from warnings import deprecated
 
 from ._format import dict_repr
 
@@ -60,13 +61,20 @@ class CommonBase[T](ABC, Pipeable):
             self.into(print)
         return self
 
-    def unwrap(self) -> T:
+    def inner(self) -> T:
         """
         Return the underlying data.
 
         This is a terminal operation.
         """
         return self._inner
+
+    @deprecated("Use .inner() instead")
+    def unwrap(self) -> T:
+        """
+        Deprecated: Use `inner()` instead.
+        """
+        return self.inner()
 
     def into[**P, R](
         self,
@@ -86,7 +94,7 @@ class CommonBase[T](ABC, Pipeable):
         ```
         This is a core functionality that allows ending the chain whilst keeping the code style consistent.
         """
-        return func(self.unwrap(), *args, **kwargs)
+        return func(self.inner(), *args, **kwargs)
 
     def equals_to(self, other: Self | T) -> bool:
         """
@@ -108,15 +116,15 @@ class CommonBase[T](ABC, Pipeable):
 
         ```
         """
-        other_data = other.unwrap() if isinstance(other, self.__class__) else other
-        return self.unwrap() == other_data
+        other_data = other.inner() if isinstance(other, self.__class__) else other
+        return self.inner() == other_data
 
 
 class IterWrapper[T](CommonBase[Iterable[T]]):
     _inner: Iterable[T]
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.unwrap().__repr__()})"
+        return f"{self.__class__.__name__}({self.inner().__repr__()})"
 
     def _eager[**P, U](
         self,
@@ -154,7 +162,7 @@ class MappingWrapper[K, V](CommonBase[dict[K, V]]):
     def _new[KU, VU](self, func: Callable[[dict[K, V]], dict[KU, VU]]) -> Dict[KU, VU]:
         from .._dict import Dict
 
-        return Dict(func(self.unwrap()))
+        return Dict(func(self.inner()))
 
     def apply[**P, KU, VU](
         self,
@@ -175,7 +183,7 @@ class MappingWrapper[K, V](CommonBase[dict[K, V]]):
         >>> import pyochain as pc
         >>> def invert_dict(d: dict[K, V]) -> dict[V, K]:
         ...     return {v: k for k, v in d.items()}
-        >>> pc.Dict({'a': 1, 'b': 2}).apply(invert_dict).unwrap()
+        >>> pc.Dict({'a': 1, 'b': 2}).apply(invert_dict)
         {1: 'a', 2: 'b'}
 
         ```
@@ -185,21 +193,3 @@ class MappingWrapper[K, V](CommonBase[dict[K, V]]):
             return func(data, *args, **kwargs)
 
         return self._new(_)
-
-
-class Wrapper[T](CommonBase[T]):
-    """
-    A generic Wrapper for any type.
-    The pipe into method is implemented to return a Wrapper of the result type.
-
-    This class is intended for use with other types/implementations that do not support the fluent/functional style.
-    This allow the use of a consistent code style across the code base.
-    """
-
-    def apply[**P, R](
-        self,
-        func: Callable[Concatenate[T, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Wrapper[R]:
-        return Wrapper(self.into(func, *args, **kwargs))
