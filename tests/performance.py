@@ -30,9 +30,9 @@ def test_performance_iter_map(iterations: int) -> None:
         return (
             pc.Seq(OUTER)
             .iter()
-            .map(lambda _: pc.Seq(INNER).iter().map(square).collect().unwrap())
+            .map(lambda _: pc.Seq(INNER).iter().map(square).collect().inner())
             .collect()
-            .unwrap()
+            .inner()
         )
 
     def _built_in_map() -> Sequence[Sequence[int]]:
