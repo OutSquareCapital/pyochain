@@ -198,7 +198,7 @@ class BaseEager[T](IterWrapper[T]):
         The last element (value) always remains in place.
 
         Args:
-            order: List of indices specifying new order of keys
+            *indices: indices specifying new order of keys
 
 
         Raises:

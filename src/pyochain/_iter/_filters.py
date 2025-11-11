@@ -39,48 +39,6 @@ class BaseFilter[T](IterWrapper[T]):
 
         return self._lazy(_filter)
 
-    def filter_isin(self, values: Iterable[T]) -> Iter[T]:
-        """
-        Return elements that are in the given values iterable.
-
-        Args:
-            values: Iterable of values to check membership against.
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3, 4]).filter_isin([2, 4, 6]).into(list)
-        [2, 4]
-
-        ```
-        """
-
-        def _filter_isin(data: Iterable[T]) -> Generator[T, None, None]:
-            value_set: set[T] = set(values)
-            return (x for x in data if x in value_set)
-
-        return self._lazy(_filter_isin)
-
-    def filter_notin(self, values: Iterable[T]) -> Iter[T]:
-        """
-        Return elements that are not in the given values iterable.
-
-        Args:
-            values: Iterable of values to exclude.
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3, 4]).filter_notin([2, 4, 6]).into(list)
-        [1, 3]
-
-        ```
-        """
-
-        def _filter_notin(data: Iterable[T]) -> Generator[T, None, None]:
-            value_set: set[T] = set(values)
-            return (x for x in data if x not in value_set)
-
-        return self._lazy(_filter_notin)
-
     def filter_contain(
         self: IterWrapper[str], text: str, format: Callable[[str], str] | None = None
     ) -> Iter[str]:
