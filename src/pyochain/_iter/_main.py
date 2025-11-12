@@ -8,7 +8,7 @@ from collections.abc import (
     Iterator,
     Sequence,
 )
-from typing import TYPE_CHECKING, Any, Concatenate, overload, override
+from typing import TYPE_CHECKING, Any, Concatenate, TypeIs, overload, override
 from warnings import deprecated
 
 import cytoolz as cz
@@ -38,6 +38,10 @@ def _convert_data[T](data: Iterable[T] | T, *more_data: T) -> Iterable[T]:
     return data if cz.itertoolz.isiterable(data) else (data, *more_data)
 
 
+def _is_sequence[T](data: Iterable[T]) -> TypeIs[Sequence[T]]:
+    return hasattr(data, "__getitem__") and hasattr(data, "__len__")
+
+
 class Iter[T](
     BaseBool[T],
     BaseFilter[T],
@@ -51,22 +55,39 @@ class Iter[T](
     CommonMethods[T],
 ):
     """
-    A wrapper around Python's built-in Iterators/Generators types, providing a rich set of functional programming tools.
+    A wrapper around Python's built-in `Iterators`/`Generators` types, providing a rich set of functional programming tools.
+
+    - An `Iterable` is any object capable of returning its members one at a time, permitting it to be iterated over in a for-loop.
+    - An `Iterator` is an object representing a stream of data; returned by calling `iter()` on an `Iterable`.
+    - Once an `Iterator` is exhausted, it cannot be reused or reset.
 
     It's designed around lazy evaluation, allowing for efficient processing of large datasets.
 
-    - To instantiate from a lazy Iterator/Generator, simply pass it to the standard constructor.
-    - To instantiate from an eager Sequence (like a list or set), use the `from_` class method.
+    - To instantiate from a lazy `Iterator`/`Generator`, simply pass it to the standard constructor.
+    - To instantiate from any `Iterable` (like a list or set), or unpacked values, use the `from_` class method.
+
+    Once an `Iter` is created, it can be transformed and manipulated using a variety of chainable methods.
+
+    However, keep in mind that `Iter` instances are single-use; once exhausted, they cannot be reused or reset.
+
+    If you need to reuse the data, consider collecting it into a `Seq` first with `.collect()`.
+
+    You can always convert back to an `Iter` using `Seq.iter()` for free.
+
+    In general, avoid intermediate references when dealing with lazy iterators, and prioritize method chaining instead.
     """
 
     __slots__ = "_inner"
 
     def __init__(self, data: Iterator[T] | Generator[T, Any, Any]) -> None:
+        """
+        Args:
+            data (Iterator[T] | Generator[T, Any, Any]): An iterator or generator to wrap.
+        """
         self._inner = data
 
     def next(self) -> T:
         """
-        Return the next element from the iterator.
         Returns:
             T: The next element in the iterator.
 
@@ -86,15 +107,17 @@ class Iter[T](
     @staticmethod
     def from_count(start: int = 0, step: int = 1) -> Iter[int]:
         """
-        Create an infinite iterator of evenly spaced values.
+        Create an infinite `Iterator` of evenly spaced values.
 
         **Warning** ⚠️
             This creates an infinite iterator.
             Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken.
 
         Args:
-            start: Starting value of the sequence. Defaults to 0.
-            step: Difference between consecutive values. Defaults to 1.
+            start (int): Starting value of the sequence. Defaults to 0.
+            step (int): Difference between consecutive values. Defaults to 1.
+        Returns:
+            Iter[int]: An iterator generating the sequence.
         Example:
         ```python
         >>> import pyochain as pc
@@ -116,9 +139,10 @@ class Iter[T](
             Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken.
 
         Args:
-            func: Function to apply repeatedly.
-            input: Initial value to start the iteration.
-
+            func (Callable[[U], U]): Function to apply repeatedly.
+            input (U): Initial value to start the iteration.
+        Returns:
+            Iter[U]: An iterator generating the sequence.
         Example:
         ```python
         >>> import pyochain as pc
@@ -141,17 +165,13 @@ class Iter[T](
         """
         Create an iterator from any Iterable, or from unpacked values.
 
-        - An Iterable is any object capable of returning its members one at a time, permitting it to be iterated over in a for-loop.
-        - An Iterator is an object representing a stream of data; returned by calling `iter()` on an Iterable.
-        - Once an Iterator is exhausted, it cannot be reused or reset.
-
-        If you need to reuse the data, consider collecting it into a list first with `.collect()`.
-
-        In general, avoid intermediate references when dealing with lazy iterators, and prioritize method chaining instead.
+        Prefer using the standard constructor, as this method involves extra checks and conversions steps.
 
         Args:
-            data: Iterable to convert into an iterator, or a single value.
-            more_data: Additional values to include if 'data' is not an Iterable.
+            data (Iterable[U] | U): Iterable to convert into an iterator, or a single value.
+            more_data (U): Additional values to include if 'data' is not an Iterable.
+        Returns:
+            Iter[U]: A new Iter instance containing the provided data.
         Example:
         ```python
         >>> import pyochain as pc
@@ -193,8 +213,8 @@ class Iter[T](
             Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken if necessary.
 
         Args:
-            seed: Initial state for the generator.
-            generator: Function that generates the next value and state.
+            seed (S): Initial state for the generator.
+            generator (Callable[[S], tuple[V, S] | None]): Function that generates the next value and state.
 
         Example:
         ```python
@@ -247,9 +267,9 @@ class Iter[T](
         This is a convenience method for the common pattern of mapping a function over an iterable of iterables.
 
         Args:
-            func: Function to apply to each wrapped element.
-            *args: Positional arguments to pass to the function.
-            **kwargs: Keyword arguments to pass to the function.
+            func (Callable[Concatenate[Iter[U], P], R]): Function to apply to each wrapped element.
+            *args (P.args): Positional arguments to pass to the function.
+            **kwargs (P.kwargs): Keyword arguments to pass to the function.
         Example:
         ```python
         >>> import pyochain as pc
@@ -278,14 +298,16 @@ class Iter[T](
         **kwargs: P.kwargs,
     ) -> Iter[R]:
         """
-        Apply a function to each element after wrapping it in a Dict.
+        Apply a function to each element after wrapping it in a `Dict`.
 
-        This is a convenience method for the common pattern of mapping a function over an iterable of dictionaries.
+        This is a convenience method for the common pattern of mapping a function over an `Iterable` of dictionaries.
 
         Args:
-            func: Function to apply to each wrapped dictionary.
-            *args: Positional arguments to pass to the function.
-            **kwargs: Keyword arguments to pass to the function.
+            func (Callable[Concatenate[Dict[K, V], P], R]): Function to apply to each wrapped dictionary.
+            *args (P.args): Positional arguments to pass to the function.
+            **kwargs (P.kwargs): Keyword arguments to pass to the function.
+        Returns:
+            Iter[R]: A new `Iter` instance containing the results of applying the function.
         Example:
         ```python
         >>> from typing import Any
@@ -369,10 +391,12 @@ class Iter[T](
 
     def collect(self, factory: Callable[[Iterable[T]], Sequence[T]] = list) -> Seq[T]:
         """
-        Collect the elements into a sequence, using the provided factory.
+        Collect the elements into a `Sequence`, using the provided factory.
 
         Args:
-            factory: A callable that takes an iterable and returns a Sequence. Defaults to list.
+            factory (Callable[[Iterable[T]], Sequence[T]]): A callable that takes an iterable and returns a Sequence. Defaults to `list`.
+        Returns:
+            Seq[T]: A `Seq` containing the collected elements.
 
         Example:
         ```python
@@ -391,59 +415,59 @@ class Iter[T](
 
     @override
     def inner(self) -> Iterator[T]:
-        """
-        Unwrap and return the underlying Iterator.
-
-        ```python
-        >>> import pyochain as pc
-        >>> iterator = pc.Iter.from_([1, 2, 3]).inner()
-        >>> list(iterator)
-        [1, 2, 3]
-
-        ```
-        """
         return self._inner  # type: ignore[return-value]
 
 
 class Seq[T](CommonMethods[T]):
     """
-    pyochain.Seq represent an in memory Sequence.
+    `Seq` represent an in memory Sequence.
 
-    Provides a subset of pyochain.Iter methods with eager evaluation, and is the return type of pyochain.Iter.collect().
+    Provides a subset of `Iter` methods with eager evaluation, and is the return type of `Iter.collect()`.
+
+    You can create a `Seq` from any `Sequence` (like a list or a tuple) using the standard constructor,
+    or from unpacked values using the `from_` class method.
+
+    Doing `Seq(...).iter()` or `Iter.from_(...)` are equivalent.
     """
 
     __slots__ = "_inner"
 
     def __init__(self, data: Sequence[T]) -> None:
+        """
+        Args:
+            data (Sequence[T]): The data to initialize the Seq with.
+        """
         self._inner = data
 
     @overload
     @staticmethod
-    def from_[U](data: Sequence[U]) -> Seq[U]: ...
+    def from_[U](data: Iterable[U]) -> Seq[U]: ...
     @overload
     @staticmethod
     def from_[U](data: U, *more_data: U) -> Seq[U]: ...
     @staticmethod
-    def from_[U](data: Sequence[U] | U, *more_data: U) -> Seq[U]:
+    def from_[U](data: Iterable[U] | U, *more_data: U) -> Seq[U]:
         """
-        Create a Seq from a Sequence or unpacked values.
+        Create a `Seq` from an `Iterable` or unpacked values.
+
+        Prefer using the standard constructor, as this method involves extra checks and conversions steps.
 
         Args:
-            data: Sequence of items or a single item.
-            more_data: Additional item to include if 'data' is not a Sequence.
+            data (*U): Unpacked items to include in the sequence.
+        Returns:
+            Seq[U]: A new Seq instance containing the provided data.
 
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq.from_([1, 2, 3])
-        Seq([1, 2, 3])
-        >>> pc.Seq.from_(1, 2)
-        Seq((1, 2))
+        >>> pc.Seq.from_(1, 2, 3)
+        Seq((1, 2, 3))
 
         ```
 
         """
-        return Seq(_convert_data(data, *more_data))  # type: ignore[return-value]
+        converted = _convert_data(data, *more_data)
+        return Seq(converted if _is_sequence(converted) else tuple(converted))
 
     def iter(self) -> Iter[T]:
         """
@@ -459,14 +483,16 @@ class Seq[T](CommonMethods[T]):
         **kwargs: P.kwargs,
     ) -> Seq[R]:
         """
-        Apply a function to the underlying Sequence and return a Seq instance.
+        Apply a function to the underlying `Sequence` and return a `Seq` instance.
 
-        Allow to pass user defined functions that transform the Sequence while retaining the Seq wrapper.
+        Allow to pass user defined functions that transform the `Sequence` while retaining the `Seq` wrapper.
 
         Args:
-            func: Function to apply to the underlying Sequence.
-            *args: Positional arguments to pass to the function.
-            **kwargs: Keyword arguments to pass to the function.
+            func (Callable[Concatenate[Iterable[T], P], Sequence[R]]): Function to apply to the underlying `Sequence`.
+            *args (P.args): Positional arguments to pass to the function.
+            **kwargs (P.kwargs): Keyword arguments to pass to the function.
+        Returns:
+            Seq[R]: A new `Seq` instance containing the result of the function.
 
         Example:
         ```python
@@ -482,19 +508,18 @@ class Seq[T](CommonMethods[T]):
 
     @override
     def inner(self) -> Sequence[T]:
-        """
-        Unwrap and return the underlying Sequence.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).inner()
-        [1, 2, 3]
-
-        ```
-        """
         return self._inner  # type: ignore[return-value]
 
     @override
     @deprecated("Use .inner() instead")
     def unwrap(self) -> Sequence[T]:
         return self._inner  # type: ignore[return-value]
+
+    @override
+    def into[**P, R](
+        self,
+        func: Callable[[Sequence[T]], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> R:
+        return super().into(func, *args, **kwargs)  # type: ignore[return-value]

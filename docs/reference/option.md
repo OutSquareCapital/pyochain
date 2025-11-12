@@ -1,5 +1,10 @@
-# ::: pyochain._results._option.Option
+# Option
 
-# ::: pyochain._results._option.Some
+::: pyochain._results._option.Option
 
-# ::: pyochain._results._option.NONE
+    options:
+      inherited_members: true
+      show_overloads: true
+      members_order: alphabetical
+      filters:
+        - "!^_"

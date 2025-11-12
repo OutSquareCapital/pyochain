@@ -20,6 +20,17 @@ class Unzipped[T, V](NamedTuple):
 
 
 class BaseAgg[T](IterWrapper[T]):
+    def join(self: IterWrapper[str], sep: str) -> str:
+        """
+        Join all elements of the `Iterable` into a single `string`, with a specified separator.
+
+        Args:
+            sep (str): Separator to use between elements.
+        Returns:
+            str: The joined string.
+        """
+        return self.into(functools.partial(str.join, sep))
+
     def unzip[U, V](self: IterWrapper[tuple[U, V]]) -> Unzipped[U, V]:
         """
         Converts an iterator of pairs into a pair of iterators.

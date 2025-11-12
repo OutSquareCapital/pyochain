@@ -363,7 +363,7 @@ class BaseJoins[T](IterWrapper[T]):
         """
         return self._lazy(cz.itertoolz.diff, *others, default=default, key=key)
 
-    def join[R, K](
+    def join_with[R, K](
         self,
         other: Iterable[R],
         left_on: Callable[[T], K],
@@ -375,17 +375,19 @@ class BaseJoins[T](IterWrapper[T]):
         Perform a relational join with another iterable.
 
         Args:
-            other: Iterable to join with.
-            left_on: Function to extract the join key from the left iterable.
-            right_on: Function to extract the join key from the right iterable.
-            left_default: Default value for missing elements in the left iterable. Defaults to None.
-            right_default: Default value for missing elements in the right iterable. Defaults to None.
+            other (Iterable[R]): Iterable to join with.
+            left_on (Callable[[T], K]): Function to extract the join key from the left iterable.
+            right_on (Callable[[R], K]): Function to extract the join key from the right iterable.
+            left_default (T | None): Default value for missing elements in the left iterable. Defaults to None.
+            right_default (R | None): Default value for missing elements in the right iterable. Defaults to None.
+        Returns:
+            Iter[tuple[T, R]]: An iterator yielding tuples of joined elements.
         Example:
         ```python
         >>> import pyochain as pc
         >>> colors = pc.Iter.from_(["blue", "red"])
         >>> sizes = ["S", "M"]
-        >>> colors.join(sizes, left_on=lambda c: c, right_on=lambda s: s).into(list)
+        >>> colors.join_with(sizes, left_on=lambda c: c, right_on=lambda s: s).into(list)
         [(None, 'S'), (None, 'M'), ('blue', None), ('red', None)]
 
         ```

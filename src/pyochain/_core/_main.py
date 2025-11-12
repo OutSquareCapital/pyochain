@@ -19,7 +19,32 @@ class Pipeable:
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> R:
-        """Pipe the instance in the function and return the result."""
+        """
+        Pipe the instance in the function and return the result.
+
+        Accept additional arguments to pass to the function.
+
+        This is a core method, shared by all pyochain wrappers, that allows chaining operations in a functional style.
+
+        Args:
+            func (Callable[Concatenate[Self, P], R]): Function to apply to the instance.
+            *args (P.args): Positional arguments to pass to the function.
+            **kwargs (P.kwargs): Keyword arguments to pass to the function.
+        Returns:
+            R: The result of the function.
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> def maybe_sum(data: pc.Seq[int]) -> pc.Option[int]:
+        ...     match data.count():
+        ...         case 0:
+        ...             return pc.NONE
+        ...         case _:
+        ...             return pc.Some(data.sum())
+        >>>
+        >>> pc.Seq(range(5)).pipe(maybe_sum).unwrap()
+        10
+        """
         return func(self, *args, **kwargs)
 
 
@@ -52,6 +77,10 @@ class CommonBase[T](ABC, Pipeable):
 
         Useful for debugging, simply insert `.println()` in the chain,
         and then removing it will not affect the rest of the chain.
+        Args:
+            pretty (bool): Whether to pretty print the data. Defaults to True.
+        Returns:
+            Self: The instance itself for chaining.
         """
         from pprint import pprint
 
@@ -63,9 +92,11 @@ class CommonBase[T](ABC, Pipeable):
 
     def inner(self) -> T:
         """
-        Return the underlying data.
+        Get the underlying data.
+        This is a terminal operation that ends the chain.
 
-        This is a terminal operation.
+        Returns:
+            T: The underlying data.
         """
         return self._inner
 
@@ -86,13 +117,21 @@ class CommonBase[T](ABC, Pipeable):
         Pass the *unwrapped* underlying data into a function.
 
         The result is not wrapped.
+
+        This is a core functionality that allows ending the chain whilst keeping the code style consistent.
+        Args:
+            func (Callable[Concatenate[T, P], R]): Function to apply to the underlying data.
+            *args (P.args): Positional arguments to pass to the function.
+            **kwargs (P.kwargs): Keyword arguments to pass to the function.
+        Returns:
+            R: The result of the function.
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Iter.from_(range(5)).into(list)
         [0, 1, 2, 3, 4]
 
         ```
-        This is a core functionality that allows ending the chain whilst keeping the code style consistent.
         """
         return func(self.inner(), *args, **kwargs)
 
@@ -101,8 +140,9 @@ class CommonBase[T](ABC, Pipeable):
         Check if two records are equal based on their data.
 
         Args:
-            other: Another instance or corresponding underlying data to compare against.
-
+            other (Self | T): Another instance or corresponding underlying data to compare against.
+        Returns:
+            bool: True if the underlying data are equal, False otherwise.
         Example:
         ```python
         >>> import pyochain as pc
@@ -172,12 +212,15 @@ class MappingWrapper[K, V](CommonBase[dict[K, V]]):
     ) -> Dict[KU, VU]:
         """
         Apply a function to the underlying dict and return a Dict of the result.
+
         Allow to pass user defined functions that transform the dict while retaining the Dict wrapper.
 
         Args:
-            func: Function to apply to the underlying dict.
-            *args: Positional arguments to pass to the function.
-            **kwargs: Keyword arguments to pass to the function.
+            func (Callable[Concatenate[dict[K, V], P], dict[KU, VU]]): Function to apply to the underlying dict.
+            *args (P.args): Positional arguments to pass to the function.
+            **kwargs (P.kwargs): Keyword arguments to pass to the function.
+        Returns:
+            Dict[KU, VU]: A new Dict instance containing the result of the function.
         Example:
         ```python
         >>> import pyochain as pc

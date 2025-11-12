@@ -5,6 +5,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Never, TypeIs
 
+from .._core import Pipeable
+
 if TYPE_CHECKING:
     from ._result import Result
 
@@ -12,7 +14,32 @@ if TYPE_CHECKING:
 class OptionUnwrapError(RuntimeError): ...
 
 
-class Option[T](ABC):
+class Option[T](Pipeable, ABC):
+    """
+    Type `Option[T]` represents an optional value, every Option is either:
+    - `Some` and contains a value
+    - `None`, and does not.
+
+    This is a common type in Rust, and is used to represent values that may be absent.
+
+    In python, this is best tought of a an union type `T | None`, but with additional methods to operate on the contained value in a functional style.
+
+    `Option[T]` and/or `T | None` types are very useful, as they have a number of uses:
+
+    - Initial values
+    - Union types
+    - Return value for otherwise reporting simple errors, where None is returned on error
+    - Optional class fields
+    - Optional function arguments
+
+    The fact that `T | None` is a very common pattern in python, but without a dedicated structure/handling, leads to:
+    - a lot of boilerplate code
+    - potential bugs (even with type checkers)
+    - less readable code (where does the None come from? is it expected?).
+
+    `Option[T]` instances are commonly paired with pattern matching to query the presence of a value and take action, always accounting for the None case.
+    """
+
     @abstractmethod
     def is_some(self) -> TypeIs[Some[T]]:  # type: ignore[misc]
         """
@@ -222,7 +249,7 @@ class Option[T](ABC):
 
     def or_else(self, f: Callable[[], Option[T]]) -> Option[T]:
         """
-        Returns the option if it contains a value, otherwise calls a function and returns the result.
+        Returns the `Option[T]` if it contains a value, otherwise calls a function and returns the result.
 
         Args:
             f (Callable[[], Option[T]]): The function to call if the option is `None`.
@@ -250,7 +277,7 @@ class Option[T](ABC):
 
     def zip[U](self, other: Option[U]) -> Option[tuple[T, U]]:
         """
-        Returns an Option containing a tuple of the values if both options are Some, otherwise returns NONE.
+        Returns an `Option[tuple[T, U]]` containing a tuple of the values if both options are `Some`, otherwise returns `NONE`.
 
         Args:
             other (Option[U]): The other option to zip with.
@@ -287,7 +314,7 @@ class Option[T](ABC):
             other (pc.Option[U]): The second option.
             f (Callable[[T, U], R]): The function to apply to the unwrapped values.
         Returns:
-            pc.Option[R]: The resulting option after applying the function.
+            Option[R]: The resulting option after applying the function.
         Examples:
         ```python
         >>> from dataclasses import dataclass
@@ -359,13 +386,13 @@ class Option[T](ABC):
 
         return Ok(self.unwrap()) if self.is_some() else Err(err())
 
-    def map_or[U](self, default: U, f: Callable[[T], U]) -> U:
+    def map_or[U](self, f: Callable[[T], U], default: U) -> U:
         """
         Returns the result of applying a function to the contained value if Some, otherwise returns the default value.
 
         Args:
-            default (U): The default value to return if NONE.
             f (Callable[[T], U]): The function to apply to the contained value.
+            default (U): The default value to return if NONE.
 
         Returns:
             U: The result of f(self.unwrap()) if Some, otherwise default.
@@ -373,22 +400,22 @@ class Option[T](ABC):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Some(2).map_or(0, lambda x: x * 10)
+        >>> pc.Some(2).map_or(lambda x: x * 10, 0)
         20
-        >>> pc.NONE.map_or(0, lambda x: x * 10)
+        >>> pc.NONE.map_or(lambda x: x * 10, 0)
         0
 
         ```
         """
         return f(self.unwrap()) if self.is_some() else default
 
-    def map_or_else[U](self, default: Callable[[], U], f: Callable[[T], U]) -> U:
+    def map_or_else[U](self, f: Callable[[T], U], default: Callable[[], U]) -> U:
         """
         Returns the result of applying a function to the contained value if Some, otherwise computes a default value.
 
         Args:
-            default (Callable[[], U]): A function returning the default value if NONE.
             f (Callable[[T], U]): The function to apply to the contained value.
+            default (Callable[[], U]): A function returning the default value if NONE.
 
         Returns:
             U: The result of f(self.unwrap()) if Some, otherwise default().
@@ -396,9 +423,9 @@ class Option[T](ABC):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Some(2).map_or_else(lambda: 0, lambda x: x * 10)
+        >>> pc.Some(2).map_or_else(lambda x: x * 10, lambda: 0)
         20
-        >>> pc.NONE.map_or_else(lambda: 0, lambda x: x * 10)
+        >>> pc.NONE.map_or_else(lambda x: x * 10, lambda: 0)
         0
 
         ```
@@ -426,17 +453,21 @@ class Some[T](Option[T]):
     value: T
 
     def is_some(self) -> TypeIs[Some[T]]:  # type: ignore[misc]
-        """Returns `True` for `Some`."""
+        """
+        Returns:
+            bool: `True` for `Some`.
+        """
         return True
 
     def is_none(self) -> TypeIs[_None]:  # type: ignore[misc]
-        """Returns `False` for `Some`."""
+        """
+        Returns:
+            bool: `False` for `Some`.
+        """
         return False
 
     def unwrap(self) -> T:
         """
-        Returns the contained value.
-
         Returns:
             T: The contained value.
         """
@@ -447,31 +478,27 @@ class Some[T](Option[T]):
 class _None(Option[Any]):
     """
     Option variant representing the absence of a value.
-
-    Example:
-    ```python
-    >>> import pyochain as pc
-    >>> pc.NONE
-    NONE
-
-    ```
     """
 
     def __repr__(self) -> str:
         return "NONE"
 
     def is_some(self) -> TypeIs[Some[Any]]:  # type: ignore[misc]
-        """Returns `False` for `None`."""
+        """
+        Returns:
+            bool: `False` for `None`.
+        """
         return False
 
     def is_none(self) -> TypeIs[_None]:  # type: ignore[misc]
-        """Returns `True` for `None`."""
+        """
+        Returns:
+            bool: `True` for `None`.
+        """
         return True
 
     def unwrap(self) -> Never:
         """
-        Raises `OptionUnwrapError` because there is no value.
-
         Raises:
             OptionUnwrapError: Always, since `None` contains no value.
         """
@@ -479,3 +506,4 @@ class _None(Option[Any]):
 
 
 NONE: Option[Any] = _None()
+"""Singleton instance representing the absence of a value."""

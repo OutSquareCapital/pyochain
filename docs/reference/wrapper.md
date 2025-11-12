@@ -1,6 +1,6 @@
-# Result
+# Wrapper
 
-::: pyochain._results._result.Result
+::: pyochain._results._result.Wrapper
     options:
       inherited_members: true
       show_overloads: true

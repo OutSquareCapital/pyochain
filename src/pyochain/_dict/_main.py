@@ -37,13 +37,13 @@ class Dict[K, V](DictCommonMethods[K, V]):
         data: Mapping[G, I] | Iterable[tuple[G, I]] | SupportsKeysAndGetItem[G, I],
     ) -> Dict[G, I]:
         """
-        Create a Dict from a convertible value.
+        Create a `Dict` from a convertible value.
 
         Args:
-            data: A mapping, Iterable of tuples, or object supporting keys and item access to convert into a Dict.
+            data (Mapping[G, I] | Iterable[tuple[G, I]] | SupportsKeysAndGetItem[G, I]): Object convertible into a Dict.
 
         Returns:
-            A Dict instance containing the data from the input.
+            Dict[G, I]: Instance containing the data from the input.
 
         Example:
 
@@ -71,10 +71,14 @@ class Dict[K, V](DictCommonMethods[K, V]):
     @staticmethod
     def from_object(obj: object) -> Dict[str, Any]:
         """
-        Create a Dict from an object's __dict__ attribute.
+        Create a `Dict` from an object `__dict__` attribute.
+
+        We can't know in advance the values types, so we use `Any`.
 
         Args:
-            obj: The object whose `__dict__` attribute will be used to create the Dict.
+            obj (object): The object whose `__dict__` attribute will be used to create the Dict.
+        Returns:
+            Dict[str, Any]: A new Dict instance containing the attributes of the object.
 
         ```python
         >>> import pyochain as pc
@@ -94,13 +98,13 @@ class Dict[K, V](DictCommonMethods[K, V]):
         """
         Pivot a nested dictionary by rearranging the key levels according to order.
 
-        Syntactic sugar for to_arrays().rearrange(*indices).to_records()
+        Syntactic sugar for `Dict.to_arrays().rearrange(*indices).to_records()`
 
         Args:
-            indices: Indices specifying the new order of key levels
+            indices (int): Indices specifying the new order of key levels
 
         Returns:
-            Pivoted dictionary with keys rearranged
+            out (Dict[Any, Any]): Pivoted dictionary with keys rearranged
 
         Example:
         ```python
