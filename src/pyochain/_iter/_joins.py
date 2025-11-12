@@ -380,6 +380,7 @@ class BaseJoins[T](IterWrapper[T]):
             right_on (Callable[[R], K]): Function to extract the join key from the right iterable.
             left_default (T | None): Default value for missing elements in the left iterable. Defaults to None.
             right_default (R | None): Default value for missing elements in the right iterable. Defaults to None.
+
         Returns:
             Iter[tuple[T, R]]: An iterator yielding tuples of joined elements.
         Example:

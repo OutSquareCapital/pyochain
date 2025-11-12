@@ -30,6 +30,7 @@ class Pipeable:
             func (Callable[Concatenate[Self, P], R]): Function to apply to the instance.
             *args (P.args): Positional arguments to pass to the function.
             **kwargs (P.kwargs): Keyword arguments to pass to the function.
+
         Returns:
             R: The result of the function.
         Example:
@@ -79,6 +80,7 @@ class CommonBase[T](ABC, Pipeable):
         and then removing it will not affect the rest of the chain.
         Args:
             pretty (bool): Whether to pretty print the data. Defaults to True.
+
         Returns:
             Self: The instance itself for chaining.
         """
@@ -123,6 +125,7 @@ class CommonBase[T](ABC, Pipeable):
             func (Callable[Concatenate[T, P], R]): Function to apply to the underlying data.
             *args (P.args): Positional arguments to pass to the function.
             **kwargs (P.kwargs): Keyword arguments to pass to the function.
+
         Returns:
             R: The result of the function.
         Example:
@@ -141,6 +144,7 @@ class CommonBase[T](ABC, Pipeable):
 
         Args:
             other (Self | T): Another instance or corresponding underlying data to compare against.
+
         Returns:
             bool: True if the underlying data are equal, False otherwise.
         Example:
@@ -219,6 +223,7 @@ class MappingWrapper[K, V](CommonBase[dict[K, V]]):
             func (Callable[Concatenate[dict[K, V], P], dict[KU, VU]]): Function to apply to the underlying dict.
             *args (P.args): Positional arguments to pass to the function.
             **kwargs (P.kwargs): Keyword arguments to pass to the function.
+
         Returns:
             Dict[KU, VU]: A new Dict instance containing the result of the function.
         Example:

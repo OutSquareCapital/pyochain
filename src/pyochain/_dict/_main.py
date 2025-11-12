@@ -77,6 +77,7 @@ class Dict[K, V](DictCommonMethods[K, V]):
 
         Args:
             obj (object): The object whose `__dict__` attribute will be used to create the Dict.
+
         Returns:
             Dict[str, Any]: A new Dict instance containing the attributes of the object.
 

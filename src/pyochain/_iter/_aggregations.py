@@ -26,8 +26,17 @@ class BaseAgg[T](IterWrapper[T]):
 
         Args:
             sep (str): Separator to use between elements.
+
         Returns:
             str: The joined string.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter.from_(["a", "b", "c"]).join("-")
+        'a-b-c'
+
+        ```
         """
         return self.into(functools.partial(str.join, sep))
 

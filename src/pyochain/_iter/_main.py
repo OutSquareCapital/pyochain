@@ -116,6 +116,7 @@ class Iter[T](
         Args:
             start (int): Starting value of the sequence. Defaults to 0.
             step (int): Difference between consecutive values. Defaults to 1.
+
         Returns:
             Iter[int]: An iterator generating the sequence.
         Example:
@@ -141,6 +142,7 @@ class Iter[T](
         Args:
             func (Callable[[U], U]): Function to apply repeatedly.
             input (U): Initial value to start the iteration.
+
         Returns:
             Iter[U]: An iterator generating the sequence.
         Example:
@@ -170,6 +172,7 @@ class Iter[T](
         Args:
             data (Iterable[U] | U): Iterable to convert into an iterator, or a single value.
             more_data (U): Additional values to include if 'data' is not an Iterable.
+
         Returns:
             Iter[U]: A new Iter instance containing the provided data.
         Example:
@@ -306,6 +309,7 @@ class Iter[T](
             func (Callable[Concatenate[Dict[K, V], P], R]): Function to apply to each wrapped dictionary.
             *args (P.args): Positional arguments to pass to the function.
             **kwargs (P.kwargs): Keyword arguments to pass to the function.
+
         Returns:
             Iter[R]: A new `Iter` instance containing the results of applying the function.
         Example:
@@ -395,6 +399,7 @@ class Iter[T](
 
         Args:
             factory (Callable[[Iterable[T]], Sequence[T]]): A callable that takes an iterable and returns a Sequence. Defaults to `list`.
+
         Returns:
             Seq[T]: A `Seq` containing the collected elements.
 
@@ -454,6 +459,7 @@ class Seq[T](CommonMethods[T]):
 
         Args:
             data (*U): Unpacked items to include in the sequence.
+
         Returns:
             Seq[U]: A new Seq instance containing the provided data.
 
@@ -491,6 +497,7 @@ class Seq[T](CommonMethods[T]):
             func (Callable[Concatenate[Iterable[T], P], Sequence[R]]): Function to apply to the underlying `Sequence`.
             *args (P.args): Positional arguments to pass to the function.
             **kwargs (P.kwargs): Keyword arguments to pass to the function.
+
         Returns:
             Seq[R]: A new `Seq` instance containing the result of the function.
 

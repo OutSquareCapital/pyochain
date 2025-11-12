@@ -313,6 +313,7 @@ class Option[T](Pipeable, ABC):
         Args:
             other (pc.Option[U]): The second option.
             f (Callable[[T, U], R]): The function to apply to the unwrapped values.
+
         Returns:
             Option[R]: The resulting option after applying the function.
         Examples:

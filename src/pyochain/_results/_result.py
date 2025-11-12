@@ -320,7 +320,7 @@ class Result[T, E](Pipeable, ABC):
             fn (Callable[[T], Result[U, E]]): The function to call with the `Ok` value.
 
         Returns:
-            out (Result[U, E]): The result of the function if `Ok`, otherwise the original `Err`.
+            Result[U, E]: The result of the function if `Ok`, otherwise the original `Err`.
 
         Example:
         ```python
