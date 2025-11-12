@@ -42,53 +42,56 @@ The full API reference can be found at:
 
 #### `Iter[T]`
 
-To instantiate it, wrap a Python `Iterator` or `Generator`, or take any Iterable (`list`, `tuple`, etc...) and call Iter.from_ (which will call the builtin `iter()` on it).
+A wrapper for any `Iterator` or `Generator`. All operations are **lazy**, consuming the underlying iterator only when needed.
 
-All operations that return a new `Iter` are **lazy**, consuming the underlying iterator on demand.
+This allows for efficient processing of large or even infinite sequences.
 
-Provides a vast array of methods for transformation, filtering, aggregation, joining, etc..
+To create an `Iter`, you can:
+
+* Wrap an existing iterator/generator: `pc.Iter(my_iterator)`
+* Convert any iterable: `pc.Iter.from_(my_list)`
+* Wrap unpacked values: `pc.Iter.from_(1, 2, 3)`
+* Use built-in constructors like `pc.Iter.from_count()` for infinite sequences.
 
 #### `Seq[T]`
 
-Wraps a Python `Sequence` (`list`, `tuple`...), and represents **eagerly** evaluated data.
+A wrapper for a `Sequence` (like a `list` or `tuple`), representing an **eagerly** evaluated collection of data.
+`Seq` is useful when you need to store results in memory, access elements by index, or reuse the data multiple times.
 
-Exposes a subset of the `Iter` methods who operate on the full dataset (e.g., `sort`, `union`) or who aggregate it.
-
-It is most useful when you need to reuse the data multiple times without re-iterating it.
-
-Use `.iter()` to switch back to lazy processing.
+It shares many methods with `Iter` but performs operations immediately.
+You can switch between lazy and eager evaluation by using `my_seq.iter()` and `my_iter.collect()`.
 
 #### `Dict[K, V]`
 
-Wraps a Python `dict` (or any Mapping via ``Dict.from_``) and provides chainable methods specific to dictionaries (manipulating keys, values, items, nesting, joins, grouping).
+A wrapper for a `dict`, providing a rich, chainable API for dictionary manipulation. It simplifies common tasks like filtering, mapping, and transforming dictionary keys and values.
 
-Promote immutability by returning new `Dict` instances on each operation, and avoiding in-place modifications.
+Key features include:
 
-Can work easily on known data structure (e.g `dict[str, int]`), with methods like `map_values`, `filter_keys`, etc., who works on the whole `dict` in a performant way, mostly thanks to `cytoolz` functions.
+* **Immutability**: Most methods return a new `Dict` instance, preventing unintended side effects.
+* **Nested Data Utilities**: Easily work with complex, nested dictionaries using methods like `pluck` and `flatten`.
+* **Flexible Instantiation**: Create a `Dict` from mappings, iterables of pairs, or even object attributes with `Dict.from_object()`.
 
-But `Dict` can work also as well as on "irregular" structures (e.g., `dict[Any, Any]`, TypedDict, etc..), by providing a set of utilities for working with nested data, including:
+#### `Result[T, E]`
 
-* `pluck` to extract multiple fields at once.
-* `flatten` to collapse nested structures into a single level.
+A type for functions that can fail, inspired by Rust's `Result`. It represents either a success (`Ok[T]`) containing a value or an error (`Err[E]`) containing an error. It forces you to handle potential failures explicitly, leading to more robust code.
+
+#### `Option[T]`
+
+A type for values that may be absent, inspired by Rust's `Option`. It represents either the presence of a value (`Some[T]`) or its absence (`NONE`). It provides a safe and expressive way to handle optional values without resorting to `None` checks everywhere.
 
 #### `Wrapper[T]`
 
-A generic wrapper for any Python object, allowing integration into `pyochain`'s fluent style using `pipe`, `apply`, and `into`.
-
-Can be for example used to wrap numpy arrays, json outputs from requests, or any custom class instance, as a way to integrate them into a chain of operations, rather than breaking the chain to reference intermediate variables.
+A generic wrapper for any Python object, allowing it to be integrated into a `pyochain` fluent-style chain. Use `Wrapper` to `pipe`, `apply`, or `into` functions when working with objects that don't have their own `pyochain` wrapper, such as instances of custom classes or third-party library objects.
 
 ### Core Piping Methods
 
-All wrappers inherit from `CommonBase`:
+All wrappers provide a set of common methods for chaining and data manipulation:
 
-* `into[**P, R](func: Callable[Concatenate[T, P]], *args: P.args, **kwargs: P.kwargs) -> R`
-    Passes the **unwrapped** data to `func` and returns the raw result (terminal).
-* `apply[**P, R](func: Callable[Concatenate[T, P]], *args: P.args, **kwargs: P.kwargs) -> "CurrentWrapper"[R]`
-    Passes the **unwrapped** data to`func` and **re-wraps** the result for continued chaining.
-* `pipe[**P, R](func: Callable[Concatenate[Self, P]], *args: P.args, **kwargs: P.kwargs) -> R`
-    Passes the **wrapped instance** (`self`) to `func` and returns the raw result (can be terminal).
-* `println()`
-    Prints the unwrapped data and returns `self`.
+* `into(func, *args, **kwargs)`: Passes the **unwrapped** data to `func` and returns the raw result. This is a terminal operation that ends the chain.
+* `apply(func, *args, **kwargs)`: Passes the **unwrapped** data to `func` and **re-wraps** the result in the same wrapper type for continued chaining.
+* `pipe(func, *args, **kwargs)`: Passes the **wrapped instance** (`self`) to `func`. This allows you to insert custom functions into the chain that operate on the wrapper itself.
+* `println()`: Prints the unwrapped data to the console for debugging and returns `self` to continue the chain.
+* `inner()`: Returns the underlying wrapped data.
 
 ### Rich Lazy Iteration (`Iter`)
 
@@ -98,13 +101,44 @@ Leverage dozens of methods inspired by Rust's `Iterator`, `itertools`, `cytoolz`
 import pyochain as pc
 
 result = (
-    pc.Iter.from_count(1) # Infinite iterator: 1, 2, 3, ...
-    .filter(lambda x: x % 2 != 0) # Keep odd numbers: 1, 3, 5, ...
-    .map(lambda x: x * x) # Square them: 1, 9, 25, ...
-    .take(5) # Take the first 5: 1, 9, 25, 49, 81
-    .into(list) # Consume into a list
+    pc.Iter.from_count(1)  # Infinite iterator: 1, 2, 3, ...
+    .filter(lambda x: x % 2 != 0)  # Keep odd numbers
+    .map(lambda x: x * x)  # Square them
+    .take(5)  # Take the first 5
+    .into(list)  # Consume into a list
 )
 # result: [1, 9, 25, 49, 81]
+```
+
+### Type-Safe Error Handling (`Result` and `Option`)
+
+Write robust code by handling potential failures explicitly.
+
+```python
+import pyochain as pc
+
+def divide(a: int, b: int) -> pc.Result[float, str]:
+    if b == 0:
+        return pc.Err("Cannot divide by zero")
+    return pc.Ok(a / b)
+
+# --- With Result ---
+res1 = divide(10, 2)  # Ok(5.0)
+res2 = divide(10, 0)  # Err("Cannot divide by zero")
+
+# Safely unwrap or provide a default
+value = res2.unwrap_or(0.0)  # 0.0
+
+# Map over a successful result
+squared = res1.map(lambda x: x * x)  # Ok(25.0)
+
+# --- With Option ---
+def find_user(user_id: int) -> pc.Option[str]:
+    users = {1: "Alice", 2: "Bob"}
+    return pc.Some(users.get(user_id)) if user_id in users else pc.NONE
+
+user = find_user(1).map(str.upper).unwrap_or("Not Found")  # "ALICE"
+not_found = find_user(3).unwrap_or("Not Found")  # "Not Found"
 ```
 
 ### Typing enforcement

@@ -27,30 +27,68 @@ uv add pyochain
 
 #### `Iter[T]`
 
-Wraps a Python `Iterator` or `Generator`. All operations are **lazy**, consuming the underlying iterator on demand.
-
+A wrapper for lazy processing of `Iterator` and `Generator` objects.
 [See full documentation →](reference/iter.md)
+
+#### `Seq[T]`
+
+A wrapper for eager processing of `Sequence` objects like `list` and `tuple`.
+[See full documentation →](reference/seq.md)
 
 #### `Dict[K, V]`
 
-Wraps a Python `dict` with chainable methods specific to dictionaries.
-
+A chainable wrapper for dictionaries.
 [See full documentation →](reference/dict.md)
 
+#### `Result[T, E]`
+
+A type for robust error handling, representing either a success (`Ok`) or a failure (`Err`).
+[See full documentation →](reference/result.md)
+
+#### `Option[T]`
+
+A type for handling optional values that can be either `Some(value)` or `NONE`.
+[See full documentation →](reference/option.md)
+
+#### `Wrapper[T]`
+
+A generic wrapper to integrate any Python object into a `pyochain` chain.
+[See full documentation →](reference/wrapper.md)
+
 ## Quick Examples
+
+### Lazy Iteration
 
 ```python
 import pyochain as pc
 
-# Chain operations on iterables
+# Chain operations on iterables lazily
 result = (
-    pc.Iter.from_(range(10))
-    .filter(lambda x: x % 2 == 0)
+    pc.Iter.from_count(1)
+    .filter(lambda x: x % 2 != 0)
     .map(lambda x: x ** 2)
-    .collect()
-    .unwrap()
+    .take(5)
+    .into(list)
 )
-# [0, 4, 16, 36, 64]
+# [1, 9, 25, 49, 81]
+```
+
+### Error Handling
+
+```python
+import pyochain as pc
+
+def divide(a: int, b: int) -> pc.Result[float, str]:
+    if b == 0:
+        return pc.Err("Cannot divide by zero")
+    return pc.Ok(a / b)
+
+# Safely handle the result
+result = divide(10, 0).map_or_else(
+    ok=lambda val: f"Success: {val}",
+    err=lambda msg: f"Error: {msg}"
+)
+# "Error: Cannot divide by zero"
 ```
 
 ## Contributing
