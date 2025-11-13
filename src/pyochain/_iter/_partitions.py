@@ -29,6 +29,8 @@ class BasePartitions[T](IterWrapper[T]):
     def windows(self, length: int) -> Iter[tuple[T, ...]]:
         """A sequence of overlapping subsequences of the given length.
 
+        This function allows you to apply custom function not available in the rolling namespace.
+
         Args:
             length (int): The length of each window.
 
@@ -36,13 +38,10 @@ class BasePartitions[T](IterWrapper[T]):
             Iter[tuple[T, ...]]: An iterable of overlapping subsequences.
 
         Example:
+        ```python
         >>> import pyochain as pc
         >>> pc.Iter.from_([1, 2, 3, 4]).windows(2).into(list)
         [(1, 2), (2, 3), (3, 4)]
-
-        ```
-        This function allows you to apply custom function not available in the rolling namespace.
-        ```python
         >>> def moving_average(seq: tuple[int, ...]) -> float:
         ...     return float(sum(seq)) / len(seq)
         >>> pc.Iter.from_([1, 2, 3, 4]).windows(2).map(moving_average).into(list)
@@ -96,13 +95,15 @@ class BasePartitions[T](IterWrapper[T]):
     def partition_all(self, n: int) -> Iter[tuple[T, ...]]:
         """Partition all elements of sequence into tuples of length at most n.
 
+        The final tuple may be shorter to accommodate extra elements.
+
         Args:
             n (int): Maximum length of each partition.
 
         Returns:
             Iter[tuple[T, ...]]: An iterable of partitioned tuples.
 
-        The final tuple may be shorter to accommodate extra elements.
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Iter.from_([1, 2, 3, 4]).partition_all(2).into(list)

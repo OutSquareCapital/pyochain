@@ -28,31 +28,37 @@ uv add pyochain
 #### `Iter[T]`
 
 A wrapper for lazy processing of `Iterator` and `Generator` objects.
+
 [See full documentation →](reference/iter.md)
 
 #### `Seq[T]`
 
 A wrapper for eager processing of `Sequence` objects like `list` and `tuple`.
+
 [See full documentation →](reference/seq.md)
 
 #### `Dict[K, V]`
 
 A chainable wrapper for dictionaries.
+
 [See full documentation →](reference/dict.md)
 
 #### `Result[T, E]`
 
 A type for robust error handling, representing either a success (`Ok`) or a failure (`Err`).
+
 [See full documentation →](reference/result.md)
 
 #### `Option[T]`
 
 A type for handling optional values that can be either `Some(value)` or `NONE`.
+
 [See full documentation →](reference/option.md)
 
 #### `Wrapper[T]`
 
 A generic wrapper to integrate any Python object into a `pyochain` chain.
+
 [See full documentation →](reference/wrapper.md)
 
 ## Quick Examples

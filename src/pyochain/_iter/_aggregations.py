@@ -57,10 +57,10 @@ class BaseAgg[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> data = [(1, "a"), (2, "b"), (3, "c")]
         >>> unzipped = pc.Iter.from_(data).unzip()
-        >>> unzipped.first.into(list)
-        [1, 2, 3]
-        >>> unzipped.second.into(list)
-        ['a', 'b', 'c']
+        >>> unzipped.first.collect()
+        Seq([1, 2, 3])
+        >>> unzipped.second.collect()
+        Seq(['a', 'b', 'c'])
 
         ```
         """

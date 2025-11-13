@@ -33,8 +33,8 @@ class BaseFilter[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3]).filter(lambda x: x > 1).into(list)
-        [2, 3]
+        >>> pc.Seq([1, 2, 3]).iter().filter(lambda x: x > 1).collect()
+        Seq([2, 3])
 
         ```
         """
@@ -65,10 +65,10 @@ class BaseFilter[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>>
         >>> data = pc.Seq(["apple", "banana", "cherry", "date"])
-        >>> data.iter().filter_contain("ana").into(list)
-        ['banana']
-        >>> data.iter().map(str.upper).filter_contain("ana", str.lower).into(list)
-        ['BANANA']
+        >>> data.iter().filter_contain("ana").collect()
+        Seq(['banana'])
+        >>> data.iter().map(str.upper).filter_contain("ana", str.lower).collect()
+        Seq(['BANANA'])
 
         ```
         """
@@ -122,8 +122,8 @@ class BaseFilter[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3]).filter_false(lambda x: x > 1).into(list)
-        [1]
+        >>> pc.Seq([1, 2, 3]).iter().filter_false(lambda x: x > 1).collect()
+        Seq([1])
 
         ```
         """
@@ -153,8 +153,8 @@ class BaseFilter[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> iterable = ["1", "2", "three", "4", None]
-        >>> pc.Iter.from_(iterable).filter_except(int, ValueError, TypeError).into(list)
-        ['1', '2', '4']
+        >>> pc.Seq(iterable).iter().filter_except(int, ValueError, TypeError).collect()
+        Seq(['1', '2', '4'])
 
         ```
         """
@@ -176,8 +176,8 @@ class BaseFilter[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 0]).take_while(lambda x: x > 0).into(list)
-        [1, 2]
+        >>> pc.Seq([1, 2, 0]).iter().take_while(lambda x: x > 0).collect()
+        Seq([1, 2])
 
         ```
         """
@@ -195,8 +195,8 @@ class BaseFilter[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 0]).skip_while(lambda x: x > 0).into(list)
-        [0]
+        >>> pc.Seq([1, 2, 0]).iter().skip_while(lambda x: x > 0).collect()
+        Seq([0])
 
         ```
         """
@@ -214,8 +214,8 @@ class BaseFilter[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_("ABCDEF").compress(1, 0, 1, 0, 1, 1).into(list)
-        ['A', 'C', 'E', 'F']
+        >>> pc.Seq("ABCDEF").iter().compress(1, 0, 1, 0, 1, 1).collect()
+        Seq(['A', 'C', 'E', 'F'])
 
         ```
         """
@@ -233,16 +233,16 @@ class BaseFilter[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3]).unique().into(list)
-        [1, 2, 3]
-        >>> pc.Iter.from_([1, 2, 1, 3]).unique().into(list)
-        [1, 2, 3]
+        >>> pc.Seq([1, 2, 3]).iter().unique().collect()
+        Seq([1, 2, 3])
+        >>> pc.Seq([1, 2, 1, 3]).iter().unique().collect()
+        Seq([1, 2, 3])
 
         ```
         Uniqueness can be defined by key keyword
         ```python
-        >>> pc.Iter.from_(["cat", "mouse", "dog", "hen"]).unique(key=len).into(list)
-        ['cat', 'mouse']
+        >>> pc.Seq(["cat", "mouse", "dog", "hen"]).iter().unique(key=len).collect()
+        Seq(['cat', 'mouse'])
 
         ```
         """
@@ -268,10 +268,10 @@ class BaseFilter[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> data = [1, 2, 3]
-        >>> pc.Iter.from_(data).take(2).into(list)
-        [1, 2]
-        >>> pc.Iter.from_(data).take(5).into(list)
-        [1, 2, 3]
+        >>> pc.Seq(data).iter().take(2).collect()
+        Seq([1, 2])
+        >>> pc.Seq(data).iter().take(5).collect()
+        Seq([1, 2, 3])
 
         ```
         """
@@ -289,8 +289,8 @@ class BaseFilter[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3]).skip(1).into(list)
-        [2, 3]
+        >>> pc.Seq([1, 2, 3]).iter().skip(1).collect()
+        Seq([2, 3])
 
         ```
         """
@@ -308,10 +308,10 @@ class BaseFilter[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_("AAAABBBCCDAABBB").unique_justseen().into(list)
-        ['A', 'B', 'C', 'D', 'A', 'B']
-        >>> pc.Iter.from_("ABBCcAD").unique_justseen(str.lower).into(list)
-        ['A', 'B', 'C', 'A', 'D']
+        >>> pc.Iter.from_("AAAABBBCCDAABBB").unique_justseen().collect()
+        Seq(['A', 'B', 'C', 'D', 'A', 'B'])
+        >>> pc.Iter.from_("ABBCcAD").unique_justseen(str.lower).collect()
+        Seq(['A', 'B', 'C', 'A', 'D'])
 
         ```
         """
@@ -338,14 +338,14 @@ class BaseFilter[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> iterable = [0, 1, 0, 2, 3, 0]
         >>> n = 3
-        >>> pc.Iter.from_(iterable).unique_in_window(n).into(list)
-        [0, 1, 2, 3, 0]
+        >>> pc.Iter.from_(iterable).unique_in_window(n).collect()
+        Seq([0, 1, 2, 3, 0])
 
         ```
         The key function, if provided, will be used to determine uniqueness:
         ```python
-        >>> pc.Iter.from_("abAcda").unique_in_window(3, key=str.lower).into(list)
-        ['a', 'b', 'c', 'd', 'a']
+        >>> pc.Iter.from_("abAcda").unique_in_window(3, key=str.lower).collect()
+        Seq(['a', 'b', 'c', 'd', 'a'])
 
         ```
         """
@@ -369,8 +369,8 @@ class BaseFilter[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> text = "abcdefghijklmnopqrstuvwxyz"
-        >>> pc.Iter.from_(text).extract([7, 4, 11, 11, 14]).into(list)
-        ['h', 'e', 'l', 'l', 'o']
+        >>> pc.Seq(text).iter().extract([7, 4, 11, 11, 14]).collect()
+        Seq(['h', 'e', 'l', 'l', 'o'])
 
         ```
         """
@@ -388,8 +388,8 @@ class BaseFilter[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([10, 20, 30, 40]).every(2).into(list)
-        [10, 30]
+        >>> pc.Seq([10, 20, 30, 40]).iter().every(2).collect()
+        Seq([10, 30])
 
         ```
         """
@@ -414,10 +414,10 @@ class BaseFilter[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3, 4, 5]).slice(1, 4).into(list)
-        [2, 3, 4]
-        >>> pc.Iter.from_([1, 2, 3, 4, 5]).slice(step=2).into(list)
-        [1, 3, 5]
+        >>> pc.Seq([1, 2, 3, 4, 5]).iter().slice(1, 4).collect()
+        Seq([2, 3, 4])
+        >>> pc.Seq([1, 2, 3, 4, 5]).iter().slice(step=2).collect()
+        Seq([1, 3, 5])
 
         ```
         """
@@ -455,10 +455,10 @@ class BaseFilter[T](IterWrapper[T]):
         ...     return cls.__name__
         >>>
         >>> data = pc.Seq([A, B, C])
-        >>> data.iter().filter_subclass(A).map(name).into(list)
-        ['A', 'B']
-        >>> data.iter().filter_subclass(A, keep_parent=False).map(name).into(list)
-        ['B']
+        >>> data.iter().filter_subclass(A).map(name).collect()
+        Seq(['A', 'B'])
+        >>> data.iter().filter_subclass(A, keep_parent=False).map(name).collect()
+        Seq(['B'])
 
         ```
         """
@@ -484,8 +484,8 @@ class BaseFilter[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, "two", 3.0, "four", 5]).filter_type(int).into(list)
-        [1, 5]
+        >>> pc.Seq([1, "two", 3.0, "four", 5]).iter().filter_type(int).collect()
+        Seq([1, 5])
 
         ```
         """

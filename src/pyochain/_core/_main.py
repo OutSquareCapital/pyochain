@@ -137,7 +137,7 @@ class CommonBase[T](ABC, Pipeable):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_(range(5)).into(list)
+        >>> pc.Seq(range(5)).into(list)
         [0, 1, 2, 3, 4]
 
         ```

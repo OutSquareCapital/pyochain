@@ -35,8 +35,8 @@ class BaseEager[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([3, 1, 2]).sort().into(list)
-        [1, 2, 3]
+        >>> pc.Seq([3, 1, 2]).sort()
+        Seq([1, 2, 3])
 
         ```
         """

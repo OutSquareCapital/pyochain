@@ -69,8 +69,8 @@ class BaseTuples[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3]).combinations(2).into(list)
-        [(1, 2), (1, 3), (2, 3)]
+        >>> pc.Seq([1, 2, 3]).iter().combinations(2).collect()
+        Seq([(1, 2), (1, 3), (2, 3)])
 
         ```
 
@@ -97,8 +97,8 @@ class BaseTuples[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3]).permutations(2).into(list)
-        [(1, 2), (1, 3), (2, 1), (2, 3), (3, 1), (3, 2)]
+        >>> pc.Seq([1, 2, 3]).iter().permutations(2).collect()
+        Seq([(1, 2), (1, 3), (2, 1), (2, 3), (3, 1), (3, 2)])
 
         ```
 

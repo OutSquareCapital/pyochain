@@ -256,8 +256,8 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2]).chain([3, 4], [5]).into(list)
-        [1, 2, 3, 4, 5]
+        >>> pc.Seq([1, 2]).iter().chain([3, 4], [5]).collect()
+        Seq([1, 2, 3, 4, 5])
 
         ```
         """
@@ -314,8 +314,8 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3]).reverse().into(list)
-        [3, 2, 1]
+        >>> pc.Seq([1, 2, 3]).iter().reverse().collect()
+        Seq([3, 2, 1])
 
         ```
         """
