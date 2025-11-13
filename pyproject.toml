@@ -3,7 +3,7 @@ description     = "Method chaining for iterables and dictionaries in Python."
 name            = "pyochain"
 readme          = "README.md"
 requires-python = ">=3.12"
-version         = "0.5.43"
+version         = "0.5.44"
 
 dependencies = ["cytoolz>=1.0.1", "more-itertools>=10.8.0", "rolling>=0.5.0"]
 
