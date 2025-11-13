@@ -22,11 +22,12 @@ dev = [
     "cytoolz-stubs",
 ]
 [tool.ruff]
-extend-select = ["DOC", "DTZ"]
-ignore        = ["D401", "E501"]
-select        = ["F", "E", "D"]
+ignore = ["D401", "E501", "TID252", "TC003", "TC006"]
+select = ["ALL"]
 [tool.ruff.format]
 docstring-code-format = true
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 [tool.uv.sources]
 cytoolz-stubs = { git = "https://github.com/OutSquareCapital/cytoolz-stubs.git" }
 doctester     = { git = "https://github.com/OutSquareCapital/doctester.git" }

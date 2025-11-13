@@ -192,7 +192,8 @@ class Result[T, E](Pipeable, ABC):
         """
         if self.is_ok():
             return self.unwrap()
-        raise ResultUnwrapError(f"{msg}: {self.unwrap_err()}")
+        err_msg = f"{msg}: {self.unwrap_err()}"
+        raise ResultUnwrapError(err_msg)
 
     def expect_err(self, msg: str) -> E:
         """Returns the contained `Err` value.
@@ -223,7 +224,8 @@ class Result[T, E](Pipeable, ABC):
         """
         if self.is_err():
             return self.unwrap_err()
-        raise ResultUnwrapError(f"{msg}: expected Err, got Ok({self.unwrap()!r})")
+        err_msg = f"{msg}: expected Err, got Ok({self.unwrap()!r})"
+        raise ResultUnwrapError(err_msg)
 
     def unwrap_or(self, default: T) -> T:
         """Returns the contained `Ok` value or a provided default.

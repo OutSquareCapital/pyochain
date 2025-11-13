@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import itertools
-from collections.abc import Callable
 from functools import partial
 from typing import TYPE_CHECKING, Literal, overload
 
@@ -10,6 +9,8 @@ import cytoolz as cz
 from .._core import IterWrapper
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from ._main import Iter
 
 
@@ -26,8 +27,7 @@ class BasePartitions[T](IterWrapper[T]):
     def windows(self, length: Literal[5]) -> Iter[tuple[T, T, T, T, T]]: ...
 
     def windows(self, length: int) -> Iter[tuple[T, ...]]:
-        """
-        A sequence of overlapping subsequences of the given length.
+        """A sequence of overlapping subsequences of the given length.
 
         Args:
             length: The length of each window.
@@ -58,13 +58,14 @@ class BasePartitions[T](IterWrapper[T]):
     def partition(self, n: Literal[4], pad: None = None) -> Iter[tuple[T, T, T, T]]: ...
     @overload
     def partition(
-        self, n: Literal[5], pad: None = None
+        self,
+        n: Literal[5],
+        pad: None = None,
     ) -> Iter[tuple[T, T, T, T, T]]: ...
     @overload
     def partition(self, n: int, pad: int) -> Iter[tuple[T, ...]]: ...
     def partition(self, n: int, pad: int | None = None) -> Iter[tuple[T, ...]]:
-        """
-        Partition sequence into tuples of length n.
+        """Partition sequence into tuples of length n.
 
         Args:
             n: Length of each partition.
@@ -82,12 +83,10 @@ class BasePartitions[T](IterWrapper[T]):
 
         ```
         """
-
         return self._lazy(partial(cz.itertoolz.partition, n, pad=pad))
 
     def partition_all(self, n: int) -> Iter[tuple[T, ...]]:
-        """
-        Partition all elements of sequence into tuples of length at most n.
+        """Partition all elements of sequence into tuples of length at most n.
 
         Args:
             n: Maximum length of each partition.
@@ -104,8 +103,7 @@ class BasePartitions[T](IterWrapper[T]):
         return self._lazy(partial(cz.itertoolz.partition_all, n))
 
     def partition_by(self, predicate: Callable[[T], bool]) -> Iter[tuple[T, ...]]:
-        """
-        Partition the `iterable` into a sequence of `tuples` according to a predicate function.
+        """Partition the `iterable` into a sequence of `tuples` according to a predicate function.
 
         Every time the output of `predicate` changes, a new `tuple` is started,
         and subsequent items are collected into that `tuple`.
@@ -126,8 +124,7 @@ class BasePartitions[T](IterWrapper[T]):
         return self._lazy(partial(cz.recipes.partitionby, predicate))
 
     def batch(self, n: int) -> Iter[tuple[T, ...]]:
-        """
-        Batch elements into tuples of length n and return a new Iter.
+        """Batch elements into tuples of length n and return a new Iter.
 
         - The last batch may be shorter than n.
         - The data is consumed lazily, just enough to fill a batch.

@@ -25,7 +25,8 @@ class Ok[T, E](Result[T, E]):
         return self.value
 
     def unwrap_err(self) -> Never:
-        raise ResultUnwrapError("called `unwrap_err` on Ok")
+        msg = "called `unwrap_err` on Ok"
+        raise ResultUnwrapError(msg)
 
 
 @dataclass(slots=True)
@@ -41,7 +42,8 @@ class Err[T, E](Result[T, E]):
         return True
 
     def unwrap(self) -> Never:
-        raise ResultUnwrapError(f"called `unwrap` on Err: {self.error!r}")
+        msg = f"called `unwrap` on Err: {self.error!r}"
+        raise ResultUnwrapError(msg)
 
     def unwrap_err(self) -> E:
         return self.error
@@ -90,7 +92,8 @@ class NoneOption(Option[Any]):
         return True
 
     def unwrap(self) -> Never:
-        raise OptionUnwrapError("called `unwrap` on a `None`")
+        msg = "called `unwrap` on a `None`"
+        raise OptionUnwrapError(msg)
 
 
 NONE: Option[Any] = NoneOption()
