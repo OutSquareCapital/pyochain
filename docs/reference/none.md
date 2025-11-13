@@ -1,6 +1,6 @@
 # None
 
-::: pyochain._results._option.NONE
+::: pyochain._results._option.NoneOption
 
     options:
       inherited_members: true
