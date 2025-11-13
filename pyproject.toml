@@ -22,7 +22,7 @@ dev = [
     "cytoolz-stubs",
 ]
 [tool.ruff]
-ignore = ["D401", "E501", "TID252", "TC003", "TC006"]
+ignore = ["D401", "E501", "TID252", "TC003", "TC006", "C417"]
 select = ["ALL"]
 [tool.ruff.format]
 docstring-code-format = true
