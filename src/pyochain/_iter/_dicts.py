@@ -13,11 +13,14 @@ if TYPE_CHECKING:
 
 class BaseDict[T](IterWrapper[T]):
     def with_keys[K](self, keys: Iterable[K]) -> Dict[K, T]:
-        """
-        Create a Dict by zipping the iterable with keys.
+        """Create a Dict by zipping the iterable with keys.
 
         Args:
-            keys: Iterable of keys to pair with the values.
+            keys (Iterable[K]): Iterable of keys to pair with the values.
+
+        Returns:
+            Dict[K, T]: Dict with the provided keys and iterable values.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -36,16 +39,19 @@ class BaseDict[T](IterWrapper[T]):
         from .._dict import Dict
 
         def _with_keys(data: Iterable[T]) -> Dict[K, T]:
-            return Dict(dict(zip(keys, data)))
+            return Dict(dict(zip(keys, data, strict=False)))
 
         return self.into(_with_keys)
 
     def with_values[V](self, values: Iterable[V]) -> Dict[T, V]:
-        """
-        Create a Dict by zipping the iterable with values.
+        """Create a Dict by zipping the iterable with values.
 
         Args:
-            values: Iterable of values to pair with the keys.
+            values (Iterable[V]): Iterable of values to pair with the keys.
+
+        Returns:
+            Dict[T, V]: Dict with the iterable as keys and provided values.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -64,19 +70,24 @@ class BaseDict[T](IterWrapper[T]):
         from .._dict import Dict
 
         def _with_values(data: Iterable[T]) -> Dict[T, V]:
-            return Dict(dict(zip(data, values)))
+            return Dict(dict(zip(data, values, strict=False)))
 
         return self.into(_with_values)
 
     def reduce_by[K](
-        self, key: Callable[[T], K], binop: Callable[[T, T], T]
+        self,
+        key: Callable[[T], K],
+        binop: Callable[[T, T], T],
     ) -> Dict[K, T]:
-        """
-        Perform a simultaneous groupby and reduction.
+        """Perform a simultaneous groupby and reduction.
 
         Args:
-            key: Function to compute the key for grouping.
-            binop: Binary operation to reduce the grouped elements.
+            key (Callable[[T], K]): Function to compute the key for grouping.
+            binop (Callable[[T, T], T]): Binary operation to reduce the grouped elements.
+
+        Returns:
+            Dict[K, T]: Dict with grouped and reduced elements.
+
         Example:
         ```python
         >>> from collections.abc import Iterable
@@ -117,11 +128,14 @@ class BaseDict[T](IterWrapper[T]):
         return self.into(_reduce_by)
 
     def group_by[K](self, on: Callable[[T], K]) -> Dict[K, list[T]]:
-        """
-        Group elements by key function and return a Dict result.
+        """Group elements by key function and return a Dict result.
 
         Args:
-            on: Function to compute the key for grouping.
+            on (Callable[[T], K]): Function to compute the key for grouping.
+
+        Returns:
+            Dict[K, list[T]]: Dict with grouped elements as lists.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -165,8 +179,11 @@ class BaseDict[T](IterWrapper[T]):
         return self.into(_group_by)
 
     def frequencies(self) -> Dict[T, int]:
-        """
-        Find number of occurrences of each value in the iterable.
+        """Find number of occurrences of each value in the iterable.
+
+        Returns:
+            Dict[T, int]: Dict with element frequencies as counts.
+
         ```python
         >>> import pyochain as pc
         >>> data = ["cat", "cat", "ox", "pig", "pig", "cat"]
@@ -183,11 +200,14 @@ class BaseDict[T](IterWrapper[T]):
         return self.into(_frequencies)
 
     def count_by[K](self, key: Callable[[T], K]) -> Dict[K, int]:
-        """
-        Count elements of a collection by a key function.
+        """Count elements of a collection by a key function.
 
         Args:
-            key: Function to compute the key for counting.
+            key (Callable[[T], K]): Function to compute the key for counting.
+
+        Returns:
+            Dict[K, int]: Dict with count of elements for each key.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -208,12 +228,14 @@ class BaseDict[T](IterWrapper[T]):
         return self.into(_count_by)
 
     def to_records[U: Sequence[Any]](self: BaseDict[U]) -> Dict[Any, Any]:
-        """
-        Transform an iterable of nested sequences into a nested dictionary.
+        """Transform an iterable of nested sequences into a nested dictionary.
 
         - Each inner sequence represents a path to a value in the dictionary.
         - The last element of each sequence is treated as the value
         - All preceding elements are treated as keys leading to that value.
+
+        Returns:
+            Dict[Any, Any]: Nested dictionary constructed from the sequences.
 
         Example:
         ```python
@@ -227,12 +249,12 @@ class BaseDict[T](IterWrapper[T]):
         from .._dict import Dict
 
         def _from_nested(
-            arrays: Iterable[Sequence[Any]], parent: dict[Any, Any] | None = None
+            arrays: Iterable[Sequence[Any]],
+            parent: dict[Any, Any] | None = None,
         ) -> dict[Any, Any]:
-            """from dictutils.pivot"""
             d: dict[Any, Any] = parent or {}
             for arr in arrays:
-                if len(arr) >= 2:
+                if len(arr) > 1:
                     head, *tail = arr
                     if len(tail) == 1:
                         d[head] = tail[0]

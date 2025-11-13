@@ -11,8 +11,7 @@ from .._core import IterWrapper
 
 class BaseBool[T](IterWrapper[T]):
     def all(self, predicate: Callable[[T], bool] = lambda x: bool(x)) -> bool:
-        """
-        Tests if every element of the iterator matches a predicate.
+        """Tests if every element of the iterator matches a predicate.
 
         `Iter.all()` takes a closure that returns true or false.
 
@@ -23,7 +22,11 @@ class BaseBool[T](IterWrapper[T]):
         An empty iterator returns true.
 
         Args:
-            predicate: Function to evaluate each item. Defaults to checking truthiness.
+            predicate (Callable[[T], bool]): Function to evaluate each item. Defaults to checking truthiness.
+
+        Returns:
+            bool: True if all elements match the predicate, False otherwise.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -47,9 +50,7 @@ class BaseBool[T](IterWrapper[T]):
         return self.into(_all)
 
     def any(self, predicate: Callable[[T], bool] = lambda x: bool(x)) -> bool:
-        """
-        Tests if any element of the iterator matches a predicate.
-
+        """Tests if any element of the iterator matches a predicate.
 
         `Iter.any()` takes a closure that returns true or false.
 
@@ -60,7 +61,11 @@ class BaseBool[T](IterWrapper[T]):
         An empty iterator returns false.
 
         Args:
-            predicate: Function to evaluate each item. Defaults to checking truthiness.
+            predicate (Callable[[T], bool]): Function to evaluate each item. Defaults to checking truthiness.
+
+        Returns:
+            bool: True if any element matches the predicate, False otherwise.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -82,8 +87,11 @@ class BaseBool[T](IterWrapper[T]):
         return self.into(_any)
 
     def is_distinct(self) -> bool:
-        """
-        Return True if all items are distinct.
+        """Return True if all items are distinct.
+
+        Returns:
+            bool: True if all items are distinct, False otherwise.
+
         ```python
         >>> import pyochain as pc
         >>> pc.Iter.from_([1, 2]).is_distinct()
@@ -94,11 +102,14 @@ class BaseBool[T](IterWrapper[T]):
         return self.into(cz.itertoolz.isdistinct)
 
     def all_equal[U](self, key: Callable[[T], U] | None = None) -> bool:
-        """
-        Return True if all items are equal.
+        """Return True if all items are equal.
 
         Args:
-            key: Function to transform items before comparison. Defaults to None.
+            key (Callable[[T], U] | None): Function to transform items before comparison. Defaults to None.
+
+        Returns:
+            bool: True if all items are equal, False otherwise.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -118,11 +129,14 @@ class BaseBool[T](IterWrapper[T]):
         return self.into(mit.all_equal, key=key)
 
     def all_unique[U](self, key: Callable[[T], U] | None = None) -> bool:
-        """
-        Returns True if all the elements of iterable are unique.
+        """Returns True if all the elements of iterable are unique.
 
         Args:
-            key: Function to transform items before comparison. Defaults to None.
+            key (Callable[[T], U] | None): Function to transform items before comparison. Defaults to None.
+
+        Returns:
+            bool: True if all elements are unique, False otherwise.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -148,16 +162,20 @@ class BaseBool[T](IterWrapper[T]):
     def is_sorted[U](
         self,
         key: Callable[[T], U] | None = None,
+        *,
         reverse: bool = False,
         strict: bool = False,
     ) -> bool:
-        """
-        Returns True if the items of iterable are in sorted order.
+        """Returns True if the items of iterable are in sorted order.
 
         Args:
-            key: Function to transform items before comparison. Defaults to None.
-            reverse: Whether to check for descending order. Defaults to False.
-            strict: Whether to enforce strict sorting (no equal elements). Defaults to False.
+            key (Callable[[T], U] | None): Function to transform items before comparison. Defaults to None.
+            reverse (bool): Whether to check for descending order. Defaults to False.
+            strict (bool): Whether to enforce strict sorting (no equal elements). Defaults to False.
+
+        Returns:
+            bool: True if items are sorted according to the criteria, False otherwise.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -185,16 +203,19 @@ class BaseBool[T](IterWrapper[T]):
 
     @overload
     def find(
-        self, default: None = None, predicate: Callable[[T], bool] | None = ...
+        self,
+        default: None = None,
+        predicate: Callable[[T], bool] | None = ...,
     ) -> T | None: ...
     @overload
     def find(self, default: T, predicate: Callable[[T], bool] | None = ...) -> T: ...
 
     def find[U](
-        self, default: U = None, predicate: Callable[[T], bool] | None = None
+        self,
+        default: U = None,
+        predicate: Callable[[T], bool] | None = None,
     ) -> U | T:
-        """
-        Searches for an element of an iterator that satisfies a `predicate`, by:
+        """Searches for an element of an iterator that satisfies a `predicate`.
 
         - Taking a closure that returns true or false as `predicate` (optional).
         - Using the identity function if no `predicate` is provided.
@@ -204,8 +225,12 @@ class BaseBool[T](IterWrapper[T]):
         If all the elements return false, `Iter.find()` returns the default value.
 
         Args:
-            default: Value to return if no element satisfies the predicate. Defaults to None.
-            predicate: Function to evaluate each item. Defaults to checking truthiness.
+            default (U): Value to return if no element satisfies the predicate. Defaults to None.
+            predicate (Callable[[T], bool] | None): Function to evaluate each item. Defaults to checking truthiness.
+
+        Returns:
+            U | T: The first element satisfying the predicate, or the default value.
+
         Example:
         ```python
         >>> import pyochain as pc

@@ -11,7 +11,11 @@ from ._result import Result, ResultUnwrapError
 
 @dataclass(slots=True)
 class Ok[T, E](Result[T, E]):
-    """Represents a successful value."""
+    """Represents a successful value.
+
+    Attributes:
+        value (T): The contained successful value.
+    """
 
     value: T
 
@@ -31,7 +35,11 @@ class Ok[T, E](Result[T, E]):
 
 @dataclass(slots=True)
 class Err[T, E](Result[T, E]):
-    """Represents an error value."""
+    """Represents an error value.
+
+    Attributes:
+        error (E): The contained error value.
+    """
 
     error: E
 
@@ -53,7 +61,7 @@ class Err[T, E](Result[T, E]):
 class Some[T](Option[T]):
     """Option variant representing the presence of a value.
 
-    Args:
+    Attributes:
         value (T): The contained value.
 
     Example:

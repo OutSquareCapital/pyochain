@@ -14,18 +14,24 @@ if TYPE_CHECKING:
 
 class BaseEager[T](IterWrapper[T]):
     def sort[U: SupportsRichComparison[Any]](
-        self: BaseEager[U], reverse: bool = False, key: Callable[[U], Any] | None = None
+        self: BaseEager[U],
+        key: Callable[[U], Any] | None = None,
+        *,
+        reverse: bool = False,
     ) -> Seq[U]:
-        """
-        Sort the elements of the sequence.
+        """Sort the elements of the sequence.
 
         Note:
             This method must consume the entire iterable to perform the sort.
             The result is a new iterable over the sorted sequence.
 
         Args:
-            reverse: Whether to sort in descending order. Defaults to False.
-            key: Function to extract a comparison key from each element. Defaults to None.
+            key (Callable[[U], Any] | None): Function to extract a comparison key from each element. Defaults to None.
+            reverse (bool): Whether to sort in descending order. Defaults to False.
+
+        Returns:
+            Seq[U]: A new Seq with elements sorted.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -41,11 +47,14 @@ class BaseEager[T](IterWrapper[T]):
         return self._eager(_sort)
 
     def tail(self, n: int) -> Seq[T]:
-        """
-        Return a tuple of the last n elements.
+        """Return a tuple of the last n elements.
 
         Args:
-            n: Number of elements to return.
+            n (int): Number of elements to return.
+
+        Returns:
+            Seq[T]: A new Seq containing the last n elements.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -57,12 +66,15 @@ class BaseEager[T](IterWrapper[T]):
         return self._eager(partial(cz.itertoolz.tail, n))
 
     def top_n(self, n: int, key: Callable[[T], Any] | None = None) -> Seq[T]:
-        """
-        Return a tuple of the top-n items according to key.
+        """Return a tuple of the top-n items according to key.
 
         Args:
-            n: Number of top elements to return.
-            key: Function to extract a comparison key from each element. Defaults to None.
+            n (int): Number of top elements to return.
+            key (Callable[[T], Any] | None): Function to extract a comparison key from each element. Defaults to None.
+
+        Returns:
+            Seq[T]: A new Seq containing the top-n elements.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -74,14 +86,17 @@ class BaseEager[T](IterWrapper[T]):
         return self._eager(partial(cz.itertoolz.topk, n, key=key))
 
     def union(self, *others: Iterable[T]) -> Seq[T]:
-        """
-        Return the union of this iterable and 'others'.
+        """Return the union of this iterable and 'others'.
 
         Note:
             This method consumes inner data and removes duplicates.
 
         Args:
-            *others: Other iterables to include in the union.
+            *others (Iterable[T]): Other iterables to include in the union.
+
+        Returns:
+            Seq[T]: A new Seq containing the union of elements.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -97,14 +112,17 @@ class BaseEager[T](IterWrapper[T]):
         return self._eager(_union)
 
     def intersection(self, *others: Iterable[T]) -> Seq[T]:
-        """
-        Return the elements common to this iterable and 'others'.
+        """Return the elements common to this iterable and 'others'.
 
         Note:
             This method consumes inner data, unsorts it, and removes duplicates.
 
         Args:
-            *others: Other iterables to intersect with.
+            *others (Iterable[T]): Other iterables to intersect with.
+
+        Returns:
+            Seq[T]: A new Seq containing the intersection of elements.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -120,15 +138,19 @@ class BaseEager[T](IterWrapper[T]):
         return self._eager(_intersection)
 
     def diff_unique(self, *others: Iterable[T]) -> Seq[T]:
-        """
-        Return the difference of this iterable and 'others'.
+        """Return the difference of this iterable and 'others'.
+
         (Elements in 'self' but not in 'others').
 
         Note:
             This method consumes inner data, unsorts it, and removes duplicates.
 
         Args:
-            *others: Other iterables to subtract from this iterable.
+            *others (Iterable[T]): Other iterables to subtract from this iterable.
+
+        Returns:
+            Seq[T]: A new Seq containing the difference of elements.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -144,14 +166,17 @@ class BaseEager[T](IterWrapper[T]):
         return self._eager(_difference)
 
     def diff_symmetric(self, *others: Iterable[T]) -> Seq[T]:
-        """
-        Return the symmetric difference (XOR) of this iterable and 'others'.
+        """Return the symmetric difference (XOR) of this iterable and 'others'.
 
         Note:
             This method consumes inner data, unsorts it, and removes duplicates.
 
         Args:
-            *others: Other iterables to compute the symmetric difference with.
+            *others (Iterable[T]): Other iterables to compute the symmetric difference with.
+
+        Returns:
+            Seq[T]: A new Seq containing the symmetric difference of elements.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -169,13 +194,16 @@ class BaseEager[T](IterWrapper[T]):
         return self._eager(_symmetric_difference)
 
     def most_common(self, n: int | None = None) -> Seq[tuple[T, int]]:
-        """
-        Return the n most common elements and their counts.
+        """Return the n most common elements and their counts.
 
         If n is None, then all elements are returned.
 
         Args:
-            n: Number of most common elements to return. Defaults to None (all elements).
+            n (int | None): Number of most common elements to return. Defaults to None (all elements).
+
+        Returns:
+            Seq[tuple[T, int]]: A new Seq containing tuples of (element, count).
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -192,17 +220,18 @@ class BaseEager[T](IterWrapper[T]):
         return self._eager(_most_common)
 
     def rearrange[U: Sequence[Any]](self: BaseEager[U], *indices: int) -> Seq[list[U]]:
-        """
-        Rearrange elements in a given list of arrays by order indices.
+        """Rearrange elements in a given list of arrays by order indices.
 
         The last element (value) always remains in place.
 
         Args:
-            *indices: indices specifying new order of keys
-
+            *indices (int): indices specifying new order of keys
 
         Raises:
-            IndexError: If any index in order is out of range for the row
+            IndexError: If any index in order is out of range for the row.
+
+        Returns:
+            Seq[list[U]]: A new Seq containing rearranged elements.
 
         Example:
         ```python
@@ -214,17 +243,20 @@ class BaseEager[T](IterWrapper[T]):
         ```
         """
 
+        def _check_bound(i: int, max_key_index: int) -> None:
+            if i < 0 or i > max_key_index:
+                msg = f"order index {i} out of range for row with {max_key_index + 1} keys"
+                raise IndexError(
+                    msg,
+                )
+
         def _rearrange(in_arrs: Iterable[U]) -> list[list[U]]:
-            """from dictutils.pivot"""
             order = indices
             out: list[list[U]] = []
             for arr in in_arrs:
                 max_key_index: int = len(arr) - 2
                 for i in order:
-                    if i < 0 or i > max_key_index:
-                        raise IndexError(
-                            f"order index {i} out of range for row with {max_key_index + 1} keys"
-                        )
+                    _check_bound(i, max_key_index)
 
                 out.append([arr[i] for i in order] + [arr[-1]])
 

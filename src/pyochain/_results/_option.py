@@ -51,7 +51,7 @@ class Option[T](Pipeable, ABC):
         Uses `TypeIs[Some[T]]` for more precise type narrowing.
 
         Returns:
-            bool: `True` if the option is a `Some` variant, `False` otherwise.
+            TypeIs[Some[T]]: `True` if the option is a `Some` variant, `False` otherwise.
 
         Example:
         ```python
@@ -75,7 +75,7 @@ class Option[T](Pipeable, ABC):
         Uses `TypeIs[_None]` for more precise type narrowing.
 
         Returns:
-            bool: `True` if the option is a `_None` variant, `False` otherwise.
+            TypeIs[NoneOption]: `True` if the option is a `_None` variant, `False` otherwise.
 
         Example:
         ```python
@@ -321,7 +321,7 @@ class Option[T](Pipeable, ABC):
         Otherwise, `NONE` is returned.
 
         Args:
-            other (pc.Option[U]): The second option.
+            other (Option[U]): The second option.
             f (Callable[[T, U], R]): The function to apply to the unwrapped values.
 
         Returns:

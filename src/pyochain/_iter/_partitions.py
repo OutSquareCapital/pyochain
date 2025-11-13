@@ -30,8 +30,12 @@ class BasePartitions[T](IterWrapper[T]):
         """A sequence of overlapping subsequences of the given length.
 
         Args:
-            length: The length of each window.
-        ```python
+            length (int): The length of each window.
+
+        Returns:
+            Iter[tuple[T, ...]]: An iterable of overlapping subsequences.
+
+        Example:
         >>> import pyochain as pc
         >>> pc.Iter.from_([1, 2, 3, 4]).windows(2).into(list)
         [(1, 2), (2, 3), (3, 4)]
@@ -68,9 +72,13 @@ class BasePartitions[T](IterWrapper[T]):
         """Partition sequence into tuples of length n.
 
         Args:
-            n: Length of each partition.
-            pad: Value to pad the last partition if needed.
-        ```python
+            n (int): Length of each partition.
+            pad (int | None): Value to pad the last partition if needed. Defaults to None.
+
+        Returns:
+            Iter[tuple[T, ...]]: An iterable of partitioned tuples.
+
+        Example:
         >>> import pyochain as pc
         >>> pc.Iter.from_([1, 2, 3, 4]).partition(2).into(list)
         [(1, 2), (3, 4)]
@@ -89,7 +97,11 @@ class BasePartitions[T](IterWrapper[T]):
         """Partition all elements of sequence into tuples of length at most n.
 
         Args:
-            n: Maximum length of each partition.
+            n (int): Maximum length of each partition.
+
+        Returns:
+            Iter[tuple[T, ...]]: An iterable of partitioned tuples.
+
         The final tuple may be shorter to accommodate extra elements.
         ```python
         >>> import pyochain as pc
@@ -109,8 +121,12 @@ class BasePartitions[T](IterWrapper[T]):
         and subsequent items are collected into that `tuple`.
 
         Args:
-            predicate: Function to determine partition boundaries.
-        ```python
+            predicate (Callable[[T], bool]): Function to determine partition boundaries.
+
+        Returns:
+            Iter[tuple[T, ...]]: An iterable of partitioned tuples.
+
+        Example:
         >>> import pyochain as pc
         >>> pc.Iter.from_("I have space").partition_by(lambda c: c == " ").into(list)
         [('I',), (' ',), ('h', 'a', 'v', 'e'), (' ',), ('s', 'p', 'a', 'c', 'e')]
@@ -131,8 +147,12 @@ class BasePartitions[T](IterWrapper[T]):
         - The result is yielded as soon as a batch is full or when the input iterable is exhausted.
 
         Args:
-            n: Number of elements in each batch.
-        ```python
+            n (int): Number of elements in each batch.
+
+        Returns:
+            Iter[tuple[T, ...]]: An iterable of batched tuples.
+
+        Example:
         >>> import pyochain as pc
         >>> pc.Iter.from_("ABCDEFG").batch(3).into(list)
         [('A', 'B', 'C'), ('D', 'E', 'F'), ('G',)]

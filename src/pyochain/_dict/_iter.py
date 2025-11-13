@@ -19,13 +19,15 @@ class IterDict[K, V](MappingWrapper[K, V]):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Dict[K, R]:
-        """
-        Apply a function to each value after wrapping it in an Iter.
+        """Apply a function to each value after wrapping it in an Iter.
 
         Args:
-            func: Function to apply to each value after wrapping it in an Iter.
-            *args: Positional arguments to pass to the function.
-            **kwargs: Keyword arguments to pass to the function.
+            func(Callable[Concatenate[Iter[U], P], R]): Function to apply to each value after wrapping it in an Iter.
+            *args(P.args): Positional arguments to pass to the function.
+            **kwargs(P.kwargs): Keyword arguments to pass to the function.
+
+        Returns:
+            Dict[K, R]: Dict with function results as values.
 
         Syntactic sugar for `map_values(lambda data: func(Iter(data), *args, **kwargs))`
         ```python
@@ -50,8 +52,11 @@ class IterDict[K, V](MappingWrapper[K, V]):
         return self._new(_itr)
 
     def iter_keys(self) -> Iter[K]:
-        """
-        Return an Iter of the dict's keys.
+        """Return an Iter of the dict's keys.
+
+        Returns:
+            Iter[K]: An Iter wrapping the dictionary's keys.
+
         ```python
         >>> import pyochain as pc
         >>> pc.Dict({1: 2}).iter_keys().into(list)
@@ -67,8 +72,11 @@ class IterDict[K, V](MappingWrapper[K, V]):
         return self.into(_keys)
 
     def iter_values(self) -> Iter[V]:
-        """
-        Return an Iter of the dict's values.
+        """Return an Iter of the dict's values.
+
+        Returns:
+            Iter[V]: An Iter wrapping the dictionary's values.
+
         ```python
         >>> import pyochain as pc
         >>> pc.Dict({1: 2}).iter_values().into(list)
@@ -84,8 +92,11 @@ class IterDict[K, V](MappingWrapper[K, V]):
         return self.into(_values)
 
     def iter_items(self) -> Iter[tuple[K, V]]:
-        """
-        Return an Iter of the dict's items.
+        """Return an Iter of the dict's items.
+
+        Returns:
+            Iter[tuple[K, V]]: An Iter wrapping the dictionary's (key, value) pairs.
+
         ```python
         >>> import pyochain as pc
         >>> pc.Dict({1: 2}).iter_items().into(list)
@@ -101,10 +112,12 @@ class IterDict[K, V](MappingWrapper[K, V]):
         return self.into(_items)
 
     def to_arrays(self) -> Seq[list[Any]]:
-        """
-        Convert the nested dictionary into a sequence of arrays.
+        """Convert the nested dictionary into a sequence of arrays.
 
         The sequence represents all paths from root to leaves.
+
+        Returns:
+            Seq[list[Any]]: A Seq of arrays representing paths from root to leaves.
 
         ```python
         >>> import pyochain as pc
@@ -120,13 +133,11 @@ class IterDict[K, V](MappingWrapper[K, V]):
         from .._iter import Seq
 
         def _to_arrays(d: Mapping[Any, Any]) -> list[list[Any]]:
-            """from dictutils.pivot"""
             match d:
                 case Mapping():
                     arr: list[Any] = []
                     for k, v in d.items():
-                        for el in _to_arrays(v):
-                            arr.append([k] + el)
+                        arr.extend([[k, *el] for el in _to_arrays(v)])
                     return arr
 
                 case _:

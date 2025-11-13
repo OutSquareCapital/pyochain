@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from .._core import SupportsKeysAndGetItem
 from ._filters import FilterDict
 from ._groups import GroupsDict
 from ._iter import IterDict
@@ -11,6 +10,9 @@ from ._joins import JoinsDict
 from ._maps import MapDict
 from ._nested import NestedDict
 from ._process import ProcessDict
+
+if TYPE_CHECKING:
+    from .._core import SupportsKeysAndGetItem
 
 
 class DictCommonMethods[K, V](
@@ -26,9 +28,7 @@ class DictCommonMethods[K, V](
 
 
 class Dict[K, V](DictCommonMethods[K, V]):
-    """
-    Wrapper for Python dictionaries with chainable methods.
-    """
+    """Wrapper for Python dictionaries with chainable methods."""
 
     __slots__ = ()
 
@@ -36,8 +36,7 @@ class Dict[K, V](DictCommonMethods[K, V]):
     def from_[G, I](
         data: Mapping[G, I] | Iterable[tuple[G, I]] | SupportsKeysAndGetItem[G, I],
     ) -> Dict[G, I]:
-        """
-        Create a `Dict` from a convertible value.
+        """Create a `Dict` from a convertible value.
 
         Args:
             data (Mapping[G, I] | Iterable[tuple[G, I]] | SupportsKeysAndGetItem[G, I]): Object convertible into a Dict.
@@ -46,7 +45,6 @@ class Dict[K, V](DictCommonMethods[K, V]):
             Dict[G, I]: Instance containing the data from the input.
 
         Example:
-
         ```python
         >>> import pyochain as pc
         >>> class MyMapping:
@@ -70,8 +68,7 @@ class Dict[K, V](DictCommonMethods[K, V]):
 
     @staticmethod
     def from_object(obj: object) -> Dict[str, Any]:
-        """
-        Create a `Dict` from an object `__dict__` attribute.
+        """Create a `Dict` from an object `__dict__` attribute.
 
         We can't know in advance the values types, so we use `Any`.
 
@@ -96,16 +93,15 @@ class Dict[K, V](DictCommonMethods[K, V]):
         return Dict(obj.__dict__)
 
     def pivot(self, *indices: int) -> Dict[Any, Any]:
-        """
-        Pivot a nested dictionary by rearranging the key levels according to order.
+        """Pivot a nested dictionary by rearranging the key levels according to order.
 
         Syntactic sugar for `Dict.to_arrays().rearrange(*indices).to_records()`
 
         Args:
-            indices (int): Indices specifying the new order of key levels
+            *indices (int): Indices specifying the new order of key levels
 
         Returns:
-            out (Dict[Any, Any]): Pivoted dictionary with keys rearranged
+            Dict[Any, Any]: Pivoted dictionary with keys rearranged
 
         Example:
         ```python
@@ -114,5 +110,4 @@ class Dict[K, V](DictCommonMethods[K, V]):
         >>> pc.Dict(d).pivot(1, 0).inner()
         {'X': {'A': 1, 'B': 3}, 'Y': {'A': 2, 'B': 4}}
         """
-
         return self.to_arrays().rearrange(*indices).to_records()

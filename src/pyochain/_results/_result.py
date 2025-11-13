@@ -33,7 +33,7 @@ class Result[T, E](Pipeable, ABC):
         Uses `TypeIs[Ok[T, E]]` for more precise type narrowing.
 
         Returns:
-            bool: `True` if the result is an `Ok` variant, `False` otherwise.
+            TypeIs[Ok[T, E]]: `True` if the result is an `Ok` variant, `False` otherwise.
 
         Example:
         ```python
@@ -57,7 +57,7 @@ class Result[T, E](Pipeable, ABC):
         Use `TypeIs[Err[T, E]]` for more precise type narrowing.
 
         Returns:
-            bool: `True` if the result is an `Err` variant, `False` otherwise.
+            TypeIs[Err[T, E]]: `True` if the result is an `Err` variant, `False` otherwise.
 
         Example:
         ```python

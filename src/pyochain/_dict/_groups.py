@@ -13,11 +13,13 @@ if TYPE_CHECKING:
 
 class GroupsDict[K, V](MappingWrapper[K, V]):
     def group_by_value[G](self, func: Callable[[V], G]) -> Dict[G, dict[K, V]]:
-        """
-        Group dict items into sub-dictionaries based on a function of the value.
+        """Group dict items into sub-dictionaries based on a function of the value.
 
         Args:
-            func: Function to determine the group for each value.
+            func(Callable[[V], G]): Function to determine the group for each value.
+
+        Returns:
+            Dict[G, dict[K, V]]: Grouped Dict with groups as keys and sub-dicts as values.
 
         ```python
         >>> import pyochain as pc
@@ -37,11 +39,13 @@ class GroupsDict[K, V](MappingWrapper[K, V]):
         return self._new(_group_by_value)
 
     def group_by_key[G](self, func: Callable[[K], G]) -> Dict[G, dict[K, V]]:
-        """
-        Group dict items into sub-dictionaries based on a function of the key.
+        """Group dict items into sub-dictionaries based on a function of the key.
 
         Args:
-            func: Function to determine the group for each key.
+            func(Callable[[K], G]): Function to determine the group for each key.
+
+        Returns:
+            Dict[G, dict[K, V]]: Grouped Dict with groups as keys and sub-dicts as values.
 
         ```python
         >>> import pyochain as pc
@@ -65,12 +69,14 @@ class GroupsDict[K, V](MappingWrapper[K, V]):
         key_func: Callable[[K], G],
         agg_func: Callable[[Dict[K, V]], R],
     ) -> Dict[G, R]:
-        """
-        Group by key function, then apply aggregation function to each sub-dict.
+        """Group by key function, then apply aggregation function to each sub-dict.
 
         Args:
-            key_func: Function to determine the group for each key.
-            agg_func: Function to aggregate each sub-dictionary.
+            key_func(Callable[[K], G]): Function to determine the group for each key.
+            agg_func(Callable[[Dict[K, V]], R]): Function to aggregate each sub-dictionary.
+
+        Returns:
+            Dict[G, R]: Grouped and aggregated Dict.
 
         This avoids materializing intermediate `dict` objects if you only need
         an aggregated result for each group.
@@ -125,12 +131,14 @@ class GroupsDict[K, V](MappingWrapper[K, V]):
         value_func: Callable[[V], G],
         agg_func: Callable[[Dict[K, V]], R],
     ) -> Dict[G, R]:
-        """
-        Group by value function, then apply aggregation function to each sub-dict.
+        """Group by value function, then apply aggregation function to each sub-dict.
 
         Args:
-            value_func: Function to determine the group for each value.
-            agg_func: Function to aggregate each sub-dictionary.
+            value_func(Callable[[V], G]): Function to determine the group for each value.
+            agg_func(Callable[[Dict[K, V]], R]): Function to aggregate each sub-dictionary.
+
+        Returns:
+            Dict[G, R]: Grouped and aggregated Dict.
 
         This avoids materializing intermediate `dict` objects if you only need
         an aggregated result for each group.

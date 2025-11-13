@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import itertools
-from collections.abc import Callable, Generator, Iterable, Iterator
-from typing import TYPE_CHECKING, Any, TypeIs, overload
+from collections.abc import Callable, Iterable, Iterator
+from typing import TYPE_CHECKING, Any, overload
 
 import cytoolz as cz
 import more_itertools as mit
@@ -16,7 +16,11 @@ if TYPE_CHECKING:
 class BaseJoins[T](IterWrapper[T]):
     @overload
     def zip[T1](
-        self, iter1: Iterable[T1], /, *, strict: bool = ...
+        self,
+        iter1: Iterable[T1],
+        /,
+        *,
+        strict: bool = ...,
     ) -> Iter[tuple[T, T1]]: ...
     @overload
     def zip[T1, T2](
@@ -49,14 +53,18 @@ class BaseJoins[T](IterWrapper[T]):
         strict: bool = ...,
     ) -> Iter[tuple[T, T1, T2, T3, T4]]: ...
     def zip(
-        self, *others: Iterable[Any], strict: bool = False
+        self,
+        *others: Iterable[Any],
+        strict: bool = False,
     ) -> Iter[tuple[Any, ...]]:
-        """
-        Zip with other iterables, optionally strict.
+        """Zip with other iterables, optionally strict.
 
         Args:
-            *others: Other iterables to zip with.
-            strict: Whether to enforce equal lengths of iterables. Defaults to False.
+            *others (Iterable[Any]): Other iterables to zip with.
+            strict (bool): Whether to enforce equal lengths of iterables. Defaults to False.
+
+        Returns:
+            Iter[tuple[Any, ...]]: An iterable of tuples containing elements from the zipped iter
         Example:
         ```python
         >>> import pyochain as pc
@@ -76,14 +84,17 @@ class BaseJoins[T](IterWrapper[T]):
         longest: bool = False,
         fillvalue: U = None,
     ) -> Iter[tuple[T | U, ...]]:
-        """
-        Zip the input iterables together, but offset the i-th iterable by the i-th item in offsets.
+        """Zip the input iterables together, but offset the i-th iterable by the i-th item in offsets.
 
         Args:
-            *others: Other iterables to zip with.
-            offsets: List of integers specifying the offsets for each iterable.
-            longest: Whether to continue until the longest iterable is exhausted. Defaults to False.
-            fillvalue: Value to use for missing elements. Defaults to None.
+            *others (Iterable[T]): Other iterables to zip with.
+            offsets (list[int]): List of integers specifying the offsets for each iterable.
+            longest (bool): Whether to continue until the longest iterable is exhausted. Defaults to False.
+            fillvalue (U): Value to use for missing elements. Defaults to None.
+
+        Returns:
+            Iter[tuple[T | U, ...]]: An iterable of tuples containing elements from the zipped iterables with offsets.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -116,111 +127,15 @@ class BaseJoins[T](IterWrapper[T]):
         return self._lazy(_zip_offset)
 
     @overload
-    def zip_broadcast[T1](
-        self,
-        iter1: Iterable[T1],
-        /,
-        *,
-        strict: bool = False,
-    ) -> Iter[tuple[T, T1]]: ...
-    @overload
-    def zip_broadcast[T1, T2](
-        self,
-        iter1: Iterable[T1],
-        iter2: Iterable[T2],
-        /,
-        *,
-        strict: bool = False,
-    ) -> Iter[tuple[T, T1, T2]]: ...
-    @overload
-    def zip_broadcast[T1, T2, T3](
-        self,
-        iter1: Iterable[T1],
-        iter2: Iterable[T2],
-        iter3: Iterable[T3],
-        /,
-        *,
-        strict: bool = False,
-    ) -> Iter[tuple[T, T1, T2, T3]]: ...
-    @overload
-    def zip_broadcast[T1, T2, T3, T4](
-        self,
-        iter1: Iterable[T1],
-        iter2: Iterable[T2],
-        iter3: Iterable[T3],
-        iter4: Iterable[T4],
-        /,
-        *,
-        strict: bool = False,
-    ) -> Iter[tuple[T, T1, T2, T3, T4]]: ...
-    def zip_broadcast(
-        self, *others: Iterable[Any], strict: bool = False
-    ) -> Iter[tuple[Any, ...]]:
-        """
-        Version of zip that "broadcasts" any scalar (i.e., non-iterable) items into output tuples.
-
-        `str` and `bytes` are not treated as iterables.
-
-        If the strict keyword argument is True, then UnequalIterablesError will be raised if any of the iterables have different lengths.
-
-        Args:
-            *others: Other iterables or scalars to zip with.
-            strict: Whether to enforce equal lengths of iterables. Defaults to False.
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> data = pc.Iter.from_([1, 2, 3])
-        >>> other = ["a", "b", "c"]
-        >>> scalar = "_"
-        >>> data.zip_broadcast(other, scalar).into(list)
-        [(1, 'a', '_'), (2, 'b', '_'), (3, 'c', '_')]
-
-        ```
-        """
-
-        def _zip_broadcast(
-            *objects: Iterable[Any],
-        ) -> Generator[tuple[Iterable[Any], ...] | tuple[object, ...], Any, None]:
-            """from more_itertools.zip_broadcast"""
-
-            def is_scalar(obj: Any) -> TypeIs[object]:
-                if isinstance(obj, (str, bytes)):
-                    return True
-                return cz.itertoolz.isiterable(obj) is False
-
-            size = len(objects)
-            if not size:
-                return
-
-            new_item: list[object] = [None] * size
-            iterables: list[Iterator[Any]] = []
-            iterable_positions: list[int] = []
-            for i, obj in enumerate(objects):
-                if is_scalar(obj):
-                    new_item[i] = obj
-                else:
-                    iterables.append(iter(obj))
-                    iterable_positions.append(i)
-
-            if not iterables:
-                yield tuple(objects)
-                return
-
-            zipper = mit.zip_equal if strict else zip
-            for item in zipper(*iterables):
-                for i, new_item[i] in zip(iterable_positions, item):
-                    pass
-                yield tuple(new_item)
-
-        return self._lazy(_zip_broadcast, *others)
-
-    @overload
     def zip_equal(self) -> Iter[tuple[T]]: ...
     @overload
-    def zip_equal[T2](self, __iter2: Iterable[T2]) -> Iter[tuple[T, T2]]: ...
+    def zip_equal[T2](self, __iter2: Iterable[T2], /) -> Iter[tuple[T, T2]]: ...
     @overload
     def zip_equal[T2, T3](
-        self, __iter2: Iterable[T2], __iter3: Iterable[T3]
+        self,
+        __iter2: Iterable[T2],
+        __iter3: Iterable[T3],
+        /,
     ) -> Iter[tuple[T, T2, T3]]: ...
     @overload
     def zip_equal[T2, T3, T4](
@@ -228,6 +143,7 @@ class BaseJoins[T](IterWrapper[T]):
         __iter2: Iterable[T2],
         __iter3: Iterable[T3],
         __iter4: Iterable[T4],
+        /,
     ) -> Iter[tuple[T, T2, T3, T4]]: ...
     @overload
     def zip_equal[T2, T3, T4, T5](
@@ -236,13 +152,17 @@ class BaseJoins[T](IterWrapper[T]):
         __iter3: Iterable[T3],
         __iter4: Iterable[T4],
         __iter5: Iterable[T5],
+        /,
     ) -> Iter[tuple[T, T2, T3, T4, T5]]: ...
     def zip_equal(self, *others: Iterable[Any]) -> Iter[tuple[Any, ...]]:
-        """
-        `zip` the input *iterables* together but raise `UnequalIterablesError` if they aren't all the same length.
+        """`zip` the input *iterables* together but raise `UnequalIterablesError` if they aren't all the same length.
 
         Args:
-            *others: Other iterables to zip with.
+            *others (Iterable[Any]): Other iterables to zip with.
+
+        Returns:
+            Iter[tuple[Any, ...]]: An iterable of tuples containing elements from the zipped iterables.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -264,14 +184,19 @@ class BaseJoins[T](IterWrapper[T]):
         return self._lazy(_zip_equal)
 
     def zip_longest[U](
-        self, *others: Iterable[T], fill_value: U = None
+        self,
+        *others: Iterable[T],
+        fill_value: U = None,
     ) -> Iter[tuple[U | T, ...]]:
-        """
-        Zip with other iterables, filling missing values.
+        """Zip with other iterables, filling missing values.
 
         Args:
-            *others: Other iterables to zip with.
-            fill_value: Value to use for missing elements. Defaults to None.
+            *others (Iterable[T]): Other iterables to zip with.
+            fill_value (U): Value to use for missing elements. Defaults to None.
+
+        Returns:
+            Iter[tuple[U | T, ...]]: An iterable of tuples containing elements from the zipped iterables.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -288,11 +213,18 @@ class BaseJoins[T](IterWrapper[T]):
     def product[T1](self, iter1: Iterable[T1], /) -> Iter[tuple[T, T1]]: ...
     @overload
     def product[T1, T2](
-        self, iter1: Iterable[T1], iter2: Iterable[T2], /
+        self,
+        iter1: Iterable[T1],
+        iter2: Iterable[T2],
+        /,
     ) -> Iter[tuple[T, T1, T2]]: ...
     @overload
     def product[T1, T2, T3](
-        self, iter1: Iterable[T1], iter2: Iterable[T2], iter3: Iterable[T3], /
+        self,
+        iter1: Iterable[T1],
+        iter2: Iterable[T2],
+        iter3: Iterable[T3],
+        /,
     ) -> Iter[tuple[T, T1, T2, T3]]: ...
     @overload
     def product[T1, T2, T3, T4](
@@ -305,15 +237,19 @@ class BaseJoins[T](IterWrapper[T]):
     ) -> Iter[tuple[T, T1, T2, T3, T4]]: ...
 
     def product(self, *others: Iterable[Any]) -> Iter[tuple[Any, ...]]:
-        """
-        Computes the Cartesian product with another iterable.
+        """Computes the Cartesian product with another iterable.
+
         This is the declarative equivalent of nested for-loops.
 
         It pairs every element from the source iterable with every element from the
         other iterable.
 
         Args:
-            *others: Other iterables to compute the Cartesian product with.
+            *others (Iterable[Any]): Other iterables to compute the Cartesian product with.
+
+        Returns:
+            Iter[tuple[Any, ...]]: An iterable of tuples containing elements from the Cartesian product.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -332,16 +268,20 @@ class BaseJoins[T](IterWrapper[T]):
         default: T | None = None,
         key: Callable[[T], Any] | None = None,
     ) -> Iter[tuple[T, ...]]:
-        """
-        Return those items that differ between iterables.
+        """Return those items that differ between iterables.
+
         Each output item is a tuple where the i-th element is from the i-th input iterable.
 
         If an input iterable is exhausted before others, then the corresponding output items will be filled with *default*.
 
         Args:
-            *others: Other iterables to compare with.
-            default: Value to use for missing elements. Defaults to None.
-            key: Function to apply to each item for comparison. Defaults to None.
+            *others (Iterable[T]): Other iterables to compare with.
+            default (T | None): Value to use for missing elements. Defaults to None.
+            key (Callable[[T], Any] | None): Function to apply to each item for comparison. Defaults to None.
+
+        Returns:
+            Iter[tuple[T, ...]]: An iterable of tuples containing differing elements from the input iterables.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -371,8 +311,7 @@ class BaseJoins[T](IterWrapper[T]):
         left_default: T | None = None,
         right_default: R | None = None,
     ) -> Iter[tuple[T, R]]:
-        """
-        Perform a relational join with another iterable.
+        """Perform a relational join with another iterable.
 
         Args:
             other (Iterable[R]): Iterable to join with.
@@ -383,6 +322,7 @@ class BaseJoins[T](IterWrapper[T]):
 
         Returns:
             Iter[tuple[T, R]]: An iterator yielding tuples of joined elements.
+
         Example:
         ```python
         >>> import pyochain as pc

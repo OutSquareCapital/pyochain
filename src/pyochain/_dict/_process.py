@@ -18,13 +18,15 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Dict[K, V]:
-        """
-        Apply a function to each key-value pair in the dict for side effects.
+        """Apply a function to each key-value pair in the dict for side effects.
 
         Args:
-            func: Function to apply to each key-value pair.
-            *args: Positional arguments to pass to the function.
-            **kwargs: Keyword arguments to pass to the function.
+            func (Callable[Concatenate[K, V, P], Any]): Function to apply to each key-value pair.
+            *args (P.args): Positional arguments to pass to the function.
+            **kwargs (P.kwargs): Keyword arguments to pass to the function.
+
+        Returns:
+            Dict[K, V]: The original Dict unchanged.
 
         Returns the original Dict unchanged.
         ```python
@@ -47,15 +49,20 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
         return self._new(_for_each)
 
     def update_in(
-        self, *keys: K, func: Callable[[V], V], default: V | None = None
+        self,
+        *keys: K,
+        func: Callable[[V], V],
+        default: V | None = None,
     ) -> Dict[K, V]:
-        """
-        Update value in a (potentially) nested dictionary.
+        """Update value in a (potentially) nested dictionary.
 
         Args:
-            *keys: Sequence of keys representing the nested path to update.
-            func: Function to apply to the value at the specified path.
-            default: Default value to use if the path does not exist, by default None
+            *keys (K): Sequence of keys representing the nested path to update.
+            func (Callable[[V], V]): Function to apply to the value at the specified path.
+            default (V | None): Default value to use if the path does not exist, by default None
+
+        Returns:
+            Dict[K, V]: Dict with the updated value at the nested path.
 
         Applies the func to the value at the path specified by keys, returning a new Dict with the updated value.
 
@@ -87,12 +94,14 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
         return self._new(_update_in)
 
     def with_key(self, key: K, value: V) -> Dict[K, V]:
-        """
-        Return a new Dict with key set to value.
+        """Return a new Dict with key set to value.
 
         Args:
-            key: Key to set in the dictionary.
-            value: Value to associate with the specified key.
+            key (K): Key to set in the dictionary.
+            value (V): Value to associate with the specified key.
+
+        Returns:
+            Dict[K, V]: New Dict with the key-value pair set.
 
         Does not modify the initial dictionary.
         ```python
@@ -113,11 +122,13 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
         return self._new(_with_key)
 
     def drop(self, *keys: K) -> Dict[K, V]:
-        """
-        Return a new Dict with given keys removed.
+        """Return a new Dict with given keys removed.
 
         Args:
-            *keys: Sequence of keys to remove from the dictionary.
+            *keys (K): Sequence of keys to remove from the dictionary.
+
+        Returns:
+            Dict[K, V]: New Dict with specified keys removed.
 
         New dict has d[key] deleted for each supplied key.
         ```python
@@ -140,11 +151,13 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
         return self._new(_drop)
 
     def rename(self, mapping: Mapping[K, K]) -> Dict[K, V]:
-        """
-        Return a new Dict with keys renamed according to the mapping.
+        """Return a new Dict with keys renamed according to the mapping.
 
         Args:
-            mapping: A dictionary mapping old keys to new keys.
+            mapping (Mapping[K, K]): A dictionary mapping old keys to new keys.
+
+        Returns:
+            Dict[K, V]: Dict with keys renamed according to the mapping.
 
         Keys not in the mapping are kept as is.
         ```python
@@ -162,12 +175,14 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_rename)
 
-    def sort(self, reverse: bool = False) -> Dict[K, V]:
-        """
-        Sort the dictionary by its keys and return a new Dict.
+    def sort(self, *, reverse: bool = False) -> Dict[K, V]:
+        """Sort the dictionary by its keys and return a new Dict.
 
         Args:
-            reverse: Whether to sort in descending order. Defaults to False.
+            reverse (bool): Whether to sort in descending order. Defaults to False.
+
+        Returns:
+            Dict[K, V]: Sorted Dict by keys.
 
         ```python
         >>> import pyochain as pc
@@ -183,13 +198,17 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
         return self._new(_sort)
 
     def sort_values[U: SupportsRichComparison[Any]](
-        self: ProcessDict[K, U], reverse: bool = False
+        self: ProcessDict[K, U],
+        *,
+        reverse: bool = False,
     ) -> Dict[K, U]:
-        """
-        Sort the dictionary by its values and return a new Dict.
+        """Sort the dictionary by its values and return a new Dict.
 
         Args:
-            reverse: Whether to sort in descending order. Defaults to False.
+            reverse (bool): Whether to sort in descending order. Defaults to False.
+
+        Returns:
+            Dict[K, U]: Sorted Dict by values.
         ```python
         >>> import pyochain as pc
         >>> pc.Dict({"a": 2, "b": 1}).sort_values().inner()

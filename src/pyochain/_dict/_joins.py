@@ -13,11 +13,13 @@ if TYPE_CHECKING:
 
 class JoinsDict[K, V](MappingWrapper[K, V]):
     def inner_join[W](self, other: Mapping[K, W]) -> Dict[K, tuple[V, W]]:
-        """
-        Performs an inner join with another mapping based on keys.
+        """Performs an inner join with another mapping based on keys.
 
         Args:
-            other: The mapping to join with.
+            other(Mapping[K, W]): The mapping to join with.
+
+        Returns:
+            Dict[K, tuple[V, W]]: Joined Dict with tuples of values from both mappings.
 
         Only keys present in both mappings are kept.
         ```python
@@ -36,11 +38,13 @@ class JoinsDict[K, V](MappingWrapper[K, V]):
         return self._new(_inner_join)
 
     def left_join[W](self, other: Mapping[K, W]) -> Dict[K, tuple[V, W | None]]:
-        """
-        Performs a left join with another mapping based on keys.
+        """Performs a left join with another mapping based on keys.
 
         Args:
-            other: The mapping to join with.
+            other(Mapping[K, W]): The mapping to join with.
+
+        Returns:
+            Dict[K, tuple[V, W | None]]: Joined Dict with tuples of values, right side can be None.
 
         All keys from the left dictionary (self) are kept.
         ```python
@@ -59,11 +63,13 @@ class JoinsDict[K, V](MappingWrapper[K, V]):
         return self._new(_left_join)
 
     def diff(self, other: Mapping[K, V]) -> Dict[K, tuple[V | None, V | None]]:
-        """
-        Returns a dict of the differences between this dict and another.
+        """Returns a dict of the differences between this dict and another.
 
         Args:
-            other: The mapping to compare against.
+            other(Mapping[K, V]): The mapping to compare against.
+
+        Returns:
+            Dict[K, tuple[V | None, V | None]]: Dict with differences as (self_value, other_value) tuples.
 
         The keys of the returned dict are the keys that are not shared or have different values.
         The values are tuples containing the value from self and the value from other.
@@ -90,11 +96,13 @@ class JoinsDict[K, V](MappingWrapper[K, V]):
         return self._new(_diff)
 
     def merge(self, *others: Mapping[K, V]) -> Dict[K, V]:
-        """
-        Merge other dicts into this one.
+        """Merge other dicts into this one.
 
         Args:
-            *others: One or more mappings to merge into the current dictionary.
+            *others(Mapping[K, V]): One or more mappings to merge into the current dictionary.
+
+        Returns:
+            Dict[K, V]: Merged Dict with values from all dicts.
 
         ```python
         >>> import pyochain as pc
@@ -113,14 +121,18 @@ class JoinsDict[K, V](MappingWrapper[K, V]):
         return self._new(_merge)
 
     def merge_with(
-        self, *others: Mapping[K, V], func: Callable[[Iterable[V]], V]
+        self,
+        *others: Mapping[K, V],
+        func: Callable[[Iterable[V]], V],
     ) -> Dict[K, V]:
-        """
-        Merge dicts using a function to combine values for duplicate keys.
+        """Merge dicts using a function to combine values for duplicate keys.
 
         Args:
-            *others: One or more mappings to merge into the current dictionary.
-            func: Function to combine values for duplicate keys.
+            *others(Mapping[K, V]): One or more mappings to merge into the current dictionary.
+            func(Callable[[Iterable[V]], V]): Function to combine values for duplicate keys.
+
+        Returns:
+            Dict[K, V]: Merged Dict with combined values.
 
         A key may occur in more than one dict, and all values mapped from the key will be passed to the function as a list, such as func([val1, val2, ...]).
         ```python

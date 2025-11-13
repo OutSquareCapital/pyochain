@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import itertools
 from collections.abc import Callable, Iterable, Iterator
+from enum import StrEnum, auto
 from functools import partial
 from typing import TYPE_CHECKING, Any, Literal, overload
 
@@ -14,16 +15,37 @@ if TYPE_CHECKING:
     from ._main import Iter
 
 
+class Position(StrEnum):
+    """Enum representing the position of an element in an iterable.
+
+    Attributes:
+        FIRST: The element is the first in the iterable.
+        MIDDLE: The element is neither the first nor the last in the iterable.
+        LAST: The element is the last in the iterable.
+        ONLY: The element is the only one in the iterable.
+    """
+
+    FIRST = auto()
+    MIDDLE = auto()
+    LAST = auto()
+    ONLY = auto()
+
+
 class BaseTuples[T](IterWrapper[T]):
     def enumerate(self) -> Iter[tuple[int, T]]:
-        """
-        Return a Iter of (index, value) pairs.
+        """Return a Iter of (index, value) pairs.
+
+        Returns:
+            Iter[tuple[int, T]]: An iterable of (index, value) pairs.
+
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Iter.from_(["a", "b"]).enumerate().into(list)
         [(0, 'a'), (1, 'b')]
 
         ```
+
         """
         return self._lazy(enumerate)
 
@@ -36,17 +58,22 @@ class BaseTuples[T](IterWrapper[T]):
     @overload
     def combinations(self, r: Literal[5]) -> Iter[tuple[T, T, T, T, T]]: ...
     def combinations(self, r: int) -> Iter[tuple[T, ...]]:
-        """
-        Return all combinations of length r.
+        """Return all combinations of length r.
 
         Args:
-            r: Length of each combination.
+            r (int): Length of each combination.
+
+        Returns:
+            Iter[tuple[T, ...]]: An iterable of combinations.
+
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Iter.from_([1, 2, 3]).combinations(2).into(list)
         [(1, 2), (1, 3), (2, 3)]
 
         ```
+
         """
         return self._lazy(itertools.combinations, r)
 
@@ -59,17 +86,22 @@ class BaseTuples[T](IterWrapper[T]):
     @overload
     def permutations(self, r: Literal[5]) -> Iter[tuple[T, T, T, T, T]]: ...
     def permutations(self, r: int | None = None) -> Iter[tuple[T, ...]]:
-        """
-        Return all permutations of length r.
+        """Return all permutations of length r.
 
         Args:
-            r: Length of each permutation. Defaults to the length of the iterable.
+            r (int | None): Length of each permutation. Defaults to the length of the iterable.
+
+        Returns:
+            Iter[tuple[T, ...]]: An iterable of permutations.
+
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Iter.from_([1, 2, 3]).permutations(2).into(list)
         [(1, 2), (1, 3), (2, 1), (2, 3), (3, 1), (3, 2)]
 
         ```
+
         """
         return self._lazy(itertools.permutations, r)
 
@@ -79,36 +111,48 @@ class BaseTuples[T](IterWrapper[T]):
     def combinations_with_replacement(self, r: Literal[3]) -> Iter[tuple[T, T, T]]: ...
     @overload
     def combinations_with_replacement(
-        self, r: Literal[4]
+        self,
+        r: Literal[4],
     ) -> Iter[tuple[T, T, T, T]]: ...
     @overload
     def combinations_with_replacement(
-        self, r: Literal[5]
+        self,
+        r: Literal[5],
     ) -> Iter[tuple[T, T, T, T, T]]: ...
     def combinations_with_replacement(self, r: int) -> Iter[tuple[T, ...]]:
-        """
-        Return all combinations with replacement of length r.
+        """Return all combinations with replacement of length r.
 
         Args:
-            r: Length of each combination.
+            r (int): Length of each combination.
+
+        Returns:
+            Iter[tuple[T, ...]]: An iterable of combinations with replacement.
+
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Iter.from_([1, 2, 3]).combinations_with_replacement(2).into(list)
         [(1, 1), (1, 2), (1, 3), (2, 2), (2, 3), (3, 3)]
 
         ```
+
         """
         return self._lazy(itertools.combinations_with_replacement, r)
 
     def pairwise(self) -> Iter[tuple[T, T]]:
-        """
-        Return an iterator over pairs of consecutive elements.
+        """Return an iterator over pairs of consecutive elements.
+
+        Returns:
+            Iter[tuple[T, T]]: An iterable of pairs of consecutive elements.
+
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Iter.from_([1, 2, 3]).pairwise().into(list)
         [(1, 2), (2, 3)]
 
         ```
+
         """
         return self._lazy(itertools.pairwise)
 
@@ -137,10 +181,15 @@ class BaseTuples[T](IterWrapper[T]):
         /,
     ) -> Iter[tuple[R1, R2, R3, R4]]: ...
     def map_juxt(self, *funcs: Callable[[T], object]) -> Iter[tuple[object, ...]]:
-        """
-        Apply several functions to each item.
+        """Apply several functions to each item.
 
         Returns a new Iter where each item is a tuple of the results of applying each function to the original item.
+
+        Args:
+            *funcs (Callable[[T], object]): Functions to apply to each item.
+
+        Returns:
+            Iter[tuple[object, ...]]: An iterable of tuples containing the results of each function.
         ```python
         >>> import pyochain as pc
         >>> def is_even(n: int) -> bool:
@@ -156,14 +205,18 @@ class BaseTuples[T](IterWrapper[T]):
         return self._lazy(partial(map, cz.functoolz.juxt(*funcs)))
 
     def adjacent(
-        self, predicate: Callable[[T], bool], distance: int = 1
+        self,
+        predicate: Callable[[T], bool],
+        distance: int = 1,
     ) -> Iter[tuple[bool, T]]:
-        """
-        Return an iterable over (bool, item) tuples.
+        """Return an iterable over (bool, item) tuples.
 
         Args:
-            predicate: Function to determine if an item satisfies the condition.
-            distance: Number of places to consider as adjacent. Defaults to 1.
+            predicate (Callable[[T], bool]): Function to determine if an item satisfies the condition.
+            distance (int): Number of places to consider as adjacent. Defaults to 1.
+
+        Returns:
+            Iter[tuple[bool, T]]: An iterable of (bool, item) tuples.
 
         The output is a sequence of tuples where the item is drawn from iterable.
 
@@ -191,12 +244,13 @@ class BaseTuples[T](IterWrapper[T]):
         The predicate function will only be called once for each item in the iterable.
 
         See also groupby_transform, which can be used with this function to group ranges of items with the same bool value.
+
         """
         return self._lazy(partial(mit.adjacent, predicate, distance=distance))
 
     def classify_unique(self) -> Iter[tuple[T, bool, bool]]:
-        """
-        Classify each element in terms of its uniqueness.\n
+        """Classify each element in terms of its uniqueness.
+
         For each element in the input iterable, return a 3-tuple consisting of:
 
         - The element itself
@@ -204,6 +258,9 @@ class BaseTuples[T](IterWrapper[T]):
         - False if this element has been seen anywhere in the input before, True otherwise (i.e. the equivalent of unique_everseen)
 
         This function is analogous to unique_everseen and is subject to the same performance considerations.
+
+        Returns:
+            Iter[tuple[T, bool, bool]]: An iterable of (element, is_new, is_unique) tuples.
 
         ```python
         >>> import pyochain as pc
@@ -280,13 +337,15 @@ class BaseTuples[T](IterWrapper[T]):
         valuefunc: Callable[[T], V] | None = None,
         reducefunc: Any = None,
     ) -> Iter[tuple[Any, ...]]:
-        """
-        An extension of ``Iter.groupby`` that can apply transformations to the grouped data.
+        """An extension of ``Iter.groupby`` that can apply transformations to the grouped data.
 
         Args:
-            keyfunc: Function to compute the key for grouping. Defaults to None.
-            valuefunc: Function to transform individual items after grouping. Defaults to None.
-            reducefunc: Function to transform each group of items. Defaults to None.
+            keyfunc (Callable[[T], U] | None): Function to compute the key for grouping. Defaults to None.
+            valuefunc (Callable[[T], V] | None): Function to transform individual items after grouping. Defaults to None.
+            reducefunc (Any): Function to transform each group of items. Defaults to None.
+
+        Returns:
+            Iter[tuple[Any, ...]]: An iterable of transformed groups.
 
         Example:
         ```python
@@ -318,9 +377,53 @@ class BaseTuples[T](IterWrapper[T]):
         [(0, 'ab'), (1, 'cde'), (2, 'fgh'), (3, 'i')]
 
         ```
+
         """
 
         def _group_by_transform(data: Iterable[T]) -> Iterator[tuple[Any, ...]]:
             return mit.groupby_transform(data, keyfunc, valuefunc, reducefunc)
 
         return self._lazy(_group_by_transform)
+
+    def with_position(self) -> Iter[tuple[Position, T]]:
+        """Return an iterable over (`Position`, `T`) tuples.
+
+        The `Position` indicates whether the item `T` is the first, middle, last, or only element in the iterable.
+
+        Returns:
+            Iter[tuple[Position, T]]: An iterable of (`Position`, item) tuples.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Seq(["a", "b", "c"]).iter().with_position().collect()
+        Seq([(<Position.FIRST: 'first'>, 'a'), (<Position.MIDDLE: 'middle'>, 'b'), (<Position.LAST: 'last'>, 'c')])
+        >>> pc.Seq(["a"]).iter().with_position().collect()
+        Seq([(<Position.ONLY: 'only'>, 'a')])
+
+        ```
+
+        """
+
+        def gen(data: Iterable[T]) -> Iterator[tuple[Position, T]]:
+            it = iter(data)
+
+            try:
+                first = next(it)
+            except StopIteration:
+                return
+
+            try:
+                second = next(it)
+            except StopIteration:
+                yield (Position.ONLY, first)
+                return
+            yield (Position.FIRST, first)
+
+            current: T = second
+            for nxt in it:
+                yield (Position.MIDDLE, current)
+                current = nxt
+            yield (Position.LAST, current)
+
+        return self._lazy(gen)

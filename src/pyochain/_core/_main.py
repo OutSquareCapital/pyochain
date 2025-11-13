@@ -19,8 +19,7 @@ class Pipeable:
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> R:
-        """
-        Pipe the instance in the function and return the result.
+        """Pipe the instance in the function and return the result.
 
         Accept additional arguments to pass to the function.
 
@@ -33,6 +32,7 @@ class Pipeable:
 
         Returns:
             R: The result of the function.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -50,10 +50,13 @@ class Pipeable:
 
 
 class CommonBase[T](ABC, Pipeable):
-    """
-    Base class for all wrappers.
+    """Base class for all wrappers.
+
     You can subclass this to create your own wrapper types.
     The pipe unwrap method must be implemented to allow piping functions that transform the underlying data type, whilst retaining the wrapper.
+
+    Args:
+        data (T): The underlying data to wrap.
     """
 
     _inner: T
@@ -69,15 +72,15 @@ class CommonBase[T](ABC, Pipeable):
         func: Callable[Concatenate[T, P], Any],
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> Any:
+    ) -> CommonBase[Any]:
         raise NotImplementedError
 
-    def println(self, pretty: bool = True) -> Self:
-        """
-        Print the underlying data and return self for chaining.
+    def println(self, *, pretty: bool = True) -> Self:
+        """Print the underlying data and return self for chaining.
 
         Useful for debugging, simply insert `.println()` in the chain,
         and then removing it will not affect the rest of the chain.
+
         Args:
             pretty (bool): Whether to pretty print the data. Defaults to True.
 
@@ -93,8 +96,8 @@ class CommonBase[T](ABC, Pipeable):
         return self
 
     def inner(self) -> T:
-        """
-        Get the underlying data.
+        """Get the underlying data.
+
         This is a terminal operation that ends the chain.
 
         Returns:
@@ -104,8 +107,10 @@ class CommonBase[T](ABC, Pipeable):
 
     @deprecated("Use .inner() instead")
     def unwrap(self) -> T:
-        """
-        Deprecated: Use `inner()` instead.
+        """Deprecated: Use `inner()` instead.
+
+        Returns:
+            T: The underlying data.
         """
         return self.inner()
 
@@ -115,12 +120,12 @@ class CommonBase[T](ABC, Pipeable):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> R:
-        """
-        Pass the *unwrapped* underlying data into a function.
+        """Pass the *unwrapped* underlying data into a function.
 
         The result is not wrapped.
 
         This is a core functionality that allows ending the chain whilst keeping the code style consistent.
+
         Args:
             func (Callable[Concatenate[T, P], R]): Function to apply to the underlying data.
             *args (P.args): Positional arguments to pass to the function.
@@ -128,6 +133,7 @@ class CommonBase[T](ABC, Pipeable):
 
         Returns:
             R: The result of the function.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -139,14 +145,14 @@ class CommonBase[T](ABC, Pipeable):
         return func(self.inner(), *args, **kwargs)
 
     def equals_to(self, other: Self | T) -> bool:
-        """
-        Check if two records are equal based on their data.
+        """Check if two records are equal based on their data.
 
         Args:
             other (Self | T): Another instance or corresponding underlying data to compare against.
 
         Returns:
             bool: True if the underlying data are equal, False otherwise.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -178,7 +184,7 @@ class IterWrapper[T](CommonBase[Iterable[T]]):
     ) -> Seq[U]:
         from .._iter import Seq
 
-        def _(data: Iterable[T]):
+        def _(data: Iterable[T]) -> Seq[U]:
             return Seq(factory(data, *args, **kwargs))
 
         return self.into(_)
@@ -191,7 +197,7 @@ class IterWrapper[T](CommonBase[Iterable[T]]):
     ) -> Iter[U]:
         from .._iter import Iter
 
-        def _(data: Iterable[T]):
+        def _(data: Iterable[T]) -> Iter[U]:
             return Iter(factory(data, *args, **kwargs))
 
         return self.into(_)
@@ -214,8 +220,7 @@ class MappingWrapper[K, V](CommonBase[dict[K, V]]):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Dict[KU, VU]:
-        """
-        Apply a function to the underlying dict and return a Dict of the result.
+        """Apply a function to the underlying dict and return a Dict of the result.
 
         Allow to pass user defined functions that transform the dict while retaining the Dict wrapper.
 
@@ -226,6 +231,7 @@ class MappingWrapper[K, V](CommonBase[dict[K, V]]):
 
         Returns:
             Dict[KU, VU]: A new Dict instance containing the result of the function.
+
         Example:
         ```python
         >>> import pyochain as pc

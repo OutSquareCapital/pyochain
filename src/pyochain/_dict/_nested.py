@@ -13,13 +13,15 @@ if TYPE_CHECKING:
 
 
 def _drop_nones(
-    data: dict[Any, Any] | list[Any], remove_empty: bool = True
+    data: dict[Any, Any] | list[Any],
+    *,
+    remove_empty: bool = True,
 ) -> dict[Any, Any] | list[Any] | None:
     match data:
         case dict():
             pruned_dict: dict[Any, Any] = {}
             for k, v in data.items():
-                pruned_v = _drop_nones(v, remove_empty)
+                pruned_v = _drop_nones(v, remove_empty=remove_empty)
 
                 is_empty = remove_empty and (pruned_v is None or pruned_v in ({}, []))
                 if not is_empty:
@@ -27,7 +29,9 @@ def _drop_nones(
             return pruned_dict if pruned_dict or not remove_empty else None
 
         case list():
-            pruned_list = [_drop_nones(item, remove_empty) for item in data]
+            pruned_list = [
+                _drop_nones(item, remove_empty=remove_empty) for item in data
+            ]
             if remove_empty:
                 pruned_list = [
                     item
@@ -49,13 +53,15 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Dict[K, R]:
-        """
-        Apply a function to each value after wrapping it in a Dict.
+        """Apply a function to each value after wrapping it in a Dict.
 
         Args:
-            func: Function to apply to each value after wrapping it in a Dict.
-            *args: Positional arguments to pass to the function.
-            **kwargs: Keyword arguments to pass to the function.
+            func (Callable[Concatenate[Dict[K, U], P], R]): Function to apply to each value after wrapping it in a Dict.
+            *args (P.args): Positional arguments to pass to the function.
+            **kwargs (P.kwargs): Keyword arguments to pass to the function.
+
+        Returns:
+            Dict[K, R]: Dict with function results as values.
 
         Syntactic sugar for `map_values(lambda data: func(pc.Dict(data), *args, **kwargs))`
         ```python
@@ -82,14 +88,18 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         return self._new(_struct)
 
     def flatten(
-        self: NestedDict[str, Any], sep: str = ".", max_depth: int | None = None
+        self: NestedDict[str, Any],
+        sep: str = ".",
+        max_depth: int | None = None,
     ) -> Dict[str, Any]:
-        """
-        Flatten a nested dictionary, concatenating keys with the specified separator.
+        """Flatten a nested dictionary, concatenating keys with the specified separator.
 
         Args:
-            sep: Separator to use when concatenating keys
-            max_depth: Maximum depth to flatten. If None, flattens completely.
+            sep (str): Separator to use when concatenating keys
+            max_depth (int | None): Maximum depth to flatten. If None, flattens completely.
+
+        Returns:
+            Dict[str, Any]: Flattened Dict with concatenated keys.
         ```python
         >>> import pyochain as pc
         >>> data = {
@@ -107,7 +117,9 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         """
 
         def _flatten(
-            d: Mapping[Any, Any], parent_key: str = "", current_depth: int = 1
+            d: Mapping[Any, Any],
+            parent_key: str = "",
+            current_depth: int = 1,
         ) -> dict[str, Any]:
             def _can_recurse(v: object) -> TypeIs[Mapping[Any, Any]]:
                 return isinstance(v, Mapping) and (
@@ -128,8 +140,10 @@ class NestedDict[K, V](MappingWrapper[K, V]):
     def unpivot(
         self: NestedDict[str, Mapping[str, Any]],
     ) -> Dict[str, dict[str, Any]]:
-        """
-        Unpivot a nested dictionary by swapping rows and columns.
+        """Unpivot a nested dictionary by swapping rows and columns.
+
+        Returns:
+            Dict[str, dict[str, Any]]: Unpivoted Dict with columns as keys and rows as sub-dicts.
 
         Example:
         ```python
@@ -155,12 +169,14 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         return self._new(_unpivot)
 
     def with_nested_key(self, *keys: K, value: V) -> Dict[K, V]:
-        """
-        Set a nested key path and return a new Dict with new, potentially nested, key value pair.
+        """Set a nested key path and return a new Dict with new, potentially nested, key value pair.
 
         Args:
-            *keys: Sequence of keys representing the nested path.
-            value: Value to set at the specified nested path.
+            *keys (K): Sequence of keys representing the nested path.
+            value (V): Value to set at the specified nested path.
+
+        Returns:
+            Dict[K, V]: Dict with the new nested key-value pair.
         ```python
         >>> import pyochain as pc
         >>> purchase = {
@@ -182,11 +198,13 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         return self._new(_with_nested_key)
 
     def pluck[U: str | int](self: NestedDict[U, Any], *keys: str) -> Dict[U, Any]:
-        """
-        Extract values from nested dictionaries using a sequence of keys.
+        """Extract values from nested dictionaries using a sequence of keys.
 
         Args:
-            *keys: Sequence of keys to extract values from the nested dictionaries.
+            *keys (str): Sequence of keys to extract values from the nested dictionaries.
+
+        Returns:
+            Dict[U, Any]: Dict with extracted values from nested dictionaries.
         ```python
         >>> import pyochain as pc
         >>> data = {
@@ -198,7 +216,6 @@ class NestedDict[K, V](MappingWrapper[K, V]):
 
         ```
         """
-
         getter = partial(cz.dicttoolz.get_in, keys)
 
         def _pluck(data: Mapping[U, Any]) -> dict[U, Any]:
@@ -206,13 +223,15 @@ class NestedDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_pluck)
 
-    def get_in(self, *keys: K, default: Any = None) -> Any:
-        """
-        Retrieve a value from a nested dictionary structure.
+    def get_in[T](self, *keys: K, default: T = None) -> V | T:
+        """Retrieve a value from a nested dictionary structure.
 
         Args:
-            *keys: Sequence of keys representing the nested path to retrieve the value.
-            default: Default value to return if the keys do not exist.
+            *keys (K): Sequence of keys representing the nested path to retrieve the value.
+            default (T): Default value to return if the keys do not exist.
+
+        Returns:
+            V | T: Value at the nested path or default if not found.
 
         ```python
         >>> import pyochain as pc
@@ -225,19 +244,21 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         ```
         """
 
-        def _get_in(data: Mapping[K, V]) -> Any:
+        def _get_in(data: Mapping[K, V]) -> V | T:
             return cz.dicttoolz.get_in(keys, data, default)
 
         return self.into(_get_in)
 
-    def drop_nones(self, remove_empty: bool = True) -> Dict[K, V]:
-        """
-        Recursively drop None values from the dictionary.
+    def drop_nones(self, *, remove_empty: bool = True) -> Dict[K, V]:
+        """Recursively drop None values from the dictionary.
 
         Options to also remove empty dicts and lists.
 
         Args:
-            remove_empty: If True (default), removes `None`, `{}` and `[]`.
+            remove_empty (bool): If True (default), removes `None`, `{}` and `[]`.
+
+        Returns:
+            Dict[K, V]: Dict with None values and optionally empty structures removed.
 
         Example:
         ```python
@@ -266,7 +287,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         """
 
         def _apply_drop_nones(data: dict[K, V]) -> dict[Any, Any]:
-            result = _drop_nones(data, remove_empty)
-            return result if isinstance(result, dict) else dict()
+            result = _drop_nones(data, remove_empty=remove_empty)
+            return result if isinstance(result, dict) else {}
 
         return self._new(_apply_drop_nones)

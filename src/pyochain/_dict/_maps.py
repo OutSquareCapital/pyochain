@@ -15,11 +15,13 @@ if TYPE_CHECKING:
 
 class MapDict[K, V](MappingWrapper[K, V]):
     def map_keys[T](self, func: Callable[[K], T]) -> Dict[T, V]:
-        """
-        Return keys transformed by func.
+        """Return keys transformed by func.
 
         Args:
-            func: Function to apply to each key in the dictionary.
+            func (Callable[[K], T]): Function to apply to each key in the dictionary.
+
+        Returns:
+            Dict[T, V]: Dict with transformed keys.
 
         ```python
         >>> import pyochain as pc
@@ -36,11 +38,13 @@ class MapDict[K, V](MappingWrapper[K, V]):
         return self._new(partial(cz.dicttoolz.keymap, func))
 
     def map_values[T](self, func: Callable[[V], T]) -> Dict[K, T]:
-        """
-        Return values transformed by func.
+        """Return values transformed by func.
 
         Args:
-            func: Function to apply to each value in the dictionary.
+            func (Callable[[V], T]): Function to apply to each value in the dictionary.
+
+        Returns:
+            Dict[K, T]: Dict with transformed values.
 
         ```python
         >>> import pyochain as pc
@@ -58,11 +62,13 @@ class MapDict[K, V](MappingWrapper[K, V]):
         self,
         func: Callable[[tuple[K, V]], tuple[KR, VR]],
     ) -> Dict[KR, VR]:
-        """
-        Transform (key, value) pairs using a function that takes a (key, value) tuple.
+        """Transform (key, value) pairs using a function that takes a (key, value) tuple.
 
         Args:
-            func: Function to transform each (key, value) pair into a new (key, value) tuple.
+            func (Callable[[tuple[K, V]], tuple[KR, VR]]): Function to transform each (key, value) pair into a new (key, value) tuple.
+
+        Returns:
+            Dict[KR, VR]: Dict with transformed items.
 
         ```python
         >>> import pyochain as pc
@@ -79,11 +85,13 @@ class MapDict[K, V](MappingWrapper[K, V]):
         self,
         func: Callable[[K, V], tuple[KR, VR]],
     ) -> Dict[KR, VR]:
-        """
-        Transform (key, value) pairs using a function that takes key and value as separate arguments.
+        """Transform (key, value) pairs using a function that takes key and value as separate arguments.
 
         Args:
-            func: Function to transform each key and value into a new (key, value) tuple.
+            func (Callable[[K, V], tuple[KR, VR]]): Function to transform each key and value into a new (key, value) tuple.
+
+        Returns:
+            Dict[KR, VR]: Dict with transformed items.
 
         ```python
         >>> import pyochain as pc
@@ -102,8 +110,11 @@ class MapDict[K, V](MappingWrapper[K, V]):
         return self._new(_map_kv)
 
     def invert(self) -> Dict[V, list[K]]:
-        """
-        Invert the dictionary, grouping keys by common (and hashable) values.
+        """Invert the dictionary, grouping keys by common (and hashable) values.
+
+        Returns:
+            Dict[V, list[K]]: Inverted Dict with values as keys and lists of original keys as values.
+
         ```python
         >>> import pyochain as pc
         >>> d = {"a": 1, "b": 2, "c": 1}
@@ -122,8 +133,11 @@ class MapDict[K, V](MappingWrapper[K, V]):
         return self._new(_invert)
 
     def implode(self) -> Dict[K, list[V]]:
-        """
-        Nest all the values in lists.
+        """Nest all the values in lists.
+
+        Returns:
+            Dict[K, list[V]]: Dict with all values nested in lists.
+
         syntactic sugar for map_values(lambda v: [v])
         ```python
         >>> import pyochain as pc

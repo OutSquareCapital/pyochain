@@ -19,42 +19,44 @@ def _measure(func: Tested, iterations: int) -> float:
     return statistics.median(all_time)
 
 
+def _square(x: int) -> int:
+    return x * x
+
+
 def test_performance_iter_map(iterations: int) -> None:
     def _add_measure(data: pc.Dict[str, float], func: Tested) -> pc.Dict[str, float]:
         return data.with_key(func.__name__, _measure(func, iterations))
-
-    def square(x: int) -> int:
-        return x * x
 
     def _iter_map() -> Sequence[Sequence[int]]:
         return (
             pc.Seq(OUTER)
             .iter()
-            .map(lambda _: pc.Seq(INNER).iter().map(square).collect().inner())
+            .map(lambda _: pc.Seq(INNER).iter().map(_square).collect().inner())
             .collect()
             .inner()
         )
 
     def _built_in_map() -> Sequence[Sequence[int]]:
-        return list(map(lambda _: list(map(square, INNER)), OUTER))
+        return list(map(lambda _: list(map(_square, INNER)), OUTER))
 
     def _for_loop() -> Sequence[Sequence[int]]:
         total: list[list[int]] = []
         for _ in OUTER:
-            result: list[int] = []
-            for x in INNER:
-                result.append(square(x))
+            result: list[int] = [_square(x) for x in INNER]
             total.append(result)
         return total
 
     def _comprehension() -> Sequence[Sequence[int]]:
-        return [[square(x) for x in INNER] for _ in OUTER]
+        return [[_square(x) for x in INNER] for _ in OUTER]
 
-    def _assert_equals():
-        assert _iter_map() == _built_in_map() == _for_loop() == _comprehension()
+    def _assert_equals() -> None:
+        res = _iter_map() == _built_in_map() == _for_loop() == _comprehension()
+        if not res:
+            msg = "Results of different methods do not match."
+            raise AssertionError(msg)
         print("okay, starting performance test...")
 
-    def _run_test():
+    def _run_test() -> pc.Dict[str, float]:
         return (
             pc.Dict[str, float]({})
             .pipe(_add_measure, _iter_map)

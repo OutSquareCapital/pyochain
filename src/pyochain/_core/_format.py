@@ -27,6 +27,7 @@ def dict_repr(
     max_items: int = 20,
     depth: int = 3,
     width: int = 80,
+    *,
     compact: bool = True,
 ) -> str:
     truncated = dict(list(v.items())[:max_items])

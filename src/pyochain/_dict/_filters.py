@@ -18,13 +18,17 @@ class FilterDict[K, V](MappingWrapper[K, V]):
     @overload
     def filter_keys(self, predicate: Callable[[K], bool]) -> Dict[K, V]: ...
     def filter_keys[U](
-        self, predicate: Callable[[K], bool | TypeIs[U]]
+        self,
+        predicate: Callable[[K], bool | TypeIs[U]],
     ) -> Dict[K, V] | Dict[U, V]:
-        """
-        Return keys that satisfy predicate.
+        """Return keys that satisfy predicate.
 
         Args:
-            predicate: Function to determine if a key should be included.
+            predicate (Callable[[K], bool | TypeIs[U]]): Function to determine if a key should be included.
+
+        Returns:
+            Dict[K, V] | Dict[U, V]: Filtered Dict with keys satisfying predicate.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -41,13 +45,17 @@ class FilterDict[K, V](MappingWrapper[K, V]):
     @overload
     def filter_values(self, predicate: Callable[[V], bool]) -> Dict[K, V]: ...
     def filter_values[U](
-        self, predicate: Callable[[V], bool] | Callable[[V], TypeIs[U]]
+        self,
+        predicate: Callable[[V], bool] | Callable[[V], TypeIs[U]],
     ) -> Dict[K, V] | Dict[K, U]:
-        """
-        Return items whose values satisfy predicate.
+        """Return items whose values satisfy predicate.
 
         Args:
-            predicate: Function to determine if a value should be included.
+            predicate (Callable[[V], bool] | Callable[[V], TypeIs[U]]): Function to determine if a value should be included.
+
+        Returns:
+            Dict[K, V] | Dict[K, U]: Filtered Dict with values satisfying predicate
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -62,11 +70,14 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         return self._new(partial(cz.dicttoolz.valfilter, predicate))
 
     def filter_items(self, predicate: Callable[[tuple[K, V]], bool]) -> Dict[K, V]:
-        """
-        Filter items by predicate applied to (key, value) tuples.
+        """Filter items by predicate applied to (key, value) tuples.
 
         Args:
-            predicate: Function to determine if a (key, value) pair should be included.
+            predicate (Callable[[tuple[K, V]], bool]): Function to determine if a (key, value) pair should be included.
+
+        Returns:
+            Dict[K, V]: A new Dict instance containing only the items that satisfy the predicate.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -85,11 +96,14 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         return self._new(partial(cz.dicttoolz.itemfilter, predicate))
 
     def filter_kv(self, predicate: Callable[[K, V], bool]) -> Dict[K, V]:
-        """
-        Filter items by predicate applied to unpacked (key, value) tuples.
+        """Filter items by predicate applied to unpacked (key, value) tuples.
 
         Args:
-            predicate: Function to determine if a key-value pair should be included.
+            predicate(Callable[[K, V], bool]): Function to determine if a key-value pair should be included.
+
+        Returns:
+            Dict[K, V]: Filtered Dict with items satisfying predicate.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -113,15 +127,18 @@ class FilterDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_filter_kv)
 
-    def filter_attr[U](self, attr: str, dtype: type[U] = object) -> Dict[K, U]:
-        """
-        Filter values that have a given attribute.
+    def filter_attr[U](self, attr: str, dtype: type[U] = object) -> Dict[K, U]:  # noqa: ARG002
+        """Filter values that have a given attribute.
 
         This does not enforce type checking at runtime for performance considerations.
 
         Args:
-            attr: Attribute name to check for.
-            dtype: Optional expected type of the attribute for type hinting.
+            attr (str): Attribute name to check for.
+            dtype (type[U]): Optional expected type of the attribute for type hinting.
+
+        Returns:
+            Dict[K, U]: A new Dict instance containing only the items whose values have the specified attribute.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -142,11 +159,14 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         return self._new(_filter_attr)
 
     def filter_type[R](self, dtype: type[R]) -> Dict[K, R]:
-        """
-        Filter values by type.
+        """Filter values by type.
 
         Args:
-            dtype: Type to filter values by.
+            dtype (type[R]): Type to filter values by.
+
+        Returns:
+            Dict[K, R]: A new Dict instance containing only the items whose values are of the
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -166,14 +186,19 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         return self._new(_filter_type)
 
     def filter_subclass[U: type[Any], R](
-        self: FilterDict[K, U], parent: type[R], keep_parent: bool = True
+        self: FilterDict[K, U],
+        parent: type[R],
+        *,
+        keep_parent: bool = True,
     ) -> Dict[K, type[R]]:
-        """
-        Filter values that are subclasses of a given parent class.
+        """Filter values that are subclasses of a given parent class.
 
         Args:
-            parent: Parent class to check against.
-            keep_parent: Whether to include the parent class itself. Defaults to True.
+            parent (type[R]): Parent class to check against.
+            keep_parent (bool): Whether to include the parent class itself. Defaults to True.
+
+        Returns:
+            Dict[K, type[R]]: A new Dict instance containing only the items whose values are subclasses of the specified parent class.
 
         ```python
         >>> import pyochain as pc
@@ -198,19 +223,20 @@ class FilterDict[K, V](MappingWrapper[K, V]):
             def _(x: type[Any]) -> TypeIs[type[R]]:
                 if keep_parent:
                     return issubclass(x, parent)
-                else:
-                    return issubclass(x, parent) and x is not parent
+                return issubclass(x, parent) and x is not parent
 
             return cz.dicttoolz.valfilter(_, data)
 
         return self._new(_filter_subclass)
 
     def intersect_keys(self, *others: Mapping[K, V]) -> Dict[K, V]:
-        """
-        Keep only keys present in self and all others mappings.
+        """Keep only keys present in self and all others mappings.
 
         Args:
-            *others: Other mappings to intersect keys with.
+            *others (Mapping[K, V]): Other mappings to intersect keys with.
+
+        Returns:
+            Dict[K, V]: A new Dict with only the intersected keys.
 
         ```python
         >>> import pyochain as pc
@@ -232,12 +258,13 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         return self._new(_intersect_keys)
 
     def diff_keys(self, *others: Mapping[K, V]) -> Dict[K, V]:
-        """
-        Keep only keys present in self but not in others mappings.
+        """Keep only keys present in self but not in others mappings.
 
         Args:
-            *others: Other mappings to exclude keys from.
+            *others (Mapping[K, V]): Other mappings to exclude keys from.
 
+        Returns:
+            Dict[K, V]: A new Dict with only the differing keys.
         ```python
         >>> import pyochain as pc
         >>> d1 = {"a": 1, "b": 2, "c": 3}

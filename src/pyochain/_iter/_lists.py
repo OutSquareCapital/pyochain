@@ -14,10 +14,14 @@ if TYPE_CHECKING:
 
 class BaseList[T](IterWrapper[T]):
     def implode(self) -> Iter[list[T]]:
-        """
-        Wrap each element in the iterable into a list.
+        """Wrap each element in the iterable into a list.
 
         Syntactic sugar for `Iter.map(lambda x: [x])`.
+
+        Returns:
+            Iter[list[T]]: An iterable of lists, each containing a single element from the original iterable.
+
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Iter.from_(range(5)).implode().into(list)
@@ -35,15 +39,19 @@ class BaseList[T](IterWrapper[T]):
         self,
         pred: Callable[[T], bool],
         maxsplit: int = -1,
+        *,
         keep_separator: bool = False,
     ) -> Iter[list[T]]:
-        """
-        Yield lists of items from iterable, where each list is delimited by an item where callable pred returns True.
+        """Yield lists of items from iterable, where each list is delimited by an item where callable pred returns True.
 
         Args:
-            pred: Function to determine the split points.
-            maxsplit: Maximum number of splits to perform. Defaults to -1 (no limit).
-            keep_separator: Whether to include the separator in the output. Defaults to False.
+            pred (Callable[[T], bool]): Function to determine the split points.
+            maxsplit (int): Maximum number of splits to perform. Defaults to -1 (no limit).
+            keep_separator (bool): Whether to include the separator in the output. Defaults to False.
+
+        Returns:
+            Iter[list[T]]: An iterable of lists, each containing a segment of the original iterable.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -76,14 +84,19 @@ class BaseList[T](IterWrapper[T]):
         return self._lazy(mit.split_at, pred, maxsplit, keep_separator)
 
     def split_after(
-        self, predicate: Callable[[T], bool], max_split: int = -1
+        self,
+        predicate: Callable[[T], bool],
+        max_split: int = -1,
     ) -> Iter[list[T]]:
-        """
-        Yield lists of items from iterable, where each list ends with an item where callable pred returns True.
+        """Yield lists of items from iterable, where each list ends with an item where callable pred returns True.
 
         Args:
-            predicate: Function to determine the split points.
-            max_split: Maximum number of splits to perform. Defaults to -1 (no limit).
+            predicate (Callable[[T], bool]): Function to determine the split points.
+            max_split (int): Maximum number of splits to perform. Defaults to -1 (no limit).
+
+        Returns:
+            Iter[list[T]]: An iterable of lists of items.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -103,14 +116,19 @@ class BaseList[T](IterWrapper[T]):
         return self._lazy(mit.split_after, predicate, max_split)
 
     def split_before(
-        self, predicate: Callable[[T], bool], max_split: int = -1
+        self,
+        predicate: Callable[[T], bool],
+        max_split: int = -1,
     ) -> Iter[list[T]]:
-        """
-        Yield lists of items from iterable, where each list ends with an item where callable pred returns True.
+        """Yield lists of items from iterable, where each list ends with an item where callable pred returns True.
 
         Args:
-            predicate: Function to determine the split points.
-            max_split: Maximum number of splits to perform. Defaults to -1 (no limit).
+            predicate (Callable[[T], bool]): Function to determine the split points.
+            max_split (int): Maximum number of splits to perform. Defaults to -1 (no limit).
+
+        Returns:
+            Iter[list[T]]: An iterable of lists of items.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -136,11 +154,14 @@ class BaseList[T](IterWrapper[T]):
         return self._lazy(mit.split_before, predicate, max_split)
 
     def split_into(self, sizes: Iterable[int | None]) -> Iter[list[T]]:
-        """
-        Yield a list of sequential items from iterable of length 'n' for each integer 'n' in sizes.
+        """Yield a list of sequential items from iterable of length 'n' for each integer 'n' in sizes.
 
         Args:
-            sizes: Iterable of integers specifying the sizes of each chunk. Use None for the remainder.
+            sizes (Iterable[int | None]): Iterable of integers specifying the sizes of each chunk. Use None for the remainder.
+
+        Returns:
+            Iter[list[T]]: An iterable of lists, each containing a chunk of the original iterable.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -182,16 +203,23 @@ class BaseList[T](IterWrapper[T]):
         return self._lazy(mit.split_into, sizes)
 
     def split_when(
-        self, predicate: Callable[[T, T], bool], max_split: int = -1
+        self,
+        predicate: Callable[[T, T], bool],
+        max_split: int = -1,
     ) -> Iter[list[T]]:
-        """
-        Split iterable into pieces based on the output of a predicate function.
+        """Split iterable into pieces based on the output of a predicate function.
+
+        The example below shows how to find runs of increasing numbers,
+        by splitting the iterable when element i is larger than element i + 1.
 
         Args:
-            predicate: Function that takes successive pairs of items and returns True if the iterable should be split.
-            max_split: Maximum number of splits to perform. Defaults to -1 (no limit).
+            predicate (Callable[[T, T], bool]): Function that takes successive pairs of items and returns True if the iterable should be split.
+            max_split (int): Maximum number of splits to perform. Defaults to -1 (no limit).
 
-        For example, to find runs of increasing numbers, split the iterable when element i is larger than element i + 1:
+        Returns:
+            Iter[list[T]]: An iterable of lists of items.
+
+        Example:
         ```python
         >>> import pyochain as pc
         >>> data = pc.Seq([1, 2, 3, 3, 2, 5, 2, 4, 2])
@@ -211,24 +239,26 @@ class BaseList[T](IterWrapper[T]):
         """
         return self._lazy(mit.split_when, predicate, max_split)
 
-    def chunks(self, n: int, strict: bool = False) -> Iter[list[T]]:
-        """
-        Break iterable into lists of length n.
+    def chunks(self, n: int, *, strict: bool = False) -> Iter[list[T]]:
+        """Break iterable into lists of length n.
 
         By default, the last yielded list will have fewer than *n* elements if the length of *iterable* is not divisible by *n*.
 
         To use a fill-in value instead, see the :func:`grouper` recipe.
 
         If:
-
-        - the length of *iterable* is not divisible by *n*
-        - *strict* is `True`
+            - the length of *iterable* is not divisible by *n*
+            - *strict* is `True`
 
         then `ValueError` will be raised before the last list is yielded.
 
         Args:
-            n: Number of elements in each chunk.
-            strict: Whether to raise an error if the last chunk is smaller than n. Defaults to False.
+            n (int): Number of elements in each chunk.
+            strict (bool): Whether to raise an error if the last chunk is smaller than n. Defaults to False.
+
+        Returns:
+            Iter[list[T]]: An iterable of lists, each containing a chunk of the original iterable.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -242,13 +272,16 @@ class BaseList[T](IterWrapper[T]):
         return self._lazy(mit.chunked, n, strict)
 
     def chunks_even(self, n: int) -> Iter[list[T]]:
-        """
-        Break iterable into lists of approximately length n.
+        """Break iterable into lists of approximately length n.
 
         Items are distributed such the lengths of the lists differ by at most 1 item.
 
         Args:
-            n: Approximate number of elements in each chunk.
+            n (int): Approximate number of elements in each chunk.
+
+        Returns:
+            Iter[list[T]]: An iterable of lists, each containing a chunk of the original iterable.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -263,8 +296,16 @@ class BaseList[T](IterWrapper[T]):
         return self._lazy(mit.chunked_even, n)
 
     def unique_to_each[U: Iterable[Any]](self: IterWrapper[U]) -> Iter[list[U]]:
-        """
-        Return the elements from each of the iterables that aren't in the other iterables.
+        """Return the elements from each of the iterables that aren't in the other iterables.
+
+        It is assumed that the elements of each iterable are hashable.
+
+        **Credits**
+
+            more_itertools.unique_to_each
+
+        Returns:
+            Iter[list[U]]: An iterable of lists, each containing the unique elements from the corresponding input iterable.
 
         For example, suppose you have a set of packages, each with a set of dependencies:
 
@@ -275,6 +316,7 @@ class BaseList[T](IterWrapper[T]):
         If pkg_1 is removed, then A is no longer necessary - it is not associated with pkg_2 or pkg_3.
 
         Similarly, C is only needed for pkg_2, and D is only needed for pkg_3:
+
         ```python
         >>> import pyochain as pc
         >>> data = ({"A", "B"}, {"B", "C"}, {"B", "D"})
@@ -293,14 +335,11 @@ class BaseList[T](IterWrapper[T]):
 
         ```
 
-        It is assumed that the elements of each iterable are hashable.
         """
-
         from collections import Counter
 
         def _unique_to_each(data: Iterable[U]) -> Generator[list[U], None, None]:
-            """from more_itertools.unique_to_each"""
-            pool: list[Iterable[U]] = [it for it in data]
+            pool: list[Iterable[U]] = list(data)
             counts: Counter[U] = Counter(itertools.chain.from_iterable(map(set, pool)))
             uniques: set[U] = {element for element in counts if counts[element] == 1}
             return ((list(filter(uniques.__contains__, it))) for it in pool)
