@@ -283,3 +283,66 @@ def generate_palettes_literal() -> None:
 ```
 
 Since I have to reference the literal_content variable in the for loop, This is more reasonnable to use a for loop here rather than a map + reduce approach.
+
+### Other example
+
+Below is an example of using pyochain to get all the public methods of the `pc.Iter` class, both with pyochain and with pure python.
+
+```python
+from collections.abc import Sequence
+from typing import Any
+
+import pyochain as pc
+
+
+def get_all_iter_methods() -> Sequence[tuple[int, str]]:
+    return (
+        pc.Seq(pc.Iter.mro())
+        .iter()
+        .map(lambda x: x.__dict__.values())
+        .flatten()
+        .map_if(
+            predicate=lambda f: callable(f) and not f.__name__.startswith("_"),
+            func=lambda f: f.__name__,
+        )
+        .sort()
+        .iter()
+        .enumerate()
+        .collect()
+        .inner()
+    )
+
+
+def get_all_iter_methods_pure_python() -> list[tuple[int, str]]:
+    dict_values: list[Any] = []
+    for cls in pc.Iter.mro():
+        dict_values.extend(cls.__dict__.values())
+
+    return list(
+        enumerate(
+            sorted(
+                [
+                    obj.__name__
+                    for obj in dict_values
+                    if callable(obj) and not obj.__name__.startswith("_")
+                ],
+            ),
+        ),
+    )
+```
+
+Output excerpt, if returning mmediatly after collect, and then calling println():
+
+```text
+PS C:\Users\tibo\python_codes\pyochain> uv run foo.py
+[(0, 'accumulate'),
+ (1, 'adjacent'),
+ (2, 'all'),
+ (3, 'all_equal'),
+ (4, 'all_unique'),
+ (5, 'any'),
+ (6, 'apply'),
+ (7, 'apply'),
+ ...
+]
+```
