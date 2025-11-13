@@ -20,14 +20,27 @@ dev = [
     "polars>=1.33.1",
     "rolling @ git+https://github.com/OutSquareCapital/rolling.git@add-type-stubs",
     "cytoolz-stubs",
+    "ruff>=0.14.4",
 ]
 [tool.ruff]
-ignore = ["D401", "E501", "TID252", "TC003", "TC006", "C417"]
+ignore = ["D401", "E501", "TID252", "TC003", "TC006", "C417", "PLC0415"]
 select = ["ALL"]
 [tool.ruff.format]
 docstring-code-format = true
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+[tool.pydoclint]
+arg-type-hints-in-docstring                   = true
+arg-type-hints-in-signature                   = true
+check-raises                                  = true
+check-return-types                            = true
+check-yield                                   = true
+require-arg-section                           = true
+require-return-section                        = true
+require-return-section-when-returning-nothing = true
+skip-checking-short-docstrings                = false
+style                                         = "google"
+
 [tool.uv.sources]
 cytoolz-stubs = { git = "https://github.com/OutSquareCapital/cytoolz-stubs.git" }
 doctester     = { git = "https://github.com/OutSquareCapital/doctester.git" }
