@@ -18,6 +18,7 @@ class Option[T](Pipeable, ABC):
     """Type `Option[T]` represents an optional value.
 
     Every Option is either:
+
     - `Some` and contains a value
     - `None`, and does not.
 
@@ -28,17 +29,18 @@ class Option[T](Pipeable, ABC):
 
     `Option[T]` and/or `T | None` types are very useful, as they have a number of uses:
 
-        - Initial values
-        - Union types
-        - Return value where None is returned on error
-        - Optional class fields
-        - Optional function arguments
+    - Initial values
+    - Union types
+    - Return value where None is returned on error
+    - Optional class fields
+    - Optional function arguments
 
     The fact that `T | None` is a very common pattern in python,
     but without a dedicated structure/handling, leads to:
-        - a lot of boilerplate code
-        - potential bugs (even with type checkers)
-        - less readable code (where does the None come from? is it expected?).
+
+    - a lot of boilerplate code
+    - potential bugs (even with type checkers)
+    - less readable code (where does the None come from? is it expected?).
 
     `Option[T]` instances are commonly paired with pattern matching.
     This allow to query the presence of a value and take action, always accounting for the None case.
