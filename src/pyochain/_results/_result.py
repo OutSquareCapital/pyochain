@@ -51,6 +51,8 @@ class Result[T, E](Pipeable, ABC):
         ...     return 1 / 0
         >>> pc.Result.from_fn(ZeroDivisionError, fn=might_fail, map_err=str)
         Err(error='division by zero')
+
+        ```
         """
         from ._states import Err, Ok
 
