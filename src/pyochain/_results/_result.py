@@ -26,6 +26,39 @@ class Result[T, E](Pipeable, ABC):
 
     """
 
+    @staticmethod
+    def from_fn[U, F](
+        *exc_types: type[BaseException],
+        fn: Callable[[], U],
+        map_err: Callable[[BaseException], F] = lambda e: e,
+    ) -> Result[U, F]:
+        """Creates a `Result` from a function that may raise exceptions.
+
+        All exceptions of the specified types are caught and mapped to `Err` using the optional provided mapping function.
+
+        Args:
+            *exc_types (type[BaseException]): Exception types to catch.
+            fn (Callable[[], U]): The function to execute.
+            map_err (Callable[[BaseException], F]): A function that maps caught exceptions to error values. Defaults to identity function.
+
+        Returns:
+            Result[U, F]: `Ok` with the function's return value if no exception is raised, otherwise `Err` with the mapped error.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> def might_fail() -> int:
+        ...     return 1 / 0
+        >>> pc.Result.from_fn(ZeroDivisionError, fn=might_fail, map_err=str)
+        Err(error='division by zero')
+        """
+        from ._states import Err, Ok
+
+        try:
+            return Ok(fn())
+        except exc_types as exc:
+            return Err(map_err(exc))
+
     @abstractmethod
     def is_ok(self) -> TypeIs[Ok[T, E]]:  # type: ignore[misc]
         """Returns `True` if the result is `Ok`.
