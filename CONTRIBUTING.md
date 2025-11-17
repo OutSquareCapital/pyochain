@@ -91,5 +91,8 @@ uv sync --dev
 ## Testing
 
 ```bash
+uv run pydoclint src/pyochain
+uv run ruff check src/pyochain
+uv run ruff format src/pyochain
 uv run -m tests.main
 ```

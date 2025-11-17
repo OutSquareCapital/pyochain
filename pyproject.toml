@@ -1,50 +1,73 @@
 [project]
-description     = "Method chaining for iterables and dictionaries in Python."
-name            = "pyochain"
-readme          = "README.md"
-requires-python = ">=3.12"
-version         = "0.5.44"
+    description     = "Method chaining for iterables and dictionaries in Python."
+    name            = "pyochain"
+    readme          = "README.md"
+    requires-python = ">=3.12"
+    version         = "0.5.44"
 
-dependencies = ["cytoolz>=1.0.1", "more-itertools>=10.8.0", "rolling>=0.5.0"]
+    dependencies = [
+        "cytoolz>=1.0.1",
+        "more-itertools>=10.8.0",
+        "rolling>=0.5.0",
+    ]
 
 [dependency-groups]
-dev = [
-    "doctester",
-    "griffe>=1.14.0",
-    "mkdocs>=1.6.1",
-    "mkdocs-autorefs>=1.4.3",
-    "mkdocs-material>=9.6.22",
-    "mkdocs-simple-hooks>=0.1.5",
-    "mkdocstrings>=0.30.1",
-    "mkdocstrings-python>=1.18.2",
-    "polars>=1.33.1",
-    "rolling @ git+https://github.com/OutSquareCapital/rolling.git@add-type-stubs",
-    "cytoolz-stubs",
-    "ruff>=0.14.4",
-]
+    dev = [
+        "cytoolz-stubs",
+        "doctester",
+        "griffe>=1.14.0",
+        "mkdocs-autorefs>=1.4.3",
+        "mkdocs-material>=9.6.22",
+        "mkdocs-simple-hooks>=0.1.5",
+        "mkdocs>=1.6.1",
+        "mkdocstrings-python>=1.18.2",
+        "mkdocstrings>=0.30.1",
+        "polars>=1.33.1",
+        "pydoclint>=0.8.1",
+        "rolling @ git+https://github.com/OutSquareCapital/rolling.git@add-type-stubs",
+        "ruff>=0.14.4",
+    ]
 [tool.ruff]
-ignore = ["D401", "E501", "TID252", "TC003", "TC006", "C417", "PLC0415", "T201"]
-select = ["ALL"]
-[tool.ruff.format]
-docstring-code-format = true
-[tool.ruff.lint.pydocstyle]
-convention = "google"
+    lint.ignore = [
+        "C417",
+        "COM812",
+        "COM812",
+        "D401",
+        "E501",
+        "FIX002",
+        "PLC0415",
+        "S608",
+        "SLF001",
+        "T201",
+        "TC003",
+        "TC006",
+        "TD002",
+        "TD003",
+        "TID252",
+    ]
+    lint.select = ["ALL"]
+    [tool.ruff.format]
+        docstring-code-format = true
+    [tool.ruff.lint.pydocstyle]
+        convention = "google"
+
 [tool.pydoclint]
-arg-type-hints-in-docstring                   = true
-arg-type-hints-in-signature                   = true
-check-raises                                  = true
-check-return-types                            = true
-check-yield                                   = true
-require-arg-section                           = true
-require-return-section                        = true
-require-return-section-when-returning-nothing = true
-skip-checking-raises                          = true
-skip-checking-short-docstrings                = false
-style                                         = "google"
+    arg-type-hints-in-docstring                   = true
+    arg-type-hints-in-signature                   = true
+    check-class-attributes                        = true
+    check-raises                                  = true
+    check-return-types                            = true
+    check-yield                                   = true
+    require-arg-section                           = true
+    require-return-section                        = true
+    require-return-section-when-returning-nothing = false
+    skip-checking-short-docstrings                = true
+    style                                         = "google"
+
 [tool.uv.sources]
-cytoolz-stubs = { git = "https://github.com/OutSquareCapital/cytoolz-stubs.git" }
-doctester     = { git = "https://github.com/OutSquareCapital/doctester.git" }
+    cytoolz-stubs = { git = "https://github.com/OutSquareCapital/cytoolz-stubs.git" }
+    doctester     = { git = "https://github.com/OutSquareCapital/doctester.git" }
 
 [build-system]
-build-backend = "uv_build"
-requires      = ["uv_build>=0.8.15,<0.9.0"]
+    build-backend = "uv_build"
+    requires      = ["uv_build>=0.8.15,<0.9.0"]
