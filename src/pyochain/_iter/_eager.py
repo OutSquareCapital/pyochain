@@ -225,10 +225,7 @@ class BaseEager[T](IterWrapper[T]):
         The last element (value) always remains in place.
 
         Args:
-            *indices (int): indices specifying new order of keys
-
-        Raises:
-            IndexError: If any index in order is out of range for the row.
+            *indices (int): indices specifying new order of keys in each array.
 
         Returns:
             Seq[list[U]]: A new Seq containing rearranged elements.
