@@ -8,8 +8,7 @@ from collections.abc import (
     Iterator,
     Sequence,
 )
-from typing import TYPE_CHECKING, Any, Concatenate, TypeIs, overload, override
-from warnings import deprecated
+from typing import TYPE_CHECKING, Any, Concatenate, Self, TypeIs, overload, override
 
 import cytoolz as cz
 
@@ -416,13 +415,46 @@ class Iter[T](
         return self._eager(factory)
 
     @override
-    @deprecated("Use .inner() instead")
-    def unwrap(self) -> Iterator[T]:
-        return self._inner  # type: ignore[return-value]
-
-    @override
     def inner(self) -> Iterator[T]:
         return self._inner  # type: ignore[return-value]
+
+    def for_each[**P](
+        self,
+        func: Callable[Concatenate[T, P], Any],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None:
+        """Consume the Iterator by applying a function to each element in the iterable.
+
+        Is a terminal operation, and is useful for functions that have side effects,
+        or when you want to force evaluation of a lazy iterable.
+
+        Args:
+            func (Callable[Concatenate[T, P], Any]): Function to apply to each element.
+            *args (P.args): Positional arguments for the function.
+            **kwargs (P.kwargs): Keyword arguments for the function.
+
+        Returns:
+            None: This is a terminal operation with no return value.
+
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Seq([1, 2, 3]).iter().for_each(lambda x: print(x + 1))
+        2
+        3
+        4
+
+        ```
+
+        """
+
+        def _for_each(data: Iterable[T]) -> None:
+            for v in data:
+                func(v, *args, **kwargs)
+
+        return self.into(_for_each)
 
 
 class Seq[T](CommonMethods[T]):
@@ -520,11 +552,6 @@ class Seq[T](CommonMethods[T]):
         return self._inner  # type: ignore[return-value]
 
     @override
-    @deprecated("Use .inner() instead")
-    def unwrap(self) -> Sequence[T]:
-        return self._inner  # type: ignore[return-value]
-
-    @override
     def into[**P, R](
         self,
         func: Callable[[Sequence[T]], R],
@@ -532,3 +559,29 @@ class Seq[T](CommonMethods[T]):
         **kwargs: P.kwargs,
     ) -> R:
         return super().into(func, *args, **kwargs)  # type: ignore[return-value]
+
+    def for_each[**P](
+        self,
+        func: Callable[Concatenate[T, P], Any],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Self:
+        """Iterate over the elements and apply a function to each.
+
+        Contratry to `Iter.for_each`, this method returns the same instance for chaining.
+
+        Args:
+            func (Callable[Concatenate[T, P], Any]): Function to apply to each element.
+            *args (P.args): Positional arguments for the function.
+            **kwargs (P.kwargs): Keyword arguments for the function.
+
+        Returns:
+            Self: The same instance for chaining.
+
+        Examples:
+        ```python
+        ```
+        """
+        for v in self.inner():
+            func(v, *args, **kwargs)
+        return self

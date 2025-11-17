@@ -11,7 +11,7 @@ from collections.abc import (
     ValuesView,
 )
 from functools import partial
-from typing import TYPE_CHECKING, Any, Concatenate, overload
+from typing import TYPE_CHECKING, Any, overload
 
 import cytoolz as cz
 import more_itertools as mit
@@ -24,43 +24,6 @@ if TYPE_CHECKING:
 
 
 class BaseMap[T](IterWrapper[T]):
-    def for_each[**P](
-        self,
-        func: Callable[Concatenate[T, P], Any],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None:
-        """Consume the Iterator by applying a function to each element in the iterable.
-
-        Args:
-            func (Callable[Concatenate[T, P], Any]): Function to apply to each element.
-            *args (P.args): Positional arguments for the function.
-            **kwargs (P.kwargs): Keyword arguments for the function.
-
-        Returns:
-            None: This is a terminal operation with no return value.
-
-        Is a terminal operation, and is useful for functions that have side effects,
-        or when you want to force evaluation of a lazy iterable.
-
-        Examples:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3]).for_each(lambda x: print(x))
-        1
-        2
-        3
-
-        ```
-
-        """
-
-        def _for_each(data: Iterable[T]) -> None:
-            for v in data:
-                func(v, *args, **kwargs)
-
-        return self.into(_for_each)
-
     def map[R](self, func: Callable[[T], R]) -> Iter[R]:
         """Map each element through func and return a Iter of results.
 

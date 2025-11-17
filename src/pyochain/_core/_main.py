@@ -3,7 +3,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from typing import TYPE_CHECKING, Any, Concatenate, Self
-from warnings import deprecated
 
 from ._format import dict_repr
 
@@ -104,15 +103,6 @@ class CommonBase[T](ABC, Pipeable):
             T: The underlying data.
         """
         return self._inner
-
-    @deprecated("Use .inner() instead")
-    def unwrap(self) -> T:
-        """Deprecated: Use `inner()` instead.
-
-        Returns:
-            T: The underlying data.
-        """
-        return self.inner()
 
     def into[**P, R](
         self,
