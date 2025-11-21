@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING, TypeIs, cast
+from typing import TYPE_CHECKING, cast
 
 from .._core import Pipeable
 
 if TYPE_CHECKING:
-    from ._states import Err, Ok, Option
+    from ._states import Option
 
 
 class ResultUnwrapError(RuntimeError): ...
@@ -62,13 +62,11 @@ class Result[T, E](Pipeable, ABC):
             return Err(map_err(exc))
 
     @abstractmethod
-    def is_ok(self) -> TypeIs[Ok[T, E]]:  # type: ignore[misc]
+    def is_ok(self) -> bool:
         """Returns `True` if the result is `Ok`.
 
-        Uses `TypeIs[Ok[T, E]]` for more precise type narrowing.
-
         Returns:
-            TypeIs[Ok[T, E]]: `True` if the result is an `Ok` variant, `False` otherwise.
+            bool: `True` if the result is an `Ok` variant, `False` otherwise.
 
         Example:
         ```python
@@ -86,13 +84,11 @@ class Result[T, E](Pipeable, ABC):
         ...
 
     @abstractmethod
-    def is_err(self) -> TypeIs[Err[T, E]]:  # type: ignore[misc]
+    def is_err(self) -> bool:
         """Returns `True` if the result is `Err`.
 
-        Use `TypeIs[Err[T, E]]` for more precise type narrowing.
-
         Returns:
-            TypeIs[Err[T, E]]: `True` if the result is an `Err` variant, `False` otherwise.
+            bool: `True` if the result is an `Err` variant, `False` otherwise.
 
         Example:
         ```python

@@ -2,13 +2,12 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING, TypeIs
+from typing import TYPE_CHECKING
 
 from .._core import Pipeable
 
 if TYPE_CHECKING:
     from ._result import Result
-    from ._states import NoneOption, Some
 
 
 class OptionUnwrapError(RuntimeError): ...
@@ -47,13 +46,11 @@ class Option[T](Pipeable, ABC):
     """
 
     @abstractmethod
-    def is_some(self) -> TypeIs[Some[T]]:  # type: ignore[misc]
+    def is_some(self) -> bool:
         """Returns `True` if the option is a `Some` value.
 
-        Uses `TypeIs[Some[T]]` for more precise type narrowing.
-
         Returns:
-            TypeIs[Some[T]]: `True` if the option is a `Some` variant, `False` otherwise.
+            bool: `True` if the option is a `Some` variant, `False` otherwise.
 
         Example:
         ```python
@@ -71,13 +68,11 @@ class Option[T](Pipeable, ABC):
         ...
 
     @abstractmethod
-    def is_none(self) -> TypeIs[NoneOption]:  # type: ignore[misc]
+    def is_none(self) -> bool:
         """Returns `True` if the option is a `None` value.
 
-        Uses `TypeIs[_None]` for more precise type narrowing.
-
         Returns:
-            TypeIs[NoneOption]: `True` if the option is a `_None` variant, `False` otherwise.
+            bool: `True` if the option is a `_None` variant, `False` otherwise.
 
         Example:
         ```python

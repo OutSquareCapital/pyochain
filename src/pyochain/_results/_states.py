@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Concatenate, Never, TypeIs
+from typing import Any, Concatenate, Never
 
 from .._core import CommonBase
 from ._option import Option, OptionUnwrapError
@@ -19,10 +19,10 @@ class Ok[T, E](Result[T, E]):
 
     value: T
 
-    def is_ok(self) -> TypeIs[Ok[T, E]]:  # type: ignore[misc]
+    def is_ok(self) -> bool:
         return True
 
-    def is_err(self) -> TypeIs[Err[T, E]]:  # type: ignore[misc]
+    def is_err(self) -> bool:
         return False
 
     def unwrap(self) -> T:
@@ -43,10 +43,10 @@ class Err[T, E](Result[T, E]):
 
     error: E
 
-    def is_ok(self) -> TypeIs[Ok[T, E]]:  # type: ignore[misc]
+    def is_ok(self) -> bool:
         return False
 
-    def is_err(self) -> TypeIs[Err[T, E]]:  # type: ignore[misc]
+    def is_err(self) -> bool:
         return True
 
     def unwrap(self) -> Never:
@@ -76,10 +76,10 @@ class Some[T](Option[T]):
 
     value: T
 
-    def is_some(self) -> TypeIs[Some[T]]:  # type: ignore[misc]
+    def is_some(self) -> bool:
         return True
 
-    def is_none(self) -> TypeIs[NoneOption]:  # type: ignore[misc]
+    def is_none(self) -> bool:
         return False
 
     def unwrap(self) -> T:
@@ -93,10 +93,10 @@ class NoneOption(Option[Any]):
     def __repr__(self) -> str:
         return "NONE"
 
-    def is_some(self) -> TypeIs[Some[Any]]:  # type: ignore[misc]
+    def is_some(self) -> bool:
         return False
 
-    def is_none(self) -> TypeIs[NoneOption]:  # type: ignore[misc]
+    def is_none(self) -> bool:
         return True
 
     def unwrap(self) -> Never:
