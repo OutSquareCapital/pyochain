@@ -3,7 +3,7 @@
     name            = "pyochain"
     readme          = "README.md"
     requires-python = ">=3.12"
-    version         = "0.5.50"
+    version         = "0.5.51"
 
     dependencies = [
         "cytoolz>=1.0.1",

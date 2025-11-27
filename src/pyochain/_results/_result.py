@@ -3,7 +3,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import TYPE_CHECKING, cast
-from warnings import deprecated
 
 from .._core import Pipeable
 
@@ -27,42 +26,6 @@ class Result[T, E](Pipeable, ABC):
 
     """
 
-    @deprecated("Use try / except blocks instead")
-    @staticmethod
-    def from_fn[U, F](
-        *exc_types: type[BaseException],
-        fn: Callable[[], U],
-        map_err: Callable[[BaseException], F] = lambda e: e,
-    ) -> Result[U, F]:
-        """Creates a `Result` from a function that may raise exceptions.
-
-        All exceptions of the specified types are caught and mapped to `Err` using the optional provided mapping function.
-
-        Args:
-            *exc_types (type[BaseException]): Exception types to catch.
-            fn (Callable[[], U]): The function to execute.
-            map_err (Callable[[BaseException], F]): A function that maps caught exceptions to error values. Defaults to identity function.
-
-        Returns:
-            Result[U, F]: `Ok` with the function's return value if no exception is raised, otherwise `Err` with the mapped error.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> def might_fail() -> int:
-        ...     return 1 / 0
-        >>> pc.Result.from_fn(ZeroDivisionError, fn=might_fail, map_err=str)
-        Err(error='division by zero')
-
-        ```
-        """
-        from ._states import Err, Ok
-
-        try:
-            return Ok(fn())
-        except exc_types as exc:
-            return Err(map_err(exc))
-
     @abstractmethod
     def is_ok(self) -> bool:
         """Returns `True` if the result is `Ok`.
@@ -81,7 +44,6 @@ class Result[T, E](Pipeable, ABC):
         False
 
         ```
-
         """
         ...
 
@@ -103,7 +65,6 @@ class Result[T, E](Pipeable, ABC):
         True
 
         ```
-
         """
         ...
 
@@ -136,7 +97,6 @@ class Result[T, E](Pipeable, ABC):
         pyochain._results._result.ResultUnwrapError: called `unwrap` on Err: 'emergency failure'
 
         ```
-
         """
         ...
 
@@ -165,7 +125,6 @@ class Result[T, E](Pipeable, ABC):
         pyochain._results._result.ResultUnwrapError: called `unwrap_err` on Ok
 
         ```
-
         """
         ...
 
@@ -192,7 +151,6 @@ class Result[T, E](Pipeable, ABC):
         42
 
         ```
-
         """
         return ok(self.unwrap()) if self.is_ok() else err(self.unwrap_err())
 
@@ -221,7 +179,6 @@ class Result[T, E](Pipeable, ABC):
         pyochain._results._result.ResultUnwrapError: Testing expect: emergency failure
 
         ```
-
         """
         if self.is_ok():
             return self.unwrap()
@@ -253,7 +210,6 @@ class Result[T, E](Pipeable, ABC):
         pyochain._results._result.ResultUnwrapError: Testing expect_err: expected Err, got Ok(10)
 
         ```
-
         """
         if self.is_err():
             return self.unwrap_err()
@@ -278,7 +234,6 @@ class Result[T, E](Pipeable, ABC):
         10
 
         ```
-
         """
         return self.unwrap() if self.is_ok() else default
 
@@ -300,7 +255,6 @@ class Result[T, E](Pipeable, ABC):
         3
 
         ```
-
         """
         return self.unwrap() if self.is_ok() else fn(self.unwrap_err())
 
@@ -325,7 +279,6 @@ class Result[T, E](Pipeable, ABC):
         Err(error='error')
 
         ```
-
         """
         from ._states import Ok
 
@@ -352,11 +305,64 @@ class Result[T, E](Pipeable, ABC):
         Err(error=3)
 
         ```
-
         """
         from ._states import Err
 
         return Err(fn(self.unwrap_err())) if self.is_err() else cast(Result[T, F], self)
+
+    def inspect(self, fn: Callable[[T], object]) -> Result[T, E]:
+        """Applies a function to the contained `Ok` value, returning the original `Result`.
+
+        This is primarily useful for debugging or logging, allowing side effects to be
+        performed on the `Ok` value without changing the result.
+
+        Args:
+            fn (Callable[[T], object]): Function to apply to the `Ok` value.
+
+        Returns:
+            Result[T, E]: The original result, unchanged.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> seen: list[int] = []
+        >>> pc.Ok(2).inspect(lambda x: seen.append(x))
+        Ok(value=2)
+        >>> seen
+        [2]
+
+        ```
+        """
+        if self.is_ok():
+            fn(self.unwrap())
+        return self
+
+    def inspect_err(self, fn: Callable[[E], object]) -> Result[T, E]:
+        """Applies a function to the contained `Err` value, returning the original `Result`.
+
+        This mirrors :meth:`inspect` but operates on the error value. It is useful for
+        logging or debugging error paths while keeping the `Result` unchanged.
+
+        Args:
+            fn (Callable[[E], object]): Function to apply to the `Err` value.
+
+        Returns:
+            Result[T, E]: The original result, unchanged.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> seen: list[str] = []
+        >>> pc.Err("oops").inspect_err(lambda e: seen.append(e))
+        Err(error='oops')
+        >>> seen
+        ['oops']
+
+        ```
+        """
+        if self.is_err():
+            fn(self.unwrap_err())
+        return self
 
     def and_then[U](self, fn: Callable[[T], Result[U, E]]) -> Result[U, E]:
         """Calls a function if the result is `Ok`, otherwise returns the `Err` value.
@@ -380,7 +386,6 @@ class Result[T, E](Pipeable, ABC):
         Err(error='error')
 
         ```
-
         """
         return fn(self.unwrap()) if self.is_ok() else cast(Result[U, E], self)
 
@@ -406,7 +411,6 @@ class Result[T, E](Pipeable, ABC):
         Ok(value=3)
 
         ```
-
         """
         return self if self.is_ok() else fn(self.unwrap_err())
 
@@ -427,7 +431,6 @@ class Result[T, E](Pipeable, ABC):
         NONE
 
         ```
-
         """
         from ._states import NONE, Some
 
@@ -450,7 +453,6 @@ class Result[T, E](Pipeable, ABC):
         Some(value='error')
 
         ```
-
         """
         from ._states import NONE, Some
 
@@ -476,7 +478,6 @@ class Result[T, E](Pipeable, ABC):
         False
 
         ```
-
         """
         return self.is_ok() and pred(self.unwrap())
 
@@ -500,7 +501,6 @@ class Result[T, E](Pipeable, ABC):
         False
 
         ```
-
         """
         return self.is_err() and pred(self.unwrap_err())
 
@@ -523,7 +523,6 @@ class Result[T, E](Pipeable, ABC):
         10
 
         ```
-
         """
         return f(self.unwrap()) if self.is_ok() else default
 
@@ -548,7 +547,6 @@ class Result[T, E](Pipeable, ABC):
         Some(value=Err(error='err'))
 
         ```
-
         """
         from ._states import NONE, Err, Ok, Some
 

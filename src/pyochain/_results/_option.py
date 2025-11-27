@@ -45,6 +45,30 @@ class Option[T](Pipeable, ABC):
     This allow to query the presence of a value and take action, always accounting for the None case.
     """
 
+    @staticmethod
+    def from_[V](value: V | None) -> Option[V]:
+        """Creates an `Option[V]` from a value that may be `None`.
+
+        Args:
+            value (V | None): The value to convert into an `Option[V]`.
+
+        Returns:
+            Option[V]: `Some(value)` if the value is not `None`, otherwise `NONE`.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Option.from_(42)
+        Some(value=42)
+        >>> pc.Option.from_(None)
+        NONE
+
+        ```
+        """
+        from ._states import NONE, Some
+
+        return Some(value) if value is not None else NONE
+
     @abstractmethod
     def is_some(self) -> bool:
         """Returns `True` if the option is a `Some` value.
@@ -63,7 +87,6 @@ class Option[T](Pipeable, ABC):
         False
 
         ```
-
         """
         ...
 
@@ -85,7 +108,6 @@ class Option[T](Pipeable, ABC):
         True
 
         ```
-
         """
         ...
 
@@ -114,7 +136,6 @@ class Option[T](Pipeable, ABC):
         pyochain._results._option.OptionUnwrapError: called `unwrap` on a `None`
 
         ```
-
         """
         ...
 
@@ -143,7 +164,6 @@ class Option[T](Pipeable, ABC):
         pyochain._results._option.OptionUnwrapError: fruits are healthy (called `expect` on a `None`)
 
         ```
-
         """
         if self.is_some():
             return self.unwrap()
@@ -168,7 +188,6 @@ class Option[T](Pipeable, ABC):
         'bike'
 
         ```
-
         """
         return self.unwrap() if self.is_some() else default
 
@@ -191,7 +210,6 @@ class Option[T](Pipeable, ABC):
         20
 
         ```
-
         """
         return self.unwrap() if self.is_some() else f()
 
@@ -216,7 +234,6 @@ class Option[T](Pipeable, ABC):
         NONE
 
         ```
-
         """
         from ._states import NONE, Some
 
@@ -248,7 +265,6 @@ class Option[T](Pipeable, ABC):
         NONE
 
         ```
-
         """
         from ._states import NONE
 
@@ -278,7 +294,6 @@ class Option[T](Pipeable, ABC):
         NONE
 
         ```
-
         """
         return self if self.is_some() else f()
 
@@ -302,7 +317,6 @@ class Option[T](Pipeable, ABC):
         NONE
 
         ```
-
         """
         from ._states import NONE, Some
 
@@ -342,7 +356,6 @@ class Option[T](Pipeable, ABC):
         NONE
 
         ```
-
         """
         from ._states import NONE, Some
 
@@ -368,7 +381,6 @@ class Option[T](Pipeable, ABC):
         Err(error='fail')
 
         ```
-
         """
         from ._states import Err, Ok
 
@@ -392,7 +404,6 @@ class Option[T](Pipeable, ABC):
         Err(error='fail')
 
         ```
-
         """
         from ._states import Err, Ok
 
@@ -417,7 +428,6 @@ class Option[T](Pipeable, ABC):
         0
 
         ```
-
         """
         return f(self.unwrap()) if self.is_some() else default
 
@@ -440,6 +450,36 @@ class Option[T](Pipeable, ABC):
         0
 
         ```
-
         """
         return f(self.unwrap()) if self.is_some() else default()
+
+    def inspect(self, f: Callable[[T], object]) -> Option[T]:
+        """Applies a function to the contained `Some` value, returning the original `Option`.
+
+        This mirrors :meth:`Result.inspect`, allowing side effects
+        (logging, debugging, metrics, etc.) on the wrapped value without changing it.
+
+        Args:
+            f (Callable[[T], object]): Function to apply to the `Some` value.
+
+        Returns:
+            Option[T]: The original option, unchanged.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> seen: list[int] = []
+        >>> pc.Some(2).inspect(lambda x: seen.append(x))
+        Some(value=2)
+        >>> seen
+        [2]
+        >>> pc.NONE.inspect(lambda x: seen.append(x))
+        NONE
+        >>> seen
+        [2]
+
+        ```
+        """
+        if self.is_some():
+            f(self.unwrap())
+        return self
