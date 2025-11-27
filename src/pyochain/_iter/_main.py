@@ -341,9 +341,10 @@ class Iter[T](
         ...         .map(lambda d: d.drop("Age").with_key("Continent", "NA"))
         ...         .map_if(
         ...             lambda d: d.inner().get("City") == "Paris",
-        ...             lambda d: set_continent(d, "Europe"),
-        ...             lambda d: set_continent(d, "America"),
         ...         )
+        ...         .then(lambda d: set_continent(d, "Europe"))
+        ...         .or_else(
+        ...             lambda d: set_continent(d, "America"))
         ...         .group_by(lambda d: d.get("Continent"))
         ...         .map_values(
         ...             lambda d: pc.Iter.from_(d)

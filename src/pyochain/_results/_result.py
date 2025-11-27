@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import TYPE_CHECKING, cast
+from warnings import deprecated
 
 from .._core import Pipeable
 
@@ -26,6 +27,7 @@ class Result[T, E](Pipeable, ABC):
 
     """
 
+    @deprecated("Use try / except blocks instead")
     @staticmethod
     def from_fn[U, F](
         *exc_types: type[BaseException],

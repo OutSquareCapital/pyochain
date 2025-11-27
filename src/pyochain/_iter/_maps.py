@@ -10,6 +10,7 @@ from collections.abc import (
     Sequence,
     ValuesView,
 )
+from dataclasses import dataclass
 from functools import partial
 from typing import TYPE_CHECKING, Any, overload
 
@@ -21,6 +22,109 @@ from .._core import IterWrapper
 if TYPE_CHECKING:
     from .._results import Option
     from ._main import Iter
+
+
+@dataclass(slots=True)
+class _CaseBuilder[T]:
+    _iter: Iterable[T]
+    _predicate: Callable[[T], bool]
+
+
+@dataclass(slots=True)
+class _WhenBuilder[T](_CaseBuilder[T]):
+    def then[U](self, func: Callable[[T], U]) -> _ThenBuilder[T, U]:
+        """Add a transformation to apply when the predicate is true.
+
+        Args:
+            func (Callable[[T], U]): Function to apply to items satisfying the predicate.
+
+        Returns:
+            _ThenBuilder[T, U]: Builder to chain further then() or finalize with or_else()/or_skip().
+        """
+        return _ThenBuilder(
+            _iter=self._iter,
+            _predicate=self._predicate,
+            _func=func,
+        )
+
+    def or_else[U](self, func_else: Callable[[T], U]) -> Iter[T | U]:
+        """Apply a function to items not satisfying the predicate.
+
+        Args:
+            func_else (Callable[[T], U]): Function to apply to items not satisfying the predicate.
+
+        Returns:
+            Iter[T | U]: An Iter with transformed items.
+        """
+        from .._iter import Iter
+
+        return Iter(
+            item if self._predicate(item) else func_else(item) for item in self._iter
+        )
+
+    def or_skip(self) -> Iter[T]:
+        """Skip items not satisfying the predicate.
+
+        All items satisfying the predicate are retained.
+
+        Returns:
+            Iter[T]: An Iter with only items satisfying the predicate.
+
+        """
+        from .._iter import Iter
+
+        return Iter(item for item in self._iter if self._predicate(item))
+
+
+@dataclass(slots=True)
+class _ThenBuilder[T, R](_CaseBuilder[T]):
+    _func: Callable[[T], R]
+
+    def then[U](self, func: Callable[[R], U]) -> _ThenBuilder[T, U]:
+        """Add a transformation to apply when the predicate is true.
+
+        The function is composed with the result from the previous `then()`.
+
+        Args:
+            func (Callable[[R], U]): Function to apply to items satisfying the predicate.
+
+        Returns:
+            _ThenBuilder[T, U]: Builder to chain further then() or finalize with or_else()/or_skip().
+        """
+        return _ThenBuilder(
+            _iter=self._iter,
+            _predicate=self._predicate,
+            _func=lambda x: func(self._func(x)),
+        )
+
+    def or_else[U](self, func_else: Callable[[T], U]) -> Iter[R | U]:
+        """Apply a function to items not satisfying the predicate.
+
+        Args:
+            func_else (Callable[[T], U]): Function to apply to items not satisfying the predicate.
+
+        Returns:
+            Iter[R | U]: An Iter with transformed items.
+        """
+        from .._iter import Iter
+
+        return Iter(
+            self._func(item) if self._predicate(item) else func_else(item)
+            for item in self._iter
+        )
+
+    def or_skip(self) -> Iter[R]:
+        """Skip items not satisfying the predicate.
+
+        All items satisfying the predicate are retained.
+
+        Returns:
+            Iter[R]: An Iter with only items satisfying the predicate.
+
+        """
+        from .._iter import Iter
+
+        return Iter(self._func(item) for item in self._iter if self._predicate(item))
 
 
 class BaseMap[T](IterWrapper[T]):
@@ -128,89 +232,28 @@ class BaseMap[T](IterWrapper[T]):
         """
         return self._lazy(partial(itertools.starmap, func))
 
-    def map_if[R](
-        self,
-        predicate: Callable[[T], bool],
-        func: Callable[[T], R],
-        func_else: Callable[[T], R] | None = None,
-    ) -> Iter[R]:
-        """Evaluate each item with `func` or `func_else`, based on the `predicate` result.
-
-        If the result is equivalent to True, transform the item with func and yield it.
-
-        Otherwise, the presence or absence of `func_else` determines the strategy:
-            - If `func_else` is provided, transform the item with it and yield it.
-            - If `func_else` is not provided, skip the item (do not yield it).
-
+    def map_if(self, predicate: Callable[[T], bool]) -> _WhenBuilder[T]:
+        """Begin a conditional transformation chain on an Iter.
 
         Args:
-            predicate (Callable[[T], bool]): Function to evaluate each item.
-            func (Callable[[T], R]): Function to apply if predicate is True.
-            func_else (Callable[[T], R] | None): Function to apply if predicate is False.
+            predicate (Callable[[T], bool]): Function to test each item.
 
         Returns:
-            Iter[R]: An iterable of transformed and filtered items.
+            _WhenBuilder[T]: Builder to chain then() and or_else()/or_skip() calls.
 
+        Example:
         ```python
         >>> import pyochain as pc
-        >>> from math import sqrt
-        >>> data = pc.Seq(range(-5, 5))
-        >>> data.iter().map_if(lambda x: x > 3, lambda x: f"{x} is toobig").into(list)
-        ['4 is toobig']
-        >>> data.iter().map_if(
-        ...     lambda x: x >= 0,
-        ...     lambda x: f"{sqrt(x):.2f}",
-        ...     lambda x: None,
-        ... ).collect()
-        Seq([None, None, None, None, None, '0.00', '1.00', '1.41', '1.73', '2.00'])
-
-        ```
-
+        >>> data = pc.Seq(range(-3, 4))
+        >>> data.iter().map_if(lambda x: x > 0).then(lambda x: x * 10).or_else(lambda x: x).collect()
+        Seq([-3, -2, -1, 0, 10, 20, 30])
+        >>> data.iter().map_if(lambda x: x % 2 == 0).then(lambda x: f"{x} is even").or_skip().collect()
+        Seq(['-2 is even', '0 is even', '2 is even'])
         """
-
-        def _map_if(data: Iterable[T]) -> Generator[R, None, None]:
-            match func_else:
-                case None:
-                    return (func(item) for item in data if predicate(item))
-                case _:
-                    return (
-                        func(item) if predicate(item) else func_else(item)
-                        for item in data
-                    )
-
-        return self._lazy(_map_if)
-
-    def map_except[R](
-        self,
-        func: Callable[[T], R],
-        *exceptions: type[BaseException],
-    ) -> Iter[R]:
-        """Transform each item from iterable with function and yield the result, unless function raises one of the specified exceptions.
-
-        Args:
-            func (Callable[[T], R]): Function to apply to each item.
-            *exceptions (type[BaseException]): Exceptions to catch and ignore.
-
-        Returns:
-            Iter[R]: An iterable of transformed items that don't raise specified exceptions.
-
-        The function is called to transform each item in iterable
-
-        If an exception other than one given by exceptions is raised by function, it is raised like normal.
-        ```python
-        >>> import pyochain as pc
-        >>> iterable = ["1", "2", "three", "4", None]
-        >>> pc.Iter.from_(iterable).map_except(int, ValueError, TypeError).into(list)
-        [1, 2, 4]
-
-        ```
-
-        """
-
-        def _map_except(data: Iterable[T]) -> Iterator[R]:
-            return mit.map_except(func, data, *exceptions)
-
-        return self._lazy(_map_except)
+        return self.into(
+            _WhenBuilder,
+            _predicate=predicate,
+        )
 
     def repeat(
         self,

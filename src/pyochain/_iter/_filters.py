@@ -44,44 +44,6 @@ class BaseFilter[T](IterWrapper[T]):
 
         return self._lazy(_filter)
 
-    def filter_contain(
-        self: IterWrapper[str],
-        text: str,
-        fmt: Callable[[str], str] | None = None,
-    ) -> Iter[str]:
-        """Return elements that contain the given text.
-
-        Optionally, a fmt function can be provided to preprocess each element before checking for the substring.
-
-        Args:
-            text (str): Substring to check for.
-            fmt (Callable[[str], str] | None): Optional function to preprocess each element before checking. Defaults to None.
-
-        Returns:
-            Iter[str]: An iterable of the items that contain the specified text.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>>
-        >>> data = pc.Seq(["apple", "banana", "cherry", "date"])
-        >>> data.iter().filter_contain("ana").collect()
-        Seq(['banana'])
-        >>> data.iter().map(str.upper).filter_contain("ana", str.lower).collect()
-        Seq(['BANANA'])
-
-        ```
-        """
-
-        def _filter_contain(data: Iterable[str]) -> Generator[str, None, None]:
-            def _(x: str) -> bool:
-                formatted = fmt(x) if fmt else x
-                return text in formatted
-
-            return (x for x in data if _(x))
-
-        return self._lazy(_filter_contain)
-
     def filter_attr[U](self, attr: str, dtype: type[U] = object) -> Iter[U]:  # noqa: ARG002
         """Return elements that have the given attribute.
 
@@ -128,41 +90,6 @@ class BaseFilter[T](IterWrapper[T]):
         ```
         """
         return self._lazy(partial(itertools.filterfalse, func))
-
-    def filter_except(
-        self,
-        func: Callable[[T], object],
-        *exceptions: type[BaseException],
-    ) -> Iter[T]:
-        """Yield the items from iterable for which the validator function does not raise one of the specified exceptions.
-
-        Validator is called for each item in iterable.
-
-        It should be a function that accepts one argument and raises an exception if that item is not valid.
-
-        If an exception other than one given by exceptions is raised by validator, it is raised like normal.
-
-        Args:
-            func (Callable[[T], object]): Validator function to apply to each item.
-            *exceptions (type[BaseException]): Exceptions to catch and ignore.
-
-        Returns:
-            Iter[T]: An iterable of the items for which func did not raise the specified exceptions.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> iterable = ["1", "2", "three", "4", None]
-        >>> pc.Seq(iterable).iter().filter_except(int, ValueError, TypeError).collect()
-        Seq(['1', '2', '4'])
-
-        ```
-        """
-
-        def _filter_except(data: Iterable[T]) -> Iterator[T]:
-            return mit.filter_except(func, data, *exceptions)
-
-        return self._lazy(_filter_except)
 
     def take_while(self, predicate: Callable[[T], bool]) -> Iter[T]:
         """Take items while predicate holds.
