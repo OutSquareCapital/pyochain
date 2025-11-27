@@ -249,6 +249,8 @@ class BaseMap[T](IterWrapper[T]):
         Seq([-3, -2, -1, 0, 10, 20, 30])
         >>> data.iter().map_if(lambda x: x % 2 == 0).then(lambda x: f"{x} is even").or_skip().collect()
         Seq(['-2 is even', '0 is even', '2 is even'])
+
+        ```
         """
         return self.into(
             _WhenBuilder,

@@ -154,6 +154,7 @@ class BasePartitions[T](IterWrapper[T]):
             Iter[tuple[T, ...]]: An iterable of batched tuples.
 
         Example:
+        ```python
         >>> import pyochain as pc
         >>> pc.Iter.from_("ABCDEFG").batch(3).into(list)
         [('A', 'B', 'C'), ('D', 'E', 'F'), ('G',)]

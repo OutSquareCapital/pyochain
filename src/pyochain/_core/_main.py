@@ -44,6 +44,8 @@ class Pipeable:
         >>>
         >>> pc.Seq(range(5)).pipe(maybe_sum).unwrap()
         10
+
+        ```
         """
         return func(self, *args, **kwargs)
 
