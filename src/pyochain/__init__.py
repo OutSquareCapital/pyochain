@@ -2,7 +2,7 @@
 
 from ._dict import Dict
 from ._iter import Iter, Seq
-from ._results import NONE, Err, Ok, Option, Result, ResultUnwrapError, Some, Wrapper
+from ._results import NONE, Err, Ok, Option, Result, ResultUnwrapError, Some
 
 __all__ = [
     "NONE",
@@ -15,5 +15,4 @@ __all__ = [
     "ResultUnwrapError",
     "Seq",
     "Some",
-    "Wrapper",
 ]

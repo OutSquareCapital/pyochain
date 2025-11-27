@@ -55,12 +55,6 @@ A type for handling optional values that can be either `Some(value)` or `NONE`.
 
 [See full documentation →](reference/option.md)
 
-#### `Wrapper[T]`
-
-A generic wrapper to integrate any Python object into a `pyochain` chain.
-
-[See full documentation →](reference/wrapper.md)
-
 ## Quick Examples
 
 ### Lazy Iteration

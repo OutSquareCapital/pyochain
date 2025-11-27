@@ -34,7 +34,6 @@ nav:
       - Err: reference/err.md
       - Some: reference/some.md
       - None: reference/none.md
-      - Wrapper: reference/wrapper.md
   
 
 theme:

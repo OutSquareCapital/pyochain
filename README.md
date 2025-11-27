@@ -79,10 +79,6 @@ A type for functions that can fail, inspired by Rust's `Result`. It represents e
 
 A type for values that may be absent, inspired by Rust's `Option`. It represents either the presence of a value (`Some[T]`) or its absence (`NONE`). It provides a safe and expressive way to handle optional values without resorting to `None` checks everywhere.
 
-#### `Wrapper[T]`
-
-A generic wrapper for any Python object, allowing it to be integrated into a `pyochain` fluent-style chain. Use `Wrapper` to `pipe`, `apply`, or `into` functions when working with objects that don't have their own `pyochain` wrapper, such as instances of custom classes or third-party library objects.
-
 ### Core Piping Methods
 
 All wrappers provide a set of common methods for chaining and data manipulation:

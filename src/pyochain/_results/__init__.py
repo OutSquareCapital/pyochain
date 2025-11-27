@@ -1,6 +1,6 @@
 from ._option import Option
 from ._result import Result, ResultUnwrapError
-from ._states import NONE, Err, Ok, OptionUnwrapError, Some, Wrapper
+from ._states import NONE, Err, Ok, OptionUnwrapError, Some
 
 __all__ = [
     "NONE",
@@ -11,5 +11,4 @@ __all__ = [
     "Result",
     "ResultUnwrapError",
     "Some",
-    "Wrapper",
 ]

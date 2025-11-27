@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Concatenate, Never
+from typing import Any, Never
 
-from .._core import CommonBase
 from ._option import Option, OptionUnwrapError
 from ._result import Result, ResultUnwrapError
 
@@ -106,23 +104,3 @@ class NoneOption(Option[Any]):
 
 NONE: Option[Any] = NoneOption()
 """Singleton instance representing the absence of a value."""
-
-
-class Wrapper[T](CommonBase[T]):
-    """A generic Wrapper for any type.
-
-    The pipe into method is implemented to return a Wrapper of the result type.
-
-    This class is intended for use with other types/implementations that do not support the fluent/functional style.
-
-    This allow the use of a consistent code style across the code base.
-
-    """
-
-    def apply[**P, R](
-        self,
-        func: Callable[Concatenate[T, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Wrapper[R]:
-        return Wrapper(self.into(func, *args, **kwargs))
