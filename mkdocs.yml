@@ -24,6 +24,9 @@ plugins:
               - "!^_"
 nav:
   - Home: index.md
+  - Guides:
+      - Overview: guides/index.md
+      - Chaining Methods: guides/chaining.md
   - Reference:
       - Iter: reference/iter.md
       - Dict: reference/dict.md

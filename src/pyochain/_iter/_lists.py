@@ -24,7 +24,7 @@ class BaseList[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_(range(5)).implode().into(list)
+        >>> pc.Seq.from_(range(5)).iter().implode().into(list)
         [[0], [1], [2], [3], [4]]
 
         ```
@@ -55,16 +55,16 @@ class BaseList[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_("abcdcba").split_at(lambda x: x == "b").into(list)
+        >>> pc.Seq("abcdcba").iter().split_at(lambda x: x == "b").into(list)
         [['a'], ['c', 'd', 'c'], ['a']]
-        >>> pc.Iter.from_(range(10)).split_at(lambda n: n % 2 == 1).into(list)
+        >>> pc.Seq(range(10)).iter().split_at(lambda n: n % 2 == 1).into(list)
         [[0], [2], [4], [6], [8], []]
 
         At most *maxsplit* splits are done.
 
         If *maxsplit* is not specified or -1, then there is no limit on the number of splits:
         ```python
-        >>> pc.Iter.from_(range(10)).split_at(lambda n: n % 2 == 1, maxsplit=2).into(
+        >>> pc.Seq(range(10)).iter().split_at(lambda n: n % 2 == 1, maxsplit=2).into(
         ...     list
         ... )
         [[0], [2], [4, 5, 6, 7, 8, 9]]
@@ -76,7 +76,7 @@ class BaseList[T](IterWrapper[T]):
         ```python
         >>> def cond(x: str) -> bool:
         ...     return x == "b"
-        >>> pc.Iter.from_("abcdcba").split_at(cond, keep_separator=True).into(list)
+        >>> pc.Seq("abcdcba").iter().split_at(cond, keep_separator=True).into(list)
         [['a'], ['b'], ['c', 'd', 'c'], ['b'], ['a']]
 
         ```
@@ -100,15 +100,15 @@ class BaseList[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_("one1two2").split_after(str.isdigit).into(list)
+        >>> pc.Seq("one1two2").iter().split_after(str.isdigit).into(list)
         [['o', 'n', 'e', '1'], ['t', 'w', 'o', '2']]
 
         >>> def cond(n: int) -> bool:
         ...     return n % 3 == 0
         >>>
-        >>> pc.Iter.from_(range(10)).split_after(cond).into(list)
+        >>> pc.Seq(range(10)).iter().split_after(cond).into(list)
         [[0], [1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        >>> pc.Iter.from_(range(10)).split_after(cond, max_split=2).into(list)
+        >>> pc.Seq(range(10)).iter().split_after(cond, max_split=2).into(list)
         [[0], [1, 2, 3], [4, 5, 6, 7, 8, 9]]
 
         ```
@@ -132,13 +132,13 @@ class BaseList[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_("abcdcba").split_before(lambda x: x == "b").into(list)
+        >>> pc.Seq("abcdcba").iter().split_before(lambda x: x == "b").into(list)
         [['a'], ['b', 'c', 'd', 'c'], ['b', 'a']]
         >>>
         >>> def cond(n: int) -> bool:
         ...     return n % 2 == 1
         >>>
-        >>> pc.Iter.from_(range(10)).split_before(cond).into(list)
+        >>> pc.Seq(range(10)).iter().split_before(cond).into(list)
         [[0], [1, 2], [3, 4], [5, 6], [7, 8], [9]]
 
         ```
@@ -146,7 +146,7 @@ class BaseList[T](IterWrapper[T]):
 
         If *max_split* is not specified or -1, then there is no limit on the number of splits:
         ```python
-        >>> pc.Iter.from_(range(10)).split_before(cond, max_split=2).into(list)
+        >>> pc.Seq(range(10)).iter().split_before(cond, max_split=2).into(list)
         [[0], [1, 2], [3, 4, 5, 6, 7, 8, 9]]
 
         ```
@@ -165,12 +165,12 @@ class BaseList[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3, 4, 5, 6]).split_into([1, 2, 3]).into(list)
+        >>> pc.Seq([1, 2, 3, 4, 5, 6]).iter().split_into([1, 2, 3]).into(list)
         [[1], [2, 3], [4, 5, 6]]
 
         If the sum of sizes is smaller than the length of iterable, then the remaining items of iterable will not be returned.
         ```python
-        >>> pc.Iter.from_([1, 2, 3, 4, 5, 6]).split_into([2, 3]).into(list)
+        >>> pc.Seq([1, 2, 3, 4, 5, 6]).iter().split_into([2, 3]).into(list)
         [[1, 2], [3, 4, 5]]
 
         ```

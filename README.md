@@ -81,13 +81,10 @@ A type for values that may be absent, inspired by Rust's `Option`. It represents
 
 ### Core Piping Methods
 
-All wrappers provide a set of common methods for chaining and data manipulation:
+All wrappers provide a small set of core methods for chaining and passing values to your own functions.
 
-* `into(func, *args, **kwargs)`: Passes the **unwrapped** data to `func` and returns the raw result. This is a terminal operation that ends the chain.
-* `apply(func, *args, **kwargs)`: Passes the **unwrapped** data to `func` and **re-wraps** the result in the same wrapper type for continued chaining.
-* `pipe(func, *args, **kwargs)`: Passes the **wrapped instance** (`self`) to `func`. This allows you to insert custom functions into the chain that operate on the wrapper itself.
-* `println()`: Prints the unwrapped data to the console for debugging and returns `self` to continue the chain.
-* `inner()`: Returns the underlying wrapped data.
+This is covered in detail in the guide: see
+[`Guides → Chaining Methods`](docs/guides/chaining.md).
 
 ### Rich Lazy Iteration (`Iter`)
 
@@ -142,27 +139,6 @@ not_found = find_user(3).unwrap_or("Not Found")  # "Not Found"
 Each method and class make extensive use of generics, type hints, and overloads (when necessary) to ensure type safety and improve developer experience.
 
 Since there's much less need for intermediate variables, the developper don't have to annotate them as much, whilst still keeping a type-safe codebase.
-
-### Convenience mappers: itr and struct
-
-Operate on iterables of iterables or iterables of dicts without leaving the chain.
-
-```python
-import pyochain as pc
-
-nested = pc.Iter.from_([[1, 2, 3], [4, 5]])
-totals = nested.itr(lambda it: it.sum()).into(list)
-# [6, 9]
-
-records = pc.Iter.from_(
-    [
-        {"name": "Alice", "age": 30},
-        {"name": "Bob", "age": 25},
-    ]
-)
-names = records.struct(lambda d: d.pluck("name").unwrap()).into(list)
-# ['Alice', 'Bob']
-```
 
 ## Key Dependencies and credits
 

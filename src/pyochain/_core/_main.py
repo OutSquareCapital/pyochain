@@ -49,6 +49,27 @@ class Pipeable:
         """
         return func(self, *args, **kwargs)
 
+    def tap(self, func: Callable[[Self], Any]) -> Self:
+        """Tap into the chain to perform side effects without altering the data.
+
+        Args:
+            func (Callable[[Self], Any]): Function to apply to the instance for side effects.
+
+        Returns:
+            Self: The instance itself for chaining.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Seq([1, 2, 3, 4]).tap(print).last()
+        Seq([1, 2, 3, 4])
+        4
+
+        ```
+        """
+        func(self)
+        return self
+
 
 class CommonBase[T](ABC, Pipeable):
     """Base class for all wrappers.
@@ -75,26 +96,6 @@ class CommonBase[T](ABC, Pipeable):
         **kwargs: P.kwargs,
     ) -> CommonBase[Any]:
         raise NotImplementedError
-
-    def println(self, *, pretty: bool = True) -> Self:
-        """Print the underlying data and return self for chaining.
-
-        Useful for debugging, simply insert `.println()` in the chain,
-        and then removing it will not affect the rest of the chain.
-
-        Args:
-            pretty (bool): Whether to pretty print the data. Defaults to True.
-
-        Returns:
-            Self: The instance itself for chaining.
-        """
-        from pprint import pprint
-
-        if pretty:
-            self.into(pprint, sort_dicts=False)
-        else:
-            self.into(print)
-        return self
 
     def inner(self) -> T:
         """Get the underlying data.

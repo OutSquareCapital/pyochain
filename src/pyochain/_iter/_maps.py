@@ -18,9 +18,9 @@ import cytoolz as cz
 import more_itertools as mit
 
 from .._core import IterWrapper
+from .._results import NONE, Option, Some
 
 if TYPE_CHECKING:
-    from .._results import Option
     from ._main import Iter
 
 
@@ -284,37 +284,42 @@ class BaseMap[T](IterWrapper[T]):
 
         return self._lazy(_repeat)
 
-    @overload
-    def repeat_last(self, default: T) -> Iter[T]: ...
-    @overload
-    def repeat_last[U](self, default: U) -> Iter[T | U]: ...
-    def repeat_last[U](self, default: U = None) -> Iter[T | U]:
+    def repeat_last(self) -> Iter[Option[T]]:
         """After the iterable is exhausted, keep yielding its last element.
+
+        Wrap each yielded element in an Option[T].
 
         **Warning** ⚠️
             This creates an infinite iterator.
             Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken.
 
-        Args:
-            default (U): Value to yield if the iterable is empty.
-
         Returns:
-            Iter[T | U]: An iterable that yields the last element repeatedly, or default if empty
+            Iter[Option[T]]: An iterable that yields the last element repeatedly, or default if empty
+
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_(range(3)).repeat_last().take(5).into(list)
-        [0, 1, 2, 2, 2]
+        >>> pc.Seq(range(3)).iter().repeat_last().take(5).map(lambda x: x.unwrap()).collect()
+        Seq([0, 1, 2, 2, 2])
 
-        If the iterable is empty, yield default forever:
+        If the iterable is empty, yield `NONE` indefinitely:
         ```python
-        >>> pc.Iter.from_(range(0)).repeat_last(42).take(5).into(list)
-        [42, 42, 42, 42, 42]
+        >>> pc.Seq(range(0)).iter().repeat_last().take(5).collect()
+        Seq([NONE, NONE, NONE, NONE, NONE])
 
         ```
 
         """
-        return self._lazy(mit.repeat_last, default)
+
+        def _repeat_last(data: Iterable[T]) -> Iterator[Option[T]]:
+            _marker = object()
+            item = _marker
+            for item in data:
+                yield Some(item)
+            final = NONE if item is _marker else Some(item)
+            yield from itertools.repeat(final)
+
+        return self._lazy(_repeat_last)
 
     def ichunked(self, n: int) -> Iter[Iterator[T]]:
         """Break *iterable* into sub-iterables with *n* elements each.

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import itertools
 from collections.abc import Callable, Iterable, Iterator
-from enum import StrEnum, auto
 from functools import partial
 from typing import TYPE_CHECKING, Any, Literal, overload
 
@@ -14,21 +13,8 @@ from .._core import IterWrapper
 if TYPE_CHECKING:
     from ._main import Iter
 
-
-class Position(StrEnum):
-    """Enum representing the position of an element in an iterable.
-
-    Attributes:
-        FIRST: The element is the first in the iterable.
-        MIDDLE: The element is neither the first nor the last in the iterable.
-        LAST: The element is the last in the iterable.
-        ONLY: The element is the only one in the iterable.
-    """
-
-    FIRST = auto()
-    MIDDLE = auto()
-    LAST = auto()
-    ONLY = auto()
+Position = Literal["first", "middle", "last", "only"]
+"""Literal type representing the position of an item in an iterable."""
 
 
 class BaseTuples[T](IterWrapper[T]):
@@ -41,7 +27,7 @@ class BaseTuples[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_(["a", "b"]).enumerate().into(list)
+        >>> pc.Seq(["a", "b"]).iter().enumerate().into(list)
         [(0, 'a'), (1, 'b')]
 
         ```
@@ -370,11 +356,11 @@ class BaseTuples[T](IterWrapper[T]):
         Example:
         ```python
         >>> from operator import itemgetter
-        >>> data = pc.Iter.from_([0, 0, 1, 1, 1, 2, 2, 2, 3])
-        >>> data.zip("abcdefghi").group_by_transform(itemgetter(0), itemgetter(1)).map(
+        >>> data = pc.Seq([0, 0, 1, 1, 1, 2, 2, 2, 3])
+        >>> data.iter().zip("abcdefghi").group_by_transform(itemgetter(0), itemgetter(1)).map(
         ...     lambda kv: (kv[0], "".join(kv[1]))
-        ... ).into(list)
-        [(0, 'ab'), (1, 'cde'), (2, 'fgh'), (3, 'i')]
+        ... ).collect()
+        Seq([(0, 'ab'), (1, 'cde'), (2, 'fgh'), (3, 'i')])
 
         ```
 
@@ -397,9 +383,9 @@ class BaseTuples[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Seq(["a", "b", "c"]).iter().with_position().collect()
-        Seq([(<Position.FIRST: 'first'>, 'a'), (<Position.MIDDLE: 'middle'>, 'b'), (<Position.LAST: 'last'>, 'c')])
+        Seq([('first', 'a'), ('middle', 'b'), ('last', 'c')])
         >>> pc.Seq(["a"]).iter().with_position().collect()
-        Seq([(<Position.ONLY: 'only'>, 'a')])
+        Seq([('only', 'a')])
 
         ```
 
@@ -416,14 +402,14 @@ class BaseTuples[T](IterWrapper[T]):
             try:
                 second = next(it)
             except StopIteration:
-                yield (Position.ONLY, first)
+                yield ("only", first)
                 return
-            yield (Position.FIRST, first)
+            yield ("first", first)
 
             current: T = second
             for nxt in it:
-                yield (Position.MIDDLE, current)
+                yield ("middle", current)
                 current = nxt
-            yield (Position.LAST, current)
+            yield ("last", current)
 
         return self._lazy(gen)

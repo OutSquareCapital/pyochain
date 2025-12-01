@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from .._dict import Dict
 
 
-class CommonMethods[T](BaseAgg[T], BaseEager[T], BaseDict[T]):
+class CommonMethods[T](BaseAgg[T], BaseEager[T], BaseDict[T], BaseBool[T]):
     pass
 
 
@@ -42,7 +42,6 @@ def _is_sequence[T](data: Iterable[T]) -> TypeIs[Sequence[T]]:
 
 
 class Iter[T](
-    BaseBool[T],
     BaseFilter[T],
     BaseProcess[T],
     BaseMap[T],
@@ -92,7 +91,7 @@ class Iter[T](
         Example:
         ```python
         >>> import pyochain as pc
-        >>> it = pc.Iter.from_([1, 2, 3])
+        >>> it = pc.Seq([1, 2, 3]).iter()
         >>> it.next()
         1
         >>> it.next()
@@ -281,9 +280,7 @@ class Iter[T](
         ...     [4, 5],
         ...     [6, 7, 8, 9],
         ... ]
-        >>> pc.Iter.from_(data).itr(
-        ...     lambda x: x.repeat(2).flatten().reduce(lambda a, b: a + b)
-        ... ).into(list)
+        >>> pc.Seq(data).iter().itr(lambda x: x.repeat(2).flatten().reduce(lambda a, b: a + b))
         [12, 18, 60]
 
         ```

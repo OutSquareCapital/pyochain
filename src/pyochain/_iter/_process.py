@@ -4,15 +4,20 @@ import itertools
 from collections.abc import Callable, Generator, Iterable, Iterator
 from functools import partial
 from random import Random
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 import cytoolz as cz
 import more_itertools as mit
 
-from .._core import IterWrapper, peek, peekn
+from .._core import IterWrapper
 
 if TYPE_CHECKING:
     from ._main import Iter
+
+
+class Peeked[T](NamedTuple):
+    values: tuple[T, ...]
+    original: Iterator[T]
 
 
 def _too_short(item_count: int) -> None:
@@ -157,11 +162,14 @@ class BaseProcess[T](IterWrapper[T]):
         """
         return self._lazy(partial(cz.itertoolz.cons, value))
 
-    def peekn(self, n: int) -> Iter[T]:
-        """Print and return sequence after peeking n items.
+    def peek(self, n: int, func: Callable[[Iterable[T]], Any]) -> Iter[T]:
+        """Retrieve the first n items from the iterable, pass them to func, and return the original iterable.
+
+        Allow to pass side-effect functions that process the peeked items without consuming the original Iterator.
 
         Args:
             n (int): Number of items to peek.
+            func (Callable[[Iterable[T]], Any]): Function to process the peeked items.
 
         Returns:
             Iter[T]: A new Iterable wrapper with the peeked items.
@@ -169,29 +177,19 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3]).peekn(2).into(list)
+        >>> pc.Seq([1, 2, 3]).iter().peek(2, lambda x: print(f"Peeked {len(x)} values: {x}")).collect()
         Peeked 2 values: (1, 2)
-        [1, 2, 3]
+        Seq([1, 2, 3])
 
         ```
         """
-        return self._lazy(peekn, n)
 
-    def peek(self) -> Iter[T]:
-        """Print and return sequence after peeking first item.
+        def _peek(data: Iterable[T]) -> Iterator[T]:
+            peeked = Peeked(*cz.itertoolz.peekn(n, data))
+            func(peeked.values)
+            return peeked.original
 
-        Returns:
-            Iter[T]: A new Iterable wrapper with the peeked item.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2]).peek().into(list)
-        Peeked value: 1
-        [1, 2]
-
-        ```
-        """
-        return self._lazy(peek)
+        return self._lazy(_peek)
 
     def merge_sorted(
         self,

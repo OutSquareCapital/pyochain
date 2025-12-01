@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
-from typing import overload
+from typing import TYPE_CHECKING
 
 import cytoolz as cz
 import more_itertools as mit
 
 from .._core import IterWrapper
+
+if TYPE_CHECKING:
+    from pyochain._results._option import Option
 
 
 class BaseBool[T](IterWrapper[T]):
@@ -30,15 +33,15 @@ class BaseBool[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, True]).all()
+        >>> pc.Seq([1, True]).all()
         True
-        >>> pc.Iter.from_([]).all()
+        >>> pc.Seq([]).all()
         True
-        >>> pc.Iter.from_([1, 0]).all()
+        >>> pc.Seq([1, 0]).all()
         False
         >>> def is_even(x: int) -> bool:
         ...     return x % 2 == 0
-        >>> pc.Iter.from_([2, 4, 6]).all(is_even)
+        >>> pc.Seq([2, 4, 6]).all(is_even)
         True
 
         ```
@@ -69,13 +72,13 @@ class BaseBool[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([0, 1]).any()
+        >>> pc.Seq([0, 1]).any()
         True
-        >>> pc.Iter.from_(range(0)).any()
+        >>> pc.Seq(range(0)).any()
         False
         >>> def is_even(x: int) -> bool:
         ...     return x % 2 == 0
-        >>> pc.Iter.from_([1, 3, 4]).any(is_even)
+        >>> pc.Seq([1, 3, 4]).any(is_even)
         True
 
         ```
@@ -94,7 +97,7 @@ class BaseBool[T](IterWrapper[T]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2]).is_distinct()
+        >>> pc.Seq([1, 2]).is_distinct()
         True
 
         ```
@@ -113,15 +116,15 @@ class BaseBool[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 1, 1]).all_equal()
+        >>> pc.Seq([1, 1, 1]).all_equal()
         True
 
         ```
         A function that accepts a single argument and returns a transformed version of each input item can be specified with key:
         ```python
-        >>> pc.Iter.from_("AaaA").all_equal(key=str.casefold)
+        >>> pc.Seq("AaaA").all_equal(key=str.casefold)
         True
-        >>> pc.Iter.from_([1, 2, 3]).all_equal(key=lambda x: x < 10)
+        >>> pc.Seq([1, 2, 3]).all_equal(key=lambda x: x < 10)
         True
 
         ```
@@ -140,15 +143,15 @@ class BaseBool[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_("ABCB").all_unique()
+        >>> pc.Seq("ABCB").all_unique()
         False
 
         ```
         If a key function is specified, it will be used to make comparisons.
         ```python
-        >>> pc.Iter.from_("ABCb").all_unique()
+        >>> pc.Seq("ABCb").all_unique()
         True
-        >>> pc.Iter.from_("ABCb").all_unique(str.lower)
+        >>> pc.Seq("ABCb").all_unique(str.lower)
         False
 
         ```
@@ -179,16 +182,16 @@ class BaseBool[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_(["1", "2", "3", "4", "5"]).is_sorted(key=int)
+        >>> pc.Seq(["1", "2", "3", "4", "5"]).is_sorted(key=int)
         True
-        >>> pc.Iter.from_([5, 4, 3, 1, 2]).is_sorted(reverse=True)
+        >>> pc.Seq([5, 4, 3, 1, 2]).is_sorted(reverse=True)
         False
 
         If strict, tests for strict sorting, that is, returns False if equal elements are found:
         ```python
-        >>> pc.Iter.from_([1, 2, 2]).is_sorted()
+        >>> pc.Seq([1, 2, 2]).is_sorted()
         True
-        >>> pc.Iter.from_([1, 2, 2]).is_sorted(strict=True)
+        >>> pc.Seq([1, 2, 2]).is_sorted(strict=True)
         False
 
         ```
@@ -201,35 +204,19 @@ class BaseBool[T](IterWrapper[T]):
         """
         return self.into(mit.is_sorted, key=key, reverse=reverse, strict=strict)
 
-    @overload
     def find(
         self,
-        default: None = None,
-        predicate: Callable[[T], bool] | None = ...,
-    ) -> T | None: ...
-    @overload
-    def find(self, default: T, predicate: Callable[[T], bool] | None = ...) -> T: ...
-
-    def find[U](
-        self,
-        default: U = None,
-        predicate: Callable[[T], bool] | None = None,
-    ) -> U | T:
+        predicate: Callable[[T], bool],
+    ) -> Option[T]:
         """Searches for an element of an iterator that satisfies a `predicate`.
 
-        - Taking a closure that returns true or false as `predicate` (optional).
-        - Using the identity function if no `predicate` is provided.
-        - Applying this closure to each element of the iterator.
-        - Returning the first element that satisfies the `predicate`.
-
-        If all the elements return false, `Iter.find()` returns the default value.
+        Takes a closure that returns true or false as `predicate`, and applies it to each element of the iterator.
 
         Args:
-            default (U): Value to return if no element satisfies the predicate. Defaults to None.
-            predicate (Callable[[T], bool] | None): Function to evaluate each item. Defaults to checking truthiness.
+            predicate (Callable[[T], bool]): Function to evaluate each item.
 
         Returns:
-            U | T: The first element satisfying the predicate, or the default value.
+            Option[T]: The first element satisfying the predicate. `Some(value)` if found, `NONE` otherwise.
 
         Example:
         ```python
@@ -240,13 +227,16 @@ class BaseBool[T](IterWrapper[T]):
         >>> def gt_nine(x: int) -> bool:
         ...     return x > 9
         >>>
-        >>> pc.Iter.from_(range(10)).find()
-        1
-        >>> pc.Iter.from_(range(10)).find(predicate=gt_five)
-        6
-        >>> pc.Iter.from_(range(10)).find(default="missing", predicate=gt_nine)
+        >>> pc.Seq(range(10)).find(predicate=gt_five)
+        Some(value=6)
+        >>> pc.Seq(range(10)).find(predicate=gt_nine).unwrap_or("missing")
         'missing'
 
         ```
         """
-        return self.into(mit.first_true, default, predicate)
+        from .._results import Option
+
+        def _find(data: Iterable[T]) -> Option[T]:
+            return Option.from_(next(filter(predicate, data), None))
+
+        return self.into(_find)

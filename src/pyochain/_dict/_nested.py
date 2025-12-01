@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Concatenate, TypeIs
 import cytoolz as cz
 
 from .._core import MappingWrapper
+from .._results import Option
 
 if TYPE_CHECKING:
     from ._main import Dict
@@ -223,12 +224,11 @@ class NestedDict[K, V](MappingWrapper[K, V]):
 
         return self._new(_pluck)
 
-    def get_in[T](self, *keys: K, default: T = None) -> V | T:
+    def get_in(self, *keys: K) -> Option[V]:
         """Retrieve a value from a nested dictionary structure.
 
         Args:
             *keys (K): Sequence of keys representing the nested path to retrieve the value.
-            default (T): Default value to return if the keys do not exist.
 
         Returns:
             V | T: Value at the nested path or default if not found.
@@ -237,15 +237,15 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         >>> import pyochain as pc
         >>> data = {"a": {"b": {"c": 1}}}
         >>> pc.Dict(data).get_in("a", "b", "c")
-        1
-        >>> pc.Dict(data).get_in("a", "x", default="Not Found")
+        Some(value=1)
+        >>> pc.Dict(data).get_in("a", "x").unwrap_or('Not Found')
         'Not Found'
 
         ```
         """
 
-        def _get_in(data: Mapping[K, V]) -> V | T:
-            return cz.dicttoolz.get_in(keys, data, default)
+        def _get_in(data: Mapping[K, V]) -> Option[V]:
+            return Option.from_(cz.dicttoolz.get_in(keys, data, None))
 
         return self.into(_get_in)
 
