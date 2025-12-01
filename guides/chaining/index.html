@@ -1,0 +1,1798 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../../reference/iter/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+    
+    
+      
+        <title>Chaining Methods - pyochain</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#chaining-passing-values-between-functions" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="pyochain" class="md-header__button md-logo" aria-label="pyochain" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            pyochain
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Chaining Methods
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Passer en mode sombre"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Passer en mode sombre" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="pyochain" class="md-nav__button md-logo" aria-label="pyochain" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    pyochain
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chaining Methods
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chaining Methods
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#behavioural-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Behavioural categories
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-working-at-the-wrapper-level-pipe-and-tap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Working at the Wrapper Level: pipe and tap
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Working at the Wrapper Level: pipe and tap">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-pipe-delegate-a-sub-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 pipe: delegate a sub-pipeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-tap-side-effects-on-the-wrapper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 tap: side effects on the wrapper
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-mapping-vs-observing-elements-map-inspect-for_each-peek" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Mapping vs Observing Elements: map, inspect, for_each, peek
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Mapping vs Observing Elements: map, inspect, for_each, peek">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-map-on-iter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 map on Iter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-map-on-option-and-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 map on Option and Result
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-observing-without-changing-inspect-and-inspect_err" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Observing without changing: inspect and inspect_err
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-element-wise-side-effects-for_each" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Element-wise side effects: for_each
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-looking-ahead-peek-on-iter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Looking ahead: peek on Iter
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-crossing-the-boundary-into-apply-from_" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Crossing the Boundary: into, apply, from_
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Crossing the Boundary: into, apply, from_">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-from_-entering-the-chain-with-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 from_: entering the chain with conversion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-apply-calling-plain-functions-while-staying-wrapped" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 apply: calling plain functions while staying wrapped
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-into-leaving-the-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 into: leaving the chain
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-which-types-expose-which-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Which Types Expose Which Methods?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-impact-on-software-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Impact on Software Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Impact on Software Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-orchestration-as-a-single-linear-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Orchestration as a single, linear flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-pure-functions-first-glue-code-second" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Pure functions first, glue code second
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-closures-as-generic-building-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Closures as generic building blocks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-named-tuples-and-light-data-structures-shine-again" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 Named tuples and light data structures shine again
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-refactoring-and-debugging-as-secondary-benefits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 Refactoring and debugging as secondary benefits
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/iter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Iter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/dict/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dict
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/seq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Seq
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/result/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Result
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/option/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Option
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/ok/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ok
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/err/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Err
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/some/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Some
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/none/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    None
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#behavioural-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Behavioural categories
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-working-at-the-wrapper-level-pipe-and-tap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Working at the Wrapper Level: pipe and tap
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Working at the Wrapper Level: pipe and tap">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-pipe-delegate-a-sub-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 pipe: delegate a sub-pipeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-tap-side-effects-on-the-wrapper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 tap: side effects on the wrapper
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-mapping-vs-observing-elements-map-inspect-for_each-peek" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Mapping vs Observing Elements: map, inspect, for_each, peek
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Mapping vs Observing Elements: map, inspect, for_each, peek">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-map-on-iter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 map on Iter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-map-on-option-and-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 map on Option and Result
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-observing-without-changing-inspect-and-inspect_err" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Observing without changing: inspect and inspect_err
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-element-wise-side-effects-for_each" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Element-wise side effects: for_each
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-looking-ahead-peek-on-iter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Looking ahead: peek on Iter
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-crossing-the-boundary-into-apply-from_" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Crossing the Boundary: into, apply, from_
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Crossing the Boundary: into, apply, from_">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-from_-entering-the-chain-with-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 from_: entering the chain with conversion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-apply-calling-plain-functions-while-staying-wrapped" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 apply: calling plain functions while staying wrapped
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-into-leaving-the-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 into: leaving the chain
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-which-types-expose-which-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Which Types Expose Which Methods?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-impact-on-software-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Impact on Software Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Impact on Software Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-orchestration-as-a-single-linear-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Orchestration as a single, linear flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-pure-functions-first-glue-code-second" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Pure functions first, glue code second
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-closures-as-generic-building-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Closures as generic building blocks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-named-tuples-and-light-data-structures-shine-again" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 Named tuples and light data structures shine again
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-refactoring-and-debugging-as-secondary-benefits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 Refactoring and debugging as secondary benefits
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="chaining-passing-values-between-functions">Chaining: Passing Values Between Functions<a class="headerlink" href="#chaining-passing-values-between-functions" title="Permanent link">&para;</a></h1>
+<p><code>pyochain</code> is built around the idea of <strong>staying in a fluent chain</strong> while still being able to call your own functions, observe what happens, and eventually get back to plain Python values.</p>
+<p>This guide explains how data flows between:</p>
+<ul>
+<li>the wrappers (<code>Iter</code>, <code>Seq</code>, <code>Dict</code>, <code>Result</code>, <code>Option</code>, …),</li>
+<li>your own functions (pure or not),</li>
+<li>and the outside world (final values, side effects).</li>
+</ul>
+<p>We will mostly classify methods by <strong>behaviour</strong>, not by concrete type.</p>
+<h2 id="behavioural-categories">Behavioural categories<a class="headerlink" href="#behavioural-categories" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>pipe</code> / <code>tap</code>: work on the <em>wrapper</em> itself.</li>
+<li><code>map</code> on <code>Iter</code> / <code>Seq</code> / <code>Option</code> / <code>Result</code> vs observation methods (<code>inspect</code>, <code>inspect_err</code>, <code>for_each</code>, <code>peek</code>).</li>
+<li><code>from_</code>, <code>apply</code>, <code>into</code>: bridge between plain Python values and <code>pyochain</code> wrappers.</li>
+</ul>
+<p>Along the way, we also highlight <strong>which wrappers expose what</strong>, so you can quickly see what is available on <code>Iter</code> vs <code>Seq</code> vs <code>Result</code>, and how they fit together.</p>
+<hr />
+<h2 id="1-working-at-the-wrapper-level-pipe-and-tap">1. Working at the Wrapper Level: <code>pipe</code> and <code>tap</code><a class="headerlink" href="#1-working-at-the-wrapper-level-pipe-and-tap" title="Permanent link">&para;</a></h2>
+<p>At the highest level, you sometimes want to pass the <strong>wrapper itself</strong> to a function. In other words, your function wants to receive <code>pc.Seq[int]</code> or <code>pc.Iter[str]</code>, not a raw <code>list[int]</code> or <code>Iterator[str]</code>.</p>
+<p>This is where <code>pipe</code> and <code>tap</code> live. Both are defined on the shared <code>Pipeable</code> base class, so they are available on <strong>all</strong> <code>pyochain</code> wrappers: <code>Iter</code>, <code>Seq</code>, <code>Dict</code>, <code>Option</code>, <code>Result</code>, etc.</p>
+<h3 id="11-pipe-delegate-a-sub-pipeline">1.1 <code>pipe</code>: delegate a sub-pipeline<a class="headerlink" href="#11-pipe-delegate-a-sub-pipeline" title="Permanent link">&para;</a></h3>
+<p><code>pipe</code> passes the current wrapper instance as the first argument to your function and returns <strong>whatever the function returns</strong>.</p>
+<p>Conceptually, <code>pipe</code> lets you <em>name</em> a part of your chain:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><span class="k">def</span><span class="w"> </span><span class="nf">maybe_sum</span><span class="p">(</span><span class="n">xs</span><span class="p">:</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Option</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+</span><span id="__span-0-2">    <span class="k">if</span> <span class="n">xs</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="__span-0-3">        <span class="k">return</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span>
+</span><span id="__span-0-4">    <span class="k">return</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="n">xs</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+</span><span id="__span-0-5">
+</span><span id="__span-0-6"><span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">pipe</span><span class="p">(</span><span class="n">maybe_sum</span><span class="p">)</span>  <span class="c1"># Seq[int] -&gt; Option[int]</span>
+</span></code></pre></div>
+<p>You can think of <code>pipe</code> as "call this helper that knows about the wrapper type":</p>
+<ul>
+<li>Use <code>pipe</code> when the helper function <strong>works in terms of wrappers</strong> (<code>pc.Seq</code>, <code>pc.Iter</code>, <code>pc.Result</code>, …).</li>
+<li>Use it to implement branching logic (e.g. return <code>Option</code> from <code>Seq</code>, or turn a <code>Result</code> into another <code>Result</code>).</li>
+</ul>
+<h3 id="12-tap-side-effects-on-the-wrapper">1.2 <code>tap</code>: side effects on the wrapper<a class="headerlink" href="#12-tap-side-effects-on-the-wrapper" title="Permanent link">&para;</a></h3>
+<p><code>tap</code> also receives the wrapper, but it always returns the <strong>same instance</strong>, unchanged.</p>
+<p>The intent of <code>tap</code> is: <em>"run some side-effect, but don’t affect the logical value of the chain"</em>.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="nb">print</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span> <span class="c1"># logs the whole Seq</span>
+</span></code></pre></div>
+<p>Typical use cases:</p>
+<ul>
+<li>Debugging / logging the state of the wrapper at some point in the chain.</li>
+<li>Emitting metrics (e.g. length, distribution, etc.).</li>
+<li>Mutating <em>external</em> state (counters, queues, caches…) while keeping the wrapped data intact.</li>
+</ul>
+<p><strong>Summary:</strong></p>
+<ul>
+<li>Reach for <code>pipe</code> when your function is part of the <strong>logical pipeline</strong> and returns a new value.</li>
+<li>Reach for <code>tap</code> when your function is purely <strong>observational / side-effectful</strong> and should not change the value.</li>
+</ul>
+<p>Both live at the <em>wrapper</em> level, not at the element level.</p>
+<hr />
+<h2 id="2-mapping-vs-observing-elements-map-inspect-for_each-peek">2. Mapping vs Observing Elements: <code>map</code>, <code>inspect</code>, <code>for_each</code>, <code>peek</code><a class="headerlink" href="#2-mapping-vs-observing-elements-map-inspect-for_each-peek" title="Permanent link">&para;</a></h2>
+<p>Most of the time you are not transforming the entire wrapper, but <strong>elements inside</strong> it or values wrapped by it (<code>Some</code>, <code>Ok</code>). There is a clear split between:</p>
+<ul>
+<li>Methods that <strong>transform</strong> values: <code>map</code> and friends.</li>
+<li>Methods that <strong>observe</strong> values: <code>inspect</code>, <code>inspect_err</code>, <code>for_each</code>, <code>peek</code>.</li>
+</ul>
+<p>The key question is:</p>
+<blockquote>
+<p>“Does my function produce a new value that should replace the old one, or does it just perform a side effect?”</p>
+</blockquote>
+<h3 id="21-map-on-iter">2.1 <code>map</code> on <code>Iter</code><a class="headerlink" href="#21-map-on-iter" title="Permanent link">&para;</a></h3>
+<p><code>Iter.map</code> takes a function <code>T -&gt; U</code> and returns a new <code>Iter[U]</code> with transformed elements.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span> <span class="c1"># -&gt; Seq([2, 4, 6])</span>
+</span><span id="__span-2-2"><span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="s2">&quot;hello&quot;</span><span class="p">,</span> <span class="s2">&quot;world&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">str</span><span class="o">.</span><span class="n">upper</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span> <span class="c1"># -&gt; Seq([&quot;HELLO&quot;, &quot;WORLD&quot;])</span>
+</span></code></pre></div>
+<p>Characteristics:</p>
+<ul>
+<li><strong>Element-wise transformation</strong>.</li>
+<li>Produces a <strong>new sequence of values</strong> once <code>collect()</code> is called.</li>
+</ul>
+<h3 id="22-map-on-option-and-result">2.2 <code>map</code> on <code>Option</code> and <code>Result</code><a class="headerlink" href="#22-map-on-option-and-result" title="Permanent link">&para;</a></h3>
+<p><code>Option</code> and <code>Result</code> also expose <code>map</code>, but now the “element” is the <strong>contained value</strong> (<code>Some</code> / <code>Ok</code>).</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span>      <span class="c1"># Option[int]</span>
+</span><span id="__span-3-2"><span class="n">pc</span><span class="o">.</span><span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># Result[int, E]</span>
+</span></code></pre></div>
+<p>Behaviour:</p>
+<ul>
+<li>If there is a value (<code>Some</code>, <code>Ok</code>), the function is applied and the result is re-wrapped.</li>
+<li>If there is no value (<code>NONE</code>, <code>Err</code>), the wrapper is propagated unchanged.</li>
+</ul>
+<p><code>map</code> therefore keeps you in the same <em>error / option</em> context while allowing you to transform the success value.</p>
+<h3 id="23-observing-without-changing-inspect-and-inspect_err">2.3 Observing without changing: <code>inspect</code> and <code>inspect_err</code><a class="headerlink" href="#23-observing-without-changing-inspect-and-inspect_err" title="Permanent link">&para;</a></h3>
+<p>Where <code>map</code> <em>changes</em> the value, <code>inspect</code> is the <strong>read-only twin</strong>:</p>
+<ul>
+<li><code>Option.inspect(f)</code> calls <code>f(value)</code> if <code>Some</code>, then returns the original <code>Option</code>.</li>
+<li><code>Result.inspect(f)</code> calls <code>f(ok_value)</code> if <code>Ok</code>, then returns the original <code>Result</code>.</li>
+<li><code>Result.inspect_err(f)</code> calls <code>f(err_value)</code> if <code>Err</code>, then returns the original <code>Result</code>.</li>
+</ul>
+<p>This is ideal for logging and debugging paths in a <code>Result</code>/<code>Option</code> pipeline without breaking the fluent style.</p>
+<p>Conceptually:</p>
+<ul>
+<li><code>map</code> = “transform and keep going”.</li>
+<li><code>inspect</code> / <code>inspect_err</code> = “peek into the value, but do not touch it”.</li>
+</ul>
+<h3 id="24-element-wise-side-effects-for_each">2.4 Element-wise side effects: <code>for_each</code><a class="headerlink" href="#24-element-wise-side-effects-for_each" title="Permanent link">&para;</a></h3>
+<p>On sequences, you sometimes want to run a function on <strong>each element</strong> for its side effects only.</p>
+<ul>
+<li><code>Iter.for_each(f)</code> applies <code>f</code> to each element and is <strong>terminal</strong> (returns <code>None</code>).</li>
+<li><code>{Seq, Dict}.for_each(f)</code> does the same but returns <code>self</code> so that you can continue chaining.</li>
+</ul>
+<p>Use <code>for_each</code> when:</p>
+<ul>
+<li>You want to push elements into an external sink (e.g. write to a file, send over the network).</li>
+<li>You want to update external state per element (accumulate stats, build a separate index, etc.).</li>
+</ul>
+<p>If you need a new sequence of transformed values, use <code>map</code> instead.</p>
+<p>Iter.for_each is terminal because it <strong>consumes</strong> the iterator. After calling it, there are no more elements to process.</p>
+<p><code>{Seq, Dict}.for_each</code> returns self since it calls iter() on an already in-memory structure, leaving the original Seq/Dict intact for further use.</p>
+<h3 id="25-looking-ahead-peek-on-iter">2.5 Looking ahead: <code>peek</code> on <code>Iter</code><a class="headerlink" href="#25-looking-ahead-peek-on-iter" title="Permanent link">&para;</a></h3>
+<p><code>peek</code> is specific to <code>Iter</code>. It allows you to examine a <strong>prefix</strong> of the iterator without consuming the underlying data:</p>
+<ul>
+<li>It takes <code>n</code> and a function <code>Iterable[T] -&gt; Any</code>.</li>
+<li>It materialises the first <code>n</code> items, passes them to your function, then rebuilds an iterator that yields <strong>all</strong> items (including the peeked ones).</li>
+</ul>
+<p>Use cases:</p>
+<ul>
+<li>Log or inspect the “shape” of an iterator early on (first few rows, sample keys, …).</li>
+<li>Implement early-termination logic outside of the chain while keeping lazy behaviour inside.</li>
+</ul>
+<p>Compared to <code>for_each</code>:</p>
+<ul>
+<li><code>for_each</code> walks the <strong>entire</strong> sequence (and for <code>Iter</code> it is terminal).</li>
+<li><code>peek</code> only inspects a <strong>bounded prefix</strong> and returns another <code>Iter</code> for continued chaining.</li>
+</ul>
+<hr />
+<h2 id="3-crossing-the-boundary-into-apply-from_">3. Crossing the Boundary: <code>into</code>, <code>apply</code>, <code>from_</code><a class="headerlink" href="#3-crossing-the-boundary-into-apply-from_" title="Permanent link">&para;</a></h2>
+<p>So far we have stayed inside the <code>pyochain</code> world. At some point, you either need to:</p>
+<ul>
+<li><strong>Enter</strong> a chain from raw Python values.</li>
+<li><strong>Call plain functions</strong> that don’t know about wrappers.</li>
+<li><strong>Leave</strong> the chain with a final, ordinary Python value.</li>
+</ul>
+<p>This is the role of <code>from_</code>, <code>apply</code>, and <code>into</code>.</p>
+<h3 id="31-from_-entering-the-chain-with-conversion">3.1 <code>from_</code>: entering the chain with conversion<a class="headerlink" href="#31-from_-entering-the-chain-with-conversion" title="Permanent link">&para;</a></h3>
+<p>There are factory-like helpers such as <code>Iter.from_</code>, <code>Seq.from_</code> and <code>Option.from_</code> that convert existing Python values into wrappers. They are convenient, but <strong>not all of them are free</strong>.</p>
+<p>Concrete behaviour:</p>
+<ul>
+<li><code>Option.from_(value)</code> is a cheap, explicit conversion from <code>T | None</code> to <code>Option[T]</code>:</li>
+<li><code>Some(value)</code> if <code>value is not None</code>.</li>
+<li>
+<p><code>NONE</code> otherwise.</p>
+</li>
+<li>
+<p><code>Seq.from_(...)</code> accepts either an iterable or unpacked values and internally calls <code>_convert_data</code> and <code>_is_sequence</code>:</p>
+</li>
+<li>If you <strong>already</strong> have a <code>Sequence</code>, <code>pc.Seq(existing_sequence)</code> is cheaper and more direct.</li>
+<li>
+<p><code>Seq.from_</code> is mostly a convenience for quick “wrap these values” calls or when you don’t care about the extra checks.</p>
+</li>
+<li>
+<p><code>Iter.from_(...)</code> takes an arbitrary iterable and turns it into a lazy <code>Iter</code>. It may need to adapt non-iterator iterables into an underlying iterator before wrapping.</p>
+</li>
+</ul>
+<p>In other words, <code>from_</code> trades a bit of extra work (type checks / conversions) for ergonomics. In hot paths where you already know you have the right kind of object, prefer the plain constructors:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><span class="c1"># Cheaper, when you already know the type</span>
+</span><span id="__span-4-2"><span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">(</span><span class="n">existing_sequence</span><span class="p">)</span>      <span class="c1"># instead of Seq.from_(existing_sequence)</span>
+</span><span id="__span-4-3"><span class="n">pc</span><span class="o">.</span><span class="n">Iter</span><span class="p">(</span><span class="n">existing_iterator</span><span class="p">)</span>     <span class="c1"># instead of Iter.from_(existing_iterator)</span>
+</span><span id="__span-4-4">
+</span><span id="__span-4-5"><span class="c1"># Use from_ when you want convenience or type-normalisation</span>
+</span><span id="__span-4-6"><span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="o">.</span><span class="n">from_</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+</span><span id="__span-4-7"><span class="n">pc</span><span class="o">.</span><span class="n">Iter</span><span class="o">.</span><span class="n">from_</span><span class="p">(</span><span class="n">some_iterable</span><span class="p">)</span>
+</span><span id="__span-4-8"><span class="n">pc</span><span class="o">.</span><span class="n">Option</span><span class="o">.</span><span class="n">from_</span><span class="p">(</span><span class="n">maybe_value</span><span class="p">)</span>
+</span></code></pre></div>
+<h3 id="32-apply-calling-plain-functions-while-staying-wrapped">3.2 <code>apply</code>: calling plain functions while staying wrapped<a class="headerlink" href="#32-apply-calling-plain-functions-while-staying-wrapped" title="Permanent link">&para;</a></h3>
+<p><code>apply</code> also works on the inner value, but instead of exiting the chain, it <strong>re-wraps</strong> whatever your function returns.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+</span><span id="__span-5-2"><span class="k">def</span><span class="w"> </span><span class="nf">double_all</span><span class="p">(</span><span class="n">xs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+</span><span id="__span-5-3">    <span class="k">return</span> <span class="p">[</span><span class="n">x</span> <span class="o">*</span> <span class="mi">2</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">]</span>
+</span><span id="__span-5-4">
+</span><span id="__span-5-5"><span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">double_all</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Here:</p>
+<ul>
+<li><code>double_all</code> has no dependency on <code>pyochain</code>.</li>
+<li><code>apply</code> adapts its input and output for you:</li>
+<li>It passes the unwrapped <code>Sequence</code> to <code>double_all</code>.</li>
+<li>It wraps the result back into a <code>Seq</code>.</li>
+</ul>
+<p>This is extremely useful to incrementally adopt <code>pyochain</code>:</p>
+<ul>
+<li>You can keep most of your logic in ordinary functions that manipulate <code>list</code>, <code>Iterator</code>, etc.</li>
+<li>You only sprinkle <code>apply</code> and <code>into</code> at the boundaries, rather than rewriting everything in terms of <code>Iter</code>/<code>Seq</code>.</li>
+</ul>
+<p>Note that <code>apply</code> will pass either an <code>Iterator</code> or a <code>Sequence</code> when used on <code>Iter</code> or <code>Seq</code> respectively.</p>
+<p>Make sure your function can handle the expected type. Often, signatures in codebases are plain <code>list[T]</code> even though you do not need any <code>MutableSequence</code> features.
+Using <code>apply</code> is a simple way to promote <strong>immutability</strong> and <strong>genericity</strong> by working with the more general <code>Sequence</code> or <code>Iterator</code> abstractions.</p>
+<h3 id="33-into-leaving-the-chain">3.3 <code>into</code>: leaving the chain<a class="headerlink" href="#33-into-leaving-the-chain" title="Permanent link">&para;</a></h3>
+<p><code>into</code> is the symmetric operation: it takes the <strong>inner value</strong> and passes it to a function you provide, returning the raw result.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="nb">sum</span><span class="p">)</span>       <span class="c1"># -&gt; 6 (int)</span>
+</span><span id="__span-6-2"><span class="n">pc</span><span class="o">.</span><span class="n">Iter</span><span class="o">.</span><span class="n">from_</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>  <span class="c1"># -&gt; [1, 2, 3] (list[int])</span>
+</span></code></pre></div>
+<p>You typically use <code>into</code> when:</p>
+<ul>
+<li>You want to hand off to a library that expects plain containers.</li>
+<li>You want to compute a final scalar or structure (e.g. <code>dict</code>, <code>DataFrame</code>, SQL string…).</li>
+</ul>
+<p>Once you call <code>into</code>, you are <strong>out of the chain</strong>.</p>
+<p><strong>Mental model:</strong></p>
+<ul>
+<li><code>from_</code>: <em>wrap this</em> (enter the chain).</li>
+<li><code>apply</code>: <em>call my existing function but keep chaining</em>.</li>
+<li><code>into</code>: <em>unwrap and give to this function, I’m done</em>.</li>
+</ul>
+<hr />
+<h2 id="4-which-types-expose-which-methods">4. Which Types Expose Which Methods?<a class="headerlink" href="#4-which-types-expose-which-methods" title="Permanent link">&para;</a></h2>
+<p>The table below summarises which methods are available on each wrapper.</p>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Method</th>
+<th style="text-align: center;"><code>Iter</code></th>
+<th style="text-align: center;"><code>Seq</code></th>
+<th style="text-align: center;"><code>Dict</code></th>
+<th style="text-align: center;"><code>Option</code></th>
+<th style="text-align: center;"><code>Result</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Wrapper-level</strong></td>
+<td><code>pipe</code></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td></td>
+<td><code>tap</code></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td><strong>Boundary</strong></td>
+<td><code>from_</code></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+</tr>
+<tr>
+<td></td>
+<td><code>apply</code></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+</tr>
+<tr>
+<td></td>
+<td><code>into</code></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+</tr>
+<tr>
+<td></td>
+<td><code>inner</code></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+</tr>
+<tr>
+<td><strong>Transform</strong></td>
+<td><code>map</code></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">✓ (_values,_items, _keys)</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td></td>
+<td><code>map_err</code></td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td></td>
+<td><code>and_then</code></td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td></td>
+<td><code>or_else</code></td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td><strong>Observe</strong></td>
+<td><code>inspect</code></td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td></td>
+<td><code>inspect_err</code></td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td></td>
+<td><code>for_each</code></td>
+<td style="text-align: center;">✓ (terminal)</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+</tr>
+<tr>
+<td></td>
+<td><code>peek</code></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key take-aways:</strong></p>
+<ul>
+<li>Every wrapper has <code>pipe</code> and <code>tap</code> (inherited from <code>Pipeable</code>).</li>
+<li>Sequence-like wrappers (<code>Iter</code>, <code>Seq</code>, <code>Dict</code>) share boundary methods (<code>from_</code>, <code>apply</code>, <code>into</code>, <code>inner</code>).</li>
+<li><code>Option</code> and <code>Result</code> share transform methods (<code>map</code>, <code>and_then</code>, <code>or_else</code>) and the observe method <code>inspect</code>.</li>
+<li><code>Iter.for_each</code> is <strong>terminal</strong> (consumes the iterator); <code>Seq.for_each</code> and <code>Dict.for_each</code> return <code>self</code>.</li>
+</ul>
+<p>Once you recognise these patterns, navigating the API—and designing your own helpers in the same style—becomes much more natural.</p>
+<hr />
+<h2 id="5-impact-on-software-design">5. Impact on Software Design<a class="headerlink" href="#5-impact-on-software-design" title="Permanent link">&para;</a></h2>
+<p>So far we have focused on <em>what</em> each method does and <em>how</em> to combine them. The most important consequence of this design is <strong>how it changes the way you structure programs</strong>.</p>
+<p>At a high level, <code>pyochain</code> encourages you to:</p>
+<ul>
+<li>Keep <strong>concrete domain logic</strong> in small, pure (or mostly pure) functions.</li>
+<li>Express the <strong>orchestration</strong> of your program as a single, readable chain of <code>pipe</code> / <code>apply</code> / <code>into</code> / <code>from_</code> (and the usual <code>map</code> / <code>filter</code> / <code>for_each</code>, etc.).</li>
+</ul>
+<p>The goal is that your “main” function – or the core of a feature – reads like a pipeline:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="__span-7-2">    <span class="k">return</span> <span class="p">(</span>
+</span><span id="__span-7-3">        <span class="n">load_raw_data</span><span class="p">()</span>               <span class="c1"># plain function, returns e.g. list[Row]</span>
+</span><span id="__span-7-4">        <span class="o">.</span><span class="n">pipe</span><span class="p">(</span><span class="n">wrap_as_seq</span><span class="p">)</span>            <span class="c1"># orchestration and normalisation</span>
+</span><span id="__span-7-5">        <span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">normalise_row</span><span class="p">)</span>           <span class="c1"># pure transformations</span>
+</span><span id="__span-7-6">        <span class="o">.</span><span class="n">pipe</span><span class="p">(</span><span class="n">apply_business_rules</span><span class="p">)</span>   <span class="c1"># may use Option/Result internally</span>
+</span><span id="__span-7-7">        <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">group_and_sort</span><span class="p">)</span>        <span class="c1"># call existing helper, stay wrapped</span>
+</span><span id="__span-7-8">        <span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="n">write_report</span><span class="p">)</span>           <span class="c1"># leave the chain at the very end</span>
+</span><span id="__span-7-9">    <span class="p">)</span>
+</span></code></pre></div>
+<h3 id="51-orchestration-as-a-single-linear-flow">5.1 Orchestration as a single, linear flow<a class="headerlink" href="#51-orchestration-as-a-single-linear-flow" title="Permanent link">&para;</a></h3>
+<p>Without chaining, “glue code” tends to look like:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><span class="n">rows</span> <span class="o">=</span> <span class="n">load_raw_data</span><span class="p">()</span>
+</span><span id="__span-8-2"><span class="n">rows</span> <span class="o">=</span> <span class="p">[</span><span class="n">normalise_row</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
+</span><span id="__span-8-3"><span class="n">valid_rows</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span> <span class="k">if</span> <span class="n">is_valid</span><span class="p">(</span><span class="n">r</span><span class="p">)]</span>
+</span><span id="__span-8-4"><span class="n">grouped</span> <span class="o">=</span> <span class="n">group_and_sort</span><span class="p">(</span><span class="n">valid_rows</span><span class="p">)</span>
+</span><span id="__span-8-5"><span class="k">return</span> <span class="n">write_report</span><span class="p">(</span><span class="n">grouped</span><span class="p">)</span>
+</span></code></pre></div>
+<p>This is not terrible, but as complexity grows you quickly accumulate:</p>
+<ul>
+<li>Many intermediate variables (<code>rows</code>, <code>valid_rows</code>, <code>grouped</code>, …).</li>
+<li>Conditionals and error-handling branches interleaved with data transformations.</li>
+<li>State that has to be threaded through multiple steps manually.</li>
+</ul>
+<p>With <code>pyochain</code>, you can push the <em>details</em> into functions and keep the <strong>top-level orchestration</strong> as a single, top-to-bottom chain:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="__span-9-2">    <span class="k">return</span> <span class="p">(</span>
+</span><span id="__span-9-3">        <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">(</span><span class="n">load_raw_data</span><span class="p">())</span>
+</span><span id="__span-9-4">        <span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">normalise_row</span><span class="p">)</span>
+</span><span id="__span-9-5">        <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_valid</span><span class="p">)</span>
+</span><span id="__span-9-6">        <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">group_and_sort</span><span class="p">)</span>
+</span><span id="__span-9-7">        <span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="n">write_report</span><span class="p">)</span>
+</span><span id="__span-9-8">    <span class="p">)</span>
+</span></code></pre></div>
+<p>You read the flow from top to bottom, with very few names in scope, and every step corresponds to a meaningful stage in the pipeline.</p>
+<h3 id="52-pure-functions-first-glue-code-second">5.2 Pure functions first, glue code second<a class="headerlink" href="#52-pure-functions-first-glue-code-second" title="Permanent link">&para;</a></h3>
+<p>Because <code>pipe</code>, <code>apply</code> and <code>into</code> make it easy to call plain functions, you are encouraged to design <strong>most of your code as normal, testable functions</strong>:</p>
+<ul>
+<li><code>normalise_row(row: Row) -&gt; Row</code></li>
+<li><code>apply_business_rules(row: Row) -&gt; Result[Row, Error]</code></li>
+<li><code>group_and_sort(rows: Sequence[Row]) -&gt; Sequence[Grouped]</code></li>
+</ul>
+<p>None of these need to know about <code>Iter</code>/<code>Seq</code>/<code>Result</code> – or only about one of them in a small area. The chain then becomes a thin orchestration layer that wires these pure functions together.</p>
+<p>The impact on design:</p>
+<ul>
+<li>It is easy to unit-test the core logic without any wrappers involved.</li>
+<li>The pipeline becomes the place where you decide <em>when</em> to turn a <code>Seq</code> into an <code>Iter</code>, <em>when</em> to introduce an <code>Option</code> or <code>Result</code>, and <em>when</em> to exit back to plain values.</li>
+</ul>
+<h3 id="53-closures-as-generic-building-blocks">5.3 Closures as generic building blocks<a class="headerlink" href="#53-closures-as-generic-building-blocks" title="Permanent link">&para;</a></h3>
+<p>Because the chaining style works well with small functions, Python <strong>closures</strong> (functions that capture variables from their environment) naturally complement it. They let you build small, specialised callables without committing to any particular implementation detail (no framework, no concrete type required).</p>
+<p>There are two common, very generic patterns:</p>
+<ol>
+<li><strong>Capture configuration once, reuse everywhere</strong></li>
+</ol>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
+</span><span id="__span-10-2">
+</span><span id="__span-10-3">
+</span><span id="__span-10-4"><span class="k">def</span><span class="w"> </span><span class="nf">make_threshold_filter</span><span class="p">(</span><span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]:</span>
+</span><span id="__span-10-5">    <span class="k">def</span><span class="w"> </span><span class="nf">_predicate</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="__span-10-6">        <span class="k">return</span> <span class="n">value</span> <span class="o">&gt;=</span> <span class="n">threshold</span>
+</span><span id="__span-10-7">
+</span><span id="__span-10-8">    <span class="k">return</span> <span class="n">_predicate</span>
+</span><span id="__span-10-9">
+</span><span id="__span-10-10">
+</span><span id="__span-10-11"><span class="k">def</span><span class="w"> </span><span class="nf">filter_values</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+</span><span id="__span-10-12">    <span class="n">keep</span> <span class="o">=</span> <span class="n">make_threshold_filter</span><span class="p">(</span><span class="n">threshold</span><span class="p">)</span>
+</span><span id="__span-10-13">    <span class="k">return</span> <span class="p">(</span>
+</span><span id="__span-10-14">        <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+</span><span id="__span-10-15">        <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">keep</span><span class="p">)</span>
+</span><span id="__span-10-16">        <span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+</span><span id="__span-10-17">    <span class="p">)</span>
+</span></code></pre></div>
+<p>Here, the chain only sees “a predicate over numbers”. The fact that it depends on a particular <code>threshold</code> is encapsulated in the closure returned by <code>make_threshold_filter</code>.</p>
+<ol>
+<li><strong>Define tiny helpers next to the pipeline</strong></li>
+</ol>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+</span><span id="__span-11-2">
+</span><span id="__span-11-3">
+</span><span id="__span-11-4"><span class="k">def</span><span class="w"> </span><span class="nf">describe_numbers</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">default_minmax</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="__span-11-5">  <span class="k">def</span><span class="w"> </span><span class="nf">_format_summary</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="__span-11-6">    <span class="k">return</span> <span class="p">(</span>
+</span><span id="__span-11-7">      <span class="sa">f</span><span class="s2">&quot;count=</span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">count</span><span class="p">()</span><span class="si">}</span><span class="s2">, &quot;</span>
+</span><span id="__span-11-8">      <span class="sa">f</span><span class="s2">&quot;min=</span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">min_or</span><span class="p">(</span><span class="n">default_minmax</span><span class="p">)</span><span class="si">}</span><span class="s2">, &quot;</span>
+</span><span id="__span-11-9">      <span class="sa">f</span><span class="s2">&quot;max=</span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">max_or</span><span class="p">(</span><span class="n">default_minmax</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="__span-11-10">    <span class="p">)</span>
+</span><span id="__span-11-11">
+</span><span id="__span-11-12">  <span class="k">return</span> <span class="p">(</span>
+</span><span id="__span-11-13">    <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+</span><span id="__span-11-14">    <span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">abs</span><span class="p">)</span>
+</span><span id="__span-11-15">    <span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;debug:&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">inner</span><span class="p">()))</span>
+</span><span id="__span-11-16">    <span class="o">.</span><span class="n">pipe</span><span class="p">(</span><span class="n">_format_summary</span><span class="p">)</span>
+</span><span id="__span-11-17">  <span class="p">)</span>
+</span></code></pre></div>
+<p>Here, <code>_format_summary</code> is a closure: it <strong>captures</strong> <code>default_minmax</code> from <code>describe_numbers</code> and uses it when computing the summary, without needing to pass it explicitly through the chain.</p>
+<p>This does <strong>not</strong> mean that classes become obsolete. In many real programs you will mix both approaches:</p>
+<ul>
+<li>Use dataclasses / named tuples / typed dicts to model <strong>data</strong>.</li>
+<li>Use closures and small top-level functions to model <strong>behaviour</strong>, especially when that behaviour is passed as callbacks into <code>map</code>, <code>filter</code>, <code>tap</code>, <code>pipe</code>, etc.</li>
+</ul>
+<p>The key point is that the chaining style makes it easy to:</p>
+<ul>
+<li>Pass closures wherever a callable is expected (<code>map</code>, <code>filter</code>, <code>for_each</code>, <code>tap</code>, <code>pipe</code>).</li>
+<li>Keep stateful or configuration-heavy pieces in well-defined structures, without turning every bit of behaviour into a large class.</li>
+</ul>
+<p>This keeps the design close to “data + functions” rather than “data + classes with a lot of mutable state”, while still being very expressive.</p>
+<h3 id="54-named-tuples-and-light-data-structures-shine-again">5.4 Named tuples and light data structures shine again<a class="headerlink" href="#54-named-tuples-and-light-data-structures-shine-again" title="Permanent link">&para;</a></h3>
+<p>In this style, lightweight, immutable data structures like <code>namedtuple</code>, <code>dataclass(frozen=True)</code> or simple <code>TypedDict</code> become a natural fit:</p>
+<ul>
+<li>They are easy to construct and pass around.</li>
+<li>They work well with <code>map</code>/<code>filter</code>/<code>group_by</code>-style operations.</li>
+<li>They interact nicely with closures: you can capture them, transform them, and keep everything value-oriented.</li>
+</ul>
+<p>Rather than introducing classes mostly to carry state between methods, you can:</p>
+<ul>
+<li>Use named tuples / dataclasses to describe <strong>shape of data</strong>.</li>
+<li>Use pipelines and small functions to describe <strong>behaviour over that data</strong>.</li>
+</ul>
+<h3 id="55-refactoring-and-debugging-as-secondary-benefits">5.5 Refactoring and debugging as secondary benefits<a class="headerlink" href="#55-refactoring-and-debugging-as-secondary-benefits" title="Permanent link">&para;</a></h3>
+<p>Once your program is structured as “pure functions + orchestration chain”, other benefits follow almost automatically:</p>
+<ul>
+<li><strong>Refactoring</strong> becomes local and predictable:</li>
+<li>Changing the shape of intermediate data usually means adjusting a <code>map</code> or <code>apply</code>.</li>
+<li>
+<p>Moving code into or out of helpers is often just switching between <code>pipe</code>, <code>apply</code> and <code>into</code>.</p>
+</li>
+<li>
+<p><strong>Debugging pipelines</strong> is simpler:</p>
+</li>
+<li>Insert <code>tap</code>, <code>inspect</code>, <code>inspect_err</code>, <code>for_each</code> or <code>peek</code> where needed to observe values without disrupting the flow.</li>
+<li>
+<p>Remove these hooks once you’re done; the core design stays the same.</p>
+</li>
+<li>
+<p><strong>Gradual adoption</strong> is natural:</p>
+</li>
+<li>You can start by wrapping a single slice of logic in a <code>Seq</code>/<code>Iter</code> pipeline.</li>
+<li>Over time, you migrate more of the orchestration into chains while leaving domain logic mostly unchanged.</li>
+</ul>
+<p>All of this stems from the same design choice: make the <em>glue</em> of your program a linear, chainable data flow, and keep the <em>meat</em> of your program in small, focused functions.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      
+    
+  </body>
+</html>
