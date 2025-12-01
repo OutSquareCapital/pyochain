@@ -15,7 +15,7 @@ Those emojis will be used in the changelog to highlight the type of change:
 - 🧪 Test update
 - 🗑️ Removal of deprecated features
 
-## Unreleased
+## Released
 
 ### [0.5.52]
 
@@ -27,5 +27,3 @@ Those emojis will be used in the changelog to highlight the type of change:
 - 🔧: `peek` methods: deleted old peek and replaced it with peekn (now peek)
 - 📝: Various changes to use more `Seq.iter` rather than `Iter.from_` in the docstrings examples.
 - 📝: Added new guide section to `docs/guides/`
-
-## Released

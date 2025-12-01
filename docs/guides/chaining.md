@@ -258,36 +258,31 @@ Once you call `into`, you are **out of the chain**.
 
 ## 4. Which Types Expose Which Methods?
 
-To summarise by wrapper:
+The table below summarises which methods are available on each wrapper.
 
-- **All wrappers (`Pipeable`)**
-  - `pipe`, `tap`.
+| Category | Method | `Iter` | `Seq` | `Dict` | `Option` | `Result` |
+|----------|--------|:------:|:-----:|:------:|:--------:|:--------:|
+| **Wrapper-level** | `pipe` | ✓ | ✓ | ✓ | ✓ | ✓ |
+|                   | `tap`  | ✓ | ✓ | ✓ | ✓ | ✓ |
+| **Boundary** | `from_`  | ✓ | ✓ | ✓ | ✓ | – |
+|              | `apply`  | ✓ | ✓ | ✓ | – | – |
+|              | `into`   | ✓ | ✓ | ✓ | – | – |
+|              | `inner`  | ✓ | ✓ | ✓ | – | – |
+| **Transform** | `map`       | ✓ | – | ✓ (_values,_items, _keys) | ✓ | ✓ |
+|               | `map_err`   | – | – | – | – | ✓ |
+|               | `and_then`  | – | – | – | ✓ | ✓ |
+|               | `or_else`   | – | – | – | ✓ | ✓ |
+| **Observe** | `inspect`     | – | – | – | ✓ | ✓ |
+|             | `inspect_err` | – | – | – | – | ✓ |
+|             | `for_each`    | ✓ (terminal) | ✓ | ✓ | – | – |
+|             | `peek`        | ✓ | – | – | – | – |
 
-- **Sequence-like wrappers (`Iter`, `Seq`, `Dict`)**
-  - Boundary methods: `apply`, `inner`, `into`.
-  - Transformers: `Iter.map`, `Dict.map_values`, etc.
-  - Side-effect / inspection:
-    - `Iter`: `for_each` (terminal), `peek`.
-    - `Seq`: `for_each` (returns `self`).
-    - `Dict`: `for_each` (returns `self`).
+**Key take-aways:**
 
-- **`Dict`**
-  - Follows the same `CommonBase` pattern: `pipe`, `tap`, `apply`, `into`.
-  - Exposes iter-style views that in turn support `map`-like operations.
-
-- **`Option` (`Some` / `NONE`)**
-  - Transformers: `map`, `and_then`, `map_or`, `map_or_else`, `ok_or`, `ok_or_else`, etc.
-  - Observers: `inspect`.
-
-- **`Result` (`Ok` / `Err`)**
-  - Transformers: `map`, `map_err`, `and_then`, `or_else`, `transpose`, …
-  - Observers: `inspect` (on `Ok`), `inspect_err` (on `Err`).
-
-The common thread is that every family has:
-
-- A **transforming twin** (`map`, `and_then`, …) that changes values.
-- An **observing twin** (`inspect`, `for_each`, `peek`) that looks at values but keeps the structure intact.
-- Boundary methods (`from_`, `apply`, `into`) to move in and out of the chain.
+- Every wrapper has `pipe` and `tap` (inherited from `Pipeable`).
+- Sequence-like wrappers (`Iter`, `Seq`, `Dict`) share boundary methods (`from_`, `apply`, `into`, `inner`).
+- `Option` and `Result` share transform methods (`map`, `and_then`, `or_else`) and the observe method `inspect`.
+- `Iter.for_each` is **terminal** (consumes the iterator); `Seq.for_each` and `Dict.for_each` return `self`.
 
 Once you recognise these patterns, navigating the API—and designing your own helpers in the same style—becomes much more natural.
 
