@@ -32,7 +32,7 @@ class BaseAgg[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_(["a", "b", "c"]).join("-")
+        >>> pc.Seq(["a", "b", "c"]).join("-")
         'a-b-c'
 
         ```
@@ -56,7 +56,7 @@ class BaseAgg[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> data = [(1, "a"), (2, "b"), (3, "c")]
-        >>> unzipped = pc.Iter.from_(data).unzip()
+        >>> unzipped = pc.Seq(data).unzip()
         >>> unzipped.first.collect()
         Seq([1, 2, 3])
         >>> unzipped.second.collect()
@@ -88,7 +88,7 @@ class BaseAgg[T](IterWrapper[T]):
         It then serves as a default when the iterable is empty.
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3]).reduce(lambda a, b: a + b)
+        >>> pc.Seq([1, 2, 3]).reduce(lambda a, b: a + b)
         6
 
         ```
@@ -111,7 +111,7 @@ class BaseAgg[T](IterWrapper[T]):
         ValueError will be raised if the given element isn't one of the combinations of iterable.
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_("abcdefg").combination_index("adf")
+        >>> pc.Seq("abcdefg").combination_index("adf")
         10
 
         ```
@@ -126,7 +126,7 @@ class BaseAgg[T](IterWrapper[T]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([9]).first()
+        >>> pc.Seq([9]).first()
         9
 
         ```
@@ -141,7 +141,7 @@ class BaseAgg[T](IterWrapper[T]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([9, 8]).second()
+        >>> pc.Seq([9, 8]).second()
         8
 
         ```
@@ -156,7 +156,7 @@ class BaseAgg[T](IterWrapper[T]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([7, 8, 9]).last()
+        >>> pc.Seq([7, 8, 9]).last()
         9
 
         ```
@@ -172,7 +172,7 @@ class BaseAgg[T](IterWrapper[T]):
         Like the builtin len but works on lazy sequences.
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2]).count()
+        >>> pc.Seq([1, 2]).count()
         2
 
         ```
@@ -190,7 +190,7 @@ class BaseAgg[T](IterWrapper[T]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([10, 20]).item(1)
+        >>> pc.Seq([10, 20]).item(1)
         20
 
         ```
@@ -208,15 +208,15 @@ class BaseAgg[T](IterWrapper[T]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_("abcdefghabcd").argmax()
+        >>> pc.Seq("abcdefghabcd").argmax()
         7
-        >>> pc.Iter.from_([0, 1, 2, 3, 3, 2, 1, 0]).argmax()
+        >>> pc.Seq([0, 1, 2, 3, 3, 2, 1, 0]).argmax()
         3
 
         ```
         For example, identify the best machine learning model:
         ```python
-        >>> models = pc.Iter.from_(["svm", "random forest", "knn", "naïve bayes"])
+        >>> models = pc.Seq(["svm", "random forest", "knn", "naïve bayes"])
         >>> accuracy = pc.Seq([68, 61, 84, 72])
         >>> # Most accurate model
         >>> models.item(accuracy.argmax())
@@ -241,9 +241,9 @@ class BaseAgg[T](IterWrapper[T]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_("efghabcdijkl").argmin()
+        >>> pc.Seq("efghabcdijkl").argmin()
         4
-        >>> pc.Iter.from_([3, 2, 1, 0, 4, 2, 1, 0]).argmin()
+        >>> pc.Seq([3, 2, 1, 0, 4, 2, 1, 0]).argmin()
         3
 
         ```
@@ -253,7 +253,7 @@ class BaseAgg[T](IterWrapper[T]):
         >>> def cost(x):
         ...     "Days for a wound to heal given a subject's age."
         ...     return x**2 - 20 * x + 150
-        >>> labels = pc.Iter.from_(["homer", "marge", "bart", "lisa", "maggie"])
+        >>> labels = pc.Seq(["homer", "marge", "bart", "lisa", "maggie"])
         >>> ages = pc.Seq([35, 30, 10, 9, 1])
         >>> # Fastest healing family member
         >>> labels.item(ages.argmin(key=cost))
@@ -274,7 +274,7 @@ class BaseAgg[T](IterWrapper[T]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3]).sum()
+        >>> pc.Seq([1, 2, 3]).sum()
         6
 
         ```
@@ -289,7 +289,7 @@ class BaseAgg[T](IterWrapper[T]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([3, 1, 2]).min()
+        >>> pc.Seq([3, 1, 2]).min()
         1
 
         ```
@@ -304,7 +304,7 @@ class BaseAgg[T](IterWrapper[T]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([3, 1, 2]).max()
+        >>> pc.Seq([3, 1, 2]).max()
         3
 
         ```
@@ -319,7 +319,7 @@ class BaseAgg[T](IterWrapper[T]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3]).mean()
+        >>> pc.Seq([1, 2, 3]).mean()
         2
 
         ```
@@ -334,7 +334,7 @@ class BaseAgg[T](IterWrapper[T]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 3, 2]).median()
+        >>> pc.Seq([1, 3, 2]).median()
         2
 
         ```
@@ -349,7 +349,7 @@ class BaseAgg[T](IterWrapper[T]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 2, 3]).mode()
+        >>> pc.Seq([1, 2, 2, 3]).mode()
         2
 
         ```
@@ -366,7 +366,7 @@ class BaseAgg[T](IterWrapper[T]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3]).stdev()
+        >>> pc.Seq([1, 2, 3]).stdev()
         1.0
 
         ```
@@ -383,7 +383,7 @@ class BaseAgg[T](IterWrapper[T]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3, 7, 8]).variance()
+        >>> pc.Seq([1, 2, 3, 7, 8]).variance()
         9.7
 
         ```
