@@ -57,7 +57,7 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
         """Update value in a (potentially) nested dictionary.
 
         Args:
-            *keys (K): Sequence of keys representing the nested path to update.
+            *keys (K): keys representing the nested path to update.
             func (Callable[[V], V]): Function to apply to the value at the specified path.
             default (V | None): Default value to use if the path does not exist, by default None
 
@@ -125,7 +125,7 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
         """Return a new Dict with given keys removed.
 
         Args:
-            *keys (K): Sequence of keys to remove from the dictionary.
+            *keys (K): keys to remove from the dictionary.
 
         Returns:
             Dict[K, V]: New Dict with specified keys removed.

@@ -134,7 +134,7 @@ class BaseRolling[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([1, 2, 4, 1, 4]).iter().rolling_std(3).map(lambda x: round(x, 2)).collect()
-        Seq([1.53, 1.53, 1.73])
+        Seq((1.53, 1.53, 1.73))
 
         ```
 
@@ -172,7 +172,7 @@ class BaseRolling[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([1, 2, 4, 1, 4]).iter().rolling_skew(3).map(lambda x: round(x, 2)).collect()
-        Seq([0.94, 0.94, -1.73])
+        Seq((0.94, 0.94, -1.73))
 
         ```
 

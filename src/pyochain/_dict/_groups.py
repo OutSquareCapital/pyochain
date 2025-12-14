@@ -99,7 +99,7 @@ class GroupsDict[K, V](MappingWrapper[K, V]):
         >>>
         >>> def get_stats(sub_dict: pc.Dict[str, int]) -> dict[str, Any]:
         ...     return {
-        ...         "count": sub_dict.iter_keys().count(),
+        ...         "count": sub_dict.iter_keys().length(),
         ...         "total_size": sub_dict.iter_values().sum(),
         ...         "max_size": sub_dict.iter_values().max(),
         ...         "files": sub_dict.iter_keys().sort().into(list),
@@ -148,7 +148,7 @@ class GroupsDict[K, V](MappingWrapper[K, V]):
         >>> data = {"math": "A", "physics": "B", "english": "A"}
         >>> pc.Dict(data).group_by_value_agg(
         ...     value_func=lambda grade: grade,
-        ...     agg_func=lambda d: d.iter_keys().count(),
+        ...     agg_func=lambda d: d.iter_keys().length(),
         ... ).inner()
         {'A': 2, 'B': 1}
         >>> # Second example

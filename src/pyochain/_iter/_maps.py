@@ -1,16 +1,10 @@
 from __future__ import annotations
 
 import itertools
-from collections.abc import (
-    Callable,
-    Iterable,
-    Iterator,
-    Mapping,
-    Sequence,
-)
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from functools import partial
-from typing import TYPE_CHECKING, Any, overload
+from typing import TYPE_CHECKING, Any
 
 import cytoolz as cz
 
@@ -126,71 +120,33 @@ class _ThenBuilder[T, R](_CaseBuilder[T]):
 
 class BaseMap[T](IterWrapper[T]):
     def map[R](self, func: Callable[[T], R]) -> Iter[R]:
-        """Map each element through func and return a Iter of results.
+        """Apply a function to each element of the iterable.
+
+        If you are good at thinking in types, you can think of map() like this:
+            If you have an iterator that gives you elements of some type A, and you want an iterator of some other type B, you can use map(),
+            passing a closure that takes an A and returns a B.
+
+        map() is conceptually similar to a for loop.
+
+        However, as map() is lazy, it is best used when you are already working with other iterators.
+
+        If you are doing some sort of looping for a side effect, it is considered more idiomatic to use `for_each` than map().
 
         Args:
             func (Callable[[T], R]): Function to apply to each element.
 
         Returns:
-            Iter[R]: An iterable of transformed elements.
+            Iter[R]: An iterator of transformed elements.
+
+        Example:
+        ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2]).iter().map(lambda x: x + 1).collect()
-        Seq([2, 3])
+        >>> pc.Iter([1, 2]).map(lambda x: x + 1).collect()
+        Seq((2, 3))
 
         ```
         """
         return self._lazy(partial(map, func))
-
-    @overload
-    def flat_map[U, R](
-        self: IterWrapper[Iterable[U]],
-        func: Callable[[U], R],
-    ) -> Iter[R]: ...
-    @overload
-    def flat_map[U, R](
-        self: IterWrapper[Iterator[U]],
-        func: Callable[[U], R],
-    ) -> Iter[R]: ...
-    @overload
-    def flat_map[U, R](
-        self: IterWrapper[Sequence[U]],
-        func: Callable[[U], R],
-    ) -> Iter[R]: ...
-    @overload
-    def flat_map[U, R](
-        self: IterWrapper[list[U]],
-        func: Callable[[U], R],
-    ) -> Iter[R]: ...
-    @overload
-    def flat_map[U, R](
-        self: IterWrapper[tuple[U, ...]],
-        func: Callable[[U], R],
-    ) -> Iter[R]: ...
-    @overload
-    def flat_map[R](self: IterWrapper[range], func: Callable[[int], R]) -> Iter[R]: ...
-    def flat_map[U: Iterable[Any], R](
-        self: IterWrapper[U],
-        func: Callable[[Any], R],
-    ) -> Iter[Any]:
-        """Map each element through func and flatten the result by one level.
-
-        Args:
-            func (Callable[[Any], R]): Function to apply to each element.
-
-        Returns:
-            Iter[Any]: An iterable of flattened transformed elements.
-        >>> import pyochain as pc
-        >>> data = [[1, 2], [3, 4]]
-        >>> pc.Seq(data).iter().flat_map(lambda x: x + 10).collect()
-        Seq([11, 12, 13, 14])
-
-        ```
-        """
-
-        def _flat_map(data: Iterable[U]) -> map[R]:
-            return map(func, itertools.chain.from_iterable(data))
-
-        return self._lazy(_flat_map)
 
     def map_star[U: Iterable[Any], R](
         self: IterWrapper[U],
@@ -243,9 +199,9 @@ class BaseMap[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> data = pc.Seq(range(-3, 4))
         >>> data.iter().map_if(lambda x: x > 0).then(lambda x: x * 10).or_else(lambda x: x).collect()
-        Seq([-3, -2, -1, 0, 10, 20, 30])
+        Seq((-3, -2, -1, 0, 10, 20, 30))
         >>> data.iter().map_if(lambda x: x % 2 == 0).then(lambda x: f"{x} is even").or_skip().collect()
-        Seq(['-2 is even', '0 is even', '2 is even'])
+        Seq(('-2 is even', '0 is even', '2 is even'))
 
         ```
         """
@@ -268,10 +224,10 @@ class BaseMap[T](IterWrapper[T]):
         Returns:
             Iter[Iterable[T]]: An iterable of repeated sequences.
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2]).iter().repeat(2).collect()
-        Seq([(1, 2), (1, 2)])
-        >>> pc.Seq([1, 2]).iter().repeat(3, list).collect()
-        Seq([[1, 2], [1, 2], [1, 2]])
+        >>> pc.Iter([1, 2]).repeat(2).collect()
+        Seq(((1, 2), (1, 2)))
+        >>> pc.Iter([1, 2]).repeat(3, list).collect()
+        Seq(([1, 2], [1, 2], [1, 2]))
 
         ```
         """
@@ -296,13 +252,13 @@ class BaseMap[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq(range(3)).iter().repeat_last().take(5).map(lambda x: x.unwrap()).collect()
-        Seq([0, 1, 2, 2, 2])
+        >>> pc.Iter(range(3)).repeat_last().take(5).map(lambda x: x.unwrap()).collect()
+        Seq((0, 1, 2, 2, 2))
 
         If the iterable is empty, yield `NONE` indefinitely:
         ```python
-        >>> pc.Seq(range(0)).iter().repeat_last().take(5).collect()
-        Seq([NONE, NONE, NONE, NONE, NONE])
+        >>> pc.Iter(range(0)).repeat_last().take(5).collect()
+        Seq((NONE, NONE, NONE, NONE, NONE))
 
         ```
 
@@ -389,7 +345,7 @@ class BaseMap[T](IterWrapper[T]):
         ...         case _:
         ...             return pc.NONE
         >>> pc.Seq([1, 2, 3, 4, 5]).iter().scan(0, accumulate_until_limit).collect()
-        Seq([1, 3, 6, 10])
+        Seq((1, 3, 6, 10))
 
         ```
 

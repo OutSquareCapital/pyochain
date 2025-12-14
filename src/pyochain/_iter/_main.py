@@ -3,13 +3,14 @@ from __future__ import annotations
 import itertools
 from collections.abc import (
     Callable,
+    Collection,
     Generator,
     Iterable,
     Iterator,
     Sequence,
     ValuesView,
 )
-from typing import TYPE_CHECKING, Any, Concatenate, Self, TypeIs, overload, override
+from typing import TYPE_CHECKING, Any, Concatenate, Self, overload
 
 import cytoolz as cz
 
@@ -28,7 +29,6 @@ from ._rolling import BaseRolling
 from ._tuples import BaseTuples
 
 if TYPE_CHECKING:
-    from .._core import IntoIter
     from .._dict import Dict
 
 
@@ -38,10 +38,6 @@ class CommonMethods[T](BaseAgg[T], BaseEager[T], BaseDict[T], BaseBool[T]):
 
 def _convert_data[T](data: Iterable[T] | T, *more_data: T) -> Iterable[T]:
     return data if cz.itertoolz.isiterable(data) else (data, *more_data)
-
-
-def _is_sequence[T](data: Iterable[T]) -> TypeIs[Sequence[T]]:
-    return hasattr(data, "__getitem__") and hasattr(data, "__len__")
 
 
 class Iter[T](
@@ -55,7 +51,7 @@ class Iter[T](
     BaseJoins[T],
     CommonMethods[T],
 ):
-    """A wrapper around Python's built-in `Iterators`/`Generators` types, providing a rich set of functional programming tools.
+    """A superset around Python's built-in `Iterator` Protocol, providing a rich set of functional programming tools.
 
     - An `Iterable` is any object capable of returning its members one at a time, permitting it to be iterated over in a for-loop.
     - An `Iterator` is an object representing a stream of data; returned by calling `iter()` on an `Iterable`.
@@ -63,8 +59,8 @@ class Iter[T](
 
     It's designed around lazy evaluation, allowing for efficient processing of large datasets.
 
-    - To instantiate from a lazy `Iterator`/`Generator`, simply pass it to the standard constructor.
-    - To instantiate from any `Iterable` (like a list or set), or unpacked values, use the `from_` class method.
+    - To instantiate from an `Iterable`, simply pass it to the standard constructor.
+    - To instantiate from unpacked values, use the `from_` class method. This would be equivalent to the convenience of [x,y,z] syntax for lists.
 
     Once an `Iter` is created, it can be transformed and manipulated using a variety of chainable methods.
 
@@ -77,19 +73,24 @@ class Iter[T](
     In general, avoid intermediate references when dealing with lazy iterators, and prioritize method chaining instead.
 
     Args:
-        data (IntoIter[T]): An iterator or generator to wrap.
+        data (Iterable[T]): Any object that can be iterated over.
     """
+
+    _inner: Iterator[T]
 
     __slots__ = ("_inner",)
 
-    def __init__(self, data: IntoIter[T]) -> None:
-        self._inner = data
+    def __init__(self, data: Iterable[T]) -> None:
+        self._inner = iter(data)  # pyright: ignore[reportIncompatibleVariableOverride]
+
+    def __next__(self) -> T:
+        return next(self._inner)
 
     def next(self) -> Option[T]:
-        """Call next builtin on the underlying iterator to get the next element.
+        """Return the next element in the iterator.
 
         Returns:
-            Option[T]: The next element in the iterator.
+            Option[T]: The next element in the iterator. `Some[T]`, or `NONE` if the iterator is exhausted.
 
         Example:
         ```python
@@ -102,8 +103,7 @@ class Iter[T](
 
         ```
         """
-        val = next(self.inner())
-        return Option.from_(val)
+        return Option.from_(next(self))
 
     @staticmethod
     def from_count(start: int = 0, step: int = 1) -> Iter[int]:
@@ -188,14 +188,14 @@ class Iter[T](
         Seq((2, 4, 6))
         >>> # iterator is now exhausted
         >>> iterator.collect()
-        Seq([])
+        Seq(())
         >>> # Creating from unpacked values
         >>> pc.Iter.from_(1, 2, 3).collect(tuple)
         Seq((1, 2, 3))
 
         ```
         """
-        return Iter(iter(_convert_data(data, *more_data)))
+        return Iter(_convert_data(data, *more_data))
 
     @staticmethod
     def unfold[S, V](seed: S, generator: Callable[[S], Option[tuple[V, S]]]) -> Iter[V]:
@@ -258,43 +258,6 @@ class Iter[T](
 
         return Iter(_unfold())
 
-    def itr[**P, R, U: Iterable[Any]](
-        self: Iter[U],
-        func: Callable[Concatenate[Iter[U], P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Iter[R]:
-        """Apply a function to each element after wrapping it in an Iter.
-
-        This is a convenience method for the common pattern of mapping a function over an iterable of iterables.
-
-        Args:
-            func (Callable[Concatenate[Iter[U], P], R]): Function to apply to each wrapped element.
-            *args (P.args): Positional arguments to pass to the function.
-            **kwargs (P.kwargs): Keyword arguments to pass to the function.
-
-        Returns:
-            Iter[R]: A new `Iter` instance containing the results of applying the function.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> data = [
-        ...     [1, 2, 3],
-        ...     [4, 5],
-        ...     [6, 7, 8, 9],
-        ... ]
-        >>> pc.Seq(data).iter().itr(lambda x: x.repeat(2).flatten().reduce(lambda a, b: a + b)).collect()
-        Seq([12, 18, 60])
-
-        ```
-        """
-
-        def _itr(data: Iterable[U]) -> Generator[R, None, None]:
-            return (func(Iter(iter(x)), *args, **kwargs) for x in data)
-
-        return self._lazy(_itr)
-
     def struct[**P, R, K, V](
         self: Iter[dict[K, V]],
         func: Callable[Concatenate[Dict[K, V], P], R],
@@ -348,7 +311,7 @@ class Iter[T](
         ...             lambda d: set_continent(d, "America"))
         ...         .group_by(lambda d: d.get("Continent"))
         ...         .map_values(
-        ...             lambda d: pc.Iter.from_(d)
+        ...             lambda d: pc.Iter(d)
         ...             .struct(lambda d: d.drop("Continent").inner())
         ...             .into(list)
         ...         )
@@ -367,65 +330,7 @@ class Iter[T](
 
         return self._lazy(_struct)
 
-    def apply[**P, R](
-        self,
-        func: Callable[Concatenate[IntoIter[T], P], Iterator[R]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Iter[R]:
-        """Apply a function to the underlying Iterator and return a new Iter instance.
-
-        Allow to pass user defined functions that transform the iterable while retaining the Iter wrapper.
-
-        Args:
-            func (Callable[Concatenate[IntoIter[T], P], Iterator[R]]): Function to apply to the underlying iterator.
-            *args (P.args): Positional arguments to pass to the function.
-            **kwargs (P.kwargs): Keyword arguments to pass to the function.
-
-        Returns:
-            Iter[R]: A new `Iter` instance containing the result of the function.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> def double(data: Iterable[int]) -> Iterator[int]:
-        ...     return (x * 2 for x in data)
-        >>> pc.Iter.from_(1, 2, 3).apply(double).into(list)
-        [2, 4, 6]
-
-        ```
-        """
-        return self._lazy(func, *args, **kwargs)
-
-    def into[**P, R](
-        self,
-        func: Callable[Concatenate[IntoIter[T], P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> R:
-        """Convert the underlying Iterator into another type using a provided function.
-
-        This is a terminal operation that consumes the iterator and returns the result of applying the function.
-
-        Args:
-            func (Callable[Concatenate[IntoIter[T], P], R]): Function to convert the underlying iterator.
-            *args (P.args): Positional arguments to pass to the function.
-            **kwargs (P.kwargs): Keyword arguments to pass to the function.
-
-        Returns:
-            R: The result of applying the function to the underlying iterator.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter.from_(1, 2, 3).into(sum)
-        6
-
-        ```
-        """
-        return func(self.inner(), *args, **kwargs)
-
-    def collect(self, factory: Callable[[Iterable[T]], Sequence[T]] = list) -> Seq[T]:
+    def collect(self, factory: Callable[[Iterable[T]], Sequence[T]] = tuple) -> Seq[T]:
         """Collect the elements into a `Sequence`, using the provided factory.
 
         Args:
@@ -438,15 +343,11 @@ class Iter[T](
         ```python
         >>> import pyochain as pc
         >>> pc.Iter.from_(range(5)).collect()
-        Seq([0, 1, 2, 3, 4])
+        Seq((0, 1, 2, 3, 4))
 
         ```
         """
         return self._eager(factory)
-
-    @override
-    def inner(self) -> Iterator[T]:
-        return self._inner  # type: ignore[return-value]
 
     def for_each[**P](
         self,
@@ -506,15 +407,15 @@ class Iter[T](
         >>> all_chunks = pc.Iter.from_count().chunks(4)
         >>> c_1, c_2, c_3 = all_chunks.next(), all_chunks.next(), all_chunks.next()
         >>> c_2.unwrap().collect()  # c_1's elements have been cached; c_3's haven't been
-        Seq([4, 5, 6, 7])
+        Seq((4, 5, 6, 7))
         >>> c_1.unwrap().collect()
-        Seq([0, 1, 2, 3])
+        Seq((0, 1, 2, 3))
         >>> c_3.unwrap().collect()
-        Seq([8, 9, 10, 11])
+        Seq((8, 9, 10, 11))
         >>> pc.Seq([1, 2, 3, 4, 5, 6]).iter().chunks(3).map(lambda c: c.collect()).collect()
-        Seq([Seq([1, 2, 3]), Seq([4, 5, 6])])
+        Seq((Seq((1, 2, 3)), Seq((4, 5, 6))))
         >>> pc.Seq([1, 2, 3, 4, 5, 6, 7, 8]).iter().chunks(3).map(lambda c: c.collect()).collect()
-        Seq([Seq([1, 2, 3]), Seq([4, 5, 6]), Seq([7, 8])])
+        Seq((Seq((1, 2, 3)), Seq((4, 5, 6)), Seq((7, 8))))
 
         ```
         """
@@ -566,13 +467,15 @@ class Iter[T](
         return self._lazy(lambda x: _chunks(x, size))
 
     @overload
-    def flatten[U](self: Iter[Generator[U, None, None]]) -> Iter[U]: ...
+    def flatten[U](self: Iter[Generator[U]]) -> Iter[U]: ...
     @overload
     def flatten[U](self: Iter[ValuesView[U]]) -> Iter[U]: ...
     @overload
     def flatten[U](self: Iter[Iterable[U]]) -> Iter[U]: ...
     @overload
     def flatten[U](self: Iter[Iterator[U]]) -> Iter[U]: ...
+    @overload
+    def flatten[U](self: Iter[Collection[U]]) -> Iter[U]: ...
     @overload
     def flatten[U](self: Iter[Sequence[U]]) -> Iter[U]: ...
     @overload
@@ -590,20 +493,76 @@ class Iter[T](
             Iter[Any]: An iterable of flattened elements.
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([[1, 2], [3]]).iter().flatten().collect()
-        Seq([1, 2, 3])
+        >>> pc.Iter([[1, 2], [3]]).flatten().collect()
+        Seq((1, 2, 3))
 
         ```
         """
         return self._lazy(itertools.chain.from_iterable)
 
+    @overload
+    def flat_map[U, R](
+        self: Iter[Iterable[U]],
+        func: Callable[[U], R],
+    ) -> Iter[R]: ...
+    @overload
+    def flat_map[U, R](
+        self: Iter[Iterator[U]],
+        func: Callable[[U], R],
+    ) -> Iter[R]: ...
+    @overload
+    def flat_map[U, R](
+        self: Iter[Collection[U]],
+        func: Callable[[U], R],
+    ) -> Iter[R]: ...
+    @overload
+    def flat_map[U, R](
+        self: Iter[Sequence[U]],
+        func: Callable[[U], R],
+    ) -> Iter[R]: ...
+    @overload
+    def flat_map[U, R](
+        self: Iter[list[U]],
+        func: Callable[[U], R],
+    ) -> Iter[R]: ...
+    @overload
+    def flat_map[U, R](
+        self: Iter[tuple[U, ...]],
+        func: Callable[[U], R],
+    ) -> Iter[R]: ...
+    @overload
+    def flat_map[R](self: Iter[range], func: Callable[[int], R]) -> Iter[R]: ...
+    def flat_map[U: Iterable[Any], R](
+        self: Iter[U],
+        func: Callable[[Any], R],
+    ) -> Iter[Any]:
+        """Map each element through func and flatten the result by one level.
 
-class Seq[T](CommonMethods[T]):
+        Args:
+            func (Callable[[Any], R]): Function to apply to each element.
+
+        Returns:
+            Iter[Any]: An iterable of flattened transformed elements.
+        >>> import pyochain as pc
+        >>> data = [[1, 2], [3, 4]]
+        >>> pc.Seq(data).iter().flat_map(lambda x: x + 10).collect()
+        Seq((11, 12, 13, 14))
+
+        ```
+        """
+
+        def _flat_map(data: Iterable[U]) -> map[R]:
+            return map(func, itertools.chain.from_iterable(data))
+
+        return self._lazy(_flat_map)
+
+
+class Seq[T](CommonMethods[T], Sequence[T]):
     """`Seq` represent an in memory Sequence.
 
     Provides a subset of `Iter` methods with eager evaluation, and is the return type of `Iter.collect()`.
 
-    You can create a `Seq` from any `Sequence` (like a list or a tuple) using the standard constructor,
+    You can create a `Seq` from any `Sequence` (like a list, or tuple) using the standard constructor,
     or from unpacked values using the `from_` class method.
 
     Doing `Seq(...).iter()` or `Iter.from_(...)` are equivalent.
@@ -612,10 +571,22 @@ class Seq[T](CommonMethods[T]):
             data (Sequence[T]): The data to initialize the Seq with.
     """
 
+    _inner: Sequence[T]
+
     __slots__ = ("_inner",)
 
     def __init__(self, data: Sequence[T]) -> None:
-        self._inner = data
+        self._inner = data  # pyright: ignore[reportIncompatibleVariableOverride]
+
+    @overload
+    def __getitem__(self, index: int) -> T: ...
+    @overload
+    def __getitem__(self, index: slice) -> Sequence[T]: ...
+    def __getitem__(self, index: int | slice[Any, Any, Any]) -> T | Sequence[T]:
+        return self._inner.__getitem__(index)
+
+    def __len__(self) -> int:
+        return len(self._inner)
 
     @overload
     @staticmethod
@@ -646,7 +617,7 @@ class Seq[T](CommonMethods[T]):
 
         """
         converted = _convert_data(data, *more_data)
-        return Seq(converted if _is_sequence(converted) else tuple(converted))
+        return Seq(converted if isinstance(converted, Sequence) else tuple(converted))
 
     def iter(self) -> Iter[T]:
         """Get an iterator over the sequence.
@@ -657,48 +628,6 @@ class Seq[T](CommonMethods[T]):
             Iter[T]: An `Iter` instance wrapping an iterator over the sequence.
         """
         return self._lazy(iter)
-
-    def apply[**P, R](
-        self,
-        func: Callable[Concatenate[Sequence[T], P], Sequence[R]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Seq[R]:
-        """Apply a function to the underlying `Sequence` and return a `Seq` instance.
-
-        Allow to pass user defined functions that transform the `Sequence` while retaining the `Seq` wrapper.
-
-        Args:
-            func (Callable[Concatenate[Sequence[T], P], Sequence[R]]): Function to apply to the underlying `Sequence`.
-            *args (P.args): Positional arguments to pass to the function.
-            **kwargs (P.kwargs): Keyword arguments to pass to the function.
-
-        Returns:
-            Seq[R]: A new `Seq` instance containing the result of the function.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> def double(data: Iterable[int]) -> Sequence[int]:
-        ...     return [x * 2 for x in data]
-        >>> pc.Seq([1, 2, 3]).apply(double).into(list)
-        [2, 4, 6]
-
-        ```
-        """
-        return Seq(func(self.inner(), *args, **kwargs))
-
-    @override
-    def inner(self) -> Sequence[T]:
-        return self._inner  # type: ignore[return-value]
-
-    def into[**P, R](
-        self,
-        func: Callable[Concatenate[Sequence[T], P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> R:
-        return func(self.inner(), *args, **kwargs)
 
     def for_each[**P](
         self,
@@ -725,3 +654,18 @@ class Seq[T](CommonMethods[T]):
         for v in self.inner():
             func(v, *args, **kwargs)
         return self
+
+    def is_distinct(self) -> bool:
+        """Return True if all items are distinct.
+
+        Returns:
+            bool: True if all items are distinct, False otherwise.
+
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Seq([1, 2]).is_distinct()
+        True
+
+        ```
+        """
+        return self.into(cz.itertoolz.isdistinct)

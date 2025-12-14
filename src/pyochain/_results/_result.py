@@ -72,10 +72,6 @@ class Result[T, E](Pipeable, ABC):
     def unwrap(self) -> T:
         """Returns the contained `Ok` value.
 
-        Similar to `Iter.inner()`, this is a terminal operation that ends the chain.
-
-        However, since this can raise an exception if the result is `Err`, the terminology is kept consistent with Rust's `Result` type.
-
         Returns:
             T: The contained `Ok` value.
 

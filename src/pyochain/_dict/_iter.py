@@ -36,7 +36,7 @@ class IterDict[K, V](MappingWrapper[K, V]):
         ...     "numbers1": [1, 2, 3],
         ...     "numbers2": [4, 5, 6],
         ... }
-        >>> pc.Dict(data).itr(lambda v: v.repeat(5).flatten().sum()).inner()
+        >>> pc.Dict(data).itr(lambda v: v.repeat(5).flatten().sum())
         {'numbers1': 30, 'numbers2': 75}
 
         ```
@@ -45,7 +45,7 @@ class IterDict[K, V](MappingWrapper[K, V]):
 
         def _itr(data: Mapping[K, Iterable[U]]) -> dict[K, R]:
             def _(v: Iterable[U]) -> R:
-                return func(Iter(iter(v)), *args, **kwargs)
+                return func(Iter(v), *args, **kwargs)
 
             return cz.dicttoolz.valmap(_, data)
 
@@ -59,17 +59,14 @@ class IterDict[K, V](MappingWrapper[K, V]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({1: 2}).iter_keys().collect()
+        >>> pc.Dict({1: 2}).iter_keys().collect(list)
         Seq([1])
 
         ```
         """
         from .._iter import Iter
 
-        def _keys(data: dict[K, V]) -> Iter[K]:
-            return Iter(iter(data.keys()))
-
-        return self.into(_keys)
+        return self.into(lambda d: Iter(d._inner.keys()))
 
     def iter_values(self) -> Iter[V]:
         """Return an Iter of the dict's values.
@@ -79,17 +76,14 @@ class IterDict[K, V](MappingWrapper[K, V]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({1: 2}).iter_values().collect()
+        >>> pc.Dict({1: 2}).iter_values().collect(list)
         Seq([2])
 
         ```
         """
         from .._iter import Iter
 
-        def _values(data: dict[K, V]) -> Iter[V]:
-            return Iter(iter(data.values()))
-
-        return self.into(_values)
+        return self.into(lambda d: Iter(d.inner().values()))
 
     def iter_items(self) -> Iter[tuple[K, V]]:
         """Return an Iter of the dict's items.
@@ -99,17 +93,14 @@ class IterDict[K, V](MappingWrapper[K, V]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({1: 2}).iter_items().collect()
-        Seq([(1, 2)])
+        >>> pc.Dict({"a": 1, "b": 2}).iter_items().collect(list)
+        Seq([('a', 1), ('b', 2)])
 
         ```
         """
         from .._iter import Iter
 
-        def _items(data: dict[K, V]) -> Iter[tuple[K, V]]:
-            return Iter(iter(data.items()))
-
-        return self.into(_items)
+        return self.into(lambda d: Iter(d.inner().items()))
 
     def to_arrays(self) -> Seq[list[Any]]:
         """Convert the nested dictionary into a sequence of arrays.
@@ -143,4 +134,4 @@ class IterDict[K, V](MappingWrapper[K, V]):
                 case _:
                     return [[d]]
 
-        return Seq(self.into(_to_arrays))
+        return self.into(lambda d: Seq(_to_arrays(d.inner())))

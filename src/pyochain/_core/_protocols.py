@@ -1,4 +1,4 @@
-from collections.abc import Iterable, Sized
+from collections.abc import Iterable
 from typing import Protocol
 
 
@@ -23,16 +23,4 @@ class SupportsKeysAndGetItem[K, V](Protocol):
     def __getitem__(self, key: K, /) -> V: ...
 
 
-class SupportsAllComparisons[T](
-    SupportsDunderLT[T],
-    SupportsDunderGT[T],
-    SupportsDunderLE[T],
-    SupportsDunderGE[T],
-    Protocol,
-): ...
-
-
 type SupportsRichComparison[T] = SupportsDunderLT[T] | SupportsDunderGT[T]
-
-
-class SizedIterable[T](Sized, Iterable[T]): ...

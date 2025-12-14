@@ -173,7 +173,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         """Set a nested key path and return a new Dict with new, potentially nested, key value pair.
 
         Args:
-            *keys (K): Sequence of keys representing the nested path.
+            *keys (K): keys representing the nested path.
             value (V): Value to set at the specified nested path.
 
         Returns:
@@ -202,7 +202,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         """Extract values from nested dictionaries using a sequence of keys.
 
         Args:
-            *keys (str): Sequence of keys to extract values from the nested dictionaries.
+            *keys (str): keys to extract values from the nested dictionaries.
 
         Returns:
             Dict[U, Any]: Dict with extracted values from nested dictionaries.
@@ -228,7 +228,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         """Retrieve a value from a nested dictionary structure.
 
         Args:
-            *keys (K): Sequence of keys representing the nested path to retrieve the value.
+            *keys (K): keys representing the nested path to retrieve the value.
 
         Returns:
             Option[V]: Value at the nested path or default if not found.
@@ -247,7 +247,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         def _get_in(data: Mapping[K, V]) -> Option[V]:
             return Option.from_(cz.dicttoolz.get_in(keys, data, None))
 
-        return self.into(_get_in)
+        return self.into(lambda d: _get_in(d.inner()))
 
     def drop_nones(self, *, remove_empty: bool = True) -> Dict[K, V]:
         """Recursively drop None values from the dictionary.

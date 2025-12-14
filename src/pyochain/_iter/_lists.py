@@ -24,8 +24,8 @@ class BaseList[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq(range(5)).iter().implode().collect()
-        Seq([[0], [1], [2], [3], [4]])
+        >>> pc.Iter(range(5)).implode().collect()
+        Seq(([0], [1], [2], [3], [4]))
 
         ```
         """
@@ -165,13 +165,13 @@ class BaseList[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3, 4, 5, 6]).iter().split_into([1, 2, 3]).collect()
-        Seq([[1], [2, 3], [4, 5, 6]])
+        >>> pc.Iter([1, 2, 3, 4, 5, 6]).split_into([1, 2, 3]).collect()
+        Seq(([1], [2, 3], [4, 5, 6]))
 
         If the sum of sizes is smaller than the length of iterable, then the remaining items of iterable will not be returned.
         ```python
-        >>> pc.Seq([1, 2, 3, 4, 5, 6]).iter().split_into([2, 3]).collect()
-        Seq([[1, 2], [3, 4, 5]])
+        >>> pc.Iter([1, 2, 3, 4, 5, 6]).split_into([2, 3]).collect()
+        Seq(([1, 2], [3, 4, 5]))
 
         ```
 
@@ -180,16 +180,16 @@ class BaseList[T](IterWrapper[T]):
         - fewer items will be returned in the iteration that overruns the iterable
         - further lists will be empty
         ```python
-        >>> pc.Seq([1, 2, 3, 4]).iter().split_into([1, 2, 3, 4]).collect()
-        Seq([[1], [2, 3], [4], []])
+        >>> pc.Iter([1, 2, 3, 4]).split_into([1, 2, 3, 4]).collect()
+        Seq(([1], [2, 3], [4], []))
 
         ```
 
         When a None object is encountered in sizes, the returned list will contain items up to the end of iterable the same way that itertools.slice does:
         ```python
         >>> data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
-        >>> pc.Seq(data).iter().split_into([2, 3, None]).collect()
-        Seq([[1, 2], [3, 4, 5], [6, 7, 8, 9, 0]])
+        >>> pc.Iter(data).split_into([2, 3, None]).collect()
+        Seq(([1, 2], [3, 4, 5], [6, 7, 8, 9, 0]))
 
         ```
 
@@ -264,8 +264,8 @@ class BaseList[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> data = ({"A", "B"}, {"B", "C"}, {"B", "D"})
-        >>> pc.Seq(data).iter().unique_to_each().map(lambda x: x.into(list)).collect()
-        Seq([['A'], ['C'], ['D']])
+        >>> pc.Iter(data).unique_to_each().map(lambda x: x.into(list)).collect()
+        Seq((['A'], ['C'], ['D']))
 
         ```
 
@@ -275,7 +275,7 @@ class BaseList[T](IterWrapper[T]):
         ```python
         >>> data = ("mississippi", "missouri")
         >>> pc.Seq(data).iter().unique_to_each().map(lambda x: x.into(list)).collect()
-        Seq([['p', 'p'], ['o', 'u', 'r']])
+        Seq((['p', 'p'], ['o', 'u', 'r']))
 
         ```
 

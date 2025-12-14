@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from collections.abc import Callable, Generator, Iterable, Iterator, Sequence
+from abc import ABC
+from collections.abc import Callable, Generator, Iterable, Iterator, Mapping, Sequence
+from pprint import pformat
 from typing import TYPE_CHECKING, Any, Concatenate, Self
-
-from ._format import dict_repr
 
 if TYPE_CHECKING:
     from .._dict import Dict
@@ -16,37 +15,39 @@ type IntoIter[T] = Iterator[T] | Generator[T, Any, Any]
 
 
 class Pipeable:
-    def pipe[**P, R](
+    def into[**P, R](
         self,
         func: Callable[Concatenate[Self, P], R],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> R:
-        """Pipe the instance in the function and return the result.
+        """Convert `Self` to `R`.
 
-        Accept additional arguments to pass to the function.
+        This method allows to pipe the instance into an object or function that can convert `Self` into another type.
+
+        Conceptually, this allow to do x.into(f) instead of f(x), hence keeping a functional chaining style.
 
         This is a core method, shared by all pyochain wrappers, that allows chaining operations in a functional style.
 
         Args:
-            func (Callable[Concatenate[Self, P], R]): Function to apply to the instance.
+            func (Callable[Concatenate[Self, P], R]): Function for conversion.
             *args (P.args): Positional arguments to pass to the function.
             **kwargs (P.kwargs): Keyword arguments to pass to the function.
 
         Returns:
-            R: The result of the function.
+            R: The converted value.
 
         Example:
         ```python
         >>> import pyochain as pc
         >>> def maybe_sum(data: pc.Seq[int]) -> pc.Option[int]:
-        ...     match data.count():
+        ...     match data.length():
         ...         case 0:
         ...             return pc.NONE
         ...         case _:
         ...             return pc.Some(data.sum())
         >>>
-        >>> pc.Seq(range(5)).pipe(maybe_sum).unwrap()
+        >>> pc.Seq(range(5)).into(maybe_sum).unwrap()
         10
 
         ```
@@ -92,15 +93,6 @@ class CommonBase[T](ABC, Pipeable):
     def __init__(self, data: T) -> None:
         self._inner = data
 
-    @abstractmethod
-    def apply[**P](
-        self,
-        func: Callable[Concatenate[T, P], Any],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> CommonBase[Any]:
-        raise NotImplementedError
-
     def inner(self) -> T:
         """Get the underlying data.
 
@@ -110,36 +102,6 @@ class CommonBase[T](ABC, Pipeable):
             T: The underlying data.
         """
         return self._inner
-
-    def into[**P, R](
-        self,
-        func: Callable[Concatenate[T, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> R:
-        """Pass the *unwrapped* underlying data into a function.
-
-        The result is not wrapped.
-
-        This is a core functionality that allows ending the chain whilst keeping the code style consistent.
-
-        Args:
-            func (Callable[Concatenate[T, P], R]): Function to apply to the underlying data.
-            *args (P.args): Positional arguments to pass to the function.
-            **kwargs (P.kwargs): Keyword arguments to pass to the function.
-
-        Returns:
-            R: The result of the function.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq(range(5)).into(list)
-        [0, 1, 2, 3, 4]
-
-        ```
-        """
-        return func(self.inner(), *args, **kwargs)
 
     def equals_to(self, other: Self | T) -> bool:
         """Check if two records are equal based on their data.
@@ -170,6 +132,9 @@ class CommonBase[T](ABC, Pipeable):
 class IterWrapper[T](CommonBase[Iterable[T]]):
     _inner: Iterable[T]
 
+    def __iter__(self) -> Iterator[T]:
+        return iter(self.inner())
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.inner().__repr__()})"
 
@@ -188,13 +153,13 @@ class IterWrapper[T](CommonBase[Iterable[T]]):
 
     def _lazy[**P, U](
         self,
-        factory: Callable[Concatenate[Iterator[T], P], Iterator[U]],
+        factory: Callable[Concatenate[Iterable[T], P], Iterator[U]],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Iter[U]:
         from .._iter import Iter
 
-        def _(data: Iterator[T]) -> Iter[U]:
+        def _(data: Iterable[T]) -> Iter[U]:
             return Iter(factory(data, *args, **kwargs))
 
         return self.into(_)
@@ -204,43 +169,23 @@ class MappingWrapper[K, V](CommonBase[dict[K, V]]):
     _inner: dict[K, V]
 
     def __repr__(self) -> str:
-        return f"{self.into(dict_repr)}"
+        def dict_repr(
+            v: Mapping[Any, Any],
+            max_items: int = 20,
+            depth: int = 3,
+            width: int = 80,
+            *,
+            compact: bool = True,
+        ) -> str:
+            truncated = dict(list(v.items())[:max_items])
+            suffix = "..." if len(v) > max_items else ""
+            return (
+                pformat(truncated, depth=depth, width=width, compact=compact) + suffix
+            )
+
+        return f"{self.into(lambda d: dict_repr(d.inner()))}"
 
     def _new[KU, VU](self, func: Callable[[dict[K, V]], dict[KU, VU]]) -> Dict[KU, VU]:
         from .._dict import Dict
 
         return Dict(func(self.inner()))
-
-    def apply[**P, KU, VU](
-        self,
-        func: Callable[Concatenate[dict[K, V], P], dict[KU, VU]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Dict[KU, VU]:
-        """Apply a function to the underlying dict and return a Dict of the result.
-
-        Allow to pass user defined functions that transform the dict while retaining the Dict wrapper.
-
-        Args:
-            func (Callable[Concatenate[dict[K, V], P], dict[KU, VU]]): Function to apply to the underlying dict.
-            *args (P.args): Positional arguments to pass to the function.
-            **kwargs (P.kwargs): Keyword arguments to pass to the function.
-
-        Returns:
-            Dict[KU, VU]: A new Dict instance containing the result of the function.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> def invert_dict(d: dict[K, V]) -> dict[V, K]:
-        ...     return {v: k for k, v in d.items()}
-        >>> pc.Dict({'a': 1, 'b': 2}).apply(invert_dict)
-        {1: 'a', 2: 'b'}
-
-        ```
-        """
-
-        def _(data: dict[K, V]) -> dict[KU, VU]:
-            return func(data, *args, **kwargs)
-
-        return self._new(_)

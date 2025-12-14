@@ -2,14 +2,14 @@
     description     = "Method chaining for iterables and dictionaries in Python."
     name            = "pyochain"
     readme          = "README.md"
-    requires-python = ">=3.12"
-    version         = "0.5.52"
+    requires-python = ">=3.13"
+    version         = "0.5.6"
 
     dependencies = [
         "cytoolz>=1.0.1",
         "more-itertools>=10.8.0",
         "rolling>=0.5.0",
-    ]
+]
 
 [dependency-groups]
     dev = [
@@ -26,6 +26,7 @@
         "pydoclint>=0.8.1",
         "rolling @ git+https://github.com/OutSquareCapital/rolling.git@add-type-stubs",
         "ruff>=0.14.4",
+        "ty>=0.0.1a34",
     ]
 [tool.ruff]
     lint.ignore = [

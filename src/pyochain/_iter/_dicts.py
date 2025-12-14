@@ -29,8 +29,8 @@ class BaseDict[T](IterWrapper[T]):
         >>> pc.Seq(values).iter().with_keys(keys).inner()
         {'a': 1, 'b': 2, 'c': 3}
         >>> # This is equivalent to:
-        >>> pc.Seq(keys).iter().zip(values).pipe(
-        ...     lambda x: pc.Dict(x.into(dict)).inner()
+        >>> pc.Seq(keys).iter().zip(values).into(
+        ...     lambda x: pc.Dict(dict(x)).inner()
         ... )
         {'a': 1, 'b': 2, 'c': 3}
 
@@ -60,8 +60,8 @@ class BaseDict[T](IterWrapper[T]):
         >>> pc.Iter.from_(keys).with_values(values).inner()
         {1: 'a', 2: 'b', 3: 'c'}
         >>> # This is equivalent to:
-        >>> pc.Iter.from_(keys).zip(values).pipe(
-        ...     lambda x: pc.Dict(x.into(dict)).inner()
+        >>> pc.Iter.from_(keys).zip(values).into(
+        ...     lambda x: pc.Dict(dict(x)).inner()
         ... )
         {1: 'a', 2: 'b', 3: 'c'}
 

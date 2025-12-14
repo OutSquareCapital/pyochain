@@ -58,9 +58,9 @@ class BaseAgg[T](IterWrapper[T]):
         >>> data = [(1, "a"), (2, "b"), (3, "c")]
         >>> unzipped = pc.Seq(data).unzip()
         >>> unzipped.first.collect()
-        Seq([1, 2, 3])
+        Seq((1, 2, 3))
         >>> unzipped.second.collect()
-        Seq(['a', 'b', 'c'])
+        Seq(('a', 'b', 'c'))
 
         ```
         """
@@ -93,7 +93,11 @@ class BaseAgg[T](IterWrapper[T]):
 
         ```
         """
-        return self.into(functools.partial(functools.reduce, func))
+
+        def _reduce(data: Iterable[T]) -> T:
+            return functools.reduce(func, data)
+
+        return self.into(_reduce)
 
     def combination_index(self, r: Iterable[T]) -> int:
         """Equivalent to list(combinations(iterable, r)).index(element).
@@ -163,16 +167,16 @@ class BaseAgg[T](IterWrapper[T]):
         """
         return self.into(cz.itertoolz.last)
 
-    def count(self) -> int:
-        """Return the length of the sequence.
+    def length(self) -> int:
+        """Return the length of the Iterable.
+
+        Like the builtin len but works on lazy sequences.
 
         Returns:
             int: The count of elements.
-
-        Like the builtin len but works on lazy sequences.
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2]).count()
+        >>> pc.Seq([1, 2]).length()
         2
 
         ```

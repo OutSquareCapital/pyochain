@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING
 
-import cytoolz as cz
 import more_itertools as mit
 
 from .._core import IterWrapper
@@ -88,21 +87,6 @@ class BaseBool[T](IterWrapper[T]):
             return any(predicate(x) for x in data)
 
         return self.into(_any)
-
-    def is_distinct(self) -> bool:
-        """Return True if all items are distinct.
-
-        Returns:
-            bool: True if all items are distinct, False otherwise.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2]).is_distinct()
-        True
-
-        ```
-        """
-        return self.into(cz.itertoolz.isdistinct)
 
     def all_equal[U](self, key: Callable[[T], U] | None = None) -> bool:
         """Return True if all items are equal.

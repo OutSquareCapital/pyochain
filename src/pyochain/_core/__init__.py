@@ -1,10 +1,5 @@
 from ._main import CommonBase, IntoIter, IterWrapper, MappingWrapper, Pipeable
-from ._protocols import (
-    SizedIterable,
-    SupportsAllComparisons,
-    SupportsKeysAndGetItem,
-    SupportsRichComparison,
-)
+from ._protocols import SupportsKeysAndGetItem, SupportsRichComparison
 
 __all__ = [
     "CommonBase",
@@ -12,8 +7,6 @@ __all__ = [
     "IterWrapper",
     "MappingWrapper",
     "Pipeable",
-    "SizedIterable",
-    "SupportsAllComparisons",
     "SupportsKeysAndGetItem",
     "SupportsRichComparison",
 ]

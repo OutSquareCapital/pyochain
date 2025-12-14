@@ -33,7 +33,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         ```python
         >>> import pyochain as pc
         >>> d = {1: 2, 2: 3, 3: 4, 4: 5}
-        >>> pc.Dict(d).filter_keys(lambda x: x % 2 == 0).inner()
+        >>> pc.Dict(d).filter_keys(lambda x: x % 2 == 0)
         {2: 3, 4: 5}
 
         ```
@@ -60,9 +60,9 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         ```python
         >>> import pyochain as pc
         >>> d = {1: 2, 2: 3, 3: 4, 4: 5}
-        >>> pc.Dict(d).filter_values(lambda x: x % 2 == 0).inner()
+        >>> pc.Dict(d).filter_values(lambda x: x % 2 == 0)
         {1: 2, 3: 4}
-        >>> pc.Dict(d).filter_values(lambda x: not x > 3).inner()
+        >>> pc.Dict(d).filter_values(lambda x: not x > 3)
         {1: 2, 2: 3}
 
         ```
@@ -86,9 +86,9 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         ...     return k % 2 == 0 and v < 4
         >>> d = pc.Dict({1: 2, 2: 3, 3: 4, 4: 5})
         >>>
-        >>> d.filter_items(isvalid).inner()
+        >>> d.filter_items(isvalid)
         {2: 3}
-        >>> d.filter_items(lambda kv: not isvalid(kv)).inner()
+        >>> d.filter_items(lambda kv: not isvalid(kv))
         {1: 2, 3: 4, 4: 5}
 
         ```
@@ -111,9 +111,9 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         ...     return key % 2 == 0 and value < 4
         >>> d = pc.Dict({1: 2, 2: 3, 3: 4, 4: 5})
         >>>
-        >>> d.filter_kv(isvalid).inner()
+        >>> d.filter_kv(isvalid)
         {2: 3}
-        >>> d.filter_kv(lambda k, v: not isvalid(k, v)).inner()
+        >>> d.filter_kv(lambda k, v: not isvalid(k, v))
         {1: 2, 3: 4, 4: 5}
 
         ```

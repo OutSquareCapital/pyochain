@@ -48,8 +48,8 @@ class BaseProcess[T](IterWrapper[T]):
 
         Example:
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2]).iter().cycle().take(5).collect()
-        Seq([1, 2, 1, 2, 1])
+        >>> pc.Seq((1, 2)).iter().cycle().take(5).collect()
+        Seq((1, 2, 1, 2, 1))
 
         ```
         """
@@ -68,7 +68,7 @@ class BaseProcess[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([1, 2]).iter().interpose(0).collect()
-        Seq([1, 0, 2])
+        Seq((1, 0, 2))
 
         ```
         """
@@ -136,8 +136,8 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).iter().accumulate(lambda a, b: a + b).collect()
-        Seq([1, 3, 6])
+        >>> pc.Seq((1, 2, 3)).iter().accumulate(lambda a, b: a + b).collect()
+        Seq((1, 3, 6))
 
         ```
         """
@@ -155,8 +155,8 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([2, 3]).iter().insert_left(1).collect()
-        Seq([1, 2, 3])
+        >>> pc.Seq((2, 3)).iter().insert_left(1).collect()
+        Seq((1, 2, 3))
 
         ```
         """
@@ -179,7 +179,7 @@ class BaseProcess[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> pc.Seq([1, 2, 3]).iter().peek(2, lambda x: print(f"Peeked {len(x)} values: {x}")).collect()
         Peeked 2 values: (1, 2)
-        Seq([1, 2, 3])
+        Seq((1, 2, 3))
 
         ```
         """
@@ -209,7 +209,7 @@ class BaseProcess[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([1, 3]).iter().merge_sorted([2, 4]).collect()
-        Seq([1, 2, 3, 4])
+        Seq((1, 2, 3, 4))
 
         ```
         """
@@ -227,8 +227,8 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2]).iter().interleave([3, 4]).collect()
-        Seq([1, 3, 2, 4])
+        >>> pc.Seq((1, 2)).iter().interleave((3, 4)).collect()
+        Seq((1, 3, 2, 4))
 
         ```
         """
@@ -254,8 +254,8 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2]).iter().chain([3, 4], [5]).collect()
-        Seq([1, 2, 3, 4, 5])
+        >>> pc.Seq((1, 2)).iter().chain((3, 4), [5]).collect()
+        Seq((1, 2, 3, 4, 5))
 
         ```
         """
@@ -313,7 +313,7 @@ class BaseProcess[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([1, 2, 3]).iter().reverse().collect()
-        Seq([3, 2, 1])
+        Seq((3, 2, 1))
 
         ```
         """
@@ -393,7 +393,7 @@ class BaseProcess[T](IterWrapper[T]):
         ```
         """
 
-        def _strictly_n_(iterable: Iterable[T]) -> Generator[T, Any, None]:
+        def _strictly_n_(iterable: Iterable[T]) -> Generator[T, Any]:
             it = iter(iterable)
 
             sent = 0
