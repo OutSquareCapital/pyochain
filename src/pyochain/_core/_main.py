@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterable, Iterator, Sequence
+from collections.abc import Callable, Generator, Iterable, Iterator, Sequence
 from typing import TYPE_CHECKING, Any, Concatenate, Self
 
 from ._format import dict_repr
@@ -9,6 +9,10 @@ from ._format import dict_repr
 if TYPE_CHECKING:
     from .._dict import Dict
     from .._iter import Iter, Seq
+
+
+type IntoIter[T] = Iterator[T] | Generator[T, Any, Any]
+"""A type alias representing an iterator or generator."""
 
 
 class Pipeable:
@@ -184,13 +188,13 @@ class IterWrapper[T](CommonBase[Iterable[T]]):
 
     def _lazy[**P, U](
         self,
-        factory: Callable[Concatenate[Iterable[T], P], Iterator[U]],
+        factory: Callable[Concatenate[Iterator[T], P], Iterator[U]],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Iter[U]:
         from .._iter import Iter
 
-        def _(data: Iterable[T]) -> Iter[U]:
+        def _(data: Iterator[T]) -> Iter[U]:
             return Iter(factory(data, *args, **kwargs))
 
         return self.into(_)

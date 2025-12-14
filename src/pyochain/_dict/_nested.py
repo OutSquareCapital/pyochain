@@ -231,7 +231,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
             *keys (K): Sequence of keys representing the nested path to retrieve the value.
 
         Returns:
-            V | T: Value at the nested path or default if not found.
+            Option[V]: Value at the nested path or default if not found.
 
         ```python
         >>> import pyochain as pc

@@ -7,11 +7,13 @@ from collections.abc import (
     Iterable,
     Iterator,
     Sequence,
+    ValuesView,
 )
 from typing import TYPE_CHECKING, Any, Concatenate, Self, TypeIs, overload, override
 
 import cytoolz as cz
 
+from .._results import Option
 from ._aggregations import BaseAgg
 from ._booleans import BaseBool
 from ._dicts import BaseDict
@@ -26,6 +28,7 @@ from ._rolling import BaseRolling
 from ._tuples import BaseTuples
 
 if TYPE_CHECKING:
+    from .._core import IntoIter
     from .._dict import Dict
 
 
@@ -74,32 +77,33 @@ class Iter[T](
     In general, avoid intermediate references when dealing with lazy iterators, and prioritize method chaining instead.
 
     Args:
-        data (Iterator[T] | Generator[T, Any, Any]): An iterator or generator to wrap.
+        data (IntoIter[T]): An iterator or generator to wrap.
     """
 
     __slots__ = ("_inner",)
 
-    def __init__(self, data: Iterator[T] | Generator[T, Any, Any]) -> None:
+    def __init__(self, data: IntoIter[T]) -> None:
         self._inner = data
 
-    def next(self) -> T:
+    def next(self) -> Option[T]:
         """Call next builtin on the underlying iterator to get the next element.
 
         Returns:
-            T: The next element in the iterator.
+            Option[T]: The next element in the iterator.
 
         Example:
         ```python
         >>> import pyochain as pc
         >>> it = pc.Seq([1, 2, 3]).iter()
-        >>> it.next()
+        >>> it.next().unwrap()
         1
-        >>> it.next()
+        >>> it.next().unwrap()
         2
 
         ```
         """
-        return next(self.inner())
+        val = next(self.inner())
+        return Option.from_(val)
 
     @staticmethod
     def from_count(start: int = 0, step: int = 1) -> Iter[int]:
@@ -194,7 +198,7 @@ class Iter[T](
         return Iter(iter(_convert_data(data, *more_data)))
 
     @staticmethod
-    def unfold[S, V](seed: S, generator: Callable[[S], tuple[V, S] | None]) -> Iter[V]:
+    def unfold[S, V](seed: S, generator: Callable[[S], Option[tuple[V, S]]]) -> Iter[V]:
         """Create an iterator by repeatedly applying a generator function to an initial state.
 
         The `generator` function takes the current state and must return:
@@ -210,7 +214,7 @@ class Iter[T](
 
         Args:
             seed (S): Initial state for the generator.
-            generator (Callable[[S], tuple[V, S] | None]): Function that generates the next value and state.
+            generator (Callable[[S], Option[tuple[V, S]]]): Function that generates the next value and state.
 
         Returns:
             Iter[V]: An iterator generating values produced by the generator function.
@@ -219,23 +223,23 @@ class Iter[T](
         ```python
         >>> import pyochain as pc
         >>> # Example 1: Simple counter up to 5
-        >>> def counter_generator(state: int) -> tuple[int, int] | None:
+        >>> def counter_generator(state: int) -> pc.Option[tuple[int, int]]:
         ...     if state < 5:
-        ...         return (state * 10, state + 1)
-        ...     return None
+        ...         return pc.Some((state * 10, state + 1))
+        ...     return pc.NONE
         >>> pc.Iter.unfold(seed=0, generator=counter_generator).into(list)
         [0, 10, 20, 30, 40]
         >>> # Example 2: Fibonacci sequence up to 100
         >>> type FibState = tuple[int, int]
-        >>> def fib_generator(state: FibState) -> tuple[int, FibState] | None:
+        >>> def fib_generator(state: FibState) -> pc.Option[tuple[int, FibState]]:
         ...     a, b = state
         ...     if a > 100:
-        ...         return None
-        ...     return (a, (b, a + b))
+        ...         return pc.NONE
+        ...     return pc.Some((a, (b, a + b)))
         >>> pc.Iter.unfold(seed=(0, 1), generator=fib_generator).into(list)
         [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89]
         >>> # Example 3: Infinite iterator (requires take())
-        >>> pc.Iter.unfold(seed=1, generator=lambda s: (s, s * 2)).take(5).into(list)
+        >>> pc.Iter.unfold(seed=1, generator=lambda s: pc.Some((s, s * 2))).take(5).into(list)
         [1, 2, 4, 8, 16]
 
         ```
@@ -245,10 +249,10 @@ class Iter[T](
         def _unfold() -> Iterator[V]:
             current_seed: S = seed
             while True:
-                result: tuple[V, S] | None = generator(current_seed)
-                if result is None:
+                result: Option[tuple[V, S]] = generator(current_seed)
+                if result.is_none():
                     break
-                value, next_seed = result
+                value, next_seed = result.unwrap()
                 yield value
                 current_seed = next_seed
 
@@ -280,8 +284,8 @@ class Iter[T](
         ...     [4, 5],
         ...     [6, 7, 8, 9],
         ... ]
-        >>> pc.Seq(data).iter().itr(lambda x: x.repeat(2).flatten().reduce(lambda a, b: a + b))
-        [12, 18, 60]
+        >>> pc.Seq(data).iter().itr(lambda x: x.repeat(2).flatten().reduce(lambda a, b: a + b)).collect()
+        Seq([12, 18, 60])
 
         ```
         """
@@ -358,14 +362,14 @@ class Iter[T](
         """
         from .._dict import Dict
 
-        def _struct(data: Iterable[dict[K, V]]) -> Generator[R, None, None]:
+        def _struct(data: Iterable[dict[K, V]]) -> Iterator[R]:
             return (func(Dict(x), *args, **kwargs) for x in data)
 
         return self._lazy(_struct)
 
     def apply[**P, R](
         self,
-        func: Callable[Concatenate[Iterable[T], P], Iterator[R]],
+        func: Callable[Concatenate[IntoIter[T], P], Iterator[R]],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Iter[R]:
@@ -374,7 +378,7 @@ class Iter[T](
         Allow to pass user defined functions that transform the iterable while retaining the Iter wrapper.
 
         Args:
-            func (Callable[Concatenate[Iterable[T], P], Iterator[R]]): Function to apply to the underlying iterable.
+            func (Callable[Concatenate[IntoIter[T], P], Iterator[R]]): Function to apply to the underlying iterator.
             *args (P.args): Positional arguments to pass to the function.
             **kwargs (P.kwargs): Keyword arguments to pass to the function.
 
@@ -392,6 +396,34 @@ class Iter[T](
         ```
         """
         return self._lazy(func, *args, **kwargs)
+
+    def into[**P, R](
+        self,
+        func: Callable[Concatenate[IntoIter[T], P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> R:
+        """Convert the underlying Iterator into another type using a provided function.
+
+        This is a terminal operation that consumes the iterator and returns the result of applying the function.
+
+        Args:
+            func (Callable[Concatenate[IntoIter[T], P], R]): Function to convert the underlying iterator.
+            *args (P.args): Positional arguments to pass to the function.
+            **kwargs (P.kwargs): Keyword arguments to pass to the function.
+
+        Returns:
+            R: The result of applying the function to the underlying iterator.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter.from_([1, 2, 3]).into(sum)
+        6
+
+        ```
+        """
+        return func(self.inner(), *args, **kwargs)
 
     def collect(self, factory: Callable[[Iterable[T]], Sequence[T]] = list) -> Seq[T]:
         """Collect the elements into a `Sequence`, using the provided factory.
@@ -453,6 +485,117 @@ class Iter[T](
                 func(v, *args, **kwargs)
 
         return self.into(_for_each)
+
+    def chunks(self, size: int) -> Iter[Iter[T]]:
+        """Yield subiterators (chunks) that each yield a fixed number elements, determined by size.
+
+        The last chunk will be shorter if there are not enough elements.
+
+        Args:
+            size (int): Number of elements in each chunk.
+
+        Returns:
+            Iter[Iter[T]]: An iterable of iterators, each yielding n elements.
+        If the sub-iterables are read in order, the elements of *iterable*
+        won't be stored in memory.
+
+        If they are read out of order, :func:`itertools.tee` is used to cache
+        elements as necessary.
+        ```python
+        >>> import pyochain as pc
+        >>> all_chunks = pc.Iter.from_count().chunks(4)
+        >>> c_1, c_2, c_3 = all_chunks.next(), all_chunks.next(), all_chunks.next()
+        >>> c_2.unwrap().collect()  # c_1's elements have been cached; c_3's haven't been
+        Seq([4, 5, 6, 7])
+        >>> c_1.unwrap().collect()
+        Seq([0, 1, 2, 3])
+        >>> c_3.unwrap().collect()
+        Seq([8, 9, 10, 11])
+        >>> pc.Seq([1, 2, 3, 4, 5, 6]).iter().chunks(3).map(lambda c: c.collect()).collect()
+        Seq([Seq([1, 2, 3]), Seq([4, 5, 6])])
+        >>> pc.Seq([1, 2, 3, 4, 5, 6, 7, 8]).iter().chunks(3).map(lambda c: c.collect()).collect()
+        Seq([Seq([1, 2, 3]), Seq([4, 5, 6]), Seq([7, 8])])
+
+        ```
+        """
+
+        def _chunks(data: Iterable[T], size: int) -> Iterator[Iter[T]]:
+            from collections import deque
+            from contextlib import suppress
+
+            def _ichunk(
+                iterator: Iterator[T], n: int
+            ) -> tuple[Iterator[T], Callable[[int], int]]:
+                cache: deque[T] = deque()
+                chunk = itertools.islice(iterator, n)
+
+                def generator() -> Iterator[T]:
+                    with suppress(StopIteration):
+                        while True:
+                            if cache:
+                                yield cache.popleft()
+                            else:
+                                yield next(chunk)
+
+                def materialize_next(n: int) -> int:
+                    to_cache = n - len(cache)
+
+                    # materialize up to n
+                    if to_cache > 0:
+                        cache.extend(itertools.islice(chunk, to_cache))
+
+                    # return number materialized up to n
+                    return min(n, len(cache))
+
+                return (generator(), materialize_next)
+
+            iterator = iter(data)
+            while True:
+                # Create new chunk
+                chunk, materialize_next = _ichunk(iterator, size)
+
+                # Check to see whether we're at the end of the source iterable
+                if not materialize_next(size):
+                    return
+
+                yield self.__class__(chunk)
+
+                # Fill previous chunk's cache
+                materialize_next(size)
+
+        return self._lazy(lambda x: _chunks(x, size))
+
+    @overload
+    def flatten[U](self: Iter[Generator[U, None, None]]) -> Iter[U]: ...
+    @overload
+    def flatten[U](self: Iter[ValuesView[U]]) -> Iter[U]: ...
+    @overload
+    def flatten[U](self: Iter[Iterable[U]]) -> Iter[U]: ...
+    @overload
+    def flatten[U](self: Iter[Iterator[U]]) -> Iter[U]: ...
+    @overload
+    def flatten[U](self: Iter[Sequence[U]]) -> Iter[U]: ...
+    @overload
+    def flatten[U](self: Iter[list[U]]) -> Iter[U]: ...
+    @overload
+    def flatten[U](self: Iter[tuple[U, ...]]) -> Iter[U]: ...
+    @overload
+    def flatten(self: Iter[range]) -> Iter[int]: ...
+    def flatten[U: Iterable[Any]](self: Iter[U]) -> Iter[Any]:
+        """Flatten one level of nesting and return a new Iterable wrapper.
+
+        This is a shortcut for `.apply(itertools.chain.from_iterable)`.
+
+        Returns:
+            Iter[Any]: An iterable of flattened elements.
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Seq([[1, 2], [3]]).iter().flatten().collect()
+        Seq([1, 2, 3])
+
+        ```
+        """
+        return self._lazy(itertools.chain.from_iterable)
 
 
 class Seq[T](CommonMethods[T]):
@@ -517,7 +660,7 @@ class Seq[T](CommonMethods[T]):
 
     def apply[**P, R](
         self,
-        func: Callable[Concatenate[Iterable[T], P], Sequence[R]],
+        func: Callable[Concatenate[Sequence[T], P], Sequence[R]],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Seq[R]:
@@ -526,7 +669,7 @@ class Seq[T](CommonMethods[T]):
         Allow to pass user defined functions that transform the `Sequence` while retaining the `Seq` wrapper.
 
         Args:
-            func (Callable[Concatenate[Iterable[T], P], Sequence[R]]): Function to apply to the underlying `Sequence`.
+            func (Callable[Concatenate[Sequence[T], P], Sequence[R]]): Function to apply to the underlying `Sequence`.
             *args (P.args): Positional arguments to pass to the function.
             **kwargs (P.kwargs): Keyword arguments to pass to the function.
 
@@ -543,20 +686,19 @@ class Seq[T](CommonMethods[T]):
 
         ```
         """
-        return self._eager(func, *args, **kwargs)
+        return Seq(func(self.inner(), *args, **kwargs))
 
     @override
     def inner(self) -> Sequence[T]:
         return self._inner  # type: ignore[return-value]
 
-    @override
     def into[**P, R](
         self,
-        func: Callable[[Sequence[T]], R],
+        func: Callable[Concatenate[Sequence[T], P], R],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> R:
-        return super().into(func, *args, **kwargs)  # type: ignore[return-value]
+        return func(self.inner(), *args, **kwargs)
 
     def for_each[**P](
         self,
