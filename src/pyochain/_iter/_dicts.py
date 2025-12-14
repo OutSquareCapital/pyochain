@@ -26,10 +26,10 @@ class BaseDict[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> keys = ["a", "b", "c"]
         >>> values = [1, 2, 3]
-        >>> pc.Iter.from_(values).with_keys(keys).inner()
+        >>> pc.Seq(values).iter().with_keys(keys).inner()
         {'a': 1, 'b': 2, 'c': 3}
         >>> # This is equivalent to:
-        >>> pc.Iter.from_(keys).zip(values).pipe(
+        >>> pc.Seq(keys).iter().zip(values).pipe(
         ...     lambda x: pc.Dict(x.into(dict)).inner()
         ... )
         {'a': 1, 'b': 2, 'c': 3}

@@ -59,10 +59,8 @@ class BaseFilter[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_(["hello", "world", 2, 5]).filter_attr("capitalize", str).into(
-        ...     list
-        ... )
-        ['hello', 'world']
+        >>> pc.Seq(["hello", "world", 2, 5]).iter().filter_attr("capitalize", str).collect()
+        Seq(['hello', 'world'])
 
         ```
         """

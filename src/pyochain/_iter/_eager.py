@@ -58,8 +58,8 @@ class BaseEager[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3]).tail(2)
-        Seq((2, 3))
+        >>> pc.Seq([1, 2, 3]).tail(2)
+        Seq([2, 3])
 
         ```
         """
@@ -78,7 +78,7 @@ class BaseEager[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 3, 2]).top_n(2)
+        >>> pc.Seq([1, 3, 2]).top_n(2)
         Seq((3, 2))
 
         ```
@@ -100,7 +100,7 @@ class BaseEager[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 2]).union([2, 3], [4]).iter().sort()
+        >>> pc.Seq([1, 2, 2]).union([2, 3], [4]).iter().sort()
         Seq([1, 2, 3, 4])
 
         ```
@@ -126,7 +126,7 @@ class BaseEager[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 2]).intersection([2, 3], [2])
+        >>> pc.Seq([1, 2, 2]).intersection([2, 3], [2])
         Seq([2])
 
         ```
@@ -154,7 +154,7 @@ class BaseEager[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 2]).diff_unique([2, 3])
+        >>> pc.Seq([1, 2, 2]).diff_unique([2, 3])
         Seq([1])
 
         ```
@@ -180,9 +180,9 @@ class BaseEager[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 2]).diff_symmetric([2, 3]).iter().sort()
+        >>> pc.Seq([1, 2, 2]).diff_symmetric([2, 3]).iter().sort()
         Seq([1, 3])
-        >>> pc.Iter.from_([1, 2, 3]).diff_symmetric([3, 4, 5]).iter().sort()
+        >>> pc.Seq([1, 2, 3]).diff_symmetric([3, 4, 5]).iter().sort()
         Seq([1, 2, 4, 5])
 
         ```
@@ -207,7 +207,7 @@ class BaseEager[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 1, 2, 3, 3, 3]).most_common(2)
+        >>> pc.Seq([1, 1, 2, 3, 3, 3]).most_common(2)
         Seq([(3, 3), (1, 2)])
 
         ```

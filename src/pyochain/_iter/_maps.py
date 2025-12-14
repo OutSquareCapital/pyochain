@@ -134,8 +134,8 @@ class BaseMap[T](IterWrapper[T]):
         Returns:
             Iter[R]: An iterable of transformed elements.
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2]).map(lambda x: x + 1).into(list)
-        [2, 3]
+        >>> pc.Seq([1, 2]).iter().map(lambda x: x + 1).collect()
+        Seq([2, 3])
 
         ```
         """
@@ -181,8 +181,8 @@ class BaseMap[T](IterWrapper[T]):
             Iter[Any]: An iterable of flattened transformed elements.
         >>> import pyochain as pc
         >>> data = [[1, 2], [3, 4]]
-        >>> pc.Iter.from_(data).flat_map(lambda x: x + 10).into(list)
-        [11, 12, 13, 14]
+        >>> pc.Seq(data).iter().flat_map(lambda x: x + 10).collect()
+        Seq([11, 12, 13, 14])
 
         ```
         """
@@ -268,9 +268,9 @@ class BaseMap[T](IterWrapper[T]):
         Returns:
             Iter[Iterable[T]]: An iterable of repeated sequences.
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2]).repeat(2).collect()
+        >>> pc.Seq([1, 2]).iter().repeat(2).collect()
         Seq([(1, 2), (1, 2)])
-        >>> pc.Iter.from_([1, 2]).repeat(3, list).collect()
+        >>> pc.Seq([1, 2]).iter().repeat(3, list).collect()
         Seq([[1, 2], [1, 2], [1, 2]])
 
         ```

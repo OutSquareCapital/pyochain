@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import itertools
-from collections.abc import Callable, Generator, Iterable
+from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, Any
 
 import more_itertools as mit
 
-from .._core import IterWrapper
+from .._core import IntoIter, IterWrapper
 
 if TYPE_CHECKING:
     from ._main import Iter
@@ -24,13 +24,13 @@ class BaseList[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq.from_(range(5)).iter().implode().into(list)
-        [[0], [1], [2], [3], [4]]
+        >>> pc.Seq(range(5)).iter().implode().collect()
+        Seq([[0], [1], [2], [3], [4]])
 
         ```
         """
 
-        def _implode(data: Iterable[T]) -> Generator[list[T], None, None]:
+        def _implode(data: Iterable[T]) -> IntoIter[list[T]]:
             return ([x] for x in data)
 
         return self._lazy(_implode)
@@ -165,13 +165,13 @@ class BaseList[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3, 4, 5, 6]).iter().split_into([1, 2, 3]).into(list)
-        [[1], [2, 3], [4, 5, 6]]
+        >>> pc.Seq([1, 2, 3, 4, 5, 6]).iter().split_into([1, 2, 3]).collect()
+        Seq([[1], [2, 3], [4, 5, 6]])
 
         If the sum of sizes is smaller than the length of iterable, then the remaining items of iterable will not be returned.
         ```python
-        >>> pc.Seq([1, 2, 3, 4, 5, 6]).iter().split_into([2, 3]).into(list)
-        [[1, 2], [3, 4, 5]]
+        >>> pc.Seq([1, 2, 3, 4, 5, 6]).iter().split_into([2, 3]).collect()
+        Seq([[1, 2], [3, 4, 5]])
 
         ```
 
@@ -180,16 +180,16 @@ class BaseList[T](IterWrapper[T]):
         - fewer items will be returned in the iteration that overruns the iterable
         - further lists will be empty
         ```python
-        >>> pc.Iter.from_([1, 2, 3, 4]).split_into([1, 2, 3, 4]).into(list)
-        [[1], [2, 3], [4], []]
+        >>> pc.Seq([1, 2, 3, 4]).iter().split_into([1, 2, 3, 4]).collect()
+        Seq([[1], [2, 3], [4], []])
 
         ```
 
         When a None object is encountered in sizes, the returned list will contain items up to the end of iterable the same way that itertools.slice does:
         ```python
         >>> data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
-        >>> pc.Iter.from_(data).split_into([2, 3, None]).into(list)
-        [[1, 2], [3, 4, 5], [6, 7, 8, 9, 0]]
+        >>> pc.Seq(data).iter().split_into([2, 3, None]).collect()
+        Seq([[1, 2], [3, 4, 5], [6, 7, 8, 9, 0]])
 
         ```
 
@@ -239,8 +239,8 @@ class BaseList[T](IterWrapper[T]):
         """
         return self._lazy(mit.split_when, predicate, max_split)
 
-    def unique_to_each[U: Iterable[Any]](self: IterWrapper[U]) -> Iter[list[U]]:
-        """Return the elements from each of the iterables that aren't in the other iterables.
+    def unique_to_each[U: Iterable[Any]](self: IterWrapper[U]) -> Iter[Iter[U]]:
+        """Return the elements from each of the iterators that aren't in the other iterators.
 
         It is assumed that the elements of each iterable are hashable.
 
@@ -249,7 +249,7 @@ class BaseList[T](IterWrapper[T]):
             more_itertools.unique_to_each
 
         Returns:
-            Iter[list[U]]: An iterable of lists, each containing the unique elements from the corresponding input iterable.
+            Iter[Iter[U]]: An iterator of iterators, each containing the unique elements from the corresponding input iterable.
 
         For example, suppose you have a set of packages, each with a set of dependencies:
 
@@ -264,7 +264,7 @@ class BaseList[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> data = ({"A", "B"}, {"B", "C"}, {"B", "D"})
-        >>> pc.Iter.from_(data).unique_to_each().collect()
+        >>> pc.Seq(data).iter().unique_to_each().map(lambda x: x.into(list)).collect()
         Seq([['A'], ['C'], ['D']])
 
         ```
@@ -274,7 +274,7 @@ class BaseList[T](IterWrapper[T]):
         Input order is preserved:
         ```python
         >>> data = ("mississippi", "missouri")
-        >>> pc.Iter.from_(data).unique_to_each().collect()
+        >>> pc.Seq(data).iter().unique_to_each().map(lambda x: x.into(list)).collect()
         Seq([['p', 'p'], ['o', 'u', 'r']])
 
         ```
@@ -282,10 +282,12 @@ class BaseList[T](IterWrapper[T]):
         """
         from collections import Counter
 
-        def _unique_to_each(data: Iterable[U]) -> Generator[list[U], None, None]:
+        def _unique_to_each(data: Iterable[U]) -> IntoIter[Iter[U]]:
+            from ._main import Iter
+
             pool: list[Iterable[U]] = list(data)
             counts: Counter[U] = Counter(itertools.chain.from_iterable(map(set, pool)))
             uniques: set[U] = {element for element in counts if counts[element] == 1}
-            return ((list(filter(uniques.__contains__, it))) for it in pool)
+            return ((Iter(filter(uniques.__contains__, it))) for it in pool)
 
         return self._lazy(_unique_to_each)

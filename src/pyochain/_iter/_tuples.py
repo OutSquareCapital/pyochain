@@ -117,8 +117,8 @@ class BaseTuples[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3]).combinations_with_replacement(2).into(list)
-        [(1, 1), (1, 2), (1, 3), (2, 2), (2, 3), (3, 3)]
+        >>> pc.Seq([1, 2, 3]).iter().combinations_with_replacement(2).collect()
+        Seq([(1, 1), (1, 2), (1, 3), (2, 2), (2, 3), (3, 3)])
 
         ```
 
@@ -134,8 +134,8 @@ class BaseTuples[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3]).pairwise().into(list)
-        [(1, 2), (2, 3)]
+        >>> pc.Seq([1, 2, 3]).iter().pairwise().collect()
+        Seq([(1, 2), (2, 3)])
 
         ```
 
@@ -183,8 +183,8 @@ class BaseTuples[T](IterWrapper[T]):
         >>> def is_positive(n: int) -> bool:
         ...     return n > 0
         >>>
-        >>> pc.Iter.from_([1, -2, 3]).map_juxt(is_even, is_positive).into(list)
-        [(False, True), (True, False), (False, True)]
+        >>> pc.Seq([1, -2, 3]).iter().map_juxt(is_even, is_positive).collect()
+        Seq([(False, True), (True, False), (False, True)])
 
         ```
         """
@@ -211,15 +211,15 @@ class BaseTuples[T](IterWrapper[T]):
         For example, to find whether items are adjacent to a 3:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_(range(6)).adjacent(lambda x: x == 3).into(list)
-        [(False, 0), (False, 1), (True, 2), (True, 3), (True, 4), (False, 5)]
+        >>> pc.Seq(range(6)).iter().adjacent(lambda x: x == 3).collect()
+        Seq([(False, 0), (False, 1), (True, 2), (True, 3), (True, 4), (False, 5)])
 
         ```
         Set distance to change what counts as adjacent.
         For example, to find whether items are two places away from a 3:
         ```python
-        >>> pc.Iter.from_(range(6)).adjacent(lambda x: x == 3, distance=2).into(list)
-        [(False, 0), (True, 1), (True, 2), (True, 3), (True, 4), (True, 5)]
+        >>> pc.Seq(range(6)).iter().adjacent(lambda x: x == 3, distance=2).collect()
+        Seq([(False, 0), (True, 1), (True, 2), (True, 3), (True, 4), (True, 5)])
 
         ```
 
@@ -250,12 +250,12 @@ class BaseTuples[T](IterWrapper[T]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_("otto").classify_unique().into(list)
+        >>> pc.Seq("otto").iter().classify_unique().collect()
         ... # doctest: +NORMALIZE_WHITESPACE
-        [('o', True,  True),
+        Seq([('o', True,  True),
         ('t', True,  True),
         ('t', False, False),
-        ('o', True,  False)]
+        ('o', True,  False)])
 
         ```
         """
@@ -336,11 +336,11 @@ class BaseTuples[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> data = pc.Iter.from_("aAAbBBcCC")
+        >>> data = pc.Seq("aAAbBBcCC").iter()
         >>> data.group_by_transform(
         ...     lambda k: k.upper(), lambda v: v.lower(), lambda g: "".join(g)
-        ... ).into(list)
-        [('A', 'aaa'), ('B', 'bbb'), ('C', 'ccc')]
+        ... ).collect()
+        Seq([('A', 'aaa'), ('B', 'bbb'), ('C', 'ccc')])
 
         ```
         Each optional argument defaults to an identity function if not specified.

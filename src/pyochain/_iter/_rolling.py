@@ -22,7 +22,7 @@ class BaseRolling[T](IterWrapper[T]):
             Iter[float]: An iterable of rolling mean values.
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3, 4, 5]).rolling_mean(3).into(list)
+        >>> pc.Seq([1, 2, 3, 4, 5]).iter().rolling_mean(3).into(list)
         [2.0, 3.0, 4.0]
 
         ```
@@ -40,7 +40,7 @@ class BaseRolling[T](IterWrapper[T]):
             Iter[T]: An iterable of rolling median values.
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 3, 2, 5, 4]).rolling_median(3).into(list)
+        >>> pc.Seq([1, 3, 2, 5, 4]).iter().rolling_median(3).into(list)
         [2, 3, 4]
 
         ```
@@ -60,7 +60,7 @@ class BaseRolling[T](IterWrapper[T]):
             Iter[T]: An iterable of rolling sum values.
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1.0, 2, 3, 4, 5]).rolling_sum(3).into(list)
+        >>> pc.Seq([1.0, 2, 3, 4, 5]).iter().rolling_sum(3).into(list)
         [6.0, 9.0, 12.0]
 
         ```
@@ -78,7 +78,7 @@ class BaseRolling[T](IterWrapper[T]):
             Iter[T]: An iterable of rolling minimum values.
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([3, 1, 4, 1, 5, 9, 2]).rolling_min(3).into(list)
+        >>> pc.Seq([3, 1, 4, 1, 5, 9, 2]).iter().rolling_min(3).into(list)
         [1, 1, 1, 1, 2]
 
         ```
@@ -96,7 +96,7 @@ class BaseRolling[T](IterWrapper[T]):
             Iter[T]: An iterable of rolling maximum values.
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([3, 1, 4, 1, 5, 9, 2]).rolling_max(3).into(list)
+        >>> pc.Seq([3, 1, 4, 1, 5, 9, 2]).iter().rolling_max(3).into(list)
         [4, 4, 5, 9, 9]
 
         ```
@@ -114,7 +114,7 @@ class BaseRolling[T](IterWrapper[T]):
             Iter[float]: An iterable of rolling variance values.
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 4, 1, 4]).rolling_var(3).map(lambda x: round(x, 2)).into(list)
+        >>> pc.Seq([1, 2, 4, 1, 4]).iter().rolling_var(3).map(lambda x: round(x, 2)).into(list)
         [2.33, 2.33, 3.0]
 
         ```
@@ -151,7 +151,7 @@ class BaseRolling[T](IterWrapper[T]):
             Iter[float]: An iterable of rolling kurtosis values.
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 4, 1, 4]).rolling_kurtosis(4).into(list)
+        >>> pc.Seq([1, 2, 4, 1, 4]).iter().rolling_kurtosis(4).into(list)
         [1.5, -3.901234567901234]
 
         ```
@@ -189,7 +189,7 @@ class BaseRolling[T](IterWrapper[T]):
             Iter[bool]: An iterable of rolling all boolean values.
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([True, True, False, True, True]).rolling_all(2).into(list)
+        >>> pc.Seq([True, True, False, True, True]).iter().rolling_all(2).into(list)
         [True, False, False, True]
 
         ```
@@ -207,7 +207,7 @@ class BaseRolling[T](IterWrapper[T]):
             Iter[bool]: An iterable of rolling any values.
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([True, True, False, True, True]).rolling_any(2).into(list)
+        >>> pc.Seq([True, True, False, True, True]).iter().rolling_any(2).into(list)
         [True, True, True, True]
 
         ```
@@ -225,7 +225,7 @@ class BaseRolling[T](IterWrapper[T]):
             Iter[float]: An iterable of rolling product values.
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3, 4, 5]).rolling_product(3).into(list)
+        >>> pc.Seq([1, 2, 3, 4, 5]).iter().rolling_product(3).into(list)
         [6.0, 24.0, 60.0]
 
         ```
@@ -252,7 +252,7 @@ class BaseRolling[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> def range_func(window):
         ...     return max(window) - min(window)
-        >>> pc.Iter.from_([1, 3, 2, 5, 4]).rolling_apply(range_func, 3).into(list)
+        >>> pc.Seq([1, 3, 2, 5, 4]).iter().rolling_apply(range_func, 3).into(list)
         [2, 3, 3]
 
         ```
@@ -282,7 +282,7 @@ class BaseRolling[T](IterWrapper[T]):
         >>> from statistics import correlation as corr
         >>> seq_1 = [1, 2, 3, 4, 5]
         >>> seq_2 = [1, 2, 3, 2, 1]
-        >>> pc.Iter.from_(seq_1).rolling_apply_pairwise(seq_2, corr, 3).into(list)
+        >>> pc.Seq(seq_1).iter().rolling_apply_pairwise(seq_2, corr, 3).into(list)
         [1.0, 0.0, -1.0]
 
         ```

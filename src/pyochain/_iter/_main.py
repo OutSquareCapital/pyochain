@@ -390,7 +390,7 @@ class Iter[T](
         >>> import pyochain as pc
         >>> def double(data: Iterable[int]) -> Iterator[int]:
         ...     return (x * 2 for x in data)
-        >>> pc.Iter.from_([1, 2, 3]).apply(double).into(list)
+        >>> pc.Iter.from_(1, 2, 3).apply(double).into(list)
         [2, 4, 6]
 
         ```
@@ -418,7 +418,7 @@ class Iter[T](
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3]).into(sum)
+        >>> pc.Iter.from_(1, 2, 3).into(sum)
         6
 
         ```

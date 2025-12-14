@@ -48,8 +48,8 @@ class BaseProcess[T](IterWrapper[T]):
 
         Example:
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2]).cycle().take(5).into(list)
-        [1, 2, 1, 2, 1]
+        >>> pc.Seq([1, 2]).iter().cycle().take(5).collect()
+        Seq([1, 2, 1, 2, 1])
 
         ```
         """
@@ -67,8 +67,8 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2]).interpose(0).into(list)
-        [1, 0, 2]
+        >>> pc.Seq([1, 2]).iter().interpose(0).collect()
+        Seq([1, 0, 2])
 
         ```
         """
@@ -136,8 +136,8 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3]).accumulate(lambda a, b: a + b).into(list)
-        [1, 3, 6]
+        >>> pc.Seq([1, 2, 3]).iter().accumulate(lambda a, b: a + b).collect()
+        Seq([1, 3, 6])
 
         ```
         """
@@ -155,8 +155,8 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([2, 3]).insert_left(1).into(list)
-        [1, 2, 3]
+        >>> pc.Seq([2, 3]).iter().insert_left(1).collect()
+        Seq([1, 2, 3])
 
         ```
         """
@@ -208,8 +208,8 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 3]).merge_sorted([2, 4]).into(list)
-        [1, 2, 3, 4]
+        >>> pc.Seq([1, 3]).iter().merge_sorted([2, 4]).collect()
+        Seq([1, 2, 3, 4])
 
         ```
         """
@@ -227,8 +227,8 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2]).interleave([3, 4]).into(list)
-        [1, 3, 2, 4]
+        >>> pc.Seq([1, 2]).iter().interleave([3, 4]).collect()
+        Seq([1, 3, 2, 4])
 
         ```
         """
@@ -278,7 +278,7 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_("ABCABC").elements().sort()
+        >>> pc.Seq("ABCABC").iter().elements().sort()
         Seq(['A', 'A', 'B', 'B', 'C', 'C'])
 
         ```
@@ -286,7 +286,7 @@ class BaseProcess[T](IterWrapper[T]):
         ```python
         >>> import math
         >>> data = [2, 2, 3, 3, 3, 17]
-        >>> pc.Iter.from_(data).elements().into(math.prod)
+        >>> pc.Seq(data).iter().elements().into(math.prod)
         1836
 
         ```
@@ -348,7 +348,7 @@ class BaseProcess[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> iterable = ["a", "b", "c", "d"]
         >>> n = 4
-        >>> pc.Iter.from_(iterable).is_strictly_n(n).into(list)
+        >>> pc.Seq(iterable).iter().is_strictly_n(n).into(list)
         ['a', 'b', 'c', 'd']
 
         ```
@@ -357,14 +357,14 @@ class BaseProcess[T](IterWrapper[T]):
 
         By default, *too_short* and *too_long* are functions that raise`ValueError`.
         ```python
-        >>> pc.Iter.from_("ab").is_strictly_n(3).into(
+        >>> pc.Seq("ab").iter().is_strictly_n(3).into(
         ...     list
         ... )  # doctest: +IGNORE_EXCEPTION_DETAIL
         Traceback (most recent call last):
         ...
         ValueError: too few items in iterable (got 2)
 
-        >>> pc.Iter.from_("abc").is_strictly_n(2).into(
+        >>> pc.Seq("abc").iter().is_strictly_n(2).into(
         ...     list
         ... )  # doctest: +IGNORE_EXCEPTION_DETAIL
         Traceback (most recent call last):
@@ -380,13 +380,13 @@ class BaseProcess[T](IterWrapper[T]):
         ```python
         >>> def too_short(item_count):
         ...     raise RuntimeError
-        >>> pc.Iter.from_("abcd").is_strictly_n(6, too_short=too_short).into(list)
+        >>> pc.Seq("abcd").iter().is_strictly_n(6, too_short=too_short).into(list)
         Traceback (most recent call last):
         ...
         RuntimeError
         >>> def too_long(item_count):
         ...     print("The boss is going to hear about this")
-        >>> pc.Iter.from_("abcdef").is_strictly_n(4, too_long=too_long).into(list)
+        >>> pc.Seq("abcdef").iter().is_strictly_n(4, too_long=too_long).into(list)
         The boss is going to hear about this
         ['a', 'b', 'c', 'd']
 
