@@ -164,7 +164,7 @@ Compared to `for_each`:
 
 ---
 
-## 3. Crossing the Boundary: `into`, `apply`, `from_`
+## 3. Crossing the Boundary: `from_`, `apply`, `into`
 
 So far we have stayed inside the `pyochain` world. At some point, you either need to:
 
@@ -208,11 +208,11 @@ pc.Option.from_(maybe_value)
 `apply` also works on the inner value, but instead of exiting the chain, it **re-wraps** whatever your function returns.
 
 ```python
-from collections.abc import Sequence
-def double_all(xs: Sequence[int]) -> Sequence[int]:
-    return [x * 2 for x in xs]
+from collections.abc import Iterator
+def double_all(xs: Iterator[int]) -> Iterator[int]:
+    return (x * 2 for x in xs)
 
-pc.Seq([1, 2, 3]).apply(double_all).map(lambda x: x + 1)
+pc.Seq([1, 2, 3]).iter().apply(double_all).map(lambda x: x + 1)
 ```
 
 Here:
@@ -237,7 +237,8 @@ Using `apply` is a simple way to promote **immutability** and **genericity** by 
 `into` is the symmetric operation: it takes the **inner value** and passes it to a function you provide, returning the raw result.
 
 ```python
-pc.Seq([1, 2, 3]).into(sum)       # -> 6 (int)
+import polars as pl
+pc.Seq([1, 2, 3]).into(pl.Series)       # -> Series([1, 2, 3])
 pc.Iter.from_([1, 2, 3]).into(list)  # -> [1, 2, 3] (list[int])
 ```
 
@@ -335,6 +336,7 @@ With `pyochain`, you can push the *details* into functions and keep the **top-le
 def main() -> int:
     return (
         pc.Seq(load_raw_data())
+        .iter()
         .map(normalise_row)
         .filter(is_valid)
         .apply(group_and_sort)
@@ -367,51 +369,51 @@ There are two common, very generic patterns:
 
 1. **Capture configuration once, reuse everywhere**
 
-   ```python
-   from collections.abc import Callable, Sequence
+```python
 
+from collections.abc import Callable, Sequence
 
-   def make_threshold_filter(threshold: float) -> Callable[[float], bool]:
-       def _predicate(value: float) -> bool:
-           return value >= threshold
+import pyochain as pc
 
-       return _predicate
+def _make_threshold_filter(threshold: float) -> Callable[[float], bool]:
+    def_predicate(value: float) -> bool:
+        return value >= threshold
 
+    return _predicate
 
-   def filter_values(values: Sequence[float], threshold: float) -> list[float]:
-       keep = make_threshold_filter(threshold)
-       return (
-           pc.Seq(values)
-           .filter(keep)
-           .into(list)
-       )
-   ```
+def filter_values(values: Sequence[float], threshold: float) -> pc.Seq[float]:
+    return pc.Seq(values).iter().filter(_make_threshold_filter(threshold)).collect()
 
-   Here, the chain only sees “a predicate over numbers”. The fact that it depends on a particular `threshold` is encapsulated in the closure returned by `make_threshold_filter`.
+```
+
+Here, the chain only sees “a predicate over numbers”. The fact that it depends on a particular `threshold` is encapsulated in the closure returned by `make_threshold_filter`.
 
 2. **Define tiny helpers next to the pipeline**
 
-   ```python
-   from collections.abc import Sequence
+```python
+import pyochain as pc
+from collections.abc import Sequence
 
 
-   def describe_numbers(values: Sequence[int], default_minmax: int) -> str:
-     def _format_summary(data: pc.Seq[int]) -> str:
-       return (
-         f"count={data.count()}, "
-         f"min={data.min_or(default_minmax)}, "
-         f"max={data.max_or(default_minmax)}"
-       )
+def describe_numbers(values: Sequence[int], default_minmax: int) -> str:
+  def _format_summary(data: pc.Seq[int]) -> str:
+    return (
+      f"count={data.count()}, "
+      f"min={data.min_or(default_minmax)}, "
+      f"max={data.max_or(default_minmax)}"
+    )
 
-     return (
-       pc.Seq(values)
-       .map(abs)
-       .tap(lambda s: print("debug:", s.inner()))
-       .pipe(_format_summary)
-     )
-   ```
+  return (
+    pc.Seq(values)
+    .iter()
+    .map(abs)
+    .collect()
+    .tap(lambda s: print("debug:", s.inner()))
+    .pipe(_format_summary)
+  )
+```
 
-   Here, `_format_summary` is a closure: it **captures** `default_minmax` from `describe_numbers` and uses it when computing the summary, without needing to pass it explicitly through the chain.
+Here, `_format_summary` is a closure: it **captures** `default_minmax` from `describe_numbers` and uses it when computing the summary, without needing to pass it explicitly through the chain.
 
 This does **not** mean that classes become obsolete. In many real programs you will mix both approaches:
 
