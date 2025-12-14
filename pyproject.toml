@@ -3,13 +3,13 @@
     name            = "pyochain"
     readme          = "README.md"
     requires-python = ">=3.13"
-    version         = "0.5.6"
+    version         = "0.6.0"
 
     dependencies = [
         "cytoolz>=1.0.1",
         "more-itertools>=10.8.0",
         "rolling>=0.5.0",
-]
+    ]
 
 [dependency-groups]
     dev = [
