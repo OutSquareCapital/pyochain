@@ -3,19 +3,16 @@ from __future__ import annotations
 import itertools
 from collections.abc import (
     Callable,
-    Generator,
     Iterable,
     Iterator,
     Mapping,
     Sequence,
-    ValuesView,
 )
 from dataclasses import dataclass
 from functools import partial
 from typing import TYPE_CHECKING, Any, overload
 
 import cytoolz as cz
-import more_itertools as mit
 
 from .._core import IterWrapper
 from .._results import NONE, Option, Some
@@ -320,67 +317,6 @@ class BaseMap[T](IterWrapper[T]):
             yield from itertools.repeat(final)
 
         return self._lazy(_repeat_last)
-
-    def ichunked(self, n: int) -> Iter[Iterator[T]]:
-        """Break *iterable* into sub-iterables with *n* elements each.
-
-        Args:
-            n (int): Number of elements in each chunk.
-
-        Returns:
-            Iter[Iterator[T]]: An iterable of iterators, each yielding n elements.
-        If the sub-iterables are read in order, the elements of *iterable*
-        won't be stored in memory.
-
-        If they are read out of order, :func:`itertools.tee` is used to cache
-        elements as necessary.
-        ```python
-        >>> import pyochain as pc
-        >>> all_chunks = pc.Iter.from_count().ichunked(4)
-        >>> c_1, c_2, c_3 = all_chunks.next(), all_chunks.next(), all_chunks.next()
-        >>> list(c_2)  # c_1's elements have been cached; c_3's haven't been
-        [4, 5, 6, 7]
-        >>> list(c_1)
-        [0, 1, 2, 3]
-        >>> list(c_3)
-        [8, 9, 10, 11]
-
-        ```
-
-        """
-        return self._lazy(mit.ichunked, n)
-
-    @overload
-    def flatten[U](self: IterWrapper[Generator[U, None, None]]) -> Iter[U]: ...
-    @overload
-    def flatten[U](self: IterWrapper[ValuesView[U]]) -> Iter[U]: ...
-    @overload
-    def flatten[U](self: IterWrapper[Iterable[U]]) -> Iter[U]: ...
-    @overload
-    def flatten[U](self: IterWrapper[Iterator[U]]) -> Iter[U]: ...
-    @overload
-    def flatten[U](self: IterWrapper[Sequence[U]]) -> Iter[U]: ...
-    @overload
-    def flatten[U](self: IterWrapper[list[U]]) -> Iter[U]: ...
-    @overload
-    def flatten[U](self: IterWrapper[tuple[U, ...]]) -> Iter[U]: ...
-    @overload
-    def flatten(self: IterWrapper[range]) -> Iter[int]: ...
-    def flatten[U: Iterable[Any]](self: IterWrapper[U]) -> Iter[Any]:
-        """Flatten one level of nesting and return a new Iterable wrapper.
-
-        This is a shortcut for `.apply(itertools.chain.from_iterable)`.
-
-        Returns:
-            Iter[Any]: An iterable of flattened elements.
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter.from_([[1, 2], [3]]).flatten().into(list)
-        [1, 2, 3]
-
-        ```
-        """
-        return self._lazy(itertools.chain.from_iterable)
 
     def pluck[U: Mapping[Any, Any]](
         self: IterWrapper[U],

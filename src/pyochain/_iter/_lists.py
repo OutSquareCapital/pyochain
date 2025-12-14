@@ -239,62 +239,6 @@ class BaseList[T](IterWrapper[T]):
         """
         return self._lazy(mit.split_when, predicate, max_split)
 
-    def chunks(self, n: int, *, strict: bool = False) -> Iter[list[T]]:
-        """Break iterable into lists of length n.
-
-        By default, the last yielded list will have fewer than *n* elements if the length of *iterable* is not divisible by *n*.
-
-        To use a fill-in value instead, see the :func:`grouper` recipe.
-
-        If:
-            - the length of *iterable* is not divisible by *n*
-            - *strict* is `True`
-
-        then `ValueError` will be raised before the last list is yielded.
-
-        Args:
-            n (int): Number of elements in each chunk.
-            strict (bool): Whether to raise an error if the last chunk is smaller than n. Defaults to False.
-
-        Returns:
-            Iter[list[T]]: An iterable of lists, each containing a chunk of the original iterable.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2, 3, 4, 5, 6]).chunks(3).into(list)
-        [[1, 2, 3], [4, 5, 6]]
-        >>> pc.Iter.from_([1, 2, 3, 4, 5, 6, 7, 8]).chunks(3).into(list)
-        [[1, 2, 3], [4, 5, 6], [7, 8]]
-
-        ```
-        """
-        return self._lazy(mit.chunked, n, strict)
-
-    def chunks_even(self, n: int) -> Iter[list[T]]:
-        """Break iterable into lists of approximately length n.
-
-        Items are distributed such the lengths of the lists differ by at most 1 item.
-
-        Args:
-            n (int): Approximate number of elements in each chunk.
-
-        Returns:
-            Iter[list[T]]: An iterable of lists, each containing a chunk of the original iterable.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> iterable = pc.Seq([1, 2, 3, 4, 5, 6, 7])
-        >>> iterable.iter().chunks_even(3).into(list)  # List lengths: 3, 2, 2
-        [[1, 2, 3], [4, 5], [6, 7]]
-        >>> iterable.iter().chunks(3).into(list)  # List lengths: 3, 3, 1
-        [[1, 2, 3], [4, 5, 6], [7]]
-
-        ```
-        """
-        return self._lazy(mit.chunked_even, n)
-
     def unique_to_each[U: Iterable[Any]](self: IterWrapper[U]) -> Iter[list[U]]:
         """Return the elements from each of the iterables that aren't in the other iterables.
 
