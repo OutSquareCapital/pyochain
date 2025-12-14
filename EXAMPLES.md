@@ -98,11 +98,11 @@ def get_palettes() -> pc.Dict[str, list[str]]:
     clr = "color"
     scl = "scale"
     df: pl.DataFrame = (
-        pc.Iter.from_(MODULES)
+        pc.Iter(MODULES)
         .map(
             lambda mod: pc.Dict.from_object(mod)
             .filter_values(lambda v: isinstance(v, list))
-            .unwrap()
+            .inner()
         )
         .into(pl.LazyFrame)
         .unpivot(value_name=clr, variable_name=scl)
@@ -115,9 +115,7 @@ def get_palettes() -> pc.Dict[str, list[str]]:
         .sort(scl)
         .collect()
     )
-    keys: list[str] = df.get_column(scl).to_list()
-    values: list[list[str]] = df.get_column(clr).to_list()
-    return pc.Iter.from_(keys).with_values(values)
+    return pc.Iter(df.get_column(scl)).with_values(df.get_column(clr))
 
 
 # Ouput excerpt:
@@ -176,8 +174,7 @@ import pyochain as pc
 
 def get_all_iter_methods() -> Sequence[tuple[int, str]]:
     return (
-        pc.Seq(pc.Iter.mro())
-        .iter()
+        pc.Iter(pc.Iter.mro())
         .map(lambda x: x.__dict__.values())
         .flatten()
         .map_if(

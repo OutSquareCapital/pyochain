@@ -201,13 +201,13 @@ class Iter[T](
 
         The `generator` function takes the current state and must return:
 
-        - A tuple `(value, new_state)` to emit the `value` and continue with the `new_state`.
-        - `None` to stop the generation.
+        - A tuple of `Some(value, new_state)` to emit the `value` and continue with the `new_state`.
+        - `NONE` to stop the generation.
 
         This is functionally equivalent to a state-based `while` loop.
 
         **Warning** ⚠️
-            If the `generator` function never returns `None`, it creates an infinite iterator.
+            If the `generator` function never returns `NONE`, it creates an infinite iterator.
             Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken if necessary.
 
         Args:
