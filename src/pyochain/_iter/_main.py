@@ -21,7 +21,6 @@ from ._dicts import BaseDict
 from ._eager import BaseEager
 from ._filters import BaseFilter
 from ._joins import BaseJoins
-from ._lists import BaseList
 from ._maps import BaseMap
 from ._partitions import BasePartitions
 from ._process import BaseProcess
@@ -45,7 +44,6 @@ class Iter[T](
     BaseProcess[T],
     BaseMap[T],
     BaseRolling[T],
-    BaseList[T],
     BaseTuples[T],
     BasePartitions[T],
     BaseJoins[T],
@@ -555,6 +553,362 @@ class Iter[T](
             return map(func, itertools.chain.from_iterable(data))
 
         return self._lazy(_flat_map)
+
+    def unique_to_each[U: Iterable[Any]](self: Iter[U]) -> Iter[Iter[U]]:
+        """Return the elements from each of the iterators that aren't in the other iterators.
+
+        It is assumed that the elements of each iterable are hashable.
+
+        **Credits**
+
+            more_itertools.unique_to_each
+
+        Returns:
+            Iter[Iter[U]]: An iterator of iterators, each containing the unique elements from the corresponding input iterable.
+
+        For example, suppose you have a set of packages, each with a set of dependencies:
+
+        **{'pkg_1': {'A', 'B'}, 'pkg_2': {'B', 'C'}, 'pkg_3': {'B', 'D'}}**
+
+        If you remove one package, which dependencies can also be removed?
+
+        If pkg_1 is removed, then A is no longer necessary - it is not associated with pkg_2 or pkg_3.
+
+        Similarly, C is only needed for pkg_2, and D is only needed for pkg_3:
+
+        ```python
+        >>> import pyochain as pc
+        >>> data = ({"A", "B"}, {"B", "C"}, {"B", "D"})
+        >>> pc.Iter(data).unique_to_each().map(lambda x: x.into(list)).collect()
+        Seq((['A'], ['C'], ['D']))
+
+        ```
+
+        If there are duplicates in one input iterable that aren't in the others they will be duplicated in the output.
+
+        Input order is preserved:
+        ```python
+        >>> data = ("mississippi", "missouri")
+        >>> pc.Seq(data).iter().unique_to_each().map(lambda x: x.into(list)).collect()
+        Seq((['p', 'p'], ['o', 'u', 'r']))
+
+        ```
+
+        """
+        from collections import Counter
+
+        def _unique_to_each(data: Iterable[U]) -> Iterator[Iter[U]]:
+            from ._main import Iter
+
+            pool: list[Iterable[U]] = list(data)
+            counts: Counter[U] = Counter(itertools.chain.from_iterable(map(set, pool)))
+            uniques: set[U] = {element for element in counts if counts[element] == 1}
+            return ((Iter(filter(uniques.__contains__, it))) for it in pool)
+
+        return self._lazy(_unique_to_each)
+
+    def split_into(self, *sizes: Option[int]) -> Iter[Iter[T]]:
+        """Yield a list of sequential items from iterable of length 'n' for each integer 'n' in sizes.
+
+        Args:
+            *sizes (Option[int]): `Some` integers specifying the sizes of each chunk. Use `NONE` for the remainder.
+
+        Returns:
+            Iter[Iter[T]]: An iterator of iterators, each containing a chunk of the original iterable.
+
+        If the sum of sizes is smaller than the length of iterable, then the remaining items of iterable will not be returned.
+
+        If the sum of sizes is larger than the length of iterable:
+
+        - fewer items will be returned in the iteration that overruns the iterable
+        - further lists will be empty
+
+        When a `NONE` object is encountered in sizes, the returned list will contain items up to the end of iterable the same way that itertools.slice does.
+
+        split_into can be useful for grouping a series of items where the sizes of the groups are not uniform.
+
+        An example would be where in a row from a table:
+
+        - multiple columns represent elements of the same feature (e.g. a point represented by x,y,z)
+        - the format is not the same for all columns.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> def _get_results(x: pc.Iter[pc.Iter[int]]) -> pc.Seq[pc.Seq[int]]:
+        ...    return x.map(lambda x: x.collect(list)).collect()
+        >>>
+        >>> data = [1, 2, 3, 4, 5, 6]
+        >>> pc.Iter(data).split_into(pc.Some(1), pc.Some(2), pc.Some(3)).into(_get_results)
+        Seq((Seq([1]), Seq([2, 3]), Seq([4, 5, 6])))
+        >>> pc.Iter(data).split_into(pc.Some(2), pc.Some(3)).into(_get_results)
+        Seq((Seq([1, 2]), Seq([3, 4, 5])))
+        >>> pc.Iter([1, 2, 3, 4]).split_into(pc.Some(1), pc.Some(2), pc.Some(3), pc.Some(4)).into(_get_results)
+        Seq((Seq([1]), Seq([2, 3]), Seq([4]), Seq([])))
+        >>> data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+        >>> pc.Iter(data).split_into(pc.Some(2), pc.Some(3), pc.NONE).into(_get_results)
+        Seq((Seq([1, 2]), Seq([3, 4, 5]), Seq([6, 7, 8, 9, 0])))
+
+        ```
+        """
+
+        def _split_into(data: Iterable[T]) -> Iterator[Iter[T]]:
+            """Credits: more_itertools.split_into."""
+            it = iter(data)
+
+            for size in sizes:
+                if size.is_none():
+                    yield self.__class__(it)
+                    return
+                else:
+                    yield self.__class__(itertools.islice(it, size.unwrap()))
+
+        return self._lazy(_split_into)
+
+    def split_when(
+        self,
+        predicate: Callable[[T, T], bool],
+        max_split: int = -1,
+    ) -> Iter[Iter[T]]:
+        """Split iterable into pieces based on the output of a predicate function.
+
+        Args:
+            predicate (Callable[[T, T], bool]): Function that takes successive pairs of items and returns True if the iterable should be split.
+            max_split (int): Maximum number of splits to perform. Defaults to -1 (no limit).
+
+        Returns:
+            Iter[Iter[T]]: An iterator of iterators of items.
+
+        At most *max_split* splits are done.
+
+        If *max_split* is not specified or -1, then there is no limit on the number of splits.
+
+        The example below shows how to find runs of increasing numbers, by splitting the iterable when element i is larger than element i + 1.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> data = pc.Seq([1, 2, 3, 3, 2, 5, 2, 4, 2])
+        >>> data.iter().split_when(lambda x, y: x > y).map(lambda x: x.collect(list)).collect()
+        Seq((Seq([1, 2, 3, 3]), Seq([2, 5]), Seq([2, 4]), Seq([2])))
+        >>> data.iter().split_when(lambda x, y: x > y, max_split=2).map(lambda x: x.collect(list)).collect()
+        Seq((Seq([1, 2, 3, 3]), Seq([2, 5]), Seq([2, 4, 2])))
+
+        ```
+        """
+
+        def _split_when(data: Iterable[T], max_split: int) -> Iterator[Iter[T]]:
+            """Credits: more_itertools.split_when."""
+            if max_split == 0:
+                yield self
+                return
+
+            it = iter(data)
+            try:
+                cur_item = next(it)
+            except StopIteration:
+                return
+
+            buf = [cur_item]
+            for next_item in it:
+                if predicate(cur_item, next_item):
+                    yield Iter(buf)
+                    if max_split == 1:
+                        yield Iter((next_item, *it))
+                        return
+                    buf = []
+                    max_split -= 1
+
+                buf.append(next_item)
+                cur_item = next_item
+
+            yield Iter(buf)
+
+        return self._lazy(_split_when, max_split)
+
+    def split_at(
+        self,
+        predicate: Callable[[T], bool],
+        max_split: int = -1,
+        *,
+        keep_separator: bool = False,
+    ) -> Iter[Iter[T]]:
+        """Yield iterators of items from iterable, where each iterator is delimited by an item where `predicate` returns True.
+
+        Args:
+            predicate (Callable[[T], bool]): Function to determine the split points.
+            max_split (int): Maximum number of splits to perform. Defaults to -1 (no limit).
+            keep_separator (bool): Whether to include the separator in the output. Defaults to False.
+
+        Returns:
+            Iter[Iter[T]]: An iterator of iterators, each containing a segment of the original iterable.
+
+        By default, the delimiting items are not included in the output.
+
+        To include them, set *keep_separator* to `True`.
+        At most *max_split* splits are done.
+
+        If *max_split* is not specified or -1, then there is no limit on the number of splits.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> def _to_res(x: pc.Iter[pc.Iter[str]]) -> pc.Seq[pc.Seq[str]]:
+        ...     return x.map(lambda x: x.into(list)).collect()
+        >>>
+        >>> pc.Iter("abcdcba").split_at(lambda x: x == "b").into(_to_res)
+        Seq((['a'], ['c', 'd', 'c'], ['a']))
+        >>> pc.Iter(range(10)).split_at(lambda n: n % 2 == 1).into(_to_res)
+        Seq(([0], [2], [4], [6], [8], []))
+        >>> pc.Iter(range(10)).split_at(lambda n: n % 2 == 1, max_split=2).into(_to_res)
+        Seq(([0], [2], [4, 5, 6, 7, 8, 9]))
+        >>>
+        >>> def cond(x: str) -> bool:
+        ...     return x == "b"
+        >>>
+        >>> pc.Iter("abcdcba").split_at(cond, keep_separator=True).into(_to_res)
+        Seq((['a'], ['b'], ['c', 'd', 'c'], ['b'], ['a']))
+
+        ```
+        """
+
+        def _split_at(data: Iterable[T], max_split: int) -> Iterator[Iter[T]]:
+            """Credits: more_itertools.split_at."""
+            if max_split == 0:
+                yield self
+                return
+
+            buf: list[T] = []
+            it = iter(data)
+            for item in it:
+                if predicate(item):
+                    yield self.__class__(buf)
+                    if keep_separator:
+                        yield self.__class__((item,))
+                    if max_split == 1:
+                        yield self.__class__(it)
+                        return
+                    buf = []
+                    max_split -= 1
+                else:
+                    buf.append(item)
+            yield self.__class__(buf)
+
+        return self._lazy(_split_at, max_split)
+
+    def split_after(
+        self,
+        predicate: Callable[[T], bool],
+        max_split: int = -1,
+    ) -> Iter[Iter[T]]:
+        """Yield iterator of items from iterable, where each iterator ends with an item where `predicate` returns True.
+
+        Args:
+            predicate (Callable[[T], bool]): Function to determine the split points.
+            max_split (int): Maximum number of splits to perform. Defaults to -1 (no limit).
+
+        Returns:
+            Iter[Iter[T]]: An iterable of lists of items.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter("one1two2").split_after(str.isdigit).map(list).collect()
+        Seq((['o', 'n', 'e', '1'], ['t', 'w', 'o', '2']))
+
+        >>> def cond(n: int) -> bool:
+        ...     return n % 3 == 0
+        >>>
+        >>> pc.Iter(range(10)).split_after(cond).map(list).collect()
+        Seq(([0], [1, 2, 3], [4, 5, 6], [7, 8, 9]))
+        >>> pc.Iter(range(10)).split_after(cond, max_split=2).map(list).collect()
+        Seq(([0], [1, 2, 3], [4, 5, 6, 7, 8, 9]))
+
+        ```
+        """
+
+        def _split_after(data: Iterable[T], max_split: int) -> Iterator[Iter[T]]:
+            """Credits: more_itertools.split_after."""
+            if max_split == 0:
+                yield self.__class__(data)
+                return
+
+            buf: list[T] = []
+            it = iter(data)
+            for item in it:
+                buf.append(item)
+                if predicate(item) and buf:
+                    yield self.__class__(buf)
+                    if max_split == 1:
+                        buf = list(it)
+                        if buf:
+                            yield self.__class__(buf)
+                        return
+                    buf = []
+                    max_split -= 1
+            if buf:
+                yield self.__class__(buf)
+
+        return self._lazy(_split_after, max_split)
+
+    def split_before(
+        self,
+        predicate: Callable[[T], bool],
+        max_split: int = -1,
+    ) -> Iter[Iter[T]]:
+        """Yield iterator of items from iterable, where each iterator ends with an item where `predicate` returns True.
+
+        Args:
+            predicate (Callable[[T], bool]): Function to determine the split points.
+            max_split (int): Maximum number of splits to perform. Defaults to -1 (no limit).
+
+        Returns:
+            Iter[Iter[T]]: An iterable of lists of items.
+
+
+        At most *max_split* are done.
+
+
+        If *max_split* is not specified or -1, then there is no limit on the number of splits:
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter("abcdcba").split_before(lambda x: x == "b").map(list).collect()
+        Seq((['a'], ['b', 'c', 'd', 'c'], ['b', 'a']))
+        >>>
+        >>> def cond(n: int) -> bool:
+        ...     return n % 2 == 1
+        >>>
+        >>> pc.Iter(range(10)).split_before(cond).map(list).collect()
+        Seq(([0], [1, 2], [3, 4], [5, 6], [7, 8], [9]))
+        >>> pc.Iter(range(10)).split_before(cond, max_split=2).map(list).collect()
+        Seq(([0], [1, 2], [3, 4, 5, 6, 7, 8, 9]))
+
+        ```
+        """
+
+        def _split_before(data: Iterable[T], max_split: int) -> Iterator[Iter[T]]:
+            """Credits: more_itertools.split_before."""
+            if max_split == 0:
+                yield self.__class__(data)
+                return
+
+            buf: list[T] = []
+            it = iter(data)
+            for item in it:
+                if predicate(item) and buf:
+                    yield self.__class__(buf)
+                    if max_split == 1:
+                        yield self.__class__([item, *it])
+                        return
+                    buf = []
+                    max_split -= 1
+                buf.append(item)
+            if buf:
+                yield self.__class__(buf)
+
+        return self._lazy(_split_before, max_split)
 
 
 class Seq[T](CommonMethods[T], Sequence[T]):

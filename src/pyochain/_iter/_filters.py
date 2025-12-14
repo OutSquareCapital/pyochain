@@ -22,7 +22,18 @@ class BaseFilter[T](IterWrapper[T]):
     @overload
     def filter(self, func: Callable[[T], bool]) -> Iter[T]: ...
     def filter[U](self, func: Callable[[T], bool | TypeIs[U]]) -> Iter[T] | Iter[U]:
-        """Return an iterator yielding those items of iterable for which function is true.
+        """Creates an `Iter` which uses a closure to determine if an element should be yielded.
+
+        Given an element the closure must return true or false.
+
+        The returned `Iter` will yield only the elements for which the closure returns true.
+
+        The closure can return a `TypeIs` to narrow the type of the returned iterable.
+
+        This won't have any runtime effect, but allows for better type inference.
+
+        Note:
+            `Iter.filter(f).next()` is equivalent to `Iter.find(f)`.
 
         Args:
             func (Callable[[T], bool | TypeIs[U]]): Function to evaluate each item.
@@ -33,8 +44,13 @@ class BaseFilter[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter((1, 2, 3)).filter(lambda x: x > 1).collect()
+        >>> data = (1, 2, 3)
+        >>> pc.Iter(data).filter(lambda x: x > 1).collect()
         Seq((2, 3))
+        >>> pc.Iter(data).filter(lambda x: x > 1).next()
+        Some(value=2)
+        >>> pc.Iter(data).find(lambda x: x > 1)
+        Some(value=2)
 
         ```
         """

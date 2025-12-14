@@ -175,10 +175,10 @@ class BaseMap[T](IterWrapper[T]):
         ...     return f"{color}-{size}"
         >>> data = pc.Seq(["blue", "red"])
         >>> data.iter().product(["S", "M"]).map_star(make_sku).collect()
-        Seq(['blue-S', 'blue-M', 'red-S', 'red-M'])
+        Seq(('blue-S', 'blue-M', 'red-S', 'red-M'))
         >>> # This is equivalent to:
         >>> data.iter().product(["S", "M"]).map(lambda x: make_sku(*x)).collect()
-        Seq(['blue-S', 'blue-M', 'red-S', 'red-M'])
+        Seq(('blue-S', 'blue-M', 'red-S', 'red-M'))
 
         ```
         """
@@ -343,7 +343,7 @@ class BaseMap[T](IterWrapper[T]):
         ...             return pc.Some(new_state)
         ...         case _:
         ...             return pc.NONE
-        >>> pc.Seq([1, 2, 3, 4, 5]).iter().scan(0, accumulate_until_limit).collect()
+        >>> pc.Iter([1, 2, 3, 4, 5]).scan(0, accumulate_until_limit).collect()
         Seq((1, 3, 6, 10))
 
         ```

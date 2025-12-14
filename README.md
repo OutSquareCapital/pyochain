@@ -42,14 +42,13 @@ The full API reference can be found at:
 
 #### `Iter[T]`
 
-A wrapper for any `Iterator` or `Generator`. All operations are **lazy**, consuming the underlying iterator only when needed.
+A superset of Iterator. All operations are **lazy**, consuming the underlying iterator only when needed.
 
 This allows for efficient processing of large or even infinite sequences.
 
 To create an `Iter`, you can:
 
-* Wrap an existing iterator/generator: `pc.Iter(my_iterator)`
-* Convert any iterable: `pc.Iter.from_(my_list)`
+* Take any iterable: `pc.Iter(my_iterable)`
 * Wrap unpacked values: `pc.Iter.from_(1, 2, 3)`
 * Use built-in constructors like `pc.Iter.from_count()` for infinite sequences.
 
