@@ -2,9 +2,9 @@
 
 **_Functional-style method chaining for Python data structures._**
 
-`pyochain` brings a fluent, declarative API inspired by Rust's `Iterator` and DataFrame libraries like Polars to your everyday Python iterables and dictionaries.
+`pyochain` brings a fluent, declarative API inspired by Rust's `Iterator`, `Result`, `Option`, and DataFrame libraries like Polars to your everyday Python iterables and dictionaries.
 
-Manipulate data through composable chains of operations, enhancing readability and reducing boilerplate.
+Manipulate data through composable chains of operations and manage errors and optional values safely, all while enjoying type-safe guarantees.
 
 ## Notice on Stability ⚠️
 
@@ -34,7 +34,7 @@ The full API reference can be found at:
 
 ### Inspirations
 
-* **Rust's language and  Rust `Iterator` Trait:** Emulate naming conventions (`from_()`, `into()`) and leverage concepts from Rust's powerful iterator traits (method chaining, lazy evaluation) to bring similar expressiveness to Python.
+* **Rust's language and  Rust stdlib:** Emulate naming conventions (`from_()`, `into()`) and leverage concepts from Rust's powerful iterator traits (method chaining, lazy evaluation), Option and Result enums, to bring similar expressiveness to Python.
 * **Python iterators libraries:** Libraries like `rolling`, `cytoolz`, and `more-itertools` provided ideas, inspiration, and implementations for many of the iterator methods.
 * **PyFunctional:** Although not directly used (because I started writing pyochain before discovering it), also shares similar goals and ideas.
 

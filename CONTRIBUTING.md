@@ -15,6 +15,8 @@ This can be deconstructed into:
 - This can be repeated (explanation, code block, blank line, return, blank line) as needed for more complex functions.
 - The closing triple quotes.
 
+The weird end is due to the usage of docstring parsers that can parse examples in code blocks.
+
 Example:
 
 ```python
@@ -96,3 +98,7 @@ uv run ruff check src/pyochain
 uv run ruff format src/pyochain
 uv run -m tests.main
 ```
+
+### Internal code logic
+
+Internal home-implementations of methods use "vanilla" python declarative iterations. This can seem a bit conflictual with the public API purpose, but is done to minimize function call overhead for performance.
