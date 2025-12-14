@@ -159,29 +159,28 @@ class BaseMap[T](IterWrapper[T]):
 
         In short, for each `element` in the sequence, it computes `func(*element)`.
 
+        - Use map_star when the performance matters (it is faster).
+        - Use map with unpacking when readability matters (the types can be inferred).
+
         Args:
             func (Callable[..., R]): Function to apply to unpacked elements.
 
         Returns:
             Iter[R]: An iterable of results from applying the function to unpacked elements.
+
+        Example:
+        ```python
         >>> import pyochain as pc
         >>> def make_sku(color, size):
         ...     return f"{color}-{size}"
         >>> data = pc.Seq(["blue", "red"])
-        >>> data.iter().product(["S", "M"]).map_star(make_sku).into(list)
-        ['blue-S', 'blue-M', 'red-S', 'red-M']
+        >>> data.iter().product(["S", "M"]).map_star(make_sku).collect()
+        Seq(['blue-S', 'blue-M', 'red-S', 'red-M'])
+        >>> # This is equivalent to:
+        >>> data.iter().product(["S", "M"]).map(lambda x: make_sku(*x)).collect()
+        Seq(['blue-S', 'blue-M', 'red-S', 'red-M'])
 
         ```
-        This is equivalent to:
-        ```python
-        >>> data.iter().product(["S", "M"]).map(lambda x: make_sku(*x)).into(list)
-        ['blue-S', 'blue-M', 'red-S', 'red-M']
-
-        ```
-
-        - Use map_star when the performance matters (it is faster).
-        - Use map with unpacking when readability matters (the types can be inferred).
-
         """
         return self._lazy(partial(itertools.starmap, func))
 

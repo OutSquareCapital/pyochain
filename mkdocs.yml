@@ -12,7 +12,6 @@ plugins:
           options:
             members_order: source
             inherited_members: true
-            show_inheritance: true
             show_signature_annotations: true
             separate_signature: true
             line_length: 88
