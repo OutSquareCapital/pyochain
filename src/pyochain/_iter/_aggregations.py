@@ -67,7 +67,7 @@ class BaseAgg[T](IterWrapper[T]):
         from ._main import Iter
 
         def _unzip(data: Iterable[tuple[U, V]]) -> Unzipped[U, V]:
-            d: list[tuple[U, V]] = list(data)
+            d: tuple[tuple[U, V], ...] = tuple(data)
             return Unzipped(Iter(x[0] for x in d), Iter(x[1] for x in d))
 
         return self.into(_unzip)

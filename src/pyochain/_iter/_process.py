@@ -319,7 +319,7 @@ class BaseProcess[T](IterWrapper[T]):
         """
 
         def _reverse(data: Iterable[T]) -> Iterator[T]:
-            return reversed(list(data))
+            return reversed(tuple(data))
 
         return self._lazy(_reverse)
 

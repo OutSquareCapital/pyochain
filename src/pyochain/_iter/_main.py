@@ -14,7 +14,6 @@ from typing import TYPE_CHECKING, Any, Concatenate, Self, overload
 
 import cytoolz as cz
 
-from .._results import Option
 from ._aggregations import BaseAgg
 from ._booleans import BaseBool
 from ._dicts import BaseDict
@@ -29,6 +28,7 @@ from ._tuples import BaseTuples
 
 if TYPE_CHECKING:
     from .._dict import Dict
+    from .._results import Option
 
 
 class CommonMethods[T](BaseAgg[T], BaseEager[T], BaseDict[T], BaseBool[T]):
@@ -101,7 +101,9 @@ class Iter[T](
 
         ```
         """
-        return Option.from_(next(self))
+        from .._results import Option
+
+        return Option.from_(next(self, None))
 
     @staticmethod
     def from_count(start: int = 0, step: int = 1) -> Iter[int]:
@@ -600,7 +602,7 @@ class Iter[T](
         def _unique_to_each(data: Iterable[U]) -> Iterator[Iter[U]]:
             from ._main import Iter
 
-            pool: list[Iterable[U]] = list(data)
+            pool: tuple[Iterable[U], ...] = tuple(data)
             counts: Counter[U] = Counter(itertools.chain.from_iterable(map(set, pool)))
             uniques: set[U] = {element for element in counts if counts[element] == 1}
             return ((Iter(filter(uniques.__contains__, it))) for it in pool)
