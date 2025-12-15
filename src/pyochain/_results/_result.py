@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, cast
 from .._core import Pipeable
 
 if TYPE_CHECKING:
+    from .._iter import Iter
     from ._states import Option
 
 
@@ -25,6 +26,30 @@ class Result[T, E](Pipeable, ABC):
     This is directly inspired by Rust's `Result` type, and provides similar functionality for error handling in Python.
 
     """
+
+    def flatten(self: Result[Result[T, E], E]) -> Result[T, E]:
+        """Flattens a nested `Result`.
+
+        Converts from `Result[Result[T, E], E]` to `Result[T, E]`.
+
+        Equivalent to calling `Result.and_then(lambda x: x)`, but more convenient when there's no need to process the inner `Ok` value.
+
+        Returns:
+            Result[T, E]: The flattened result.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> nested_ok: pc.Result[pc.Result[int, str], str] = pc.Ok(pc.Ok(2))
+        >>> nested_ok.flatten()
+        Ok(value=2)
+        >>> nested_err: pc.Result[pc.Result[int, str], str] = pc.Ok(pc.Err("inner error"))
+        >>> nested_err.flatten()
+        Err(error='inner error')
+
+        ```
+        """
+        return self.and_then(lambda x: x)
 
     @abstractmethod
     def is_ok(self) -> bool:
@@ -280,17 +305,17 @@ class Result[T, E](Pipeable, ABC):
 
         return Ok(fn(self.unwrap())) if self.is_ok() else cast(Result[U, E], self)
 
-    def map_err[F](self, fn: Callable[[E], F]) -> Result[T, F]:
-        """Maps a `Result[T, E]` to `Result[T, F]`.
+    def map_err[R](self, fn: Callable[[E], R]) -> Result[T, R]:
+        """Maps a `Result[T, E]` to `Result[T, R]`.
 
         Done by applying a function to a contained `Err` value,
         leaving an `Ok` value untouched.
 
         Args:
-            fn (Callable[[E], F]): The function to apply to the `Err` value.
+            fn (Callable[[E], R]): The function to apply to the `Err` value.
 
         Returns:
-            Result[T, F]: A new `Result` with the mapped error if `Err`, otherwise the original `Ok`.
+            Result[T, R]: A new `Result` with the mapped error if `Err`, otherwise the original `Ok`.
 
         Example:
         ```python
@@ -304,7 +329,7 @@ class Result[T, E](Pipeable, ABC):
         """
         from ._states import Err
 
-        return Err(fn(self.unwrap_err())) if self.is_err() else cast(Result[T, F], self)
+        return Err(fn(self.unwrap_err())) if self.is_err() else cast(Result[T, R], self)
 
     def inspect(self, fn: Callable[[T], object]) -> Result[T, E]:
         """Applies a function to the contained `Ok` value, returning the original `Result`.
@@ -360,16 +385,53 @@ class Result[T, E](Pipeable, ABC):
             fn(self.unwrap_err())
         return self
 
-    def and_then[U](self, fn: Callable[[T], Result[U, E]]) -> Result[U, E]:
+    def and_[U](self, res: Result[U, E]) -> Result[U, E]:
+        """Returns `res` if the result is `Ok`, otherwise returns the `Err` value.
+
+        This is often used for chaining operations that might fail.
+
+        Args:
+            res (Result[U, E]): The result to return if the original result is `Ok`.
+
+        Returns:
+            Result[U, E]: `res` if the original result is `Ok`, otherwise the original `Err`.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> x = pc.Ok(2)
+        >>> y = pc.Err("late error")
+        >>> x.and_(y)
+        Err(error='late error')
+        >>> x = pc.Err("early error")
+        >>> y = pc.Ok("foo")
+        >>> x.and_(y)
+        Err(error='early error')
+
+        >>> x = pc.Err("not a 2")
+        >>> y = pc.Err("late error")
+        >>> x.and_(y)
+        Err(error='not a 2')
+
+        >>> x = pc.Ok(2)
+        >>> y = pc.Ok("different result type")
+        >>> x.and_(y)
+        Ok(value='different result type')
+
+        ```
+        """
+        return res if self.is_ok() else cast(Result[U, E], self)
+
+    def and_then[R](self, fn: Callable[[T], Result[R, E]]) -> Result[R, E]:
         """Calls a function if the result is `Ok`, otherwise returns the `Err` value.
 
         This is often used for chaining operations that might fail.
 
         Args:
-            fn (Callable[[T], Result[U, E]]): The function to call with the `Ok` value.
+            fn (Callable[[T], Result[R, E]]): The function to call with the `Ok` value.
 
         Returns:
-            Result[U, E]: The result of the function if `Ok`, otherwise the original `Err`.
+            Result[R, E]: The result of the function if `Ok`, otherwise the original `Err`.
 
         Example:
         ```python
@@ -383,7 +445,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        return fn(self.unwrap()) if self.is_ok() else cast(Result[U, E], self)
+        return fn(self.unwrap()) if self.is_ok() else cast(Result[R, E], self)
 
     def or_else(self, fn: Callable[[E], Result[T, E]]) -> Result[T, E]:
         """Calls a function if the result is `Err`, otherwise returns the `Ok` value.
@@ -522,6 +584,24 @@ class Result[T, E](Pipeable, ABC):
         """
         return f(self.unwrap()) if self.is_ok() else default
 
+    def iter(self) -> Iter[T]:
+        """Returns a `Iter[T]` over the possibly contained value.
+
+        The iterator yields one value if the result is `Ok`, otherwise none.
+
+        Returns:
+            Iter[T]: An iterator over the `Ok` value, or empty if `Err`.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Ok(7).iter().next()
+        Some(value=7)
+        >>> pc.Err("nothing!").iter().next()
+        NONE
+        """
+        return self.ok().iter()
+
     def transpose(self: Result[Option[T], E]) -> Option[Result[T, E]]:
         """Transposes a Result containing an Option into an Option containing a Result.
 
@@ -552,3 +632,26 @@ class Result[T, E](Pipeable, ABC):
         if opt.is_none():
             return NONE
         return Some(Ok(opt.unwrap()))
+
+    def or_[F](self, res: Result[T, F]) -> Result[T, F]:
+        """Returns res if the result is `Err`, otherwise returns the `Ok` value of **self**.
+
+        Args:
+            res (Result[T, F]): The result to return if the original result is `Err`.
+
+        Returns:
+            Result[T, F]: The original `Ok` value, or `res` if the original result is `Err`.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Ok(2).or_(pc.Err("late error"))
+        Ok(value=2)
+        >>> pc.Err("early error").or_(pc.Ok(2))
+        Ok(value=2)
+        >>> pc.Err("not a 2").or_(pc.Err("late error"))
+        Err(error='late error')
+        >>> pc.Ok(2).or_(pc.Ok(100))
+        Ok(value=2)
+        """
+        return cast(Result[T, F], self) if self.is_ok() else res

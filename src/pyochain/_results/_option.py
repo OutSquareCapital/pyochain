@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from .._core import Pipeable
 
 if TYPE_CHECKING:
+    from .._iter import Iter
     from ._result import Result
 
 
@@ -44,6 +45,15 @@ class Option[T](Pipeable, ABC):
     `Option[T]` instances are commonly paired with pattern matching.
     This allow to query the presence of a value and take action, always accounting for the None case.
     """
+
+    def __bool__(self) -> None:
+        """Prevent implicit `Some|None` value checking in boolean contexts.
+
+        Raises:
+            TypeError: Always, to prevent implicit `Some|None` value checking.
+        """
+        msg = "Option instances cannot be used in boolean contexts for implicit `Some|None` value checking. Use is_some() or is_none() instead."
+        raise TypeError(msg)
 
     @staticmethod
     def from_[V](value: V | None) -> Option[V]:
@@ -90,6 +100,36 @@ class Option[T](Pipeable, ABC):
         """
         ...
 
+    def is_some_and(self, predicate: Callable[[T], bool]) -> bool:
+        """Returns true if the option is a Some and the value inside of it matches a predicate.
+
+        Args:
+            predicate (Callable[[T], bool]): The predicate to apply to the contained value.
+
+        Returns:
+            bool: `True` if the option is `Some` and the predicate returns `True` for the contained value, `False` otherwise.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> x = pc.Some(2)
+        >>> x.is_some_and(lambda x: x > 1)
+        True
+
+        >>> x = pc.Some(0)
+        >>> x.is_some_and(lambda x: x > 1)
+        False
+        >>> x = pc.NONE
+        >>> x.is_some_and(lambda x: x > 1)
+        False
+        >>> x = pc.Some("hello")
+        >>> x.is_some_and(lambda x: len(x) > 1)
+        True
+
+        ```
+        """
+        return self.is_some() and predicate(self.unwrap())
+
     @abstractmethod
     def is_none(self) -> bool:
         """Returns `True` if the option is a `None` value.
@@ -110,6 +150,31 @@ class Option[T](Pipeable, ABC):
         ```
         """
         ...
+
+    def is_none_or(self, func: Callable[[T], bool]) -> bool:
+        """Returns true if the option is a None or the value inside of it matches a predicate.
+
+        Args:
+            func (Callable[[T], bool]): The predicate to apply to the contained value.
+
+        Returns:
+            bool: `True` if the option is `None` or the predicate returns `True` for the contained value, `False` otherwise.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some(2).is_none_or(lambda x: x > 1)
+        True
+        >>> pc.Some(0).is_none_or(lambda x: x > 1)
+        False
+        >>> pc.NONE.is_none_or(lambda x: x > 1)
+        True
+        >>> pc.Some("hello").is_none_or(lambda x: len(x) > 1)
+        True
+
+        ```
+        """
+        return self.is_none() or func(self.unwrap())
 
     @abstractmethod
     def unwrap(self) -> T:
@@ -239,6 +304,81 @@ class Option[T](Pipeable, ABC):
 
         return Some(f(self.unwrap())) if self.is_some() else NONE
 
+    def flatten[U](self: Option[Option[U]]) -> Option[U]:
+        """Flattens a nested `Option`.
+
+        Converts an `Option[Option[U]]` into an `Option[U]` by removing one level of nesting.
+
+        Equivalent to `Option.and_then(lambda x: x)`.
+
+        Returns:
+            Option[U]: The flattened option.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some(pc.Some(42)).flatten()
+        Some(value=42)
+        >>> pc.Some(pc.NONE).flatten()
+        NONE
+        >>> pc.NONE.flatten()
+        NONE
+
+        ```
+        """
+        return self.and_then(lambda x: x)
+
+    def and_[U](self, optb: Option[U]) -> Option[U]:
+        """Returns `NONE` if the option is `NONE`, otherwise returns optb.
+
+        This is similar to `and_then`, except that the value is passed directly instead of through a closure.
+
+        Args:
+            optb (Option[U]): The option to return if the original option is `NONE`
+        Returns:
+            Option[U]: `NONE` if the original option is `NONE`, otherwise `optb`.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some(2).and_(pc.NONE)
+        NONE
+        >>> pc.NONE.and_(pc.Some("foo"))
+        NONE
+        >>> pc.Some(2).and_(pc.Some("foo"))
+        Some(value='foo')
+        >>> pc.NONE.and_(pc.NONE)
+        NONE
+
+        ```
+        """
+        from ._states import NONE
+
+        return optb if self.is_some() else NONE
+
+    def or_(self, optb: Option[T]) -> Option[T]:
+        """Returns the option if it contains a value, otherwise returns optb.
+
+        Args:
+            optb (Option[T]): The option to return if the original option is `NONE`.
+
+        Returns:
+            Option[T]: The original option if it is `Some`, otherwise `optb`.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some(2).or_(pc.NONE)
+        Some(value=2)
+        >>> pc.NONE.or_(pc.Some(100))
+        Some(value=100)
+        >>> pc.Some(2).or_(pc.Some(100))
+        Some(value=2)
+        >>> pc.NONE.or_(pc.NONE)
+        NONE
+        """
+        return self if self.is_some() else optb
+
     def and_then[U](self, f: Callable[[T], Option[U]]) -> Option[U]:
         """Calls a function if the option is `Some`, otherwise returns `None`.
 
@@ -296,6 +436,212 @@ class Option[T](Pipeable, ABC):
         ```
         """
         return self if self.is_some() else f()
+
+    def ok_or[E](self, err: E) -> Result[T, E]:
+        """Converts the option to a `Result`.
+
+        Args:
+            err (E): The error value to use if the option is `NONE`.
+
+        Returns:
+            Result[T, E]: `Ok(v)` if `Some(v)`, otherwise `Err(err)`.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some(1).ok_or('fail')
+        Ok(value=1)
+        >>> pc.NONE.ok_or('fail')
+        Err(error='fail')
+
+        ```
+        """
+        from ._states import Err, Ok
+
+        return Ok(self.unwrap()) if self.is_some() else Err(err)
+
+    def ok_or_else[E](self, err: Callable[[], E]) -> Result[T, E]:
+        """Converts the option to a Result.
+
+        Args:
+            err (Callable[[], E]): A function returning the error value if the option is NONE.
+
+        Returns:
+            Result[T, E]: Ok(v) if Some(v), otherwise Err(err()).
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some(1).ok_or_else(lambda: 'fail')
+        Ok(value=1)
+        >>> pc.NONE.ok_or_else(lambda: 'fail')
+        Err(error='fail')
+
+        ```
+        """
+        from ._states import Err, Ok
+
+        return Ok(self.unwrap()) if self.is_some() else Err(err())
+
+    def map_or[U](self, default: U, f: Callable[[T], U]) -> U:
+        """Returns the result of applying a function to the contained value if Some, otherwise returns the default value.
+
+        Args:
+            default (U): The default value to return if NONE.
+            f (Callable[[T], U]): The function to apply to the contained value.
+
+        Returns:
+            U: The result of f(self.unwrap()) if Some, otherwise default.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some(2).map_or(0, lambda x: x * 10)
+        20
+        >>> pc.NONE.map_or(0, lambda x: x * 10)
+        0
+
+        ```
+        """
+        return f(self.unwrap()) if self.is_some() else default
+
+    def map_or_else[U](self, default: Callable[[], U], f: Callable[[T], U]) -> U:
+        """Returns the result of applying a function to the contained value if Some, otherwise computes a default value.
+
+        Args:
+            default (Callable[[], U]): A function returning the default value if NONE.
+            f (Callable[[T], U]): The function to apply to the contained value.
+
+        Returns:
+            U: The result of f(self.unwrap()) if Some, otherwise default().
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some(2).map_or_else(lambda: 0, lambda x: x * 10)
+        20
+        >>> pc.NONE.map_or_else(lambda: 0, lambda x: x * 10)
+        0
+
+        ```
+        """
+        return f(self.unwrap()) if self.is_some() else default()
+
+    def filter(self, predicate: Callable[[T], bool]) -> Option[T]:
+        """Returns None if the option is None, otherwise calls predicate with the wrapped value.
+
+        This function works similar to `Iter.filter` in the sense that we only keep the value if it matches a predicate.
+
+        You can imagine the `Option[T]` being an iterator over one or zero elements.
+
+        Args:
+            predicate (Callable[[T], bool]): The predicate to apply to the contained value.
+
+        Returns:
+            Option[T]: `Some[T]` if predicate returns true (where T is the wrapped value), `NONE` if predicate returns false.
+
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>>
+        >>> def is_even(n: int) -> bool:
+        ...     return n % 2 == 0
+        >>>
+        >>> pc.NONE.filter(is_even)
+        NONE
+        >>> pc.Some(3).filter(is_even)
+        NONE
+        >>> pc.Some(4).filter(is_even)
+        Some(value=4)
+
+        ```
+        """
+        from ._states import NONE
+
+        return self if self.is_some() and predicate(self.unwrap()) else NONE
+
+    def iter(self) -> Iter[T]:
+        """Creates an `Iter` over the optional value.
+
+        - If the option is `Some(value)`, the iterator yields `value`.
+        - If the option is `NONE`, the iterator yields nothing.
+
+        Equivalent to `Iter((self,))`.
+
+        Returns:
+            Iter[T]: An iterator over the optional value.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some(42).iter().next()
+        Some(value=42)
+        >>> pc.NONE.iter().next()
+        NONE
+
+        ```
+        """
+        from .._iter import Iter
+
+        return Iter((self.unwrap(),)) if self.is_some() else Iter(())
+
+    def inspect(self, f: Callable[[T], object]) -> Option[T]:
+        """Applies a function to the contained `Some` value, returning the original `Option`.
+
+        This mirrors :meth:`Result.inspect`, allowing side effects
+        (logging, debugging, metrics, etc.) on the wrapped value without changing it.
+
+        Args:
+            f (Callable[[T], object]): Function to apply to the `Some` value.
+
+        Returns:
+            Option[T]: The original option, unchanged.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> seen: list[int] = []
+        >>> pc.Some(2).inspect(lambda x: seen.append(x))
+        Some(value=2)
+        >>> seen
+        [2]
+        >>> pc.NONE.inspect(lambda x: seen.append(x))
+        NONE
+        >>> seen
+        [2]
+
+        ```
+        """
+        if self.is_some():
+            f(self.unwrap())
+        return self
+
+    def unzip[U](self: Option[tuple[T, U]]) -> tuple[Option[T], Option[U]]:
+        """Unzips an `Option` of a tuple into a tuple of `Option`s.
+
+        If the option is `Some((a, b))`, this method returns `(Some(a), Some(b))`.
+        If the option is `NONE`, it returns `(NONE, NONE)`.
+
+        Returns:
+            tuple[Option[T], Option[U]]: A tuple containing two options.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some((1, 'a')).unzip()
+        (Some(value=1), Some(value='a'))
+        >>> pc.NONE.unzip()
+        (NONE, NONE)
+
+        ```
+        """
+        from ._states import NONE, Some
+
+        if self.is_some():
+            a, b = self.unwrap()
+            return Some(a), Some(b)
+        return NONE, NONE
 
     def zip[U](self, other: Option[U]) -> Option[tuple[T, U]]:
         """Returns an `Option[tuple[T, U]]` containing a tuple of the values if both options are `Some`, otherwise returns `NONE`.
@@ -363,123 +709,106 @@ class Option[T](Pipeable, ABC):
             return Some(f(self.unwrap(), other.unwrap()))
         return NONE
 
-    def ok_or[E](self, err: E) -> Result[T, E]:
-        """Converts the option to a `Result`.
+    def reduce[U](self, other: Option[T], func: Callable[[T, T], T]) -> Option[T]:
+        """Reduces two options into one, using the provided function if both are Some.
+
+        If **self** is `Some(s)` and **other** is `Some(o)`, this method returns `Some(func(s, o))`.
+
+        Otherwise, if only one of **self** and **other** is `Some`, that value is returned.
+
+        If both **self** and **other** are `NONE`, `NONE` is returned.
 
         Args:
-            err (E): The error value to use if the option is `NONE`.
+            other (Option[T]): The second option.
+            func (Callable[[T, T], T]): The function to apply to the unwrapped values.
 
         Returns:
-            Result[T, E]: `Ok(v)` if `Some(v)`, otherwise `Err(err)`.
+            Option[T]: The resulting option after reduction.
 
-        Example:
+        Examples:
         ```python
         >>> import pyochain as pc
-        >>> pc.Some(1).ok_or('fail')
-        Ok(value=1)
-        >>> pc.NONE.ok_or('fail')
-        Err(error='fail')
-
-        ```
-        """
-        from ._states import Err, Ok
-
-        return Ok(self.unwrap()) if self.is_some() else Err(err)
-
-    def ok_or_else[E](self, err: Callable[[], E]) -> Result[T, E]:
-        """Converts the option to a Result.
-
-        Args:
-            err (Callable[[], E]): A function returning the error value if the option is NONE.
-
-        Returns:
-            Result[T, E]: Ok(v) if Some(v), otherwise Err(err()).
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Some(1).ok_or_else(lambda: 'fail')
-        Ok(value=1)
-        >>> pc.NONE.ok_or_else(lambda: 'fail')
-        Err(error='fail')
-
-        ```
-        """
-        from ._states import Err, Ok
-
-        return Ok(self.unwrap()) if self.is_some() else Err(err())
-
-    def map_or[U](self, f: Callable[[T], U], default: U) -> U:
-        """Returns the result of applying a function to the contained value if Some, otherwise returns the default value.
-
-        Args:
-            f (Callable[[T], U]): The function to apply to the contained value.
-            default (U): The default value to return if NONE.
-
-        Returns:
-            U: The result of f(self.unwrap()) if Some, otherwise default.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Some(2).map_or(lambda x: x * 10, 0)
-        20
-        >>> pc.NONE.map_or(lambda x: x * 10, 0)
-        0
-
-        ```
-        """
-        return f(self.unwrap()) if self.is_some() else default
-
-    def map_or_else[U](self, f: Callable[[T], U], default: Callable[[], U]) -> U:
-        """Returns the result of applying a function to the contained value if Some, otherwise computes a default value.
-
-        Args:
-            f (Callable[[T], U]): The function to apply to the contained value.
-            default (Callable[[], U]): A function returning the default value if NONE.
-
-        Returns:
-            U: The result of f(self.unwrap()) if Some, otherwise default().
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Some(2).map_or_else(lambda x: x * 10, lambda: 0)
-        20
-        >>> pc.NONE.map_or_else(lambda x: x * 10, lambda: 0)
-        0
-
-        ```
-        """
-        return f(self.unwrap()) if self.is_some() else default()
-
-    def inspect(self, f: Callable[[T], object]) -> Option[T]:
-        """Applies a function to the contained `Some` value, returning the original `Option`.
-
-        This mirrors :meth:`Result.inspect`, allowing side effects
-        (logging, debugging, metrics, etc.) on the wrapped value without changing it.
-
-        Args:
-            f (Callable[[T], object]): Function to apply to the `Some` value.
-
-        Returns:
-            Option[T]: The original option, unchanged.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> seen: list[int] = []
-        >>> pc.Some(2).inspect(lambda x: seen.append(x))
-        Some(value=2)
-        >>> seen
-        [2]
-        >>> pc.NONE.inspect(lambda x: seen.append(x))
+        >>> s12 = pc.Some(12)
+        >>> s17 = pc.Some(17)
+        >>>
+        >>> def add(a: int, b: int) -> int:
+        ...     return a + b
+        >>>
+        >>> s12.reduce(s17, add)
+        Some(value=29)
+        >>> s12.reduce(pc.NONE, add)
+        Some(value=12)
+        >>> pc.NONE.reduce(s17, add)
+        Some(value=17)
+        >>> pc.NONE.reduce(pc.NONE, add)
         NONE
-        >>> seen
-        [2]
 
         ```
         """
+        from ._states import NONE, Some
+
+        if self.is_some() and other.is_some():
+            return Some(func(self.unwrap(), other.unwrap()))
         if self.is_some():
-            f(self.unwrap())
-        return self
+            return self
+        if other.is_some():
+            return other
+        return NONE
+
+    def transpose[E](self: Option[Result[T, E]]) -> Result[Option[T], E]:
+        """Transposes an `Option` of a `Result` into a `Result` of an `Option`.
+
+        `Some(Ok[T])` is mapped to `Ok(Some[T])`, `Some(Err[E])` is mapped to `Err[E]`, and `NONE` will be mapped to `Ok(NONE)`.
+
+        Returns:
+            Result[Option[T], E]: The transposed result.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some(pc.Ok(5)).transpose()
+        Ok(value=Some(value=5))
+        >>> pc.NONE.transpose()
+        Ok(value=NONE)
+        >>> pc.Some(pc.Err("error")).transpose()
+        Err(error='error')
+
+        ```
+        """
+        from ._states import Err, Ok
+
+        if self.is_some():
+            inner = self.unwrap()
+            if inner.is_ok():
+                return Ok(Option.from_(inner.unwrap()))
+            return Err(inner.unwrap_err())
+        return Ok(Option.from_(None))
+
+    def xor(self, optb: Option[T]) -> Option[T]:
+        """Returns `Some` if exactly one of **self**, optb is `Some`, otherwise returns `NONE`.
+
+        Args:
+            optb (Option[T]): The other option to compare with.
+
+        Returns:
+            Option[T]: `Some` value if exactly one option is `Some`, otherwise `NONE`.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some(2).xor(pc.NONE)
+        Some(value=2)
+        >>> pc.NONE.xor(pc.Some(2))
+        Some(value=2)
+        >>> pc.Some(2).xor(pc.Some(2))
+        NONE
+        >>> pc.NONE.xor(pc.NONE)
+        NONE
+        """
+        from ._states import NONE
+
+        if self.is_some() and not optb.is_some():
+            return self
+        if not self.is_some() and optb.is_some():
+            return optb
+        return NONE
