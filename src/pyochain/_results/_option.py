@@ -376,6 +376,8 @@ class Option[T](Pipeable, ABC):
         Some(value=2)
         >>> pc.NONE.or_(pc.NONE)
         NONE
+
+        ```
         """
         return self if self.is_some() else optb
 
@@ -804,6 +806,8 @@ class Option[T](Pipeable, ABC):
         NONE
         >>> pc.NONE.xor(pc.NONE)
         NONE
+
+        ```
         """
         from ._states import NONE
 

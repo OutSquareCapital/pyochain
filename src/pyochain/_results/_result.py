@@ -599,6 +599,8 @@ class Result[T, E](Pipeable, ABC):
         Some(value=7)
         >>> pc.Err("nothing!").iter().next()
         NONE
+
+        ```
         """
         return self.ok().iter()
 
@@ -653,5 +655,7 @@ class Result[T, E](Pipeable, ABC):
         Err(error='late error')
         >>> pc.Ok(2).or_(pc.Ok(100))
         Ok(value=2)
+
+        ```
         """
         return cast(Result[T, F], self) if self.is_ok() else res
