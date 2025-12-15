@@ -129,55 +129,7 @@ This is often the simplest way to turn existing Python functions into composable
 
 ---
 
-## 2. Side-Effect Hooks: `tap`, `inspect`, `inspect_err`, `for_each`, `peek`
-
-These methods are all about **observing** values and triggering side effects (logging, metrics, IO) while keeping the dataflow chained.
-
-- `tap`: observe self (available on all wrappers).
-- `inspect`: observe the success value inside `Option`/`Result`.
-- `inspect_err`: observe the error value inside `Result`.
-- `for_each`: run effects per element for `Iter`/`Seq`/`Dict`.
-- `peek`: inspect a bounded prefix of an `Iter` without consuming it.
-
-If your callback returns something meaningful and should replace the old value, you probably want a transform (`map`, `and_then`, ...), not a side-effect hook.
-
-### 2.1 `tap`: side effects on the wrapper
-
-`tap` receives the wrapper, runs a side-effect, and returns the **same instance** unchanged.
-This can be very convenient for example when dealing with functions that need the value, return None by design, but you still need the same value later.
-printing/logging being an obvious use case, but writing to a file or sending the value over the network are also common examples.
-
-```python
-import pyochain as pc
-
-pc.Seq((1, 2, 3)).tap(print).last()  # logs the whole Seq
-```
-
-### 2.2 `inspect` and `inspect_err`: observe `Option`/`Result` values
-
-Where `map` changes the value, `inspect` is the **read-only twin**:
-
-- `Option.inspect(f)` calls `f(value)` if `Some`, then returns the original `Option`.
-- `Result.inspect(f)` calls `f(ok_value)` if `Ok`, then returns the original `Result`.
-- `Result.inspect_err(f)` calls `f(err_value)` if `Err`, then returns the original `Result`.
-
-This is ideal for logging and debugging paths in a `Result`/`Option` pipeline without breaking the fluent style.
-
-### 2.3 `peek` on `Iter`: inspect a prefix without consuming
-
-`peek` is specific to `Iter`. It allows you to examine a **prefix** of the iterator without consuming the underlying data:
-
-- It takes `n` and a function `Iterable[T] -> Any`.
-- It materialises the first `n` items, passes them to your function, then rebuilds an iterator that yields **all** items (including the peeked ones).
-
-Compared to `for_each`:
-
-- `for_each` walks the **entire** sequence (and for `Iter` it is terminal).
-- `peek` only inspects a **bounded prefix** and returns another `Iter` for continued chaining.
-
----
-
-## 3. Transforming Values: `map` vs `for_each` (especially on `Iter`)
+## 2. Transforming Values: `map` vs `for_each` (especially on `Iter`)
 
 Most of the time you are not transforming the entire wrapper, but **elements inside** it.
 
@@ -185,7 +137,7 @@ The key question (especially for `Iter`) is:
 
 > “Am I producing new elements (`map`), or just running a side effect (`for_each`)?”
 
-### 3.1 `map` on `Iter`
+### 2.1 `map` on `Iter`
 
 `Iter.map` takes a function `T -> U` and returns a new `Iter[U]` with transformed elements.
 
@@ -201,7 +153,7 @@ Characteristics:
 
 `Option` and `Result` also expose `map` (and other transforms), but that is covered in Section 4.
 
-### 3.2 `for_each` on `Iter`
+### 2.2 `for_each` on `Iter`
 
 On Sequences, you sometimes want to run a function on **each element** for its side effects only.
 
@@ -213,6 +165,77 @@ Iter.for_each is terminal because it **consumes** the iterator. After calling it
 `{Seq, Dict}.for_each` returns self since it calls iter() on an already in-memory structure, leaving the original Seq/Dict intact for further use.
 This is best compared to a classic python for-loop over a list or dict who would print the values.
 `Seq.tap(lambda x: x.iter().map(lambda v: print(v)))` would be an equivalent, altough much less ergonomic.
+
+---
+
+## 3. Side-Effect Hooks: `tap`, `inspect`, `inspect_err`, `for_each`, `peek`
+
+These methods are all about **observing** values and triggering side effects (logging, metrics, IO) while keeping the dataflow chained.
+
+- `tap`: observe self (available on all wrappers).
+- `inspect`: observe the success value inside `Option`/`Result`.
+- `inspect_err`: observe the error value inside `Result`.
+- `for_each`: run effects per element for `Iter`/`Seq`/`Dict`.
+- `peek`: inspect a bounded prefix of an `Iter` without consuming it.
+
+If your callback returns something meaningful and should replace the old value, you probably want a transform (`map`, `and_then`, ...), not a side-effect hook.
+
+### 3.1 `tap`: side effects on the wrapper
+
+`tap` receives the wrapper, runs a side-effect, and returns the **same instance** unchanged.
+This can be tought of an equivalent of `into`, but that always returns self, and isn't *supposed* to mutate it.
+This can be very convenient for example when dealing with functions that need the value, return None by design, but you still need the same value later.
+printing/logging being an obvious use case, but writing to a file or sending the value over the network are also common examples.
+
+```python
+import pyochain as pc
+
+pc.Seq((1, 2, 3)).tap(print).last()  # logs the whole Seq
+```
+
+### 3.2 `inspect` and `inspect_err`: observe `Option`/`Result` values
+
+Where `map` changes the value, `inspect` is the **read-only twin**:
+
+- `Option.inspect(f)` calls `f(value)` if `Some`, then returns the original `Option`.
+- `Result.inspect(f)` calls `f(ok_value)` if `Ok`, then returns the original `Result`.
+- `Result.inspect_err(f)` calls `f(err_value)` if `Err`, then returns the original `Result`.
+
+This is ideal for logging and debugging paths in a `Result`/`Option` pipeline without breaking the fluent style.
+
+The question could be: why not use `tap` for this?
+The answer is that `tap` doesn't know about the inner implementations details of it's instance. It simply passe `self` to the closure, then return `self`.
+You *can* use `tap` to observe `Option` and `Result`, but be warned that you function will be called every time, which could lead to some surprising results.
+
+```python
+import pyochain as pc
+
+def _log_val(n: int) -> None:
+    print(f"Parsed int: {n}")
+
+def process_value(s: str) -> pc.Result[int, ValueError]:
+    return (
+        pc.Option.from_(int(s) if s.isdigit() else None)
+        .ok_or(ValueError("not an int"))
+        .inspect(_log_val)
+    )
+
+process_value("42")  # logs "Parsed int: 42"
+process_value("foo")  # does not log anything
+process_value("foo").tap(_log_val)  # log the error incorrectly, will warn at type checking time anyway.
+```
+
+### 3.3 `peek` on `Iter`: inspect a prefix without consuming
+
+`peek` is specific to `Iter`. It allows you to examine a **prefix** of the iterator without consuming the underlying data:
+
+- It takes `n` and a function `Iterable[T] -> Any`.
+- It materialises the first `n` items, passes them to your function, then rebuilds an iterator that yields **all** items (including the peeked ones).
+
+Compared to `for_each`:
+
+- `for_each` walks the **entire** sequence (and for `Iter` it is terminal).
+- `peek` only inspects a **bounded prefix** and returns another `Iter` for continued chaining.
 
 ---
 
