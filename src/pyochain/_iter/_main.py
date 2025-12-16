@@ -7,6 +7,7 @@ from collections.abc import (
     Generator,
     Iterable,
     Iterator,
+    MutableSequence,
     Sequence,
     ValuesView,
 )
@@ -48,6 +49,7 @@ class Iter[T](
     BasePartitions[T],
     BaseJoins[T],
     CommonMethods[T],
+    Iterator[T],
 ):
     """A superset around Python's built-in `Iterator` Protocol, providing a rich set of functional programming tools.
 
@@ -326,7 +328,7 @@ class Iter[T](
         Note:
             Any Callable capable of consuming an `Iterable` and producing a `Sequence` is valid.
 
-            Polars/Pandas Series, numpy arrays, plain python lists, tuples, etc. are all valid factories.
+            Polars/Pandas Series, numpy arrays, tuples, etc. are all valid factories.
 
             However, the actual type of the container will be lost once wrapped in a `Seq`.
 
@@ -361,6 +363,50 @@ class Iter[T](
         ```
         """
         return self._eager(factory)
+
+    def collect_mut(
+        self, factory: Callable[[Iterable[T]], MutableSequence[T]] = list
+    ) -> Vec[T]:
+        """Collect the elements into a `MutableSequence`, using the provided factory.
+
+        The factory will be the underlying data structure of the resulting `Vec`.
+
+        Note:
+            Any Callable capable of consuming an `Iterable` and producing a `MutableSequence` is valid.
+
+            However, the actual type of the container will be lost once wrapped in a `Vec`.
+
+            Calling `.inner()` on the resulting `Vec` will always return a generic `MutableSequence`.
+
+            Prefer using `.into()` if you want to convert the Iter into a specific container type directly.
+
+        Args:
+            factory (Callable[[Iterable[T]], MutableSequence[T]]): A callable that takes an iterable and returns a MutableSequence. Defaults to `list`.
+
+        Returns:
+            Vec[T]: A `Vec` containing the collected elements.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter(range(5)).collect_mut()
+        Vec([0, 1, 2, 3, 4])
+        >>> data: list[int] = [1, 2, 3]
+        >>> iterator = pc.Iter.from_(data)
+        >>> iterator.inner().__class__.__name__
+        'list_iterator'
+        >>> mapped = iterator.map(lambda x: x * 2)
+        >>> mapped.inner().__class__.__name__
+        'map'
+        >>> mapped.collect_mut()
+        Vec([2, 4, 6])
+        >>> # iterator is now exhausted
+        >>> iterator.collect()
+        Seq(())
+
+        ```
+        """
+        return Vec(self.into(factory))
 
     def for_each[**P](
         self,
@@ -1052,3 +1098,106 @@ class Seq[T](CommonMethods[T], Sequence[T]):
         ```
         """
         return self.into(cz.itertoolz.isdistinct)
+
+
+class Vec[T](Seq[T], MutableSequence[T]):
+    """A mutable sequence wrapper with functional API.
+
+    Unlike `Seq` which wraps immutable sequences (tuple by default),
+    `Vec` wraps mutable sequences (list by default).
+
+    Implement the `MutableSequence` interface, so elements can be modified in place, and passed to any function/object expecting a standard mutable sequence.
+
+    Args:
+        data (MutableSequence[T]): The mutable sequence to wrap.
+    """
+
+    _inner: MutableSequence[T]
+
+    def __init__(self, data: MutableSequence[T]) -> None:
+        self._inner = data  # type: ignore[assignment]
+
+    @overload
+    def __setitem__(self, index: int, value: T) -> None: ...
+    @overload
+    def __setitem__(self, index: slice, value: Iterable[T]) -> None: ...
+    def __setitem__(self, index: int | slice, value: T | Iterable[T]) -> None:
+        return self._inner.__setitem__(index, value)  # type: ignore[arg-type]
+
+    def __delitem__(self, index: int | slice) -> None:
+        self._inner.__delitem__(index)
+
+    def insert(self, index: int, value: T) -> None:
+        """Inserts an element at position index within the vector, shifting all elements after it to the right.
+
+        Args:
+            index (int): Position where to insert the element.
+            value (T): The element to insert.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> vec = pc.Vec(['a', 'b', 'c'])
+        >>> vec.insert(1, 'd')
+        >>> vec
+        Vec(['a', 'd', 'b', 'c'])
+        >>> vec.insert(4, 'e')
+        >>> vec
+        Vec(['a', 'd', 'b', 'c', 'e'])
+        """
+        self._inner.insert(index, value)
+
+    @overload
+    @staticmethod
+    def from_[U](data: Iterable[U]) -> Vec[U]: ...
+    @overload
+    @staticmethod
+    def from_[U](data: U, *more_data: U) -> Vec[U]: ...
+    @staticmethod
+    def from_[U](data: Iterable[U] | U, *more_data: U) -> Vec[U]:
+        """Create a `Vec` from an `Iterable` or unpacked values.
+
+        Prefer using the standard constructor, as this method involves extra checks and conversions steps.
+
+        Args:
+            data (Iterable[U] | U): Iterable to convert into a sequence, or a single value.
+            *more_data (U): Unpacked items to include in the sequence, if 'data' is not an Iterable.
+
+        Returns:
+            Vec[U]: A new Vec instance containing the provided data.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Vec.from_(1, 2, 3)
+        Vec([1, 2, 3])
+
+        ```
+
+        """
+        converted = _convert_data(data, *more_data)
+        return Vec(
+            converted if isinstance(converted, MutableSequence) else list(converted)
+        )
+
+    @staticmethod
+    def new() -> Vec[T]:
+        """Create an empty `Vec`.
+
+        Make sure to specify the type when calling this method, e.g., `Vec[int].new()`.
+
+        Otherwise, `T` will be inferred as `Any`.
+
+        Returns:
+            Vec[T]: A new empty Vec instance.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Vec.new()
+        Vec([])
+
+        ```
+
+        """
+        return Vec([])

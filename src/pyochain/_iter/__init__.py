@@ -1,3 +1,3 @@
-from ._main import Iter, Seq
+from ._main import Iter, Seq, Vec
 
-__all__ = ["Iter", "Seq"]
+__all__ = ["Iter", "Seq", "Vec"]

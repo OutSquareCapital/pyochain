@@ -27,7 +27,7 @@
         "rolling @ git+https://github.com/OutSquareCapital/rolling.git@add-type-stubs",
         "ruff>=0.14.4",
         "ty>=0.0.1a34",
-    ]
+]
 [tool.ruff]
     lint.ignore = [
         "C417",

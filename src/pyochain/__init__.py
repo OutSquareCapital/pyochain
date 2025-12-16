@@ -1,7 +1,7 @@
 """pyochain - A functional programming library for Python."""
 
 from ._dict import Dict
-from ._iter import Iter, Seq
+from ._iter import Iter, Seq, Vec
 from ._results import NONE, Err, Ok, Option, Result, ResultUnwrapError, Some
 
 __all__ = [
@@ -15,4 +15,5 @@ __all__ = [
     "ResultUnwrapError",
     "Seq",
     "Some",
+    "Vec",
 ]
