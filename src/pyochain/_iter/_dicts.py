@@ -55,7 +55,7 @@ class BaseDict[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> keys = [1, 2, 3]
         >>> values = ["a", "b", "c"]
-        >>> pc.Iter.from_(keys).with_values(values)
+        >>> pc.Iter(keys).with_values(values)
         {1: 'a', 2: 'b', 3: 'c'}
         >>> # This is equivalent to:
         >>> pc.Iter(keys).zip(values).into(lambda x: pc.Dict(dict(x)))
@@ -94,7 +94,7 @@ class BaseDict[T](IterWrapper[T]):
         ...     return x % 2 == 0
         >>>
         >>> def group_reduce(data: Iterable[int]) -> int:
-        ...     return pc.Iter.from_(data).reduce(add)
+        ...     return pc.Iter(data).reduce(add)
         >>>
         >>> data = pc.Seq([1, 2, 3, 4, 5])
         >>> data.iter().reduce_by(is_even, add).inner()
@@ -109,9 +109,9 @@ class BaseDict[T](IterWrapper[T]):
 
         Simple Examples:
         ```python
-        >>> pc.Iter.from_([1, 2, 3, 4, 5]).reduce_by(is_even, add).inner()
+        >>> pc.Iter([1, 2, 3, 4, 5]).reduce_by(is_even, add)
         {False: 9, True: 6}
-        >>> pc.Iter.from_([1, 2, 3, 4, 5]).reduce_by(is_even, mul).inner()
+        >>> pc.Iter([1, 2, 3, 4, 5]).reduce_by(is_even, mul)
         {False: 15, True: 8}
 
         ```
@@ -143,12 +143,12 @@ class BaseDict[T](IterWrapper[T]):
         ...     "Edith",
         ...     "Frank",
         ... ]
-        >>> pc.Iter.from_(names).group_by(len).sort()
+        >>> pc.Iter(names).group_by(len).sort()
         ... # doctest: +NORMALIZE_WHITESPACE
         {3: ['Bob', 'Dan'], 5: ['Alice', 'Edith', 'Frank'], 7: ['Charlie']}
         >>>
         >>> iseven = lambda x: x % 2 == 0
-        >>> pc.Iter.from_([1, 2, 3, 4, 5, 6, 7, 8]).group_by(iseven)
+        >>> pc.Iter([1, 2, 3, 4, 5, 6, 7, 8]).group_by(iseven)
         ... # doctest: +NORMALIZE_WHITESPACE
         {False: [1, 3, 5, 7], True: [2, 4, 6, 8]}
 
@@ -160,7 +160,7 @@ class BaseDict[T](IterWrapper[T]):
         ...     {"name": "Bob", "gender": "M"},
         ...     {"name": "Charlie", "gender": "M"},
         ... ]
-        >>> pc.Iter.from_(data).group_by("gender").sort()
+        >>> pc.Iter(data).group_by("gender").sort()
         ... # doctest: +NORMALIZE_WHITESPACE
         {'F': [{'gender': 'F', 'name': 'Alice'}],
         'M': [{'gender': 'M', 'name': 'Bob'}, {'gender': 'M', 'name': 'Charlie'}]}
@@ -183,7 +183,7 @@ class BaseDict[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> data = ["cat", "cat", "ox", "pig", "pig", "cat"]
-        >>> pc.Iter.from_(data).frequencies().inner()
+        >>> pc.Iter(data).frequencies()
         {'cat': 3, 'ox': 1, 'pig': 2}
 
         ```
@@ -207,11 +207,11 @@ class BaseDict[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_(["cat", "mouse", "dog"]).count_by(len).inner()
+        >>> pc.Iter(["cat", "mouse", "dog"]).count_by(len)
         {3: 2, 5: 1}
         >>> def iseven(x):
         ...     return x % 2 == 0
-        >>> pc.Iter.from_([1, 2, 3]).count_by(iseven).inner()
+        >>> pc.Iter([1, 2, 3]).count_by(iseven)
         {False: 2, True: 1}
 
         ```

@@ -177,18 +177,6 @@ class Iter[T](
         Example:
         ```python
         >>> import pyochain as pc
-        >>> data: tuple[int, ...] = (1, 2, 3)
-        >>> iterator = pc.Iter.from_(data)
-        >>> iterator.inner().__class__.__name__
-        'tuple_iterator'
-        >>> mapped = iterator.map(lambda x: x * 2)
-        >>> mapped.inner().__class__.__name__
-        'map'
-        >>> mapped.collect(tuple)
-        Seq((2, 4, 6))
-        >>> # iterator is now exhausted
-        >>> iterator.collect()
-        Seq(())
         >>> # Creating from unpacked values
         >>> pc.Iter.from_(1, 2, 3).collect(tuple)
         Seq((1, 2, 3))
@@ -299,7 +287,7 @@ class Iter[T](
         >>>
         >>> def grouped_data():
         ...     return (
-        ...         pc.Iter.from_(data)
+        ...         pc.Iter(data)
         ...         .struct(to_title)
         ...         .filter_false(is_young)
         ...         .map(lambda d: d.drop("Age").with_key("Continent", "NA"))
@@ -333,8 +321,21 @@ class Iter[T](
     def collect(self, factory: Callable[[Iterable[T]], Sequence[T]] = tuple) -> Seq[T]:
         """Collect the elements into a `Sequence`, using the provided factory.
 
+        The factory will be the underlying data structure of the resulting `Seq`.
+
+        Note:
+            Any Callable capable of consuming an `Iterable` and producing a `Sequence` is valid.
+
+            Polars/Pandas Series, numpy arrays, plain python lists, tuples, etc. are all valid factories.
+
+            However, the actual type of the container will be lost once wrapped in a `Seq`.
+
+            Calling `.inner()` on the resulting `Seq` will always return a generic `Sequence`.
+
+            Prefer using `.into()` if you want to convert the Iter into a specific container type directly.
+
         Args:
-            factory (Callable[[Iterable[T]], Sequence[T]]): A callable that takes an iterable and returns a Sequence. Defaults to `list`.
+            factory (Callable[[Iterable[T]], Sequence[T]]): A callable that takes an iterable and returns a Sequence. Defaults to `tuple`.
 
         Returns:
             Seq[T]: A `Seq` containing the collected elements.
@@ -342,8 +343,20 @@ class Iter[T](
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_(range(5)).collect()
+        >>> pc.Iter(range(5)).collect()
         Seq((0, 1, 2, 3, 4))
+        >>> data: tuple[int, ...] = (1, 2, 3)
+        >>> iterator = pc.Iter.from_(data)
+        >>> iterator.inner().__class__.__name__
+        'tuple_iterator'
+        >>> mapped = iterator.map(lambda x: x * 2)
+        >>> mapped.inner().__class__.__name__
+        'map'
+        >>> mapped.collect(tuple)
+        Seq((2, 4, 6))
+        >>> # iterator is now exhausted
+        >>> iterator.collect()
+        Seq(())
 
         ```
         """

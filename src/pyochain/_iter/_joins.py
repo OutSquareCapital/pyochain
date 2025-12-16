@@ -73,10 +73,10 @@ class BaseJoins[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2]).zip([10, 20]).into(list)
-        [(1, 10), (2, 20)]
-        >>> pc.Iter.from_(["a", "b"]).zip([1, 2, 3]).into(list)
-        [('a', 1), ('b', 2)]
+        >>> pc.Iter([1, 2]).zip([10, 20]).collect()
+        Seq(((1, 10), (2, 20)))
+        >>> pc.Iter(["a", "b"]).zip([1, 2, 3]).collect()
+        Seq((('a', 1), ('b', 2)))
 
         ```
         """
@@ -146,8 +146,8 @@ class BaseJoins[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_([1, 2]).zip_longest([10], fill_value=0).into(list)
-        [(1, 10), (2, 0)]
+        >>> pc.Iter([1, 2]).zip_longest([10], fill_value=0).collect()
+        Seq(((1, 10), (2, 0)))
 
         ```
         """
@@ -199,10 +199,9 @@ class BaseJoins[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> colors = pc.Iter.from_(["blue", "red"])
         >>> sizes = ["S", "M"]
-        >>> colors.product(sizes).into(list)
-        [('blue', 'S'), ('blue', 'M'), ('red', 'S'), ('red', 'M')]
+        >>> pc.Iter(["blue", "red"]).product(sizes).collect()
+        Seq((('blue', 'S'), ('blue', 'M'), ('red', 'S'), ('red', 'M')))
 
         ```
         """
@@ -240,10 +239,8 @@ class BaseJoins[T](IterWrapper[T]):
         A key function may also be applied to each item to use during comparisons:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_(["apples", "bananas"]).diff_at(
-        ...     ["Apples", "Oranges"], key=str.lower
-        ... ).into(list)
-        [('bananas', 'Oranges')]
+        >>> pc.Iter(["apples", "bananas"]).diff_at(["Apples", "Oranges"], key=str.lower).collect(list)
+        Seq([('bananas', 'Oranges')])
 
         ```
         """
@@ -272,10 +269,9 @@ class BaseJoins[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> colors = pc.Iter.from_(["blue", "red"])
         >>> sizes = ["S", "M"]
-        >>> colors.join_with(sizes, left_on=lambda c: c, right_on=lambda s: s).into(list)
-        [(None, 'S'), (None, 'M'), ('blue', None), ('red', None)]
+        >>> pc.Iter(["blue", "red"]).join_with(sizes, left_on=lambda c: c, right_on=lambda s: s).collect()
+        Seq(((None, 'S'), (None, 'M'), ('blue', None), ('red', None)))
 
         ```
         """
