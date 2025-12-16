@@ -5,6 +5,8 @@ from collections.abc import Callable, Generator, Iterable, Iterator, Mapping, Se
 from pprint import pformat
 from typing import TYPE_CHECKING, Any, Concatenate, Self
 
+from ._config import get_config
+
 if TYPE_CHECKING:
     from .._dict import Dict
     from .._iter import Iter, Seq
@@ -67,7 +69,7 @@ class Pipeable:
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([1, 2, 3, 4]).tap(print).last()
-        Seq([1, 2, 3, 4])
+        Seq(1, 2, 3, 4)
         4
 
         ```
@@ -136,7 +138,7 @@ class IterWrapper[T](CommonBase[Iterable[T]]):
         return iter(self.inner())
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.inner().__repr__()})"
+        return f"{self.__class__.__name__}({get_config().iter_repr(self.inner())})"
 
     def _eager[**P, U](
         self,

@@ -142,7 +142,7 @@ class BaseMap[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter([1, 2]).map(lambda x: x + 1).collect()
-        Seq((2, 3))
+        Seq(2, 3)
 
         ```
         """
@@ -175,10 +175,10 @@ class BaseMap[T](IterWrapper[T]):
         ...     return f"{color}-{size}"
         >>> data = pc.Seq(["blue", "red"])
         >>> data.iter().product(["S", "M"]).map_star(make_sku).collect()
-        Seq(('blue-S', 'blue-M', 'red-S', 'red-M'))
+        Seq('blue-S', 'blue-M', 'red-S', 'red-M')
         >>> # This is equivalent to:
         >>> data.iter().product(["S", "M"]).map(lambda x: make_sku(*x)).collect()
-        Seq(('blue-S', 'blue-M', 'red-S', 'red-M'))
+        Seq('blue-S', 'blue-M', 'red-S', 'red-M')
 
         ```
         """
@@ -198,9 +198,9 @@ class BaseMap[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> data = pc.Seq(range(-3, 4))
         >>> data.iter().map_if(lambda x: x > 0).then(lambda x: x * 10).or_else(lambda x: x).collect()
-        Seq((-3, -2, -1, 0, 10, 20, 30))
+        Seq(-3, -2, -1, 0, 10, 20, 30)
         >>> data.iter().map_if(lambda x: x % 2 == 0).then(lambda x: f"{x} is even").or_skip().collect()
-        Seq(('-2 is even', '0 is even', '2 is even'))
+        Seq('-2 is even', '0 is even', '2 is even')
 
         ```
         """
@@ -224,9 +224,9 @@ class BaseMap[T](IterWrapper[T]):
             Iter[Iterable[T]]: An iterable of repeated sequences.
         >>> import pyochain as pc
         >>> pc.Iter([1, 2]).repeat(2).collect()
-        Seq(((1, 2), (1, 2)))
+        Seq((1, 2), (1, 2))
         >>> pc.Iter([1, 2]).repeat(3, list).collect()
-        Seq(([1, 2], [1, 2], [1, 2]))
+        Seq([1, 2], [1, 2], [1, 2])
 
         ```
         """
@@ -252,12 +252,12 @@ class BaseMap[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter(range(3)).repeat_last().take(5).map(lambda x: x.unwrap()).collect()
-        Seq((0, 1, 2, 2, 2))
+        Seq(0, 1, 2, 2, 2)
 
         If the iterable is empty, yield `NONE` indefinitely:
         ```python
         >>> pc.Iter(range(0)).repeat_last().take(5).collect()
-        Seq((NONE, NONE, NONE, NONE, NONE))
+        Seq(NONE, NONE, NONE, NONE, NONE)
 
         ```
 
@@ -293,9 +293,9 @@ class BaseMap[T](IterWrapper[T]):
         ...     ]
         ... )
         >>> data.iter().pluck("info").collect()
-        Seq(({'name': 'Alice', 'age': 30}, {'name': 'Bob', 'age': 25}))
+        Seq({'name': 'Alice', 'age': 30}, {'name': 'Bob', 'age': 25})
         >>> data.iter().pluck("info", "name").collect()
-        Seq(('Alice', 'Bob'))
+        Seq('Alice', 'Bob')
 
         ```
         Example: get the maximum age along with the corresponding id)
@@ -342,7 +342,7 @@ class BaseMap[T](IterWrapper[T]):
         ...         case _:
         ...             return pc.NONE
         >>> pc.Iter([1, 2, 3, 4, 5]).scan(0, accumulate_until_limit).collect()
-        Seq((1, 3, 6, 10))
+        Seq(1, 3, 6, 10)
 
         ```
 

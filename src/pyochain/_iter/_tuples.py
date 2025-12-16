@@ -28,7 +28,7 @@ class BaseTuples[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter(["a", "b"]).enumerate().collect()
-        Seq(((0, 'a'), (1, 'b')))
+        Seq((0, 'a'), (1, 'b'))
 
         ```
 
@@ -56,7 +56,7 @@ class BaseTuples[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter([1, 2, 3]).combinations(2).collect()
-        Seq(((1, 2), (1, 3), (2, 3)))
+        Seq((1, 2), (1, 3), (2, 3))
 
         ```
 
@@ -84,7 +84,7 @@ class BaseTuples[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter([1, 2, 3]).permutations(2).collect()
-        Seq(((1, 2), (1, 3), (2, 1), (2, 3), (3, 1), (3, 2)))
+        Seq((1, 2), (1, 3), (2, 1), (2, 3), (3, 1), (3, 2))
 
         ```
 
@@ -118,7 +118,7 @@ class BaseTuples[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter([1, 2, 3]).combinations_with_replacement(2).collect()
-        Seq(((1, 1), (1, 2), (1, 3), (2, 2), (2, 3), (3, 3)))
+        Seq((1, 1), (1, 2), (1, 3), (2, 2), (2, 3), (3, 3))
 
         ```
 
@@ -135,7 +135,7 @@ class BaseTuples[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter([1, 2, 3]).pairwise().collect()
-        Seq(((1, 2), (2, 3)))
+        Seq((1, 2), (2, 3))
 
         ```
 
@@ -184,7 +184,7 @@ class BaseTuples[T](IterWrapper[T]):
         ...     return n > 0
         >>>
         >>> pc.Iter([1, -2, 3]).map_juxt(is_even, is_positive).collect()
-        Seq(((False, True), (True, False), (False, True)))
+        Seq((False, True), (True, False), (False, True))
 
         ```
         """
@@ -212,14 +212,14 @@ class BaseTuples[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter(range(6)).adjacent(lambda x: x == 3).collect()
-        Seq(((False, 0), (False, 1), (True, 2), (True, 3), (True, 4), (False, 5)))
+        Seq((False, 0), (False, 1), (True, 2), (True, 3), (True, 4), (False, 5))
 
         ```
         Set distance to change what counts as adjacent.
         For example, to find whether items are two places away from a 3:
         ```python
         >>> pc.Iter(range(6)).adjacent(lambda x: x == 3, distance=2).collect()
-        Seq(((False, 0), (True, 1), (True, 2), (True, 3), (True, 4), (True, 5)))
+        Seq((False, 0), (True, 1), (True, 2), (True, 3), (True, 4), (True, 5))
 
         ```
 
@@ -252,10 +252,10 @@ class BaseTuples[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> pc.Iter("otto").classify_unique().collect()
         ... # doctest: +NORMALIZE_WHITESPACE
-        Seq((('o', True,  True),
+        Seq(('o', True,  True),
         ('t', True,  True),
         ('t', False, False),
-        ('o', True,  False)))
+        ('o', True,  False))
 
         ```
         """
@@ -340,7 +340,7 @@ class BaseTuples[T](IterWrapper[T]):
         >>> data.group_by_transform(
         ...     lambda k: k.upper(), lambda v: v.lower(), lambda g: "".join(g)
         ... ).collect()
-        Seq((('A', 'aaa'), ('B', 'bbb'), ('C', 'ccc')))
+        Seq(('A', 'aaa'), ('B', 'bbb'), ('C', 'ccc'))
 
         ```
         Each optional argument defaults to an identity function if not specified.
@@ -360,7 +360,7 @@ class BaseTuples[T](IterWrapper[T]):
         >>> data.zip("abcdefghi").group_by_transform(itemgetter(0), itemgetter(1)).map(
         ...     lambda kv: (kv[0], "".join(kv[1]))
         ... ).collect()
-        Seq(((0, 'ab'), (1, 'cde'), (2, 'fgh'), (3, 'i')))
+        Seq((0, 'ab'), (1, 'cde'), (2, 'fgh'), (3, 'i'))
 
         ```
 
@@ -383,9 +383,9 @@ class BaseTuples[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter(["a", "b", "c"]).with_position().collect()
-        Seq((('first', 'a'), ('middle', 'b'), ('last', 'c')))
+        Seq(('first', 'a'), ('middle', 'b'), ('last', 'c'))
         >>> pc.Iter(["a"]).with_position().collect()
-        Seq((('only', 'a'),))
+        Seq(('only', 'a'),)
 
         ```
 

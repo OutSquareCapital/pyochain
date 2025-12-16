@@ -126,7 +126,7 @@ class Iter[T](
         ```python
         >>> import pyochain as pc
         >>> pc.Iter.from_count(10, 2).take(3).collect()
-        Seq((10, 12, 14))
+        Seq(10, 12, 14)
 
         ```
         """
@@ -151,7 +151,7 @@ class Iter[T](
         ```python
         >>> import pyochain as pc
         >>> pc.Iter.from_func(lambda x: x + 1, 0).take(3).collect()
-        Seq((0, 1, 2))
+        Seq(0, 1, 2)
 
         ```
         """
@@ -181,7 +181,7 @@ class Iter[T](
         >>> import pyochain as pc
         >>> # Creating from unpacked values
         >>> pc.Iter.from_(1, 2, 3).collect(tuple)
-        Seq((1, 2, 3))
+        Seq(1, 2, 3)
 
         ```
         """
@@ -218,7 +218,7 @@ class Iter[T](
         ...         return pc.Some((state * 10, state + 1))
         ...     return pc.NONE
         >>> pc.Iter.unfold(seed=0, generator=counter_generator).collect()
-        Seq((0, 10, 20, 30, 40))
+        Seq(0, 10, 20, 30, 40)
         >>> # Example 2: Fibonacci sequence up to 100
         >>> type FibState = tuple[int, int]
         >>> def fib_generator(state: FibState) -> pc.Option[tuple[int, FibState]]:
@@ -227,10 +227,10 @@ class Iter[T](
         ...         return pc.NONE
         ...     return pc.Some((a, (b, a + b)))
         >>> pc.Iter.unfold(seed=(0, 1), generator=fib_generator).collect()
-        Seq((0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89))
+        Seq(0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89)
         >>> # Example 3: Infinite iterator (requires take())
         >>> pc.Iter.unfold(seed=1, generator=lambda s: pc.Some((s, s * 2))).take(5).collect()
-        Seq((1, 2, 4, 8, 16))
+        Seq(1, 2, 4, 8, 16)
 
         ```
         """
@@ -346,7 +346,7 @@ class Iter[T](
         ```python
         >>> import pyochain as pc
         >>> pc.Iter(range(5)).collect()
-        Seq((0, 1, 2, 3, 4))
+        Seq(0, 1, 2, 3, 4)
         >>> data: tuple[int, ...] = (1, 2, 3)
         >>> iterator = pc.Iter.from_(data)
         >>> iterator.inner().__class__.__name__
@@ -355,10 +355,10 @@ class Iter[T](
         >>> mapped.inner().__class__.__name__
         'map'
         >>> mapped.collect(tuple)
-        Seq((2, 4, 6))
+        Seq(2, 4, 6)
         >>> # iterator is now exhausted
         >>> iterator.collect()
-        Seq(())
+        Seq()
 
         ```
         """
@@ -390,7 +390,7 @@ class Iter[T](
         ```python
         >>> import pyochain as pc
         >>> pc.Iter(range(5)).collect_mut()
-        Vec([0, 1, 2, 3, 4])
+        Vec(0, 1, 2, 3, 4)
         >>> data: list[int] = [1, 2, 3]
         >>> iterator = pc.Iter.from_(data)
         >>> iterator.inner().__class__.__name__
@@ -399,10 +399,10 @@ class Iter[T](
         >>> mapped.inner().__class__.__name__
         'map'
         >>> mapped.collect_mut()
-        Vec([2, 4, 6])
+        Vec(2, 4, 6)
         >>> # iterator is now exhausted
         >>> iterator.collect()
-        Seq(())
+        Seq()
 
         ```
         """
@@ -466,15 +466,15 @@ class Iter[T](
         >>> all_chunks = pc.Iter.from_count().chunks(4)
         >>> c_1, c_2, c_3 = all_chunks.next(), all_chunks.next(), all_chunks.next()
         >>> c_2.unwrap().collect()  # c_1's elements have been cached; c_3's haven't been
-        Seq((4, 5, 6, 7))
+        Seq(4, 5, 6, 7)
         >>> c_1.unwrap().collect()
-        Seq((0, 1, 2, 3))
+        Seq(0, 1, 2, 3)
         >>> c_3.unwrap().collect()
-        Seq((8, 9, 10, 11))
+        Seq(8, 9, 10, 11)
         >>> pc.Seq([1, 2, 3, 4, 5, 6]).iter().chunks(3).map(lambda c: c.collect()).collect()
-        Seq((Seq((1, 2, 3)), Seq((4, 5, 6))))
+        Seq(Seq(1, 2, 3), Seq(4, 5, 6))
         >>> pc.Seq([1, 2, 3, 4, 5, 6, 7, 8]).iter().chunks(3).map(lambda c: c.collect()).collect()
-        Seq((Seq((1, 2, 3)), Seq((4, 5, 6)), Seq((7, 8))))
+        Seq(Seq(1, 2, 3), Seq(4, 5, 6), Seq(7, 8))
 
         ```
         """
@@ -557,7 +557,7 @@ class Iter[T](
         ```python
         >>> import pyochain as pc
         >>> pc.Iter([[1, 2], [3]]).flatten().collect()
-        Seq((1, 2, 3))
+        Seq(1, 2, 3)
 
         ```
         """
@@ -619,7 +619,7 @@ class Iter[T](
         >>> import pyochain as pc
         >>> data = [[1, 2], [3, 4]]
         >>> pc.Seq(data).iter().flat_map(lambda x: x + 10).collect()
-        Seq((11, 12, 13, 14))
+        Seq(11, 12, 13, 14)
 
         ```
         """
@@ -655,7 +655,7 @@ class Iter[T](
         >>> import pyochain as pc
         >>> data = ({"A", "B"}, {"B", "C"}, {"B", "D"})
         >>> pc.Iter(data).unique_to_each().map(lambda x: x.into(list)).collect()
-        Seq((['A'], ['C'], ['D']))
+        Seq(['A'], ['C'], ['D'])
 
         ```
 
@@ -665,7 +665,7 @@ class Iter[T](
         ```python
         >>> data = ("mississippi", "missouri")
         >>> pc.Seq(data).iter().unique_to_each().map(lambda x: x.into(list)).collect()
-        Seq((['p', 'p'], ['o', 'u', 'r']))
+        Seq(['p', 'p'], ['o', 'u', 'r'])
 
         ```
 
@@ -715,14 +715,14 @@ class Iter[T](
         >>>
         >>> data = [1, 2, 3, 4, 5, 6]
         >>> pc.Iter(data).split_into(pc.Some(1), pc.Some(2), pc.Some(3)).into(_get_results)
-        Seq((Seq([1]), Seq([2, 3]), Seq([4, 5, 6])))
+        Seq(Seq(1), Seq(2, 3), Seq(4, 5, 6))
         >>> pc.Iter(data).split_into(pc.Some(2), pc.Some(3)).into(_get_results)
-        Seq((Seq([1, 2]), Seq([3, 4, 5])))
+        Seq(Seq(1, 2), Seq(3, 4, 5))
         >>> pc.Iter([1, 2, 3, 4]).split_into(pc.Some(1), pc.Some(2), pc.Some(3), pc.Some(4)).into(_get_results)
-        Seq((Seq([1]), Seq([2, 3]), Seq([4]), Seq([])))
+        Seq(Seq(1), Seq(2, 3), Seq(4), Seq())
         >>> data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
         >>> pc.Iter(data).split_into(pc.Some(2), pc.Some(3), pc.NONE).into(_get_results)
-        Seq((Seq([1, 2]), Seq([3, 4, 5]), Seq([6, 7, 8, 9, 0])))
+        Seq(Seq(1, 2), Seq(3, 4, 5), Seq(6, 7, 8, 9, 0))
 
         ```
         """
@@ -765,9 +765,9 @@ class Iter[T](
         >>> import pyochain as pc
         >>> data = pc.Seq([1, 2, 3, 3, 2, 5, 2, 4, 2])
         >>> data.iter().split_when(lambda x, y: x > y).map(lambda x: x.collect(list)).collect()
-        Seq((Seq([1, 2, 3, 3]), Seq([2, 5]), Seq([2, 4]), Seq([2])))
+        Seq(Seq(1, 2, 3, 3), Seq(2, 5), Seq(2, 4), Seq(2))
         >>> data.iter().split_when(lambda x, y: x > y, max_split=2).map(lambda x: x.collect(list)).collect()
-        Seq((Seq([1, 2, 3, 3]), Seq([2, 5]), Seq([2, 4, 2])))
+        Seq(Seq(1, 2, 3, 3), Seq(2, 5), Seq(2, 4, 2))
 
         ```
         """
@@ -832,17 +832,17 @@ class Iter[T](
         ...     return x.map(lambda x: x.into(list)).collect()
         >>>
         >>> pc.Iter("abcdcba").split_at(lambda x: x == "b").into(_to_res)
-        Seq((['a'], ['c', 'd', 'c'], ['a']))
+        Seq(['a'], ['c', 'd', 'c'], ['a'])
         >>> pc.Iter(range(10)).split_at(lambda n: n % 2 == 1).into(_to_res)
-        Seq(([0], [2], [4], [6], [8], []))
+        Seq([0], [2], [4], [6], [8], [])
         >>> pc.Iter(range(10)).split_at(lambda n: n % 2 == 1, max_split=2).into(_to_res)
-        Seq(([0], [2], [4, 5, 6, 7, 8, 9]))
+        Seq([0], [2], [4, 5, 6, 7, 8, 9])
         >>>
         >>> def cond(x: str) -> bool:
         ...     return x == "b"
         >>>
         >>> pc.Iter("abcdcba").split_at(cond, keep_separator=True).into(_to_res)
-        Seq((['a'], ['b'], ['c', 'd', 'c'], ['b'], ['a']))
+        Seq(['a'], ['b'], ['c', 'd', 'c'], ['b'], ['a'])
 
         ```
         """
@@ -889,15 +889,15 @@ class Iter[T](
         ```python
         >>> import pyochain as pc
         >>> pc.Iter("one1two2").split_after(str.isdigit).map(list).collect()
-        Seq((['o', 'n', 'e', '1'], ['t', 'w', 'o', '2']))
+        Seq(['o', 'n', 'e', '1'], ['t', 'w', 'o', '2'])
 
         >>> def cond(n: int) -> bool:
         ...     return n % 3 == 0
         >>>
         >>> pc.Iter(range(10)).split_after(cond).map(list).collect()
-        Seq(([0], [1, 2, 3], [4, 5, 6], [7, 8, 9]))
+        Seq([0], [1, 2, 3], [4, 5, 6], [7, 8, 9])
         >>> pc.Iter(range(10)).split_after(cond, max_split=2).map(list).collect()
-        Seq(([0], [1, 2, 3], [4, 5, 6, 7, 8, 9]))
+        Seq([0], [1, 2, 3], [4, 5, 6, 7, 8, 9])
 
         ```
         """
@@ -950,15 +950,15 @@ class Iter[T](
         ```python
         >>> import pyochain as pc
         >>> pc.Iter("abcdcba").split_before(lambda x: x == "b").map(list).collect()
-        Seq((['a'], ['b', 'c', 'd', 'c'], ['b', 'a']))
+        Seq(['a'], ['b', 'c', 'd', 'c'], ['b', 'a'])
         >>>
         >>> def cond(n: int) -> bool:
         ...     return n % 2 == 1
         >>>
         >>> pc.Iter(range(10)).split_before(cond).map(list).collect()
-        Seq(([0], [1, 2], [3, 4], [5, 6], [7, 8], [9]))
+        Seq([0], [1, 2], [3, 4], [5, 6], [7, 8], [9])
         >>> pc.Iter(range(10)).split_before(cond, max_split=2).map(list).collect()
-        Seq(([0], [1, 2], [3, 4, 5, 6, 7, 8, 9]))
+        Seq([0], [1, 2], [3, 4, 5, 6, 7, 8, 9])
 
         ```
         """
@@ -1040,7 +1040,7 @@ class Seq[T](CommonMethods[T], Sequence[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Seq.from_(1, 2, 3)
-        Seq((1, 2, 3))
+        Seq(1, 2, 3)
 
         ```
 
@@ -1140,10 +1140,10 @@ class Vec[T](Seq[T], MutableSequence[T]):
         >>> vec = pc.Vec(['a', 'b', 'c'])
         >>> vec.insert(1, 'd')
         >>> vec
-        Vec(['a', 'd', 'b', 'c'])
+        Vec('a', 'd', 'b', 'c')
         >>> vec.insert(4, 'e')
         >>> vec
-        Vec(['a', 'd', 'b', 'c', 'e'])
+        Vec('a', 'd', 'b', 'c', 'e')
         """
         self._inner.insert(index, value)
 
@@ -1170,7 +1170,7 @@ class Vec[T](Seq[T], MutableSequence[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Vec.from_(1, 2, 3)
-        Vec([1, 2, 3])
+        Vec(1, 2, 3)
 
         ```
 
@@ -1195,7 +1195,7 @@ class Vec[T](Seq[T], MutableSequence[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Vec.new()
-        Vec([])
+        Vec()
 
         ```
 

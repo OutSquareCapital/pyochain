@@ -59,8 +59,8 @@ class IterDict[K, V](MappingWrapper[K, V]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({1: 2}).iter_keys().collect(list)
-        Seq([1])
+        >>> pc.Dict({1: 2}).iter_keys().collect()
+        Seq(1,)
 
         ```
         """
@@ -76,8 +76,8 @@ class IterDict[K, V](MappingWrapper[K, V]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({1: 2}).iter_values().collect(list)
-        Seq([2])
+        >>> pc.Dict({1: 2}).iter_values().collect()
+        Seq(2,)
 
         ```
         """
@@ -93,8 +93,8 @@ class IterDict[K, V](MappingWrapper[K, V]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({"a": 1, "b": 2}).iter_items().collect(list)
-        Seq([('a', 1), ('b', 2)])
+        >>> pc.Dict({"a": 1, "b": 2}).iter_items().collect()
+        Seq(('a', 1), ('b', 2))
 
         ```
         """

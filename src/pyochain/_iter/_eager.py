@@ -37,7 +37,7 @@ class BaseEager[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([3, 1, 2]).sort()
-        Seq([1, 2, 3])
+        Seq(1, 2, 3)
 
         ```
         """
@@ -60,7 +60,7 @@ class BaseEager[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([1, 2, 3]).tail(2)
-        Seq([2, 3])
+        Seq(2, 3)
 
         ```
         """
@@ -80,7 +80,7 @@ class BaseEager[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([1, 3, 2]).top_n(2)
-        Seq((3, 2))
+        Seq(3, 2)
 
         ```
         """
@@ -102,7 +102,7 @@ class BaseEager[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([1, 2, 2]).union([2, 3], [4]).iter().sort()
-        Seq([1, 2, 3, 4])
+        Seq(1, 2, 3, 4)
 
         ```
         """
@@ -134,7 +134,7 @@ class BaseEager[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([1, 2, 2]).intersection([2, 3], [2])
-        Seq((2,))
+        Seq(2,)
 
         ```
         """
@@ -164,7 +164,7 @@ class BaseEager[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([1, 2, 2]).difference([2, 3])
-        Seq((1,))
+        Seq(1,)
 
         ```
         """
@@ -196,9 +196,9 @@ class BaseEager[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([1, 2, 2]).diff_symmetric([2, 3]).iter().sort()
-        Seq([1, 3])
+        Seq(1, 3)
         >>> pc.Seq([1, 2, 3]).diff_symmetric([3, 4, 5]).iter().sort()
-        Seq([1, 2, 4, 5])
+        Seq(1, 2, 4, 5)
 
         ```
         """
@@ -223,7 +223,7 @@ class BaseEager[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([1, 1, 2, 3, 3, 3]).most_common(2)
-        Seq([(3, 3), (1, 2)])
+        Seq((3, 3), (1, 2))
 
         ```
         """
@@ -250,7 +250,7 @@ class BaseEager[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> data = pc.Seq([["A", "X", 1], ["A", "Y", 2], ["B", "X", 3], ["B", "Y", 4]])
         >>> data.rearrange(1, 0)
-        Seq([['X', 'A', 1], ['Y', 'A', 2], ['X', 'B', 3], ['Y', 'B', 4]])
+        Seq(['X', 'A', 1], ['Y', 'A', 2], ['X', 'B', 3], ['Y', 'B', 4])
 
         ```
         """

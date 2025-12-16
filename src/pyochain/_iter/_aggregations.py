@@ -58,9 +58,9 @@ class BaseAgg[T](IterWrapper[T]):
         >>> data = [(1, "a"), (2, "b"), (3, "c")]
         >>> unzipped = pc.Seq(data).unzip()
         >>> unzipped.first.collect()
-        Seq((1, 2, 3))
+        Seq(1, 2, 3)
         >>> unzipped.second.collect()
-        Seq(('a', 'b', 'c'))
+        Seq('a', 'b', 'c')
 
         ```
         """

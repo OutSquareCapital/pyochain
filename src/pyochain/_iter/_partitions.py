@@ -41,11 +41,11 @@ class BasePartitions[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter([1, 2, 3, 4]).windows(2).collect()
-        Seq(((1, 2), (2, 3), (3, 4)))
+        Seq((1, 2), (2, 3), (3, 4))
         >>> def moving_average(seq: tuple[int, ...]) -> float:
         ...     return float(sum(seq)) / len(seq)
         >>> pc.Iter([1, 2, 3, 4]).windows(2).map(moving_average).collect()
-        Seq((1.5, 2.5, 3.5))
+        Seq(1.5, 2.5, 3.5)
 
         ```
         """
@@ -80,13 +80,13 @@ class BasePartitions[T](IterWrapper[T]):
         Example:
         >>> import pyochain as pc
         >>> pc.Iter([1, 2, 3, 4]).partition(2).collect()
-        Seq(((1, 2), (3, 4)))
+        Seq((1, 2), (3, 4))
 
         ```
         If the length of seq is not evenly divisible by n, the final tuple is dropped if pad is not specified, or filled to length n by pad:
         ```python
         >>> pc.Iter([1, 2, 3, 4, 5]).partition(2).collect()
-        Seq(((1, 2), (3, 4), (5, None)))
+        Seq((1, 2), (3, 4), (5, None))
 
         ```
         """
@@ -107,9 +107,9 @@ class BasePartitions[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter([1, 2, 3, 4]).partition_all(2).collect()
-        Seq(((1, 2), (3, 4)))
+        Seq((1, 2), (3, 4))
         >>> pc.Iter([1, 2, 3, 4, 5]).partition_all(2).collect()
-        Seq(((1, 2), (3, 4), (5,)))
+        Seq((1, 2), (3, 4), (5,))
 
         ```
         """
@@ -130,11 +130,11 @@ class BasePartitions[T](IterWrapper[T]):
         Example:
         >>> import pyochain as pc
         >>> pc.Iter("I have space").partition_by(lambda c: c == " ").collect()
-        Seq((('I',), (' ',), ('h', 'a', 'v', 'e'), (' ',), ('s', 'p', 'a', 'c', 'e')))
+        Seq(('I',), (' ',), ('h', 'a', 'v', 'e'), (' ',), ('s', 'p', 'a', 'c', 'e'))
         >>>
         >>> data = [1, 2, 1, 99, 88, 33, 99, -1, 5]
         >>> pc.Iter(data).partition_by(lambda x: x > 10).collect()
-        Seq(((1, 2, 1), (99, 88, 33, 99), (-1, 5)))
+        Seq((1, 2, 1), (99, 88, 33, 99), (-1, 5))
 
         ```
         """
@@ -157,7 +157,7 @@ class BasePartitions[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter("ABCDEFG").batch(3).collect()
-        Seq((('A', 'B', 'C'), ('D', 'E', 'F'), ('G',)))
+        Seq(('A', 'B', 'C'), ('D', 'E', 'F'), ('G',))
 
         ```
         """

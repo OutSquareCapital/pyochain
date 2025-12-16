@@ -74,9 +74,9 @@ class BaseJoins[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter([1, 2]).zip([10, 20]).collect()
-        Seq(((1, 10), (2, 20)))
+        Seq((1, 10), (2, 20))
         >>> pc.Iter(["a", "b"]).zip([1, 2, 3]).collect()
-        Seq((('a', 1), ('b', 2)))
+        Seq(('a', 1), ('b', 2))
 
         ```
         """
@@ -111,9 +111,9 @@ class BaseJoins[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> data = pc.Seq("0123")
         >>> data.iter().zip_offset("abcdef", offsets=(0, 1)).collect()
-        Seq((('0', 'b'), ('1', 'c'), ('2', 'd'), ('3', 'e')))
+        Seq(('0', 'b'), ('1', 'c'), ('2', 'd'), ('3', 'e'))
         >>> data.iter().zip_offset("abcdef", offsets=(0, 1), longest=True).collect()
-        Seq((('0', 'b'), ('1', 'c'), ('2', 'd'), ('3', 'e'), (None, 'f')))
+        Seq(('0', 'b'), ('1', 'c'), ('2', 'd'), ('3', 'e'), (None, 'f'))
 
         ```
         """
@@ -147,7 +147,7 @@ class BaseJoins[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter([1, 2]).zip_longest([10], fill_value=0).collect()
-        Seq(((1, 10), (2, 0)))
+        Seq((1, 10), (2, 0))
 
         ```
         """
@@ -201,7 +201,7 @@ class BaseJoins[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> sizes = ["S", "M"]
         >>> pc.Iter(["blue", "red"]).product(sizes).collect()
-        Seq((('blue', 'S'), ('blue', 'M'), ('red', 'S'), ('red', 'M')))
+        Seq(('blue', 'S'), ('blue', 'M'), ('red', 'S'), ('red', 'M'))
 
         ```
         """
@@ -232,15 +232,15 @@ class BaseJoins[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> data = pc.Seq([1, 2, 3])
         >>> data.iter().diff_at([1, 2, 10, 100], default=None).collect()
-        Seq(((3, 10), (None, 100)))
+        Seq((3, 10), (None, 100))
         >>> data.iter().diff_at([1, 2, 10, 100, 2, 6, 7], default=0).collect()
-        Seq(((3, 10), (0, 100), (0, 2), (0, 6), (0, 7)))
+        Seq((3, 10), (0, 100), (0, 2), (0, 6), (0, 7))
 
         A key function may also be applied to each item to use during comparisons:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter(["apples", "bananas"]).diff_at(["Apples", "Oranges"], key=str.lower).collect(list)
-        Seq([('bananas', 'Oranges')])
+        >>> pc.Iter(["apples", "bananas"]).diff_at(["Apples", "Oranges"], key=str.lower).collect()
+        Seq(('bananas', 'Oranges'),)
 
         ```
         """
@@ -271,7 +271,7 @@ class BaseJoins[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> sizes = ["S", "M"]
         >>> pc.Iter(["blue", "red"]).join_with(sizes, left_on=lambda c: c, right_on=lambda s: s).collect()
-        Seq(((None, 'S'), (None, 'M'), ('blue', None), ('red', None)))
+        Seq((None, 'S'), (None, 'M'), ('blue', None), ('red', None))
 
         ```
         """

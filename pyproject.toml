@@ -9,7 +9,7 @@
         "cytoolz>=1.0.1",
         "more-itertools>=10.8.0",
         "rolling>=0.5.0",
-    ]
+]
 
 [dependency-groups]
     dev = [

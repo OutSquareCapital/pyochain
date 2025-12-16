@@ -46,7 +46,7 @@ class BaseFilter[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> data = (1, 2, 3)
         >>> pc.Iter(data).filter(lambda x: x > 1).collect()
-        Seq((2, 3))
+        Seq(2, 3)
         >>> pc.Iter(data).filter(lambda x: x > 1).next()
         Some(value=2)
         >>> pc.Iter(data).find(lambda x: x > 1)
@@ -76,7 +76,7 @@ class BaseFilter[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter(("hello", "world", 2, 5)).filter_attr("capitalize", str).collect()
-        Seq(('hello', 'world'))
+        Seq('hello', 'world')
 
         ```
         """
@@ -98,8 +98,8 @@ class BaseFilter[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter([1, 2, 3]).filter_false(lambda x: x > 1).collect(list)
-        Seq([1])
+        >>> pc.Iter([1, 2, 3]).filter_false(lambda x: x > 1).collect()
+        Seq(1,)
 
         ```
         """
@@ -118,7 +118,7 @@ class BaseFilter[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter((1, 2, 0)).take_while(lambda x: x > 0).collect()
-        Seq((1, 2))
+        Seq(1, 2)
 
         ```
         """
@@ -136,8 +136,8 @@ class BaseFilter[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter((1, 2, 0)).skip_while(lambda x: x > 0).collect(list)
-        Seq([0])
+        >>> pc.Iter((1, 2, 0)).skip_while(lambda x: x > 0).collect()
+        Seq(0,)
 
         ```
         """
@@ -156,7 +156,7 @@ class BaseFilter[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter("ABCDEF").compress(1, 0, 1, 0, 1, 1).collect()
-        Seq(('A', 'C', 'E', 'F'))
+        Seq('A', 'C', 'E', 'F')
 
         ```
         """
@@ -175,15 +175,15 @@ class BaseFilter[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter([1, 2, 3]).unique().collect()
-        Seq((1, 2, 3))
+        Seq(1, 2, 3)
         >>> pc.Iter([1, 2, 1, 3]).unique().collect()
-        Seq((1, 2, 3))
+        Seq(1, 2, 3)
 
         ```
         Uniqueness can be defined by key keyword
         ```python
         >>> pc.Iter(["cat", "mouse", "dog", "hen"]).unique(key=len).collect()
-        Seq(('cat', 'mouse'))
+        Seq('cat', 'mouse')
 
         ```
         """
@@ -210,9 +210,9 @@ class BaseFilter[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> data = [1, 2, 3]
         >>> pc.Iter(data).take(2).collect()
-        Seq((1, 2))
+        Seq(1, 2)
         >>> pc.Iter(data).take(5).collect()
-        Seq((1, 2, 3))
+        Seq(1, 2, 3)
 
         ```
         """
@@ -231,7 +231,7 @@ class BaseFilter[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter((1, 2, 3)).skip(1).collect()
-        Seq((2, 3))
+        Seq(2, 3)
 
         ```
         """
@@ -250,9 +250,9 @@ class BaseFilter[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter.from_("AAAABBBCCDAABBB").unique_justseen().collect()
-        Seq(('A', 'B', 'C', 'D', 'A', 'B'))
+        Seq('A', 'B', 'C', 'D', 'A', 'B')
         >>> pc.Iter.from_("ABBCcAD").unique_justseen(str.lower).collect()
-        Seq(('A', 'B', 'C', 'A', 'D'))
+        Seq('A', 'B', 'C', 'A', 'D')
 
         ```
         """
@@ -280,13 +280,13 @@ class BaseFilter[T](IterWrapper[T]):
         >>> iterable = [0, 1, 0, 2, 3, 0]
         >>> n = 3
         >>> pc.Iter(iterable).unique_in_window(n).collect()
-        Seq((0, 1, 2, 3, 0))
+        Seq(0, 1, 2, 3, 0)
 
         ```
         The key function, if provided, will be used to determine uniqueness:
         ```python
         >>> pc.Iter.from_("abAcda").unique_in_window(3, key=str.lower).collect()
-        Seq(('a', 'b', 'c', 'd', 'a'))
+        Seq('a', 'b', 'c', 'd', 'a')
 
         ```
         """
@@ -311,7 +311,7 @@ class BaseFilter[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> text = "abcdefghijklmnopqrstuvwxyz"
         >>> pc.Iter(text).extract([7, 4, 11, 11, 14]).collect()
-        Seq(('h', 'e', 'l', 'l', 'o'))
+        Seq('h', 'e', 'l', 'l', 'o')
 
         ```
         """
@@ -330,7 +330,7 @@ class BaseFilter[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter([10, 20, 30, 40]).every(2).collect()
-        Seq((10, 30))
+        Seq(10, 30)
 
         ```
         """
@@ -357,9 +357,9 @@ class BaseFilter[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> data = (1, 2, 3, 4, 5)
         >>> pc.Iter(data).slice(1, 4).collect()
-        Seq((2, 3, 4))
+        Seq(2, 3, 4)
         >>> pc.Iter(data).slice(step=2).collect()
-        Seq((1, 3, 5))
+        Seq(1, 3, 5)
 
         ```
         """
@@ -397,10 +397,10 @@ class BaseFilter[T](IterWrapper[T]):
         ...     return cls.__name__
         >>>
         >>> data = pc.Seq((A, B, C))
-        >>> data.iter().filter_subclass(A).map(name).collect(list)
-        Seq(['A', 'B'])
-        >>> data.iter().filter_subclass(A, keep_parent=False).map(name).collect(list)
-        Seq(['B'])
+        >>> data.iter().filter_subclass(A).map(name).collect()
+        Seq('A', 'B')
+        >>> data.iter().filter_subclass(A, keep_parent=False).map(name).collect()
+        Seq('B',)
 
         ```
         """
@@ -427,7 +427,7 @@ class BaseFilter[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter((1, "two", 3.0, "four", 5)).filter_type(int).collect()
-        Seq((1, 5))
+        Seq(1, 5)
 
         ```
         """
@@ -463,7 +463,7 @@ class BaseFilter[T](IterWrapper[T]):
         >>>
         >>> data = pc.Seq(["1", "two", "NaN", "four", "5"])
         >>> data.iter().filter_map(lambda s: _parse(s).ok()).collect()
-        Seq((1, 5))
+        Seq(1, 5)
         >>> # Equivalent to:
         >>> (
         ...     data.iter()
@@ -472,7 +472,7 @@ class BaseFilter[T](IterWrapper[T]):
         ...    .map(lambda s: s.unwrap())
         ...    .collect()
         ... )
-        Seq((1, 5))
+        Seq(1, 5)
 
         ```
         """

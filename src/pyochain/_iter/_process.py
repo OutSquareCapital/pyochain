@@ -49,7 +49,7 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         >>> import pyochain as pc
         >>> pc.Iter((1, 2)).cycle().take(5).collect()
-        Seq((1, 2, 1, 2, 1))
+        Seq(1, 2, 1, 2, 1)
 
         ```
         """
@@ -68,7 +68,7 @@ class BaseProcess[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter([1, 2]).interpose(0).collect()
-        Seq((1, 0, 2))
+        Seq(1, 0, 2)
 
         ```
         """
@@ -97,18 +97,18 @@ class BaseProcess[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> data = pc.Iter(range(100)).collect()
         >>> data.iter().random_sample(0.1).collect()  # doctest: +SKIP
-        Seq((6, 9, 19, 35, 45, 50, 58, 62, 68, 72, 78, 86, 95))
+        Seq(6, 9, 19, 35, 45, 50, 58, 62, 68, 72, 78, 86, 95)
         >>> data.iter().random_sample(0.1).collect()  # doctest: +SKIP
-        Seq((6, 44, 54, 61, 69, 94))
+        Seq(6, 44, 54, 61, 69, 94)
         ```
         Providing an integer seed for random_state will result in deterministic sampling.
 
         Given the same seed it will return the same sample every time.
         ```python
         >>> data.iter().random_sample(0.1, state=2016).collect()
-        Seq((7, 9, 19, 25, 30, 32, 34, 48, 59, 60, 81, 98))
+        Seq(7, 9, 19, 25, 30, 32, 34, 48, 59, 60, 81, 98)
         >>> data.iter().random_sample(0.1, state=2016).collect()
-        Seq((7, 9, 19, 25, 30, 32, 34, 48, 59, 60, 81, 98))
+        Seq(7, 9, 19, 25, 30, 32, 34, 48, 59, 60, 81, 98)
 
         ```
         random_state can also be any object with a method random that returns floats between 0.0 and 1.0 (exclusive).
@@ -116,7 +116,7 @@ class BaseProcess[T](IterWrapper[T]):
         >>> from random import Random
         >>> randobj = Random(2016)
         >>> data.iter().random_sample(0.1, state=randobj).collect()
-        Seq((7, 9, 19, 25, 30, 32, 34, 48, 59, 60, 81, 98))
+        Seq(7, 9, 19, 25, 30, 32, 34, 48, 59, 60, 81, 98)
 
         ```
         """
@@ -137,7 +137,7 @@ class BaseProcess[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter((1, 2, 3)).accumulate(lambda a, b: a + b).collect()
-        Seq((1, 3, 6))
+        Seq(1, 3, 6)
 
         ```
         """
@@ -156,7 +156,7 @@ class BaseProcess[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter((2, 3)).insert_left(1).collect()
-        Seq((1, 2, 3))
+        Seq(1, 2, 3)
 
         ```
         """
@@ -179,7 +179,7 @@ class BaseProcess[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> pc.Iter([1, 2, 3]).peek(2, lambda x: print(f"Peeked {len(x)} values: {x}")).collect()
         Peeked 2 values: (1, 2)
-        Seq((1, 2, 3))
+        Seq(1, 2, 3)
 
         ```
         """
@@ -209,7 +209,7 @@ class BaseProcess[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter([1, 3]).merge_sorted([2, 4]).collect()
-        Seq((1, 2, 3, 4))
+        Seq(1, 2, 3, 4)
 
         ```
         """
@@ -228,7 +228,7 @@ class BaseProcess[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter((1, 2)).interleave((3, 4)).collect()
-        Seq((1, 3, 2, 4))
+        Seq(1, 3, 2, 4)
 
         ```
         """
@@ -255,7 +255,7 @@ class BaseProcess[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter((1, 2)).chain((3, 4), [5]).collect()
-        Seq((1, 2, 3, 4, 5))
+        Seq(1, 2, 3, 4, 5)
 
         ```
         """
@@ -279,7 +279,7 @@ class BaseProcess[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter("ABCABC").elements().sort()
-        Seq(['A', 'A', 'B', 'B', 'C', 'C'])
+        Seq('A', 'A', 'B', 'B', 'C', 'C')
 
         ```
         Knuth's example for prime factors of 1836:  2**2 * 3**3 * 17**1
@@ -313,7 +313,7 @@ class BaseProcess[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter([1, 2, 3]).reverse().collect()
-        Seq((3, 2, 1))
+        Seq(3, 2, 1)
 
         ```
         """
@@ -349,7 +349,7 @@ class BaseProcess[T](IterWrapper[T]):
         >>> data = ["a", "b", "c", "d"]
         >>> n = 4
         >>> pc.Iter(data).is_strictly_n(n).collect()
-        Seq(('a', 'b', 'c', 'd'))
+        Seq('a', 'b', 'c', 'd')
 
         ```
         Note that the returned iterable must be consumed in order for the check to
@@ -384,7 +384,7 @@ class BaseProcess[T](IterWrapper[T]):
         ...     print("The boss is going to hear about this")
         >>> pc.Iter("abcdef").is_strictly_n(4, too_long=too_long).collect()
         The boss is going to hear about this
-        Seq(('a', 'b', 'c', 'd'))
+        Seq('a', 'b', 'c', 'd')
 
         ```
         """
