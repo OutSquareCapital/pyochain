@@ -123,8 +123,8 @@ class Iter[T](
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_count(10, 2).take(3).into(list)
-        [10, 12, 14]
+        >>> pc.Iter.from_count(10, 2).take(3).collect()
+        Seq((10, 12, 14))
 
         ```
         """
@@ -148,8 +148,8 @@ class Iter[T](
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter.from_func(lambda x: x + 1, 0).take(3).into(list)
-        [0, 1, 2]
+        >>> pc.Iter.from_func(lambda x: x + 1, 0).take(3).collect()
+        Seq((0, 1, 2))
 
         ```
         """
@@ -215,8 +215,8 @@ class Iter[T](
         ...     if state < 5:
         ...         return pc.Some((state * 10, state + 1))
         ...     return pc.NONE
-        >>> pc.Iter.unfold(seed=0, generator=counter_generator).into(list)
-        [0, 10, 20, 30, 40]
+        >>> pc.Iter.unfold(seed=0, generator=counter_generator).collect()
+        Seq((0, 10, 20, 30, 40))
         >>> # Example 2: Fibonacci sequence up to 100
         >>> type FibState = tuple[int, int]
         >>> def fib_generator(state: FibState) -> pc.Option[tuple[int, FibState]]:
@@ -224,11 +224,11 @@ class Iter[T](
         ...     if a > 100:
         ...         return pc.NONE
         ...     return pc.Some((a, (b, a + b)))
-        >>> pc.Iter.unfold(seed=(0, 1), generator=fib_generator).into(list)
-        [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89]
+        >>> pc.Iter.unfold(seed=(0, 1), generator=fib_generator).collect()
+        Seq((0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89))
         >>> # Example 3: Infinite iterator (requires take())
-        >>> pc.Iter.unfold(seed=1, generator=lambda s: pc.Some((s, s * 2))).take(5).into(list)
-        [1, 2, 4, 8, 16]
+        >>> pc.Iter.unfold(seed=1, generator=lambda s: pc.Some((s, s * 2))).take(5).collect()
+        Seq((1, 2, 4, 8, 16))
 
         ```
         """

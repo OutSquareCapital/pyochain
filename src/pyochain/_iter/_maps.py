@@ -292,17 +292,15 @@ class BaseMap[T](IterWrapper[T]):
         ...         {"id": 2, "info": {"name": "Bob", "age": 25}},
         ...     ]
         ... )
-        >>> data.iter().pluck("info").into(list)
-        [{'name': 'Alice', 'age': 30}, {'name': 'Bob', 'age': 25}]
-        >>> data.iter().pluck("info", "name").into(list)
-        ['Alice', 'Bob']
+        >>> data.iter().pluck("info").collect()
+        Seq(({'name': 'Alice', 'age': 30}, {'name': 'Bob', 'age': 25}))
+        >>> data.iter().pluck("info", "name").collect()
+        Seq(('Alice', 'Bob'))
 
         ```
         Example: get the maximum age along with the corresponding id)
         ```python
-        >>> data.iter().pluck("info", "age").zip(
-        ...     data.iter().pluck("id").into(list)
-        ... ).max()
+        >>> data.iter().pluck("info", "age").zip(data.iter().pluck("id")).max()
         (30, 1)
 
         ```

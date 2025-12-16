@@ -231,10 +231,10 @@ class BaseJoins[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> data = pc.Seq([1, 2, 3])
-        >>> data.iter().diff_at([1, 2, 10, 100], default=None).into(list)
-        [(3, 10), (None, 100)]
-        >>> data.iter().diff_at([1, 2, 10, 100, 2, 6, 7], default=0).into(list)
-        [(3, 10), (0, 100), (0, 2), (0, 6), (0, 7)]
+        >>> data.iter().diff_at([1, 2, 10, 100], default=None).collect()
+        Seq(((3, 10), (None, 100)))
+        >>> data.iter().diff_at([1, 2, 10, 100, 2, 6, 7], default=0).collect()
+        Seq(((3, 10), (0, 100), (0, 2), (0, 6), (0, 7)))
 
         A key function may also be applied to each item to use during comparisons:
         ```python
