@@ -100,7 +100,14 @@ class BaseAgg[T](IterWrapper[T]):
         return self.into(_reduce)
 
     def combination_index(self, r: Iterable[T]) -> int:
-        """Equivalent to list(combinations(iterable, r)).index(element).
+        """Computes the index of the first element, without computing the previous combinations.
+
+        The subsequences of iterable that are of length r can be ordered lexicographically.
+
+
+        ValueError will be raised if the given element isn't one of the combinations of iterable.
+
+        Equivalent to list(combinations(iterable, r)).index(element).
 
         Args:
             r (Iterable[T]): The combination to find the index of.
@@ -108,11 +115,6 @@ class BaseAgg[T](IterWrapper[T]):
         Returns:
             int: The index of the combination.
 
-        The subsequences of iterable that are of length r can be ordered lexicographically.
-
-        combination_index computes the index of the first element, without computing the previous combinations.
-
-        ValueError will be raised if the given element isn't one of the combinations of iterable.
         ```python
         >>> import pyochain as pc
         >>> pc.Seq("abcdefg").combination_index("adf")

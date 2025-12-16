@@ -57,14 +57,19 @@ class BaseJoins[T](IterWrapper[T]):
         *others: Iterable[Any],
         strict: bool = False,
     ) -> Iter[tuple[Any, ...]]:
-        """Zip with other iterables, optionally strict.
+        """Yields n-length tuples, where n is the number of iterables passed as positional arguments.
+
+        The i-th element in every tuple comes from the i-th iterable argument to `.zip()`.
+
+        This continues until the shortest argument is exhausted.
 
         Args:
             *others (Iterable[Any]): Other iterables to zip with.
-            strict (bool): Whether to enforce equal lengths of iterables. Defaults to False.
+            strict (bool): If `True` and one of the arguments is exhausted before the others, raise a ValueError. Defaults to `False`.
 
         Returns:
-            Iter[tuple[Any, ...]]: An iterable of tuples containing elements from the zipped iter
+            Iter[tuple[Any, ...]]: An `Iter` of tuples containing elements from the zipped Iter and other iterables.
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -123,63 +128,6 @@ class BaseJoins[T](IterWrapper[T]):
             )
 
         return self._lazy(_zip_offset)
-
-    @overload
-    def zip_equal(self) -> Iter[tuple[T]]: ...
-    @overload
-    def zip_equal[T2](self, __iter2: Iterable[T2], /) -> Iter[tuple[T, T2]]: ...
-    @overload
-    def zip_equal[T2, T3](
-        self,
-        __iter2: Iterable[T2],
-        __iter3: Iterable[T3],
-        /,
-    ) -> Iter[tuple[T, T2, T3]]: ...
-    @overload
-    def zip_equal[T2, T3, T4](
-        self,
-        __iter2: Iterable[T2],
-        __iter3: Iterable[T3],
-        __iter4: Iterable[T4],
-        /,
-    ) -> Iter[tuple[T, T2, T3, T4]]: ...
-    @overload
-    def zip_equal[T2, T3, T4, T5](
-        self,
-        __iter2: Iterable[T2],
-        __iter3: Iterable[T3],
-        __iter4: Iterable[T4],
-        __iter5: Iterable[T5],
-        /,
-    ) -> Iter[tuple[T, T2, T3, T4, T5]]: ...
-    def zip_equal(self, *others: Iterable[Any]) -> Iter[tuple[Any, ...]]:
-        """`zip` the input *iterables* together but raise `UnequalIterablesError` if they aren't all the same length.
-
-        Args:
-            *others (Iterable[Any]): Other iterables to zip with.
-
-        Returns:
-            Iter[tuple[Any, ...]]: An iterable of tuples containing elements from the zipped iterables.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter.from_(range(3)).zip_equal("abc").into(list)
-        [(0, 'a'), (1, 'b'), (2, 'c')]
-        >>> pc.Iter.from_(range(3)).zip_equal("abcd").into(list)
-        ... # doctest: +IGNORE_EXCEPTION_DETAIL
-        Traceback (most recent call last):
-        ...
-        more_itertools.more.UnequalIterablesError: Iterables have different
-        lengths
-
-        ```
-        """
-
-        def _zip_equal(data: Iterable[T]) -> Iterator[tuple[Any, ...]]:
-            return mit.zip_equal(data, *others)
-
-        return self._lazy(_zip_equal)
 
     def zip_longest[U](
         self,
