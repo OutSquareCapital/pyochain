@@ -86,6 +86,12 @@ class BaseJoins[T](IterWrapper[T]):
     ) -> Iter[tuple[T | U, ...]]:
         """Zip the input iterables together, but offset the i-th iterable by the i-th item in offsets.
 
+        This can be used as a lightweight alternative to SciPy or pandas to analyze data sets in which some series have a lead or lag relationship.
+
+        By default, the sequence will end when the shortest iterable is exhausted.
+
+        To continue until the longest iterable is exhausted, set longest to True.
+
         Args:
             *others (Iterable[T]): Other iterables to zip with.
             offsets (list[int]): List of integers specifying the offsets for each iterable.
@@ -99,18 +105,10 @@ class BaseJoins[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> data = pc.Seq("0123")
-        >>> data.iter().zip_offset("abcdef", offsets=(0, 1)).into(list)
-        [('0', 'b'), ('1', 'c'), ('2', 'd'), ('3', 'e')]
-
-        ```
-        This can be used as a lightweight alternative to SciPy or pandas to analyze data sets in which some series have a lead or lag relationship.
-
-        By default, the sequence will end when the shortest iterable is exhausted.
-
-        To continue until the longest iterable is exhausted, set longest to True.
-        ```python
-        >>> data.iter().zip_offset("abcdef", offsets=(0, 1), longest=True).into(list)
-        [('0', 'b'), ('1', 'c'), ('2', 'd'), ('3', 'e'), (None, 'f')]
+        >>> data.iter().zip_offset("abcdef", offsets=(0, 1)).collect()
+        Seq((('0', 'b'), ('1', 'c'), ('2', 'd'), ('3', 'e')))
+        >>> data.iter().zip_offset("abcdef", offsets=(0, 1), longest=True).collect()
+        Seq((('0', 'b'), ('1', 'c'), ('2', 'd'), ('3', 'e'), (None, 'f')))
 
         ```
         """

@@ -24,6 +24,7 @@ class BaseEager[T](IterWrapper[T]):
         Note:
             This method must consume the entire iterable to perform the sort.
             The result is a new iterable over the sorted sequence.
+            The underlying data collection is a list.
 
         Args:
             key (Callable[[U], Any] | None): Function to extract a comparison key from each element. Defaults to None.

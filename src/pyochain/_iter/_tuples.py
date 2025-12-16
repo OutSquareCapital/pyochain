@@ -27,8 +27,8 @@ class BaseTuples[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq(["a", "b"]).iter().enumerate().into(list)
-        [(0, 'a'), (1, 'b')]
+        >>> pc.Iter(["a", "b"]).enumerate().collect()
+        Seq(((0, 'a'), (1, 'b')))
 
         ```
 
@@ -55,7 +55,7 @@ class BaseTuples[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).iter().combinations(2).collect()
+        >>> pc.Iter([1, 2, 3]).combinations(2).collect()
         Seq(((1, 2), (1, 3), (2, 3)))
 
         ```
@@ -83,7 +83,7 @@ class BaseTuples[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).iter().permutations(2).collect()
+        >>> pc.Iter([1, 2, 3]).permutations(2).collect()
         Seq(((1, 2), (1, 3), (2, 1), (2, 3), (3, 1), (3, 2)))
 
         ```
@@ -117,7 +117,7 @@ class BaseTuples[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).iter().combinations_with_replacement(2).collect()
+        >>> pc.Iter([1, 2, 3]).combinations_with_replacement(2).collect()
         Seq(((1, 1), (1, 2), (1, 3), (2, 2), (2, 3), (3, 3)))
 
         ```
@@ -134,7 +134,7 @@ class BaseTuples[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).iter().pairwise().collect()
+        >>> pc.Iter([1, 2, 3]).pairwise().collect()
         Seq(((1, 2), (2, 3)))
 
         ```
@@ -183,7 +183,7 @@ class BaseTuples[T](IterWrapper[T]):
         >>> def is_positive(n: int) -> bool:
         ...     return n > 0
         >>>
-        >>> pc.Seq([1, -2, 3]).iter().map_juxt(is_even, is_positive).collect()
+        >>> pc.Iter([1, -2, 3]).map_juxt(is_even, is_positive).collect()
         Seq(((False, True), (True, False), (False, True)))
 
         ```
@@ -211,14 +211,14 @@ class BaseTuples[T](IterWrapper[T]):
         For example, to find whether items are adjacent to a 3:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq(range(6)).iter().adjacent(lambda x: x == 3).collect()
+        >>> pc.Iter(range(6)).adjacent(lambda x: x == 3).collect()
         Seq(((False, 0), (False, 1), (True, 2), (True, 3), (True, 4), (False, 5)))
 
         ```
         Set distance to change what counts as adjacent.
         For example, to find whether items are two places away from a 3:
         ```python
-        >>> pc.Seq(range(6)).iter().adjacent(lambda x: x == 3, distance=2).collect()
+        >>> pc.Iter(range(6)).adjacent(lambda x: x == 3, distance=2).collect()
         Seq(((False, 0), (True, 1), (True, 2), (True, 3), (True, 4), (True, 5)))
 
         ```
@@ -250,7 +250,7 @@ class BaseTuples[T](IterWrapper[T]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq("otto").iter().classify_unique().collect()
+        >>> pc.Iter("otto").classify_unique().collect()
         ... # doctest: +NORMALIZE_WHITESPACE
         Seq((('o', True,  True),
         ('t', True,  True),
@@ -356,8 +356,8 @@ class BaseTuples[T](IterWrapper[T]):
         Example:
         ```python
         >>> from operator import itemgetter
-        >>> data = pc.Seq([0, 0, 1, 1, 1, 2, 2, 2, 3])
-        >>> data.iter().zip("abcdefghi").group_by_transform(itemgetter(0), itemgetter(1)).map(
+        >>> data = pc.Iter([0, 0, 1, 1, 1, 2, 2, 2, 3])
+        >>> data.zip("abcdefghi").group_by_transform(itemgetter(0), itemgetter(1)).map(
         ...     lambda kv: (kv[0], "".join(kv[1]))
         ... ).collect()
         Seq(((0, 'ab'), (1, 'cde'), (2, 'fgh'), (3, 'i')))
@@ -382,9 +382,9 @@ class BaseTuples[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq(["a", "b", "c"]).iter().with_position().collect()
+        >>> pc.Iter(["a", "b", "c"]).with_position().collect()
         Seq((('first', 'a'), ('middle', 'b'), ('last', 'c')))
-        >>> pc.Seq(["a"]).iter().with_position().collect()
+        >>> pc.Iter(["a"]).with_position().collect()
         Seq((('only', 'a'),))
 
         ```

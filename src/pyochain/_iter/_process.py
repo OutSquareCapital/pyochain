@@ -48,7 +48,7 @@ class BaseProcess[T](IterWrapper[T]):
 
         Example:
         >>> import pyochain as pc
-        >>> pc.Seq((1, 2)).iter().cycle().take(5).collect()
+        >>> pc.Iter((1, 2)).cycle().take(5).collect()
         Seq((1, 2, 1, 2, 1))
 
         ```
@@ -67,7 +67,7 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2]).iter().interpose(0).collect()
+        >>> pc.Iter([1, 2]).interpose(0).collect()
         Seq((1, 0, 2))
 
         ```
@@ -95,28 +95,28 @@ class BaseProcess[T](IterWrapper[T]):
             Iter[T]: A new Iterable wrapper with randomly sampled elements.
         ```python
         >>> import pyochain as pc
-        >>> data = pc.Seq(list(range(100)))
-        >>> data.iter().random_sample(0.1).into(list)  # doctest: +SKIP
-        [6, 9, 19, 35, 45, 50, 58, 62, 68, 72, 78, 86, 95]
-        >>> data.iter().random_sample(0.1).into(list)  # doctest: +SKIP
-        [6, 44, 54, 61, 69, 94]
+        >>> data = pc.Iter(range(100)).collect()
+        >>> data.iter().random_sample(0.1).collect()  # doctest: +SKIP
+        Seq((6, 9, 19, 35, 45, 50, 58, 62, 68, 72, 78, 86, 95))
+        >>> data.iter().random_sample(0.1).collect()  # doctest: +SKIP
+        Seq((6, 44, 54, 61, 69, 94))
         ```
         Providing an integer seed for random_state will result in deterministic sampling.
 
         Given the same seed it will return the same sample every time.
         ```python
-        >>> data.iter().random_sample(0.1, state=2016).into(list)
-        [7, 9, 19, 25, 30, 32, 34, 48, 59, 60, 81, 98]
-        >>> data.iter().random_sample(0.1, state=2016).into(list)
-        [7, 9, 19, 25, 30, 32, 34, 48, 59, 60, 81, 98]
+        >>> data.iter().random_sample(0.1, state=2016).collect()
+        Seq((7, 9, 19, 25, 30, 32, 34, 48, 59, 60, 81, 98))
+        >>> data.iter().random_sample(0.1, state=2016).collect()
+        Seq((7, 9, 19, 25, 30, 32, 34, 48, 59, 60, 81, 98))
 
         ```
         random_state can also be any object with a method random that returns floats between 0.0 and 1.0 (exclusive).
         ```python
         >>> from random import Random
         >>> randobj = Random(2016)
-        >>> data.iter().random_sample(0.1, state=randobj).into(list)
-        [7, 9, 19, 25, 30, 32, 34, 48, 59, 60, 81, 98]
+        >>> data.iter().random_sample(0.1, state=randobj).collect()
+        Seq((7, 9, 19, 25, 30, 32, 34, 48, 59, 60, 81, 98))
 
         ```
         """
@@ -136,7 +136,7 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq((1, 2, 3)).iter().accumulate(lambda a, b: a + b).collect()
+        >>> pc.Iter((1, 2, 3)).accumulate(lambda a, b: a + b).collect()
         Seq((1, 3, 6))
 
         ```
@@ -155,7 +155,7 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq((2, 3)).iter().insert_left(1).collect()
+        >>> pc.Iter((2, 3)).insert_left(1).collect()
         Seq((1, 2, 3))
 
         ```
@@ -177,7 +177,7 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).iter().peek(2, lambda x: print(f"Peeked {len(x)} values: {x}")).collect()
+        >>> pc.Iter([1, 2, 3]).peek(2, lambda x: print(f"Peeked {len(x)} values: {x}")).collect()
         Peeked 2 values: (1, 2)
         Seq((1, 2, 3))
 
@@ -208,7 +208,7 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 3]).iter().merge_sorted([2, 4]).collect()
+        >>> pc.Iter([1, 3]).merge_sorted([2, 4]).collect()
         Seq((1, 2, 3, 4))
 
         ```
@@ -227,7 +227,7 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq((1, 2)).iter().interleave((3, 4)).collect()
+        >>> pc.Iter((1, 2)).interleave((3, 4)).collect()
         Seq((1, 3, 2, 4))
 
         ```
@@ -254,7 +254,7 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq((1, 2)).iter().chain((3, 4), [5]).collect()
+        >>> pc.Iter((1, 2)).chain((3, 4), [5]).collect()
         Seq((1, 2, 3, 4, 5))
 
         ```
@@ -278,7 +278,7 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq("ABCABC").iter().elements().sort()
+        >>> pc.Iter("ABCABC").elements().sort()
         Seq(['A', 'A', 'B', 'B', 'C', 'C'])
 
         ```
@@ -286,7 +286,7 @@ class BaseProcess[T](IterWrapper[T]):
         ```python
         >>> import math
         >>> data = [2, 2, 3, 3, 3, 17]
-        >>> pc.Seq(data).iter().elements().into(math.prod)
+        >>> pc.Iter(data).elements().into(math.prod)
         1836
 
         ```
@@ -312,7 +312,7 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).iter().reverse().collect()
+        >>> pc.Iter([1, 2, 3]).reverse().collect()
         Seq((3, 2, 1))
 
         ```
@@ -346,10 +346,10 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> iterable = ["a", "b", "c", "d"]
+        >>> data = ["a", "b", "c", "d"]
         >>> n = 4
-        >>> pc.Seq(iterable).iter().is_strictly_n(n).into(list)
-        ['a', 'b', 'c', 'd']
+        >>> pc.Iter(data).is_strictly_n(n).collect()
+        Seq(('a', 'b', 'c', 'd'))
 
         ```
         Note that the returned iterable must be consumed in order for the check to
@@ -357,16 +357,12 @@ class BaseProcess[T](IterWrapper[T]):
 
         By default, *too_short* and *too_long* are functions that raise`ValueError`.
         ```python
-        >>> pc.Seq("ab").iter().is_strictly_n(3).into(
-        ...     list
-        ... )  # doctest: +IGNORE_EXCEPTION_DETAIL
+        >>> pc.Iter("ab").is_strictly_n(3).collect()  # doctest: +IGNORE_EXCEPTION_DETAIL
         Traceback (most recent call last):
         ...
         ValueError: too few items in iterable (got 2)
 
-        >>> pc.Seq("abc").iter().is_strictly_n(2).into(
-        ...     list
-        ... )  # doctest: +IGNORE_EXCEPTION_DETAIL
+        >>> pc.Iter("abc").is_strictly_n(2).collect()  # doctest: +IGNORE_EXCEPTION_DETAIL
         Traceback (most recent call last):
         ...
         ValueError: too many items in iterable (got at least 3)
@@ -380,15 +376,15 @@ class BaseProcess[T](IterWrapper[T]):
         ```python
         >>> def too_short(item_count):
         ...     raise RuntimeError
-        >>> pc.Seq("abcd").iter().is_strictly_n(6, too_short=too_short).into(list)
+        >>> pc.Iter("abcd").is_strictly_n(6, too_short=too_short).collect()
         Traceback (most recent call last):
         ...
         RuntimeError
         >>> def too_long(item_count):
         ...     print("The boss is going to hear about this")
-        >>> pc.Seq("abcdef").iter().is_strictly_n(4, too_long=too_long).into(list)
+        >>> pc.Iter("abcdef").is_strictly_n(4, too_long=too_long).collect()
         The boss is going to hear about this
-        ['a', 'b', 'c', 'd']
+        Seq(('a', 'b', 'c', 'd'))
 
         ```
         """

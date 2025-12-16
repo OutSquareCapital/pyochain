@@ -40,11 +40,11 @@ class BasePartitions[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3, 4]).iter().windows(2).collect()
+        >>> pc.Iter([1, 2, 3, 4]).windows(2).collect()
         Seq(((1, 2), (2, 3), (3, 4)))
         >>> def moving_average(seq: tuple[int, ...]) -> float:
         ...     return float(sum(seq)) / len(seq)
-        >>> pc.Seq([1, 2, 3, 4]).iter().windows(2).map(moving_average).collect()
+        >>> pc.Iter([1, 2, 3, 4]).windows(2).map(moving_average).collect()
         Seq((1.5, 2.5, 3.5))
 
         ```
@@ -129,11 +129,11 @@ class BasePartitions[T](IterWrapper[T]):
 
         Example:
         >>> import pyochain as pc
-        >>> pc.Seq("I have space").iter().partition_by(lambda c: c == " ").collect()
+        >>> pc.Iter("I have space").partition_by(lambda c: c == " ").collect()
         Seq((('I',), (' ',), ('h', 'a', 'v', 'e'), (' ',), ('s', 'p', 'a', 'c', 'e')))
         >>>
         >>> data = [1, 2, 1, 99, 88, 33, 99, -1, 5]
-        >>> pc.Seq(data).iter().partition_by(lambda x: x > 10).collect()
+        >>> pc.Iter(data).partition_by(lambda x: x > 10).collect()
         Seq(((1, 2, 1), (99, 88, 33, 99), (-1, 5)))
 
         ```
