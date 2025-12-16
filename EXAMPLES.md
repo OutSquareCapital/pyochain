@@ -79,14 +79,12 @@ I want to check wether the colors are in hex format or not, and I want to get a 
 The script below shows you can smoothly interoperate between pyochain and polars to achieve this in a readable way.
 
 ```python
-
 from types import ModuleType
 
 import polars as pl
-import pyochain as pc
 from plotly.express.colors import cyclical, qualitative, sequential
 
-
+import pyochain as pc
 
 MODULES: set[ModuleType] = {
     sequential,
@@ -94,10 +92,11 @@ MODULES: set[ModuleType] = {
     qualitative,
 }
 
+
 def get_palettes() -> pc.Dict[str, list[str]]:
     clr = "color"
     scl = "scale"
-    df: pl.DataFrame = (
+    return (
         pc.Iter(MODULES)
         .map(
             lambda mod: pc.Dict.from_object(mod)
@@ -114,28 +113,32 @@ def get_palettes() -> pc.Dict[str, list[str]]:
         )
         .sort(scl)
         .collect()
+        .pipe(lambda df: pc.Iter(df.get_column(scl)).with_values(df.get_column(clr)))
     )
-    return pc.Iter(df.get_column(scl)).with_values(df.get_column(clr))
 
 
 # Ouput excerpt:
-{'mygbm_r': ['#ef55f1',
-            '#c543fa',
-            '#9139fa',
-            '#6324f5',
-            '#2e21ea',
-            '#284ec8',
-            '#3d719a',
-            '#439064',
-            '#31ac28',
-            '#61c10b',
-            '#96d310',
-            '#c6e516',
-            '#f0ed35',
-            '#fcd471',
-            '#fbafa1',
-            '#fb84ce',
-            '#ef55f1']}
+{
+    "mygbm_r": [
+        "#ef55f1",
+        "#c543fa",
+        "#9139fa",
+        "#6324f5",
+        "#2e21ea",
+        "#284ec8",
+        "#3d719a",
+        "#439064",
+        "#31ac28",
+        "#61c10b",
+        "#96d310",
+        "#c6e516",
+        "#f0ed35",
+        "#fcd471",
+        "#fbafa1",
+        "#fb84ce",
+        "#ef55f1",
+    ]
+}
 ```
 
 However you can still easily go back with for loops when the readability is better this way.
@@ -166,26 +169,23 @@ Since I have to reference the literal_content variable in the for loop, This is 
 Below is an example of using pyochain to get all the public methods of the `pc.Iter` class, both with pyochain and with pure python.
 
 ```python
-from collections.abc import Sequence
 from typing import Any
 
 import pyochain as pc
 
 
-def get_all_iter_methods() -> Sequence[tuple[int, str]]:
+def get_all_iter_methods() -> pc.Seq[tuple[int, str]]:
     return (
         pc.Iter(pc.Iter.mro())
         .map(lambda x: x.__dict__.values())
         .flatten()
-        .map_if(
-            predicate=lambda f: callable(f) and not f.__name__.startswith("_")
-        )
+        .map_if(predicate=lambda f: callable(f) and not f.__name__.startswith("_"))
         .then(lambda f: f.__name__)
+        .or_skip()
         .sort()
         .iter()
         .enumerate()
-        .collect()
-        .inner()
+        .collect(list)
     )
 
 
