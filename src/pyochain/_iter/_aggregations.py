@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import functools
-import statistics
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
@@ -318,82 +317,3 @@ class BaseAgg[T](IterWrapper[T]):
         ```
         """
         return self.into(max)
-
-    def mean[U: int | float](self: IterWrapper[U]) -> float:
-        """Return the mean of the sequence.
-
-        Returns:
-            float: The mean value.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).mean()
-        2
-
-        ```
-        """
-        return self.into(statistics.mean)
-
-    def median[U: int | float](self: IterWrapper[U]) -> float:
-        """Return the median of the sequence.
-
-        Returns:
-            float: The median value.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 3, 2]).median()
-        2
-
-        ```
-        """
-        return self.into(statistics.median)
-
-    def mode[U: int | float](self: IterWrapper[U]) -> U:
-        """Return the mode of the sequence.
-
-        Returns:
-            U: The mode value.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 2, 3]).mode()
-        2
-
-        ```
-        """
-        return self.into(statistics.mode)
-
-    def stdev[U: int | float](
-        self: IterWrapper[U],
-    ) -> float:
-        """Return the standard deviation of the sequence.
-
-        Returns:
-            float: The standard deviation.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).stdev()
-        1.0
-
-        ```
-        """
-        return self.into(statistics.stdev)
-
-    def variance[U: int | float](
-        self: IterWrapper[U],
-    ) -> float:
-        """Return the variance of the sequence.
-
-        Returns:
-            float: The variance.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3, 7, 8]).variance()
-        9.7
-
-        ```
-        """
-        return self.into(statistics.variance)

@@ -284,7 +284,7 @@ class BaseProcess[T](IterWrapper[T]):
 
         return self._lazy(_elements)
 
-    def reverse(self) -> Iter[T]:
+    def rev(self) -> Iter[T]:
         """Return a new Iterable wrapper with elements in reverse order.
 
         The result is a new iterable over the reversed sequence.
@@ -298,7 +298,7 @@ class BaseProcess[T](IterWrapper[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter([1, 2, 3]).reverse().collect()
+        >>> pc.Iter([1, 2, 3]).rev().collect()
         Seq(3, 2, 1)
 
         ```

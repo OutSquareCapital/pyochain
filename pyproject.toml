@@ -5,11 +5,7 @@
     requires-python = ">=3.13"
     version         = "0.6.0.2"
 
-    dependencies = [
-        "cytoolz>=1.0.1",
-        "more-itertools>=10.8.0",
-        "rolling>=0.5.0",
-]
+    dependencies = ["cytoolz>=1.0.1", "more-itertools>=10.8.0"]
 
 [dependency-groups]
     dev = [
@@ -27,7 +23,7 @@
         "rolling @ git+https://github.com/OutSquareCapital/rolling.git@add-type-stubs",
         "ruff>=0.14.4",
         "ty>=0.0.1a34",
-]
+    ]
 [tool.ruff]
     lint.ignore = [
         "C417",

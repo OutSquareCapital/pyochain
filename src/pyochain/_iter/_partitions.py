@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import itertools
+from collections.abc import Iterable, Iterator
 from functools import partial
-from typing import TYPE_CHECKING, Literal, overload
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 import cytoolz as cz
 
@@ -16,40 +17,65 @@ if TYPE_CHECKING:
 
 class BasePartitions[T](IterWrapper[T]):
     @overload
-    def windows(self, length: Literal[1]) -> Iter[tuple[T]]: ...
+    def map_windows[R](
+        self, length: Literal[1], func: Callable[[tuple[T]], R]
+    ) -> Iter[R]: ...
     @overload
-    def windows(self, length: Literal[2]) -> Iter[tuple[T, T]]: ...
+    def map_windows[R](
+        self, length: Literal[2], func: Callable[[tuple[T, T]], R]
+    ) -> Iter[R]: ...
     @overload
-    def windows(self, length: Literal[3]) -> Iter[tuple[T, T, T]]: ...
+    def map_windows[R](
+        self, length: Literal[3], func: Callable[[tuple[T, T, T]], R]
+    ) -> Iter[R]: ...
     @overload
-    def windows(self, length: Literal[4]) -> Iter[tuple[T, T, T, T]]: ...
+    def map_windows[R](
+        self, length: Literal[4], func: Callable[[tuple[T, T, T, T]], R]
+    ) -> Iter[R]: ...
     @overload
-    def windows(self, length: Literal[5]) -> Iter[tuple[T, T, T, T, T]]: ...
+    def map_windows[R](
+        self, length: Literal[5], func: Callable[[tuple[T, T, T, T, T]], R]
+    ) -> Iter[R]: ...
+    @overload
+    def map_windows[R](
+        self, length: int, func: Callable[[tuple[T, ...]], R]
+    ) -> Iter[R]: ...
+    def map_windows[R](
+        self, length: int, func: Callable[[tuple[Any, ...]], R]
+    ) -> Iter[R]:
+        """Calls the given **func** for each contiguous window of size **length** over **self**.
 
-    def windows(self, length: int) -> Iter[tuple[T, ...]]:
-        """A sequence of overlapping subsequences of the given length.
+        The windows during mapping overlaps.
 
-        This function allows you to apply custom function not available in the rolling namespace.
+        The provided function must have a signature matching the length of the window.
 
         Args:
             length (int): The length of each window.
+            func (Callable[[tuple[Any, ...]], R]): Function to apply to each window.
 
         Returns:
-            Iter[tuple[T, ...]]: An iterable of overlapping subsequences.
+            Iter[R]: An iterator over the outputs of func.
 
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter([1, 2, 3, 4]).windows(2).collect()
+
+        >>> pc.Iter("abcd").map_windows(2, lambda xy: f"{xy[0]}+{xy[1]}").collect()
+        Seq('a+b', 'b+c', 'c+d')
+        >>> pc.Iter([1, 2, 3, 4]).map_windows(2, lambda xy: xy).collect()
         Seq((1, 2), (2, 3), (3, 4))
         >>> def moving_average(seq: tuple[int, ...]) -> float:
         ...     return float(sum(seq)) / len(seq)
-        >>> pc.Iter([1, 2, 3, 4]).windows(2).map(moving_average).collect()
+        >>> pc.Iter([1, 2, 3, 4]).map_windows(2, moving_average).collect()
         Seq(1.5, 2.5, 3.5)
 
         ```
         """
-        return self._lazy(partial(cz.itertoolz.sliding_window, length))
+
+        def _map_windows(data: Iterable[T]) -> Iterator[R]:
+            return map(func, cz.itertoolz.sliding_window(length, data))
+
+        return self._lazy(_map_windows)
 
     @overload
     def partition(self, n: Literal[1], pad: None = None) -> Iter[tuple[T]]: ...
