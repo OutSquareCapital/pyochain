@@ -3,18 +3,20 @@ from __future__ import annotations
 import functools
 import statistics
 from collections.abc import Callable, Iterable
-from typing import TYPE_CHECKING, Literal, NamedTuple
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Literal
 
 import cytoolz as cz
 import more_itertools as mit
 
-from .._core import IterWrapper
+from .._core import IterWrapper, Pipeable
 
 if TYPE_CHECKING:
     from ._main import Iter
 
 
-class Unzipped[T, V](NamedTuple):
+@dataclass(slots=True)
+class Unzipped[T, V](Pipeable):
     first: Iter[T]
     second: Iter[V]
 
@@ -43,11 +45,11 @@ class BaseAgg[T](IterWrapper[T]):
         """Converts an iterator of pairs into a pair of iterators.
 
         Returns:
-            Unzipped[U, V]: NamedTuple with first and second iterators.
+            Unzipped[U, V]: dataclass with first and second iterators.
 
         `Iter.unzip()` consumes the iterator of pairs.
 
-        Returns an Unzipped NamedTuple, containing two iterators:
+        Returns an Unzipped dataclass, containing two iterators:
 
         - one from the left elements of the pairs
         - one from the right elements.

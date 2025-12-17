@@ -7,6 +7,7 @@ from collections.abc import (
     Generator,
     Iterable,
     Iterator,
+    KeysView,
     MutableSequence,
     Sequence,
     ValuesView,
@@ -604,6 +605,8 @@ class Iter[T](
         return self._lazy(lambda x: _chunks(x, size))
 
     @overload
+    def flatten[U](self: Iter[KeysView[U]]) -> Iter[U]: ...
+    @overload
     def flatten[U](self: Iter[Iterable[U]]) -> Iter[U]: ...
     @overload
     def flatten[U](self: Iter[Generator[U]]) -> Iter[U]: ...
@@ -644,6 +647,16 @@ class Iter[T](
     @overload
     def flat_map[U, R](
         self: Iter[Iterable[U]],
+        func: Callable[[U], R],
+    ) -> Iter[R]: ...
+    @overload
+    def flat_map[U, R](
+        self: Iter[KeysView[U]],
+        func: Callable[[U], R],
+    ) -> Iter[R]: ...
+    @overload
+    def flat_map[U, R](
+        self: Iter[ValuesView[U]],
         func: Callable[[U], R],
     ) -> Iter[R]: ...
     @overload

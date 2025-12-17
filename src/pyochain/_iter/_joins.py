@@ -136,7 +136,7 @@ class BaseJoins[T](IterWrapper[T]):
         When the shorter iterables are exhausted, they yield `NONE`.
 
         Args:
-            *others (Iterable[T]): Other iterables to zip with.
+            *others (Iterable[Any]): Other iterables to zip with.
 
         Returns:
             Iter[tuple[Option[Any], ...]]: An iterable of tuples containing optional elements from the zipped iterables.
