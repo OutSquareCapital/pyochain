@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import Callable, Generator, Iterable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Generator, Iterable, Iterator, Mapping
 from pprint import pformat
 from typing import TYPE_CHECKING, Any, Concatenate, Self
 
@@ -9,7 +9,7 @@ from ._config import get_config
 
 if TYPE_CHECKING:
     from .._dict import Dict
-    from .._iter import Iter, Seq
+    from .._iter import Iter, Seq, Vec
 
 
 type IntoIter[T] = Iterator[T] | Generator[T, Any, Any]
@@ -127,22 +127,22 @@ class CommonBase[T](ABC, Pipeable):
 
         ```
         """
-        other_data = other.inner() if isinstance(other, self.__class__) else other
-        return self.inner() == other_data
+        other_data = other._inner if isinstance(other, self.__class__) else other
+        return self._inner == other_data
 
 
 class IterWrapper[T](CommonBase[Iterable[T]]):
     _inner: Iterable[T]
 
     def __iter__(self) -> Iterator[T]:
-        return iter(self.inner())
+        return iter(self._inner)
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({get_config().iter_repr(self.inner())})"
+        return f"{self.__class__.__name__}({get_config().iter_repr(self._inner)})"
 
     def _eager[**P, U](
         self,
-        factory: Callable[Concatenate[Iterable[T], P], Sequence[U]],
+        factory: Callable[Concatenate[Iterable[T], P], tuple[U, ...]],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Seq[U]:
@@ -150,6 +150,19 @@ class IterWrapper[T](CommonBase[Iterable[T]]):
 
         def _(data: Iterable[T]) -> Seq[U]:
             return Seq(factory(data, *args, **kwargs))
+
+        return self.into(_)
+
+    def _eager_mut[**P, U](
+        self,
+        factory: Callable[Concatenate[Iterable[T], P], list[U]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Vec[U]:
+        from .._iter import Vec
+
+        def _(data: Iterable[T]) -> Vec[U]:
+            return Vec(factory(data, *args, **kwargs))
 
         return self.into(_)
 
@@ -185,9 +198,9 @@ class MappingWrapper[K, V](CommonBase[dict[K, V]]):
                 pformat(truncated, depth=depth, width=width, compact=compact) + suffix
             )
 
-        return f"{self.into(lambda d: dict_repr(d.inner()))}"
+        return f"{self.into(lambda d: dict_repr(d._inner))}"
 
     def _new[KU, VU](self, func: Callable[[dict[K, V]], dict[KU, VU]]) -> Dict[KU, VU]:
         from .._dict import Dict
 
-        return Dict(func(self.inner()))
+        return Dict(func(self._inner))

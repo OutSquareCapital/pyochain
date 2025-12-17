@@ -9,7 +9,7 @@ import cytoolz as cz
 from .._core import IterWrapper, SupportsRichComparison
 
 if TYPE_CHECKING:
-    from ._main import Seq
+    from ._main import Seq, Vec
 
 
 class BaseEager[T](IterWrapper[T]):
@@ -18,26 +18,25 @@ class BaseEager[T](IterWrapper[T]):
         key: Callable[[U], Any] | None = None,
         *,
         reverse: bool = False,
-    ) -> Seq[U]:
+    ) -> Vec[U]:
         """Sort the elements of the sequence.
 
         Note:
             This method must consume the entire iterable to perform the sort.
-            The result is a new iterable over the sorted sequence.
-            The underlying data collection is a list.
+            The result is a new `Vec` over the sorted sequence.
 
         Args:
             key (Callable[[U], Any] | None): Function to extract a comparison key from each element. Defaults to None.
             reverse (bool): Whether to sort in descending order. Defaults to False.
 
         Returns:
-            Seq[U]: A new Seq with elements sorted.
+            Vec[U]: A `Vec` with elements sorted.
 
         Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([3, 1, 2]).sort()
-        Seq(1, 2, 3)
+        Vec(1, 2, 3)
 
         ```
         """
@@ -45,7 +44,7 @@ class BaseEager[T](IterWrapper[T]):
         def _sort(data: Iterable[U]) -> list[U]:
             return sorted(data, reverse=reverse, key=key)
 
-        return self._eager(_sort)
+        return self._eager_mut(_sort)
 
     def tail(self, n: int) -> Seq[T]:
         """Return a tuple of the last n elements.
@@ -102,7 +101,7 @@ class BaseEager[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([1, 2, 2]).union([2, 3], [4]).iter().sort()
-        Seq(1, 2, 3, 4)
+        Vec(1, 2, 3, 4)
 
         ```
         """
@@ -196,9 +195,9 @@ class BaseEager[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([1, 2, 2]).diff_symmetric([2, 3]).iter().sort()
-        Seq(1, 3)
+        Vec(1, 3)
         >>> pc.Seq([1, 2, 3]).diff_symmetric([3, 4, 5]).iter().sort()
-        Seq(1, 2, 4, 5)
+        Vec(1, 2, 4, 5)
 
         ```
         """
@@ -208,7 +207,7 @@ class BaseEager[T](IterWrapper[T]):
 
         return self._eager(_symmetric_difference)
 
-    def most_common(self, n: int | None = None) -> Seq[tuple[T, int]]:
+    def most_common(self, n: int | None = None) -> Vec[tuple[T, int]]:
         """Return the n most common elements and their counts.
 
         If n is None, then all elements are returned.
@@ -217,13 +216,13 @@ class BaseEager[T](IterWrapper[T]):
             n (int | None): Number of most common elements to return. Defaults to None (all elements).
 
         Returns:
-            Seq[tuple[T, int]]: A new Seq containing tuples of (element, count).
+            Vec[tuple[T, int]]: A new Seq containing tuples of (element, count).
 
         Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([1, 1, 2, 3, 3, 3]).most_common(2)
-        Seq((3, 3), (1, 2))
+        Vec((3, 3), (1, 2))
 
         ```
         """
@@ -232,9 +231,9 @@ class BaseEager[T](IterWrapper[T]):
         def _most_common(data: Iterable[T]) -> list[tuple[T, int]]:
             return Counter(data).most_common(n)
 
-        return self._eager(_most_common)
+        return self._eager_mut(_most_common)
 
-    def rearrange[U: Sequence[Any]](self: BaseEager[U], *indices: int) -> Seq[list[U]]:
+    def rearrange[U: Sequence[Any]](self: BaseEager[U], *indices: int) -> Vec[list[U]]:
         """Rearrange elements in a given list of arrays by order indices.
 
         The last element (value) always remains in place.
@@ -243,14 +242,14 @@ class BaseEager[T](IterWrapper[T]):
             *indices (int): indices specifying new order of keys in each array.
 
         Returns:
-            Seq[list[U]]: A new Seq containing rearranged elements.
+            Vec[list[U]]: A new Vec containing rearranged elements.
 
         Example:
         ```python
         >>> import pyochain as pc
         >>> data = pc.Seq([["A", "X", 1], ["A", "Y", 2], ["B", "X", 3], ["B", "Y", 4]])
         >>> data.rearrange(1, 0)
-        Seq(['X', 'A', 1], ['Y', 'A', 2], ['X', 'B', 3], ['Y', 'B', 4])
+        Vec(['X', 'A', 1], ['Y', 'A', 2], ['X', 'B', 3], ['Y', 'B', 4])
 
         ```
         """
@@ -274,4 +273,4 @@ class BaseEager[T](IterWrapper[T]):
 
             return out
 
-        return self._eager(_rearrange)
+        return self._eager_mut(_rearrange)

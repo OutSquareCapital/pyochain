@@ -61,6 +61,8 @@ class Iter[T](
 ):
     """A superset around Python's built-in `Iterator` Protocol, providing a rich set of functional programming tools.
 
+    Implements the `Iterator` Protocol from `collections.abc`, so it can be used as a standard iterator.
+
     - An `Iterable` is any object capable of returning its members one at a time, permitting it to be iterated over in a for-loop.
     - An `Iterator` is an object representing a stream of data; returned by calling `iter()` on an `Iterable`.
     - Once an `Iterator` is exhausted, it cannot be reused or reset.
@@ -74,9 +76,9 @@ class Iter[T](
 
     However, keep in mind that `Iter` instances are single-use; once exhausted, they cannot be reused or reset.
 
-    If you need to reuse the data, consider collecting it into a `Seq` first with `.collect()`.
+    If you need to reuse the data, consider collecting it into an immutable `Seq` first with `.collect()`, or a mutable `Vec` with `.collect_mut()`.
 
-    You can always convert back to an `Iter` using `Seq.iter()` for free.
+    You can always convert back to an `Iter` using `{Seq, Vec}.iter()` for free.
 
     In general, avoid intermediate references when dealing with lazy iterators, and prioritize method chaining instead.
 
@@ -96,6 +98,13 @@ class Iter[T](
 
     def next(self) -> Option[T]:
         """Return the next element in the iterator.
+
+        Note:
+            The actual `.__next__()` method is conform to the Python `Iterator` Protocol, and is what will be actually called if you iterate over the `Iter` instance.
+
+            `Iter.next()` is a convenience method that wraps the result in an `Option` to handle exhaustion gracefully, for custom use cases.
+
+            Not only for typing, but for performance reasons, and coherence (iter(`Iter`) and iter(`Iter._inner`) wouldn't behave consistently otherwise).
 
         Returns:
             Option[T]: The next element in the iterator. `Some[T]`, or `NONE` if the iterator is exhausted.
@@ -188,7 +197,7 @@ class Iter[T](
         ```python
         >>> import pyochain as pc
         >>> # Creating from unpacked values
-        >>> pc.Iter.from_(1, 2, 3).collect(tuple)
+        >>> pc.Iter.from_(1, 2, 3).collect()
         Seq(1, 2, 3)
 
         ```
@@ -328,24 +337,11 @@ class Iter[T](
 
         return self._lazy(_struct)
 
-    def collect(self, factory: Callable[[Iterable[T]], Sequence[T]] = tuple) -> Seq[T]:
-        """Collect the elements into a `Sequence`, using the provided factory.
-
-        The factory will be the underlying data structure of the resulting `Seq`.
+    def collect(self) -> Seq[T]:
+        """Collect the elements of the Iterator in a tuple and wrap it in a `Seq`.
 
         Note:
-            Any Callable capable of consuming an `Iterable` and producing a `Sequence` is valid.
-
-            Polars/Pandas Series, numpy arrays, tuples, etc. are all valid factories.
-
-            However, the actual type of the container will be lost once wrapped in a `Seq`.
-
-            Calling `.inner()` on the resulting `Seq` will always return a generic `Sequence`.
-
-            Prefer using `.into()` if you want to convert the Iter into a specific container type directly.
-
-        Args:
-            factory (Callable[[Iterable[T]], Sequence[T]]): A callable that takes an iterable and returns a Sequence. Defaults to `tuple`.
+            Prefer using `.into()` if you want to convert the Iter into a specific container type directly (polars Series, dict, set, etc.).
 
         Returns:
             Seq[T]: A `Seq` containing the collected elements.
@@ -357,12 +353,12 @@ class Iter[T](
         Seq(0, 1, 2, 3, 4)
         >>> data: tuple[int, ...] = (1, 2, 3)
         >>> iterator = pc.Iter.from_(data)
-        >>> iterator.inner().__class__.__name__
+        >>> iterator._inner.__class__.__name__
         'tuple_iterator'
         >>> mapped = iterator.map(lambda x: x * 2)
-        >>> mapped.inner().__class__.__name__
+        >>> mapped._inner.__class__.__name__
         'map'
-        >>> mapped.collect(tuple)
+        >>> mapped.collect()
         Seq(2, 4, 6)
         >>> # iterator is now exhausted
         >>> iterator.collect()
@@ -370,26 +366,13 @@ class Iter[T](
 
         ```
         """
-        return self._eager(factory)
+        return Seq(self.into(tuple))
 
-    def collect_mut(
-        self, factory: Callable[[Iterable[T]], MutableSequence[T]] = list
-    ) -> Vec[T]:
-        """Collect the elements into a `MutableSequence`, using the provided factory.
-
-        The factory will be the underlying data structure of the resulting `Vec`.
+    def collect_mut(self) -> Vec[T]:
+        """Collect the elements of the Iterator in a list and wrap it in a `Vec`.
 
         Note:
-            Any Callable capable of consuming an `Iterable` and producing a `MutableSequence` is valid.
-
-            However, the actual type of the container will be lost once wrapped in a `Vec`.
-
-            Calling `.inner()` on the resulting `Vec` will always return a generic `MutableSequence`.
-
             Prefer using `.into()` if you want to convert the Iter into a specific container type directly.
-
-        Args:
-            factory (Callable[[Iterable[T]], MutableSequence[T]]): A callable that takes an iterable and returns a MutableSequence. Defaults to `list`.
 
         Returns:
             Vec[T]: A `Vec` containing the collected elements.
@@ -401,10 +384,10 @@ class Iter[T](
         Vec(0, 1, 2, 3, 4)
         >>> data: list[int] = [1, 2, 3]
         >>> iterator = pc.Iter.from_(data)
-        >>> iterator.inner().__class__.__name__
+        >>> iterator._inner.__class__.__name__
         'list_iterator'
         >>> mapped = iterator.map(lambda x: x * 2)
-        >>> mapped.inner().__class__.__name__
+        >>> mapped._inner.__class__.__name__
         'map'
         >>> mapped.collect_mut()
         Vec(2, 4, 6)
@@ -414,7 +397,7 @@ class Iter[T](
 
         ```
         """
-        return Vec(self.into(factory))
+        return Vec(self.into(list))
 
     def try_collect[U](self: TryIter[U]) -> Option[Vec[U]]:
         """Fallibly transforms **self** into a `Vec`, short circuiting if a failure is encountered.
@@ -802,15 +785,15 @@ class Iter[T](
         ```python
         >>> import pyochain as pc
         >>> def _get_results(x: pc.Iter[pc.Iter[int]]) -> pc.Seq[pc.Seq[int]]:
-        ...    return x.map(lambda x: x.collect(list)).collect()
+        ...    return x.map(lambda x: x.collect()).collect()
         >>>
         >>> data = [1, 2, 3, 4, 5, 6]
         >>> pc.Iter(data).split_into(pc.Some(1), pc.Some(2), pc.Some(3)).into(_get_results)
-        Seq(Seq(1), Seq(2, 3), Seq(4, 5, 6))
+        Seq(Seq(1,), Seq(2, 3), Seq(4, 5, 6))
         >>> pc.Iter(data).split_into(pc.Some(2), pc.Some(3)).into(_get_results)
         Seq(Seq(1, 2), Seq(3, 4, 5))
         >>> pc.Iter([1, 2, 3, 4]).split_into(pc.Some(1), pc.Some(2), pc.Some(3), pc.Some(4)).into(_get_results)
-        Seq(Seq(1), Seq(2, 3), Seq(4), Seq())
+        Seq(Seq(1,), Seq(2, 3), Seq(4,), Seq())
         >>> data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
         >>> pc.Iter(data).split_into(pc.Some(2), pc.Some(3), pc.NONE).into(_get_results)
         Seq(Seq(1, 2), Seq(3, 4, 5), Seq(6, 7, 8, 9, 0))
@@ -855,9 +838,9 @@ class Iter[T](
         ```python
         >>> import pyochain as pc
         >>> data = pc.Seq([1, 2, 3, 3, 2, 5, 2, 4, 2])
-        >>> data.iter().split_when(lambda x, y: x > y).map(lambda x: x.collect(list)).collect()
-        Seq(Seq(1, 2, 3, 3), Seq(2, 5), Seq(2, 4), Seq(2))
-        >>> data.iter().split_when(lambda x, y: x > y, max_split=2).map(lambda x: x.collect(list)).collect()
+        >>> data.iter().split_when(lambda x, y: x > y).map(lambda x: x.collect()).collect()
+        Seq(Seq(1, 2, 3, 3), Seq(2, 5), Seq(2, 4), Seq(2,))
+        >>> data.iter().split_when(lambda x, y: x > y, max_split=2).map(lambda x: x.collect()).collect()
         Seq(Seq(1, 2, 3, 3), Seq(2, 5), Seq(2, 4, 2))
 
         ```
@@ -1080,22 +1063,25 @@ class Iter[T](
 class Seq[T](CommonMethods[T], Sequence[T]):
     """`Seq` represent an in memory Sequence.
 
+    Implements the `Sequence` Protocol from `collections.abc`, so it can be used as a standard immutable sequence.
+
     Provides a subset of `Iter` methods with eager evaluation, and is the return type of `Iter.collect()`.
 
-    You can create a `Seq` from any `Sequence` (like a list, or tuple) using the standard constructor,
-    or from unpacked values using the `from_` class method.
+    The underlying data structure is an immutable tuple, hence the memory efficiency is better than a `Vec`.
 
-    Doing `Seq(...).iter()` or `Iter.from_(...)` are equivalent.
+    You can create a `Seq` from any `Iterable` (like a list, or polars.Series) or unpacked values using the `from_` class method.
+
+    If you already have a tuple, simply pass it to the constructor, without runtime checks.
 
     Args:
-            data (Sequence[T]): The data to initialize the Seq with.
+            data (tuple[T, ...]): The data to initialize the Seq with.
     """
 
-    _inner: Sequence[T]
+    _inner: tuple[T, ...]
 
     __slots__ = ("_inner",)
 
-    def __init__(self, data: Sequence[T]) -> None:
+    def __init__(self, data: tuple[T, ...]) -> None:
         self._inner = data  # pyright: ignore[reportIncompatibleVariableOverride]
 
     @overload
@@ -1137,7 +1123,7 @@ class Seq[T](CommonMethods[T], Sequence[T]):
 
         """
         converted = _convert_data(data, *more_data)
-        return Seq(converted if isinstance(converted, Sequence) else tuple(converted))
+        return Seq(converted if isinstance(converted, tuple) else tuple(converted))
 
     def iter(self) -> Iter[T]:
         """Get an iterator over the sequence.
@@ -1171,7 +1157,7 @@ class Seq[T](CommonMethods[T], Sequence[T]):
         ```python
         ```
         """
-        for v in self.inner():
+        for v in self._inner:
             func(v, *args, **kwargs)
         return self
 
@@ -1194,18 +1180,23 @@ class Seq[T](CommonMethods[T], Sequence[T]):
 class Vec[T](Seq[T], MutableSequence[T]):
     """A mutable sequence wrapper with functional API.
 
-    Unlike `Seq` which wraps immutable sequences (tuple by default),
-    `Vec` wraps mutable sequences (list by default).
+    Implement `MutableSequence` Protocol from `collections.abc` so it can be used as a standard mutable sequence.
+
+    Unlike `Seq` which is immutable, `Vec` allows in-place modification of elements.
 
     Implement the `MutableSequence` interface, so elements can be modified in place, and passed to any function/object expecting a standard mutable sequence.
 
+    If you already have a list, simply pass it to the constructor, without runtime checks.
+
+    Otherwise, use the `from_` class method to create a `Vec` from any `Iterable` or unpacked values.
+
     Args:
-        data (MutableSequence[T]): The mutable sequence to wrap.
+        data (list[T]): The mutable sequence to wrap.
     """
 
-    _inner: MutableSequence[T]
+    _inner: list[T]
 
-    def __init__(self, data: MutableSequence[T]) -> None:
+    def __init__(self, data: list[T]) -> None:
         self._inner = data  # type: ignore[assignment]
 
     @overload
@@ -1267,9 +1258,7 @@ class Vec[T](Seq[T], MutableSequence[T]):
 
         """
         converted = _convert_data(data, *more_data)
-        return Vec(
-            converted if isinstance(converted, MutableSequence) else list(converted)
-        )
+        return Vec(converted if isinstance(converted, list) else list(converted))
 
     @staticmethod
     def new() -> Vec[T]:

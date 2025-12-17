@@ -265,7 +265,7 @@ class BaseProcess[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter("ABCABC").elements().sort()
-        Seq('A', 'A', 'B', 'B', 'C', 'C')
+        Vec('A', 'A', 'B', 'B', 'C', 'C')
 
         ```
         Knuth's example for prime factors of 1836:  2**2 * 3**3 * 17**1
