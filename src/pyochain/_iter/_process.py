@@ -1,37 +1,23 @@
 from __future__ import annotations
 
 import itertools
-from collections.abc import Callable, Generator, Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from functools import partial
 from random import Random
 from typing import TYPE_CHECKING, Any, NamedTuple
 
 import cytoolz as cz
-import more_itertools as mit
 
 from .._core import IterWrapper
 
 if TYPE_CHECKING:
+    from .._results import Result
     from ._main import Iter
 
 
 class Peeked[T](NamedTuple):
     values: tuple[T, ...]
     original: Iterator[T]
-
-
-def _too_short(item_count: int) -> None:
-    return mit.raise_(
-        ValueError,
-        f"Too few items in iterable (got {item_count})",
-    )
-
-
-def _too_long(item_count: int) -> None:
-    return mit.raise_(
-        ValueError,
-        f"Too many items in iterable (got at least {item_count})",
-    )
 
 
 class BaseProcess[T](IterWrapper[T]):
@@ -323,25 +309,21 @@ class BaseProcess[T](IterWrapper[T]):
 
         return self._lazy(_reverse)
 
-    def is_strictly_n(
-        self,
-        n: int,
-        too_short: Callable[[int], Iterator[T]] | Callable[[int], None] = _too_short,
-        too_long: Callable[[int], Iterator[T]] | Callable[[int], None] = _too_long,
-    ) -> Iter[T]:
-        """Validate that *iterable* has exactly *n* items and return them if it does.
+    def is_strictly_n(self, n: int) -> Iter[Result[T, ValueError]]:
+        """Yield`Ok[T]` as long as the iterable has exactly *n* items.
 
-        If it has fewer than *n* items, call function *too_short* with the actual number of items.
+        If it has fewer than *n* items, yield `Err[ValueError]` with the actual number of items.
 
-        If it has more than *n* items, call function *too_long* with the number `n + 1`.
+        If it has more than *n* items, yield `Err[ValueError]` with the number `n + 1`.
+
+        Note that the returned iterable must be consumed in order for the check to
+        be made.
 
         Args:
             n (int): The exact number of items expected.
-            too_short (Callable[[int], Iterator[T]] | Callable[[int], None]): Function to call if there are too few items.
-            too_long (Callable[[int], Iterator[T]] | Callable[[int], None]): Function to call if there are too many items.
 
         Returns:
-            Iter[T]: A new Iterable wrapper with exactly n items.
+            Iter[Result[T, ValueError]]: A new Iterable wrapper yielding results based on the item count.
 
         Example:
         ```python
@@ -349,60 +331,47 @@ class BaseProcess[T](IterWrapper[T]):
         >>> data = ["a", "b", "c", "d"]
         >>> n = 4
         >>> pc.Iter(data).is_strictly_n(n).collect()
-        Seq('a', 'b', 'c', 'd')
+        Seq(Ok(value='a'), Ok(value='b'), Ok(value='c'), Ok(value='d'))
+        >>> pc.Iter("ab").is_strictly_n(3).collect()  # doctest: +NORMALIZE_WHITESPACE
+        Seq(Ok(value='a'), Ok(value='b'),
+        Err(error=ValueError('Too few items in iterable (got 2)')))
+        >>> pc.Iter("abc").is_strictly_n(2).collect()  # doctest: +NORMALIZE_WHITESPACE
+        Seq(Ok(value='a'), Ok(value='b'),
+        Err(error=ValueError('Too many items in iterable (got at least 3)')))
 
         ```
-        Note that the returned iterable must be consumed in order for the check to
-        be made.
-
-        By default, *too_short* and *too_long* are functions that raise`ValueError`.
+        You can easily combine this with `.map(lambda r: r.map_err(...))` to handle the errors as you wish.
         ```python
-        >>> pc.Iter("ab").is_strictly_n(3).collect()  # doctest: +IGNORE_EXCEPTION_DETAIL
-        Traceback (most recent call last):
-        ...
-        ValueError: too few items in iterable (got 2)
-
-        >>> pc.Iter("abc").is_strictly_n(2).collect()  # doctest: +IGNORE_EXCEPTION_DETAIL
-        Traceback (most recent call last):
-        ...
-        ValueError: too many items in iterable (got at least 3)
+        >>> def _my_err(e: ValueError) -> str:
+        ...     return f"custom error: {e}"
+        >>>
+        >>> pc.Iter([1]).is_strictly_n(0).map(lambda r: r.map_err(_my_err)).collect()
+        Seq(Err(error='custom error: Too many items in iterable (got at least 1)'),)
 
         ```
-        You can instead supply functions that do something else.
-
-        *too_short* will be called with the number of items in *iterable*.
-
-        *too_long* will be called with `n + 1`.
+        Or use `.filter_map(...)` to only keep the `Ok` values.
         ```python
-        >>> def too_short(item_count):
-        ...     raise RuntimeError
-        >>> pc.Iter("abcd").is_strictly_n(6, too_short=too_short).collect()
-        Traceback (most recent call last):
-        ...
-        RuntimeError
-        >>> def too_long(item_count):
-        ...     print("The boss is going to hear about this")
-        >>> pc.Iter("abcdef").is_strictly_n(4, too_long=too_long).collect()
-        The boss is going to hear about this
-        Seq('a', 'b', 'c', 'd')
+        >>> pc.Iter([1, 2, 3]).is_strictly_n(2).filter_map(lambda r: r.ok()).collect()
+        Seq(1, 2)
 
         ```
         """
+        from .._results import Err, Ok
 
-        def _strictly_n_(iterable: Iterable[T]) -> Generator[T, Any]:
+        def _strictly_n_(iterable: Iterable[T]) -> Iterator[Result[T, ValueError]]:
             it = iter(iterable)
 
             sent = 0
             for item in itertools.islice(it, n):
-                yield item
+                yield Ok(item)
                 sent += 1
 
             if sent < n:
-                too_short(sent)
-                return
+                e = ValueError(f"Too few items in iterable (got {sent})")
+                yield Err(e)
 
             for _ in it:
-                too_long(n + 1)
-                return
+                e = ValueError(f"Too many items in iterable (got at least {n + 1})")
+                yield Err(e)
 
         return self._lazy(_strictly_n_)
