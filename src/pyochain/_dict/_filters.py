@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from functools import partial
-from typing import TYPE_CHECKING, Any, TypeIs, overload
+from typing import TYPE_CHECKING, TypeIs, overload
 
 import cytoolz as cz
 
@@ -126,106 +126,6 @@ class FilterDict[K, V](MappingWrapper[K, V]):
             return cz.dicttoolz.itemfilter(_, data)
 
         return self._new(_filter_kv)
-
-    def filter_attr[U](self, attr: str, dtype: type[U] = object) -> Dict[K, U]:  # noqa: ARG002
-        """Filter values that have a given attribute.
-
-        This does not enforce type checking at runtime for performance considerations.
-
-        Args:
-            attr (str): Attribute name to check for.
-            dtype (type[U]): Optional expected type of the attribute for type hinting.
-
-        Returns:
-            Dict[K, U]: A new Dict instance containing only the items whose values have the specified attribute.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Dict({"a": "hello", "b": "world", "c": 2, "d": 5}).filter_attr("capitalize", str)
-        {'a': 'hello', 'b': 'world'}
-
-        ```
-        """
-
-        def _filter_attr(data: dict[K, V]) -> dict[K, U]:
-            def has_attr(x: object) -> TypeIs[U]:
-                return hasattr(x, attr)
-
-            return cz.dicttoolz.valfilter(has_attr, data)
-
-        return self._new(_filter_attr)
-
-    def filter_type[R](self, dtype: type[R]) -> Dict[K, R]:
-        """Filter values by type.
-
-        Args:
-            dtype (type[R]): Type to filter values by.
-
-        Returns:
-            Dict[K, R]: A new Dict instance containing only the items whose values are of the
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> data = {"a": "one", "b": "two", "c": 3, "d": 4}
-        >>> pc.Dict(data).filter_type(str)
-        {'a': 'one', 'b': 'two'}
-
-        ```
-        """
-
-        def _filter_type(data: dict[K, V]) -> dict[K, R]:
-            def _(x: object) -> TypeIs[R]:
-                return isinstance(x, dtype)
-
-            return cz.dicttoolz.valfilter(_, data)
-
-        return self._new(_filter_type)
-
-    def filter_subclass[U: type[Any], R](
-        self: FilterDict[K, U],
-        parent: type[R],
-        *,
-        keep_parent: bool = True,
-    ) -> Dict[K, type[R]]:
-        """Filter values that are subclasses of a given parent class.
-
-        Args:
-            parent (type[R]): Parent class to check against.
-            keep_parent (bool): Whether to include the parent class itself. Defaults to True.
-
-        Returns:
-            Dict[K, type[R]]: A new Dict instance containing only the items whose values are subclasses of the specified parent class.
-
-        ```python
-        >>> import pyochain as pc
-        >>> class A:
-        ...     pass
-        >>> class B(A):
-        ...     pass
-        >>> class C:
-        ...     pass
-        >>> def name(cls: type[Any]) -> str:
-        ...     return cls.__name__
-        >>> data = pc.Dict({"first": A, "second": B, "third": C})
-        >>> data.filter_subclass(A).map_values(name)
-        {'first': 'A', 'second': 'B'}
-        >>> data.filter_subclass(A, keep_parent=False).map_values(name)
-        {'second': 'B'}
-
-        ```
-        """
-
-        def _filter_subclass(data: dict[K, U]) -> dict[K, type[R]]:
-            def _(x: type[Any]) -> TypeIs[type[R]]:
-                if keep_parent:
-                    return issubclass(x, parent)
-                return issubclass(x, parent) and x is not parent
-
-            return cz.dicttoolz.valfilter(_, data)
-
-        return self._new(_filter_subclass)
 
     def intersect_keys(self, *others: Mapping[K, V]) -> Dict[K, V]:
         """Keep only keys present in self and all others mappings.
