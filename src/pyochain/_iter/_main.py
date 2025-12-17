@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any, Concatenate, Self, overload
 
 import cytoolz as cz
 
+from .._results import Option
 from ._aggregations import BaseAgg
 from ._booleans import BaseBool
 from ._dicts import BaseDict
@@ -29,7 +30,7 @@ from ._tuples import BaseTuples
 
 if TYPE_CHECKING:
     from .._dict import Dict
-    from .._results import Option
+    from .._results import Result
 
 
 class CommonMethods[T](BaseAgg[T], BaseEager[T], BaseDict[T], BaseBool[T]):
@@ -407,6 +408,79 @@ class Iter[T](
         ```
         """
         return Vec(self.into(factory))
+
+    def try_collect[U](
+        self: Iter[Option[U]] | Iter[Result[U, Any]] | Iter[U | None],
+    ) -> Option[Vec[U]]:
+        """Fallibly transforms **self** into a `Vec`, short circuiting if a failure is encountered.
+
+        `try_collect()` is a variation of `collect()` that allows fallible conversions during collection.
+
+        Its main use case is simplifying conversions from iterators yielding `Option[T]`, `Result[T, E]` or `U | None` into `Option[Sequence[T]]`.
+
+        Also, if a failure is encountered during `try_collect()`, the iterator is still valid and may continue to be used, in which case it will continue iterating starting after the element that triggered the failure.
+
+        See the last example below for an example of how this works.
+
+        Note:
+            This method return `Vec[U]` instead of `Seq[U]` because the underlying data structure must be mutable in order to build up the collection.
+
+        Returns:
+            Option[Vec[U]]: `Some[Vec[U]]` if all elements were successfully collected, or `NONE` if a failure was encountered.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> # Successfully collecting an iterator of Option[int] into Option[Vec[int]]:
+        >>> pc.Iter([pc.Some(1), pc.Some(2), pc.Some(3)]).try_collect()
+        Some(value=Vec(1, 2, 3))
+        >>> # Failing to collect in the same way:
+        >>> pc.Iter([pc.Some(1), pc.Some(2), pc.NONE, pc.Some(3)]).try_collect()
+        NONE
+        >>> # A similar example, but with Result:
+        >>> pc.Iter([pc.Ok(1), pc.Ok(2), pc.Ok(3)]).try_collect()
+        Some(value=Vec(1, 2, 3))
+        >>> pc.Iter([pc.Ok(1), pc.Err("error"), pc.Ok(3)]).try_collect()
+        NONE
+        >>> def external_fn(x: int) -> int | None:
+        ...     if x % 2 == 0:
+        ...         return x
+        ...     return None
+        >>> pc.Iter([1, 2, 3, 4]).map(external_fn).try_collect()
+        NONE
+        >>> # Demonstrating that the iterator remains usable after a failure:
+        >>> it = pc.Iter([pc.Some(1), pc.NONE, pc.Some(3), pc.Some(4)])
+        >>> it.try_collect()
+        NONE
+        >>> it.try_collect()
+        Some(value=Vec(3, 4))
+
+        ```
+        """
+        from .._results import NONE, Result, Some
+
+        def _try_collect(
+            data: Iterable[Option[U]] | Iterable[Result[U, Any]] | Iterable[U | None],
+        ) -> Option[Vec[U]]:
+            collected: MutableSequence[U] = []
+
+            for item in data:
+                if item is None:
+                    return NONE
+                match item:
+                    case Result():
+                        if item.is_err():
+                            return NONE
+                        collected.append(item.unwrap())  # type: ignore[arg-type] # Already checked for None above
+                    case Option():
+                        if item.is_none():
+                            return NONE
+                        collected.append(item.unwrap())  # type: ignore[arg-type] # Already checked for None above
+                    case _ as plain_value:
+                        collected.append(plain_value)
+            return Some(Vec(collected))
+
+        return self.into(_try_collect)
 
     def for_each[**P](
         self,
