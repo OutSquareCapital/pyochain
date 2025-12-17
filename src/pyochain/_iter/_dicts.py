@@ -97,9 +97,9 @@ class BaseDict[T](IterWrapper[T]):
         ...     return pc.Iter(data).reduce(add)
         >>>
         >>> data = pc.Seq([1, 2, 3, 4, 5])
-        >>> data.iter().reduce_by(is_even, add).inner()
+        >>> data.iter().reduce_by(is_even, add)
         {False: 9, True: 6}
-        >>> data.iter().group_by(is_even).map_values(group_reduce).inner()
+        >>> data.iter().group_by(is_even).map_values(group_reduce)
         {False: 9, True: 6}
 
         ```
@@ -237,7 +237,7 @@ class BaseDict[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> arrays = [["a", "b", 1], ["a", "c", 2], ["d", 3]]
-        >>> pc.Seq(arrays).to_records().inner()
+        >>> pc.Seq(arrays).to_records()
         {'a': {'b': 1, 'c': 2}, 'd': 3}
 
         ```

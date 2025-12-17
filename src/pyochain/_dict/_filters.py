@@ -142,9 +142,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({"a": "hello", "b": "world", "c": 2, "d": 5}).filter_attr(
-        ...     "capitalize", str
-        ... ).inner()
+        >>> pc.Dict({"a": "hello", "b": "world", "c": 2, "d": 5}).filter_attr("capitalize", str)
         {'a': 'hello', 'b': 'world'}
 
         ```
@@ -171,7 +169,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         ```python
         >>> import pyochain as pc
         >>> data = {"a": "one", "b": "two", "c": 3, "d": 4}
-        >>> pc.Dict(data).filter_type(str).inner()
+        >>> pc.Dict(data).filter_type(str)
         {'a': 'one', 'b': 'two'}
 
         ```
@@ -211,9 +209,9 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         >>> def name(cls: type[Any]) -> str:
         ...     return cls.__name__
         >>> data = pc.Dict({"first": A, "second": B, "third": C})
-        >>> data.filter_subclass(A).map_values(name).inner()
+        >>> data.filter_subclass(A).map_values(name)
         {'first': 'A', 'second': 'B'}
-        >>> data.filter_subclass(A, keep_parent=False).map_values(name).inner()
+        >>> data.filter_subclass(A, keep_parent=False).map_values(name)
         {'second': 'B'}
 
         ```
@@ -243,7 +241,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         >>> d1 = {"a": 1, "b": 2, "c": 3}
         >>> d2 = {"b": 10, "c": 20}
         >>> d3 = {"c": 30}
-        >>> pc.Dict(d1).intersect_keys(d2, d3).inner()
+        >>> pc.Dict(d1).intersect_keys(d2, d3)
         {'c': 3}
 
         ```
@@ -270,7 +268,7 @@ class FilterDict[K, V](MappingWrapper[K, V]):
         >>> d1 = {"a": 1, "b": 2, "c": 3}
         >>> d2 = {"b": 10, "d": 40}
         >>> d3 = {"c": 30}
-        >>> pc.Dict(d1).diff_keys(d2, d3).inner()
+        >>> pc.Dict(d1).diff_keys(d2, d3)
         {'a': 1}
 
         ```

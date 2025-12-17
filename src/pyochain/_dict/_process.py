@@ -31,9 +31,7 @@ class ProcessDict[K, V](MappingWrapper[K, V]):
         Returns the original Dict unchanged.
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({"a": 1, "b": 2}).for_each(
-        ...     lambda k, v: print(f"Key: {k}, Value: {v}")
-        ... ).inner()
+        >>> pc.Dict({"a": 1, "b": 2}).for_each(lambda k, v: print(f"Key: {k}, Value: {v}"))
         Key: a, Value: 1
         Key: b, Value: 2
         {'a': 1, 'b': 2}

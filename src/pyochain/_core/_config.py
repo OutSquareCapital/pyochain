@@ -72,6 +72,7 @@ class PyochainConfig:
                 depth=self.depth,
                 width=self.width,
                 compact=self.compact,
+                sort_dicts=False,
             )
             + suffix
         )
