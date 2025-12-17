@@ -4,7 +4,7 @@
 
 This guide explains how data flows between:
 
-- the wrappers (`Iter`, `Seq`, `Dict`, `Result`, `Option`, …),
+- the wrappers (`Iter`, `Seq`, `Vec`, `Dict`, `Result`, `Option`, …),
 - your own functions (pure or not),
 - and the outside world (final values, side effects).
 
@@ -16,7 +16,7 @@ We will mostly classify methods by **behaviour**, not by concrete type.
 - Side-effect hooks (observe without changing): `tap`, `inspect`, `inspect_err`, `for_each`, `peek`.
 - Pure transformations (produce new values): `map`, `and_then`, `map_err`, `ok_or`, `or_else`.
 
-Along the way, we also highlight **which wrappers expose what**, so you can quickly see what is available on `Iter` vs `Seq` vs `Result` vs `Option`, and how they fit together.
+Along the way, we also highlight **which wrappers expose what**, so you can quickly see what is available on `Iter` vs `Seq` vs `Vec` vs `Dict` vs `Result` vs `Option`, and how they fit together.
 
 ---
 
@@ -108,7 +108,24 @@ pc.Iter(range(3)).collect()            # -> Seq((0, 1, 2))
 pc.Iter(range(3)).into(pc.Seq.from_)   # -> Seq((0, 1, 2))
 ```
 
-They both materialise the iterator into a `Seq`. `collect()` avoids the extra “is this iterable?” check that `Seq.from_` does, so `collect()` is the more direct materialisation primitive.
+They both materialise the iterator into a `Seq`. `collect()` avoids the extra "is this iterable?" check that `Seq.from_` does, so `collect()` is the more direct materialisation primitive.
+
+#### `Vec.from_`
+
+`Vec.from_` works similarly to `Seq.from_`, but materialises into a **mutable list** instead of an immutable tuple:
+
+- If you pass a `list`, it wraps it directly.
+- If you pass any other `Iterable` (tuple, set, iterator, generator, ...), it will **collect/materialise** it into a `list`.
+- If you pass unpacked values, it will also materialise them into a `list`.
+
+```python
+import pyochain as pc
+
+pc.Iter(range(3)).collect_mut()         # -> Vec([0, 1, 2])
+pc.Iter(range(3)).into(pc.Vec.from_)    # -> Vec([0, 1, 2])
+```
+
+Prefer `collect_mut()` for direct materialisation, as it avoids the checks that `Vec.from_` performs.
 
 #### `Option.from_`
 
@@ -158,13 +175,16 @@ Characteristics:
 On Sequences, you sometimes want to run a function on **each element** for its side effects only.
 
 - `Iter.for_each(f)` applies `f` to each element and is **terminal** (returns `None`).
-- `{Seq, Dict}.for_each(f)` does the same but returns `self` so that you can continue chaining.
+- `Seq.for_each(f)` / `Vec.for_each(f)` return `Self` (the same sequence instance) so you can continue chaining.
+- `Dict.for_each(f)` returns `Dict[K, V]` (a new Dict instance with the same data) so you can continue chaining.
 
 Iter.for_each is terminal because it **consumes** the iterator. After calling it, there are no more elements to process.
 
-`{Seq, Dict}.for_each` returns self since it calls iter() on an already in-memory structure, leaving the original Seq/Dict intact for further use.
-This is best compared to a classic python for-loop over a list or dict who would print the values.
-`Seq.tap(lambda x: x.iter().map(lambda v: print(v)))` would be an equivalent, altough much less ergonomic.
+`Seq.for_each` and `Vec.for_each` return self since they iterate over an already in-memory structure, leaving the original sequence intact for further use.
+`Dict.for_each` creates a new Dict instance (via `_new`) but with unchanged data.
+
+This is best compared to a classic Python for-loop over a list or dict that would print the values.
+`Seq.tap(lambda x: x.iter().map(lambda v: print(v)))` would be an equivalent, although much less ergonomic.
 
 ---
 
@@ -175,7 +195,7 @@ These methods are all about **observing** values and triggering side effects (lo
 - `tap`: observe self (available on all wrappers).
 - `inspect`: observe the success value inside `Option`/`Result`.
 - `inspect_err`: observe the error value inside `Result`.
-- `for_each`: run effects per element for `Iter`/`Seq`/`Dict`.
+- `for_each`: run effects per element for `Iter`/`Seq`/`Vec`/`Dict`.
 - `peek`: inspect a bounded prefix of an `Iter` without consuming it.
 
 If your callback returns something meaningful and should replace the old value, you probably want a transform (`map`, `and_then`, ...), not a side-effect hook.
@@ -431,6 +451,6 @@ All of this stems from the same design choice: make the *glue* of your program a
 **Key take-aways:**
 
 - Every wrapper has `into` and `tap` (inherited from `Pipeable`).
-- `Iter` is an `Iterator` and `Seq` is a `Sequence`, so many plain-Python functions can consume them directly (and `into` is the ergonomic way to express that in a chain).
+- `Iter` is an `Iterator`, `Seq` is a `Sequence`, and `Vec` is a `MutableSequence`, so many plain-Python functions can consume them directly (and `into` is the ergonomic way to express that in a chain).
 - `Option` and `Result` share transform methods (`map`, `and_then`, `or_else`) and the observe method `inspect`.
-- `Iter.for_each` is **terminal** (consumes the iterator); `Seq.for_each` and `Dict.for_each` return `self`.
+- `Iter.for_each` is **terminal** (consumes the iterator and returns `None`); `Seq.for_each` and `Vec.for_each` return `Self`; `Dict.for_each` returns a new `Dict[K, V]` instance.
