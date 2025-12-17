@@ -145,10 +145,10 @@ class BaseJoins[T](IterWrapper[T]):
         ```python
         >>> import pyochain as pc
         >>> pc.Iter([1, 2]).zip_longest([10]).collect()
-        Seq((Some(value=1), Some(value=10)), (Some(value=2), NONE))
+        Seq((Some(1), Some(10)), (Some(2), NONE))
         >>> # Can be combined with try collect to filter out the NONE:
         >>> pc.Iter([1, 2]).zip_longest([10]).map(lambda x: pc.Iter(x).try_collect()).collect()
-        Seq(Some(value=Vec(1, 10)), NONE)
+        Seq(Some(Vec(1, 10)), NONE)
 
         ```
         """

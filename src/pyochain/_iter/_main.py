@@ -437,13 +437,13 @@ class Iter[T](
         >>> import pyochain as pc
         >>> # Successfully collecting an iterator of Option[int] into Option[Vec[int]]:
         >>> pc.Iter([pc.Some(1), pc.Some(2), pc.Some(3)]).try_collect()
-        Some(value=Vec(1, 2, 3))
+        Some(Vec(1, 2, 3))
         >>> # Failing to collect in the same way:
         >>> pc.Iter([pc.Some(1), pc.Some(2), pc.NONE, pc.Some(3)]).try_collect()
         NONE
         >>> # A similar example, but with Result:
         >>> pc.Iter([pc.Ok(1), pc.Ok(2), pc.Ok(3)]).try_collect()
-        Some(value=Vec(1, 2, 3))
+        Some(Vec(1, 2, 3))
         >>> pc.Iter([pc.Ok(1), pc.Err("error"), pc.Ok(3)]).try_collect()
         NONE
         >>> def external_fn(x: int) -> int | None:
@@ -457,7 +457,7 @@ class Iter[T](
         >>> it.try_collect()
         NONE
         >>> it.try_collect()
-        Some(value=Vec(3, 4))
+        Some(Vec(3, 4))
 
         ```
         """

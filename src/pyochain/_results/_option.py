@@ -69,7 +69,7 @@ class Option[T](Pipeable, ABC):
         ```python
         >>> import pyochain as pc
         >>> pc.Option.from_(42)
-        Some(value=42)
+        Some(42)
         >>> pc.Option.from_(None)
         NONE
 
@@ -294,7 +294,7 @@ class Option[T](Pipeable, ABC):
         ```python
         >>> import pyochain as pc
         >>> pc.Some("Hello, World!").map(len)
-        Some(value=13)
+        Some(13)
         >>> pc.NONE.map(len)
         NONE
 
@@ -318,7 +318,7 @@ class Option[T](Pipeable, ABC):
         ```python
         >>> import pyochain as pc
         >>> pc.Some(pc.Some(42)).flatten()
-        Some(value=42)
+        Some(42)
         >>> pc.Some(pc.NONE).flatten()
         NONE
         >>> pc.NONE.flatten()
@@ -346,7 +346,7 @@ class Option[T](Pipeable, ABC):
         >>> pc.NONE.and_(pc.Some("foo"))
         NONE
         >>> pc.Some(2).and_(pc.Some("foo"))
-        Some(value='foo')
+        Some('foo')
         >>> pc.NONE.and_(pc.NONE)
         NONE
 
@@ -369,11 +369,11 @@ class Option[T](Pipeable, ABC):
         ```python
         >>> import pyochain as pc
         >>> pc.Some(2).or_(pc.NONE)
-        Some(value=2)
+        Some(2)
         >>> pc.NONE.or_(pc.Some(100))
-        Some(value=100)
+        Some(100)
         >>> pc.Some(2).or_(pc.Some(100))
-        Some(value=2)
+        Some(2)
         >>> pc.NONE.or_(pc.NONE)
         NONE
 
@@ -398,7 +398,7 @@ class Option[T](Pipeable, ABC):
         >>> def nope(x: int) -> Option[int]:
         ...     return pc.NONE
         >>> pc.Some(2).and_then(sq).and_then(sq)
-        Some(value=16)
+        Some(16)
         >>> pc.Some(2).and_then(sq).and_then(nope)
         NONE
         >>> pc.Some(2).and_then(nope).and_then(sq)
@@ -429,9 +429,9 @@ class Option[T](Pipeable, ABC):
         >>> def vikings() -> Option[str]:
         ...     return pc.Some("vikings")
         >>> pc.Some("barbarians").or_else(vikings)
-        Some(value='barbarians')
+        Some('barbarians')
         >>> pc.NONE.or_else(vikings)
-        Some(value='vikings')
+        Some('vikings')
         >>> pc.NONE.or_else(nobody)
         NONE
 
@@ -452,9 +452,9 @@ class Option[T](Pipeable, ABC):
         ```python
         >>> import pyochain as pc
         >>> pc.Some(1).ok_or('fail')
-        Ok(value=1)
+        Ok(1)
         >>> pc.NONE.ok_or('fail')
-        Err(error='fail')
+        Err('fail')
 
         ```
         """
@@ -475,9 +475,9 @@ class Option[T](Pipeable, ABC):
         ```python
         >>> import pyochain as pc
         >>> pc.Some(1).ok_or_else(lambda: 'fail')
-        Ok(value=1)
+        Ok(1)
         >>> pc.NONE.ok_or_else(lambda: 'fail')
-        Err(error='fail')
+        Err('fail')
 
         ```
         """
@@ -555,7 +555,7 @@ class Option[T](Pipeable, ABC):
         >>> pc.Some(3).filter(is_even)
         NONE
         >>> pc.Some(4).filter(is_even)
-        Some(value=4)
+        Some(4)
 
         ```
         """
@@ -578,7 +578,7 @@ class Option[T](Pipeable, ABC):
         ```python
         >>> import pyochain as pc
         >>> pc.Some(42).iter().next()
-        Some(value=42)
+        Some(42)
         >>> pc.NONE.iter().next()
         NONE
 
@@ -605,7 +605,7 @@ class Option[T](Pipeable, ABC):
         >>> import pyochain as pc
         >>> seen: list[int] = []
         >>> pc.Some(2).inspect(lambda x: seen.append(x))
-        Some(value=2)
+        Some(2)
         >>> seen
         [2]
         >>> pc.NONE.inspect(lambda x: seen.append(x))
@@ -632,7 +632,7 @@ class Option[T](Pipeable, ABC):
         ```python
         >>> import pyochain as pc
         >>> pc.Some((1, 'a')).unzip()
-        (Some(value=1), Some(value='a'))
+        (Some(1), Some('a'))
         >>> pc.NONE.unzip()
         (NONE, NONE)
 
@@ -658,7 +658,7 @@ class Option[T](Pipeable, ABC):
         ```python
         >>> import pyochain as pc
         >>> pc.Some(1).zip(pc.Some('a'))
-        Some(value=(1, 'a'))
+        Some((1, 'a'))
         >>> pc.Some(1).zip(pc.NONE)
         NONE
         >>> pc.NONE.zip(pc.Some('a'))
@@ -699,7 +699,7 @@ class Option[T](Pipeable, ABC):
         >>> x = pc.Some(17.5)
         >>> y = pc.Some(42.7)
         >>> x.zip_with(y, Point)
-        Some(value=Point(x=17.5, y=42.7))
+        Some(Point(x=17.5, y=42.7))
         >>> x.zip_with(pc.NONE, Point)
         NONE
 
@@ -737,11 +737,11 @@ class Option[T](Pipeable, ABC):
         ...     return a + b
         >>>
         >>> s12.reduce(s17, add)
-        Some(value=29)
+        Some(29)
         >>> s12.reduce(pc.NONE, add)
-        Some(value=12)
+        Some(12)
         >>> pc.NONE.reduce(s17, add)
-        Some(value=17)
+        Some(17)
         >>> pc.NONE.reduce(pc.NONE, add)
         NONE
 
@@ -769,11 +769,11 @@ class Option[T](Pipeable, ABC):
         ```python
         >>> import pyochain as pc
         >>> pc.Some(pc.Ok(5)).transpose()
-        Ok(value=Some(value=5))
+        Ok(Some(5))
         >>> pc.NONE.transpose()
-        Ok(value=NONE)
+        Ok(NONE)
         >>> pc.Some(pc.Err("error")).transpose()
-        Err(error='error')
+        Err('error')
 
         ```
         """
@@ -799,9 +799,9 @@ class Option[T](Pipeable, ABC):
         ```python
         >>> import pyochain as pc
         >>> pc.Some(2).xor(pc.NONE)
-        Some(value=2)
+        Some(2)
         >>> pc.NONE.xor(pc.Some(2))
-        Some(value=2)
+        Some(2)
         >>> pc.Some(2).xor(pc.Some(2))
         NONE
         >>> pc.NONE.xor(pc.NONE)

@@ -212,7 +212,7 @@ class BaseBool[T](IterWrapper[T]):
         ...     return x > 9
         >>>
         >>> pc.Seq(range(10)).find(predicate=gt_five)
-        Some(value=6)
+        Some(6)
         >>> pc.Seq(range(10)).find(predicate=gt_nine).unwrap_or("missing")
         'missing'
 

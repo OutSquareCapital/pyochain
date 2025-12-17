@@ -17,6 +17,9 @@ class Ok[T, E](Result[T, E]):
 
     value: T
 
+    def __repr__(self) -> str:
+        return f"Ok({self.value!r})"
+
     def is_ok(self) -> bool:
         return True
 
@@ -40,6 +43,9 @@ class Err[T, E](Result[T, E]):
     """
 
     error: E
+
+    def __repr__(self) -> str:
+        return f"Err({self.error!r})"
 
     def is_ok(self) -> bool:
         return False
@@ -66,13 +72,16 @@ class Some[T](Option[T]):
     ```python
     >>> import pyochain as pc
     >>> pc.Some(42)
-    Some(value=42)
+    Some(42)
 
     ```
 
     """
 
     value: T
+
+    def __repr__(self) -> str:
+        return f"Some({self.value!r})"
 
     def is_some(self) -> bool:
         return True

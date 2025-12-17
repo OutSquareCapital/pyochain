@@ -237,7 +237,7 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         >>> import pyochain as pc
         >>> data = {"a": {"b": {"c": 1}}}
         >>> pc.Dict(data).get_in("a", "b", "c")
-        Some(value=1)
+        Some(1)
         >>> pc.Dict(data).get_in("a", "x").unwrap_or('Not Found')
         'Not Found'
 

@@ -48,9 +48,9 @@ class BaseFilter[T](IterWrapper[T]):
         >>> pc.Iter(data).filter(lambda x: x > 1).collect()
         Seq(2, 3)
         >>> pc.Iter(data).filter(lambda x: x > 1).next()
-        Some(value=2)
+        Some(2)
         >>> pc.Iter(data).find(lambda x: x > 1)
-        Some(value=2)
+        Some(2)
 
         ```
         """

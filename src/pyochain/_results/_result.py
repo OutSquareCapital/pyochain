@@ -42,10 +42,10 @@ class Result[T, E](Pipeable, ABC):
         >>> import pyochain as pc
         >>> nested_ok: pc.Result[pc.Result[int, str], str] = pc.Ok(pc.Ok(2))
         >>> nested_ok.flatten()
-        Ok(value=2)
+        Ok(2)
         >>> nested_err: pc.Result[pc.Result[int, str], str] = pc.Ok(pc.Err("inner error"))
         >>> nested_err.flatten()
-        Err(error='inner error')
+        Err('inner error')
 
         ```
         """
@@ -295,9 +295,9 @@ class Result[T, E](Pipeable, ABC):
         ```python
         >>> import pyochain as pc
         >>> pc.Ok(2).map(lambda x: x * 2)
-        Ok(value=4)
+        Ok(4)
         >>> pc.Err("error").map(lambda x: x * 2)
-        Err(error='error')
+        Err('error')
 
         ```
         """
@@ -321,9 +321,9 @@ class Result[T, E](Pipeable, ABC):
         ```python
         >>> import pyochain as pc
         >>> pc.Ok(2).map_err(len)
-        Ok(value=2)
+        Ok(2)
         >>> pc.Err("foo").map_err(len)
-        Err(error=3)
+        Err(3)
 
         ```
         """
@@ -348,7 +348,7 @@ class Result[T, E](Pipeable, ABC):
         >>> import pyochain as pc
         >>> seen: list[int] = []
         >>> pc.Ok(2).inspect(lambda x: seen.append(x))
-        Ok(value=2)
+        Ok(2)
         >>> seen
         [2]
 
@@ -375,7 +375,7 @@ class Result[T, E](Pipeable, ABC):
         >>> import pyochain as pc
         >>> seen: list[str] = []
         >>> pc.Err("oops").inspect_err(lambda e: seen.append(e))
-        Err(error='oops')
+        Err('oops')
         >>> seen
         ['oops']
 
@@ -402,21 +402,21 @@ class Result[T, E](Pipeable, ABC):
         >>> x = pc.Ok(2)
         >>> y = pc.Err("late error")
         >>> x.and_(y)
-        Err(error='late error')
+        Err('late error')
         >>> x = pc.Err("early error")
         >>> y = pc.Ok("foo")
         >>> x.and_(y)
-        Err(error='early error')
+        Err('early error')
 
         >>> x = pc.Err("not a 2")
         >>> y = pc.Err("late error")
         >>> x.and_(y)
-        Err(error='not a 2')
+        Err('not a 2')
 
         >>> x = pc.Ok(2)
         >>> y = pc.Ok("different result type")
         >>> x.and_(y)
-        Ok(value='different result type')
+        Ok('different result type')
 
         ```
         """
@@ -439,9 +439,9 @@ class Result[T, E](Pipeable, ABC):
         >>> def to_str(x: int) -> Result[str, str]:
         ...     return pc.Ok(str(x))
         >>> pc.Ok(2).and_then(to_str)
-        Ok(value='2')
+        Ok('2')
         >>> pc.Err("error").and_then(to_str)
-        Err(error='error')
+        Err('error')
 
         ```
         """
@@ -464,9 +464,9 @@ class Result[T, E](Pipeable, ABC):
         >>> def fallback(e: str) -> Result[int, str]:
         ...     return pc.Ok(len(e))
         >>> pc.Ok(2).or_else(fallback)
-        Ok(value=2)
+        Ok(2)
         >>> pc.Err("foo").or_else(fallback)
-        Ok(value=3)
+        Ok(3)
 
         ```
         """
@@ -484,7 +484,7 @@ class Result[T, E](Pipeable, ABC):
         ```python
         >>> import pyochain as pc
         >>> pc.Ok(2).ok()
-        Some(value=2)
+        Some(2)
         >>> pc.Err("error").ok()
         NONE
 
@@ -508,7 +508,7 @@ class Result[T, E](Pipeable, ABC):
         >>> pc.Ok(2).err()
         NONE
         >>> pc.Err("error").err()
-        Some(value='error')
+        Some('error')
 
         ```
         """
@@ -596,7 +596,7 @@ class Result[T, E](Pipeable, ABC):
         ```python
         >>> import pyochain as pc
         >>> pc.Ok(7).iter().next()
-        Some(value=7)
+        Some(7)
         >>> pc.Err("nothing!").iter().next()
         NONE
 
@@ -618,11 +618,11 @@ class Result[T, E](Pipeable, ABC):
         ```python
         >>> import pyochain as pc
         >>> pc.Ok(pc.Some(2)).transpose()
-        Some(value=Ok(value=2))
+        Some(Ok(2))
         >>> pc.Ok(pc.NONE).transpose()
         NONE
         >>> pc.Err("err").transpose()
-        Some(value=Err(error='err'))
+        Some(Err('err'))
 
         ```
         """
@@ -648,13 +648,13 @@ class Result[T, E](Pipeable, ABC):
         ```python
         >>> import pyochain as pc
         >>> pc.Ok(2).or_(pc.Err("late error"))
-        Ok(value=2)
+        Ok(2)
         >>> pc.Err("early error").or_(pc.Ok(2))
-        Ok(value=2)
+        Ok(2)
         >>> pc.Err("not a 2").or_(pc.Err("late error"))
-        Err(error='late error')
+        Err('late error')
         >>> pc.Ok(2).or_(pc.Ok(100))
-        Ok(value=2)
+        Ok(2)
 
         ```
         """

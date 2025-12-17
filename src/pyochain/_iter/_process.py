@@ -331,13 +331,13 @@ class BaseProcess[T](IterWrapper[T]):
         >>> data = ["a", "b", "c", "d"]
         >>> n = 4
         >>> pc.Iter(data).is_strictly_n(n).collect()
-        Seq(Ok(value='a'), Ok(value='b'), Ok(value='c'), Ok(value='d'))
+        Seq(Ok('a'), Ok('b'), Ok('c'), Ok('d'))
         >>> pc.Iter("ab").is_strictly_n(3).collect()  # doctest: +NORMALIZE_WHITESPACE
-        Seq(Ok(value='a'), Ok(value='b'),
-        Err(error=ValueError('Too few items in iterable (got 2)')))
+        Seq(Ok('a'), Ok('b'),
+        Err(ValueError('Too few items in iterable (got 2)')))
         >>> pc.Iter("abc").is_strictly_n(2).collect()  # doctest: +NORMALIZE_WHITESPACE
-        Seq(Ok(value='a'), Ok(value='b'),
-        Err(error=ValueError('Too many items in iterable (got at least 3)')))
+        Seq(Ok('a'), Ok('b'),
+        Err(ValueError('Too many items in iterable (got at least 3)')))
 
         ```
         You can easily combine this with `.map(lambda r: r.map_err(...))` to handle the errors as you wish.
@@ -346,7 +346,7 @@ class BaseProcess[T](IterWrapper[T]):
         ...     return f"custom error: {e}"
         >>>
         >>> pc.Iter([1]).is_strictly_n(0).map(lambda r: r.map_err(_my_err)).collect()
-        Seq(Err(error='custom error: Too many items in iterable (got at least 1)'),)
+        Seq(Err('custom error: Too many items in iterable (got at least 1)'),)
 
         ```
         Or use `.filter_map(...)` to only keep the `Ok` values.
