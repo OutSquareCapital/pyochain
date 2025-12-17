@@ -26,7 +26,6 @@ from ._joins import BaseJoins
 from ._maps import BaseMap
 from ._partitions import BasePartitions
 from ._process import BaseProcess
-from ._rolling import BaseRolling
 from ._tuples import BaseTuples
 
 if TYPE_CHECKING:
@@ -52,7 +51,6 @@ class Iter[T](
     BaseFilter[T],
     BaseProcess[T],
     BaseMap[T],
-    BaseRolling[T],
     BaseTuples[T],
     BasePartitions[T],
     BaseJoins[T],
@@ -1058,6 +1056,31 @@ class Iter[T](
                 yield self.__class__(buf)
 
         return self._lazy(_split_before, max_split)
+
+    def find_map[R](self, func: Callable[[T], Option[R]]) -> Option[R]:
+        """Applies function to the elements of the `Iterator` and returns the first Some(R) result.
+
+        `Iter.find_map(f)` is equivalent to `Iter.filter_map(f).next()`.
+
+        Args:
+            func (Callable[[T], Option[R]]): Function to apply to each element, returning an `Option[R]`.
+
+        Returns:
+            Option[R]: The first `Some(R)` result from applying `func`, or `NONE` if no such result is found.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> def _parse(s: str) -> pc.Option[int]:
+        ...     try:
+        ...         return pc.Some(int(s))
+        ...     except ValueError:
+        ...         return pc.NONE
+        >>>
+        >>> pc.Iter(["lol", "NaN", "2", "5"]).find_map(_parse)
+        Some(2)
+        """
+        return self.filter_map(func).next()
 
 
 class Seq[T](CommonMethods[T], Sequence[T]):

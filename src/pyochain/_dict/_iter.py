@@ -103,12 +103,12 @@ class IterDict[K, V](MappingWrapper[K, V]):
         return self.into(lambda d: Iter(d.inner().items()))
 
     def to_arrays(self) -> Vec[list[Any]]:
-        """Convert the nested dictionary into a sequence of arrays.
+        """Convert the nested dictionary into a `Vec` of arrays.
 
         The sequence represents all paths from root to leaves.
 
         Returns:
-            Seq[list[Any]]: A Seq of arrays representing paths from root to leaves.
+            Vec[list[Any]]: A `Vec` of arrays representing paths from root to leaves.
 
         ```python
         >>> import pyochain as pc
