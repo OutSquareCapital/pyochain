@@ -689,6 +689,9 @@ class Iter[T](
 
         Returns:
             Iter[Any]: An iterable of flattened transformed elements.
+
+        Example:
+        ```python
         >>> import pyochain as pc
         >>> data = [[1, 2], [3, 4]]
         >>> pc.Seq(data).iter().flat_map(lambda x: x + 10).collect()

@@ -10,7 +10,7 @@ import more_itertools as mit
 from .._core import IterWrapper
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Generator, Iterable, Iterator
+    from collections.abc import Callable, Iterable, Iterator
 
     from .._results import Option
     from ._main import Iter
@@ -56,35 +56,9 @@ class BaseFilter[T](IterWrapper[T]):
         """
 
         def _filter(data: Iterable[T]) -> Iterator[T]:
-            return (x for x in data if func(x))
+            return filter(func, data)
 
         return self._lazy(_filter)
-
-    def filter_attr[U](self, attr: str, dtype: type[U] = object) -> Iter[U]:  # noqa: ARG002
-        """Return elements that have the given attribute.
-
-        The provided dtype is not checked at runtime for performance considerations.
-
-        Args:
-            attr (str): Name of the attribute to check for.
-            dtype (type[U]): Expected type of the attribute. Defaults to object.
-
-        Returns:
-            Iter[U]: An iterable of the items that have the specified attribute.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter(("hello", "world", 2, 5)).filter_attr("capitalize", str).collect()
-        Seq('hello', 'world')
-
-        ```
-        """
-
-        def check(data: Iterable[Any]) -> Generator[U]:
-            return (x for x in data if hasattr(x, attr))
-
-        return self._lazy(check)
 
     def filter_false(self, func: Callable[[T], bool]) -> Iter[T]:
         """Return elements for which func is false.
@@ -368,74 +342,6 @@ class BaseFilter[T](IterWrapper[T]):
             return itertools.islice(data, start, stop, step)
 
         return self._lazy(_slice)
-
-    def filter_subclass[U: type[Any], R](
-        self: IterWrapper[U],
-        parent: type[R],
-        *,
-        keep_parent: bool = True,
-    ) -> Iter[type[R]]:
-        """Return elements that are subclasses of the given class, optionally excluding the parent class itself.
-
-        Args:
-            parent (type[R]): Parent class to check against.
-            keep_parent (bool): Whether to include the parent class itself. Defaults to True.
-
-        Returns:
-            Iter[type[R]]: A new Iterable wrapper with the filtered subclasses.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> class A:
-        ...     pass
-        >>> class B(A):
-        ...     pass
-        >>> class C:
-        ...     pass
-        >>> def name(cls: type[Any]) -> str:
-        ...     return cls.__name__
-        >>>
-        >>> data = pc.Seq((A, B, C))
-        >>> data.iter().filter_subclass(A).map(name).collect()
-        Seq('A', 'B')
-        >>> data.iter().filter_subclass(A, keep_parent=False).map(name).collect()
-        Seq('B',)
-
-        ```
-        """
-
-        def _filter_subclass(
-            data: Iterable[type[Any]],
-        ) -> Generator[type[R]]:
-            if keep_parent:
-                return (x for x in data if issubclass(x, parent))
-            return (x for x in data if issubclass(x, parent) and x is not parent)
-
-        return self._lazy(_filter_subclass)
-
-    def filter_type[R](self, dtype: type[R]) -> Iter[R]:
-        """Return elements that are instances of the given type.
-
-        Args:
-            dtype (type[R]): Type to check against.
-
-        Returns:
-            Iter[R]: An iterable of the items that are instances of the specified type.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1, "two", 3.0, "four", 5)).filter_type(int).collect()
-        Seq(1, 5)
-
-        ```
-        """
-
-        def _filter_type(data: Iterable[T]) -> Generator[R]:
-            return (x for x in data if isinstance(x, dtype))
-
-        return self._lazy(_filter_type)
 
     def filter_map[R](self, func: Callable[[T], Option[R]]) -> Iter[R]:
         """Creates an iterator that both filters and maps.

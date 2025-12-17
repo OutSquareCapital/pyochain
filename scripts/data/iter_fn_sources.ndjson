@@ -18,10 +18,7 @@
 {"source":"python","fn":"elements"}
 {"source":"python","fn":"every"}
 {"source":"python","fn":"extract"}
-{"source":"python","fn":"filter_attr"}
 {"source":"python","fn":"filter_false"}
-{"source":"python","fn":"filter_subclass"}
-{"source":"python","fn":"filter_type"}
 {"source":"python","fn":"first"}
 {"source":"python","fn":"frequencies"}
 {"source":"python","fn":"from_"}
