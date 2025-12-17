@@ -8,7 +8,7 @@ import cytoolz as cz
 from .._core import MappingWrapper
 
 if TYPE_CHECKING:
-    from .._iter import Iter, Seq
+    from .._iter import Iter, Vec
     from ._main import Dict
 
 
@@ -102,7 +102,7 @@ class IterDict[K, V](MappingWrapper[K, V]):
 
         return self.into(lambda d: Iter(d.inner().items()))
 
-    def to_arrays(self) -> Seq[list[Any]]:
+    def to_arrays(self) -> Vec[list[Any]]:
         """Convert the nested dictionary into a sequence of arrays.
 
         The sequence represents all paths from root to leaves.
@@ -121,7 +121,7 @@ class IterDict[K, V](MappingWrapper[K, V]):
 
         ```
         """
-        from .._iter import Seq
+        from .._iter import Vec
 
         def _to_arrays(d: Mapping[Any, Any]) -> list[list[Any]]:
             match d:
@@ -134,4 +134,4 @@ class IterDict[K, V](MappingWrapper[K, V]):
                 case _:
                     return [[d]]
 
-        return self.into(lambda d: Seq(_to_arrays(d.inner())))
+        return self.into(lambda d: Vec(_to_arrays(d.inner())))
