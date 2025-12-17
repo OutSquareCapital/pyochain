@@ -105,7 +105,7 @@ class CommonBase[T](ABC, Pipeable):
         """
         return self._inner
 
-    def equals_to(self, other: Self | T) -> bool:
+    def eq(self, other: Self | T) -> bool:
         """Check if two records are equal based on their data.
 
         Args:
@@ -120,9 +120,9 @@ class CommonBase[T](ABC, Pipeable):
         >>> d1 = pc.Dict({"a": 1, "b": 2})
         >>> d2 = pc.Dict({"a": 1, "b": 2})
         >>> d3 = pc.Dict({"a": 1, "b": 3})
-        >>> d1.equals_to(d2)
+        >>> d1.eq(d2)
         True
-        >>> d1.equals_to(d3)
+        >>> d1.eq(d3)
         False
 
         ```

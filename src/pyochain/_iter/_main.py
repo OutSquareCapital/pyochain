@@ -506,7 +506,7 @@ class Iter[T](
 
         return self.into(_for_each)
 
-    def chunks(self, size: int) -> Iter[Iter[T]]:
+    def array_chunks(self, size: int) -> Iter[Iter[T]]:
         """Yield subiterators (chunks) that each yield a fixed number elements, determined by size.
 
         The last chunk will be shorter if there are not enough elements.
@@ -516,6 +516,7 @@ class Iter[T](
 
         Returns:
             Iter[Iter[T]]: An iterable of iterators, each yielding n elements.
+
         If the sub-iterables are read in order, the elements of *iterable*
         won't be stored in memory.
 
@@ -523,7 +524,7 @@ class Iter[T](
         elements as necessary.
         ```python
         >>> import pyochain as pc
-        >>> all_chunks = pc.Iter.from_count().chunks(4)
+        >>> all_chunks = pc.Iter.from_count().array_chunks(4)
         >>> c_1, c_2, c_3 = all_chunks.next(), all_chunks.next(), all_chunks.next()
         >>> c_2.unwrap().collect()  # c_1's elements have been cached; c_3's haven't been
         Seq(4, 5, 6, 7)
@@ -531,9 +532,9 @@ class Iter[T](
         Seq(0, 1, 2, 3)
         >>> c_3.unwrap().collect()
         Seq(8, 9, 10, 11)
-        >>> pc.Seq([1, 2, 3, 4, 5, 6]).iter().chunks(3).map(lambda c: c.collect()).collect()
+        >>> pc.Seq([1, 2, 3, 4, 5, 6]).iter().array_chunks(3).map(lambda c: c.collect()).collect()
         Seq(Seq(1, 2, 3), Seq(4, 5, 6))
-        >>> pc.Seq([1, 2, 3, 4, 5, 6, 7, 8]).iter().chunks(3).map(lambda c: c.collect()).collect()
+        >>> pc.Seq([1, 2, 3, 4, 5, 6, 7, 8]).iter().array_chunks(3).map(lambda c: c.collect()).collect()
         Seq(Seq(1, 2, 3), Seq(4, 5, 6), Seq(7, 8))
 
         ```

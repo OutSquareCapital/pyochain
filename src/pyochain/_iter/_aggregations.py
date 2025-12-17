@@ -186,8 +186,8 @@ class BaseAgg[T](IterWrapper[T]):
         """
         return self.into(cz.itertoolz.count)
 
-    def item(self, index: int) -> T:
-        """Return item at index.
+    def nth(self, index: int) -> T:
+        """Return the nth item at index.
 
         Args:
             index (int): The index of the item to retrieve.
@@ -197,7 +197,7 @@ class BaseAgg[T](IterWrapper[T]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([10, 20]).item(1)
+        >>> pc.Seq([10, 20]).nth(1)
         20
 
         ```
@@ -226,7 +226,7 @@ class BaseAgg[T](IterWrapper[T]):
         >>> models = pc.Seq(["svm", "random forest", "knn", "naïve bayes"])
         >>> accuracy = pc.Seq([68, 61, 84, 72])
         >>> # Most accurate model
-        >>> models.item(accuracy.argmax())
+        >>> models.nth(accuracy.argmax())
         'knn'
         >>>
         >>> # Best accuracy
@@ -263,7 +263,7 @@ class BaseAgg[T](IterWrapper[T]):
         >>> labels = pc.Seq(["homer", "marge", "bart", "lisa", "maggie"])
         >>> ages = pc.Seq([35, 30, 10, 9, 1])
         >>> # Fastest healing family member
-        >>> labels.item(ages.argmin(key=cost))
+        >>> labels.nth(ages.argmin(key=cost))
         'bart'
         >>> # Age with fastest healing
         >>> ages.into(min, key=cost)
