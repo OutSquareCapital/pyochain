@@ -23,20 +23,36 @@ The full API reference can be found at:
 
 ## Overview
 
+Provides the following core classes and utilities:
+
+- `Iter[T]`: A superset of Python `collections.abc.Iterator`, with chainable functional methods. Implement Iterator Protocol.
+- `Seq[T]`: An immutable collection with chainable methods. Underlying data structure is a `tuple`. Can be converted to `Iter` with the `.iter()` method. Implement Sequence Protocol.
+- `Vec[T]`: A mutable collection with chainable methods. Underlying data structure is a `list`. Can be converted to `Iter` with the `.iter()` method. Implement MutableSequence Protocol.
+- `Dict[K, V]`: An immutable mapping with chainable methods. Underlying data structure is a `dict`.
+- `Option[T] | Some[T] | NONE`: A type representing an optional value, similar to Rust's `Option` Enum. Analog to a superset of T | None.
+- `Result[T, E] | Ok[T] | Err[E]`: A type representing either a success (Ok) or failure (Err), similar to Rust's `Result` Enum. Analog to a superset of T | Exception.
+
+All classes have:`.tap()`, `from_` and `.into()` methods (or equivalents, see Option and Result for tap) for:
+
+- Easy conversion between types, whilst keeping the chain uninterrupted (`into`). E.g Seq[T].into() can take any function/object that expect a `Sequence[T]` as argument.
+- Creating instances from various inputs (`from_*`). This allow flexible instantiation when needed, without runtime checks in the base **init** of the class.
+- Inserting side-effects in the chain without breaking it (`tap`, inspect, for_each, etc...) for side-effect operations.
+
 ### Philosophy
 
-* **Declarative over Imperative:** Replace explicit `for` and `while` loops with sequences of high-level operations (map, filter, group, join...).
-* **Fluent Chaining:** Each method transforms the data and returns a new wrapper instance, allowing for seamless chaining.
-* **Lazy and Eager:** `Iter` operates lazily for efficiency on large or infinite sequences, while `Seq` represents materialized sequences for eager operations.
-* **100% Type-safe:** Extensive use of generics and overloads ensures type safety and improves developer experience.
-* **Documentation-first:** Each method is thoroughly documented with clear explanations, and usage examples. Before any commit is made, each docstring is automatically tested to ensure accuracy. This also allows for a convenient experience in IDEs, where developers can easily access documentation with a simple hover of the mouse.
-* **Functional paradigm:** Design encourages building complex data transformations by composing simple, reusable functions on known buildings blocks, rather than implementing customs classes each time.
+- **Declarative over Imperative:** Replace explicit `for` and `while` loops with sequences of high-level operations (map, filter, group, join...).
+- **Fluent Chaining:** Each method transforms the data and returns a new wrapper instance, allowing for seamless chaining.
+- **Lazy and Eager:** `Iter` operates lazily for efficiency on large or infinite sequences, while `Seq` and `Vec` represent materialized sequences for eager operations.
+- **Explicit mutability:** `Seq` is the usual return type for most methods who materialize data, hence improving memory efficiency and safety, compared to using list everytime. `Vec` is provided when mutability is required.
+- **100% Type-safe:** Extensive use of generics and overloads ensures type safety and improves developer experience.
+- **Documentation-first:** Each method is thoroughly documented with clear explanations, and usage examples. Before any commit is made, each docstring is automatically tested to ensure accuracy. This also allows for a convenient experience in IDEs, where developers can easily access documentation with a simple hover of the mouse.
+- **Functional and chained paradigm:** Design encourages building complex data transformations by composing simple, reusable functions on known buildings blocks, rather than implementing customs classes each time.
 
 ### Inspirations
 
-* **Rust's language and  Rust stdlib:** Emulate naming conventions (`from_()`, `into()`) and leverage concepts from Rust's powerful iterator traits (method chaining, lazy evaluation), Option and Result enums, to bring similar expressiveness to Python.
-* **Python iterators libraries:** Libraries like `rolling`, `cytoolz`, and `more-itertools` provided ideas, inspiration, and implementations for many of the iterator methods.
-* **PyFunctional:** Although not directly used (because I started writing pyochain before discovering it), also shares similar goals and ideas.
+- **Rust's language and  Rust stdlib:** Emulate naming conventions (`from_()`, `into()`) and leverage concepts from Rust's powerful iterator traits (method chaining, lazy evaluation), Option and Result enums, to bring similar expressiveness to Python.
+- **Python iterators libraries:** Libraries like `rolling`, `cytoolz`, and `more-itertools` provided ideas, inspiration, and implementations for many of the iterator methods.
+- **PyFunctional:** Although not directly used (because I started writing pyochain before discovering it), also shares similar goals and ideas.
 
 ### Core Components
 
@@ -48,9 +64,9 @@ This allows for efficient processing of large or even infinite sequences.
 
 To create an `Iter`, you can:
 
-* Take any iterable: `pc.Iter(my_iterable)`
-* Wrap unpacked values: `pc.Iter.from_(1, 2, 3)`
-* Use built-in constructors like `pc.Iter.from_count()` for infinite sequences.
+- Take any iterable: `pc.Iter(my_iterable)`
+- Wrap unpacked values: `pc.Iter.from_(1, 2, 3)`
+- Use built-in constructors like `pc.Iter.from_count()` for infinite sequences.
 
 #### `Seq[T]`
 
@@ -66,9 +82,9 @@ A wrapper for a `dict`, providing a rich, chainable API for dictionary manipulat
 
 Key features include:
 
-* **Immutability**: Most methods return a new `Dict` instance, preventing unintended side effects.
-* **Nested Data Utilities**: Easily work with complex, nested dictionaries using methods like `pluck` and `flatten`.
-* **Flexible Instantiation**: Create a `Dict` from mappings, iterables of pairs, or even object attributes with `Dict.from_object()`.
+- **Immutability**: Most methods return a new `Dict` instance, preventing unintended side effects.
+- **Nested Data Utilities**: Easily work with complex, nested dictionaries using methods like `pluck` and `flatten`.
+- **Flexible Instantiation**: Create a `Dict` from mappings, iterables of pairs, or even object attributes with `Dict.from_object()`.
 
 #### `Result[T, E]`
 
@@ -90,16 +106,16 @@ This is covered in detail in the guide: see
 Leverage dozens of methods inspired by Rust's `Iterator`, `itertools`, `cytoolz`, and `more-itertools`.
 
 ```python
-import pyochain as pc
-
-result = (
-    pc.Iter.from_count(1)  # Infinite iterator: 1, 2, 3, ...
-    .filter(lambda x: x % 2 != 0)  # Keep odd numbers
-    .map(lambda x: x * x)  # Square them
-    .take(5)  # Take the first 5
-    .into(list)  # Consume into a list
+>>> import pyochain as pc
+>>>
+>>> result = (
+...    pc.Iter.from_count(1)  # Infinite iterator: 1, 2, 3, ...
+...    .filter(lambda x: x % 2 != 0)  # Keep odd numbers
+...    .map(lambda x: x * x)  # Square them
+...    .take(5)  # Take the first 5
+...    .collect()  # Materialize the result into a Seq
 )
-# result: [1, 9, 25, 49, 81]
+Seq(1, 9, 25, 49, 81)
 ```
 
 ### Type-Safe Error Handling (`Result` and `Option`)
@@ -107,30 +123,34 @@ result = (
 Write robust code by handling potential failures explicitly.
 
 ```python
-import pyochain as pc
+>>> import pyochain as pc
+>>>
+>>> def divide(a: int, b: int) -> pc.Result[float, str]:
+...     if b == 0:
+...         return pc.Err("Cannot divide by zero")
+...     return pc.Ok(a / b)
+>>>
+>>> # --- With Result ---
+>>> res1 = divide(10, 2)
+Ok(5.0)
+>>> res2 = divide(10, 0)
+Err("Cannot divide by zero")
+>>> # Safely unwrap or provide a default
+>>> res2.unwrap_or(0.0)
+0.0
+>>> # Map over a successful result
+>>> res1.map(lambda x: x * x)
+Ok(25.0)
+>>> # --- With Option ---
+>>> def find_user(user_id: int) -> pc.Option[str]:
+...     users = {1: "Alice", 2: "Bob"}
+...     return pc.Some(users.get(user_id)) if user_id in users else pc.NONE
+>>>
+>>> find_user(1).map(str.upper).unwrap_or("Not Found")
+"ALICE"
+>>> find_user(3).unwrap_or("Not Found")
+"Not Found"
 
-def divide(a: int, b: int) -> pc.Result[float, str]:
-    if b == 0:
-        return pc.Err("Cannot divide by zero")
-    return pc.Ok(a / b)
-
-# --- With Result ---
-res1 = divide(10, 2)  # Ok(5.0)
-res2 = divide(10, 0)  # Err("Cannot divide by zero")
-
-# Safely unwrap or provide a default
-value = res2.unwrap_or(0.0)  # 0.0
-
-# Map over a successful result
-squared = res1.map(lambda x: x * x)  # Ok(25.0)
-
-# --- With Option ---
-def find_user(user_id: int) -> pc.Option[str]:
-    users = {1: "Alice", 2: "Bob"}
-    return pc.Some(users.get(user_id)) if user_id in users else pc.NONE
-
-user = find_user(1).map(str.upper).unwrap_or("Not Found")  # "ALICE"
-not_found = find_user(3).unwrap_or("Not Found")  # "Not Found"
 ```
 
 ### Typing enforcement
@@ -156,5 +176,3 @@ pyochain acts as a unifying API layer over these powerful tools.
 The stubs used for the developpement, made by the maintainer of pyochain, can be found here:
 
 <https://github.com/py-stubs/cytoolz-stubs>
-
----
