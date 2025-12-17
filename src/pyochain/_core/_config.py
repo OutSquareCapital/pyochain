@@ -1,5 +1,5 @@
 import itertools
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Self
 
@@ -35,6 +35,8 @@ class PyochainConfig:
         from pprint import pformat
 
         # Convert to sequence if needed for inspection
+        if isinstance(v, Iterator):
+            return v.__repr__()
         if isinstance(v, Sequence):
             items = v
             is_truncated = len(v) > self.max_items
