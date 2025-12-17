@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Any, Concatenate, Self, overload
 
 import cytoolz as cz
 
-from .._results import Option
+from .._results import Option, Result
 from ._aggregations import BaseAgg
 from ._booleans import BaseBool
 from ._dicts import BaseDict
@@ -30,7 +30,13 @@ from ._tuples import BaseTuples
 
 if TYPE_CHECKING:
     from .._dict import Dict
-    from .._results import Result
+
+type TryVal[T] = Option[T] | Result[T, Any] | T | None
+"""Represent a value that may be failible."""
+type TryIter[T] = (
+    Iter[Option[T]] | Iter[Result[T, Any]] | Iter[T | None] | Iter[TryVal[T]]
+)
+"""Represent an iterator that may yield failible values."""
 
 
 class CommonMethods[T](BaseAgg[T], BaseEager[T], BaseDict[T], BaseBool[T]):
@@ -409,9 +415,7 @@ class Iter[T](
         """
         return Vec(self.into(factory))
 
-    def try_collect[U](
-        self: Iter[Option[U]] | Iter[Result[U, Any]] | Iter[U | None],
-    ) -> Option[Vec[U]]:
+    def try_collect[U](self: TryIter[U]) -> Option[Vec[U]]:
         """Fallibly transforms **self** into a `Vec`, short circuiting if a failure is encountered.
 
         `try_collect()` is a variation of `collect()` that allows fallible conversions during collection.
@@ -459,23 +463,23 @@ class Iter[T](
         """
         from .._results import NONE, Result, Some
 
-        def _try_collect(
-            data: Iterable[Option[U]] | Iterable[Result[U, Any]] | Iterable[U | None],
-        ) -> Option[Vec[U]]:
+        def _try_collect(data: TryIter[U]) -> Option[Vec[U]]:
             collected: MutableSequence[U] = []
 
             for item in data:
                 if item is None:
                     return NONE
                 match item:
-                    case Result():
-                        if item.is_err():
+                    case Result() as res:  # type: ignore[match-case-generic]
+                        res: Result[U, Any]
+                        if res.is_err():
                             return NONE
-                        collected.append(item.unwrap())  # type: ignore[arg-type] # Already checked for None above
-                    case Option():
-                        if item.is_none():
+                        collected.append(res.unwrap())
+                    case Option() as opt:  # type: ignore[match-case-generic]
+                        opt: Option[U]
+                        if opt.is_none():
                             return NONE
-                        collected.append(item.unwrap())  # type: ignore[arg-type] # Already checked for None above
+                        collected.append(opt.unwrap())
                     case _ as plain_value:
                         collected.append(plain_value)
             return Some(Vec(collected))
