@@ -222,3 +222,46 @@ PS C:\Users\tibo\python_codes\pyochain> uv run foo.py
  ...
 ]
 ```
+
+### Checking whether functions are implemented in Python or Rust
+
+In this example, I want to check which functions of the Iter class or Rust Iterator class are not implemented in both languages.
+
+It demonstrate how to combine pyochain with polars in uninterrupted data pipelines, who combines lazy Iterators, LazyFrames, and streaming mode writing.
+
+```python
+from typing import Literal
+
+import polars as pl
+
+import pyochain as pc
+
+def _with_source(fn_name: str, src: Literal["python", "rust"]) -> tuple[str, str]:
+    return (src, fn_name)
+
+RUST_FN = [...] # list of rust Iterator trait methods names as strings, copy pasted from website
+
+def main() -> None:
+    fn: pl.Expr = pl.col("fn")
+    return (
+        # create an iterator over the class hierarchy
+        pc.Iter(pc.Iter.mro())
+        # get the dict values view of each class
+        .map(lambda x: x.__dict__.values())
+        # flatten the views of dict values
+        .flatten()
+        # keep only callables (methods of the classes here)
+        .filter(callable)
+        # get the method name, associate it with "python"
+        .map(lambda x: _with_source(x.__name__, "python"))
+        # do the same for rust functions, simply associating it with "rust"
+        .chain(pc.Iter(RUST_FN).map(lambda x: _with_source(x, "rust")))
+        # pass the iterator directly into a polars lazyframe, with specified schema (otherwise columns are named column_0, column_1)
+        .into(lambda x: pl.LazyFrame(x, schema=["source", "fn"]))
+        # keep only unique fn names, and those not starting with _ (dunder/private methods)
+        .filter(fn.is_unique().and_(fn.str.starts_with("_").not_()))
+        .sort(fn)  # sort by fn name
+        # write the result to an ndjson file in streaming mode.
+        .sink_ndjson("iter_fn_sources.ndjson")
+    )
+```
