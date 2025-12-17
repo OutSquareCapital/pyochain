@@ -5,11 +5,11 @@ from collections.abc import Callable, Iterable, Iterator
 from typing import TYPE_CHECKING, Any, overload
 
 import cytoolz as cz
-import more_itertools as mit
 
 from .._core import IterWrapper
 
 if TYPE_CHECKING:
+    from .._results import Option
     from ._main import Iter
 
 
@@ -82,76 +82,85 @@ class BaseJoins[T](IterWrapper[T]):
         """
         return self._lazy(zip, *others, strict=strict)
 
-    def zip_offset[U](
+    @overload
+    def zip_longest[T2](
+        self, iter2: Iterable[T2], /
+    ) -> Iter[tuple[Option[T], Option[T2]]]: ...
+    @overload
+    def zip_longest[T2, T3](
+        self, iter2: Iterable[T2], iter3: Iterable[T3], /
+    ) -> Iter[tuple[Option[T], Option[T2], Option[T3]]]: ...
+    @overload
+    def zip_longest[T2, T3, T4](
         self,
-        *others: Iterable[T],
-        offsets: list[int],
-        longest: bool = False,
-        fillvalue: U = None,
-    ) -> Iter[tuple[T | U, ...]]:
-        """Zip the input iterables together, but offset the i-th iterable by the i-th item in offsets.
+        iter2: Iterable[T2],
+        iter3: Iterable[T3],
+        iter4: Iterable[T4],
+        /,
+    ) -> Iter[tuple[Option[T], Option[T2], Option[T3], Option[T4]]]: ...
+    @overload
+    def zip_longest[T2, T3, T4, T5](
+        self,
+        iter2: Iterable[T2],
+        iter3: Iterable[T3],
+        iter4: Iterable[T4],
+        iter5: Iterable[T5],
+        /,
+    ) -> Iter[
+        tuple[
+            Option[T],
+            Option[T2],
+            Option[T3],
+            Option[T4],
+            Option[T5],
+        ]
+    ]: ...
+    @overload
+    def zip_longest(
+        self,
+        iter2: Iterable[T],
+        iter3: Iterable[T],
+        iter4: Iterable[T],
+        iter5: Iterable[T],
+        iter6: Iterable[T],
+        /,
+        *iterables: Iterable[T],
+    ) -> Iter[tuple[Option[T], ...]]: ...
+    def zip_longest(self, *others: Iterable[Any]) -> Iter[tuple[Option[Any], ...]]:
+        """Return a zip Iterator who yield a tuple where the i-th element comes from the i-th iterable argument.
 
-        This can be used as a lightweight alternative to SciPy or pandas to analyze data sets in which some series have a lead or lag relationship.
+        Yield values until the longest iterable in the argument sequence is exhausted, and then it raises StopIteration.
 
-        By default, the sequence will end when the shortest iterable is exhausted.
+        The longest iterable determines the length of the returned iterator, and will return `Some[T]` until exhaustion.
 
-        To continue until the longest iterable is exhausted, set longest to True.
+        When the shorter iterables are exhausted, they yield `NONE`.
 
         Args:
             *others (Iterable[T]): Other iterables to zip with.
-            offsets (list[int]): List of integers specifying the offsets for each iterable.
-            longest (bool): Whether to continue until the longest iterable is exhausted. Defaults to False.
-            fillvalue (U): Value to use for missing elements. Defaults to None.
 
         Returns:
-            Iter[tuple[T | U, ...]]: An iterable of tuples containing elements from the zipped iterables with offsets.
+            Iter[tuple[Option[Any], ...]]: An iterable of tuples containing optional elements from the zipped iterables.
 
         Example:
         ```python
         >>> import pyochain as pc
-        >>> data = pc.Seq("0123")
-        >>> data.iter().zip_offset("abcdef", offsets=(0, 1)).collect()
-        Seq(('0', 'b'), ('1', 'c'), ('2', 'd'), ('3', 'e'))
-        >>> data.iter().zip_offset("abcdef", offsets=(0, 1), longest=True).collect()
-        Seq(('0', 'b'), ('1', 'c'), ('2', 'd'), ('3', 'e'), (None, 'f'))
+        >>> pc.Iter([1, 2]).zip_longest([10]).collect()
+        Seq((Some(value=1), Some(value=10)), (Some(value=2), NONE))
+        >>> # Can be combined with try collect to filter out the NONE:
+        >>> pc.Iter([1, 2]).zip_longest([10]).map(lambda x: pc.Iter(x).try_collect()).collect()
+        Seq(Some(value=Vec(1, 10)), NONE)
 
         ```
         """
+        from .._results import Option
 
-        def _zip_offset(data: Iterable[T]) -> Iterator[tuple[T | U, ...]]:
-            return mit.zip_offset(
-                data,
-                *others,
-                offsets=offsets,
-                longest=longest,
-                fillvalue=fillvalue,
+        def _zip_longest(data: Iterable[T]) -> Iterator[tuple[Option[T], ...]]:
+            return (
+                tuple(Option.from_(t) for t in tup)
+                for tup in itertools.zip_longest(data, *others, fillvalue=None)
             )
 
-        return self._lazy(_zip_offset)
-
-    def zip_longest[U](
-        self,
-        *others: Iterable[T],
-        fill_value: U = None,
-    ) -> Iter[tuple[U | T, ...]]:
-        """Zip with other iterables, filling missing values.
-
-        Args:
-            *others (Iterable[T]): Other iterables to zip with.
-            fill_value (U): Value to use for missing elements. Defaults to None.
-
-        Returns:
-            Iter[tuple[U | T, ...]]: An iterable of tuples containing elements from the zipped iterables.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter([1, 2]).zip_longest([10], fill_value=0).collect()
-        Seq((1, 10), (2, 0))
-
-        ```
-        """
-        return self._lazy(itertools.zip_longest, *others, fillvalue=fill_value)
+        return self._lazy(_zip_longest)
 
     @overload
     def product(self) -> Iter[tuple[T]]: ...
