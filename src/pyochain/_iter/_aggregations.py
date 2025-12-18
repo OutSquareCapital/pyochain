@@ -3,7 +3,7 @@ from __future__ import annotations
 import functools
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 import cytoolz as cz
 import more_itertools as mit
@@ -16,8 +16,8 @@ if TYPE_CHECKING:
 
 @dataclass(slots=True)
 class Unzipped[T, V](Pipeable):
-    first: Iter[T]
-    second: Iter[V]
+    left: Iter[T]
+    right: Iter[V]
 
 
 class BaseAgg[T](IterWrapper[T]):
@@ -58,9 +58,9 @@ class BaseAgg[T](IterWrapper[T]):
         >>> import pyochain as pc
         >>> data = [(1, "a"), (2, "b"), (3, "c")]
         >>> unzipped = pc.Seq(data).unzip()
-        >>> unzipped.first.collect()
+        >>> unzipped.left.collect()
         Seq(1, 2, 3)
-        >>> unzipped.second.collect()
+        >>> unzipped.right.collect()
         Seq('a', 'b', 'c')
 
         ```
@@ -273,11 +273,11 @@ class BaseAgg[T](IterWrapper[T]):
         """
         return self.into(mit.argmin, key=key)
 
-    def sum[U: int | float](self: IterWrapper[U]) -> U | Literal[0]:
+    def sum[U: int | float](self: IterWrapper[U]) -> int:
         """Return the sum of the sequence.
 
         Returns:
-            U | Literal[0]: The sum of all elements.
+            int: The sum of all elements.
 
         ```python
         >>> import pyochain as pc
