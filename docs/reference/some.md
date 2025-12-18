@@ -1,6 +1,6 @@
 # Some
 
-::: pyochain._results._states.Some
+::: pyochain._results._option.Some
 
     options:
       inherited_members: true

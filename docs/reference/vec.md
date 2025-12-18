@@ -1,6 +1,6 @@
-# None
+# Vec
 
-::: pyochain._results._option.NoneOption
+::: pyochain._iter._main.Vec
 
     options:
       inherited_members: true
