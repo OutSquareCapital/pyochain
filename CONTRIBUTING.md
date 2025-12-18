@@ -86,14 +86,14 @@ Before committing, ensure all tests pass and code quality checks are satisfied b
 - **pydoclint** -> checks for missing or incomplete docstrings.
 - **ruff** -> lints and formats the code.
 - **ty** -> runs type-checking.
-- **-m tests.main** -> runs all tests on docstrings.
+- **pytest** -> runs all tests on docstrings.
 
 ```bash
 uv run pydoclint src/pyochain
 uv run ruff check --fix src/pyochain
 uv run ruff format src/pyochain
 uv run ty check src/pyochain
-uv run -m tests.main
+uv run pytest --doctest-modules src/pyochain
 ```
 
 ### Internal code logic

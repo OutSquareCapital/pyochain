@@ -114,8 +114,10 @@ Leverage dozens of methods inspired by Rust's `Iterator`, `itertools`, `cytoolz`
 ...    .map(lambda x: x * x)  # Square them
 ...    .take(5)  # Take the first 5
 ...    .collect()  # Materialize the result into a Seq
-)
+... )
+>>> result
 Seq(1, 9, 25, 49, 81)
+
 ```
 
 ### Type-Safe Error Handling (`Result` and `Option`)
@@ -132,9 +134,11 @@ Write robust code by handling potential failures explicitly.
 >>>
 >>> # --- With Result ---
 >>> res1 = divide(10, 2)
+>>> res1
 Ok(5.0)
 >>> res2 = divide(10, 0)
-Err("Cannot divide by zero")
+>>> res2
+Err('Cannot divide by zero')
 >>> # Safely unwrap or provide a default
 >>> res2.unwrap_or(0.0)
 0.0
@@ -147,9 +151,9 @@ Ok(25.0)
 ...     return pc.Some(users.get(user_id)) if user_id in users else pc.NONE
 >>>
 >>> find_user(1).map(str.upper).unwrap_or("Not Found")
-"ALICE"
+'ALICE'
 >>> find_user(3).unwrap_or("Not Found")
-"Not Found"
+'Not Found'
 
 ```
 
