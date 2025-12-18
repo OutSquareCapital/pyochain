@@ -260,7 +260,6 @@ class BaseMap[T](IterWrapper[T]):
         Seq(NONE, NONE, NONE, NONE, NONE)
 
         ```
-
         """
 
         def _repeat_last(data: Iterable[T]) -> Iterator[Option[T]]:
@@ -304,7 +303,6 @@ class BaseMap[T](IterWrapper[T]):
         (30, 1)
 
         ```
-
         """
         getter = partial(cz.dicttoolz.get_in, keys)
         return self._lazy(partial(map, getter))
@@ -345,7 +343,6 @@ class BaseMap[T](IterWrapper[T]):
         Seq(1, 3, 6, 10)
 
         ```
-
         """
 
         def gen(data: Iterable[T]) -> Iterator[U]:

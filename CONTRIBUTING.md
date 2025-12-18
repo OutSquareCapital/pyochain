@@ -37,20 +37,9 @@ def my_function(param1: int, param2: str) -> bool:
     True
 
     ```
-
     """
     ...
 ```
-
-## type-checking
-
-pyochain has been developped with pylance strict type-checking mode and Ruff for formatting.
-No errors should be existing before committing new code.
-
-## Linting and Formatting
-
-pyochain uses Ruff for linting and formatting, with the VSCode extension.
-Or you can simply run Ruff at the root.
 
 ## Architecture
 
@@ -92,13 +81,23 @@ uv sync --dev
 
 ## Testing
 
+Before committing, ensure all tests pass and code quality checks are satisfied by running:
+
+- **pydoclint** -> checks for missing or incomplete docstrings.
+- **ruff** -> lints and formats the code.
+- **ty** -> runs type-checking.
+- **-m tests.main** -> runs all tests on docstrings.
+
 ```bash
 uv run pydoclint src/pyochain
-uv run ruff check src/pyochain
+uv run ruff check --fix src/pyochain
 uv run ruff format src/pyochain
+uv run ty check src/pyochain
 uv run -m tests.main
 ```
 
 ### Internal code logic
 
-Internal home-implementations of methods use "vanilla" python declarative iterations. This can seem a bit conflictual with the public API purpose, but is done to minimize function call overhead for performance.
+Internal home-implementations of methods use "vanilla" python declarative iterations.
+
+This can seem a bit conflictual with the public API purpose, but is done to minimize function call overhead for performance.

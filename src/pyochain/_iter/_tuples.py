@@ -31,7 +31,6 @@ class BaseTuples[T](IterWrapper[T]):
         Seq((0, 'a'), (1, 'b'))
 
         ```
-
         """
         return self._lazy(enumerate)
 
@@ -59,7 +58,6 @@ class BaseTuples[T](IterWrapper[T]):
         Seq((1, 2), (1, 3), (2, 3))
 
         ```
-
         """
         return self._lazy(itertools.combinations, r)
 
@@ -87,7 +85,6 @@ class BaseTuples[T](IterWrapper[T]):
         Seq((1, 2), (1, 3), (2, 1), (2, 3), (3, 1), (3, 2))
 
         ```
-
         """
         return self._lazy(itertools.permutations, r)
 
@@ -121,7 +118,6 @@ class BaseTuples[T](IterWrapper[T]):
         Seq((1, 1), (1, 2), (1, 3), (2, 2), (2, 3), (3, 3))
 
         ```
-
         """
         return self._lazy(itertools.combinations_with_replacement, r)
 
@@ -138,7 +134,6 @@ class BaseTuples[T](IterWrapper[T]):
         Seq((1, 2), (2, 3))
 
         ```
-
         """
         return self._lazy(itertools.pairwise)
 
@@ -363,7 +358,6 @@ class BaseTuples[T](IterWrapper[T]):
         Seq((0, 'ab'), (1, 'cde'), (2, 'fgh'), (3, 'i'))
 
         ```
-
         """
 
         def _group_by_transform(data: Iterable[T]) -> Iterator[tuple[Any, ...]]:
@@ -388,7 +382,6 @@ class BaseTuples[T](IterWrapper[T]):
         Seq(('only', 'a'),)
 
         ```
-
         """
 
         def gen(data: Iterable[T]) -> Iterator[tuple[Position, T]]:

@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING, cast
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Never, cast
 
 from .._core import Pipeable
 
 if TYPE_CHECKING:
     from .._iter import Iter
-    from ._states import Option
+    from ._option import Option
 
 
 class ResultUnwrapError(RuntimeError): ...
@@ -301,8 +302,6 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        from ._states import Ok
-
         return Ok(fn(self.unwrap())) if self.is_ok() else cast(Result[U, E], self)
 
     def map_err[R](self, fn: Callable[[E], R]) -> Result[T, R]:
@@ -327,8 +326,6 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        from ._states import Err
-
         return Err(fn(self.unwrap_err())) if self.is_err() else cast(Result[T, R], self)
 
     def inspect(self, fn: Callable[[T], object]) -> Result[T, E]:
@@ -490,7 +487,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        from ._states import NONE, Some
+        from ._option import NONE, Some
 
         return Some(self.unwrap()) if self.is_ok() else NONE
 
@@ -512,7 +509,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        from ._states import NONE, Some
+        from ._option import NONE, Some
 
         return Some(self.unwrap_err()) if self.is_err() else NONE
 
@@ -626,14 +623,16 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        from ._states import NONE, Err, Ok, Some
+        from ._option import NONE, Option, Some
+
+        r = Option[Result[T, E]]
 
         if self.is_err():
-            return Some(Err(self.unwrap_err()))
+            return cast(r, Some(Err(self.unwrap_err())))
         opt = self.unwrap()
         if opt.is_none():
             return NONE
-        return Some(Ok(opt.unwrap()))
+        return cast(r, Some(Ok(opt.unwrap())))
 
     def or_[F](self, res: Result[T, F]) -> Result[T, F]:
         """Returns res if the result is `Err`, otherwise returns the `Ok` value of **self**.
@@ -659,3 +658,57 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
         return cast(Result[T, F], self) if self.is_ok() else res
+
+
+@dataclass(slots=True)
+class Ok[T, E](Result[T, E]):
+    """Represents a successful value.
+
+    Attributes:
+        value (T): The contained successful value.
+    """
+
+    value: T
+
+    def __repr__(self) -> str:
+        return f"Ok({self.value!r})"
+
+    def is_ok(self) -> bool:
+        return True
+
+    def is_err(self) -> bool:
+        return False
+
+    def unwrap(self) -> T:
+        return self.value
+
+    def unwrap_err(self) -> Never:
+        msg = "called `unwrap_err` on Ok"
+        raise ResultUnwrapError(msg)
+
+
+@dataclass(slots=True)
+class Err[T, E](Result[T, E]):
+    """Represents an error value.
+
+    Attributes:
+        error (E): The contained error value.
+    """
+
+    error: E
+
+    def __repr__(self) -> str:
+        return f"Err({self.error!r})"
+
+    def is_ok(self) -> bool:
+        return False
+
+    def is_err(self) -> bool:
+        return True
+
+    def unwrap(self) -> Never:
+        msg = f"called `unwrap` on Err: {self.error!r}"
+        raise ResultUnwrapError(msg)
+
+    def unwrap_err(self) -> E:
+        return self.error

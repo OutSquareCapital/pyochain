@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Never, cast
 
 from .._core import Pipeable
 
@@ -75,9 +76,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        from ._states import NONE, Some
-
-        return Some(value) if value is not None else NONE
+        return cast(Option[V], Some(value) if value is not None else NONE)
 
     @abstractmethod
     def is_some(self) -> bool:
@@ -300,8 +299,6 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        from ._states import NONE, Some
-
         return Some(f(self.unwrap())) if self.is_some() else NONE
 
     def flatten[U](self: Option[Option[U]]) -> Option[U]:
@@ -352,8 +349,6 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        from ._states import NONE
-
         return optb if self.is_some() else NONE
 
     def or_(self, optb: Option[T]) -> Option[T]:
@@ -408,8 +403,6 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        from ._states import NONE
-
         return f(self.unwrap()) if self.is_some() else NONE
 
     def or_else(self, f: Callable[[], Option[T]]) -> Option[T]:
@@ -458,7 +451,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        from ._states import Err, Ok
+        from ._result import Err, Ok
 
         return Ok(self.unwrap()) if self.is_some() else Err(err)
 
@@ -481,7 +474,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        from ._states import Err, Ok
+        from ._result import Err, Ok
 
         return Ok(self.unwrap()) if self.is_some() else Err(err())
 
@@ -559,8 +552,6 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        from ._states import NONE
-
         return self if self.is_some() and predicate(self.unwrap()) else NONE
 
     def iter(self) -> Iter[T]:
@@ -638,8 +629,6 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        from ._states import NONE, Some
-
         if self.is_some():
             a, b = self.unwrap()
             return Some(a), Some(b)
@@ -666,8 +655,6 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        from ._states import NONE, Some
-
         if self.is_some() and other.is_some():
             return Some((self.unwrap(), other.unwrap()))
         return NONE
@@ -705,8 +692,6 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        from ._states import NONE, Some
-
         if self.is_some() and other.is_some():
             return Some(f(self.unwrap(), other.unwrap()))
         return NONE
@@ -747,8 +732,6 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        from ._states import NONE, Some
-
         if self.is_some() and other.is_some():
             return Some(func(self.unwrap(), other.unwrap()))
         if self.is_some():
@@ -777,7 +760,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        from ._states import Err, Ok
+        from ._result import Err, Ok
 
         if self.is_some():
             inner = self.unwrap()
@@ -809,10 +792,62 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        from ._states import NONE
-
         if self.is_some() and not optb.is_some():
             return self
         if not self.is_some() and optb.is_some():
             return optb
         return NONE
+
+
+@dataclass(slots=True)
+class Some[T](Option[T]):
+    """Option variant representing the presence of a value.
+
+    Attributes:
+        value (T): The contained value.
+
+    Example:
+    ```python
+    >>> import pyochain as pc
+    >>> pc.Some(42)
+    Some(42)
+
+    ```
+
+    """
+
+    value: T
+
+    def __repr__(self) -> str:
+        return f"Some({self.value!r})"
+
+    def is_some(self) -> bool:
+        return True
+
+    def is_none(self) -> bool:
+        return False
+
+    def unwrap(self) -> T:
+        return self.value
+
+
+@dataclass(slots=True)
+class NoneOption(Option[Any]):
+    """Option variant representing the absence of a value."""
+
+    def __repr__(self) -> str:
+        return "NONE"
+
+    def is_some(self) -> bool:
+        return False
+
+    def is_none(self) -> bool:
+        return True
+
+    def unwrap(self) -> Never:
+        msg = "called `unwrap` on a `None`"
+        raise OptionUnwrapError(msg)
+
+
+NONE: NoneOption[Any] = NoneOption()
+"""Singleton instance representing the absence of a value."""

@@ -247,7 +247,7 @@ class BaseProcess[T](IterWrapper[T]):
         """
 
         def _chain(data: Iterable[T]) -> Iterator[T]:
-            return cz.itertoolz.concat((data, *others))
+            return cz.itertoolz.concat((data, *others))  # ty:ignore[invalid-return-type] # @Todo(StarredExpression)
 
         return self._lazy(_chain)
 

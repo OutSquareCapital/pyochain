@@ -195,8 +195,11 @@ wheels = [
 
 [[package]]
 name = "cytoolz-stubs"
-version = "0.3.1"
-source = { git = "https://github.com/OutSquareCapital/cytoolz-stubs.git#d595be58d61ca002551d4efe9e30cf87f7c7cc68" }
+version = "0.3.2"
+source = { git = "https://github.com/OutSquareCapital/cytoolz-stubs.git#23c0caf1ad1a6633626fa4dedbb4da4ca2909efe" }
+dependencies = [
+    { name = "doctester" },
+]
 
 [[package]]
 name = "docstring-parser-fork"

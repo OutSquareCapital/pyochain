@@ -44,7 +44,7 @@ class CommonMethods[T](BaseAgg[T], BaseEager[T], BaseDict[T], BaseBool[T]):
 
 
 def _convert_data[T](data: Iterable[T] | T, *more_data: T) -> Iterable[T]:
-    return data if cz.itertoolz.isiterable(data) else (data, *more_data)
+    return data if cz.itertoolz.isiterable(data) else (data, *more_data)  # ty:ignore[invalid-return-type] # @Todo(StarredExpression)]
 
 
 class Iter[T](
@@ -249,7 +249,6 @@ class Iter[T](
 
         ```
         """
-        from ._main import Iter
 
         def _unfold() -> Iterator[V]:
             current_seed: S = seed
@@ -452,12 +451,12 @@ class Iter[T](
                 if item is None:
                     return NONE
                 match item:
-                    case Result() as res:  # type: ignore[match-case-generic]
+                    case Result() as res:
                         res: Result[U, Any]
                         if res.is_err():
                             return NONE
                         collected.append(res.unwrap())
-                    case Option() as opt:  # type: ignore[match-case-generic]
+                    case Option() as opt:
                         opt: Option[U]
                         if opt.is_none():
                             return NONE
@@ -497,7 +496,6 @@ class Iter[T](
         4
 
         ```
-
         """
 
         def _for_each(data: Iterable[T]) -> None:
@@ -744,13 +742,10 @@ class Iter[T](
         Seq(['p', 'p'], ['o', 'u', 'r'])
 
         ```
-
         """
         from collections import Counter
 
         def _unique_to_each(data: Iterable[U]) -> Iterator[Iter[U]]:
-            from ._main import Iter
-
             pool: tuple[Iterable[U], ...] = tuple(data)
             counts: Counter[U] = Counter(itertools.chain.from_iterable(map(set, pool)))
             uniques: set[U] = {element for element in counts if counts[element] == 1}
@@ -1083,6 +1078,8 @@ class Iter[T](
         >>>
         >>> pc.Iter(["lol", "NaN", "2", "5"]).find_map(_parse)
         Some(2)
+
+        ```
         """
         return self.filter_map(func).next()
 
@@ -1140,17 +1137,16 @@ class Seq[T](CommonMethods[T], Sequence[T]):
         Returns:
             Seq[U]: A new Seq instance containing the provided data.
 
-        Example:
+        Examples:
         ```python
         >>> import pyochain as pc
         >>> pc.Seq.from_(1, 2, 3)
         Seq(1, 2, 3)
 
         ```
-
         """
         converted = _convert_data(data, *more_data)
-        return Seq(converted if isinstance(converted, tuple) else tuple(converted))
+        return Seq(converted if isinstance(converted, tuple) else tuple(converted))  # ty:ignore[invalid-argument-type] # ty doesn't seem to correctly narrow here
 
     def iter(self) -> Iter[T]:
         """Get an iterator over the sequence.
@@ -1224,7 +1220,7 @@ class Vec[T](Seq[T], MutableSequence[T]):
     _inner: list[T]
 
     def __init__(self, data: list[T]) -> None:
-        self._inner = data  # type: ignore[assignment]
+        self._inner = data
 
     @overload
     def __setitem__(self, index: int, value: T) -> None: ...
@@ -1253,6 +1249,8 @@ class Vec[T](Seq[T], MutableSequence[T]):
         >>> vec.insert(4, 'e')
         >>> vec
         Vec('a', 'd', 'b', 'c', 'e')
+
+        ```
         """
         self._inner.insert(index, value)
 
@@ -1282,7 +1280,6 @@ class Vec[T](Seq[T], MutableSequence[T]):
         Vec(1, 2, 3)
 
         ```
-
         """
         converted = _convert_data(data, *more_data)
         return Vec(converted if isinstance(converted, list) else list(converted))
@@ -1305,6 +1302,5 @@ class Vec[T](Seq[T], MutableSequence[T]):
         Vec()
 
         ```
-
         """
         return Vec([])
