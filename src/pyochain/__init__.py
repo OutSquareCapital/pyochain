@@ -12,18 +12,42 @@ Manipulate data through composable chains of operations and manage errors and op
 
 Provides the following core classes and utilities:
 
-- `Iter[T]`: A superset of Python `collections.abc.Iterator`, with chainable functional methods. Implement Iterator Protocol.
-- `Seq[T]`: An immutable collection with chainable methods. Underlying data structure is a `tuple`. Can be converted to `Iter` with the `.iter()` method. Implement Sequence Protocol.
-- `Vec[T]`: A mutable collection with chainable methods. Underlying data structure is a `list`. Can be converted to `Iter` with the `.iter()` method. Implement MutableSequence Protocol.
-- `Dict[K, V]`: An immutable mapping with chainable methods. Underlying data structure is a `dict`.
-- `Option[T] | Some[T] | NONE`: A type representing an optional value, similar to Rust's `Option` Enum. Analog to a superset of T | None.
-- `Result[T, E] | Ok[T] | Err[E]`: A type representing either a success (Ok) or failure (Err), similar to Rust's `Result` Enum. Analog to a superset of T | Exception.
+- `Iter[T]`
+  - A superset of Python `collections.abc.Iterator`, with chainable functional methods.
+  - Underlying data structure is an `iterator` (if we can call it that).
+  - Implement Iterator Protocol.
+  - Can be converted to `Seq` with the `.collect()` method, or to `Vec` with `.collect_mut()` method.
+- `Seq[T]`
+  - An immutable collection with chainable methods.
+  - Underlying data structure is a `tuple`.
+  - Can be converted to `Iter` with the `.iter()` method.
+  - Implement Sequence Protocol.
+- `Vec[T]`
+  - A mutable collection with chainable methods.
+  - Underlying data structure is a `list`.
+  - Can be converted to `Iter` with the `.iter()` method.
+  - Implement MutableSequence Protocol.
+- `Dict[K, V]`
+  - An immutable mapping with chainable methods.
+  - Underlying data structure is a `dict`.
+  - Can be converted to `Iter` with the `.iter_items()`, `.iter_keys()`, `.iter_values()` methods.
 
-All classes have:`.tap()`, `from_` and `.into()` methods (or equivalents, see Option and Result for tap) for:
+- `Option[T] | Some[T] | NONE`
+  - A type representing an optional value.
+  - Provides all methods from the Rust stdlib `Option` Trait (as long as they are applicable/made sense in a Python context).
+  - Analog to a superset of `T | None`.
+- `Result[T, E] | Ok[T] | Err[E]`
+  - A type representing either a success (`Ok[T]`) or failure (`Err[E]`), similar to Rust's `Result` Enum.
+  - Provides all methods from the Rust stdlib `Result` Trait (as long as they are applicable/made sense in a Python context).
+  - Analog to a superset of `T | Exception`.
 
-- Easy conversion between types, whilst keeping the chain uninterrupted (`into`). E.g Seq[T].into() can take any function/object that expect a `Sequence[T]` as argument.
-- Creating instances from various inputs (`from_*`). This allow flexible instantiation when needed, without runtime checks in the base **init** of the class.
-- Inserting side-effects in the chain without breaking it (`tap`, inspect, for_each, etc...) for side-effect operations.
+All classes have: `from_`, `.tap()` and `.into()` methods (or equivalents, see Option and Result for `inspect` and `inspect_err`) for:
+
+**into**:  Easy conversion between types, whilst keeping the chain uninterrupted. E.g `Seq[T].into()` can take any function/object that expect a `Sequence[T]` as argument, and return it's result `R`. e.g `Callable[[Sequence[T]], R] -> R`.
+
+**from_**: Creating instances from various inputs. This allow flexible instantiation when needed, keeping the base **init** of the classes without type conversions for performance.
+
+**tap, inspect, for_each**: Inserting side-effects in the chain without breaking it (print, mutation of an external variable, logging...).
 
 ## Installation
 
@@ -127,6 +151,8 @@ pyochain acts as a unifying API layer over these powerful tools.
 The stubs used for the developpement, made by the maintainer of pyochain, can be found here:
 
 <https://github.com/OutSquareCapital/cytoolz-stubs>
+
+
 """
 
 from ._dict import Dict
