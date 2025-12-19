@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Never, cast
+from typing import TYPE_CHECKING, Concatenate, Never, cast
 
 from .._core import Pipeable
 
@@ -259,11 +259,15 @@ class Result[T, E](Pipeable, ABC):
         """
         return self.unwrap() if self.is_ok() else default
 
-    def unwrap_or_else(self, fn: Callable[[E], T]) -> T:
+    def unwrap_or_else[**P](
+        self, fn: Callable[Concatenate[E, P], T], *args: P.args, **kwargs: P.kwargs
+    ) -> T:
         """Returns the contained `Ok` value or computes it from a function.
 
         Args:
-            fn (Callable[[E], T]): A function that takes the `Err` value and returns a default value.
+            fn (Callable[Concatenate[E, P], T]): A function that takes the `Err` value and returns a default value.
+            *args (P.args): Additional positional arguments to pass to fn.
+            **kwargs (P.kwargs): Additional keyword arguments to pass to fn.
 
         Returns:
             T: The contained `Ok` value or the result of the function.
@@ -278,19 +282,23 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        return self.unwrap() if self.is_ok() else fn(self.unwrap_err())
+        return self.unwrap() if self.is_ok() else fn(self.unwrap_err(), *args, **kwargs)
 
-    def map[U](self, fn: Callable[[T], U]) -> Result[U, E]:
+    def map[**P, R](
+        self, fn: Callable[Concatenate[T, P], R], *args: P.args, **kwargs: P.kwargs
+    ) -> Result[R, E]:
         """Maps a `Result[T, E]` to `Result[U, E]`.
 
         Done by applying a function to a contained `Ok` value,
         leaving an `Err` value untouched.
 
         Args:
-            fn (Callable[[T], U]): The function to apply to the `Ok` value.
+            fn (Callable[Concatenate[T, P], R]): The function to apply to the `Ok` value.
+            *args (P.args): Additional positional arguments to pass to fn.
+            **kwargs (P.kwargs): Additional keyword arguments to pass to fn.
 
         Returns:
-            Result[U, E]: A new `Result` with the mapped value if `Ok`, otherwise the original `Err`.
+            Result[R, E]: A new `Result` with the mapped value if `Ok`, otherwise the original `Err`.
 
         Example:
         ```python
@@ -302,16 +310,25 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        return Ok(fn(self.unwrap())) if self.is_ok() else cast(Result[U, E], self)
+        return (
+            Ok(fn(self.unwrap(), *args, **kwargs))
+            if self.is_ok()
+            else cast(Result[R, E], self)
+        )
 
-    def map_err[R](self, fn: Callable[[E], R]) -> Result[T, R]:
+    def map_err[**P, R](
+        self, fn: Callable[Concatenate[E, P], R], *args: P.args, **kwargs: P.kwargs
+    ) -> Result[T, R]:
         """Maps a `Result[T, E]` to `Result[T, R]`.
 
         Done by applying a function to a contained `Err` value,
         leaving an `Ok` value untouched.
 
         Args:
-            fn (Callable[[E], R]): The function to apply to the `Err` value.
+            fn (Callable[Concatenate[E, P], R]): The function to apply to the `Err` value.
+            *args (P.args): Additional positional arguments to pass to fn.
+            **kwargs (P.kwargs): Additional keyword arguments to pass to fn.
+
 
         Returns:
             Result[T, R]: A new `Result` with the mapped error if `Err`, otherwise the original `Ok`.
@@ -326,16 +343,24 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        return Err(fn(self.unwrap_err())) if self.is_err() else cast(Result[T, R], self)
+        return (
+            Err(fn(self.unwrap_err(), *args, **kwargs))
+            if self.is_err()
+            else cast(Result[T, R], self)
+        )
 
-    def inspect(self, fn: Callable[[T], object]) -> Result[T, E]:
+    def inspect[**P](
+        self, fn: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
+    ) -> Result[T, E]:
         """Applies a function to the contained `Ok` value, returning the original `Result`.
 
         This is primarily useful for debugging or logging, allowing side effects to be
         performed on the `Ok` value without changing the result.
 
         Args:
-            fn (Callable[[T], object]): Function to apply to the `Ok` value.
+            fn (Callable[Concatenate[T, P], object]): Function to apply to the `Ok` value.
+            *args (P.args): Additional positional arguments to pass to fn.
+            **kwargs (P.kwargs): Additional keyword arguments to pass to fn.
 
         Returns:
             Result[T, E]: The original result, unchanged.
@@ -352,17 +377,21 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
         if self.is_ok():
-            fn(self.unwrap())
+            fn(self.unwrap(), *args, **kwargs)
         return self
 
-    def inspect_err(self, fn: Callable[[E], object]) -> Result[T, E]:
+    def inspect_err[**P](
+        self, fn: Callable[Concatenate[E, P], object], *args: P.args, **kwargs: P.kwargs
+    ) -> Result[T, E]:
         """Applies a function to the contained `Err` value, returning the original `Result`.
 
         This mirrors :meth:`inspect` but operates on the error value. It is useful for
         logging or debugging error paths while keeping the `Result` unchanged.
 
         Args:
-            fn (Callable[[E], object]): Function to apply to the `Err` value.
+            fn (Callable[Concatenate[E, P], object]): Function to apply to the `Err` value.
+            *args (P.args): Additional positional arguments to pass to fn.
+            **kwargs (P.kwargs): Additional keyword arguments to pass to fn.
 
         Returns:
             Result[T, E]: The original result, unchanged.
@@ -379,7 +408,7 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
         if self.is_err():
-            fn(self.unwrap_err())
+            fn(self.unwrap_err(), *args, **kwargs)
         return self
 
     def and_[U](self, res: Result[U, E]) -> Result[U, E]:
@@ -419,13 +448,20 @@ class Result[T, E](Pipeable, ABC):
         """
         return res if self.is_ok() else cast(Result[U, E], self)
 
-    def and_then[R](self, fn: Callable[[T], Result[R, E]]) -> Result[R, E]:
+    def and_then[**P, R](
+        self,
+        fn: Callable[Concatenate[T, P], Result[R, E]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Result[R, E]:
         """Calls a function if the result is `Ok`, otherwise returns the `Err` value.
 
         This is often used for chaining operations that might fail.
 
         Args:
-            fn (Callable[[T], Result[R, E]]): The function to call with the `Ok` value.
+            fn (Callable[Concatenate[T, P], Result[R, E]]): The function to call with the `Ok` value.
+            *args (P.args): Additional positional arguments to pass to fn.
+            **kwargs (P.kwargs): Additional keyword arguments to pass to fn.
 
         Returns:
             Result[R, E]: The result of the function if `Ok`, otherwise the original `Err`.
@@ -442,15 +478,26 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        return fn(self.unwrap()) if self.is_ok() else cast(Result[R, E], self)
+        return (
+            fn(self.unwrap(), *args, **kwargs)
+            if self.is_ok()
+            else cast(Result[R, E], self)
+        )
 
-    def or_else(self, fn: Callable[[E], Result[T, E]]) -> Result[T, E]:
+    def or_else[**P](
+        self,
+        fn: Callable[Concatenate[E, P], Result[T, E]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Result[T, E]:
         """Calls a function if the result is `Err`, otherwise returns the `Ok` value.
 
         This is often used for handling errors by trying an alternative operation.
 
         Args:
-            fn (Callable[[E], Result[T, E]]): The function to call with the `Err` value.
+            fn (Callable[Concatenate[E, P], Result[T, E]]): The function to call with the `Err` value.
+            *args (P.args): Additional positional arguments to pass to fn.
+            **kwargs (P.kwargs): Additional keyword arguments to pass to fn.
 
         Returns:
             Result[T, E]: The original `Ok` value, or the result of the function if `Err`.
@@ -467,7 +514,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        return self if self.is_ok() else fn(self.unwrap_err())
+        return self if self.is_ok() else fn(self.unwrap_err(), *args, **kwargs)
 
     def ok(self) -> Option[T]:
         """Converts from `Result[T, E]` to `Option[T]`.
@@ -513,11 +560,15 @@ class Result[T, E](Pipeable, ABC):
 
         return Some(self.unwrap_err()) if self.is_err() else NONE
 
-    def is_ok_and(self, pred: Callable[[T], bool]) -> bool:
+    def is_ok_and[**P](
+        self, pred: Callable[Concatenate[T, P], bool], *args: P.args, **kwargs: P.kwargs
+    ) -> bool:
         """Returns True if the result is `Ok` and the predicate is true for the contained value.
 
         Args:
-            pred (Callable[[T], bool]): Predicate function to apply to the `Ok` value.
+            pred (Callable[Concatenate[T, P], bool]): Predicate function to apply to the `Ok` value.
+            *args (P.args): Additional positional arguments to pass to pred.
+            **kwargs (P.kwargs): Additional keyword arguments to pass to pred.
 
         Returns:
             bool: True if `Ok` and pred(value) is true, False otherwise.
@@ -534,13 +585,17 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        return self.is_ok() and pred(self.unwrap())
+        return self.is_ok() and pred(self.unwrap(), *args, **kwargs)
 
-    def is_err_and(self, pred: Callable[[E], bool]) -> bool:
+    def is_err_and[**P](
+        self, pred: Callable[Concatenate[E, P], bool], *args: P.args, **kwargs: P.kwargs
+    ) -> bool:
         """Returns True if the result is Err and the predicate is true for the error value.
 
         Args:
-            pred (Callable[[E], bool]): Predicate function to apply to the Err value.
+            pred (Callable[Concatenate[E, P], bool]): Predicate function to apply to the Err value.
+            *args (P.args): Additional positional arguments to pass to pred.
+            **kwargs (P.kwargs): Additional keyword arguments to pass to pred.
 
         Returns:
             bool: True if Err and pred(error) is true, False otherwise.
@@ -557,17 +612,25 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        return self.is_err() and pred(self.unwrap_err())
+        return self.is_err() and pred(self.unwrap_err(), *args, **kwargs)
 
-    def map_or[U](self, default: U, f: Callable[[T], U]) -> U:
+    def map_or[**P, R](
+        self,
+        default: R,
+        f: Callable[Concatenate[T, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> R:
         """Applies a function to the `Ok` value if present, otherwise returns the default value.
 
         Args:
-            default (U): Value to return if the result is Err.
-            f (Callable[[T], U]): Function to apply to the `Ok` value.
+            default (R): Value to return if the result is Err.
+            f (Callable[Concatenate[T, P], R]): Function to apply to the `Ok` value.
+            *args (P.args): Additional positional arguments to pass to f.
+            **kwargs (P.kwargs): Additional keyword arguments to pass to f.
 
         Returns:
-            U: Result of f(value) if Ok, otherwise default.
+            R: Result of f(value) if Ok, otherwise default.
 
         Example:
         ```python
@@ -579,7 +642,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        return f(self.unwrap()) if self.is_ok() else default
+        return f(self.unwrap(), *args, **kwargs) if self.is_ok() else default
 
     def iter(self) -> Iter[T]:
         """Returns a `Iter[T]` over the possibly contained value.

@@ -1,5 +1,6 @@
 """Check that all Rust iterator functions have a Python equivalent."""
 
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Literal
 
@@ -106,9 +107,13 @@ def _with_source(fn_name: str, src: Literal["python", "rust"]) -> tuple[str, str
 def main() -> None:
     """Run the check and output the results to a ndjson file."""
     fn: pl.Expr = pl.col("fn")
+
+    def _get_vals(x: object) -> Iterable[object]:
+        return x.__dict__.values()
+
     return (
         pc.Iter(pc.Iter.mro())
-        .map(lambda x: x.__dict__.values())
+        .map(_get_vals)
         .flatten()
         .filter(callable)
         .map(lambda x: _with_source(x.__name__, "python"))

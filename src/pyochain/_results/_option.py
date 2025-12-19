@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Never, cast
+from typing import TYPE_CHECKING, Any, Concatenate, Never, cast
 
 from .._core import Pipeable
 
@@ -99,11 +99,18 @@ class Option[T](Pipeable, ABC):
         """
         ...
 
-    def is_some_and(self, predicate: Callable[[T], bool]) -> bool:
+    def is_some_and[**P](
+        self,
+        predicate: Callable[Concatenate[T, P], bool],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> bool:
         """Returns true if the option is a Some and the value inside of it matches a predicate.
 
         Args:
-            predicate (Callable[[T], bool]): The predicate to apply to the contained value.
+            predicate (Callable[Concatenate[T, P], bool]): The predicate to apply to the contained value.
+            *args (P.args): Additional positional arguments to pass to predicate.
+            **kwargs (P.kwargs): Additional keyword arguments to pass to predicate.
 
         Returns:
             bool: `True` if the option is `Some` and the predicate returns `True` for the contained value, `False` otherwise.
@@ -127,7 +134,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        return self.is_some() and predicate(self.unwrap())
+        return self.is_some() and predicate(self.unwrap(), *args, **kwargs)
 
     @abstractmethod
     def is_none(self) -> bool:
@@ -150,11 +157,15 @@ class Option[T](Pipeable, ABC):
         """
         ...
 
-    def is_none_or(self, func: Callable[[T], bool]) -> bool:
+    def is_none_or[**P](
+        self, func: Callable[Concatenate[T, P], bool], *args: P.args, **kwargs: P.kwargs
+    ) -> bool:
         """Returns true if the option is a None or the value inside of it matches a predicate.
 
         Args:
-            func (Callable[[T], bool]): The predicate to apply to the contained value.
+            func (Callable[Concatenate[T, P], bool]): The predicate to apply to the contained value.
+            *args (P.args): Additional positional arguments to pass to func.
+            **kwargs (P.kwargs): Additional keyword arguments to pass to func.
 
         Returns:
             bool: `True` if the option is `None` or the predicate returns `True` for the contained value, `False` otherwise.
@@ -173,7 +184,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        return self.is_none() or func(self.unwrap())
+        return self.is_none() or func(self.unwrap(), *args, **kwargs)
 
     @abstractmethod
     def unwrap(self) -> T:
@@ -277,17 +288,21 @@ class Option[T](Pipeable, ABC):
         """
         return self.unwrap() if self.is_some() else f()
 
-    def map[U](self, f: Callable[[T], U]) -> Option[U]:
+    def map[**P, R](
+        self, f: Callable[Concatenate[T, P], R], *args: P.args, **kwargs: P.kwargs
+    ) -> Option[R]:
         """Maps an `Option[T]` to `Option[U]`.
 
         Done by applying a function to a contained `Some` value,
         leaving a `None` value untouched.
 
         Args:
-            f (Callable[[T], U]): The function to apply to the `Some` value.
+            f (Callable[Concatenate[T, P], R]): The function to apply to the `Some` value.
+            *args (P.args): Additional positional arguments to pass to f.
+            **kwargs (P.kwargs): Additional keyword arguments to pass to f.
 
         Returns:
-            Option[U]: A new `Option` with the mapped value if `Some`, otherwise `None`.
+            Option[R]: A new `Option` with the mapped value if `Some`, otherwise `None`.
 
         Example:
         ```python
@@ -299,7 +314,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        return Some(f(self.unwrap())) if self.is_some() else NONE
+        return Some(f(self.unwrap(), *args, **kwargs)) if self.is_some() else NONE
 
     def flatten[U](self: Option[Option[U]]) -> Option[U]:
         """Flattens a nested `Option`.
@@ -376,14 +391,21 @@ class Option[T](Pipeable, ABC):
         """
         return self if self.is_some() else optb
 
-    def and_then[U](self, f: Callable[[T], Option[U]]) -> Option[U]:
+    def and_then[**P, R](
+        self,
+        f: Callable[Concatenate[T, P], Option[R]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Option[R]:
         """Calls a function if the option is `Some`, otherwise returns `None`.
 
         Args:
-            f (Callable[[T], Option[U]]): The function to call with the `Some` value.
+            f (Callable[Concatenate[T, P], Option[R]]): The function to call with the `Some` value.
+            *args (P.args): Additional positional arguments to pass to f.
+            **kwargs (P.kwargs): Additional keyword arguments to pass to f.
 
         Returns:
-            Option[U]: The result of the function if `Some`, otherwise `None`.
+            Option[R]: The result of the function if `Some`, otherwise `None`.
 
         Example:
         ```python
@@ -403,7 +425,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        return f(self.unwrap()) if self.is_some() else NONE
+        return f(self.unwrap(), *args, **kwargs) if self.is_some() else NONE
 
     def or_else(self, f: Callable[[], Option[T]]) -> Option[T]:
         """Returns the `Option[T]` if it contains a value, otherwise calls a function and returns the result.
@@ -478,15 +500,23 @@ class Option[T](Pipeable, ABC):
 
         return Ok(self.unwrap()) if self.is_some() else Err(err())
 
-    def map_or[U](self, default: U, f: Callable[[T], U]) -> U:
+    def map_or[**P, R](
+        self,
+        default: R,
+        f: Callable[Concatenate[T, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> R:
         """Returns the result of applying a function to the contained value if Some, otherwise returns the default value.
 
         Args:
-            default (U): The default value to return if NONE.
-            f (Callable[[T], U]): The function to apply to the contained value.
+            default (R): The default value to return if NONE.
+            f (Callable[Concatenate[T, P], R]): The function to apply to the contained value.
+            *args (P.args): Additional positional arguments to pass to f.
+            **kwargs (P.kwargs): Additional keyword arguments to pass to f.
 
         Returns:
-            U: The result of f(self.unwrap()) if Some, otherwise default.
+            R: The result of f(self.unwrap()) if Some, otherwise default.
 
         Example:
         ```python
@@ -498,17 +528,17 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        return f(self.unwrap()) if self.is_some() else default
+        return f(self.unwrap(), *args, **kwargs) if self.is_some() else default
 
-    def map_or_else[U](self, default: Callable[[], U], f: Callable[[T], U]) -> U:
+    def map_or_else[**P, R](self, default: Callable[[], R], f: Callable[[T], R]) -> R:
         """Returns the result of applying a function to the contained value if Some, otherwise computes a default value.
 
         Args:
-            default (Callable[[], U]): A function returning the default value if NONE.
-            f (Callable[[T], U]): The function to apply to the contained value.
+            default (Callable[[], R]): A function returning the default value if NONE.
+            f (Callable[[T], R]): The function to apply to the contained value.
 
         Returns:
-            U: The result of f(self.unwrap()) if Some, otherwise default().
+            R: The result of f(self.unwrap()) if Some, otherwise default().
 
         Example:
         ```python
@@ -522,7 +552,12 @@ class Option[T](Pipeable, ABC):
         """
         return f(self.unwrap()) if self.is_some() else default()
 
-    def filter(self, predicate: Callable[[T], bool]) -> Option[T]:
+    def filter[**P, R](
+        self,
+        predicate: Callable[Concatenate[T, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Option[T]:
         """Returns None if the option is None, otherwise calls predicate with the wrapped value.
 
         This function works similar to `Iter.filter` in the sense that we only keep the value if it matches a predicate.
@@ -530,7 +565,9 @@ class Option[T](Pipeable, ABC):
         You can imagine the `Option[T]` being an iterator over one or zero elements.
 
         Args:
-            predicate (Callable[[T], bool]): The predicate to apply to the contained value.
+            predicate (Callable[Concatenate[T, P], R]): The predicate to apply to the contained value.
+            *args (P.args): Additional positional arguments to pass to predicate.
+            **kwargs (P.kwargs): Additional keyword arguments to pass to predicate.
 
         Returns:
             Option[T]: `Some[T]` if predicate returns true (where T is the wrapped value), `NONE` if predicate returns false.
@@ -552,7 +589,11 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        return self if self.is_some() and predicate(self.unwrap()) else NONE
+        return (
+            self
+            if self.is_some() and predicate(self.unwrap(), *args, **kwargs)
+            else NONE
+        )
 
     def iter(self) -> Iter[T]:
         """Creates an `Iter` over the optional value.

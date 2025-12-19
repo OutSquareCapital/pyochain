@@ -56,11 +56,18 @@ class Pipeable:
         """
         return func(self, *args, **kwargs)
 
-    def tap(self, func: Callable[[Self], Any]) -> Self:
+    def tap[**P](
+        self,
+        func: Callable[Concatenate[Self, P], Any],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Self:
         """Tap into the chain to perform side effects without altering the data.
 
         Args:
-            func (Callable[[Self], Any]): Function to apply to the instance for side effects.
+            func (Callable[Concatenate[Self, P], Any]): Function to apply to the instance for side effects.
+            *args (P.args): Positional arguments to pass to the function.
+            **kwargs (P.kwargs): Keyword arguments to pass to the function.
 
         Returns:
             Self: The instance itself for chaining.
@@ -74,7 +81,7 @@ class Pipeable:
 
         ```
         """
-        func(self)
+        func(self, *args, **kwargs)
         return self
 
 
