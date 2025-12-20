@@ -12,7 +12,7 @@ from collections.abc import (
     Sequence,
     ValuesView,
 )
-from typing import TYPE_CHECKING, Any, Concatenate, Self, overload
+from typing import Any, Concatenate, Self, overload
 
 import cytoolz as cz
 
@@ -28,14 +28,9 @@ from ._partitions import BasePartitions
 from ._process import BaseProcess
 from ._tuples import BaseTuples
 
-if TYPE_CHECKING:
-    from .._dict import Dict
-
-type TryVal[T] = Option[T] | Result[T, Any] | T | None
+type TryVal[T] = Option[T] | Result[T, object] | T | None
 """Represent a value that may be failible."""
-type TryIter[T] = (
-    Iter[Option[T]] | Iter[Result[T, Any]] | Iter[T | None] | Iter[TryVal[T]]
-)
+type TryIter[T] = Iter[Option[T]] | Iter[Result[T, object]] | Iter[T | None]
 """Represent an iterator that may yield failible values."""
 
 
@@ -44,7 +39,7 @@ class CommonMethods[T](BaseAgg[T], BaseEager[T], BaseDict[T], BaseBool[T]):
 
 
 def _convert_data[T](data: Iterable[T] | T, *more_data: T) -> Iterable[T]:
-    return data if cz.itertoolz.isiterable(data) else (data, *more_data)  # ty:ignore[invalid-return-type] # @Todo(StarredExpression)]
+    return data if cz.itertoolz.isiterable(data) else (data, *more_data)
 
 
 class Iter[T](
@@ -262,78 +257,6 @@ class Iter[T](
 
         return Iter(_unfold())
 
-    def struct[**P, R, K, V](
-        self: Iter[dict[K, V]],
-        func: Callable[Concatenate[Dict[K, V], P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Iter[R]:
-        """Apply a function to each element after wrapping it in a `Dict`.
-
-        This is a convenience method for the common pattern of mapping a function over an `Iterable` of dictionaries.
-
-        Args:
-            func (Callable[Concatenate[Dict[K, V], P], R]): Function to apply to each wrapped dictionary.
-            *args (P.args): Positional arguments to pass to the function.
-            **kwargs (P.kwargs): Keyword arguments to pass to the function.
-
-        Returns:
-            Iter[R]: A new `Iter` instance containing the results of applying the function.
-
-        Example:
-        ```python
-        >>> from typing import Any
-        >>> import pyochain as pc
-
-        >>> data: list[dict[str, Any]] = [
-        ...     {"name": "Alice", "age": 30, "city": "New York"},
-        ...     {"name": "Bob", "age": 25, "city": "Los Angeles"},
-        ...     {"name": "Charlie", "age": 35, "city": "New York"},
-        ...     {"name": "David", "age": 40, "city": "Paris"},
-        ... ]
-        >>>
-        >>> def to_title(d: pc.Dict[str, Any]) -> pc.Dict[str, Any]:
-        ...     return d.map_keys(lambda k: k.title())
-        >>>
-        >>> def is_young(d: pc.Dict[str, Any]) -> bool:
-        ...     return d.inner().get("Age", 0) < 30
-        >>>
-        >>> def set_continent(d: pc.Dict[str, Any], value: str) -> dict[str, Any]:
-        ...     return d.with_key("Continent", value).inner()
-        >>>
-        >>> def grouped_data():
-        ...     return (
-        ...         pc.Iter(data)
-        ...         .struct(to_title)
-        ...         .filter_false(is_young)
-        ...         .map(lambda d: d.drop("Age").with_key("Continent", "NA"))
-        ...         .map_if(
-        ...             lambda d: d.inner().get("City") == "Paris",
-        ...         )
-        ...         .then(lambda d: set_continent(d, "Europe"))
-        ...         .or_else(
-        ...             lambda d: set_continent(d, "America"))
-        ...         .group_by(lambda d: d.get("Continent"))
-        ...         .map_values(
-        ...             lambda d: pc.Iter(d)
-        ...             .struct(lambda d: d.drop("Continent").inner())
-        ...             .into(list)
-        ...         )
-        ...     )
-        >>> grouped_data()  # doctest: +NORMALIZE_WHITESPACE
-        {'America': [{'City': 'New York', 'Name': 'Alice'},
-                    {'City': 'New York', 'Name': 'Charlie'}],
-        'Europe': [{'City': 'Paris', 'Name': 'David'}]}
-
-        ```
-        """
-        from .._dict import Dict
-
-        def _struct(data: Iterable[dict[K, V]]) -> Iterator[R]:
-            return (func(Dict(x), *args, **kwargs) for x in data)
-
-        return self._lazy(_struct)
-
     def collect(self) -> Seq[T]:
         """Collect the elements of the Iterator in a tuple and wrap it in a `Seq`.
 
@@ -445,25 +368,23 @@ class Iter[T](
         from .._results import NONE, Result, Some
 
         def _try_collect(data: TryIter[U]) -> Option[Vec[U]]:
-            collected: MutableSequence[U] = []
+            collected = Vec[U].new()
 
             for item in data:
                 if item is None:
                     return NONE
                 match item:
-                    case Result() as res:
-                        res: Result[U, Any]
-                        if res.is_err():
+                    case Result():
+                        if item.is_err():
                             return NONE
-                        collected.append(res.unwrap())
-                    case Option() as opt:
-                        opt: Option[U]
-                        if opt.is_none():
+                        collected.append(item.unwrap())  # pyright: ignore[reportUnknownArgumentType]
+                    case Option():
+                        if item.is_none():
                             return NONE
-                        collected.append(opt.unwrap())
+                        collected.append(item.unwrap())  # pyright: ignore[reportUnknownArgumentType]
                     case _ as plain_value:
                         collected.append(plain_value)
-            return Some(Vec(collected))
+            return Some(collected)
 
         return self.into(_try_collect)
 
@@ -537,11 +458,10 @@ class Iter[T](
 
         ```
         """
+        from collections import deque
+        from contextlib import suppress
 
         def _chunks(data: Iterable[T], size: int) -> Iterator[Iter[T]]:
-            from collections import deque
-            from contextlib import suppress
-
             def _ichunk(
                 iterator: Iterator[T], n: int
             ) -> tuple[Iterator[T], Callable[[int], int]]:
@@ -578,11 +498,9 @@ class Iter[T](
                     return
 
                 yield self.__class__(chunk)
-
-                # Fill previous chunk's cache
                 materialize_next(size)
 
-        return self._lazy(lambda x: _chunks(x, size))
+        return self._lazy(_chunks, size)
 
     @overload
     def flatten[U](self: Iter[KeysView[U]]) -> Iter[U]: ...
@@ -1220,7 +1138,7 @@ class Vec[T](Seq[T], MutableSequence[T]):
     _inner: list[T]
 
     def __init__(self, data: list[T]) -> None:
-        self._inner = data
+        self._inner = data  # type: ignore[override]
 
     @overload
     def __setitem__(self, index: int, value: T) -> None: ...

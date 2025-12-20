@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING, Any
 import cytoolz as cz
 
 from .._core import IterWrapper
-from .._results import NONE, Option, Some
 
 if TYPE_CHECKING:
+    from .._results import Option
     from ._main import Iter
 
 
@@ -235,42 +235,6 @@ class BaseMap[T](IterWrapper[T]):
             return itertools.repeat(factory(data), n)
 
         return self._lazy(_repeat)
-
-    def repeat_last(self) -> Iter[Option[T]]:
-        """After the iterable is exhausted, keep yielding its last element.
-
-        Wrap each yielded element in an Option[T].
-
-        **Warning** ⚠️
-            This creates an infinite iterator.
-            Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken.
-
-        Returns:
-            Iter[Option[T]]: An iterable that yields the last element repeatedly, or default if empty
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter(range(3)).repeat_last().take(5).map(lambda x: x.unwrap()).collect()
-        Seq(0, 1, 2, 2, 2)
-
-        If the iterable is empty, yield `NONE` indefinitely:
-        ```python
-        >>> pc.Iter(range(0)).repeat_last().take(5).collect()
-        Seq(NONE, NONE, NONE, NONE, NONE)
-
-        ```
-        """
-
-        def _repeat_last(data: Iterable[T]) -> Iterator[Option[T]]:
-            _marker = object()
-            item = _marker
-            for item in data:
-                yield Some(item)
-            final = NONE if item is _marker else Some(item)
-            yield from itertools.repeat(final)
-
-        return self._lazy(_repeat_last)
 
     def pluck[U: Mapping[Any, Any]](
         self: IterWrapper[U],
