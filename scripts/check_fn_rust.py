@@ -86,9 +86,18 @@ RUST_FN = (
     "try_reduce",
     "unzip",
     "zip",
+    "empty",
+    "from_coroutine",
+    "from_fn",
+    "once",
+    "once_with",
+    "repeat",
+    "repeat_n",
+    "repeat_with",
+    "successors",
 )
 
-PURE_RUST = {"copied", "cloned", "by_ref"}
+PURE_RUST = {"copied", "cloned", "by_ref", "from_coroutine"}
 """Methods that are not pertinent in the Python context."""
 EQUIVALENT = [
     ("count", "length"),  # count is reserved for MutableMappings in Python
@@ -97,7 +106,14 @@ EQUIVALENT = [
         "is_sorted_by_key",
         "is_sorted_by",
     ),  # all covered by is_sorted in Python
+    (
+        "from_",
+        "into",
+    ),  # from is a reserved word in Python, into is implicitely implemented with From trait in Rust
 ]
+"""Methods that have an equivalent Python counterpart."""
+PY_STDLIB = ["filter_false"]
+"""Methods that exist in python stdlib but not in Rust."""
 
 
 def _with_source(fn_name: str, src: Literal["python", "rust"]) -> tuple[str, str]:
@@ -127,6 +143,7 @@ def main() -> None:
                     fn.is_in(PURE_RUST)
                     .not_()
                     .and_(fn.is_in(pc.Iter(EQUIVALENT).flatten().into(set)).not_())
+                    .and_(fn.is_in(PY_STDLIB).not_())
                 )
             )
         )
