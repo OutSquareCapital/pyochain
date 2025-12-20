@@ -73,8 +73,8 @@ class NestedDict[K, V](MappingWrapper[K, V]):
         ... }
         >>> pc.Dict(data).struct(lambda d: d.map_keys(str.upper).drop("AGE").inner())
         ... # doctest: +NORMALIZE_WHITESPACE
-        {'person1': {'CITY': 'New York', 'NAME': 'Alice'},
-        'person2': {'CITY': 'Los Angeles', 'NAME': 'Bob'}}
+        {'person1': {'NAME': 'Alice', 'CITY': 'New York'},
+        'person2': {'NAME': 'Bob', 'CITY': 'Los Angeles'}}
 
         ```
         """

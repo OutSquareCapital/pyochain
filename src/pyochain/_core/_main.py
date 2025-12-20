@@ -1,15 +1,13 @@
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import Callable, Generator, Iterable, Iterator, Mapping
-from pprint import pformat
+from collections.abc import Callable, Generator, Iterator
 from typing import TYPE_CHECKING, Any, Concatenate, Self
 
 from ._config import get_config
 
 if TYPE_CHECKING:
     from .._dict import Dict
-    from .._iter import Iter, Seq, Vec
 
 
 type IntoIter[T] = Iterator[T] | Generator[T, Any, Any]
@@ -112,125 +110,12 @@ class CommonBase[T](ABC, Pipeable):
         """
         return self._inner
 
-    def eq(self, other: Self) -> bool:
-        """Check if two records are equal based on their data.
-
-        Args:
-            other (Self | T): Another instance or corresponding underlying data to compare against.
-
-        Returns:
-            bool: True if the underlying data are equal, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> d1 = pc.Dict({"a": 1, "b": 2})
-        >>> d2 = pc.Dict({"a": 1, "b": 2})
-        >>> d3 = pc.Dict({"a": 1, "b": 3})
-        >>> d1.eq(d2)
-        True
-        >>> d1.eq(d3)
-        False
-
-        ```
-        """
-        return self._inner == other._inner
-
-    def ne(self, other: Self) -> bool:
-        """Check if two records are not equal based on their data.
-
-        Args:
-            other (Self | T): Another instance or corresponding underlying data to compare against.
-
-        Returns:
-            bool: True if the underlying data are not equal, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> d1 = pc.Dict({"a": 1, "b": 2})
-        >>> d2 = pc.Dict({"a": 1, "b": 2})
-        >>> d3 = pc.Dict({"a": 1, "b": 3})
-        >>> d1.ne(d2)
-        False
-        >>> d1.ne(d3)
-        True
-        >>> pc.Iter((1, 2, 3)).ne((1, 2, 3))
-        False
-
-        ```
-        """
-        return self._inner != other._inner
-
-
-class IterWrapper[T](CommonBase[Iterable[T]]):
-    _inner: Iterable[T]
-
-    def __iter__(self) -> Iterator[T]:
-        return iter(self._inner)
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({get_config().iter_repr(self._inner)})"
-
-    def _eager[**P, U](
-        self,
-        factory: Callable[Concatenate[Iterable[T], P], tuple[U, ...]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Seq[U]:
-        from .._iter import Seq
-
-        def _(data: Iterable[T]) -> Seq[U]:
-            return Seq(factory(data, *args, **kwargs))
-
-        return self.into(_)
-
-    def _eager_mut[**P, U](
-        self,
-        factory: Callable[Concatenate[Iterable[T], P], list[U]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Vec[U]:
-        from .._iter import Vec
-
-        def _(data: Iterable[T]) -> Vec[U]:
-            return Vec(factory(data, *args, **kwargs))
-
-        return self.into(_)
-
-    def _lazy[**P, U](
-        self,
-        factory: Callable[Concatenate[Iterable[T], P], Iterator[U]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Iter[U]:
-        from .._iter import Iter
-
-        def _(data: Iterable[T]) -> Iter[U]:
-            return Iter(factory(data, *args, **kwargs))
-
-        return self.into(_)
-
 
 class MappingWrapper[K, V](CommonBase[dict[K, V]]):
     _inner: dict[K, V]
 
     def __repr__(self) -> str:
-        def dict_repr(
-            v: Mapping[Any, Any],
-            max_items: int = 20,
-            depth: int = 3,
-            width: int = 80,
-            *,
-            compact: bool = True,
-        ) -> str:
-            truncated = dict(list(v.items())[:max_items])
-            suffix = "..." if len(v) > max_items else ""
-            return (
-                pformat(truncated, depth=depth, width=width, compact=compact) + suffix
-            )
-
-        return f"{self.into(lambda d: dict_repr(d._inner))}"
+        return f"{self.into(lambda d: get_config().dict_repr(d._inner))}"
 
     def _new[KU, VU](self, func: Callable[[dict[K, V]], dict[KU, VU]]) -> Dict[KU, VU]:
         from .._dict import Dict

@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import functools
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Concatenate, Literal, Self
 
 import cytoolz as cz
 import more_itertools as mit
 
-from .._core import IterWrapper, Pipeable, SupportsRichComparison
+from .._core import CommonBase, Pipeable, SupportsRichComparison, get_config
 
 if TYPE_CHECKING:
     from .._dict import Dict
@@ -26,8 +26,203 @@ def convert_data[T](data: Iterable[T] | T, *more_data: T) -> Iterable[T]:
     return data if cz.itertoolz.isiterable(data) else (data, *more_data)
 
 
-class CommonMethods[T](IterWrapper[T]):
-    def join(self: IterWrapper[str], sep: str) -> str:
+class CommonMethods[T](CommonBase[Iterable[T]]):
+    _inner: Iterable[T]
+
+    def __iter__(self) -> Iterator[T]:
+        return iter(self._inner)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({get_config().iter_repr(self._inner)})"
+
+    def _eager[**P, U](
+        self,
+        factory: Callable[Concatenate[Iterable[T], P], tuple[U, ...]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Seq[U]:
+        from .._iter import Seq
+
+        def _(data: Iterable[T]) -> Seq[U]:
+            return Seq(factory(data, *args, **kwargs))
+
+        return self.into(_)
+
+    def _eager_mut[**P, U](
+        self,
+        factory: Callable[Concatenate[Iterable[T], P], list[U]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Vec[U]:
+        from .._iter import Vec
+
+        def _(data: Iterable[T]) -> Vec[U]:
+            return Vec(factory(data, *args, **kwargs))
+
+        return self.into(_)
+
+    def _lazy[**P, U](
+        self,
+        factory: Callable[Concatenate[Iterable[T], P], Iterator[U]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Iter[U]:
+        from .._iter import Iter
+
+        def _(data: Iterable[T]) -> Iter[U]:
+            return Iter(factory(data, *args, **kwargs))
+
+        return self.into(_)
+
+    def eq(self, other: Self) -> bool:
+        """Check if two Iterables are equal based on their data.
+
+        Note:
+            This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
+
+        Args:
+            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]` to compare against.
+
+        Returns:
+            bool: True if the underlying data are equal, False otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter((1,2,3)).eq(pc.Iter((1,2,3)))
+        True
+        >>> pc.Iter((1,2,3)).eq(pc.Seq([1,2]))
+        False
+        >>> pc.Iter((1,2,3)).eq(pc.Iter((1,2)))
+        False
+        >>> pc.Seq((1,2,3)).eq(pc.Vec([1,2,3]))
+        True
+
+        ```
+        """
+        return tuple(self._inner) == tuple(other._inner)
+
+    def ne(self, other: Self) -> bool:
+        """Check if two Iterables are not equal based on their data.
+
+        Note:
+            This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
+
+        Args:
+            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]` to compare against.
+
+        Returns:
+            bool: True if the underlying data are not equal, False otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter((1,2,3)).ne(pc.Iter((1,2)))
+        True
+        >>> pc.Iter((1,2,3)).ne(pc.Iter((1,2,3)))
+        False
+
+        ```
+        """
+        return tuple(self._inner) != tuple(other._inner)
+
+    def le(self, other: Self) -> bool:
+        """Check if this Iterable is less than or equal to another based on their data.
+
+        Note:
+            This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
+
+        Args:
+            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]` to compare against.
+
+        Returns:
+            bool: True if the underlying data of self is less than or equal to that of other, False otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Seq((1,2)).le(pc.Seq((1,2,3)))
+        True
+        >>> pc.Seq((1,2,3)).le(pc.Seq((1,2)))
+        False
+
+        ```
+        """
+        return tuple(self._inner) <= tuple(other._inner)
+
+    def lt(self, other: Self) -> bool:
+        """Check if this Iterable is less than another based on their data.
+
+        Note:
+            This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
+
+        Args:
+            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]` to compare against.
+
+        Returns:
+            bool: True if the underlying data of self is less than that of other, False otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Seq((1,2)).lt(pc.Seq((1,2,3)))
+        True
+        >>> pc.Seq((1,2,3)).lt(pc.Seq((1,2)))
+        False
+
+        ```
+        """
+        return tuple(self._inner) < tuple(other._inner)
+
+    def gt(self, other: Self) -> bool:
+        """Check if this Iterable is greater than another based on their data.
+
+        Note:
+            This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
+
+        Args:
+            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]` to compare against.
+
+        Returns:
+            bool: True if the underlying data of self is greater than that of other, False otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Seq((1,2,3)).gt(pc.Seq((1,2)))
+        True
+        >>> pc.Seq((1,2)).gt(pc.Seq((1,2,3)))
+        False
+
+        ```
+        """
+        return tuple(self._inner) > tuple(other._inner)
+
+    def ge(self, other: Self) -> bool:
+        """Check if this Iterable is greater than or equal to another based on their data.
+
+        Note:
+            This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
+
+        Args:
+            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]` to compare against.
+
+        Returns:
+            bool: True if the underlying data of self is greater than or equal to that of other, False otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Seq((1,2,3)).ge(pc.Seq((1,2)))
+        True
+        >>> pc.Seq((1,2)).ge(pc.Seq((1,2,3)))
+        False
+
+        ```
+        """
+        return tuple(self._inner) >= tuple(other._inner)
+
+    def join(self: CommonMethods[str], sep: str) -> str:
         """Join all elements of the `Iterable` into a single `string`, with a specified separator.
 
         Args:
@@ -46,7 +241,7 @@ class CommonMethods[T](IterWrapper[T]):
         """
         return self.into(functools.partial(str.join, sep))
 
-    def unzip[U, V](self: IterWrapper[tuple[U, V]]) -> Unzipped[U, V]:
+    def unzip[U, V](self: CommonMethods[tuple[U, V]]) -> Unzipped[U, V]:
         """Converts an iterator of pairs into a pair of iterators.
 
         Returns:
@@ -279,7 +474,7 @@ class CommonMethods[T](IterWrapper[T]):
         """
         return self.into(mit.argmin, key=key)
 
-    def sum[U: int | float](self: IterWrapper[U]) -> U | Literal[0]:
+    def sum[U: int | float](self: CommonMethods[U]) -> U | Literal[0]:
         """Return the sum of the sequence.
 
         Returns:
@@ -294,7 +489,7 @@ class CommonMethods[T](IterWrapper[T]):
         """
         return self.into(sum)
 
-    def min[U: int | float](self: IterWrapper[U]) -> U:
+    def min[U: int | float](self: CommonMethods[U]) -> U:
         """Return the minimum of the sequence.
 
         Returns:
@@ -309,7 +504,7 @@ class CommonMethods[T](IterWrapper[T]):
         """
         return self.into(min)
 
-    def max[U: int | float](self: IterWrapper[U]) -> U:
+    def max[U: int | float](self: CommonMethods[U]) -> U:
         """Return the maximum of the sequence.
 
         Returns:
@@ -951,8 +1146,8 @@ class CommonMethods[T](IterWrapper[T]):
         ... ]
         >>> pc.Iter(data).group_by("gender").sort()
         ... # doctest: +NORMALIZE_WHITESPACE
-        {'F': [{'gender': 'F', 'name': 'Alice'}],
-        'M': [{'gender': 'M', 'name': 'Bob'}, {'gender': 'M', 'name': 'Charlie'}]}
+        {'F': [{'name': 'Alice', 'gender': 'F'}],
+        'M': [{'name': 'Bob', 'gender': 'M'}, {'name': 'Charlie', 'gender': 'M'}]}
 
         ```
         """
