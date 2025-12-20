@@ -76,8 +76,8 @@ class Pipeable:
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([1, 2, 3, 4]).inspect(print).last()
-        Seq(1, 2, 3, 4) # printed the instance
-        4 # still returns the last element
+        Seq(1, 2, 3, 4)
+        4
 
         ```
         """
@@ -112,7 +112,7 @@ class CommonBase[T](ABC, Pipeable):
         """
         return self._inner
 
-    def eq(self, other: Self | T) -> bool:
+    def eq(self, other: Self) -> bool:
         """Check if two records are equal based on their data.
 
         Args:
@@ -134,8 +134,33 @@ class CommonBase[T](ABC, Pipeable):
 
         ```
         """
-        other_data = other._inner if isinstance(other, self.__class__) else other
-        return self._inner == other_data
+        return self._inner == other._inner
+
+    def ne(self, other: Self) -> bool:
+        """Check if two records are not equal based on their data.
+
+        Args:
+            other (Self | T): Another instance or corresponding underlying data to compare against.
+
+        Returns:
+            bool: True if the underlying data are not equal, False otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> d1 = pc.Dict({"a": 1, "b": 2})
+        >>> d2 = pc.Dict({"a": 1, "b": 2})
+        >>> d3 = pc.Dict({"a": 1, "b": 3})
+        >>> d1.ne(d2)
+        False
+        >>> d1.ne(d3)
+        True
+        >>> pc.Iter((1, 2, 3)).ne((1, 2, 3))
+        False
+
+        ```
+        """
+        return self._inner != other._inner
 
 
 class IterWrapper[T](CommonBase[Iterable[T]]):

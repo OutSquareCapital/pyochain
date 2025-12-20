@@ -296,7 +296,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         ...     if state < 5:
         ...         return pc.Some((state * 10, state + 1))
         ...     return pc.NONE
-        >>> pc.Iter.from_fn(seed=0, generator=counter_generator).collect()
+        >>> pc.Iter.from_fn(0, counter_generator).collect()
         Seq(0, 10, 20, 30, 40)
         >>> # Example 2: Fibonacci sequence up to 100
         >>> type FibState = tuple[int, int]
@@ -305,10 +305,10 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         ...     if a > 100:
         ...         return pc.NONE
         ...     return pc.Some((a, (b, a + b)))
-        >>> pc.Iter.from_fn(seed=(0, 1), generator=fib_generator).collect()
+        >>> pc.Iter.from_fn((0, 1), fib_generator).collect()
         Seq(0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89)
         >>> # Example 3: Infinite iterator (requires take())
-        >>> pc.Iter.from_fn(seed=1, generator=lambda s: pc.Some((s, s * 2))).take(5).collect()
+        >>> pc.Iter.from_fn(1, lambda s: pc.Some((s, s * 2))).take(5).collect()
         Seq(1, 2, 4, 8, 16)
 
         ```
