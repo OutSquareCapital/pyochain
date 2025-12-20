@@ -41,13 +41,17 @@ Provides the following core classes and utilities:
   - Provides all methods from the Rust stdlib `Result` Trait (as long as they are applicable/made sense in a Python context).
   - Analog to a superset of `T | Exception`.
 
-All classes have: `from_`, `.tap()` and `.into()` methods (or equivalents, see Option and Result for `inspect` and `inspect_err`) for:
+### Shared Core Features
 
-**into**:  Easy conversion between types, whilst keeping the chain uninterrupted. E.g `Seq[T].into()` can take any function/object that expect a `Sequence[T]` as argument, and return it's result `R`. e.g `Callable[[Sequence[T]], R] -> R`.
+All provided classes share the following core methods for enhanced usability:
 
-**from_**: Creating instances from various inputs. This allow flexible instantiation when needed, keeping the base **init** of the classes without type conversions for performance.
+- **`.from_()`**: Create instances from various inputs. This allow flexible instantiation when needed, whilst keeping the base **init** of the classes without type conversions for performance.
 
-**tap, inspect, for_each**: Inserting side-effects in the chain without breaking it (print, mutation of an external variable, logging...).
+- **`.inspect()`**: Insert functions who compute side-effects in the chain without breaking it (print, mutation of an external variable, logging...). If Option or Result, call the function only if `Some` or `Ok`.
+
+- **`.into()`**:  Provide a `Callable[[Self, P], T]` to convert from **Self** to T in a fluent way.
+E.g `Seq[T].into()` can take any function/object that expect a `Sequence[T]` as argument, and return it's result `R`.
+Conceptually, replace`f(x, args, kwargs)` with `x.into(f, args, kwargs)`.
 
 ## Installation
 
@@ -151,8 +155,6 @@ pyochain acts as a unifying API layer over these powerful tools.
 The stubs used for the developpement, made by the maintainer of pyochain, can be found here:
 
 <https://github.com/OutSquareCapital/cytoolz-stubs>
-
-
 """
 
 from ._dict import Dict
