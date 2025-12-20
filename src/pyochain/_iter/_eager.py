@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, MutableSequence, Sequence
-from typing import TYPE_CHECKING, Any, Concatenate, Self, overload
+from collections.abc import Iterable, MutableSequence, Sequence
+from typing import TYPE_CHECKING, Any, overload
 
 import cytoolz as cz
 
@@ -84,32 +84,6 @@ class Seq[T](CommonMethods[T], Sequence[T]):
             Iter[T]: An `Iter` instance wrapping an iterator over the sequence.
         """
         return self._lazy(iter)
-
-    def for_each[**P](
-        self,
-        func: Callable[Concatenate[T, P], Any],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Self:
-        """Iterate over the elements and apply a function to each.
-
-        Contratry to `Iter.for_each`, this method returns the same instance for chaining.
-
-        Args:
-            func (Callable[Concatenate[T, P], Any]): Function to apply to each element.
-            *args (P.args): Positional arguments for the function.
-            **kwargs (P.kwargs): Keyword arguments for the function.
-
-        Returns:
-            Self: The same instance for chaining.
-
-        Examples:
-        ```python
-        ```
-        """
-        for v in self._inner:
-            func(v, *args, **kwargs)
-        return self
 
     def is_distinct(self) -> bool:
         """Return True if all items are distinct.

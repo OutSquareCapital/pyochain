@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from typing import TYPE_CHECKING, Any, Concatenate
+from typing import TYPE_CHECKING, Any
 
 import cytoolz as cz
 
@@ -12,40 +12,6 @@ if TYPE_CHECKING:
 
 
 class ProcessDict[K, V](MappingWrapper[K, V]):
-    def for_each[**P](
-        self,
-        func: Callable[Concatenate[K, V, P], Any],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Dict[K, V]:
-        """Apply a function to each key-value pair in the dict for side effects.
-
-        Args:
-            func (Callable[Concatenate[K, V, P], Any]): Function to apply to each key-value pair.
-            *args (P.args): Positional arguments to pass to the function.
-            **kwargs (P.kwargs): Keyword arguments to pass to the function.
-
-        Returns:
-            Dict[K, V]: The original Dict unchanged.
-
-        Returns the original Dict unchanged.
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Dict({"a": 1, "b": 2}).for_each(lambda k, v: print(f"Key: {k}, Value: {v}"))
-        Key: a, Value: 1
-        Key: b, Value: 2
-        {'a': 1, 'b': 2}
-
-        ```
-        """
-
-        def _for_each(data: dict[K, V]) -> dict[K, V]:
-            for k, v in data.items():
-                func(k, v, *args, **kwargs)
-            return data
-
-        return self._new(_for_each)
-
     def update_in(
         self,
         *keys: K,
