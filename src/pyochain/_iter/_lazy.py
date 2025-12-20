@@ -235,31 +235,6 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         """
         return Iter(itertools.count(start, step))
 
-    @staticmethod
-    def from_func[U](func: Callable[[U], U], value: U) -> Iter[U]:
-        """Create an infinite iterator by repeatedly applying a function on an original value.
-
-        **Warning** ⚠️
-            This creates an infinite iterator.
-            Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken.
-
-        Args:
-            func (Callable[[U], U]): Function to apply repeatedly.
-            value (U): Initial value to start the iteration.
-
-        Returns:
-            Iter[U]: An iterator generating the sequence.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter.from_func(lambda x: x + 1, 0).take(3).collect()
-        Seq(0, 1, 2)
-
-        ```
-        """
-        return Iter(cz.itertoolz.iterate(func, value))
-
     @overload
     @staticmethod
     def from_[U](data: Iterable[U]) -> Iter[U]: ...
@@ -291,22 +266,24 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         return Iter(convert_data(data, *more_data))
 
     @staticmethod
-    def unfold[S, V](seed: S, generator: Callable[[S], Option[tuple[V, S]]]) -> Iter[V]:
-        """Create an iterator by repeatedly applying a generator function to an initial state.
+    def from_fn[S, V](
+        state: S, generator: Callable[[S], Option[tuple[V, S]]]
+    ) -> Iter[V]:
+        """Create an `Iter` by repeatedly applying a **generator** function to an initial **state**.
 
-        The `generator` function takes the current state and must return:
+        The **generator** function takes the current state and must return:
 
-        - A tuple of `Some(value, new_state)` to emit the `value` and continue with the `new_state`.
+        - A tuple of `Some(value, new_state)` to emit the value `V` and continue with the new **state** `S`.
         - `NONE` to stop the generation.
 
         This is functionally equivalent to a state-based `while` loop.
 
         **Warning** ⚠️
-            If the `generator` function never returns `NONE`, it creates an infinite iterator.
+            If the **generator** function never returns `NONE`, it creates an infinite iterator.
             Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken if necessary.
 
         Args:
-            seed (S): Initial state for the generator.
+            state (S): Initial state for the generator.
             generator (Callable[[S], Option[tuple[V, S]]]): Function that generates the next value and state.
 
         Returns:
@@ -320,7 +297,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         ...     if state < 5:
         ...         return pc.Some((state * 10, state + 1))
         ...     return pc.NONE
-        >>> pc.Iter.unfold(seed=0, generator=counter_generator).collect()
+        >>> pc.Iter.from_fn(seed=0, generator=counter_generator).collect()
         Seq(0, 10, 20, 30, 40)
         >>> # Example 2: Fibonacci sequence up to 100
         >>> type FibState = tuple[int, int]
@@ -329,26 +306,26 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         ...     if a > 100:
         ...         return pc.NONE
         ...     return pc.Some((a, (b, a + b)))
-        >>> pc.Iter.unfold(seed=(0, 1), generator=fib_generator).collect()
+        >>> pc.Iter.from_fn(seed=(0, 1), generator=fib_generator).collect()
         Seq(0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89)
         >>> # Example 3: Infinite iterator (requires take())
-        >>> pc.Iter.unfold(seed=1, generator=lambda s: pc.Some((s, s * 2))).take(5).collect()
+        >>> pc.Iter.from_fn(seed=1, generator=lambda s: pc.Some((s, s * 2))).take(5).collect()
         Seq(1, 2, 4, 8, 16)
 
         ```
         """
 
-        def _unfold() -> Iterator[V]:
-            current_seed: S = seed
+        def _from_fn() -> Iterator[V]:
+            current_state: S = state
             while True:
-                result: Option[tuple[V, S]] = generator(current_seed)
+                result: Option[tuple[V, S]] = generator(current_state)
                 if result.is_none():
                     break
-                value, next_seed = result.unwrap()
+                value, next_state = result.unwrap()
                 yield value
-                current_seed = next_seed
+                current_state = next_state
 
-        return Iter(_unfold())
+        return Iter(_from_fn())
 
     def collect(self) -> Seq[T]:
         """Collect the elements of the Iterator in a tuple and wrap it in a `Seq`.
