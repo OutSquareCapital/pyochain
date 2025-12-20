@@ -5,6 +5,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Concatenate, Never, cast
 
+import cytoolz as cz
+
 from .._core import Pipeable
 
 if TYPE_CHECKING:
@@ -50,7 +52,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        return self.and_then(lambda x: x)
+        return self.and_then(cz.functoolz.identity)
 
     @abstractmethod
     def is_ok(self) -> bool:
@@ -686,16 +688,14 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        from ._option import NONE, Option, Some
-
-        r = Option[Result[T, E]]
+        from ._option import NONE, Some
 
         if self.is_err():
-            return cast(r, Some(Err(self.unwrap_err())))
+            return Some(Err(self.unwrap_err()))
         opt = self.unwrap()
         if opt.is_none():
             return NONE
-        return cast(r, Some(Ok(opt.unwrap())))
+        return Some(Ok(opt.unwrap()))
 
     def or_[F](self, res: Result[T, F]) -> Result[T, F]:
         """Returns res if the result is `Err`, otherwise returns the `Ok` value of **self**.

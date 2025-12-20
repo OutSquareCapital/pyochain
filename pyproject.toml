@@ -19,10 +19,10 @@
         "mkdocstrings>=0.30.1",
         "polars>=1.33.1",
         "pydoclint>=0.8.1",
+        "pyright>=1.1.407",
         "pytest>=9.0.2",
         "ruff>=0.14.9",
-        "ty>=0.0.3",
-    ]
+]
 [tool.ruff]
     lint.ignore = [
         "C417",

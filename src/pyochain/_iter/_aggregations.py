@@ -3,7 +3,7 @@ from __future__ import annotations
 import functools
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import cytoolz as cz
 import more_itertools as mit
@@ -273,7 +273,7 @@ class BaseAgg[T](IterWrapper[T]):
         """
         return self.into(mit.argmin, key=key)
 
-    def sum[U: int | float](self: IterWrapper[U]) -> int:
+    def sum[U: int | float](self: IterWrapper[U]) -> U | Literal[0]:
         """Return the sum of the sequence.
 
         Returns:

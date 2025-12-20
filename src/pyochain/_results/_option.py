@@ -623,7 +623,7 @@ class Option[T](Pipeable, ABC):
     def inspect(self, f: Callable[[T], object]) -> Option[T]:
         """Applies a function to the contained `Some` value, returning the original `Option`.
 
-        This mirrors :meth:`Result.inspect`, allowing side effects
+        This mirrors `Result.inspect`, allowing side effects
         (logging, debugging, metrics, etc.) on the wrapped value without changing it.
 
         Args:
@@ -873,7 +873,7 @@ class Some[T](Option[T]):
 
 
 @dataclass(slots=True)
-class NoneOption(Option[Any]):
+class NoneOption[T](Option[T]):
     """Option variant representing the absence of a value."""
 
     def __repr__(self) -> str:
