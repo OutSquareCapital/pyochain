@@ -1,276 +1,233 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, Sequence
-from functools import partial
-from typing import TYPE_CHECKING, Any
+from collections.abc import Callable, Iterable, MutableSequence, Sequence
+from typing import TYPE_CHECKING, Any, Concatenate, Self, overload
 
 import cytoolz as cz
 
-from .._core import IterWrapper, SupportsRichComparison
+from ._common import CommonMethods, convert_data
 
 if TYPE_CHECKING:
-    from ._main import Seq, Vec
+    from ._lazy import Iter
 
 
-class BaseEager[T](IterWrapper[T]):
-    def sort[U: SupportsRichComparison[Any]](
-        self: BaseEager[U],
-        key: Callable[[U], Any] | None = None,
-        *,
-        reverse: bool = False,
-    ) -> Vec[U]:
-        """Sort the elements of the sequence.
+class Seq[T](CommonMethods[T], Sequence[T]):
+    """`Seq` represent an in memory Sequence.
 
-        Note:
-            This method must consume the entire iterable to perform the sort.
-            The result is a new `Vec` over the sorted sequence.
+    Implements the `Sequence` Protocol from `collections.abc`, so it can be used as a standard immutable sequence.
+
+    Provides a subset of `Iter` methods with eager evaluation, and is the return type of `Iter.collect()`.
+
+    The underlying data structure is an immutable tuple, hence the memory efficiency is better than a `Vec`.
+
+    You can create a `Seq` from any `Iterable` (like a list, or polars.Series) or unpacked values using the `from_` class method.
+
+    If you already have a tuple, simply pass it to the constructor, without runtime checks.
+
+    Args:
+            data (tuple[T, ...]): The data to initialize the Seq with.
+    """
+
+    _inner: tuple[T, ...]
+
+    __slots__ = ("_inner",)
+
+    def __init__(self, data: tuple[T, ...]) -> None:
+        self._inner = data  # pyright: ignore[reportIncompatibleVariableOverride]
+
+    @overload
+    def __getitem__(self, index: int) -> T: ...
+    @overload
+    def __getitem__(self, index: slice) -> Sequence[T]: ...
+    def __getitem__(self, index: int | slice[Any, Any, Any]) -> T | Sequence[T]:
+        return self._inner.__getitem__(index)
+
+    def __len__(self) -> int:
+        return len(self._inner)
+
+    @overload
+    @staticmethod
+    def from_[U](data: Iterable[U]) -> Seq[U]: ...
+    @overload
+    @staticmethod
+    def from_[U](data: U, *more_data: U) -> Seq[U]: ...
+    @staticmethod
+    def from_[U](data: Iterable[U] | U, *more_data: U) -> Seq[U]:
+        """Create a `Seq` from an `Iterable` or unpacked values.
+
+        Prefer using the standard constructor, as this method involves extra checks and conversions steps.
 
         Args:
-            key (Callable[[U], Any] | None): Function to extract a comparison key from each element. Defaults to None.
-            reverse (bool): Whether to sort in descending order. Defaults to False.
+            data (Iterable[U] | U): Iterable to convert into a sequence, or a single value.
+            *more_data (U): Unpacked items to include in the sequence, if 'data' is not an Iterable.
 
         Returns:
-            Vec[U]: A `Vec` with elements sorted.
+            Seq[U]: A new Seq instance containing the provided data.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Seq.from_(1, 2, 3)
+        Seq(1, 2, 3)
+
+        ```
+        """
+        converted = convert_data(data, *more_data)
+        return Seq(converted if isinstance(converted, tuple) else tuple(converted))
+
+    def iter(self) -> Iter[T]:
+        """Get an iterator over the sequence.
+
+        Call this to switch to lazy evaluation.
+
+        Returns:
+            Iter[T]: An `Iter` instance wrapping an iterator over the sequence.
+        """
+        return self._lazy(iter)
+
+    def for_each[**P](
+        self,
+        func: Callable[Concatenate[T, P], Any],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Self:
+        """Iterate over the elements and apply a function to each.
+
+        Contratry to `Iter.for_each`, this method returns the same instance for chaining.
+
+        Args:
+            func (Callable[Concatenate[T, P], Any]): Function to apply to each element.
+            *args (P.args): Positional arguments for the function.
+            **kwargs (P.kwargs): Keyword arguments for the function.
+
+        Returns:
+            Self: The same instance for chaining.
+
+        Examples:
+        ```python
+        ```
+        """
+        for v in self._inner:
+            func(v, *args, **kwargs)
+        return self
+
+    def is_distinct(self) -> bool:
+        """Return True if all items are distinct.
+
+        Returns:
+            bool: True if all items are distinct, False otherwise.
+
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Seq([1, 2]).is_distinct()
+        True
+
+        ```
+        """
+        return self.into(cz.itertoolz.isdistinct)
+
+
+class Vec[T](Seq[T], MutableSequence[T]):
+    """A mutable sequence wrapper with functional API.
+
+    Implement `MutableSequence` Protocol from `collections.abc` so it can be used as a standard mutable sequence.
+
+    Unlike `Seq` which is immutable, `Vec` allows in-place modification of elements.
+
+    Implement the `MutableSequence` interface, so elements can be modified in place, and passed to any function/object expecting a standard mutable sequence.
+
+    If you already have a list, simply pass it to the constructor, without runtime checks.
+
+    Otherwise, use the `from_` class method to create a `Vec` from any `Iterable` or unpacked values.
+
+    Args:
+        data (list[T]): The mutable sequence to wrap.
+    """
+
+    _inner: list[T]
+
+    def __init__(self, data: list[T]) -> None:
+        self._inner = data  # type: ignore[override]
+
+    @overload
+    def __setitem__(self, index: int, value: T) -> None: ...
+    @overload
+    def __setitem__(self, index: slice, value: Iterable[T]) -> None: ...
+    def __setitem__(self, index: int | slice, value: T | Iterable[T]) -> None:
+        return self._inner.__setitem__(index, value)  # type: ignore[arg-type]
+
+    def __delitem__(self, index: int | slice) -> None:
+        self._inner.__delitem__(index)
+
+    def insert(self, index: int, value: T) -> None:
+        """Inserts an element at position index within the vector, shifting all elements after it to the right.
+
+        Args:
+            index (int): Position where to insert the element.
+            value (T): The element to insert.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> vec = pc.Vec(['a', 'b', 'c'])
+        >>> vec.insert(1, 'd')
+        >>> vec
+        Vec('a', 'd', 'b', 'c')
+        >>> vec.insert(4, 'e')
+        >>> vec
+        Vec('a', 'd', 'b', 'c', 'e')
+
+        ```
+        """
+        self._inner.insert(index, value)
+
+    @overload
+    @staticmethod
+    def from_[U](data: Iterable[U]) -> Vec[U]: ...
+    @overload
+    @staticmethod
+    def from_[U](data: U, *more_data: U) -> Vec[U]: ...
+    @staticmethod
+    def from_[U](data: Iterable[U] | U, *more_data: U) -> Vec[U]:
+        """Create a `Vec` from an `Iterable` or unpacked values.
+
+        Prefer using the standard constructor, as this method involves extra checks and conversions steps.
+
+        Args:
+            data (Iterable[U] | U): Iterable to convert into a sequence, or a single value.
+            *more_data (U): Unpacked items to include in the sequence, if 'data' is not an Iterable.
+
+        Returns:
+            Vec[U]: A new Vec instance containing the provided data.
 
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([3, 1, 2]).sort()
+        >>> pc.Vec.from_(1, 2, 3)
         Vec(1, 2, 3)
 
         ```
         """
+        converted = convert_data(data, *more_data)
+        return Vec(converted if isinstance(converted, list) else list(converted))
 
-        def _sort(data: Iterable[U]) -> list[U]:
-            return sorted(data, reverse=reverse, key=key)
+    @staticmethod
+    def new() -> Vec[T]:
+        """Create an empty `Vec`.
 
-        return self._eager_mut(_sort)
+        Make sure to specify the type when calling this method, e.g., `Vec[int].new()`.
 
-    def tail(self, n: int) -> Seq[T]:
-        """Return a tuple of the last n elements.
-
-        Args:
-            n (int): Number of elements to return.
+        Otherwise, `T` will be inferred as `Any`.
 
         Returns:
-            Seq[T]: A new Seq containing the last n elements.
+            Vec[T]: A new empty Vec instance.
 
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).tail(2)
-        Seq(2, 3)
+        >>> pc.Vec.new()
+        Vec()
 
         ```
         """
-        return self._eager(partial(cz.itertoolz.tail, n))
-
-    def top_n(self, n: int, key: Callable[[T], Any] | None = None) -> Seq[T]:
-        """Return a tuple of the top-n items according to key.
-
-        Args:
-            n (int): Number of top elements to return.
-            key (Callable[[T], Any] | None): Function to extract a comparison key from each element. Defaults to None.
-
-        Returns:
-            Seq[T]: A new Seq containing the top-n elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 3, 2]).top_n(2)
-        Seq(3, 2)
-
-        ```
-        """
-        return self._eager(partial(cz.itertoolz.topk, n, key=key))
-
-    def union(self, *others: Iterable[T]) -> Seq[T]:
-        """Return the union of this iterable and 'others'.
-
-        Note:
-            This method consumes inner data and removes duplicates.
-
-        Args:
-            *others (Iterable[T]): Other iterables to include in the union.
-
-        Returns:
-            Seq[T]: A new Seq containing the union of elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 2]).union([2, 3], [4]).iter().sort()
-        Vec(1, 2, 3, 4)
-
-        ```
-        """
-
-        def _union(data: Iterable[T]) -> tuple[T, ...]:
-            return tuple(set(data).union(*others))
-
-        return self._eager(_union)
-
-    def intersection(self, *others: Iterable[T]) -> Seq[T]:
-        """Return the elements common to this iterable and 'others'.
-
-        Is the opposite of `difference`.
-
-        See Also:
-            - `difference`
-            - `diff_symmetric`
-
-        Note:
-            This method consumes inner data, unsorts it, and removes duplicates.
-
-        Args:
-            *others (Iterable[T]): Other iterables to intersect with.
-
-        Returns:
-            Seq[T]: A new Seq containing the intersection of elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 2]).intersection([2, 3], [2])
-        Seq(2,)
-
-        ```
-        """
-
-        def _intersection(data: Iterable[T]) -> tuple[T, ...]:
-            return tuple(set(data).intersection(*others))
-
-        return self._eager(_intersection)
-
-    def difference(self, *others: Iterable[T]) -> Seq[T]:
-        """Return the difference of this iterable and 'others'.
-
-        See Also:
-            - `intersection`
-            - `diff_symmetric`
-
-        Note:
-            This method consumes inner data, unsorts it, and removes duplicates.
-
-        Args:
-            *others (Iterable[T]): Other iterables to subtract from this iterable.
-
-        Returns:
-            Seq[T]: A new Seq containing the difference of elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 2]).difference([2, 3])
-        Seq(1,)
-
-        ```
-        """
-
-        def _difference(data: Iterable[T]) -> tuple[T, ...]:
-            return tuple(set(data).difference(*others))
-
-        return self._eager(_difference)
-
-    def diff_symmetric(self, *others: Iterable[T]) -> Seq[T]:
-        """Return the symmetric difference (XOR) of this iterable and 'others'.
-
-        (Elements in either 'self' or 'others' but not in both).
-
-        **See Also**:
-            - `intersection`
-            - `difference`
-
-        Note:
-            This method consumes inner data, unsorts it, and removes duplicates.
-
-        Args:
-            *others (Iterable[T]): Other iterables to compute the symmetric difference with.
-
-        Returns:
-            Seq[T]: A new Seq containing the symmetric difference of elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 2]).diff_symmetric([2, 3]).iter().sort()
-        Vec(1, 3)
-        >>> pc.Seq([1, 2, 3]).diff_symmetric([3, 4, 5]).iter().sort()
-        Vec(1, 2, 4, 5)
-
-        ```
-        """
-
-        def _symmetric_difference(data: Iterable[T]) -> tuple[T, ...]:
-            return tuple(set(data).symmetric_difference(*others))
-
-        return self._eager(_symmetric_difference)
-
-    def most_common(self, n: int | None = None) -> Vec[tuple[T, int]]:
-        """Return the n most common elements and their counts.
-
-        If n is None, then all elements are returned.
-
-        Args:
-            n (int | None): Number of most common elements to return. Defaults to None (all elements).
-
-        Returns:
-            Vec[tuple[T, int]]: A new Seq containing tuples of (element, count).
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 1, 2, 3, 3, 3]).most_common(2)
-        Vec((3, 3), (1, 2))
-
-        ```
-        """
-        from collections import Counter
-
-        def _most_common(data: Iterable[T]) -> list[tuple[T, int]]:
-            return Counter(data).most_common(n)
-
-        return self._eager_mut(_most_common)
-
-    def rearrange[U: Sequence[Any]](self: BaseEager[U], *indices: int) -> Vec[list[U]]:
-        """Rearrange elements in a given list of arrays by order indices.
-
-        The last element (value) always remains in place.
-
-        Args:
-            *indices (int): indices specifying new order of keys in each array.
-
-        Returns:
-            Vec[list[U]]: A new Vec containing rearranged elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> data = pc.Seq([["A", "X", 1], ["A", "Y", 2], ["B", "X", 3], ["B", "Y", 4]])
-        >>> data.rearrange(1, 0)
-        Vec(['X', 'A', 1], ['Y', 'A', 2], ['X', 'B', 3], ['Y', 'B', 4])
-
-        ```
-        """
-
-        def _check_bound(i: int, max_key_index: int) -> None:
-            if i < 0 or i > max_key_index:
-                msg = f"order index {i} out of range for row with {max_key_index + 1} keys"
-                raise IndexError(
-                    msg,
-                )
-
-        def _rearrange(in_arrs: Iterable[U]) -> list[list[U]]:
-            order = indices
-            out: list[list[U]] = []
-            for arr in in_arrs:
-                max_key_index: int = len(arr) - 2
-                for i in order:
-                    _check_bound(i, max_key_index)
-
-                out.append([arr[i] for i in order] + [arr[-1]])
-
-            return out
-
-        return self._eager_mut(_rearrange)
+        return Vec([])
