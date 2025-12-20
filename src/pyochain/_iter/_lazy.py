@@ -8,7 +8,6 @@ from collections.abc import (
     Iterable,
     Iterator,
     KeysView,
-    Mapping,
     Sequence,
     ValuesView,
 )
@@ -1194,38 +1193,6 @@ class Iter[T](CommonMethods[T], Iterator[T]):
             return itertools.repeat(factory(data), n)
 
         return self._lazy(_repeat)
-
-    def pluck[U: Mapping[Any, Any]](self: Iter[U], *keys: str | int) -> Iter[Any]:
-        """Get an element from each item in a sequence using a nested key path.
-
-        Args:
-            *keys (str | int): Nested keys to extract values.
-
-        Returns:
-            Iter[Any]: An iterable of extracted values.
-        ```python
-        >>> import pyochain as pc
-        >>> data = pc.Seq(
-        ...     [
-        ...         {"id": 1, "info": {"name": "Alice", "age": 30}},
-        ...         {"id": 2, "info": {"name": "Bob", "age": 25}},
-        ...     ]
-        ... )
-        >>> data.iter().pluck("info").collect()
-        Seq({'name': 'Alice', 'age': 30}, {'name': 'Bob', 'age': 25})
-        >>> data.iter().pluck("info", "name").collect()
-        Seq('Alice', 'Bob')
-
-        ```
-        Example: get the maximum age along with the corresponding id)
-        ```python
-        >>> data.iter().pluck("info", "age").zip(data.iter().pluck("id")).max()
-        (30, 1)
-
-        ```
-        """
-        getter = partial(cz.dicttoolz.get_in, keys)
-        return self._lazy(partial(map, getter))
 
     def scan[U](self, state: U, func: Callable[[U, T], Option[U]]) -> Iter[U]:
         """Transform elements by sharing state between iterations.
