@@ -620,14 +620,17 @@ class Option[T](Pipeable, ABC):
 
         return Iter((self.unwrap(),)) if self.is_some() else Iter(())
 
-    def inspect(self, f: Callable[[T], object]) -> Option[T]:
+    def inspect[**P](
+        self, f: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
+    ) -> Option[T]:
         """Applies a function to the contained `Some` value, returning the original `Option`.
 
-        This mirrors `Result.inspect`, allowing side effects
-        (logging, debugging, metrics, etc.) on the wrapped value without changing it.
+        This allows side effects (logging, debugging, metrics, etc.) on the wrapped value without changing it.
 
         Args:
-            f (Callable[[T], object]): Function to apply to the `Some` value.
+            f (Callable[Concatenate[T, P], object]): Function to apply to the `Some` value.
+            *args (P.args): Additional positional arguments to pass to f.
+            **kwargs (P.kwargs): Additional keyword arguments to pass to f.
 
         Returns:
             Option[T]: The original option, unchanged.
@@ -648,7 +651,7 @@ class Option[T](Pipeable, ABC):
         ```
         """
         if self.is_some():
-            f(self.unwrap())
+            f(self.unwrap(), *args, **kwargs)
         return self
 
     def unzip[U](self: Option[tuple[T, U]]) -> tuple[Option[T], Option[U]]:

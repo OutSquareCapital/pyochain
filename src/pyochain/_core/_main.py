@@ -56,16 +56,16 @@ class Pipeable:
         """
         return func(self, *args, **kwargs)
 
-    def tap[**P](
+    def inspect[**P](
         self,
-        func: Callable[Concatenate[Self, P], Any],
+        func: Callable[Concatenate[Self, P], object],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Self:
-        """Tap into the chain to perform side effects without altering the data.
+        """Pass the instance to a function to perform side effects without altering the data.
 
         Args:
-            func (Callable[Concatenate[Self, P], Any]): Function to apply to the instance for side effects.
+            func (Callable[Concatenate[Self, P], object]): Function to apply to the instance for side effects.
             *args (P.args): Positional arguments to pass to the function.
             **kwargs (P.kwargs): Keyword arguments to pass to the function.
 
@@ -75,9 +75,9 @@ class Pipeable:
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3, 4]).tap(print).last()
-        Seq(1, 2, 3, 4)
-        4
+        >>> pc.Seq([1, 2, 3, 4]).inspect(print).last()
+        Seq(1, 2, 3, 4) # printed the instance
+        4 # still returns the last element
 
         ```
         """
