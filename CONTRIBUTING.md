@@ -19,7 +19,7 @@ The `src/pyochain` package is organized into a small number of internal subpacka
 
 - `_core/`:
   - `__init__.py`
-  - `_config.py`
+  - `_config.py` — repr config settings.
   - `_main.py` — common base classes such as `CommonBase`, `IterWrapper`, `MappingWrapper` and shared helpers.
   - `_protocols.py` — structural `typing.Protocol` definitions used across the package.
 
@@ -31,14 +31,7 @@ The `src/pyochain` package is organized into a small number of internal subpacka
 
 - `_dict/`:
   - `__init__.py`
-  - `_filters.py`
-  - `_groups.py`
-  - `_iter.py`
-  - `_joins.py`
-  - `_main.py` — `Dict` class and constructor logic.
-  - `_maps.py`
-  - `_nested.py`
-  - `_process.py`
+  - `_main.py` — `Dict` class logic.
 
 - `_results/`:
   - `__init__.py`

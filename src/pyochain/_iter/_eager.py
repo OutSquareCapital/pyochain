@@ -119,6 +119,7 @@ class Vec[T](Seq[T], MutableSequence[T]):
     """
 
     _inner: list[T]
+    __slots__ = ("_inner",)
 
     def __init__(self, data: list[T]) -> None:
         self._inner = data  # type: ignore[override]
