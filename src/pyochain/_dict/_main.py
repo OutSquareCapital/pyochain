@@ -52,9 +52,9 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         ...     def __getitem__(self, key):
         ...         return self._data[key]
         >>>
-        >>> pc.Dict.from_(MyMapping()).inner()
+        >>> pc.Dict.from_(MyMapping())
         {1: 'a', 2: 'b', 3: 'c'}
-        >>> pc.Dict.from_([("d", "e"), ("f", "g")]).inner()
+        >>> pc.Dict.from_([("d", "e"), ("f", "g")])
         {'d': 'e', 'f': 'g'}
 
         ```
@@ -80,7 +80,7 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         ...         self.name = name
         ...         self.age = age
         >>> person = Person("Alice", 30)
-        >>> pc.Dict.from_object(person).inner()
+        >>> pc.Dict.from_object(person)
         {'name': 'Alice', 'age': 30}
 
         ```
@@ -102,7 +102,7 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         ```python
         >>> import pyochain as pc
         >>> d = {"A": {"X": 1, "Y": 2}, "B": {"X": 3, "Y": 4}}
-        >>> pc.Dict(d).pivot(1, 0).inner()
+        >>> pc.Dict(d).pivot(1, 0)
         {'X': {'A': 1, 'B': 3}, 'Y': {'A': 2, 'B': 4}}
         """
         return self.to_arrays().rearrange(*indices).to_records()
@@ -139,7 +139,7 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         """
         from .._iter import Iter
 
-        return self.into(lambda d: Iter(d.inner().values()))
+        return self.into(lambda d: Iter(d._inner.values()))
 
     def iter_items(self) -> Iter[tuple[K, V]]:
         """Return an Iter of the dict's items.
@@ -156,7 +156,7 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         """
         from .._iter import Iter
 
-        return self.into(lambda d: Iter(d.inner().items()))
+        return self.into(lambda d: Iter(d._inner.items()))
 
     def to_arrays(self) -> Vec[list[Any]]:
         """Convert the nested dictionary into a `Vec` of arrays.
@@ -172,8 +172,8 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         ...     "a": {"b": 1, "c": 2},
         ...     "d": {"e": {"f": 3}},
         ... }
-        >>> pc.Dict(data).to_arrays().inner()
-        [['a', 'b', 1], ['a', 'c', 2], ['d', 'e', 'f', 3]]
+        >>> pc.Dict(data).to_arrays()
+        Vec(['a', 'b', 1], ['a', 'c', 2], ['d', 'e', 'f', 3])
 
         ```
         """
@@ -190,7 +190,7 @@ class Dict[K, V](CommonBase[dict[K, V]]):
                 case _:
                     return [[d]]
 
-        return self.into(lambda d: Vec(_to_arrays(d.inner())))
+        return self.into(lambda d: Vec(_to_arrays(d._inner)))
 
     def map_keys[T](self, func: Callable[[K], T]) -> Dict[T, V]:
         """Return keys transformed by func.
@@ -203,12 +203,10 @@ class Dict[K, V](CommonBase[dict[K, V]]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({"Alice": [20, 15, 30], "Bob": [10, 35]}).map_keys(
-        ...     str.lower
-        ... ).inner()
+        >>> pc.Dict({"Alice": [20, 15, 30], "Bob": [10, 35]}).map_keys(str.lower)
         {'alice': [20, 15, 30], 'bob': [10, 35]}
         >>>
-        >>> pc.Dict({1: "a"}).map_keys(str).inner()
+        >>> pc.Dict({1: "a"}).map_keys(str)
         {'1': 'a'}
 
         ```
@@ -226,10 +224,10 @@ class Dict[K, V](CommonBase[dict[K, V]]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({"Alice": [20, 15, 30], "Bob": [10, 35]}).map_values(sum).inner()
+        >>> pc.Dict({"Alice": [20, 15, 30], "Bob": [10, 35]}).map_values(sum)
         {'Alice': 65, 'Bob': 45}
         >>>
-        >>> pc.Dict({1: 1}).map_values(lambda v: v + 1).inner()
+        >>> pc.Dict({1: 1}).map_values(lambda v: v + 1)
         {1: 2}
 
         ```
@@ -252,7 +250,7 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         >>> import pyochain as pc
         >>> pc.Dict({"Alice": 10, "Bob": 20}).map_items(
         ...     lambda kv: (kv[0].upper(), kv[1] * 2)
-        ... ).inner()
+        ... )
         {'ALICE': 20, 'BOB': 40}
 
         ```
@@ -268,7 +266,7 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         ```python
         >>> import pyochain as pc
         >>> d = {"a": 1, "b": 2, "c": 1}
-        >>> pc.Dict(d).invert().inner()
+        >>> pc.Dict(d).invert()
         {1: ['a', 'c'], 2: ['b']}
 
         ```
@@ -305,19 +303,22 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         ```python
         >>> import pyochain as pc
         >>> inc = lambda x: x + 1
-        >>> pc.Dict({"a": 0}).update_in("a", func=inc).inner()
+        >>> pc.Dict({"a": 0}).update_in("a", func=inc)
         {'a': 1}
         >>> transaction = {
         ...     "name": "Alice",
         ...     "purchase": {"items": ["Apple", "Orange"], "costs": [0.50, 1.25]},
         ...     "credit card": "5555-1234-1234-1234",
         ... }
-        >>> pc.Dict(transaction).update_in("purchase", "costs", func=sum).inner()
-        {'name': 'Alice', 'purchase': {'items': ['Apple', 'Orange'], 'costs': 1.75}, 'credit card': '5555-1234-1234-1234'}
+        >>> pc.Dict(transaction).update_in("purchase", "costs", func=sum) # doctest: +NORMALIZE_WHITESPACE
+        {'name': 'Alice',
+        'purchase': {'items': ['Apple', 'Orange'], 'costs': 1.75},
+        'credit card': '5555-1234-1234-1234'}
+
         >>> # updating a value when k0 is not in d
-        >>> pc.Dict({}).update_in(1, 2, 3, func=str, default="bar").inner()
+        >>> pc.Dict({}).update_in(1, 2, 3, func=str, default="bar")
         {1: {2: {3: 'bar'}}}
-        >>> pc.Dict({1: "foo"}).update_in(2, 3, 4, func=inc, default=0).inner()
+        >>> pc.Dict({1: "foo"}).update_in(2, 3, 4, func=inc, default=0)
         {1: 'foo', 2: {3: {4: 1}}}
 
         ```
@@ -341,11 +342,11 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         Does not modify the initial dictionary.
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({"x": 1}).with_key("x", 2).inner()
+        >>> pc.Dict({"x": 1}).with_key("x", 2)
         {'x': 2}
-        >>> pc.Dict({"x": 1}).with_key("y", 3).inner()
+        >>> pc.Dict({"x": 1}).with_key("y", 3)
         {'x': 1, 'y': 3}
-        >>> pc.Dict({}).with_key("x", 1).inner()
+        >>> pc.Dict({}).with_key("x", 1)
         {'x': 1}
 
         ```
@@ -368,13 +369,13 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         New dict has d[key] deleted for each supplied key.
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({"x": 1, "y": 2}).drop("y").inner()
+        >>> pc.Dict({"x": 1, "y": 2}).drop("y")
         {'x': 1}
-        >>> pc.Dict({"x": 1, "y": 2}).drop("y", "x").inner()
+        >>> pc.Dict({"x": 1, "y": 2}).drop("y", "x")
         {}
-        >>> pc.Dict({"x": 1}).drop("y").inner()  # Ignores missing keys
+        >>> pc.Dict({"x": 1}).drop("y")  # Ignores missing keys
         {'x': 1}
-        >>> pc.Dict({1: 2, 3: 4}).drop(1).inner()
+        >>> pc.Dict({1: 2, 3: 4}).drop(1)
         {3: 4}
 
         ```
@@ -399,7 +400,7 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         >>> import pyochain as pc
         >>> d = {"a": 1, "b": 2, "c": 3}
         >>> mapping = {"b": "beta", "c": "gamma"}
-        >>> pc.Dict(d).rename(mapping).inner()
+        >>> pc.Dict(d).rename(mapping)
         {'a': 1, 'beta': 2, 'gamma': 3}
 
         ```
@@ -593,7 +594,7 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         >>> import pyochain as pc
         >>> d1 = {"a": 1, "b": 2}
         >>> d2 = {"b": 10, "c": 20}
-        >>> pc.Dict(d1).inner_join(d2).inner()
+        >>> pc.Dict(d1).inner_join(d2)
         {'b': (2, 10)}
 
         ```
@@ -618,7 +619,7 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         >>> import pyochain as pc
         >>> d1 = {"a": 1, "b": 2}
         >>> d2 = {"b": 10, "c": 20}
-        >>> pc.Dict(d1).left_join(d2).inner()
+        >>> pc.Dict(d1).left_join(d2)
         {'a': (1, None), 'b': (2, 10)}
 
         ```
@@ -644,7 +645,7 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         >>> import pyochain as pc
         >>> d1 = {"a": 1, "b": 2, "c": 3}
         >>> d2 = {"b": 2, "c": 4, "d": 5}
-        >>> pc.Dict(d1).diff(d2).sort().inner()
+        >>> pc.Dict(d1).diff(d2).iter_items().sort().into(pc.Dict.from_)
         {'a': (1, None), 'c': (3, 4), 'd': (None, 5)}
 
         ```
@@ -673,10 +674,10 @@ class Dict[K, V](CommonBase[dict[K, V]]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({1: "one"}).merge({2: "two"}).inner()
+        >>> pc.Dict({1: "one"}).merge({2: "two"})
         {1: 'one', 2: 'two'}
         >>> # Later dictionaries have precedence
-        >>> pc.Dict({1: 2, 3: 4}).merge({3: 3, 4: 4}).inner()
+        >>> pc.Dict({1: 2, 3: 4}).merge({3: 3, 4: 4})
         {1: 2, 3: 3, 4: 4}
 
         ```
@@ -688,9 +689,7 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         return self._new(_merge)
 
     def merge_with(
-        self,
-        *others: Mapping[K, V],
-        func: Callable[[Iterable[V]], V],
+        self, *others: Mapping[K, V], func: Callable[[Iterable[V]], V]
     ) -> Dict[K, V]:
         """Merge dicts using a function to combine values for duplicate keys.
 
@@ -704,9 +703,9 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         A key may occur in more than one dict, and all values mapped from the key will be passed to the function as a list, such as func([val1, val2, ...]).
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({1: 1, 2: 2}).merge_with({1: 10, 2: 20}, func=sum).inner()
+        >>> pc.Dict({1: 1, 2: 2}).merge_with({1: 10, 2: 20}, func=sum)
         {1: 11, 2: 22}
-        >>> pc.Dict({1: 1, 2: 2}).merge_with({2: 20, 3: 30}, func=max).inner()
+        >>> pc.Dict({1: 1, 2: 2}).merge_with({2: 20, 3: 30}, func=max)
         {1: 1, 2: 20, 3: 30}
 
         ```
@@ -729,7 +728,7 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         ```python
         >>> import pyochain as pc
         >>> d = {"a": 1, "b": 2, "c": 3, "d": 2}
-        >>> pc.Dict(d).group_by_value(lambda v: v % 2).inner()
+        >>> pc.Dict(d).group_by_value(lambda v: v % 2)
         {1: {'a': 1, 'c': 3}, 0: {'b': 2, 'd': 2}}
 
         ```
@@ -755,7 +754,7 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         ```python
         >>> import pyochain as pc
         >>> d = {"user_1": 10, "user_2": 20, "admin_1": 100}
-        >>> pc.Dict(d).group_by_key(lambda k: k.split("_")[0]).inner()
+        >>> pc.Dict(d).group_by_key(lambda k: k.split("_")[0])
         {'user': {'user_1': 10, 'user_2': 20}, 'admin': {'admin_1': 100}}
 
         ```
@@ -770,9 +769,7 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         return self._new(_group_by_key)
 
     def group_by_key_agg[G, R](
-        self,
-        key_func: Callable[[K], G],
-        agg_func: Callable[[Dict[K, V]], R],
+        self, key_func: Callable[[K], G], agg_func: Callable[[Dict[K, V]], R]
     ) -> Dict[G, R]:
         """Group by key function, then apply aggregation function to each sub-dict.
 
@@ -792,7 +789,7 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         >>> pc.Dict(data).group_by_key_agg(
         ...     key_func=lambda k: k.split("_")[0],
         ...     agg_func=lambda d: d.iter_values().sum(),
-        ... ).inner()
+        ... )
         {'user': 30, 'admin': 100}
         >>>
         >>> data_files = {
@@ -812,8 +809,15 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         >>>
         >>> pc.Dict(data_files).group_by_key_agg(
         ...     key_func=lambda k: k.split(".")[-1], agg_func=get_stats
-        ... ).sort().inner()
-        {'log': {'count': 2, 'total_size': 25, 'max_size': 20, 'files': ['file_b.log', 'file_d.log']}, 'txt': {'count': 2, 'total_size': 150, 'max_size': 100, 'files': ['file_a.txt', 'file_c.txt']}}
+        ... ).iter_items().sort().into(pc.Dict.from_) # doctest: +NORMALIZE_WHITESPACE
+        {'log': {'count': 2,
+                'total_size': 25,
+                'max_size': 20,
+                'files': ['file_b.log', 'file_d.log']},
+        'txt': {'count': 2,
+                'total_size': 150,
+                'max_size': 100,
+                'files': ['file_a.txt', 'file_c.txt']}}
 
         ```
         """
@@ -854,7 +858,7 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         >>> pc.Dict(data).group_by_value_agg(
         ...     value_func=lambda grade: grade,
         ...     agg_func=lambda d: d.iter_keys().length(),
-        ... ).inner()
+        ... )
         {'A': 2, 'B': 1}
         >>> # Second example
         >>> sales_data = {
@@ -868,7 +872,7 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         >>> pc.Dict(sales_data).group_by_value_agg(
         ...     value_func=lambda category: category,
         ...     agg_func=lambda d: d.iter_keys().sort().first(),
-        ... ).sort().inner()
+        ... ).iter_items().sort().into(pc.Dict.from_)
         {'Clothing': 'store_4', 'Electronics': 'store_1', 'Groceries': 'store_2'}
 
         ```
@@ -906,12 +910,22 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         ...     "config": {"params": {"retries": 3, "timeout": 30}, "mode": "fast"},
         ...     "version": 1.0,
         ... }
-        >>> pc.Dict(data).flatten().inner()
-        {'config.params.retries': 3, 'config.params.timeout': 30, 'config.mode': 'fast', 'version': 1.0}
-        >>> pc.Dict(data).flatten(sep="_").inner()
-        {'config_params_retries': 3, 'config_params_timeout': 30, 'config_mode': 'fast', 'version': 1.0}
-        >>> pc.Dict(data).flatten(max_depth=1).inner()
-        {'config.params': {'retries': 3, 'timeout': 30}, 'config.mode': 'fast', 'version': 1.0}
+        >>> pc.Dict(data).flatten() # doctest: +NORMALIZE_WHITESPACE
+        {'config.params.retries': 3,
+        'config.params.timeout': 30,
+        'config.mode': 'fast',
+        'version': 1.0}
+        >>>
+        >>> pc.Dict(data).flatten(sep="_") # doctest: +NORMALIZE_WHITESPACE
+        {'config_params_retries': 3,
+        'config_params_timeout': 30,
+        'config_mode': 'fast',
+        'version': 1.0}
+        >>>
+        >>> pc.Dict(data).flatten(max_depth=1) # doctest: +NORMALIZE_WHITESPACE
+        {'config.params': {'retries': 3, 'timeout': 30},
+        'config.mode': 'fast',
+        'version': 1.0}
 
         ```
         """
@@ -984,8 +998,10 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         ... }
         >>> pc.Dict(purchase).with_nested_key(
         ...     "order", "costs", value=[0.25, 1.00]
-        ... ).inner()
-        {'name': 'Alice', 'order': {'items': ['Apple', 'Orange'], 'costs': [0.25, 1.0]}, 'credit card': '5555-1234-1234-1234'}
+        ... ) # doctest: +NORMALIZE_WHITESPACE
+        {'name': 'Alice',
+        'order': {'items': ['Apple', 'Orange'], 'costs': [0.25, 1.0]},
+        'credit card': '5555-1234-1234-1234'}
 
         ```
         """
@@ -1009,7 +1025,7 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         ...     "person1": {"name": "Alice", "age": 30},
         ...     "person2": {"name": "Bob", "age": 25},
         ... }
-        >>> pc.Dict(data).pluck("name").inner()
+        >>> pc.Dict(data).pluck("name")
         {'person1': 'Alice', 'person2': 'Bob'}
 
         ```
@@ -1045,7 +1061,7 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         def _get_in(data: Mapping[K, V]) -> Option[V]:
             return Option.from_(cz.dicttoolz.get_in(keys, data, None))
 
-        return self.into(lambda d: _get_in(d.inner()))
+        return self.into(lambda d: _get_in(d._inner))
 
     def drop_nones(self, *, remove_empty: bool = True) -> Dict[K, V]:
         """Recursively drop None values from the dictionary.
@@ -1072,14 +1088,20 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         ... }
         >>> p_data = pc.Dict(data)
         >>>
-        >>> p_data.drop_nones().inner()
+        >>> p_data.drop_nones()
         {'a': 1, 'e': {'g': 2}, 'h': [1], 'i': 0}
         >>>
-        >>> p_data.drop_nones().inner()
+        >>> p_data.drop_nones()
         {'a': 1, 'e': {'g': 2}, 'h': [1], 'i': 0}
         >>>
-        >>> p_data.drop_nones(remove_empty=False).inner()
-        {'a': 1, 'b': None, 'c': {}, 'd': [], 'e': {'f': None, 'g': 2}, 'h': [1, None, {}], 'i': 0}
+        >>> p_data.drop_nones(remove_empty=False) # doctest: +NORMALIZE_WHITESPACE
+        {'a': 1,
+        'b': None,
+        'c': {},
+        'd': [],
+        'e': {'f': None, 'g': 2},
+        'h': [1, None, {}],
+        'i': 0}
 
         ```
         """

@@ -1127,7 +1127,7 @@ class CommonMethods[T](CommonBase[Iterable[T]]):
         ...     "Edith",
         ...     "Frank",
         ... ]
-        >>> pc.Iter(names).group_by(len).sort()
+        >>> pc.Iter(names).group_by(len).iter_items().sort().into(pc.Dict.from_)
         ... # doctest: +NORMALIZE_WHITESPACE
         {3: ['Bob', 'Dan'], 5: ['Alice', 'Edith', 'Frank'], 7: ['Charlie']}
         >>>
@@ -1144,8 +1144,7 @@ class CommonMethods[T](CommonBase[Iterable[T]]):
         ...     {"name": "Bob", "gender": "M"},
         ...     {"name": "Charlie", "gender": "M"},
         ... ]
-        >>> pc.Iter(data).group_by("gender").sort()
-        ... # doctest: +NORMALIZE_WHITESPACE
+        >>> pc.Iter(data).group_by("gender").iter_items().sort().into(pc.Dict.from_) # doctest: +NORMALIZE_WHITESPACE
         {'F': [{'name': 'Alice', 'gender': 'F'}],
         'M': [{'name': 'Bob', 'gender': 'M'}, {'name': 'Charlie', 'gender': 'M'}]}
 
