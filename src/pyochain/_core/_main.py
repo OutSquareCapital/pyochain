@@ -2,13 +2,7 @@ from __future__ import annotations
 
 from abc import ABC
 from collections.abc import Callable, Generator, Iterator
-from typing import TYPE_CHECKING, Any, Concatenate, Self
-
-from ._config import get_config
-
-if TYPE_CHECKING:
-    from .._dict import Dict
-
+from typing import Any, Concatenate, Self
 
 type IntoIter[T] = Iterator[T] | Generator[T, Any, Any]
 """A type alias representing an iterator or generator."""
@@ -109,15 +103,3 @@ class CommonBase[T](ABC, Pipeable):
             T: The underlying data.
         """
         return self._inner
-
-
-class MappingWrapper[K, V](CommonBase[dict[K, V]]):
-    _inner: dict[K, V]
-
-    def __repr__(self) -> str:
-        return f"{self.into(lambda d: get_config().dict_repr(d._inner))}"
-
-    def _new[KU, VU](self, func: Callable[[dict[K, V]], dict[KU, VU]]) -> Dict[KU, VU]:
-        from .._dict import Dict
-
-        return Dict(func(self._inner))
