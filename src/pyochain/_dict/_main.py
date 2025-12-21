@@ -493,38 +493,6 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         """
         return self._new(partial(cz.dicttoolz.itemfilter, predicate))
 
-    def filter_kv(self, predicate: Callable[[K, V], bool]) -> Dict[K, V]:
-        """Filter items by predicate applied to unpacked (key, value) tuples.
-
-        Args:
-            predicate(Callable[[K, V], bool]): Function to determine if a key-value pair should be included.
-
-        Returns:
-            Dict[K, V]: Filtered Dict with items satisfying predicate.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> def isvalid(key, value):
-        ...     return key % 2 == 0 and value < 4
-        >>> d = pc.Dict({1: 2, 2: 3, 3: 4, 4: 5})
-        >>>
-        >>> d.filter_kv(isvalid)
-        {2: 3}
-        >>> d.filter_kv(lambda k, v: not isvalid(k, v))
-        {1: 2, 3: 4, 4: 5}
-
-        ```
-        """
-
-        def _filter_kv(data: dict[K, V]) -> dict[K, V]:
-            def _(kv: tuple[K, V]) -> bool:
-                return predicate(kv[0], kv[1])
-
-            return cz.dicttoolz.itemfilter(_, data)
-
-        return self._new(_filter_kv)
-
     def intersect_keys(self, *others: Mapping[K, V]) -> Dict[K, V]:
         """Keep only keys present in self and all others mappings.
 
