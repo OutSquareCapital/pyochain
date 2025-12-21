@@ -6,7 +6,6 @@
 {"source":"python","fn":"argmin"}
 {"source":"python","fn":"batch"}
 {"source":"python","fn":"classify_unique"}
-{"source":"python","fn":"collect_mut"}
 {"source":"python","fn":"combination_index"}
 {"source":"python","fn":"combinations"}
 {"source":"python","fn":"combinations_with_replacement"}
@@ -36,7 +35,6 @@
 {"source":"python","fn":"map_star"}
 {"source":"python","fn":"merge_sorted"}
 {"source":"python","fn":"most_common"}
-{"source":"python","fn":"next"}
 {"source":"python","fn":"pairwise"}
 {"source":"python","fn":"partition_all"}
 {"source":"python","fn":"partition_by"}
@@ -73,19 +71,14 @@
 {"source":"rust","fn":"eq_by"}
 {"source":"rust","fn":"fold"}
 {"source":"rust","fn":"fuse"}
-{"source":"rust","fn":"ge"}
-{"source":"rust","fn":"gt"}
 {"source":"rust","fn":"intersperse"}
 {"source":"rust","fn":"intersperse_with"}
 {"source":"rust","fn":"is_partitioned"}
-{"source":"rust","fn":"le"}
-{"source":"rust","fn":"lt"}
 {"source":"rust","fn":"map_while"}
 {"source":"rust","fn":"max_by"}
 {"source":"rust","fn":"max_by_key"}
 {"source":"rust","fn":"min_by"}
 {"source":"rust","fn":"min_by_key"}
-{"source":"rust","fn":"ne"}
 {"source":"rust","fn":"next_chunk"}
 {"source":"rust","fn":"once"}
 {"source":"rust","fn":"once_with"}

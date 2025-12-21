@@ -1,6 +1,5 @@
 """Check that all Rust iterator functions have a Python equivalent."""
 
-from collections.abc import Iterable
 from pathlib import Path
 from typing import Literal
 
@@ -95,11 +94,16 @@ RUST_FN = (
     "repeat_n",
     "repeat_with",
     "successors",
+    "next",
 )
 
 PURE_RUST = {"copied", "cloned", "by_ref", "from_coroutine"}
 """Methods that are not pertinent in the Python context."""
-EQUIVALENT = [
+PURE_PY = {
+    "collect_mut"  # don't need in Rust cause collect can use watever collection
+}
+"""Methods that are not pertinent in the Rust context."""
+EQUIVALENT = {
     ("count", "length"),  # count is reserved for MutableMappings in Python
     (
         "is_sorted",
@@ -110,10 +114,14 @@ EQUIVALENT = [
         "from_",
         "into",
     ),  # from is a reserved word in Python, into is implicitely implemented with From trait in Rust
-]
+}
 """Methods that have an equivalent Python counterpart."""
-PY_STDLIB = ["filter_false"]
+PY_STDLIB = {"filter_false"}
 """Methods that exist in python stdlib but not in Rust."""
+
+ALL_FILTERS = (
+    PURE_RUST.union(PURE_PY).union(pc.Iter(EQUIVALENT).flatten()).union(PY_STDLIB)
+)
 
 
 def _with_source(fn_name: str, src: Literal["python", "rust"]) -> tuple[str, str]:
@@ -124,12 +132,9 @@ def main() -> None:
     """Run the check and output the results to a ndjson file."""
     fn: pl.Expr = pl.col("fn")
 
-    def _get_vals(x: object) -> Iterable[object]:
-        return x.__dict__.values()
-
     return (
         pc.Iter(pc.Iter.mro())
-        .map(_get_vals)
+        .map(lambda x: x.__dict__.values())
         .flatten()
         .filter(callable)
         .map(lambda x: _with_source(x.__name__, "python"))
@@ -137,14 +142,7 @@ def main() -> None:
         .into(lambda x: pl.LazyFrame(x, schema=["source", "fn"]))
         .filter(
             fn.is_unique().and_(
-                fn.str.starts_with("_")
-                .not_()
-                .and_(
-                    fn.is_in(PURE_RUST)
-                    .not_()
-                    .and_(fn.is_in(pc.Iter(EQUIVALENT).flatten().into(set)).not_())
-                    .and_(fn.is_in(PY_STDLIB).not_())
-                )
+                fn.str.starts_with("_").not_().and_(fn.is_in(ALL_FILTERS).not_())
             )
         )
         .sort(["source", "fn"])
