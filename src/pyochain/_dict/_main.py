@@ -259,34 +259,6 @@ class Dict[K, V](CommonBase[dict[K, V]]):
         """
         return self._new(partial(cz.dicttoolz.itemmap, func))
 
-    def map_kv[KR, VR](
-        self,
-        func: Callable[[K, V], tuple[KR, VR]],
-    ) -> Dict[KR, VR]:
-        """Transform (key, value) pairs using a function that takes key and value as separate arguments.
-
-        Args:
-            func (Callable[[K, V], tuple[KR, VR]]): Function to transform each key and value into a new (key, value) tuple.
-
-        Returns:
-            Dict[KR, VR]: Dict with transformed items.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Dict({1: 2}).map_kv(lambda k, v: (k + 1, v * 10)).inner()
-        {2: 20}
-
-        ```
-        """
-
-        def _map_kv(data: dict[K, V]) -> dict[KR, VR]:
-            def _(kv: tuple[K, V]) -> tuple[KR, VR]:
-                return func(kv[0], kv[1])
-
-            return cz.dicttoolz.itemmap(_, data)
-
-        return self._new(_map_kv)
-
     def invert(self) -> Dict[V, list[K]]:
         """Invert the dictionary, grouping keys by common (and hashable) values.
 
@@ -437,28 +409,6 @@ class Dict[K, V](CommonBase[dict[K, V]]):
             return {mapping.get(k, k): v for k, v in data.items()}
 
         return self._new(_rename)
-
-    def sort(self, *, reverse: bool = False) -> Dict[K, V]:
-        """Sort the dictionary by its keys and return a new Dict.
-
-        Args:
-            reverse (bool): Whether to sort in descending order. Defaults to False.
-
-        Returns:
-            Dict[K, V]: Sorted Dict by keys.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Dict({"b": 2, "a": 1}).sort().inner()
-        {'a': 1, 'b': 2}
-
-        ```
-        """
-
-        def _sort(data: dict[K, V]) -> dict[K, V]:
-            return dict(sorted(data.items(), reverse=reverse))
-
-        return self._new(_sort)
 
     @overload
     def filter_keys[U](self, predicate: Callable[[K], TypeIs[U]]) -> Dict[U, V]: ...
