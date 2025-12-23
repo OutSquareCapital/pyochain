@@ -2819,3 +2819,78 @@ class Iter[T](CommonMethods[T], Iterator[T]):
             yield ("last", current)
 
         return self._lazy(gen)
+
+    @overload
+    def group_by(self, key: None = None) -> Iter[tuple[T, Iter[T]]]: ...
+    @overload
+    def group_by[R](self, key: Callable[[T], R]) -> Iter[tuple[R, Iter[T]]]: ...
+    @overload
+    def group_by[R](
+        self, key: Callable[[T], R] | None = None
+    ) -> Iter[tuple[R, Iter[T]] | tuple[T, Iter[T]]]: ...
+    def group_by(
+        self, key: Callable[[T], Any] | None = None
+    ) -> Iter[tuple[Any, Iter[T]]]:
+        """Make an `Iter` that returns consecutive keys and groups from the iterable.
+
+        Args:
+            key (Callable[[T], Any] | None): Function to compute the key for grouping. Defaults to None.
+
+        Returns:
+            Iter[tuple[Any, Iter[T]]]: An `Iter` of (key, group) tuples.
+
+        The **key** is a function computing a key value for each element.
+
+        If not specified or is None, **key** defaults to an identity function and returns the element unchanged.
+
+        The `Iter` needs to already be sorted on the same key function.
+
+        This is due to the fact that it generates a new group every time the value of the **key** function changes.
+
+        That behavior differs from SQL's `GROUP BY` which aggregates common elements regardless of their input order.
+
+        Note:
+            Each group generated is itself an `Iter` and is fully lazy.
+            If you need all the groups, you must materialize them with a `.map()` call and a closure that can materialize the group (e.g `.collect()`, `.into(list)`, etc...).
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> # Group even and odd numbers
+        >>> (
+        ... pc.Iter.from_count() # create an infinite iterator of integers
+        ... .take(8) # take the first 8
+        ... .map(lambda x: (x % 2 == 0, x)) # map to (is_even, value)
+        ... .sort(key=lambda x: x[0]) # sort by is_even
+        ... .iter() # Since sort collect to a Vec, we need to convert back to Iter
+        ... .group_by(lambda x: x[0]) # group by is_even
+        ... .map(lambda x: (x[0], x[1].map(lambda y: y[1]).into(list))) # extract values from groups, discarding keys, and materializing them to lists
+        ... .collect() # collect the result
+        ... .into(dict) # convert to dict
+        ... )
+        {False: [1, 3, 5, 7], True: [0, 2, 4, 6]}
+        >>> # group by a common key, already sorted
+        >>> data = [
+        ...     {"name": "Alice", "gender": "F"},
+        ...     {"name": "Bob", "gender": "M"},
+        ...     {"name": "Charlie", "gender": "M"},
+        ...     {"name": "Dan", "gender": "M"},
+        ... ]
+        >>> (
+        ... pc.Iter(data)
+        ... .group_by(lambda x: x["gender"]) # group by the gender key
+        ... .map(lambda x: (x[0], x[1].length())) # get the length of each group
+        ... .collect()
+        ... )
+        Seq(('F', 1), ('M', 3))
+
+        ```
+        """
+        # TODO: Inventory of all group_by and follow-ups in Dict and Iter, potentially do like polars: GroupBy object
+
+        def _group_by(
+            data: Iterable[T],
+        ) -> Iterator[tuple[Any, Iter[T]]]:
+            return ((x, Iter(y)) for x, y in itertools.groupby(data, key))
+
+        return self._lazy(_group_by)
