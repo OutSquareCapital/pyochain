@@ -1,11 +1,8 @@
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import Callable, Generator, Iterator
-from typing import Any, Concatenate, Self
-
-type IntoIter[T] = Iterator[T] | Generator[T, Any, Any]
-"""A type alias representing an iterator or generator."""
+from collections.abc import Callable
+from typing import Concatenate, Self
 
 
 class Pipeable:
