@@ -5,10 +5,10 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Concatenate, Never, cast
 
-from .._core import Pipeable
+from ._core import Pipeable
 
 if TYPE_CHECKING:
-    from .._iter import Iter
+    from ._lazy import Iter
     from ._result import Result
 
 
@@ -208,7 +208,7 @@ class Option[T](Pipeable, ABC):
         >>> pc.NONE.unwrap()
         Traceback (most recent call last):
             ...
-        pyochain._results._option.OptionUnwrapError: called `unwrap` on a `None`
+        pyochain._option.OptionUnwrapError: called `unwrap` on a `None`
 
         ```
         """
@@ -236,7 +236,7 @@ class Option[T](Pipeable, ABC):
         >>> pc.NONE.expect("fruits are healthy")
         Traceback (most recent call last):
             ...
-        pyochain._results._option.OptionUnwrapError: fruits are healthy (called `expect` on a `None`)
+        pyochain._option.OptionUnwrapError: fruits are healthy (called `expect` on a `None`)
 
         ```
         """
@@ -616,7 +616,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        from .._iter import Iter
+        from ._lazy import Iter
 
         return Iter((self.unwrap(),)) if self.is_some() else Iter(())
 

@@ -8,11 +8,13 @@ from typing import TYPE_CHECKING, Any, Concatenate, Literal, Self
 import cytoolz as cz
 import more_itertools as mit
 
-from .._core import CommonBase, Pipeable, SupportsRichComparison, get_config
+from ._config import get_config
+from ._core import CommonBase, Pipeable
+from ._protocols import SupportsRichComparison
 
 if TYPE_CHECKING:
-    from .._results import Option
     from ._lazy import Iter, Seq, Vec
+    from ._option import Option
 
 
 @dataclass(slots=True)
@@ -40,33 +42,33 @@ class CommonMethods[T](CommonBase[Iterable[T]]):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Seq[U]:
-        from .._iter import Seq
+        from ._eager import Seq
 
         def _(data: Iterable[T]) -> Seq[U]:
             return Seq(factory(data, *args, **kwargs))
 
         return self.into(_)
 
-    def _eager_mut[**P, U](
+    def _vec[**P, U](
         self,
         factory: Callable[Concatenate[Iterable[T], P], list[U]],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Vec[U]:
-        from .._iter import Vec
+        from ._eager import Vec
 
         def _(data: Iterable[T]) -> Vec[U]:
             return Vec(factory(data, *args, **kwargs))
 
         return self.into(_)
 
-    def _lazy[**P, U](
+    def _iter[**P, U](
         self,
         factory: Callable[Concatenate[Iterable[T], P], Iterator[U]],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Iter[U]:
-        from .._iter import Iter
+        from ._lazy import Iter
 
         def _(data: Iterable[T]) -> Iter[U]:
             return Iter(factory(data, *args, **kwargs))
@@ -724,7 +726,7 @@ class CommonMethods[T](CommonBase[Iterable[T]]):
 
         ```
         """
-        from .._results import Option
+        from ._option import Option
 
         def _find(data: Iterable[T]) -> Option[T]:
             return Option.from_(next(filter(predicate, data), None))
@@ -762,7 +764,7 @@ class CommonMethods[T](CommonBase[Iterable[T]]):
         def _sort(data: Iterable[U]) -> list[U]:
             return sorted(data, reverse=reverse, key=key)
 
-        return self._eager_mut(_sort)
+        return self._vec(_sort)
 
     def tail(self, n: int) -> Seq[T]:
         """Return a tuple of the last n elements.
@@ -949,4 +951,4 @@ class CommonMethods[T](CommonBase[Iterable[T]]):
         def _most_common(data: Iterable[T]) -> list[tuple[T, int]]:
             return Counter(data).most_common(n)
 
-        return self._eager_mut(_most_common)
+        return self._vec(_most_common)

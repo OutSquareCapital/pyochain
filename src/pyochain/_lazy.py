@@ -27,8 +27,9 @@ from typing import (
 import cytoolz as cz
 import more_itertools as mit
 
-from .._results import Option, Result
-from ._common import CommonMethods, convert_data
+from ._iter import CommonMethods, convert_data
+from ._option import Option
+from ._result import Result
 
 if TYPE_CHECKING:
     from ._eager import Seq, Vec
@@ -205,7 +206,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        from .._results import Option
+        from ._option import Option
 
         return Option.from_(next(self, None))
 
@@ -438,8 +439,9 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        from .._results import NONE, Result, Some
         from ._eager import Vec
+        from ._option import NONE, Some
+        from ._result import Result
 
         def _try_collect(data: TryIter[U]) -> Option[Vec[U]]:
             collected = Vec[U].new()
@@ -574,7 +576,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
                 yield self.__class__(chunk)
                 materialize_next(size)
 
-        return self._lazy(_chunks, size)
+        return self._iter(_chunks, size)
 
     @overload
     def flatten[U](self: Iter[KeysView[U]]) -> Iter[U]: ...
@@ -614,7 +616,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(itertools.chain.from_iterable)
+        return self._iter(itertools.chain.from_iterable)
 
     @overload
     def flat_map[U, R](
@@ -693,7 +695,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         def _flat_map(data: Iterable[U]) -> map[R]:
             return map(func, itertools.chain.from_iterable(data))
 
-        return self._lazy(_flat_map)
+        return self._iter(_flat_map)
 
     def unique_to_each[U: Iterable[Any]](self: Iter[U]) -> Iter[Iter[U]]:
         """Return the elements from each of the iterators that aren't in the other iterators.
@@ -743,7 +745,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
             uniques: set[U] = {element for element in counts if counts[element] == 1}
             return ((Iter(filter(uniques.__contains__, it))) for it in pool)
 
-        return self._lazy(_unique_to_each)
+        return self._iter(_unique_to_each)
 
     def split_into(self, *sizes: Option[int]) -> Iter[Iter[T]]:
         """Yield a list of sequential items from iterable of length 'n' for each integer 'n' in sizes.
@@ -801,7 +803,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
                 else:
                     yield self.__class__(itertools.islice(it, size.unwrap()))
 
-        return self._lazy(_split_into)
+        return self._iter(_split_into)
 
     def split_when(
         self,
@@ -862,7 +864,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
             yield Iter(buf)
 
-        return self._lazy(_split_when, max_split)
+        return self._iter(_split_when, max_split)
 
     def split_at(
         self,
@@ -932,7 +934,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
                     buf.append(item)
             yield self.__class__(buf)
 
-        return self._lazy(_split_at, max_split)
+        return self._iter(_split_at, max_split)
 
     def split_after(
         self,
@@ -987,7 +989,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
             if buf:
                 yield self.__class__(buf)
 
-        return self._lazy(_split_after, max_split)
+        return self._iter(_split_after, max_split)
 
     def split_before(
         self,
@@ -1046,7 +1048,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
             if buf:
                 yield self.__class__(buf)
 
-        return self._lazy(_split_before, max_split)
+        return self._iter(_split_before, max_split)
 
     def find_map[R](self, func: Callable[[T], Option[R]]) -> Option[R]:
         """Applies function to the elements of the `Iterator` and returns the first Some(R) result.
@@ -1104,7 +1106,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(partial(map, func))
+        return self._iter(partial(map, func))
 
     def map_star[U: Iterable[Any], R](
         self: Iter[U],
@@ -1140,7 +1142,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(partial(itertools.starmap, func))
+        return self._iter(partial(itertools.starmap, func))
 
     def map_if(self, predicate: Callable[[T], bool]) -> _WhenBuilder[T]:
         """Begin a conditional transformation chain on an Iter.
@@ -1192,7 +1194,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         def _repeat(data: Iterable[T]) -> Iterator[Iterable[T]]:
             return itertools.repeat(factory(data), n)
 
-        return self._lazy(_repeat)
+        return self._iter(_repeat)
 
     def scan[U](self, state: U, func: Callable[[U, T], Option[U]]) -> Iter[U]:
         """Transform elements by sharing state between iterations.
@@ -1241,7 +1243,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
                 current = res.unwrap()
                 yield res.unwrap()
 
-        return self._lazy(gen)
+        return self._iter(gen)
 
     # filters ------------------------------------------------------------
     @overload
@@ -1285,7 +1287,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         def _filter(data: Iterable[T]) -> Iterator[T]:
             return filter(func, data)
 
-        return self._lazy(_filter)
+        return self._iter(_filter)
 
     def filter_false(self, func: Callable[[T], bool]) -> Iter[T]:
         """Return elements for which func is false.
@@ -1304,7 +1306,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(partial(itertools.filterfalse, func))
+        return self._iter(partial(itertools.filterfalse, func))
 
     def take_while(self, predicate: Callable[[T], bool]) -> Iter[T]:
         """Take items while predicate holds.
@@ -1323,7 +1325,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(partial(itertools.takewhile, predicate))
+        return self._iter(partial(itertools.takewhile, predicate))
 
     def skip_while(self, predicate: Callable[[T], bool]) -> Iter[T]:
         """Drop items while predicate holds.
@@ -1342,7 +1344,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(partial(itertools.dropwhile, predicate))
+        return self._iter(partial(itertools.dropwhile, predicate))
 
     def compress(self, *selectors: bool) -> Iter[T]:
         """Filter elements using a boolean selector iterable.
@@ -1361,7 +1363,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(itertools.compress, selectors)
+        return self._iter(itertools.compress, selectors)
 
     def unique(self, key: Callable[[T], Any] | None = None) -> Iter[T]:
         """Return only unique elements of the iterable.
@@ -1388,7 +1390,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(cz.itertoolz.unique, key=key)
+        return self._iter(cz.itertoolz.unique, key=key)
 
     def take(self, n: int) -> Iter[T]:
         """Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner.
@@ -1417,7 +1419,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(partial(cz.itertoolz.take, n))
+        return self._iter(partial(cz.itertoolz.take, n))
 
     def skip(self, n: int) -> Iter[T]:
         """Drop first n elements.
@@ -1436,7 +1438,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(partial(cz.itertoolz.drop, n))
+        return self._iter(partial(cz.itertoolz.drop, n))
 
     def unique_justseen(self, key: Callable[[T], Any] | None = None) -> Iter[T]:
         """Yields elements in order, ignoring serial duplicates.
@@ -1457,7 +1459,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(mit.unique_justseen, key=key)
+        return self._iter(mit.unique_justseen, key=key)
 
     def unique_in_window(
         self,
@@ -1491,7 +1493,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(mit.unique_in_window, n, key=key)
+        return self._iter(mit.unique_in_window, n, key=key)
 
     def extract(self, indices: Iterable[int]) -> Iter[T]:
         """Yield values at the specified indices.
@@ -1516,7 +1518,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(mit.extract, indices)
+        return self._iter(mit.extract, indices)
 
     def every(self, index: int) -> Iter[T]:
         """Return every nth item starting from first.
@@ -1535,7 +1537,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(partial(cz.itertoolz.take_nth, index))
+        return self._iter(partial(cz.itertoolz.take_nth, index))
 
     def slice(
         self,
@@ -1568,7 +1570,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         def _slice(data: Iterable[T]) -> Iterator[T]:
             return itertools.islice(data, start, stop, step)
 
-        return self._lazy(_slice)
+        return self._iter(_slice)
 
     def filter_map[R](self, func: Callable[[T], Option[R]]) -> Iter[R]:
         """Creates an iterator that both filters and maps.
@@ -1616,7 +1618,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
                 if res.is_some():
                     yield res.unwrap()
 
-        return self._lazy(_filter_map)
+        return self._iter(_filter_map)
 
     # joins and zips ------------------------------------------------------------
     @overload
@@ -1685,7 +1687,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(zip, *others, strict=strict)
+        return self._iter(zip, *others, strict=strict)
 
     @overload
     def zip_longest[T2](
@@ -1757,7 +1759,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        from .._results import Option
+        from ._option import Option
 
         def _zip_longest(data: Iterable[T]) -> Iterator[tuple[Option[T], ...]]:
             return (
@@ -1765,7 +1767,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
                 for tup in itertools.zip_longest(data, *others, fillvalue=None)
             )
 
-        return self._lazy(_zip_longest)
+        return self._iter(_zip_longest)
 
     @overload
     def product(self) -> Iter[tuple[T]]: ...
@@ -1819,7 +1821,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(itertools.product, *others)
+        return self._iter(itertools.product, *others)
 
     def diff_at(
         self,
@@ -1858,7 +1860,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(cz.itertoolz.diff, *others, default=default, key=key)
+        return self._iter(cz.itertoolz.diff, *others, default=default, key=key)
 
     def join_with[R, K](
         self,
@@ -1900,7 +1902,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
                 right_default=right_default,
             )
 
-        return self._lazy(_join)
+        return self._iter(_join)
 
     # windows and partitions ------------------------------------------------------------
     @overload
@@ -1962,7 +1964,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         def _map_windows(data: Iterable[T]) -> Iterator[R]:
             return map(func, cz.itertoolz.sliding_window(length, data))
 
-        return self._lazy(_map_windows)
+        return self._iter(_map_windows)
 
     @overload
     def partition(self, n: Literal[1], pad: None = None) -> Iter[tuple[T]]: ...
@@ -2003,7 +2005,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(partial(cz.itertoolz.partition, n, pad=pad))
+        return self._iter(partial(cz.itertoolz.partition, n, pad=pad))
 
     def partition_all(self, n: int) -> Iter[tuple[T, ...]]:
         """Partition all elements of sequence into tuples of length at most n.
@@ -2026,7 +2028,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(partial(cz.itertoolz.partition_all, n))
+        return self._iter(partial(cz.itertoolz.partition_all, n))
 
     def partition_by(self, predicate: Callable[[T], bool]) -> Iter[tuple[T, ...]]:
         """Partition the `iterable` into a sequence of `tuples` according to a predicate function.
@@ -2051,7 +2053,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(partial(cz.recipes.partitionby, predicate))
+        return self._iter(partial(cz.recipes.partitionby, predicate))
 
     def batch(self, n: int) -> Iter[tuple[T, ...]]:
         """Batch elements into tuples of length n and return a new Iter.
@@ -2074,7 +2076,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(itertools.batched, n)
+        return self._iter(itertools.batched, n)
 
     def cycle(self) -> Iter[T]:
         """Repeat the sequence indefinitely.
@@ -2094,7 +2096,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(itertools.cycle)
+        return self._iter(itertools.cycle)
 
     def interpose(self, element: T) -> Iter[T]:
         """Interpose element between items and return a new Iterable wrapper.
@@ -2113,7 +2115,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(partial(cz.itertoolz.interpose, element))
+        return self._iter(partial(cz.itertoolz.interpose, element))
 
     def random_sample(
         self,
@@ -2161,7 +2163,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(
+        return self._iter(
             partial(cz.itertoolz.random_sample, probability, random_state=state),
         )
 
@@ -2182,7 +2184,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(partial(cz.itertoolz.accumulate, func))
+        return self._iter(partial(cz.itertoolz.accumulate, func))
 
     def insert_left(self, value: T) -> Iter[T]:
         """Prepend value to the sequence and return a new Iterable wrapper.
@@ -2201,7 +2203,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(partial(cz.itertoolz.cons, value))
+        return self._iter(partial(cz.itertoolz.cons, value))
 
     def peek(self, n: int, func: Callable[[Iterable[T]], Any]) -> Iter[T]:
         """Retrieve the first n items from the iterable, pass them to func, and return the original iterable.
@@ -2230,7 +2232,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
             func(peeked.values)
             return peeked.original
 
-        return self._lazy(_peek)
+        return self._iter(_peek)
 
     def merge_sorted(
         self,
@@ -2254,7 +2256,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(cz.itertoolz.merge_sorted, *others, key=sort_on)
+        return self._iter(cz.itertoolz.merge_sorted, *others, key=sort_on)
 
     def interleave(self, *others: Iterable[T]) -> Iter[T]:
         """Interleave multiple sequences element-wise.
@@ -2277,7 +2279,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         def _interleave(data: Iterable[T]) -> Iterator[T]:
             return cz.itertoolz.interleave((data, *others))
 
-        return self._lazy(_interleave)
+        return self._iter(_interleave)
 
     def chain(self, *others: Iterable[T]) -> Iter[T]:
         """Concatenate zero or more iterables, any of which may be infinite.
@@ -2304,7 +2306,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         def _chain(data: Iterable[T]) -> Iterator[T]:
             return cz.itertoolz.concat((data, *others))  # ty:ignore[invalid-return-type] # @Todo(StarredExpression)
 
-        return self._lazy(_chain)
+        return self._iter(_chain)
 
     def elements(self) -> Iter[T]:
         """Iterator over elements repeating each as many times as its count.
@@ -2337,7 +2339,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         def _elements(data: Iterable[T]) -> Iterator[T]:
             return Counter(data).elements()
 
-        return self._lazy(_elements)
+        return self._iter(_elements)
 
     def rev(self) -> Iter[T]:
         """Return a new Iterable wrapper with elements in reverse order.
@@ -2362,7 +2364,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         def _reverse(data: Iterable[T]) -> Iterator[T]:
             return reversed(tuple(data))
 
-        return self._lazy(_reverse)
+        return self._iter(_reverse)
 
     def is_strictly_n(self, n: int) -> Iter[Result[T, ValueError]]:
         """Yield`Ok[T]` as long as the iterable has exactly *n* items.
@@ -2411,7 +2413,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        from .._results import Err, Ok
+        from ._result import Err, Ok
 
         def _strictly_n_(iterable: Iterable[T]) -> Iterator[Result[T, ValueError]]:
             it = iter(iterable)
@@ -2429,7 +2431,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
                 e = ValueError(f"Too many items in iterable (got at least {n + 1})")
                 yield Err(e)
 
-        return self._lazy(_strictly_n_)
+        return self._iter(_strictly_n_)
 
     def enumerate(self) -> Iter[tuple[int, T]]:
         """Return a Iter of (index, value) pairs.
@@ -2445,7 +2447,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(enumerate)
+        return self._iter(enumerate)
 
     @overload
     def combinations(self, r: Literal[2]) -> Iter[tuple[T, T]]: ...
@@ -2472,7 +2474,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(itertools.combinations, r)
+        return self._iter(itertools.combinations, r)
 
     @overload
     def permutations(self, r: Literal[2]) -> Iter[tuple[T, T]]: ...
@@ -2499,7 +2501,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(itertools.permutations, r)
+        return self._iter(itertools.permutations, r)
 
     @overload
     def combinations_with_replacement(self, r: Literal[2]) -> Iter[tuple[T, T]]: ...
@@ -2532,7 +2534,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(itertools.combinations_with_replacement, r)
+        return self._iter(itertools.combinations_with_replacement, r)
 
     def pairwise(self) -> Iter[tuple[T, T]]:
         """Return an iterator over pairs of consecutive elements.
@@ -2548,7 +2550,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(itertools.pairwise)
+        return self._iter(itertools.pairwise)
 
     @overload
     def map_juxt[R1, R2](
@@ -2596,7 +2598,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(partial(map, cz.functoolz.juxt(*funcs)))
+        return self._iter(partial(map, cz.functoolz.juxt(*funcs)))
 
     def adjacent(
         self,
@@ -2640,7 +2642,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         See also groupby_transform, which can be used with this function to group ranges of items with the same bool value.
 
         """
-        return self._lazy(partial(mit.adjacent, predicate, distance=distance))
+        return self._iter(partial(mit.adjacent, predicate, distance=distance))
 
     def classify_unique(self) -> Iter[tuple[T, bool, bool]]:
         """Classify each element in terms of its uniqueness.
@@ -2667,7 +2669,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._lazy(mit.classify_unique)
+        return self._iter(mit.classify_unique)
 
     @overload
     def group_by_transform(
@@ -2776,7 +2778,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         def _group_by_transform(data: Iterable[T]) -> Iterator[tuple[Any, ...]]:
             return mit.groupby_transform(data, keyfunc, valuefunc, reducefunc)
 
-        return self._lazy(_group_by_transform)
+        return self._iter(_group_by_transform)
 
     def with_position(self) -> Iter[tuple[Position, T]]:
         """Return an iterable over (`Position`, `T`) tuples.
@@ -2818,7 +2820,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
                 current = nxt
             yield ("last", current)
 
-        return self._lazy(gen)
+        return self._iter(gen)
 
     @overload
     def group_by(self, key: None = None) -> Iter[tuple[T, Iter[T]]]: ...
@@ -2893,4 +2895,4 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         ) -> Iterator[tuple[Any, Iter[T]]]:
             return ((x, Iter(y)) for x, y in itertools.groupby(data, key))
 
-        return self._lazy(_group_by)
+        return self._iter(_group_by)

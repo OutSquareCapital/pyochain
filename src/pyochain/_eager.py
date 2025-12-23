@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, overload
 
 import cytoolz as cz
 
-from ._common import CommonMethods, convert_data
+from ._iter import CommonMethods, convert_data
 
 if TYPE_CHECKING:
     from ._lazy import Iter
@@ -83,7 +83,7 @@ class Seq[T](CommonMethods[T], Sequence[T]):
         Returns:
             Iter[T]: An `Iter` instance wrapping an iterator over the sequence.
         """
-        return self._lazy(iter)
+        return self._iter(iter)
 
     def is_distinct(self) -> bool:
         """Return True if all items are distinct.

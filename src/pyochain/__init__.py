@@ -158,8 +158,10 @@ The stubs used for the developpement, made by the maintainer of pyochain, can be
 """
 
 from ._dict import Dict
-from ._iter import Iter, Seq, Vec
-from ._results import NONE, Err, Ok, Option, Result, ResultUnwrapError, Some
+from ._eager import Seq, Vec
+from ._lazy import Iter
+from ._option import NONE, Option, Some
+from ._result import Err, Ok, Result, ResultUnwrapError
 
 __all__ = [
     "NONE",

@@ -6,12 +6,13 @@ from typing import TYPE_CHECKING, Any, TypeIs, overload
 
 import cytoolz as cz
 
-from .._core import CommonBase, get_config
+from ._config import get_config
+from ._core import CommonBase
 
 if TYPE_CHECKING:
-    from .._core import SupportsKeysAndGetItem
-    from .._iter import Iter
-    from .._results import Option
+    from ._lazy import Iter
+    from ._option import Option
+    from ._protocols import SupportsKeysAndGetItem
 
 
 class Dict[K, V](CommonBase[dict[K, V]], Mapping[K, V]):
@@ -109,7 +110,7 @@ class Dict[K, V](CommonBase[dict[K, V]], Mapping[K, V]):
 
         ```
         """
-        from .._iter import Iter
+        from ._lazy import Iter
 
         return self.into(lambda d: Iter(d._inner.values()))
 
@@ -126,7 +127,7 @@ class Dict[K, V](CommonBase[dict[K, V]], Mapping[K, V]):
 
         ```
         """
-        from .._iter import Iter
+        from ._lazy import Iter
 
         return self.into(lambda d: Iter(d._inner.items()))
 
@@ -373,7 +374,7 @@ class Dict[K, V](CommonBase[dict[K, V]], Mapping[K, V]):
 
         ```
         """
-        from .._results import Option
+        from ._option import Option
 
         def _get_in(data: Mapping[K, V]) -> Option[V]:
             return Option.from_(cz.dicttoolz.get_in(keys, data, None))

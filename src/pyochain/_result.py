@@ -7,10 +7,10 @@ from typing import TYPE_CHECKING, Concatenate, Never, cast
 
 import cytoolz as cz
 
-from .._core import Pipeable
+from ._core import Pipeable
 
 if TYPE_CHECKING:
-    from .._iter import Iter
+    from ._lazy import Iter
     from ._option import Option
 
 
@@ -118,7 +118,7 @@ class Result[T, E](Pipeable, ABC):
         >>> pc.Err("emergency failure").unwrap()
         Traceback (most recent call last):
             ...
-        pyochain._results._result.ResultUnwrapError: called `unwrap` on Err: 'emergency failure'
+        pyochain._result.ResultUnwrapError: called `unwrap` on Err: 'emergency failure'
 
         ```
         """
@@ -146,7 +146,7 @@ class Result[T, E](Pipeable, ABC):
         >>> pc.Ok(2).unwrap_err()
         Traceback (most recent call last):
             ...
-        pyochain._results._result.ResultUnwrapError: called `unwrap_err` on Ok
+        pyochain._result.ResultUnwrapError: called `unwrap_err` on Ok
 
         ```
         """
@@ -200,7 +200,7 @@ class Result[T, E](Pipeable, ABC):
         >>> pc.Err("emergency failure").expect("Testing expect")
         Traceback (most recent call last):
             ...
-        pyochain._results._result.ResultUnwrapError: Testing expect: emergency failure
+        pyochain._result.ResultUnwrapError: Testing expect: emergency failure
 
         ```
         """
@@ -231,7 +231,7 @@ class Result[T, E](Pipeable, ABC):
         >>> pc.Ok(10).expect_err("Testing expect_err")
         Traceback (most recent call last):
             ...
-        pyochain._results._result.ResultUnwrapError: Testing expect_err: expected Err, got Ok(10)
+        pyochain._result.ResultUnwrapError: Testing expect_err: expected Err, got Ok(10)
 
         ```
         """
