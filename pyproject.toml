@@ -3,7 +3,7 @@
     name            = "pyochain"
     readme          = "README.md"
     requires-python = ">=3.13"
-    version         = "0.6.0.4"
+    version         = "0.6.0.5"
 
     dependencies = ["cytoolz>=1.0.1", "more-itertools>=10.8.0"]
 
@@ -22,7 +22,7 @@
         "pyright>=1.1.407",
         "pytest>=9.0.2",
         "ruff>=0.14.9",
-]
+    ]
 [tool.ruff]
     lint.ignore = [
         "C417",
@@ -32,6 +32,7 @@
         "E501",
         "FIX002",
         "PLC0415",
+        "S101",
         "S608",
         "SLF001",
         "T201",
