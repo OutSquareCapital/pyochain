@@ -10,59 +10,6 @@ import pyochain as pc
 
 DATA = Path("scripts", "data")
 
-HASHMAP_FN = {
-    "capacity",
-    "clear",
-    "contains_key",
-    "drain",
-    "entry",
-    "extract_if",
-    "get",
-    "get_disjoint_mut",
-    "get_disjoint_unchecked_mut",
-    "get_key_value",
-    "get_mut",
-    "hasher",
-    "insert",
-    "into_keys",
-    "into_values",
-    "is_empty",
-    "iter",
-    "iter_mut",
-    "keys",
-    "len",
-    "new",
-    "remove",
-    "remove_entry",
-    "reserve",
-    "retain",
-    "shrink_to",
-    "shrink_to_fit",
-    "try_insert",
-    "try_reserve",
-    "values",
-    "values_mut",
-    "with_capacity",
-    "with_capacity_and_hasher",
-    "with_hasher",
-}
-
-
-def _dict_filter() -> set[str]:
-    return {
-        "capacity",  # not pertinent in Python
-        "with_capacity",  # not pertinent in Python
-        "with_capacity_and_hasher",  # not pertinent in Python
-        "with_hasher",  # not pertinent in Python
-        "into",  # implicitely implemented with From trait in Rust
-        "from_",  # from is a reserved word in Python
-        "shrink_to",  # not pertinent in Python
-        "shrink_to_fit",  # not pertinent in Python
-        "into_keys",  # not pertinent in Python
-        "into_values",  # not pertinent in Python
-        "drain",  # not pertinent in Python
-    }
-
 
 ITERATOR_FN = {
     "advance_by",
@@ -212,4 +159,3 @@ def main(dtype: type, rust_fns: set[str], filters: set[str]) -> None:
 
 if __name__ == "__main__":
     main(pc.Iter, ITERATOR_FN, _iter_filter())
-    main(pc.Dict, HASHMAP_FN, _dict_filter())
