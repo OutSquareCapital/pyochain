@@ -330,31 +330,30 @@ class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
 
         return self.into(lambda d: Iter(d._inner.items()))
 
-    def get_item(self, *keys: K) -> Option[V]:
-        """Retrieve a value from a nested dictionary structure.
+    def get_item(self, key: K) -> Option[V]:
+        """Retrieve a value from the `Dict`.
+
+        Returns `Some(value)` if the key exists, or `None` if it does not.
 
         Args:
-            *keys (K): keys representing the nested path to retrieve the value.
+            key (K): The key to look up.
 
         Returns:
-            Option[V]: Value at the nested path or default if not found.
+            Option[V]: Value that is associated with the key, or None if not found.
 
         ```python
         >>> import pyochain as pc
-        >>> data = {"a": {"b": {"c": 1}}}
-        >>> pc.Dict(data).get_item("a", "b", "c")
+        >>> data = {"a": 1}
+        >>> pc.Dict(data).get_item("a")
         Some(1)
-        >>> pc.Dict(data).get_item("a", "x").unwrap_or('Not Found')
+        >>> pc.Dict(data).get_item("x").unwrap_or('Not Found')
         'Not Found'
 
         ```
         """
         from ._option import Option
 
-        def _get_in(data: Mapping[K, V]) -> Option[V]:
-            return Option.from_(cz.dicttoolz.get_in(keys, data, None))
-
-        return self.into(lambda d: _get_in(d._inner))
+        return Option.from_(self._inner.get(key, None))
 
     def is_empty(self) -> bool:
         """Returns true if the map contains no elements.
@@ -384,7 +383,9 @@ class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
         self,
         predicate: Callable[[K], bool | TypeIs[U]],
     ) -> Dict[K, V] | Dict[U, V]:
-        """Return keys that satisfy predicate.
+        """Return a new `Dict` containing only the items whose keys satisfy the **predicate**.
+
+        This does not modify the original `Dict`.
 
         Args:
             predicate (Callable[[K], bool | TypeIs[U]]): Function to determine if a key should be included.
@@ -411,7 +412,9 @@ class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
         self,
         predicate: Callable[[V], bool] | Callable[[V], TypeIs[U]],
     ) -> Dict[K, V] | Dict[K, U]:
-        """Return items whose values satisfy predicate.
+        """Return a new `Dict` containing only the items whose values satisfy the **predicate**.
+
+        This does not modify the original `Dict`.
 
         Args:
             predicate (Callable[[V], bool] | Callable[[V], TypeIs[U]]): Function to determine if a value should be included.
@@ -433,7 +436,9 @@ class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
         return Dict(cz.dicttoolz.valfilter(predicate, self._inner))
 
     def filter_items(self, predicate: Callable[[tuple[K, V]], bool]) -> Dict[K, V]:
-        """Filter items by predicate applied to (key, value) tuples.
+        """Return a new `Dict` containing only the items that satisfy the **predicate**.
+
+        This does not modify the original `Dict`.
 
         Args:
             predicate (Callable[[tuple[K, V]], bool]): Function to determine if a (key, value) pair should be included.
@@ -459,7 +464,9 @@ class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
         return Dict(cz.dicttoolz.itemfilter(predicate, self._inner))
 
     def map_keys[T](self, func: Callable[[K], T]) -> Dict[T, V]:
-        """Return keys transformed by func.
+        """Return a new `Dict` with keys transformed by the provided **func**.
+
+        The values of the original `Dict` remain unchanged.
 
         Args:
             func (Callable[[K], T]): Function to apply to each key in the dictionary.
@@ -480,7 +487,9 @@ class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
         return Dict(cz.dicttoolz.keymap(func, self._inner))
 
     def map_values[T](self, func: Callable[[V], T]) -> Dict[K, T]:
-        """Return values transformed by func.
+        """Return a new `Dict` with values transformed by the provided **func**.
+
+        The keys of the original `Dict` remain unchanged.
 
         Args:
             func (Callable[[V], T]): Function to apply to each value in the dictionary.
@@ -504,7 +513,9 @@ class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
         self,
         func: Callable[[tuple[K, V]], tuple[KR, VR]],
     ) -> Dict[KR, VR]:
-        """Transform (key, value) pairs using a function that takes a (key, value) tuple.
+        """Return a new `Dict` with items transformed by the provided **func**.
+
+        The original `Dict` remains unchanged.
 
         Args:
             func (Callable[[tuple[K, V]], tuple[KR, VR]]): Function to transform each (key, value) pair into a new (key, value) tuple.
