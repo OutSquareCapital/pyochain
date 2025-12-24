@@ -1,7 +1,6 @@
-# Option
+# Seq
 
-::: pyochain._option.Option
-
+::: pyochain._eager.Set
     options:
       inherited_members: true
       show_overloads: true
