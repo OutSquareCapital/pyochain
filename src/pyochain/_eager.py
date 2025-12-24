@@ -1,14 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Collection, Iterable, MutableSequence, Sequence
-from typing import TYPE_CHECKING, Any, Self, overload
+from typing import Any, Self, overload
 
 import cytoolz as cz
 
 from ._iter import CommonMethods, convert_data
-
-if TYPE_CHECKING:
-    from ._lazy import Iter
 
 
 class Set[T](CommonMethods[T], Collection[T]):
@@ -76,16 +73,6 @@ class Set[T](CommonMethods[T], Collection[T]):
             if isinstance(converted, (set, frozenset))
             else frozenset(converted)
         )
-
-    def iter(self) -> Iter[T]:
-        """Get an iterator over the `Collection`.
-
-        Call this to switch to lazy evaluation.
-
-        Returns:
-            Iter[T]: An `Iterator` over the `Collection`.
-        """
-        return self._iter(iter)
 
     def union(self, *others: Iterable[T]) -> Set[T]:
         """Return the union of this iterable and 'others'.
@@ -257,7 +244,7 @@ class Set[T](CommonMethods[T], Collection[T]):
         return self._inner.isdisjoint(other)
 
 
-class Seq[T](Set[T], Sequence[T]):
+class Seq[T](CommonMethods[T], Sequence[T]):
     """`Seq` represent an in memory Sequence.
 
     Implements the `Sequence` Protocol from `collections.abc`, so it can be used as a standard immutable sequence.
@@ -280,6 +267,9 @@ class Seq[T](Set[T], Sequence[T]):
 
     def __init__(self, data: tuple[T, ...]) -> None:
         self._inner = data  # pyright: ignore[reportIncompatibleVariableOverride]
+
+    def __len__(self) -> int:
+        return len(self._inner)
 
     @overload
     def __getitem__(self, index: int) -> T: ...

@@ -37,6 +37,18 @@ class CommonMethods[T](CommonBase[Iterable[T]]):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({get_config().iter_repr(self._inner)})"
 
+    def iter(self) -> Iter[T]:
+        """Get an iterator over the `Iterable`.
+
+        Call this to switch to lazy evaluation.
+
+        Calling this method on an `Iter` instance has no effect.
+
+        Returns:
+            Iter[T]: An `Iterator` over the `Iterable`.
+        """
+        return self._iter(iter)
+
     def _iter[**P, U](
         self,
         factory: Callable[Concatenate[Iterable[T], P], Iterator[U]],
