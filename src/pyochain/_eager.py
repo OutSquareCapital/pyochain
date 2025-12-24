@@ -122,7 +122,7 @@ class Set[T](CommonMethods[T], Collection[T]):
             This method consumes inner data, unsorts it, and removes duplicates.
 
         Args:
-            *others (Iterable[T]): Other iterables to intersect with.
+            *others (Iterable[Any]): Other iterables to intersect with.
 
         Returns:
             Set[T]: A new `Set` containing the intersection of elements.
@@ -428,7 +428,7 @@ class Vec[T](Seq[T], MutableSequence[T]):
         Otherwise, `T` will be inferred as `Any`.
 
         Returns:
-            Vec[T]: A new empty Vec instance.
+            Self: A new empty Vec instance.
 
         Example:
         ```python

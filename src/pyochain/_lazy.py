@@ -1533,11 +1533,14 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         """
         return self._iter(mit.extract, indices)
 
-    def every(self, index: int) -> Iter[T]:
-        """Return every nth item starting from first.
+    def step_by(self, step: int) -> Iter[T]:
+        """Creates an `Iter` starting at the same point, but stepping by the given **step** at each iteration.
+
+        Note:
+            The first element of the iterator will always be returned, regardless of the **step** given.
 
         Args:
-            index (int): Step size for selecting items.
+            step (int): Step size for selecting items.
 
         Returns:
             Iter[T]: An iterable of every nth item.
@@ -1545,12 +1548,12 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter([10, 20, 30, 40]).every(2).collect()
-        Seq(10, 30)
+        >>> pc.Iter([0, 1, 2, 3, 4, 5]).step_by(2).collect()
+        Seq(0, 2, 4)
 
         ```
         """
-        return self._iter(partial(cz.itertoolz.take_nth, index))
+        return self._iter(partial(cz.itertoolz.take_nth, step))
 
     def slice(
         self,
@@ -2246,30 +2249,6 @@ class Iter[T](CommonMethods[T], Iterator[T]):
             return peeked.original
 
         return self._iter(_peek)
-
-    def merge_sorted(
-        self,
-        *others: Iterable[T],
-        sort_on: Callable[[T], Any] | None = None,
-    ) -> Iter[T]:
-        """Merge already-sorted sequences.
-
-        Args:
-            *others (Iterable[T]): Other sorted iterables to merge.
-            sort_on (Callable[[T], Any] | None): Optional key function for sorting.
-
-        Returns:
-            Iter[T]: A new Iterable wrapper with merged sorted elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter([1, 3]).merge_sorted([2, 4]).collect()
-        Seq(1, 2, 3, 4)
-
-        ```
-        """
-        return self._iter(cz.itertoolz.merge_sorted, *others, key=sort_on)
 
     def interleave(self, *others: Iterable[T]) -> Iter[T]:
         """Interleave multiple sequences element-wise.
