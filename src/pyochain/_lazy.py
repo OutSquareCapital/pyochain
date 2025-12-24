@@ -32,14 +32,19 @@ from ._option import Option
 from ._result import Result
 
 if TYPE_CHECKING:
-    from ._eager import Seq, Vec
+    from ._eager import Seq, Set, Vec
 
 type TryVal[T] = Option[T] | Result[T, object] | T | None
 """Represent a value that may be failible."""
 type TryIter[T] = Iter[Option[T]] | Iter[Result[T, object]] | Iter[T | None]
 """Represent an iterator that may yield failible values."""
-
-
+type Collector[T] = (
+    Callable[[Iterable[T]], list[T]]
+    | Callable[[Iterable[T]], tuple[T, ...]]
+    | Callable[[Iterable[T]], set[T]]
+    | Callable[[Iterable[T]], frozenset[T]]
+)
+"""Represent a function that collects an Iterable into a specific collection type."""
 Position = Literal["first", "middle", "last", "only"]
 """Literal type representing the position of an item in an iterable."""
 
@@ -162,7 +167,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
     However, keep in mind that `Iter` instances are single-use; once exhausted, they cannot be reused or reset.
 
-    If you need to reuse the data, consider collecting it into an immutable `Seq` first with `.collect()`, or a mutable `Vec` with `.collect_mut()`.
+    If you need to reuse the data, consider collecting it into a collection first with `.collect()`.
 
     You can always convert back to an `Iter` using `{Seq, Vec}.iter()` for free.
 
@@ -327,14 +332,33 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         return Iter(_from_fn())
 
-    def collect(self) -> Seq[T]:
-        """Collect the elements of the Iterator in a tuple and wrap it in a `Seq`.
+    @overload
+    def collect(self, collector: Callable[[Iterable[T]], list[T]]) -> Vec[T]: ...
+    @overload
+    def collect(
+        self, collector: Callable[[Iterable[T]], tuple[T, ...]] = ...
+    ) -> Seq[T]: ...
+    @overload
+    def collect(self, collector: Callable[[Iterable[T]], set[T]]) -> Set[T]: ...
+    def collect(self, collector: Collector[T] = tuple) -> Seq[T] | Vec[T] | Set[T]:
+        """Transforms an `Iter` into a collection.
+
+        The most basic pattern in which collect() is used is to turn one collection into another.
+
+        You take a collection, call `iter()` on it, do a bunch of transformations, and then `collect()` at the end.
+
+        You can specify the target collection type by providing a **collector** function or type.
+
+        This can be directly `list`, `tuple`, `frozenset` or `set`, or any `Callable` that takes an `Iterable[T]` and returns a `Collection[T]` of those types.
 
         Note:
-            Prefer using `.into()` if you want to convert the Iter into a specific container type directly (polars Series, dict, set, etc.).
+            Use `.into()` if you want to convert the Iter into an unsupported container type directly (polars Series | DataFrame, pandas Series | DataFrame, numpy array,  etc.).
+
+        Args:
+            collector (Collector[T]): Function|type that defines the target collection type. Defaults to `tuple`, producing a `Seq[T]`.
 
         Returns:
-            Seq[T]: A `Seq` containing the collected elements.
+            Seq[T] | Vec[T] | Set[T]: A materialized collection containing the collected elements.
 
         Example:
         ```python
@@ -353,45 +377,26 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         >>> # iterator is now exhausted
         >>> iterator.collect()
         Seq()
-
-        ```
-        """
-        from ._eager import Seq
-
-        return Seq(self.into(tuple))
-
-    def collect_mut(self) -> Vec[T]:
-        """Collect the elements of the Iterator in a list and wrap it in a `Vec`.
-
-        Note:
-            Prefer using `.into()` if you want to convert the Iter into a specific container type directly.
-
-        Returns:
-            Vec[T]: A `Vec` containing the collected elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter(range(5)).collect_mut()
+        >>> pc.Iter(range(5)).collect(list)
         Vec(0, 1, 2, 3, 4)
         >>> data: list[int] = [1, 2, 3]
         >>> iterator = pc.Iter.from_(data)
         >>> iterator._inner.__class__.__name__
         'list_iterator'
-        >>> mapped = iterator.map(lambda x: x * 2)
-        >>> mapped._inner.__class__.__name__
-        'map'
-        >>> mapped.collect_mut()
-        Vec(2, 4, 6)
-        >>> # iterator is now exhausted
-        >>> iterator.collect()
-        Seq()
 
         ```
         """
-        from ._eager import Vec
+        from ._eager import Seq, Set, Vec
 
-        return Vec(self.into(list))
+        data = collector(self._inner)
+
+        match data:
+            case tuple():
+                return Seq(data)
+            case list():
+                return Vec(data)
+            case set() | frozenset():
+                return Set(data)
 
     def try_collect[U](self: TryIter[U]) -> Option[Vec[U]]:
         """Fallibly transforms **self** into a `Vec`, short circuiting if a failure is encountered.
@@ -601,6 +606,8 @@ class Iter[T](CommonMethods[T], Iterator[T]):
     @overload
     def flatten[U](self: Iter[Seq[U]]) -> Iter[U]: ...
     @overload
+    def flatten[U](self: Iter[Set[U]]) -> Iter[U]: ...
+    @overload
     def flatten(self: Iter[range]) -> Iter[int]: ...
     def flatten[U: Iterable[Any]](self: Iter[U]) -> Iter[Any]:
         """Flatten one level of nesting and return a new Iterable wrapper.
@@ -625,17 +632,22 @@ class Iter[T](CommonMethods[T], Iterator[T]):
     ) -> Iter[R]: ...
     @overload
     def flat_map[U, R](
+        self: Iter[Iterator[U]],
+        func: Callable[[U], R],
+    ) -> Iter[R]: ...
+    @overload
+    def flat_map[U, R](
+        self: Iter[Collection[U]],
+        func: Callable[[U], R],
+    ) -> Iter[R]: ...
+    @overload
+    def flat_map[U, R](
         self: Iter[KeysView[U]],
         func: Callable[[U], R],
     ) -> Iter[R]: ...
     @overload
     def flat_map[U, R](
         self: Iter[ValuesView[U]],
-        func: Callable[[U], R],
-    ) -> Iter[R]: ...
-    @overload
-    def flat_map[U, R](
-        self: Iter[Iterator[U]],
         func: Callable[[U], R],
     ) -> Iter[R]: ...
     @overload
@@ -650,9 +662,10 @@ class Iter[T](CommonMethods[T], Iterator[T]):
     ) -> Iter[R]: ...
     @overload
     def flat_map[U, R](
-        self: Iter[Collection[U]],
+        self: Iter[Set[U]],
         func: Callable[[U], R],
     ) -> Iter[R]: ...
+
     @overload
     def flat_map[U, R](
         self: Iter[Sequence[U]],

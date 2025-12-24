@@ -13,18 +13,23 @@ Provides the following core classes and utilities:
 - `Iter[T]`
   - A superset of Python `collections.abc.Iterator`, with chainable functional methods.
   - Underlying data structure is an `iterator` (if we can call it that).
-  - Implement Iterator Protocol.
-  - Can be converted to `Seq` with the `.collect()` method, or to `Vec` with `.collect_mut()` method.
+  - Implement `Iterator` Protocol.
+  - Can be converted to `Seq[T]|Vec[T]|Set[T]` with the `.collect()` method.
 - `Seq[T]`
   - An immutable collection with chainable methods.
   - Underlying data structure is a `tuple`.
   - Can be converted to `Iter` with the `.iter()` method.
-  - Implement Sequence Protocol.
+  - Implement `Sequence` Protocol.
 - `Vec[T]`
   - A mutable collection with chainable methods.
   - Underlying data structure is a `list`.
   - Can be converted to `Iter` with the `.iter()` method.
-  - Implement MutableSequence Protocol.
+  - Implement `MutableSequence` Protocol.
+- `Set[T]`
+  - A mutable, unordered collection of unique elements with chainable methods.
+  - Underlying data structure is a `set` or `frozenset`.
+  - Can be converted to `Iter` with the `.iter()` method.
+  - Implement `Collection` Protocol.
 - `Dict[K, V]`
   - An immutable mapping with chainable methods.
   - Underlying data structure is a `dict`.

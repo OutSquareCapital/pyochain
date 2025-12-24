@@ -99,29 +99,25 @@ RUST_FN = (
 
 PURE_RUST = {"copied", "cloned", "by_ref", "from_coroutine"}
 """Methods that are not pertinent in the Python context."""
-PURE_PY = {
-    "collect_mut"  # don't need in Rust cause collect can use watever collection
-}
-"""Methods that are not pertinent in the Rust context."""
-EQUIVALENT = {
-    ("count", "length"),  # count is reserved for MutableMappings in Python
-    (
-        "is_sorted",
-        "is_sorted_by_key",
-        "is_sorted_by",
-    ),  # all covered by is_sorted in Python
-    (
-        "from_",
-        "into",
-    ),  # from is a reserved word in Python, into is implicitely implemented with From trait in Rust
-}
+EQUIVALENT = pc.Set(
+    {
+        ("count", "length"),  # count is reserved for MutableSequence in Python
+        (
+            "is_sorted",
+            "is_sorted_by_key",
+            "is_sorted_by",
+        ),  # all covered by is_sorted in Python
+        (
+            "from_",
+            "into",
+        ),  # from is a reserved word in Python, into is implicitely implemented with From trait in Rust
+    }
+)
 """Methods that have an equivalent Python counterpart."""
 PY_STDLIB = {"filter_false"}
 """Methods that exist in python stdlib but not in Rust."""
 
-ALL_FILTERS = (
-    PURE_RUST.union(PURE_PY).union(pc.Iter(EQUIVALENT).flatten()).union(PY_STDLIB)
-)
+ALL_FILTERS = PURE_RUST.union(EQUIVALENT.iter().flatten()).union(PY_STDLIB)
 
 
 def _with_source(fn_name: str, src: Literal["python", "rust"]) -> tuple[str, str]:

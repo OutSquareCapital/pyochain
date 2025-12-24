@@ -13,7 +13,8 @@ from ._core import CommonBase, Pipeable
 from ._protocols import SupportsRichComparison
 
 if TYPE_CHECKING:
-    from ._lazy import Iter, Seq, Vec
+    from ._eager import Seq, Set, Vec
+    from ._lazy import Iter
     from ._option import Option
 
 
@@ -72,6 +73,19 @@ class CommonMethods[T](CommonBase[Iterable[T]]):
 
         def _(data: Iterable[T]) -> Iter[U]:
             return Iter(factory(data, *args, **kwargs))
+
+        return self.into(_)
+
+    def _set[**P, U](
+        self,
+        factory: Callable[Concatenate[Iterable[T], P], set[U]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Set[U]:
+        from ._eager import Set
+
+        def _(data: Iterable[T]) -> Set[U]:
+            return Set(factory(data, *args, **kwargs))
 
         return self.into(_)
 
@@ -804,128 +818,6 @@ class CommonMethods[T](CommonBase[Iterable[T]]):
         ```
         """
         return self._eager(functools.partial(cz.itertoolz.topk, n, key=key))
-
-    def union(self, *others: Iterable[T]) -> Seq[T]:
-        """Return the union of this iterable and 'others'.
-
-        Note:
-            This method consumes inner data and removes duplicates.
-
-        Args:
-            *others (Iterable[T]): Other iterables to include in the union.
-
-        Returns:
-            Seq[T]: A new Seq containing the union of elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 2]).union([2, 3], [4]).iter().sort()
-        Vec(1, 2, 3, 4)
-
-        ```
-        """
-
-        def _union(data: Iterable[T]) -> tuple[T, ...]:
-            return tuple(set(data).union(*others))
-
-        return self._eager(_union)
-
-    def intersection(self, *others: Iterable[T]) -> Seq[T]:
-        """Return the elements common to this iterable and 'others'.
-
-        Is the opposite of `difference`.
-
-        See Also:
-            - `difference`
-            - `diff_symmetric`
-
-        Note:
-            This method consumes inner data, unsorts it, and removes duplicates.
-
-        Args:
-            *others (Iterable[T]): Other iterables to intersect with.
-
-        Returns:
-            Seq[T]: A new Seq containing the intersection of elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 2]).intersection([2, 3], [2])
-        Seq(2,)
-
-        ```
-        """
-
-        def _intersection(data: Iterable[T]) -> tuple[T, ...]:
-            return tuple(set(data).intersection(*others))
-
-        return self._eager(_intersection)
-
-    def difference(self, *others: Iterable[T]) -> Seq[T]:
-        """Return the difference of this iterable and 'others'.
-
-        See Also:
-            - `intersection`
-            - `diff_symmetric`
-
-        Note:
-            This method consumes inner data, unsorts it, and removes duplicates.
-
-        Args:
-            *others (Iterable[T]): Other iterables to subtract from this iterable.
-
-        Returns:
-            Seq[T]: A new Seq containing the difference of elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 2]).difference([2, 3])
-        Seq(1,)
-
-        ```
-        """
-
-        def _difference(data: Iterable[T]) -> tuple[T, ...]:
-            return tuple(set(data).difference(*others))
-
-        return self._eager(_difference)
-
-    def diff_symmetric(self, *others: Iterable[T]) -> Seq[T]:
-        """Return the symmetric difference (XOR) of this iterable and 'others'.
-
-        (Elements in either 'self' or 'others' but not in both).
-
-        **See Also**:
-            - `intersection`
-            - `difference`
-
-        Note:
-            This method consumes inner data, unsorts it, and removes duplicates.
-
-        Args:
-            *others (Iterable[T]): Other iterables to compute the symmetric difference with.
-
-        Returns:
-            Seq[T]: A new Seq containing the symmetric difference of elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 2]).diff_symmetric([2, 3]).iter().sort()
-        Vec(1, 3)
-        >>> pc.Seq([1, 2, 3]).diff_symmetric([3, 4, 5]).iter().sort()
-        Vec(1, 2, 4, 5)
-
-        ```
-        """
-
-        def _symmetric_difference(data: Iterable[T]) -> tuple[T, ...]:
-            return tuple(set(data).symmetric_difference(*others))
-
-        return self._eager(_symmetric_difference)
 
     def most_common(self, n: int | None = None) -> Vec[tuple[T, int]]:
         """Return the n most common elements and their counts.
