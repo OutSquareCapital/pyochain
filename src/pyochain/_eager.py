@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Collection, Iterable, MutableSequence, Sequence
-from typing import TYPE_CHECKING, Any, overload
+from typing import TYPE_CHECKING, Any, Self, overload
 
 import cytoolz as cz
 
@@ -107,9 +107,9 @@ class Set[T](CommonMethods[T], Collection[T]):
 
         ```
         """
-        return Set(self._inner.union(*others))
+        return self.__class__(self._inner.union(*others))
 
-    def intersection(self, *others: Iterable[T]) -> Set[T]:
+    def intersection(self, *others: Iterable[Any]) -> Set[T]:
         """Return the elements common to this iterable and 'others'.
 
         Is the opposite of `difference`.
@@ -135,7 +135,7 @@ class Set[T](CommonMethods[T], Collection[T]):
 
         ```
         """
-        return Set(self._inner.intersection(*others))
+        return self.__class__(self._inner.intersection(*others))
 
     def difference(self, *others: Iterable[T]) -> Set[T]:
         """Return the difference of this iterable and 'others'.
@@ -161,7 +161,7 @@ class Set[T](CommonMethods[T], Collection[T]):
 
         ```
         """
-        return Set(self._inner.difference(*others))
+        return self.__class__(self._inner.difference(*others))
 
     def symmetric_difference(self, *others: Iterable[T]) -> Set[T]:
         """Return the symmetric difference (XOR) of this iterable and 'others'.
@@ -191,13 +191,13 @@ class Set[T](CommonMethods[T], Collection[T]):
 
         ```
         """
-        return Set(self._inner.symmetric_difference(*others))
+        return self.__class__(self._inner.symmetric_difference(*others))
 
-    def is_subset(self, other: Iterable[T]) -> bool:
+    def is_subset(self, other: Iterable[Any]) -> bool:
         """Test whether every element in the set is in **other**.
 
         Args:
-            other (Iterable[T]): Another iterable to compare with.
+            other (Iterable[Any]): Another iterable to compare with.
 
         Returns:
             bool: True if this set is a subset of **other**, False otherwise.
@@ -214,11 +214,11 @@ class Set[T](CommonMethods[T], Collection[T]):
         """
         return self._inner.issubset(other)
 
-    def is_superset(self, other: Iterable[T]) -> bool:
+    def is_superset(self, other: Iterable[Any]) -> bool:
         """Test whether every element in **other** is in the set.
 
         Args:
-            other (Iterable[T]): Another iterable to compare with.
+            other (Iterable[Any]): Another iterable to compare with.
 
         Returns:
             bool: True if this set is a superset of **other**, False otherwise.
@@ -235,11 +235,11 @@ class Set[T](CommonMethods[T], Collection[T]):
         """
         return self._inner.issuperset(other)
 
-    def is_disjoint(self, other: Iterable[T]) -> bool:
+    def is_disjoint(self, other: Iterable[Any]) -> bool:
         """Test whether the set and **other** have no elements in common.
 
         Args:
-            other (Iterable[T]): Another iterable to compare with.
+            other (Iterable[Any]): Another iterable to compare with.
 
         Returns:
             bool: True if the sets have no elements in common, False otherwise.
@@ -419,8 +419,8 @@ class Vec[T](Seq[T], MutableSequence[T]):
         converted = convert_data(data, *more_data)
         return Vec(converted if isinstance(converted, list) else list(converted))
 
-    @staticmethod
-    def new() -> Vec[T]:
+    @classmethod
+    def new(cls) -> Self:
         """Create an empty `Vec`.
 
         Make sure to specify the type when calling this method, e.g., `Vec[int].new()`.
@@ -438,4 +438,4 @@ class Vec[T](Seq[T], MutableSequence[T]):
 
         ```
         """
-        return Vec([])
+        return cls([])

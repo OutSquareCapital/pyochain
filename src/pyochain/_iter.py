@@ -13,7 +13,7 @@ from ._core import CommonBase, Pipeable
 from ._protocols import SupportsRichComparison
 
 if TYPE_CHECKING:
-    from ._eager import Seq, Set, Vec
+    from ._eager import Seq, Vec
     from ._lazy import Iter
     from ._option import Option
 
@@ -37,32 +37,6 @@ class CommonMethods[T](CommonBase[Iterable[T]]):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({get_config().iter_repr(self._inner)})"
 
-    def _eager[**P, U](
-        self,
-        factory: Callable[Concatenate[Iterable[T], P], tuple[U, ...]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Seq[U]:
-        from ._eager import Seq
-
-        def _(data: Iterable[T]) -> Seq[U]:
-            return Seq(factory(data, *args, **kwargs))
-
-        return self.into(_)
-
-    def _vec[**P, U](
-        self,
-        factory: Callable[Concatenate[Iterable[T], P], list[U]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Vec[U]:
-        from ._eager import Vec
-
-        def _(data: Iterable[T]) -> Vec[U]:
-            return Vec(factory(data, *args, **kwargs))
-
-        return self.into(_)
-
     def _iter[**P, U](
         self,
         factory: Callable[Concatenate[Iterable[T], P], Iterator[U]],
@@ -73,19 +47,6 @@ class CommonMethods[T](CommonBase[Iterable[T]]):
 
         def _(data: Iterable[T]) -> Iter[U]:
             return Iter(factory(data, *args, **kwargs))
-
-        return self.into(_)
-
-    def _set[**P, U](
-        self,
-        factory: Callable[Concatenate[Iterable[T], P], set[U]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Set[U]:
-        from ._eager import Set
-
-        def _(data: Iterable[T]) -> Set[U]:
-            return Set(factory(data, *args, **kwargs))
 
         return self.into(_)
 
@@ -774,11 +735,12 @@ class CommonMethods[T](CommonBase[Iterable[T]]):
 
         ```
         """
+        from ._eager import Vec
 
-        def _sort(data: Iterable[U]) -> list[U]:
-            return sorted(data, reverse=reverse, key=key)
+        def _sort(data: Iterable[U]) -> Vec[U]:
+            return Vec(sorted(data, reverse=reverse, key=key))
 
-        return self._vec(_sort)
+        return self.into(_sort)
 
     def tail(self, n: int) -> Seq[T]:
         """Return a tuple of the last n elements.
@@ -797,7 +759,12 @@ class CommonMethods[T](CommonBase[Iterable[T]]):
 
         ```
         """
-        return self._eager(functools.partial(cz.itertoolz.tail, n))
+        from ._eager import Seq
+
+        def _tail(data: Iterable[T]) -> Seq[T]:
+            return Seq(cz.itertoolz.tail(n, data))
+
+        return self.into(_tail)
 
     def top_n(self, n: int, key: Callable[[T], Any] | None = None) -> Seq[T]:
         """Return a tuple of the top-n items according to key.
@@ -817,7 +784,12 @@ class CommonMethods[T](CommonBase[Iterable[T]]):
 
         ```
         """
-        return self._eager(functools.partial(cz.itertoolz.topk, n, key=key))
+        from ._eager import Seq
+
+        def _top_n(data: Iterable[T]) -> Seq[T]:
+            return Seq(cz.itertoolz.topk(n, data, key=key))
+
+        return self.into(_top_n)
 
     def most_common(self, n: int | None = None) -> Vec[tuple[T, int]]:
         """Return the n most common elements and their counts.
@@ -840,7 +812,9 @@ class CommonMethods[T](CommonBase[Iterable[T]]):
         """
         from collections import Counter
 
-        def _most_common(data: Iterable[T]) -> list[tuple[T, int]]:
-            return Counter(data).most_common(n)
+        from ._eager import Vec
 
-        return self._vec(_most_common)
+        def _most_common(data: Iterable[T]) -> Vec[tuple[T, int]]:
+            return Vec(Counter(data).most_common(n))
+
+        return self.into(_most_common)
