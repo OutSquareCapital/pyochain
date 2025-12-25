@@ -4,7 +4,7 @@
 
 This guide explains how data flows between:
 
-- the wrappers (`Iter`, `Seq`, `Vec`, `Dict`, `Result`, `Option`, …),
+- the wrappers (`Iter`, `Seq`, `Vec`, `Set`, `Dict`, `Result`, `Option`, …),
 - your own functions (pure or not),
 - and the outside world (final values, side effects).
 
@@ -13,7 +13,7 @@ We will mostly classify methods by **behaviour**, not by concrete type.
 ## Behavioural categories
 
 - Boundary conversion (in/out): constructors, `from_`, `into`, `collect`, `inner`, `unwrap`.
-- Side-effect hooks (observe without changing): `tap`, `inspect`, `inspect_err`, `for_each`, `peek`.
+- Side-effect hooks (observe without changing): `inspect`, `inspect_err`, `for_each`, `peek`.
 - Pure transformations (produce new values): `map`, `and_then`, `map_err`, `ok_or`, `or_else`.
 
 Along the way, we also highlight **which wrappers expose what**, so you can quickly see what is available on `Iter` vs `Seq` vs `Vec` vs `Dict` vs `Result` vs `Option`, and how they fit together.
@@ -72,77 +72,87 @@ You can think of `into` as "Give this value to this function who will convert it
 - If your helper returns a `pyochain` wrapper, you stay in the `pyochain` world.
 - If your helper returns a plain value, you have exited the chain.
 
-### 1.2 `from_`: convert in (and what is cheap vs not)
+### 1.2 `from_`: convert in
 
-`from_` methods are convenience constructors. Some are intentionally “not cheap” because they normalise inputs.
+`from_` methods are convenience constructors. They accept unpacked values or iterables, but involve extra checks and potential materialisation.
 
-#### `Iter.from_`
+**General pattern:**
 
-Prefer `pc.Iter(iterable)` for an existing iterable.
-Use `Iter.from_(...)` mainly for the ergonomics of **unpacked values**, or when dealing with strings for example.
-
-```python
-import pyochain as pc
-pc.Iter((1,), (2,), (3,))      # .from_ is more readable here
-pc.Iter.from_(1, 2, 3)         # unpacked
-pc.Iter([1, 2, 3])             # iterable (preferred if already computed)
-pc.Iter.from_("hello")        # from_ normalises strings into char iterators, avoid splitting it manually.
-```
-
-#### `Seq.from_`
-
-`Seq.from_` do the same, but since it's a more precise wrapper, it has to do a few checks:
-
-- If you pass a `Sequence`, it can wrap it directly.
-- If you pass a non-`Sequence` iterable (set, iterator, generator, ...), it will **collect/materialise** it (currently into a `tuple`).
-- If you pass unpacked values, it will also materialise them into a `tuple`.
-
-That means `Seq.from_` is not “cheap” in the general case because it has to do a few checks.
-
-Basically, those two are equivalent:
+- If the native type matches (e.g. `list` for `Vec`, `tuple` for `Seq`, `set`/`frozenset` for `Set`), wraps directly.
+- Otherwise, materialises the iterable into the target type.
+- Unpacked values are always materialised.
 
 ```python
 import pyochain as pc
 
-pc.Iter(range(3)).collect()            # -> Seq((0, 1, 2))
-pc.Iter(range(3)).into(pc.Seq.from_)   # -> Seq((0, 1, 2))
+# Iter.from_: mainly for unpacked values or string normalisation
+pc.Iter.from_(1, 2, 3)         # -> Iter over (1, 2, 3)
+pc.Iter.from_("hello")         # -> Iter over chars ('h', 'e', 'l', 'l', 'o')
+
+# Seq.from_: wraps Sequence directly, else materialises into tuple
+pc.Seq.from_([1, 2, 3])        # -> Seq((1, 2, 3))
+pc.Seq.from_(1, 2, 3)          # -> Seq((1, 2, 3))
+
+# Vec.from_: wraps list directly, else materialises into list
+pc.Vec.from_([1, 2, 3])        # -> Vec([1, 2, 3]) (no copy)
+pc.Vec.from_((1, 2, 3))        # -> Vec([1, 2, 3]) (materialises)
+
+# Set.from_: wraps set/frozenset directly, else materialises into frozenset
+pc.Set.from_({1, 2, 3})        # -> Set({1, 2, 3})
+pc.Set.from_(1, 2, 3)          # -> Set(frozenset({1, 2, 3}))
 ```
 
-They both materialise the iterator into a `Seq`. `collect()` avoids the extra "is this iterable?" check that `Seq.from_` does, so `collect()` is the more direct materialisation primitive.
+**When to use `from_` vs direct constructor:**
 
-#### `Vec.from_`
+- Use the direct constructor (`Iter(iterable)`, `Seq(sequence)`, ...) when you already have the right type.
+- Use `from_` for unpacked values or when you want automatic conversion.
+- For `Iter`, prefer `collect()` over `.into(Seq.from_)` as it's more direct.
 
-`Vec.from_` works similarly to `Seq.from_`, but materialises into a **mutable list** instead of an immutable tuple:
+### 1.3 `collect`: materialise an `Iter`
 
-- If you pass a `list`, it wraps it directly.
-- If you pass any other `Iterable` (tuple, set, iterator, generator, ...), it will **collect/materialise** it into a `list`.
-- If you pass unpacked values, it will also materialise them into a `list`.
+`collect` is how you exit from lazy iteration back to an in-memory collection.
+
+**Signature:** `collect(collector: Collector[T] = tuple) -> Seq[T] | Vec[T] | Set[T]`
+
+**Supported collectors:**
+
+- `tuple` (default) → `Seq[T]` (immutable sequence)
+- `list` → `Vec[T]` (mutable list)
+- `set` → `Set[T]` (unordered unique elements)
+- `frozenset` → `Set[T]` (immutable unordered unique elements)
+
+You can pass the type directly (`list`, `tuple`, `set`, `frozenset`) or any callable that takes an `Iterable[T]` and returns one of those types.
 
 ```python
 import pyochain as pc
 
-pc.Iter(range(3)).collect_mut()         # -> Vec([0, 1, 2])
-pc.Iter(range(3)).into(pc.Vec.from_)    # -> Vec([0, 1, 2])
+# Default: tuple -> Seq
+pc.Iter(range(5)).collect()              # -> Seq(0, 1, 2, 3, 4)
+
+# Explicit: list -> Vec
+pc.Iter(range(5)).collect(list)          # -> Vec([0, 1, 2, 3, 4])
+
+# Explicit: set -> Set (removes duplicates)
+pc.Iter([1, 2, 2, 3]).collect(set)       # -> Set({1, 2, 3})
+
+# Explicit: frozenset -> Set
+pc.Iter([1, 2, 2, 3]).collect(frozenset) # -> Set(frozenset({1, 2, 3}))
 ```
 
-Prefer `collect_mut()` for direct materialisation, as it avoids the checks that `Vec.from_` performs.
+**For other types** (polars, pandas, numpy), use `.into(DataFrame)` or similar.
 
 #### `Option.from_`
 
-`Option.from_` is extremely useful in most situations because it wraps the very common “maybe” convention (`T | None`) into a chain-friendly shape:
+`Option.from_` wraps the common "maybe" convention (`T | None`):
 
 ```python
 import pyochain as pc
 
-
-def find_user_id(name: str) -> int | None:  # legacy / external API
+def find_user_id(name: str) -> int | None:
     return 123 if name == "alice" else None
 
-
-pc.Option.from_(find_user_id("alice")).map(lambda user_id: user_id + 1)
+pc.Option.from_(find_user_id("alice")).map(lambda uid: uid + 1)
 ```
-
-This is often the simplest way to turn existing Python functions into composable pipelines.
 
 ---
 
@@ -172,60 +182,48 @@ Characteristics:
 
 ### 2.2 `for_each` on `Iter`
 
-On Sequences, you sometimes want to run a function on **each element** for its side effects only.
+`Iter.for_each(f)` applies `f` to each element for side effects only and is **terminal** (returns `None`).
 
-- `Iter.for_each(f)` applies `f` to each element and is **terminal** (returns `None`).
-- `Seq.for_each(f)` / `Vec.for_each(f)` return `Self` (the same sequence instance) so you can continue chaining.
-- `Dict.for_each(f)` returns `Dict[K, V]` (a new Dict instance with the same data) so you can continue chaining.
+It consumes the iterator completely. After calling it, there are no more elements to process.
 
-Iter.for_each is terminal because it **consumes** the iterator. After calling it, there are no more elements to process.
-
-`Seq.for_each` and `Vec.for_each` return self since they iterate over an already in-memory structure, leaving the original sequence intact for further use.
-`Dict.for_each` creates a new Dict instance (via `_new`) but with unchanged data.
-
-This is best compared to a classic Python for-loop over a list or dict that would print the values.
-`Seq.tap(lambda x: x.iter().map(lambda v: print(v)))` would be an equivalent, although much less ergonomic.
+This is equivalent to a classic Python for-loop that prints values.
 
 ---
 
-## 3. Side-Effect Hooks: `tap`, `inspect`, `inspect_err`, `for_each`, `peek`
+## 3. Side-Effect Hooks: `inspect`, `inspect_err`, `for_each`, `peek`
 
 These methods are all about **observing** values and triggering side effects (logging, metrics, IO) while keeping the dataflow chained.
 
-- `tap`: observe self (available on all wrappers).
-- `inspect`: observe the success value inside `Option`/`Result`.
+- `inspect`: observe self (available on all wrappers).
 - `inspect_err`: observe the error value inside `Result`.
-- `for_each`: run effects per element for `Iter`/`Seq`/`Vec`/`Dict`.
+- `for_each`: run effects per element for `Iter` only (terminal).
 - `peek`: inspect a bounded prefix of an `Iter` without consuming it.
 
 If your callback returns something meaningful and should replace the old value, you probably want a transform (`map`, `and_then`, ...), not a side-effect hook.
 
-### 3.1 `tap`: side effects on the wrapper
+### 3.1 `inspect`: side effects on the wrapper
 
-`tap` receives the wrapper, runs a side-effect, and returns the **same instance** unchanged.
-This can be tought of an equivalent of `into`, but that always returns self, and isn't *supposed* to mutate it.
-This can be very convenient for example when dealing with functions that need the value, return None by design, but you still need the same value later.
-printing/logging being an obvious use case, but writing to a file or sending the value over the network are also common examples.
+`inspect` receives the wrapper, runs a side-effect, and returns the **same instance** unchanged.
+This can be convenient when dealing with functions that need the value and return `None` by design, but you still need the same value later.
+Printing/logging is an obvious use case, but writing to a file or sending the value over the network are also common examples.
 
 ```python
 import pyochain as pc
 
-pc.Seq((1, 2, 3)).tap(print).last()  # logs the whole Seq
+pc.Seq((1, 2, 3)).inspect(print).last()  # logs the whole Seq
 ```
 
 ### 3.2 `inspect` and `inspect_err`: observe `Option`/`Result` values
 
-Where `map` changes the value, `inspect` is the **read-only twin**:
+Where `map` changes the value, `inspect` is the **read-only twin**.
 
-- `Option.inspect(f)` calls `f(value)` if `Some`, then returns the original `Option`.
-- `Result.inspect(f)` calls `f(ok_value)` if `Ok`, then returns the original `Result`.
-- `Result.inspect_err(f)` calls `f(err_value)` if `Err`, then returns the original `Result`.
+`inspect` on `Option`/`Result` is **value-aware**:
+
+- `Option.inspect(f)` calls `f(value)` only if `Some`, then returns the original `Option`.
+- `Result.inspect(f)` calls `f(ok_value)` only if `Ok`, then returns the original `Result`.
+- `Result.inspect_err(f)` calls `f(err_value)` only if `Err`, then returns the original `Result`.
 
 This is ideal for logging and debugging paths in a `Result`/`Option` pipeline without breaking the fluent style.
-
-The question could be: why not use `tap` for this?
-The answer is that `tap` doesn't know about the inner implementations details of it's instance. It simply passe `self` to the closure, then return `self`.
-You *can* use `tap` to observe `Option` and `Result`, but be warned that you function will be called every time, which could lead to some surprising results.
 
 ```python
 import pyochain as pc
@@ -242,7 +240,6 @@ def process_value(s: str) -> pc.Result[int, ValueError]:
 
 process_value("42")  # logs "Parsed int: 42"
 process_value("foo")  # does not log anything
-process_value("foo").tap(_log_val)  # log the error incorrectly, will warn at type checking time anyway.
 ```
 
 ### 3.3 `peek` on `Iter`: inspect a prefix without consuming
@@ -254,7 +251,7 @@ process_value("foo").tap(_log_val)  # log the error incorrectly, will warn at ty
 
 Compared to `for_each`:
 
-- `for_each` walks the **entire** sequence (and for `Iter` it is terminal).
+- `for_each` walks the **entire** sequence and is terminal.
 - `peek` only inspects a **bounded prefix** and returns another `Iter` for continued chaining.
 
 ---
@@ -396,7 +393,7 @@ def describe_numbers(values: Sequence[int], default_minmax: int) -> str:
         pc.Iter(values)
         .map(abs)
         .collect()
-        .tap(lambda s: print("debug:", s.inner()))
+        .inspect(lambda s: print("debug:", s.inner()))
         .into(_format_summary)
     )
 ```
@@ -437,7 +434,7 @@ Once your program is structured as “pure functions + orchestration chain”, o
   - Moving code into or out of helpers is often just turning an inline step into an `into(helper)` call.
 
 - **Debugging pipelines** is simpler:
-  - Insert `tap`, `inspect`, `inspect_err`, `for_each` or `peek` where needed to observe values without disrupting the flow.
+  - Insert `inspect`, `inspect_err`, `for_each` or `peek` where needed to observe values without disrupting the flow.
   - Remove these hooks once you’re done; the core design stays the same.
 
 - **Gradual adoption** is natural:
@@ -450,7 +447,7 @@ All of this stems from the same design choice: make the *glue* of your program a
 
 **Key take-aways:**
 
-- Every wrapper has `into` and `tap` (inherited from `Pipeable`).
-- `Iter` is an `Iterator`, `Seq` is a `Sequence`, and `Vec` is a `MutableSequence`, so many plain-Python functions can consume them directly (and `into` is the ergonomic way to express that in a chain).
-- `Option` and `Result` share transform methods (`map`, `and_then`, `or_else`) and the observe method `inspect`.
-- `Iter.for_each` is **terminal** (consumes the iterator and returns `None`); `Seq.for_each` and `Vec.for_each` return `Self`; `Dict.for_each` returns a new `Dict[K, V]` instance.
+- Every wrapper has `into` and `inspect` (inherited from `Pipeable`).
+- `Iter` is an `Iterator`, `Seq` is a `Sequence`, `Vec` is a `MutableSequence`, and `Set` is a `Collection`, so many plain-Python functions can consume them directly (and `into` is the ergonomic way to express that in a chain).
+- `Option` and `Result` share transform methods (`map`, `and_then`, `or_else`).
+- `Iter.for_each` is **terminal** (consumes the iterator and returns `None`).
