@@ -54,6 +54,18 @@ class Peeked[T](NamedTuple):
     original: Iterator[T]
 
 
+class Enumerated[T](NamedTuple):
+    """Represents an item with its associated index in an enumeration."""
+
+    idx: int
+    """The index of the item in the enumeration."""
+    value: T
+    """The value of the item."""
+
+    def __repr__(self) -> str:
+        return f"({self.idx}, {self.value.__repr__()})"
+
+
 @dataclass(slots=True)
 class _CaseBuilder[T]:
     _iter: Iterable[T]
@@ -2427,11 +2439,15 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         return self._iter(_strictly_n_)
 
-    def enumerate(self) -> Iter[tuple[int, T]]:
-        """Return a Iter of (index, value) pairs.
+    def enumerate(self) -> Iter[Enumerated[T]]:
+        """Return a `Iter` of (index, value) pairs.
+
+        Each value in the iterable is paired with its index, starting from 0.
+
+        The `Iter` yields `Enumerated[T]` tuples where **idx** is the index and **value[T]** is the corresponding element from the iterable.
 
         Returns:
-            Iter[tuple[int, T]]: An iterable of (index, value) pairs.
+            Iter[Enumerated[T]]: An iterable of (index, value) pairs.
 
         Example:
         ```python
@@ -2441,7 +2457,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        return self._iter(enumerate)
+        return self._iter(enumerate).map(lambda x: Enumerated(*x))
 
     @overload
     def combinations(self, r: Literal[2]) -> Iter[tuple[T, T]]: ...

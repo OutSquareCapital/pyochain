@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Iterator, Mapping, MutableMapping
-from typing import TYPE_CHECKING, Any, Self, TypeIs, overload
+from typing import TYPE_CHECKING, Any, NamedTuple, Self, TypeIs, overload
 
 import cytoolz as cz
 
@@ -13,6 +13,18 @@ if TYPE_CHECKING:
     from ._option import Option
     from ._protocols import SupportsKeysAndGetItem
     from ._result import Result
+
+
+class Item[K, V](NamedTuple):
+    """Represents a key-value pair from a `Dict`."""
+
+    key: K
+    """The key of the item."""
+    value: V
+    """The value associated with the key."""
+
+    def __repr__(self) -> str:
+        return f"({self.key.__repr__()}, {self.value.__repr__()})"
 
 
 class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
@@ -255,8 +267,8 @@ class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
 
         return Option.from_(self._inner.pop(key, None))
 
-    def remove_entry(self, key: K) -> Option[tuple[K, V]]:
-        """Remove a key from the `Dict` and return the (key, value) pair if it existed.
+    def remove_entry(self, key: K) -> Option[Item[K, V]]:
+        """Remove a key from the `Dict` and return the `Item` if it existed.
 
         Args:
             key (K): The key to remove.
@@ -276,7 +288,7 @@ class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
         from ._option import NONE, Some
 
         if key in self._inner:
-            return Some((key, self._inner.pop(key)))
+            return Some(Item(key, self._inner.pop(key)))
         return NONE
 
     def keys_iter(self) -> Iter[K]:
@@ -313,12 +325,11 @@ class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
 
         return self.into(lambda d: Iter(d._inner.values()))
 
-    def iter(self) -> Iter[tuple[K, V]]:
+    def iter(self) -> Iter[Item[K, V]]:
         """Return an `Iter` of the dict's items.
 
         Returns:
-            Iter[tuple[K, V]]: An Iter wrapping the dictionary's (key, value) pairs.
-
+            Iter[Item[K, V]]: An Iter wrapping the dictionary's (key, value) pairs.
         ```python
         >>> import pyochain as pc
         >>> pc.Dict({"a": 1, "b": 2}).iter().collect()
@@ -328,7 +339,7 @@ class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
         """
         from ._lazy import Iter
 
-        return self.into(lambda d: Iter(d._inner.items()))
+        return self.into(lambda d: Iter(Item(*item) for item in d._inner.items()))
 
     def get_item(self, key: K) -> Option[V]:
         """Retrieve a value from the `Dict`.
