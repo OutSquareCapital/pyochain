@@ -33,8 +33,6 @@ In the current API, `from_` and `into` are the two symmetric “conversion” pr
 - `from_` converts *Python values → wrapper*.
 - `into` converts *wrapper → whatever your function returns* (another wrapper or a plain value).
 
-Because `Iter` implements the `Iterator` protocol and `Seq` implements the `Sequence` protocol, wrappers can often be consumed directly by ordinary Python functions.
-
 ### 1.1 `into`: convert out / delegate (and optionally keep chaining)
 
 `into` passes the current wrapper instance as the first argument to your function and returns **whatever the function returns**.
@@ -53,23 +51,19 @@ def maybe_sum(xs: pc.Seq[int]) -> pc.Option[int]:
 pc.Seq(range(5)).into(maybe_sum)  # Seq[int] -> Option[int]
 ```
 
-But since `Iter` implements the `Iterator` protocol and `Seq` implements the `Sequence` protocol, you can also pass them to ordinary Python functions that expect those protocols:
+Since `Iter` implements the `Iterator` protocol and `Seq` implements the `Sequence` protocol, wrappers can be passed directly to ordinary Python functions:
 
 ```python
 def compute_data(data: Iterable[int]) -> int:
-    """Example function that works on an Iterable[int].
-    Most of the time, this will be (if typed at all!) as list[int] or tuple[int, ...].
-    This is also often a good opportunity to implement more generic Protocols (here, only __iter__ is needed really, so Iterable[int] is sufficient).
-    """
     return sum(x * 2 for x in data)
 
 pc.Iter((1, 2, 3)).into(compute_data)  # Iter[int] -> int
 ```
 
-You can think of `into` as "Give this value to this function who will convert it into this other value".
+Use cases:
 
-- Use it to implement branching logic (e.g. return `Option` from `Seq`, or turn a `Result` into another `Result`).
-- If your helper returns a `pyochain` wrapper, you stay in the `pyochain` world.
+- Implement branching logic (e.g. return `Option` from `Seq`, or turn a `Result` into another `Result`).
+- If your helper returns a `pyochain` wrapper, you stay in the chain.
 - If your helper returns a plain value, you have exited the chain.
 
 ### 1.2 `from_`: convert in
@@ -87,7 +81,8 @@ import pyochain as pc
 
 # Iter.from_: mainly for unpacked values or string normalisation
 pc.Iter.from_(1, 2, 3)         # -> Iter over (1, 2, 3)
-pc.Iter.from_("hello")         # -> Iter over chars ('h', 'e', 'l', 'l', 'o')
+pc.Iter.from_("hello")         # -> Iter over the words ("hello",)
+pc.Iter("hello")              # -> Iter over the characters ('h', 'e', 'l', 'l', 'o')
 
 # Seq.from_: wraps Sequence directly, else materialises into tuple
 pc.Seq.from_([1, 2, 3])        # -> Seq((1, 2, 3))
@@ -100,6 +95,8 @@ pc.Vec.from_((1, 2, 3))        # -> Vec([1, 2, 3]) (materialises)
 # Set.from_: wraps set/frozenset directly, else materialises into frozenset
 pc.Set.from_({1, 2, 3})        # -> Set({1, 2, 3})
 pc.Set.from_(1, 2, 3)          # -> Set(frozenset({1, 2, 3}))
+pc.Option.from_(42)            # -> Some(42)
+pc.Option.from_(None)          # -> NONE
 ```
 
 **When to use `from_` vs direct constructor:**
@@ -182,11 +179,7 @@ Characteristics:
 
 ### 2.2 `for_each` on `Iter`
 
-`Iter.for_each(f)` applies `f` to each element for side effects only and is **terminal** (returns `None`).
-
-It consumes the iterator completely. After calling it, there are no more elements to process.
-
-This is equivalent to a classic Python for-loop that prints values.
+`Iter.for_each(f)` applies `f` to each element for side effects only and is **terminal** (returns `None`). It consumes the iterator completely – equivalent to a classic Python for-loop.
 
 ---
 
@@ -201,11 +194,11 @@ These methods are all about **observing** values and triggering side effects (lo
 
 If your callback returns something meaningful and should replace the old value, you probably want a transform (`map`, `and_then`, ...), not a side-effect hook.
 
-### 3.1 `inspect`: side effects on the wrapper
+### 3.1 `inspect`: observe without changing
 
-`inspect` receives the wrapper, runs a side-effect, and returns the **same instance** unchanged.
-This can be convenient when dealing with functions that need the value and return `None` by design, but you still need the same value later.
-Printing/logging is an obvious use case, but writing to a file or sending the value over the network are also common examples.
+`inspect` receives the wrapper, runs a side-effect, and returns the **same instance** unchanged. Where `map` transforms, `inspect` is the **read-only twin**.
+
+Common use cases: logging, writing to a file, or sending the value over the network.
 
 ```python
 import pyochain as pc
@@ -214,8 +207,6 @@ pc.Seq((1, 2, 3)).inspect(print).last()  # logs the whole Seq
 ```
 
 ### 3.2 `inspect` and `inspect_err`: observe `Option`/`Result` values
-
-Where `map` changes the value, `inspect` is the **read-only twin**.
 
 `inspect` on `Option`/`Result` is **value-aware**:
 
@@ -403,11 +394,7 @@ Here, `_format_summary` is a closure: it **captures** `default_minmax` from `des
 This does **not** mean that classes become obsolete. In many real programs you will mix both approaches:
 
 - Use dataclasses / named tuples / typed dicts to model **data**.
-- Use closures and small top-level functions to model **behaviour**, especially when that behaviour is passed as callbacks into `map`, `filter`, `for_each`, `tap`, `into`, etc.
-
-The key point is that the chaining style makes it easy to:
-
-- Pass closures wherever a callable is expected (`map`, `filter`, `for_each`, `tap`, `into`).
+- Use closures and small top-level functions to model **behaviour**.
 - Keep stateful or configuration-heavy pieces in well-defined structures, without turning every bit of behaviour into a large class.
 
 This keeps the design close to “data + functions” rather than “data + classes with a lot of mutable state”, while still being very expressive.
