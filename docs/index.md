@@ -26,10 +26,6 @@ divide(10, 0).unwrap_or(0.0)  # → 0.0
 
 ## Documentation Navigation
 
-### Guides
-
-- [**Chaining Guide**](guides/chaining.md) — Master the art of chaining with pyochain
-
 ### API Reference
 
 #### Collections
