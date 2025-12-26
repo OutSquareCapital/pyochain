@@ -101,25 +101,24 @@ ITERATOR_FN = {
 
 
 def _iter_filter() -> pc.Set[str]:
-    pure_rust = pc.Set.from_("copied", "cloned", "by_ref", "from_coroutine")
-    """Methods that are not pertinent in the Python context."""
-    equivalent: pc.Set[tuple[str, ...]] = pc.Set.from_(
-        ("count", "length"),  # count is reserved for MutableSequence in Python
+    return pc.Set(
         (
+            "copied",
+            "cloned",
+            "by_ref",
+            "from_coroutine",
+            # not pertinent in Python
+            "count",
+            "length",  # count is reserved for MutableSequence in Python
             "is_sorted",
             "is_sorted_by_key",
             "is_sorted_by",
-        ),  # all covered by is_sorted in Python
-        (
-            "from_",
-            "into",
-        ),  # from is a reserved word in Python, into is implicitely implemented with From trait in Rust
+            # all covered by is_sorted in Python
+            "into",  # into is implicitely implemented with From trait in Rust
+            "filter_false",  # filter_false is in itertools in Python
+            "iter",  # inerhited from base class in Python
+        )
     )
-    """Methods that have an equivalent Python counterpart."""
-    py_stdlib = pc.Set.from_("filter_false")
-    """Methods that exist in python stdlib but not in Rust."""
-
-    return pure_rust.union(equivalent.iter().flatten()).union(py_stdlib)
 
 
 def _decorated(fn: Callable[..., Any]) -> Callable[..., Any]:
@@ -138,8 +137,7 @@ def main(dtype: type, rust_fns: set[str], filters: pc.Set[str]) -> None:
 
     return (
         pc.Iter(dtype.mro())
-        .map(lambda x: x.__dict__.values())
-        .flatten()
+        .flat_map(lambda x: x.__dict__.values())
         .filter(lambda x: callable(x) or isinstance(x, (staticmethod, classmethod)))
         .map(_decorated)
         .map(lambda x: _with_source(x.__name__, "python"))

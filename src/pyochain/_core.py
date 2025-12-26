@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from abc import ABC
 from collections.abc import Callable
 from typing import Concatenate, Self
 
@@ -72,31 +71,3 @@ class Pipeable:
         """
         func(self, *args, **kwargs)
         return self
-
-
-class CommonBase[T](ABC, Pipeable):
-    """Base class for all wrappers.
-
-    You can subclass this to create your own wrapper types.
-    The pipe unwrap method must be implemented to allow piping functions that transform the underlying data type, whilst retaining the wrapper.
-
-    Args:
-        data (T): The underlying data to wrap.
-    """
-
-    _inner: T
-
-    __slots__ = ("_inner",)
-
-    def __init__(self, data: T) -> None:
-        self._inner = data
-
-    def inner(self) -> T:
-        """Get the underlying data.
-
-        This is a terminal operation that ends the chain.
-
-        Returns:
-            T: The underlying data.
-        """
-        return self._inner

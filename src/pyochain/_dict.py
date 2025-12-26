@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING, Any, NamedTuple, Self, TypeIs, overload
 import cytoolz as cz
 
 from ._config import get_config
-from ._core import CommonBase
+from ._core import Pipeable
 
 if TYPE_CHECKING:
-    from ._lazy import Iter
+    from ._iter import Iter
     from ._option import Option
     from ._protocols import SupportsKeysAndGetItem
     from ._result import Result
@@ -27,7 +27,7 @@ class Item[K, V](NamedTuple):
         return f"({self.key.__repr__()}, {self.value.__repr__()})"
 
 
-class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
+class Dict[K, V](Pipeable, MutableMapping[K, V]):
     """A `Dict` is a key-value store similar to Python's built-in `dict`, but with additional methods inspired by Rust's `HashMap`.
 
     You can initialize it with an existing Python `dict`, or from any object that can be converted into a dict with the `from_` method.
@@ -39,6 +39,11 @@ class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
     __slots__ = ("_inner",)
 
     _inner: dict[K, V]
+
+    def __init__(
+        self, data: Mapping[K, V] | Iterable[tuple[K, V]] | SupportsKeysAndGetItem[K, V]
+    ) -> None:
+        self._inner = dict(data)
 
     def __repr__(self) -> str:
         return f"{self.into(lambda d: get_config().dict_repr(d._inner))}"
@@ -115,38 +120,22 @@ class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
         return cls({})
 
     @staticmethod
-    def from_[G, I](
-        data: Mapping[G, I] | Iterable[tuple[G, I]] | SupportsKeysAndGetItem[G, I],
-    ) -> Dict[G, I]:
-        """Create a `Dict` from a convertible value.
+    def from_kwargs[U](**kwargs: U) -> Dict[str, U]:
+        """Create a `Dict` from keyword arguments.
 
         Args:
-            data (Mapping[G, I] | Iterable[tuple[G, I]] | SupportsKeysAndGetItem[G, I]): Object convertible into a Dict.
+            **kwargs (U): Key-value pairs to initialize the Dict.
 
         Returns:
-            Dict[G, I]: Instance containing the data from the input.
+            Dict[str, U]: A new Dict instance containing the provided key-value pairs.
 
         Example:
         ```python
         >>> import pyochain as pc
-        >>> class MyMapping:
-        ...     def __init__(self):
-        ...         self._data = {1: "a", 2: "b", 3: "c"}
-        ...
-        ...     def keys(self):
-        ...         return self._data.keys()
-        ...
-        ...     def __getitem__(self, key):
-        ...         return self._data[key]
-        >>>
-        >>> pc.Dict.from_(MyMapping())
-        {1: 'a', 2: 'b', 3: 'c'}
-        >>> pc.Dict.from_([("d", "e"), ("f", "g")])
-        {'d': 'e', 'f': 'g'}
-
-        ```
+        >>> pc.Dict.from_kwargs(a=1, b=2)
+        {'a': 1, 'b': 2}
         """
-        return Dict(dict(data))
+        return Dict(kwargs)
 
     @staticmethod
     def from_object(obj: object) -> Dict[str, Any]:
@@ -306,7 +295,7 @@ class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
 
         ```
         """
-        from ._lazy import Iter
+        from ._iter import Iter
 
         return self.into(lambda d: Iter(d._inner.keys()))
 
@@ -323,7 +312,7 @@ class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
 
         ```
         """
-        from ._lazy import Iter
+        from ._iter import Iter
 
         return self.into(lambda d: Iter(d._inner.values()))
 
@@ -341,7 +330,7 @@ class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
 
         ```
         """
-        from ._lazy import Iter
+        from ._iter import Iter
 
         return self.into(lambda d: Iter(Item(*it) for it in d._inner.items()))
 

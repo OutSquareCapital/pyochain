@@ -10,7 +10,7 @@ import cytoolz as cz
 from ._core import Pipeable
 
 if TYPE_CHECKING:
-    from ._lazy import Iter
+    from ._iter import Iter
     from ._option import Option
 
 

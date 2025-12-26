@@ -28,19 +28,19 @@ def _inner_fn(x: int, offset: int) -> int:
 # Benchmarks Registry
 # ============================================================================
 
-BENCHMARKS: dict[str, Callable[[], dict[str, float]]] = {}
+BENCHMARKS = pc.Dict[str, Callable[[], pc.Dict[str, float]]].new()
 
 
 def benchmark(
     name: str,
-) -> Callable[[Callable[[], dict[str, float]]], Callable[[], dict[str, float]]]:
+) -> Callable[[Callable[[], pc.Dict[str, float]]], Callable[[], pc.Dict[str, float]]]:
     """Decorator to register a benchmark."""
 
     def decorator(
-        func: Callable[[], dict[str, float]],
-    ) -> Callable[[], dict[str, float]]:
+        func: Callable[[], pc.Dict[str, float]],
+    ) -> Callable[[], pc.Dict[str, float]]:
         @wraps(func)
-        def wrapper() -> dict[str, float]:
+        def wrapper() -> pc.Dict[str, float]:
             return func()
 
         BENCHMARKS[name] = wrapper
@@ -50,31 +50,31 @@ def benchmark(
 
 
 @benchmark("Simple Map (1K items, 10K iter)")
-def bench_simple_map() -> dict[str, float]:
+def bench_simple_map() -> pc.Dict[str, float]:
     """Simple map avec transformation."""
-    data = list(range(1000))
+    data = pc.Iter(range(1000)).into(list)
     mult, off = 3, 10
     nb = 10_000
 
     def _transform(x: int) -> int:
         return _process(x, mult, off)
 
-    return {
-        "python": timeit.timeit(
+    return pc.Dict.from_kwargs(
+        python=timeit.timeit(
             lambda: tuple(_process(x, mult, off) for x in data), number=nb
         ),
-        "pyochain_lambda": timeit.timeit(
+        pyochain_lambda=timeit.timeit(
             lambda: pc.Iter(data).map(lambda x: _process(x, mult, off)).collect(),
             number=nb,
         ),
-        "pyochain_closure": timeit.timeit(
+        pyochain_closure=timeit.timeit(
             lambda: pc.Iter(data).map(_transform).collect(), number=nb
         ),
-    }
+    )
 
 
 @benchmark("Nested Map (100x10 items, 1K iter)")
-def bench_nested_map() -> dict[str, float]:
+def bench_nested_map() -> pc.Dict[str, float]:
     """Nested map (pire cas)."""
     data = [list(range(10)) for _ in range(100)]
     factor, offset = 2, 10
@@ -87,15 +87,15 @@ def bench_nested_map() -> dict[str, float]:
             .collect()
         )
 
-    return {
-        "python": timeit.timeit(
+    return pc.Dict.from_kwargs(
+        python=timeit.timeit(
             lambda: tuple(
                 tuple(_inner_fn(_outer_fn(x, factor), offset) for x in outer)
                 for outer in data
             ),
             number=nb,
         ),
-        "pyochain_lambda": timeit.timeit(
+        pyochain_lambda=timeit.timeit(
             lambda: pc.Iter(data)
             .map(
                 lambda outer: pc.Iter(outer)
@@ -106,22 +106,21 @@ def bench_nested_map() -> dict[str, float]:
             .collect(),
             number=nb,
         ),
-        "pyochain_closure": timeit.timeit(
+        pyochain_closure=timeit.timeit(
             lambda: pc.Iter(data).map(_transform_nested).collect(),
             number=nb,
         ),
-        "pyochain_flatten": timeit.timeit(
+        pyochain_flatten=timeit.timeit(
             lambda: pc.Iter(data)
-            .map(
+            .flat_map(
                 lambda outer: pc.Iter(outer)
                 .map(lambda x: _outer_fn(x, factor))
                 .map(lambda x: _inner_fn(x, offset))
             )
-            .flatten()
             .collect(),
             number=nb,
         ),
-    }
+    )
 
 
 # ============================================================================
@@ -130,23 +129,23 @@ def bench_nested_map() -> dict[str, float]:
 console = Console()
 
 
-def run_all_benchmarks() -> dict[str, dict[str, int | float]]:
+def run_all_benchmarks() -> pc.Dict[str, pc.Dict[str, int | float]]:
     """Exécute tous les benchmarks."""
     console.print("\n🔬 [bold cyan]PYOCHAIN vs PYTHON[/bold cyan]")
     console.print("=" * 60)
 
     def _run(
-        item: tuple[str, Callable[[], dict[str, float]]],
-    ) -> tuple[str, dict[str, float]]:
+        item: tuple[str, Callable[[], pc.Dict[str, float]]],
+    ) -> tuple[str, pc.Dict[str, float]]:
         return (item[0], item[1]())
 
-    return pc.Iter(BENCHMARKS.items()).map(_run).into(dict)  # ty:ignore[invalid-return-type]
+    return pc.Iter(BENCHMARKS.items()).map(_run).into(pc.Dict)
 
 
-def _summary(results: dict[str, dict[str, int | float]]) -> None:
+def _summary(results: pc.Dict[str, pc.Dict[str, int | float]]) -> None:
     # Afficher chaque benchmark
-    pc.Iter(results.items()).for_each(
-        lambda item: _display_benchmark(console, item[0], item[1])
+    results.iter().for_each(
+        lambda item: _display_benchmark(console, item.key, item.value)
     )
 
     # Summary
@@ -154,14 +153,14 @@ def _summary(results: dict[str, dict[str, int | float]]) -> None:
     console.print("[bold yellow]OVERHEAD PYOCHAIN[/bold yellow]")
     console.print(f"{'=' * 60}\n")
 
-    pc.Iter(results.items()).filter(lambda item: "pyochain_lambda" in item[1]).for_each(
-        lambda item: _display_overhead(console, item[0], item[1])
+    results.iter().filter(lambda item: "pyochain_lambda" in item.value).for_each(
+        lambda item: _display_overhead(console, item.key, item.value)
     )
 
     console.print(f"\n{'=' * 60}\n")
 
 
-def _display_benchmark(console: Console, name: str, r: dict[str, float]) -> None:
+def _display_benchmark(console: Console, name: str, r: pc.Dict[str, float]) -> None:
     """Affiche les résultats d'un benchmark."""
     baseline = r["python"]
 
@@ -170,16 +169,16 @@ def _display_benchmark(console: Console, name: str, r: dict[str, float]) -> None
     table.add_column("Temps (s)", justify="right", style="green")
     table.add_column("vs Python", justify="right", style="yellow")
 
-    pc.Iter(r.items()).sort(lambda x: x[1]).iter().for_each(
+    r.iter().sort(lambda x: x.value).iter().for_each(
         lambda item: table.add_row(
-            item[0], f"{item[1]:.4f}", f"{item[1] / baseline:.2f}x"
+            item.key, f"{item.value:.4f}", f"{item.value / baseline:.2f}x"
         )
     )
 
     console.print(table)
 
 
-def _display_overhead(console: Console, name: str, r: dict[str, float]) -> None:
+def _display_overhead(console: Console, name: str, r: pc.Dict[str, float]) -> None:
     """Affiche l'overhead pour un benchmark."""
     overhead = (r["pyochain_lambda"] / r["python"] - 1) * 100
     color = _get_color(overhead)

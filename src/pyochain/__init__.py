@@ -22,7 +22,7 @@ Provides the following core classes and utilities:
   - A superset of Python `collections.abc.Iterator`, with chainable functional methods.
   - Underlying data structure is an `iterator` (if we can call it that).
   - Implement `Iterator` Protocol.
-  - Can be converted to `Seq[T]|Vec[T]|SetFrozen[T]|SetMut[T]` with the `.collect()` method.
+  - Can be converted to `Seq[T]|Vec[T]|SetFrozen[T]|SetMut[T]` with the `.collect()` method (default to Seq[T]).
 - `Seq[T]`
   - An immutable collection with chainable methods.
   - Underlying data structure is a `tuple`.
@@ -64,8 +64,6 @@ Provides the following core classes and utilities:
 ### Shared Core Features
 
 All provided classes share the following core methods for enhanced usability:
-
-- **`.from_()`**: Create instances from various inputs. This allow flexible instantiation when needed, whilst keeping the base **init** of the classes without type conversions for performance.
 
 - **`.inspect()`**: Insert functions who compute side-effects in the chain without breaking it (print, mutation of an external variable, logging...). If Option or Result, call the function only if `Some` or `Ok`.
 
@@ -152,8 +150,8 @@ This encourages the use of lazy processing by default (since you have to explici
 
 ### Inspirations
 
-- **Rust's language and  Rust stdlib:** Emulate naming conventions (`from_()`, `into()`) and leverage concepts from Rust's powerful iterator traits (method chaining, lazy evaluation), Option and Result enums, to bring similar expressiveness to Python.
-- **Python iterators libraries:** Libraries like `rolling`, `cytoolz`, and `more-itertools` provided ideas, inspiration, and implementations for many of the iterator methods.
+- **Rust's language and  Rust stdlib:** Emulate naming conventions (`into()`) and leverage concepts from Rust's powerful iterator traits (method chaining, lazy evaluation), Option and Result enums, to bring similar expressiveness to Python.
+- **Python iterators libraries:** Libraries like `cytoolz`, and `more-itertools` provided ideas, inspiration, and implementations for many of the iterator methods.
 - **PyFunctional:** Although not directly used (because I started writing pyochain before discovering it), also shares similar goals and ideas.
 
 ## Key Dependencies and credits
@@ -174,8 +172,7 @@ The stubs used for the developpement, made by the maintainer of pyochain, can be
 """
 
 from ._dict import Dict
-from ._eager import Seq, Set, SetMut, Vec
-from ._lazy import Iter
+from ._iter import Iter, Seq, Set, SetMut, Vec
 from ._option import NONE, Option, Some
 from ._result import Err, Ok, Result, ResultUnwrapError
 

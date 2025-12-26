@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Concatenate, Never, cast
 from ._core import Pipeable
 
 if TYPE_CHECKING:
-    from ._lazy import Iter
+    from ._iter import Iter
     from ._result import Result
 
 
@@ -616,7 +616,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        from ._lazy import Iter
+        from ._iter import Iter
 
         return Iter((self.unwrap(),)) if self.is_some() else Iter(())
 
