@@ -32,7 +32,7 @@ from ._option import Option
 from ._result import Result
 
 if TYPE_CHECKING:
-    from ._eager import Seq, Set, Vec
+    from ._eager import Seq, SetFrozen, SetMut, Vec
 
 type TryVal[T] = Option[T] | Result[T, object] | T | None
 """Represent a value that may be failible."""
@@ -359,10 +359,14 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         self, collector: Callable[[Iterable[T]], tuple[T, ...]] = ...
     ) -> Seq[T]: ...
     @overload
-    def collect(self, collector: Callable[[Iterable[T]], set[T]]) -> Set[T]: ...
+    def collect(self, collector: Callable[[Iterable[T]], set[T]]) -> SetMut[T]: ...
     @overload
-    def collect(self, collector: Callable[[Iterable[T]], frozenset[T]]) -> Set[T]: ...
-    def collect(self, collector: Collector[T] = tuple) -> Seq[T] | Vec[T] | Set[T]:
+    def collect(
+        self, collector: Callable[[Iterable[T]], frozenset[T]]
+    ) -> SetFrozen[T]: ...
+    def collect(
+        self, collector: Collector[T] = tuple
+    ) -> Seq[T] | Vec[T] | SetFrozen[T]:
         """Transforms an `Iter` into a collection.
 
         The most basic pattern in which collect() is used is to turn one collection into another.
@@ -408,7 +412,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         ```
         """
-        from ._eager import Seq, Set, Vec
+        from ._eager import Seq, SetFrozen, SetMut, Vec
 
         data = collector(self._inner)
 
@@ -417,8 +421,10 @@ class Iter[T](CommonMethods[T], Iterator[T]):
                 return Seq(data)
             case list():
                 return Vec(data)
-            case set() | frozenset():
-                return Set(data)
+            case frozenset():
+                return SetFrozen(data)
+            case set():
+                return SetMut(data)
 
     def try_collect[U](self: TryIter[U]) -> Option[Vec[U]]:
         """Fallibly transforms **self** into a `Vec`, short circuiting if a failure is encountered.
@@ -628,7 +634,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
     @overload
     def flatten[U](self: Iter[Seq[U]]) -> Iter[U]: ...
     @overload
-    def flatten[U](self: Iter[Set[U]]) -> Iter[U]: ...
+    def flatten[U](self: Iter[SetFrozen[U]]) -> Iter[U]: ...
     @overload
     def flatten(self: Iter[range]) -> Iter[int]: ...
     def flatten[U: Iterable[Any]](self: Iter[U]) -> Iter[Any]:

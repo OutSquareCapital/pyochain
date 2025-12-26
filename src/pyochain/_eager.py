@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Collection, Iterable, MutableSequence, Sequence
+from collections.abc import Iterable, MutableSequence, MutableSet, Sequence, Set
 from typing import Any, Self, overload
 
 import cytoolz as cz
@@ -8,28 +8,28 @@ import cytoolz as cz
 from ._iter import CommonMethods, convert_data
 
 
-class Set[T](CommonMethods[T], Collection[T]):
+class SetFrozen[T](CommonMethods[T], Set[T]):
     """`Set` represent an in- memory **unordered**  collection of **unique** elements.
 
     Implements the `Collection` Protocol from `collections.abc`, so it can be used as a standard immutable collection.
 
     Provides a subset of `Iter` methods with eager evaluation, and is returned from some `Iter/Seq/Vec` methods.
 
-    The underlying data structure is a `set` or `frozenset`.
+    The underlying data structure is a `frozenset`.
 
     You can create a `Set` from any `Iterable` (like a list, or polars.Series) or unpacked values using the `from_` class method.
 
-    If you already have a `set` or `frozenset`, simply pass it to the constructor, without runtime checks.
+    If you already have a `frozenset`, simply pass it to the constructor, without runtime checks.
 
     Args:
-            data (set[T] | frozenset[T]): The data to initialize the Set with.
+            data (frozenset[T]): The data to initialize the Set with.
     """
 
-    _inner: set[T] | frozenset[T]
+    _inner: frozenset[T]
 
     __slots__ = ("_inner",)
 
-    def __init__(self, data: set[T] | frozenset[T]) -> None:
+    def __init__(self, data: frozenset[T]) -> None:
         self._inner = data  # pyright: ignore[reportIncompatibleVariableOverride]
 
     def __contains__(self, item: object) -> bool:
@@ -40,17 +40,15 @@ class Set[T](CommonMethods[T], Collection[T]):
 
     @overload
     @staticmethod
-    def from_[U](data: Iterable[U]) -> Set[U]: ...
+    def from_[U](data: Iterable[U]) -> SetFrozen[U]: ...
     @overload
     @staticmethod
-    def from_[U](data: U, *more_data: U) -> Set[U]: ...
+    def from_[U](data: U, *more_data: U) -> SetFrozen[U]: ...
     @staticmethod
-    def from_[U](data: Iterable[U] | U, *more_data: U) -> Set[U]:
-        """Create a `Set` from an `Iterable` or unpacked values.
+    def from_[U](data: Iterable[U] | U, *more_data: U) -> SetFrozen[U]:
+        """Create a `SetFrozen` from an `Iterable` or unpacked values.
 
         Prefer using the standard constructor, as this method involves extra checks and conversions steps.
-
-        The underlying data structure will be a `frozenset`.
 
         Args:
             data (Iterable[U] | U): Iterable to convert into a sequence, or a single value.
@@ -68,13 +66,11 @@ class Set[T](CommonMethods[T], Collection[T]):
         ```
         """
         converted = convert_data(data, *more_data)
-        return Set(
-            converted
-            if isinstance(converted, (set, frozenset))
-            else frozenset(converted)
+        return SetFrozen(
+            converted if isinstance(converted, frozenset) else frozenset(converted)
         )
 
-    def union(self, *others: Iterable[T]) -> Set[T]:
+    def union(self, *others: Iterable[T]) -> Self:
         """Return the union of this iterable and 'others'.
 
         Note:
@@ -96,7 +92,7 @@ class Set[T](CommonMethods[T], Collection[T]):
         """
         return self.__class__(self._inner.union(*others))
 
-    def intersection(self, *others: Iterable[Any]) -> Set[T]:
+    def intersection(self, *others: Iterable[Any]) -> Self:
         """Return the elements common to this iterable and 'others'.
 
         Is the opposite of `difference`.
@@ -124,7 +120,7 @@ class Set[T](CommonMethods[T], Collection[T]):
         """
         return self.__class__(self._inner.intersection(*others))
 
-    def difference(self, *others: Iterable[T]) -> Set[T]:
+    def difference(self, *others: Iterable[T]) -> Self:
         """Return the difference of this iterable and 'others'.
 
         See Also:
@@ -150,7 +146,7 @@ class Set[T](CommonMethods[T], Collection[T]):
         """
         return self.__class__(self._inner.difference(*others))
 
-    def symmetric_difference(self, *others: Iterable[T]) -> Set[T]:
+    def symmetric_difference(self, *others: Iterable[T]) -> Self:
         """Return the symmetric difference (XOR) of this iterable and 'others'.
 
         (Elements in either 'self' or 'others' but not in both).
@@ -242,6 +238,66 @@ class Set[T](CommonMethods[T], Collection[T]):
         ```
         """
         return self._inner.isdisjoint(other)
+
+
+class SetMut[T](SetFrozen[T], MutableSet[T]):
+    """A mutable set wrapper with functional API.
+
+    Unlike `SetFrozen` which is immutable, `SetMut` allows in-place modification of elements.
+
+    Implement the `MutableSet` interface, so elements can be modified in place, and passed to any function/object expecting a standard mutable set.
+
+    If you already have a `set`, simply pass it to the constructor, without runtime checks.
+
+    Otherwise, use the `from_` class method to create a `SetMut` from any `Iterable` or unpacked values.
+
+    Args:
+        data (set[T]): The mutable set to wrap.
+    """
+
+    _inner: set[T]
+    __slots__ = ("_inner",)
+
+    def __init__(self, data: set[T]) -> None:
+        self._inner = data  # type: ignore[override]
+
+    def add(self, value: T) -> None:
+        """Add an element to the set.
+
+        Args:
+            value (T): The element to add.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> s = pc.SetMut({'a', 'b'})
+        >>> s.add('c')
+        >>> s
+        SetMut('a', 'b', 'c')
+
+        ```
+        """
+        self._inner.add(value)
+
+    def discard(self, value: T) -> None:
+        """Remove an element from the set if it is a member.
+
+        Unlike `.remove()`, the `discard()` method does not raise an exception when an element is missing from the set.
+
+        Args:
+            value (T): The element to remove.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> s = pc.SetMut({'a', 'b', 'c'})
+        >>> s.discard('b')
+        >>> s
+        SetMut('a', 'c')
+
+        ```
+        """
+        self._inner.discard(value)
 
 
 class Seq[T](CommonMethods[T], Sequence[T]):
