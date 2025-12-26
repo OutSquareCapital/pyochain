@@ -1,6 +1,6 @@
 # Seq
 
-::: pyochain._eager.Set
+::: pyochain._eager.SetMut
     options:
       inherited_members: true
       show_overloads: true
