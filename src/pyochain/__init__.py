@@ -8,6 +8,12 @@
 
 Manipulate data through composable chains of operations and manage errors and optional values safely, all while enjoying type-safe guarantees.
 
+## Installation
+
+```bash
+uv add pyochain
+```
+
 ## Overview
 
 Provides the following core classes and utilities:
@@ -16,7 +22,7 @@ Provides the following core classes and utilities:
   - A superset of Python `collections.abc.Iterator`, with chainable functional methods.
   - Underlying data structure is an `iterator` (if we can call it that).
   - Implement `Iterator` Protocol.
-  - Can be converted to `Seq[T]|Vec[T]|Set[T]` with the `.collect()` method.
+  - Can be converted to `Seq[T]|Vec[T]|SetFrozen[T]|SetMut[T]` with the `.collect()` method.
 - `Seq[T]`
   - An immutable collection with chainable methods.
   - Underlying data structure is a `tuple`.
@@ -27,24 +33,33 @@ Provides the following core classes and utilities:
   - Underlying data structure is a `list`.
   - Can be converted to `Iter` with the `.iter()` method.
   - Implement `MutableSequence` Protocol.
-- `Set[T]`
-  - A mutable, unordered collection of unique elements with chainable methods.
-  - Underlying data structure is a `set` or `frozenset`.
+- `SetFrozen[T]`
+  - An immutable, unordered collection of unique elements with chainable methods.
+  - Underlying data structure is a `frozenset`.
   - Can be converted to `Iter` with the `.iter()` method.
-  - Implement `Collection` Protocol.
+  - Implement `Set` Protocol.
+- `SetMut[T]`
+  - A mutable, unordered collection of unique elements with chainable methods.
+  - Underlying data structure is a `set`.
+  - Can be converted to `Iter` with the `.iter()` method.
+  - Implement `MutableSet` Protocol.
 - `Dict[K, V]`
-  - An immutable mapping with chainable methods.
+  - A mutable mapping with chainable methods.
   - Underlying data structure is a `dict`.
-  - Can be converted to `Iter` with the `.iter_items()`, `.iter_keys()`, `.iter_values()` methods.
-
+  - Implement `MutableMapping` Protocol.
+  - Can be converted to `Iter` with the `.iter()`, `.keys_iter()`, `.values_iter()` methods.
 - `Option[T] | Some[T] | NONE`
   - A type representing an optional value.
   - Provides all methods from the Rust stdlib `Option` Trait (as long as they are applicable/made sense in a Python context).
   - Analog to a superset of `T | None`.
+  - Can be converted to `Iter[T]` with the `.iter()` method.
+  - Can be converted to Result with the `.ok_or()` method.
 - `Result[T, E] | Ok[T] | Err[E]`
   - A type representing either a success (`Ok[T]`) or failure (`Err[E]`), similar to Rust's `Result` Enum.
   - Provides all methods from the Rust stdlib `Result` Trait (as long as they are applicable/made sense in a Python context).
   - Analog to a superset of `T | Exception`.
+  - Can be converted to `Iter[T]` with the `.iter()` method.
+  - Can be converted to `Option[T]` with the `.ok()` method.
 
 ### Shared Core Features
 
@@ -54,15 +69,9 @@ All provided classes share the following core methods for enhanced usability:
 
 - **`.inspect()`**: Insert functions who compute side-effects in the chain without breaking it (print, mutation of an external variable, logging...). If Option or Result, call the function only if `Some` or `Ok`.
 
-- **`.into()`**:  Provide a `Callable[[Self, P], T]` to convert from **Self** to T in a fluent way.
+- **`.into()`**:  Take a `Callable[[Self, P], T]` as argument to convert from **Self** to **T** in a chained way.
 E.g `Seq[T].into()` can take any function/object that expect a `Sequence[T]` as argument, and return it's result `R`.
 Conceptually, replace`f(x, args, kwargs)` with `x.into(f, args, kwargs)`.
-
-## Installation
-
-```bash
-uv add pyochain
-```
 
 ## API Reference 📖
 
@@ -133,7 +142,9 @@ Ok(25.0)
 
 - **Declarative over Imperative:** Replace explicit `for` and `while` loops with sequences of high-level operations (map, filter, group, join...).
 - **Fluent Chaining:** Each method transforms the data and returns a new wrapper instance, allowing for seamless chaining.
-- **Lazy and Eager:** `Iter` operates lazily for efficiency on large or infinite sequences, while `Seq` and `Vec` represent materialized sequences for eager operations.
+- **Lazy first:** All methods on collections that use an Iterator (think most for loop) and do not need to materialize data immediately are in `Iter[T]`.
+Only methods that directly returns booleans, single values, or need to operate on the whole dataset (set methods sorting, etc...) are shared between the `Iterable` classes (`Seq`, `Vec`, `SetFrozen`, `SetMut`) via their common base class.
+This encourages the use of lazy processing by default (since you have to explicitly call `iter()` to get access to most methods), and collecting only at the last possible moment.
 - **Explicit mutability:** `Seq` is the usual return type for most methods who materialize data, hence improving memory efficiency and safety, compared to using list everytime. `Vec` is provided when mutability is required.
 - **100% Type-safe:** Extensive use of generics and overloads ensures type safety and improves developer experience.
 - **Documentation-first:** Each method is thoroughly documented with clear explanations, and usage examples. Before any commit is made, each docstring is automatically tested to ensure accuracy. This also allows for a convenient experience in IDEs, where developers can easily access documentation with a simple hover of the mouse.
@@ -147,7 +158,7 @@ Ok(25.0)
 
 ## Key Dependencies and credits
 
-Most of the computations are done with implementations from the `cytoolz`, `more-itertools`, and `rolling` libraries.
+Most of the computations are done with implementations from the `cytoolz` and `more-itertools` libraries.
 
 An extensive use of the `itertools` stdlib module is also to be noted.
 
