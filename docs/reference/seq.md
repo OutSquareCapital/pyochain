@@ -1,6 +1,6 @@
 # Seq
 
-::: pyochain._eager.Seq
+::: pyochain._iter.Seq
     options:
       inherited_members: true
       show_overloads: true

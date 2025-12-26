@@ -1,6 +1,6 @@
 # Seq
 
-::: pyochain._eager.SetFrozen
+::: pyochain._iter.Set
     options:
       inherited_members: true
       show_overloads: true

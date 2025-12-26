@@ -1,6 +1,6 @@
 # Iter
 
-::: pyochain._lazy.Iter
+::: pyochain._iter.Iter
     options:
       inherited_members: true
       show_overloads: true

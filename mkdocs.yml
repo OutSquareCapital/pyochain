@@ -30,7 +30,7 @@ nav:
       - Iter: reference/iter.md
       - Dict: reference/dict.md
       - Seq: reference/seq.md
-      - SetFrozen: reference/setfrozen.md
+      - SetFrozen: reference/set.md
       - SetMut: reference/setmut.md
       - Vec: reference/vec.md
       - Result: reference/result.md
