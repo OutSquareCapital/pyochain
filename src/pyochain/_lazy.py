@@ -66,6 +66,14 @@ class Enumerated[T](NamedTuple):
         return f"({self.idx}, {self.value.__repr__()})"
 
 
+class Group[K, V](NamedTuple):
+    key: K
+    values: Iter[V]
+
+    def __repr__(self) -> str:
+        return f"({self.key.__repr__()}, {self.values.__repr__()})"
+
+
 @dataclass(slots=True)
 class _CaseBuilder[T]:
     _iter: Iterable[T]
@@ -639,88 +647,30 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         """
         return self._iter(itertools.chain.from_iterable)
 
-    @overload
-    def flat_map[U, R](
-        self: Iter[Iterable[U]],
-        func: Callable[[U], R],
-    ) -> Iter[R]: ...
-    @overload
-    def flat_map[U, R](
-        self: Iter[Iterator[U]],
-        func: Callable[[U], R],
-    ) -> Iter[R]: ...
-    @overload
-    def flat_map[U, R](
-        self: Iter[Collection[U]],
-        func: Callable[[U], R],
-    ) -> Iter[R]: ...
-    @overload
-    def flat_map[U, R](
-        self: Iter[KeysView[U]],
-        func: Callable[[U], R],
-    ) -> Iter[R]: ...
-    @overload
-    def flat_map[U, R](
-        self: Iter[ValuesView[U]],
-        func: Callable[[U], R],
-    ) -> Iter[R]: ...
-    @overload
-    def flat_map[U, R](
-        self: Iter[Iter[U]],
-        func: Callable[[U], R],
-    ) -> Iter[R]: ...
-    @overload
-    def flat_map[U, R](
-        self: Iter[Seq[U]],
-        func: Callable[[U], R],
-    ) -> Iter[R]: ...
-    @overload
-    def flat_map[U, R](
-        self: Iter[Set[U]],
-        func: Callable[[U], R],
-    ) -> Iter[R]: ...
+    def flat_map[R](self, func: Callable[[T], Iterable[R]]) -> Iter[R]:
+        """Creates an iterator that applies a function to each element of the original iterator and flattens the result.
 
-    @overload
-    def flat_map[U, R](
-        self: Iter[Sequence[U]],
-        func: Callable[[U], R],
-    ) -> Iter[R]: ...
-    @overload
-    def flat_map[U, R](
-        self: Iter[list[U]],
-        func: Callable[[U], R],
-    ) -> Iter[R]: ...
-    @overload
-    def flat_map[U, R](
-        self: Iter[tuple[U, ...]],
-        func: Callable[[U], R],
-    ) -> Iter[R]: ...
-    @overload
-    def flat_map[R](self: Iter[range], func: Callable[[int], R]) -> Iter[R]: ...
-    def flat_map[U: Iterable[Any], R](
-        self: Iter[U],
-        func: Callable[[Any], R],
-    ) -> Iter[Any]:
-        """Map each element through func and flatten the result by one level.
+        This is useful when the **func** you want to pass to `.map()` itself returns an iterable, and you want to avoid having nested iterables in the output.
+
+        This is equivalent to calling `.map(func).flatten()`.
 
         Args:
-            func (Callable[[Any], R]): Function to apply to each element.
+            func (Callable[[T], Iterable[R]]): Function to apply to each element.
 
         Returns:
-            Iter[Any]: An iterable of flattened transformed elements.
+            Iter[R]: An iterable of flattened transformed elements.
 
         Example:
         ```python
         >>> import pyochain as pc
-        >>> data = [[1, 2], [3, 4]]
-        >>> pc.Seq(data).iter().flat_map(lambda x: x + 10).collect()
-        Seq(11, 12, 13, 14)
+        >>> pc.Iter([1, 2, 3]).flat_map(lambda x: range(x)).collect()
+        Seq(0, 0, 1, 0, 1, 2)
 
         ```
         """
 
-        def _flat_map(data: Iterable[U]) -> map[R]:
-            return map(func, itertools.chain.from_iterable(data))
+        def _flat_map(data: Iterable[T]) -> itertools.chain[R]:
+            return itertools.chain.from_iterable(map(func, data))
 
         return self._iter(_flat_map)
 
@@ -2724,23 +2674,25 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         return self._iter(gen)
 
     @overload
-    def group_by(self, key: None = None) -> Iter[tuple[T, Iter[T]]]: ...
+    def group_by(self, key: None = None) -> Iter[Group[T, T]]: ...
     @overload
-    def group_by[R](self, key: Callable[[T], R]) -> Iter[tuple[R, Iter[T]]]: ...
+    def group_by[K](self, key: Callable[[T], K]) -> Iter[Group[K, T]]: ...
     @overload
-    def group_by[R](
-        self, key: Callable[[T], R] | None = None
-    ) -> Iter[tuple[R, Iter[T]] | tuple[T, Iter[T]]]: ...
+    def group_by[K](
+        self, key: Callable[[T], K] | None = None
+    ) -> Iter[Group[K, T] | Group[T, T]]: ...
     def group_by(
         self, key: Callable[[T], Any] | None = None
-    ) -> Iter[tuple[Any, Iter[T]]]:
+    ) -> Iter[Group[Any | T, T]]:
         """Make an `Iter` that returns consecutive keys and groups from the iterable.
 
         Args:
             key (Callable[[T], Any] | None): Function to compute the key for grouping. Defaults to None.
 
         Returns:
-            Iter[tuple[Any, Iter[T]]]: An `Iter` of (key, group) tuples.
+            Iter[Group[Any | T, T]]: An `Iter` of `Group(key, value)` tuples.
+
+        The values yielded are `Group[K, T]` objects, which are `NamedTuples` where the first element is the group key and the second element is an `Iter` of type `T` over the group values.
 
         The **key** is a function computing a key value for each element.
 
@@ -2748,12 +2700,12 @@ class Iter[T](CommonMethods[T], Iterator[T]):
 
         The `Iter` needs to already be sorted on the same key function.
 
-        This is due to the fact that it generates a new group every time the value of the **key** function changes.
+        This is due to the fact that it generates a new `Group` every time the value of the **key** function changes.
 
         That behavior differs from SQL's `GROUP BY` which aggregates common elements regardless of their input order.
 
         Note:
-            Each group generated is itself an `Iter` and is fully lazy.
+            Each `Group` generated is itself an `Iter` and is fully lazy.
             If you need all the groups, you must materialize them with a `.map()` call and a closure that can materialize the group (e.g `.collect()`, `.into(list)`, etc...).
 
         Examples:
@@ -2791,9 +2743,7 @@ class Iter[T](CommonMethods[T], Iterator[T]):
         """
         # TODO: Inventory of all group_by and follow-ups in Dict and Iter, potentially do like polars: GroupBy object
 
-        def _group_by(
-            data: Iterable[T],
-        ) -> Iterator[tuple[Any, Iter[T]]]:
-            return ((x, Iter(y)) for x, y in itertools.groupby(data, key))
+        def _group_by(data: Iterable[T]) -> Generator[Group[Any | T, T]]:
+            return (Group(x, Iter(y)) for x, y in itertools.groupby(data, key))
 
         return self._iter(_group_by)

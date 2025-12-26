@@ -270,11 +270,13 @@ class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
     def remove_entry(self, key: K) -> Option[Item[K, V]]:
         """Remove a key from the `Dict` and return the `Item` if it existed.
 
+        Return an `Item` containing the (key, value) pair if the key was present.
+
         Args:
             key (K): The key to remove.
 
         Returns:
-            Option[tuple[K, V]]: The (key, value) pair associated with the removed key, or None if the key was not present.
+            Option[Item[K, V]]: The (key, value) pair associated with the removed key, or None if the key was not present.
         ```python
         >>> import pyochain as pc
         >>> data = pc.Dict({1: "a", 2: "b"})
@@ -328,6 +330,8 @@ class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
     def iter(self) -> Iter[Item[K, V]]:
         """Return an `Iter` of the dict's items.
 
+        Yield `Item` instances representing each (key, value) pair in the `Dict`.
+
         Returns:
             Iter[Item[K, V]]: An Iter wrapping the dictionary's (key, value) pairs.
         ```python
@@ -339,7 +343,7 @@ class Dict[K, V](CommonBase[dict[K, V]], MutableMapping[K, V]):
         """
         from ._lazy import Iter
 
-        return self.into(lambda d: Iter(Item(*item) for item in d._inner.items()))
+        return self.into(lambda d: Iter(Item(*it) for it in d._inner.items()))
 
     def get_item(self, key: K) -> Option[V]:
         """Retrieve a value from the `Dict`.
