@@ -174,7 +174,7 @@ The stubs used for the developpement, made by the maintainer of pyochain, can be
 """
 
 from ._dict import Dict
-from ._eager import Seq, SetFrozen, SetMut, Vec
+from ._eager import Seq, Set, SetMut, Vec
 from ._lazy import Iter
 from ._option import NONE, Option, Some
 from ._result import Err, Ok, Result, ResultUnwrapError
@@ -189,7 +189,7 @@ __all__ = [
     "Result",
     "ResultUnwrapError",
     "Seq",
-    "SetFrozen",
+    "Set",
     "SetMut",
     "Some",
     "Vec",

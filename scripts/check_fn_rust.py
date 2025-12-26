@@ -100,10 +100,10 @@ ITERATOR_FN = {
 }
 
 
-def _iter_filter() -> pc.SetFrozen[str]:
-    pure_rust = pc.SetFrozen.from_("copied", "cloned", "by_ref", "from_coroutine")
+def _iter_filter() -> pc.Set[str]:
+    pure_rust = pc.Set.from_("copied", "cloned", "by_ref", "from_coroutine")
     """Methods that are not pertinent in the Python context."""
-    equivalent: pc.SetFrozen[tuple[str, ...]] = pc.SetFrozen.from_(
+    equivalent: pc.Set[tuple[str, ...]] = pc.Set.from_(
         ("count", "length"),  # count is reserved for MutableSequence in Python
         (
             "is_sorted",
@@ -116,7 +116,7 @@ def _iter_filter() -> pc.SetFrozen[str]:
         ),  # from is a reserved word in Python, into is implicitely implemented with From trait in Rust
     )
     """Methods that have an equivalent Python counterpart."""
-    py_stdlib = pc.SetFrozen.from_("filter_false")
+    py_stdlib = pc.Set.from_("filter_false")
     """Methods that exist in python stdlib but not in Rust."""
 
     return pure_rust.union(equivalent.iter().flatten()).union(py_stdlib)
@@ -132,7 +132,7 @@ def _with_source(fn_name: str, src: Literal["python", "rust"]) -> tuple[str, str
     return (src, fn_name)
 
 
-def main(dtype: type, rust_fns: set[str], filters: pc.SetFrozen[str]) -> None:
+def main(dtype: type, rust_fns: set[str], filters: pc.Set[str]) -> None:
     """Run the check and output the results to a ndjson file."""
     fn: pl.Expr = pl.col("fn")
 

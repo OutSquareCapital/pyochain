@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, MutableSequence, MutableSet, Sequence, Set
+from collections.abc import Iterable, MutableSequence, MutableSet, Sequence
+from collections.abc import Set as AbstractSet
 from typing import Any, Self, overload
 
 import cytoolz as cz
@@ -8,7 +9,7 @@ import cytoolz as cz
 from ._iter import CommonMethods, convert_data
 
 
-class SetFrozen[T](CommonMethods[T], Set[T]):
+class Set[T](CommonMethods[T], AbstractSet[T]):
     """`Set` represent an in- memory **unordered**  collection of **unique** elements.
 
     Implements the `Collection` Protocol from `collections.abc`, so it can be used as a standard immutable collection.
@@ -40,13 +41,13 @@ class SetFrozen[T](CommonMethods[T], Set[T]):
 
     @overload
     @staticmethod
-    def from_[U](data: Iterable[U]) -> SetFrozen[U]: ...
+    def from_[U](data: Iterable[U]) -> Set[U]: ...
     @overload
     @staticmethod
-    def from_[U](data: U, *more_data: U) -> SetFrozen[U]: ...
+    def from_[U](data: U, *more_data: U) -> Set[U]: ...
     @staticmethod
-    def from_[U](data: Iterable[U] | U, *more_data: U) -> SetFrozen[U]:
-        """Create a `SetFrozen` from an `Iterable` or unpacked values.
+    def from_[U](data: Iterable[U] | U, *more_data: U) -> Set[U]:
+        """Create a `Set` from an `Iterable` or unpacked values.
 
         Prefer using the standard constructor, as this method involves extra checks and conversions steps.
 
@@ -66,21 +67,25 @@ class SetFrozen[T](CommonMethods[T], Set[T]):
         ```
         """
         converted = convert_data(data, *more_data)
-        return SetFrozen(
+        return Set(
             converted if isinstance(converted, frozenset) else frozenset(converted)
         )
 
-    def union(self, *others: Iterable[T]) -> Self:
+    @overload
+    def union(self, *others: Iterable[T]) -> Set[T]: ...
+    @overload
+    def union[U](self, *others: Iterable[U]) -> Set[T | U]: ...
+    def union(self, *others: Iterable[Any]) -> Set[Any]:
         """Return the union of this iterable and 'others'.
 
         Note:
             This method consumes inner data and removes duplicates.
 
         Args:
-            *others (Iterable[T]): Other iterables to include in the union.
+            *others (Iterable[Any]): Other iterables to include in the union.
 
         Returns:
-            Set[T]: A new `Set` containing the union of elements.
+            Set[Any]: A new `Set` containing the union of elements.
 
         Example:
         ```python
@@ -108,7 +113,7 @@ class SetFrozen[T](CommonMethods[T], Set[T]):
             *others (Iterable[Any]): Other iterables to intersect with.
 
         Returns:
-            Set[T]: A new `Set` containing the intersection of elements.
+            Self: A new `Set` containing the intersection of elements.
 
         Example:
         ```python
@@ -134,7 +139,7 @@ class SetFrozen[T](CommonMethods[T], Set[T]):
             *others (Iterable[T]): Other iterables to subtract from this iterable.
 
         Returns:
-            Set[T]: A new `Set` containing the difference of elements.
+            Self: A new `Set` containing the difference of elements.
 
         Example:
         ```python
@@ -162,7 +167,7 @@ class SetFrozen[T](CommonMethods[T], Set[T]):
             *others (Iterable[T]): Other iterables to compute the symmetric difference with.
 
         Returns:
-            Set[T]: A new `Set` containing the symmetric difference of elements.
+            Self: A new `Set` containing the symmetric difference of elements.
 
         Example:
         ```python
@@ -240,10 +245,10 @@ class SetFrozen[T](CommonMethods[T], Set[T]):
         return self._inner.isdisjoint(other)
 
 
-class SetMut[T](SetFrozen[T], MutableSet[T]):
+class SetMut[T](Set[T], MutableSet[T]):
     """A mutable set wrapper with functional API.
 
-    Unlike `SetFrozen` which is immutable, `SetMut` allows in-place modification of elements.
+    Unlike `Set` which is immutable, `SetMut` allows in-place modification of elements.
 
     Implement the `MutableSet` interface, so elements can be modified in place, and passed to any function/object expecting a standard mutable set.
 
@@ -272,8 +277,8 @@ class SetMut[T](SetFrozen[T], MutableSet[T]):
         >>> import pyochain as pc
         >>> s = pc.SetMut({'a', 'b'})
         >>> s.add('c')
-        >>> s
-        SetMut('a', 'b', 'c')
+        >>> s.iter().sort()
+        Vec('a', 'b', 'c')
 
         ```
         """
@@ -292,8 +297,8 @@ class SetMut[T](SetFrozen[T], MutableSet[T]):
         >>> import pyochain as pc
         >>> s = pc.SetMut({'a', 'b', 'c'})
         >>> s.discard('b')
-        >>> s
-        SetMut('a', 'c')
+        >>> s.iter().sort()
+        Vec('a', 'c')
 
         ```
         """
