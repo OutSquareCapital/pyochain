@@ -31,7 +31,7 @@ Provides the following core classes and utilities:
   - Underlying data structure is a `list`.
   - Can be converted to `Iter` with the `.iter()` method.
   - Implement `MutableSequence` Protocol.
-- `SetFrozen[T]`
+- `Set[T]`
   - An immutable, unordered collection of unique elements with chainable methods.
   - Underlying data structure is a `frozenset`.
   - Can be converted to `Iter` with the `.iter()` method.

@@ -33,7 +33,7 @@ Provides the following core classes and utilities:
   - Underlying data structure is a `list`.
   - Can be converted to `Iter` with the `.iter()` method.
   - Implement `MutableSequence` Protocol.
-- `SetFrozen[T]`
+- `Set[T]`
   - An immutable, unordered collection of unique elements with chainable methods.
   - Underlying data structure is a `frozenset`.
   - Can be converted to `Iter` with the `.iter()` method.
@@ -169,6 +169,7 @@ pyochain acts as a unifying API layer over these powerful tools.
 The stubs used for the developpement, made by the maintainer of pyochain, can be found here:
 
 <https://github.com/OutSquareCapital/cytoolz-stubs>
+
 """
 
 from ._dict import Dict

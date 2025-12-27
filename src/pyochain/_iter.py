@@ -108,7 +108,7 @@ class BaseIter[T](Pipeable):
             This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
 
         Args:
-            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]` to compare against.
+            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]|Set[T]|SetMut[T]` to compare against.
 
         Returns:
             bool: True if the underlying data are equal, False otherwise.
@@ -136,7 +136,7 @@ class BaseIter[T](Pipeable):
             This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
 
         Args:
-            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]` to compare against.
+            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]|Set[T]|SetMut[T]` to compare against.
 
         Returns:
             bool: True if the underlying data are not equal, False otherwise.
@@ -160,7 +160,7 @@ class BaseIter[T](Pipeable):
             This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
 
         Args:
-            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]` to compare against.
+            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]|Set[T]|SetMut[T]` to compare against.
 
         Returns:
             bool: True if the underlying data of self is less than or equal to that of other, False otherwise.
@@ -184,7 +184,7 @@ class BaseIter[T](Pipeable):
             This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
 
         Args:
-            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]` to compare against.
+            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]|Set[T]|SetMut[T]` to compare against.
 
         Returns:
             bool: True if the underlying data of self is less than that of other, False otherwise.
@@ -208,7 +208,7 @@ class BaseIter[T](Pipeable):
             This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
 
         Args:
-            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]` to compare against.
+            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]|Set[T]|SetMut[T]` to compare against.
 
         Returns:
             bool: True if the underlying data of self is greater than that of other, False otherwise.
@@ -232,7 +232,7 @@ class BaseIter[T](Pipeable):
             This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
 
         Args:
-            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]` to compare against.
+            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]|Set[T]|SetMut[T]` to compare against.
 
         Returns:
             bool: True if the underlying data of self is greater than or equal to that of other, False otherwise.

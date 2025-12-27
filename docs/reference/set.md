@@ -1,4 +1,4 @@
-# Seq
+# Set
 
 ::: pyochain._iter.Set
     options:

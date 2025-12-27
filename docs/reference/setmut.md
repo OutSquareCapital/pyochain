@@ -1,4 +1,4 @@
-# Seq
+# SetMut
 
 ::: pyochain._iter.SetMut
     options:
