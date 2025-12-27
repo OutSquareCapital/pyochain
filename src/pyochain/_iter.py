@@ -3802,7 +3802,6 @@ class Iter[T](BaseIter[T], Iterator[T]):
 
         ```
         """
-        # TODO: Inventory of all group_by and follow-ups in Dict and Iter, potentially do like polars: GroupBy object
 
         def _group_by(data: Iterable[T]) -> Iter[Group[Any | T, T]]:
             return Iter(Group(x, Iter(y)) for x, y in itertools.groupby(data, key))

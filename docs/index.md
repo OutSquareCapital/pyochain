@@ -32,7 +32,7 @@ divide(10, 0).unwrap_or(0.0)  # → 0.0
 
 - [**Iter[T]**](reference/iter.md) — Lazy processing of iterators
 - [**Seq[T]**](reference/seq.md) — Immutable collections (tuple-backed)
-- [**SetFrozen[T]**](reference/setfrozen.md) — Immutable collections (frozenset-backed)
+- [**Set[T]**](reference/set.md) — Immutable collections (frozenset-backed)
 - [**SetMut[T]**](reference/setmut.md) — Mutable Set (set-backed)
 - [**Vec[T]**](reference/vec.md) — Mutable collections (list-backed)
 - [**Dict[K, V]**](reference/dict.md) — Chainable dictionaries
