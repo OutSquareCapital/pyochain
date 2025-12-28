@@ -17,7 +17,7 @@
 {"source":"python","fn":"first"}
 {"source":"python","fn":"from_count"}
 {"source":"python","fn":"group_by"}
-{"source":"python","fn":"insert_left"}
+{"source":"python","fn":"insert"}
 {"source":"python","fn":"interleave"}
 {"source":"python","fn":"is_strictly_n"}
 {"source":"python","fn":"join"}
@@ -62,7 +62,6 @@
 {"source":"rust","fn":"min_by"}
 {"source":"rust","fn":"min_by_key"}
 {"source":"rust","fn":"next_chunk"}
-{"source":"rust","fn":"once"}
 {"source":"rust","fn":"once_with"}
 {"source":"rust","fn":"partial_cmp"}
 {"source":"rust","fn":"partial_cmp_by"}

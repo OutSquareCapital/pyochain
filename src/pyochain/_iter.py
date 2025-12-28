@@ -1305,6 +1305,30 @@ class Iter[T](BaseIter[T], Iterator[T]):
         return Option.from_(next(self, None))
 
     @staticmethod
+    def once(value: T) -> Iter[T]:
+        """Create an `Iter` that yields a single value.
+
+        If you have a function which works on iterators, but you only need to process one value, you can use this method rather than doing something like `Iter([value])`.
+
+        This can be considered the equivalent of `.insert()` but as a constructor.
+
+        Args:
+            value (T): The single value to yield.
+
+        Returns:
+            Iter[T]: An iterator yielding the specified value.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter.once(42).collect()
+        Seq(42,)
+
+        ```
+        """
+        return Iter((value,))
+
+    @staticmethod
     def from_count(start: int = 0, step: int = 1) -> Iter[int]:
         """Create an infinite `Iterator` of evenly spaced values.
 
@@ -3085,33 +3109,15 @@ class Iter[T](BaseIter[T], Iterator[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter([1, 2]).intersperse(0).collect()
-        Seq(1, 0, 2)
-        >>> a = pc.Iter([0, 1, 2]).intersperse(100)
-        >>> # The first element from `a`.
-        >>> a.next()
-        Some(0)
-        >>> # The separator.
-        >>> a.next()
-        Some(100)
-        >>> a.next()
-        Some(1)
-        >>> a.next()
-        Some(100)
-        >>> a.next()
-        Some(2)
-        >>> # No more elements.
-        >>> a.next()
-        NONE
-
-        ```
-        `.intersperse()` can be very useful to join an iterator items using a common element
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter(["Hello", "World", "!"]).intersperse(" ").collect()
-        Seq('Hello', ' ', 'World', ' ', '!')
-        >>> pc.Iter(["Hello", "World", "!"]).intersperse(" ").join("")
-        'Hello World !'
+        >>> # Simple example with numbers
+        >>> pc.Iter([1, 2, 3]).intersperse(0).collect()
+        Seq(1, 0, 2, 0, 3)
+        >>> # Useful when chaining with other operations
+        >>> pc.Iter([10, 20, 30]).intersperse(5).sum()
+        70
+        >>> # Inserting separators between groups, then flattening
+        >>> pc.Iter([[1, 2], [3, 4], [5, 6]]).intersperse([-1]).flatten().collect()
+        Seq(1, 2, -1, 3, 4, -1, 5, 6)
 
         ```
         """
@@ -3184,8 +3190,16 @@ class Iter[T](BaseIter[T], Iterator[T]):
         """
         return Iter(cz.itertoolz.accumulate(func, self._inner))
 
-    def insert_left(self, value: T) -> Iter[T]:
-        """Prepend value to the sequence and return a new Iterable wrapper.
+    def insert(self, value: T) -> Iter[T]:
+        """Prepend the **value** to the `Iter`.
+
+        This can be useful when you want to add an element at the beginning of an existing iterable sequence.
+
+        Use `.chain()` to add multiple elements (at the end of the `Iterator`).
+
+        Note:
+            This can be considered the equivalent as `list.append()`, but for `Iter`.
+            However, append add the value at the **end**, while insert add it at the **beginning**.
 
         Args:
             value (T): The value to prepend.
@@ -3196,7 +3210,7 @@ class Iter[T](BaseIter[T], Iterator[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter((2, 3)).insert_left(1).collect()
+        >>> pc.Iter((2, 3)).insert(1).collect()
         Seq(1, 2, 3)
 
         ```
@@ -3250,6 +3264,8 @@ class Iter[T](BaseIter[T], Iterator[T]):
     def chain(self, *others: Iterable[T]) -> Iter[T]:
         """Concatenate zero or more iterables, any of which may be infinite.
 
+        In other words, it links **self** and **others** together, in a chain. 🔗
+
         An infinite sequence will prevent the rest of the arguments from being included.
 
         We use chain.from_iterable rather than chain(*seqs) so that seqs can be a generator.
@@ -3258,12 +3274,14 @@ class Iter[T](BaseIter[T], Iterator[T]):
             *others (Iterable[T]): Other iterables to concatenate.
 
         Returns:
-            Iter[T]: A new Iterable wrapper with concatenated elements.
+            Iter[T]: A new `Iter` which will first iterate over values from the first iterator and then over values from the **others** `Iterable`s.
 
         Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Iter((1, 2)).chain((3, 4), [5]).collect()
+        Seq(1, 2, 3, 4, 5)
+        >>> pc.Iter((1, 2)).chain(pc.Iter.from_count(3)).take(5).collect()
         Seq(1, 2, 3, 4, 5)
 
         ```
