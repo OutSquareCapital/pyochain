@@ -15,32 +15,17 @@ Top-level files and folders of interest:
 
 ## Package layout
 
-The `src/pyochain` package is organized into a small number of internal subpackages (leading underscore indicates internal implementation):
+The `src/pyochain` package is organized into a small number of internal modules (leading underscore indicates internal implementation):
 
-- `_core/`:
-  - `__init__.py`
-  - `_config.py` — repr config settings.
-  - `_main.py` — common base classes such as `CommonBase`, `IterWrapper`, `MappingWrapper` and shared helpers.
-  - `_protocols.py` — structural `typing.Protocol` definitions used across the package.
+- `_config.py` — repr config settings and configuration utilities.
+- `_core.py` — common base classes such as `CommonBase`, `IterWrapper`, `MappingWrapper`, shared helpers, and structural `typing.Protocol` definitions used across the package.
+- `_iter.py` — implementation of `Iter` (lazy iterator), `Seq`, `Vec`, `Set`, `SetMut` and all iteration/collection helpers.
+- `_dict.py` — `Dict` class implementation and mapping-related logic.
+- `_option.py` — `Option`, `Some`, `NONE`, and `OptionUnwrapError`.
+- `_result.py` — `Result`, `Ok`, `Err`, and `ResultUnwrapError`.
+- `py.typed` — PEP 561 marker file for type checking support.
 
-- `_iter/`:
-  - `__init__.py`
-  - `_common.py` — shared helpers and common methods used by both lazy and eager implementations.
-  - `_lazy.py` — implementation of `Iter` (lazy iterator) and lazy iteration helpers.
-  - `_eager.py` — implementation of `Seq`, `Vec` and eager collection helpers.
-
-- `_dict/`:
-  - `__init__.py`
-  - `_main.py` — `Dict` class logic.
-
-- `_results/`:
-  - `__init__.py`
-  - `_option.py` — `Option`, `Some`, `NONE`, and `OptionUnwrapError`.
-  - `_result.py` — `Result`, `Ok`, `Err`, and `ResultUnwrapError`.
-
-Each of the method files (for example `_filters.py`, `_maps.py`) typically declares a small base class that groups related methods; the public class composes those bases via multiple inheritance in the corresponding `_main.py`.
-
-**Note**: The above structure is subject to change as the project evolves and may be not up-to-date with the latest changes.
+The public API is exposed through `src/pyochain/__init__.py`, which imports and re-exports the main classes and types.
 
 ## Coding and documentation guidelines
 
