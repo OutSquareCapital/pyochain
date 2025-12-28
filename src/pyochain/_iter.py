@@ -3073,20 +3073,45 @@ class Iter[T](BaseIter[T], Iterator[T]):
         """
         return Iter(itertools.cycle(self._inner))
 
-    def interpose(self, element: T) -> Iter[T]:
-        """Interpose element between items and return a new Iterable wrapper.
+    def intersperse(self, element: T) -> Iter[T]:
+        """Creates a new iterator which places a copy of separator between adjacent items of the original iterator.
 
         Args:
             element (T): The element to interpose between items.
 
         Returns:
-            Iter[T]: A new Iterable wrapper with the element interposed.
+            Iter[T]: A new `Iter` with the element interposed.
 
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter([1, 2]).interpose(0).collect()
+        >>> pc.Iter([1, 2]).intersperse(0).collect()
         Seq(1, 0, 2)
+        >>> a = pc.Iter([0, 1, 2]).intersperse(100)
+        >>> # The first element from `a`.
+        >>> a.next()
+        Some(0)
+        >>> # The separator.
+        >>> a.next()
+        Some(100)
+        >>> a.next()
+        Some(1)
+        >>> a.next()
+        Some(100)
+        >>> a.next()
+        Some(2)
+        >>> # No more elements.
+        >>> a.next()
+        NONE
+
+        ```
+        `.intersperse()` can be very useful to join an iterator items using a common element
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter(["Hello", "World", "!"]).intersperse(" ").collect()
+        Seq('Hello', ' ', 'World', ' ', '!')
+        >>> pc.Iter(["Hello", "World", "!"]).intersperse(" ").join("")
+        'Hello World !'
 
         ```
         """

@@ -19,11 +19,9 @@
 {"source":"python","fn":"group_by"}
 {"source":"python","fn":"insert_left"}
 {"source":"python","fn":"interleave"}
-{"source":"python","fn":"interpose"}
 {"source":"python","fn":"is_strictly_n"}
 {"source":"python","fn":"join"}
 {"source":"python","fn":"join_with"}
-{"source":"python","fn":"map_if"}
 {"source":"python","fn":"map_juxt"}
 {"source":"python","fn":"map_star"}
 {"source":"python","fn":"most_common"}
@@ -57,10 +55,8 @@
 {"source":"rust","fn":"eq_by"}
 {"source":"rust","fn":"fold"}
 {"source":"rust","fn":"fuse"}
-{"source":"rust","fn":"intersperse"}
 {"source":"rust","fn":"intersperse_with"}
 {"source":"rust","fn":"is_partitioned"}
-{"source":"rust","fn":"map_while"}
 {"source":"rust","fn":"max_by"}
 {"source":"rust","fn":"max_by_key"}
 {"source":"rust","fn":"min_by"}
