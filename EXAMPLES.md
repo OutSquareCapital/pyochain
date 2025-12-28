@@ -70,100 +70,6 @@ if __name__ == "__main__":
     main()
 ```
 
-## Getting Plotly Color Palettes
-
-In one of my project, I have to introspect some modules from plotly to get some lists of colors.
-
-I want to check wether the colors are in hex format or not, and I want to get a dictionary of palettes.
-
-The script below shows you can smoothly interoperate between pyochain and polars to achieve this in a readable way.
-
-```python
-from types import ModuleType
-
-import polars as pl
-from plotly.express.colors import cyclical, qualitative, sequential
-
-import pyochain as pc
-
-MODULES: set[ModuleType] = {
-    sequential,
-    cyclical,
-    qualitative,
-}
-
-
-def get_palettes() -> pc.Dict[str, list[str]]:
-    clr = "color"
-    scl = "scale"
-    return (
-        pc.Iter(MODULES)
-        .map(
-            lambda mod: pc.Dict.from_object(mod)
-            .filter_values(lambda v: isinstance(v, list))
-            .inner()
-        )
-        .into(pl.LazyFrame)
-        .unpivot(value_name=clr, variable_name=scl)
-        .drop_nulls()
-        .filter(
-            pl.col(clr)
-            .list.eval(pl.element().first().str.starts_with("#").alias("is_hex"))
-            .list.first()
-        )
-        .sort(scl)
-        .collect()
-        .pipe(lambda df: pc.Iter(df.get_column(scl)).with_values(df.get_column(clr)))
-    )
-
-
-# Ouput excerpt:
-{
-    "mygbm_r": [
-        "#ef55f1",
-        "#c543fa",
-        "#9139fa",
-        "#6324f5",
-        "#2e21ea",
-        "#284ec8",
-        "#3d719a",
-        "#439064",
-        "#31ac28",
-        "#61c10b",
-        "#96d310",
-        "#c6e516",
-        "#f0ed35",
-        "#fcd471",
-        "#fbafa1",
-        "#fb84ce",
-        "#ef55f1",
-    ]
-}
-```
-
-However you can still easily go back with for loops when the readability is better this way.
-
-In another place, I use this function to generate a Literal from the keys of the palettes.
-
-```python
-
-from enum import StrEnum
-
-class Text(StrEnum):
-    CONTENT = "Palettes = Literal[\n"
-    END_CONTENT = "]\n"
-    ...# rest of the class
-
-def generate_palettes_literal() -> None:
-    literal_content: str = Text.CONTENT
-    for name in get_palettes().iter_keys().sort().unwrap():
-        literal_content += f'    "{name}",\n'
-    literal_content += Text.END_CONTENT
-    ...# rest of the function
-```
-
-Since I have to reference the literal_content variable in the for loop, This is more reasonnable to use a for loop here rather than a map + reduce approach.
-
 ### Determining All Public Methods of a Class
 
 Below is an example of using pyochain to get all the public methods of the `pc.Iter` class, both with pyochain and with pure python.
@@ -174,27 +80,25 @@ from typing import Any
 import pyochain as pc
 
 
-def get_all_iter_methods() -> pc.Seq[tuple[int, str]]:
+def get_all_iter_methods() -> dict[int, str]:
     return (
         pc.Iter(pc.Iter.mro())
-        .map(lambda x: x.__dict__.values())
-        .flatten()
-        .map_if(predicate=lambda f: callable(f) and not f.__name__.startswith("_"))
-        .then(lambda f: f.__name__)
-        .or_skip()
+        .flat_map(lambda x: x.__dict__.values())
+        .filter(lambda f: callable(f) and not f.__name__.startswith("_"))
+        .map(lambda f: f.__name__)
         .sort()
         .iter()
         .enumerate()
-        .collect(list)
+        .collect(dict)
     )
 
 
-def get_all_iter_methods_pure_python() -> list[tuple[int, str]]:
+def get_all_iter_methods_pure_python() -> dict[int, str]:
     dict_values: list[Any] = []
     for cls in pc.Iter.mro():
         dict_values.extend(cls.__dict__.values())
 
-    return list(
+    return dict(
         enumerate(
             sorted(
                 [
@@ -205,22 +109,13 @@ def get_all_iter_methods_pure_python() -> list[tuple[int, str]]:
             ),
         ),
     )
-```
 
-Output excerpt, if returning immediately after collect, and then calling println():
 
-```text
-PS C:\Users\tibo\python_codes\pyochain> uv run foo.py
-[(0, 'accumulate'),
- (1, 'adjacent'),
- (2, 'all'),
- (3, 'all_equal'),
- (4, 'all_unique'),
- (5, 'any'),
- (6, 'apply'),
- (7, 'apply'),
- ...
-]
+if __name__ == "__main__":
+    methods = get_all_iter_methods()
+    methods_pure = get_all_iter_methods_pure_python()
+    assert methods == methods_pure
+
 ```
 
 ### Checking whether functions are implemented in Python or Rust
@@ -236,20 +131,23 @@ import polars as pl
 
 import pyochain as pc
 
+
 def _with_source(fn_name: str, src: Literal["python", "rust"]) -> tuple[str, str]:
     return (src, fn_name)
 
-RUST_FN = [...] # list of rust Iterator trait methods names as strings, copy pasted from website
+
+RUST_FN = [
+    ...
+]  # list of rust Iterator trait methods names as strings, copy pasted from website
+
 
 def main() -> None:
     fn: pl.Expr = pl.col("fn")
     return (
         # create an iterator over the class hierarchy
         pc.Iter(pc.Iter.mro())
-        # get the dict values view of each class
-        .map(lambda x: x.__dict__.values())
-        # flatten the views of dict values
-        .flatten()
+        # get the dict values view of each class and flatten them
+        .flat_map(lambda x: x.__dict__.values())
         # keep only callables (methods of the classes here)
         .filter(callable)
         # get the method name, associate it with "python"
@@ -264,4 +162,5 @@ def main() -> None:
         # write the result to an ndjson file in streaming mode.
         .sink_ndjson("iter_fn_sources.ndjson")
     )
+
 ```
