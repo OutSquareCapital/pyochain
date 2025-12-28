@@ -32,8 +32,7 @@ import cytoolz as cz
 import more_itertools as mit
 
 from ._config import get_config
-from ._core import Pipeable
-from ._protocols import SupportsRichComparison
+from ._core import Pipeable, SupportsRichComparison
 
 if TYPE_CHECKING:
     from ._option import Option
@@ -865,101 +864,6 @@ class BaseIter[T](Pipeable):
         return self.into(_most_common)
 
 
-@dataclass(slots=True)
-class _CaseBuilder[T]:
-    _iter: Iterable[T]
-    _predicate: Callable[[T], bool]
-
-
-@dataclass(slots=True)
-class _WhenBuilder[T](_CaseBuilder[T]):
-    def then[U](self, func: Callable[[T], U]) -> _ThenBuilder[T, U]:
-        """Add a transformation to apply when the predicate is true.
-
-        Args:
-            func (Callable[[T], U]): Function to apply to items satisfying the predicate.
-
-        Returns:
-            _ThenBuilder[T, U]: Builder to chain further then() or finalize with or_else()/or_skip().
-        """
-        return _ThenBuilder(
-            _iter=self._iter,
-            _predicate=self._predicate,
-            _func=func,
-        )
-
-    def or_else[U](self, func_else: Callable[[T], U]) -> Iter[T | U]:
-        """Apply a function to items not satisfying the predicate.
-
-        Args:
-            func_else (Callable[[T], U]): Function to apply to items not satisfying the predicate.
-
-        Returns:
-            Iter[T | U]: An Iter with transformed items.
-        """
-        return Iter(
-            item if self._predicate(item) else func_else(item) for item in self._iter
-        )
-
-    def or_skip(self) -> Iter[T]:
-        """Skip items not satisfying the predicate.
-
-        All items satisfying the predicate are retained.
-
-        Returns:
-            Iter[T]: An Iter with only items satisfying the predicate.
-
-        """
-        return Iter(item for item in self._iter if self._predicate(item))
-
-
-@dataclass(slots=True)
-class _ThenBuilder[T, R](_CaseBuilder[T]):
-    _func: Callable[[T], R]
-
-    def then[U](self, func: Callable[[R], U]) -> _ThenBuilder[T, U]:
-        """Add a transformation to apply when the predicate is true.
-
-        The function is composed with the result from the previous `then()`.
-
-        Args:
-            func (Callable[[R], U]): Function to apply to items satisfying the predicate.
-
-        Returns:
-            _ThenBuilder[T, U]: Builder to chain further then() or finalize with or_else()/or_skip().
-        """
-        return _ThenBuilder(
-            _iter=self._iter,
-            _predicate=self._predicate,
-            _func=lambda x: func(self._func(x)),
-        )
-
-    def or_else[U](self, func_else: Callable[[T], U]) -> Iter[R | U]:
-        """Apply a function to items not satisfying the predicate.
-
-        Args:
-            func_else (Callable[[T], U]): Function to apply to items not satisfying the predicate.
-
-        Returns:
-            Iter[R | U]: An Iter with transformed items.
-        """
-        return Iter(
-            self._func(item) if self._predicate(item) else func_else(item)
-            for item in self._iter
-        )
-
-    def or_skip(self) -> Iter[R]:
-        """Skip items not satisfying the predicate.
-
-        All items satisfying the predicate are retained.
-
-        Returns:
-            Iter[R]: An Iter with only items satisfying the predicate.
-
-        """
-        return Iter(self._func(item) for item in self._iter if self._predicate(item))
-
-
 class Set[T](BaseIter[T], AbstractSet[T]):
     """`Set` represent an in- memory **unordered**  collection of **unique** elements.
 
@@ -1587,26 +1491,23 @@ class Iter[T](BaseIter[T], Iterator[T]):
         from ._option import NONE, Option, Some
         from ._result import Result
 
-        def _try_collect(data: TryIter[U]) -> Option[Vec[U]]:
-            collected = Vec[U].new()
+        collected = Vec[U].new()
 
-            for item in data:
-                if item is None:
-                    return NONE
-                match item:
-                    case Result():
-                        if item.is_err():
-                            return NONE
-                        collected.append(item.unwrap())  # pyright: ignore[reportUnknownArgumentType]
-                    case Option():
-                        if item.is_none():
-                            return NONE
-                        collected.append(item.unwrap())  # pyright: ignore[reportUnknownArgumentType]
-                    case _ as plain_value:
-                        collected.append(plain_value)
-            return Some(collected)
-
-        return self.into(_try_collect)
+        for item in self._inner:
+            if item is None:
+                return NONE
+            match item:
+                case Result():
+                    if item.is_err():
+                        return NONE
+                    collected.append(item.unwrap())  # pyright: ignore[reportUnknownArgumentType]
+                case Option():
+                    if item.is_none():
+                        return NONE
+                    collected.append(item.unwrap())  # pyright: ignore[reportUnknownArgumentType]
+                case _ as plain_value:
+                    collected.append(plain_value)
+        return Some(collected)
 
     def for_each[**P](
         self,
@@ -1638,12 +1539,8 @@ class Iter[T](BaseIter[T], Iterator[T]):
 
         ```
         """
-
-        def _for_each(data: Iterable[T]) -> None:
-            for v in data:
-                func(v, *args, **kwargs)
-
-        return self.into(_for_each)
+        for v in self._inner:
+            func(v, *args, **kwargs)
 
     def array_chunks(self, size: int) -> Iter[Iter[T]]:
         """Yield subiterators (chunks) that each yield a fixed number elements, determined by size.
@@ -2225,30 +2122,44 @@ class Iter[T](BaseIter[T], Iterator[T]):
         """
         return Iter(itertools.starmap(func, self._inner))
 
-    def map_if(self, predicate: Callable[[T], bool]) -> _WhenBuilder[T]:
-        """Begin a conditional transformation chain on an Iter.
+    def map_while[R](self, func: Callable[[T], Option[R]]) -> Iter[R]:
+        """Creates an iterator that both yields elements based on a predicate and maps.
+
+        `map_while()` takes a closure as an argument. It will call this closure on each element of
+        the iterator, and yield elements while it returns `Some(_)`.
+
+        After `NONE` is returned, `map_while()` stops and the rest of the elements are ignored.
 
         Args:
-            predicate (Callable[[T], bool]): Function to test each item.
+            func (Callable[[T], Option[R]]): Function to apply to each element that returns `Option[R]`.
 
         Returns:
-            _WhenBuilder[T]: Builder to chain then() and or_else()/or_skip() calls.
+            Iter[R]: An iterator of transformed elements until `NONE` is encountered.
 
-        Example:
+        Examples:
         ```python
         >>> import pyochain as pc
-        >>> data = pc.Seq(range(-3, 4))
-        >>> data.iter().map_if(lambda x: x > 0).then(lambda x: x * 10).or_else(lambda x: x).collect()
-        Seq(-3, -2, -1, 0, 10, 20, 30)
-        >>> data.iter().map_if(lambda x: x % 2 == 0).then(lambda x: f"{x} is even").or_skip().collect()
-        Seq('-2 is even', '0 is even', '2 is even')
+        >>> def checked_div(x: int) -> pc.Option[int]:
+        ...     return pc.Some(16 // x) if x != 0 else pc.NONE
+        >>>
+        >>> data = pc.Iter([-1, 4, 0, 1])
+        >>> data.map_while(checked_div).collect()
+        Seq(-16, 4)
+        >>> data = pc.Iter([0, 1, 2, -3, 4, 5, -6])
+        >>> # Convert to positive ints, stop at first negative
+        >>> data.map_while(lambda x: pc.Some(x) if x >= 0 else pc.NONE).collect()
+        Seq(0, 1, 2)
 
         ```
         """
-        return self.into(
-            _WhenBuilder,
-            _predicate=predicate,
-        )
+
+        def _gen() -> Generator[R]:
+            for opt in map(func, self._inner):
+                if opt.is_none():
+                    return
+                yield opt.unwrap()
+
+        return Iter(_gen())
 
     def repeat(
         self,
@@ -3619,7 +3530,7 @@ class Iter[T](BaseIter[T], Iterator[T]):
 
         ```
         """
-        return self.into(lambda x: Iter(map(cz.functoolz.juxt(*funcs), x._inner)))
+        return Iter(map(cz.functoolz.juxt(*funcs), self._inner))
 
     def adjacent(
         self,
@@ -3663,9 +3574,7 @@ class Iter[T](BaseIter[T], Iterator[T]):
         See also groupby_transform, which can be used with this function to group ranges of items with the same bool value.
 
         """
-        return self.into(
-            lambda x: Iter(mit.adjacent(predicate, x._inner, distance=distance))
-        )
+        return Iter(mit.adjacent(predicate, self._inner, distance=distance))
 
     def classify_unique(self) -> Iter[tuple[T, bool, bool]]:
         """Classify each element in terms of its uniqueness.
@@ -3692,7 +3601,7 @@ class Iter[T](BaseIter[T], Iterator[T]):
 
         ```
         """
-        return self.into(lambda x: Iter(mit.classify_unique(x)))
+        return Iter(mit.classify_unique(self._inner))
 
     def with_position(self) -> Iter[tuple[Position, T]]:
         """Return an iterable over (`Position`, `T`) tuples.
@@ -3732,7 +3641,7 @@ class Iter[T](BaseIter[T], Iterator[T]):
                 current = nxt
             yield ("last", current)
 
-        return self.into(lambda x: Iter(gen(x)))
+        return Iter(gen(self._inner))
 
     @overload
     def group_by(self, key: None = None) -> Iter[Group[T, T]]: ...
@@ -3802,8 +3711,4 @@ class Iter[T](BaseIter[T], Iterator[T]):
 
         ```
         """
-
-        def _group_by(data: Iterable[T]) -> Iter[Group[Any | T, T]]:
-            return Iter(Group(x, Iter(y)) for x, y in itertools.groupby(data, key))
-
-        return self.into(lambda x: _group_by(x._inner))
+        return Iter(Group(x, Iter(y)) for x, y in itertools.groupby(self._inner, key))
