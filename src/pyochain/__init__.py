@@ -172,15 +172,18 @@ The stubs used for the developpement, made by the maintainer of pyochain, can be
 
 """
 
-from ._dict import Dict
-from ._iter import Iter, Seq, Set, SetMut, Vec
+from ._dict import Dict, Item
+from ._iter import Enumerated, Group, Iter, Seq, Set, SetMut, Unzipped, Vec
 from ._option import NONE, Option, Some
 from ._result import Err, Ok, Result, ResultUnwrapError
 
 __all__ = [
     "NONE",
     "Dict",
+    "Enumerated",
     "Err",
+    "Group",
+    "Item",
     "Iter",
     "Ok",
     "Option",
@@ -190,5 +193,6 @@ __all__ = [
     "Set",
     "SetMut",
     "Some",
+    "Unzipped",
     "Vec",
 ]
