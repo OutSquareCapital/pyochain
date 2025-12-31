@@ -46,7 +46,7 @@ class Dict[K, V](Pipeable, MutableMapping[K, V]):
         self._inner = dict(data)
 
     def __repr__(self) -> str:
-        return f"{self.into(lambda d: get_config().dict_repr(d._inner))}"
+        return f"{get_config().dict_repr(self._inner)}"
 
     def __iter__(self) -> Iterator[K]:
         return self._inner.__iter__()
@@ -297,7 +297,7 @@ class Dict[K, V](Pipeable, MutableMapping[K, V]):
         """
         from ._iter import Iter
 
-        return self.into(lambda d: Iter(d._inner.keys()))
+        return Iter(self._inner.keys())
 
     def values_iter(self) -> Iter[V]:
         """Return an Iter of the dict's values.
@@ -314,7 +314,7 @@ class Dict[K, V](Pipeable, MutableMapping[K, V]):
         """
         from ._iter import Iter
 
-        return self.into(lambda d: Iter(d._inner.values()))
+        return Iter(self._inner.values())
 
     def iter(self) -> Iter[Item[K, V]]:
         """Return an `Iter` of the dict's items.
@@ -332,7 +332,7 @@ class Dict[K, V](Pipeable, MutableMapping[K, V]):
         """
         from ._iter import Iter
 
-        return self.into(lambda d: Iter(Item(*it) for it in d._inner.items()))
+        return Iter(Item(*it) for it in self._inner.items())
 
     def get_item(self, key: K) -> Option[V]:
         """Retrieve a value from the `Dict`.

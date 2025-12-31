@@ -41,8 +41,12 @@ if TYPE_CHECKING:
 
 @dataclass(slots=True)
 class Unzipped[T, V](Pipeable):
+    """Represents the result of unzipping an iterator of pairs into two separate iterators."""
+
     left: Iter[T]
+    """An iterator over the first elements of the pairs."""
     right: Iter[V]
+    """An iterator over the second elements of the pairs."""
 
 
 type TryVal[T] = Option[T] | Result[T, object] | T | None
@@ -72,8 +76,15 @@ class Enumerated[T](NamedTuple):
 
 
 class Group[K, V](NamedTuple):
+    """Represents a grouping of values by a common key.
+
+    Created by the `Iter.group_by()` method.
+    """
+
     key: K
+    """The common key for the group."""
     values: Iter[V]
+    """An iterator over the values associated with the key."""
 
     def __repr__(self) -> str:
         return f"({self.key.__repr__()}, {self.values.__repr__()})"
@@ -265,7 +276,7 @@ class BaseIter[T](Pipeable):
 
         ```
         """
-        return self.into(functools.partial(str.join, sep))
+        return sep.join(self._inner)
 
     def unzip[U, V](self: BaseIter[tuple[U, V]]) -> Unzipped[U, V]:
         """Converts an iterator of pairs into a pair of iterators.
@@ -292,12 +303,8 @@ class BaseIter[T](Pipeable):
 
         ```
         """
-
-        def _unzip(data: Iterable[tuple[U, V]]) -> Unzipped[U, V]:
-            d: tuple[tuple[U, V], ...] = tuple(data)
-            return Unzipped(Iter(x[0] for x in d), Iter(x[1] for x in d))
-
-        return self.into(_unzip)
+        d: tuple[tuple[U, V], ...] = tuple(self._inner)
+        return Unzipped(Iter(x[0] for x in d), Iter(x[1] for x in d))
 
     def reduce(self, func: Callable[[T, T], T]) -> T:
         """Apply a function of two arguments cumulatively to the items of an iterable, from left to right.
@@ -320,11 +327,7 @@ class BaseIter[T](Pipeable):
 
         ```
         """
-
-        def _reduce(data: Iterable[T]) -> T:
-            return functools.reduce(func, data)
-
-        return self.into(_reduce)
+        return functools.reduce(func, self._inner)
 
     def combination_index(self, r: Iterable[T]) -> int:
         """Computes the index of the first element, without computing the previous combinations.
@@ -349,7 +352,7 @@ class BaseIter[T](Pipeable):
 
         ```
         """
-        return self.into(functools.partial(mit.combination_index, r))
+        return mit.combination_index(r, self._inner)
 
     def first(self) -> T:
         """Return the first element.
@@ -364,7 +367,7 @@ class BaseIter[T](Pipeable):
 
         ```
         """
-        return self.into(cz.itertoolz.first)
+        return cz.itertoolz.first(self._inner)
 
     def second(self) -> T:
         """Return the second element.
@@ -379,7 +382,7 @@ class BaseIter[T](Pipeable):
 
         ```
         """
-        return self.into(cz.itertoolz.second)
+        return cz.itertoolz.second(self._inner)
 
     def last(self) -> T:
         """Return the last element.
@@ -394,7 +397,7 @@ class BaseIter[T](Pipeable):
 
         ```
         """
-        return self.into(cz.itertoolz.last)
+        return cz.itertoolz.last(self._inner)
 
     def length(self) -> int:
         """Return the length of the Iterable.
@@ -410,7 +413,7 @@ class BaseIter[T](Pipeable):
 
         ```
         """
-        return self.into(cz.itertoolz.count)
+        return cz.itertoolz.count(self._inner)
 
     def nth(self, index: int) -> T:
         """Return the nth item at index.
@@ -428,7 +431,7 @@ class BaseIter[T](Pipeable):
 
         ```
         """
-        return self.into(functools.partial(cz.itertoolz.nth, index))
+        return cz.itertoolz.nth(index, self._inner)
 
     def argmax[U](self, key: Callable[[T], U] | None = None) -> int:
         """Index of the first occurrence of a maximum value in an iterable.
@@ -461,7 +464,7 @@ class BaseIter[T](Pipeable):
 
         ```
         """
-        return self.into(mit.argmax, key=key)
+        return mit.argmax(self._inner, key=key)
 
     def argmin[U](self, key: Callable[[T], U] | None = None) -> int:
         """Index of the first occurrence of a minimum value in an iterable.
@@ -497,7 +500,7 @@ class BaseIter[T](Pipeable):
 
         ```
         """
-        return self.into(mit.argmin, key=key)
+        return mit.argmin(self._inner, key=key)
 
     def sum[U: int | float](self: BaseIter[U]) -> U | Literal[0]:
         """Return the sum of the sequence.
@@ -512,7 +515,7 @@ class BaseIter[T](Pipeable):
 
         ```
         """
-        return self.into(sum)
+        return sum(self._inner)
 
     def min[U: int | float](self: BaseIter[U]) -> U:
         """Return the minimum of the sequence.
@@ -527,7 +530,7 @@ class BaseIter[T](Pipeable):
 
         ```
         """
-        return self.into(min)
+        return min(self._inner)
 
     def max[U: int | float](self: BaseIter[U]) -> U:
         """Return the maximum of the sequence.
@@ -542,7 +545,7 @@ class BaseIter[T](Pipeable):
 
         ```
         """
-        return self.into(max)
+        return max(self._inner)
 
     def all(self, predicate: Callable[[T], bool] = lambda x: bool(x)) -> bool:
         """Tests if every element of the iterator matches a predicate.
@@ -577,11 +580,7 @@ class BaseIter[T](Pipeable):
 
         ```
         """
-
-        def _all(data: Iterable[T]) -> bool:
-            return all(predicate(x) for x in data)
-
-        return self.into(_all)
+        return all(predicate(x) for x in self._inner)
 
     def any(self, predicate: Callable[[T], bool] = lambda x: bool(x)) -> bool:
         """Tests if any element of the iterator matches a predicate.
@@ -614,11 +613,7 @@ class BaseIter[T](Pipeable):
 
         ```
         """
-
-        def _any(data: Iterable[T]) -> bool:
-            return any(predicate(x) for x in data)
-
-        return self.into(_any)
+        return any(predicate(x) for x in self._inner)
 
     def all_equal[U](self, key: Callable[[T], U] | None = None) -> bool:
         """Return True if all items are equal.
@@ -645,7 +640,7 @@ class BaseIter[T](Pipeable):
 
         ```
         """
-        return self.into(mit.all_equal, key=key)
+        return mit.all_equal(self._inner, key=key)
 
     def all_unique[U](self, key: Callable[[T], U] | None = None) -> bool:
         """Returns True if all the elements of iterable are unique.
@@ -676,7 +671,7 @@ class BaseIter[T](Pipeable):
         Iterables with a mix of hashable and unhashable items can be used, but the function will be slower for unhashable items
 
         """
-        return self.into(mit.all_unique, key=key)
+        return mit.all_unique(self._inner, key=key)
 
     def is_sorted[U](
         self,
@@ -718,7 +713,7 @@ class BaseIter[T](Pipeable):
 
         If there are no out-of-order items, the iterable is exhausted.
         """
-        return self.into(mit.is_sorted, key=key, reverse=reverse, strict=strict)
+        return mit.is_sorted(self._inner, key=key, reverse=reverse, strict=strict)
 
     def find(
         self,
@@ -752,10 +747,7 @@ class BaseIter[T](Pipeable):
         """
         from ._option import Option
 
-        def _find(data: Iterable[T]) -> Option[T]:
-            return Option.from_(next(filter(predicate, data), None))
-
-        return self.into(_find)
+        return Option.from_(next(filter(predicate, self._inner), None))
 
     def sort[U: SupportsRichComparison[Any]](
         self: BaseIter[U],
@@ -784,11 +776,7 @@ class BaseIter[T](Pipeable):
 
         ```
         """
-
-        def _sort(data: Iterable[U]) -> Vec[U]:
-            return Vec(sorted(data, reverse=reverse, key=key))
-
-        return self.into(_sort)
+        return Vec(sorted(self._inner, reverse=reverse, key=key))
 
     def tail(self, n: int) -> Seq[T]:
         """Return a tuple of the last n elements.
@@ -807,11 +795,7 @@ class BaseIter[T](Pipeable):
 
         ```
         """
-
-        def _tail(data: Iterable[T]) -> Seq[T]:
-            return Seq(cz.itertoolz.tail(n, data))
-
-        return self.into(_tail)
+        return Seq(cz.itertoolz.tail(n, self._inner))
 
     def top_n(self, n: int, key: Callable[[T], Any] | None = None) -> Seq[T]:
         """Return a tuple of the top-n items according to key.
@@ -831,11 +815,7 @@ class BaseIter[T](Pipeable):
 
         ```
         """
-
-        def _top_n(data: Iterable[T]) -> Seq[T]:
-            return Seq(cz.itertoolz.topk(n, data, key=key))
-
-        return self.into(_top_n)
+        return Seq(cz.itertoolz.topk(n, self._inner, key=key))
 
     def most_common(self, n: int | None = None) -> Vec[tuple[T, int]]:
         """Return the n most common elements and their counts.
@@ -858,10 +838,7 @@ class BaseIter[T](Pipeable):
         """
         from collections import Counter
 
-        def _most_common(data: Iterable[T]) -> Vec[tuple[T, int]]:
-            return Vec(Counter(data).most_common(n))
-
-        return self.into(_most_common)
+        return Vec(Counter(self._inner).most_common(n))
 
 
 class Set[T](BaseIter[T], AbstractSet[T]):
@@ -1165,7 +1142,7 @@ class Seq[T](BaseIter[T], Sequence[T]):
 
         ```
         """
-        return self.into(cz.itertoolz.isdistinct)
+        return cz.itertoolz.isdistinct(self._inner)
 
 
 class Vec[T](Seq[T], MutableSequence[T]):
