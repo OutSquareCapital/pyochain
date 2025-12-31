@@ -20,7 +20,7 @@ Provides the following core classes and utilities:
   - A superset of Python `collections.abc.Iterator`, with chainable functional methods.
   - Underlying data structure is an `iterator` (if we can call it that).
   - Implement `Iterator` Protocol.
-  - Can be converted to `Seq[T]|Vec[T]|SetFrozen[T]|SetMut[T]` with the `.collect()` method (default to Seq[T]).
+  - Can be converted to `Seq[T]|Vec[T]|Set[T]|SetMut[T]` with the `.collect()` method (default to Seq[T]).
 - `Seq[T]`
   - An immutable collection with chainable methods.
   - Underlying data structure is a `tuple`.
@@ -137,13 +137,13 @@ Ok(25.0)
 ### Philosophy
 
 - **Declarative over Imperative:** Replace explicit `for` and `while` loops with sequences of high-level operations (map, filter, group, join...).
-- **Fluent Chaining:** Each method transforms the data and returns a new wrapper instance, allowing for seamless chaining.
+- **Fluent Chaining:** Most methods transforms the data and returns a new wrapper instance, allowing for seamless chaining.
 - **Lazy first:** All methods on collections that use an Iterator (think most for loop) and do not need to materialize data immediately are in `Iter[T]`.
-Only methods that directly returns booleans, single values, or need to operate on the whole dataset (set methods sorting, etc...) are shared between the `Iterable` classes (`Seq`, `Vec`, `SetFrozen`, `SetMut`) via their common base class.
+Only methods that directly returns booleans, single values, or need to operate on the whole dataset (sorting for example) are shared between the `Iterable` classes (`Seq`, `Vec`, `Set`, `SetMut`) via their common base class.
 This encourages the use of lazy processing by default (since you have to explicitly call `iter()` to get access to most methods), and collecting only at the last possible moment.
-- **Explicit mutability:** `Seq` is the usual return type for most methods who materialize data, hence improving memory efficiency and safety, compared to using list everytime. `Vec` is provided when mutability is required.
-- **100% Type-safe:** Extensive use of generics and overloads ensures type safety and improves developer experience.
-- **Documentation-first:** Each method is thoroughly documented with clear explanations, and usage examples. Before any commit is made, each docstring is automatically tested to ensure accuracy. This also allows for a convenient experience in IDEs, where developers can easily access documentation with a simple hover of the mouse.
+- **Explicit mutability:** `Seq` is the usual return type for most methods who materialize data, hence improving memory efficiency and safety, compared to using list everytime. `Vec` is provided when mutability is required. Same for `Set` and `SetMut`. In python, set is the "default" set type (constructor and shorter name), but in pyochain Set is a frozenset.
+- **100% Type-safe:** Extensive use of generics and overloads ensures type safety and improves developer experience. The library is fully typed and autocompletion is a central concern.
+- **Documentation-first:** Each method is thoroughly documented with clear explanations, and usage examples. Before any commit is made, each docstring is automatically tested to ensure accuracy. This also allows for a convenient experience in IDEs, where developers can easily access documentation with a simple hover of the mouse, with a guarantee that the examples work as intended.
 - **Functional and chained paradigm:** Design encourages building complex data transformations by composing simple, reusable functions on known buildings blocks, rather than implementing customs classes each time.
 
 ### Inspirations
