@@ -134,6 +134,8 @@ Ok(25.0)
 
 ```
 
+Find more examples in the [examples file](EXAMPLES.md).
+
 ### Philosophy
 
 - **Declarative over Imperative:** Replace explicit `for` and `while` loops with sequences of high-level operations (map, filter, group, join...).

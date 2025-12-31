@@ -16,7 +16,8 @@ from pathlib import Path
 import pyochain as pc
 
 PROJECT = "my_project"
-SRC = Path(f"src/{PROJECT}")
+SRC = Path("src").joinpath(PROJECT)
+
 
 class Splitter(StrEnum):
     EQ = "=="
@@ -40,34 +41,33 @@ def _split_version(line: str, pos: int) -> str:
     )
 
 
-def find_paths():
+def find_paths() -> pc.Seq[Path]:
     """Find all requirements.txt files in the src/project directory."""
-    return (
-        pc.Iter(SRC.rglob("*requirements.txt"))
-        .collect()
-        .println()
-    )
+    return pc.Iter(SRC.rglob("*requirements.txt")).collect()
 
-def main():
+
+def main() -> pc.Dict[str, str]:
     return (
         pc.Iter(SRC.rglob("*requirements.txt"))
         .map(lambda p: p.read_text().splitlines())
         .flatten()
         .group_by(lambda line: _split_version(line, 0))
-        .map_values(
-            lambda lines: pc.Seq(lines)
-            .iter()
-            .map(lambda line: _split_version(line, 1).strip())
-            .sort()
-            .first()
+        .map(
+            lambda lines: (
+                lines.key,
+                lines.values.map(lambda line: _split_version(line, 1).strip())
+                .sort()
+                .first(),
+            )
         )
-        .println()
+        .collect(pc.Dict)
     )
 
 
 if __name__ == "__main__":
     find_paths()
     main()
+
 ```
 
 ### Determining All Public Methods of a Class
