@@ -32,7 +32,7 @@ import cytoolz as cz
 import more_itertools as mit
 
 from ._config import get_config
-from ._core import Pipeable, SupportsRichComparison
+from ._core import Pipeable, SupportsRichComparison, SupportsSumWithNoDefaultGiven
 
 if TYPE_CHECKING:
     from ._option import Option
@@ -53,7 +53,6 @@ type TryVal[T] = Option[T] | Result[T, object] | T | None
 """Represent a value that may be failible."""
 type TryIter[T] = Iter[Option[T]] | Iter[Result[T, object]] | Iter[T | None]
 """Represent an iterator that may yield failible values."""
-"""Represent a function that collects an Iterable into a specific collection type."""
 Position = Literal["first", "middle", "last", "only"]
 """Literal type representing the position of an item in an iterable."""
 
@@ -502,7 +501,7 @@ class BaseIter[T](Pipeable):
         """
         return mit.argmin(self._inner, key=key)
 
-    def sum[U: int | float](self: BaseIter[U]) -> U | Literal[0]:
+    def sum[U: SupportsSumWithNoDefaultGiven[Any]](self: BaseIter[U]) -> U | Literal[0]:
         """Return the sum of the sequence.
 
         Returns:
@@ -517,7 +516,7 @@ class BaseIter[T](Pipeable):
         """
         return sum(self._inner)
 
-    def min[U: int | float](self: BaseIter[U]) -> U:
+    def min[U: SupportsRichComparison[Any]](self: BaseIter[U]) -> U:
         """Return the minimum of the sequence.
 
         Returns:
@@ -532,7 +531,7 @@ class BaseIter[T](Pipeable):
         """
         return min(self._inner)
 
-    def max[U: int | float](self: BaseIter[U]) -> U:
+    def max[U: SupportsRichComparison[Any]](self: BaseIter[U]) -> U:
         """Return the maximum of the sequence.
 
         Returns:
@@ -715,10 +714,7 @@ class BaseIter[T](Pipeable):
         """
         return mit.is_sorted(self._inner, key=key, reverse=reverse, strict=strict)
 
-    def find(
-        self,
-        predicate: Callable[[T], bool],
-    ) -> Option[T]:
+    def find(self, predicate: Callable[[T], bool]) -> Option[T]:
         """Searches for an element of an iterator that satisfies a `predicate`.
 
         Takes a closure that returns true or false as `predicate`, and applies it to each element of the iterator.
