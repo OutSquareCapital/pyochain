@@ -502,7 +502,9 @@ class BaseIter[T](Pipeable):
         return mit.argmin(self._inner, key=key)
 
     def sum[U: SupportsSumWithNoDefaultGiven[Any]](self: BaseIter[U]) -> U | Literal[0]:
-        """Return the sum of the sequence.
+        """Return the sum of the `Iterable`.
+
+        If the `Iterable` is empty, return 0.
 
         Returns:
             U | Literal[0]: The sum of all elements.
@@ -519,9 +521,16 @@ class BaseIter[T](Pipeable):
     def min[U: SupportsRichComparison[Any]](self: BaseIter[U]) -> U:
         """Return the minimum of the sequence.
 
+        The elements of the `Iterable` must support comparison operations.
+
+        For comparing elements using a custom **key** function, use `min_by()` instead.
+
+        If multiple elements are tied for the minimum value, the first one encountered is returned.
+
         Returns:
             U: The minimum value.
 
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([3, 1, 2]).min()
@@ -531,12 +540,48 @@ class BaseIter[T](Pipeable):
         """
         return min(self._inner)
 
+    def min_by[U: SupportsRichComparison[Any]](self, *, key: Callable[[T], U]) -> T:
+        """Return the minimum element using a custom **key** function.
+
+        If multiple elements are tied for the minimum value, the first one encountered is returned.
+
+        Args:
+            key (Callable[[T], U]): Function to extract a comparison key from each element.
+
+        Returns:
+            T: The element with the minimum key value.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> from dataclasses import dataclass
+        >>> @dataclass
+        ... class Foo:
+        ...     x: int
+        ...     y: str
+        >>>
+        >>> pc.Seq([Foo(2, "a"), Foo(1, "b"), Foo(4, "c")]).min_by(key=lambda f: f.x)
+        Foo(x=1, y='b')
+        >>> pc.Seq([Foo(2, "a"), Foo(1, "b"), Foo(1, "c")]).min_by(key=lambda f: f.x)
+        Foo(x=1, y='b')
+
+        ```
+        """
+        return min(self._inner, key=key)
+
     def max[U: SupportsRichComparison[Any]](self: BaseIter[U]) -> U:
-        """Return the maximum of the sequence.
+        """Return the maximum of the `Iterable`.
+
+        The elements of the `Iterable` must support comparison operations.
+
+        For comparing elements using a custom **key** function, use `max_by()` instead.
+
+        If multiple elements are tied for the maximum value, the first one encountered is returned.
 
         Returns:
             U: The maximum value.
 
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([3, 1, 2]).max()
@@ -546,7 +591,36 @@ class BaseIter[T](Pipeable):
         """
         return max(self._inner)
 
-    def all(self, predicate: Callable[[T], bool] = lambda x: bool(x)) -> bool:
+    def max_by[U: SupportsRichComparison[Any]](self, *, key: Callable[[T], U]) -> T:
+        """Return the maximum element using a custom **key** function.
+
+        If multiple elements are tied for the maximum value, the first one encountered is returned.
+
+        Args:
+            key (Callable[[T], U]): Function to extract a comparison key from each element.
+
+        Returns:
+            T: The element with the maximum key value.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> from dataclasses import dataclass
+        >>> @dataclass
+        ... class Foo:
+        ...     x: int
+        ...     y: str
+        >>>
+        >>> pc.Seq([Foo(2, "a"), Foo(3, "b"), Foo(4, "c")]).max_by(key=lambda f: f.x)
+        Foo(x=4, y='c')
+        >>> pc.Seq([Foo(2, "a"), Foo(3, "b"), Foo(3, "c")]).max_by(key=lambda f: f.x)
+        Foo(x=3, y='b')
+
+        ```
+        """
+        return max(self._inner, key=key)
+
+    def all(self, predicate: Callable[[T], bool] | None = None) -> bool:
         """Tests if every element of the iterator matches a predicate.
 
         `Iter.all()` takes a closure that returns true or false.
@@ -558,7 +632,7 @@ class BaseIter[T](Pipeable):
         An empty iterator returns true.
 
         Args:
-            predicate (Callable[[T], bool]): Function to evaluate each item. Defaults to checking truthiness.
+            predicate (Callable[[T], bool] | None): Optional function to evaluate each item.
 
         Returns:
             bool: True if all elements match the predicate, False otherwise.
@@ -579,9 +653,11 @@ class BaseIter[T](Pipeable):
 
         ```
         """
+        if predicate is None:
+            return all(self._inner)
         return all(predicate(x) for x in self._inner)
 
-    def any(self, predicate: Callable[[T], bool] = lambda x: bool(x)) -> bool:
+    def any(self, predicate: Callable[[T], bool] | None = None) -> bool:
         """Tests if any element of the iterator matches a predicate.
 
         `Iter.any()` takes a closure that returns true or false.
@@ -593,7 +669,7 @@ class BaseIter[T](Pipeable):
         An empty iterator returns false.
 
         Args:
-            predicate (Callable[[T], bool]): Function to evaluate each item. Defaults to checking truthiness.
+            predicate (Callable[[T], bool] | None): Optional function to evaluate each item.
 
         Returns:
             bool: True if any element matches the predicate, False otherwise.
@@ -612,6 +688,8 @@ class BaseIter[T](Pipeable):
 
         ```
         """
+        if predicate is None:
+            return any(self._inner)
         return any(predicate(x) for x in self._inner)
 
     def all_equal[U](self, key: Callable[[T], U] | None = None) -> bool:
