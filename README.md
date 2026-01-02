@@ -138,7 +138,7 @@ All provided classes share the following core methods for enhanced usability:
 
 E.g `Seq[T].into()` can take any function/object that expect a `Sequence[T]` as argument, and return it's result `R`.
 Conceptually, replace`f(x, args, kwargs)` with `x.into(f, args, kwargs)`.
-Note that `Iter.collect()` is just a specific case of `into()`, with constraint on the return type being one of the collection types (but the implementation is the same).
+Note that `Iter.collect()` is just a specific case of `into()`, with constraint on the return type being one of the collection types (but the implementation is the same), and `Seq` as a default argument value.
 Using `collect()` for `Iter` rather than `into()` is considered the idiomatic way to materialize data from an iterator in pyochain.  
 
 ## API Reference 📖

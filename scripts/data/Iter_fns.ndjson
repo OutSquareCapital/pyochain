@@ -51,14 +51,12 @@
 {"source":"rust","fn":"cmp"}
 {"source":"rust","fn":"cmp_by"}
 {"source":"rust","fn":"collect_into"}
-{"source":"rust","fn":"empty"}
 {"source":"rust","fn":"eq_by"}
 {"source":"rust","fn":"fold"}
 {"source":"rust","fn":"fuse"}
 {"source":"rust","fn":"intersperse_with"}
 {"source":"rust","fn":"is_partitioned"}
 {"source":"rust","fn":"next_chunk"}
-{"source":"rust","fn":"once_with"}
 {"source":"rust","fn":"partial_cmp"}
 {"source":"rust","fn":"partial_cmp_by"}
 {"source":"rust","fn":"partition_in_place"}
@@ -68,8 +66,6 @@
 {"source":"rust","fn":"repeat_with"}
 {"source":"rust","fn":"rposition"}
 {"source":"rust","fn":"size_hint"}
-{"source":"rust","fn":"successors"}
 {"source":"rust","fn":"try_find"}
 {"source":"rust","fn":"try_fold"}
-{"source":"rust","fn":"try_for_each"}
 {"source":"rust","fn":"try_reduce"}
