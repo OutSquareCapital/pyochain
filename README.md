@@ -14,50 +14,119 @@ uv add pyochain
 
 ## Overview
 
-Provides the following core classes and utilities:
+Pyochain focus on providing a set of core classes to work with collections, handle optional values, or manage errors.
 
-- `Iter[T]`
-  - A superset of Python `collections.abc.Iterator`, with chainable functional methods.
-  - Underlying data structure is an `iterator` (if we can call it that).
-  - Implement `Iterator` Protocol.
-  - Can be converted to `Seq[T]|Vec[T]|Set[T]|SetMut[T]` with the `.collect()` method (default to Seq[T]).
-- `Seq[T]`
-  - An immutable collection with chainable methods.
-  - Underlying data structure is a `tuple`.
-  - Can be converted to `Iter` with the `.iter()` method.
-  - Implement `Sequence` Protocol.
-- `Vec[T]`
-  - A mutable collection with chainable methods.
-  - Underlying data structure is a `list`.
-  - Can be converted to `Iter` with the `.iter()` method.
-  - Implement `MutableSequence` Protocol.
-- `Set[T]`
-  - An immutable, unordered collection of unique elements with chainable methods.
-  - Underlying data structure is a `frozenset`.
-  - Can be converted to `Iter` with the `.iter()` method.
-  - Implement `Set` Protocol.
-- `SetMut[T]`
-  - A mutable, unordered collection of unique elements with chainable methods.
-  - Underlying data structure is a `set`.
-  - Can be converted to `Iter` with the `.iter()` method.
-  - Implement `MutableSet` Protocol.
-- `Dict[K, V]`
-  - A mutable mapping with chainable methods.
-  - Underlying data structure is a `dict`.
-  - Implement `MutableMapping` Protocol.
-  - Can be converted to `Iter` with the `.iter()`, `.keys_iter()`, `.values_iter()` methods.
-- `Option[T] | Some[T] | NONE`
-  - A type representing an optional value.
-  - Provides all methods from the Rust stdlib `Option` Trait (as long as they are applicable/made sense in a Python context).
-  - Analog to a superset of `T | None`.
-  - Can be converted to `Iter[T]` with the `.iter()` method.
-  - Can be converted to Result with the `.ok_or()` method.
-- `Result[T, E] | Ok[T] | Err[E]`
-  - A type representing either a success (`Ok[T]`) or failure (`Err[E]`), similar to Rust's `Result` Enum.
-  - Provides all methods from the Rust stdlib `Result` Trait (as long as they are applicable/made sense in a Python context).
-  - Analog to a superset of `T | Exception`.
-  - Can be converted to `Iter[T]` with the `.iter()` method.
-  - Can be converted to `Option[T]` with the `.ok()` method.
+### Collections & Iterators
+
+The following table summarizes the main collection types provided by pyochain, along with their characteristics and Python equivalents.
+All collection types can be created from any object implementing the `Iterable` protocol (think anything you can use in a `for` loop).
+
+| Type        | Underlying Structure | Implement         | Ordered   | Uniqueness | Mutability | Python Equivalent |
+| ----------- | -------------------- | ----------------- | --------- | ---------- | ---------- | ----------------- |
+| `Iter[T]`   | `iterator`           | `Iterator`        | N/A       | N/A        | N/A        | `Iterator[T]`     |
+| `Seq[T]`    | `tuple`              | `Sequence`        | Yes       | No         | No         | `tuple[T]`        |
+| `Vec[T]`    | `list`               | `MutableSequence` | Yes       | No         | Yes        | `list[T]`         |
+| `Set[T]`    | `frozenset`          | `Set`             | No        | Yes        | No         | `frozenset[T]`    |
+| `SetMut[T]` | `set`                | `MutableSet`      | No        | Yes        | Yes        | `set[T]`          |
+| `Dict[K,V]` | `dict`               | `MutableMapping`  | Yes       | Keys       | Yes        | `dict[K, V]`      |
+
+### Option & Result Types
+
+The following table summarizes the `Option` and `Result` types provided by pyochain, along with their characteristics and Python equivalents.
+Due to type inference limitations in Python, small functions with explicit `Result[T, E]` or `Option[T]` return types are the recommended way to create those types.
+Note that `Option` is easier to infer from context than `Result`, and can henceforth be created with simple lambdas most of the time.
+
+| Type           | Description                             | Creation                                                          | Python Equivalent |
+| -------------- | --------------------------------------- | ----------------------------------------------------------------- | ----------------- |
+| `Option[T]`    | Optional value container (abstract)     | `Option.from_(value)` or if/else statements                       | `T \| None`       |
+| `Some[T]`      | Represents a present value              | `Some(value)` with if/else or `Option.from_(value)`               | `T`               |
+| `NONE`         | Represents absence of value             | `NONE` (singleton) with if/else or `Option.from_(None)`           | `None`            |
+| `Result[T, E]` | Success or failure container (abstract) | In functions with try/except pattern                              | `T \| E`          |
+| `Ok[T]`        | Represents a successful result          | `Ok(value)` in try block or success path                          | `T`               |
+| `Err[E]`       | Represents a failed result              | `Err(error)` in except block or error path                        | `Exception`       |
+
+### Graphical Overview
+
+Below is a graphical representation of the core classes and their relationships.
+
+```mermaid
+---
+config:
+  look: neo
+---
+flowchart BT
+ subgraph Collections["📦 Collections"]
+    direction TB
+        Seq["<b>Seq[T]</b><br>tuple"]
+        Vec["<b>Vec[T]</b><br>list"]
+        Set["<b>Set[T]</b><br>frozenset"]
+        SetMut["<b>SetMut[T]</b><br>set"]
+        Dict["<b>Dict[K,V]</b><br>dict"]
+  end
+ subgraph OptionGroup["🎁 Option Types"]
+    direction TB
+        Option["<b>Option[T]</b><br>(abstract)"]
+        Some["<b>Some[T]</b><br>(has value)"]
+        NONE["<b>NONE</b><br>(no value)"]
+  end
+ subgraph ResultGroup["✅ Result Types"]
+    direction TB
+        Result["<b>Result[T,E]</b><br>(abstract)"]
+        Ok["<b>Ok[T]</b><br>(success)"]
+        Err["<b>Err[E]</b><br>(error)"]
+  end
+    Option -.-> Some & NONE
+    Result -.-> Ok & Err
+    Collections L_Collections_IterMethod_0@--> IterMethod["⛓️<br><b>.iter()</b>"] & Into["🔄<br><b>.into(func/type)</b>"]
+    OptionGroup L_OptionGroup_IterMethod_0@--> IterMethod & OkOrMethod["✅<br><b>.ok_or(err)</b>"] & Into
+    ResultGroup L_ResultGroup_IterMethod_0@--> IterMethod & OkMethod["🎁<br><b>.ok()</b>"] & Into
+    IterMethod L_IterMethod_Iter_0@--> Iter["<b>Iter[T]</b><br>lazy iterator"]
+    Iter L_Iter_CollectMethod_0@--> CollectMethod["📦<br><b>.collect(func/type)</b>"] & Into
+    CollectMethod L_CollectMethod_Collections_0@--> Collections
+    OkOrMethod L_OkOrMethod_ResultGroup_0@--> ResultGroup
+    OkMethod L_OkMethod_OptionGroup_0@--> OptionGroup
+    Into L_Into_AnyType_0@--> AnyType["🔄 Any Type"]
+
+    IterMethod@{ shape: rounded}
+    Into@{ shape: rounded}
+    OkOrMethod@{ shape: rounded}
+    OkMethod@{ shape: rounded}
+    CollectMethod@{ shape: rounded}
+     Seq:::collectionsStyle
+     Vec:::collectionsStyle
+     Set:::collectionsStyle
+     SetMut:::collectionsStyle
+     Dict:::collectionsStyle
+     Option:::optionStyle
+     Some:::optionStyle
+     NONE:::optionStyle
+     Result:::resultStyle
+     Ok:::resultStyle
+     Err:::resultStyle
+     IterMethod:::iterMethodStyle
+     Into:::intoStyle
+     OkOrMethod:::okOrMethodStyle
+     OkMethod:::okMethodStyle
+     Iter:::iterStyle
+     CollectMethod:::collectMethodStyle
+     AnyType:::anyStyle
+    classDef collectionsStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000
+    classDef iterMethodStyle fill:#c8e6c9,stroke:#2e7d32,stroke-width:3px,color:#000
+    classDef iterStyle fill:#e8f5e9,stroke:#388e3c,stroke-width:3px,color:#000
+    classDef collectMethodStyle fill:#b3e5fc,stroke:#0277bd,stroke-width:3px,color:#000
+    classDef okOrMethodStyle fill:#ffccbc,stroke:#d84315,stroke-width:3px,color:#000
+    classDef okMethodStyle fill:#fff59d,stroke:#f9a825,stroke-width:3px,color:#000
+    classDef optionStyle fill:#fff9c4,stroke:#f57f17,stroke-width:3px,color:#000
+    classDef resultStyle fill:#ffebee,stroke:#c62828,stroke-width:3px,color:#000
+    classDef intoStyle fill:#e1bee7,stroke:#7b1fa2,stroke-width:3px,color:#000
+    classDef anyStyle fill:#f5f5f5,stroke:#616161,stroke-width:2px,stroke-dasharray:5,color:#000
+    style IterMethod fill:#FFD600,stroke:#FF6D00
+    style Into stroke:#FF6D00,fill:#FFD600
+    style OkOrMethod fill:#FFD600,stroke:#FF6D00
+    style OkMethod fill:#FFD600,stroke:#FF6D00
+    style CollectMethod fill:#FFD600,stroke:#FF6D00
+    style AnyType stroke-width:1px,stroke-dasharray: 0
+```
 
 ### Shared Core Features
 
@@ -66,8 +135,11 @@ All provided classes share the following core methods for enhanced usability:
 - **`.inspect()`**: Insert functions who compute side-effects in the chain without breaking it (print, mutation of an external variable, logging...). If Option or Result, call the function only if `Some` or `Ok`.
 
 - **`.into()`**:  Take a `Callable[[Self, P], T]` as argument to convert from **Self** to **T** in a chained way.
+
 E.g `Seq[T].into()` can take any function/object that expect a `Sequence[T]` as argument, and return it's result `R`.
 Conceptually, replace`f(x, args, kwargs)` with `x.into(f, args, kwargs)`.
+Note that `Iter.collect()` is just a specific case of `into()`, with constraint on the return type being one of the collection types (but the implementation is the same).
+Using `collect()` for `Iter` rather than `into()` is considered the idiomatic way to materialize data from an iterator in pyochain.  
 
 ## API Reference 📖
 
