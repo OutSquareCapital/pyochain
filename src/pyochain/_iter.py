@@ -1327,6 +1327,27 @@ class Iter[T](BaseIter[T], Iterator[T]):
     def __next__(self) -> T:
         return next(self._inner)
 
+    @classmethod
+    def empty(cls) -> Self:
+        """Create an empty `Iter`.
+
+        Make sure to specify the type when calling this method, e.g., `Iter[int].empty()`.
+
+        Otherwise, `T` will be inferred as `Any`.
+
+        Returns:
+            Self: A new empty Iter instance.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter.empty().collect()
+        Seq()
+
+        ```
+        """
+        return cls(())
+
     def next(self) -> Option[T]:
         """Return the next element in the iterator.
 
@@ -1356,7 +1377,7 @@ class Iter[T](BaseIter[T], Iterator[T]):
         return Option.from_(next(self, None))
 
     @staticmethod
-    def once(value: T) -> Iter[T]:
+    def once[V](value: V) -> Iter[V]:
         """Create an `Iter` that yields a single value.
 
         If you have a function which works on iterators, but you only need to process one value, you can use this method rather than doing something like `Iter([value])`.
@@ -1364,10 +1385,10 @@ class Iter[T](BaseIter[T], Iterator[T]):
         This can be considered the equivalent of `.insert()` but as a constructor.
 
         Args:
-            value (T): The single value to yield.
+            value (V): The single value to yield.
 
         Returns:
-            Iter[T]: An iterator yielding the specified value.
+            Iter[V]: An iterator yielding the specified value.
 
         Example:
         ```python
@@ -1378,6 +1399,36 @@ class Iter[T](BaseIter[T], Iterator[T]):
         ```
         """
         return Iter((value,))
+
+    @staticmethod
+    def once_with[**P, R](
+        func: Callable[P, R], *args: P.args, **kwargs: P.kwargs
+    ) -> Iter[R]:
+        """Create an `Iter`  that lazily generates a value exactly once by invoking the provided closure.
+
+        If you have a function which works on iterators, but you only need to process one value, you can use this method rather than doing something like `Iter([value])`.
+
+        This can be considered the equivalent of `.insert()` but as a constructor.
+
+        Unlike `.once()`, this function will lazily generate the value on request.
+
+        Args:
+            func (Callable[P, R]): The single value to yield.
+            *args (P.args): Positional arguments to pass to **func**.
+            **kwargs (P.kwargs): Keyword arguments to pass to **func**.
+
+        Returns:
+            Iter[R]: An iterator yielding the specified value.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter.once(42).collect()
+        Seq(42,)
+
+        ```
+        """
+        return Iter(func(*args, **kwargs) for _ in range(1))
 
     @staticmethod
     def from_count(start: int = 0, step: int = 1) -> Iter[int]:
@@ -1405,66 +1456,77 @@ class Iter[T](BaseIter[T], Iterator[T]):
         return Iter(itertools.count(start, step))
 
     @staticmethod
-    def from_fn[S, V](
-        state: S, generator: Callable[[S], Option[tuple[V, S]]]
-    ) -> Iter[V]:
-        """Create an `Iter` by repeatedly applying a **generator** function to an initial **state**.
+    def from_fn[R](f: Callable[[], Option[R]]) -> Iter[R]:
+        """Create an `Iter` from a nullary generator function.
 
-        The **generator** function takes the current state and must return:
+        The callable must return:
 
-        - A tuple of `Some(value, new_state)` to emit the value `V` and continue with the new **state** `S`.
-        - `NONE` to stop the generation.
+        - `Some(value)` to yield a value
+        - `NONE` to stop
 
-        This is functionally equivalent to a state-based `while` loop.
-
-        **Warning** ⚠️
-            If the **generator** function never returns `NONE`, it creates an infinite iterator.
-            Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken if necessary.
 
         Args:
-            state (S): Initial state for the generator.
-            generator (Callable[[S], Option[tuple[V, S]]]): Function that generates the next value and state.
+            f (Callable[[], Option[R]]): Callable that returns the next item wrapped in `Option`.
 
         Returns:
-            Iter[V]: An iterator generating values produced by the generator function.
+            Iter[R]: An iterator yielding values produced by **f**.
 
         Example:
         ```python
         >>> import pyochain as pc
-        >>> # Example 1: Simple counter up to 5
-        >>> def counter_generator(state: int) -> pc.Option[tuple[int, int]]:
-        ...     if state < 5:
-        ...         return pc.Some((state * 10, state + 1))
-        ...     return pc.NONE
-        >>> pc.Iter.from_fn(0, counter_generator).collect()
-        Seq(0, 10, 20, 30, 40)
-        >>> # Example 2: Fibonacci sequence up to 100
-        >>> type FibState = tuple[int, int]
-        >>> def fib_generator(state: FibState) -> pc.Option[tuple[int, FibState]]:
-        ...     a, b = state
-        ...     if a > 100:
-        ...         return pc.NONE
-        ...     return pc.Some((a, (b, a + b)))
-        >>> pc.Iter.from_fn((0, 1), fib_generator).collect()
-        Seq(0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89)
-        >>> # Example 3: Infinite iterator (requires take())
-        >>> pc.Iter.from_fn(1, lambda s: pc.Some((s, s * 2))).take(5).collect()
-        Seq(1, 2, 4, 8, 16)
+        >>> counter = 0
+        >>> def gen() -> pc.Option[int]:
+        ...     global counter
+        ...     counter += 1
+        ...     return pc.Some(counter) if counter < 6 else pc.NONE
+        >>> pc.Iter.from_fn(gen).collect()
+        Seq(1, 2, 3, 4, 5)
 
         ```
         """
 
-        def _from_fn() -> Iterator[V]:
-            current_state: S = state
+        def _from_fn() -> Iterator[R]:
             while True:
-                result = generator(current_state)
-                if result.is_none():
-                    break
-                value, next_state = result.unwrap()
-                yield value
-                current_state = next_state
+                item = f()
+                if item.is_none():
+                    return
+                yield item.unwrap()
 
         return Iter(_from_fn())
+
+    @staticmethod
+    def successors[U](first: Option[U], succ: Callable[[U], Option[U]]) -> Iter[U]:
+        """Create an iterator of successive values computed from the previous one.
+
+        The iterator yields `first` (if it is `Some`), then repeatedly applies **succ** to the
+        previous yielded value until it returns `NONE`.
+
+        Args:
+            first (Option[U]): Initial item.
+            succ (Callable[[U], Option[U]]): Successor function.
+
+        Returns:
+            Iter[U]: Iterator yielding `first` and its successors.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> def next_pow10(x: int) -> pc.Option[int]:
+        ...     return pc.Some(x * 10) if x < 10_000 else pc.NONE
+        >>> pc.Iter.successors(pc.Some(1), next_pow10).collect()
+        Seq(1, 10, 100, 1000, 10000)
+
+        ```
+        """
+
+        def _successors() -> Iterator[U]:
+            current = first
+            while current.is_some():
+                value = current.unwrap()
+                yield value
+                current = succ(value)
+
+        return Iter(_successors())
 
     def collect[R: Collection[Any]](
         self, collector: Callable[[Iterator[T]], R] = Seq[T]
@@ -1616,6 +1678,40 @@ class Iter[T](BaseIter[T], Iterator[T]):
         """
         for v in self._inner:
             func(v, *args, **kwargs)
+
+    def try_for_each[E](self, f: Callable[[T], Result[Any, E]]) -> Result[None, E]:
+        """An iterator method that applies a fallible function to each item in the iterator, stopping at the first error and returning that error.
+
+        This can also be thought of as the fallible form of `.for_each()`.
+
+        Args:
+            f (Callable[[T], Result[Any, E]]): A function that takes an item of type `T` and returns a `Result`.
+
+        Returns:
+            Result[None, E]: Returns `Ok(None)` if all applications of **f** were successful (i.e., returned `Ok`), or the first error `E` encountered.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> def validate_positive(n: int) -> pc.Result[None, str]:
+        ...     if n > 0:
+        ...         return pc.Ok(None)
+        ...     return pc.Err(f"Value {n} is not positive")
+        >>> pc.Iter([1, 2, 3, 4, 5]).try_for_each(validate_positive)
+        Ok(None)
+        >>> # Short-circuit on first error:
+        >>> pc.Iter([1, 2, -1, 4]).try_for_each(validate_positive)
+        Err('Value -1 is not positive')
+
+        ```
+        """
+        from ._result import Ok
+
+        for item in self._inner:
+            res = f(item)
+            if res.is_err():
+                return res
+        return Ok(None)
 
     def array_chunks(self, size: int) -> Iter[Iter[T]]:
         """Yield subiterators (chunks) that each yield a fixed number elements, determined by size.
