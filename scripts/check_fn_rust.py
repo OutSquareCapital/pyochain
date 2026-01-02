@@ -117,6 +117,8 @@ def _iter_filter() -> pc.Set[str]:
             "into",  # into is implicitely implemented with From trait in Rust
             "filter_false",  # filter_false is in itertools in Python
             "iter",  # inerhited from base class in Python
+            "max_by_key",  # already covered by max_by
+            "min_by_key",  # already covered by min_by
         )
     )
 

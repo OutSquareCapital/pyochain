@@ -57,10 +57,6 @@
 {"source":"rust","fn":"fuse"}
 {"source":"rust","fn":"intersperse_with"}
 {"source":"rust","fn":"is_partitioned"}
-{"source":"rust","fn":"max_by"}
-{"source":"rust","fn":"max_by_key"}
-{"source":"rust","fn":"min_by"}
-{"source":"rust","fn":"min_by_key"}
 {"source":"rust","fn":"next_chunk"}
 {"source":"rust","fn":"once_with"}
 {"source":"rust","fn":"partial_cmp"}
