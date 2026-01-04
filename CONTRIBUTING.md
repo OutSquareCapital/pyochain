@@ -27,6 +27,18 @@ The `src/pyochain` package is organized into a small number of internal modules 
 
 The public API is exposed through `src/pyochain/__init__.py`, which imports and re-exports the main classes and types.
 
+## Design goals
+
+pyochain aims to provide a powerful, Rust-inspired chaining API for Python iterators and collections. The design prioritizes **clarity, performance, and composability**:
+
+1. **Implement all Python builtins** — Methods like `.map()`, `.filter()`, `.reduce()` mirror their Python equivalents (e.g., `itertools`, `functools`, `collections.abc`) to ensure familiarity.
+
+2. **Implement Rust `Iterator` methods when applicable** — Methods like `.take()`, `.skip()`, `.scan()`, `.fold()` are inspired by Rust's `std::iter::Iterator` trait to enable expressive functional composition.
+
+3. **Python is prioritaire on friction** — When there's a conflict between Python conventions and Rust semantics, Python wins. For example, `.zip()` accepts variadic arguments like Python's `zip()` rather than strictly following Rust's binary `.zip()`.
+
+4. **Use `cytoolz` over `more-itertools`** — `cytoolz` is preferred because it's implemented in Cython and provides better performance for hot paths. This aligns with pyochain's emphasis on minimizing overhead.
+
 ## Coding and documentation guidelines
 
 - All public API functions and methods must include clear docstrings, full type hints, and overloads/generics where appropriate.

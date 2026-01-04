@@ -23,19 +23,25 @@ plugins:
               - "!^_"
 nav:
   - Home: index.md
-  - Reference:
-      - Iter: reference/iter.md
-      - Dict: reference/dict.md
-      - Seq: reference/seq.md
-      - Set: reference/set.md
-      - SetMut: reference/setmut.md
-      - Vec: reference/vec.md
-      - Result: reference/result.md
-      - Option: reference/option.md
-      - Ok: reference/ok.md
-      - Err: reference/err.md
-      - Some: reference/some.md
-      - None: reference/none.md
+  - Getting Started:
+      - Core Types Overview: core-types-overview.md
+      - Examples & Cookbook: examples.md
+  - API Reference:
+      - Collections:
+          - Iter: reference/iter.md
+          - Seq: reference/seq.md
+          - Vec: reference/vec.md
+          - Set: reference/set.md
+          - SetMut: reference/setmut.md
+          - Dict: reference/dict.md
+      - Error Handling:
+          - Result: reference/result.md
+          - Ok: reference/ok.md
+          - Err: reference/err.md
+      - Optional Values:
+          - Option: reference/option.md
+          - Some: reference/some.md
+          - None: reference/none.md
   
 
 theme:

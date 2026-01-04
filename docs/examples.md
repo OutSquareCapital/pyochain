@@ -3,11 +3,131 @@
 This cookbook provides practical examples of how to use the `pyochain` library for various data manipulation tasks in Python.
 Each example demonstrates a specific use case, showcasing the power and flexibility of `pyochain` for functional programming and data processing.
 
+## Basic Usage
+
+### Chained Data Transformations
+
+```python
+>>> import pyochain as pc
+>>>
+>>> result = (
+...    pc.Iter.from_count(1)  # Infinite iterator: 1, 2, 3, ...
+...    .filter(lambda x: x % 2 != 0)  # Keep odd numbers
+...    .map(lambda x: x * x)  # Square them
+...    .take(5)  # Take the first 5
+...    .collect()  # Materialize the result into a Seq
+... )
+>>> result
+Seq(1, 9, 25, 49, 81)
+
+```
+
+### Type-Safe Error Handling (`Result` and `Option`)
+
+Write robust code by handling potential failures explicitly.
+
+```python
+>>> import pyochain as pc
+>>>
+>>> def divide(a: int, b: int) -> pc.Result[float, str]:
+...     if b == 0:
+...         return pc.Err("Cannot divide by zero")
+...     return pc.Ok(a / b)
+>>>
+>>> # --- With Result ---
+>>> res1 = divide(10, 2)
+>>> res1
+Ok(5.0)
+>>> res2 = divide(10, 0)
+>>> res2
+Err('Cannot divide by zero')
+>>> # Safely unwrap or provide a default
+>>> res2.unwrap_or(0.0)
+0.0
+>>> # Map over a successful result
+>>> res1.map(lambda x: x * x)
+Ok(25.0)
+>>> # --- With Option ---
+>>> def find_user(user_id: int) -> pc.Option[str]:
+...     users = {1: "Alice", 2: "Bob"}
+...     return pc.Some(users.get(user_id)) if user_id in users else pc.NONE
+>>>
+>>> find_user(1).map(str.upper).unwrap_or("Not Found")
+'ALICE'
+>>> find_user(3).unwrap_or("Not Found")
+'Not Found'
+
+```
+
+### Combining them in Data Pipelines
+
+Classes have been designed to work seamlessly together, enabling complex data processing pipelines with clear error handling.
+
+```python
+from pathlib import Path
+
+import polars as pl
+
+import pyochain as pc
+
+
+def safe_parse_int(s: str) -> pc.Result[int, str]:
+    try:
+        return pc.Ok(int(s))
+    except ValueError:
+        return pc.Err(f"Invalid integer: {s}")
+
+
+def _write_to_file(lf: pl.LazyFrame, file_path: Path) -> pc.Result[None, str]:
+    """Write the LazyFrame to a CSV file."""
+    try:
+        return pc.Ok(lf.filter(pl.col("value") > 15).sink_parquet(file_path))
+    except (OSError, pl.exceptions.ComputeError) as e:
+        return pc.Err(f"Failed to write to file: {e}")
+
+
+>>> PATH = Path("parsed_integers.parquet")
+>>> data = ["10", "20", "foo", "30", "bar"]
+>>> results = (
+...    pc.Iter(data)
+...    .map(safe_parse_int)  # Parse each string safely
+...    .filter_map(lambda r: r.ok())  # Keep only successful parses
+...    .enumerate()  # Add indices
+...    .collect()  # Materialize the results
+...    .inspect(
+...        lambda seq: print(f"Parsed integers: {seq}") # Log parsed integers
+...    )
+...    .into(pl.LazyFrame, schema=["index", "value"])  # Pass to Polars LazyFrame
+...    .pipe(_write_to_file, PATH)  # Write to file
+...    .map_err(lambda e: print(f"Error: {e}"))  # Print error message
+)
+
+```
+
+### Concrete Use Cases
+
+Below are some more specific examples demonstrating how to use `pyochain` for specific tasks encountered in real-world scenarios.
+
 ## Finding the Earliest Compatible Dependency Versions
 
-Problem:
+**Problem:**
 Multiple folders in a src tree may have their own `requirements.txt` files specifying dependencies with version constraints.
-To find all the files paths, and then their earliest compatible versions, you can use the following script:
+e.g:
+
+```text
+--- src/my_project/module_a/requirements.txt
+  numpy>=1.20.0
+  pandas==1.3.0
+--- src/my_project/module_b/requirements.txt
+  numpy>=1.18.0
+    pandas>=1.2.0
+etc...
+```
+
+**Goal:**
+To find all the files paths, and then their earliest compatible versions for each dependency across all files.
+
+**Solution:**
 
 ```python
 from enum import StrEnum, auto
