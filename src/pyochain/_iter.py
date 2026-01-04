@@ -98,6 +98,21 @@ class BaseIter[T](Pipeable):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({get_config().iter_repr(self._inner)})"
 
+    @classmethod
+    def new(cls) -> Self:
+        """Create a new empty `Iterable`.
+
+        Be sure to specify the type parameter when calling this method, e.g. `Iter[int].new()`.
+
+        Otherwise, `T` will be inferred as `Any`.
+
+        Returns:
+            Self: A new empty instance of the same type as self.
+        """
+        instance = cls.__new__(cls)
+        instance._inner = ()
+        return instance
+
     def iter(self) -> Iter[T]:
         """Get an iterator over the `Iterable`.
 
@@ -327,6 +342,34 @@ class BaseIter[T](Pipeable):
         ```
         """
         return functools.reduce(func, self._inner)
+
+    def fold[B](self, init: B, func: Callable[[B, T], B]) -> B:
+        """Fold every element into an accumulator by applying an operation, returning the final result.
+
+        Args:
+            init (B): Initial value for the accumulator.
+            func (Callable[[B, T], B]): Function that takes the accumulator and current element,
+                returning the new accumulator value.
+
+        Returns:
+            B: The final accumulated value.
+
+        Note:
+            This is similar to `reduce()` but with an initial value, making it equivalent to
+            Python's `functools.reduce()` with an initializer.
+
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Seq([1, 2, 3]).fold(0, lambda acc, x: acc + x)
+        6
+        >>> pc.Seq([1, 2, 3]).fold(10, lambda acc, x: acc + x)
+        16
+        >>> pc.Seq(['a', 'b', 'c']).fold('', lambda acc, x: acc + x)
+        'abc'
+
+        ```
+        """
+        return functools.reduce(func, self._inner, init)
 
     def combination_index(self, r: Iterable[T]) -> int:
         """Computes the index of the first element, without computing the previous combinations.
@@ -1269,27 +1312,6 @@ class Vec[T](Seq[T], MutableSequence[T]):
         ```
         """
         self._inner.insert(index, value)
-
-    @classmethod
-    def new(cls) -> Self:
-        """Create an empty `Vec`.
-
-        Make sure to specify the type when calling this method, e.g., `Vec[int].new()`.
-
-        Otherwise, `T` will be inferred as `Any`.
-
-        Returns:
-            Self: A new empty Vec instance.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Vec.new()
-        Vec()
-
-        ```
-        """
-        return cls([])
 
 
 class Iter[T](BaseIter[T], Iterator[T]):
@@ -2345,6 +2367,9 @@ class Iter[T](BaseIter[T], Iterator[T]):
 
         Returns:
             Iter[Iterable[T]]: An iterable of repeated sequences.
+
+        Example:
+        ```python
         >>> import pyochain as pc
         >>> pc.Iter([1, 2]).repeat(2).collect()
         Seq((1, 2), (1, 2))
@@ -2355,23 +2380,57 @@ class Iter[T](BaseIter[T], Iterator[T]):
         """
         return Iter(itertools.repeat(factory(self._inner), n))
 
-    def scan[U](self, state: U, func: Callable[[U, T], Option[U]]) -> Iter[U]:
+    def accumulate(
+        self, func: Callable[[T, T], T], initial: T | None = None
+    ) -> Iter[T]:
+        """Return an `Iter` of accumulated binary function results.
+
+        In principle, `.accumulate()` is similar to `.fold()` if you provide it with the same binary function.
+
+        However, instead of returning the final accumulated result, it returns an `Iter` that yields the current value `T` of the accumulator for each iteration.
+
+        In other words, the last element yielded by `.accumulate()` is what would have been returned by `.fold()` if it had been used instead.
+
+        Args:
+            func (Callable[[T, T], T]): A binary function to apply cumulatively.
+            initial (T | None): Optional initial value to start the accumulation. Defaults to None.
+
+        Returns:
+            Iter[T]: A new Iterable wrapper with accumulated results.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter((1, 2, 3)).accumulate(lambda a, b: a + b, 0).collect()
+        Seq(0, 1, 3, 6)
+        >>> # The final accumulated result is the same as fold:
+        >>> pc.Iter((1,2,3)).fold(0, lambda a, b: a + b)
+        6
+        >>> pc.Iter((1, 2, 3)).accumulate(lambda a, b: a * b).collect()
+        Seq(1, 2, 6)
+
+
+        ```
+        """
+        return Iter(itertools.accumulate(self._inner, func, initial=initial))
+
+    def scan[U](self, initial: U, func: Callable[[U, T], Option[U]]) -> Iter[U]:
         """Transform elements by sharing state between iterations.
 
         `scan` takes two arguments:
-            - an initial value which seeds the internal state
-            - a closure with two arguments
+            - an **initial** value which seeds the internal state
+            - a **func** with two arguments
 
         The first being a reference to the internal state and the second an iterator element.
 
-        The closure can assign to the internal state to share state between iterations.
+        The **func** can assign to the internal state to share state between iterations.
 
-        On iteration, the closure will be applied to each element of the iterator and the return value from the closure, an Option, is returned by the next method.
+        On iteration, the **func** will be applied to each element of the iterator and the return value from the func, an Option, is returned by the next method.
 
-        Thus the closure can return Some(value) to yield value, or None to end the iteration.
+        Thus the **func** can return `Some(value)` to yield value, or None to end the iteration.
 
         Args:
-            state (U): Initial state.
+            initial (U): Initial state.
             func (Callable[[U, T], Option[U]]): Function that takes the current state and an item, and returns an Option.
 
         Returns:
@@ -2394,7 +2453,7 @@ class Iter[T](BaseIter[T], Iterator[T]):
         """
 
         def gen(data: Iterable[T]) -> Iterator[U]:
-            current: U = state
+            current: U = initial
             for item in data:
                 res = func(current, item)
                 if res.is_none():
@@ -3138,6 +3197,7 @@ class Iter[T](BaseIter[T], Iterator[T]):
             Iter[tuple[T, ...]]: An iterable of partitioned tuples.
 
         Example:
+        ```python
         >>> import pyochain as pc
         >>> pc.Iter([1, 2, 3, 4]).partition(2).collect()
         Seq((1, 2), (3, 4))
@@ -3188,6 +3248,7 @@ class Iter[T](BaseIter[T], Iterator[T]):
             Iter[tuple[T, ...]]: An iterable of partitioned tuples.
 
         Example:
+        ```python
         >>> import pyochain as pc
         >>> pc.Iter("I have space").partition_by(lambda c: c == " ").collect()
         Seq(('I',), (' ',), ('h', 'a', 'v', 'e'), (' ',), ('s', 'p', 'a', 'c', 'e'))
@@ -3317,25 +3378,6 @@ class Iter[T](BaseIter[T], Iterator[T]):
         return Iter(
             cz.itertoolz.random_sample(probability, self._inner, random_state=state)
         )
-
-    def accumulate(self, func: Callable[[T, T], T]) -> Iter[T]:
-        """Return cumulative application of binary op provided by the function.
-
-        Args:
-            func (Callable[[T, T], T]): A binary function to apply cumulatively.
-
-        Returns:
-            Iter[T]: A new Iterable wrapper with accumulated results.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1, 2, 3)).accumulate(lambda a, b: a + b).collect()
-        Seq(1, 3, 6)
-
-        ```
-        """
-        return Iter(cz.itertoolz.accumulate(func, self._inner))
 
     def insert(self, value: T) -> Iter[T]:
         """Prepend the **value** to the `Iter`.
@@ -3551,12 +3593,15 @@ class Iter[T](BaseIter[T], Iterator[T]):
 
         return Iter(_strictly_n_(self._inner))
 
-    def enumerate(self) -> Iter[Enumerated[T]]:
+    def enumerate(self, start: int = 0) -> Iter[Enumerated[T]]:
         """Return a `Iter` of (index, value) pairs.
 
         Each value in the iterable is paired with its index, starting from 0.
 
         The `Iter` yields `Enumerated[T]` tuples where **idx** is the index and **value[T]** is the corresponding element from the iterable.
+
+        Args:
+            start (int): The starting index. Defaults to 0.
 
         Returns:
             Iter[Enumerated[T]]: An iterable of (index, value) pairs.
@@ -3566,10 +3611,12 @@ class Iter[T](BaseIter[T], Iterator[T]):
         >>> import pyochain as pc
         >>> pc.Iter(["a", "b"]).enumerate().collect()
         Seq((0, 'a'), (1, 'b'))
+        >>> pc.Iter(["a", "b"]).enumerate().map(lambda e: e.idx).collect()
+        Seq(0, 1)
 
         ```
         """
-        return Iter(enumerate(self._inner)).map(lambda x: Enumerated(*x))
+        return Iter(enumerate(self._inner, start)).map(lambda x: Enumerated(*x))
 
     @overload
     def combinations(self, r: Literal[2]) -> Iter[tuple[T, T]]: ...
