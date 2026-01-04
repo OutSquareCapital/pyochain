@@ -38,6 +38,8 @@ Below is a graphical representation of the core classes and their relationships.
 ---
 config:
   look: neo
+  layout: elk
+  theme: neo-dark
 ---
 flowchart BT
  subgraph Collections["📦 Collections"]
@@ -62,15 +64,15 @@ flowchart BT
   end
     Option -.-> Some & NONE
     Result -.-> Ok & Err
-    Collections L_Collections_IterMethod_0@--> IterMethod["⛓️<br><b>.iter()</b>"] & Into["🔄<br><b>.into(func/type)</b>"]
-    OptionGroup L_OptionGroup_IterMethod_0@--> IterMethod & OkOrMethod["✅<br><b>.ok_or(err)</b>"] & Into
-    ResultGroup L_ResultGroup_IterMethod_0@--> IterMethod & OkMethod["🎁<br><b>.ok()</b>"] & Into
-    IterMethod L_IterMethod_Iter_0@--> Iter["<b>Iter[T]</b><br>lazy iterator"]
-    Iter L_Iter_CollectMethod_0@--> CollectMethod["📦<br><b>.collect(func/type)</b>"] & Into
-    CollectMethod L_CollectMethod_Collections_0@--> Collections
-    OkOrMethod L_OkOrMethod_ResultGroup_0@--> ResultGroup
-    OkMethod L_OkMethod_OptionGroup_0@--> OptionGroup
-    Into L_Into_AnyType_0@--> AnyType["🔄 Any Type"]
+    Collections --> IterMethod["⛓️<br><b>.iter()</b>"] & Into["🔄<br><b>.into(func/type)</b>"]
+    OptionGroup --> IterMethod & OkOrMethod["✅<br><b>.ok_or(err)</b>"] & Into
+    ResultGroup --> IterMethod & OkMethod["🎁<br><b>.ok()</b>"] & Into
+    IterMethod --> Iter["<b>Iter[T]</b><br>lazy iterator"]
+    Iter --> CollectMethod["📦<br><b>.collect(func/type)</b>"] & Into
+    CollectMethod --> Collections
+    OkOrMethod --> ResultGroup
+    OkMethod --> OptionGroup
+    Into --> AnyType["🔄 Any Type"]
 
     IterMethod@{ shape: rounded}
     Into@{ shape: rounded}
