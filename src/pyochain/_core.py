@@ -15,7 +15,7 @@ class Pipeable:
 
         This method allows to pipe the instance into an object or function that can convert `Self` into another type.
 
-        Conceptually, this allow to do x.into(f) instead of f(x), hence keeping a functional chaining style.
+        Conceptually, this allow to do `x.into(f)` instead of `f(x)`, hence keeping a functional chaining style.
 
         This is a core method, shared by all pyochain wrappers, that allows chaining operations in a functional style.
 
@@ -51,6 +51,8 @@ class Pipeable:
         **kwargs: P.kwargs,
     ) -> Self:
         """Pass the instance to a function to perform side effects without altering the data.
+
+        This method is very useful for debugging or passing the instance to other functions for side effects, without breaking the method chaining.
 
         Args:
             func (Callable[Concatenate[Self, P], object]): Function to apply to the instance for side effects.

@@ -3979,7 +3979,7 @@ class Iter[T](BaseIter[T], Iterator[T]):
         >>> (
         ... pc.Iter(data)
         ... .group_by(lambda x: x["gender"]) # group by the gender key
-        ... .map(lambda x: (x[0], x[1].length())) # get the length of each group
+        ... .map(lambda x: (x.key, x.value.length())) # get the length of each group
         ... .collect()
         ... )
         Seq(('F', 1), ('M', 3))

@@ -4,7 +4,7 @@
 
 Inspired by Rust's `Iterator`, `Result`, `Option`, and DataFrame libraries like `Polars`, `pyochain` provide a set of classes with a fluent and declarative API, to work with collections, handle optional values, or manage errors.
 
-### Key Features
+## Key Features
 
 - ⛓️ **Declarative & fluent chaining** — Replace `for` loops with chainable methods (`map`, `filter`, `group`, etc.).
 - 🦥 **Lazy-first design** — `Iter[T]` for lazy processing; `Seq`, `Vec`, `Set` for materialized collections.
