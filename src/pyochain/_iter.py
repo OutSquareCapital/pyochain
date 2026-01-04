@@ -98,21 +98,6 @@ class BaseIter[T](Pipeable):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({get_config().iter_repr(self._inner)})"
 
-    @classmethod
-    def new(cls) -> Self:
-        """Create a new empty `Iterable`.
-
-        Be sure to specify the type parameter when calling this method, e.g. `Iter[int].new()`.
-
-        Otherwise, `T` will be inferred as `Any`.
-
-        Returns:
-            Self: A new empty instance of the same type as self.
-        """
-        instance = cls.__new__(cls)
-        instance._inner = ()
-        return instance
-
     def iter(self) -> Iter[T]:
         """Get an iterator over the `Iterable`.
 
@@ -1177,6 +1162,27 @@ class SetMut[T](Set[T], MutableSet[T]):
     def __init__(self, data: Iterable[T]) -> None:
         self._inner = set(data)  # type: ignore[override]
 
+    @classmethod
+    def new(cls) -> Self:
+        """Create an empty `SetMut`.
+
+        Make sure to specify the type when calling this method, e.g., `SetMut[int].new()`.
+
+        Otherwise, `T` will be inferred as `Any`.
+
+        Returns:
+            Self: A new empty SetMut instance.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.SetMut[object].new()
+        SetMut()
+
+        ```
+        """
+        return cls([])
+
     def add(self, value: T) -> None:
         """Add an element to the set.
 
@@ -1280,6 +1286,27 @@ class Vec[T](Seq[T], MutableSequence[T]):
 
     def __init__(self, data: Iterable[T]) -> None:
         self._inner = list(data)  # type: ignore[override]
+
+    @classmethod
+    def new(cls) -> Self:
+        """Create an empty `Vec`.
+
+        Make sure to specify the type when calling this method, e.g., `Vec[int].new()`.
+
+        Otherwise, `T` will be inferred as `Any`.
+
+        Returns:
+            Self: A new empty Vec instance.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Vec.new()
+        Vec()
+
+        ```
+        """
+        return cls([])
 
     @overload
     def __setitem__(self, index: int, value: T) -> None: ...
