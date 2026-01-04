@@ -1,0 +1,57 @@
+[project]
+    site_author      = "Outside Square Capital"
+    site_description = "A modern Python library for functional programming with chainable operations"
+    site_name        = "pyochain"
+    site_url         = "https://outsquarecapital.github.io/pyochain/"
+
+    docs_dir = "docs"
+    site_dir = "site"
+
+    nav = [
+        { "API Reference" = [
+            { "Collections" = [
+                { "Dict" = "reference/dict.md" },
+                { "Iter" = "reference/iter.md" },
+                { "Seq" = "reference/seq.md" },
+                { "Set" = "reference/set.md" },
+                { "SetMut" = "reference/setmut.md" },
+                { "Vec" = "reference/vec.md" },
+            ] },
+            { "Error Handling" = [
+                { "Err" = "reference/err.md" },
+                { "Ok" = "reference/ok.md" },
+                { "Result" = "reference/result.md" },
+            ] },
+            { "Optional Values" = [
+                { "None" = "reference/none.md" },
+                { "Option" = "reference/option.md" },
+                { "Some" = "reference/some.md" },
+            ] },
+        ] },
+        { "Getting Started" = [
+            { "Core Types Overview" = "core-types-overview.md" },
+            { "Examples & Cookbook" = "examples.md" },
+        ] },
+        { "Home" = "index.md" },
+    ]
+
+    [project.theme]
+        palette = [
+            { media = "(prefers-color-scheme: dark)", scheme = "slate", primary = "indigo", accent = "indigo", toggle = { icon = "lucide/moon", name = "Switch to light mode" } },
+            { media = "(prefers-color-scheme: light)", scheme = "default", primary = "indigo", accent = "indigo", toggle = { icon = "lucide/sun", name = "Switch to dark mode" } },
+        ]
+        paths = ["src"]
+        variant = "classic"
+
+    [project.plugins.mkdocstrings.handlers.python.options]
+        docstring_style   = "google"
+        filters           = ["!^_"]
+        inherited_members = true
+        members_order     = "source"
+        show_overloads    = true
+        show_source       = true
+
+    [project.markdown_extensions.pymdownx.superfences]
+        custom_fences = [
+            { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+        ]

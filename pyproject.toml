@@ -8,19 +8,14 @@
     dependencies = [
     "cytoolz>=1.0.1",
     "more-itertools>=10.8.0",
+    "zensical>=0.0.15",
 ]
 
 [dependency-groups]
     dev = [
         "cytoolz-stubs",
         "griffe>=1.14.0",
-        "mkdocs-autorefs>=1.4.3",
-        "mkdocs-material>=9.6.22",
-        "mkdocs-mermaid2-plugin>=1.2.3",
-        "mkdocs-simple-hooks>=0.1.5",
-        "mkdocs>=1.6.1",
         "mkdocstrings-python>=1.18.2",
-        "mkdocstrings>=0.30.1",
         "polars>=1.33.1",
         "pydoclint>=0.8.1",
         "pyright>=1.1.407",

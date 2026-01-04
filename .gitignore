@@ -5,6 +5,7 @@ __pycache__/
 build/
 dist/
 wheels/
+site/
 docs/sphinx/*.rst
 docs/sphinx/_build/
 *.egg-info
