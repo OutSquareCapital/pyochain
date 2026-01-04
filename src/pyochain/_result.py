@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Concatenate, Never, Self, cast
+from typing import TYPE_CHECKING, Any, Concatenate, Never, cast
 
 import cytoolz as cz
 
@@ -353,7 +353,7 @@ class Result[T, E](Pipeable, ABC):
 
     def inspect[**P](
         self, fn: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
-    ) -> Self:
+    ) -> Result[T, E]:
         """Applies a function to the contained `Ok` value, returning the original `Result`.
 
         This is primarily useful for debugging or logging, allowing side effects to be
@@ -365,7 +365,7 @@ class Result[T, E](Pipeable, ABC):
             **kwargs (P.kwargs): Additional keyword arguments to pass to fn.
 
         Returns:
-            Self: The original result, unchanged.
+            Result[T, E]: The original result, unchanged.
 
         Example:
         ```python
@@ -384,7 +384,7 @@ class Result[T, E](Pipeable, ABC):
 
     def inspect_err[**P](
         self, fn: Callable[Concatenate[E, P], object], *args: P.args, **kwargs: P.kwargs
-    ) -> Self:
+    ) -> Result[T, E]:
         """Applies a function to the contained `Err` value, returning the original `Result`.
 
         This mirrors :meth:`inspect` but operates on the error value. It is useful for
@@ -396,7 +396,7 @@ class Result[T, E](Pipeable, ABC):
             **kwargs (P.kwargs): Additional keyword arguments to pass to fn.
 
         Returns:
-            Self: The original result, unchanged.
+            Result[T, E]: The original result, unchanged.
 
         Example:
         ```python
@@ -488,10 +488,10 @@ class Result[T, E](Pipeable, ABC):
 
     def or_else[**P](
         self,
-        fn: Callable[Concatenate[E, P], Self],
+        fn: Callable[Concatenate[E, P], Result[T, E]],
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> Self:
+    ) -> Result[T, E]:
         """Calls a function if the result is `Err`, otherwise returns the `Ok` value.
 
         This is often used for handling errors by trying an alternative operation.
@@ -502,7 +502,7 @@ class Result[T, E](Pipeable, ABC):
             **kwargs (P.kwargs): Additional keyword arguments to pass to fn.
 
         Returns:
-            Self: The original `Ok` value, or the result of the function if `Err`.
+            Result[T, E]: The original `Ok` value, or the result of the function if `Err`.
 
         Example:
         ```python
