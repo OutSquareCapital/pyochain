@@ -8,7 +8,7 @@ Top-level files and folders of interest:
 
 - `pyproject.toml` — project metadata and build configuration.
 - `mkdocs.yml` — documentation site configuration.
-- `README.md`, `CONTRIBUTING.md`, `LICENSE.md`, `EXAMPLES.md` — user-facing docs.
+- `README.md`, `CONTRIBUTING.md`, `LICENSE.md`, — user-facing docs.
 - `docs/` — project documentation sources.
 - `scripts/` — development helpers and benchmarks.
 - `src/pyochain/` — package source (public API defined in `src/pyochain/__init__.py`).
@@ -93,6 +93,16 @@ Notes:
 - `ruff` is used for linting and formatting.
 - `pyright` provides static type checking.
 - `pytest --doctest-modules` runs doctests embedded in docstrings.
+
+## Building docs
+
+To build the documentation locally, run:
+
+```powershell
+uv run zensical serve
+```
+
+Then open your browser at the given adress.
 
 ## Contributing workflow
 

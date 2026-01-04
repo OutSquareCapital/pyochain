@@ -37,9 +37,7 @@ Below is a graphical representation of the core classes and their relationships.
 ```mermaid
 ---
 config:
-  look: neo
-  layout: elk
-  theme: neo-dark
+  layout: dagre
 ---
 flowchart BT
  subgraph Collections["📦 Collections"]
@@ -64,15 +62,15 @@ flowchart BT
   end
     Option -.-> Some & NONE
     Result -.-> Ok & Err
-    Collections --> IterMethod["⛓️<br><b>.iter()</b>"] & Into["🔄<br><b>.into(func/type)</b>"]
-    OptionGroup --> IterMethod & OkOrMethod["✅<br><b>.ok_or(err)</b>"] & Into
-    ResultGroup --> IterMethod & OkMethod["🎁<br><b>.ok()</b>"] & Into
-    IterMethod --> Iter["<b>Iter[T]</b><br>lazy iterator"]
-    Iter --> CollectMethod["📦<br><b>.collect(func/type)</b>"] & Into
-    CollectMethod --> Collections
-    OkOrMethod --> ResultGroup
-    OkMethod --> OptionGroup
-    Into --> AnyType["🔄 Any Type"]
+    Collections L_Collections_IterMethod_0@--> IterMethod["⛓️<br><b>.iter()</b>"] & Into["🔄<br><b>.into(func/type)</b>"]
+    OptionGroup L_OptionGroup_IterMethod_0@--> IterMethod & OkOrMethod["✅<br><b>.ok_or(err)</b>"] & Into
+    ResultGroup L_ResultGroup_IterMethod_0@--> IterMethod & OkMethod["🎁<br><b>.ok()</b>"] & Into
+    IterMethod L_IterMethod_Iter_0@--> Iter["<b>Iter[T]</b><br>lazy iterator"]
+    Iter L_Iter_CollectMethod_0@--> CollectMethod["📦<br><b>.collect(func/type)</b>"] & Into
+    CollectMethod L_CollectMethod_Collections_0@--> Collections
+    OkOrMethod L_OkOrMethod_ResultGroup_0@--> ResultGroup
+    OkMethod L_OkMethod_OptionGroup_0@--> OptionGroup
+    Into L_Into_AnyType_0@--> AnyType["🔄 Any Type"]
 
     IterMethod@{ shape: rounded}
     Into@{ shape: rounded}
@@ -107,12 +105,40 @@ flowchart BT
     classDef resultStyle fill:#ffebee,stroke:#c62828,stroke-width:3px,color:#000
     classDef intoStyle fill:#e1bee7,stroke:#7b1fa2,stroke-width:3px,color:#000
     classDef anyStyle fill:#f5f5f5,stroke:#616161,stroke-width:2px,stroke-dasharray:5,color:#000
-    style IterMethod fill:#FFD600,stroke:#FF6D00
-    style Into stroke:#FF6D00,fill:#FFD600
-    style OkOrMethod fill:#FFD600,stroke:#FF6D00
-    style OkMethod fill:#FFD600,stroke:#FF6D00
-    style CollectMethod fill:#FFD600,stroke:#FF6D00
-    style AnyType stroke-width:1px,stroke-dasharray: 0
+    style Seq fill:transparent,color:#FFFFFF
+    style Vec color:#FFFFFF,fill:transparent
+    style Set color:#FFFFFF,fill:transparent
+    style SetMut fill:transparent,color:#FFFFFF
+    style Dict color:#FFFFFF,fill:transparent
+    style Option fill:transparent,color:#FFFFFF
+    style Some fill:transparent,color:#FFFFFF
+    style NONE fill:transparent,color:#FFFFFF
+    style Result color:#FFFFFF,fill:transparent
+    style Ok color:#FFFFFF,fill:transparent
+    style Err color:#FFFFFF,fill:transparent
+    style IterMethod fill:transparent,stroke:#FFD600,color:#FFFFFF
+    style Into stroke:#FFD600,fill:transparent,color:#FFFFFF
+    style OkOrMethod fill:transparent,stroke:#FFD600,color:#FFFFFF
+    style OkMethod fill:transparent,stroke:#FFD600,color:#FFFFFF
+    style Iter color:#FFFFFF,fill:transparent
+    style CollectMethod fill:transparent,stroke:#FFD600,color:#FFFFFF
+    style AnyType stroke-width:1px,stroke-dasharray: 0,color:#FFFFFF,fill:transparent,stroke:#AA00FF
+
+    L_Collections_IterMethod_0@{ animation: slow } 
+    L_Collections_Into_0@{ animation: slow } 
+    L_OptionGroup_IterMethod_0@{ animation: slow } 
+    L_OptionGroup_OkOrMethod_0@{ animation: slow } 
+    L_OptionGroup_Into_0@{ animation: slow } 
+    L_ResultGroup_IterMethod_0@{ animation: slow } 
+    L_ResultGroup_OkMethod_0@{ animation: slow } 
+    L_ResultGroup_Into_0@{ animation: slow } 
+    L_IterMethod_Iter_0@{ animation: slow } 
+    L_Iter_CollectMethod_0@{ animation: slow } 
+    L_Iter_Into_0@{ animation: slow } 
+    L_CollectMethod_Collections_0@{ animation: slow } 
+    L_OkOrMethod_ResultGroup_0@{ animation: slow } 
+    L_OkMethod_OptionGroup_0@{ animation: slow } 
+    L_Into_AnyType_0@{ animation: slow }
 ```
 
 ## Shared Features and interoperability

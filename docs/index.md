@@ -8,6 +8,7 @@ Welcome to the `pyochain` documentation! This library brings a fluent, declarati
 
 ### Getting Started
 
+- [**User Guide**](user-guide.md) — Concepts, mental models, and the “why” behind pyochain
 - [**Examples & Cookbook**](examples.md) — Practical use cases and data manipulation patterns
 - [**Core Types Overview**](core-types-overview.md) — Comprehensive guide to all pyochain types
 
@@ -33,5 +34,4 @@ Each reference page includes detailed examples and complete type signatures.
 
 - [**GitHub Repository**](https://github.com/OutSquareCapital/pyochain)
 - [**Contributing Guide**](https://github.com/OutSquareCapital/pyochain/blob/master/CONTRIBUTING.md)
-- [**Examples**](https://github.com/OutSquareCapital/pyochain/blob/master/EXAMPLES.md)
 - [**PyPI Package**](https://pypi.org/project/pyochain/)
