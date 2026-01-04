@@ -9,7 +9,8 @@ from ._config import get_config
 from ._core import Pipeable
 
 if TYPE_CHECKING:
-    from ._core import SupportsKeysAndGetItem
+    from _typeshed import SupportsKeysAndGetItem
+
     from ._iter import Iter
     from ._option import Option
     from ._result import Result
