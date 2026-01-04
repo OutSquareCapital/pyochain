@@ -607,7 +607,7 @@ wheels = [
 
 [[package]]
 name = "pyochain"
-version = "0.6.1.5"
+version = "0.6.1.51"
 source = { editable = "." }
 dependencies = [
     { name = "cytoolz" },

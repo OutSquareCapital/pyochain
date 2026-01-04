@@ -3,8 +3,6 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 from typing import Any, Concatenate, Protocol, Self
 
-from _typeshed import SupportsAdd, SupportsDunderGT, SupportsDunderLT, SupportsRAdd
-
 
 class Pipeable:
     def into[**P, R](
@@ -76,6 +74,30 @@ class Pipeable:
 
 
 # typeshed protocols
+
+
+class SupportsDunderLT[T](Protocol):
+    def __lt__(self, other: T, /) -> bool: ...
+
+
+class SupportsDunderGT[T](Protocol):
+    def __gt__(self, other: T, /) -> bool: ...
+
+
+class SupportsDunderLE[T](Protocol):
+    def __le__(self, other: T, /) -> bool: ...
+
+
+class SupportsDunderGE[T](Protocol):
+    def __ge__(self, other: T, /) -> bool: ...
+
+
+class SupportsAdd[T, T1](Protocol):
+    def __add__(self, x: T, /) -> T1: ...
+
+
+class SupportsRAdd[T, T1](Protocol):
+    def __radd__(self, x: T, /) -> T1: ...
 
 
 class SupportsKeysAndGetItem[K, V](Protocol):
