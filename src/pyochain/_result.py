@@ -731,6 +731,8 @@ class Ok[T, E](Result[T, E]):
         value (T): The contained successful value.
     """
 
+    __match_args__ = ("value",)
+
     value: T
 
     def __repr__(self) -> str:
@@ -757,6 +759,8 @@ class Err[T, E](Result[T, E]):
     Attributes:
         error (E): The contained error value.
     """
+
+    __match_args__ = ("error",)
 
     error: E
 

@@ -860,6 +860,8 @@ class Some[T](Option[T]):
 
     """
 
+    __match_args__ = ("value",)
+
     value: T
 
     def __repr__(self) -> str:
@@ -878,6 +880,8 @@ class Some[T](Option[T]):
 @dataclass(slots=True)
 class NoneOption[T](Option[T]):
     """Option variant representing the absence of a value."""
+
+    __match_args__ = ()
 
     def __repr__(self) -> str:
         return "NONE"
