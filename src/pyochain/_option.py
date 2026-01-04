@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Concatenate, Never, cast
+from typing import TYPE_CHECKING, Any, Concatenate, Never, Self, cast
 
 from ._core import Pipeable
 
@@ -366,14 +366,14 @@ class Option[T](Pipeable, ABC):
         """
         return optb if self.is_some() else NONE
 
-    def or_(self, optb: Option[T]) -> Option[T]:
+    def or_(self, optb: Self) -> Self:
         """Returns the option if it contains a value, otherwise returns optb.
 
         Args:
             optb (Option[T]): The option to return if the original option is `NONE`.
 
         Returns:
-            Option[T]: The original option if it is `Some`, otherwise `optb`.
+            Self: The original option if it is `Some`, otherwise `optb`.
 
         Examples:
         ```python
@@ -427,14 +427,14 @@ class Option[T](Pipeable, ABC):
         """
         return f(self.unwrap(), *args, **kwargs) if self.is_some() else NONE
 
-    def or_else(self, f: Callable[[], Option[T]]) -> Option[T]:
+    def or_else(self, f: Callable[[], Self]) -> Self:
         """Returns the `Option[T]` if it contains a value, otherwise calls a function and returns the result.
 
         Args:
-            f (Callable[[], Option[T]]): The function to call if the option is `None`.
+            f (Callable[[], Self]): The function to call if the option is `None`.
 
         Returns:
-            Option[T]: The original `Option` if it is `Some`, otherwise the result of the function.
+            Self: The original `Option` if it is `Some`, otherwise the result of the function.
 
         Example:
         ```python
@@ -622,7 +622,7 @@ class Option[T](Pipeable, ABC):
 
     def inspect[**P](
         self, f: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
-    ) -> Option[T]:
+    ) -> Self:
         """Applies a function to the contained `Some` value, returning the original `Option`.
 
         This allows side effects (logging, debugging, metrics, etc.) on the wrapped value without changing it.
@@ -633,7 +633,7 @@ class Option[T](Pipeable, ABC):
             **kwargs (P.kwargs): Additional keyword arguments to pass to f.
 
         Returns:
-            Option[T]: The original option, unchanged.
+            Self: The original option, unchanged.
 
         Example:
         ```python
@@ -740,7 +740,7 @@ class Option[T](Pipeable, ABC):
             return Some(f(self.unwrap(), other.unwrap()))
         return NONE
 
-    def reduce[U](self, other: Option[T], func: Callable[[T, T], T]) -> Option[T]:
+    def reduce(self, other: Self, func: Callable[[T, T], T]) -> Option[T]:
         """Reduces two options into one, using the provided function if both are Some.
 
         If **self** is `Some(s)` and **other** is `Some(o)`, this method returns `Some(func(s, o))`.
