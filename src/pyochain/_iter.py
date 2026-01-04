@@ -41,7 +41,10 @@ if TYPE_CHECKING:
 
 @dataclass(slots=True)
 class Unzipped[T, V](Pipeable):
-    """Represents the result of unzipping an iterator of pairs into two separate iterators."""
+    """Represents the result of unzipping an iterator of pairs into two separate iterators.
+
+    See `Iter.unzip()` for details.
+    """
 
     left: Iter[T]
     """An iterator over the first elements of the pairs."""
@@ -57,13 +60,23 @@ Position = Literal["first", "middle", "last", "only"]
 """Literal type representing the position of an item in an iterable."""
 
 
-class Peeked[T](NamedTuple):
-    values: tuple[T, ...]
-    original: Iterator[T]
+class Peekable[T](NamedTuple):
+    """Represents the result of peeking into an iterator.
+
+    See `Iter.peekable()` for details.
+    """
+
+    peek: Iter[T]
+    """An iterator over the peeked elements."""
+    values: Iter[T]
+    """An iterator of values, still including the peeked elements."""
 
 
 class Enumerated[T](NamedTuple):
-    """Represents an item with its associated index in an enumeration."""
+    """Represents an item with its associated index in an enumeration.
+
+    See `Iter.enumerate()` for details.
+    """
 
     idx: int
     """The index of the item in the enumeration."""
@@ -77,7 +90,7 @@ class Enumerated[T](NamedTuple):
 class Group[K, V](NamedTuple):
     """Represents a grouping of values by a common key.
 
-    Created by the `Iter.group_by()` method.
+    See `Iter.group_by()` for details.
     """
 
     key: K
@@ -3433,30 +3446,28 @@ class Iter[T](BaseIter[T], Iterator[T]):
         """
         return Iter(cz.itertoolz.cons(value, self._inner))
 
-    def peek(self, n: int, func: Callable[[Iterable[T]], Any]) -> Iter[T]:
-        """Retrieve the first n items from the iterable, pass them to func, and return the original iterable.
-
-        Allow to pass side-effect functions that process the peeked items without consuming the original Iterator.
+    def peekable(self, n: int) -> Peekable[T]:
+        """Retrieve the next n elements from the `Iterator`, and return a tuple of the retrieved elements along with the original Iterator, unconsumed.
 
         Args:
             n (int): Number of items to peek.
-            func (Callable[[Iterable[T]], Any]): Function to process the peeked items.
 
         Returns:
-            Iter[T]: A new Iterable wrapper with the peeked items.
+            Peekable[T]: A `Peekable` object containing the peeked elements and the remaining iterator.
 
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter([1, 2, 3]).peek(2, lambda x: print(f"Peeked {len(x)} values: {x}")).collect()
-        Peeked 2 values: (1, 2)
+        >>> data = pc.Iter([1, 2, 3]).peekable(2)
+        >>> data.peek.collect()
+        Seq(1, 2)
+        >>> data.values.collect()
         Seq(1, 2, 3)
 
         ```
         """
-        peeked = Peeked(*cz.itertoolz.peekn(n, self._inner))
-        func(peeked.values)
-        return Iter(peeked.original)
+        peeked, vals = cz.itertoolz.peekn(n, self._inner)
+        return Peekable(Iter(peeked), Iter(vals))
 
     def interleave(self, *others: Iterable[T]) -> Iter[T]:
         """Interleave multiple sequences element-wise.

@@ -28,7 +28,6 @@
 {"source":"python","fn":"pairwise"}
 {"source":"python","fn":"partition_all"}
 {"source":"python","fn":"partition_by"}
-{"source":"python","fn":"peek"}
 {"source":"python","fn":"permutations"}
 {"source":"python","fn":"random_sample"}
 {"source":"python","fn":"second"}
@@ -59,7 +58,6 @@
 {"source":"rust","fn":"partial_cmp"}
 {"source":"rust","fn":"partial_cmp_by"}
 {"source":"rust","fn":"partition_in_place"}
-{"source":"rust","fn":"peekable"}
 {"source":"rust","fn":"position"}
 {"source":"rust","fn":"repeat_n"}
 {"source":"rust","fn":"repeat_with"}
