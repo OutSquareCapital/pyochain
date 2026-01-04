@@ -122,6 +122,7 @@ def _iter_filter() -> pc.Set[str]:
             "iter",  # inerhited from base class in Python
             "max_by_key",  # already covered by max_by
             "min_by_key",  # already covered by min_by
+            "new",  # Not present in the trait in Rust
         )
     )
 

@@ -52,7 +52,6 @@
 {"source":"rust","fn":"cmp_by"}
 {"source":"rust","fn":"collect_into"}
 {"source":"rust","fn":"eq_by"}
-{"source":"rust","fn":"fold"}
 {"source":"rust","fn":"fuse"}
 {"source":"rust","fn":"intersperse_with"}
 {"source":"rust","fn":"is_partitioned"}
