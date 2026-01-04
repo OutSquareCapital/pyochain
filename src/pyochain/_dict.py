@@ -73,6 +73,8 @@ class Dict[K, V](Pipeable, MutableMapping[K, V]):
 
         Returns:
             bool: True if the key exists in the Dict, False otherwise.
+
+        Example:
         ```python
         >>> import pyochain as pc
         >>> data = pc.Dict({1: "a", 2: "b"})
@@ -110,6 +112,7 @@ class Dict[K, V](Pipeable, MutableMapping[K, V]):
         Returns:
             Self: An empty Dict instance.
 
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Dict.new()
@@ -134,6 +137,8 @@ class Dict[K, V](Pipeable, MutableMapping[K, V]):
         >>> import pyochain as pc
         >>> pc.Dict.from_kwargs(a=1, b=2)
         {'a': 1, 'b': 2}
+
+        ```
         """
         return Dict(kwargs)
 
@@ -149,6 +154,7 @@ class Dict[K, V](Pipeable, MutableMapping[K, V]):
         Returns:
             Dict[str, Any]: A new Dict instance containing the attributes of the object.
 
+        Example:
         ```python
         >>> import pyochain as pc
         >>> class Person:
@@ -179,6 +185,7 @@ class Dict[K, V](Pipeable, MutableMapping[K, V]):
         Returns:
             Option[V]: The previous value associated with the key, or None if the key was not present.
 
+        Examples:
         ```python
         >>> import pyochain as pc
         >>> data = pc.Dict.new()
@@ -222,6 +229,8 @@ class Dict[K, V](Pipeable, MutableMapping[K, V]):
         'a'
         >>> d.try_insert(37, "b")
         Err(KeyError('Key 37 already exists with value a.'))
+
+        ```
         """
         from ._result import Err, Ok
 
@@ -300,11 +309,12 @@ class Dict[K, V](Pipeable, MutableMapping[K, V]):
         return Iter(self._inner.keys())
 
     def values_iter(self) -> Iter[V]:
-        """Return an Iter of the dict's values.
+        """Return an `Iter` of the `Dict` values.
 
         Returns:
             Iter[V]: An Iter wrapping the dictionary's values.
 
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Dict({1: 2}).values_iter().collect()
@@ -323,10 +333,17 @@ class Dict[K, V](Pipeable, MutableMapping[K, V]):
 
         Returns:
             Iter[Item[K, V]]: An Iter wrapping the dictionary's (key, value) pairs.
+
+        Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict({"a": 1, "b": 2}).iter().collect()
+        >>> data = pc.Dict({"a": 1, "b": 2})
+        >>> data.iter().collect()
         Seq(('a', 1), ('b', 2))
+        >>> data.iter().map(lambda item: item.key).collect()
+        Seq('a', 'b')
+        >>> data.iter().map(lambda item: item.value).collect()
+        Seq(1, 2)
 
         ```
         """
@@ -345,6 +362,7 @@ class Dict[K, V](Pipeable, MutableMapping[K, V]):
         Returns:
             Option[V]: Value that is associated with the key, or None if not found.
 
+        Example:
         ```python
         >>> import pyochain as pc
         >>> data = {"a": 1}
@@ -366,6 +384,7 @@ class Dict[K, V](Pipeable, MutableMapping[K, V]):
             bool: True if the Dict is empty, False otherwise.
 
         Examples:
+        ```python
         >>> import pyochain as pc
         >>> d = pc.Dict.new()
         >>> d.is_empty()
@@ -478,6 +497,7 @@ class Dict[K, V](Pipeable, MutableMapping[K, V]):
         Returns:
             Dict[T, V]: Dict with transformed keys.
 
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Dict({"Alice": [20, 15, 30], "Bob": [10, 35]}).map_keys(str.lower)
@@ -501,6 +521,7 @@ class Dict[K, V](Pipeable, MutableMapping[K, V]):
         Returns:
             Dict[K, T]: Dict with transformed values.
 
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Dict({"Alice": [20, 15, 30], "Bob": [10, 35]}).map_values(sum)
@@ -527,6 +548,7 @@ class Dict[K, V](Pipeable, MutableMapping[K, V]):
         Returns:
             Dict[KR, VR]: Dict with transformed items.
 
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Dict({"Alice": 10, "Bob": 20}).map_items(
