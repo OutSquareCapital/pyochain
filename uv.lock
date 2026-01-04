@@ -487,7 +487,6 @@ source = { editable = "." }
 dependencies = [
     { name = "cytoolz" },
     { name = "more-itertools" },
-    { name = "zensical" },
 ]
 
 [package.dev-dependencies]
@@ -500,13 +499,13 @@ dev = [
     { name = "pyright" },
     { name = "pytest" },
     { name = "ruff" },
+    { name = "zensical" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "cytoolz", specifier = ">=1.0.1" },
     { name = "more-itertools", specifier = ">=10.8.0" },
-    { name = "zensical", specifier = ">=0.0.15" },
 ]
 
 [package.metadata.requires-dev]
@@ -519,6 +518,7 @@ dev = [
     { name = "pyright", specifier = ">=1.1.407" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "ruff", specifier = ">=0.14.9" },
+    { name = "zensical", specifier = ">=0.0.15" },
 ]
 
 [[package]]
