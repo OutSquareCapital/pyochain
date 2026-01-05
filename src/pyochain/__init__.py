@@ -1,5 +1,6 @@
 """pyochain - A functional programming library for Python."""
 
+from . import traits
 from ._dict import Dict, Item
 from ._iter import Enumerated, Group, Iter, Seq, Set, SetMut, Unzipped, Vec
 from ._option import NONE, NoneOption, Option, Some
@@ -24,4 +25,5 @@ __all__ = [
     "Some",
     "Unzipped",
     "Vec",
+    "traits",
 ]
