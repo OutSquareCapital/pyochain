@@ -169,7 +169,7 @@ def _display_benchmark(console: Console, name: str, r: pc.Dict[str, float]) -> N
     table.add_column("Temps (s)", justify="right", style="green")
     table.add_column("vs Python", justify="right", style="yellow")
 
-    r.iter().sort(lambda x: x.value).iter().for_each(
+    r.iter().sort(key=lambda x: x.value).iter().for_each(
         lambda item: table.add_row(
             item.key, f"{item.value:.4f}", f"{item.value / baseline:.2f}x"
         )

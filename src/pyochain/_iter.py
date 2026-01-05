@@ -23,6 +23,7 @@ from typing import (
     Concatenate,
     Literal,
     NamedTuple,
+    Never,
     Self,
     TypeIs,
     overload,
@@ -864,12 +865,33 @@ class BaseIter[T](Pipeable):
 
         return Option.from_(next(filter(predicate, self._inner), None))
 
+    @overload
     def sort[U: SupportsRichComparison[Any]](
         self: BaseIter[U],
-        key: Callable[[U], Any] | None = None,
         *,
+        key: None = None,
         reverse: bool = False,
-    ) -> Vec[U]:
+    ) -> Vec[U]: ...
+    @overload
+    def sort(
+        self,
+        *,
+        key: Callable[[T], SupportsRichComparison[Any]],
+        reverse: bool = False,
+    ) -> Vec[T]: ...
+    @overload
+    def sort(
+        self,
+        *,
+        key: None = None,
+        reverse: bool = False,
+    ) -> Never: ...
+    def sort(
+        self,
+        *,
+        key: Callable[[T], SupportsRichComparison[Any]] | None = None,
+        reverse: bool = False,
+    ) -> Vec[Any]:
         """Sort the elements of the sequence.
 
         Note:
@@ -881,7 +903,7 @@ class BaseIter[T](Pipeable):
             reverse (bool): Whether to sort in descending order. Defaults to False.
 
         Returns:
-            Vec[U]: A `Vec` with elements sorted.
+            Vec[Any]: A `Vec` with elements sorted.
 
         Example:
         ```python
@@ -3979,7 +4001,7 @@ class Iter[T](BaseIter[T], Iterator[T]):
         >>> (
         ... pc.Iter(data)
         ... .group_by(lambda x: x["gender"]) # group by the gender key
-        ... .map(lambda x: (x.key, x.value.length())) # get the length of each group
+        ... .map(lambda x: (x.key, x.values.length())) # get the length of each group
         ... .collect()
         ... )
         Seq(('F', 1), ('M', 3))
