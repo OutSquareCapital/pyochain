@@ -1,33 +1,22 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Iterator, Mapping, MutableMapping
-from typing import TYPE_CHECKING, Any, NamedTuple, Self, TypeIs, overload
+from typing import TYPE_CHECKING, Any, Self, TypeIs, overload
 
 import cytoolz as cz
 
 from ._config import get_config
-from ._core import Pipeable
+from ._types import Item
+from .traits import Checkable, Pipeable
 
 if TYPE_CHECKING:
-    from ._core import SupportsKeysAndGetItem
     from ._iter import Iter
     from ._option import Option
     from ._result import Result
+    from ._types import SupportsKeysAndGetItem
 
 
-class Item[K, V](NamedTuple):
-    """Represents a key-value pair from a `Dict`."""
-
-    key: K
-    """The key of the item."""
-    value: V
-    """The value associated with the key."""
-
-    def __repr__(self) -> str:
-        return f"({self.key.__repr__()}, {self.value.__repr__()})"
-
-
-class Dict[K, V](Pipeable, MutableMapping[K, V]):
+class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
     """A `Dict` is a key-value store similar to Python's built-in `dict`, but with additional methods inspired by Rust's `HashMap`.
 
     You can initialize it with an existing Python `dict`, or from any object that can be converted into a dict with the `from_` method.

@@ -5,7 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Concatenate, Never, cast
 
-from ._core import Pipeable
+from .traits import Pipeable
 
 if TYPE_CHECKING:
     from ._iter import Iter
@@ -713,6 +713,8 @@ class Result[T, E](Pipeable, ABC):
 class Ok[T, E](Result[T, E]):
     """Represents a successful value.
 
+    For more documentation, see the `Result[T, E]` class.
+
     Attributes:
         value (T): The contained successful value.
     """
@@ -851,6 +853,8 @@ class Ok[T, E](Result[T, E]):
 @dataclass(slots=True)
 class Err[T, E](Result[T, E]):
     """Represents an error value.
+
+    For more documentation, see the `Result[T, E]` class.
 
     Attributes:
         error (E): The contained error value.

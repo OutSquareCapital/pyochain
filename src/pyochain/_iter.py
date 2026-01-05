@@ -15,14 +15,12 @@ from collections.abc import (
     ValuesView,
 )
 from collections.abc import Set as AbstractSet
-from dataclasses import dataclass
 from random import Random
 from typing import (
     TYPE_CHECKING,
     Any,
     Concatenate,
     Literal,
-    NamedTuple,
     Never,
     Self,
     TypeIs,
@@ -33,77 +31,30 @@ import cytoolz as cz
 import more_itertools as mit
 
 from ._config import get_config
-from ._core import Pipeable, SupportsRichComparison, SupportsSumWithNoDefaultGiven
+from ._types import (
+    Enumerated,
+    Group,
+    Peekable,
+    SupportsRichComparison,
+    SupportsSumWithNoDefaultGiven,
+    Unzipped,
+)
+from .traits import Checkable, Pipeable
 
 if TYPE_CHECKING:
     from ._option import Option
     from ._result import Result
 
 
-@dataclass(slots=True)
-class Unzipped[T, V](Pipeable):
-    """Represents the result of unzipping an iterator of pairs into two separate iterators.
-
-    See `Iter.unzip()` for details.
-    """
-
-    left: Iter[T]
-    """An iterator over the first elements of the pairs."""
-    right: Iter[V]
-    """An iterator over the second elements of the pairs."""
-
-
-type TryVal[T] = Option[T] | Result[T, object] | T | None
+type TryVal[T] = Option[T] | Result[T, Any] | T | None
 """Represent a value that may be failible."""
-type TryIter[T] = Iter[Option[T]] | Iter[Result[T, object]] | Iter[T | None]
+type TryIter[T] = Iter[Option[T]] | Iter[Result[T, Any]] | Iter[T | None]
 """Represent an iterator that may yield failible values."""
 Position = Literal["first", "middle", "last", "only"]
 """Literal type representing the position of an item in an iterable."""
 
 
-class Peekable[T](NamedTuple):
-    """Represents the result of peeking into an iterator.
-
-    See `Iter.peekable()` for details.
-    """
-
-    peek: Iter[T]
-    """An iterator over the peeked elements."""
-    values: Iter[T]
-    """An iterator of values, still including the peeked elements."""
-
-
-class Enumerated[T](NamedTuple):
-    """Represents an item with its associated index in an enumeration.
-
-    See `Iter.enumerate()` for details.
-    """
-
-    idx: int
-    """The index of the item in the enumeration."""
-    value: T
-    """The value of the item."""
-
-    def __repr__(self) -> str:
-        return f"({self.idx}, {self.value.__repr__()})"
-
-
-class Group[K, V](NamedTuple):
-    """Represents a grouping of values by a common key.
-
-    See `Iter.group_by()` for details.
-    """
-
-    key: K
-    """The common key for the group."""
-    values: Iter[V]
-    """An iterator over the values associated with the key."""
-
-    def __repr__(self) -> str:
-        return f"({self.key.__repr__()}, {self.values.__repr__()})"
-
-
-class BaseIter[T](Pipeable):
+class BaseIter[T](Pipeable, Checkable):
     _inner: Iterable[T]
 
     def __iter__(self) -> Iterator[T]:
@@ -1396,6 +1347,11 @@ class Iter[T](BaseIter[T], Iterator[T]):
     You can always convert back to an `Iter` using `{Seq, Vec}.iter()` for free.
 
     In general, avoid intermediate references when dealing with lazy iterators, and prioritize method chaining instead.
+
+    Note:
+        `Iter` inerhit from `Checkable` from it's internal base class `BaseIter`.
+
+        However, since it does not implement `__len__` (contrary to other collections like `Seq` or `Vec`), the methods like `.then()`, `.ok_or()` etc. will always return `Some[Iter[T]], or `Ok[Iter[T]`.
 
     Args:
         data (Iterable[T]): Any object that can be iterated over.

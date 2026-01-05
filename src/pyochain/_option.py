@@ -5,7 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Concatenate, Never, cast
 
-from ._core import Pipeable
+from .traits import Pipeable
 
 if TYPE_CHECKING:
     from ._iter import Iter
@@ -836,6 +836,8 @@ class Option[T](Pipeable, ABC):
 class Some[T](Option[T]):
     """Option variant representing the presence of a value.
 
+    For more documentation, see the `Option[T]` class.
+
     Attributes:
         value (T): The contained value.
 
@@ -983,7 +985,13 @@ class Some[T](Option[T]):
 
 @dataclass(slots=True)
 class NoneOption[T](Option[T]):
-    """Option variant representing the absence of a value."""
+    """Option variant representing the absence of a value.
+
+    This class is not supposed to be instanciated by the user.
+    Instead, pyochain provide the `NONE` singleton (for performance reasons).
+
+    For more documentation, see the `Option[T]` class.
+    """
 
     __match_args__ = ()
 
