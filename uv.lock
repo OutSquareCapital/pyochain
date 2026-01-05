@@ -482,7 +482,7 @@ wheels = [
 
 [[package]]
 name = "pyochain"
-version = "0.6.1.61"
+version = "0.6.1.70"
 source = { editable = "." }
 dependencies = [
     { name = "cytoolz" },
@@ -499,6 +499,7 @@ dev = [
     { name = "pyright" },
     { name = "pytest" },
     { name = "ruff" },
+    { name = "stubtester" },
     { name = "zensical" },
 ]
 
@@ -518,6 +519,7 @@ dev = [
     { name = "pyright", specifier = ">=1.1.407" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "ruff", specifier = ">=0.14.9" },
+    { name = "stubtester", git = "https://github.com/OutSquareCapital/stubtester.git" },
     { name = "zensical", specifier = ">=0.0.15" },
 ]
 
@@ -670,7 +672,7 @@ wheels = [
 [[package]]
 name = "stubtester"
 version = "0.1.5"
-source = { git = "https://github.com/OutSquareCapital/stubtester.git#911fb5b034476814069fa5232db41c284e7f61de" }
+source = { git = "https://github.com/OutSquareCapital/stubtester.git#dcd350c1cd78f045c32795018a7a1409cb1c3b59" }
 dependencies = [
     { name = "pyochain" },
     { name = "pytest" },
