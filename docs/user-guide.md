@@ -13,6 +13,22 @@ This guide focuses on concepts and a mental model. For exhaustive examples and m
 
 ---
 
+## General usage
+
+Pyochain code usually has this shape:
+
+1. build a pipeline (`Iter` transformations are lazy)
+2. optionally observe with `inspect(...)`
+3. finish with a terminal operation (`collect`, `sum`, `for_each`, …)
+
+```python
+>>> import pyochain as pc
+>>> pc.Iter(range(10)).filter(lambda n: n % 2 == 0).map(lambda n: n * n).collect()
+Seq(0, 4, 16, 36, 64)
+```
+
+Note: a terminal operation consumes an `Iter`. If you need to reuse data, materialize it into `Seq`/`Vec`.
+
 ## Data types and structures
 
 Pyochain types are small wrappers over familiar Python concepts. Pick them based on two dimensions:
@@ -28,6 +44,19 @@ Pyochain types are small wrappers over familiar Python concepts. Pick them based
 - terminal methods (`collect`, `sum`, `for_each`, …) consume the iterator
 
 Important: `Iter` is single-use. Once consumed, it is exhausted.
+
+If you need to traverse data multiple times, materialize it:
+
+```python
+>>> import pyochain as pc
+>>> seq = pc.Iter(range(3)).map(lambda x: x + 1).collect()
+>>> seq
+Seq(1, 2, 3)
+>>> seq.iter().sum()
+6
+>>> seq.iter().sum()
+6
+```
 
 ### `Seq[T]`: eager and immutable
 
@@ -97,6 +126,8 @@ Guidelines:
 
 Terminal operations are where an `Iter[T]` is actually consumed (e.g. `collect`, `sum`, `for_each`).
 
+Note: keep callables pure by default. When you need side effects (logging/metrics), prefer `inspect(...)` so the chain stays composable.
+
 ---
 
 ## Lazy API: when to use which
@@ -104,6 +135,12 @@ Terminal operations are where an `Iter[T]` is actually consumed (e.g. `collect`,
 Pyochain is “lazy-first” in one very specific sense: `Iter` chains are not executed until you consume them.
 
 There is no query planner: pyochain will not rewrite or optimize your pipeline. The main benefit of laziness here is simply “do no work until you must”.
+
+### Pipeline mental model
+
+- transformations (`map`, `filter`, `take`, …) build a new `Iter`
+- nothing executes until a terminal method is called
+- a terminal method consumes the iterator
 
 ### Prefer lazy when
 
@@ -126,7 +163,32 @@ Practical pattern: sample a pipeline without consuming everything.
 Seq(0, 2, 4, 6, 8)
 ```
 
+Tip: `take(n)` + `collect()` is a handy “preview” for large streams.
+
 ---
+
+## Common patterns
+
+### Uniqueness and frequencies
+
+When you need uniqueness, prefer pyochain’s dedicated tools rather than ad-hoc sets/counters.
+
+Note that unique return an Iterator.
+If you need uniqueness and collect immediately after, you can directly call `.collect(pc.Set)`.
+
+```python
+>>> import pyochain as pc
+>>> pc.Iter([1, 2, 1, 3]).unique().collect()
+Seq(1, 2, 3)
+```
+
+To count occurrences (like a “value counts”), use `most_common()`:
+
+```python
+>>> import pyochain as pc
+>>> pc.Seq(["spam", "ham", "spam", "egg"]).most_common()
+Vec(('spam', 2), ('ham', 1), ('egg', 1))
+```
 
 ## Side effects: `inspect` vs `for_each`
 
@@ -170,10 +232,11 @@ Use `Option[T]` when “no value” is a normal outcome (lookups, searches, opti
 
 Use `Result[T, E]` when something may fail and the caller should decide what to do.
 
-A pragmatic Python pattern is “exceptions at the boundary”: convert raised exceptions at IO/parsing boundaries into a `Result`, then keep the rest of your pipeline exception-free.
+A pragmatic pattern is “errors at the boundary”: convert fallible operations (IO/parsing/validation) into a `Result`, then keep the rest of your pipeline exception-free.
 
 ```python
 >>> import pyochain as pc
+>>>
 >>> def parse_port(value: str) -> pc.Result[int, str]:
 ...     try:
 ...         port = int(value)
@@ -216,7 +279,32 @@ This makes gradual adoption practical: internal logic can use pyochain types, wh
 
 ---
 
+## Traits: Adding chainable behavior to any class
+
+Pyochain provides two **mixin traits** that enhance any class with common functional patterns:
+
+- **`Pipeable`**: adds `.into()` and `.inspect()` for orchestrating transformations and side effects
+- **`Checkable`**: adds `.then()`, `.then_some()`, `.ok_or()`, `.ok_or_else()` for conditional chaining based on truthiness
+
+These traits are already built-in to all pyochain collections, but can be mixed into custom classes:
+
+```python
+>>> import pyochain as pc
+>>> import hashlib
+>>> def sha256_hex(data: pc.Seq[int]) -> str:
+...     return hashlib.sha256(bytes(data)).hexdigest()
+>>>
+>>> pc.Seq([1, 2, 3]).into(sha256_hex)
+'039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81'
+```
+
+For more details, see the reference pages for [Pipeable](reference/pipeable.md) and [Checkable](reference/checkable.md).
+
+---
+
 ## Where to go next
 
 - [`docs/examples.md`](examples.md)
 - [`docs/core-types-overview.md`](core-types-overview.md)
+- [`docs/reference/pipeable.md`](reference/pipeable.md)
+- [`docs/reference/checkable.md`](reference/checkable.md)

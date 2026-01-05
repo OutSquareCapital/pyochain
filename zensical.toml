@@ -9,6 +9,7 @@
 
     nav = [
         { "API Reference" = [
+            { "Overview" = "api-reference.md" },
             { "Collections" = [
                 { "Dict" = "reference/dict.md" },
                 { "Iter" = "reference/iter.md" },
@@ -27,10 +28,16 @@
                 { "Option" = "reference/option.md" },
                 { "Some" = "reference/some.md" },
             ] },
+            { "Traits & Mixins" = [
+                { "Checkable" = "reference/checkable.md" },
+                { "Pipeable" = "reference/pipeable.md" },
+            ] },
         ] },
         { "Getting Started" = [
+            { "Overview" = "getting-started.md" },
             { "Core Types Overview" = "core-types-overview.md" },
-            { "Examples & Cookbook" = "examples.md" },
+            { "Examples" = "examples.md" },
+            { "User Guide" = "user-guide.md" },
         ] },
         { "Home" = "index.md" },
     ]

@@ -10,9 +10,11 @@ Inspired by Rust's `Iterator`, `Result`, `Option`, and DataFrame libraries like 
 - 🦥 **Lazy-first design** — `Iter[T]` for lazy processing; `Seq`, `Vec`, `Set` for materialized collections.
 - 🔒 **Explicit mutability** — `Seq` and `Set` for immutable data; `Vec` and `SetMut` when you need to mutate.
 - 🛡️ **100% type-safe** — Full generic support and autocompletion in your IDE.
-- 📚 **Documentation-first** — Every method is documented and tested with runnable examples.
+- 📚 **Accurate Documentation** — Every method is documented and tested with runnable examples.
+Every code example in the website (or this README) is also tested, ensuring accuracy and reliability.
 - ⚡ **Performance-conscious** — Built on `cytoolz` (Cython), `more-itertools`, and stdlib `itertools` for efficiency.
 - 🔄 **Interoperable** — Seamlessly convert to/from types with `.into()`, `.collect()`
+- 🐍 **Mixins traits** — Extend your own classes with the methods in the mixins provided by the `traits` module.
 
 ## Quick Start
 
@@ -49,7 +51,7 @@ For comprehensive guides and examples:
 
 - **Why?** → [📘 User Guide](https://outsquarecapital.github.io/pyochain/user-guide/) — Concepts and mental models
 - **With what?** → [🔍 Core Types Overview](https://outsquarecapital.github.io/pyochain/core-types-overview/) — Type overview, comparisons and visual relationships
-- **How?** → [📚 Full API Reference](https://outsquarecapital.github.io/pyochain/) — Complete API documentation
+- **How?** → [📚 Full API Reference](https://outsquarecapital.github.io/pyochain/api-reference/) — Complete API documentation
 - **For when?** → [📖 Examples & Cookbook](https://outsquarecapital.github.io/pyochain/examples/) — Practical patterns and recipes
 
 ## Notice on Stability ⚠️
@@ -62,9 +64,7 @@ Want to contribute? Read our [contributing guide](CONTRIBUTING.md)
 
 ## Key Dependencies and credits
 
-Most of the computations are done with implementations from the `cytoolz` and `more-itertools` libraries.
-
-An extensive use of the `itertools` stdlib module is also to be noted.
+Most of the computations are done with implementations from, itertools, `cytoolz` and `more-itertools`.
 
 pyochain acts as a unifying API layer over these powerful tools.
 
@@ -72,6 +72,6 @@ pyochain acts as a unifying API layer over these powerful tools.
 
 <https://github.com/more-itertools/more-itertools>
 
-The stubs used for the developpement, made by the maintainer of pyochain, can be found here:
+The stubs used for the development, made by the maintainer of pyochain, can be found here:
 
 <https://github.com/OutSquareCapital/cytoolz-stubs>
