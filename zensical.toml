@@ -41,7 +41,6 @@
             { media = "(prefers-color-scheme: light)", scheme = "default", primary = "indigo", accent = "indigo", toggle = { icon = "lucide/sun", name = "Switch to dark mode" } },
         ]
         paths = ["src"]
-        variant = "classic"
 
     [project.plugins.mkdocstrings.handlers.python.options]
         docstring_style   = "google"
