@@ -20,12 +20,13 @@ Inspired by Rust's `Iterator`, `Result`, `Option`, and DataFrame libraries like 
 >>> import pyochain as pc
 >>> # Lazy processing with Iter
 >>> res: pc.Seq[int] = (
-...    pc.Iter.from_count(1)
-...    .filter(lambda x: x % 2 != 0)
-...    .map(lambda x: x**2)
-...    .take(5)
-...    .collect()
-...)
+...     pc.Iter.from_count(1)
+...     .filter(lambda x: x % 2 != 0)
+...     .map(lambda x: x**2)
+...     .take(5)
+...     .collect()
+... )
+>>> res
 Seq(1, 9, 25, 49, 81)
 >>> # Type-safe error handling with Result
 >>> def divide(a: int, b: int) -> pc.Result[float, str]:

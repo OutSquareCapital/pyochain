@@ -1,262 +1,222 @@
 # User Guide
 
-`pyochain` is a small set of core types (`Iter`, `Seq`, `Vec`, `Set`, `Dict`, `Option`, `Result`) designed to make Python code more declarative:
+`pyochain` provides a small set of core types (`Iter`, `Seq`, `Vec`, `Set`, `SetMut`, `Dict`, `Option`, `Result`) to write Python code as data pipelines:
 
-- build pipelines of transformations instead of step-by-step loops
-- separate **data flow** from **side effects**
-- make “may fail” and “may be missing” explicit in the type system
+- build transformations as a chain (instead of step-by-step loops)
+- keep **data flow** and **side effects** separated
+- make “may be missing” (`Option`) and “may fail” (`Result`) explicit
 
-This guide focuses on the mental model and the “why”. For exhaustive examples and method lists, prefer the reference pages (see `docs/reference/`) and the cookbook (`docs/examples.md`).
+This guide focuses on concepts and a mental model. For exhaustive examples and method lists, prefer:
 
----
-
-## A Mental Model: Adapters vs Terminal Operations
-
-Pyochain’s API is strongly inspired by Rust’s iterator style:
-
-- **adapter methods** transform a container into another container (still chainable)
-- **terminal methods** consume the pipeline and produce a final value
-
-For `Iter[T]`, adapter methods are lazy (they build a *description* of work). Nothing is executed until a terminal method runs.
-
-Common adapters:
-
-- `map`, `filter`, `filter_map`, `take`, `skip`, `flat_map`, `flatten`, `sort` (note: `sort` materializes into a `Vec`)
-
-Common terminals:
-
-- `collect` (materialize into `Seq` by default)
-- `length`, `sum`, `min`, `max`, `fold`, `reduce`
-- `for_each` (side effects)
-
-Minimal example (adapter chain + terminal):
-
-```python
-import pyochain as pc
-
-out: pc.Seq[int] = (
-    pc.Iter(range(10)).filter(lambda n: n % 2 == 0).map(lambda n: n * n).collect()
-)
-```
-
-### `Iter` is single-use
-
-`Iter[T]` wraps a Python `Iterator[T]`. Like any iterator, it is exhausted after consumption.
-
-- If you need to traverse data multiple times, materialize once with `.collect()` to a `Seq`/`Vec`/`Set`.
-- If you already have `Seq`/`Vec`/`Set`/`Dict`, you can switch to lazy mode with `.iter()`.
+- the reference pages in `docs/reference/`
+- the cookbook in `docs/examples.md`
 
 ---
 
-## Picking the Right Container
+## Data types and structures
 
-You don’t need to memorize every type; think in terms of *evaluation* and *mutability*:
+Pyochain types are small wrappers over familiar Python concepts. Pick them based on two dimensions:
+
+- evaluation: lazy (streaming) vs eager (materialized)
+- mutability: immutable vs mutable
+
+### `Iter[T]`: streaming and lazy
+
+`Iter[T]` wraps a Python `Iterator[T]` and is designed for pipelines.
+
+- transformation methods (`map`, `filter`, `take`, …) are lazy
+- terminal methods (`collect`, `sum`, `for_each`, …) consume the iterator
+
+Important: `Iter` is single-use. Once consumed, it is exhausted.
+
+### `Seq[T]`: eager and immutable
+
+`Seq[T]` is tuple-backed: it is materialized, reusable, and great for “hold this in memory and traverse multiple times”.
+
+If you want laziness again, call `.iter()`.
+
+### `Vec[T]`: eager and mutable
+
+`Vec[T]` is list-backed: use it when you need in-place mutations (append/extend/insert, etc.).
+
+### `Set[T]` and `SetMut[T]`: uniqueness
+
+Use `Set[T]` (immutable) or `SetMut[T]` (mutable) when you need uniqueness and fast membership tests.
+
+### `Dict[K, V]`: key/value transformations
+
+`Dict[K, V]` is a mapping wrapper with a fluent API.
+
+- for typed lookup, prefer `get_item(key) -> Option[V]` over `dict.get(key) -> V | None`
+
+### Which one should I use?
 
 | You need… | Use |
 | --- | --- |
-| streaming / laziness / “pipeline first” | `Iter[T]` |
-| materialized, reusable, immutable data | `Seq[T]` |
-| materialized and mutable data | `Vec[T]` |
-| uniqueness / membership tests | `Set[T]` or `SetMut[T]` |
-| key/value transformations with a fluent API | `Dict[K, V]` |
+| a streaming pipeline, laziness by default | `Iter[T]` |
+| an immutable materialized collection | `Seq[T]` |
+| a mutable materialized collection | `Vec[T]` |
+| uniqueness / membership tests | `Set[T]` / `SetMut[T]` |
+| key/value operations with `Option` lookup | `Dict[K, V]` |
 
-Notes:
+For a compact overview, see `docs/core-types-overview.md`.
 
-- `Seq[T]` is tuple-backed. It supports indexing, but pyochain also provides `nth(index)` as a terminal method.
-- `Vec[T]` is list-backed (`MutableSequence`); you can use list-like methods such as `append`, `extend`, `insert`, etc.
-- `Dict[K, V]` implements `MutableMapping` and also offers `get_item(key) -> Option[V]` for typed lookup.
+Reference pages:
 
-For a compact overview table, see `docs/core-types-overview.md`.
+- [`Iter[T]`](reference/iter.md)
+- [`Seq[T]`](reference/seq.md)
+- [`Vec[T]`](reference/vec.md)
+- [`Set[T]`](reference/set.md)
+- [`SetMut[T]`](reference/setmut.md)
+- [`Dict[K, V]`](reference/dict.md)
+- [`Option[T]`](reference/option.md)
+- [`Result[T, E]`](reference/result.md)
 
 ---
 
-## Functions as Values (Closures in Python)
+## Functions as values (callables)
 
-Most pyochain methods take callables (functions/lambdas). This is the “functional” part: you describe transformations by passing behavior.
-
-Guidelines that tend to scale well:
-
-- Prefer small named functions (`def`) when the logic is reused or when type checkers struggle with complex lambdas.
-- Use lambdas for tiny one-liners.
-- When your pipeline elements are “tuple-like”, prefer `map_star(func)` to unpack items into function arguments.
-
-Example with named predicates and mappers:
+Most transformation methods take a callable (function/lambda). Treat these callables as reusable “blocks” you can compose.
 
 ```python
-import pyochain as pc
+>>> import pyochain as pc
+>>> def is_even(n: int) -> bool:
+...     return n % 2 == 0
+>>> def square(n: int) -> int:
+...     return n * n
+>>> out: pc.Seq[int] = pc.Iter(range(10)).filter(is_even).map(square).collect()
+>>> out
+Seq(0, 4, 16, 36, 64)
+```
 
+Guidelines:
 
-def is_even(n: int) -> bool:
-    return n % 2 == 0
+- use small named `def` when reused, or when type checkers struggle with lambdas
+- keep lambdas for tiny one-liners
+- for tuple-like elements, prefer `map_star(func)` to unpack into arguments
 
+Terminal operations are where an `Iter[T]` is actually consumed (e.g. `collect`, `sum`, `for_each`).
 
-def square(n: int) -> int:
-    return n * n
+---
 
+## Lazy API: when to use which
 
-out: pc.Seq[int] = pc.Iter(range(10)).filter(is_even).map(square).collect()
+Pyochain is “lazy-first” in one very specific sense: `Iter` chains are not executed until you consume them.
+
+There is no query planner: pyochain will not rewrite or optimize your pipeline. The main benefit of laziness here is simply “do no work until you must”.
+
+### Prefer lazy when
+
+- you want to stream values and avoid materializing intermediate collections
+- you want to combine transformations before producing a final result
+- you only need one pass over the data
+
+### Prefer eager when
+
+- you need to inspect intermediate results (exploration/debugging)
+- you need multiple passes (e.g. “filter, then later reuse the filtered data twice”)
+- you need random access (indexing), stable size, or repeated iteration
+
+Practical pattern: sample a pipeline without consuming everything.
+
+```python
+>>> import pyochain as pc
+>>> head: pc.Seq[int] = pc.Iter(range(1_000_000)).map(lambda x: x * 2).take(5).collect()
+>>> head
+Seq(0, 2, 4, 6, 8)
 ```
 
 ---
 
-## Side Effects: `inspect` vs `for_each`
+## Side effects: `inspect` vs `for_each`
 
-Side effects are often necessary (logging, metrics, printing), but they shouldn’t destroy composability.
+Side effects (logging, printing, metrics) are often necessary, but they shouldn’t destroy composability.
 
 Use:
 
-- `inspect(...)` when you want to **observe** intermediate values without breaking the chain
-- `for_each(...)` when the entire purpose of the pipeline is the side effect (and you want to consume it)
-
-Key difference:
-
-- `inspect` returns the original container for chaining
-- `for_each` is terminal and returns `None`
+- `inspect(...)` to observe intermediate values while keeping the chain intact
+- `for_each(...)` when the pipeline’s purpose is the side effect (terminal, returns `None`)
 
 ```python
-import pyochain as pc
-
-pc.Iter(range(5)).inspect(lambda it: print("about to consume")).map(lambda n: n + 1).for_each(print)
+>>> import pyochain as pc
+>>> _ = pc.Iter(range(5)).inspect(lambda _: print("about to consume")).map(lambda n: n + 1).for_each(print)
+about to consume
+1
+2
+3
+4
+5
 ```
 
 ---
 
-## Error Handling: `Result[T, E]` (Recoverable Errors)
+## Missingness and failure are data: `Option` and `Result`
 
-Like Rust, pyochain encourages distinguishing:
+Pyochain’s “types for control flow” are meant to keep “expected absence” and “recoverable failure” explicit.
 
-- **recoverable** errors: you expect them to happen sometimes (bad user input, missing file, timeouts)
-- **unrecoverable** errors: bugs or invariant violations (these can still raise)
+### `Option[T]`: expected absence
 
-In pyochain, recoverable errors are represented by `Result[T, E]`.
-
-### Why this helps
-
-Compared to exceptions as control flow:
-
-- the *type signature* communicates “this may fail”
-- failures are chainable with `map`, `and_then`, `or_else`, etc.
-- you can build linear pipelines without nested `try/except`
-
-### Practical pattern: “exceptions at the boundary”
-
-Python libraries often raise exceptions. A good compromise is:
-
-1) catch exceptions at IO / parsing boundaries
-2) convert to `Result`
-3) keep the rest of the pipeline exception-free
+Use `Option[T]` when “no value” is a normal outcome (lookups, searches, optional config).
 
 ```python
-import pyochain as pc
-
-
-def parse_port(value: str) -> pc.Result[int, str]:
-    try:
-        port = int(value)
-    except ValueError:
-        return pc.Err("port must be an integer")
-
-    if 1 <= port <= 65535:
-        return pc.Ok(port)
-    return pc.Err("port out of range")
-
-
-port: int = parse_port("8080").unwrap_or(3000)
+>>> import pyochain as pc
+>>> cfg = pc.Dict.from_kwargs(host="localhost")
+>>> port: int = cfg.get_item("port").map(int).unwrap_or(3000)
+>>> port
+3000
 ```
 
-### Reading the combinators
+### `Result[T, E]`: recoverable failure
 
-You can mentally model the core methods like this:
+Use `Result[T, E]` when something may fail and the caller should decide what to do.
 
-- `map(f)`: apply `f` to the `Ok` value
-- `map_err(f)`: apply `f` to the `Err` value
-- `and_then(f)`: sequence fallible operations (a “flat_map” for `Result`)
-- `unwrap_or(default)`: extract the value with a fallback
-- `map_or_else(ok=..., err=...)`: produce a final value from either branch
-
----
-
-## Optional Values: `Option[T]` (Expected Absence)
-
-`Option[T]` is for “missingness”, not for “failure”. Use it when “no value” is an expected outcome.
-
-Typical sources:
-
-- optional config keys
-- lookups in mappings
-- search operations
-
-### Prefer typed lookups with `Dict.get_item`
-
-Instead of `dict.get(...) -> T | None`, you can use `Dict.get_item(...) -> Option[T]` and stay in the fluent world:
+A pragmatic Python pattern is “exceptions at the boundary”: convert raised exceptions at IO/parsing boundaries into a `Result`, then keep the rest of your pipeline exception-free.
 
 ```python
-import pyochain as pc
-
-cfg = pc.Dict.from_kwargs(host="localhost")
-port: int = cfg.get_item("port").map(int).unwrap_or(3000)
+>>> import pyochain as pc
+>>> def parse_port(value: str) -> pc.Result[int, str]:
+...     try:
+...         port = int(value)
+...     except ValueError:
+...         return pc.Err("port must be an integer")
+...     if 1 <= port <= 65535:
+...         return pc.Ok(port)
+...     return pc.Err("port out of range")
+>>> port: int = parse_port("8080").unwrap_or(3000)
+>>> port
+8080
 ```
 
-### `Option` combinators mirror `Result`
+Decision rule:
 
-- `map(f)`: apply `f` to a `Some` value
-- `and_then(f)`: chain optional operations
-- `unwrap_or(default)`: extract with fallback
-- `ok_or(err)`: convert `Option[T]` to `Result[T, E]`
-
----
-
-## `Option` vs `Result` vs Exceptions
-
-Use this as a default decision rule:
-
-- `Option[T]`: the value may be missing and that’s *expected*
-- `Result[T, E]`: the operation may fail and the caller should decide what to do
-- exceptions: bugs or invariants (the program should not continue normally)
+- `Option[T]`: missing is expected
+- `Result[T, E]`: failure is expected and recoverable
+- exceptions: bugs / invariant violations
 
 ---
 
 ## Interoperability: `.into(...)` and `.collect(...)`
 
-Two concepts matter:
+Two conversions matter most:
 
-- `.collect(...)` materializes an `Iter` into a pyochain collection (`Seq` by default)
-- `.into(func_or_type)` converts to *anything* by calling a function with the current object
-
-Examples:
+- `.collect(...)`: materialize an `Iter` into a pyochain collection (`Seq` by default)
+- `.into(func_or_type)`: convert by calling a function/type with the current object
 
 ```python
-import pyochain as pc
-
-as_seq: pc.Seq[int] = pc.Iter(range(5)).collect()
-as_list: list[int] = as_seq.into(list)
+>>> import pyochain as pc
+>>> as_seq: pc.Seq[int] = pc.Iter(range(5)).collect()
+>>> as_seq
+Seq(0, 1, 2, 3, 4)
+>>> as_list: list[int] = as_seq.into(list)
+>>> as_list
+[0, 1, 2, 3, 4]
 ```
 
-This makes gradual adoption practical: you can keep using external libraries that expect native Python types while writing your internal logic with pyochain types.
+This makes gradual adoption practical: internal logic can use pyochain types, while boundaries can convert to/from native Python types.
 
 ---
 
-## Note on Polars-style “contexts” (`with_columns`)
+## Where to go next
 
-Polars expressions are *descriptions* of computations that only materialize inside a context (`select`, `with_columns`, `filter`, …). That’s conceptually similar to pyochain adapters vs terminals: build descriptions first, execute later.
-
-When integrating pyochain with Polars, one pragmatic use case is to generate repeated expressions (e.g., a family of derived columns) without manual loops:
-
-```python
-import polars as pl
-
-import pyochain as pc
-
-out: pl.LazyFrame = (
-    pc.Seq([1, 2, 3])
-    .into(lambda x: pl.LazyFrame({"x": x}))
-    .with_columns(
-        pc.Iter(["a", "b", "c"]).map(lambda name: pl.col("x").mul(2).alias(f"{name}_x"))
-    )
-)
-
-```
-
-This can be more concise and coherent than mixing polars fluent API calls with Python loops.
-You also get the benefit of pyochain’s rich combinators for transformations, and lazy evaluation.
-This means that expressions AND computations are lazy.
+- [`docs/examples.md`](examples.md)
+- [`docs/core-types-overview.md`](core-types-overview.md)
