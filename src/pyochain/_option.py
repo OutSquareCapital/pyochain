@@ -978,9 +978,7 @@ class Some[T](Option[T]):
         return Err(inner.unwrap_err())
 
     def xor(self, optb: Option[T]) -> Option[T]:
-        if not optb.is_some():
-            return self
-        return optb
+        return self if optb.is_none() else NONE
 
 
 @dataclass(slots=True)
@@ -1116,9 +1114,7 @@ class NoneOption[T](Option[T]):
         return Ok(Option.from_(None))
 
     def xor(self, optb: Option[T]) -> Option[T]:
-        if optb.is_some():
-            return optb
-        return self
+        return optb if optb.is_some() else NONE
 
 
 NONE: NoneOption[Any] = NoneOption()
