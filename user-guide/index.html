@@ -1,0 +1,1443 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A modern Python library for functional programming with chainable operations">
+      
+      
+        <meta name="author" content="Outside Square Capital">
+      
+      
+        <link rel="canonical" href="https://outsquarecapital.github.io/pyochain/user-guide/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.15">
+    
+    
+      
+        <title>User Guide - pyochain</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../assets/stylesheets/classic/main.70d17ad7.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../assets/stylesheets/classic/palette.7dc9a0ad.min.css">
+      
+      
+  
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+  
+  <style>:root{}</style>
+
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,a=__md_scope)=>JSON.parse(t.getItem(a.pathname+"."+e)),__md_set=(e,t,a=localStorage,_=__md_scope)=>{try{a.setItem(_.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#user-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="pyochain" class="md-header__button md-logo" aria-label="pyochain" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            pyochain
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              User Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="pyochain" class="md-nav__button md-logo" aria-label="pyochain" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    pyochain
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_1" id="__nav_1_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Collections
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Collections
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/dict/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dict
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/iter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Iter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/seq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Seq
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/set/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Set
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/setmut/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SetMut
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/vec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vec
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_2" id="__nav_1_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Error Handling
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Error Handling
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/err/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Err
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/ok/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ok
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/result/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Result
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Optional Values
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Optional Values
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/none/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    None
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/option/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Option
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/some/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Some
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core-types-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Types Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples & Cookbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#a-mental-model-adapters-vs-terminal-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A Mental Model: Adapters vs Terminal Operations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="A Mental Model: Adapters vs Terminal Operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#iter-is-single-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Iter is single-use
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#picking-the-right-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Picking the Right Container
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#functions-as-values-closures-in-python" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Functions as Values (Closures in Python)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#side-effects-inspect-vs-for_each" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Side Effects: inspect vs for_each
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling-resultt-e-recoverable-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling: Result[T, E] (Recoverable Errors)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Error Handling: Result[T, E] (Recoverable Errors)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-this-helps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why this helps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#practical-pattern-exceptions-at-the-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Practical pattern: “exceptions at the boundary”
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reading-the-combinators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading the combinators
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional-values-optiont-expected-absence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional Values: Option[T] (Expected Absence)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Optional Values: Option[T] (Expected Absence)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prefer-typed-lookups-with-dictget_item" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prefer typed lookups with Dict.get_item
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-combinators-mirror-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option combinators mirror Result
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#option-vs-result-vs-exceptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option vs Result vs Exceptions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interoperability-into-and-collect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interoperability: .into(...) and .collect(...)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#note-on-polars-style-contexts-with_columns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Note on Polars-style “contexts” (with_columns)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+<h1 id="user-guide">User Guide</h1>
+<p><code>pyochain</code> is a small set of core types (<code>Iter</code>, <code>Seq</code>, <code>Vec</code>, <code>Set</code>, <code>Dict</code>, <code>Option</code>, <code>Result</code>) designed to make Python code more declarative:</p>
+<ul>
+<li>build pipelines of transformations instead of step-by-step loops</li>
+<li>separate <strong>data flow</strong> from <strong>side effects</strong></li>
+<li>make “may fail” and “may be missing” explicit in the type system</li>
+</ul>
+<p>This guide focuses on the mental model and the “why”. For exhaustive examples and method lists, prefer the reference pages (see <code>docs/reference/</code>) and the cookbook (<code>docs/examples.md</code>).</p>
+<hr />
+<h2 id="a-mental-model-adapters-vs-terminal-operations">A Mental Model: Adapters vs Terminal Operations</h2>
+<p>Pyochain’s API is strongly inspired by Rust’s iterator style:</p>
+<ul>
+<li><strong>adapter methods</strong> transform a container into another container (still chainable)</li>
+<li><strong>terminal methods</strong> consume the pipeline and produce a final value</li>
+</ul>
+<p>For <code>Iter[T]</code>, adapter methods are lazy (they build a <em>description</em> of work). Nothing is executed until a terminal method runs.</p>
+<p>Common adapters:</p>
+<ul>
+<li><code>map</code>, <code>filter</code>, <code>filter_map</code>, <code>take</code>, <code>skip</code>, <code>flat_map</code>, <code>flatten</code>, <code>sort</code> (note: <code>sort</code> materializes into a <code>Vec</code>)</li>
+</ul>
+<p>Common terminals:</p>
+<ul>
+<li><code>collect</code> (materialize into <code>Seq</code> by default)</li>
+<li><code>length</code>, <code>sum</code>, <code>min</code>, <code>max</code>, <code>fold</code>, <code>reduce</code></li>
+<li><code>for_each</code> (side effects)</li>
+</ul>
+<p>Minimal example (adapter chain + terminal):</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+
+<span class="n">out</span><span class="p">:</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">pc</span><span class="o">.</span><span class="n">Iter</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+<span class="p">)</span>
+</code></pre></div>
+<h3 id="iter-is-single-use"><code>Iter</code> is single-use</h3>
+<p><code>Iter[T]</code> wraps a Python <code>Iterator[T]</code>. Like any iterator, it is exhausted after consumption.</p>
+<ul>
+<li>If you need to traverse data multiple times, materialize once with <code>.collect()</code> to a <code>Seq</code>/<code>Vec</code>/<code>Set</code>.</li>
+<li>If you already have <code>Seq</code>/<code>Vec</code>/<code>Set</code>/<code>Dict</code>, you can switch to lazy mode with <code>.iter()</code>.</li>
+</ul>
+<hr />
+<h2 id="picking-the-right-container">Picking the Right Container</h2>
+<p>You don’t need to memorize every type; think in terms of <em>evaluation</em> and <em>mutability</em>:</p>
+<table>
+<thead>
+<tr>
+<th>You need…</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>streaming / laziness / “pipeline first”</td>
+<td><code>Iter[T]</code></td>
+</tr>
+<tr>
+<td>materialized, reusable, immutable data</td>
+<td><code>Seq[T]</code></td>
+</tr>
+<tr>
+<td>materialized and mutable data</td>
+<td><code>Vec[T]</code></td>
+</tr>
+<tr>
+<td>uniqueness / membership tests</td>
+<td><code>Set[T]</code> or <code>SetMut[T]</code></td>
+</tr>
+<tr>
+<td>key/value transformations with a fluent API</td>
+<td><code>Dict[K, V]</code></td>
+</tr>
+</tbody>
+</table>
+<p>Notes:</p>
+<ul>
+<li><code>Seq[T]</code> is tuple-backed. It supports indexing, but pyochain also provides <code>nth(index)</code> as a terminal method.</li>
+<li><code>Vec[T]</code> is list-backed (<code>MutableSequence</code>); you can use list-like methods such as <code>append</code>, <code>extend</code>, <code>insert</code>, etc.</li>
+<li><code>Dict[K, V]</code> implements <code>MutableMapping</code> and also offers <code>get_item(key) -&gt; Option[V]</code> for typed lookup.</li>
+</ul>
+<p>For a compact overview table, see <code>docs/core-types-overview.md</code>.</p>
+<hr />
+<h2 id="functions-as-values-closures-in-python">Functions as Values (Closures in Python)</h2>
+<p>Most pyochain methods take callables (functions/lambdas). This is the “functional” part: you describe transformations by passing behavior.</p>
+<p>Guidelines that tend to scale well:</p>
+<ul>
+<li>Prefer small named functions (<code>def</code>) when the logic is reused or when type checkers struggle with complex lambdas.</li>
+<li>Use lambdas for tiny one-liners.</li>
+<li>When your pipeline elements are “tuple-like”, prefer <code>map_star(func)</code> to unpack items into function arguments.</li>
+</ul>
+<p>Example with named predicates and mappers:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">is_even</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">square</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">n</span> <span class="o">*</span> <span class="n">n</span>
+
+
+<span class="n">out</span><span class="p">:</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Iter</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_even</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">square</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+</code></pre></div>
+<hr />
+<h2 id="side-effects-inspect-vs-for_each">Side Effects: <code>inspect</code> vs <code>for_each</code></h2>
+<p>Side effects are often necessary (logging, metrics, printing), but they shouldn’t destroy composability.</p>
+<p>Use:</p>
+<ul>
+<li><code>inspect(...)</code> when you want to <strong>observe</strong> intermediate values without breaking the chain</li>
+<li><code>for_each(...)</code> when the entire purpose of the pipeline is the side effect (and you want to consume it)</li>
+</ul>
+<p>Key difference:</p>
+<ul>
+<li><code>inspect</code> returns the original container for chaining</li>
+<li><code>for_each</code> is terminal and returns <code>None</code></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+
+<span class="n">pc</span><span class="o">.</span><span class="n">Iter</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">inspect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">it</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;about to consume&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">for_each</span><span class="p">(</span><span class="nb">print</span><span class="p">)</span>
+</code></pre></div>
+<hr />
+<h2 id="error-handling-resultt-e-recoverable-errors">Error Handling: <code>Result[T, E]</code> (Recoverable Errors)</h2>
+<p>Like Rust, pyochain encourages distinguishing:</p>
+<ul>
+<li><strong>recoverable</strong> errors: you expect them to happen sometimes (bad user input, missing file, timeouts)</li>
+<li><strong>unrecoverable</strong> errors: bugs or invariant violations (these can still raise)</li>
+</ul>
+<p>In pyochain, recoverable errors are represented by <code>Result[T, E]</code>.</p>
+<h3 id="why-this-helps">Why this helps</h3>
+<p>Compared to exceptions as control flow:</p>
+<ul>
+<li>the <em>type signature</em> communicates “this may fail”</li>
+<li>failures are chainable with <code>map</code>, <code>and_then</code>, <code>or_else</code>, etc.</li>
+<li>you can build linear pipelines without nested <code>try/except</code></li>
+</ul>
+<h3 id="practical-pattern-exceptions-at-the-boundary">Practical pattern: “exceptions at the boundary”</h3>
+<p>Python libraries often raise exceptions. A good compromise is:</p>
+<p>1) catch exceptions at IO / parsing boundaries
+2) convert to <code>Result</code>
+3) keep the rest of the pipeline exception-free</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_port</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Result</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">port</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pc</span><span class="o">.</span><span class="n">Err</span><span class="p">(</span><span class="s2">&quot;port must be an integer&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">port</span> <span class="o">&lt;=</span> <span class="mi">65535</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pc</span><span class="o">.</span><span class="n">Ok</span><span class="p">(</span><span class="n">port</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pc</span><span class="o">.</span><span class="n">Err</span><span class="p">(</span><span class="s2">&quot;port out of range&quot;</span><span class="p">)</span>
+
+
+<span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">parse_port</span><span class="p">(</span><span class="s2">&quot;8080&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap_or</span><span class="p">(</span><span class="mi">3000</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="reading-the-combinators">Reading the combinators</h3>
+<p>You can mentally model the core methods like this:</p>
+<ul>
+<li><code>map(f)</code>: apply <code>f</code> to the <code>Ok</code> value</li>
+<li><code>map_err(f)</code>: apply <code>f</code> to the <code>Err</code> value</li>
+<li><code>and_then(f)</code>: sequence fallible operations (a “flat_map” for <code>Result</code>)</li>
+<li><code>unwrap_or(default)</code>: extract the value with a fallback</li>
+<li><code>map_or_else(ok=..., err=...)</code>: produce a final value from either branch</li>
+</ul>
+<hr />
+<h2 id="optional-values-optiont-expected-absence">Optional Values: <code>Option[T]</code> (Expected Absence)</h2>
+<p><code>Option[T]</code> is for “missingness”, not for “failure”. Use it when “no value” is an expected outcome.</p>
+<p>Typical sources:</p>
+<ul>
+<li>optional config keys</li>
+<li>lookups in mappings</li>
+<li>search operations</li>
+</ul>
+<h3 id="prefer-typed-lookups-with-dictget_item">Prefer typed lookups with <code>Dict.get_item</code></h3>
+<p>Instead of <code>dict.get(...) -&gt; T | None</code>, you can use <code>Dict.get_item(...) -&gt; Option[T]</code> and stay in the fluent world:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Dict</span><span class="o">.</span><span class="n">from_kwargs</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s2">&quot;localhost&quot;</span><span class="p">)</span>
+<span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get_item</span><span class="p">(</span><span class="s2">&quot;port&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap_or</span><span class="p">(</span><span class="mi">3000</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="option-combinators-mirror-result"><code>Option</code> combinators mirror <code>Result</code></h3>
+<ul>
+<li><code>map(f)</code>: apply <code>f</code> to a <code>Some</code> value</li>
+<li><code>and_then(f)</code>: chain optional operations</li>
+<li><code>unwrap_or(default)</code>: extract with fallback</li>
+<li><code>ok_or(err)</code>: convert <code>Option[T]</code> to <code>Result[T, E]</code></li>
+</ul>
+<hr />
+<h2 id="option-vs-result-vs-exceptions"><code>Option</code> vs <code>Result</code> vs Exceptions</h2>
+<p>Use this as a default decision rule:</p>
+<ul>
+<li><code>Option[T]</code>: the value may be missing and that’s <em>expected</em></li>
+<li><code>Result[T, E]</code>: the operation may fail and the caller should decide what to do</li>
+<li>exceptions: bugs or invariants (the program should not continue normally)</li>
+</ul>
+<hr />
+<h2 id="interoperability-into-and-collect">Interoperability: <code>.into(...)</code> and <code>.collect(...)</code></h2>
+<p>Two concepts matter:</p>
+<ul>
+<li><code>.collect(...)</code> materializes an <code>Iter</code> into a pyochain collection (<code>Seq</code> by default)</li>
+<li><code>.into(func_or_type)</code> converts to <em>anything</em> by calling a function with the current object</li>
+</ul>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+
+<span class="n">as_seq</span><span class="p">:</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Iter</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+<span class="n">as_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">as_seq</span><span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+</code></pre></div>
+<p>This makes gradual adoption practical: you can keep using external libraries that expect native Python types while writing your internal logic with pyochain types.</p>
+<hr />
+<h2 id="note-on-polars-style-contexts-with_columns">Note on Polars-style “contexts” (<code>with_columns</code>)</h2>
+<p>Polars expressions are <em>descriptions</em> of computations that only materialize inside a context (<code>select</code>, <code>with_columns</code>, <code>filter</code>, …). That’s conceptually similar to pyochain adapters vs terminals: build descriptions first, execute later.</p>
+<p>When integrating pyochain with Polars, one pragmatic use case is to generate repeated expressions (e.g., a family of derived columns) without manual loops:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+
+<span class="n">out</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">LazyFrame</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+    <span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">LazyFrame</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">x</span><span class="p">}))</span>
+    <span class="o">.</span><span class="n">with_columns</span><span class="p">(</span>
+        <span class="n">pc</span><span class="o">.</span><span class="n">Iter</span><span class="p">([</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">name</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_x&quot;</span><span class="p">))</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>This can be more concise and coherent than mixing polars fluent API calls with Python loops.
+You also get the benefit of pyochain’s rich combinators for transformations, and lazy evaluation.
+This means that expressions AND computations are lazy.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":[],"search":"../assets/javascripts/workers/search.e2d2d235.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.00c35305.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1645,9 +1645,7 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/pyochain/_option.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">878</span>
-<span class="normal">879</span>
-<span class="normal">880</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">880</span>
 <span class="normal">881</span>
 <span class="normal">882</span>
 <span class="normal">883</span>
@@ -1660,9 +1658,15 @@
 <span class="normal">890</span>
 <span class="normal">891</span>
 <span class="normal">892</span>
-<span class="normal">893</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="normal">893</span>
+<span class="normal">894</span>
+<span class="normal">895</span>
+<span class="normal">896</span>
+<span class="normal">897</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">NoneOption</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">Option</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Option variant representing the absence of a value.&quot;&quot;&quot;</span>
+
+    <span class="n">__match_args__</span> <span class="o">=</span> <span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot;NONE&quot;</span>
@@ -2802,7 +2806,7 @@
 
         <p>Convert <code>Self</code> to <code>R</code>.</p>
 <p>This method allows to pipe the instance into an object or function that can convert <code>Self</code> into another type.</p>
-<p>Conceptually, this allow to do x.into(f) instead of f(x), hence keeping a functional chaining style.</p>
+<p>Conceptually, this allow to do <code>x.into(f)</code> instead of <code>f(x)</code>, hence keeping a functional chaining style.</p>
 <p>This is a core method, shared by all pyochain wrappers, that allows chaining operations in a functional style.</p>
 
 
@@ -2953,7 +2957,7 @@
 
 <span class="sd">    This method allows to pipe the instance into an object or function that can convert `Self` into another type.</span>
 
-<span class="sd">    Conceptually, this allow to do x.into(f) instead of f(x), hence keeping a functional chaining style.</span>
+<span class="sd">    Conceptually, this allow to do `x.into(f)` instead of `f(x)`, hence keeping a functional chaining style.</span>
 
 <span class="sd">    This is a core method, shared by all pyochain wrappers, that allows chaining operations in a functional style.</span>
 

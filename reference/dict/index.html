@@ -3783,6 +3783,7 @@
     <div class="doc doc-contents ">
 
         <p>Pass the instance to a function to perform side effects without altering the data.</p>
+<p>This method is very useful for debugging or passing the instance to other functions for side effects, without breaking the method chaining.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -3905,13 +3906,17 @@
 <span class="normal">70</span>
 <span class="normal">71</span>
 <span class="normal">72</span>
-<span class="normal">73</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">inspect</span><span class="p">[</span><span class="o">**</span><span class="n">P</span><span class="p">](</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">inspect</span><span class="p">[</span><span class="o">**</span><span class="n">P</span><span class="p">](</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Concatenate</span><span class="p">[</span><span class="n">Self</span><span class="p">,</span> <span class="n">P</span><span class="p">],</span> <span class="nb">object</span><span class="p">],</span>
     <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Pass the instance to a function to perform side effects without altering the data.</span>
+
+<span class="sd">    This method is very useful for debugging or passing the instance to other functions for side effects, without breaking the method chaining.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        func (Callable[Concatenate[Self, P], object]): Function to apply to the instance for side effects.</span>
@@ -3951,7 +3956,7 @@
 
         <p>Convert <code>Self</code> to <code>R</code>.</p>
 <p>This method allows to pipe the instance into an object or function that can convert <code>Self</code> into another type.</p>
-<p>Conceptually, this allow to do x.into(f) instead of f(x), hence keeping a functional chaining style.</p>
+<p>Conceptually, this allow to do <code>x.into(f)</code> instead of <code>f(x)</code>, hence keeping a functional chaining style.</p>
 <p>This is a core method, shared by all pyochain wrappers, that allows chaining operations in a functional style.</p>
 
 
@@ -4102,7 +4107,7 @@
 
 <span class="sd">    This method allows to pipe the instance into an object or function that can convert `Self` into another type.</span>
 
-<span class="sd">    Conceptually, this allow to do x.into(f) instead of f(x), hence keeping a functional chaining style.</span>
+<span class="sd">    Conceptually, this allow to do `x.into(f)` instead of `f(x)`, hence keeping a functional chaining style.</span>
 
 <span class="sd">    This is a core method, shared by all pyochain wrappers, that allows chaining operations in a functional style.</span>
 

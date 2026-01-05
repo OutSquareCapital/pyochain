@@ -1704,7 +1704,9 @@
 <span class="normal">872</span>
 <span class="normal">873</span>
 <span class="normal">874</span>
-<span class="normal">875</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="normal">875</span>
+<span class="normal">876</span>
+<span class="normal">877</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Some</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">Option</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Option variant representing the presence of a value.</span>
 
@@ -1720,6 +1722,8 @@
 <span class="sd">    ```</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__match_args__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">,)</span>
 
     <span class="n">value</span><span class="p">:</span> <span class="n">T</span>
 
@@ -2860,7 +2864,7 @@
 
         <p>Convert <code>Self</code> to <code>R</code>.</p>
 <p>This method allows to pipe the instance into an object or function that can convert <code>Self</code> into another type.</p>
-<p>Conceptually, this allow to do x.into(f) instead of f(x), hence keeping a functional chaining style.</p>
+<p>Conceptually, this allow to do <code>x.into(f)</code> instead of <code>f(x)</code>, hence keeping a functional chaining style.</p>
 <p>This is a core method, shared by all pyochain wrappers, that allows chaining operations in a functional style.</p>
 
 
@@ -3011,7 +3015,7 @@
 
 <span class="sd">    This method allows to pipe the instance into an object or function that can convert `Self` into another type.</span>
 
-<span class="sd">    Conceptually, this allow to do x.into(f) instead of f(x), hence keeping a functional chaining style.</span>
+<span class="sd">    Conceptually, this allow to do `x.into(f)` instead of `f(x)`, hence keeping a functional chaining style.</span>
 
 <span class="sd">    This is a core method, shared by all pyochain wrappers, that allows chaining operations in a functional style.</span>
 

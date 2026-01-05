@@ -1542,7 +1542,7 @@
 <a id="pyochain._result.Ok"></a>
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><autoref identifier="pyochain._result.Result" backlink-type="subclassed-by" backlink-anchor="pyochain._result.Ok" optional hover>Result</autoref>[<autoref identifier="pyochain._result.Ok[T]" optional>T</autoref>, <autoref identifier="pyochain._result.Ok[E]" optional>E</autoref>]</code></p>
+              Bases: <code><autoref identifier="pyochain._result.Result" backlink-type="subclassed-by" backlink-anchor="pyochain._result.Ok" optional hover>Result</autoref>[<autoref identifier="pyochain._result.Ok[T]" optional>T</autoref>, <autoref identifier="typing.Any" backlink-type="subclassed-by" backlink-anchor="pyochain._result.Ok" optional hover>Any</autoref>]</code></p>
 
 
 
@@ -1606,13 +1606,17 @@
 <span class="normal">747</span>
 <span class="normal">748</span>
 <span class="normal">749</span>
-<span class="normal">750</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">Ok</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">E</span><span class="p">](</span><span class="n">Result</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">E</span><span class="p">]):</span>
+<span class="normal">750</span>
+<span class="normal">751</span>
+<span class="normal">752</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Ok</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">Result</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a successful value.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        value (T): The contained successful value.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__match_args__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">,)</span>
 
     <span class="n">value</span><span class="p">:</span> <span class="n">T</span>
 
@@ -2901,7 +2905,7 @@ logging or debugging error paths while keeping the <code>Result</code> unchanged
 
         <p>Convert <code>Self</code> to <code>R</code>.</p>
 <p>This method allows to pipe the instance into an object or function that can convert <code>Self</code> into another type.</p>
-<p>Conceptually, this allow to do x.into(f) instead of f(x), hence keeping a functional chaining style.</p>
+<p>Conceptually, this allow to do <code>x.into(f)</code> instead of <code>f(x)</code>, hence keeping a functional chaining style.</p>
 <p>This is a core method, shared by all pyochain wrappers, that allows chaining operations in a functional style.</p>
 
 
@@ -3052,7 +3056,7 @@ logging or debugging error paths while keeping the <code>Result</code> unchanged
 
 <span class="sd">    This method allows to pipe the instance into an object or function that can convert `Self` into another type.</span>
 
-<span class="sd">    Conceptually, this allow to do x.into(f) instead of f(x), hence keeping a functional chaining style.</span>
+<span class="sd">    Conceptually, this allow to do `x.into(f)` instead of `f(x)`, hence keeping a functional chaining style.</span>
 
 <span class="sd">    This is a core method, shared by all pyochain wrappers, that allows chaining operations in a functional style.</span>
 
