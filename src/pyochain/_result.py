@@ -93,7 +93,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def is_err(self) -> bool:
@@ -114,7 +114,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def unwrap(self) -> T:
@@ -142,7 +142,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def unwrap_err(self) -> E:
@@ -170,7 +170,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def map_or_else[U](self, ok: Callable[[T], U], err: Callable[[E], U]) -> U:
@@ -197,7 +197,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def expect(self, msg: str) -> T:
@@ -226,7 +226,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def expect_err(self, msg: str) -> E:
@@ -255,7 +255,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def unwrap_or(self, default: T) -> T:
@@ -277,7 +277,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def unwrap_or_else[**P](
@@ -303,7 +303,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def map[**P, R](
@@ -332,7 +332,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def map_err[**P, R](
@@ -362,7 +362,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def inspect[**P](
@@ -392,7 +392,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def inspect_err[**P](
@@ -422,7 +422,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def and_[U](self, res: Result[U, E]) -> Result[U, E]:
@@ -460,7 +460,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def and_then[**P, R](
@@ -493,7 +493,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def or_else[**P](
@@ -526,7 +526,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def ok(self) -> Option[T]:
@@ -547,7 +547,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def err(self) -> Option[E]:
@@ -568,7 +568,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def is_ok_and[**P](
@@ -596,7 +596,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def is_err_and[**P](
@@ -624,7 +624,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def map_or[**P, R](
@@ -655,7 +655,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def transpose(self: Result[Option[T], E]) -> Option[Result[T, E]]:
@@ -680,7 +680,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def or_[F](self, res: Result[T, F]) -> Result[T, F]:
@@ -706,7 +706,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
 
 @dataclass(slots=True)

@@ -899,7 +899,7 @@ class BaseIter[T](Pipeable):
             The result is a new `Vec` over the sorted sequence.
 
         Args:
-            key (Callable[[U], Any] | None): Function to extract a comparison key from each element. Defaults to None.
+            key (Callable[[T], SupportsRichComparison[Any]] | None): Function to extract a comparison key from each element. Defaults to None.
             reverse (bool): Whether to sort in descending order. Defaults to False.
 
         Returns:

@@ -123,7 +123,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def is_some_and[**P](
@@ -161,7 +161,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def is_none(self) -> bool:
@@ -182,7 +182,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def is_none_or[**P](
@@ -212,7 +212,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def unwrap(self) -> T:
@@ -240,7 +240,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def expect(self, msg: str) -> T:
@@ -294,7 +294,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def unwrap_or_else(self, f: Callable[[], T]) -> T:
@@ -317,7 +317,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def map[**P, R](
@@ -346,7 +346,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def and_[U](self, optb: Option[U]) -> Option[U]:
@@ -373,7 +373,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def or_(self, optb: Option[T]) -> Option[T]:
@@ -399,7 +399,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def and_then[**P, R](
@@ -436,7 +436,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def or_else(self, f: Callable[[], Option[T]]) -> Option[T]:
@@ -464,7 +464,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def ok_or[E](self, err: E) -> Result[T, E]:
@@ -486,7 +486,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def ok_or_else[E](self, err: Callable[[], E]) -> Result[T, E]:
@@ -508,7 +508,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def map_or[**P, R](
@@ -539,7 +539,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def map_or_else[**P, R](self, default: Callable[[], R], f: Callable[[T], R]) -> R:
@@ -562,7 +562,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def filter[**P, R](
@@ -602,7 +602,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def iter(self) -> Iter[T]:
@@ -626,7 +626,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def inspect[**P](
@@ -659,7 +659,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def unzip[U](self: Option[tuple[T, U]]) -> tuple[Option[T], Option[U]]:
@@ -681,7 +681,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def zip[U](self, other: Option[U]) -> Option[tuple[T, U]]:
@@ -705,7 +705,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def zip_with[U, R](self, other: Option[U], f: Callable[[T, U], R]) -> Option[R]:
@@ -741,7 +741,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def reduce[U](self, other: Option[T], func: Callable[[T, T], T]) -> Option[T]:
@@ -780,7 +780,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def transpose[E](self: Option[Result[T, E]]) -> Result[Option[T], E]:
@@ -803,7 +803,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def xor(self, optb: Option[T]) -> Option[T]:
@@ -829,7 +829,7 @@ class Option[T](Pipeable, ABC):
 
         ```
         """
-        raise NotImplementedError
+        ...
 
 
 @dataclass(slots=True)
