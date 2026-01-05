@@ -3,18 +3,20 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Concatenate, Never
+from typing import TYPE_CHECKING, Any, Concatenate, Never, cast
 
 from pyochain._core import Pipeable
 
 if TYPE_CHECKING:
-    from pyochain import Iter, Result
+    from pyochain._iter import Iter
+
+    from ._result import Result
 
 
 class OptionUnwrapError(RuntimeError): ...
 
 
-class BaseOption[T](Pipeable, ABC):
+class Option[T](Pipeable, ABC):
     """Type `Option[T]` represents an optional value.
 
     Every Option is either:
@@ -68,14 +70,40 @@ class BaseOption[T](Pipeable, ABC):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.option(42)
+        >>> pc.Option.from_(42)
         Some(42)
-        >>> pc.option(None)
+        >>> pc.Option.from_(None)
         NONE
 
         ```
         """
-        return Some(value) if value is not None else NONE
+        return cast(Option[V], Some(value) if value is not None else NONE)
+
+    def flatten[U](self: Option[Option[U]]) -> Option[U]:
+        """Flattens a nested `Option`.
+
+        Converts an `Option[Option[U]]` into an `Option[U]` by removing one level of nesting.
+
+        Equivalent to `Option.and_then(lambda x: x)`.
+
+        Returns:
+            Option[U]: The flattened option.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some(pc.Some(42)).flatten()
+        Some(42)
+        >>> pc.Some(pc.NONE).flatten()
+        NONE
+        >>> pc.NONE.flatten()
+        NONE
+
+        ```
+        """
+        return self.and_then(lambda x: x)
+
+    # Abstract methods ----------------------------------------------------------------
 
     @abstractmethod
     def is_some(self) -> bool:
@@ -96,8 +124,9 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        ...
+        raise NotImplementedError
 
+    @abstractmethod
     def is_some_and[**P](
         self,
         predicate: Callable[Concatenate[T, P], bool],
@@ -133,7 +162,7 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        return self.is_some() and predicate(self.unwrap(), *args, **kwargs)
+        raise NotImplementedError
 
     @abstractmethod
     def is_none(self) -> bool:
@@ -154,8 +183,9 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        ...
+        raise NotImplementedError
 
+    @abstractmethod
     def is_none_or[**P](
         self, func: Callable[Concatenate[T, P], bool], *args: P.args, **kwargs: P.kwargs
     ) -> bool:
@@ -183,7 +213,7 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        return self.is_none() or func(self.unwrap(), *args, **kwargs)
+        raise NotImplementedError
 
     @abstractmethod
     def unwrap(self) -> T:
@@ -211,8 +241,9 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        ...
+        raise NotImplementedError
 
+    @abstractmethod
     def expect(self, msg: str) -> T:
         """Returns the contained `Some` value.
 
@@ -244,6 +275,7 @@ class BaseOption[T](Pipeable, ABC):
         msg = f"{msg} (called `expect` on a `None`)"
         raise OptionUnwrapError(msg)
 
+    @abstractmethod
     def unwrap_or(self, default: T) -> T:
         """Returns the contained `Some` value or a provided default.
 
@@ -263,8 +295,9 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        return self.unwrap() if self.is_some() else default
+        raise NotImplementedError
 
+    @abstractmethod
     def unwrap_or_else(self, f: Callable[[], T]) -> T:
         """Returns the contained `Some` value or computes it from a function.
 
@@ -285,8 +318,9 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        return self.unwrap() if self.is_some() else f()
+        raise NotImplementedError
 
+    @abstractmethod
     def map[**P, R](
         self, f: Callable[Concatenate[T, P], R], *args: P.args, **kwargs: P.kwargs
     ) -> Option[R]:
@@ -313,32 +347,9 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        return Some(f(self.unwrap(), *args, **kwargs)) if self.is_some() else NONE
+        raise NotImplementedError
 
-    def flatten[U](self: BaseOption[Option[U]]) -> Option[U]:
-        """Flattens a nested `Option`.
-
-        Converts an `Option[Option[U]]` into an `Option[U]` by removing one level of nesting.
-
-        Equivalent to `Option.and_then(lambda x: x)`.
-
-        Returns:
-            Option[U]: The flattened option.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Some(pc.Some(42)).flatten()
-        Some(42)
-        >>> pc.Some(pc.NONE).flatten()
-        NONE
-        >>> pc.NONE.flatten()
-        NONE
-
-        ```
-        """
-        return self.and_then(lambda x: x)
-
+    @abstractmethod
     def and_[U](self, optb: Option[U]) -> Option[U]:
         """Returns `NONE` if the option is `NONE`, otherwise returns optb.
 
@@ -363,8 +374,9 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        return optb if self.is_some() else NONE
+        raise NotImplementedError
 
+    @abstractmethod
     def or_(self, optb: Option[T]) -> Option[T]:
         """Returns the option if it contains a value, otherwise returns optb.
 
@@ -388,8 +400,9 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        return Some(self.unwrap()) if self.is_some() else optb
+        raise NotImplementedError
 
+    @abstractmethod
     def and_then[**P, R](
         self,
         f: Callable[Concatenate[T, P], Option[R]],
@@ -424,8 +437,9 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        return f(self.unwrap(), *args, **kwargs) if self.is_some() else NONE
+        raise NotImplementedError
 
+    @abstractmethod
     def or_else(self, f: Callable[[], Option[T]]) -> Option[T]:
         """Returns the `Option[T]` if it contains a value, otherwise calls a function and returns the result.
 
@@ -451,8 +465,9 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        return Some(self.unwrap()) if self.is_some() else f()
+        raise NotImplementedError
 
+    @abstractmethod
     def ok_or[E](self, err: E) -> Result[T, E]:
         """Converts the option to a `Result`.
 
@@ -472,10 +487,9 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        from pyochain import Err, Ok
+        raise NotImplementedError
 
-        return Ok(self.unwrap()) if self.is_some() else Err(err)
-
+    @abstractmethod
     def ok_or_else[E](self, err: Callable[[], E]) -> Result[T, E]:
         """Converts the option to a Result.
 
@@ -495,10 +509,9 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        from pyochain import Err, Ok
+        raise NotImplementedError
 
-        return Ok(self.unwrap()) if self.is_some() else Err(err())
-
+    @abstractmethod
     def map_or[**P, R](
         self,
         default: R,
@@ -527,8 +540,9 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        return f(self.unwrap(), *args, **kwargs) if self.is_some() else default
+        raise NotImplementedError
 
+    @abstractmethod
     def map_or_else[**P, R](self, default: Callable[[], R], f: Callable[[T], R]) -> R:
         """Returns the result of applying a function to the contained value if Some, otherwise computes a default value.
 
@@ -549,8 +563,9 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        return f(self.unwrap()) if self.is_some() else default()
+        raise NotImplementedError
 
+    @abstractmethod
     def filter[**P, R](
         self,
         predicate: Callable[Concatenate[T, P], R],
@@ -588,12 +603,9 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        return (
-            Some(self.unwrap())
-            if self.is_some() and predicate(self.unwrap(), *args, **kwargs)
-            else NONE
-        )
+        raise NotImplementedError
 
+    @abstractmethod
     def iter(self) -> Iter[T]:
         """Creates an `Iter` over the optional value.
 
@@ -615,10 +627,9 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        from pyochain import Iter
+        raise NotImplementedError
 
-        return Iter((self.unwrap(),)) if self.is_some() else Iter(())
-
+    @abstractmethod
     def inspect[**P](
         self, f: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
     ) -> Option[T]:
@@ -649,11 +660,10 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        if self.is_some():
-            f(self.unwrap(), *args, **kwargs)
-        return Some(self.unwrap())
+        raise NotImplementedError
 
-    def unzip[U](self: BaseOption[tuple[T, U]]) -> tuple[Option[T], Option[U]]:
+    @abstractmethod
+    def unzip[U](self: Option[tuple[T, U]]) -> tuple[Option[T], Option[U]]:
         """Unzips an `Option` of a tuple into a tuple of `Option`s.
 
         If the option is `Some((a, b))`, this method returns `(Some(a), Some(b))`.
@@ -672,11 +682,9 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        if self.is_some():
-            a, b = self.unwrap()
-            return Some(a), Some(b)
-        return NONE, NONE
+        raise NotImplementedError
 
+    @abstractmethod
     def zip[U](self, other: Option[U]) -> Option[tuple[T, U]]:
         """Returns an `Option[tuple[T, U]]` containing a tuple of the values if both options are `Some`, otherwise returns `NONE`.
 
@@ -698,10 +706,9 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        if self.is_some() and other.is_some():
-            return Some((self.unwrap(), other.unwrap()))
-        return NONE
+        raise NotImplementedError
 
+    @abstractmethod
     def zip_with[U, R](self, other: Option[U], f: Callable[[T, U], R]) -> Option[R]:
         """Zips `self` and another `Option` with function `f`.
 
@@ -735,10 +742,9 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        if self.is_some() and other.is_some():
-            return Some(f(self.unwrap(), other.unwrap()))
-        return NONE
+        raise NotImplementedError
 
+    @abstractmethod
     def reduce[U](self, other: Option[T], func: Callable[[T, T], T]) -> Option[T]:
         """Reduces two options into one, using the provided function if both are Some.
 
@@ -775,15 +781,10 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        if self.is_some() and other.is_some():
-            return Some(func(self.unwrap(), other.unwrap()))
-        if self.is_some():
-            return Some(self.unwrap())
-        if other.is_some():
-            return other
-        return NONE
+        raise NotImplementedError
 
-    def transpose[E](self: BaseOption[Result[T, E]]) -> Result[Option[T], E]:
+    @abstractmethod
+    def transpose[E](self: Option[Result[T, E]]) -> Result[Option[T], E]:
         """Transposes an `Option` of a `Result` into a `Result` of an `Option`.
 
         `Some(Ok[T])` is mapped to `Ok(Some[T])`, `Some(Err[E])` is mapped to `Err[E]`, and `NONE` will be mapped to `Ok(NONE)`.
@@ -803,15 +804,9 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        from pyochain import Err, Ok
+        raise NotImplementedError
 
-        if self.is_some():
-            inner = self.unwrap()
-            if inner.is_ok():
-                return Ok(option(inner.unwrap()))
-            return Err(inner.unwrap_err())
-        return Ok(option(None))
-
+    @abstractmethod
     def xor(self, optb: Option[T]) -> Option[T]:
         """Returns `Some` if exactly one of **self**, optb is `Some`, otherwise returns `NONE`.
 
@@ -835,15 +830,11 @@ class BaseOption[T](Pipeable, ABC):
 
         ```
         """
-        if self.is_some() and not optb.is_some():
-            return Some(self.unwrap())
-        if not self.is_some() and optb.is_some():
-            return optb
-        return NONE
+        raise NotImplementedError
 
 
 @dataclass(slots=True)
-class Some[T](BaseOption[T]):
+class Some[T](Option[T]):
     """Option variant representing the presence of a value.
 
     Attributes:
@@ -859,6 +850,8 @@ class Some[T](BaseOption[T]):
 
     """
 
+    __match_args__ = ("value",)
+
     value: T
 
     def __repr__(self) -> str:
@@ -873,10 +866,129 @@ class Some[T](BaseOption[T]):
     def unwrap(self) -> T:
         return self.value
 
+    def is_some_and[**P](
+        self,
+        predicate: Callable[Concatenate[T, P], bool],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> bool:
+        return predicate(self.unwrap(), *args, **kwargs)
+
+    def is_none_or[**P](
+        self, func: Callable[Concatenate[T, P], bool], *args: P.args, **kwargs: P.kwargs
+    ) -> bool:
+        return func(self.unwrap(), *args, **kwargs)
+
+    def expect(self, msg: str) -> T:  # noqa: ARG002
+        return self.unwrap()
+
+    def unwrap_or(self, default: T) -> T:  # noqa: ARG002
+        return self.unwrap()
+
+    def unwrap_or_else(self, f: Callable[[], T]) -> T:  # noqa: ARG002
+        return self.unwrap()
+
+    def map[**P, R](
+        self, f: Callable[Concatenate[T, P], R], *args: P.args, **kwargs: P.kwargs
+    ) -> Option[R]:
+        return Some(f(self.unwrap(), *args, **kwargs))
+
+    def and_[U](self, optb: Option[U]) -> Option[U]:
+        return optb
+
+    def or_(self, optb: Option[T]) -> Option[T]:  # noqa: ARG002
+        return self
+
+    def and_then[**P, R](
+        self,
+        f: Callable[Concatenate[T, P], Option[R]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Option[R]:
+        return f(self.unwrap(), *args, **kwargs)
+
+    def or_else(self, f: Callable[[], Option[T]]) -> Option[T]:  # noqa: ARG002
+        return self
+
+    def ok_or[E](self, err: E) -> Result[T, E]:  # noqa: ARG002
+        from ._result import Ok
+
+        return Ok(self.unwrap())
+
+    def ok_or_else[E](self, err: Callable[[], E]) -> Result[T, E]:  # noqa: ARG002
+        from ._result import Ok
+
+        return Ok(self.unwrap())
+
+    def map_or[**P, R](
+        self,
+        default: R,  # noqa: ARG002
+        f: Callable[Concatenate[T, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> R:
+        return f(self.unwrap(), *args, **kwargs)
+
+    def map_or_else[**P, R](self, default: Callable[[], R], f: Callable[[T], R]) -> R:  # noqa: ARG002
+        return f(self.unwrap())
+
+    def filter[**P, R](
+        self,
+        predicate: Callable[Concatenate[T, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Option[T]:
+        return self if predicate(self.unwrap(), *args, **kwargs) else NONE
+
+    def iter(self) -> Iter[T]:
+        from pyochain import Iter
+
+        return Iter.once(self.unwrap())
+
+    def inspect[**P](
+        self, f: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
+    ) -> Option[T]:
+        f(self.unwrap(), *args, **kwargs)
+        return self
+
+    def unzip[U](self: Option[tuple[T, U]]) -> tuple[Option[T], Option[U]]:
+        a, b = self.unwrap()
+        return Some(a), Some(b)
+
+    def zip[U](self, other: Option[U]) -> Option[tuple[T, U]]:
+        if other.is_some():
+            return Some((self.unwrap(), other.unwrap()))
+        return NONE
+
+    def zip_with[U, R](self, other: Option[U], f: Callable[[T, U], R]) -> Option[R]:
+        if other.is_some():
+            return Some(f(self.unwrap(), other.unwrap()))
+        return NONE
+
+    def reduce[U](self, other: Option[T], func: Callable[[T, T], T]) -> Option[T]:
+        if other.is_some():
+            return Some(func(self.unwrap(), other.unwrap()))
+        return self
+
+    def transpose[E](self: Option[Result[T, E]]) -> Result[Option[T], E]:
+        from ._result import Err, Ok
+
+        inner = self.unwrap()
+        if inner.is_ok():
+            return Ok(Option.from_(inner.unwrap()))
+        return Err(inner.unwrap_err())
+
+    def xor(self, optb: Option[T]) -> Option[T]:
+        if not optb.is_some():
+            return self
+        return optb
+
 
 @dataclass(slots=True)
-class NoneOption(BaseOption[Any]):
+class NoneOption[T](Option[T]):
     """Option variant representing the absence of a value."""
+
+    __match_args__ = ()
 
     def __repr__(self) -> str:
         return "NONE"
@@ -891,30 +1003,124 @@ class NoneOption(BaseOption[Any]):
         msg = "called `unwrap` on a `None`"
         raise OptionUnwrapError(msg)
 
+    def is_some_and[**P](
+        self,
+        predicate: Callable[Concatenate[T, P], bool],  # noqa: ARG002
+        *args: P.args,  # noqa: ARG002
+        **kwargs: P.kwargs,  # noqa: ARG002
+    ) -> bool:
+        return False
 
-NONE: NoneOption = NoneOption()
+    def is_none_or[**P](
+        self,
+        func: Callable[Concatenate[T, P], bool],  # noqa: ARG002
+        *args: P.args,  # noqa: ARG002
+        **kwargs: P.kwargs,  # noqa: ARG002
+    ) -> bool:
+        return self.is_none()
+
+    def expect(self, msg: str) -> T:
+        msg = f"{msg} (called `expect` on a `None`)"
+        raise OptionUnwrapError(msg)
+
+    def unwrap_or(self, default: T) -> T:
+        return default
+
+    def unwrap_or_else(self, f: Callable[[], T]) -> T:
+        return f()
+
+    def map[**P, R](
+        self,
+        f: Callable[Concatenate[T, P], R],  # noqa: ARG002
+        *args: P.args,  # noqa: ARG002
+        **kwargs: P.kwargs,  # noqa: ARG002
+    ) -> Option[R]:
+        return NONE
+
+    def and_[U](self, optb: Option[U]) -> Option[U]:  # noqa: ARG002
+        return NONE
+
+    def or_(self, optb: Option[T]) -> Option[T]:
+        return optb
+
+    def and_then[**P, R](
+        self,
+        f: Callable[Concatenate[T, P], Option[R]],  # noqa: ARG002
+        *args: P.args,  # noqa: ARG002
+        **kwargs: P.kwargs,  # noqa: ARG002
+    ) -> Option[R]:
+        return NONE
+
+    def or_else(self, f: Callable[[], Option[T]]) -> Option[T]:
+        return f()
+
+    def ok_or[E](self, err: E) -> Result[T, E]:
+        from ._result import Err
+
+        return Err(err)
+
+    def ok_or_else[E](self, err: Callable[[], E]) -> Result[T, E]:
+        from ._result import Err
+
+        return Err(err())
+
+    def map_or[**P, R](
+        self,
+        default: R,
+        f: Callable[Concatenate[T, P], R],  # noqa: ARG002
+        *args: P.args,  # noqa: ARG002
+        **kwargs: P.kwargs,  # noqa: ARG002
+    ) -> R:
+        return default
+
+    def map_or_else[**P, R](self, default: Callable[[], R], f: Callable[[T], R]) -> R:  # noqa: ARG002
+        return default()
+
+    def filter[**P, R](
+        self,
+        predicate: Callable[Concatenate[T, P], R],  # noqa: ARG002
+        *args: P.args,  # noqa: ARG002
+        **kwargs: P.kwargs,  # noqa: ARG002
+    ) -> Option[T]:
+        return self
+
+    def iter(self) -> Iter[T]:
+        from pyochain import Iter
+
+        return Iter[T].empty()
+
+    def inspect[**P](
+        self,
+        f: Callable[Concatenate[T, P], object],  # noqa: ARG002
+        *args: P.args,  # noqa: ARG002
+        **kwargs: P.kwargs,  # noqa: ARG002
+    ) -> Option[T]:
+        return self
+
+    def unzip[U](self: Option[tuple[T, U]]) -> tuple[Option[T], Option[U]]:
+        return NONE, NONE
+
+    def zip[U](self, other: Option[U]) -> Option[tuple[T, U]]:  # noqa: ARG002
+        return NONE
+
+    def zip_with[U, R](self, other: Option[U], f: Callable[[T, U], R]) -> Option[R]:  # noqa: ARG002
+        return NONE
+
+    def reduce[U](self, other: Option[T], func: Callable[[T, T], T]) -> Option[T]:  # noqa: ARG002
+        if other.is_some():
+            return other
+        return self
+
+    def transpose[E](self: Option[Result[T, E]]) -> Result[Option[T], E]:
+        from ._result import Ok
+
+        return Ok(Option.from_(None))
+
+    def xor(self, optb: Option[T]) -> Option[T]:
+        if optb.is_some():
+            return optb
+        return self
+
+
+NONE: NoneOption[Any] = NoneOption()
 """Singleton instance representing the absence of a value."""
-
-type Option[T] = Some[T] | NoneOption
-
-
-def option[T](value: T | None) -> Option[T]:
-    """Creates an `Option[T]` from a value that may be `None`.
-
-    Args:
-        value (T | None): The value to convert into an `Option[T]`.
-
-    Returns:
-        Option[T]: `Some(value)` if the value is not `None`, otherwise `NONE`.
-
-    Example:
-    ```python
-    >>> import pyochain as pc
-    >>> pc.option(42)
-    Some(42)
-    >>> pc.option(None)
-    NONE
-
-    ```
-    """
-    return Some(value) if value is not None else NONE
