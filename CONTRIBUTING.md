@@ -59,15 +59,13 @@ def my_function(param1: int, param2: str) -> bool:
                 bool: Description of the return value.
 
         Examples:
-        ```nopython 
+        ```python
         >>> my_function(5, "test")
         True
         ```
         """
         return True
 ```
-
-Note: ```nopython is used here to avoid stubtester runnning the docstring code block as a doctest.
 
 ## Setup
 
@@ -87,6 +85,7 @@ uv run ruff check --fix src/pyochain
 uv run ruff format src/pyochain
 uv run pyright src/pyochain
 uv run pytest --doctest-modules src/pyochain
+uv run stubtester README.md
 uv run stubtester docs/
 ```
 

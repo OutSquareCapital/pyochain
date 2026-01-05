@@ -6,30 +6,25 @@ Each example demonstrates a specific use case, showcasing the power and flexibil
 ## Combining Option, Result and Iterators in Data Pipelines
 
 Classes have been designed to work seamlessly together, enabling complex data processing pipelines with clear error handling.
+**Note**: We return pc.Ok(None) for simplicity, the commented line shows how you would use it in practice.
 
 ```python
-from pathlib import Path
-
-import polars as pl
-
-import pyochain as pc
-
-
-def safe_parse_int(s: str) -> pc.Result[int, str]:
-    try:
-        return pc.Ok(int(s))
-    except ValueError:
-        return pc.Err(f"Invalid integer: {s}")
-
-
-def _write_to_file(lf: pl.LazyFrame, file_path: Path) -> pc.Result[None, str]:
-    """Write the LazyFrame to a CSV file."""
-    try:
-        return pc.Ok(lf.filter(pl.col("value") > 15).sink_parquet(file_path))
-    except (OSError, pl.exceptions.ComputeError) as e:
-        return pc.Err(f"Failed to write to file: {e}")
-
-
+>>> from pathlib import Path
+>>> import polars as pl
+>>> import pyochain as pc
+>>> def safe_parse_int(s: str) -> pc.Result[int, str]:
+...     try:
+...         return pc.Ok(int(s))
+...     except ValueError:
+...         return pc.Err(f"Invalid integer: {s}")
+>>>
+>>> def _write_to_file(lf: pl.LazyFrame, file_path: Path) -> pc.Result[None, str]:
+...     """Write the LazyFrame to a CSV file."""
+...     try:
+...         # lf.filter(pl.col("value").gt(15)).sink_parquet(file_path)
+...         return pc.Ok(None)
+...     except (OSError, pl.exceptions.ComputeError) as e:
+...         return pc.Err(f"Failed to write to file: {e}")
 >>> PATH = Path("parsed_integers.parquet")
 >>> data = ["10", "20", "foo", "30", "bar"]
 >>> results = (
@@ -44,7 +39,10 @@ def _write_to_file(lf: pl.LazyFrame, file_path: Path) -> pc.Result[None, str]:
 ...    .into(pl.LazyFrame, schema=["index", "value"])  # Pass to Polars LazyFrame
 ...    .pipe(_write_to_file, PATH)  # Write to file
 ...    .map_err(lambda e: print(f"Error: {e}"))  # Print error message
-)
+... )
+Parsed integers: Seq((0, 10), (1, 20), (2, 30))
+>>> results
+Ok(None)
 
 ```
 
@@ -132,95 +130,42 @@ if __name__ == "__main__":
 
 ### Determining All Public Methods of a Class
 
-Below is an example of using pyochain to get all the public methods of the `pc.Iter` class, both with pyochain and with pure python.
+Below is an example of using pyochain to extract and enumerate all public methods of a class.
 
 ```python
-from typing import Any
-
-import pyochain as pc
-
-
-def get_all_iter_methods() -> dict[int, str]:
-    return (
-        pc.Iter(pc.Iter.mro())
-        .flat_map(lambda x: x.__dict__.values())
-        .filter(lambda f: callable(f) and not f.__name__.startswith("_"))
-        .map(lambda f: f.__name__)
-        .sort()
-        .iter()
-        .enumerate()
-        .collect(dict)
-    )
-
-
-def get_all_iter_methods_pure_python() -> dict[int, str]:
-    dict_values: list[Any] = []
-    for cls in pc.Iter.mro():
-        dict_values.extend(cls.__dict__.values())
-
-    return dict(
-        enumerate(
-            sorted(
-                [
-                    obj.__name__
-                    for obj in dict_values
-                    if callable(obj) and not obj.__name__.startswith("_")
-                ],
-            ),
-        ),
-    )
-
-
-if __name__ == "__main__":
-    methods = get_all_iter_methods()
-    methods_pure = get_all_iter_methods_pure_python()
-    assert methods == methods_pure
+>>> import pyochain as pc
+>>> def get_public_methods(cls: type) -> dict[int, str]:
+...     return (
+...         pc.Iter(cls.mro())
+...         .flat_map(lambda x: x.__dict__.values())
+...         .filter(lambda f: callable(f) and not f.__name__.startswith("_"))
+...         .map(lambda f: f.__name__)
+...         .sort()
+...         .iter()
+...         .enumerate()
+...         .collect(dict)
+...     )
+>>> methods = get_public_methods(pc.Iter)
+>>> "map" in methods.values() and "filter" in methods.values()
+True
 
 ```
 
-### Checking whether functions are implemented in Python or Rust
-
-In this example, I want to check which functions of the Iter class or Rust Iterator class are not implemented in both languages.
-
-It demonstrate how to combine pyochain with polars in uninterrupted data pipelines, who combines lazy Iterators, LazyFrames, and streaming mode writing.
+For comparison, here's the equivalent using pure Python:
 
 ```python
-from typing import Literal
-
-import polars as pl
-
-import pyochain as pc
-
-
-def _with_source(fn_name: str, src: Literal["python", "rust"]) -> tuple[str, str]:
-    return (src, fn_name)
-
-
-RUST_FN = [
-    ...
-]  # list of rust Iterator trait methods names as strings, copy pasted from website
-
-
-def main() -> None:
-    fn: pl.Expr = pl.col("fn")
-    return (
-        # create an iterator over the class hierarchy
-        pc.Iter(pc.Iter.mro())
-        # get the dict values view of each class and flatten them
-        .flat_map(lambda x: x.__dict__.values())
-        # keep only callables (methods of the classes here)
-        .filter(callable)
-        # get the method name, associate it with "python"
-        .map(lambda x: _with_source(x.__name__, "python"))
-        # do the same for rust functions, simply associating it with "rust"
-        .chain(pc.Iter(RUST_FN).map(lambda x: _with_source(x, "rust")))
-        # pass the iterator directly into a polars lazyframe, with specified schema (otherwise columns are named column_0, column_1)
-        .into(lambda x: pl.LazyFrame(x, schema=["source", "fn"]))
-        # keep only unique fn names, and those not starting with _ (dunder/private methods)
-        .filter(fn.is_unique().and_(fn.str.starts_with("_").not_()))
-        .sort(fn)  # sort by fn name
-        # write the result to an ndjson file in streaming mode.
-        .sink_ndjson("iter_fn_sources.ndjson")
-    )
+>>> import pyochain as pc
+>>> def get_public_methods_pure(cls: type) -> dict[int, str]:
+...     dict_values = []
+...     for klass in cls.mro():
+...         dict_values.extend(klass.__dict__.values())
+...     return dict(enumerate(sorted([
+...         obj.__name__
+...         for obj in dict_values
+...         if callable(obj) and not obj.__name__.startswith("_")
+...     ])))
+>>> methods_pure = get_public_methods_pure(pc.Iter)
+>>> "map" in methods_pure.values() and "filter" in methods_pure.values()
+True
 
 ```
