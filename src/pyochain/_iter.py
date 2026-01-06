@@ -1165,7 +1165,7 @@ class SetMut[T](Set[T], MutableSet[T]):
 
         ```
         """
-        return cls([])
+        return cls(())
 
     def add(self, value: T) -> None:
         """Add an element to the set.
@@ -1290,7 +1290,7 @@ class Vec[T](Seq[T], MutableSequence[T]):
 
         ```
         """
-        return cls([])
+        return cls(())
 
     @overload
     def __setitem__(self, index: int, value: T) -> None: ...
