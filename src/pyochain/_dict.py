@@ -196,7 +196,7 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
 
         previous = self._inner.get(key, None)
         self._inner[key] = value
-        return Option.from_(previous)
+        return Option(previous)
 
     def try_insert(self, key: K, value: V) -> Result[V, KeyError]:
         """Tries to insert a key-value pair into the map, and returns a mutable reference to the value in the entry.
@@ -252,7 +252,7 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         """
         from ._option import Option
 
-        return Option.from_(self._inner.pop(key, None))
+        return Option(self._inner.pop(key, None))
 
     def remove_entry(self, key: K) -> Option[Item[K, V]]:
         """Remove a key from the `Dict` and return the `Item` if it existed.
@@ -364,7 +364,7 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         """
         from ._option import Option
 
-        return Option.from_(self._inner.get(key, None))
+        return Option(self._inner.get(key, None))
 
     def is_empty(self) -> bool:
         """Returns true if the map contains no elements.

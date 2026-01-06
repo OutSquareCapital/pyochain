@@ -15,7 +15,6 @@ from collections.abc import (
     ValuesView,
 )
 from collections.abc import Set as AbstractSet
-from random import Random
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -42,9 +41,10 @@ from ._types import (
 from .traits import Checkable, Pipeable
 
 if TYPE_CHECKING:
+    from random import Random
+
     from ._option import Option
     from ._result import Result
-
 
 type TryVal[T] = Option[T] | Result[T, Any] | T | None
 """Represent a value that may be failible."""
@@ -814,7 +814,7 @@ class BaseIter[T](Pipeable, Checkable):
         """
         from ._option import Option
 
-        return Option.from_(next(filter(predicate, self._inner), None))
+        return Option(next(filter(predicate, self._inner), None))
 
     @overload
     def sort[U: SupportsRichComparison[Any]](
@@ -1414,7 +1414,7 @@ class Iter[T](BaseIter[T], Iterator[T]):
         """
         from ._option import Option
 
-        return Option.from_(next(self, None))
+        return Option(next(self, None))
 
     @staticmethod
     def once[V](value: V) -> Iter[V]:
@@ -3043,7 +3043,7 @@ class Iter[T](BaseIter[T], Iterator[T]):
         from ._option import Option
 
         return Iter(
-            tuple(Option.from_(t) for t in tup)
+            tuple(Option(t) for t in tup)
             for tup in itertools.zip_longest(self._inner, *others, fillvalue=None)
         )
 
