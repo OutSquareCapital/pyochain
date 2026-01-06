@@ -2701,7 +2701,7 @@ class Iter[T](BaseIter[T], Iterator[T]):
 
         ```
         """
-        return Iter(cz.itertoolz.take(n, self._inner))
+        return Iter(itertools.islice(self._inner, n))
 
     def skip(self, n: int) -> Iter[T]:
         """Drop first n elements.
