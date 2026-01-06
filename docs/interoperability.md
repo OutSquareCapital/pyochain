@@ -21,10 +21,12 @@ This is particularly useful when you need to pass the result to a function you d
 ```python
 >>> import pyochain as pc
 >>> import json
->>> data = pc.Dict({"id": 1, "name": "Alice"})
->>> # Instead of json.dumps(data, indent=2)
->>> data.into(json.dumps, indent=2)
-'{\n  "id": 1,\n  "name": "Alice"\n}'
+>>> # Flow is broken, nested function calls, read from middle -> right -> left -> right
+>>> json.dumps(dict(pc.Dict({"id": 1, "name": "Alice"}).map_keys(str.upper)))
+'{"ID": 1, "NAME": "Alice"}'
+>>> # Fluent chaining with .into(), read left -> right
+>>> pc.Dict({"id": 1, "name": "Alice"}).map_keys(str.upper).into(lambda d: json.dumps(dict(d)))
+'{"ID": 1, "NAME": "Alice"}'
 ```
 
 #### `.inspect(func, *args, **kwargs) -> Self`
