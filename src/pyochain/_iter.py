@@ -2297,6 +2297,56 @@ class Iter[T](BaseIter[T], Iterator[T]):
         """
         return Iter(map(func, self._inner))
 
+    @overload
+    def map_star[R](
+        self: Iter[tuple[Any]],
+        func: Callable[[Any], R],
+    ) -> Iter[R]: ...
+    @overload
+    def map_star[T1, T2, R](
+        self: Iter[tuple[T1, T2]],
+        func: Callable[[T1, T2], R],
+    ) -> Iter[R]: ...
+    @overload
+    def map_star[T1, T2, T3, R](
+        self: Iter[tuple[T1, T2, T3]],
+        func: Callable[[T1, T2, T3], R],
+    ) -> Iter[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, R](
+        self: Iter[tuple[T1, T2, T3, T4]],
+        func: Callable[[T1, T2, T3, T4], R],
+    ) -> Iter[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, R](
+        self: Iter[tuple[T1, T2, T3, T4, T5]],
+        func: Callable[[T1, T2, T3, T4, T5], R],
+    ) -> Iter[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, R](
+        self: Iter[tuple[T1, T2, T3, T4, T5, T6]],
+        func: Callable[[T1, T2, T3, T4, T5, T6], R],
+    ) -> Iter[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, T7, R](
+        self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7], R],
+    ) -> Iter[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
+        self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], R],
+    ) -> Iter[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
+        self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], R],
+    ) -> Iter[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
+        self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
+    ) -> Iter[R]: ...
     def map_star[U: Iterable[Any], R](
         self: Iter[U],
         func: Callable[..., R],
@@ -2320,7 +2370,7 @@ class Iter[T](BaseIter[T], Iterator[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> def make_sku(color, size):
+        >>> def make_sku(color: str, size: str) -> str:
         ...     return f"{color}-{size}"
         >>> data = pc.Seq(["blue", "red"])
         >>> data.iter().product(["S", "M"]).map_star(make_sku).collect()
@@ -3927,14 +3977,16 @@ class Iter[T](BaseIter[T], Iterator[T]):
 
         That behavior differs from SQL's `GROUP BY` which aggregates common elements regardless of their input order.
 
-        Note:
-            Each `Group` generated is itself an `Iter` and is fully lazy.
-            If you need all the groups, you must materialize them with a `.map()` call and a closure that can materialize the group (e.g `.collect()`, `.into(list)`, etc...).
+        **Warning** ⚠️
+            **You MUST materialize `group.values` immediately** when iterating over groups!
+
+            Because `.group_by()` uses Python's `itertools.groupby` under the hood, each group's iterator shares internal state.
+            When you advance to the next group, the previous group's iterator becomes invalid and will yield empty results.
 
         Examples:
         ```python
         >>> import pyochain as pc
-        >>> # Group even and odd numbers
+        >>> # Example 1: Group even and odd numbers
         >>> (
         ... pc.Iter.from_count() # create an infinite iterator of integers
         ... .take(8) # take the first 8
@@ -3947,7 +3999,7 @@ class Iter[T](BaseIter[T], Iterator[T]):
         ... .into(dict) # convert to dict
         ... )
         {False: [1, 3, 5, 7], True: [0, 2, 4, 6]}
-        >>> # group by a common key, already sorted
+        >>> # Example 2: Group by a common key, already sorted
         >>> data = [
         ...     {"name": "Alice", "gender": "F"},
         ...     {"name": "Bob", "gender": "M"},
@@ -3961,6 +4013,24 @@ class Iter[T](BaseIter[T], Iterator[T]):
         ... .collect()
         ... )
         Seq(('F', 1), ('M', 3))
+        >>> # Example 3: Incorrect usage with LATE materialization:
+        >>> groups = pc.Iter(["a1", "a2", "b1"]).group_by(lambda x: x[0]).collect()
+        >>> # Now iterate - TOO LATE! The group iterators are consumed
+        >>> for g in groups:
+        ...     print(g.values.collect())  # ❌ Empty!
+        Seq()
+        Seq()
+        >>> # Example 4: Correct usage with intermediate materialization:
+        >>> groups = (
+        ...     pc.Iter(["a1", "a2", "b1"])
+        ...     .group_by(lambda x: x[0])
+        ...     .map(lambda g: (g.key, g.values.collect()))  # ✅ Materialize NOW
+        ...     .collect()
+        ...     .iter()
+        ...     .for_each(lambda x: print(f"{x[0]}: {x[1]}"))
+        ... )
+        a: Seq('a1', 'a2')
+        b: Seq('b1',)
 
         ```
         """
