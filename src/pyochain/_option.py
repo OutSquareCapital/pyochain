@@ -119,6 +119,32 @@ class Option[T](Pipeable):
         """
         return cast(Option[V], Some(value) if predicate() else NONE)
 
+    @staticmethod
+    def if_some[V](value: V) -> Option[V]:
+        """Creates an `Option[V]` based on the truthiness of a value.
+
+        Args:
+            value (V): The value to evaluate.
+
+        Returns:
+            Option[V]: `Some(value)` if the value is truthy, otherwise `NONE`.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Option.if_some(42)
+        Some(42)
+        >>> pc.Option.if_some(0)
+        NONE
+        >>> pc.Option.if_some("hello")
+        Some('hello')
+        >>> pc.Option.if_some("")
+        NONE
+
+        ```
+        """
+        return cast(Option[V], Some(value) if value else NONE)
+
     def flatten[U](self: Option[Option[U]]) -> Option[U]:
         """Flattens a nested `Option`.
 
