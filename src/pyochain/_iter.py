@@ -2734,13 +2734,17 @@ class Iter[T](BaseIter[T], Iterator[T]):
     def filter_false[U](
         self, func: Callable[[T], bool | TypeIs[U]]
     ) -> Iter[T] | Iter[U]:
-        """Return elements for which func is false.
+        """Return elements for which **func** is false.
+
+        The **func** can return a `TypeIs` to narrow the type of the returned iterable.
+
+        This won't have any runtime effect, but allows for better type inference.
 
         Args:
-            func (Callable[[T], bool]): Function to evaluate each item.
+            func (Callable[[T], bool | TypeIs[U]]): Function to evaluate each item.
 
         Returns:
-            Iter[T]: An iterable of the items that do not satisfy the predicate.
+            Iter[T] | Iter[U]: An iterable of the items that do not satisfy the predicate.
 
         Example:
         ```python

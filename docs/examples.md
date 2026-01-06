@@ -66,14 +66,14 @@ Below is an example of using pyochain to:
 ...         .filter(lambda f: callable(f) and not f.__name__.startswith("_"))
 ...         .map(lambda f: f.__name__)
 ...         .enumerate()
-...         .sort(key=lambda pair: pair.value)
+...         .sort(key=lambda pair: pair[1])
 ...         .iter()
 ...         .take(3)
 ...         .collect(dict)
 ...     )
 >>>
 >>> get_public_methods(pc.Iter)
-{24: 'accumulate', 66: 'adjacent', 94: 'all'}
+{25: 'accumulate', 68: 'adjacent', 96: 'all'}
 
 
 ```
@@ -102,6 +102,6 @@ For comparison, here's the equivalent using pure Python:
 ...     )
 >>>
 >>> get_public_methods_pure(pc.Iter)
-{24: 'accumulate', 66: 'adjacent', 94: 'all'}
+{25: 'accumulate', 68: 'adjacent', 96: 'all'}
 
 ```
