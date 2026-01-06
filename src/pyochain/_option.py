@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+import warnings
+from abc import abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Concatenate, Never, cast
+from typing import TYPE_CHECKING, Any, Concatenate, Final, Never, cast, final
 
 from .traits import Pipeable
 
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
 class OptionUnwrapError(RuntimeError): ...
 
 
-class Option[T](Pipeable, ABC):
+class Option[T](Pipeable):
     """Type `Option[T]` represents an optional value.
 
     Every Option is either:
@@ -47,18 +48,12 @@ class Option[T](Pipeable, ABC):
     This allow to query the presence of a value and take action, always accounting for the None case.
     """
 
-    def __bool__(self) -> None:
-        """Prevent implicit `Some|None` value checking in boolean contexts.
-
-        Raises:
-            TypeError: Always, to prevent implicit `Some|None` value checking.
-        """
-        msg = "Option instances cannot be used in boolean contexts for implicit `Some|None` value checking. Use is_some() or is_none() instead."
-        raise TypeError(msg)
-
-    @staticmethod
-    def from_[V](value: V | None) -> Option[V]:
+    def __new__[V](cls, value: V | None) -> Option[V]:
         """Creates an `Option[V]` from a value that may be `None`.
+
+        When calling `Option(value)`, this method automatically redirects to:
+        - `Some(value)` if the value is not `None`
+        - `NONE` if the value is `None`
 
         Args:
             value (V | None): The value to convert into an `Option[V]`.
@@ -69,14 +64,60 @@ class Option[T](Pipeable, ABC):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Option.from_(42)
+        >>> pc.Option(42)
         Some(42)
-        >>> pc.Option.from_(None)
+        >>> pc.Option(None)
         NONE
 
         ```
         """
-        return cast(Option[V], Some(value) if value is not None else NONE)
+        if value is None:
+            return cast(Option[V], NONE)
+        return cast(Option[V], Some(value))
+
+    @staticmethod
+    @warnings.deprecated("Use Option(value) instead.")
+    def from_[V](value: V | None) -> Option[V]:
+        return Option(value)
+
+    def __bool__(self) -> None:
+        """Prevent implicit `Some|None` value checking in boolean contexts.
+
+        Raises:
+            TypeError: Always, to prevent implicit `Some|None` value checking.
+        """
+        msg = "Option instances cannot be used in boolean contexts for implicit `Some|None` value checking. Use is_some() or is_none() instead."
+        raise TypeError(msg)
+
+    @staticmethod
+    def if_true[V](value: V, *, predicate: Callable[[], bool]) -> Option[V]:
+        """Creates an `Option[V]` based on a **predicate** condition.
+
+        Args:
+            value (V): The value to wrap in `Some` if the condition is `True`.
+            predicate (Callable[[], bool]): The condition to evaluate.
+
+        Returns:
+            Option[V]: `Some(value)` if the condition is `True`, otherwise `NONE`.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Option.if_true(42, predicate=lambda: 2 + 2 == 4)
+        Some(42)
+        >>> pc.Option.if_true(42, predicate=lambda: 2 + 2 == 5)
+        NONE
+        >>> # Evaluate on __bool__ of a collection (will call __len__ under the hood)
+        >>> data = [1, 2, 3]
+        >>> pc.Option.if_true(data, predicate=lambda: data)
+        Some([1, 2, 3])
+        >>> empty_data = []
+        >>> pc.Option.if_true(empty_data, predicate=lambda: empty_data)
+        NONE
+
+        ```
+        """
+        return cast(Option[V], Some(value) if predicate() else NONE)
 
     def flatten[U](self: Option[Option[U]]) -> Option[U]:
         """Flattens a nested `Option`.
@@ -832,6 +873,7 @@ class Option[T](Pipeable, ABC):
         ...
 
 
+@final
 @dataclass(slots=True)
 class Some[T](Option[T]):
     """Option variant representing the presence of a value.
@@ -854,6 +896,10 @@ class Some[T](Option[T]):
     __match_args__ = ("value",)
 
     value: T
+
+    def __new__[V](cls, _value: V) -> Some[V]:
+        """Bypass Option's redirect by directly creating a Some instance."""
+        return cast(Some[V], object.__new__(cls))
 
     def __repr__(self) -> str:
         return f"Some({self.value!r})"
@@ -976,14 +1022,15 @@ class Some[T](Option[T]):
 
         inner = self.unwrap()
         if inner.is_ok():
-            return Ok(Option.from_(inner.unwrap()))
+            return Ok(Option(inner.unwrap()))
         return Err(inner.unwrap_err())
 
     def xor(self, optb: Option[T]) -> Option[T]:
         return self if optb.is_none() else NONE
 
 
-@dataclass(slots=True)
+@final
+@dataclass(init=False, slots=True)
 class NoneOption[T](Option[T]):
     """Option variant representing the absence of a value.
 
@@ -994,6 +1041,10 @@ class NoneOption[T](Option[T]):
     """
 
     __match_args__ = ()
+
+    def __new__(cls, _value: object = None) -> NoneOption[Any]:
+        """Bypass Option's redirect by directly creating a NoneOption instance."""
+        return cast(NoneOption[Any], object.__new__(cls))
 
     def __repr__(self) -> str:
         return "NONE"
@@ -1119,11 +1170,11 @@ class NoneOption[T](Option[T]):
     def transpose[E](self: Option[Result[T, E]]) -> Result[Option[T], E]:
         from ._result import Ok
 
-        return Ok(Option.from_(None))
+        return Ok(Option(None))
 
     def xor(self, optb: Option[T]) -> Option[T]:
         return optb if optb.is_some() else NONE
 
 
-NONE: NoneOption[Any] = NoneOption()
+NONE: Final[NoneOption[Any]] = NoneOption()
 """Singleton instance representing the absence of a value."""

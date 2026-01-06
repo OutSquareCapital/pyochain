@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Concatenate, Never, cast
+from typing import TYPE_CHECKING, Concatenate, Never, cast, final
 
 from .traits import Pipeable
 
@@ -709,6 +709,7 @@ class Result[T, E](Pipeable, ABC):
         ...
 
 
+@final
 @dataclass(slots=True)
 class Ok[T, E](Result[T, E]):
     """Represents a successful value.
@@ -850,6 +851,7 @@ class Ok[T, E](Result[T, E]):
         return cast(Result[T, F], self)
 
 
+@final
 @dataclass(slots=True)
 class Err[T, E](Result[T, E]):
     """Represents an error value.
