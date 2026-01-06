@@ -23,142 +23,46 @@ Note that `Option` is easier to infer from context than `Result`, and can hencef
 
 | Type           | Description                             | Creation                                                          | Python Equivalent |
 | -------------- | --------------------------------------- | ----------------------------------------------------------------- | ----------------- |
-| `Option[T]`    | Optional value container (abstract)     | `Option.from_(value)` or if/else statements                       | `T \| None`       |
-| `Some[T]`      | Represents a present value              | `Some(value)` with if/else or `Option.from_(value)`               | `T`               |
-| `NONE`         | Represents absence of value             | `NONE` (singleton) with if/else or `Option.from_(None)`           | `None`            |
+| `Option[T]`    | Optional value container (abstract)     | `Option(value)` - auto-dispatches to `Some` or `NONE`             | `T \| None`       |
+| `Some[T]`      | Represents a present value              | `Some(value)` or via `Option(value)` when value is not `None`     | `T`               |
+| `NONE`         | Represents absence of value             | `NONE` (singleton) or via `Option(None)`                          | `None`            |
 | `Result[T, E]` | Success or failure container (abstract) | In functions with try/except pattern                              | `T \| E`          |
 | `Ok[T]`        | Represents a successful result          | `Ok(value)` in try block or success path                          | `T`               |
 | `Err[E]`       | Represents a failed result              | `Err(error)` in except block or error path                        | `Exception`       |
 
 ## Graphical Overview
 
-Below is a graphical representation of the core classes and their relationships.
+Below is a diagram showing the inheritance structure and trait implementation of shared types.
 
 ```mermaid
 ---
 config:
-  layout: dagre
+  layout: elk
 ---
-flowchart BT
- subgraph Collections["📦 Collections"]
-    direction TB
-        Seq["<b>Seq[T]</b><br>tuple"]
-        Vec["<b>Vec[T]</b><br>list"]
-        Set["<b>Set[T]</b><br>frozenset"]
-        SetMut["<b>SetMut[T]</b><br>set"]
-        Dict["<b>Dict[K,V]</b><br>dict"]
+flowchart TB
+ subgraph Collections["📦 Collections Hierarchy"]
+        BaseIter["BaseIter<br>(internal)"]
+        Iter["Iter[T]<br>lazy iterator"]
+        Seq["Seq[T]<br>immutable sequence"]
+        Vec["Vec[T]<br>mutable sequence"]
+        Set["Set[T]<br>immutable uniqueness"]
+        SetMut["SetMut[T]<br>mutable uniqueness"]
   end
- subgraph OptionGroup["🎁 Option Types"]
-    direction TB
-        Option["<b>Option[T]</b><br>(abstract)"]
-        Some["<b>Some[T]</b><br>(has value)"]
-        NONE["<b>NONE</b><br>(no value)"]
+ subgraph ErrorHandling["❌ Error Handling Hierarchy"]
+        Result["Result[T, E]<br>(abstract)"]
+        Ok["Ok[T]<br>success"]
+        Err["Err[E]<br>error"]
   end
- subgraph ResultGroup["✅ Result Types"]
-    direction TB
-        Result["<b>Result[T,E]</b><br>(abstract)"]
-        Ok["<b>Ok[T]</b><br>(success)"]
-        Err["<b>Err[E]</b><br>(error)"]
+ subgraph Optional["🎁 Optional Values Hierarchy"]
+        Option["Option[T]<br>(abstract)"]
+        Some["Some[T]<br>some value"]
+        NONE["NONE<br>no value"]
   end
-    Option -.-> Some & NONE
-    Result -.-> Ok & Err
-    Collections L_Collections_IterMethod_0@--> IterMethod["⛓️<br><b>.iter()</b>"] & Into["🔄<br><b>.into(func/type)</b>"]
-    OptionGroup L_OptionGroup_IterMethod_0@--> IterMethod & OkOrMethod["✅<br><b>.ok_or(err)</b>"] & Into
-    ResultGroup L_ResultGroup_IterMethod_0@--> IterMethod & OkMethod["🎁<br><b>.ok()</b>"] & Into
-    IterMethod L_IterMethod_Iter_0@--> Iter["<b>Iter[T]</b><br>lazy iterator"]
-    Iter L_Iter_CollectMethod_0@--> CollectMethod["📦<br><b>.collect(func/type)</b>"] & Into
-    CollectMethod L_CollectMethod_Collections_0@--> Collections
-    OkOrMethod L_OkOrMethod_ResultGroup_0@--> ResultGroup
-    OkMethod L_OkMethod_OptionGroup_0@--> OptionGroup
-    Into L_Into_AnyType_0@--> AnyType["🔄 Any Type"]
-
-    IterMethod@{ shape: rounded}
-    Into@{ shape: rounded}
-    OkOrMethod@{ shape: rounded}
-    OkMethod@{ shape: rounded}
-    CollectMethod@{ shape: rounded}
-     Seq:::collectionsStyle
-     Vec:::collectionsStyle
-     Set:::collectionsStyle
-     SetMut:::collectionsStyle
-     Dict:::collectionsStyle
-     Option:::optionStyle
-     Some:::optionStyle
-     NONE:::optionStyle
-     Result:::resultStyle
-     Ok:::resultStyle
-     Err:::resultStyle
-     IterMethod:::iterMethodStyle
-     Into:::intoStyle
-     OkOrMethod:::okOrMethodStyle
-     OkMethod:::okMethodStyle
-     Iter:::iterStyle
-     CollectMethod:::collectMethodStyle
-     AnyType:::anyStyle
-    classDef collectionsStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000
-    classDef iterMethodStyle fill:#c8e6c9,stroke:#2e7d32,stroke-width:3px,color:#000
-    classDef iterStyle fill:#e8f5e9,stroke:#388e3c,stroke-width:3px,color:#000
-    classDef collectMethodStyle fill:#b3e5fc,stroke:#0277bd,stroke-width:3px,color:#000
-    classDef okOrMethodStyle fill:#ffccbc,stroke:#d84315,stroke-width:3px,color:#000
-    classDef okMethodStyle fill:#fff59d,stroke:#f9a825,stroke-width:3px,color:#000
-    classDef optionStyle fill:#fff9c4,stroke:#f57f17,stroke-width:3px,color:#000
-    classDef resultStyle fill:#ffebee,stroke:#c62828,stroke-width:3px,color:#000
-    classDef intoStyle fill:#e1bee7,stroke:#7b1fa2,stroke-width:3px,color:#000
-    classDef anyStyle fill:#f5f5f5,stroke:#616161,stroke-width:2px,stroke-dasharray:5,color:#000
-    style Seq fill:transparent,color:#FFFFFF
-    style Vec color:#FFFFFF,fill:transparent
-    style Set color:#FFFFFF,fill:transparent
-    style SetMut fill:transparent,color:#FFFFFF
-    style Dict color:#FFFFFF,fill:transparent
-    style Option fill:transparent,color:#FFFFFF
-    style Some fill:transparent,color:#FFFFFF
-    style NONE fill:transparent,color:#FFFFFF
-    style Result color:#FFFFFF,fill:transparent
-    style Ok color:#FFFFFF,fill:transparent
-    style Err color:#FFFFFF,fill:transparent
-    style IterMethod fill:transparent,stroke:#FFD600,color:#FFFFFF
-    style Into stroke:#FFD600,fill:transparent,color:#FFFFFF
-    style OkOrMethod fill:transparent,stroke:#FFD600,color:#FFFFFF
-    style OkMethod fill:transparent,stroke:#FFD600,color:#FFFFFF
-    style Iter color:#FFFFFF,fill:transparent
-    style CollectMethod fill:transparent,stroke:#FFD600,color:#FFFFFF
-    style AnyType stroke-width:1px,stroke-dasharray: 0,color:#FFFFFF,fill:transparent,stroke:#AA00FF
-
-    L_Collections_IterMethod_0@{ animation: slow } 
-    L_Collections_Into_0@{ animation: slow } 
-    L_OptionGroup_IterMethod_0@{ animation: slow } 
-    L_OptionGroup_OkOrMethod_0@{ animation: slow } 
-    L_OptionGroup_Into_0@{ animation: slow } 
-    L_ResultGroup_IterMethod_0@{ animation: slow } 
-    L_ResultGroup_OkMethod_0@{ animation: slow } 
-    L_ResultGroup_Into_0@{ animation: slow } 
-    L_IterMethod_Iter_0@{ animation: slow } 
-    L_Iter_CollectMethod_0@{ animation: slow } 
-    L_Iter_Into_0@{ animation: slow } 
-    L_CollectMethod_Collections_0@{ animation: slow } 
-    L_OkOrMethod_ResultGroup_0@{ animation: slow } 
-    L_OkMethod_OptionGroup_0@{ animation: slow } 
-    L_Into_AnyType_0@{ animation: slow }
+    BaseIter --> Iter & Seq & Set
+    Seq --> Vec
+    Set --> SetMut
+    Result --> Ok & Err
+    Option --> Some & NONE
+    Pipeable["🔄 Pipeable<br>(mixin)"] --> BaseIter & Dict["Dict[K,V]<br>mutable mapping"] & Result & Option
+    Checkable["✅ Checkable<br>(mixin)"] --> BaseIter & Dict
 ```
-
-## Shared Features and interoperability
-
-All provided classes share the following core methods for enhanced usability:
-
-### `.inspect()`
-
-Insert functions who compute side-effects in the chain without breaking it (print, mutation of an external variable, logging...). If Option or Result, call the function only if `Some` or `Ok`.
-
-### `.into()` & `.collect()`
-
-Take a `Callable[[Self, P], T]` as argument to convert from **Self** to **T** in a chained way.
-
-E.g `Seq[T].into()` can take any function/object that expect a `Sequence[T]` as argument, and return it's result `R`.
-Conceptually, replace`f(x, args, kwargs)` with `x.into(f, args, kwargs)`.
-
-`Iter.collect()` is a specific case of `into()`, with constraint on the return type being one of the collection types (but the implementation is the same), and `Seq` as a default argument value.
-Using `collect()` for `Iter` rather than `into()` is considered the idiomatic way to materialize data from an iterator in pyochain.
-
-### `.filter_map()`, `Dict.iter_values()`, `Result.ok()`, `Option.ok_or()`, etc
-
-Various methods across the different classes return, accept, handle or produce other pyochain types, enabling seamless interoperability and chaining between them.

@@ -23,6 +23,6 @@ Seq(1, 9, 25, 49, 81)
 
 ## Next steps
 
-- [User Guide](user-guide.md): concepts and mental model
-- [Core Types Overview](core-types-overview.md): choose between `Iter`, `Seq`, `Vec`, `Set`, `Dict`, `Option`, `Result`
-- [Examples & Cookbook](examples.md): practical patterns
+- [Core Types Overview](core-types-overview.md): choose between the various provided types
+- [Interoperability](interoperability.md): convert between types with various methods
+- [Examples & Cookbook](examples.md): practical patterns and concrete examples
