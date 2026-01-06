@@ -95,180 +95,136 @@ Err('empty')
 The following graph illustrates all the built-in ways to convert between types in Pyochain.
 
 - Types are grouped by category.
-- Yellow boxes represent methods.
-- Arrows indicate conversion paths.
+- Arrows color and direction represent conversion paths.
+- Arrow labels represent methods.
 
 ```mermaid
 ---
 config:
   layout: elk
 ---
-flowchart BT
- subgraph Collections["📦 Collections"]
-    direction TB
-        Seq["<b>Seq[T]</b><br>tuple"]
-        Vec["<b>Vec[T]</b><br>list"]
-        Set["<b>Set[T]</b><br>frozenset"]
-        SetMut["<b>SetMut[T]</b><br>set"]
+flowchart TB
+ subgraph Collections["📦 Collections (Eager)"]
+    direction LR
+        Seq["<b>Seq[T]</b><br>immutable<br>tuple"]
+        Vec["<b>Vec[T]</b><br>mutable<br>list"]
+        Set["<b>Set[T]</b><br>immutable<br>frozenset"]
+        SetMut["<b>SetMut[T]</b><br>mutable<br>set"]
+  end
+ subgraph Lazy["⛓️ Lazy"]
+    direction LR
+        Iter["<b>Iter[T]</b><br>lazy iterator<br>Iterator"]
   end
  subgraph DictGroup["🔑 Dictionary"]
-    direction TB
-        Dict["<b>Dict[K,V]</b><br>dict"]
+    direction LR
+        Dict["<b>Dict[K,V]</b><br>mutable<br>dict"]
   end
  subgraph OptionGroup["🎁 Option Types"]
-    direction TB
-        Option["<b>Option[T]</b><br>(abstract)"]
-        Some["<b>Some[T]</b><br>(has value)"]
-        NONE["<b>NONE</b><br>(no value)"]
+    direction LR
+        Option["<b>Option[T]</b>"]
+        Some["<b>Some[T]</b>"]
+        NONE["<b>NONE</b>"]
   end
  subgraph ResultGroup["✅ Result Types"]
-    direction TB
-        Result["<b>Result[T,E]</b><br>(abstract)"]
-        Ok["<b>Ok[T]</b><br>(success)"]
-        Err["<b>Err[E]</b><br>(error)"]
+    direction LR
+        Result["<b>Result[T,E]</b>"]
+        Ok["<b>Ok[T]</b>"]
+        Err["<b>Err[E]</b>"]
   end
-
+ subgraph External["🌐 External Types"]
+    direction LR
+        AnyType["<b>Any Type</b><br>via .into(func)"]
+  end
     Option -.-> Some & NONE
     Result -.-> Ok & Err
-    Collections L_Coll_Into_0@--> Into["🔄<br><b>.into(func/type)</b>"]
-    Iter L_Iter_Into_0@--> Into
-    OptionGroup L_Opt_Into_0@--> Into
-    ResultGroup L_Res_Into_0@--> Into
-    
-    Into L_Into_Any_0@--> AnyType["🔄 Any Type"]
-    Collections L_Coll_Iter_0@--> IterMethod["⛓️<br><b>.iter()</b>"]
-    OptionGroup L_Opt_Iter_0@--> IterMethod
-    ResultGroup L_Res_Iter_0@--> IterMethod
-    IterMethod L_IterMethod_Iter_0@--> Iter["<b>Iter[T]</b><br>lazy iterator"]
-    Dict L_Dict_Iter_0@--> DictIterMethod["🔑<br><b>.keys_iter()</b><br><b>.values_iter()</b><br><b>.iter()</b>"]
-    DictIterMethod L_DictIter_Iter_0@--> Iter
-    
-    Dict L_Dict_Opt_0@--> DictOptMethod["🎁<br><b>.get_item()</b><br><b>.insert()</b><br><b>.remove()</b>"]
-    DictOptMethod L_DictOpt_Opt_0@--> OptionGroup
-    
-    Dict L_Dict_Res_0@--> DictResMethod["✅<br><b>.try_insert()</b>"]
-    DictResMethod L_DictRes_Res_0@--> ResultGroup
-    Collections L_Coll_CheckOpt_0@--> CheckOptMethod["🎁<br><b>.then()</b><br><b>.then_some()</b>"]
-    Iter L_Iter_CheckOpt_0@--> CheckOptMethod
-    Dict L_Dict_CheckOpt_0@--> CheckOptMethod
-    CheckOptMethod L_CheckOpt_Opt_0@--> OptionGroup
-
-    Collections L_Coll_CheckRes_0@--> CheckResMethod["✅<br><b>.ok_or(err)</b><br><b>.ok_or_else()</b>"]
-    Iter L_Iter_CheckRes_0@--> CheckResMethod
-    Dict L_Dict_CheckRes_0@--> CheckResMethod
-    OptionGroup L_Opt_CheckRes_0@--> CheckResMethod
-    CheckResMethod L_CheckRes_Res_0@--> ResultGroup
-    
-    ResultGroup L_Res_Opt_0@--> ResOptMethod["🎁<br><b>.ok()</b><br><b>.err()</b>"]
-    ResOptMethod L_ResOpt_Opt_0@--> OptionGroup
-    
-    OptionGroup L_Opt_Trans_0@--> TransposeMethod["🔄<br><b>.transpose()</b>"]
-    ResultGroup L_Res_Trans_0@--> TransposeMethod
-    TransposeMethod L_Trans_Opt_0@--> OptionGroup
-    TransposeMethod L_Trans_Res_0@--> ResultGroup
-    Iter L_Iter_Coll_0@--> CollectMethod["📦<br><b>.collect(func/type)</b>"]
-    CollectMethod L_CollBack_0@--> Collections
-    IterMethod@{ shape: rounded}
-    DictIterMethod@{ shape: rounded}
-    Into@{ shape: rounded}
-    CheckResMethod@{ shape: rounded}
-    ResOptMethod@{ shape: rounded}
-    CollectMethod@{ shape: rounded}
-    CheckOptMethod@{ shape: rounded}
-    TransposeMethod@{ shape: rounded}
-    DictOptMethod@{ shape: rounded}
-    DictResMethod@{ shape: rounded}
+    Collections -- ".iter()" --> Lazy
+    Lazy -- ".collect()" --> Collections
+    Lazy -- ".collect(Dict)" --> DictGroup
+    DictGroup -- ".iter() → Item[K,V]<br>.keys_iter() → K<br>.values_iter() → V" --> Lazy
+    OptionGroup -- ".iter()" --> Lazy
+    ResultGroup -- ".iter()" --> Lazy
+    DictGroup -- ".get_item(key)<br>.insert(key, val)<br>.remove(key)" --> OptionGroup
+    DictGroup -- ".try_insert(key, val)" --> ResultGroup
+    Collections -- ".then(func)<br>.then_some()" --> OptionGroup
+    Lazy -- ".then(func)<br>.then_some()" --> OptionGroup
+    DictGroup -- ".then(func)<br>.then_some()" --> OptionGroup
+    Collections -- ".ok_or(err)<br>.ok_or_else(func)" --> ResultGroup
+    Lazy -- ".ok_or(err)<br>.ok_or_else(func)" --> ResultGroup
+    DictGroup -- ".ok_or(err)<br>.ok_or_else(func)" --> ResultGroup
+    OptionGroup -- ".ok_or(err)<br>.ok_or_else(func)" --> ResultGroup
+    ResultGroup -- ".ok()<br>.err()" --> OptionGroup
+    OptionGroup L_OptionGroup_ResultGroup_2@<-- ".transpose()" --> ResultGroup
+    Collections -- ".into(func)" --> External
+    Lazy -- ".into(func)" --> External
+    DictGroup -- ".into(func)" --> External
+    OptionGroup -- ".into(func)" --> External
+    ResultGroup -- ".into(func)" --> External
 
      Seq:::collectionsStyle
      Vec:::collectionsStyle
      Set:::collectionsStyle
      SetMut:::collectionsStyle
-     Dict:::collectionsStyle
+     Iter:::iterStyle
+     Dict:::dictStyle
      Option:::optionStyle
      Some:::optionStyle
      NONE:::optionStyle
      Result:::resultStyle
      Ok:::resultStyle
      Err:::resultStyle
-     IterMethod:::iterMethodStyle
-     DictIterMethod:::iterMethodStyle
-     Into:::intoStyle
-     CheckResMethod:::okOrMethodStyle
-     DictResMethod:::okOrMethodStyle
-     ResOptMethod:::okMethodStyle
-     CheckOptMethod:::okMethodStyle
-     DictOptMethod:::okMethodStyle
-     TransposeMethod:::intoStyle
-     Iter:::iterStyle
-     CollectMethod:::collectMethodStyle
-     AnyType:::anyStyle
+     AnyType:::externalStyle
+     Collections:::collectionsStyle
+     OptionGroup:::optionStyle
+     ResultGroup:::resultStyle
+    classDef collectionsStyle fill:#1e88e5,stroke:#0d47a1,stroke-width:2px,color:#fff
+    classDef iterStyle fill:#43a047,stroke:#1b5e20,stroke-width:2px,color:#fff
+    classDef dictStyle fill:#fb8c00,stroke:#e65100,stroke-width:2px,color:#fff
+    classDef optionStyle fill:#fdd835,stroke:#f57f17,stroke-width:2px,color:#000
+    classDef resultStyle fill:#e53935,stroke:#b71c1c,stroke-width:2px,color:#fff
+    classDef externalStyle fill:#9e9e9e,stroke:#424242,stroke-width:2px,color:#fff
+    style Seq color:none
+    style Vec color:none
+    style Set color:none
+    style SetMut color:none
+    style Dict fill:#FF6D00,color:none,stroke:#FF6D00
+    style Option color:#FFFFFF,fill:transparent,stroke:#FFD600
+    style Some color:#FFFFFF,fill:transparent,stroke:#FFD600
+    style NONE color:#FFFFFF,fill:transparent,stroke:#FFD600
+    style Result fill:#D50000
+    style Ok fill:#D50000
+    style Err fill:#D50000
+    style Collections fill:#000000,color:none,stroke:#2962FF
+    style Lazy fill:#000000,stroke:#00C853
+    style DictGroup fill:#000000,color:none,stroke:#FF6D00
+    style OptionGroup fill:#000000,color:#FFFFFF,stroke:#FFD600
+    style ResultGroup fill:#000000,stroke:#D50000
+    style External fill:#000000
+    linkStyle 0 stroke:#666,stroke-width:1px,stroke-dasharray:3,fill:none
+    linkStyle 1 stroke:#666,stroke-width:1px,stroke-dasharray:3,fill:none
+    linkStyle 2 stroke:#666,stroke-width:1px,stroke-dasharray:3,fill:none
+    linkStyle 3 stroke:#666,stroke-width:1px,stroke-dasharray:3,fill:none
+    linkStyle 4 stroke:#1e88e5,stroke-width:2.5px,fill:none
+    linkStyle 5 stroke:#43a047,stroke-width:2.5px,fill:none
+    linkStyle 6 stroke:#43a047,stroke-width:2.5px,fill:none
+    linkStyle 7 stroke:#fb8c00,stroke-width:2.5px,fill:none
+    linkStyle 8 stroke:#fdd835,stroke-width:2.5px,fill:none
+    linkStyle 9 stroke:#e53935,stroke-width:2.5px,fill:none
+    linkStyle 10 stroke:#fb8c00,stroke-width:2.5px,fill:none
+    linkStyle 11 stroke:#fb8c00,stroke-width:2.5px,fill:none
+    linkStyle 12 stroke:#1e88e5,stroke-width:2.5px,fill:none
+    linkStyle 13 stroke:#43a047,stroke-width:2.5px,fill:none
+    linkStyle 14 stroke:#fb8c00,stroke-width:2.5px,fill:none
+    linkStyle 15 stroke:#1e88e5,stroke-width:2.5px,fill:none
+    linkStyle 16 stroke:#43a047,stroke-width:2.5px,fill:none
+    linkStyle 17 stroke:#fb8c00,stroke-width:2.5px,fill:none
+    linkStyle 18 stroke:#fdd835,stroke-width:2.5px,fill:none
+    linkStyle 19 stroke:#e53935,stroke-width:2.5px,fill:none
+    linkStyle 20 stroke:#9c27b0,stroke-width:2.5px,fill:none
+    linkStyle 21 stroke:#1e88e5,stroke-width:2.5px,fill:none
+    linkStyle 22 stroke:#43a047,stroke-width:2.5px,fill:none
+    linkStyle 23 stroke:#fb8c00,stroke-width:2.5px,fill:none
+    linkStyle 24 stroke:#fdd835,stroke-width:2.5px,fill:none
+    linkStyle 25 stroke:#e53935,stroke-width:2.5px,fill:none
 
-    classDef collectionsStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000
-    classDef iterMethodStyle fill:#c8e6c9,stroke:#2e7d32,stroke-width:3px,color:#000
-    classDef iterStyle fill:#e8f5e9,stroke:#388e3c,stroke-width:3px,color:#000
-    classDef collectMethodStyle fill:#b3e5fc,stroke:#0277bd,stroke-width:3px,color:#000
-    classDef okOrMethodStyle fill:#ffccbc,stroke:#d84315,stroke-width:3px,color:#000
-    classDef okMethodStyle fill:#fff59d,stroke:#f9a825,stroke-width:3px,color:#000
-    classDef optionStyle fill:#fff9c4,stroke:#f57f17,stroke-width:3px,color:#000
-    classDef resultStyle fill:#ffebee,stroke:#c62828,stroke-width:3px,color:#000
-    classDef intoStyle fill:#e1bee7,stroke:#7b1fa2,stroke-width:3px,color:#000
-    classDef anyStyle fill:#f5f5f5,stroke:#616161,stroke-width:2px,stroke-dasharray:5,color:#000
-
-    style Seq fill:transparent,color:#FFFFFF
-    style Vec color:#FFFFFF,fill:transparent
-    style Set color:#FFFFFF,fill:transparent
-    style SetMut fill:transparent,color:#FFFFFF
-    style Dict color:#FFFFFF,fill:transparent
-    style Option fill:transparent,color:#FFFFFF
-    style Some fill:transparent,color:#FFFFFF
-    style NONE fill:transparent,color:#FFFFFF
-    style Result color:#FFFFFF,fill:transparent
-    style Ok color:#FFFFFF,fill:transparent
-    style Err color:#FFFFFF,fill:transparent
-    
-    style IterMethod fill:transparent,stroke:#FFD600,color:#FFFFFF
-    style Into stroke:#FFD600,fill:transparent,color:#FFFFFF
-    style CheckResMethod fill:transparent,stroke:#FFD600,color:#FFFFFF
-    style ResOptMethod fill:transparent,stroke:#FFD600,color:#FFFFFF
-    style CheckOptMethod fill:transparent,stroke:#FFD600,color:#FFFFFF
-    style CollectMethod fill:transparent,stroke:#FFD600,color:#FFFFFF
-    style AnyType stroke-width:1px,stroke-dasharray: 0,color:#FFFFFF,fill:transparent,stroke:#AA00FF
-    
-    style DictIterMethod fill:transparent,stroke:#FFD600,color:#FFFFFF
-    style DictOptMethod fill:transparent,stroke:#FFD600,color:#FFFFFF
-    style DictResMethod fill:transparent,stroke:#FFD600,color:#FFFFFF
-    style TransposeMethod fill:transparent,stroke:#FFD600,color:#FFFFFF
-    style Iter color:#FFFFFF,fill:transparent
-
-    L_Coll_Into_0@{ animation: slow }
-    L_Iter_Into_0@{ animation: slow }
-    L_Opt_Into_0@{ animation: slow }
-    L_Res_Into_0@{ animation: slow }
-    L_Into_Any_0@{ animation: slow }
-    L_Coll_Iter_0@{ animation: slow }
-    L_Opt_Iter_0@{ animation: slow }
-    L_Res_Iter_0@{ animation: slow }
-    L_IterMethod_Iter_0@{ animation: slow }
-    L_Dict_Iter_0@{ animation: slow }
-    L_DictIter_Iter_0@{ animation: slow }
-    L_Dict_Opt_0@{ animation: slow }
-    L_DictOpt_Opt_0@{ animation: slow }
-    L_Dict_Res_0@{ animation: slow }
-    L_DictRes_Res_0@{ animation: slow }
-    L_Coll_CheckOpt_0@{ animation: slow }
-    L_Iter_CheckOpt_0@{ animation: slow }
-    L_CheckOpt_Opt_0@{ animation: slow }
-    L_Coll_CheckRes_0@{ animation: slow }
-    L_Iter_CheckRes_0@{ animation: slow }
-    L_Dict_CheckRes_0@{ animation: slow }
-    L_Opt_CheckRes_0@{ animation: slow }
-    L_CheckRes_Res_0@{ animation: slow }
-    L_Res_Opt_0@{ animation: slow }
-    L_ResOpt_Opt_0@{ animation: slow }
-    L_Opt_Trans_0@{ animation: slow }
-    L_Res_Trans_0@{ animation: slow }
-    L_Trans_Opt_0@{ animation: slow }
-    L_Trans_Res_0@{ animation: slow }
-    L_Iter_Coll_0@{ animation: slow }
-    L_CollBack_0@{ animation: slow }
+    L_OptionGroup_ResultGroup_2@{ animation: none }
 ```
