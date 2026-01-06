@@ -31,8 +31,6 @@ import more_itertools as mit
 
 from ._config import get_config
 from ._types import (
-    Enumerated,
-    Group,
     Peekable,
     SupportsRichComparison,
     SupportsSumWithNoDefaultGiven,
@@ -1719,6 +1717,85 @@ class Iter[T](BaseIter[T], Iterator[T]):
         for v in self._inner:
             func(v, *args, **kwargs)
 
+    @overload
+    def for_each_star[R](
+        self: Iter[tuple[Any]],
+        func: Callable[[Any], R],
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, R](
+        self: Iter[tuple[T1, T2]],
+        func: Callable[[T1, T2], R],
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, R](
+        self: Iter[tuple[T1, T2, T3]],
+        func: Callable[[T1, T2, T3], R],
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, R](
+        self: Iter[tuple[T1, T2, T3, T4]],
+        func: Callable[[T1, T2, T3, T4], R],
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, T5, R](
+        self: Iter[tuple[T1, T2, T3, T4, T5]],
+        func: Callable[[T1, T2, T3, T4, T5], R],
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, T5, T6, R](
+        self: Iter[tuple[T1, T2, T3, T4, T5, T6]],
+        func: Callable[[T1, T2, T3, T4, T5, T6], R],
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, T5, T6, T7, R](
+        self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7], R],
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
+        self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], R],
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
+        self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], R],
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
+        self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
+    ) -> None: ...
+    def for_each_star[U: Iterable[Any], R](
+        self: Iter[U],
+        func: Callable[..., R],
+    ) -> None:
+        """Consume the `Iterator` by applying a function to each unpacked item in the iterable.
+
+        Is a terminal operation, and is useful for functions that have side effects,
+        or when you want to force evaluation of a lazy iterable.
+
+        Each item yielded by the iterator is expected to be an iterable itself (e.g., a tuple or list),
+        and its elements are unpacked as arguments to the provided function.
+
+        This is often used after methods like `zip()` or `enumerate()` that yield tuples.
+
+        Args:
+            func (Callable[..., R]): Function to apply to each unpacked element.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter([(1, 2), (3, 4)]).for_each_star(lambda x, y: print(x + y))
+        3
+        7
+
+        ```
+        """
+        for item in self._inner:
+            func(*item)
+
     def try_for_each[E](self, f: Callable[[T], Result[Any, E]]) -> Result[None, E]:
         """An iterator method that applies a fallible function to each item in the iterator, stopping at the first error and returning that error.
 
@@ -2571,6 +2648,85 @@ class Iter[T](BaseIter[T], Iterator[T]):
         """
         return Iter(filter(func, self._inner))
 
+    @overload
+    def filter_star(
+        self: Iter[tuple[Any]],
+        func: Callable[[Any], bool],
+    ) -> Iter[tuple[Any]]: ...
+    @overload
+    def filter_star[T1, T2](
+        self: Iter[tuple[T1, T2]],
+        func: Callable[[T1, T2], bool],
+    ) -> Iter[tuple[T1, T2]]: ...
+    @overload
+    def filter_star[T1, T2, T3](
+        self: Iter[tuple[T1, T2, T3]],
+        func: Callable[[T1, T2, T3], bool],
+    ) -> Iter[tuple[T1, T2, T3]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4](
+        self: Iter[tuple[T1, T2, T3, T4]],
+        func: Callable[[T1, T2, T3, T4], bool],
+    ) -> Iter[tuple[T1, T2, T3, T4]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4, T5](
+        self: Iter[tuple[T1, T2, T3, T4, T5]],
+        func: Callable[[T1, T2, T3, T4, T5], bool],
+    ) -> Iter[tuple[T1, T2, T3, T4, T5]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4, T5, T6](
+        self: Iter[tuple[T1, T2, T3, T4, T5, T6]],
+        func: Callable[[T1, T2, T3, T4, T5, T6], bool],
+    ) -> Iter[tuple[T1, T2, T3, T4, T5, T6]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4, T5, T6, T7](
+        self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7], bool],
+    ) -> Iter[tuple[T1, T2, T3, T4, T5, T6, T7]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4, T5, T6, T7, T8](
+        self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], bool],
+    ) -> Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4, T5, T6, T7, T8, T9](
+        self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], bool],
+    ) -> Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
+        self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], bool],
+    ) -> Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]]: ...
+    def filter_star[U: Iterable[Any]](
+        self: Iter[U],
+        func: Callable[..., bool],
+    ) -> Iter[U]:
+        """Creates an `Iter` which uses a closure to determine if an element should be yielded, where each element is an iterable.
+
+        Unlike `.filter()`, which passes each element as a single argument, `.filter_star()` unpacks each element into positional arguments for the function.
+
+        In short, for each `element` in the sequence, it computes `func(*element)`.
+
+        This is useful after using methods like `zip`, `product`, or `enumerate` that yield tuples.
+
+        Args:
+            func (Callable[..., bool]): Function to evaluate unpacked elements.
+
+        Returns:
+            Iter[U]: An iterable of the items that satisfy the predicate.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> data = pc.Seq(["apple", "banana", "cherry", "date"])
+        >>> data.iter().enumerate().filter_star(lambda index, fruit: index % 2 == 0).map_star(lambda index, fruit: fruit.title()).collect()
+        Seq('Apple', 'Cherry')
+
+        ```
+        """
+        return Iter(filter(lambda x: func(*x), self._inner))
+
     def filter_false(self, func: Callable[[T], bool]) -> Iter[T]:
         """Return elements for which func is false.
 
@@ -2950,6 +3106,10 @@ class Iter[T](BaseIter[T], Iterator[T]):
         The i-th element in every tuple comes from the i-th iterable argument to `.zip()`.
 
         This continues until the shortest argument is exhausted.
+
+        Note:
+            `Iter.map_star` can then be used for subsequent operations on the index and value, in a destructuring manner.
+            This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.
 
         Args:
             *others (Iterable[Any]): Other iterables to zip with.
@@ -3659,30 +3819,32 @@ class Iter[T](BaseIter[T], Iterator[T]):
 
         return Iter(_strictly_n_(self._inner))
 
-    def enumerate(self, start: int = 0) -> Iter[Enumerated[T]]:
+    def enumerate(self, start: int = 0) -> Iter[tuple[int, T]]:
         """Return a `Iter` of (index, value) pairs.
 
         Each value in the iterable is paired with its index, starting from 0.
 
-        The `Iter` yields `Enumerated[T]` tuples where **idx** is the index and **value[T]** is the corresponding element from the iterable.
+        Note:
+            `Iter.map_star` can then be used for subsequent operations on the index and value, in a destructuring manner.
+            This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.
 
         Args:
             start (int): The starting index. Defaults to 0.
 
         Returns:
-            Iter[Enumerated[T]]: An iterable of (index, value) pairs.
+            Iter[tuple[int, T]]: An iterable of (index, value) pairs.
 
         Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Iter(["a", "b"]).enumerate().collect()
         Seq((0, 'a'), (1, 'b'))
-        >>> pc.Iter(["a", "b"]).enumerate().map(lambda e: e.idx).collect()
-        Seq(0, 1)
+        >>> pc.Iter(["a", "b"]).enumerate().map_star(lambda idx, val: (idx, val.upper())).collect()
+        Seq((0, 'A'), (1, 'B'))
 
         ```
         """
-        return Iter(enumerate(self._inner, start)).map(lambda x: Enumerated(*x))
+        return Iter(enumerate(self._inner, start))
 
     @overload
     def combinations(self, r: Literal[2]) -> Iter[tuple[T, T]]: ...
@@ -3947,25 +4109,25 @@ class Iter[T](BaseIter[T], Iterator[T]):
         return Iter(gen(self._inner))
 
     @overload
-    def group_by(self, key: None = None) -> Iter[Group[T, T]]: ...
+    def group_by(self, key: None = None) -> Iter[tuple[T, Iter[T]]]: ...
     @overload
-    def group_by[K](self, key: Callable[[T], K]) -> Iter[Group[K, T]]: ...
+    def group_by[K](self, key: Callable[[T], K]) -> Iter[tuple[K, Iter[T]]]: ...
     @overload
     def group_by[K](
         self, key: Callable[[T], K] | None = None
-    ) -> Iter[Group[K, T] | Group[T, T]]: ...
+    ) -> Iter[tuple[K, Iter[T]] | tuple[T, Iter[T]]]: ...
     def group_by(
         self, key: Callable[[T], Any] | None = None
-    ) -> Iter[Group[Any | T, T]]:
+    ) -> Iter[tuple[Any | T, Iter[T]]]:
         """Make an `Iter` that returns consecutive keys and groups from the iterable.
 
         Args:
             key (Callable[[T], Any] | None): Function to compute the key for grouping. Defaults to None.
 
         Returns:
-            Iter[Group[Any | T, T]]: An `Iter` of `Group(key, value)` tuples.
+            Iter[tuple[Any | T, Iter[T]]]: An `Iter` of `(key, value)` tuples.
 
-        The values yielded are `Group[K, T]` objects, which are `NamedTuples` where the first element is the group key and the second element is an `Iter` of type `T` over the group values.
+        The values yielded are `(K, Iter[T])` tuples, where the first element is the group key and the second element is an `Iter` of type `T` over the group values.
 
         The **key** is a function computing a key value for each element.
 
@@ -3978,7 +4140,7 @@ class Iter[T](BaseIter[T], Iterator[T]):
         That behavior differs from SQL's `GROUP BY` which aggregates common elements regardless of their input order.
 
         **Warning** ⚠️
-            **You MUST materialize `group.values` immediately** when iterating over groups!
+            **You MUST materialize the second element of the tuple **immediately** when iterating over groups!
 
             Because `.group_by()` uses Python's `itertools.groupby` under the hood, each group's iterator shares internal state.
             When you advance to the next group, the previous group's iterator becomes invalid and will yield empty results.
@@ -3994,7 +4156,7 @@ class Iter[T](BaseIter[T], Iterator[T]):
         ... .sort(key=lambda x: x[0]) # sort by is_even
         ... .iter() # Since sort collect to a Vec, we need to convert back to Iter
         ... .group_by(lambda x: x[0]) # group by is_even
-        ... .map(lambda x: (x[0], x[1].map(lambda y: y[1]).into(list))) # extract values from groups, discarding keys, and materializing them to lists
+        ... .map_star(lambda g, vals: (g, vals.map_star(lambda _, y: y).into(list))) # extract values from groups, discarding keys, and materializing them to lists
         ... .collect() # collect the result
         ... .into(dict) # convert to dict
         ... )
@@ -4009,7 +4171,7 @@ class Iter[T](BaseIter[T], Iterator[T]):
         >>> (
         ... pc.Iter(data)
         ... .group_by(lambda x: x["gender"]) # group by the gender key
-        ... .map(lambda x: (x.key, x.values.length())) # get the length of each group
+        ... .map_star(lambda g, vals: (g, vals.length())) # get the length of each group
         ... .collect()
         ... )
         Seq(('F', 1), ('M', 3))
@@ -4017,14 +4179,14 @@ class Iter[T](BaseIter[T], Iterator[T]):
         >>> groups = pc.Iter(["a1", "a2", "b1"]).group_by(lambda x: x[0]).collect()
         >>> # Now iterate - TOO LATE! The group iterators are consumed
         >>> for g in groups:
-        ...     print(g.values.collect())  # ❌ Empty!
+        ...     print(g[1].collect())  # ❌ Empty!
         Seq()
         Seq()
         >>> # Example 4: Correct usage with intermediate materialization:
         >>> groups = (
         ...     pc.Iter(["a1", "a2", "b1"])
         ...     .group_by(lambda x: x[0])
-        ...     .map(lambda g: (g.key, g.values.collect()))  # ✅ Materialize NOW
+        ...     .map_star(lambda g, vals: (g, vals.collect()))  # ✅ Materialize NOW
         ...     .collect()
         ...     .iter()
         ...     .for_each(lambda x: print(f"{x[0]}: {x[1]}"))
@@ -4034,4 +4196,4 @@ class Iter[T](BaseIter[T], Iterator[T]):
 
         ```
         """
-        return Iter(Group(x, Iter(y)) for x, y in itertools.groupby(self._inner, key))
+        return Iter((x, Iter(y)) for x, y in itertools.groupby(self._inner, key))

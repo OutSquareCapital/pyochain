@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Any, Self, TypeIs, overload
 import cytoolz as cz
 
 from ._config import get_config
-from ._types import Item
 from .traits import Checkable, Pipeable
 
 if TYPE_CHECKING:
@@ -254,7 +253,7 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
 
         return Option(self._inner.pop(key, None))
 
-    def remove_entry(self, key: K) -> Option[Item[K, V]]:
+    def remove_entry(self, key: K) -> Option[tuple[K, V]]:
         """Remove a key from the `Dict` and return the `Item` if it existed.
 
         Return an `Item` containing the (key, value) pair if the key was present.
@@ -263,7 +262,7 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
             key (K): The key to remove.
 
         Returns:
-            Option[Item[K, V]]: The (key, value) pair associated with the removed key, or None if the key was not present.
+            Option[tuple[K, V]]: The (key, value) pair associated with the removed key, or None if the key was not present.
         ```python
         >>> import pyochain as pc
         >>> data = pc.Dict({1: "a", 2: "b"})
@@ -277,7 +276,7 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         from ._option import NONE, Some
 
         if key in self._inner:
-            return Some(Item(key, self._inner.pop(key)))
+            return Some((key, self._inner.pop(key)))
         return NONE
 
     def keys_iter(self) -> Iter[K]:
@@ -315,13 +314,17 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
 
         return Iter(self._inner.values())
 
-    def iter(self) -> Iter[Item[K, V]]:
+    def iter(self) -> Iter[tuple[K, V]]:
         """Return an `Iter` of the dict's items.
 
-        Yield `Item` instances representing each (key, value) pair in the `Dict`.
+        Yield tuples of (key, value) pairs.
+
+        Note:
+            `Iter.map_star` can then be used for subsequent operations on the index and value, in a destructuring manner.
+            This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.
 
         Returns:
-            Iter[Item[K, V]]: An Iter wrapping the dictionary's (key, value) pairs.
+            Iter[tuple[K, V]]: An Iter wrapping the dictionary's (key, value) pairs.
 
         Example:
         ```python
@@ -329,16 +332,16 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         >>> data = pc.Dict({"a": 1, "b": 2})
         >>> data.iter().collect()
         Seq(('a', 1), ('b', 2))
-        >>> data.iter().map(lambda item: item.key).collect()
+        >>> data.iter().map_star(lambda key, value: key).collect()
         Seq('a', 'b')
-        >>> data.iter().map(lambda item: item.value).collect()
+        >>> data.iter().map_star(lambda key, value: value).collect()
         Seq(1, 2)
 
         ```
         """
         from ._iter import Iter
 
-        return Iter(Item(*it) for it in self._inner.items())
+        return Iter(self._inner.items())
 
     def get_item(self, key: K) -> Option[V]:
         """Retrieve a value from the `Dict`.

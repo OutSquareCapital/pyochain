@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, NamedTuple, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from .traits import Pipeable
 
@@ -36,51 +36,6 @@ class Peekable[T](Pipeable):
     """An iterator over the peeked elements."""
     values: Iter[T]
     """An iterator of values, still including the peeked elements."""
-
-
-# Iterations result types
-
-
-class Item[K, V](NamedTuple):
-    """Represents a key-value pair from a `Dict`."""
-
-    key: K
-    """The key of the item."""
-    value: V
-    """The value associated with the key."""
-
-    def __repr__(self) -> str:
-        return f"({self.key.__repr__()}, {self.value.__repr__()})"
-
-
-class Enumerated[T](NamedTuple):
-    """Represents an item with its associated index in an enumeration.
-
-    See `Iter.enumerate()` for details.
-    """
-
-    idx: int
-    """The index of the item in the enumeration."""
-    value: T
-    """The value of the item."""
-
-    def __repr__(self) -> str:
-        return f"({self.idx}, {self.value.__repr__()})"
-
-
-class Group[K, V](NamedTuple):
-    """Represents a grouping of values by a common key.
-
-    See `Iter.group_by()` for details.
-    """
-
-    key: K
-    """The common key for the group."""
-    values: Iter[V]
-    """An `Iter` over the values associated with the key."""
-
-    def __repr__(self) -> str:
-        return f"({self.key.__repr__()}, {self.values.__repr__()})"
 
 
 # typeshed protocols
