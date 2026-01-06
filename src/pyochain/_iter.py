@@ -2727,7 +2727,13 @@ class Iter[T](BaseIter[T], Iterator[T]):
         """
         return Iter(filter(lambda x: func(*x), self._inner))
 
-    def filter_false(self, func: Callable[[T], bool]) -> Iter[T]:
+    @overload
+    def filter_false[U](self, func: Callable[[T], TypeIs[U]]) -> Iter[U]: ...
+    @overload
+    def filter_false(self, func: Callable[[T], bool]) -> Iter[T]: ...
+    def filter_false[U](
+        self, func: Callable[[T], bool | TypeIs[U]]
+    ) -> Iter[T] | Iter[U]:
         """Return elements for which func is false.
 
         Args:
