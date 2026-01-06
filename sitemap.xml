@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
       <url>
+        <loc>https://outsquarecapital.github.io/pyochain/api-reference/</loc>
+      </url>
+      <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/dict/</loc>
       </url>
       <url>
@@ -37,10 +40,22 @@
         <loc>https://outsquarecapital.github.io/pyochain/reference/some/</loc>
       </url>
       <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/checkable/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/pipeable/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/getting-started/</loc>
+      </url>
+      <url>
         <loc>https://outsquarecapital.github.io/pyochain/core-types-overview/</loc>
       </url>
       <url>
         <loc>https://outsquarecapital.github.io/pyochain/examples/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/user-guide/</loc>
       </url>
       <url>
         <loc>https://outsquarecapital.github.io/pyochain/</loc>
