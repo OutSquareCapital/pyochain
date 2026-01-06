@@ -12,13 +12,13 @@
         <meta name="author" content="Outside Square Capital">
       
       
-        <link rel="canonical" href="https://outsquarecapital.github.io/pyochain/getting-started/">
+        <link rel="canonical" href="https://outsquarecapital.github.io/pyochain/interoperability/">
       
       
-        <link rel="prev" href="../interoperability/">
+        <link rel="prev" href="../examples/">
       
       
-        <link rel="next" href="..">
+        <link rel="next" href="../getting-started/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>Getting Started - pyochain</title>
+        <title>Interoperability & Chaining Guide - pyochain</title>
       
     
     
@@ -114,7 +114,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#getting-started" class="md-skip">
+        <a href="#interoperability-chaining-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -150,7 +150,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Getting Started
+              Interoperability &amp; Chaining Guide
             
           </span>
         </div>
@@ -1043,34 +1043,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../interoperability/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Interoperability
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -1090,7 +1062,7 @@
   <span class="md-ellipsis">
     
   
-    Overview
+    Interoperability
   
 
     
@@ -1108,7 +1080,7 @@
   <span class="md-ellipsis">
     
   
-    Overview
+    Interoperability
   
 
     
@@ -1135,32 +1107,127 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
+  <a href="#shared-features" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Installation
+        Shared Features
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Shared Features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pipeable-trait" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeable trait
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pipeable trait">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intofunc-args-kwargs-r" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .into(func, *args, **kwargs) -&gt; R
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#inspectfunc-args-kwargs-self" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick start
+        .inspect(func, *args, **kwargs) -&gt; Self
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checkable-trait" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Next steps
+        Checkable trait
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Checkable trait">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#thenfunc-args-kwargs-optionr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .then(func, *args, **kwargs) -&gt; Option[R]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#then_some-optionself" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .then_some() -&gt; Option[Self]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ok_orerr-resultself-e" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .ok_or(err) -&gt; Result[Self, E]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ok_or_elsefunc-args-kwargs-resultself-e" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .ok_or_else(func, *args, **kwargs) -&gt; Result[Self, E]
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conversion-interoperability-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conversion &amp; Interoperability Map
       
     </span>
   </a>
@@ -1171,6 +1238,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1238,32 +1333,127 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
+  <a href="#shared-features" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Installation
+        Shared Features
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Shared Features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pipeable-trait" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeable trait
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pipeable trait">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intofunc-args-kwargs-r" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .into(func, *args, **kwargs) -&gt; R
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#inspectfunc-args-kwargs-self" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick start
+        .inspect(func, *args, **kwargs) -&gt; Self
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checkable-trait" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Next steps
+        Checkable trait
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Checkable trait">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#thenfunc-args-kwargs-optionr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .then(func, *args, **kwargs) -&gt; Option[R]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#then_some-optionself" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .then_some() -&gt; Option[Self]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ok_orerr-resultself-e" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .ok_or(err) -&gt; Result[Self, E]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ok_or_elsefunc-args-kwargs-resultself-e" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .ok_or_else(func, *args, **kwargs) -&gt; Result[Self, E]
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conversion-interoperability-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conversion &amp; Interoperability Map
       
     </span>
   </a>
@@ -1285,28 +1475,199 @@
                 
                   
 
-<h1 id="getting-started">Getting Started</h1>
-<h2 id="installation">Installation</h2>
-<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>add<span class="w"> </span>pyochain
-</code></pre></div>
-<h2 id="quick-start">Quick start</h2>
+<h1 id="interoperability-chaining-guide">Interoperability &amp; Chaining Guide</h1>
+<p>Pyochain is designed for fluent API usage. Most types can be converted into others seamlessly, allowing you to chain operations without breaking the flow.</p>
+<h2 id="shared-features">Shared Features</h2>
+<p>To enable this flexibility, Pyochain provides two core traits (mixins) that extend all types with powerful chaining and conditional logic capabilities.</p>
+<h3 id="pipeable-trait">Pipeable trait</h3>
+<p>All pyochain types implement <code>Pipeable</code>, providing universal methods to continue a chain:</p>
+<h4 id="intofunc-args-kwargs-r"><code>.into(func, *args, **kwargs) -&gt; R</code></h4>
+<p>Convert <code>Self</code> to any type <code>R</code> via a function, maintaining fluent chaining.</p>
+<p>Conceptually, this replaces <code>f(x, args, kwargs)</code> with <code>x.into(f, args, kwargs)</code>.</p>
+<p>This is particularly useful when you need to pass the result to a function you don't control (like a library function), or to convert to a type not native to Pyochain.</p>
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">res</span><span class="p">:</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-<span class="o">...</span>     <span class="n">pc</span><span class="o">.</span><span class="n">Iter</span><span class="o">.</span><span class="n">from_count</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="o">...</span>     <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
-<span class="o">...</span>     <span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
-<span class="o">...</span>     <span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-<span class="o">...</span>     <span class="o">.</span><span class="n">collect</span><span class="p">()</span>
-<span class="o">...</span> <span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">res</span>
-<span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">49</span><span class="p">,</span> <span class="mi">81</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Dict</span><span class="p">({</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Alice&quot;</span><span class="p">})</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="c1"># Instead of json.dumps(data, indent=2)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="s1">&#39;{</span><span class="se">\n</span><span class="s1">  &quot;id&quot;: 1,</span><span class="se">\n</span><span class="s1">  &quot;name&quot;: &quot;Alice&quot;</span><span class="se">\n</span><span class="s1">}&#39;</span>
 </code></pre></div>
-<h2 id="next-steps">Next steps</h2>
+<h4 id="inspectfunc-args-kwargs-self"><code>.inspect(func, *args, **kwargs) -&gt; Self</code></h4>
+<p>Pass <code>Self</code> to a function for side effects (logging, debugging, metrics) without breaking the chain. The instance is returned unchanged.</p>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">inspect</span><span class="p">(</span><span class="nb">print</span><span class="p">)</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+<span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">Seq</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="checkable-trait">Checkable trait</h3>
+<p>Collections (<code>Seq</code>, <code>Vec</code>, <code>Set</code>, <code>SetMut</code>, <code>Dict</code>) and iterators (<code>Iter</code>) implement <code>Checkable</code>, providing conditional chaining based on truthiness (usually emptiness):</p>
+<h4 id="thenfunc-args-kwargs-optionr"><code>.then(func, *args, **kwargs) -&gt; Option[R]</code></h4>
+<p>Call <strong>func</strong> and wrap result in <code>Some</code> only if the instance is truthy.</p>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+<span class="n">Some</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([])</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+<span class="n">NONE</span>
+</code></pre></div>
+<h4 id="then_some-optionself"><code>.then_some() -&gt; Option[Self]</code></h4>
+<p>Wrap the instance in <code>Some</code> if truthy, otherwise <code>NONE</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">then_some</span><span class="p">()</span>
+<span class="n">Some</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([])</span><span class="o">.</span><span class="n">then_some</span><span class="p">()</span>
+<span class="n">NONE</span>
+</code></pre></div>
+<h4 id="ok_orerr-resultself-e"><code>.ok_or(err) -&gt; Result[Self, E]</code></h4>
+<p>Wrap in <code>Ok</code> if truthy, otherwise wrap the error in <code>Err</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">&quot;empty list&quot;</span><span class="p">)</span>
+<span class="n">Ok</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([])</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">&quot;empty list&quot;</span><span class="p">)</span>
+<span class="n">Err</span><span class="p">(</span><span class="s1">&#39;empty list&#39;</span><span class="p">)</span>
+</code></pre></div>
+<h4 id="ok_or_elsefunc-args-kwargs-resultself-e"><code>.ok_or_else(func, *args, **kwargs) -&gt; Result[Self, E]</code></h4>
+<p>Wrap in <code>Ok</code> if truthy, otherwise call <strong>func</strong> and wrap result in <code>Err</code> (lazy evaluation).</p>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="s2">&quot;empty&quot;</span><span class="p">)</span>
+<span class="n">Ok</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([])</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="s2">&quot;empty&quot;</span><span class="p">)</span>
+<span class="n">Err</span><span class="p">(</span><span class="s1">&#39;empty&#39;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="conversion-interoperability-map">Conversion &amp; Interoperability Map</h2>
+<p>The following graph illustrates all the built-in ways to convert between types in Pyochain.</p>
 <ul>
-<li><a href="../core-types-overview/">Core Types Overview</a>: choose between the various provided types</li>
-<li><a href="../interoperability/">Interoperability</a>: convert between types with various methods</li>
-<li><a href="../examples/">Examples &amp; Cookbook</a>: practical patterns and concrete examples</li>
+<li>Types are grouped by category.</li>
+<li>Arrows color and direction represent conversion paths.</li>
+<li>Arrow labels represent methods.</li>
 </ul>
+<pre class="mermaid"><code>---
+config:
+  layout: elk
+---
+flowchart TB
+ subgraph Collections["📦 Collections (Eager)"]
+    direction LR
+        Seq["&lt;b&gt;Seq[T]&lt;/b&gt;&lt;br&gt;immutable&lt;br&gt;tuple"]
+        Vec["&lt;b&gt;Vec[T]&lt;/b&gt;&lt;br&gt;mutable&lt;br&gt;list"]
+        Set["&lt;b&gt;Set[T]&lt;/b&gt;&lt;br&gt;immutable&lt;br&gt;frozenset"]
+        SetMut["&lt;b&gt;SetMut[T]&lt;/b&gt;&lt;br&gt;mutable&lt;br&gt;set"]
+  end
+ subgraph Lazy["⛓️ Lazy"]
+    direction LR
+        Iter["&lt;b&gt;Iter[T]&lt;/b&gt;&lt;br&gt;lazy iterator&lt;br&gt;Iterator"]
+  end
+ subgraph DictGroup["🔑 Dictionary"]
+    direction LR
+        Dict["&lt;b&gt;Dict[K,V]&lt;/b&gt;&lt;br&gt;mutable&lt;br&gt;dict"]
+  end
+ subgraph OptionGroup["🎁 Option Types"]
+    direction LR
+        Option["&lt;b&gt;Option[T]&lt;/b&gt;"]
+        Some["&lt;b&gt;Some[T]&lt;/b&gt;"]
+        NONE["&lt;b&gt;NONE&lt;/b&gt;"]
+  end
+ subgraph ResultGroup["✅ Result Types"]
+    direction LR
+        Result["&lt;b&gt;Result[T,E]&lt;/b&gt;"]
+        Ok["&lt;b&gt;Ok[T]&lt;/b&gt;"]
+        Err["&lt;b&gt;Err[E]&lt;/b&gt;"]
+  end
+ subgraph External["🌐 External Types"]
+    direction LR
+        AnyType["&lt;b&gt;Any Type&lt;/b&gt;&lt;br&gt;via .into(func)"]
+  end
+    Option -.-&gt; Some &amp; NONE
+    Result -.-&gt; Ok &amp; Err
+    Collections -- ".iter()" --&gt; Lazy
+    Lazy -- ".collect()" --&gt; Collections
+    Lazy -- ".collect(Dict)" --&gt; DictGroup
+    DictGroup -- ".iter() → Item[K,V]&lt;br&gt;.keys_iter() → K&lt;br&gt;.values_iter() → V" --&gt; Lazy
+    OptionGroup -- ".iter()" --&gt; Lazy
+    ResultGroup -- ".iter()" --&gt; Lazy
+    DictGroup -- ".get_item(key)&lt;br&gt;.insert(key, val)&lt;br&gt;.remove(key)" --&gt; OptionGroup
+    DictGroup -- ".try_insert(key, val)" --&gt; ResultGroup
+    Collections -- ".then(func)&lt;br&gt;.then_some()" --&gt; OptionGroup
+    Lazy -- ".then(func)&lt;br&gt;.then_some()" --&gt; OptionGroup
+    DictGroup -- ".then(func)&lt;br&gt;.then_some()" --&gt; OptionGroup
+    Collections -- ".ok_or(err)&lt;br&gt;.ok_or_else(func)" --&gt; ResultGroup
+    Lazy -- ".ok_or(err)&lt;br&gt;.ok_or_else(func)" --&gt; ResultGroup
+    DictGroup -- ".ok_or(err)&lt;br&gt;.ok_or_else(func)" --&gt; ResultGroup
+    OptionGroup -- ".ok_or(err)&lt;br&gt;.ok_or_else(func)" --&gt; ResultGroup
+    ResultGroup -- ".ok()&lt;br&gt;.err()" --&gt; OptionGroup
+    OptionGroup L_OptionGroup_ResultGroup_2@&lt;-- ".transpose()" --&gt; ResultGroup
+    Collections -- ".into(func)" --&gt; External
+    Lazy -- ".into(func)" --&gt; External
+    DictGroup -- ".into(func)" --&gt; External
+    OptionGroup -- ".into(func)" --&gt; External
+    ResultGroup -- ".into(func)" --&gt; External
+
+     Seq:::collectionsStyle
+     Vec:::collectionsStyle
+     Set:::collectionsStyle
+     SetMut:::collectionsStyle
+     Iter:::iterStyle
+     Dict:::dictStyle
+     Option:::optionStyle
+     Some:::optionStyle
+     NONE:::optionStyle
+     Result:::resultStyle
+     Ok:::resultStyle
+     Err:::resultStyle
+     AnyType:::externalStyle
+     Collections:::collectionsStyle
+     OptionGroup:::optionStyle
+     ResultGroup:::resultStyle
+    classDef collectionsStyle fill:#1e88e5,stroke:#0d47a1,stroke-width:2px,color:#fff
+    classDef iterStyle fill:#43a047,stroke:#1b5e20,stroke-width:2px,color:#fff
+    classDef dictStyle fill:#fb8c00,stroke:#e65100,stroke-width:2px,color:#fff
+    classDef optionStyle fill:#fdd835,stroke:#f57f17,stroke-width:2px,color:#000
+    classDef resultStyle fill:#e53935,stroke:#b71c1c,stroke-width:2px,color:#fff
+    classDef externalStyle fill:#9e9e9e,stroke:#424242,stroke-width:2px,color:#fff
+    style Seq color:none
+    style Vec color:none
+    style Set color:none
+    style SetMut color:none
+    style Dict fill:#FF6D00,color:none,stroke:#FF6D00
+    style Option color:#FFFFFF,fill:transparent,stroke:#FFD600
+    style Some color:#FFFFFF,fill:transparent,stroke:#FFD600
+    style NONE color:#FFFFFF,fill:transparent,stroke:#FFD600
+    style Result fill:#D50000
+    style Ok fill:#D50000
+    style Err fill:#D50000
+    style Collections fill:#000000,color:none,stroke:#2962FF
+    style Lazy fill:#000000,stroke:#00C853
+    style DictGroup fill:#000000,color:none,stroke:#FF6D00
+    style OptionGroup fill:#000000,color:#FFFFFF,stroke:#FFD600
+    style ResultGroup fill:#000000,stroke:#D50000
+    style External fill:#000000
+    linkStyle 0 stroke:#666,stroke-width:1px,stroke-dasharray:3,fill:none
+    linkStyle 1 stroke:#666,stroke-width:1px,stroke-dasharray:3,fill:none
+    linkStyle 2 stroke:#666,stroke-width:1px,stroke-dasharray:3,fill:none
+    linkStyle 3 stroke:#666,stroke-width:1px,stroke-dasharray:3,fill:none
+    linkStyle 4 stroke:#1e88e5,stroke-width:2.5px,fill:none
+    linkStyle 5 stroke:#43a047,stroke-width:2.5px,fill:none
+    linkStyle 6 stroke:#43a047,stroke-width:2.5px,fill:none
+    linkStyle 7 stroke:#fb8c00,stroke-width:2.5px,fill:none
+    linkStyle 8 stroke:#fdd835,stroke-width:2.5px,fill:none
+    linkStyle 9 stroke:#e53935,stroke-width:2.5px,fill:none
+    linkStyle 10 stroke:#fb8c00,stroke-width:2.5px,fill:none
+    linkStyle 11 stroke:#fb8c00,stroke-width:2.5px,fill:none
+    linkStyle 12 stroke:#1e88e5,stroke-width:2.5px,fill:none
+    linkStyle 13 stroke:#43a047,stroke-width:2.5px,fill:none
+    linkStyle 14 stroke:#fb8c00,stroke-width:2.5px,fill:none
+    linkStyle 15 stroke:#1e88e5,stroke-width:2.5px,fill:none
+    linkStyle 16 stroke:#43a047,stroke-width:2.5px,fill:none
+    linkStyle 17 stroke:#fb8c00,stroke-width:2.5px,fill:none
+    linkStyle 18 stroke:#fdd835,stroke-width:2.5px,fill:none
+    linkStyle 19 stroke:#e53935,stroke-width:2.5px,fill:none
+    linkStyle 20 stroke:#9c27b0,stroke-width:2.5px,fill:none
+    linkStyle 21 stroke:#1e88e5,stroke-width:2.5px,fill:none
+    linkStyle 22 stroke:#43a047,stroke-width:2.5px,fill:none
+    linkStyle 23 stroke:#fb8c00,stroke-width:2.5px,fill:none
+    linkStyle 24 stroke:#fdd835,stroke-width:2.5px,fill:none
+    linkStyle 25 stroke:#e53935,stroke-width:2.5px,fill:none
+
+    L_OptionGroup_ResultGroup_2@{ animation: none }</code></pre>
 
 
 
