@@ -3,12 +3,9 @@
     name            = "pyochain"
     readme          = "README.md"
     requires-python = ">=3.13"
-    version         = "0.6.1.70"
+    version         = "0.6.1.71"
 
-    dependencies = [
-    "cytoolz>=1.0.1",
-    "more-itertools>=10.8.0",
-]
+    dependencies = ["cytoolz>=1.0.1", "more-itertools>=10.8.0"]
 
 [dependency-groups]
     dev = [
@@ -22,7 +19,7 @@
         "ruff>=0.14.9",
         "stubtester",
         "zensical>=0.0.15",
-]
+    ]
 [tool.ruff]
     lint.ignore = [
         "C417",
@@ -63,7 +60,7 @@
 
 [tool.uv.sources]
     cytoolz-stubs = { git = "https://github.com/OutSquareCapital/cytoolz-stubs.git" }
-stubtester = { git = "https://github.com/OutSquareCapital/stubtester.git" }
+    stubtester    = { git = "https://github.com/OutSquareCapital/stubtester.git" }
 
 [build-system]
     build-backend = "uv_build"

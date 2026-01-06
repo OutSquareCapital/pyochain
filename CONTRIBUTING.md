@@ -18,14 +18,15 @@ Top-level files and folders of interest:
 The `src/pyochain` package is organized into a small number of internal modules (leading underscore indicates internal implementation):
 
 - `_config.py` — repr config settings and configuration utilities.
-- `_core.py` — common base classes such as `CommonBase`, `IterWrapper`, `MappingWrapper`, shared helpers, and structural `typing.Protocol` definitions used across the package.
+- `traits.py` — public mixin traits for fluent chaining (`Pipeable`, `Checkable`) that can be added to custom types.
+- `_types.py` — common type definitions and result types (`Unzipped`, `Item`, `Peekable`, `Group`) produced by iterator operations.
 - `_iter.py` — implementation of `Iter` (lazy iterator), `Seq`, `Vec`, `Set`, `SetMut` and all iteration/collection helpers.
 - `_dict.py` — `Dict` class implementation and mapping-related logic.
 - `_option.py` — `Option`, `Some`, `NONE`, and `OptionUnwrapError`.
 - `_result.py` — `Result`, `Ok`, `Err`, and `ResultUnwrapError`.
 - `py.typed` — PEP 561 marker file for type checking support.
 
-The public API is exposed through `src/pyochain/__init__.py`, which imports and re-exports the main classes and types.
+The public API is exposed through `src/pyochain/__init__.py`, which imports and re-exports the main classes, types, and traits.
 
 ## Design goals
 
@@ -33,11 +34,9 @@ pyochain aims to provide a powerful, Rust-inspired chaining API for Python itera
 
 1. **Implement all Python builtins** — Methods like `.map()`, `.filter()`, `.reduce()` mirror their Python equivalents (e.g., `itertools`, `functools`, `collections.abc`) to ensure familiarity.
 
-2. **Implement Rust `Iterator` methods when applicable** — Methods like `.take()`, `.skip()`, `.scan()`, `.fold()` are inspired by Rust's `std::iter::Iterator` trait to enable expressive functional composition.
+2. **Implement Rust `Iterator` methods when applicable** — Methods like `.take()`, `.skip()`, `.scan()`, `.fold()` are inspired by Rust's `std::iter::Iterator` trait to enable expr
 
-3. **Python is prioritaire on friction** — When there's a conflict between Python conventions and Rust semantics, Python wins. For example, `.zip()` accepts variadic arguments like Python's `zip()` rather than strictly following Rust's binary `.zip()`.
-
-4. **Use `cytoolz` over `more-itertools`** — `cytoolz` is preferred because it's implemented in Cython and provides better performance for hot paths. This aligns with pyochain's emphasis on minimizing overhead.
+3. **Use `cytoolz` over `more-itertools`** — `cytoolz` is preferred because it's implemented in Cython and provides better performance for hot paths. This aligns with pyochain's emphasis on minimizing overhead.
 
 ## Coding and documentation guidelines
 
