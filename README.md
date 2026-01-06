@@ -50,7 +50,9 @@ Every code example in the website (or this README) is also tested, ensuring accu
 For comprehensive guides and examples:
 
 [🔍 Core Types Overview](https://outsquarecapital.github.io/pyochain/core-types-overview/) — Type overview, comparisons and visual relationships
+
 [📚 Full API Reference](https://outsquarecapital.github.io/pyochain/api-reference/) — Complete API documentation
+
 [📖 Examples & Cookbook](https://outsquarecapital.github.io/pyochain/examples/) — Practical patterns and recipes
 
 ## Notice on Stability ⚠️
