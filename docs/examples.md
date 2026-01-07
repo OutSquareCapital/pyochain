@@ -69,11 +69,12 @@ Below is an example of using pyochain to:
 ...         .sort(key=lambda pair: pair[1])
 ...         .iter()
 ...         .take(3)
-...         .collect(dict)
+...         .find(lambda x: x[1] =="all")
+...         .unwrap()[1]
 ...     )
 >>>
 >>> get_public_methods(pc.Iter)
-{25: 'accumulate', 68: 'adjacent', 89: 'all'}
+'all'
 
 
 ```
@@ -84,24 +85,27 @@ For comparison, here's the equivalent using pure Python:
 >>> import itertools
 >>> import pyochain as pc
 >>>
->>> def get_public_methods_pure(cls: type) -> dict[int, str]:
-...     return dict(
-...         itertools.islice(
-...             sorted(
-...                 enumerate(
-...                     f.__name__
-...                     for f in itertools.chain.from_iterable(
-...                         map(lambda x: x.__dict__.values(), cls.mro())
-...                     )
-...                     if callable(f) and not f.__name__.startswith("_")
+>>> def get_public_methods_pure(cls: type) -> tuple[int, str]:
+...     return next(
+...         filter(
+...             lambda pair: pair[1] == "all",
+...             itertools.islice(
+...                 sorted(
+...                     enumerate(
+...                         f.__name__
+...                         for f in itertools.chain.from_iterable(
+...                             map(lambda x: x.__dict__.values(), cls.mro())
+...                         )
+...                         if callable(f) and not f.__name__.startswith("_")
+...                     ),
+...                     key=lambda pair: pair[1],
 ...                 ),
-...                 key=lambda pair: pair[1],
+...                 3,
 ...             ),
-...             3,
 ...         )
-...     )
+...     )[1]
 >>>
 >>> get_public_methods_pure(pc.Iter)
-{25: 'accumulate', 68: 'adjacent', 89: 'all'}
+'all'
 
 ```
