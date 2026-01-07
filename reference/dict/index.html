@@ -2558,7 +2558,7 @@
         <span class="k">return</span> <span class="n">Option</span><span class="p">(</span><span class="n">previous</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">try_insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="n">V</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Tries to insert a key-value pair into the map, and returns a mutable reference to the value in the entry.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Tries to insert a key-value pair into the map, and returns a `Result[V, KeyError]` containing the value in the entry (if successful).</span>
 
 <span class="sd">        If the map already had this key present, nothing is updated, and an error containing the occupied entry and the value is returned.</span>
 
@@ -2614,9 +2614,9 @@
         <span class="k">return</span> <span class="n">Option</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">remove_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove a key from the `Dict` and return the `Item` if it existed.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove a key from the `Dict` and return the item if it existed.</span>
 
-<span class="sd">        Return an `Item` containing the (key, value) pair if the key was present.</span>
+<span class="sd">        Return an `Option[tuple[K, V]]` containing the (key, value) pair if the key was present.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            key (K): The key to remove.</span>
@@ -2640,7 +2640,7 @@
         <span class="k">return</span> <span class="n">NONE</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">keys_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">K</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return an Iter of the dict&#39;s keys.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return an `Iter` of the dict&#39;s keys.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Iter[K]: An Iter wrapping the dictionary&#39;s keys.</span>
@@ -2684,7 +2684,7 @@
 <span class="sd">            This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Iter[tuple[K, V]]: An Iter wrapping the dictionary&#39;s (key, value) pairs.</span>
+<span class="sd">            Iter[tuple[K, V]]: An `Iter` wrapping the dictionary&#39;s (key, value) pairs.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
@@ -2730,7 +2730,7 @@
         <span class="k">return</span> <span class="n">Option</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">is_empty</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns true if the map contains no elements.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns true if the `Dict` contains no elements.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            bool: True if the Dict is empty, False otherwise.</span>
@@ -4429,7 +4429,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>Returns true if the map contains no elements.</p>
+        <p>Returns true if the <code>Dict</code> contains no elements.</p>
 
 
     <p><span class="doc-section-title">Returns:</span></p>
@@ -4487,7 +4487,7 @@
 <span class="normal">389</span>
 <span class="normal">390</span>
 <span class="normal">391</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_empty</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns true if the map contains no elements.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns true if the `Dict` contains no elements.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        bool: True if the Dict is empty, False otherwise.</span>
@@ -4548,7 +4548,7 @@ This keep the code clean and readable, without index access like <code>[0]</code
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Iter[tuple[K, V]]: An Iter wrapping the dictionary's (key, value) pairs.</p>
+                <p>Iter[tuple[K, V]]: An <code>Iter</code> wrapping the dictionary's (key, value) pairs.</p>
               </div>
             </td>
           </tr>
@@ -4605,7 +4605,7 @@ This keep the code clean and readable, without index access like <code>[0]</code
 <span class="sd">        This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Iter[tuple[K, V]]: An Iter wrapping the dictionary&#39;s (key, value) pairs.</span>
+<span class="sd">        Iter[tuple[K, V]]: An `Iter` wrapping the dictionary&#39;s (key, value) pairs.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
@@ -4640,7 +4640,7 @@ This keep the code clean and readable, without index access like <code>[0]</code
 
     <div class="doc doc-contents ">
 
-        <p>Return an Iter of the dict's keys.</p>
+        <p>Return an <code>Iter</code> of the dict's keys.</p>
 
 
     <p><span class="doc-section-title">Returns:</span></p>
@@ -4688,7 +4688,7 @@ This keep the code clean and readable, without index access like <code>[0]</code
 <span class="normal">295</span>
 <span class="normal">296</span>
 <span class="normal">297</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">keys_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">K</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an Iter of the dict&#39;s keys.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an `Iter` of the dict&#39;s keys.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Iter[K]: An Iter wrapping the dictionary&#39;s keys.</span>
@@ -5729,8 +5729,8 @@ This keep the code clean and readable, without index access like <code>[0]</code
 
     <div class="doc doc-contents ">
 
-        <p>Remove a key from the <code>Dict</code> and return the <code>Item</code> if it existed.</p>
-<p>Return an <code>Item</code> containing the (key, value) pair if the key was present.</p>
+        <p>Remove a key from the <code>Dict</code> and return the item if it existed.</p>
+<p>Return an <code>Option[tuple[K, V]]</code> containing the (key, value) pair if the key was present.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -5821,9 +5821,9 @@ This keep the code clean and readable, without index access like <code>[0]</code
 <span class="normal">278</span>
 <span class="normal">279</span>
 <span class="normal">280</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">remove_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove a key from the `Dict` and return the `Item` if it existed.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove a key from the `Dict` and return the item if it existed.</span>
 
-<span class="sd">    Return an `Item` containing the (key, value) pair if the key was present.</span>
+<span class="sd">    Return an `Option[tuple[K, V]]` containing the (key, value) pair if the key was present.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        key (K): The key to remove.</span>
@@ -6143,7 +6143,7 @@ This keep the code clean and readable, without index access like <code>[0]</code
 
     <div class="doc doc-contents ">
 
-        <p>Tries to insert a key-value pair into the map, and returns a mutable reference to the value in the entry.</p>
+        <p>Tries to insert a key-value pair into the map, and returns a <code>Result[V, KeyError]</code> containing the value in the entry (if successful).</p>
 <p>If the map already had this key present, nothing is updated, and an error containing the occupied entry and the value is returned.</p>
 
 
@@ -6258,7 +6258,7 @@ This keep the code clean and readable, without index access like <code>[0]</code
 <span class="normal">228</span>
 <span class="normal">229</span>
 <span class="normal">230</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">try_insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="n">V</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tries to insert a key-value pair into the map, and returns a mutable reference to the value in the entry.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tries to insert a key-value pair into the map, and returns a `Result[V, KeyError]` containing the value in the entry (if successful).</span>
 
 <span class="sd">    If the map already had this key present, nothing is updated, and an error containing the occupied entry and the value is returned.</span>
 
