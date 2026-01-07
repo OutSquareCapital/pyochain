@@ -6,8 +6,7 @@ from typing import TYPE_CHECKING, Any, Self, TypeIs, overload
 
 import cytoolz as cz
 
-from ._config import get_config
-from .traits import Checkable, Pipeable
+from .traits import PyoIterable
 
 if TYPE_CHECKING:
     from ._iter import Iter
@@ -16,7 +15,7 @@ if TYPE_CHECKING:
     from ._types import SupportsKeysAndGetItem
 
 
-class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
+class Dict[K, V](PyoIterable[dict[K, V]], MutableMapping[K, V]):
     """A `Dict` is a key-value store similar to Python's built-in `dict`, but with additional methods inspired by Rust's `HashMap`.
 
     You can initialize it with an existing Python `dict`, or from any object that can be converted into a dict with the `from_` method.
@@ -25,20 +24,13 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
 
     """
 
-    __slots__ = ("_inner",)
-
-    _inner: dict[K, V]
-
     def __init__(
         self, data: Mapping[K, V] | Iterable[tuple[K, V]] | SupportsKeysAndGetItem[K, V]
     ) -> None:
         self._inner = dict(data)
 
-    def __repr__(self) -> str:
-        return f"{get_config().dict_repr(self._inner)}"
-
     def __iter__(self) -> Iterator[K]:
-        return self._inner.__iter__()
+        return iter(self._inner)
 
     def __len__(self) -> int:
         return len(self._inner)
@@ -76,24 +68,6 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         """
         return key in self._inner
 
-    def length(self) -> int:
-        """Return the number of key-value pairs in the `Dict`.
-
-        Equivalent to `len(self)`.
-
-        Returns:
-            int: The number of items in the Dict.
-
-        ```python
-        >>> import pyochain as pc
-        >>> data = pc.Dict({1: "a", 2: "b", 3: "c"})
-        >>> data.length()
-        3
-
-        ```
-        """
-        return len(self._inner)
-
     @classmethod
     def new(cls) -> Self:
         """Create an empty `Dict`.
@@ -105,7 +79,7 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         ```python
         >>> import pyochain as pc
         >>> pc.Dict.new()
-        {}
+        Dict()
 
         ```
         """
@@ -125,7 +99,7 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         ```python
         >>> import pyochain as pc
         >>> pc.Dict.from_kwargs(a=1, b=2)
-        {'a': 1, 'b': 2}
+        Dict('a': 1, 'b': 2)
 
         ```
         """
@@ -152,7 +126,7 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         ...         self.age = age
         >>> person = Person("Alice", 30)
         >>> pc.Dict.from_object(person)
-        {'name': 'Alice', 'age': 30}
+        Dict('name': 'Alice', 'age': 30)
 
         ```
         """
@@ -417,7 +391,7 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         >>> import pyochain as pc
         >>> d = {1: 2, 2: 3, 3: 4, 4: 5}
         >>> pc.Dict(d).filter_keys(lambda x: x % 2 == 0)
-        {2: 3, 4: 5}
+        Dict(2: 3, 4: 5)
 
         ```
         """
@@ -449,9 +423,9 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         >>> import pyochain as pc
         >>> d = {1: 2, 2: 3, 3: 4, 4: 5}
         >>> pc.Dict(d).filter_values(lambda x: x % 2 == 0)
-        {1: 2, 3: 4}
+        Dict(1: 2, 3: 4)
         >>> pc.Dict(d).filter_values(lambda x: not x > 3)
-        {1: 2, 2: 3}
+        Dict(1: 2, 2: 3)
 
         ```
         """
@@ -480,9 +454,9 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         >>> d = pc.Dict({1: 2, 2: 3, 3: 4, 4: 5})
         >>>
         >>> d.filter_items(isvalid)
-        {2: 3}
+        Dict(2: 3)
         >>> d.filter_items(lambda kv: not isvalid(kv))
-        {1: 2, 3: 4, 4: 5}
+        Dict(1: 2, 3: 4, 4: 5)
 
         ```
         """
@@ -506,10 +480,10 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         ```python
         >>> import pyochain as pc
         >>> pc.Dict({"Alice": [20, 15, 30], "Bob": [10, 35]}).map_keys(str.lower)
-        {'alice': [20, 15, 30], 'bob': [10, 35]}
+        Dict('alice': [20, 15, 30], 'bob': [10, 35])
         >>>
         >>> pc.Dict({1: "a"}).map_keys(str)
-        {'1': 'a'}
+        Dict('1': 'a')
 
         ```
         """
@@ -533,10 +507,10 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         ```python
         >>> import pyochain as pc
         >>> pc.Dict({"Alice": [20, 15, 30], "Bob": [10, 35]}).map_values(sum)
-        {'Alice': 65, 'Bob': 45}
+        Dict('Alice': 65, 'Bob': 45)
         >>>
         >>> pc.Dict({1: 1}).map_values(lambda v: v + 1)
-        {1: 2}
+        Dict(1: 2)
 
         ```
         """
@@ -565,7 +539,7 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         >>> pc.Dict({"Alice": 10, "Bob": 20}).map_items(
         ...     lambda kv: (kv[0].upper(), kv[1] * 2)
         ... )
-        {'ALICE': 20, 'BOB': 40}
+        Dict('ALICE': 20, 'BOB': 40)
 
         ```
         """

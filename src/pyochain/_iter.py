@@ -29,14 +29,13 @@ from typing import (
 import cytoolz as cz
 import more_itertools as mit
 
-from ._config import get_config
 from ._types import (
     Peekable,
     SupportsRichComparison,
     SupportsSumWithNoDefaultGiven,
     Unzipped,
 )
-from .traits import Checkable, Pipeable
+from .traits import PyoIterable
 
 if TYPE_CHECKING:
     from random import Random
@@ -52,174 +51,12 @@ Position = Literal["first", "middle", "last", "only"]
 """Literal type representing the position of an item in an iterable."""
 
 
-class BaseIter[T](Pipeable, Checkable):
-    _inner: Iterable[T]
-
+class BaseIter[T](PyoIterable[Iterable[T]]):
     def __iter__(self) -> Iterator[T]:
         return iter(self._inner)
 
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({get_config().iter_repr(self._inner)})"
-
     def iter(self) -> Iter[T]:
-        """Get an iterator over the `Iterable`.
-
-        Call this to switch to lazy evaluation.
-
-        Calling this method on an `Iter` instance has no effect.
-
-        Returns:
-            Iter[T]: An `Iterator` over the `Iterable`.
-        """
         return Iter(self._inner)
-
-    def eq(self, other: Self) -> bool:
-        """Check if two Iterables are equal based on their data.
-
-        Note:
-            This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
-
-        Args:
-            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]|Set[T]|SetMut[T]` to compare against.
-
-        Returns:
-            bool: True if the underlying data are equal, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1,2,3)).eq(pc.Iter((1,2,3)))
-        True
-        >>> pc.Iter((1,2,3)).eq(pc.Seq([1,2]))
-        False
-        >>> pc.Iter((1,2,3)).eq(pc.Iter((1,2)))
-        False
-        >>> pc.Seq((1,2,3)).eq(pc.Vec([1,2,3]))
-        True
-
-        ```
-        """
-        return tuple(self._inner) == tuple(other._inner)
-
-    def ne(self, other: Self) -> bool:
-        """Check if two Iterables are not equal based on their data.
-
-        Note:
-            This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
-
-        Args:
-            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]|Set[T]|SetMut[T]` to compare against.
-
-        Returns:
-            bool: True if the underlying data are not equal, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1,2,3)).ne(pc.Iter((1,2)))
-        True
-        >>> pc.Iter((1,2,3)).ne(pc.Iter((1,2,3)))
-        False
-
-        ```
-        """
-        return tuple(self._inner) != tuple(other._inner)
-
-    def le(self, other: Self) -> bool:
-        """Check if this Iterable is less than or equal to another based on their data.
-
-        Note:
-            This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
-
-        Args:
-            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]|Set[T]|SetMut[T]` to compare against.
-
-        Returns:
-            bool: True if the underlying data of self is less than or equal to that of other, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq((1,2)).le(pc.Seq((1,2,3)))
-        True
-        >>> pc.Seq((1,2,3)).le(pc.Seq((1,2)))
-        False
-
-        ```
-        """
-        return tuple(self._inner) <= tuple(other._inner)
-
-    def lt(self, other: Self) -> bool:
-        """Check if this Iterable is less than another based on their data.
-
-        Note:
-            This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
-
-        Args:
-            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]|Set[T]|SetMut[T]` to compare against.
-
-        Returns:
-            bool: True if the underlying data of self is less than that of other, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq((1,2)).lt(pc.Seq((1,2,3)))
-        True
-        >>> pc.Seq((1,2,3)).lt(pc.Seq((1,2)))
-        False
-
-        ```
-        """
-        return tuple(self._inner) < tuple(other._inner)
-
-    def gt(self, other: Self) -> bool:
-        """Check if this Iterable is greater than another based on their data.
-
-        Note:
-            This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
-
-        Args:
-            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]|Set[T]|SetMut[T]` to compare against.
-
-        Returns:
-            bool: True if the underlying data of self is greater than that of other, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq((1,2,3)).gt(pc.Seq((1,2)))
-        True
-        >>> pc.Seq((1,2)).gt(pc.Seq((1,2,3)))
-        False
-
-        ```
-        """
-        return tuple(self._inner) > tuple(other._inner)
-
-    def ge(self, other: Self) -> bool:
-        """Check if this Iterable is greater than or equal to another based on their data.
-
-        Note:
-            This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
-
-        Args:
-            other (Self): Another instance of `Iter[T]|Seq[T]|Vec[T]|Set[T]|SetMut[T]` to compare against.
-
-        Returns:
-            bool: True if the underlying data of self is greater than or equal to that of other, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq((1,2,3)).ge(pc.Seq((1,2)))
-        True
-        >>> pc.Seq((1,2)).ge(pc.Seq((1,2,3)))
-        False
-
-        ```
-        """
-        return tuple(self._inner) >= tuple(other._inner)
 
     def join(self: BaseIter[str], sep: str) -> str:
         """Join all elements of the `Iterable` into a single `string`, with a specified separator.
@@ -388,22 +225,6 @@ class BaseIter[T](Pipeable, Checkable):
         ```
         """
         return cz.itertoolz.last(self._inner)
-
-    def length(self) -> int:
-        """Return the length of the Iterable.
-
-        Like the builtin len but works on lazy sequences.
-
-        Returns:
-            int: The count of elements.
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2]).length()
-        2
-
-        ```
-        """
-        return cz.itertoolz.count(self._inner)
 
     def nth(self, index: int) -> T:
         """Return the nth item at index.
