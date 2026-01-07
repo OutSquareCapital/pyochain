@@ -1,15 +1,34 @@
-# Core Types Overview
+# Types Overview
 
 The following tables summarizes the main types provided by pyochain, along with their characteristics and Python equivalents.
+
+## Core Traits
+
+For more concrete examples of these traits, see the [interoperability section](interoperability.md).
+
+### Pipeable
+
+`Pipeable` is a mixin trait that provides `into()` and `inspect()` functionality to types that inerhit from it.
+
+This allows for chaining operations in a functional programming style, enhancing code readability and maintainability.
+
+### Checkable
+
+`Checkable` is a mixin trait that provides methods like `then()`, `ok_or()`, and others to types that inherit from it.
+This trait facilitate conversion to `Option` and `Result` types, as well as chaining operations that depend on the success or failure of previous computations.
+
+### PyoIterable
+
+`PyoIterable[I]` is the base mixin trait for all pyochain collection types. It combines `Pipeable` and `Checkable` traits with Python's `Iterable` protocol, providing unified methods across all collection types. All types below inherit from `PyoIterable`.
 
 ## Collections & Iterators
 
 All collection types can be created from any object implementing the `Iterable` protocol (think anything you can use in a `for` loop).
 Since they implement collections Protocols, they can act as drop-in replacements for their Python counterparts/underlying types.
 
-### Core Trait: PyoIterable
-
-`PyoIterable[I]` is the base mixin trait for all pyochain collection types. It combines `Pipeable` and `Checkable` traits with Python's `Iterable` protocol, providing unified methods across all collection types. All types below inherit from `PyoIterable`.
+All mutable collections types provide a `from_ref()` class method to instanciate them from a reference to an existing Python mutable collection corresponding to their underlying data structure.
+This allows efficient conversion without copying data when dealing with external functions that returns standard Python collections.
+Immutable collections types don't need them, as Python already optimize this case under the hood.
 
 ### Collection Types
 
