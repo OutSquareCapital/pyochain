@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from collections.abc import Callable, Iterable, Iterator, Mapping, MutableMapping
 from typing import TYPE_CHECKING, Any, Self, TypeIs, overload
 
@@ -394,6 +395,9 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
     def filter_keys[U](self, predicate: Callable[[K], TypeIs[U]]) -> Dict[U, V]: ...
     @overload
     def filter_keys(self, predicate: Callable[[K], bool]) -> Dict[K, V]: ...
+    @warnings.deprecated(
+        "This will be removed in a future version. Use `.iter().filter_star(...).collect(pc.Dict)` instead."
+    )
     def filter_keys[U](
         self,
         predicate: Callable[[K], bool | TypeIs[U]],
@@ -423,6 +427,9 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
     def filter_values[U](self, predicate: Callable[[V], TypeIs[U]]) -> Dict[K, U]: ...
     @overload
     def filter_values(self, predicate: Callable[[V], bool]) -> Dict[K, V]: ...
+    @warnings.deprecated(
+        "This will be removed in a future version. Use `.iter().filter_star(...).collect(pc.Dict)` instead."
+    )
     def filter_values[U](
         self,
         predicate: Callable[[V], bool] | Callable[[V], TypeIs[U]],
@@ -450,6 +457,9 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         """
         return Dict(cz.dicttoolz.valfilter(predicate, self._inner))
 
+    @warnings.deprecated(
+        "This will be removed in a future version. Use `.iter().filter_star(...).collect(pc.Dict)` instead."
+    )
     def filter_items(self, predicate: Callable[[tuple[K, V]], bool]) -> Dict[K, V]:
         """Return a new `Dict` containing only the items that satisfy the **predicate**.
 
@@ -478,6 +488,9 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         """
         return Dict(cz.dicttoolz.itemfilter(predicate, self._inner))
 
+    @warnings.deprecated(
+        "This will be removed in a future version. Use `.iter().map_star(...).collect(pc.Dict)` instead."
+    )
     def map_keys[T](self, func: Callable[[K], T]) -> Dict[T, V]:
         """Return a new `Dict` with keys transformed by the provided **func**.
 
@@ -502,6 +515,9 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         """
         return Dict(cz.dicttoolz.keymap(func, self._inner))
 
+    @warnings.deprecated(
+        "This will be removed in a future version. Use `.iter().map_star(...).collect(pc.Dict)` instead."
+    )
     def map_values[T](self, func: Callable[[V], T]) -> Dict[K, T]:
         """Return a new `Dict` with values transformed by the provided **func**.
 
@@ -526,6 +542,9 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         """
         return Dict(cz.dicttoolz.valmap(func, self._inner))
 
+    @warnings.deprecated(
+        "This will be removed in a future version. Use `.iter().map_star(...).collect(pc.Dict)` instead."
+    )
     def map_items[KR, VR](
         self,
         func: Callable[[tuple[K, V]], tuple[KR, VR]],
