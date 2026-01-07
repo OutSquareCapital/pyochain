@@ -44,6 +44,40 @@ class Dict[K, V](PyoIterable[dict[K, V]], MutableMapping[K, V]):
     def __delitem__(self, key: K) -> None:
         del self._inner[key]
 
+    @staticmethod
+    def from_ref[K1, V1](data: dict[K1, V1]) -> Dict[K1, V1]:
+        """Create a `Dict` from a reference to an existing dict.
+
+        This method wraps the provided dict without copying it, allowing for efficient creation of a `Dict`.
+
+        This is the recommended way to create a `Dict` from foreign functions that return a standard Python dict.
+
+        **Warning** ⚠️:
+            Since the `Dict` directly references the original dict, any modifications made to the `Dict` will also affect the original dict, and vice versa.
+
+        Args:
+            data (dict[K1, V1]): The dict to wrap.
+
+        Returns:
+            Dict[K1, V1]: A new `Dict` instance wrapping the provided dict.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> original_dict = {1: "a", 2: "b", 3: "c"}
+        >>> dict_obj = pc.Dict.from_ref(original_dict)
+        >>> dict_obj
+        Dict(1: 'a', 2: 'b', 3: 'c')
+        >>> dict_obj[1] = "z"
+        >>> original_dict
+        {1: 'z', 2: 'b', 3: 'c'}
+
+        ```
+        """
+        instance: Dict[K1, V1] = Dict.__new__(Dict)  # pyright: ignore[reportUnknownVariableType]
+        instance._inner = data
+        return instance
+
     def contains_key(self, key: K) -> bool:
         """Check if the `Dict` contains the specified key.
 
@@ -103,7 +137,7 @@ class Dict[K, V](PyoIterable[dict[K, V]], MutableMapping[K, V]):
 
         ```
         """
-        return Dict(kwargs)
+        return Dict.from_ref(kwargs)
 
     @staticmethod
     def from_object(obj: object) -> Dict[str, Any]:
@@ -130,7 +164,7 @@ class Dict[K, V](PyoIterable[dict[K, V]], MutableMapping[K, V]):
 
         ```
         """
-        return Dict(obj.__dict__)
+        return Dict.from_ref(obj.__dict__)
 
     def insert(self, key: K, value: V) -> Option[V]:
         """Insert a key-value pair into the `Dict`.
@@ -395,7 +429,7 @@ class Dict[K, V](PyoIterable[dict[K, V]], MutableMapping[K, V]):
 
         ```
         """
-        return Dict(cz.dicttoolz.keyfilter(predicate, self._inner))
+        return Dict.from_ref(cz.dicttoolz.keyfilter(predicate, self._inner))
 
     @overload
     def filter_values[U](self, predicate: Callable[[V], TypeIs[U]]) -> Dict[K, U]: ...
@@ -429,7 +463,7 @@ class Dict[K, V](PyoIterable[dict[K, V]], MutableMapping[K, V]):
 
         ```
         """
-        return Dict(cz.dicttoolz.valfilter(predicate, self._inner))
+        return Dict.from_ref(cz.dicttoolz.valfilter(predicate, self._inner))
 
     @warnings.deprecated(
         "This will be removed in a future version. Use `.iter().filter_star(...).collect(pc.Dict)` instead."
@@ -460,7 +494,7 @@ class Dict[K, V](PyoIterable[dict[K, V]], MutableMapping[K, V]):
 
         ```
         """
-        return Dict(cz.dicttoolz.itemfilter(predicate, self._inner))
+        return Dict.from_ref(cz.dicttoolz.itemfilter(predicate, self._inner))
 
     @warnings.deprecated(
         "This will be removed in a future version. Use `.iter().map_star(...).collect(pc.Dict)` instead."
@@ -487,7 +521,7 @@ class Dict[K, V](PyoIterable[dict[K, V]], MutableMapping[K, V]):
 
         ```
         """
-        return Dict(cz.dicttoolz.keymap(func, self._inner))
+        return Dict.from_ref(cz.dicttoolz.keymap(func, self._inner))
 
     @warnings.deprecated(
         "This will be removed in a future version. Use `.iter().map_star(...).collect(pc.Dict)` instead."
@@ -514,7 +548,7 @@ class Dict[K, V](PyoIterable[dict[K, V]], MutableMapping[K, V]):
 
         ```
         """
-        return Dict(cz.dicttoolz.valmap(func, self._inner))
+        return Dict.from_ref(cz.dicttoolz.valmap(func, self._inner))
 
     @warnings.deprecated(
         "This will be removed in a future version. Use `.iter().map_star(...).collect(pc.Dict)` instead."
@@ -543,4 +577,4 @@ class Dict[K, V](PyoIterable[dict[K, V]], MutableMapping[K, V]):
 
         ```
         """
-        return Dict(cz.dicttoolz.itemmap(func, self._inner))
+        return Dict.from_ref(cz.dicttoolz.itemmap(func, self._inner))
