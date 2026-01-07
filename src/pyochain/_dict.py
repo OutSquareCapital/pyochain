@@ -198,7 +198,7 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         return Option(previous)
 
     def try_insert(self, key: K, value: V) -> Result[V, KeyError]:
-        """Tries to insert a key-value pair into the map, and returns a mutable reference to the value in the entry.
+        """Tries to insert a key-value pair into the map, and returns a `Result[V, KeyError]` containing the value in the entry (if successful).
 
         If the map already had this key present, nothing is updated, and an error containing the occupied entry and the value is returned.
 
@@ -254,9 +254,9 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         return Option(self._inner.pop(key, None))
 
     def remove_entry(self, key: K) -> Option[tuple[K, V]]:
-        """Remove a key from the `Dict` and return the `Item` if it existed.
+        """Remove a key from the `Dict` and return the item if it existed.
 
-        Return an `Item` containing the (key, value) pair if the key was present.
+        Return an `Option[tuple[K, V]]` containing the (key, value) pair if the key was present.
 
         Args:
             key (K): The key to remove.
@@ -280,7 +280,7 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         return NONE
 
     def keys_iter(self) -> Iter[K]:
-        """Return an Iter of the dict's keys.
+        """Return an `Iter` of the dict's keys.
 
         Returns:
             Iter[K]: An Iter wrapping the dictionary's keys.
@@ -324,7 +324,7 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
             This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.
 
         Returns:
-            Iter[tuple[K, V]]: An Iter wrapping the dictionary's (key, value) pairs.
+            Iter[tuple[K, V]]: An `Iter` wrapping the dictionary's (key, value) pairs.
 
         Example:
         ```python
@@ -370,7 +370,7 @@ class Dict[K, V](Pipeable, Checkable, MutableMapping[K, V]):
         return Option(self._inner.get(key, None))
 
     def is_empty(self) -> bool:
-        """Returns true if the map contains no elements.
+        """Returns true if the `Dict` contains no elements.
 
         Returns:
             bool: True if the Dict is empty, False otherwise.

@@ -70,7 +70,7 @@ For comparison, the above can be written in pure Python as the following (note t
 ```python
 
 >>> import pyochain as pc
->>> def divide(a: int, b: int) -> pc.Result[float, str]:
+>>> def divide(a: int, b: int) -> pc.Option[float]:
 ...     return pc.NONE if b == 0 else pc.Some(a / b)
 >>> divide(10, 2)
 Some(5.0)
@@ -82,9 +82,9 @@ Some(5.0)
 Some(Seq(1, 2, 3))
 >>> data.then_some().map(lambda x: x.sum()).ok_or("No values") # Convert Option to Result
 Ok(6)
->>> pc.Seq([]).then_some().map(lambda x: x.sum()).ok_or("No values")
+>>> pc.Seq[int](()).then_some().map(lambda x: x.sum()).ok_or("No values")
 Err('No values')
->>> pc.Seq([]).then_some().map(lambda x: x.sum()).ok_or("No values").ok() # Get the Option back
+>>> pc.Seq[int](()).then_some().map(lambda x: x.sum()).ok_or("No values").ok() # Get the Option back
 NONE
 
 ```
