@@ -73,7 +73,7 @@ Below is an example of using pyochain to:
 ...     )
 >>>
 >>> get_public_methods(pc.Iter)
-{25: 'accumulate', 68: 'adjacent', 96: 'all'}
+{25: 'accumulate', 68: 'adjacent', 89: 'all'}
 
 
 ```
@@ -102,6 +102,6 @@ For comparison, here's the equivalent using pure Python:
 ...     )
 >>>
 >>> get_public_methods_pure(pc.Iter)
-{25: 'accumulate', 68: 'adjacent', 96: 'all'}
+{25: 'accumulate', 68: 'adjacent', 89: 'all'}
 
 ```

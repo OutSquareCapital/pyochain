@@ -7,6 +7,12 @@ The following tables summarizes the main types provided by pyochain, along with 
 All collection types can be created from any object implementing the `Iterable` protocol (think anything you can use in a `for` loop).
 Since they implement collections Protocols, they can act as drop-in replacements for their Python counterparts/underlying types.
 
+### Core Trait: PyoIterable
+
+`PyoIterable[I]` is the base mixin trait for all pyochain collection types. It combines `Pipeable` and `Checkable` traits with Python's `Iterable` protocol, providing unified methods across all collection types. All types below inherit from `PyoIterable`.
+
+### Collection Types
+
 | Type         | Underlying Structure| Implement          | Ordered | Uniqueness | Mutability |
 |--------------|---------------------|--------------------|---------|------------|------------|
 | `Iter[T]`    | `Iterator[T]`       | `Iterator`         | N/A     | N/A        | N/A        |
@@ -40,13 +46,19 @@ config:
   layout: elk
 ---
 flowchart TB
+ subgraph Traits["🔄 Core Traits"]
+        Pipeable["Pipeable<br>(mixin)"]
+        Checkable["✅ Checkable<br>(mixin)"]
+        PyoIterable["PyoIterable[I]<br>base trait for all iterables"]
+  end
  subgraph Collections["📦 Collections Hierarchy"]
-        BaseIter["BaseIter<br>(internal)"]
+        BaseIter["BaseIter[T]<br>(internal base)"]
         Iter["Iter[T]<br>lazy iterator"]
         Seq["Seq[T]<br>immutable sequence"]
         Vec["Vec[T]<br>mutable sequence"]
         Set["Set[T]<br>immutable uniqueness"]
         SetMut["SetMut[T]<br>mutable uniqueness"]
+        Dict["Dict[K,V]<br>mutable mapping"]
   end
  subgraph ErrorHandling["❌ Error Handling Hierarchy"]
         Result["Result[T, E]<br>(abstract)"]
@@ -58,11 +70,12 @@ flowchart TB
         Some["Some[T]<br>some value"]
         NONE["NONE<br>no value"]
   end
+    Pipeable & Checkable --> PyoIterable
+    PyoIterable --> BaseIter & Dict
     BaseIter --> Iter & Seq & Set
     Seq --> Vec
     Set --> SetMut
+    Pipeable & Checkable --> Result & Option
     Result --> Ok & Err
     Option --> Some & NONE
-    Pipeable["🔄 Pipeable<br>(mixin)"] --> BaseIter & Dict["Dict[K,V]<br>mutable mapping"] & Result & Option
-    Checkable["✅ Checkable<br>(mixin)"] --> BaseIter & Dict
 ```
