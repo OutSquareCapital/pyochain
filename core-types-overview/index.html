@@ -29,7 +29,7 @@
     
     
       
-        <title>Core Types Overview - pyochain</title>
+        <title>Types Overview - pyochain</title>
       
     
     
@@ -114,7 +114,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#core-types-overview" class="md-skip">
+        <a href="#types-overview" class="md-skip">
           Skip to content
         </a>
       
@@ -150,7 +150,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Core Types Overview
+              Types Overview
             
           </span>
         </div>
@@ -1051,6 +1051,56 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#core-traits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Traits
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Traits">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pipeable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checkable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checkable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyoiterable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PyoIterable
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#collections-iterators" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1058,6 +1108,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Collections &amp; Iterators">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#collection-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Collection Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1238,6 +1305,56 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#core-traits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Traits
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Traits">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pipeable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checkable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checkable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyoiterable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PyoIterable
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#collections-iterators" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1245,6 +1362,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Collections &amp; Iterators">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#collection-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Collection Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1285,11 +1419,25 @@
                 
                   
 
-<h1 id="core-types-overview">Core Types Overview</h1>
+<h1 id="types-overview">Types Overview</h1>
 <p>The following tables summarizes the main types provided by pyochain, along with their characteristics and Python equivalents.</p>
+<h2 id="core-traits">Core Traits</h2>
+<p>For more concrete examples of these traits, see the <a href="../interoperability/">interoperability section</a>.</p>
+<h3 id="pipeable">Pipeable</h3>
+<p><code>Pipeable</code> is a mixin trait that provides <code>into()</code> and <code>inspect()</code> functionality to types that inerhit from it.</p>
+<p>This allows for chaining operations in a functional programming style, enhancing code readability and maintainability.</p>
+<h3 id="checkable">Checkable</h3>
+<p><code>Checkable</code> is a mixin trait that provides methods like <code>then()</code>, <code>ok_or()</code>, and others to types that inherit from it.
+This trait facilitate conversion to <code>Option</code> and <code>Result</code> types, as well as chaining operations that depend on the success or failure of previous computations.</p>
+<h3 id="pyoiterable">PyoIterable</h3>
+<p><code>PyoIterable[I]</code> is the base mixin trait for all pyochain collection types. It combines <code>Pipeable</code> and <code>Checkable</code> traits with Python's <code>Iterable</code> protocol, providing unified methods across all collection types. All types below inherit from <code>PyoIterable</code>.</p>
 <h2 id="collections-iterators">Collections &amp; Iterators</h2>
 <p>All collection types can be created from any object implementing the <code>Iterable</code> protocol (think anything you can use in a <code>for</code> loop).
 Since they implement collections Protocols, they can act as drop-in replacements for their Python counterparts/underlying types.</p>
+<p>All mutable collections types provide a <code>from_ref()</code> class method to instanciate them from a reference to an existing Python mutable collection corresponding to their underlying data structure.
+This allows efficient conversion without copying data when dealing with external functions that returns standard Python collections.
+Immutable collections types don't need them, as Python already optimize this case under the hood.</p>
+<h3 id="collection-types">Collection Types</h3>
 <table>
 <thead>
 <tr>
@@ -1410,13 +1558,19 @@ config:
   layout: elk
 ---
 flowchart TB
+ subgraph Traits["🔄 Core Traits"]
+        Pipeable["Pipeable&lt;br&gt;(mixin)"]
+        Checkable["✅ Checkable&lt;br&gt;(mixin)"]
+        PyoIterable["PyoIterable[I]&lt;br&gt;base trait for all iterables"]
+  end
  subgraph Collections["📦 Collections Hierarchy"]
-        BaseIter["BaseIter&lt;br&gt;(internal)"]
+        BaseIter["BaseIter[T]&lt;br&gt;(internal base)"]
         Iter["Iter[T]&lt;br&gt;lazy iterator"]
         Seq["Seq[T]&lt;br&gt;immutable sequence"]
         Vec["Vec[T]&lt;br&gt;mutable sequence"]
         Set["Set[T]&lt;br&gt;immutable uniqueness"]
         SetMut["SetMut[T]&lt;br&gt;mutable uniqueness"]
+        Dict["Dict[K,V]&lt;br&gt;mutable mapping"]
   end
  subgraph ErrorHandling["❌ Error Handling Hierarchy"]
         Result["Result[T, E]&lt;br&gt;(abstract)"]
@@ -1428,13 +1582,14 @@ flowchart TB
         Some["Some[T]&lt;br&gt;some value"]
         NONE["NONE&lt;br&gt;no value"]
   end
+    Pipeable &amp; Checkable --&gt; PyoIterable
+    PyoIterable --&gt; BaseIter &amp; Dict
     BaseIter --&gt; Iter &amp; Seq &amp; Set
     Seq --&gt; Vec
     Set --&gt; SetMut
+    Pipeable &amp; Checkable --&gt; Result &amp; Option
     Result --&gt; Ok &amp; Err
-    Option --&gt; Some &amp; NONE
-    Pipeable["🔄 Pipeable&lt;br&gt;(mixin)"] --&gt; BaseIter &amp; Dict["Dict[K,V]&lt;br&gt;mutable mapping"] &amp; Result &amp; Option
-    Checkable["✅ Checkable&lt;br&gt;(mixin)"] --&gt; BaseIter &amp; Dict</code></pre>
+    Option --&gt; Some &amp; NONE</code></pre>
 
 
 
