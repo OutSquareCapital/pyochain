@@ -683,7 +683,7 @@ class BaseIter[T](PyoIterable[Iterable[T]]):
 
         ```
         """
-        return Vec(sorted(self._inner, reverse=reverse, key=key))
+        return Vec.from_ref(sorted(self._inner, reverse=reverse, key=key))
 
     def tail(self, n: int) -> Seq[T]:
         """Return a tuple of the last n elements.
@@ -745,7 +745,7 @@ class BaseIter[T](PyoIterable[Iterable[T]]):
         """
         from collections import Counter
 
-        return Vec(Counter(self._inner).most_common(n))
+        return Vec.from_ref(Counter(self._inner).most_common(n))
 
 
 class Set[T](BaseIter[T], AbstractSet[T]):
@@ -988,6 +988,41 @@ class SetMut[T](Set[T], MutableSet[T]):
         """
         return cls(())
 
+    @staticmethod
+    def from_ref[V](data: set[V]) -> SetMut[V]:
+        """Create a `SetMut` from a reference to an existing **set**.
+
+        This method wraps the provided **set** without copying it, allowing for efficient creation of a `SetMut`.
+
+        This is the recommended way to create a `SetMut` from foreign functions that return **set** objects.
+
+        **Warning** ⚠️:
+            Since the `SetMut` directly references the original set, any modifications made to the `SetMut` will also affect the original set, and vice versa.
+
+        Args:
+            data (set[V]): The **set** to wrap.
+
+        Returns:
+            SetMut[V]: A new `SetMut` instance wrapping the provided **set**.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> original_set = {1, 2, 3}
+        >>> set_obj = pc.SetMut.from_ref(original_set)
+        >>> set_obj
+        SetMut(1, 2, 3)
+        >>> original_set.add(4)
+        >>> set_obj
+        SetMut(1, 2, 3, 4)
+
+
+        ```
+        """
+        instance: SetMut[V] = SetMut.__new__(SetMut)  # pyright: ignore[reportUnknownVariableType]
+        instance._inner = data
+        return instance
+
     def add(self, value: T) -> None:
         """Add an element to the set.
 
@@ -1091,6 +1126,40 @@ class Vec[T](Seq[T], MutableSequence[T]):
 
     def __init__(self, data: Iterable[T]) -> None:
         self._inner = list(data)  # type: ignore[override]
+
+    @staticmethod
+    def from_ref[V](data: list[V]) -> Vec[V]:
+        """Create a `Vec` from a reference to an existing list.
+
+        This method wraps the provided list without copying it, allowing for efficient creation of a `Vec`.
+
+        This is the recommended way to create a `Vec` from foreign functions.
+
+        **Warning** ⚠️:
+            Since the `Vec` directly references the original list, any modifications made to the `Vec` will also affect the original list, and vice versa.
+
+        Args:
+            data (list[V]): The list to wrap.
+
+        Returns:
+            Vec[V]: A new Vec instance wrapping the provided list.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> original_list = [1, 2, 3]
+        >>> vec = pc.Vec.from_ref(original_list)
+        >>> vec
+        Vec(1, 2, 3)
+        >>> vec[0] = 10
+        >>> original_list
+        [10, 2, 3]
+
+        ```
+        """
+        instance: Vec[V] = Vec.__new__(Vec)  # pyright: ignore[reportUnknownVariableType]
+        instance._inner = data
+        return instance
 
     @classmethod
     def new(cls) -> Self:
@@ -1293,7 +1362,7 @@ class Iter[T](BaseIter[T], Iterator[T]):
     def from_count(start: int = 0, step: int = 1) -> Iter[int]:
         """Create an infinite `Iterator` of evenly spaced values.
 
-        **Warning** ⚠️
+        **Warning** ⚠️:
             This creates an infinite iterator.
             Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken.
 
@@ -2887,6 +2956,98 @@ class Iter[T](BaseIter[T], Iterator[T]):
                     yield res.unwrap()
 
         return Iter(_filter_map(self._inner))
+
+    @overload
+    def filter_map_star[R](
+        self: Iter[tuple[Any]],
+        func: Callable[[Any], Option[R]],
+    ) -> Iter[R]: ...
+    @overload
+    def filter_map_star[T1, T2, R](
+        self: Iter[tuple[T1, T2]],
+        func: Callable[[T1, T2], Option[R]],
+    ) -> Iter[R]: ...
+    @overload
+    def filter_map_star[T1, T2, T3, R](
+        self: Iter[tuple[T1, T2, T3]],
+        func: Callable[[T1, T2, T3], Option[R]],
+    ) -> Iter[R]: ...
+    @overload
+    def filter_map_star[T1, T2, T3, T4, R](
+        self: Iter[tuple[T1, T2, T3, T4]],
+        func: Callable[[T1, T2, T3, T4], Option[R]],
+    ) -> Iter[R]: ...
+    @overload
+    def filter_map_star[T1, T2, T3, T4, T5, R](
+        self: Iter[tuple[T1, T2, T3, T4, T5]],
+        func: Callable[[T1, T2, T3, T4, T5], Option[R]],
+    ) -> Iter[R]: ...
+    @overload
+    def filter_map_star[T1, T2, T3, T4, T5, T6, R](
+        self: Iter[tuple[T1, T2, T3, T4, T5, T6]],
+        func: Callable[[T1, T2, T3, T4, T5, T6], Option[R]],
+    ) -> Iter[R]: ...
+    @overload
+    def filter_map_star[T1, T2, T3, T4, T5, T6, T7, R](
+        self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7], Option[R]],
+    ) -> Iter[R]: ...
+    @overload
+    def filter_map_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
+        self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], Option[R]],
+    ) -> Iter[R]: ...
+    @overload
+    def filter_map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
+        self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], Option[R]],
+    ) -> Iter[R]: ...
+    @overload
+    def filter_map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
+        self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], Option[R]],
+    ) -> Iter[R]: ...
+    def filter_map_star[U: Iterable[Any], R](
+        self: Iter[U],
+        func: Callable[..., Option[R]],
+    ) -> Iter[R]:
+        """Creates an iterator that both filters and maps, where each element is an iterable.
+
+        Unlike `.filter_map()`, which passes each element as a single argument, `.filter_map_star()` unpacks each element into positional arguments for the function.
+
+        In short, for each `element` in the sequence, it computes `func(*element)`.
+
+        This is useful after using methods like `zip`, `product`, or `enumerate` that yield tuples.
+
+        Args:
+            func (Callable[..., Option[R]]): Function to apply to unpacked elements.
+
+        Returns:
+            Iter[R]: An iterable of the results where func returned `Some`.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> data = pc.Seq([("1", "10"), ("two", "20"), ("3", "thirty")])
+        >>> def _parse_pair(s1: str, s2: str) -> pc.Result[tuple[int, int], str]:
+        ...     try:
+        ...         return pc.Ok((int(s1), int(s2)))
+        ...     except ValueError:
+        ...         return pc.Err(f"Invalid integer pair: {s1!r}, {s2!r}")
+        >>>
+        >>> data.iter().filter_map_star(lambda s1, s2: _parse_pair(s1, s2).ok()).collect()
+        Seq((1, 10),)
+
+        ```
+        """
+
+        def _filter_map_star(data: Iterable[U]) -> Iterator[R]:
+            for item in data:
+                res = func(*item)
+                if res.is_some():
+                    yield res.unwrap()
+
+        return Iter(_filter_map_star(self._inner))
 
     # joins and zips ------------------------------------------------------------
     @overload
