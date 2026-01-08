@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import functools
+import itertools
 from collections.abc import Callable, Collection, Iterable, Iterator
+from operator import itemgetter, lt
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -13,7 +15,6 @@ from typing import (
 )
 
 import cytoolz as cz
-import more_itertools as mit
 
 from .._types import SupportsRichComparison
 from ._converters import Checkable, Pipeable
@@ -438,6 +439,8 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
     def argmax[U](self, key: Callable[[T], U] | None = None) -> int:
         """Index of the first occurrence of a maximum value in an iterable.
 
+        Credits to more-itertools for the implementation.
+
         Args:
             key (Callable[[T], U] | None): Optional function to determine the value for comparison.
 
@@ -466,10 +469,15 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
 
         ```
         """
-        return mit.argmax(self._inner, key=key)
+        it = self._inner
+        if key is not None:
+            it = map(key, it)
+        return max(enumerate(it), key=itemgetter(1))[0]
 
     def argmin[U](self, key: Callable[[T], U] | None = None) -> int:
         """Index of the first occurrence of a minimum value in an iterable.
+
+        Credits to more-itertools for the implementation.
 
         Args:
             key (Callable[[T], U] | None): Optional function to determine the value for comparison.
@@ -502,7 +510,10 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
 
         ```
         """
-        return mit.argmin(self._inner, key=key)
+        it = self._inner
+        if key is not None:
+            it = map(key, it)
+        return min(enumerate(it), key=itemgetter(1))[0]
 
     def sum[U: int | bool](self: PyoIterable[I, U]) -> int:
         """Return the sum of the `Iterable`.
@@ -698,6 +709,8 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
     def all_equal[U](self, key: Callable[[T], U] | None = None) -> bool:
         """Return True if all items are equal.
 
+        Credits to more-itertools for the implementation.
+
         Args:
             key (Callable[[T], U] | None): Function to transform items before comparison. Defaults to None.
 
@@ -720,10 +733,17 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
 
         ```
         """
-        return mit.all_equal(self._inner, key=key)
+        iterator = itertools.groupby(self._inner, key)
+        for _first in iterator:
+            for _second in iterator:
+                return False
+            return True
+        return True
 
     def all_unique[U](self, key: Callable[[T], U] | None = None) -> bool:
         """Returns True if all the elements of iterable are unique.
+
+        Credits to more-itertools for the implementation.
 
         Args:
             key (Callable[[T], U] | None): Function to transform items before comparison. Defaults to None.
@@ -751,7 +771,20 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         Iterables with a mix of hashable and unhashable items can be used, but the function will be slower for unhashable items
 
         """
-        return mit.all_unique(self._inner, key=key)
+        seenset: set[T | U] = set()
+        seenset_add = seenset.add
+        seenlist: list[T | U] = []
+        seenlist_add = seenlist.append
+        for element in map(key, self._inner) if key else self._inner:
+            try:
+                if element in seenset:
+                    return False
+                seenset_add(element)
+            except TypeError:
+                if element in seenlist:
+                    return False
+                seenlist_add(element)
+        return True
 
     def is_sorted[U](
         self,
@@ -761,6 +794,8 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         strict: bool = False,
     ) -> bool:
         """Returns True if the items of iterable are in sorted order.
+
+        Credits to more-itertools for the implementation.
 
         Args:
             key (Callable[[T], U] | None): Function to transform items before comparison. Defaults to None.
@@ -793,7 +828,12 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
 
         If there are no out-of-order items, the iterable is exhausted.
         """
-        return mit.is_sorted(self._inner, key=key, reverse=reverse, strict=strict)
+        it = self._inner if (key is None) else map(key, self._inner)
+        a, b = itertools.tee(it)
+        next(b, None)
+        if reverse:
+            b, a = a, b
+        return all(map(lt, a, b)) if strict else not any(map(lt, b, a))
 
     def find(self, predicate: Callable[[T], bool]) -> Option[T]:
         """Searches for an element of an iterator that satisfies a `predicate`.

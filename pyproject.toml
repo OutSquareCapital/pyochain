@@ -5,7 +5,9 @@
     requires-python = ">=3.13"
     version         = "0.6.2"
 
-    dependencies = ["cytoolz>=1.0.1", "more-itertools>=10.8.0"]
+    dependencies = [
+    "cytoolz>=1.0.1",
+]
 
 [dependency-groups]
     dev = [
