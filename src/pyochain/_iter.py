@@ -3614,7 +3614,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         It then serves as a default when the iterable is empty.
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).reduce(lambda a, b: a + b)
+        >>> pc.Iter([1, 2, 3]).reduce(lambda a, b: a + b)
         6
 
         ```
@@ -3638,11 +3638,11 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).fold(0, lambda acc, x: acc + x)
+        >>> pc.Iter([1, 2, 3]).fold(0, lambda acc, x: acc + x)
         6
-        >>> pc.Seq([1, 2, 3]).fold(10, lambda acc, x: acc + x)
+        >>> pc.Iter([1, 2, 3]).fold(10, lambda acc, x: acc + x)
         16
-        >>> pc.Seq(['a', 'b', 'c']).fold('', lambda acc, x: acc + x)
+        >>> pc.Iter(['a', 'b', 'c']).fold('', lambda acc, x: acc + x)
         'abc'
 
         ```
@@ -3669,9 +3669,9 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         >>> def gt_nine(x: int) -> bool:
         ...     return x > 9
         >>>
-        >>> pc.Seq(range(10)).find(predicate=gt_five)
+        >>> pc.Iter(range(10)).find(predicate=gt_five)
         Some(6)
-        >>> pc.Seq(range(10)).find(predicate=gt_nine).unwrap_or("missing")
+        >>> pc.Iter(range(10)).find(predicate=gt_nine).unwrap_or("missing")
         'missing'
 
         ```
@@ -3695,9 +3695,9 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         ```python
         >>> import pyochain as pc
         >>> def is_even(x: int) -> pc.Result[bool, str]:
-        ...     return pc.Ok(x % 2 == 0)
+        ...     return pc.Ok(x % 2 == 0) if x >= 0 else pc.Err("negative number")
         >>>
-        >>> pc.Seq(range(1, 6)).try_find(is_even)
+        >>> pc.Iter(range(1, 6)).try_find(is_even)
         Ok(Some(2))
 
         ```
@@ -3706,17 +3706,19 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
             result = predicate(item)
             if result.is_ok():
                 if result.unwrap():
-                    return Ok(Option(item))
+                    return Ok(Some(item))
             else:
                 return Err(result.unwrap_err())
-        return Ok(Option(None))
+        return Ok(NONE)
 
     def try_fold[B, E](
         self, init: B, func: Callable[[B, T], Result[B, E]]
     ) -> Result[B, E]:
         """Folds every element into an accumulator, short-circuiting on error.
 
-        Applies **func** cumulatively to items and the accumulator. If **func** returns an error, stops and returns that error.
+        Applies **func** cumulatively to items and the accumulator.
+
+        If **func** returns an error, stops and returns that error.
 
         Args:
             init (B): Initial accumulator value.
@@ -3734,10 +3736,12 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         ...         return pc.Err("overflow")
         ...     return pc.Ok(new_val)
         >>>
-        >>> pc.Seq([1, 2, 3]).try_fold(0, checked_add)
+        >>> pc.Iter([1, 2, 3]).try_fold(0, checked_add)
         Ok(6)
-        >>> pc.Seq([50, 40, 20]).try_fold(0, checked_add)
+        >>> pc.Iter([50, 40, 20]).try_fold(0, checked_add)
         Err('overflow')
+        >>> pc.Iter([]).try_fold(0, checked_add)
+        Ok(0)
 
         ```
         """
@@ -3763,7 +3767,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
             func (Callable[[T, T], Result[T, E]]): Function that reduces two items, returns a `Result[T, E]`.
 
         Returns:
-            Result[Option[T], E]: Final accumulated value or the first error. Returns `Ok(None)` for empty iterable.
+            Result[Option[T], E]: Final accumulated value or the first error. Returns `Ok(NONE)` for empty iterable.
 
         Example:
         ```python
@@ -3773,24 +3777,23 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         ...         return pc.Err("overflow")
         ...     return pc.Ok(x + y)
         >>>
-        >>> pc.Seq([1, 2, 3]).try_reduce(checked_add)
+        >>> pc.Iter([1, 2, 3]).try_reduce(checked_add)
         Ok(Some(6))
-        >>> pc.Seq([50, 60]).try_reduce(checked_add)
+        >>> pc.Iter([50, 60]).try_reduce(checked_add)
         Err('overflow')
-        >>> pc.Seq([]).try_reduce(checked_add)
+        >>> pc.Iter([]).try_reduce(checked_add)
         Ok(NONE)
 
         ```
         """
-        iterator = iter(self._inner)
-        first = next(iterator, None)
+        first = next(self._inner, None)
 
         if first is None:
             return Ok(NONE)
 
         accumulator: T = first
 
-        for item in iterator:
+        for item in self._inner:
             result = func(accumulator, item)
             if result.is_ok():
                 accumulator = result.unwrap()
