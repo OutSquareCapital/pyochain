@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Concatenate, Never, cast, final
+from typing import TYPE_CHECKING, Any, Concatenate, Never, cast, final, overload
 
 from .traits import Pipeable
 
@@ -71,6 +71,160 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
         return self.ok().iter()
+
+    @overload
+    def map_star[R](
+        self: Result[tuple[Any], E],
+        func: Callable[[Any], R],
+    ) -> Result[R, E]: ...
+    @overload
+    def map_star[T1, T2, R](
+        self: Result[tuple[T1, T2], E],
+        func: Callable[[T1, T2], R],
+    ) -> Result[R, E]: ...
+    @overload
+    def map_star[T1, T2, T3, R](
+        self: Result[tuple[T1, T2, T3], E],
+        func: Callable[[T1, T2, T3], R],
+    ) -> Result[R, E]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, R](
+        self: Result[tuple[T1, T2, T3, T4], E],
+        func: Callable[[T1, T2, T3, T4], R],
+    ) -> Result[R, E]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, R](
+        self: Result[tuple[T1, T2, T3, T4, T5], E],
+        func: Callable[[T1, T2, T3, T4, T5], R],
+    ) -> Result[R, E]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, R](
+        self: Result[tuple[T1, T2, T3, T4, T5, T6], E],
+        func: Callable[[T1, T2, T3, T4, T5, T6], R],
+    ) -> Result[R, E]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, T7, R](
+        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7], E],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7], R],
+    ) -> Result[R, E]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
+        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7, T8], E],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], R],
+    ) -> Result[R, E]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
+        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9], E],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], R],
+    ) -> Result[R, E]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
+        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], E],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
+    ) -> Result[R, E]: ...
+    def map_star[U: Iterable[Any], R](
+        self: Result[U, E],
+        func: Callable[..., R],
+    ) -> Result[R, E]:
+        """Maps a `Result[tuple, E]` to `Result[R, E]` by unpacking the tuple.
+
+        Done by applying a function to a contained `Ok` value (which is expected to be a tuple).
+
+        Args:
+            func (Callable[..., R]): The function to apply to the unpacked `Ok` value.
+
+        Returns:
+            Result[R, E]: A new `Result` with the mapped value if `Ok`, otherwise the original `Err`.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Ok((2, 3)).map_star(lambda x, y: x + y)
+        Ok(5)
+        >>> pc.Err("error").map_star(lambda x, y: x + y)
+        Err('error')
+
+        ```
+        """
+        return self.map(lambda x: func(*x))
+
+    @overload
+    def and_then_star[R](
+        self: Result[tuple[Any], E],
+        func: Callable[[Any], Result[R, E]],
+    ) -> Result[R, E]: ...
+    @overload
+    def and_then_star[T1, T2, R](
+        self: Result[tuple[T1, T2], E],
+        func: Callable[[T1, T2], Result[R, E]],
+    ) -> Result[R, E]: ...
+    @overload
+    def and_then_star[T1, T2, T3, R](
+        self: Result[tuple[T1, T2, T3], E],
+        func: Callable[[T1, T2, T3], Result[R, E]],
+    ) -> Result[R, E]: ...
+    @overload
+    def and_then_star[T1, T2, T3, T4, R](
+        self: Result[tuple[T1, T2, T3, T4], E],
+        func: Callable[[T1, T2, T3, T4], Result[R, E]],
+    ) -> Result[R, E]: ...
+    @overload
+    def and_then_star[T1, T2, T3, T4, T5, R](
+        self: Result[tuple[T1, T2, T3, T4, T5], E],
+        func: Callable[[T1, T2, T3, T4, T5], Result[R, E]],
+    ) -> Result[R, E]: ...
+    @overload
+    def and_then_star[T1, T2, T3, T4, T5, T6, R](
+        self: Result[tuple[T1, T2, T3, T4, T5, T6], E],
+        func: Callable[[T1, T2, T3, T4, T5, T6], Result[R, E]],
+    ) -> Result[R, E]: ...
+    @overload
+    def and_then_star[T1, T2, T3, T4, T5, T6, T7, R](
+        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7], E],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7], Result[R, E]],
+    ) -> Result[R, E]: ...
+    @overload
+    def and_then_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
+        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7, T8], E],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], Result[R, E]],
+    ) -> Result[R, E]: ...
+    @overload
+    def and_then_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
+        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9], E],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], Result[R, E]],
+    ) -> Result[R, E]: ...
+    @overload
+    def and_then_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
+        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], E],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], Result[R, E]],
+    ) -> Result[R, E]: ...
+    def and_then_star[U: Iterable[Any], R](
+        self: Result[U, E],
+        func: Callable[..., Result[R, E]],
+    ) -> Result[R, E]:
+        """Calls a function if the result is `Ok`, unpacking the tuple.
+
+        Done by applying a function to a contained `Ok` value (which is expected to be a tuple).
+
+        Args:
+            func (Callable[..., Result[R, E]]): The function to call with the unpacked `Ok` value.
+
+        Returns:
+            Result[R, E]: The result of the function if `Ok`, otherwise the original `Err`.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> def to_str(x: int, y: int) -> pc.Result[str, str]:
+        ...     return pc.Ok(f"{x},{y}")
+        >>> pc.Ok((2, 3)).and_then_star(to_str)
+        Ok('2,3')
+        >>> pc.Err("error").and_then_star(to_str)
+        Err('error')
+
+        ```
+        """
+        return self.and_then(lambda x: func(*x))
 
     # abstract methods ---------------------------------------------------------------
 

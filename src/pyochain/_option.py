@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import warnings
 from abc import abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Concatenate, Final, Never, cast, final
+from typing import TYPE_CHECKING, Any, Concatenate, Final, Never, cast, final, overload
 
 from .traits import Pipeable
 
@@ -168,6 +168,153 @@ class Option[T](Pipeable):
         ```
         """
         return self.and_then(lambda x: x)
+
+    @overload
+    def map_star[R](
+        self: Option[tuple[Any]],
+        func: Callable[[Any], R],
+    ) -> Option[R]: ...
+    @overload
+    def map_star[T1, T2, R](
+        self: Option[tuple[T1, T2]],
+        func: Callable[[T1, T2], R],
+    ) -> Option[R]: ...
+    @overload
+    def map_star[T1, T2, T3, R](
+        self: Option[tuple[T1, T2, T3]],
+        func: Callable[[T1, T2, T3], R],
+    ) -> Option[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, R](
+        self: Option[tuple[T1, T2, T3, T4]],
+        func: Callable[[T1, T2, T3, T4], R],
+    ) -> Option[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, R](
+        self: Option[tuple[T1, T2, T3, T4, T5]],
+        func: Callable[[T1, T2, T3, T4, T5], R],
+    ) -> Option[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, R](
+        self: Option[tuple[T1, T2, T3, T4, T5, T6]],
+        func: Callable[[T1, T2, T3, T4, T5, T6], R],
+    ) -> Option[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, T7, R](
+        self: Option[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7], R],
+    ) -> Option[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
+        self: Option[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], R],
+    ) -> Option[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
+        self: Option[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], R],
+    ) -> Option[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
+        self: Option[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
+    ) -> Option[R]: ...
+    def map_star[U: Iterable[Any], R](
+        self: Option[U],
+        func: Callable[..., R],
+    ) -> Option[R]:
+        """Maps an `Option[Iterable]` to `Option[U]` by unpacking the iterable into the function.
+
+        Done by applying a function to a contained `Some` value,
+        leaving a `None` value untouched.
+
+        Args:
+            func (Callable[..., R]): The function to apply to the unpacked `Some` value.
+
+        Returns:
+            Option[R]: A new `Option` with the mapped value if `Some`, otherwise `None`.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some((2, 3)).map_star(lambda x, y: x + y)
+        Some(5)
+
+        ```
+        """
+        return self.map(lambda x: func(*x))
+
+    @overload
+    def and_then_star[R](
+        self: Option[tuple[Any]],
+        func: Callable[[Any], Option[R]],
+    ) -> Option[R]: ...
+    @overload
+    def and_then_star[T1, T2, R](
+        self: Option[tuple[T1, T2]],
+        func: Callable[[T1, T2], Option[R]],
+    ) -> Option[R]: ...
+    @overload
+    def and_then_star[T1, T2, T3, R](
+        self: Option[tuple[T1, T2, T3]],
+        func: Callable[[T1, T2, T3], Option[R]],
+    ) -> Option[R]: ...
+    @overload
+    def and_then_star[T1, T2, T3, T4, R](
+        self: Option[tuple[T1, T2, T3, T4]],
+        func: Callable[[T1, T2, T3, T4], Option[R]],
+    ) -> Option[R]: ...
+    @overload
+    def and_then_star[T1, T2, T3, T4, T5, R](
+        self: Option[tuple[T1, T2, T3, T4, T5]],
+        func: Callable[[T1, T2, T3, T4, T5], Option[R]],
+    ) -> Option[R]: ...
+    @overload
+    def and_then_star[T1, T2, T3, T4, T5, T6, R](
+        self: Option[tuple[T1, T2, T3, T4, T5, T6]],
+        func: Callable[[T1, T2, T3, T4, T5, T6], Option[R]],
+    ) -> Option[R]: ...
+    @overload
+    def and_then_star[T1, T2, T3, T4, T5, T6, T7, R](
+        self: Option[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7], Option[R]],
+    ) -> Option[R]: ...
+    @overload
+    def and_then_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
+        self: Option[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], Option[R]],
+    ) -> Option[R]: ...
+    @overload
+    def and_then_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
+        self: Option[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], Option[R]],
+    ) -> Option[R]: ...
+    @overload
+    def and_then_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
+        self: Option[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], Option[R]],
+    ) -> Option[R]: ...
+    def and_then_star[U: Iterable[Any], R](
+        self: Option[U],
+        func: Callable[..., Option[R]],
+    ) -> Option[R]:
+        """Calls a function if the option is `Some`, unpacking the iterable into the function.
+
+        Args:
+            func (Callable[..., Option[R]]): The function to call with the unpacked `Some` value.
+
+        Returns:
+            Option[R]: The result of the function if `Some`, otherwise `None`.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some((2, 3)).and_then_star(lambda x, y: pc.Some(x + y))
+        Some(5)
+
+        ```
+        """
+        return self.and_then(lambda x: func(*x))
 
     # Abstract methods ----------------------------------------------------------------
 
