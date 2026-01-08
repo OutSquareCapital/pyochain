@@ -811,7 +811,7 @@ class Option[T](Pipeable):
         ...
 
     @abstractmethod
-    def reduce[U](self, other: Option[T], func: Callable[[T, T], T]) -> Option[T]:
+    def reduce(self, other: Option[T], func: Callable[[T, T], T]) -> Option[T]:
         """Reduces two options into one, using the provided function if both are Some.
 
         If **self** is `Some(s)` and **other** is `Some(o)`, this method returns `Some(func(s, o))`.

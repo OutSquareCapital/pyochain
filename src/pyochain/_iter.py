@@ -156,31 +156,6 @@ class BaseIter[T](PyoIterable[Iterable[T]]):
         """
         return functools.reduce(func, self._inner, init)
 
-    def combination_index(self, r: Iterable[T]) -> int:
-        """Computes the index of the first element, without computing the previous combinations.
-
-        The subsequences of iterable that are of length r can be ordered lexicographically.
-
-
-        ValueError will be raised if the given element isn't one of the combinations of iterable.
-
-        Equivalent to list(combinations(iterable, r)).index(element).
-
-        Args:
-            r (Iterable[T]): The combination to find the index of.
-
-        Returns:
-            int: The index of the combination.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq("abcdefg").combination_index("adf")
-        10
-
-        ```
-        """
-        return mit.combination_index(r, self._inner)
-
     def first(self) -> T:
         """Return the first element.
 
@@ -753,9 +728,11 @@ class Set[T](BaseIter[T], AbstractSet[T]):
 
     Implements the `Collection` Protocol from `collections.abc`, so it can be used as a standard immutable collection.
 
-    Provides a subset of `Iter` methods with eager evaluation, and is returned from some `Iter/Seq/Vec` methods.
-
     The underlying data structure is a `frozenset`.
+
+    Note:
+        - `Set(frozenset)` is a no-copy operation since Python optimizes this under the hood.
+        - If you have an existing `set`, prefer using `SetMut.from_ref()` to avoid unnecessary copying.
 
     Args:
             data (Iterable[T]): The data to initialize the Set with.
@@ -957,6 +934,9 @@ class SetMut[T](Set[T], MutableSet[T]):
 
     Underlying data structure is a `set`.
 
+    Note:
+        If you have an existing `set`, prefer using `SetMut.from_ref()` to avoid unnecessary copying.
+
     Args:
         data (Iterable[T]): The mutable set to wrap.
     """
@@ -981,8 +961,13 @@ class SetMut[T](Set[T], MutableSet[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.SetMut[object].new()
+        >>> data = pc.SetMut[object].new()
+        >>> data
         SetMut()
+        >>> # Equivalent to
+        >>> data: set[str] = {}
+        >>> data
+        {}
 
         ```
         """
@@ -992,7 +977,7 @@ class SetMut[T](Set[T], MutableSet[T]):
     def from_ref[V](data: set[V]) -> SetMut[V]:
         """Create a `SetMut` from a reference to an existing **set**.
 
-        This method wraps the provided **set** without copying it, allowing for efficient creation of a `SetMut`.
+        This method wraps the provided **set** without copying it, allowing for efficient object instanciation.
 
         This is the recommended way to create a `SetMut` from foreign functions that return **set** objects.
 
@@ -1070,6 +1055,10 @@ class Seq[T](BaseIter[T], Sequence[T]):
     Provides a subset of `Iter` methods with eager evaluation, and is the return type of `Iter.collect()`.
 
     The underlying data structure is an immutable tuple, hence the memory efficiency is better than a `Vec`.
+
+    Note:
+        `Seq(tuple)` is preferred over `Seq(list)` as this is a no-copy operation (Python optimizes `tuple` creation from another `tuple`).
+        If you have an existing `list`, consider using `Vec.from_ref()` instead to avoid unnecessary copying.
 
     Args:
             data (Iterable[T]): The data to initialize the Seq with.
@@ -1175,8 +1164,11 @@ class Vec[T](Seq[T], MutableSequence[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Vec.new()
+        >>> data = pc.Vec[str].new()
+        >>> data
         Vec()
+        >>> # Equivalent to
+        >>> data: list[str] = []
 
         ```
         """
@@ -1226,20 +1218,22 @@ class Iter[T](BaseIter[T], Iterator[T]):
 
     It's designed around lazy evaluation, allowing for efficient processing of large datasets.
 
+    Instanciating it from any `Iterable` (like lists, sets, generators, etc.) is free and efficient (it only calls the builtin `iter()` on the input).
+
     Once an `Iter` is created, it can be transformed and manipulated using a variety of chainable methods.
 
     However, keep in mind that `Iter` instances are single-use; once exhausted, they cannot be reused or reset.
 
     If you need to reuse the data, consider collecting it into a collection first with `.collect()`.
 
-    You can always convert back to an `Iter` using `{Seq, Vec}.iter()` for free.
+    You can always convert back to an `Iter` using `.iter()` for free on any pyochain collection type.
 
     In general, avoid intermediate references when dealing with lazy iterators, and prioritize method chaining instead.
 
     Note:
-        `Iter` inerhit from `Checkable` from it's internal base class `BaseIter`.
+        `Iter` inherits from `Checkable` from its internal base class `BaseIter`.
 
-        However, since it does not implement `__len__` (contrary to other collections like `Seq` or `Vec`), the methods like `.then()`, `.ok_or()` etc. will always return `Some[Iter[T]], or `Ok[Iter[T]`.
+        However, since it does not implement `__len__` (contrary to other collections like `Seq` or `Vec`), the methods like `.then()`, `.ok_or()` etc. will always return `Some[Iter[T]]`, or `Ok[Iter[T]`.
 
     Args:
         data (Iterable[T]): Any object that can be iterated over.
@@ -1821,6 +1815,10 @@ class Iter[T](BaseIter[T], Iterator[T]):
     def flatten[U](self: Iter[Seq[U]]) -> Iter[U]: ...
     @overload
     def flatten[U](self: Iter[Set[U]]) -> Iter[U]: ...
+    @overload
+    def flatten[U](self: Iter[SetMut[U]]) -> Iter[U]: ...
+    @overload
+    def flatten[U](self: Iter[Vec[U]]) -> Iter[U]: ...
     @overload
     def flatten(self: Iter[range]) -> Iter[int]: ...
     def flatten[U: Iterable[Any]](self: Iter[U]) -> Iter[Any]:

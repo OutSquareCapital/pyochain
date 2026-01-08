@@ -18,7 +18,10 @@ if TYPE_CHECKING:
 class Dict[K, V](PyoIterable[dict[K, V]], MutableMapping[K, V]):
     """A `Dict` is a key-value store similar to Python's built-in `dict`, but with additional methods inspired by Rust's `HashMap`.
 
-    You can initialize it with an existing Python `dict`, or from any object that can be converted into a dict with the `from_` method.
+    Accept the same input types as the built-in `dict`.
+
+    Note:
+        Prefer using `Dict.from_ref` when wrapping existing dictionaries to avoid unnecessary copying.
 
     Implement the `MutableMapping` interface, so all standard dictionary operations are supported.
 
@@ -46,20 +49,18 @@ class Dict[K, V](PyoIterable[dict[K, V]], MutableMapping[K, V]):
 
     @staticmethod
     def from_ref[K1, V1](data: dict[K1, V1]) -> Dict[K1, V1]:
-        """Create a `Dict` from a reference to an existing dict.
+        """Wrap an existing `dict` without copying.
 
-        This method wraps the provided dict without copying it, allowing for efficient creation of a `Dict`.
-
-        This is the recommended way to create a `Dict` from foreign functions that return a standard Python dict.
+        This is the recommended way to create a `Dict` from foreign functions that return a standard Python `dict`.
 
         **Warning** ⚠️:
-            Since the `Dict` directly references the original dict, any modifications made to the `Dict` will also affect the original dict, and vice versa.
+            Any modifications made to this `Dict` will also affect the original, and vice versa.
 
         Args:
-            data (dict[K1, V1]): The dict to wrap.
+            data (dict[K1, V1]): The dictionary to wrap.
 
         Returns:
-            Dict[K1, V1]: A new `Dict` instance wrapping the provided dict.
+            Dict[K1, V1]: A new `Dict` instance wrapping the provided dictionary.
 
         Example:
         ```python
@@ -106,14 +107,21 @@ class Dict[K, V](PyoIterable[dict[K, V]], MutableMapping[K, V]):
     def new(cls) -> Self:
         """Create an empty `Dict`.
 
+        Be sure to specify the key and value types when using this method, otherwise they will be unknown.
+
         Returns:
             Self: An empty Dict instance.
 
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Dict.new()
+        >>> data = pc.Dict[str, int].new()
+        >>> data
         Dict()
+        >>> # Equivalent to:
+        >>> data: dict[str, int] = {}
+        >>> data
+        {}
 
         ```
         """
