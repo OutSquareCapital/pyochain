@@ -28,14 +28,14 @@ from typing import (
 
 import cytoolz as cz
 
+from ._option import NONE, Option, Some
+from ._result import Err, Ok, Result
 from ._types import SupportsRichComparison
 from .traits import Pipeable, PyoIterable
 
 if TYPE_CHECKING:
     from random import Random
 
-    from ._option import Option
-    from ._result import Result
 
 type TryVal[T] = Option[T] | Result[T, Any] | T | None
 """Represent a value that may be failible."""
@@ -670,8 +670,6 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         ```
         """
-        from ._option import Option
-
         return Option(next(self, None))
 
     @staticmethod
@@ -923,9 +921,6 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         ```
         """
-        from ._option import NONE, Option, Some
-        from ._result import Result
-
         collected = Vec[U].new()
 
         for item in self._inner:
@@ -1082,8 +1077,6 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         ```
         """
-        from ._result import Ok
-
         for item in self._inner:
             res = f(item)
             if res.is_err():
@@ -1126,7 +1119,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         from collections import deque
         from contextlib import suppress
 
-        def _chunks(data: Iterable[T], size: int) -> Iterator[Iter[T]]:
+        def _chunks() -> Iterator[Iter[T]]:
             def _ichunk(
                 iterator: Iterator[T], n: int
             ) -> tuple[Iterator[T], Callable[[int], int]]:
@@ -1153,19 +1146,19 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
                 return (generator(), materialize_next)
 
-            iterator = iter(data)
+            new = self.__class__
             while True:
                 # Create new chunk
-                chunk, materialize_next = _ichunk(iterator, size)
+                chunk, materialize_next = _ichunk(self._inner, size)
 
                 # Check to see whether we're at the end of the source iterable
                 if not materialize_next(size):
                     return
 
-                yield self.__class__(chunk)
+                yield new(chunk)
                 materialize_next(size)
 
-        return Iter(_chunks(self._inner, size))
+        return Iter(_chunks())
 
     @overload
     def flatten[U](self: Iter[KeysView[U]]) -> Iter[U]: ...
@@ -1374,6 +1367,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         def _split_when(data: Iterator[T], max_split: int) -> Iterator[Iter[T]]:
             """Credits: more_itertools.split_when."""
+            new = self.__class__  # locality help for performance
             if max_split == 0:
                 yield self
                 return
@@ -1385,9 +1379,9 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
             buf = [cur_item]
             for next_item in data:
                 if predicate(cur_item, next_item):
-                    yield Iter(buf)
+                    yield new(buf)
                     if max_split == 1:
-                        yield Iter((next_item, *data))
+                        yield new((next_item, *data))
                         return
                     buf = []
                     max_split -= 1
@@ -1395,7 +1389,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
                 buf.append(next_item)
                 cur_item = next_item
 
-            yield Iter(buf)
+            yield new(buf)
 
         return Iter(_split_when(self._inner, max_split))
 
@@ -1447,6 +1441,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         def _split_at(data: Iterator[T], max_split: int) -> Iterator[Iter[T]]:
             """Credits: more_itertools.split_at."""
+            new = self.__class__  # locality help for performance
             if max_split == 0:
                 yield self
                 return
@@ -1454,17 +1449,17 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
             buf: list[T] = []
             for item in data:
                 if predicate(item):
-                    yield self.__class__(buf)
+                    yield new(buf)
                     if keep_separator:
-                        yield self.__class__((item,))
+                        yield new((item,))
                     if max_split == 1:
-                        yield self.__class__(data)
+                        yield new(data)
                         return
                     buf = []
                     max_split -= 1
                 else:
                     buf.append(item)
-            yield self.__class__(buf)
+            yield new(buf)
 
         return Iter(_split_at(self._inner, max_split))
 
@@ -1501,24 +1496,25 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         def _split_after(data: Iterator[T], max_split: int) -> Iterator[Iter[T]]:
             """Credits: more_itertools.split_after."""
+            new = self.__class__  # locality help for performance
             if max_split == 0:
-                yield self.__class__(data)
+                yield new(data)
                 return
 
             buf: list[T] = []
             for item in data:
                 buf.append(item)
                 if predicate(item) and buf:
-                    yield self.__class__(buf)
+                    yield new(buf)
                     if max_split == 1:
                         buf = list(data)
                         if buf:
-                            yield self.__class__(buf)
+                            yield new(buf)
                         return
                     buf = []
                     max_split -= 1
             if buf:
-                yield self.__class__(buf)
+                yield new(buf)
 
         return Iter(_split_after(self._inner, max_split))
 
@@ -1561,22 +1557,23 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         def _split_before(data: Iterator[T], max_split: int) -> Iterator[Iter[T]]:
             """Credits: more_itertools.split_before."""
+            new = self.__class__  # locality help for performance
             if max_split == 0:
-                yield self.__class__(data)
+                yield new(data)
                 return
 
             buf: list[T] = []
             for item in data:
                 if predicate(item) and buf:
-                    yield self.__class__(buf)
+                    yield new(buf)
                     if max_split == 1:
-                        yield self.__class__([item, *data])
+                        yield new([item, *data])
                         return
                     buf = []
                     max_split -= 1
                 buf.append(item)
             if buf:
-                yield self.__class__(buf)
+                yield new(buf)
 
         return Iter(_split_before(self._inner, max_split))
 
@@ -2486,8 +2483,6 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         ```
         """
-        from ._option import Option
-
         return Iter(
             tuple(Option(t) for t in tup)
             for tup in itertools.zip_longest(self._inner, *others, fillvalue=None)
@@ -3115,7 +3110,6 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         ```
         """
-        from ._result import Err, Ok
 
         def _strictly_n_(data: Iterator[T]) -> Iterator[Result[T, ValueError]]:
             sent = 0
@@ -3492,3 +3486,65 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         ```
         """
         return Vec.from_ref(sorted(self._inner, reverse=reverse, key=key))
+
+    def tail(self, n: int) -> Seq[T]:
+        """Return a `Seq` of the last **n** elements of the `Iterator`.
+
+        Args:
+            n (int): Number of elements to return.
+
+        Returns:
+            Seq[T]: A `Seq` containing the last **n** elements.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter([1, 2, 3]).tail(2)
+        Seq(2, 3)
+
+        ```
+        """
+        return Seq(cz.itertoolz.tail(n, self._inner))
+
+    def top_n(self, n: int, key: Callable[[T], Any] | None = None) -> Seq[T]:
+        """Return a tuple of the top-n items according to key.
+
+        Args:
+            n (int): Number of top elements to return.
+            key (Callable[[T], Any] | None): Function to extract a comparison key from each element. Defaults to None.
+
+        Returns:
+            Seq[T]: A new Seq containing the top-n elements.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter([1, 3, 2]).top_n(2)
+        Seq(3, 2)
+
+        ```
+        """
+        return Seq(cz.itertoolz.topk(n, self._inner, key=key))
+
+    def most_common(self, n: int | None = None) -> Vec[tuple[T, int]]:
+        """Return the **n** most common elements and their counts from the `Iterator`.
+
+        If **n** is None, then all elements are returned.
+
+        Args:
+            n (int | None): Number of most common elements to return. Defaults to None (all elements).
+
+        Returns:
+            Vec[tuple[T, int]]: A `Vec` containing tuples of (element, count).
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter([1, 1, 2, 3, 3, 3]).most_common(2)
+        Vec((3, 3), (1, 2))
+
+        ```
+        """
+        from collections import Counter
+
+        return Vec.from_ref(Counter(self._inner).most_common(n))

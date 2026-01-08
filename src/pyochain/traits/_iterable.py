@@ -18,7 +18,7 @@ from .._types import SupportsRichComparison
 from ._converters import Checkable, Pipeable
 
 if TYPE_CHECKING:
-    from .._iter import Iter, Seq, Vec
+    from .._iter import Iter
     from .._option import Option
     from .._result import Result
 
@@ -374,6 +374,8 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
     def first(self) -> T:
         """Return the first element.
 
+        This is similar to `__getitem__` but works on lazy `Iterators`.
+
         Returns:
             T: The first element of the iterable.
 
@@ -388,6 +390,8 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
 
     def second(self) -> T:
         """Return the second element.
+
+        This is similar to `__getitem__` but works on lazy `Iterators`.
 
         Returns:
             T: The second element of the iterable.
@@ -404,6 +408,8 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
     def last(self) -> T:
         """Return the last element.
 
+        This is similar to `__getitem__` but works on lazy `Iterators`.
+
         Returns:
             T: The last element of the iterable.
 
@@ -418,6 +424,8 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
 
     def nth(self, index: int) -> T:
         """Return the nth item at index.
+
+        This is similar to `__getitem__` but works on lazy `Iterators`.
 
         Args:
             index (int): The index of the item to retrieve.
@@ -863,74 +871,6 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         from .._option import Option
 
         return Option(next(filter(predicate, self._inner), None))
-
-    def tail(self, n: int) -> Seq[T]:
-        """Return a tuple of the last n elements.
-
-        Args:
-            n (int): Number of elements to return.
-
-        Returns:
-            Seq[T]: A new Seq containing the last n elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).tail(2)
-        Seq(2, 3)
-
-        ```
-        """
-        from .._iter import Seq
-
-        return Seq(cz.itertoolz.tail(n, self._inner))
-
-    def top_n(self, n: int, key: Callable[[T], Any] | None = None) -> Seq[T]:
-        """Return a tuple of the top-n items according to key.
-
-        Args:
-            n (int): Number of top elements to return.
-            key (Callable[[T], Any] | None): Function to extract a comparison key from each element. Defaults to None.
-
-        Returns:
-            Seq[T]: A new Seq containing the top-n elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 3, 2]).top_n(2)
-        Seq(3, 2)
-
-        ```
-        """
-        from .._iter import Seq
-
-        return Seq(cz.itertoolz.topk(n, self._inner, key=key))
-
-    def most_common(self, n: int | None = None) -> Vec[tuple[T, int]]:
-        """Return the n most common elements and their counts.
-
-        If n is None, then all elements are returned.
-
-        Args:
-            n (int | None): Number of most common elements to return. Defaults to None (all elements).
-
-        Returns:
-            Vec[tuple[T, int]]: A new Seq containing tuples of (element, count).
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 1, 2, 3, 3, 3]).most_common(2)
-        Vec((3, 3), (1, 2))
-
-        ```
-        """
-        from collections import Counter
-
-        from .._iter import Vec
-
-        return Vec.from_ref(Counter(self._inner).most_common(n))
 
 
 def _get_repr(data: Iterable[Any]) -> Result[str, str]:
