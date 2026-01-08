@@ -106,6 +106,11 @@ def _iterators_fn() -> pc.Set[str]:
 def _iter_filter() -> pc.Set[str]:
     return pc.Set(
         (
+            "ok_or",
+            "ok_or_else",
+            "then_some",
+            "then",
+            # Implemented via boolean in Rust
             "copied",
             "cloned",
             "by_ref",
@@ -151,7 +156,9 @@ def main(dtype: type, rust_fns: pc.Set[str], filters: pc.Set[str]) -> None:
         .into(lambda x: pl.LazyFrame(x, schema=["source", "fn"]))
         .filter(
             fn.is_unique().and_(
-                fn.str.starts_with("_").not_().and_(fn.is_in(filters).not_())
+                fn.str.starts_with("_")
+                .not_()
+                .and_(fn.is_in(filters).not_().and_(fn.str.ends_with("_star").not_()))
             )
         )
         .sort(["source", "fn"])
