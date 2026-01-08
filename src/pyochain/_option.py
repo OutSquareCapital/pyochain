@@ -483,10 +483,7 @@ class Option[T](Pipeable):
 
         ```
         """
-        if self.is_some():
-            return self.unwrap()
-        msg = f"{msg} (called `expect` on a `None`)"
-        raise OptionUnwrapError(msg)
+        ...
 
     @abstractmethod
     def unwrap_or(self, default: T) -> T:
@@ -1092,26 +1089,26 @@ class Some[T](Option[T]):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> bool:
-        return predicate(self.unwrap(), *args, **kwargs)
+        return predicate(self.value, *args, **kwargs)
 
     def is_none_or[**P](
         self, func: Callable[Concatenate[T, P], bool], *args: P.args, **kwargs: P.kwargs
     ) -> bool:
-        return func(self.unwrap(), *args, **kwargs)
+        return func(self.value, *args, **kwargs)
 
     def expect(self, msg: str) -> T:  # noqa: ARG002
-        return self.unwrap()
+        return self.value
 
     def unwrap_or(self, default: T) -> T:  # noqa: ARG002
-        return self.unwrap()
+        return self.value
 
     def unwrap_or_else(self, f: Callable[[], T]) -> T:  # noqa: ARG002
-        return self.unwrap()
+        return self.value
 
     def map[**P, R](
         self, f: Callable[Concatenate[T, P], R], *args: P.args, **kwargs: P.kwargs
     ) -> Option[R]:
-        return Some(f(self.unwrap(), *args, **kwargs))
+        return Some(f(self.value, *args, **kwargs))
 
     def and_[U](self, optb: Option[U]) -> Option[U]:
         return optb
@@ -1125,7 +1122,7 @@ class Some[T](Option[T]):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Option[R]:
-        return f(self.unwrap(), *args, **kwargs)
+        return f(self.value, *args, **kwargs)
 
     def or_else(self, f: Callable[[], Option[T]]) -> Option[T]:  # noqa: ARG002
         return self
@@ -1133,12 +1130,12 @@ class Some[T](Option[T]):
     def ok_or[E](self, err: E) -> Result[T, E]:  # noqa: ARG002
         from ._result import Ok
 
-        return Ok(self.unwrap())
+        return Ok(self.value)
 
     def ok_or_else[E](self, err: Callable[[], E]) -> Result[T, E]:  # noqa: ARG002
         from ._result import Ok
 
-        return Ok(self.unwrap())
+        return Ok(self.value)
 
     def map_or[**P, R](
         self,
@@ -1147,10 +1144,10 @@ class Some[T](Option[T]):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> R:
-        return f(self.unwrap(), *args, **kwargs)
+        return f(self.value, *args, **kwargs)
 
     def map_or_else[**P, R](self, default: Callable[[], R], f: Callable[[T], R]) -> R:  # noqa: ARG002
-        return f(self.unwrap())
+        return f(self.value)
 
     def filter[**P, R](
         self,
@@ -1158,17 +1155,17 @@ class Some[T](Option[T]):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Option[T]:
-        return self if predicate(self.unwrap(), *args, **kwargs) else NONE
+        return self if predicate(self.value, *args, **kwargs) else NONE
 
     def iter(self) -> Iter[T]:
         from ._iter import Iter
 
-        return Iter.once(self.unwrap())
+        return Iter.once(self.value)
 
     def inspect[**P](
         self, f: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
     ) -> Option[T]:
-        f(self.unwrap(), *args, **kwargs)
+        f(self.value, *args, **kwargs)
         return self
 
     def unzip[U](self: Option[tuple[T, U]]) -> tuple[Option[T], Option[U]]:
@@ -1177,17 +1174,17 @@ class Some[T](Option[T]):
 
     def zip[U](self, other: Option[U]) -> Option[tuple[T, U]]:
         if other.is_some():
-            return Some((self.unwrap(), other.unwrap()))
+            return Some((self.value, other.unwrap()))
         return NONE
 
     def zip_with[U, R](self, other: Option[U], f: Callable[[T, U], R]) -> Option[R]:
         if other.is_some():
-            return Some(f(self.unwrap(), other.unwrap()))
+            return Some(f(self.value, other.unwrap()))
         return NONE
 
     def reduce[U](self, other: Option[T], func: Callable[[T, T], T]) -> Option[T]:
         if other.is_some():
-            return Some(func(self.unwrap(), other.unwrap()))
+            return Some(func(self.value, other.unwrap()))
         return self
 
     def transpose[E](self: Option[Result[T, E]]) -> Result[Option[T], E]:

@@ -895,17 +895,17 @@ class Ok[T, E](Result[T, E]):
         raise ResultUnwrapError(msg)
 
     def map_or_else[U](self, ok: Callable[[T], U], err: Callable[[E], U]) -> U:  # noqa: ARG002
-        return ok(self.unwrap())
+        return ok(self.value)
 
     def expect(self, msg: str) -> T:  # noqa: ARG002
-        return self.unwrap()
+        return self.value
 
     def expect_err(self, msg: str) -> E:
-        err_msg = f"{msg}: expected Err, got Ok({self.unwrap()!r})"
+        err_msg = f"{msg}: expected Err, got Ok({self.value!r})"
         raise ResultUnwrapError(err_msg)
 
     def unwrap_or(self, default: T) -> T:  # noqa: ARG002
-        return self.unwrap()
+        return self.value
 
     def unwrap_or_else[**P](
         self,
@@ -913,12 +913,12 @@ class Ok[T, E](Result[T, E]):
         *args: P.args,  # noqa: ARG002
         **kwargs: P.kwargs,  # noqa: ARG002
     ) -> T:
-        return self.unwrap()
+        return self.value
 
     def map[**P, R](
         self, fn: Callable[Concatenate[T, P], R], *args: P.args, **kwargs: P.kwargs
     ) -> Result[R, E]:
-        return Ok(fn(self.unwrap(), *args, **kwargs))
+        return Ok(fn(self.value, *args, **kwargs))
 
     def map_err[**P, R](
         self,
@@ -931,7 +931,7 @@ class Ok[T, E](Result[T, E]):
     def inspect[**P](
         self, fn: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
     ) -> Result[T, E]:
-        fn(self.unwrap(), *args, **kwargs)
+        fn(self.value, *args, **kwargs)
         return self
 
     def inspect_err[**P](
@@ -951,7 +951,7 @@ class Ok[T, E](Result[T, E]):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Result[R, E]:
-        return fn(self.unwrap(), *args, **kwargs)
+        return fn(self.value, *args, **kwargs)
 
     def or_else[**P](
         self,
@@ -964,7 +964,7 @@ class Ok[T, E](Result[T, E]):
     def ok(self) -> Option[T]:
         from ._option import Some
 
-        return Some(self.unwrap())
+        return Some(self.value)
 
     def err(self) -> Option[E]:
         from ._option import NONE
@@ -974,7 +974,7 @@ class Ok[T, E](Result[T, E]):
     def is_ok_and[**P](
         self, pred: Callable[Concatenate[T, P], bool], *args: P.args, **kwargs: P.kwargs
     ) -> bool:
-        return pred(self.unwrap(), *args, **kwargs)
+        return pred(self.value, *args, **kwargs)
 
     def is_err_and[**P](
         self,
@@ -991,7 +991,7 @@ class Ok[T, E](Result[T, E]):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> R:
-        return f(self.unwrap(), *args, **kwargs)
+        return f(self.value, *args, **kwargs)
 
     def transpose(self: Result[Option[T], E]) -> Option[Result[T, E]]:
         from ._option import NONE, Some
