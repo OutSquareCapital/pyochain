@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import functools
 import itertools
 from collections.abc import (
     Callable,
@@ -15,12 +14,12 @@ from collections.abc import (
     ValuesView,
 )
 from collections.abc import Set as AbstractSet
+from dataclasses import dataclass
 from typing import (
     TYPE_CHECKING,
     Any,
     Concatenate,
     Literal,
-    Never,
     Self,
     TypeIs,
     overload,
@@ -29,13 +28,7 @@ from typing import (
 import cytoolz as cz
 import more_itertools as mit
 
-from ._types import (
-    Peekable,
-    SupportsRichComparison,
-    SupportsSumWithNoDefaultGiven,
-    Unzipped,
-)
-from .traits import PyoIterable
+from .traits import Pipeable, PyoIterable
 
 if TYPE_CHECKING:
     from random import Random
@@ -51,679 +44,36 @@ Position = Literal["first", "middle", "last", "only"]
 """Literal type representing the position of an item in an iterable."""
 
 
-class BaseIter[T](PyoIterable[Iterable[T]]):
-    def __iter__(self) -> Iterator[T]:
-        return iter(self._inner)
+# transformed iterables result types
 
-    def iter(self) -> Iter[T]:
-        return Iter(self._inner)
 
-    def join(self: BaseIter[str], sep: str) -> str:
-        """Join all elements of the `Iterable` into a single `string`, with a specified separator.
+@dataclass(slots=True)
+class Unzipped[T, V](Pipeable):
+    """Represents the result of unzipping an iterator of pairs into two separate iterators.
 
-        Args:
-            sep (str): Separator to use between elements.
+    See `Iter.unzip()` for details.
+    """
 
-        Returns:
-            str: The joined string.
+    left: Iter[T]
+    """An iterator over the first elements of the pairs."""
+    right: Iter[V]
+    """An iterator over the second elements of the pairs."""
 
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq(["a", "b", "c"]).join("-")
-        'a-b-c'
 
-        ```
-        """
-        return sep.join(self._inner)
+@dataclass(slots=True)
+class Peekable[T](Pipeable):
+    """Represents the result of peeking into an iterator.
 
-    def unzip[U, V](self: BaseIter[tuple[U, V]]) -> Unzipped[U, V]:
-        """Converts an iterator of pairs into a pair of iterators.
+    See `Iter.peekable()` for details.
+    """
 
-        Returns:
-            Unzipped[U, V]: dataclass with first and second iterators.
+    peek: Iter[T]
+    """An iterator over the peeked elements."""
+    values: Iter[T]
+    """An iterator of values, still including the peeked elements."""
 
-        `Iter.unzip()` consumes the iterator of pairs.
 
-        Returns an Unzipped dataclass, containing two iterators:
-
-        - one from the left elements of the pairs
-        - one from the right elements.
-
-        This function is, in some sense, the opposite of zip.
-        ```python
-        >>> import pyochain as pc
-        >>> data = [(1, "a"), (2, "b"), (3, "c")]
-        >>> unzipped = pc.Seq(data).unzip()
-        >>> unzipped.left.collect()
-        Seq(1, 2, 3)
-        >>> unzipped.right.collect()
-        Seq('a', 'b', 'c')
-
-        ```
-        """
-        d: tuple[tuple[U, V], ...] = tuple(self._inner)
-        return Unzipped(Iter(x[0] for x in d), Iter(x[1] for x in d))
-
-    def reduce(self, func: Callable[[T, T], T]) -> T:
-        """Apply a function of two arguments cumulatively to the items of an iterable, from left to right.
-
-        Args:
-            func (Callable[[T, T], T]): Function to apply cumulatively to the items of the iterable.
-
-        Returns:
-            T: Single value resulting from cumulative reduction.
-
-        This effectively reduces the iterable to a single value.
-
-        If initial is present, it is placed before the items of the iterable in the calculation.
-
-        It then serves as a default when the iterable is empty.
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).reduce(lambda a, b: a + b)
-        6
-
-        ```
-        """
-        return functools.reduce(func, self._inner)
-
-    def fold[B](self, init: B, func: Callable[[B, T], B]) -> B:
-        """Fold every element into an accumulator by applying an operation, returning the final result.
-
-        Args:
-            init (B): Initial value for the accumulator.
-            func (Callable[[B, T], B]): Function that takes the accumulator and current element,
-                returning the new accumulator value.
-
-        Returns:
-            B: The final accumulated value.
-
-        Note:
-            This is similar to `reduce()` but with an initial value, making it equivalent to
-            Python's `functools.reduce()` with an initializer.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).fold(0, lambda acc, x: acc + x)
-        6
-        >>> pc.Seq([1, 2, 3]).fold(10, lambda acc, x: acc + x)
-        16
-        >>> pc.Seq(['a', 'b', 'c']).fold('', lambda acc, x: acc + x)
-        'abc'
-
-        ```
-        """
-        return functools.reduce(func, self._inner, init)
-
-    def first(self) -> T:
-        """Return the first element.
-
-        Returns:
-            T: The first element of the iterable.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([9]).first()
-        9
-
-        ```
-        """
-        return cz.itertoolz.first(self._inner)
-
-    def second(self) -> T:
-        """Return the second element.
-
-        Returns:
-            T: The second element of the iterable.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([9, 8]).second()
-        8
-
-        ```
-        """
-        return cz.itertoolz.second(self._inner)
-
-    def last(self) -> T:
-        """Return the last element.
-
-        Returns:
-            T: The last element of the iterable.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([7, 8, 9]).last()
-        9
-
-        ```
-        """
-        return cz.itertoolz.last(self._inner)
-
-    def nth(self, index: int) -> T:
-        """Return the nth item at index.
-
-        Args:
-            index (int): The index of the item to retrieve.
-
-        Returns:
-            T: The item at the specified index.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([10, 20]).nth(1)
-        20
-
-        ```
-        """
-        return cz.itertoolz.nth(index, self._inner)
-
-    def argmax[U](self, key: Callable[[T], U] | None = None) -> int:
-        """Index of the first occurrence of a maximum value in an iterable.
-
-        Args:
-            key (Callable[[T], U] | None): Optional function to determine the value for comparison.
-
-        Returns:
-            int: The index of the maximum value.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq("abcdefghabcd").argmax()
-        7
-        >>> pc.Seq([0, 1, 2, 3, 3, 2, 1, 0]).argmax()
-        3
-
-        ```
-        For example, identify the best machine learning model:
-        ```python
-        >>> models = pc.Seq(["svm", "random forest", "knn", "naïve bayes"])
-        >>> accuracy = pc.Seq([68, 61, 84, 72])
-        >>> # Most accurate model
-        >>> models.nth(accuracy.argmax())
-        'knn'
-        >>>
-        >>> # Best accuracy
-        >>> accuracy.into(max)
-        84
-
-        ```
-        """
-        return mit.argmax(self._inner, key=key)
-
-    def argmin[U](self, key: Callable[[T], U] | None = None) -> int:
-        """Index of the first occurrence of a minimum value in an iterable.
-
-        Args:
-            key (Callable[[T], U] | None): Optional function to determine the value for comparison.
-
-        Returns:
-            int: The index of the minimum value.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq("efghabcdijkl").argmin()
-        4
-        >>> pc.Seq([3, 2, 1, 0, 4, 2, 1, 0]).argmin()
-        3
-
-        ```
-
-        For example, look up a label corresponding to the position of a value that minimizes a cost function:
-        ```python
-        >>> def cost(x):
-        ...     "Days for a wound to heal given a subject's age."
-        ...     return x**2 - 20 * x + 150
-        >>> labels = pc.Seq(["homer", "marge", "bart", "lisa", "maggie"])
-        >>> ages = pc.Seq([35, 30, 10, 9, 1])
-        >>> # Fastest healing family member
-        >>> labels.nth(ages.argmin(key=cost))
-        'bart'
-        >>> # Age with fastest healing
-        >>> ages.into(min, key=cost)
-        10
-
-        ```
-        """
-        return mit.argmin(self._inner, key=key)
-
-    def sum[U: SupportsSumWithNoDefaultGiven[Any]](self: BaseIter[U]) -> U | Literal[0]:
-        """Return the sum of the `Iterable`.
-
-        If the `Iterable` is empty, return 0.
-
-        Returns:
-            U | Literal[0]: The sum of all elements.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).sum()
-        6
-
-        ```
-        """
-        return sum(self._inner)
-
-    def min[U: SupportsRichComparison[Any]](self: BaseIter[U]) -> U:
-        """Return the minimum of the sequence.
-
-        The elements of the `Iterable` must support comparison operations.
-
-        For comparing elements using a custom **key** function, use `min_by()` instead.
-
-        If multiple elements are tied for the minimum value, the first one encountered is returned.
-
-        Returns:
-            U: The minimum value.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([3, 1, 2]).min()
-        1
-
-        ```
-        """
-        return min(self._inner)
-
-    def min_by[U: SupportsRichComparison[Any]](self, *, key: Callable[[T], U]) -> T:
-        """Return the minimum element using a custom **key** function.
-
-        If multiple elements are tied for the minimum value, the first one encountered is returned.
-
-        Args:
-            key (Callable[[T], U]): Function to extract a comparison key from each element.
-
-        Returns:
-            T: The element with the minimum key value.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> from dataclasses import dataclass
-        >>> @dataclass
-        ... class Foo:
-        ...     x: int
-        ...     y: str
-        >>>
-        >>> pc.Seq([Foo(2, "a"), Foo(1, "b"), Foo(4, "c")]).min_by(key=lambda f: f.x)
-        Foo(x=1, y='b')
-        >>> pc.Seq([Foo(2, "a"), Foo(1, "b"), Foo(1, "c")]).min_by(key=lambda f: f.x)
-        Foo(x=1, y='b')
-
-        ```
-        """
-        return min(self._inner, key=key)
-
-    def max[U: SupportsRichComparison[Any]](self: BaseIter[U]) -> U:
-        """Return the maximum of the `Iterable`.
-
-        The elements of the `Iterable` must support comparison operations.
-
-        For comparing elements using a custom **key** function, use `max_by()` instead.
-
-        If multiple elements are tied for the maximum value, the first one encountered is returned.
-
-        Returns:
-            U: The maximum value.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([3, 1, 2]).max()
-        3
-
-        ```
-        """
-        return max(self._inner)
-
-    def max_by[U: SupportsRichComparison[Any]](self, *, key: Callable[[T], U]) -> T:
-        """Return the maximum element using a custom **key** function.
-
-        If multiple elements are tied for the maximum value, the first one encountered is returned.
-
-        Args:
-            key (Callable[[T], U]): Function to extract a comparison key from each element.
-
-        Returns:
-            T: The element with the maximum key value.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> from dataclasses import dataclass
-        >>> @dataclass
-        ... class Foo:
-        ...     x: int
-        ...     y: str
-        >>>
-        >>> pc.Seq([Foo(2, "a"), Foo(3, "b"), Foo(4, "c")]).max_by(key=lambda f: f.x)
-        Foo(x=4, y='c')
-        >>> pc.Seq([Foo(2, "a"), Foo(3, "b"), Foo(3, "c")]).max_by(key=lambda f: f.x)
-        Foo(x=3, y='b')
-
-        ```
-        """
-        return max(self._inner, key=key)
-
-    def all(self, predicate: Callable[[T], bool] | None = None) -> bool:
-        """Tests if every element of the iterator matches a predicate.
-
-        `Iter.all()` takes a closure that returns true or false.
-
-        It applies this closure to each element of the iterator, and if they all return true, then so does `Iter.all()`.
-
-        If any of them return false, it returns false.
-
-        An empty iterator returns true.
-
-        Args:
-            predicate (Callable[[T], bool] | None): Optional function to evaluate each item.
-
-        Returns:
-            bool: True if all elements match the predicate, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, True]).all()
-        True
-        >>> pc.Seq([]).all()
-        True
-        >>> pc.Seq([1, 0]).all()
-        False
-        >>> def is_even(x: int) -> bool:
-        ...     return x % 2 == 0
-        >>> pc.Seq([2, 4, 6]).all(is_even)
-        True
-
-        ```
-        """
-        if predicate is None:
-            return all(self._inner)
-        return all(predicate(x) for x in self._inner)
-
-    def any(self, predicate: Callable[[T], bool] | None = None) -> bool:
-        """Tests if any element of the iterator matches a predicate.
-
-        `Iter.any()` takes a closure that returns true or false.
-
-        It applies this closure to each element of the iterator, and if any of them return true, then so does `Iter.any()`.
-
-        If they all return false, it returns false.
-
-        An empty iterator returns false.
-
-        Args:
-            predicate (Callable[[T], bool] | None): Optional function to evaluate each item.
-
-        Returns:
-            bool: True if any element matches the predicate, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([0, 1]).any()
-        True
-        >>> pc.Seq(range(0)).any()
-        False
-        >>> def is_even(x: int) -> bool:
-        ...     return x % 2 == 0
-        >>> pc.Seq([1, 3, 4]).any(is_even)
-        True
-
-        ```
-        """
-        if predicate is None:
-            return any(self._inner)
-        return any(predicate(x) for x in self._inner)
-
-    def all_equal[U](self, key: Callable[[T], U] | None = None) -> bool:
-        """Return True if all items are equal.
-
-        Args:
-            key (Callable[[T], U] | None): Function to transform items before comparison. Defaults to None.
-
-        Returns:
-            bool: True if all items are equal, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 1, 1]).all_equal()
-        True
-
-        ```
-        A function that accepts a single argument and returns a transformed version of each input item can be specified with key:
-        ```python
-        >>> pc.Seq("AaaA").all_equal(key=str.casefold)
-        True
-        >>> pc.Seq([1, 2, 3]).all_equal(key=lambda x: x < 10)
-        True
-
-        ```
-        """
-        return mit.all_equal(self._inner, key=key)
-
-    def all_unique[U](self, key: Callable[[T], U] | None = None) -> bool:
-        """Returns True if all the elements of iterable are unique.
-
-        Args:
-            key (Callable[[T], U] | None): Function to transform items before comparison. Defaults to None.
-
-        Returns:
-            bool: True if all elements are unique, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq("ABCB").all_unique()
-        False
-
-        ```
-        If a key function is specified, it will be used to make comparisons.
-        ```python
-        >>> pc.Seq("ABCb").all_unique()
-        True
-        >>> pc.Seq("ABCb").all_unique(str.lower)
-        False
-
-        ```
-        The function returns as soon as the first non-unique element is encountered.
-
-        Iterables with a mix of hashable and unhashable items can be used, but the function will be slower for unhashable items
-
-        """
-        return mit.all_unique(self._inner, key=key)
-
-    def is_sorted[U](
-        self,
-        key: Callable[[T], U] | None = None,
-        *,
-        reverse: bool = False,
-        strict: bool = False,
-    ) -> bool:
-        """Returns True if the items of iterable are in sorted order.
-
-        Args:
-            key (Callable[[T], U] | None): Function to transform items before comparison. Defaults to None.
-            reverse (bool): Whether to check for descending order. Defaults to False.
-            strict (bool): Whether to enforce strict sorting (no equal elements). Defaults to False.
-
-        Returns:
-            bool: True if items are sorted according to the criteria, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq(["1", "2", "3", "4", "5"]).is_sorted(key=int)
-        True
-        >>> pc.Seq([5, 4, 3, 1, 2]).is_sorted(reverse=True)
-        False
-
-        If strict, tests for strict sorting, that is, returns False if equal elements are found:
-        ```python
-        >>> pc.Seq([1, 2, 2]).is_sorted()
-        True
-        >>> pc.Seq([1, 2, 2]).is_sorted(strict=True)
-        False
-
-        ```
-
-        The function returns False after encountering the first out-of-order item.
-
-        This means it may produce results that differ from the built-in sorted function for objects with unusual comparison dynamics (like math.nan).
-
-        If there are no out-of-order items, the iterable is exhausted.
-        """
-        return mit.is_sorted(self._inner, key=key, reverse=reverse, strict=strict)
-
-    def find(self, predicate: Callable[[T], bool]) -> Option[T]:
-        """Searches for an element of an iterator that satisfies a `predicate`.
-
-        Takes a closure that returns true or false as `predicate`, and applies it to each element of the iterator.
-
-        Args:
-            predicate (Callable[[T], bool]): Function to evaluate each item.
-
-        Returns:
-            Option[T]: The first element satisfying the predicate. `Some(value)` if found, `NONE` otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> def gt_five(x: int) -> bool:
-        ...     return x > 5
-        >>>
-        >>> def gt_nine(x: int) -> bool:
-        ...     return x > 9
-        >>>
-        >>> pc.Seq(range(10)).find(predicate=gt_five)
-        Some(6)
-        >>> pc.Seq(range(10)).find(predicate=gt_nine).unwrap_or("missing")
-        'missing'
-
-        ```
-        """
-        from ._option import Option
-
-        return Option(next(filter(predicate, self._inner), None))
-
-    @overload
-    def sort[U: SupportsRichComparison[Any]](
-        self: BaseIter[U],
-        *,
-        key: None = None,
-        reverse: bool = False,
-    ) -> Vec[U]: ...
-    @overload
-    def sort(
-        self,
-        *,
-        key: Callable[[T], SupportsRichComparison[Any]],
-        reverse: bool = False,
-    ) -> Vec[T]: ...
-    @overload
-    def sort(
-        self,
-        *,
-        key: None = None,
-        reverse: bool = False,
-    ) -> Never: ...
-    def sort(
-        self,
-        *,
-        key: Callable[[T], SupportsRichComparison[Any]] | None = None,
-        reverse: bool = False,
-    ) -> Vec[Any]:
-        """Sort the elements of the sequence.
-
-        Note:
-            This method must consume the entire iterable to perform the sort.
-            The result is a new `Vec` over the sorted sequence.
-
-        Args:
-            key (Callable[[T], SupportsRichComparison[Any]] | None): Function to extract a comparison key from each element. Defaults to None.
-            reverse (bool): Whether to sort in descending order. Defaults to False.
-
-        Returns:
-            Vec[Any]: A `Vec` with elements sorted.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([3, 1, 2]).sort()
-        Vec(1, 2, 3)
-
-        ```
-        """
-        return Vec.from_ref(sorted(self._inner, reverse=reverse, key=key))
-
-    def tail(self, n: int) -> Seq[T]:
-        """Return a tuple of the last n elements.
-
-        Args:
-            n (int): Number of elements to return.
-
-        Returns:
-            Seq[T]: A new Seq containing the last n elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).tail(2)
-        Seq(2, 3)
-
-        ```
-        """
-        return Seq(cz.itertoolz.tail(n, self._inner))
-
-    def top_n(self, n: int, key: Callable[[T], Any] | None = None) -> Seq[T]:
-        """Return a tuple of the top-n items according to key.
-
-        Args:
-            n (int): Number of top elements to return.
-            key (Callable[[T], Any] | None): Function to extract a comparison key from each element. Defaults to None.
-
-        Returns:
-            Seq[T]: A new Seq containing the top-n elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 3, 2]).top_n(2)
-        Seq(3, 2)
-
-        ```
-        """
-        return Seq(cz.itertoolz.topk(n, self._inner, key=key))
-
-    def most_common(self, n: int | None = None) -> Vec[tuple[T, int]]:
-        """Return the n most common elements and their counts.
-
-        If n is None, then all elements are returned.
-
-        Args:
-            n (int | None): Number of most common elements to return. Defaults to None (all elements).
-
-        Returns:
-            Vec[tuple[T, int]]: A new Seq containing tuples of (element, count).
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 1, 2, 3, 3, 3]).most_common(2)
-        Vec((3, 3), (1, 2))
-
-        ```
-        """
-        from collections import Counter
-
-        return Vec.from_ref(Counter(self._inner).most_common(n))
-
-
-class Set[T](BaseIter[T], AbstractSet[T]):
+class Set[T](PyoIterable[frozenset[T], T], AbstractSet[T]):
     """`Set` represent an in- memory **unordered**  collection of **unique** elements.
 
     Implements the `Collection` Protocol from `collections.abc`, so it can be used as a standard immutable collection.
@@ -739,11 +89,6 @@ class Set[T](BaseIter[T], AbstractSet[T]):
     """
 
     _inner: frozenset[T]
-
-    __slots__ = ("_inner",)
-
-    def __init__(self, data: Iterable[T]) -> None:
-        self._inner = frozenset(data)  # pyright: ignore[reportIncompatibleVariableOverride]
 
     def __contains__(self, item: object) -> bool:
         return self._inner.__contains__(item)
@@ -941,11 +286,7 @@ class SetMut[T](Set[T], MutableSet[T]):
         data (Iterable[T]): The mutable set to wrap.
     """
 
-    _inner: set[T]
-    __slots__ = ("_inner",)
-
-    def __init__(self, data: Iterable[T]) -> None:
-        self._inner = set(data)  # type: ignore[override]
+    _inner: set[T]  # type: ignore[override]
 
     @classmethod
     def new(cls) -> Self:
@@ -1047,7 +388,7 @@ class SetMut[T](Set[T], MutableSet[T]):
         self._inner.discard(value)
 
 
-class Seq[T](BaseIter[T], Sequence[T]):
+class Seq[T](PyoIterable[tuple[T, ...], T], Sequence[T]):
     """`Seq` represent an in memory Sequence.
 
     Implements the `Sequence` Protocol from `collections.abc`, so it can be used as a standard immutable sequence.
@@ -1065,11 +406,6 @@ class Seq[T](BaseIter[T], Sequence[T]):
     """
 
     _inner: tuple[T, ...]
-
-    __slots__ = ("_inner",)
-
-    def __init__(self, data: Iterable[T]) -> None:
-        self._inner = tuple(data)  # pyright: ignore[reportIncompatibleVariableOverride]
 
     def __len__(self) -> int:
         return len(self._inner)
@@ -1110,11 +446,7 @@ class Vec[T](Seq[T], MutableSequence[T]):
         data (Iterable[T]): The mutable sequence to wrap.
     """
 
-    _inner: list[T]
-    __slots__ = ("_inner",)
-
-    def __init__(self, data: Iterable[T]) -> None:
-        self._inner = list(data)  # type: ignore[override]
+    _inner: list[T]  # type: ignore[override]
 
     @staticmethod
     def from_ref[V](data: list[V]) -> Vec[V]:
@@ -1207,7 +539,7 @@ class Vec[T](Seq[T], MutableSequence[T]):
         self._inner.insert(index, value)
 
 
-class Iter[T](BaseIter[T], Iterator[T]):
+class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
     """A superset around Python's built-in `Iterator` Protocol, providing a rich set of functional programming tools.
 
     Implements the `Iterator` Protocol from `collections.abc`, so it can be used as a standard iterator.
@@ -1241,10 +573,8 @@ class Iter[T](BaseIter[T], Iterator[T]):
 
     _inner: Iterator[T]
 
-    __slots__ = ("_inner",)
-
     def __init__(self, data: Iterable[T]) -> None:
-        self._inner = iter(data)  # pyright: ignore[reportIncompatibleVariableOverride]
+        self._inner = iter(data)
 
     def __next__(self) -> T:
         return next(self._inner)
@@ -3196,6 +2526,34 @@ class Iter[T](BaseIter[T], Iterator[T]):
             tuple(Option(t) for t in tup)
             for tup in itertools.zip_longest(self._inner, *others, fillvalue=None)
         )
+
+    def unzip[U, V](self: Iter[tuple[U, V]]) -> Unzipped[U, V]:
+        """Converts an iterator of pairs into a pair of iterators.
+
+        Returns:
+            Unzipped[U, V]: dataclass with first and second iterators.
+
+        `Iter.unzip()` consumes the iterator of pairs.
+
+        Returns an Unzipped dataclass, containing two iterators:
+
+        - one from the left elements of the pairs
+        - one from the right elements.
+
+        This function is, in some sense, the opposite of zip.
+        ```python
+        >>> import pyochain as pc
+        >>> data = [(1, "a"), (2, "b"), (3, "c")]
+        >>> unzipped = pc.Iter(data).unzip()
+        >>> unzipped.left.collect()
+        Seq(1, 2, 3)
+        >>> unzipped.right.collect()
+        Seq('a', 'b', 'c')
+
+        ```
+        """
+        d: tuple[tuple[U, V], ...] = tuple(self._inner)
+        return Unzipped(Iter(x[0] for x in d), Iter(x[1] for x in d))
 
     @overload
     def product(self) -> Iter[tuple[T]]: ...

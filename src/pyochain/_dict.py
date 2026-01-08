@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import warnings
-from collections.abc import Callable, Iterable, Iterator, Mapping, MutableMapping
-from typing import TYPE_CHECKING, Any, Self, TypeIs, overload
+from collections.abc import Callable, Iterable, Mapping, MutableMapping
+from typing import TYPE_CHECKING, Any, Self, TypeIs, overload, override
 
 import cytoolz as cz
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from ._types import SupportsKeysAndGetItem
 
 
-class Dict[K, V](PyoIterable[dict[K, V]], MutableMapping[K, V]):
+class Dict[K, V](PyoIterable[dict[K, V], K], MutableMapping[K, V]):
     """A `Dict` is a key-value store similar to Python's built-in `dict`, but with additional methods inspired by Rust's `HashMap`.
 
     Accept the same input types as the built-in `dict`.
@@ -27,13 +27,12 @@ class Dict[K, V](PyoIterable[dict[K, V]], MutableMapping[K, V]):
 
     """
 
+    _inner: dict[K, V]
+
     def __init__(
         self, data: Mapping[K, V] | Iterable[tuple[K, V]] | SupportsKeysAndGetItem[K, V]
     ) -> None:
         self._inner = dict(data)
-
-    def __iter__(self) -> Iterator[K]:
-        return iter(self._inner)
 
     def __len__(self) -> int:
         return len(self._inner)
@@ -331,14 +330,20 @@ class Dict[K, V](PyoIterable[dict[K, V]], MutableMapping[K, V]):
 
         return Iter(self._inner.values())
 
-    def iter(self) -> Iter[tuple[K, V]]:
+    @override
+    def iter(self) -> Iter[tuple[K, V]]:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return an `Iter` of the dict's items.
 
         Yield tuples of (key, value) pairs.
 
+        This is equivalent to calling `dict.items().__iter__()`, except the Iterator returned is wrapped in a pyochain `Iter`.
+
+        `Iter.map_star` can then be used for subsequent operations on the index and value, in a destructuring manner.
+        This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.
+
         Note:
-            `Iter.map_star` can then be used for subsequent operations on the index and value, in a destructuring manner.
-            This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.
+            Overrides `PyoIterable.iter` to correspond to `HashMap.iter()` Rust behavior.
+            `Dict.__iter__` still yields keys only, as per Python convention.
 
         Returns:
             Iter[tuple[K, V]]: An `Iter` wrapping the dictionary's (key, value) pairs.
