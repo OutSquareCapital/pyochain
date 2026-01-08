@@ -1,5 +1,7 @@
 # Traits
 
+## Pipeable
+
 ::: pyochain.traits.Pipeable
 
         options:
@@ -9,6 +11,8 @@
             filters:
                 - "!^_"
 
+## Checkable
+
 ::: pyochain.traits.Checkable
 
         options:
@@ -17,3 +21,15 @@
             members_order: alphabetical
             filters:
                 - "!^_"
+
+## PyoIterable
+
+::: pyochain.traits.PyoIterable
+
+        options:
+            inherited_members: true
+            show_overloads: true
+            members_order: alphabetical
+            filters:
+                - "!^_"
+                - "!^__init_subclass__"

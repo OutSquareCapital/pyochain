@@ -19,7 +19,8 @@ This trait facilitate conversion to `Option` and `Result` types, as well as chai
 
 ### PyoIterable
 
-`PyoIterable[I]` is the base mixin trait for all pyochain collection types. It combines `Pipeable` and `Checkable` traits with Python's `Iterable` protocol, providing unified methods across all collection types. All types below inherit from `PyoIterable`.
+`PyoIterable[I]` is the base mixin trait for all pyochain collection types.
+It combines `Pipeable` and `Checkable` traits with Python's `Iterable` protocol, providing unified methods across all collection types.
 
 ## Collections & Iterators
 
@@ -43,8 +44,10 @@ Immutable collections types don't need them, as Python already optimize this cas
 
 ## Option & Result Types
 
-Due to type inference limitations in Python, small functions with explicit `Result[T, E]` or `Option[T]` return types are the recommended way to create those types.
-Note that `Option` is easier to infer from context than `Result`, and can henceforth be created with simple lambdas most of the time.
+**Option** types are used to represent values that may or may not be present, as an alternative to using `None`, with methods to handle such cases safely, explicitly, and fluently.
+**Result** types are used to represent the outcome of operations that can succeed or fail, encapsulating either a successful value or an error, promoting explicit error handling without relying on exceptions.
+Any function that may fail should be handled with `Result[T, E]` return type.
+This clearly indicates to the caller that they need to handle potential errors.
 
 | Type           | Description                             | Creation                                                          | Python Equivalent |
 | -------------- | --------------------------------------- | ----------------------------------------------------------------- | ----------------- |
@@ -65,13 +68,7 @@ config:
   layout: elk
 ---
 flowchart TB
- subgraph Traits["🔄 Core Traits"]
-        Pipeable["Pipeable<br>(mixin)"]
-        Checkable["✅ Checkable<br>(mixin)"]
-        PyoIterable["PyoIterable[I]<br>base trait for all iterables"]
-  end
  subgraph Collections["📦 Collections Hierarchy"]
-        BaseIter["BaseIter[T]<br>(internal base)"]
         Iter["Iter[T]<br>lazy iterator"]
         Seq["Seq[T]<br>immutable sequence"]
         Vec["Vec[T]<br>mutable sequence"]
@@ -89,12 +86,23 @@ flowchart TB
         Some["Some[T]<br>some value"]
         NONE["NONE<br>no value"]
   end
-    Pipeable & Checkable --> PyoIterable
-    PyoIterable --> BaseIter & Dict
-    BaseIter --> Iter & Seq & Set
+    Pipeable["Pipeable<br>(mixin)"] --> PyoIterable["PyoIterable[I]<br>base trait for all iterables"] & Result & Option
+    Checkable["✅ Checkable<br>(mixin)"] --> PyoIterable
+    PyoIterable --> Dict & Iter & Seq & Set
     Seq --> Vec
     Set --> SetMut
-    Pipeable & Checkable --> Result & Option
     Result --> Ok & Err
     Option --> Some & NONE
+
+    style Pipeable stroke:#FFD600
+    style PyoIterable stroke:#00C853
+    style Checkable stroke:#2962FF
+    linkStyle 0 stroke:#FFD600,fill:none
+    linkStyle 1 stroke:#FFD600,fill:none
+    linkStyle 2 stroke:#FFD600,fill:none
+    linkStyle 3 stroke:#2962FF,fill:none
+    linkStyle 4 stroke:#00C853,fill:none
+    linkStyle 5 stroke:#00C853,fill:none
+    linkStyle 6 stroke:#00C853,fill:none
+    linkStyle 7 stroke:#00C853,fill:none
 ```
