@@ -26,7 +26,6 @@ from typing import (
 )
 
 import cytoolz as cz
-import more_itertools as mit
 
 from .traits import Pipeable, PyoIterable
 
@@ -2106,86 +2105,6 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         """
         return Iter(cz.itertoolz.drop(n, self._inner))
 
-    def unique_justseen(self, key: Callable[[T], Any] | None = None) -> Iter[T]:
-        """Yields elements in order, ignoring serial duplicates.
-
-        Args:
-            key (Callable[[T], Any] | None): Function to transform items before comparison. Defaults to None.
-
-        Returns:
-            Iter[T]: An iterable of the unique items, preserving order.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter("AAAABBBCCDAABBB").unique_justseen().collect()
-        Seq('A', 'B', 'C', 'D', 'A', 'B')
-        >>> pc.Iter("ABBCcAD").unique_justseen(str.lower).collect()
-        Seq('A', 'B', 'C', 'A', 'D')
-
-        ```
-        """
-        return Iter(mit.unique_justseen(self._inner, key=key))
-
-    def unique_in_window(
-        self,
-        n: int,
-        key: Callable[[T], Any] | None = None,
-    ) -> Iter[T]:
-        """Yield the items from iterable that haven't been seen recently.
-
-        The items in iterable must be hashable.
-
-        Args:
-            n (int): Size of the lookback window.
-            key (Callable[[T], Any] | None): Function to transform items before comparison. Defaults to None.
-
-        Returns:
-            Iter[T]: An iterable of the items that are unique within the specified window.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> iterable = [0, 1, 0, 2, 3, 0]
-        >>> n = 3
-        >>> pc.Iter(iterable).unique_in_window(n).collect()
-        Seq(0, 1, 2, 3, 0)
-
-        ```
-        The key function, if provided, will be used to determine uniqueness:
-        ```python
-        >>> pc.Iter("abAcda").unique_in_window(3, key=str.lower).collect()
-        Seq('a', 'b', 'c', 'd', 'a')
-
-        ```
-        """
-        return Iter(mit.unique_in_window(self._inner, n, key=key))
-
-    def extract(self, indices: Iterable[int]) -> Iter[T]:
-        """Yield values at the specified indices.
-
-        - The iterable is consumed lazily and can be infinite.
-        - The indices are consumed immediately and must be finite.
-        - Raises IndexError if an index lies beyond the iterable.
-        - Raises ValueError for negative indices.
-
-        Args:
-            indices (Iterable[int]): Iterable of indices to extract values from.
-
-        Returns:
-            Iter[T]: An iterable of the extracted items.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> text = "abcdefghijklmnopqrstuvwxyz"
-        >>> pc.Iter(text).extract([7, 4, 11, 11, 14]).collect()
-        Seq('h', 'e', 'l', 'l', 'o')
-
-        ```
-        """
-        return Iter(mit.extract(self._inner, indices))
-
     def step_by(self, step: int) -> Iter[T]:
         """Creates an `Iter` starting at the same point, but stepping by the given **step** at each iteration.
 
@@ -3344,77 +3263,6 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         ```
         """
         return Iter(map(cz.functoolz.juxt(*funcs), self._inner))
-
-    def adjacent(
-        self,
-        predicate: Callable[[T], bool],
-        distance: int = 1,
-    ) -> Iter[tuple[bool, T]]:
-        """Return an iterable over (bool, item) tuples.
-
-        Args:
-            predicate (Callable[[T], bool]): Function to determine if an item satisfies the condition.
-            distance (int): Number of places to consider as adjacent. Defaults to 1.
-
-        Returns:
-            Iter[tuple[bool, T]]: An iterable of (bool, item) tuples.
-
-        The output is a sequence of tuples where the item is drawn from iterable.
-
-        The bool indicates whether that item satisfies the predicate or is adjacent to an item that does.
-
-        For example, to find whether items are adjacent to a 3:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter(range(6)).adjacent(lambda x: x == 3).collect()
-        Seq((False, 0), (False, 1), (True, 2), (True, 3), (True, 4), (False, 5))
-
-        ```
-        Set distance to change what counts as adjacent.
-        For example, to find whether items are two places away from a 3:
-        ```python
-        >>> pc.Iter(range(6)).adjacent(lambda x: x == 3, distance=2).collect()
-        Seq((False, 0), (True, 1), (True, 2), (True, 3), (True, 4), (True, 5))
-
-        ```
-
-        This is useful for contextualizing the results of a search function.
-
-        For example, a code comparison tool might want to identify lines that have changed, but also surrounding lines to give the viewer of the diff context.
-
-        The predicate function will only be called once for each item in the iterable.
-
-        See also groupby_transform, which can be used with this function to group ranges of items with the same bool value.
-
-        """
-        return Iter(mit.adjacent(predicate, self._inner, distance=distance))
-
-    def classify_unique(self) -> Iter[tuple[T, bool, bool]]:
-        """Classify each element in terms of its uniqueness.
-
-        For each element in the input iterable, return a 3-tuple consisting of:
-
-        - The element itself
-        - False if the element is equal to the one preceding it in the input, True otherwise (i.e. the equivalent of unique_justseen)
-        - False if this element has been seen anywhere in the input before, True otherwise (i.e. the equivalent of unique_everseen)
-
-        This function is analogous to unique_everseen and is subject to the same performance considerations.
-
-        Returns:
-            Iter[tuple[T, bool, bool]]: An iterable of (element, is_new, is_unique) tuples.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter("otto").classify_unique().collect()
-        ... # doctest: +NORMALIZE_WHITESPACE
-        Seq(('o', True,  True),
-        ('t', True,  True),
-        ('t', False, False),
-        ('o', True,  False))
-
-        ```
-        """
-        return Iter(mit.classify_unique(self._inner))
 
     def with_position(self) -> Iter[tuple[Position, T]]:
         """Return an iterable over (`Position`, `T`) tuples.
