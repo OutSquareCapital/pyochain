@@ -20,6 +20,7 @@ from typing import (
     Any,
     Concatenate,
     Literal,
+    Never,
     Self,
     TypeIs,
     overload,
@@ -27,6 +28,7 @@ from typing import (
 
 import cytoolz as cz
 
+from ._types import SupportsRichComparison
 from .traits import Pipeable, PyoIterable
 
 if TYPE_CHECKING:
@@ -536,6 +538,51 @@ class Vec[T](Seq[T], MutableSequence[T]):
         ```
         """
         self._inner.insert(index, value)
+
+    @overload
+    def sort[U: SupportsRichComparison[Any]](
+        self: Vec[U], *, key: None = None, reverse: bool = False
+    ) -> Vec[U]: ...
+    @overload
+    def sort(
+        self, *, key: Callable[[T], SupportsRichComparison[Any]], reverse: bool = False
+    ) -> Vec[T]: ...
+    @overload
+    def sort(
+        self,
+        *,
+        key: None = None,
+        reverse: bool = False,
+    ) -> Never: ...
+    def sort(
+        self,
+        *,
+        key: Callable[[T], SupportsRichComparison[Any]] | None = None,
+        reverse: bool = False,
+    ) -> Vec[Any]:
+        """Sort the elements of the `Vec` in place.
+
+        **Warning** ⚠️:
+            This method modifies the `Vec` in place and returns the same instance for chaining.
+
+        Args:
+            key (Callable[[T], SupportsRichComparison[Any]] | None): Optional function to extract a comparison key from each element.
+            reverse (bool): If True, sort in descending order. Defaults to False.
+
+        Returns:
+            Vec[Any]: The sorted `Vec` instance (self).
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Vec((3, 1, 2)).sort()
+        Vec(1, 2, 3)
+        >>> pc.Iter((3, 1, 2)).map(str).collect(pc.Vec).sort(key=int)
+        Vec('1', '2', '3')
+
+        """
+        self._inner.sort(key=key, reverse=reverse)  # type: ignore[arg-type]
+        return self
 
 
 class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
@@ -3393,3 +3440,55 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         ```
         """
         return Iter((x, Iter(y)) for x, y in itertools.groupby(self._inner, key))
+
+    @overload
+    def sort[U: SupportsRichComparison[Any]](
+        self: Iter[U],
+        *,
+        key: None = None,
+        reverse: bool = False,
+    ) -> Vec[U]: ...
+    @overload
+    def sort(
+        self,
+        *,
+        key: Callable[[T], SupportsRichComparison[Any]],
+        reverse: bool = False,
+    ) -> Vec[T]: ...
+    @overload
+    def sort(
+        self,
+        *,
+        key: None = None,
+        reverse: bool = False,
+    ) -> Never: ...
+    def sort(
+        self,
+        *,
+        key: Callable[[T], SupportsRichComparison[Any]] | None = None,
+        reverse: bool = False,
+    ) -> Vec[Any]:
+        """Sort the elements of the sequence.
+
+        If a key function is provided, it is used to extract a comparison key from each element.
+
+        Note:
+            This method must consume the entire iterable to perform the sort.
+            The result is a new `Vec` over the sorted sequence.
+
+        Args:
+            key (Callable[[T], SupportsRichComparison[Any]] | None): Function to extract a comparison key from each element. Defaults to None.
+            reverse (bool): Whether to sort in descending order. Defaults to False.
+
+        Returns:
+            Vec[Any]: A `Vec` with elements sorted.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter([3, 1, 2]).sort()
+        Vec(1, 2, 3)
+
+        ```
+        """
+        return Vec.from_ref(sorted(self._inner, reverse=reverse, key=key))

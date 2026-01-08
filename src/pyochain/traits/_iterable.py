@@ -7,11 +7,9 @@ from operator import itemgetter, lt
 from typing import (
     TYPE_CHECKING,
     Any,
-    Never,
     Self,
     get_origin,
     get_type_hints,
-    overload,
 )
 
 import cytoolz as cz
@@ -865,58 +863,6 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         from .._option import Option
 
         return Option(next(filter(predicate, self._inner), None))
-
-    @overload
-    def sort[U: SupportsRichComparison[Any]](
-        self: PyoIterable[I, U],
-        *,
-        key: None = None,
-        reverse: bool = False,
-    ) -> Vec[U]: ...
-    @overload
-    def sort(
-        self,
-        *,
-        key: Callable[[T], SupportsRichComparison[Any]],
-        reverse: bool = False,
-    ) -> Vec[T]: ...
-    @overload
-    def sort(
-        self,
-        *,
-        key: None = None,
-        reverse: bool = False,
-    ) -> Never: ...
-    def sort(
-        self,
-        *,
-        key: Callable[[T], SupportsRichComparison[Any]] | None = None,
-        reverse: bool = False,
-    ) -> Vec[Any]:
-        """Sort the elements of the sequence.
-
-        Note:
-            This method must consume the entire iterable to perform the sort.
-            The result is a new `Vec` over the sorted sequence.
-
-        Args:
-            key (Callable[[T], SupportsRichComparison[Any]] | None): Function to extract a comparison key from each element. Defaults to None.
-            reverse (bool): Whether to sort in descending order. Defaults to False.
-
-        Returns:
-            Vec[Any]: A `Vec` with elements sorted.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([3, 1, 2]).sort()
-        Vec(1, 2, 3)
-
-        ```
-        """
-        from .._iter import Vec
-
-        return Vec.from_ref(sorted(self._inner, reverse=reverse, key=key))
 
     def tail(self, n: int) -> Seq[T]:
         """Return a tuple of the last n elements.
