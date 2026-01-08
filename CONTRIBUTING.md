@@ -7,7 +7,7 @@ Thank you for your interest in contributing to pyochain! This document outlines 
 Top-level files and folders of interest:
 
 - `pyproject.toml` — project metadata and build configuration.
-- `mkdocs.yml` — documentation site configuration.
+- `zensical.toml` — documentation site configuration.
 - `README.md`, `CONTRIBUTING.md`, `LICENSE.md`, — user-facing docs.
 - `docs/` — project documentation sources.
 - `scripts/` — development helpers and benchmarks.
@@ -17,26 +17,15 @@ Top-level files and folders of interest:
 
 The `src/pyochain` package is organized into a small number of internal modules (leading underscore indicates internal implementation):
 
-- `_config.py` — repr config settings and configuration utilities.
-- `traits.py` — public mixin traits for fluent chaining (`Pipeable`, `Checkable`) that can be added to custom types.
-- `_types.py` — common type definitions and result types (`Unzipped`, `Item`, `Peekable`, `Group`) produced by iterator operations.
 - `_iter.py` — implementation of `Iter` (lazy iterator), `Seq`, `Vec`, `Set`, `SetMut` and all iteration/collection helpers.
 - `_dict.py` — `Dict` class implementation and mapping-related logic.
 - `_option.py` — `Option`, `Some`, `NONE`, and `OptionUnwrapError`.
 - `_result.py` — `Result`, `Ok`, `Err`, and `ResultUnwrapError`.
+- `_types.py` — Protocols for elements types returned by various methods (e.g., `SupportsLen`).
+- `traits/` — public mixin traits for fluent chaining (`Pipeable`, `Checkable`) that can be added to custom types.
 - `py.typed` — PEP 561 marker file for type checking support.
 
 The public API is exposed through `src/pyochain/__init__.py`, which imports and re-exports the main classes, types, and traits.
-
-## Design goals
-
-pyochain aims to provide a powerful, Rust-inspired chaining API for Python iterators and collections. The design prioritizes **clarity, performance, and composability**:
-
-1. **Implement all Python builtins** — Methods like `.map()`, `.filter()`, `.reduce()` mirror their Python equivalents (e.g., `itertools`, `functools`, `collections.abc`) to ensure familiarity.
-
-2. **Implement Rust `Iterator` methods when applicable** — Methods like `.take()`, `.skip()`, `.scan()`, `.fold()` are inspired by Rust's `std::iter::Iterator` trait to enable expr
-
-3. **Use `cytoolz` over `more-itertools`** — `cytoolz` is preferred because it's implemented in Cython and provides better performance for hot paths. This aligns with pyochain's emphasis on minimizing overhead.
 
 ## Coding and documentation guidelines
 
@@ -70,7 +59,7 @@ def my_function(param1: int, param2: str) -> bool:
 
 After cloning the repo, set up the development environment (the project uses `uv` tasks in this repo):
 
-```powershell
+```bash
 uv sync --dev
 ```
 
@@ -78,7 +67,7 @@ uv sync --dev
 
 Before committing, ensure tests and quality checks pass.
 
-```powershell
+```bash
 uv run pydoclint src/pyochain
 uv run ruff check --fix src/pyochain
 uv run ruff format src/pyochain
@@ -94,13 +83,13 @@ Notes:
 - `ruff` is used for linting and formatting.
 - `pyright` provides static type checking.
 - `pytest --doctest-modules` runs doctests embedded in docstrings.
-- `stubtester` runs block codes as doctests.
+- `stubtester` runs block codes in markdowns as doctests.
 
 ## Building docs
 
 To build the documentation locally, run:
 
-```powershell
+```bash
 uv run zensical serve
 ```
 

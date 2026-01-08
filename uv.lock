@@ -473,7 +473,7 @@ wheels = [
 
 [[package]]
 name = "pyochain"
-version = "0.6.2"
+version = "0.6.3"
 source = { editable = "." }
 dependencies = [
     { name = "cytoolz" },
@@ -482,7 +482,6 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "cytoolz-stubs" },
-    { name = "griffe" },
     { name = "mkdocstrings-python" },
     { name = "polars" },
     { name = "pydoclint" },
@@ -499,7 +498,6 @@ requires-dist = [{ name = "cytoolz", specifier = ">=1.0.1" }]
 [package.metadata.requires-dev]
 dev = [
     { name = "cytoolz-stubs", git = "https://github.com/OutSquareCapital/cytoolz-stubs.git" },
-    { name = "griffe", specifier = ">=1.14.0" },
     { name = "mkdocstrings-python", specifier = ">=1.18.2" },
     { name = "polars", specifier = ">=1.33.1" },
     { name = "pydoclint", specifier = ">=0.8.1" },
