@@ -3,16 +3,13 @@
     name            = "pyochain"
     readme          = "README.md"
     requires-python = ">=3.13"
-    version         = "0.6.2"
+    version         = "0.6.3"
 
-    dependencies = [
-    "cytoolz>=1.0.1",
-]
+    dependencies = ["cytoolz>=1.0.1"]
 
 [dependency-groups]
     dev = [
         "cytoolz-stubs",
-        "griffe>=1.14.0",
         "mkdocstrings-python>=1.18.2",
         "polars>=1.33.1",
         "pydoclint>=0.8.1",
@@ -21,7 +18,7 @@
         "ruff>=0.14.9",
         "stubtester",
         "zensical>=0.0.15",
-    ]
+]
 [tool.ruff]
     lint.ignore = [
         "C417",
