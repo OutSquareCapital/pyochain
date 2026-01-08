@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import itertools
 from collections.abc import (
     Callable,
@@ -3596,3 +3597,204 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         from collections import Counter
 
         return Vec.from_ref(Counter(self._inner).most_common(n))
+
+    def reduce(self, func: Callable[[T, T], T]) -> T:
+        """Apply a function of two arguments cumulatively to the items of an iterable, from left to right.
+
+        Args:
+            func (Callable[[T, T], T]): Function to apply cumulatively to the items of the iterable.
+
+        Returns:
+            T: Single value resulting from cumulative reduction.
+
+        This effectively reduces the iterable to a single value.
+
+        If initial is present, it is placed before the items of the iterable in the calculation.
+
+        It then serves as a default when the iterable is empty.
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Seq([1, 2, 3]).reduce(lambda a, b: a + b)
+        6
+
+        ```
+        """
+        return functools.reduce(func, self._inner)
+
+    def fold[B](self, init: B, func: Callable[[B, T], B]) -> B:
+        """Fold every element into an accumulator by applying an operation, returning the final result.
+
+        Args:
+            init (B): Initial value for the accumulator.
+            func (Callable[[B, T], B]): Function that takes the accumulator and current element,
+                returning the new accumulator value.
+
+        Returns:
+            B: The final accumulated value.
+
+        Note:
+            This is similar to `reduce()` but with an initial value, making it equivalent to
+            Python's `functools.reduce()` with an initializer.
+
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Seq([1, 2, 3]).fold(0, lambda acc, x: acc + x)
+        6
+        >>> pc.Seq([1, 2, 3]).fold(10, lambda acc, x: acc + x)
+        16
+        >>> pc.Seq(['a', 'b', 'c']).fold('', lambda acc, x: acc + x)
+        'abc'
+
+        ```
+        """
+        return functools.reduce(func, self._inner, init)
+
+    def find(self, predicate: Callable[[T], bool]) -> Option[T]:
+        """Searches for an element of an iterator that satisfies a `predicate`.
+
+        Takes a closure that returns true or false as `predicate`, and applies it to each element of the iterator.
+
+        Args:
+            predicate (Callable[[T], bool]): Function to evaluate each item.
+
+        Returns:
+            Option[T]: The first element satisfying the predicate. `Some(value)` if found, `NONE` otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> def gt_five(x: int) -> bool:
+        ...     return x > 5
+        >>>
+        >>> def gt_nine(x: int) -> bool:
+        ...     return x > 9
+        >>>
+        >>> pc.Seq(range(10)).find(predicate=gt_five)
+        Some(6)
+        >>> pc.Seq(range(10)).find(predicate=gt_nine).unwrap_or("missing")
+        'missing'
+
+        ```
+        """
+        return Option(next(filter(predicate, self._inner), None))
+
+    def try_find[E](
+        self, predicate: Callable[[T], Result[bool, E]]
+    ) -> Result[Option[T], E]:
+        """Applies a function returning `Result[bool, E]` to find first matching element.
+
+        Short-circuits: stops at the first successful `True` or on the first error.
+
+        Args:
+            predicate (Callable[[T], Result[bool, E]]): Function returning a `Result[bool, E]`.
+
+        Returns:
+            Result[Option[T], E]: The first matching element, or the first error.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> def is_even(x: int) -> pc.Result[bool, str]:
+        ...     return pc.Ok(x % 2 == 0)
+        >>>
+        >>> pc.Seq(range(1, 6)).try_find(is_even)
+        Ok(Some(2))
+
+        ```
+        """
+        for item in self._inner:
+            result = predicate(item)
+            if result.is_ok():
+                if result.unwrap():
+                    return Ok(Option(item))
+            else:
+                return Err(result.unwrap_err())
+        return Ok(Option(None))
+
+    def try_fold[B, E](
+        self, init: B, func: Callable[[B, T], Result[B, E]]
+    ) -> Result[B, E]:
+        """Folds every element into an accumulator, short-circuiting on error.
+
+        Applies **func** cumulatively to items and the accumulator. If **func** returns an error, stops and returns that error.
+
+        Args:
+            init (B): Initial accumulator value.
+            func (Callable[[B, T], Result[B, E]]): Function that takes the accumulator and element, returns a `Result[B, E]`.
+
+        Returns:
+            Result[B, E]: Final accumulator or the first error.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> def checked_add(acc: int, x: int) -> pc.Result[int, str]:
+        ...     new_val = acc + x
+        ...     if new_val > 100:
+        ...         return pc.Err("overflow")
+        ...     return pc.Ok(new_val)
+        >>>
+        >>> pc.Seq([1, 2, 3]).try_fold(0, checked_add)
+        Ok(6)
+        >>> pc.Seq([50, 40, 20]).try_fold(0, checked_add)
+        Err('overflow')
+
+        ```
+        """
+        accumulator = init
+
+        for item in self._inner:
+            result = func(accumulator, item)
+            if result.is_ok():
+                accumulator = result.unwrap()
+            else:
+                return result
+
+        return Ok(accumulator)
+
+    def try_reduce[E](
+        self, func: Callable[[T, T], Result[T, E]]
+    ) -> Result[Option[T], E]:
+        """Reduces elements to a single one, short-circuiting on error.
+
+        Uses the first element as the initial accumulator. If **func** returns an error, stops immediately.
+
+        Args:
+            func (Callable[[T, T], Result[T, E]]): Function that reduces two items, returns a `Result[T, E]`.
+
+        Returns:
+            Result[Option[T], E]: Final accumulated value or the first error. Returns `Ok(None)` for empty iterable.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> def checked_add(x: int, y: int) -> pc.Result[int, str]:
+        ...     if x + y > 100:
+        ...         return pc.Err("overflow")
+        ...     return pc.Ok(x + y)
+        >>>
+        >>> pc.Seq([1, 2, 3]).try_reduce(checked_add)
+        Ok(Some(6))
+        >>> pc.Seq([50, 60]).try_reduce(checked_add)
+        Err('overflow')
+        >>> pc.Seq([]).try_reduce(checked_add)
+        Ok(NONE)
+
+        ```
+        """
+        iterator = iter(self._inner)
+        first = next(iterator, None)
+
+        if first is None:
+            return Ok(NONE)
+
+        accumulator: T = first
+
+        for item in iterator:
+            result = func(accumulator, item)
+            if result.is_ok():
+                accumulator = result.unwrap()
+            else:
+                return Err(result.unwrap_err())
+
+        return Ok(Some(accumulator))

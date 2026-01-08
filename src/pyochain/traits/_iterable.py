@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import functools
 import itertools
 from collections.abc import Callable, Collection, Iterable, Iterator
 from operator import itemgetter, lt
@@ -19,7 +18,6 @@ from ._converters import Checkable, Pipeable
 
 if TYPE_CHECKING:
     from .._iter import Iter
-    from .._option import Option
     from .._result import Result
 
 
@@ -319,57 +317,6 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         ```
         """
         return sep.join(self._inner)
-
-    def reduce(self, func: Callable[[T, T], T]) -> T:
-        """Apply a function of two arguments cumulatively to the items of an iterable, from left to right.
-
-        Args:
-            func (Callable[[T, T], T]): Function to apply cumulatively to the items of the iterable.
-
-        Returns:
-            T: Single value resulting from cumulative reduction.
-
-        This effectively reduces the iterable to a single value.
-
-        If initial is present, it is placed before the items of the iterable in the calculation.
-
-        It then serves as a default when the iterable is empty.
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).reduce(lambda a, b: a + b)
-        6
-
-        ```
-        """
-        return functools.reduce(func, self._inner)
-
-    def fold[B](self, init: B, func: Callable[[B, T], B]) -> B:
-        """Fold every element into an accumulator by applying an operation, returning the final result.
-
-        Args:
-            init (B): Initial value for the accumulator.
-            func (Callable[[B, T], B]): Function that takes the accumulator and current element,
-                returning the new accumulator value.
-
-        Returns:
-            B: The final accumulated value.
-
-        Note:
-            This is similar to `reduce()` but with an initial value, making it equivalent to
-            Python's `functools.reduce()` with an initializer.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).fold(0, lambda acc, x: acc + x)
-        6
-        >>> pc.Seq([1, 2, 3]).fold(10, lambda acc, x: acc + x)
-        16
-        >>> pc.Seq(['a', 'b', 'c']).fold('', lambda acc, x: acc + x)
-        'abc'
-
-        ```
-        """
-        return functools.reduce(func, self._inner, init)
 
     def first(self) -> T:
         """Return the first element.
@@ -840,37 +787,6 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         if reverse:
             b, a = a, b
         return all(map(lt, a, b)) if strict else not any(map(lt, b, a))
-
-    def find(self, predicate: Callable[[T], bool]) -> Option[T]:
-        """Searches for an element of an iterator that satisfies a `predicate`.
-
-        Takes a closure that returns true or false as `predicate`, and applies it to each element of the iterator.
-
-        Args:
-            predicate (Callable[[T], bool]): Function to evaluate each item.
-
-        Returns:
-            Option[T]: The first element satisfying the predicate. `Some(value)` if found, `NONE` otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> def gt_five(x: int) -> bool:
-        ...     return x > 5
-        >>>
-        >>> def gt_nine(x: int) -> bool:
-        ...     return x > 9
-        >>>
-        >>> pc.Seq(range(10)).find(predicate=gt_five)
-        Some(6)
-        >>> pc.Seq(range(10)).find(predicate=gt_nine).unwrap_or("missing")
-        'missing'
-
-        ```
-        """
-        from .._option import Option
-
-        return Option(next(filter(predicate, self._inner), None))
 
 
 def _get_repr(data: Iterable[Any]) -> Result[str, str]:
