@@ -1309,8 +1309,16 @@
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>src/pyochain/traits.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">23</span>
+                <summary>Source code in <code>src/pyochain/traits/_converters.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
 <span class="normal">24</span>
 <span class="normal">25</span>
 <span class="normal">26</span>
@@ -1369,14 +1377,10 @@
 <span class="normal">79</span>
 <span class="normal">80</span>
 <span class="normal">81</span>
-<span class="normal">82</span>
-<span class="normal">83</span>
-<span class="normal">84</span>
-<span class="normal">85</span>
-<span class="normal">86</span>
-<span class="normal">87</span>
-<span class="normal">88</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Pipeable</span><span class="p">:</span>
+<span class="normal">82</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Pipeable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Mixin class providing pipeable methods for fluent chaining.&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">into</span><span class="p">[</span><span class="o">**</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">](</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -1488,7 +1492,7 @@
                 <code>func</code>
             </td>
             <td>
-                  <code><autoref identifier="collections.abc.Callable" backlink-type="used-by" backlink-anchor="pyochain.traits.Pipeable.inspect" optional hover>Callable</autoref>[<autoref identifier="typing.Concatenate" backlink-type="used-by" backlink-anchor="pyochain.traits.Pipeable.inspect" optional hover>Concatenate</autoref>[<autoref identifier="typing.Self" backlink-type="used-by" backlink-anchor="pyochain.traits.Pipeable.inspect" optional hover>Self</autoref>, <autoref identifier="pyochain.traits.Pipeable.inspect[**P]" optional>P</autoref>], <autoref identifier="object" backlink-type="used-by" backlink-anchor="pyochain.traits.Pipeable.inspect" optional>object</autoref>]</code>
+                  <code><autoref identifier="collections.abc.Callable" backlink-type="used-by" backlink-anchor="pyochain.traits.Pipeable.inspect" optional hover>Callable</autoref>[<autoref identifier="typing.Concatenate" backlink-type="used-by" backlink-anchor="pyochain.traits.Pipeable.inspect" optional hover>Concatenate</autoref>[<autoref identifier="typing.Self" backlink-type="used-by" backlink-anchor="pyochain.traits.Pipeable.inspect" optional hover>Self</autoref>, <autoref identifier="pyochain.traits._converters.Pipeable.inspect[**P]" optional>P</autoref>], <autoref identifier="object" backlink-type="used-by" backlink-anchor="pyochain.traits.Pipeable.inspect" optional>object</autoref>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1504,7 +1508,7 @@
                 <code>*args</code>
             </td>
             <td>
-                  <code><autoref identifier="pyochain.traits.Pipeable.inspect[**P]" optional>P</autoref>.<autoref identifier="pyochain.traits.Pipeable.inspect[**P].args" optional hover>args</autoref></code>
+                  <code><autoref identifier="pyochain.traits._converters.Pipeable.inspect[**P]" optional>P</autoref>.<autoref identifier="pyochain.traits._converters.Pipeable.inspect[**P].args" optional hover>args</autoref></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1520,7 +1524,7 @@
                 <code>**kwargs</code>
             </td>
             <td>
-                  <code><autoref identifier="pyochain.traits.Pipeable.inspect[**P]" optional>P</autoref>.<autoref identifier="pyochain.traits.Pipeable.inspect[**P].kwargs" optional hover>kwargs</autoref></code>
+                  <code><autoref identifier="pyochain.traits._converters.Pipeable.inspect[**P]" optional>P</autoref>.<autoref identifier="pyochain.traits._converters.Pipeable.inspect[**P].kwargs" optional hover>kwargs</autoref></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1565,8 +1569,14 @@
 
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/pyochain/traits.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">60</span>
+              <summary>Source code in <code>src/pyochain/traits/_converters.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
 <span class="normal">61</span>
 <span class="normal">62</span>
 <span class="normal">63</span>
@@ -1588,13 +1598,7 @@
 <span class="normal">79</span>
 <span class="normal">80</span>
 <span class="normal">81</span>
-<span class="normal">82</span>
-<span class="normal">83</span>
-<span class="normal">84</span>
-<span class="normal">85</span>
-<span class="normal">86</span>
-<span class="normal">87</span>
-<span class="normal">88</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">inspect</span><span class="p">[</span><span class="o">**</span><span class="n">P</span><span class="p">](</span>
+<span class="normal">82</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">inspect</span><span class="p">[</span><span class="o">**</span><span class="n">P</span><span class="p">](</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Concatenate</span><span class="p">[</span><span class="n">Self</span><span class="p">,</span> <span class="n">P</span><span class="p">],</span> <span class="nb">object</span><span class="p">],</span>
     <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
@@ -1661,7 +1665,7 @@
                 <code>func</code>
             </td>
             <td>
-                  <code><autoref identifier="collections.abc.Callable" backlink-type="used-by" backlink-anchor="pyochain.traits.Pipeable.into" optional hover>Callable</autoref>[<autoref identifier="typing.Concatenate" backlink-type="used-by" backlink-anchor="pyochain.traits.Pipeable.into" optional hover>Concatenate</autoref>[<autoref identifier="typing.Self" backlink-type="used-by" backlink-anchor="pyochain.traits.Pipeable.into" optional hover>Self</autoref>, <autoref identifier="pyochain.traits.Pipeable.into[**P]" optional>P</autoref>], <autoref identifier="pyochain.traits.Pipeable.into[R]" optional>R</autoref>]</code>
+                  <code><autoref identifier="collections.abc.Callable" backlink-type="used-by" backlink-anchor="pyochain.traits.Pipeable.into" optional hover>Callable</autoref>[<autoref identifier="typing.Concatenate" backlink-type="used-by" backlink-anchor="pyochain.traits.Pipeable.into" optional hover>Concatenate</autoref>[<autoref identifier="typing.Self" backlink-type="used-by" backlink-anchor="pyochain.traits.Pipeable.into" optional hover>Self</autoref>, <autoref identifier="pyochain.traits._converters.Pipeable.into[**P]" optional>P</autoref>], <autoref identifier="pyochain.traits._converters.Pipeable.into[R]" optional>R</autoref>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1677,7 +1681,7 @@
                 <code>*args</code>
             </td>
             <td>
-                  <code><autoref identifier="pyochain.traits.Pipeable.into[**P]" optional>P</autoref>.<autoref identifier="pyochain.traits.Pipeable.into[**P].args" optional hover>args</autoref></code>
+                  <code><autoref identifier="pyochain.traits._converters.Pipeable.into[**P]" optional>P</autoref>.<autoref identifier="pyochain.traits._converters.Pipeable.into[**P].args" optional hover>args</autoref></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1693,7 +1697,7 @@
                 <code>**kwargs</code>
             </td>
             <td>
-                  <code><autoref identifier="pyochain.traits.Pipeable.into[**P]" optional>P</autoref>.<autoref identifier="pyochain.traits.Pipeable.into[**P].kwargs" optional hover>kwargs</autoref></code>
+                  <code><autoref identifier="pyochain.traits._converters.Pipeable.into[**P]" optional>P</autoref>.<autoref identifier="pyochain.traits._converters.Pipeable.into[**P].kwargs" optional hover>kwargs</autoref></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1719,7 +1723,7 @@
       <tbody>
           <tr class="doc-section-item">
 <td><code>R</code></td>            <td>
-                  <code><autoref identifier="pyochain.traits.Pipeable.into[R]" optional>R</autoref></code>
+                  <code><autoref identifier="pyochain.traits._converters.Pipeable.into[R]" optional>R</autoref></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1741,8 +1745,14 @@
 
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/pyochain/traits.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">26</span>
+              <summary>Source code in <code>src/pyochain/traits/_converters.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
 <span class="normal">27</span>
 <span class="normal">28</span>
 <span class="normal">29</span>
@@ -1768,13 +1778,7 @@
 <span class="normal">49</span>
 <span class="normal">50</span>
 <span class="normal">51</span>
-<span class="normal">52</span>
-<span class="normal">53</span>
-<span class="normal">54</span>
-<span class="normal">55</span>
-<span class="normal">56</span>
-<span class="normal">57</span>
-<span class="normal">58</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">into</span><span class="p">[</span><span class="o">**</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">](</span>
+<span class="normal">52</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">into</span><span class="p">[</span><span class="o">**</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">](</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Concatenate</span><span class="p">[</span><span class="n">Self</span><span class="p">,</span> <span class="n">P</span><span class="p">],</span> <span class="n">R</span><span class="p">],</span>
     <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>

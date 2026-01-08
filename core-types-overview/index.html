@@ -1430,7 +1430,8 @@
 <p><code>Checkable</code> is a mixin trait that provides methods like <code>then()</code>, <code>ok_or()</code>, and others to types that inherit from it.
 This trait facilitate conversion to <code>Option</code> and <code>Result</code> types, as well as chaining operations that depend on the success or failure of previous computations.</p>
 <h3 id="pyoiterable">PyoIterable</h3>
-<p><code>PyoIterable[I]</code> is the base mixin trait for all pyochain collection types. It combines <code>Pipeable</code> and <code>Checkable</code> traits with Python's <code>Iterable</code> protocol, providing unified methods across all collection types. All types below inherit from <code>PyoIterable</code>.</p>
+<p><code>PyoIterable[I]</code> is the base mixin trait for all pyochain collection types.
+It combines <code>Pipeable</code> and <code>Checkable</code> traits with Python's <code>Iterable</code> protocol, providing unified methods across all collection types.</p>
 <h2 id="collections-iterators">Collections &amp; Iterators</h2>
 <p>All collection types can be created from any object implementing the <code>Iterable</code> protocol (think anything you can use in a <code>for</code> loop).
 Since they implement collections Protocols, they can act as drop-in replacements for their Python counterparts/underlying types.</p>
@@ -1501,8 +1502,10 @@ Immutable collections types don't need them, as Python already optimize this cas
 </tbody>
 </table>
 <h2 id="option-result-types">Option &amp; Result Types</h2>
-<p>Due to type inference limitations in Python, small functions with explicit <code>Result[T, E]</code> or <code>Option[T]</code> return types are the recommended way to create those types.
-Note that <code>Option</code> is easier to infer from context than <code>Result</code>, and can henceforth be created with simple lambdas most of the time.</p>
+<p><strong>Option</strong> types are used to represent values that may or may not be present, as an alternative to using <code>None</code>, with methods to handle such cases safely, explicitly, and fluently.
+<strong>Result</strong> types are used to represent the outcome of operations that can succeed or fail, encapsulating either a successful value or an error, promoting explicit error handling without relying on exceptions.
+Any function that may fail should be handled with <code>Result[T, E]</code> return type.
+This clearly indicates to the caller that they need to handle potential errors.</p>
 <table>
 <thead>
 <tr>
@@ -1558,13 +1561,7 @@ config:
   layout: elk
 ---
 flowchart TB
- subgraph Traits["🔄 Core Traits"]
-        Pipeable["Pipeable&lt;br&gt;(mixin)"]
-        Checkable["✅ Checkable&lt;br&gt;(mixin)"]
-        PyoIterable["PyoIterable[I]&lt;br&gt;base trait for all iterables"]
-  end
  subgraph Collections["📦 Collections Hierarchy"]
-        BaseIter["BaseIter[T]&lt;br&gt;(internal base)"]
         Iter["Iter[T]&lt;br&gt;lazy iterator"]
         Seq["Seq[T]&lt;br&gt;immutable sequence"]
         Vec["Vec[T]&lt;br&gt;mutable sequence"]
@@ -1582,14 +1579,25 @@ flowchart TB
         Some["Some[T]&lt;br&gt;some value"]
         NONE["NONE&lt;br&gt;no value"]
   end
-    Pipeable &amp; Checkable --&gt; PyoIterable
-    PyoIterable --&gt; BaseIter &amp; Dict
-    BaseIter --&gt; Iter &amp; Seq &amp; Set
+    Pipeable["Pipeable&lt;br&gt;(mixin)"] --&gt; PyoIterable["PyoIterable[I]&lt;br&gt;base trait for all iterables"] &amp; Result &amp; Option
+    Checkable["✅ Checkable&lt;br&gt;(mixin)"] --&gt; PyoIterable
+    PyoIterable --&gt; Dict &amp; Iter &amp; Seq &amp; Set
     Seq --&gt; Vec
     Set --&gt; SetMut
-    Pipeable &amp; Checkable --&gt; Result &amp; Option
     Result --&gt; Ok &amp; Err
-    Option --&gt; Some &amp; NONE</code></pre>
+    Option --&gt; Some &amp; NONE
+
+    style Pipeable stroke:#FFD600
+    style PyoIterable stroke:#00C853
+    style Checkable stroke:#2962FF
+    linkStyle 0 stroke:#FFD600,fill:none
+    linkStyle 1 stroke:#FFD600,fill:none
+    linkStyle 2 stroke:#FFD600,fill:none
+    linkStyle 3 stroke:#2962FF,fill:none
+    linkStyle 4 stroke:#00C853,fill:none
+    linkStyle 5 stroke:#00C853,fill:none
+    linkStyle 6 stroke:#00C853,fill:none
+    linkStyle 7 stroke:#00C853,fill:none</code></pre>
 
 
 
