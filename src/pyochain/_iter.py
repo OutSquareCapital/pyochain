@@ -563,6 +563,44 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         return next(self._inner)
 
     @classmethod
+    def from_ref(cls, other: Self) -> Self:
+        """Create an independent lazy copy from another `Iter`.
+
+        Both the original and the returned `Iter` can be consumed independently, in a lazy manner.
+
+        Note:
+            Values consumed by one iterator remain in the shared buffer until the other iterator consumes them too.
+
+            This is the unavoidable cost of having two independent iterators over the same source.
+
+            However, once both iterators have passed a value, it's freed from memory.
+
+        See Also:
+            - `Iter.cloned()` which is the instance method version of this function.
+
+        Args:
+            other (Self): An `Iter` instance to copy.
+
+        Returns:
+            Self: A new `Iter` instance that is independent from the original.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> original = pc.Iter([1, 2, 3])
+        >>> copy = pc.Iter.from_ref(original)
+        >>> copy.map(lambda x: x * 2).collect()
+        Seq(2, 4, 6)
+        >>> original.next()
+        Some(1)
+
+        ```
+        """
+        it1, it2 = itertools.tee(other._inner)
+        other._inner = it1
+        return cls(it2)
+
+    @classmethod
     @warnings.deprecated("Use .new() instead.")
     def empty(cls) -> Self:
         """Create an empty `Iter`.
@@ -1784,9 +1822,17 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         ```
         """
+
+        def _repeat_infinite() -> Generator[Iter[T]]:
+            tee = functools.partial(itertools.tee, self._inner, 1)
+            iterators = tee()
+            while True:
+                yield Iter(iterators[0])
+                iterators = tee()
+
         if n is None:
-            return Iter(itertools.repeat(self))
-        return Iter(itertools.repeat(self, n))
+            return Iter(_repeat_infinite())
+        return Iter(map(Iter, itertools.tee(self._inner, n)))
 
     def accumulate(
         self, func: Callable[[T, T], T], initial: T | None = None
@@ -2527,6 +2573,37 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         d: tuple[tuple[U, V], ...] = tuple(self._inner)
         return Unzipped(Iter(x[0] for x in d), Iter(x[1] for x in d))
 
+    def cloned(self) -> Self:
+        """Clone the `Iter` into a new independent `Iter` using `itertools.tee`.
+
+        After calling this method, the original `Iter` will continue to yield elements independently of the cloned one.
+
+        Note:
+            Values consumed by one iterator remain in the shared buffer until the other iterator consumes them too.
+
+            This is the unavoidable cost of having two independent iterators over the same source.
+
+            However, once both iterators have passed a value, it's freed from memory.
+
+        Returns:
+            Self: A new independent cloned iterator.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> it = pc.Iter([1, 2, 3])
+        >>> cloned = it.cloned()
+        >>> cloned.collect()
+        Seq(1, 2, 3)
+        >>> it.collect()
+        Seq(1, 2, 3)
+
+        ```
+        """
+        it1, it2 = itertools.tee(self._inner)
+        self._inner = it1
+        return self.__class__(it2)
+
     @overload
     def product(self) -> Iter[tuple[T]]: ...
     @overload
@@ -2570,12 +2647,37 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         Returns:
             Iter[tuple[Any, ...]]: An iterable of tuples containing elements from the Cartesian product.
 
-        Example:
+        Examples:
         ```python
         >>> import pyochain as pc
-        >>> sizes = ["S", "M"]
-        >>> pc.Iter(["blue", "red"]).product(sizes).collect()
+        >>> pc.Iter(["blue", "red"]).product(["S", "M"]).collect()
         Seq(('blue', 'S'), ('blue', 'M'), ('red', 'S'), ('red', 'M'))
+        >>> res = (
+        ...     pc.Iter(["blue", "red"])
+        ...     .product(["S", "M"])
+        ...     .map_star(lambda color, size: f"{color}-{size}")
+        ...     .collect()
+        ... )
+        >>> res
+        Seq('blue-S', 'blue-M', 'red-S', 'red-M')
+        >>> res = (
+        ...     pc.Iter([1, 2, 3])
+        ...     .product([10, 20])
+        ...     .filter_star(lambda a, b: a * b >= 40)
+        ...     .map_star(lambda a, b: a * b)
+        ...     .collect()
+        ... )
+        >>> res
+        Seq(40, 60)
+        >>> res = (
+        ...     pc.Iter([1])
+        ...     .product(["a", "b"], [True])
+        ...     .filter_star(lambda _a, b, _c: b != "a")
+        ...     .map_star(lambda a, b, c: f"{a}{b} is {c}")
+        ...     .collect()
+        ... )
+        >>> res
+        Seq('1b is True',)
 
         ```
         """
