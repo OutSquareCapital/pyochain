@@ -19,7 +19,7 @@ class Dict[K, V](PyoIterable[dict[K, V], K], MutableMapping[K, V]):
 
     Implement the `MutableMapping` interface, so all standard dictionary operations are supported.
 
-    Note:
+    Tip:
         Prefer using `Dict.from_ref` when wrapping existing dictionaries to avoid unnecessary copying.
 
     Args:

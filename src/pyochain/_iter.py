@@ -39,10 +39,6 @@ if TYPE_CHECKING:
     from random import Random
 
 
-type TryVal[T] = Option[T] | Result[T, Any] | T | None
-"""Represent a value that may be failible."""
-type TryIter[T] = Iter[Option[T]] | Iter[Result[T, Any]] | Iter[T | None]
-"""Represent an iterator that may yield failible values."""
 Position = Literal["first", "middle", "last", "only"]
 """Literal type representing the position of an item in an iterable."""
 
@@ -83,7 +79,7 @@ class Set[T](PyoIterable[frozenset[T], T], AbstractSet[T]):
 
     The underlying data structure is a `frozenset`.
 
-    Note:
+    Tip:
         - `Set(frozenset)` is a no-copy operation since Python optimizes this under the hood.
         - If you have an existing `set`, prefer using `SetMut.from_ref()` to avoid unnecessary copying.
 
@@ -128,8 +124,8 @@ class Set[T](PyoIterable[frozenset[T], T], AbstractSet[T]):
         Is the opposite of `difference`.
 
         See Also:
-            - `difference`
-            - `diff_symmetric`
+            - `Set.difference`
+            - `Set.symmetric_difference`
 
         Args:
             *others (Iterable[Any]): Other `Iterables` to intersect with.
@@ -151,8 +147,8 @@ class Set[T](PyoIterable[frozenset[T], T], AbstractSet[T]):
         """Return the difference of this `Set` and **others**.
 
         See Also:
-            - `intersection`
-            - `diff_symmetric`
+            - `Set.intersection`
+            - `Set.symmetric_difference`
 
         Args:
             *others (Iterable[T]): Other `Iterables` to subtract from this `Set`.
@@ -176,8 +172,8 @@ class Set[T](PyoIterable[frozenset[T], T], AbstractSet[T]):
         (Elements in either **self** or **others** but not in both).
 
         **See Also**:
-            - `intersection`
-            - `difference`
+            - `Set.intersection`
+            - `Set.difference`
 
         Args:
             *others (Iterable[T]): Other `Iterables` to compute the symmetric difference with.
@@ -270,7 +266,7 @@ class SetMut[T](Set[T], MutableSet[T]):
 
     Underlying data structure is a `set`.
 
-    Note:
+    Tip:
         If you have an existing `set`, prefer using `SetMut.from_ref()` to avoid unnecessary copying.
 
     Args:
@@ -388,7 +384,7 @@ class Seq[T](PyoIterable[tuple[T, ...], T], Sequence[T]):
 
     The underlying data structure is an immutable `tuple`, hence the memory efficiency is better than a `Vec`.
 
-    Note:
+    Tip:
         `Seq(tuple)` is preferred over `Seq(list)` as this is a no-copy operation (Python optimizes `tuple` creation from another `tuple`).
         If you have an existing `list`, consider using `Vec.from_ref()` instead to avoid unnecessary copying.
 
@@ -557,7 +553,7 @@ class Vec[T](Seq[T], MutableSequence[T]):
 
         Args:
             key (Callable[[T], SupportsRichComparison[Any]] | None): Optional function to extract a comparison key from each element.
-            reverse (bool): If True, sort in descending order. Defaults to False.
+            reverse (bool): If True, sort in descending order.
 
         Returns:
             Vec[Any]: The sorted `Vec` instance (self).
@@ -637,7 +633,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         return cls(())
 
     def next(self) -> Option[T]:
-        """Return the next element in the iterator.
+        """Return the next element in the `Iter`.
 
         Note:
             The actual `.__next__()` method is conform to the Python `Iterator` Protocol, and is what will be actually called if you iterate over the `Iter` instance.
@@ -726,8 +722,8 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
             Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken.
 
         Args:
-            start (int): Starting value of the sequence. Defaults to 0.
-            step (int): Difference between consecutive values. Defaults to 1.
+            start (int): Starting value of the sequence.
+            step (int): Difference between consecutive values.
 
         Returns:
             Iter[int]: An iterator generating the sequence.
@@ -833,7 +829,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
             However, the runtime behavior is identical in both cases: pass **self** to the provided function, return the result.
 
         Args:
-            collector (Callable[[Iterator[T]], R]): Function|type that defines the target collection. Defaults to `Seq[T]`. `R` is constrained to a `Collection`.
+            collector (Callable[[Iterator[T]], R]): Function|type that defines the target collection. `R` is constrained to a `Collection`.
 
         Returns:
             R: A materialized collection containing the collected elements.
@@ -1379,9 +1375,11 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
     ) -> Iter[Iter[T]]:
         """Split iterable into pieces based on the output of a predicate function.
 
+        By default, no limit is placed on the number of splits.
+
         Args:
             predicate (Callable[[T, T], bool]): Function that takes successive pairs of items and returns True if the iterable should be split.
-            max_split (int): Maximum number of splits to perform. Defaults to -1 (no limit).
+            max_split (int): Maximum number of splits to perform.
 
         Returns:
             Iter[Iter[T]]: An iterator of iterators of items.
@@ -1441,10 +1439,12 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
     ) -> Iter[Iter[T]]:
         """Yield iterators of items from iterable, where each iterator is delimited by an item where `predicate` returns True.
 
+        By default, no limit is placed on the number of splits.
+
         Args:
             predicate (Callable[[T], bool]): Function to determine the split points.
-            max_split (int): Maximum number of splits to perform. Defaults to -1 (no limit).
-            keep_separator (bool): Whether to include the separator in the output. Defaults to False.
+            max_split (int): Maximum number of splits to perform.
+            keep_separator (bool): Whether to include the separator in the output.
 
         Returns:
             Iter[Iter[T]]: An iterator of iterators, each containing a segment of the original iterable.
@@ -1509,9 +1509,11 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
     ) -> Iter[Iter[T]]:
         """Yield iterator of items from iterable, where each iterator ends with an item where `predicate` returns True.
 
+        By default, no limit is placed on the number of splits.
+
         Args:
             predicate (Callable[[T], bool]): Function to determine the split points.
-            max_split (int): Maximum number of splits to perform. Defaults to -1 (no limit).
+            max_split (int): Maximum number of splits to perform.
 
         Returns:
             Iter[Iter[T]]: An iterable of lists of items.
@@ -1564,9 +1566,11 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
     ) -> Iter[Iter[T]]:
         """Yield iterator of items from iterable, where each iterator ends with an item where `predicate` returns True.
 
+        By default, no limit is placed on the number of splits.
+
         Args:
             predicate (Callable[[T], bool]): Function to determine the split points.
-            max_split (int): Maximum number of splits to perform. Defaults to -1 (no limit).
+            max_split (int): Maximum number of splits to perform.
 
         Returns:
             Iter[Iter[T]]: An iterable of lists of items.
@@ -1853,7 +1857,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         Args:
             func (Callable[[T, T], T]): A binary function to apply cumulatively.
-            initial (T | None): Optional initial value to start the accumulation. Defaults to None.
+            initial (T | None): Optional initial value to start the accumulation.
 
         Returns:
             Iter[T]: A new Iterable wrapper with accumulated results.
@@ -1887,7 +1891,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         On iteration, the **func** will be applied to each element of the iterator and the return value from the func, an Option, is returned by the next method.
 
-        Thus the **func** can return `Some(value)` to yield value, or None to end the iteration.
+        Thus the **func** can return `Some(value)` to yield value, or `NONE` to end the iteration.
 
         Args:
             initial (U): Initial state.
@@ -2141,7 +2145,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         """Return only unique elements of the iterable.
 
         Args:
-            key (Callable[[T], Any] | None): Function to transform items before comparison. Defaults to None.
+            key (Callable[[T], Any] | None): Function to transform items before comparison.
 
         Returns:
             Iter[T]: An iterable of the unique items.
@@ -2243,9 +2247,9 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         """Return a slice of the iterable.
 
         Args:
-            start (int | None): Starting index of the slice. Defaults to None.
-            stop (int | None): Ending index of the slice. Defaults to None.
-            step (int | None): Step size for the slice. Defaults to None.
+            start (int | None): Starting index of the slice.
+            stop (int | None): Ending index of the slice.
+            step (int | None): Step size for the slice.
 
         Returns:
             Iter[T]: An iterable of the sliced items.
@@ -2459,7 +2463,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         Args:
             *others (Iterable[Any]): Other iterables to zip with.
-            strict (bool): If `True` and one of the arguments is exhausted before the others, raise a ValueError. Defaults to `False`.
+            strict (bool): If `True` and one of the arguments is exhausted before the others, raise a ValueError.
 
         Returns:
             Iter[tuple[Any, ...]]: An `Iter` of tuples containing elements from the zipped Iter and other iterables.
@@ -2647,8 +2651,8 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         Args:
             *others (Iterable[T]): Other iterables to compare with.
-            default (T | None): Value to use for missing elements. Defaults to None.
-            key (Callable[[T], Any] | None): Function to apply to each item for comparison. Defaults to None.
+            default (T | None): Value to use for missing elements.
+            key (Callable[[T], Any] | None): Function to apply to each item for comparison.
 
         Returns:
             Iter[tuple[T, ...]]: An iterable of tuples containing differing elements from the input iterables.
@@ -2686,8 +2690,8 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
             other (Iterable[R]): Iterable to join with.
             left_on (Callable[[T], K]): Function to extract the join key from the left iterable.
             right_on (Callable[[R], K]): Function to extract the join key from the right iterable.
-            left_default (T | None): Default value for missing elements in the left iterable. Defaults to None.
-            right_default (R | None): Default value for missing elements in the right iterable. Defaults to None.
+            left_default (T | None): Default value for missing elements in the left iterable.
+            right_default (R | None): Default value for missing elements in the right iterable.
 
         Returns:
             Iter[tuple[T, R]]: An iterator yielding tuples of joined elements.
@@ -2791,7 +2795,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         Args:
             n (int): Length of each partition.
-            pad (int | None): Value to pad the last partition if needed. Defaults to None.
+            pad (int | None): Value to pad the last partition if needed.
 
         Returns:
             Iter[tuple[T, ...]]: An iterable of partitioned tuples.
@@ -2870,7 +2874,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         Args:
             n (int): Number of elements in each batch.
-            strict (bool): If `True`, raises a ValueError if the last batch is not of length n. Defaults to `False`.
+            strict (bool): If `True`, raises a ValueError if the last batch is not of length n.
 
         Returns:
             Iter[tuple[T, ...]]: An iterable of batched tuples.
@@ -3202,17 +3206,17 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
     def enumerate(self, start: int = 0) -> Iter[tuple[int, T]]:
         """Return a `Iter` of (index, value) pairs.
 
-        Each value in the iterable is paired with its index, starting from 0.
+        Each value in the `Iter` is paired with its index, starting from 0.
 
-        Note:
+        Tip:
             `Iter.map_star` can then be used for subsequent operations on the index and value, in a destructuring manner.
             This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.
 
         Args:
-            start (int): The starting index. Defaults to 0.
+            start (int): The starting index.
 
         Returns:
-            Iter[tuple[int, T]]: An iterable of (index, value) pairs.
+            Iter[tuple[int, T]]: An `Iter` of (index, value) pairs.
 
         Example:
         ```python
@@ -3431,16 +3435,13 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         """Make an `Iter` that returns consecutive keys and groups from the iterable.
 
         Args:
-            key (Callable[[T], Any] | None): Function to compute the key for grouping. Defaults to None.
+            key (Callable[[T], Any] | None): Function computing a key value for each element..
+        If not specified or is None, **key** defaults to an identity function and returns the element unchanged.
 
         Returns:
             Iter[tuple[Any | T, Iter[T]]]: An `Iter` of `(key, value)` tuples.
 
         The values yielded are `(K, Iter[T])` tuples, where the first element is the group key and the second element is an `Iter` of type `T` over the group values.
-
-        The **key** is a function computing a key value for each element.
-
-        If not specified or is None, **key** defaults to an identity function and returns the element unchanged.
 
         The `Iter` needs to already be sorted on the same key function.
 
@@ -3540,12 +3541,12 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         If a key function is provided, it is used to extract a comparison key from each element.
 
         Note:
-            This method must consume the entire iterable to perform the sort.
+            This method must consume the entire `Iter` to perform the sort.
             The result is a new `Vec` over the sorted sequence.
 
         Args:
-            key (Callable[[T], SupportsRichComparison[Any]] | None): Function to extract a comparison key from each element. Defaults to None.
-            reverse (bool): Whether to sort in descending order. Defaults to False.
+            key (Callable[[T], SupportsRichComparison[Any]] | None): Function to extract a comparison key from each element.
+            reverse (bool): Whether to sort in descending order.
 
         Returns:
             Vec[Any]: A `Vec` with elements sorted.
@@ -3584,7 +3585,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         Args:
             n (int): Number of top elements to return.
-            key (Callable[[T], Any] | None): Function to extract a comparison key from each element. Defaults to None.
+            key (Callable[[T], Any] | None): Function to extract a comparison key from each element.
 
         Returns:
             Seq[T]: A new Seq containing the top-n elements.
@@ -3602,7 +3603,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
     def most_common(self, n: int | None = None) -> Vec[tuple[T, int]]:
         """Return the **n** most common elements and their counts from the `Iterator`.
 
-        If **n** is None, then all elements are returned.
+        If **n** is `None`, then all elements are returned.
 
         Args:
             n (int | None): Number of most common elements to return. Defaults to None (all elements).
@@ -3658,7 +3659,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         Note:
             This is similar to `reduce()` but with an initial value, making it equivalent to
-            Python's `functools.reduce()` with an initializer.
+            Python `functools.reduce()` with an initializer.
 
         ```python
         >>> import pyochain as pc
