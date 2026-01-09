@@ -2980,7 +2980,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         ```
         """
-        peeked = itertools.islice(self._inner, n)
+        peeked = tuple(itertools.islice(self._inner, n))
         return Peekable(Iter(peeked), Iter(itertools.chain(peeked, self._inner)))
 
     def interleave(self, *others: Iterable[T]) -> Iter[T]:
