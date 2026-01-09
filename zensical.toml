@@ -32,6 +32,7 @@
             { "Traits & Mixins" = [
                 { "Checkable" = "reference/checkable.md" },
                 { "Pipeable" = "reference/pipeable.md" },
+                { "PyoIterable" = "reference/pyoiterable.md" },
             ] },
         ] },
         { "Getting Started" = [

@@ -1829,8 +1829,6 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter([1, 2]).repeat(2).collect()
-        Seq(1, 2, 1, 2)
         >>> pc.Iter([1, 2]).repeat(3).map(list).collect()
         Seq([1, 2], [1, 2], [1, 2])
 
@@ -1966,7 +1964,6 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         >>> mixed_data = [1, "two", 3.0, "four"]
         >>> pc.Iter(mixed_data).filter(_is_str).collect()
         Seq('two', 'four')
-
 
         ```
         """
