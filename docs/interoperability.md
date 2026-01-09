@@ -19,14 +19,27 @@ Conceptually, this replaces `f(x, args, kwargs)` with `x.into(f, args, kwargs)`.
 This is particularly useful when you need to pass the result to a function you don't control (like a library function), or to convert to a type not native to Pyochain.
 
 ```python
->>> import pyochain as pc
 >>> import json
+>>> import pyochain as pc
+>>> 
 >>> # Flow is broken, nested function calls, read from middle -> right -> left -> right
->>> json.dumps(dict(pc.Dict({"id": 1, "name": "Alice"}).map_keys(str.upper)))
+>>> nested = json.dumps(
+...     dict(
+...         pc.Dict({"id": 1, "name": "Alice"}).iter().map_star(lambda k, v: (k.upper(), v))
+...     )
+... )
+>>> nested
 '{"ID": 1, "NAME": "Alice"}'
 >>> # Fluent chaining with .into(), read left -> right
->>> pc.Dict({"id": 1, "name": "Alice"}).map_keys(str.upper).into(lambda d: json.dumps(dict(d)))
+>>> fluent = (
+...     pc.Dict({"id": 1, "name": "Alice"})
+...     .iter()
+...     .map_star(lambda k, v: (k.upper(), v))
+...     .into(lambda d: json.dumps(dict(d)))
+... )
+>>> fluent
 '{"ID": 1, "NAME": "Alice"}'
+
 ```
 
 #### `.inspect(func, *args, **kwargs) -> Self`

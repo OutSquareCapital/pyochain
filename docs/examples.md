@@ -36,7 +36,7 @@ Classes have been designed to work seamlessly together, enabling complex data pr
 ...    .inspect(
 ...        lambda seq: print(f"Parsed integers: {seq}") # Log parsed integers
 ...    )
-...    .into(pl.LazyFrame, schema=["index", "value"])  # Pass to Polars LazyFrame
+...    .into(pl.LazyFrame, schema=["index", "value"], orient="row")  # Pass to Polars LazyFrame
 ...    .pipe(_run_ok)  # Run the pipeline
 ...    .map_err(lambda e: print(f"Error: {e}"))  # Print error message
 ...    .map(lambda _: None)
