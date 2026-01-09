@@ -1658,17 +1658,19 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
     # map -----------------------------------------------------------------
 
     def map[R](self, func: Callable[[T], R]) -> Iter[R]:
-        """Apply a function to each element of the iterable.
+        """Apply a function **func** to each element of the `Iter`.
 
-        If you are good at thinking in types, you can think of map() like this:
-            If you have an iterator that gives you elements of some type A, and you want an iterator of some other type B, you can use map(),
-            passing a closure that takes an A and returns a B.
+        If you are good at thinking in types, you can think of `Iter.map()` like this:
 
-        map() is conceptually similar to a for loop.
+        - You have an `Iterator` that gives you elements of some type `A`
+        - You want an `Iterator` of some other type `B`
+        - Thenyou can use `.map()`, passing a closure **func** that takes an `A` and returns a `B`.
 
-        However, as map() is lazy, it is best used when you are already working with other iterators.
+        `Iter.map()` is conceptually similar to a for loop.
 
-        If you are doing some sort of looping for a side effect, it is considered more idiomatic to use `for_each` than map().
+        However, as `Iter.map()` is lazy, it is best used when you are already working with other `Iter` instances.
+
+        If you are doing some sort of looping for a side effect, it is considered more idiomatic to use `Iter.for_each()` than `Iter.map().collect()`.
 
         Args:
             func (Callable[[T], R]): Function to apply to each element.
@@ -1681,6 +1683,11 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         >>> import pyochain as pc
         >>> pc.Iter([1, 2]).map(lambda x: x + 1).collect()
         Seq(2, 3)
+        >>> # You can use methods on the class rather than on instance for convenience:
+        >>> pc.Iter(["a", "b", "c"]).map(str.upper).collect()
+        Seq('A', 'B', 'C')
+        >>> pc.Iter(["a", "b", "c"]).map(lambda s: s.upper()).collect()
+        Seq('A', 'B', 'C')
 
         ```
         """
@@ -1742,13 +1749,13 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
     ) -> Iter[R]:
         """Applies a function to each element.where each element is an iterable.
 
-        Unlike `.map()`, which passes each element as a single argument,
-        `.starmap()` unpacks each element into positional arguments for the function.
+        Unlike `.map()`, which passes each element as a single argument, `.starmap()` unpacks each element into positional arguments for the function.
 
-        In short, for each `element` in the sequence, it computes `func(*element)`.
+        In short, for each element in the `Iter`, it computes `func(*element)`.
 
-        - Use map_star when the performance matters (it is faster).
-        - Use map with unpacking when readability matters (the types can be inferred).
+        Note:
+            Always prefer using `.map_star()` over `.map()` when working with `Iter` of `tuple` elements.
+            Not only it is more readable, but it's also much more performant (up to 30% faster in benchmarks).
 
         Args:
             func (Callable[..., R]): Function to apply to unpacked elements.
@@ -1951,10 +1958,19 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         >>> data = (1, 2, 3)
         >>> pc.Iter(data).filter(lambda x: x > 1).collect()
         Seq(2, 3)
+        >>> # See the equivalence of next and find:
         >>> pc.Iter(data).filter(lambda x: x > 1).next()
         Some(2)
         >>> pc.Iter(data).find(lambda x: x > 1)
         Some(2)
+        >>> # Using TypeIs to narrow type:
+        >>> from typing import TypeIs
+        >>> def _is_str(x: object) -> TypeIs[str]:
+        ...     return isinstance(x, str)
+        >>> mixed_data = [1, "two", 3.0, "four"]
+        >>> pc.Iter(mixed_data).filter(_is_str).collect()
+        Seq('two', 'four')
+
 
         ```
         """
@@ -2010,23 +2026,24 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], bool],
     ) -> Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]]: ...
+
     def filter_star[U: Iterable[Any]](
         self: Iter[U],
         func: Callable[..., bool],
     ) -> Iter[U]:
-        """Creates an `Iter` which uses a closure to determine if an element should be yielded, where each element is an iterable.
+        """Creates an `Iter` which uses a closure **func** to determine if an element should be yielded, where each element is an iterable.
 
-        Unlike `.filter()`, which passes each element as a single argument, `.filter_star()` unpacks each element into positional arguments for the function.
+        Unlike `.filter()`, which passes each element as a single argument, `.filter_star()` unpacks each element into positional arguments for the **func**.
 
-        In short, for each `element` in the sequence, it computes `func(*element)`.
+        In short, for each element in the `Iter`, it computes `func(*element)`.
 
-        This is useful after using methods like `zip`, `product`, or `enumerate` that yield tuples.
+        This is useful after using methods like `.zip()`, `.product()`, or `.enumerate()` that yield tuples.
 
         Args:
             func (Callable[..., bool]): Function to evaluate unpacked elements.
 
         Returns:
-            Iter[U]: An iterable of the items that satisfy the predicate.
+            Iter[U]: An `Iter` of the items that satisfy the predicate.
 
         Example:
         ```python
@@ -2046,9 +2063,9 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
     def filter_false[U](
         self, func: Callable[[T], bool | TypeIs[U]]
     ) -> Iter[T] | Iter[U]:
-        """Return elements for which **func** is false.
+        """Return elements for which **func** is `False`.
 
-        The **func** can return a `TypeIs` to narrow the type of the returned iterable.
+        The **func** can return a `TypeIs` to narrow the type of the returned `Iter`.
 
         This won't have any runtime effect, but allows for better type inference.
 
@@ -2056,7 +2073,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
             func (Callable[[T], bool | TypeIs[U]]): Function to evaluate each item.
 
         Returns:
-            Iter[T] | Iter[U]: An iterable of the items that do not satisfy the predicate.
+            Iter[T] | Iter[U]: An `Iter` of the items that do not satisfy the predicate.
 
         Example:
         ```python

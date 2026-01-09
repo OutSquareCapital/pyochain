@@ -40,8 +40,9 @@ class Pipeable:
         Example:
         ```python
         >>> import pyochain as pc
+        >>> from collections.abc import Sequence
         >>> import hashlib
-        >>> def sha256_hex(data: pc.Seq[int]) -> str:
+        >>> def sha256_hex(data: Sequence[int]) -> str:
         ...     return hashlib.sha256(bytes(data)).hexdigest()
         >>>
         >>> pc.Seq([1, 2, 3]).into(sha256_hex)
