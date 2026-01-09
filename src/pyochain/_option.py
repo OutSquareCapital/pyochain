@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import warnings
 from abc import abstractmethod
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
@@ -76,26 +75,12 @@ class Option[T](Pipeable):
         return cast(Option[V], Some(value))
 
     @staticmethod
-    @warnings.deprecated("Use Option(value) instead.")
-    def from_[V](value: V | None) -> Option[V]:
-        return Option(value)
-
-    def __bool__(self) -> None:
-        """Prevent implicit `Some|None` value checking in boolean contexts.
-
-        Raises:
-            TypeError: Always, to prevent implicit `Some|None` value checking.
-        """
-        msg = "Option instances cannot be used in boolean contexts for implicit `Some|None` value checking. Use is_some() or is_none() instead."
-        raise TypeError(msg)
-
-    @staticmethod
-    def if_true[V](value: V, *, predicate: Callable[[], bool]) -> Option[V]:
-        """Creates an `Option[V]` based on a **predicate** condition.
+    def if_true[V](value: V, *, predicate: Callable[[V], bool]) -> Option[V]:
+        """Creates an `Option[V]` based on a **predicate** condition on the provided **value**.
 
         Args:
             value (V): The value to wrap in `Some` if the condition is `True`.
-            predicate (Callable[[], bool]): The condition to evaluate.
+            predicate (Callable[[V], bool]): The condition to evaluate.
 
         Returns:
             Option[V]: `Some(value)` if the condition is `True`, otherwise `NONE`.
@@ -103,21 +88,19 @@ class Option[T](Pipeable):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Option.if_true(42, predicate=lambda: 2 + 2 == 4)
+        >>> pc.Option.if_true(42, predicate=lambda x: x == 42)
         Some(42)
-        >>> pc.Option.if_true(42, predicate=lambda: 2 + 2 == 5)
+        >>> pc.Option.if_true(21, predicate=lambda x: x == 42)
         NONE
-        >>> # Evaluate on __bool__ of a collection (will call __len__ under the hood)
-        >>> data = [1, 2, 3]
-        >>> pc.Option.if_true(data, predicate=lambda: data)
-        Some([1, 2, 3])
-        >>> empty_data = []
-        >>> pc.Option.if_true(empty_data, predicate=lambda: empty_data)
-        NONE
+        >>> from pathlib import Path
+        >>> pc.Option.if_true(Path("README.md"), predicate=Path.exists).map(str)
+        Some('README.md')
+        >>> pc.Option.if_true(Path("README.md"), predicate=lambda p: p.exists()).map(str) # Same as above
+        Some('README.md')
 
         ```
         """
-        return cast(Option[V], Some(value) if predicate() else NONE)
+        return cast(Option[V], Some(value) if predicate(value) else NONE)
 
     @staticmethod
     def if_some[V](value: V) -> Option[V]:
