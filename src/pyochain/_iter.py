@@ -2787,7 +2787,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
     @overload
     def partition(self, n: int, pad: int) -> Iter[tuple[T, ...]]: ...
     def partition(self, n: int, pad: int | None = None) -> Iter[tuple[T, ...]]:
-        """Partition sequence into tuples of length n.
+        """Partition **self** into `tuples` of length **n**.
 
         Args:
             n (int): Length of each partition.
@@ -2988,11 +2988,13 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         This can be useful when you want to add an element at the beginning of an existing iterable sequence.
 
-        Use `.chain()` to add multiple elements (at the end of the `Iterator`).
 
         Note:
             This can be considered the equivalent as `list.append()`, but for `Iter`.
             However, append add the value at the **end**, while insert add it at the **beginning**.
+
+        See Also:
+            `Iter.chain()` to add multiple elements at the end of the `Iterator`.
 
         Args:
             value (T): The value to prepend.
@@ -3030,8 +3032,8 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         ```
         """
-        peeked, vals = cz.itertoolz.peekn(n, self._inner)
-        return Peekable(Iter(peeked), Iter(vals))
+        peeked = itertools.islice(self._inner, n)
+        return Peekable(Iter(peeked), Iter(itertools.chain(peeked, self._inner)))
 
     def interleave(self, *others: Iterable[T]) -> Iter[T]:
         """Interleave multiple sequences element-wise.
@@ -3053,13 +3055,16 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         return Iter(cz.itertoolz.interleave((self._inner, *others)))
 
     def chain(self, *others: Iterable[T]) -> Iter[T]:
-        """Concatenate zero or more iterables, any of which may be infinite.
+        """Concatenate **self** with one or more `Iterables`, any of which may be infinite.
 
         In other words, it links **self** and **others** together, in a chain. 🔗
 
-        An infinite sequence will prevent the rest of the arguments from being included.
+        An infinite `Iterable` will prevent the rest of the arguments from being included.
 
-        We use chain.from_iterable rather than chain(*seqs) so that seqs can be a generator.
+        This is equivalent to `list.extend()`, except it is fully lazy and works with any `Iterable`.
+
+        See Also:
+            `Iter.insert()` to add a single element at the beginning of the `Iterator`.
 
         Args:
             *others (Iterable[T]): Other iterables to concatenate.
