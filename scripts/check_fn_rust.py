@@ -111,23 +111,27 @@ def _iter_filter() -> pc.Set[str]:
             "then_some",
             "then",
             # Implemented via boolean in Rust
-            "copied",
-            "cloned",
+            "copied",  # implemented via cloned
             "by_ref",
             "from_coroutine",
             # not pertinent in Python
-            "count",
-            "length",  # count is reserved for MutableSequence in Python
-            "is_sorted",
-            "is_sorted_by_key",
-            "is_sorted_by",
+            "count",  # count is reserved for MutableSequence in Python
+            "length",  # replace count
             # all covered by is_sorted in Python
             "into",  # into is implicitely implemented with From trait in Rust
             "filter_false",  # filter_false is in itertools in Python
             "iter",  # inerhited from base class in Python
+            "is_sorted_by_key",  # already covered by sort_by
             "max_by_key",  # already covered by max_by
             "min_by_key",  # already covered by min_by
             "new",  # Not present in the trait in Rust
+            "empty",  # replaced by new across classes from PyoIterable
+            "size_hint",  # not pertinent in Python
+            "map_juxt",  # itertools in Python
+            "GenericAlias",  # internal Python type
+            "sort",  # sorted is built-in in Python for any Iterable
+            "zip_longest",  # itertools in Python
+            "compress",  # itertools in Python
         )
     )
 

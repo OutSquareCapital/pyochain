@@ -1,4 +1,3 @@
-{"source":"python","fn":"GenericAlias"}
 {"source":"python","fn":"accumulate"}
 {"source":"python","fn":"all_equal"}
 {"source":"python","fn":"all_unique"}
@@ -7,18 +6,17 @@
 {"source":"python","fn":"batch"}
 {"source":"python","fn":"combinations"}
 {"source":"python","fn":"combinations_with_replacement"}
-{"source":"python","fn":"compress"}
 {"source":"python","fn":"diff_at"}
 {"source":"python","fn":"elements"}
 {"source":"python","fn":"first"}
 {"source":"python","fn":"from_count"}
+{"source":"python","fn":"from_ref"}
 {"source":"python","fn":"group_by"}
 {"source":"python","fn":"insert"}
 {"source":"python","fn":"interleave"}
 {"source":"python","fn":"is_strictly_n"}
 {"source":"python","fn":"join"}
 {"source":"python","fn":"join_with"}
-{"source":"python","fn":"map_juxt"}
 {"source":"python","fn":"most_common"}
 {"source":"python","fn":"pairwise"}
 {"source":"python","fn":"partition_all"}
@@ -27,7 +25,6 @@
 {"source":"python","fn":"random_sample"}
 {"source":"python","fn":"second"}
 {"source":"python","fn":"slice"}
-{"source":"python","fn":"sort"}
 {"source":"python","fn":"split_after"}
 {"source":"python","fn":"split_at"}
 {"source":"python","fn":"split_before"}
@@ -38,7 +35,6 @@
 {"source":"python","fn":"unique"}
 {"source":"python","fn":"unique_to_each"}
 {"source":"python","fn":"with_position"}
-{"source":"python","fn":"zip_longest"}
 {"source":"rust","fn":"advance_by"}
 {"source":"rust","fn":"cmp"}
 {"source":"rust","fn":"cmp_by"}
@@ -54,4 +50,3 @@
 {"source":"rust","fn":"repeat_n"}
 {"source":"rust","fn":"repeat_with"}
 {"source":"rust","fn":"rposition"}
-{"source":"rust","fn":"size_hint"}
