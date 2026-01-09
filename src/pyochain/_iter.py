@@ -34,7 +34,7 @@ import cytoolz as cz
 from ._option import NONE, Option, Some
 from ._result import Err, Ok, Result
 from ._types import SupportsComparison, SupportsRichComparison
-from .traits import Pipeable, PyoCollection, PyoIterable
+from .traits import Checkable, Pipeable, PyoCollection, PyoIterable
 
 if TYPE_CHECKING:
     from random import Random
@@ -51,7 +51,12 @@ Position = Literal["first", "middle", "last", "only"]
 class Unzipped[T, V](Pipeable):
     """Represents the result of unzipping an iterator of pairs into two separate iterators.
 
-    See `Iter.unzip()` for details.
+    Attributes:
+        left (Iter[T]): An iterator over the first elements of the pairs.
+        right (Iter[V]): An iterator over the second elements of the pairs.
+
+    See Also:
+        `Iter.unzip()`
     """
 
     left: Iter[T]
@@ -61,16 +66,29 @@ class Unzipped[T, V](Pipeable):
 
 
 @dataclass(slots=True)
-class Peekable[T](Pipeable):
+class Peekable[T](Pipeable, Checkable):
     """Represents the result of peeking into an iterator.
 
-    See `Iter.peekable()` for details.
+    Inerhit from `Checkable` to provide truthiness based on whether any elements were peeked.
+
+    Attributes:
+        peek (Seq[T]): A `Seq` of the peeked elements.
+        values (Iter[T]): An `Iter` of values, still including the peeked elements.
+
+    See Also:
+        `Iter.peekable()`
+        `Iter.cloned()`
+
+
     """
 
-    peek: Iter[T]
-    """An iterator over the peeked elements."""
+    peek: Seq[T]
+    """A `Seq` of the peeked elements."""
     values: Iter[T]
-    """An iterator of values, still including the peeked elements."""
+    """An `Iter` of values, still including the peeked elements."""
+
+    def __bool__(self) -> bool:
+        return bool(self.peek)
 
 
 class Set[T](PyoCollection[frozenset[T], T], AbstractSet[T]):
@@ -3062,7 +3080,13 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         return Iter(cz.itertoolz.cons(value, self._inner))
 
     def peekable(self, n: int) -> Peekable[T]:
-        """Retrieve the next n elements from the `Iterator`, and return a tuple of the retrieved elements along with the original Iterator, unconsumed.
+        """Retrieve the next **n** elements from the `Iterator`, and return a `Seq` of the retrieved elements along with the original `Iterator`, unconsumed.
+
+        The returned `Peekable` object contains two attributes:
+        - *peek*: A `Seq` of the next **n** elements.
+        - *values*: An `Iter` that includes the peeked elements followed by the remaining elements of the original `Iterator`.
+
+        `Peekable` implement `Checkable` on the *peek* attribute.
 
         Args:
             n (int): Number of items to peek.
@@ -3070,19 +3094,22 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         Returns:
             Peekable[T]: A `Peekable` object containing the peeked elements and the remaining iterator.
 
+        See Also:
+            `Iter.cloned()` to create an independent copy of the iterator.
+
         Example:
         ```python
         >>> import pyochain as pc
         >>> data = pc.Iter([1, 2, 3]).peekable(2)
-        >>> data.peek.collect()
+        >>> data.peek
         Seq(1, 2)
         >>> data.values.collect()
         Seq(1, 2, 3)
 
         ```
         """
-        peeked = tuple(itertools.islice(self._inner, n))
-        return Peekable(Iter(peeked), Iter(itertools.chain(peeked, self._inner)))
+        peeked = Seq(itertools.islice(self._inner, n))
+        return Peekable(peeked, Iter(itertools.chain(peeked, self._inner)))
 
     def interleave(self, *others: Iterable[T]) -> Iter[T]:
         """Interleave multiple sequences element-wise.
