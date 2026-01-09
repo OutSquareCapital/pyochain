@@ -16,6 +16,7 @@ from collections.abc import (
 )
 from collections.abc import Set as AbstractSet
 from dataclasses import dataclass
+from operator import itemgetter, lt
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -31,7 +32,7 @@ import cytoolz as cz
 
 from ._option import NONE, Option, Some
 from ._result import Err, Ok, Result
-from ._types import SupportsRichComparison
+from ._types import SupportsComparison, SupportsRichComparison
 from .traits import Pipeable, PyoIterable
 
 if TYPE_CHECKING:
@@ -971,21 +972,21 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         ```
         """
         collected = Vec[U].new()
-
+        collected_add = collected.append  # Local binding for performance
         for item in self._inner:
-            if item is None:
-                return NONE
             match item:
+                case None:
+                    return NONE
                 case Result():
                     if item.is_err():
                         return NONE
-                    collected.append(item.unwrap())  # pyright: ignore[reportUnknownArgumentType]
+                    collected_add(item.unwrap())  # pyright: ignore[reportUnknownArgumentType]
                 case Option():
                     if item.is_none():
                         return NONE
-                    collected.append(item.unwrap())  # pyright: ignore[reportUnknownArgumentType]
+                    collected_add(item.unwrap())  # pyright: ignore[reportUnknownArgumentType]
                 case _ as plain_value:
-                    collected.append(plain_value)
+                    collected_add(plain_value)
         return Some(collected)
 
     def for_each[**P](
@@ -1607,6 +1608,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         def _split_before(data: Iterator[T], max_split: int) -> Iterator[Iter[T]]:
             """Credits: more_itertools.split_before."""
             new = self.__class__  # locality help for performance
+
             if max_split == 0:
                 yield new(data)
                 return
@@ -3801,3 +3803,240 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
                 return Err(result.unwrap_err())
 
         return Ok(Some(accumulator))
+
+    @overload
+    def is_sorted(
+        self,
+        key: Callable[[T], SupportsComparison[Any]],
+        *,
+        reverse: bool = ...,
+        strict: bool = ...,
+    ) -> bool: ...
+    @overload
+    def is_sorted[U: SupportsComparison[Any]](
+        self: Iter[U],
+        key: None = None,
+        *,
+        reverse: bool = ...,
+        strict: bool = ...,
+    ) -> bool: ...
+    @overload
+    def is_sorted(
+        self,
+        key: None = None,
+        *,
+        reverse: bool = ...,
+        strict: bool = ...,
+    ) -> Never: ...
+    def is_sorted(
+        self,
+        key: Callable[[T], SupportsComparison[Any]] | None = None,
+        *,
+        reverse: bool = False,
+        strict: bool = False,
+    ) -> bool:
+        """Returns `True` if the items of the `Iterator` are in sorted order.
+
+        The function returns `False` after encountering the first out-of-order item.
+
+        This means it may produce results that differ from the built-in `sorted` function for objects with unusual comparison dynamics (like `math.nan`).
+
+        If there are no out-of-order items, the `Iterator` is exhausted.
+
+        A **key** function can be specified to transform each item before comparison.
+
+        Credits to **more-itertools** for the implementation.
+
+        Args:
+            key (Callable[[T], SupportsComparison[Any]] | None): Function to transform items before comparison.
+            reverse (bool): Whether to check for descending order.
+            strict (bool): Whether to enforce strict sorting (no equal elements).
+
+        Returns:
+            bool: `True` if items are sorted according to the criteria, `False` otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter(["1", "2", "3", "4", "5"]).is_sorted(key=int)
+        True
+        >>> pc.Iter([5, 4, 3, 1, 2]).is_sorted(reverse=True)
+        False
+
+        If strict, tests for strict sorting, that is, returns False if equal elements are found:
+        ```python
+        >>> pc.Iter([1, 2, 2]).is_sorted()
+        True
+        >>> pc.Iter([1, 2, 2]).is_sorted(strict=True)
+        False
+
+        ```
+
+        """
+        it = self._inner if (key is None) else map(key, self._inner)
+        a, b = itertools.tee(it)
+        next(b, None)
+        if reverse:
+            b, a = a, b
+        match strict:
+            case True:
+                return all(map(lt, a, b))  # pyright: ignore[reportArgumentType]
+            case False:
+                return not any(map(lt, b, a))  # pyright: ignore[reportArgumentType]
+
+    def all_equal[U](self, key: Callable[[T], U] | None = None) -> bool:
+        """Return `True` if all items of the `Iterator` are equal.
+
+        A function that accepts a single argument and returns a transformed version of each input item can be specified with **key**.
+
+        Credits to **more-itertools** for the implementation.
+
+        Args:
+            key (Callable[[T], U] | None): Function to transform items before comparison.
+
+        Returns:
+            bool: `True` if all items are equal, `False` otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter([1, 1, 1]).all_equal()
+        True
+        >>> pc.Iter("AaaA").all_equal(key=str.casefold)
+        True
+        >>> pc.Iter([1, 2, 3]).all_equal(key=lambda x: x < 10)
+        True
+
+        ```
+        """
+        iterator = itertools.groupby(self._inner, key)
+        for _first in iterator:
+            for _second in iterator:
+                return False
+            return True
+        return True
+
+    def all_unique[U](self, key: Callable[[T], U] | None = None) -> bool:
+        """Returns True if all the elements of iterable are unique.
+
+        The function returns as soon as the first non-unique element is encountered.
+
+        `Iters` with a mix of hashable and unhashable items can be used, but the function will be slower for unhashable items.
+
+        A function that accepts a single argument and returns a transformed version of each input item can be specified with **key**.
+
+        Credits to **more-itertools** for the implementation.
+
+        Args:
+            key (Callable[[T], U] | None): Function to transform items before comparison.
+
+        Returns:
+            bool: `True` if all elements are unique, `False` otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter("ABCB").all_unique()
+        False
+        >>> pc.Iter("ABCb").all_unique()
+        True
+        >>> pc.Iter("ABCb").all_unique(str.lower)
+        False
+
+        ```
+        """
+        seenset: set[T | U] = set()
+        seenset_add = seenset.add
+        seenlist: list[T | U] = []
+        seenlist_add = seenlist.append
+        for element in map(key, self._inner) if key else self._inner:
+            try:
+                if element in seenset:
+                    return False
+                seenset_add(element)
+            except TypeError:
+                if element in seenlist:
+                    return False
+                seenlist_add(element)
+        return True
+
+    def argmax[U](self, key: Callable[[T], U] | None = None) -> int:
+        """Index of the first occurrence of a maximum value in the `Iter`.
+
+        A function that accepts a single argument and returns a transformed version of each input item can be specified with **key**.
+
+        Credits to more-itertools for the implementation.
+
+        Args:
+            key (Callable[[T], U] | None): Optional function to determine the value for comparison.
+
+        Returns:
+            int: The index of the maximum value.
+
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter("abcdefghabcd").argmax()
+        7
+        >>> pc.Iter([0, 1, 2, 3, 3, 2, 1, 0]).argmax()
+        3
+
+        ```
+        For example, identify the best machine learning model:
+        ```python
+        >>> models = pc.Seq(["svm", "random forest", "knn", "naïve bayes"])
+        >>> accuracy = pc.Seq([68, 61, 84, 72])
+        >>> # Most accurate model
+        >>> models.nth(accuracy.iter().argmax())
+        'knn'
+        >>>
+        >>> # Best accuracy
+        >>> accuracy.max()
+        84
+
+        ```
+        """
+        it = self._inner
+        if key is not None:
+            it = map(key, it)
+        return max(enumerate(it), key=itemgetter(1))[0]
+
+    def argmin[U](self, key: Callable[[T], U] | None = None) -> int:
+        """Index of the first occurrence of a minimum value in the `Iter`.
+
+        A function that accepts a single argument and returns a transformed version of each input item can be specified with **key**.
+
+        Credits to more-itertools for the implementation.
+
+        Args:
+            key (Callable[[T], U] | None): Optional function to determine the value for comparison.
+
+        Returns:
+            int: The index of the minimum value.
+
+        ```python
+        >>> import pyochain as pc
+        >>> # Example 1: Basic usage
+        >>> pc.Iter("efghabcdijkl").argmin()
+        4
+        >>> pc.Iter([3, 2, 1, 0, 4, 2, 1, 0]).argmin()
+        3
+        >>> # Example 2: look up a label corresponding to the position of a value that minimizes a cost function
+        >>> def cost(x: int) -> float:
+        ...     "Days for a wound to heal given a subject's age."
+        ...     return x**2 - 20 * x + 150
+        >>>
+        >>> labels = pc.Seq(["homer", "marge", "bart", "lisa", "maggie"])
+        >>> ages = pc.Seq([35, 30, 10, 9, 1])
+        >>> # Fastest healing family member
+        >>> labels.nth(ages.iter().argmin(key=cost))
+        'bart'
+        >>> # Age with fastest healing
+        >>> ages.min_by(key=cost)
+        10
+
+        ```
+        """
+        it = self._inner
+        if key is not None:
+            it = map(key, it)
+        return min(enumerate(it), key=itemgetter(1))[0]

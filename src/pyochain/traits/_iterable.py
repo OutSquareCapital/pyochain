@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import itertools
 from collections.abc import Callable, Collection, Iterable, Iterator
-from operator import itemgetter, lt
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -136,9 +134,9 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         return f"{self.__class__.__name__}({_get_repr(self._inner).unwrap()})"
 
     def length(self) -> int:
-        """Return the length of the Iterable.
+        """Return the length of the `Iterable`.
 
-        Like the builtin len but works on lazy sequences.
+        Like the builtin `len()` function, but works on lazy `Iterators`.
 
         Returns:
             int: The count of elements.
@@ -146,13 +144,15 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         >>> import pyochain as pc
         >>> pc.Seq([1, 2]).length()
         2
+        >>> pc.Iter(range(5)).length()
+        5
 
         ```
         """
         return cz.itertoolz.count(self._inner)
 
     def eq(self, other: Self) -> bool:
-        """Check if two Iterables are equal based on their data.
+        """Check if two `Iterable`s are equal based on their data.
 
         Note:
             This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
@@ -180,7 +180,7 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         return tuple(self._inner) == tuple(other._inner)
 
     def ne(self, other: Self) -> bool:
-        """Check if two Iterables are not equal based on their data.
+        """Check if two `Iterable`s are not equal based on their data.
 
         Note:
             This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
@@ -204,7 +204,7 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         return tuple(self._inner) != tuple(other._inner)
 
     def le(self, other: Self) -> bool:
-        """Check if this Iterable is less than or equal to another based on their data.
+        """Check if this `Iterable` is less than or equal to another based on their data.
 
         Note:
             This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
@@ -228,7 +228,7 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         return tuple(self._inner) <= tuple(other._inner)
 
     def lt(self, other: Self) -> bool:
-        """Check if this Iterable is less than another based on their data.
+        """Check if this `Iterable` is less than another based on their data.
 
         Note:
             This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
@@ -252,7 +252,7 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         return tuple(self._inner) < tuple(other._inner)
 
     def gt(self, other: Self) -> bool:
-        """Check if this Iterable is greater than another based on their data.
+        """Check if this `Iterable` is greater than another based on their data.
 
         Note:
             This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
@@ -261,7 +261,7 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
             other (Self): Another instance of `Self` to compare against.
 
         Returns:
-            bool: True if the underlying data of self is greater than that of other, False otherwise.
+            bool: True if the underlying data of **self** is greater than that of **other**, False otherwise.
 
         Example:
         ```python
@@ -276,7 +276,7 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         return tuple(self._inner) > tuple(other._inner)
 
     def ge(self, other: Self) -> bool:
-        """Check if this Iterable is greater than or equal to another based on their data.
+        """Check if this `Iterable` is greater than or equal to another based on their data.
 
         Note:
             This will consume any `Iter` instances involved in the comparison (**self** and/or **other**).
@@ -285,7 +285,7 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
             other (Self): Another instance of `Self` to compare against.
 
         Returns:
-            bool: True if the underlying data of self is greater than or equal to that of other, False otherwise.
+            bool: True if the underlying data of **self** is greater than or equal to that of **other**, False otherwise.
 
         Example:
         ```python
@@ -300,7 +300,7 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         return tuple(self._inner) >= tuple(other._inner)
 
     def join(self: PyoIterable[I, str], sep: str) -> str:
-        """Join all elements of the `Iterable` into a single `string`, with a specified separator.
+        """Join all elements of the `Iterable` into a single `str`, with a specified separator.
 
         Args:
             sep (str): Separator to use between elements.
@@ -319,12 +319,12 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         return sep.join(self._inner)
 
     def first(self) -> T:
-        """Return the first element.
+        """Return the first element of the `Iterable`.
 
         This is similar to `__getitem__` but works on lazy `Iterators`.
 
         Returns:
-            T: The first element of the iterable.
+            T: The first element of the `Iterable`.
 
         ```python
         >>> import pyochain as pc
@@ -336,12 +336,12 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         return cz.itertoolz.first(self._inner)
 
     def second(self) -> T:
-        """Return the second element.
+        """Return the second element of the `Iterable`.
 
         This is similar to `__getitem__` but works on lazy `Iterators`.
 
         Returns:
-            T: The second element of the iterable.
+            T: The second element of the `Iterable`.
 
         ```python
         >>> import pyochain as pc
@@ -353,12 +353,12 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         return cz.itertoolz.second(self._inner)
 
     def last(self) -> T:
-        """Return the last element.
+        """Return the last element of the `Iterable`.
 
         This is similar to `__getitem__` but works on lazy `Iterators`.
 
         Returns:
-            T: The last element of the iterable.
+            T: The last element of the `Iterable`.
 
         ```python
         >>> import pyochain as pc
@@ -370,7 +370,7 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         return cz.itertoolz.last(self._inner)
 
     def nth(self, index: int) -> T:
-        """Return the nth item at index.
+        """Return the nth item of the `Iterable` at the specified **index**.
 
         This is similar to `__getitem__` but works on lazy `Iterators`.
 
@@ -378,7 +378,7 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
             index (int): The index of the item to retrieve.
 
         Returns:
-            T: The item at the specified index.
+            T: The item at the specified **index**.
 
         ```python
         >>> import pyochain as pc
@@ -388,85 +388,6 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         ```
         """
         return cz.itertoolz.nth(index, self._inner)
-
-    def argmax[U](self, key: Callable[[T], U] | None = None) -> int:
-        """Index of the first occurrence of a maximum value in an iterable.
-
-        Credits to more-itertools for the implementation.
-
-        Args:
-            key (Callable[[T], U] | None): Optional function to determine the value for comparison.
-
-        Returns:
-            int: The index of the maximum value.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq("abcdefghabcd").argmax()
-        7
-        >>> pc.Seq([0, 1, 2, 3, 3, 2, 1, 0]).argmax()
-        3
-
-        ```
-        For example, identify the best machine learning model:
-        ```python
-        >>> models = pc.Seq(["svm", "random forest", "knn", "naïve bayes"])
-        >>> accuracy = pc.Seq([68, 61, 84, 72])
-        >>> # Most accurate model
-        >>> models.nth(accuracy.argmax())
-        'knn'
-        >>>
-        >>> # Best accuracy
-        >>> accuracy.into(max)
-        84
-
-        ```
-        """
-        it = self._inner
-        if key is not None:
-            it = map(key, it)
-        return max(enumerate(it), key=itemgetter(1))[0]
-
-    def argmin[U](self, key: Callable[[T], U] | None = None) -> int:
-        """Index of the first occurrence of a minimum value in an iterable.
-
-        Credits to more-itertools for the implementation.
-
-        Args:
-            key (Callable[[T], U] | None): Optional function to determine the value for comparison.
-
-        Returns:
-            int: The index of the minimum value.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq("efghabcdijkl").argmin()
-        4
-        >>> pc.Seq([3, 2, 1, 0, 4, 2, 1, 0]).argmin()
-        3
-
-        ```
-
-        For example, look up a label corresponding to the position of a value that minimizes a cost function:
-        ```python
-        >>> def cost(x):
-        ...     "Days for a wound to heal given a subject's age."
-        ...     return x**2 - 20 * x + 150
-        >>> labels = pc.Seq(["homer", "marge", "bart", "lisa", "maggie"])
-        >>> ages = pc.Seq([35, 30, 10, 9, 1])
-        >>> # Fastest healing family member
-        >>> labels.nth(ages.argmin(key=cost))
-        'bart'
-        >>> # Age with fastest healing
-        >>> ages.into(min, key=cost)
-        10
-
-        ```
-        """
-        it = self._inner
-        if key is not None:
-            it = map(key, it)
-        return min(enumerate(it), key=itemgetter(1))[0]
 
     def sum[U: int | bool](self: PyoIterable[I, U]) -> int:
         """Return the sum of the `Iterable`.
@@ -486,7 +407,7 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         return sum(self._inner)
 
     def min[U: SupportsRichComparison[Any]](self: PyoIterable[I, U]) -> U:
-        """Return the minimum of the sequence.
+        """Return the minimum of the `Iterable`.
 
         The elements of the `Iterable` must support comparison operations.
 
@@ -508,7 +429,7 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         return min(self._inner)
 
     def min_by[U: SupportsRichComparison[Any]](self, *, key: Callable[[T], U]) -> T:
-        """Return the minimum element using a custom **key** function.
+        """Return the minimum element of the `Iterable` using a custom **key** function.
 
         If multiple elements are tied for the minimum value, the first one encountered is returned.
 
@@ -537,7 +458,7 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         return min(self._inner, key=key)
 
     def max[U: SupportsRichComparison[Any]](self: PyoIterable[I, U]) -> U:
-        """Return the maximum of the `Iterable`.
+        """Return the maximum element of the `Iterable`.
 
         The elements of the `Iterable` must support comparison operations.
 
@@ -559,7 +480,7 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         return max(self._inner)
 
     def max_by[U: SupportsRichComparison[Any]](self, *, key: Callable[[T], U]) -> T:
-        """Return the maximum element using a custom **key** function.
+        """Return the maximum element of the `Iterable` using a custom **key** function.
 
         If multiple elements are tied for the maximum value, the first one encountered is returned.
 
@@ -588,15 +509,15 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         return max(self._inner, key=key)
 
     def all(self, predicate: Callable[[T], bool] | None = None) -> bool:
-        """Tests if every element of the iterator matches a predicate.
+        """Tests if every element of the `Iterable` is truthy.
 
-        `Iter.all()` takes a closure that returns true or false.
+        `Iter.all()` can optionally take a closure that returns true or false.
 
-        It applies this closure to each element of the iterator, and if they all return true, then so does `Iter.all()`.
+        It applies this closure to each element of the `Iterable`, and if they all return true, then so does `Iter.all()`.
 
         If any of them return false, it returns false.
 
-        An empty iterator returns true.
+        An empty `Iterable` returns true.
 
         Args:
             predicate (Callable[[T], bool] | None): Optional function to evaluate each item.
@@ -625,12 +546,11 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         return all(predicate(x) for x in self._inner)
 
     def any(self, predicate: Callable[[T], bool] | None = None) -> bool:
-        """Tests if any element of the iterator matches a predicate.
+        """Tests if any element of the `Iterable` is truthy.
 
-        `Iter.any()` takes a closure that returns true or false.
+        `Iter.any()` can optionally take a closure that returns true or false.
 
-        It applies this closure to each element of the iterator, and if any of them return true, then so does `Iter.any()`.
-
+        It applies this closure to each element of the `Iterable`, and if any of them return true, then so does `Iter.any()`.
         If they all return false, it returns false.
 
         An empty iterator returns false.
@@ -658,135 +578,6 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         if predicate is None:
             return any(self._inner)
         return any(predicate(x) for x in self._inner)
-
-    def all_equal[U](self, key: Callable[[T], U] | None = None) -> bool:
-        """Return True if all items are equal.
-
-        Credits to more-itertools for the implementation.
-
-        Args:
-            key (Callable[[T], U] | None): Function to transform items before comparison. Defaults to None.
-
-        Returns:
-            bool: True if all items are equal, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 1, 1]).all_equal()
-        True
-
-        ```
-        A function that accepts a single argument and returns a transformed version of each input item can be specified with key:
-        ```python
-        >>> pc.Seq("AaaA").all_equal(key=str.casefold)
-        True
-        >>> pc.Seq([1, 2, 3]).all_equal(key=lambda x: x < 10)
-        True
-
-        ```
-        """
-        iterator = itertools.groupby(self._inner, key)
-        for _first in iterator:
-            for _second in iterator:
-                return False
-            return True
-        return True
-
-    def all_unique[U](self, key: Callable[[T], U] | None = None) -> bool:
-        """Returns True if all the elements of iterable are unique.
-
-        Credits to more-itertools for the implementation.
-
-        Args:
-            key (Callable[[T], U] | None): Function to transform items before comparison. Defaults to None.
-
-        Returns:
-            bool: True if all elements are unique, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq("ABCB").all_unique()
-        False
-
-        ```
-        If a key function is specified, it will be used to make comparisons.
-        ```python
-        >>> pc.Seq("ABCb").all_unique()
-        True
-        >>> pc.Seq("ABCb").all_unique(str.lower)
-        False
-
-        ```
-        The function returns as soon as the first non-unique element is encountered.
-
-        Iterables with a mix of hashable and unhashable items can be used, but the function will be slower for unhashable items
-
-        """
-        seenset: set[T | U] = set()
-        seenset_add = seenset.add
-        seenlist: list[T | U] = []
-        seenlist_add = seenlist.append
-        for element in map(key, self._inner) if key else self._inner:
-            try:
-                if element in seenset:
-                    return False
-                seenset_add(element)
-            except TypeError:
-                if element in seenlist:
-                    return False
-                seenlist_add(element)
-        return True
-
-    def is_sorted[U](
-        self,
-        key: Callable[[T], U] | None = None,
-        *,
-        reverse: bool = False,
-        strict: bool = False,
-    ) -> bool:
-        """Returns True if the items of iterable are in sorted order.
-
-        Credits to more-itertools for the implementation.
-
-        Args:
-            key (Callable[[T], U] | None): Function to transform items before comparison. Defaults to None.
-            reverse (bool): Whether to check for descending order. Defaults to False.
-            strict (bool): Whether to enforce strict sorting (no equal elements). Defaults to False.
-
-        Returns:
-            bool: True if items are sorted according to the criteria, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq(["1", "2", "3", "4", "5"]).is_sorted(key=int)
-        True
-        >>> pc.Seq([5, 4, 3, 1, 2]).is_sorted(reverse=True)
-        False
-
-        If strict, tests for strict sorting, that is, returns False if equal elements are found:
-        ```python
-        >>> pc.Seq([1, 2, 2]).is_sorted()
-        True
-        >>> pc.Seq([1, 2, 2]).is_sorted(strict=True)
-        False
-
-        ```
-
-        The function returns False after encountering the first out-of-order item.
-
-        This means it may produce results that differ from the built-in sorted function for objects with unusual comparison dynamics (like math.nan).
-
-        If there are no out-of-order items, the iterable is exhausted.
-        """
-        it = self._inner if (key is None) else map(key, self._inner)
-        a, b = itertools.tee(it)
-        next(b, None)
-        if reverse:
-            b, a = a, b
-        return all(map(lt, a, b)) if strict else not any(map(lt, b, a))
 
 
 def _get_repr(data: Iterable[Any]) -> Result[str, str]:

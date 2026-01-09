@@ -40,4 +40,10 @@ class SupportsSumWithNoDefaultGiven[T](
 ): ...
 
 
+type SupportsComparison[T] = (
+    SupportsDunderLE[T]
+    | SupportsDunderGE[T]
+    | SupportsDunderGT[T]
+    | SupportsDunderLT[T]
+)
 type SupportsRichComparison[T] = SupportsDunderLT[T] | SupportsDunderGT[T]
