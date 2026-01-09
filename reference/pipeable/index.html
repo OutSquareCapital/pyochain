@@ -1377,7 +1377,8 @@
 <span class="normal">79</span>
 <span class="normal">80</span>
 <span class="normal">81</span>
-<span class="normal">82</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Pipeable</span><span class="p">:</span>
+<span class="normal">82</span>
+<span class="normal">83</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Pipeable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Mixin class providing pipeable methods for fluent chaining.&quot;&quot;&quot;</span>
 
     <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
@@ -1405,8 +1406,9 @@
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
 <span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
+<span class="sd">        &gt;&gt;&gt; from collections.abc import Sequence</span>
 <span class="sd">        &gt;&gt;&gt; import hashlib</span>
-<span class="sd">        &gt;&gt;&gt; def sha256_hex(data: pc.Seq[int]) -&gt; str:</span>
+<span class="sd">        &gt;&gt;&gt; def sha256_hex(data: Sequence[int]) -&gt; str:</span>
 <span class="sd">        ...     return hashlib.sha256(bytes(data)).hexdigest()</span>
 <span class="sd">        &gt;&gt;&gt;</span>
 <span class="sd">        &gt;&gt;&gt; pc.Seq([1, 2, 3]).into(sha256_hex)</span>
@@ -1570,8 +1572,7 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/traits/_converters.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">54</span>
-<span class="normal">55</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">55</span>
 <span class="normal">56</span>
 <span class="normal">57</span>
 <span class="normal">58</span>
@@ -1598,7 +1599,8 @@
 <span class="normal">79</span>
 <span class="normal">80</span>
 <span class="normal">81</span>
-<span class="normal">82</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">inspect</span><span class="p">[</span><span class="o">**</span><span class="n">P</span><span class="p">](</span>
+<span class="normal">82</span>
+<span class="normal">83</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">inspect</span><span class="p">[</span><span class="o">**</span><span class="n">P</span><span class="p">](</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Concatenate</span><span class="p">[</span><span class="n">Self</span><span class="p">,</span> <span class="n">P</span><span class="p">],</span> <span class="nb">object</span><span class="p">],</span>
     <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
@@ -1735,8 +1737,9 @@
     </table>
         <p>Example:
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">sha256_hex</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">sha256_hex</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="o">...</span>     <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="n">data</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
 <span class="o">&gt;&gt;&gt;</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="n">sha256_hex</span><span class="p">)</span>
@@ -1778,7 +1781,8 @@
 <span class="normal">49</span>
 <span class="normal">50</span>
 <span class="normal">51</span>
-<span class="normal">52</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">into</span><span class="p">[</span><span class="o">**</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">](</span>
+<span class="normal">52</span>
+<span class="normal">53</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">into</span><span class="p">[</span><span class="o">**</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">](</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Concatenate</span><span class="p">[</span><span class="n">Self</span><span class="p">,</span> <span class="n">P</span><span class="p">],</span> <span class="n">R</span><span class="p">],</span>
     <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
@@ -1801,8 +1805,9 @@
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
 <span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
+<span class="sd">    &gt;&gt;&gt; from collections.abc import Sequence</span>
 <span class="sd">    &gt;&gt;&gt; import hashlib</span>
-<span class="sd">    &gt;&gt;&gt; def sha256_hex(data: pc.Seq[int]) -&gt; str:</span>
+<span class="sd">    &gt;&gt;&gt; def sha256_hex(data: Sequence[int]) -&gt; str:</span>
 <span class="sd">    ...     return hashlib.sha256(bytes(data)).hexdigest()</span>
 <span class="sd">    &gt;&gt;&gt;</span>
 <span class="sd">    &gt;&gt;&gt; pc.Seq([1, 2, 3]).into(sha256_hex)</span>

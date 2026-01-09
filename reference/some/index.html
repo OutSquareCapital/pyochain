@@ -1431,7 +1431,15 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/pyochain/_option.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1046</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1038</span>
+<span class="normal">1039</span>
+<span class="normal">1040</span>
+<span class="normal">1041</span>
+<span class="normal">1042</span>
+<span class="normal">1043</span>
+<span class="normal">1044</span>
+<span class="normal">1045</span>
+<span class="normal">1046</span>
 <span class="normal">1047</span>
 <span class="normal">1048</span>
 <span class="normal">1049</span>
@@ -1576,15 +1584,7 @@
 <span class="normal">1188</span>
 <span class="normal">1189</span>
 <span class="normal">1190</span>
-<span class="normal">1191</span>
-<span class="normal">1192</span>
-<span class="normal">1193</span>
-<span class="normal">1194</span>
-<span class="normal">1195</span>
-<span class="normal">1196</span>
-<span class="normal">1197</span>
-<span class="normal">1198</span>
-<span class="normal">1199</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@final</span>
+<span class="normal">1191</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@final</span>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Some</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">Option</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Option variant representing the presence of a value.</span>
@@ -1867,7 +1867,15 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_option.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">297</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
 <span class="normal">298</span>
 <span class="normal">299</span>
 <span class="normal">300</span>
@@ -1879,15 +1887,7 @@
 <span class="normal">306</span>
 <span class="normal">307</span>
 <span class="normal">308</span>
-<span class="normal">309</span>
-<span class="normal">310</span>
-<span class="normal">311</span>
-<span class="normal">312</span>
-<span class="normal">313</span>
-<span class="normal">314</span>
-<span class="normal">315</span>
-<span class="normal">316</span>
-<span class="normal">317</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">and_then_star</span><span class="p">[</span><span class="n">U</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">R</span><span class="p">](</span>
+<span class="normal">309</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">and_then_star</span><span class="p">[</span><span class="n">U</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">R</span><span class="p">](</span>
     <span class="bp">self</span><span class="p">:</span> <span class="n">Option</span><span class="p">[</span><span class="n">U</span><span class="p">],</span>
     <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Option</span><span class="p">[</span><span class="n">R</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">R</span><span class="p">]:</span>
@@ -1964,7 +1964,15 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_option.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">148</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
 <span class="normal">149</span>
 <span class="normal">150</span>
 <span class="normal">151</span>
@@ -1978,15 +1986,7 @@
 <span class="normal">159</span>
 <span class="normal">160</span>
 <span class="normal">161</span>
-<span class="normal">162</span>
-<span class="normal">163</span>
-<span class="normal">164</span>
-<span class="normal">165</span>
-<span class="normal">166</span>
-<span class="normal">167</span>
-<span class="normal">168</span>
-<span class="normal">169</span>
-<span class="normal">170</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">flatten</span><span class="p">[</span><span class="n">U</span><span class="p">](</span><span class="bp">self</span><span class="p">:</span> <span class="n">Option</span><span class="p">[</span><span class="n">Option</span><span class="p">[</span><span class="n">U</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">U</span><span class="p">]:</span>
+<span class="normal">162</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">flatten</span><span class="p">[</span><span class="n">U</span><span class="p">](</span><span class="bp">self</span><span class="p">:</span> <span class="n">Option</span><span class="p">[</span><span class="n">Option</span><span class="p">[</span><span class="n">U</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">U</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Flattens a nested `Option`.</span>
 
 <span class="sd">    Converts an `Option[Option[U]]` into an `Option[U]` by removing one level of nesting.</span>
@@ -2100,7 +2100,15 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_option.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">122</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
 <span class="normal">123</span>
 <span class="normal">124</span>
 <span class="normal">125</span>
@@ -2116,15 +2124,7 @@
 <span class="normal">135</span>
 <span class="normal">136</span>
 <span class="normal">137</span>
-<span class="normal">138</span>
-<span class="normal">139</span>
-<span class="normal">140</span>
-<span class="normal">141</span>
-<span class="normal">142</span>
-<span class="normal">143</span>
-<span class="normal">144</span>
-<span class="normal">145</span>
-<span class="normal">146</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
+<span class="normal">138</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">if_some</span><span class="p">[</span><span class="n">V</span><span class="p">](</span><span class="n">value</span><span class="p">:</span> <span class="n">V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">V</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates an `Option[V]` based on the truthiness of a value.</span>
 
@@ -2170,7 +2170,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>Creates an <code>Option[V]</code> based on a <strong>predicate</strong> condition.</p>
+        <p>Creates an <code>Option[V]</code> based on a <strong>predicate</strong> condition on the provided <strong>value</strong>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2205,7 +2205,7 @@
                 <code>predicate</code>
             </td>
             <td>
-                  <code><autoref identifier="collections.abc.Callable" backlink-type="used-by" backlink-anchor="pyochain._option.Some.if_true" optional hover>Callable</autoref>[[], <autoref identifier="bool" backlink-type="used-by" backlink-anchor="pyochain._option.Some.if_true" optional>bool</autoref>]</code>
+                  <code><autoref identifier="collections.abc.Callable" backlink-type="used-by" backlink-anchor="pyochain._option.Some.if_true" optional hover>Callable</autoref>[[<autoref identifier="pyochain._option.Option.if_true[V]" optional>V</autoref>], <autoref identifier="bool" backlink-type="used-by" backlink-anchor="pyochain._option.Some.if_true" optional>bool</autoref>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2243,23 +2243,27 @@
     </table>
         <p>Example:
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Option</span><span class="o">.</span><span class="n">if_true</span><span class="p">(</span><span class="mi">42</span><span class="p">,</span> <span class="n">predicate</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">4</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Option</span><span class="o">.</span><span class="n">if_true</span><span class="p">(</span><span class="mi">42</span><span class="p">,</span> <span class="n">predicate</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">42</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Option</span><span class="o">.</span><span class="n">if_true</span><span class="p">(</span><span class="mi">42</span><span class="p">,</span> <span class="n">predicate</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">5</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Option</span><span class="o">.</span><span class="n">if_true</span><span class="p">(</span><span class="mi">21</span><span class="p">,</span> <span class="n">predicate</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">42</span><span class="p">)</span>
 <span class="n">NONE</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="c1"># Evaluate on __bool__ of a collection (will call __len__ under the hood)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Option</span><span class="o">.</span><span class="n">if_true</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">predicate</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">data</span><span class="p">)</span>
-<span class="n">Some</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">empty_data</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Option</span><span class="o">.</span><span class="n">if_true</span><span class="p">(</span><span class="n">empty_data</span><span class="p">,</span> <span class="n">predicate</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">empty_data</span><span class="p">)</span>
-<span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Option</span><span class="o">.</span><span class="n">if_true</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;README.md&quot;</span><span class="p">),</span> <span class="n">predicate</span><span class="o">=</span><span class="n">Path</span><span class="o">.</span><span class="n">exists</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+<span class="n">Some</span><span class="p">(</span><span class="s1">&#39;README.md&#39;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Option</span><span class="o">.</span><span class="n">if_true</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;README.md&quot;</span><span class="p">),</span> <span class="n">predicate</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">())</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span> <span class="c1"># Same as above</span>
+<span class="n">Some</span><span class="p">(</span><span class="s1">&#39;README.md&#39;</span><span class="p">)</span>
 </code></pre></div></p>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_option.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 92</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
 <span class="normal"> 93</span>
 <span class="normal"> 94</span>
 <span class="normal"> 95</span>
@@ -2279,21 +2283,13 @@
 <span class="normal">109</span>
 <span class="normal">110</span>
 <span class="normal">111</span>
-<span class="normal">112</span>
-<span class="normal">113</span>
-<span class="normal">114</span>
-<span class="normal">115</span>
-<span class="normal">116</span>
-<span class="normal">117</span>
-<span class="normal">118</span>
-<span class="normal">119</span>
-<span class="normal">120</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">if_true</span><span class="p">[</span><span class="n">V</span><span class="p">](</span><span class="n">value</span><span class="p">:</span> <span class="n">V</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">predicate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">bool</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">V</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates an `Option[V]` based on a **predicate** condition.</span>
+<span class="normal">112</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">if_true</span><span class="p">[</span><span class="n">V</span><span class="p">](</span><span class="n">value</span><span class="p">:</span> <span class="n">V</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">predicate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">V</span><span class="p">],</span> <span class="nb">bool</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">V</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates an `Option[V]` based on a **predicate** condition on the provided **value**.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        value (V): The value to wrap in `Some` if the condition is `True`.</span>
-<span class="sd">        predicate (Callable[[], bool]): The condition to evaluate.</span>
+<span class="sd">        predicate (Callable[[V], bool]): The condition to evaluate.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Option[V]: `Some(value)` if the condition is `True`, otherwise `NONE`.</span>
@@ -2301,21 +2297,19 @@
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
 <span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; pc.Option.if_true(42, predicate=lambda: 2 + 2 == 4)</span>
+<span class="sd">    &gt;&gt;&gt; pc.Option.if_true(42, predicate=lambda x: x == 42)</span>
 <span class="sd">    Some(42)</span>
-<span class="sd">    &gt;&gt;&gt; pc.Option.if_true(42, predicate=lambda: 2 + 2 == 5)</span>
+<span class="sd">    &gt;&gt;&gt; pc.Option.if_true(21, predicate=lambda x: x == 42)</span>
 <span class="sd">    NONE</span>
-<span class="sd">    &gt;&gt;&gt; # Evaluate on __bool__ of a collection (will call __len__ under the hood)</span>
-<span class="sd">    &gt;&gt;&gt; data = [1, 2, 3]</span>
-<span class="sd">    &gt;&gt;&gt; pc.Option.if_true(data, predicate=lambda: data)</span>
-<span class="sd">    Some([1, 2, 3])</span>
-<span class="sd">    &gt;&gt;&gt; empty_data = []</span>
-<span class="sd">    &gt;&gt;&gt; pc.Option.if_true(empty_data, predicate=lambda: empty_data)</span>
-<span class="sd">    NONE</span>
+<span class="sd">    &gt;&gt;&gt; from pathlib import Path</span>
+<span class="sd">    &gt;&gt;&gt; pc.Option.if_true(Path(&quot;README.md&quot;), predicate=Path.exists).map(str)</span>
+<span class="sd">    Some(&#39;README.md&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; pc.Option.if_true(Path(&quot;README.md&quot;), predicate=lambda p: p.exists()).map(str) # Same as above</span>
+<span class="sd">    Some(&#39;README.md&#39;)</span>
 
 <span class="sd">    ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Option</span><span class="p">[</span><span class="n">V</span><span class="p">],</span> <span class="n">Some</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">predicate</span><span class="p">()</span> <span class="k">else</span> <span class="n">NONE</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Option</span><span class="p">[</span><span class="n">V</span><span class="p">],</span> <span class="n">Some</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">predicate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">else</span> <span class="n">NONE</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2424,8 +2418,9 @@
     </table>
         <p>Example:
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">sha256_hex</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">sha256_hex</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="o">...</span>     <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="n">data</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
 <span class="o">&gt;&gt;&gt;</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="n">sha256_hex</span><span class="p">)</span>
@@ -2467,7 +2462,8 @@
 <span class="normal">49</span>
 <span class="normal">50</span>
 <span class="normal">51</span>
-<span class="normal">52</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">into</span><span class="p">[</span><span class="o">**</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">](</span>
+<span class="normal">52</span>
+<span class="normal">53</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">into</span><span class="p">[</span><span class="o">**</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">](</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Concatenate</span><span class="p">[</span><span class="n">Self</span><span class="p">,</span> <span class="n">P</span><span class="p">],</span> <span class="n">R</span><span class="p">],</span>
     <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
@@ -2490,8 +2486,9 @@
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
 <span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
+<span class="sd">    &gt;&gt;&gt; from collections.abc import Sequence</span>
 <span class="sd">    &gt;&gt;&gt; import hashlib</span>
-<span class="sd">    &gt;&gt;&gt; def sha256_hex(data: pc.Seq[int]) -&gt; str:</span>
+<span class="sd">    &gt;&gt;&gt; def sha256_hex(data: Sequence[int]) -&gt; str:</span>
 <span class="sd">    ...     return hashlib.sha256(bytes(data)).hexdigest()</span>
 <span class="sd">    &gt;&gt;&gt;</span>
 <span class="sd">    &gt;&gt;&gt; pc.Seq([1, 2, 3]).into(sha256_hex)</span>
@@ -2609,7 +2606,15 @@ leaving a <code>None</code> value untouched.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_option.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">222</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
 <span class="normal">223</span>
 <span class="normal">224</span>
 <span class="normal">225</span>
@@ -2624,15 +2629,7 @@ leaving a <code>None</code> value untouched.</p>
 <span class="normal">234</span>
 <span class="normal">235</span>
 <span class="normal">236</span>
-<span class="normal">237</span>
-<span class="normal">238</span>
-<span class="normal">239</span>
-<span class="normal">240</span>
-<span class="normal">241</span>
-<span class="normal">242</span>
-<span class="normal">243</span>
-<span class="normal">244</span>
-<span class="normal">245</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">map_star</span><span class="p">[</span><span class="n">U</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">R</span><span class="p">](</span>
+<span class="normal">237</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">map_star</span><span class="p">[</span><span class="n">U</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">R</span><span class="p">](</span>
     <span class="bp">self</span><span class="p">:</span> <span class="n">Option</span><span class="p">[</span><span class="n">U</span><span class="p">],</span>
     <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">R</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">R</span><span class="p">]:</span>
