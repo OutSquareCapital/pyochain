@@ -3819,51 +3819,23 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         return Ok(Some(accumulator))
 
-    @overload
-    def is_sorted(
-        self,
-        key: Callable[[T], SupportsComparison[Any]],
-        *,
-        reverse: bool = ...,
-        strict: bool = ...,
-    ) -> bool: ...
-    @overload
     def is_sorted[U: SupportsComparison[Any]](
-        self: Iter[U],
-        key: None = None,
-        *,
-        reverse: bool = ...,
-        strict: bool = ...,
-    ) -> bool: ...
-    @overload
-    def is_sorted(
-        self,
-        key: None = None,
-        *,
-        reverse: bool = ...,
-        strict: bool = ...,
-    ) -> Never: ...
-    def is_sorted(
-        self,
-        key: Callable[[T], SupportsComparison[Any]] | None = None,
-        *,
-        reverse: bool = False,
-        strict: bool = False,
+        self: Iter[U], *, reverse: bool = False, strict: bool = False
     ) -> bool:
-        """Returns `True` if the items of the `Iterator` are in sorted order.
+        """Returns `True` if the items of the `Iter` are in sorted order.
+
+        The elements of the `Iter` must support comparison operations.
 
         The function returns `False` after encountering the first out-of-order item.
 
-        This means it may produce results that differ from the built-in `sorted` function for objects with unusual comparison dynamics (like `math.nan`).
-
         If there are no out-of-order items, the `Iterator` is exhausted.
-
-        A **key** function can be specified to transform each item before comparison.
 
         Credits to **more-itertools** for the implementation.
 
+        See Also:
+            - `is_sorted_by()`: If your elements do not support comparison operations directly, or you want to sort based on a specific attribute or transformation.
+
         Args:
-            key (Callable[[T], SupportsComparison[Any]] | None): Function to transform items before comparison.
             reverse (bool): Whether to check for descending order.
             strict (bool): Whether to enforce strict sorting (no equal elements).
 
@@ -3873,11 +3845,10 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter(["1", "2", "3", "4", "5"]).is_sorted(key=int)
+        >>> pc.Iter([1, 2, 3, 4, 5]).is_sorted()
         True
-        >>> pc.Iter([5, 4, 3, 1, 2]).is_sorted(reverse=True)
-        False
 
+        ```
         If strict, tests for strict sorting, that is, returns False if equal elements are found:
         ```python
         >>> pc.Iter([1, 2, 2]).is_sorted()
@@ -3888,16 +3859,65 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         ```
 
         """
-        it = self._inner if (key is None) else map(key, self._inner)
-        a, b = itertools.tee(it)
+        a, b = itertools.tee(self._inner)
         next(b, None)
         if reverse:
             b, a = a, b
         match strict:
             case True:
-                return all(map(lt, a, b))  # pyright: ignore[reportArgumentType]
+                return all(map(lt, a, b))
             case False:
-                return not any(map(lt, b, a))  # pyright: ignore[reportArgumentType]
+                return not any(map(lt, b, a))
+
+    def is_sorted_by(
+        self,
+        key: Callable[[T], SupportsComparison[Any]],
+        *,
+        reverse: bool = False,
+        strict: bool = False,
+    ) -> bool:
+        """Returns `True` if the items of the `Iterator` are in sorted order according to the key function.
+
+        The function returns `False` after encountering the first out-of-order item.
+
+        If there are no out-of-order items, the `Iterator` is exhausted.
+
+        Credits to **more-itertools** for the implementation.
+
+        Args:
+            key (Callable[[T], SupportsComparison[Any]]): Function to extract a comparison key from each element.
+            reverse (bool): Whether to check for descending order.
+            strict (bool): Whether to enforce strict sorting (no equal elements).
+
+        Returns:
+            bool: `True` if items are sorted according to the criteria, `False` otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter(["1", "2", "3", "4", "5"]).is_sorted_by(int)
+        True
+        >>> pc.Iter(["5", "4", "3", "1", "2"]).is_sorted_by(int, reverse=True)
+        False
+
+        If strict, tests for strict sorting, that is, returns False if equal elements are found:
+        ```python
+        >>> pc.Iter(["1", "2", "2"]).is_sorted_by(int)
+        True
+        >>> pc.Iter(["1", "2", "2"]).is_sorted_by(key=int, strict=True)
+        False
+
+        ```
+        """
+        a, b = itertools.tee(map(key, self._inner))
+        next(b, None)
+        if reverse:
+            b, a = a, b
+        match strict:
+            case True:
+                return all(map(lt, a, b))
+            case False:
+                return not any(map(lt, b, a))
 
     def all_equal[U](self, key: Callable[[T], U] | None = None) -> bool:
         """Return `True` if all items of the `Iterator` are equal.
@@ -3915,8 +3935,6 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter([1, 1, 1]).all_equal()
-        True
         >>> pc.Iter("AaaA").all_equal(key=str.casefold)
         True
         >>> pc.Iter([1, 2, 3]).all_equal(key=lambda x: x < 10)
