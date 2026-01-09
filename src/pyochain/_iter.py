@@ -910,19 +910,19 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         collection.extend(self._inner)
         return collection
 
-    def try_collect[U](self: TryIter[U]) -> Option[Vec[U]]:
+    def try_collect[U](self: Iter[Option[U]] | Iter[Result[U, Any]]) -> Option[Vec[U]]:
         """Fallibly transforms **self** into a `Vec`, short circuiting if a failure is encountered.
 
         `try_collect()` is a variation of `collect()` that allows fallible conversions during collection.
 
-        Its main use case is simplifying conversions from iterators yielding `Option[T]`, `Result[T, E]` or `U | None` into `Option[Sequence[T]]`.
+        Its main use case is simplifying conversions from iterators yielding `Option[T]` or `Result[T, E]` into `Option[Vec[T]]`.
 
-        Also, if a failure is encountered during `try_collect()`, the iterator is still valid and may continue to be used, in which case it will continue iterating starting after the element that triggered the failure.
+        Also, if a failure is encountered during `try_collect()`, the `Iter` is still valid and may continue to be used, in which case it will continue iterating starting after the element that triggered the failure.
 
         See the last example below for an example of how this works.
 
         Note:
-            This method return `Vec[U]` instead of `Seq[U]` because the underlying data structure must be mutable in order to build up the collection.
+            This method return `Vec[U]` instead of being customizable, because the underlying data structure must be mutable in order to build up the collection.
 
         Returns:
             Option[Vec[U]]: `Some[Vec[U]]` if all elements were successfully collected, or `NONE` if a failure was encountered.
@@ -941,10 +941,10 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         Some(Vec(1, 2, 3))
         >>> pc.Iter([pc.Ok(1), pc.Err("error"), pc.Ok(3)]).try_collect()
         NONE
-        >>> def external_fn(x: int) -> int | None:
+        >>> def external_fn(x: int) -> pc.Option[int]:
         ...     if x % 2 == 0:
-        ...         return x
-        ...     return None
+        ...         return pc.Some(x)
+        ...     return pc.NONE
         >>> pc.Iter([1, 2, 3, 4]).map(external_fn).try_collect()
         NONE
         >>> # Demonstrating that the iterator remains usable after a failure:
@@ -956,23 +956,15 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         ```
         """
-        collected = Vec[U].new()
+        collected: list[U] = []
         collected_add = collected.append  # Local binding for performance
         for item in self._inner:
             match item:
-                case None:
+                case Ok(val) | Some(val):
+                    collected_add(val)
+                case _:
                     return NONE
-                case Result():
-                    if item.is_err():
-                        return NONE
-                    collected_add(item.unwrap())  # pyright: ignore[reportUnknownArgumentType]
-                case Option():
-                    if item.is_none():
-                        return NONE
-                    collected_add(item.unwrap())  # pyright: ignore[reportUnknownArgumentType]
-                case _ as plain_value:
-                    collected_add(plain_value)
-        return Some(collected)
+        return Some(Vec.from_ref(collected))
 
     def for_each[**P](
         self,
