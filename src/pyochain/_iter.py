@@ -2543,14 +2543,21 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         Returns:
             Unzipped[U, V]: dataclass with first and second iterators.
 
-        `Iter.unzip()` consumes the iterator of pairs.
 
-        Returns an Unzipped dataclass, containing two iterators:
+        Returns an `Unzipped` dataclass, containing two iterators:
 
         - one from the left elements of the pairs
         - one from the right elements.
 
-        This function is, in some sense, the opposite of zip.
+        This function is, in some sense, the opposite of `.zip()`.
+
+        Note:
+            Both iterators share the same underlying source.
+
+            Values consumed by one iterator remain in the shared buffer until the other iterator consumes them too.
+
+            This is the unavoidable cost of having two independent iterators over the same source.
+
         ```python
         >>> import pyochain as pc
         >>> data = [(1, "a"), (2, "b"), (3, "c")]
@@ -2562,8 +2569,8 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         ```
         """
-        d: tuple[tuple[U, V], ...] = tuple(self._inner)
-        return Unzipped(Iter(x[0] for x in d), Iter(x[1] for x in d))
+        left, right = itertools.tee(self._inner, 2)
+        return Unzipped(Iter(x[0] for x in left), Iter(x[1] for x in right))
 
     def cloned(self) -> Self:
         """Clone the `Iter` into a new independent `Iter` using `itertools.tee`.
