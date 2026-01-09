@@ -348,7 +348,7 @@ class Option[T](Pipeable):
         Returns:
             bool: `True` if the option is `Some` and the predicate returns `True` for the contained value, `False` otherwise.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> x = pc.Some(2)
@@ -404,7 +404,7 @@ class Option[T](Pipeable):
         Returns:
             bool: `True` if the option is `None` or the predicate returns `True` for the contained value, `False` otherwise.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Some(2).is_none_or(lambda x: x > 1)
@@ -588,7 +588,7 @@ class Option[T](Pipeable):
         Returns:
             Option[T]: The original option if it is `Some`, otherwise `optb`.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Some(2).or_(pc.NONE)
@@ -789,7 +789,7 @@ class Option[T](Pipeable):
             Option[T]: `Some[T]` if predicate returns true (where T is the wrapped value), `NONE` if predicate returns false.
 
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>>
@@ -925,7 +925,7 @@ class Option[T](Pipeable):
         Returns:
             Option[R]: The resulting option after applying the function.
 
-        Examples:
+        Example:
         ```python
         >>> from dataclasses import dataclass
         >>> import pyochain as pc
@@ -963,7 +963,7 @@ class Option[T](Pipeable):
         Returns:
             Option[T]: The resulting option after reduction.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> s12 = pc.Some(12)
@@ -994,7 +994,7 @@ class Option[T](Pipeable):
         Returns:
             Result[Option[T], E]: The transposed result.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Some(pc.Ok(5)).transpose()
@@ -1018,7 +1018,7 @@ class Option[T](Pipeable):
         Returns:
             Option[T]: `Some` value if exactly one option is `Some`, otherwise `NONE`.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Some(2).xor(pc.NONE)

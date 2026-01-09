@@ -62,7 +62,8 @@ class Dict[K, V](PyoCollection[dict[K, V], K], MutableMapping[K, V]):
         >>> dict_obj = pc.Dict.from_ref(original_dict)
         >>> dict_obj
         Dict(1: 'a', 2: 'b', 3: 'c')
-        >>> dict_obj[1] = "z"
+        >>> dict_obj.insert(1, "z")
+        Some('a')
         >>> original_dict
         {1: 'z', 2: 'b', 3: 'c'}
 
@@ -159,7 +160,7 @@ class Dict[K, V](PyoCollection[dict[K, V], K], MutableMapping[K, V]):
         Returns:
             Option[V]: The previous value associated with the key, or None if the key was not present.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> data = pc.Dict.new()
@@ -195,7 +196,7 @@ class Dict[K, V](PyoCollection[dict[K, V], K], MutableMapping[K, V]):
         Returns:
             Result[V, KeyError]: Ok containing the value if the key was not present, or Err containing a KeyError if the key already existed.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> d = pc.Dict.new()
@@ -367,7 +368,7 @@ class Dict[K, V](PyoCollection[dict[K, V], K], MutableMapping[K, V]):
         Returns:
             bool: True if the Dict is empty, False otherwise.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> d = pc.Dict.new()

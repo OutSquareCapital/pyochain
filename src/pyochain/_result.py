@@ -60,7 +60,7 @@ class Result[T, E](Pipeable, ABC):
         Returns:
             Iter[T]: An iterator over the `Ok` value, or empty if `Err`.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Ok(7).iter().next()
@@ -846,7 +846,7 @@ class Result[T, E](Pipeable, ABC):
         Returns:
             Result[T, F]: The original `Ok` value, or `res` if the original result is `Err`.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Ok(2).or_(pc.Err("late error"))

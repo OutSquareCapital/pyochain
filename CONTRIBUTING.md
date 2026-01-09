@@ -46,7 +46,7 @@ def my_function(param1: int, param2: str) -> bool:
         Returns:
                 bool: Description of the return value.
 
-        Examples:
+        Example:
         ```python
         >>> my_function(5, "test")
         True

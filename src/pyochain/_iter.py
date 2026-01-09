@@ -311,7 +311,7 @@ class SetMut[T](Set[T], MutableSet[T]):
         Args:
             value (T): The element to add.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> s = pc.SetMut({'a', 'b'})
@@ -331,7 +331,7 @@ class SetMut[T](Set[T], MutableSet[T]):
         Args:
             value (T): The element to remove.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> s = pc.SetMut({'a', 'b', 'c'})
@@ -452,7 +452,7 @@ class Vec[T](Seq[T], MutableSequence[T]):
             index (int): Position where to insert the element.
             value (T): The element to insert.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> vec = pc.Vec(['a', 'b', 'c'])
@@ -575,7 +575,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         Returns:
             Self: A new `Iter` instance that is independent from the original.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> original = pc.Iter([1, 2, 3])
@@ -864,7 +864,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         Returns:
             MutableSequence[T]: The same mutable collection passed as argument, now containing the collected items.
 
-        Examples:
+        Example:
         Basic usage:
         ```python
         >>> import pyochain as pc
@@ -908,7 +908,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         Returns:
             Option[Vec[U]]: `Some[Vec[U]]` if all elements were successfully collected, or `NONE` if a failure was encountered.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> # Successfully collecting an iterator of Option[int] into Option[Vec[int]]:
@@ -967,7 +967,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
             None: This is a terminal operation with no return value.
 
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Seq([1, 2, 3]).iter().for_each(lambda x: print(x + 1))
@@ -1047,7 +1047,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         Args:
             func (Callable[..., R]): Function to apply to each unpacked element.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Iter([(1, 2), (3, 4)]).for_each_star(lambda x, y: print(x + y))
@@ -1070,7 +1070,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         Returns:
             Result[None, E]: Returns `Ok(None)` if all applications of **f** were successful (i.e., returned `Ok`), or the first error `E` encountered.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> def validate_positive(n: int) -> pc.Result[None, str]:
@@ -1605,7 +1605,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         Returns:
             Option[R]: The first `Some(R)` result from applying `func`, or `NONE` if no such result is found.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> def _parse(s: str) -> pc.Option[int]:
@@ -1759,7 +1759,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         Returns:
             Iter[R]: An iterator of transformed elements until `NONE` is encountered.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> def checked_div(x: int) -> pc.Option[int]:
@@ -2638,7 +2638,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         Returns:
             Iter[tuple[Any, ...]]: An iterable of tuples containing elements from the Cartesian product.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Iter(["blue", "red"]).product(["S", "M"]).collect()
@@ -3493,7 +3493,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
             When you advance to the next group, the previous group's iterator becomes invalid and will yield empty results.
 
-        Examples:
+        Example:
         ```python
         >>> import pyochain as pc
         >>> # Example 1: Group even and odd numbers
