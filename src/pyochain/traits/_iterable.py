@@ -645,6 +645,30 @@ class PyoCollection[I: Collection[Any], T](PyoIterable[I, T], Collection[T]):
     def __contains__(self, item: object) -> bool:
         return self._inner.__contains__(item)
 
+    def contains(self, value: T) -> bool:
+        """Check if the `Collection` contains the specified **value**.
+
+        This is equivalent to using the `in` keyword directly on the `Collection`.
+
+        Args:
+            value (T): The value to check for existence.
+
+        Returns:
+            bool: True if the value exists in the Collection, False otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> data = pc.Dict({1: "a", 2: "b"})
+        >>> data.contains(1)
+        True
+        >>> data.contains(3)
+        False
+
+        ```
+        """
+        return self._inner.__contains__(value)
+
     def repeat(self, n: int | None = None) -> Iter[Self]:
         """Repeat the entire `Collection` **n** times (as elements) in an `Iter`.
 

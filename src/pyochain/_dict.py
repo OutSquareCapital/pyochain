@@ -3,12 +3,12 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import TYPE_CHECKING, Any, override
 
+from ._option import NONE, Option, Some
+from ._result import Err, Ok, Result
 from .traits import PyoCollection
 
 if TYPE_CHECKING:
     from ._iter import Iter
-    from ._option import Option
-    from ._result import Result
     from ._types import DictConvertible
 
 
@@ -72,30 +72,6 @@ class Dict[K, V](PyoCollection[dict[K, V], K], MutableMapping[K, V]):
         instance: Dict[K1, V1] = Dict.__new__(Dict)  # pyright: ignore[reportUnknownVariableType]
         instance._inner = data
         return instance
-
-    def contains_key(self, key: K) -> bool:
-        """Check if the `Dict` contains the specified key.
-
-        This is equivalent to using the `in` keyword directly on the `Dict`.
-
-        Args:
-            key (K): The key to check for existence.
-
-        Returns:
-            bool: True if the key exists in the Dict, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> data = pc.Dict({1: "a", 2: "b"})
-        >>> data.contains_key(1)
-        True
-        >>> data.contains_key(3)
-        False
-
-        ```
-        """
-        return key in self._inner
 
     @staticmethod
     def from_kwargs[U](**kwargs: U) -> Dict[str, U]:
@@ -178,8 +154,6 @@ class Dict[K, V](PyoCollection[dict[K, V], K], MutableMapping[K, V]):
 
         ```
         """
-        from ._option import Option
-
         previous = self._inner.get(key, None)
         self._inner[key] = value
         return Option(previous)
@@ -207,8 +181,6 @@ class Dict[K, V](PyoCollection[dict[K, V], K], MutableMapping[K, V]):
 
         ```
         """
-        from ._result import Err, Ok
-
         if key in self._inner:
             return Err(
                 KeyError(f"Key {key} already exists with value {self._inner[key]}.")
@@ -236,8 +208,6 @@ class Dict[K, V](PyoCollection[dict[K, V], K], MutableMapping[K, V]):
 
         ```
         """
-        from ._option import Option
-
         return Option(self._inner.pop(key, None))
 
     def remove_entry(self, key: K) -> Option[tuple[K, V]]:
@@ -260,8 +230,6 @@ class Dict[K, V](PyoCollection[dict[K, V], K], MutableMapping[K, V]):
 
         ```
         """
-        from ._option import NONE, Some
-
         if key in self._inner:
             return Some((key, self._inner.pop(key)))
         return NONE
@@ -358,8 +326,6 @@ class Dict[K, V](PyoCollection[dict[K, V], K], MutableMapping[K, V]):
 
         ```
         """
-        from ._option import Option
-
         return Option(self._inner.get(key, None))
 
     def is_empty(self) -> bool:
