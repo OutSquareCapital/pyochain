@@ -562,8 +562,8 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
     def __next__(self) -> T:
         return next(self._inner)
 
-    @warnings.deprecated("Use .new() instead.")
     @classmethod
+    @warnings.deprecated("Use .new() instead.")
     def empty(cls) -> Self:
         """Create an empty `Iter`.
 
