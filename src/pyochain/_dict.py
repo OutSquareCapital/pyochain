@@ -17,11 +17,13 @@ class Dict[K, V](PyoIterable[dict[K, V], K], MutableMapping[K, V]):
 
     Accept the same input types as the built-in `dict`.
 
+    Implement the `MutableMapping` interface, so all standard dictionary operations are supported.
+
     Note:
         Prefer using `Dict.from_ref` when wrapping existing dictionaries to avoid unnecessary copying.
 
-    Implement the `MutableMapping` interface, so all standard dictionary operations are supported.
-
+    Args:
+        data (Mapping[K, V] | Iterable[tuple[K, V]] | SupportsKeysAndGetItem[K, V]): Initial data for the Dict.
     """
 
     _inner: dict[K, V]
