@@ -1171,6 +1171,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Option &amp; Result Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#result" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Result
+      
+    </span>
+  </a>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1403,6 +1431,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Option &amp; Result Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#result" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Result
+      
+    </span>
+  </a>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1450,34 +1506,31 @@
 <td><code>Pipeable</code></td>
 <td>Functional chaining</td>
 <td><code>into()</code>, <code>inspect()</code> for fluent method composition</td>
-<td>All collections, <code>Result</code>, <code>Option</code></td>
+<td>All pyochain objects</td>
 </tr>
 <tr>
 <td><code>Checkable</code></td>
 <td>Conditional operations</td>
-<td><code>then()</code>, <code>ok_or()</code>, conversion to <code>Option</code>/<code>Result</code></td>
-<td>All collections (<code>PyoIterable</code> inherits it)</td>
+<td>conversion to <code>Option</code>/<code>Result</code> with booleans</td>
+<td>All pyochain <code>Iterables</code></td>
 </tr>
 <tr>
 <td><code>PyoIterable[I, T]</code></td>
-<td>Base collection trait</td>
+<td>Base <code>Iterable</code> trait</td>
 <td>Combines <code>Pipeable</code> &amp; <code>Checkable</code> with <code>Iterable</code> protocol</td>
-<td>All collections (<code>Iter</code>, <code>Seq</code>, <code>Vec</code>, <code>Set</code>, <code>SetMut</code>, <code>Dict</code>)</td>
+<td>All pyochain <code>Iterables</code></td>
 </tr>
 <tr>
 <td><code>PyoCollection[I, T]</code></td>
 <td>Concrete collections</td>
-<td><code>__len__()</code>, <code>__contains__()</code>, <code>repeat(n)</code></td>
-<td><code>Seq</code>, <code>Vec</code>, <code>Set</code>, <code>SetMut</code>, <code>Dict</code> (not <code>Iter</code>)</td>
+<td><code>collections.abc.Collection</code> methods</td>
+<td>all pyochain eager collections (Not <code>Iter</code>)</td>
 </tr>
 </tbody>
 </table>
 <h2 id="collections-iterators">Collections &amp; Iterators</h2>
 <p>All collection types can be created from any object implementing the <code>Iterable</code> protocol (think anything you can use in a <code>for</code> loop).
 Since they implement collections Protocols, they can act as drop-in replacements for their Python counterparts/underlying types.</p>
-<p>All mutable collections types provide a <code>from_ref()</code> class method to instanciate them from a reference to an existing Python mutable collection corresponding to their underlying data structure.
-This allows efficient conversion without copying data when dealing with external functions that returns standard Python collections.
-Immutable collections types don't need them, as Python already optimize this case under the hood.</p>
 <h3 id="collection-types">Collection Types</h3>
 <table>
 <thead>
@@ -1494,7 +1547,7 @@ Immutable collections types don't need them, as Python already optimize this cas
 <tr>
 <td><code>Iter[T]</code></td>
 <td><code>Iterator[T]</code></td>
-<td><code>Iterator</code></td>
+<td><code>Iterator[T]</code></td>
 <td>N/A</td>
 <td>N/A</td>
 <td>N/A</td>
@@ -1502,7 +1555,7 @@ Immutable collections types don't need them, as Python already optimize this cas
 <tr>
 <td><code>Seq[T]</code></td>
 <td><code>tuple[T]</code></td>
-<td><code>Sequence</code></td>
+<td><code>Sequence[T]</code></td>
 <td>Yes</td>
 <td>No</td>
 <td>No</td>
@@ -1510,7 +1563,7 @@ Immutable collections types don't need them, as Python already optimize this cas
 <tr>
 <td><code>Vec[T]</code></td>
 <td><code>list[T]</code></td>
-<td><code>MutableSequence</code></td>
+<td><code>MutableSequence[T]</code></td>
 <td>Yes</td>
 <td>No</td>
 <td>Yes</td>
@@ -1518,7 +1571,7 @@ Immutable collections types don't need them, as Python already optimize this cas
 <tr>
 <td><code>Set[T]</code></td>
 <td><code>frozenset[T]</code></td>
-<td><code>Set</code></td>
+<td><code>Set[T]</code></td>
 <td>No</td>
 <td>Yes</td>
 <td>No</td>
@@ -1526,7 +1579,7 @@ Immutable collections types don't need them, as Python already optimize this cas
 <tr>
 <td><code>SetMut[T]</code></td>
 <td><code>set[T]</code></td>
-<td><code>MutableSet</code></td>
+<td><code>MutableSet[T]</code></td>
 <td>No</td>
 <td>Yes</td>
 <td>Yes</td>
@@ -1534,7 +1587,7 @@ Immutable collections types don't need them, as Python already optimize this cas
 <tr>
 <td><code>Dict[K,V]</code></td>
 <td><code>dict[K, V]</code></td>
-<td><code>MutableMapping</code></td>
+<td><code>MutableMapping[K, V]</code></td>
 <td>Yes</td>
 <td>Keys</td>
 <td>Yes</td>
@@ -1542,9 +1595,13 @@ Immutable collections types don't need them, as Python already optimize this cas
 </tbody>
 </table>
 <h2 id="option-result-types">Option &amp; Result Types</h2>
-<p><strong>Option</strong> types are used to represent values that may or may not be present, as an alternative to using <code>None</code>, with methods to handle such cases safely, explicitly, and fluently.
-<strong>Result</strong> types are used to represent the outcome of operations that can succeed or fail, encapsulating either a successful value or an error, promoting explicit error handling without relying on exceptions.
-Any function that may fail should be handled with <code>Result[T, E]</code> return type.
+<h3 id="option">Option</h3>
+<p><code>Option</code> types are used to represent values that may or may not be present.</p>
+<p>They act as an alternative to using <code>None</code>, with methods to handle such cases safely, explicitly, and fluently.</p>
+<h2 id="result">Result</h2>
+<p><code>Result[T, E]</code> types are used to represent the outcome of operations that can succeed or fail.</p>
+<p>They encapsulate either a successful <code>Ok[T]</code> value, or an error <code>Err[E]</code> value, promoting explicit error handling without relying on exceptions.</p>
+<p>Any function that may fail should be handled with <code>Result[T, E]</code> return type.
 This clearly indicates to the caller that they need to handle potential errors.</p>
 <table>
 <thead>

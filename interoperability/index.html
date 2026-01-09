@@ -1274,6 +1274,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#pyoiterable-trait-pyocollection-trait" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PyoIterable trait &amp; PyoCollection trait
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1500,6 +1522,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#pyoiterable-trait-pyocollection-trait" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PyoIterable trait &amp; PyoCollection trait
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1603,6 +1647,23 @@
 <span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([])</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="s2">&quot;empty&quot;</span><span class="p">)</span>
 <span class="n">Err</span><span class="p">(</span><span class="s1">&#39;empty&#39;</span><span class="p">)</span>
 </code></pre></div>
+<h3 id="pyoiterable-trait-pyocollection-trait">PyoIterable trait &amp; PyoCollection trait</h3>
+<p>Those traits are the base for all collection and iterator types in Pyochain.</p>
+<p>They combine <code>Pipeable</code> and <code>Checkable</code> with Python's <code>Iterable</code> protocol, providing a consistent interface.</p>
+<p>All <em>mutable collections</em> types provide a <code>from_ref()</code> class method.</p>
+<p>This method instantiates her class from a <em>reference</em> to an existing Python <em>mutable collection</em> corresponding to their underlying data structure.</p>
+<h3 id="example">Example</h3>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">py_list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="c1"># standard Python list</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Vec</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="n">py_list</span><span class="p">)</span> <span class="c1"># create Vec from reference</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="c1"># modify Vec</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span>
+<span class="n">Vec</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">py_list</span> <span class="c1"># original list is also modified. No copy was made.</span>
+<span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
+</code></pre></div>
+<p>This allows fast, efficient no-copy conversions when dealing with external functions that returns standard Python collections.</p>
+<p><em>Immutable collections</em> types don't need them, as Python already optimize this case under the hood.</p>
 <h2 id="conversion-interoperability-map">Conversion &amp; Interoperability Map</h2>
 <p>The following graph illustrates all the built-in ways to convert between types in Pyochain.</p>
 <ul>
