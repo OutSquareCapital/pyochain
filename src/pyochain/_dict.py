@@ -1,21 +1,21 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping, MutableMapping
+from collections.abc import MutableMapping
 from typing import TYPE_CHECKING, Any, override
 
-from .traits import PyoIterable
+from .traits import PyoCollection
 
 if TYPE_CHECKING:
     from ._iter import Iter
     from ._option import Option
     from ._result import Result
-    from ._types import SupportsKeysAndGetItem
+    from ._types import DictConvertible
 
 
-class Dict[K, V](PyoIterable[dict[K, V], K], MutableMapping[K, V]):
+class Dict[K, V](PyoCollection[dict[K, V], K], MutableMapping[K, V]):
     """A `Dict` is a key-value store similar to Python's built-in `dict`, but with additional methods inspired by Rust's `HashMap`.
 
-    Accept the same input types as the built-in `dict`.
+    Accept the same input types as the built-in `dict`, including `Mapping`, `Iterable` of key-value pairs, and objects implementing `__getitem__()` and `keys()`.
 
     Implement the `MutableMapping` interface, so all standard dictionary operations are supported.
 
@@ -23,18 +23,13 @@ class Dict[K, V](PyoIterable[dict[K, V], K], MutableMapping[K, V]):
         Prefer using `Dict.from_ref` when wrapping existing dictionaries to avoid unnecessary copying.
 
     Args:
-        data (Mapping[K, V] | Iterable[tuple[K, V]] | SupportsKeysAndGetItem[K, V]): Initial data for the Dict.
+        data (DictConvertible[K, V]): Initial data for the Dict that can converted to a dictionary.
     """
 
     _inner: dict[K, V]
 
-    def __init__(
-        self, data: Mapping[K, V] | Iterable[tuple[K, V]] | SupportsKeysAndGetItem[K, V]
-    ) -> None:
+    def __init__(self, data: DictConvertible[K, V]) -> None:
         self._inner = dict(data)
-
-    def __len__(self) -> int:
-        return len(self._inner)
 
     def __getitem__(self, key: K) -> V:
         return self._inner[key]

@@ -6,6 +6,6 @@ Since `Pipeable` and `Checkable` depend only on Self for arguments, returns type
 """
 
 from ._converters import Checkable, Pipeable
-from ._iterable import PyoIterable
+from ._iterable import PyoCollection, PyoIterable
 
-__all__ = ["Checkable", "Pipeable", "PyoIterable"]
+__all__ = ["Checkable", "Pipeable", "PyoCollection", "PyoIterable"]

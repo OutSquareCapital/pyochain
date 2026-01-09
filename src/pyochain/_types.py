@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from typing import Any, Protocol
 
 # typeshed protocols
@@ -47,3 +47,6 @@ type SupportsComparison[T] = (
     | SupportsDunderLT[T]
 )
 type SupportsRichComparison[T] = SupportsDunderLT[T] | SupportsDunderGT[T]
+type DictConvertible[K, V] = (
+    Mapping[K, V] | Iterable[tuple[K, V]] | SupportsKeysAndGetItem[K, V]
+)

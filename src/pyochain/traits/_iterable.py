@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 from collections.abc import Callable, Collection, Iterable, Iterator
 from typing import (
     TYPE_CHECKING,
@@ -79,7 +80,6 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         """Set up __init__ for the subclass if not manually defined."""
         super().__init_subclass__()
 
-        # Generate optimized __init__ if not manually defined
         if "__init__" not in cls.__dict__ and cls is not PyoIterable:
             inner_annotation: Callable[[Iterable[T]], I] | None = get_type_hints(
                 cls, localns={"T": Any}
@@ -91,6 +91,12 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
                     f"Example: _inner: list[T]"
                 )
                 raise TypeError(msg)
+
+            if (
+                hasattr(inner_annotation, "__name__")
+                and inner_annotation.__name__ == "I"
+            ):
+                return
 
             origin_inner = get_origin(inner_annotation)
             if origin_inner is not None:
@@ -110,7 +116,7 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
 
     def __iter__(self) -> Iterator[T]:
         """Get an `Iterator[T]` over the _inner `Iterable`."""
-        return iter(self._inner)
+        return self._inner.__iter__()
 
     @classmethod
     def new(cls) -> Self:
@@ -613,6 +619,68 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         if predicate is None:
             return any(self._inner)
         return any(predicate(x) for x in self._inner)
+
+
+class PyoCollection[I: Collection[Any], T](PyoIterable[I, T], Collection[T]):
+    """Base trait for `Collection` types.
+
+    Foundation for all pyochain collections (`Seq`, `Vec`, `Set`, `SetMut`, `Dict`).
+
+    ##  Type Parameters
+
+    - `I`: Internal storage type (e.g., `list[T]`, `tuple[T, ...]`, `frozenset[T]`)
+    - `T`: Element type
+
+    ## Provides
+    - `__len__` and `__contains__` implementations based on `_inner`
+    - `repeat(n)` method to repeat the entire collection n times in an `Iter`
+
+    """
+
+    _inner: I
+
+    def __len__(self) -> int:
+        return self._inner.__len__()
+
+    def __contains__(self, item: object) -> bool:
+        return self._inner.__contains__(item)
+
+    def repeat(self, n: int | None = None) -> Iter[Self]:
+        """Repeat the entire `Collection` **n** times (as elements) in an `Iter`.
+
+        If **n** is `None`, repeat indefinitely.
+
+        Warning:
+            If **n** is `None`, this will create an infinite `Iterator`.
+
+            Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken.
+
+        See Also:
+            `Iter.cycle()` to repeat the *elements* of the `Iter` indefinitely (`Iter[T]`).
+
+        Args:
+            n (int | None): Optional number of repetitions.
+
+        Returns:
+            Iter[Self]: An `Iter` of repeated `Iter`.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Seq([1, 2]).repeat(3).collect()
+        Seq(Seq(1, 2), Seq(1, 2), Seq(1, 2))
+        >>> pc.Seq(("a", "b")).repeat(2).collect()
+        Seq(Seq('a', 'b'), Seq('a', 'b'))
+        >>> pc.Seq([0]).repeat().flatten().take(5).collect()
+        Seq(0, 0, 0, 0, 0)
+
+        ```
+        """
+        from .._iter import Iter
+
+        if n is None:
+            return Iter(itertools.repeat(self))
+        return Iter(itertools.repeat(self, n))
 
 
 def _get_repr(data: Iterable[Any]) -> Result[str, str]:

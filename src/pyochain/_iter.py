@@ -34,7 +34,7 @@ import cytoolz as cz
 from ._option import NONE, Option, Some
 from ._result import Err, Ok, Result
 from ._types import SupportsComparison, SupportsRichComparison
-from .traits import Pipeable, PyoIterable
+from .traits import Pipeable, PyoCollection, PyoIterable
 
 if TYPE_CHECKING:
     from random import Random
@@ -73,7 +73,7 @@ class Peekable[T](Pipeable):
     """An iterator of values, still including the peeked elements."""
 
 
-class Set[T](PyoIterable[frozenset[T], T], AbstractSet[T]):
+class Set[T](PyoCollection[frozenset[T], T], AbstractSet[T]):
     """`Set` represent an in- memory **unordered**  collection of **unique** elements.
 
     Implements the `Collection` Protocol from `collections.abc`, so it can be used as a standard immutable collection.
@@ -89,12 +89,6 @@ class Set[T](PyoIterable[frozenset[T], T], AbstractSet[T]):
     """
 
     _inner: frozenset[T]
-
-    def __contains__(self, item: object) -> bool:
-        return self._inner.__contains__(item)
-
-    def __len__(self) -> int:
-        return len(self._inner)
 
     @overload
     def union(self, *others: Iterable[T]) -> Set[T]: ...
@@ -350,7 +344,7 @@ class SetMut[T](Set[T], MutableSet[T]):
         self._inner.discard(value)
 
 
-class Seq[T](PyoIterable[tuple[T, ...], T], Sequence[T]):
+class Seq[T](PyoCollection[tuple[T, ...], T], Sequence[T]):
     """Represent an in memory `Sequence`.
 
     Implements the `Sequence` Protocol from `collections.abc`.
@@ -368,9 +362,6 @@ class Seq[T](PyoIterable[tuple[T, ...], T], Sequence[T]):
     """
 
     _inner: tuple[T, ...]
-
-    def __len__(self) -> int:
-        return len(self._inner)
 
     @overload
     def __getitem__(self, index: int) -> T: ...
