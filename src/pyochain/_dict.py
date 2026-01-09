@@ -51,7 +51,7 @@ class Dict[K, V](PyoIterable[dict[K, V], K], MutableMapping[K, V]):
 
         This is the recommended way to create a `Dict` from foreign functions that return a standard Python `dict`.
 
-        **Warning** ⚠️:
+        Warning:
             Any modifications made to this `Dict` will also affect the original, and vice versa.
 
         Args:

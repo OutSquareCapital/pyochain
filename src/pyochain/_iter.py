@@ -313,7 +313,7 @@ class SetMut[T](Set[T], MutableSet[T]):
 
         This is the recommended way to create a `SetMut` from foreign functions that return `set` objects.
 
-        **Warning** ⚠️
+        Warning:
             Since the `SetMut` directly references the original `set`, any modifications made to the `SetMut` will also affect the original `set`, and vice versa.
 
         Args:
@@ -447,7 +447,7 @@ class Vec[T](Seq[T], MutableSequence[T]):
 
         This is the recommended way to create a `Vec` from foreign functions.
 
-        **Warning** ⚠️
+        Warning:
             Since the `Vec` directly references the original `list`, any modifications made to the `Vec` will also affect the original `list`, and vice versa.
 
         Args:
@@ -552,7 +552,7 @@ class Vec[T](Seq[T], MutableSequence[T]):
     ) -> Vec[Any]:
         """Sort the elements of the `Vec` in place.
 
-        **Warning** ⚠️
+        Warning:
             This method modifies the `Vec` in place and returns the same instance for chaining.
 
         Args:
@@ -599,7 +599,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
     In general, avoid intermediate references when dealing with lazy iterators, and prioritize method chaining instead.
 
     Note:
-        `Iter` inherits from `Checkable` from its internal base class `BaseIter`.
+        `Iter` inherits from `Checkable` from its internal base class `PyoIterable`.
 
         However, since it does not implement `__len__` (contrary to other collections like `Seq` or `Vec`), the methods like `.then()`, `.ok_or()` etc. will always return `Some[Iter[T]]`, or `Ok[Iter[T]`.
 
@@ -720,8 +720,9 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
     def from_count(start: int = 0, step: int = 1) -> Iter[int]:
         """Create an infinite `Iterator` of evenly spaced values.
 
-        **Warning** ⚠️
+        Warning:
             This creates an infinite iterator.
+
             Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken.
 
         Args:
@@ -1813,8 +1814,9 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         Operates lazily, hence if you need to get the underlying elements, you will need to collect each repeated `Iter` via `.map(lambda x: x.collect())` or similar.
 
-        **Warning** ⚠️
+        Warning:
             If **n** is `None`, this will create an infinite `Iterator`.
+
             Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken.
 
         See Also:
@@ -2886,8 +2888,9 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
     def cycle(self) -> Iter[T]:
         """Repeat the `Iter` indefinitely.
 
-        **Warning** ⚠️
+        Warning:
             This creates an infinite `Iterator`.
+
             Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken.
 
         See Also:
@@ -3440,10 +3443,11 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         That behavior differs from SQL's `GROUP BY` which aggregates common elements regardless of their input order.
 
-        **Warning** ⚠️
-            **You MUST materialize the second element of the tuple **immediately** when iterating over groups!
+        Warning:
+            You must materialize the second element of the tuple immediately when iterating over groups.
 
             Because `.group_by()` uses Python's `itertools.groupby` under the hood, each group's iterator shares internal state.
+
             When you advance to the next group, the previous group's iterator becomes invalid and will yield empty results.
 
         Examples:
