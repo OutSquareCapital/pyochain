@@ -15,7 +15,7 @@
         <link rel="canonical" href="https://outsquarecapital.github.io/pyochain/core-types-overview/">
       
       
-        <link rel="prev" href="../reference/pipeable/">
+        <link rel="prev" href="../reference/pyoiterable/">
       
       
         <link rel="next" href="../examples/">
@@ -919,6 +919,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/pyocollection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PyoCollection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/pyoiterable/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PyoIterable
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1063,32 +1119,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#pipeable" class="md-nav__link">
+  <a href="#trait-overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pipeable
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#checkable" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Checkable
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pyoiterable" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        PyoIterable
+        Trait Overview
       
     </span>
   </a>
@@ -1317,32 +1351,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#pipeable" class="md-nav__link">
+  <a href="#trait-overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pipeable
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#checkable" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Checkable
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pyoiterable" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        PyoIterable
+        Trait Overview
       
     </span>
   </a>
@@ -1423,15 +1435,43 @@
 <p>The following tables summarizes the main types provided by pyochain, along with their characteristics and Python equivalents.</p>
 <h2 id="core-traits">Core Traits</h2>
 <p>For more concrete examples of these traits, see the <a href="../interoperability/">interoperability section</a>.</p>
-<h3 id="pipeable">Pipeable</h3>
-<p><code>Pipeable</code> is a mixin trait that provides <code>into()</code> and <code>inspect()</code> functionality to types that inerhit from it.</p>
-<p>This allows for chaining operations in a functional programming style, enhancing code readability and maintainability.</p>
-<h3 id="checkable">Checkable</h3>
-<p><code>Checkable</code> is a mixin trait that provides methods like <code>then()</code>, <code>ok_or()</code>, and others to types that inherit from it.
-This trait facilitate conversion to <code>Option</code> and <code>Result</code> types, as well as chaining operations that depend on the success or failure of previous computations.</p>
-<h3 id="pyoiterable">PyoIterable</h3>
-<p><code>PyoIterable[I]</code> is the base mixin trait for all pyochain collection types.
-It combines <code>Pipeable</code> and <code>Checkable</code> traits with Python's <code>Iterable</code> protocol, providing unified methods across all collection types.</p>
+<h3 id="trait-overview">Trait Overview</h3>
+<table>
+<thead>
+<tr>
+<th>Trait</th>
+<th>Purpose</th>
+<th>Main Capabilities</th>
+<th>Inherited by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Pipeable</code></td>
+<td>Functional chaining</td>
+<td><code>into()</code>, <code>inspect()</code> for fluent method composition</td>
+<td>All collections, <code>Result</code>, <code>Option</code></td>
+</tr>
+<tr>
+<td><code>Checkable</code></td>
+<td>Conditional operations</td>
+<td><code>then()</code>, <code>ok_or()</code>, conversion to <code>Option</code>/<code>Result</code></td>
+<td>All collections (<code>PyoIterable</code> inherits it)</td>
+</tr>
+<tr>
+<td><code>PyoIterable[I, T]</code></td>
+<td>Base collection trait</td>
+<td>Combines <code>Pipeable</code> &amp; <code>Checkable</code> with <code>Iterable</code> protocol</td>
+<td>All collections (<code>Iter</code>, <code>Seq</code>, <code>Vec</code>, <code>Set</code>, <code>SetMut</code>, <code>Dict</code>)</td>
+</tr>
+<tr>
+<td><code>PyoCollection[I, T]</code></td>
+<td>Concrete collections</td>
+<td><code>__len__()</code>, <code>__contains__()</code>, <code>repeat(n)</code></td>
+<td><code>Seq</code>, <code>Vec</code>, <code>Set</code>, <code>SetMut</code>, <code>Dict</code> (not <code>Iter</code>)</td>
+</tr>
+</tbody>
+</table>
 <h2 id="collections-iterators">Collections &amp; Iterators</h2>
 <p>All collection types can be created from any object implementing the <code>Iterable</code> protocol (think anything you can use in a <code>for</code> loop).
 Since they implement collections Protocols, they can act as drop-in replacements for their Python counterparts/underlying types.</p>
@@ -1579,9 +1619,10 @@ flowchart TB
         Some["Some[T]&lt;br&gt;some value"]
         NONE["NONE&lt;br&gt;no value"]
   end
-    Pipeable["Pipeable&lt;br&gt;(mixin)"] --&gt; PyoIterable["PyoIterable[I]&lt;br&gt;base trait for all iterables"] &amp; Result &amp; Option
+    Pipeable["Pipeable&lt;br&gt;(mixin)"] --&gt; PyoIterable["PyoIterable[I, T]&lt;br&gt;base trait for all iterables"] &amp; Result &amp; Option
     Checkable["✅ Checkable&lt;br&gt;(mixin)"] --&gt; PyoIterable
-    PyoIterable --&gt; Dict &amp; Iter &amp; Seq &amp; Set
+    PyoIterable --&gt; Iter &amp; PyoCollection["PyoCollection[I, T]&lt;br&gt;trait for concrete collections"]
+    PyoCollection --&gt; Dict &amp; Seq &amp; Set
     Seq --&gt; Vec
     Set --&gt; SetMut
     Result --&gt; Ok &amp; Err
@@ -1589,6 +1630,7 @@ flowchart TB
 
     style Pipeable stroke:#FFD600
     style PyoIterable stroke:#00C853
+    style PyoCollection stroke:#00C853
     style Checkable stroke:#2962FF
     linkStyle 0 stroke:#FFD600,fill:none
     linkStyle 1 stroke:#FFD600,fill:none

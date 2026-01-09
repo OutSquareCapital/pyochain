@@ -1334,6 +1334,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyocollection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PyoCollection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyoiterable/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PyoIterable
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3347,7 +3403,7 @@ This allow to query the presence of a value and take action, always accounting f
 <span class="sd">        Returns:</span>
 <span class="sd">            bool: `True` if the option is `Some` and the predicate returns `True` for the contained value, `False` otherwise.</span>
 
-<span class="sd">        Examples:</span>
+<span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
 <span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
 <span class="sd">        &gt;&gt;&gt; x = pc.Some(2)</span>
@@ -3403,7 +3459,7 @@ This allow to query the presence of a value and take action, always accounting f
 <span class="sd">        Returns:</span>
 <span class="sd">            bool: `True` if the option is `None` or the predicate returns `True` for the contained value, `False` otherwise.</span>
 
-<span class="sd">        Examples:</span>
+<span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
 <span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
 <span class="sd">        &gt;&gt;&gt; pc.Some(2).is_none_or(lambda x: x &gt; 1)</span>
@@ -3587,7 +3643,7 @@ This allow to query the presence of a value and take action, always accounting f
 <span class="sd">        Returns:</span>
 <span class="sd">            Option[T]: The original option if it is `Some`, otherwise `optb`.</span>
 
-<span class="sd">        Examples:</span>
+<span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
 <span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
 <span class="sd">        &gt;&gt;&gt; pc.Some(2).or_(pc.NONE)</span>
@@ -3788,7 +3844,7 @@ This allow to query the presence of a value and take action, always accounting f
 <span class="sd">            Option[T]: `Some[T]` if predicate returns true (where T is the wrapped value), `NONE` if predicate returns false.</span>
 
 
-<span class="sd">        Examples:</span>
+<span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
 <span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
 <span class="sd">        &gt;&gt;&gt;</span>
@@ -3924,7 +3980,7 @@ This allow to query the presence of a value and take action, always accounting f
 <span class="sd">        Returns:</span>
 <span class="sd">            Option[R]: The resulting option after applying the function.</span>
 
-<span class="sd">        Examples:</span>
+<span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
 <span class="sd">        &gt;&gt;&gt; from dataclasses import dataclass</span>
 <span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
@@ -3962,7 +4018,7 @@ This allow to query the presence of a value and take action, always accounting f
 <span class="sd">        Returns:</span>
 <span class="sd">            Option[T]: The resulting option after reduction.</span>
 
-<span class="sd">        Examples:</span>
+<span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
 <span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
 <span class="sd">        &gt;&gt;&gt; s12 = pc.Some(12)</span>
@@ -3993,7 +4049,7 @@ This allow to query the presence of a value and take action, always accounting f
 <span class="sd">        Returns:</span>
 <span class="sd">            Result[Option[T], E]: The transposed result.</span>
 
-<span class="sd">        Examples:</span>
+<span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
 <span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
 <span class="sd">        &gt;&gt;&gt; pc.Some(pc.Ok(5)).transpose()</span>
@@ -4017,7 +4073,7 @@ This allow to query the presence of a value and take action, always accounting f
 <span class="sd">        Returns:</span>
 <span class="sd">            Option[T]: `Some` value if exactly one option is `Some`, otherwise `NONE`.</span>
 
-<span class="sd">        Examples:</span>
+<span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
 <span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
 <span class="sd">        &gt;&gt;&gt; pc.Some(2).xor(pc.NONE)</span>
@@ -4800,7 +4856,7 @@ This allow to query the presence of a value and take action, always accounting f
           </tr>
       </tbody>
     </table>
-        <p>Examples:
+        <p>Example:
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
 <span class="o">&gt;&gt;&gt;</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">is_even</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -4877,7 +4933,7 @@ This allow to query the presence of a value and take action, always accounting f
 <span class="sd">        Option[T]: `Some[T]` if predicate returns true (where T is the wrapped value), `NONE` if predicate returns false.</span>
 
 
-<span class="sd">    Examples:</span>
+<span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
 <span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
 <span class="sd">    &gt;&gt;&gt;</span>
@@ -5876,7 +5932,7 @@ This allow to query the presence of a value and take action, always accounting f
           </tr>
       </tbody>
     </table>
-        <p>Examples:
+        <p>Example:
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">is_none_or</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
 <span class="kc">True</span>
@@ -5933,7 +5989,7 @@ This allow to query the presence of a value and take action, always accounting f
 <span class="sd">    Returns:</span>
 <span class="sd">        bool: `True` if the option is `None` or the predicate returns `True` for the contained value, `False` otherwise.</span>
 
-<span class="sd">    Examples:</span>
+<span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
 <span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
 <span class="sd">    &gt;&gt;&gt; pc.Some(2).is_none_or(lambda x: x &gt; 1)</span>
@@ -6153,7 +6209,7 @@ This allow to query the presence of a value and take action, always accounting f
           </tr>
       </tbody>
     </table>
-        <p>Examples:
+        <p>Example:
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">is_some_and</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
@@ -6226,7 +6282,7 @@ This allow to query the presence of a value and take action, always accounting f
 <span class="sd">    Returns:</span>
 <span class="sd">        bool: `True` if the option is `Some` and the predicate returns `True` for the contained value, `False` otherwise.</span>
 
-<span class="sd">    Examples:</span>
+<span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
 <span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
 <span class="sd">    &gt;&gt;&gt; x = pc.Some(2)</span>
@@ -7356,7 +7412,7 @@ leaving a <code>None</code> value untouched.</p>
           </tr>
       </tbody>
     </table>
-        <p>Examples:
+        <p>Example:
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">or_</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
@@ -7405,7 +7461,7 @@ leaving a <code>None</code> value untouched.</p>
 <span class="sd">    Returns:</span>
 <span class="sd">        Option[T]: The original option if it is `Some`, otherwise `optb`.</span>
 
-<span class="sd">    Examples:</span>
+<span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
 <span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
 <span class="sd">    &gt;&gt;&gt; pc.Some(2).or_(pc.NONE)</span>
@@ -7661,7 +7717,7 @@ leaving a <code>None</code> value untouched.</p>
           </tr>
       </tbody>
     </table>
-        <p>Examples:
+        <p>Example:
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">s12</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">s17</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">17</span><span class="p">)</span>
@@ -7736,7 +7792,7 @@ leaving a <code>None</code> value untouched.</p>
 <span class="sd">    Returns:</span>
 <span class="sd">        Option[T]: The resulting option after reduction.</span>
 
-<span class="sd">    Examples:</span>
+<span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
 <span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
 <span class="sd">    &gt;&gt;&gt; s12 = pc.Some(12)</span>
@@ -7803,7 +7859,7 @@ leaving a <code>None</code> value untouched.</p>
           </tr>
       </tbody>
     </table>
-        <p>Examples:
+        <p>Example:
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">Ok</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
 <span class="n">Ok</span><span class="p">(</span><span class="n">Some</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
@@ -7846,7 +7902,7 @@ leaving a <code>None</code> value untouched.</p>
 <span class="sd">    Returns:</span>
 <span class="sd">        Result[Option[T], E]: The transposed result.</span>
 
-<span class="sd">    Examples:</span>
+<span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
 <span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
 <span class="sd">    &gt;&gt;&gt; pc.Some(pc.Ok(5)).transpose()</span>
@@ -8429,7 +8485,7 @@ If the option is <code>NONE</code>, it returns <code>(NONE, NONE)</code>.</p>
           </tr>
       </tbody>
     </table>
-        <p>Examples:
+        <p>Example:
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">xor</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
@@ -8478,7 +8534,7 @@ If the option is <code>NONE</code>, it returns <code>(NONE, NONE)</code>.</p>
 <span class="sd">    Returns:</span>
 <span class="sd">        Option[T]: `Some` value if exactly one option is `Some`, otherwise `NONE`.</span>
 
-<span class="sd">    Examples:</span>
+<span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
 <span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
 <span class="sd">    &gt;&gt;&gt; pc.Some(2).xor(pc.NONE)</span>
@@ -8721,7 +8777,7 @@ If the option is <code>NONE</code>, it returns <code>(NONE, NONE)</code>.</p>
           </tr>
       </tbody>
     </table>
-        <p>Examples:
+        <p>Example:
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
 <span class="o">&gt;&gt;&gt;</span>
@@ -8790,7 +8846,7 @@ If the option is <code>NONE</code>, it returns <code>(NONE, NONE)</code>.</p>
 <span class="sd">    Returns:</span>
 <span class="sd">        Option[R]: The resulting option after applying the function.</span>
 
-<span class="sd">    Examples:</span>
+<span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
 <span class="sd">    &gt;&gt;&gt; from dataclasses import dataclass</span>
 <span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
