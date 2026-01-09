@@ -6,21 +6,14 @@ The following tables summarizes the main types provided by pyochain, along with 
 
 For more concrete examples of these traits, see the [interoperability section](interoperability.md).
 
-### Pipeable
+### Trait Overview
 
-`Pipeable` is a mixin trait that provides `into()` and `inspect()` functionality to types that inerhit from it.
-
-This allows for chaining operations in a functional programming style, enhancing code readability and maintainability.
-
-### Checkable
-
-`Checkable` is a mixin trait that provides methods like `then()`, `ok_or()`, and others to types that inherit from it.
-This trait facilitate conversion to `Option` and `Result` types, as well as chaining operations that depend on the success or failure of previous computations.
-
-### PyoIterable
-
-`PyoIterable[I]` is the base mixin trait for all pyochain collection types.
-It combines `Pipeable` and `Checkable` traits with Python's `Iterable` protocol, providing unified methods across all collection types.
+| Trait | Purpose | Main Capabilities | Inherited by |
+| --- | --- | --- | --- |
+| `Pipeable` | Functional chaining | `into()`, `inspect()` for fluent method composition | All collections, `Result`, `Option` |
+| `Checkable` | Conditional operations | `then()`, `ok_or()`, conversion to `Option`/`Result` | All collections (`PyoIterable` inherits it) |
+| `PyoIterable[I, T]` | Base collection trait | Combines `Pipeable` & `Checkable` with `Iterable` protocol | All collections (`Iter`, `Seq`, `Vec`, `Set`, `SetMut`, `Dict`) |
+| `PyoCollection[I, T]` | Concrete collections | `__len__()`, `__contains__()`, `repeat(n)` | `Seq`, `Vec`, `Set`, `SetMut`, `Dict` (not `Iter`) |
 
 ## Collections & Iterators
 
@@ -86,9 +79,10 @@ flowchart TB
         Some["Some[T]<br>some value"]
         NONE["NONE<br>no value"]
   end
-    Pipeable["Pipeable<br>(mixin)"] --> PyoIterable["PyoIterable[I]<br>base trait for all iterables"] & Result & Option
+    Pipeable["Pipeable<br>(mixin)"] --> PyoIterable["PyoIterable[I, T]<br>base trait for all iterables"] & Result & Option
     Checkable["✅ Checkable<br>(mixin)"] --> PyoIterable
-    PyoIterable --> Dict & Iter & Seq & Set
+    PyoIterable --> Iter & PyoCollection["PyoCollection[I, T]<br>trait for concrete collections"]
+    PyoCollection --> Dict & Seq & Set
     Seq --> Vec
     Set --> SetMut
     Result --> Ok & Err
@@ -96,6 +90,7 @@ flowchart TB
 
     style Pipeable stroke:#FFD600
     style PyoIterable stroke:#00C853
+    style PyoCollection stroke:#00C853
     style Checkable stroke:#2962FF
     linkStyle 0 stroke:#FFD600,fill:none
     linkStyle 1 stroke:#FFD600,fill:none
