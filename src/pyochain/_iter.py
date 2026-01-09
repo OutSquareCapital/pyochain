@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import functools
 import itertools
-import warnings
 from collections.abc import (
     Callable,
     Collection,
@@ -536,6 +535,8 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
     Implements the `Iterator` Protocol from `collections.abc`, so it can be used as a standard iterator.
 
+    It also provides a `__bool__()` method to check for emptiness without consuming elements.
+
     - An `Iterable` is any object capable of returning its members one at a time, permitting it to be iterated over in a for-loop.
     - An `Iterator` is an object representing a stream of data; returned by calling `iter()` on an `Iterable`.
     - Once an `Iterator` is exhausted, it cannot be reused or reset.
@@ -548,16 +549,11 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
     However, keep in mind that `Iter` instances are single-use; once exhausted, they cannot be reused or reset.
 
-    If you need to reuse the data, consider collecting it into a collection first with `.collect()`.
+    If you need to reuse the data, consider collecting it into a collection first with `.collect()`, or clone it `.cloned()` to create an independent copy.
 
     You can always convert back to an `Iter` using `.iter()` for free on any pyochain collection type.
 
     In general, avoid intermediate references when dealing with lazy iterators, and prioritize method chaining instead.
-
-    Note:
-        `Iter` inherits from `Checkable` from its internal base class `PyoIterable`.
-
-        However, since it does not implement `__len__` (contrary to other collections like `Seq` or `Vec`), the methods like `.then()`, `.ok_or()` etc. will always return `Some[Iter[T]]`, or `Ok[Iter[T]`.
 
     Args:
         data (Iterable[T]): Any object that can be iterated over.
@@ -570,6 +566,29 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
     def __next__(self) -> T:
         return next(self._inner)
+
+    def __bool__(self) -> bool:
+        """Check if the `Iterator` has at least one element (mutates **self**).
+
+        After calling this, the `Iterator` still contains all elements.
+
+        Returns:
+            bool: True if the `Iterator` has at least one element, False otherwise.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> it = pc.Iter([1, 2, 3])
+        >>> bool(it)
+        True
+        >>> it.collect()  # All elements still available
+        Seq(1, 2, 3)
+
+        ```
+        """
+        first = tuple(itertools.islice(self._inner, 1))
+        self._inner = itertools.chain(first, self._inner)
+        return len(first) > 0
 
     @classmethod
     def from_ref(cls, other: Self) -> Self:
@@ -608,28 +627,6 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         it1, it2 = itertools.tee(other._inner)
         other._inner = it1
         return cls(it2)
-
-    @classmethod
-    @warnings.deprecated("Use .new() instead.")
-    def empty(cls) -> Self:
-        """Create an empty `Iter`.
-
-        Make sure to specify the type when calling this method, e.g., `Iter[int].empty()`.
-
-        Otherwise, `T` will be inferred as `Any`.
-
-        Returns:
-            Self: A new empty Iter instance.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter.empty().collect()
-        Seq()
-
-        ```
-        """
-        return cls(())
 
     def next(self) -> Option[T]:
         """Return the next element in the `Iter`.
