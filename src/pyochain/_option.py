@@ -74,6 +74,15 @@ class Option[T](Pipeable):
             return cast(Option[V], NONE)
         return cast(Option[V], Some(value))
 
+    def __bool__(self) -> None:
+        """Prevent implicit `Some|None` value checking in boolean contexts.
+
+        Raises:
+            TypeError: Always, to prevent implicit `Some|None` value checking.
+        """
+        msg = "Option instances cannot be used in boolean contexts for implicit `Some|None` value checking. Use is_some() or is_none() instead."
+        raise TypeError(msg)
+
     @staticmethod
     def if_true[V](value: V, *, predicate: Callable[[V], bool]) -> Option[V]:
         """Creates an `Option[V]` based on a **predicate** condition on the provided **value**.
