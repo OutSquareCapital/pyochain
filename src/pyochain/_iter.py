@@ -1332,12 +1332,13 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         def _split_into(data: Iterator[T]) -> Iterator[Iter[T]]:
             """Credits: more_itertools.split_into."""
+            new = self.__class__  # locality help for performance
             for size in sizes:
                 if size.is_none():
-                    yield self.__class__(data)
+                    yield new(data)
                     return
                 else:
-                    yield self.__class__(itertools.islice(data, size.unwrap()))
+                    yield new(itertools.islice(data, size.unwrap()))
 
         return Iter(_split_into(self._inner))
 
