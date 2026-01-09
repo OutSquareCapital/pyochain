@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import functools
 import itertools
+import warnings
 from collections.abc import (
     Callable,
     Collection,
@@ -275,32 +276,6 @@ class SetMut[T](Set[T], MutableSet[T]):
 
     _inner: set[T]  # type: ignore[override]
 
-    @classmethod
-    def new(cls) -> Self:
-        """Create an empty `SetMut`.
-
-        Make sure to specify the type when calling this method, e.g., `SetMut[int].new()`.
-
-        Otherwise, `T` will be inferred as `Any`.
-
-        Returns:
-            Self: A new empty `SetMut` instance.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> data = pc.SetMut[object].new()
-        >>> data
-        SetMut()
-        >>> # Equivalent to
-        >>> data: set[str] = {}
-        >>> data
-        {}
-
-        ```
-        """
-        return cls(())
-
     @staticmethod
     def from_ref[V](data: set[V]) -> SetMut[V]:
         """Create a `SetMut` from a reference to an existing `set`.
@@ -469,30 +444,6 @@ class Vec[T](Seq[T], MutableSequence[T]):
         instance._inner = data
         return instance
 
-    @classmethod
-    def new(cls) -> Self:
-        """Create an empty `Vec`.
-
-        Make sure to specify the type when calling this method, e.g., `Vec[int].new()`.
-
-        Otherwise, `T` will be inferred as `Any`.
-
-        Returns:
-            Self: A new empty `Vec` instance.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> data = pc.Vec[str].new()
-        >>> data
-        Vec()
-        >>> # Equivalent to
-        >>> data: list[str] = []
-
-        ```
-        """
-        return cls(())
-
     @overload
     def __setitem__(self, index: int, value: T) -> None: ...
     @overload
@@ -611,6 +562,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
     def __next__(self) -> T:
         return next(self._inner)
 
+    @warnings.deprecated("Use .new() instead.")
     @classmethod
     def empty(cls) -> Self:
         """Create an empty `Iter`.

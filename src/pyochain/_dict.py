@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, MutableMapping
-from typing import TYPE_CHECKING, Any, Self, override
+from typing import TYPE_CHECKING, Any, override
 
 from .traits import PyoIterable
 
@@ -100,30 +100,6 @@ class Dict[K, V](PyoIterable[dict[K, V], K], MutableMapping[K, V]):
         ```
         """
         return key in self._inner
-
-    @classmethod
-    def new(cls) -> Self:
-        """Create an empty `Dict`.
-
-        Be sure to specify the key and value types when using this method, otherwise they will be unknown.
-
-        Returns:
-            Self: An empty Dict instance.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> data = pc.Dict[str, int].new()
-        >>> data
-        Dict()
-        >>> # Equivalent to:
-        >>> data: dict[str, int] = {}
-        >>> data
-        {}
-
-        ```
-        """
-        return cls({})
 
     @staticmethod
     def from_kwargs[U](**kwargs: U) -> Dict[str, U]:

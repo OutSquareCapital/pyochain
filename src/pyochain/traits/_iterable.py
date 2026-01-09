@@ -112,6 +112,41 @@ class PyoIterable[I: Iterable[Any], T](Pipeable, Checkable, Iterable[T]):
         """Get an `Iterator[T]` over the _inner `Iterable`."""
         return iter(self._inner)
 
+    @classmethod
+    def new(cls) -> Self:
+        """Create an empty `Iterable`.
+
+        Make sure to specify the type when calling this method, e.g., `Vec[int].new()`.
+
+        Otherwise, `T` will be inferred as `Any`.
+
+        This can be very useful for mutable collections like `Vec` and `Dict`.
+
+        However, this can be handy for immutable collections too, for example for reprensenting failure steps in a pipeline.
+
+        Returns:
+            Self: A new empty `Iterable` instance.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> data = pc.Vec[int].new()
+        >>> data
+        Vec()
+        >>> # Equivalent to
+        >>> data: list[str] = []
+        >>> data
+        []
+        >>> my_dict = pc.Dict[str, int].new()
+        >>> my_dict.insert("a", 1)
+        NONE
+        >>> my_dict
+        Dict('a': 1)
+
+        ```
+        """
+        return cls(())
+
     def iter(self) -> Iter[T]:
         """Get an iterator over the `Iterable`.
 

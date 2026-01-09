@@ -1305,7 +1305,7 @@ class NoneOption[T](Option[T]):
     def iter(self) -> Iter[T]:
         from ._iter import Iter
 
-        return Iter[T].empty()
+        return Iter[T].new()
 
     def inspect[**P](
         self,
