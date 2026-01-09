@@ -104,13 +104,10 @@ class Set[T](PyoIterable[frozenset[T], T], AbstractSet[T]):
     @overload
     def union[U](self, *others: Iterable[U]) -> Set[T | U]: ...
     def union(self, *others: Iterable[Any]) -> Set[Any]:
-        """Return the union of this iterable and 'others'.
-
-        Note:
-            This method consumes inner data and removes duplicates.
+        """Return the union of this `Set` and **others**.
 
         Args:
-            *others (Iterable[Any]): Other iterables to include in the union.
+            *others (Iterable[Any]): Other `Iterables` to include in the union.
 
         Returns:
             Set[Any]: A new `Set` containing the union of elements.
@@ -126,7 +123,7 @@ class Set[T](PyoIterable[frozenset[T], T], AbstractSet[T]):
         return self.__class__(self._inner.union(*others))
 
     def intersection(self, *others: Iterable[Any]) -> Self:
-        """Return the elements common to this iterable and 'others'.
+        """Return the elements common to this `Set` and **others**.
 
         Is the opposite of `difference`.
 
@@ -134,11 +131,8 @@ class Set[T](PyoIterable[frozenset[T], T], AbstractSet[T]):
             - `difference`
             - `diff_symmetric`
 
-        Note:
-            This method consumes inner data, unsorts it, and removes duplicates.
-
         Args:
-            *others (Iterable[Any]): Other iterables to intersect with.
+            *others (Iterable[Any]): Other `Iterables` to intersect with.
 
         Returns:
             Self: A new `Set` containing the intersection of elements.
@@ -154,17 +148,14 @@ class Set[T](PyoIterable[frozenset[T], T], AbstractSet[T]):
         return self.__class__(self._inner.intersection(*others))
 
     def difference(self, *others: Iterable[T]) -> Self:
-        """Return the difference of this iterable and 'others'.
+        """Return the difference of this `Set` and **others**.
 
         See Also:
             - `intersection`
             - `diff_symmetric`
 
-        Note:
-            This method consumes inner data, unsorts it, and removes duplicates.
-
         Args:
-            *others (Iterable[T]): Other iterables to subtract from this iterable.
+            *others (Iterable[T]): Other `Iterables` to subtract from this `Set`.
 
         Returns:
             Self: A new `Set` containing the difference of elements.
@@ -180,19 +171,16 @@ class Set[T](PyoIterable[frozenset[T], T], AbstractSet[T]):
         return self.__class__(self._inner.difference(*others))
 
     def symmetric_difference(self, *others: Iterable[T]) -> Self:
-        """Return the symmetric difference (XOR) of this iterable and 'others'.
+        """Return the symmetric difference (XOR) of this `Set` and **others**.
 
-        (Elements in either 'self' or 'others' but not in both).
+        (Elements in either **self** or **others** but not in both).
 
         **See Also**:
             - `intersection`
             - `difference`
 
-        Note:
-            This method consumes inner data, unsorts it, and removes duplicates.
-
         Args:
-            *others (Iterable[T]): Other iterables to compute the symmetric difference with.
+            *others (Iterable[T]): Other `Iterables` to compute the symmetric difference with.
 
         Returns:
             Self: A new `Set` containing the symmetric difference of elements.
@@ -210,13 +198,13 @@ class Set[T](PyoIterable[frozenset[T], T], AbstractSet[T]):
         return self.__class__(self._inner.symmetric_difference(*others))
 
     def is_subset(self, other: Iterable[Any]) -> bool:
-        """Test whether every element in the set is in **other**.
+        """Test whether every element in the `Set` is in **other**.
 
         Args:
-            other (Iterable[Any]): Another iterable to compare with.
+            other (Iterable[Any]): Another `Iterable` to compare with.
 
         Returns:
-            bool: True if this set is a subset of **other**, False otherwise.
+            bool: True if this `Set` is a subset of **other**, False otherwise.
 
         Example:
         ```python
@@ -231,13 +219,13 @@ class Set[T](PyoIterable[frozenset[T], T], AbstractSet[T]):
         return self._inner.issubset(other)
 
     def is_superset(self, other: Iterable[Any]) -> bool:
-        """Test whether every element in **other** is in the set.
+        """Test whether every element in **other** is in **self**.
 
         Args:
-            other (Iterable[Any]): Another iterable to compare with.
+            other (Iterable[Any]): Another `Iterable` to compare with.
 
         Returns:
-            bool: True if this set is a superset of **other**, False otherwise.
+            bool: True if this `Set` is a superset of **other**, False otherwise.
 
         Example:
         ```python
@@ -252,13 +240,13 @@ class Set[T](PyoIterable[frozenset[T], T], AbstractSet[T]):
         return self._inner.issuperset(other)
 
     def is_disjoint(self, other: Iterable[Any]) -> bool:
-        """Test whether the set and **other** have no elements in common.
+        """Test whether **self** and **other** have no elements in common.
 
         Args:
-            other (Iterable[Any]): Another iterable to compare with.
+            other (Iterable[Any]): Another `Iterable` to compare with.
 
         Returns:
-            bool: True if the sets have no elements in common, False otherwise.
+            bool: True if the `Sets` have no elements in common, False otherwise.
 
         Example:
         ```python
@@ -274,11 +262,11 @@ class Set[T](PyoIterable[frozenset[T], T], AbstractSet[T]):
 
 
 class SetMut[T](Set[T], MutableSet[T]):
-    """A mutable set wrapper with functional API.
+    """A mutable `set` wrapper with functional API.
 
     Unlike `Set` which is immutable, `SetMut` allows in-place modification of elements.
 
-    Implement the `MutableSet` interface, so elements can be modified in place, and passed to any function/object expecting a standard mutable set.
+    Implement the `MutableSet` interface, so elements can be modified in place, and passed to any function/object expecting a standard mutable `set`.
 
     Underlying data structure is a `set`.
 
@@ -300,7 +288,7 @@ class SetMut[T](Set[T], MutableSet[T]):
         Otherwise, `T` will be inferred as `Any`.
 
         Returns:
-            Self: A new empty SetMut instance.
+            Self: A new empty `SetMut` instance.
 
         Example:
         ```python
@@ -319,20 +307,20 @@ class SetMut[T](Set[T], MutableSet[T]):
 
     @staticmethod
     def from_ref[V](data: set[V]) -> SetMut[V]:
-        """Create a `SetMut` from a reference to an existing **set**.
+        """Create a `SetMut` from a reference to an existing `set`.
 
-        This method wraps the provided **set** without copying it, allowing for efficient object instanciation.
+        This method wraps the provided `set` without copying it, allowing for efficient object instanciation.
 
-        This is the recommended way to create a `SetMut` from foreign functions that return **set** objects.
+        This is the recommended way to create a `SetMut` from foreign functions that return `set` objects.
 
-        **Warning** ⚠️:
-            Since the `SetMut` directly references the original set, any modifications made to the `SetMut` will also affect the original set, and vice versa.
+        **Warning** ⚠️
+            Since the `SetMut` directly references the original `set`, any modifications made to the `SetMut` will also affect the original `set`, and vice versa.
 
         Args:
-            data (set[V]): The **set** to wrap.
+            data (set[V]): The `set` to wrap.
 
         Returns:
-            SetMut[V]: A new `SetMut` instance wrapping the provided **set**.
+            SetMut[V]: A new `SetMut` instance wrapping the provided `set`.
 
         Example:
         ```python
@@ -353,7 +341,7 @@ class SetMut[T](Set[T], MutableSet[T]):
         return instance
 
     def add(self, value: T) -> None:
-        """Add an element to the set.
+        """Add an element to **self**.
 
         Args:
             value (T): The element to add.
@@ -371,7 +359,7 @@ class SetMut[T](Set[T], MutableSet[T]):
         self._inner.add(value)
 
     def discard(self, value: T) -> None:
-        """Remove an element from the set if it is a member.
+        """Remove an element from **self** if it is a member.
 
         Unlike `.remove()`, the `discard()` method does not raise an exception when an element is missing from the set.
 
@@ -392,13 +380,13 @@ class SetMut[T](Set[T], MutableSet[T]):
 
 
 class Seq[T](PyoIterable[tuple[T, ...], T], Sequence[T]):
-    """`Seq` represent an in memory Sequence.
+    """Represent an in memory `Sequence`.
 
-    Implements the `Sequence` Protocol from `collections.abc`, so it can be used as a standard immutable sequence.
+    Implements the `Sequence` Protocol from `collections.abc`.
 
     Provides a subset of `Iter` methods with eager evaluation, and is the return type of `Iter.collect()`.
 
-    The underlying data structure is an immutable tuple, hence the memory efficiency is better than a `Vec`.
+    The underlying data structure is an immutable `tuple`, hence the memory efficiency is better than a `Vec`.
 
     Note:
         `Seq(tuple)` is preferred over `Seq(list)` as this is a no-copy operation (Python optimizes `tuple` creation from another `tuple`).
@@ -421,7 +409,7 @@ class Seq[T](PyoIterable[tuple[T, ...], T], Sequence[T]):
         return self._inner.__getitem__(index)
 
     def is_distinct(self) -> bool:
-        """Return True if all items are distinct.
+        """Return True if all items of **self** are distinct.
 
         Returns:
             bool: True if all items are distinct, False otherwise.
@@ -437,36 +425,36 @@ class Seq[T](PyoIterable[tuple[T, ...], T], Sequence[T]):
 
 
 class Vec[T](Seq[T], MutableSequence[T]):
-    """A mutable sequence wrapper with functional API.
+    """A `MutableSequence` wrapper with functional API.
 
-    Implement `MutableSequence` Protocol from `collections.abc` so it can be used as a standard mutable sequence.
+    Implement `MutableSequence` Protocol from `collections.abc`.
 
     Unlike `Seq` which is immutable, `Vec` allows in-place modification of elements.
 
     Implement the `MutableSequence` interface, so elements can be modified in place, and passed to any function/object expecting a standard mutable sequence.
 
     Args:
-        data (Iterable[T]): The mutable sequence to wrap.
+        data (Iterable[T]): The `Iterable` to wrap.
     """
 
     _inner: list[T]  # type: ignore[override]
 
     @staticmethod
     def from_ref[V](data: list[V]) -> Vec[V]:
-        """Create a `Vec` from a reference to an existing list.
+        """Create a `Vec` from a reference to an existing `list`.
 
-        This method wraps the provided list without copying it, allowing for efficient creation of a `Vec`.
+        This method wraps the provided `list` without copying it, allowing for efficient creation of a `Vec`.
 
         This is the recommended way to create a `Vec` from foreign functions.
 
-        **Warning** ⚠️:
-            Since the `Vec` directly references the original list, any modifications made to the `Vec` will also affect the original list, and vice versa.
+        **Warning** ⚠️
+            Since the `Vec` directly references the original `list`, any modifications made to the `Vec` will also affect the original `list`, and vice versa.
 
         Args:
-            data (list[V]): The list to wrap.
+            data (list[V]): The `list` to wrap.
 
         Returns:
-            Vec[V]: A new Vec instance wrapping the provided list.
+            Vec[V]: A new Vec instance wrapping the provided `list`.
 
         Example:
         ```python
@@ -494,7 +482,7 @@ class Vec[T](Seq[T], MutableSequence[T]):
         Otherwise, `T` will be inferred as `Any`.
 
         Returns:
-            Self: A new empty Vec instance.
+            Self: A new empty `Vec` instance.
 
         Example:
         ```python
@@ -564,7 +552,7 @@ class Vec[T](Seq[T], MutableSequence[T]):
     ) -> Vec[Any]:
         """Sort the elements of the `Vec` in place.
 
-        **Warning** ⚠️:
+        **Warning** ⚠️
             This method modifies the `Vec` in place and returns the same instance for chaining.
 
         Args:
@@ -732,7 +720,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
     def from_count(start: int = 0, step: int = 1) -> Iter[int]:
         """Create an infinite `Iterator` of evenly spaced values.
 
-        **Warning** ⚠️:
+        **Warning** ⚠️
             This creates an infinite iterator.
             Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken.
 
@@ -1818,31 +1806,39 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         return Iter(_gen())
 
-    def repeat(
-        self,
-        n: int,
-        factory: Callable[[Iterable[T]], Sequence[T]] = tuple,
-    ) -> Iter[Iterable[T]]:
-        """Repeat the entire iterable n times (as elements).
+    def repeat(self, n: int | None = None) -> Iter[Iter[T]]:
+        """Repeat the entire `Iter` **n** times (as elements).
+
+        If **n** is `None`, repeat indefinitely.
+
+        Operates lazily, hence if you need to get the underlying elements, you will need to collect each repeated `Iter` via `.map(lambda x: x.collect())` or similar.
+
+        **Warning** ⚠️
+            If **n** is `None`, this will create an infinite `Iterator`.
+            Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken.
+
+        See Also:
+            `Iter.cycle()` to repeat the *elements* of the `Iter` indefinitely (`Iter[T]`).
 
         Args:
-            n (int): Number of repetitions.
-            factory (Callable[[Iterable[T]], Sequence[T]]): Factory to create the repeated Sequence (default: tuple).
+            n (int | None): Optional number of repetitions.
 
         Returns:
-            Iter[Iterable[T]]: An iterable of repeated sequences.
+            Iter[Iter[T]]: An `Iter` of repeated `Iter`.
 
         Example:
         ```python
         >>> import pyochain as pc
         >>> pc.Iter([1, 2]).repeat(2).collect()
-        Seq((1, 2), (1, 2))
-        >>> pc.Iter([1, 2]).repeat(3, list).collect()
+        Seq(1, 2, 1, 2)
+        >>> pc.Iter([1, 2]).repeat(3).map(list).collect()
         Seq([1, 2], [1, 2], [1, 2])
 
         ```
         """
-        return Iter(itertools.repeat(factory(self._inner), n))
+        if n is None:
+            return Iter(itertools.repeat(self))
+        return Iter(itertools.repeat(self, n))
 
     def accumulate(
         self, func: Callable[[T, T], T], initial: T | None = None
@@ -2891,17 +2887,20 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         return Iter(itertools.batched(self._inner, n, strict=strict))
 
     def cycle(self) -> Iter[T]:
-        """Repeat the sequence indefinitely.
+        """Repeat the `Iter` indefinitely.
 
         **Warning** ⚠️
-            This creates an infinite iterator.
-            Be sure to use Iter.take() or Iter.slice() to limit the number of items taken.
+            This creates an infinite `Iterator`.
+            Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken.
+
+        See Also:
+            `Iter.repeat()` to repeat *self* as elements (`Iter[Iter[T]]`).
 
         Returns:
             Iter[T]: A new Iterable wrapper that cycles through the elements indefinitely.
-        ```python
 
         Example:
+        ```python
         >>> import pyochain as pc
         >>> pc.Iter((1, 2)).cycle().take(5).collect()
         Seq(1, 2, 1, 2, 1)
