@@ -105,6 +105,33 @@ Ok(Seq(1, 2, 3))
 Err('empty')
 ```
 
+### PyoIterable trait & PyoCollection trait
+
+Those traits are the base for all collection and iterator types in Pyochain.
+
+They combine `Pipeable` and `Checkable` with Python's `Iterable` protocol, providing a consistent interface.
+
+All *mutable collections* types provide a `from_ref()` class method.
+
+This method instantiates her class from a *reference* to an existing Python *mutable collection* corresponding to their underlying data structure.
+
+### Example
+
+```python
+>>> import pyochain as pc
+>>> py_list = [1, 2, 3] # standard Python list
+>>> vec = pc.Vec.from_ref(py_list) # create Vec from reference
+>>> vec.append(4) # modify Vec
+>>> vec
+Vec(1, 2, 3, 4)
+>>> py_list # original list is also modified. No copy was made.
+[1, 2, 3, 4]
+```
+
+This allows fast, efficient no-copy conversions when dealing with external functions that returns standard Python collections.
+
+*Immutable collections* types don't need them, as Python already optimize this case under the hood.
+
 ## Conversion & Interoperability Map
 
 The following graph illustrates all the built-in ways to convert between types in Pyochain.
