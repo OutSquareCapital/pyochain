@@ -90,7 +90,7 @@ Notes:
 To build the documentation locally, run:
 
 ```bash
-uv run zensical serve
+scripts\rebuild-docs.ps1
 ```
 
 Then open your browser at the given adress.
