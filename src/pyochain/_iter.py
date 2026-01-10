@@ -105,6 +105,7 @@ class Set[T](PyoCollection[frozenset[T], T], AbstractSet[T]):
             data (Iterable[T]): The data to initialize the Set with.
     """
 
+    __slots__ = ()
     _inner: frozenset[T]
 
     @overload
@@ -285,6 +286,7 @@ class SetMut[T](Set[T], MutableSet[T]):
         data (Iterable[T]): The mutable set to wrap.
     """
 
+    __slots__ = ()
     _inner: set[T]  # type: ignore[override]
 
     @staticmethod
@@ -378,6 +380,7 @@ class Seq[T](PyoCollection[tuple[T, ...], T], Sequence[T]):
             data (Iterable[T]): The data to initialize the Seq with.
     """
 
+    __slots__ = ()
     _inner: tuple[T, ...]
 
     @overload
@@ -416,6 +419,7 @@ class Vec[T](Seq[T], MutableSequence[T]):
         data (Iterable[T]): The `Iterable` to wrap.
     """
 
+    __slots__ = ()
     _inner: list[T]  # type: ignore[override]
 
     @staticmethod
@@ -560,6 +564,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
     """
 
     _inner: Iterator[T]
+    __slots__ = ()
 
     def __init__(self, data: Iterable[T]) -> None:
         self._inner = iter(data)

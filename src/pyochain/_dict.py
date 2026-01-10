@@ -26,6 +26,7 @@ class Dict[K, V](PyoCollection[dict[K, V], K], MutableMapping[K, V]):
         data (DictConvertible[K, V]): Initial data for the Dict that can converted to a dictionary.
     """
 
+    __slots__ = ()
     _inner: dict[K, V]
 
     def __init__(self, data: DictConvertible[K, V]) -> None:

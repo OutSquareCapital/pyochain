@@ -47,6 +47,8 @@ class Option[T](Pipeable):
     This allow to query the presence of a value and take action, always accounting for the None case.
     """
 
+    __slots__ = ()
+
     def __new__[V](cls, value: V | None) -> Option[V]:
         """Creates an `Option[V]` from a value that may be `None`.
 

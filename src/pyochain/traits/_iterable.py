@@ -637,6 +637,7 @@ class PyoCollection[I: Collection[Any], T](PyoIterable[I, T], Collection[T]):
 
     """
 
+    __slots__ = ()
     _inner: I
 
     def __len__(self) -> int:
