@@ -73,6 +73,7 @@ uv run ruff check --fix src/pyochain
 uv run ruff format src/pyochain
 uv run pyright src/pyochain
 uv run pytest --doctest-modules src/pyochain
+uv run pytest tests/
 uv run stubtester README.md
 uv run stubtester docs/
 ```
