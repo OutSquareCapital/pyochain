@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Concatenate, Final, Never, cast, final, overload
+from typing import TYPE_CHECKING, Any, Concatenate, Final, Never, final, overload
 
 from .traits import Pipeable
 
@@ -72,9 +72,7 @@ class Option[T](Pipeable):
 
         ```
         """
-        if value is None:
-            return cast(Option[V], NONE)
-        return cast(Option[V], Some(value))
+        return NONE if value is None else Some(value)
 
     def __bool__(self) -> None:
         """Prevent implicit `Some|None` value checking in boolean contexts.
@@ -111,7 +109,7 @@ class Option[T](Pipeable):
 
         ```
         """
-        return cast(Option[V], Some(value) if predicate(value) else NONE)
+        return Some(value) if predicate(value) else NONE
 
     @staticmethod
     def if_some[V](value: V) -> Option[V]:
@@ -137,7 +135,7 @@ class Option[T](Pipeable):
 
         ```
         """
-        return cast(Option[V], Some(value) if value else NONE)
+        return Some(value) if value else NONE
 
     def flatten[U](self: Option[Option[U]]) -> Option[U]:
         """Flattens a nested `Option`.
@@ -1063,7 +1061,7 @@ class Some[T](Option[T]):
 
     def __new__[V](cls, _value: V) -> Some[V]:
         """Bypass Option's redirect by directly creating a Some instance."""
-        return cast(Some[V], object.__new__(cls))
+        return object.__new__(cls)  # type: ignore[return-value]
 
     def __repr__(self) -> str:
         return f"Some({self.value!r})"
@@ -1208,7 +1206,7 @@ class NoneOption[T](Option[T]):
 
     def __new__(cls, _value: object = None) -> NoneOption[Any]:
         """Bypass Option's redirect by directly creating a NoneOption instance."""
-        return cast(NoneOption[Any], object.__new__(cls))
+        return object.__new__(cls)  # type: ignore[return-value]
 
     def __repr__(self) -> str:
         return "NONE"

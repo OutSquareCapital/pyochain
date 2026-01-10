@@ -711,7 +711,11 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         ```
         """
-        return Iter(func(*args, **kwargs) for _ in range(1))
+
+        def _once_with() -> Generator[R]:
+            yield func(*args, **kwargs)
+
+        return Iter(_once_with())
 
     @staticmethod
     def from_count(start: int = 0, step: int = 1) -> Iter[int]:

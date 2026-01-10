@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Concatenate, Never, cast, final, overload
+from typing import TYPE_CHECKING, Any, Concatenate, Never, final, overload
 
 from .traits import Pipeable
 
@@ -928,7 +928,7 @@ class Ok[T, E](Result[T, E]):
         *args: P.args,  # noqa: ARG002
         **kwargs: P.kwargs,  # noqa: ARG002
     ) -> Result[T, R]:
-        return cast(Result[T, R], self)
+        return self  # type: ignore[return-value]
 
     def inspect[**P](
         self, fn: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
@@ -1004,7 +1004,7 @@ class Ok[T, E](Result[T, E]):
         return Some(Ok(opt.unwrap()))
 
     def or_[F](self, res: Result[T, F]) -> Result[T, F]:  # noqa: ARG002
-        return cast(Result[T, F], self)
+        return self  # type: ignore[return-value]
 
 
 @final
@@ -1062,7 +1062,7 @@ class Err[T, E](Result[T, E]):
         *args: P.args,  # noqa: ARG002
         **kwargs: P.kwargs,  # noqa: ARG002
     ) -> Result[R, E]:
-        return cast(Result[R, E], self)
+        return self  # type: ignore[return-value]
 
     def map_err[**P, R](
         self, fn: Callable[Concatenate[E, P], R], *args: P.args, **kwargs: P.kwargs
@@ -1084,7 +1084,7 @@ class Err[T, E](Result[T, E]):
         return self
 
     def and_[U](self, res: Result[U, E]) -> Result[U, E]:  # noqa: ARG002
-        return cast(Result[U, E], self)
+        return self  # type: ignore[return-value]
 
     def and_then[**P, R](
         self,
@@ -1092,7 +1092,7 @@ class Err[T, E](Result[T, E]):
         *args: P.args,  # noqa: ARG002
         **kwargs: P.kwargs,  # noqa: ARG002
     ) -> Result[R, E]:
-        return cast(Result[R, E], self)
+        return self  # type: ignore[return-value]
 
     def or_else[**P](
         self,
