@@ -13,6 +13,7 @@ from ._iterable import (
     PyoMapping,
     PyoMutableMapping,
     PyoSequence,
+    PyoSet,
 )
 
 __all__ = [
@@ -24,4 +25,5 @@ __all__ = [
     "PyoMapping",
     "PyoMutableMapping",
     "PyoSequence",
+    "PyoSet",
 ]

@@ -14,7 +14,6 @@ from collections.abc import (
     Sequence,
     ValuesView,
 )
-from collections.abc import Set as AbstractSet
 from dataclasses import dataclass
 from typing import (
     Any,
@@ -33,9 +32,9 @@ from ._types import SupportsRichComparison
 from .traits import (
     Checkable,
     Pipeable,
-    PyoCollection,
     PyoIterator,
     PyoSequence,
+    PyoSet,
 )
 
 Position = Literal["first", "middle", "last", "only"]
@@ -103,7 +102,7 @@ class Peekable[T](Pipeable, Checkable):
         return bool(self.peek)
 
 
-class Set[T](PyoCollection[T], AbstractSet[T]):
+class Set[T](PyoSet[T]):
     """`Set` represent an in- memory **unordered**  collection of **unique** elements.
 
     Implements the `Collection` Protocol from `collections.abc`, so it can be used as a standard immutable collection.
@@ -136,167 +135,6 @@ class Set[T](PyoCollection[T], AbstractSet[T]):
 
     def __len__(self) -> int:
         return len(self._inner)
-
-    @overload
-    def union(self, *others: Iterable[T]) -> Set[T]: ...
-    @overload
-    def union[U](self, *others: Iterable[U]) -> Set[T | U]: ...
-    def union(self, *others: Iterable[Any]) -> Set[Any]:
-        """Return the union of this `Set` and **others**.
-
-        Args:
-            *others (Iterable[Any]): Other `Iterables` to include in the union.
-
-        Returns:
-            Set[Any]: A new `Set` containing the union of elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Set({1, 2, 2}).union([2, 3], [4]).iter().sort()
-        Vec(1, 2, 3, 4)
-
-        ```
-        """
-        return self.__class__(self._inner.union(*others))
-
-    def intersection(self, *others: Iterable[Any]) -> Self:
-        """Return the elements common to this `Set` and **others**.
-
-        Is the opposite of `difference`.
-
-        See Also:
-            - `Set.difference`
-            - `Set.symmetric_difference`
-
-        Args:
-            *others (Iterable[Any]): Other `Iterables` to intersect with.
-
-        Returns:
-            Self: A new `Set` containing the intersection of elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Set({1, 2, 2}).intersection([2, 3], [2])
-        Set(2,)
-
-        ```
-        """
-        return self.__class__(self._inner.intersection(*others))
-
-    def difference(self, *others: Iterable[T]) -> Self:
-        """Return the difference of this `Set` and **others**.
-
-        See Also:
-            - `Set.intersection`
-            - `Set.symmetric_difference`
-
-        Args:
-            *others (Iterable[T]): Other `Iterables` to subtract from this `Set`.
-
-        Returns:
-            Self: A new `Set` containing the difference of elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Set({1, 2, 2}).difference([2, 3])
-        Set(1,)
-
-        ```
-        """
-        return self.__class__(self._inner.difference(*others))
-
-    def symmetric_difference(self, *others: Iterable[T]) -> Self:
-        """Return the symmetric difference (XOR) of this `Set` and **others**.
-
-        (Elements in either **self** or **others** but not in both).
-
-        **See Also**:
-            - `Set.intersection`
-            - `Set.difference`
-
-        Args:
-            *others (Iterable[T]): Other `Iterables` to compute the symmetric difference with.
-
-        Returns:
-            Self: A new `Set` containing the symmetric difference of elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Set({1, 2, 2}).symmetric_difference([2, 3]).iter().sort()
-        Vec(1, 3)
-        >>> pc.Set({1, 2, 3}).symmetric_difference([3, 4, 5]).iter().sort()
-        Vec(1, 2, 4, 5)
-
-        ```
-        """
-        return self.__class__(self._inner.symmetric_difference(*others))
-
-    def is_subset(self, other: Iterable[Any]) -> bool:
-        """Test whether every element in the `Set` is in **other**.
-
-        Args:
-            other (Iterable[Any]): Another `Iterable` to compare with.
-
-        Returns:
-            bool: True if this `Set` is a subset of **other**, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Set({1, 2}).is_subset([1, 2, 3])
-        True
-        >>> pc.Set({1, 4}).is_subset([1, 2, 3])
-        False
-
-        ```
-        """
-        return self._inner.issubset(other)
-
-    def is_superset(self, other: Iterable[Any]) -> bool:
-        """Test whether every element in **other** is in **self**.
-
-        Args:
-            other (Iterable[Any]): Another `Iterable` to compare with.
-
-        Returns:
-            bool: True if this `Set` is a superset of **other**, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Set({1, 2, 3}).is_superset([1, 2])
-        True
-        >>> pc.Set({1, 2}).is_superset([1, 2, 3])
-        False
-
-        ```
-        """
-        return self._inner.issuperset(other)
-
-    def is_disjoint(self, other: Iterable[Any]) -> bool:
-        """Test whether **self** and **other** have no elements in common.
-
-        Args:
-            other (Iterable[Any]): Another `Iterable` to compare with.
-
-        Returns:
-            bool: True if the `Sets` have no elements in common, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Set({1, 2}).is_disjoint([3, 4])
-        True
-        >>> pc.Set({1, 2}).is_disjoint([2, 3])
-        False
-
-        ```
-        """
-        return self._inner.isdisjoint(other)
 
 
 class SetMut[T](Set[T], MutableSet[T]):
@@ -561,6 +399,71 @@ class Vec[T](Seq[T], MutableSequence[T]):
         """
         self._inner.sort(key=key, reverse=reverse)  # type: ignore[arg-type]
         return self
+
+    def retain(self, predicate: Callable[[T], bool]) -> None:
+        """Retains only the elements specified by the predicate.
+
+        In other words, remove all elements e for which f(&e) returns false.
+
+        This method operates in place, visiting each element exactly once in a reverse order, and preserves the order of the retained elements.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> vec = pc.Vec([1, 2, 3, 4])
+        >>> vec.retain(lambda x: x % 2 == 0)
+        >>> vec
+        Vec(2, 4)
+
+        ```
+        External state may be used to decide which elements to keep.
+
+        ```python
+        >>> vec = pc.Vec([1, 2, 3, 4, 5])
+        >>> keep = pc.Seq([False, True, True, False, True]).rev().iter()
+        >>> vec.retain(lambda _: next(keep))
+        >>> vec
+        Vec(2, 3, 5)
+
+        ```
+
+        """
+        for i in range(len(self) - 1, -1, -1):
+            if not predicate(self[i]):
+                del self[i]
+
+    def extract_if(
+        self, predicate: Callable[[T], bool], start: int = 0, end: int | None = None
+    ) -> Iter[T]:
+        """Creates an `Iter` which uses a *predicate* to determine if an element in the `Vec` should be removed.
+
+        If the *predicate* returns `True`, the element is removed from the `Vec` and yielded.
+
+        If the *predicate* returns `False`, the element remains in the `Vec` and will not be yielded.
+
+        You can specify a range for the extraction.
+
+        If the returned ExtractIf is not exhausted, e.g. because it is dropped without iterating or the iteration short-circuits, then the remaining elements will be retained.
+
+        Use retain_mut with a negated predicate if you do not need the returned iterator.
+
+        Using this method is equivalent to the following code:
+        ```python
+            data = pc.Vec([ ... ])
+            for i in range(data.length()):
+                if predicate(data[i]):
+                    val = data.pop(i)
+                    # your code here
+        ```
+        """
+
+        def _extract_if() -> Iterator[T]:
+            pop = self.pop
+            for i in range(start, end if end is not None else len(self)):
+                if predicate(self[i]):
+                    yield pop(i)
+
+        return Iter(_extract_if())
 
 
 class Iter[T](PyoIterator[T]):

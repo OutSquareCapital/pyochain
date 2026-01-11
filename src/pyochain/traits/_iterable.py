@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import functools
 import itertools
+import operator
 from collections.abc import (
     Callable,
     Collection,
@@ -15,6 +16,7 @@ from collections.abc import (
     Sequence,
     ValuesView,
 )
+from collections.abc import Set as AbstractSet
 from operator import itemgetter, lt
 from typing import TYPE_CHECKING, Any, Concatenate, Self, overload
 
@@ -29,6 +31,9 @@ if TYPE_CHECKING:
     from random import Random
 
     from .._iter import Iter
+
+type Comparable[T] = list[T] | tuple[T, ...] | set[T] | frozenset[T]
+type Comparator[T] = Callable[[Comparable[T], Comparable[T]], bool]
 
 
 class PyoIterable[T](Pipeable, Checkable, Iterable[T]):
@@ -130,154 +135,6 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T]):
         """
         return cz.itertoolz.count(self)
 
-    def eq(self, other: Iterable[T]) -> bool:
-        """Check if two `Iterable`s are equal based on their data.
-
-        Note:
-            This will consume any `Iterator` instances involved in the comparison (**self** and/or **other**).
-
-        Args:
-            other (Iterable[T]): Another instance of `Iterable[T]` to compare against.
-
-        Returns:
-            bool: `True` if the underlying data are equal, `False` otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1,2,3)).eq(pc.Iter((1,2,3)))
-        True
-        >>> pc.Iter((1,2,3)).eq(pc.Seq([1,2]))
-        False
-        >>> pc.Iter((1,2,3)).eq(pc.Iter((1,2)))
-        False
-        >>> pc.Seq((1,2,3)).eq(pc.Vec([1,2,3]))
-        True
-
-        ```
-        """
-        return tuple(self) == tuple(other)
-
-    def ne(self, other: Iterable[T]) -> bool:
-        """Check if two `Iterable`s are not equal based on their data.
-
-        Note:
-            This will consume any `Iterator` instances involved in the comparison (**self** and/or **other**).
-
-        Args:
-            other (Iterable[T]): Another instance of `Iterable[T]` to compare against.
-
-        Returns:
-            bool: `True` if the underlying data are not equal, `False` otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1,2,3)).ne(pc.Iter((1,2)))
-        True
-        >>> pc.Iter((1,2,3)).ne(pc.Iter((1,2,3)))
-        False
-
-        ```
-        """
-        return tuple(self) != tuple(other)
-
-    def le(self, other: Iterable[T]) -> bool:
-        """Check if this `Iterable` is less than or equal to another based on their data.
-
-        Note:
-            This will consume any `Iterator` instances involved in the comparison (**self** and/or **other**).
-
-        Args:
-            other (Iterable[T]): Another instance of `Iterable[T]` to compare against.
-
-        Returns:
-            bool: `True` if the underlying data of self is less than or equal to that of other, `False` otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq((1,2)).le(pc.Seq((1,2,3)))
-        True
-        >>> pc.Seq((1,2,3)).le(pc.Seq((1,2)))
-        False
-
-        ```
-        """
-        return tuple(self) <= tuple(other)
-
-    def lt(self, other: Iterable[T]) -> bool:
-        """Check if this `Iterable` is less than another based on their data.
-
-        Note:
-            This will consume any `Iterator` instances involved in the comparison (**self** and/or **other**).
-
-        Args:
-            other (Iterable[T]): Another `Iterable[T]` to compare against.
-
-        Returns:
-            bool: `True` if the underlying data of self is less than that of other, `False` otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq((1,2)).lt(pc.Seq((1,2,3)))
-        True
-        >>> pc.Seq((1,2,3)).lt(pc.Seq((1,2)))
-        False
-
-        ```
-        """
-        return tuple(self) < tuple(other)
-
-    def gt(self, other: Iterable[T]) -> bool:
-        """Check if this `Iterable` is greater than another based on their data.
-
-        Note:
-            This will consume any `Iterator` instances involved in the comparison (**self** and/or **other**).
-
-        Args:
-            other (Iterable[T]): Another `Iterable[T]` to compare against.
-
-        Returns:
-            bool: `True` if the underlying data of **self** is greater than that of **other**, `False` otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq((1,2,3)).gt(pc.Seq((1,2)))
-        True
-        >>> pc.Seq((1,2)).gt(pc.Seq((1,2,3)))
-        False
-
-        ```
-        """
-        return tuple(self) > tuple(other)
-
-    def ge(self, other: Iterable[T]) -> bool:
-        """Check if this `Iterable` is greater than or equal to another based on their data.
-
-        Note:
-            This will consume any `Iterator` instances involved in the comparison (**self** and/or **other**).
-
-        Args:
-            other (Iterable[T]): Another `Iterable[T]` to compare against.
-
-        Returns:
-            bool: `True` if the underlying data of **self** is greater than or equal to that of **other**, `False` otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq((1,2,3)).ge(pc.Seq((1,2)))
-        True
-        >>> pc.Seq((1,2)).ge(pc.Seq((1,2,3)))
-        False
-
-        ```
-        """
-        return tuple(self) >= tuple(other)
-
     def join(self: PyoIterable[str], sep: str) -> str:
         """Join all elements of the `Iterable` into a single `str`, with a specified separator.
 
@@ -347,26 +204,6 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T]):
         ```
         """
         return cz.itertoolz.last(self)
-
-    def nth(self, index: int) -> T:
-        """Return the nth item of the `Iterable` at the specified **index**.
-
-        This is similar to `__getitem__` but works on lazy `Iterators`.
-
-        Args:
-            index (int): The index of the item to retrieve.
-
-        Returns:
-            T: The item at the specified **index**.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([10, 20]).nth(1)
-        20
-
-        ```
-        """
-        return cz.itertoolz.nth(index, self)
 
     def sum[U: int | bool](self: PyoIterable[U]) -> int:
         """Return the sum of the `Iterable`.
@@ -679,6 +516,174 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
     """
 
     __slots__ = ()
+
+    def _check(self, other: Iterable[T], op: Comparator[T]) -> bool:
+        match other:
+            case list() | set() | frozenset():
+                return op(type(other)(self), other)
+            case _:
+                return op(tuple(self), tuple(other))
+
+    def nth(self, n: int) -> Option[T]:
+        """Return the nth item of the `Iterable` at the specified **index**.
+
+        This is similar to `__getitem__` but works on lazy `Iterators`.
+
+        Args:
+            n (int): The index of the item to retrieve.
+
+        Returns:
+            T: The item at the specified **index**.
+
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter([10, 20]).nth(1)
+        Some(20)
+        >>> pc.Iter([10, 20]).nth(3)
+        NONE
+
+        ```
+        """
+        try:
+            return Some(next(itertools.islice(self, n, n + 1)))
+        except StopIteration:
+            return NONE
+
+    def eq(self, other: Iterable[T]) -> bool:
+        """Check if two `Iterable`s are equal based on their data.
+
+        Note:
+            This will consume any `Iterator` instances involved in the comparison (**self** and/or **other**).
+
+        Args:
+            other (Iterable[T]): Another instance of `Iterable[T]` to compare against.
+
+        Returns:
+            bool: `True` if the underlying data are equal, `False` otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter((1,2,3)).eq(pc.Iter((1,2,3)))
+        True
+        >>> pc.Iter((1,2,3)).eq(pc.Seq([1,2]))
+        False
+        >>> pc.Iter((1,2,3)).eq(pc.Iter((1,2)))
+        False
+        >>> pc.Iter((1,2,3)).eq(pc.Vec([1,2,3]))
+        True
+
+        ```
+        """
+        return self._check(other, operator.eq)
+
+    def ne(self, other: Iterable[T]) -> bool:
+        """Check if this `Iterator` and *other* are not equal based on their data.
+
+        Args:
+            other (Iterable[T]): Another instance of `Iterable[T]` to compare against.
+
+        Returns:
+            bool: `True` if the underlying data are not equal, `False` otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter((1,2,3)).ne(pc.Iter((1,2)))
+        True
+        >>> pc.Iter((1,2,3)).ne(pc.Iter((1,2,3)))
+        False
+
+        ```
+        """
+        return self._check(other, operator.ne)
+
+    def le(self, other: Iterable[T]) -> bool:
+        """Check if this `Iterator` is less than or equal to *other* based on their data.
+
+        Note:
+            This will consume any `Iterator` instances involved in the comparison (**self** and/or **other**).
+
+        Args:
+            other (Iterable[T]): Another instance of `Iterable[T]` to compare against.
+
+        Returns:
+            bool: `True` if the underlying data of self is less than or equal to that of other, `False` otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter((1,2)).le(pc.Seq((1,2,3)))
+        True
+        >>> pc.Iter((1,2,3)).le(pc.Seq((1,2)))
+        False
+
+        ```
+        """
+        return self._check(other, operator.le)
+
+    def lt(self, other: Iterable[T]) -> bool:
+        """Check if this `Iterator` is less than *other* based on their data.
+
+        Args:
+            other (Iterable[T]): Another `Iterable[T]` to compare against.
+
+        Returns:
+            bool: `True` if the underlying data of self is less than that of other, `False` otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter((1,2)).lt(pc.Seq((1,2,3)))
+        True
+        >>> pc.Iter((1,2,3)).lt(pc.Seq((1,2)))
+        False
+
+        ```
+        """
+        return self._check(other, operator.lt)
+
+    def gt(self, other: Iterable[T]) -> bool:
+        """Check if this `Iterator` is greater than *other* based on their data.
+
+        Args:
+            other (Iterable[T]): Another `Iterable[T]` to compare against.
+
+        Returns:
+            bool: `True` if the underlying data of **self** is greater than that of **other**, `False` otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter((1,2,3)).gt((1,2))
+        True
+        >>> pc.Iter((1,2)).gt((1,2,3))
+        False
+
+        ```
+        """
+        return self._check(other, operator.gt)
+
+    def ge(self, other: Iterable[T]) -> bool:
+        """Check if this `Iterator` is greater than or equal to *other* based on their data.
+
+        Args:
+            other (Iterable[T]): Another `Iterable[T]` to compare against.
+
+        Returns:
+            bool: `True` if the underlying data of **self** is greater than or equal to that of **other**, `False` otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter((1,2,3)).ge((1,2))
+        True
+        >>> pc.Iter((1,2)).ge((1,2,3))
+        False
+
+        ```
+        """
+        return self._check(other, operator.ge)
 
     def next(self) -> Option[T]:
         """Return the next element in the `Iterator`.
@@ -1108,7 +1113,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
         >>> models = pc.Seq(["svm", "random forest", "knn", "naïve bayes"])
         >>> accuracy = pc.Seq([68, 61, 84, 72])
         >>> # Most accurate model
-        >>> models.nth(accuracy.iter().argmax())
+        >>> models.get(accuracy.iter().argmax()).unwrap()
         'knn'
         >>>
         >>> # Best accuracy
@@ -1150,7 +1155,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
         >>> labels = pc.Seq(["homer", "marge", "bart", "lisa", "maggie"])
         >>> ages = pc.Seq([35, 30, 10, 9, 1])
         >>> # Fastest healing family member
-        >>> labels.nth(ages.iter().argmin(key=cost))
+        >>> labels.get(ages.iter().argmin(key=cost)).unwrap()
         'bart'
         >>> # Age with fastest healing
         >>> ages.min_by(key=cost)
@@ -1748,6 +1753,34 @@ class PyoSequence[T](PyoCollection[T], Sequence[T]):
 
     __slots__ = ()
 
+    @overload
+    def get(self, index: int) -> Option[T]: ...
+    @overload
+    def get(self, index: slice) -> Option[Sequence[T]]: ...
+    def get(self, index: int | slice) -> Option[T] | Option[Sequence[T]]:
+        """Return the element at the specified index as `Some(value)`, or `None` if the index is out of bounds.
+
+        Args:
+            index (int | slice): The index or slice of the element to retrieve.
+
+        Returns:
+            Option[T] | Option[Sequence[T]]: `Some(value)` if the index is valid, otherwise `None`.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Seq([10, 20, 30]).get(1)
+        Some(20)
+        >>> pc.Seq([10, 20, 30]).get(5)
+        NONE
+
+        ```
+        """
+        try:
+            return Some(self.__getitem__(index))  # pyright: ignore[reportReturnType]
+        except IndexError:
+            return NONE
+
     def rev(self) -> Iter[T]:
         """Return an `Iterator` with the elements of the `Sequence` in reverse order.
 
@@ -1782,6 +1815,215 @@ class PyoSequence[T](PyoCollection[T], Sequence[T]):
         return cz.itertoolz.isdistinct(self)
 
 
+class PyoSet[T](PyoCollection[T], AbstractSet[T]):
+    """Base trait for eager pyochain set-like collections.
+
+    `PyoSet[T]` is the shared trait for concrete, eager set-like
+    collections: `Set` and `FrozenSet`.
+
+    It extends `PyoCollection[T]` and `collections.abc.Set[T]`.
+
+    This is equivalent to subclassing `collections.abc.Set[T]` (this trait
+    already does), meaning any concrete subclass must implement the required
+    `Set` dunder methods:
+
+    - `__contains__`
+    - `__iter__`
+    - `__len__`
+
+    On top of the standard `Set` protocol, it provides the additional
+    pyochain API (from `PyoCollection`, `Pipeable`, `Checkable`, plus any helpers defined here).
+
+    """
+
+    __slots__ = ()
+
+    def is_subset(self, other: AbstractSet[T]) -> bool:
+        """Check if the `Set` is a subset of another set.
+
+        Args:
+            other (AbstractSet[T]): The other set to compare with.
+
+        Returns:
+            bool: True if the `Set` is a subset of the other set, False otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Set({1, 2}).is_subset({1, 2, 3})
+        True
+        >>> pc.Set({1, 4}).is_subset({1, 2, 3})
+        False
+
+        ```
+        """
+        return self <= other
+
+    def is_subset_strict(self, other: AbstractSet[T]) -> bool:
+        """Check if the `Set` is a proper subset of another set.
+
+        Args:
+            other (AbstractSet[T]): The other set to compare with.
+
+        Returns:
+            bool: True if the `Set` is a proper subset of the other set, False otherwise.
+        """
+        return self < other
+
+    def eq(self, other: AbstractSet[T]) -> bool:
+        """Check if the `Set` is equal to another set.
+
+        Args:
+            other (AbstractSet[T]): The other set to compare with.
+
+        Returns:
+            bool: True if the `Set` is equal to the other set, False otherwise.
+        """
+        return self == other
+
+    def is_superset(self, other: AbstractSet[T]) -> bool:
+        """Check if the `Set` is a superset of another set.
+
+        Args:
+            other (AbstractSet[T]): The other set to compare with.
+
+        Returns:
+            bool: True if the `Set` is a superset of the other set, False otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Set({1, 2, 3}).is_superset({1, 2})
+        True
+        >>> pc.Set({1, 2}).is_superset({1, 2, 3})
+        False
+
+        ```
+        """
+        return self >= other
+
+    def intersection(self, other: AbstractSet[T]) -> Self:
+        """Return the intersection of the `Set` with another set.
+
+        Args:
+            other (AbstractSet[T]): The other set to intersect with.
+
+        Returns:
+            Self: A new `Set` containing the intersection of the two sets.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Set({1, 2, 2}).intersection({2, 3})
+        Set(2,)
+
+        ```
+        """
+        return self.__class__(self & other)
+
+    def r_intersection(self, other: AbstractSet[T]) -> Self:
+        """Return the intersection of another set with the `Set`.
+
+        Args:
+            other (AbstractSet[T]): The other set to intersect with.
+
+        Returns:
+            Self: A new `Set` containing the intersection of the two sets.
+        """
+        return self.__class__(other & self)
+
+    def union(self, other: AbstractSet[T]) -> Self:
+        """Return the union of the `Set` with another set.
+
+        Args:
+            other (AbstractSet[T]): The other set to unite with.
+
+        Returns:
+            Self: A new `Set` containing the union of the two sets.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Set({1, 2, 2}).union([2, 3]).union([4]).iter().sort()
+        Vec(1, 2, 3, 4)
+
+        ```
+        """
+        return self.__class__(self | other)
+
+    def r_union(self, other: AbstractSet[T]) -> Self:
+        """Return the union of another set with the `Set`.
+
+        Args:
+            other (AbstractSet[T]): The other set to unite with.
+
+        Returns:
+            Self: A new `Set` containing the union of the two sets.
+        """
+        return self.__class__(other | self)
+
+    def difference(self, other: AbstractSet[T]) -> Self:
+        """Return the difference of the `Set` with another set.
+
+        Args:
+            other (AbstractSet[T]): The other set to subtract.
+
+        Returns:
+            Self: A new `Set` containing the difference of the two sets.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Set({1, 2, 2}).difference([2, 3])
+        Set(1,)
+
+        """
+        return self.__class__(self - other)
+
+    def r_difference(self, other: AbstractSet[T]) -> Self:
+        """Return the reverse difference of the `Set` with another set.
+
+        Args:
+            other (AbstractSet[T]): The other set to subtract from.
+
+        Returns:
+            Self: A new `Set` containing the reverse difference of the two sets.
+        """
+        return self.__class__(other - self)
+
+    def symmetric_difference(self, other: AbstractSet[T]) -> Self:
+        """Return the symmetric difference of the `Set` with another set.
+
+        Args:
+            other (AbstractSet[T]): The other set to symmetric difference with.
+
+        Returns:
+            Self: A new `Set` containing the symmetric difference of the two sets.
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Set({1, 2, 2}).symmetric_difference([2, 3]).iter().sort()
+        Vec(1, 3)
+        >>> pc.Set({1, 2, 3}).symmetric_difference([3, 4, 5]).iter().sort()
+        Vec(1, 2, 4, 5)
+
+        ```
+        """
+        return self.__class__(self ^ other)
+
+    def r_symmetric_difference(self, other: AbstractSet[T]) -> Self:
+        """Return the symmetric difference of the `Set` with another set.
+
+        Args:
+            other (AbstractSet[T]): The other set to symmetric difference with.
+
+        Returns:
+            Self: A new `Set` containing the symmetric difference of the two sets.
+
+
+        """
+        return self.__class__(other ^ self)
+
+
 # TODO: documentation for new "View" classes
 
 
@@ -1793,11 +2035,13 @@ class PyoValuesView[V](ValuesView[V], PyoMappingView[V]):
     __slots__ = ()
 
 
-class PyoKeysView[K](KeysView[K], PyoMappingView[K]):
+class PyoKeysView[K](KeysView[K], PyoMappingView[K], PyoSet[K]):
     __slots__ = ()
 
 
-class PyoItemsView[K, V](ItemsView[K, V], PyoMappingView[tuple[K, V]]):
+class PyoItemsView[K, V](
+    ItemsView[K, V], PyoMappingView[tuple[K, V]], PyoSet[tuple[K, V]]
+):
     __slots__ = ()
 
 
