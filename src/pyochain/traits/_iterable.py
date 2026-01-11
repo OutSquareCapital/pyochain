@@ -12,6 +12,7 @@ from collections.abc import (
     Mapping,
     MappingView,
     MutableMapping,
+    MutableSequence,
     Sequence,
     ValuesView,
 )
@@ -517,15 +518,17 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
     __slots__ = ()
 
     def nth(self, n: int) -> Option[T]:
-        """Return the nth item of the `Iterable` at the specified **index**.
+        """Return the nth item of the `Iterable` at the specified *n*.
 
-        This is similar to `__getitem__` but works on lazy `Iterators`.
+        This is similar to `__getitem__` but for lazy `Iterators`.
+
+        If *n* is out of bounds, returns `NONE`.
 
         Args:
             n (int): The index of the item to retrieve.
 
         Returns:
-            T: The item at the specified **index**.
+            Option[T]: `Some(item)` at the specified *n*.
 
         ```python
         >>> import pyochain as pc
@@ -600,9 +603,6 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
     def le(self, other: Iterable[T]) -> bool:
         """Check if this `Iterator` is less than or equal to *other* based on their data.
-
-        Note:
-            This will consume any `Iterator` instances involved in the comparison (**self** and/or **other**).
 
         Args:
             other (Iterable[T]): Another instance of `Iterable[T]` to compare against.
@@ -750,11 +750,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
         Returns:
             T: Single value resulting from cumulative reduction.
 
-        This effectively reduces the iterable to a single value.
+        This effectively reduces the `Iterator` to a single value.
 
-        If initial is present, it is placed before the items of the iterable in the calculation.
+        If initial is present, it is placed before the items of the `Iterator` in the calculation.
 
-        It then serves as a default when the iterable is empty.
+        It then serves as a default when the `Iterator` is empty.
         ```python
         >>> import pyochain as pc
         >>> pc.Iter([1, 2, 3]).reduce(lambda a, b: a + b)
@@ -2268,3 +2268,42 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):
         ```
         """
         return Option(self.get(key, None))
+
+
+class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):
+    __slots__ = ()
+
+    def retain(self, predicate: Callable[[T], bool]) -> None:
+        """Retains only the elements specified by the *predicate*.
+
+        In other words, remove all elements e for which the *predicate* function returns `False`.
+
+        This method operates in place, visiting each element exactly once in a reverse order, and preserves the order of the retained elements.
+
+        Args:
+            predicate (Callable[[T], bool]): A function that returns `True` for elements to keep and `False` for elements to remove.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> vec = pc.Vec([1, 2, 3, 4])
+        >>> vec.retain(lambda x: x % 2 == 0)
+        >>> vec
+        Vec(2, 4)
+
+        ```
+        External state may be used to decide which elements to keep.
+
+        ```python
+        >>> vec = pc.Vec([1, 2, 3, 4, 5])
+        >>> keep = pc.Seq([False, True, True, False, True]).rev().iter()
+        >>> vec.retain(lambda _: next(keep))
+        >>> vec
+        Vec(2, 3, 5)
+
+        ```
+
+        """
+        for i in range(len(self) - 1, -1, -1):
+            if not predicate(self[i]):
+                del self[i]

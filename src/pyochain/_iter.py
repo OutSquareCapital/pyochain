@@ -33,6 +33,7 @@ from .traits import (
     Checkable,
     Pipeable,
     PyoIterator,
+    PyoMutableSequence,
     PyoSequence,
     PyoSet,
 )
@@ -270,7 +271,7 @@ class Seq[T](PyoSequence[T]):
         return self._inner.__getitem__(index)
 
 
-class Vec[T](Seq[T], MutableSequence[T]):
+class Vec[T](Seq[T], PyoMutableSequence[T]):
     """A `MutableSequence` wrapper with functional API.
 
     Implement `MutableSequence` Protocol from `collections.abc`.
@@ -331,7 +332,7 @@ class Vec[T](Seq[T], MutableSequence[T]):
         return self._inner.__setitem__(index, value)  # type: ignore[arg-type]
 
     def __delitem__(self, index: int | slice) -> None:
-        self._inner.__delitem__(index)
+        del self._inner[index]
 
     def insert(self, index: int, value: T) -> None:
         """Inserts an element at position index within the vector, shifting all elements after it to the right.
@@ -400,38 +401,6 @@ class Vec[T](Seq[T], MutableSequence[T]):
         self._inner.sort(key=key, reverse=reverse)  # type: ignore[arg-type]
         return self
 
-    def retain(self, predicate: Callable[[T], bool]) -> None:
-        """Retains only the elements specified by the predicate.
-
-        In other words, remove all elements e for which f(&e) returns false.
-
-        This method operates in place, visiting each element exactly once in a reverse order, and preserves the order of the retained elements.
-
-        Examples:
-        ```python
-        >>> import pyochain as pc
-        >>> vec = pc.Vec([1, 2, 3, 4])
-        >>> vec.retain(lambda x: x % 2 == 0)
-        >>> vec
-        Vec(2, 4)
-
-        ```
-        External state may be used to decide which elements to keep.
-
-        ```python
-        >>> vec = pc.Vec([1, 2, 3, 4, 5])
-        >>> keep = pc.Seq([False, True, True, False, True]).rev().iter()
-        >>> vec.retain(lambda _: next(keep))
-        >>> vec
-        Vec(2, 3, 5)
-
-        ```
-
-        """
-        for i in range(len(self) - 1, -1, -1):
-            if not predicate(self[i]):
-                del self[i]
-
     def extract_if(
         self, predicate: Callable[[T], bool], start: int = 0, end: int | None = None
     ) -> Iter[T]:
@@ -456,14 +425,13 @@ class Vec[T](Seq[T], MutableSequence[T]):
                     # your code here
         ```
         """
+        pop = self.pop
 
-        def _extract_if() -> Iterator[T]:
-            pop = self.pop
-            for i in range(start, end if end is not None else len(self)):
-                if predicate(self[i]):
-                    yield pop(i)
-
-        return Iter(_extract_if())
+        return Iter(
+            pop(i)
+            for i in range(start, end if end is not None else len(self))
+            if predicate(self[i])
+        )
 
 
 class Iter[T](PyoIterator[T]):
