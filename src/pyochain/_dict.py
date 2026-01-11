@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterator, MutableMapping
+from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
 from .traits import PyoMutableMapping
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from ._types import DictConvertible
 
 
-class Dict[K, V](PyoMutableMapping[K, V], MutableMapping[K, V]):
+class Dict[K, V](PyoMutableMapping[K, V]):
     """A `Dict` is a key-value store similar to Python's built-in `dict`, but with additional methods inspired by Rust's `HashMap`.
 
     Accept the same input types as the built-in `dict`, including `Mapping`, `Iterable` of key-value pairs, and objects implementing `__getitem__()` and `keys()`.

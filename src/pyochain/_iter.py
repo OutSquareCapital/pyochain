@@ -396,7 +396,7 @@ class SetMut[T](Set[T], MutableSet[T]):
         self._inner.discard(value)
 
 
-class Seq[T](PyoSequence[T], Sequence[T]):
+class Seq[T](PyoSequence[T]):
     """Represent an in memory `Sequence`.
 
     Implements the `Sequence` Protocol from `collections.abc`.
@@ -564,7 +564,7 @@ class Vec[T](Seq[T], MutableSequence[T]):
         return self
 
 
-class Iter[T](PyoIterator[T], Iterator[T]):
+class Iter[T](PyoIterator[T]):
     """A superset around Python's built-in `Iterator` Protocol, providing a rich set of functional programming tools.
 
     Implements the `Iterator` Protocol from `collections.abc`, so it can be used as a standard iterator.
@@ -1578,7 +1578,7 @@ class Iter[T](PyoIterator[T], Iterator[T]):
             max_split (int): Maximum number of splits to perform.
 
         Returns:
-            Iter[Iter[T]]: An iterable of lists of items.
+            Iter[Self]: An iterable of lists of items.
 
 
         At most *max_split* are done.
@@ -1835,7 +1835,7 @@ class Iter[T](PyoIterator[T], Iterator[T]):
             n (int | None): Optional number of repetitions.
 
         Returns:
-            Iter[Iter[T]]: An `Iter` of repeated `Iter`.
+            Iter[Self]: An `Iter` of repeated `Iter`.
 
         Example:
         ```python
