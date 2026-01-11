@@ -2278,7 +2278,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):
 
         In other words, remove all elements e for which the *predicate* function returns `False`.
 
-        This method operates in place, visiting each element exactly once in a reverse order, and preserves the order of the retained elements.
+        This method operates in place, visiting each element exactly once in forward order, and preserves the order of the retained elements.
 
         Args:
             predicate (Callable[[T], bool]): A function that returns `True` for elements to keep and `False` for elements to remove.
@@ -2296,7 +2296,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):
 
         ```python
         >>> vec = pc.Vec([1, 2, 3, 4, 5])
-        >>> keep = pc.Seq([False, True, True, False, True]).rev().iter()
+        >>> keep = pc.Seq([False, True, True, False, True]).iter()
         >>> vec.retain(lambda _: next(keep))
         >>> vec
         Vec(2, 3, 5)
@@ -2304,9 +2304,15 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):
         ```
 
         """
-        for i in range(len(self) - 1, -1, -1):
-            if not predicate(self[i]):
-                del self[i]
+        write_idx = 0
+        length = len(self)
+        for read_idx in range(length):
+            if predicate(self[read_idx]):
+                self[write_idx] = self[read_idx]
+                write_idx += 1
+        pop = self.pop
+        while length > write_idx:
+            pop()
 
     def truncate(self, length: int) -> None:
         """Shortens the `MutableSequence`, keeping the first *length* elements and dropping the rest.
