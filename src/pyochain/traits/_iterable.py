@@ -16,7 +16,7 @@ from collections.abc import (
     ValuesView,
 )
 from operator import itemgetter, lt
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any, Concatenate, Self, overload
 
 import cytoolz as cz
 
@@ -728,7 +728,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
         return functools.reduce(func, self)
 
     def fold[B](self, init: B, func: Callable[[B, T], B]) -> B:
-        """Fold every element into an accumulator by applying an operation, returning the final result.
+        """Fold every element of the `Iterator` into an accumulator by applying an operation, returning the final result.
 
         Args:
             init (B): Initial value for the accumulator.
@@ -1546,6 +1546,182 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
         from collections import Counter
 
         return self.__class__(Counter(self).elements())
+
+    def accumulate(self, func: Callable[[T, T], T], initial: T | None = None) -> Self:
+        """Return an `Iterator` of accumulated binary function results.
+
+        In principle, `.accumulate()` is similar to `.fold()` if you provide it with the same binary function.
+
+        However, instead of returning the final accumulated result, it returns an `Iterator` that yields the current value `T` of the accumulator for each iteration.
+
+        In other words, the last element yielded by `.accumulate()` is what would have been returned by `.fold()` if it had been used instead.
+
+        Args:
+            func (Callable[[T, T], T]): A binary function to apply cumulatively.
+            initial (T | None): Optional initial value to start the accumulation.
+
+        Returns:
+            Self: A new `Iterator` with accumulated results.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter((1, 2, 3)).accumulate(lambda a, b: a + b, 0).collect()
+        Seq(0, 1, 3, 6)
+        >>> # The final accumulated result is the same as fold:
+        >>> pc.Iter((1,2,3)).fold(0, lambda a, b: a + b)
+        6
+        >>> pc.Iter((1, 2, 3)).accumulate(lambda a, b: a * b).collect()
+        Seq(1, 2, 6)
+
+
+        ```
+        """
+        return self.__class__(itertools.accumulate(self, func, initial=initial))
+
+    def for_each[**P](
+        self,
+        func: Callable[Concatenate[T, P], Any],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None:
+        """Consume the `Iterator` by applying a function to each element in the `Iterable`.
+
+        Is a terminal operation, and is useful for functions that have side effects,
+        or when you want to force evaluation of a lazy iterable.
+
+        Args:
+            func (Callable[Concatenate[T, P], Any]): Function to apply to each element.
+            *args (P.args): Positional arguments for the function.
+            **kwargs (P.kwargs): Keyword arguments for the function.
+
+        Returns:
+            None: This is a terminal operation with no return value.
+
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Seq([1, 2, 3]).iter().for_each(lambda x: print(x + 1))
+        2
+        3
+        4
+
+        ```
+        """
+        for v in self:
+            func(v, *args, **kwargs)
+
+    @overload
+    def for_each_star[R](
+        self: PyoIterator[tuple[Any]],
+        func: Callable[[Any], R],
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, R](
+        self: PyoIterator[tuple[T1, T2]],
+        func: Callable[[T1, T2], R],
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, R](
+        self: PyoIterator[tuple[T1, T2, T3]],
+        func: Callable[[T1, T2, T3], R],
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4]],
+        func: Callable[[T1, T2, T3, T4], R],
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, T5, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
+        func: Callable[[T1, T2, T3, T4, T5], R],
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, T5, T6, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
+        func: Callable[[T1, T2, T3, T4, T5, T6], R],
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, T5, T6, T7, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7], R],
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], R],
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], R],
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
+    ) -> None: ...
+    def for_each_star[U: Iterable[Any], R](
+        self: PyoIterator[U],
+        func: Callable[..., R],
+    ) -> None:
+        """Consume the `Iterator` by applying a function to each unpacked item in the `Iterable` element.
+
+        Is a terminal operation, and is useful for functions that have side effects,
+        or when you want to force evaluation of a lazy iterable.
+
+        Each item yielded by the `Iterator` is expected to be an `Iterable` itself (e.g., a tuple or list),
+        and its elements are unpacked as arguments to the provided function.
+
+        This is often used after methods like `zip()` or `enumerate()` that yield tuples.
+
+        Args:
+            func (Callable[..., R]): Function to apply to each unpacked element.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter([(1, 2), (3, 4)]).for_each_star(lambda x, y: print(x + y))
+        3
+        7
+
+        ```
+        """
+        for item in self:
+            func(*item)
+
+    def try_for_each[E](self, f: Callable[[T], Result[Any, E]]) -> Result[None, E]:
+        """Applies a fallible function to each item in the `Iterator`, stopping at the first error and returning that error.
+
+        This can also be thought of as the fallible form of `.for_each()`.
+
+        Args:
+            f (Callable[[T], Result[Any, E]]): A function that takes an item of type `T` and returns a `Result`.
+
+        Returns:
+            Result[None, E]: Returns `Ok(None)` if all applications of **f** were successful (i.e., returned `Ok`), or the first error `E` encountered.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> def validate_positive(n: int) -> pc.Result[None, str]:
+        ...     if n > 0:
+        ...         return pc.Ok(None)
+        ...     return pc.Err(f"Value {n} is not positive")
+        >>> pc.Iter([1, 2, 3, 4, 5]).try_for_each(validate_positive)
+        Ok(None)
+        >>> # Short-circuit on first error:
+        >>> pc.Iter([1, 2, -1, 4]).try_for_each(validate_positive)
+        Err('Value -1 is not positive')
+
+        ```
+        """
+        for item in self:
+            res = f(item)
+            if res.is_err():
+                return res
+        return Ok(None)
 
 
 class PyoSequence[T](PyoCollection[T], Sequence[T]):
