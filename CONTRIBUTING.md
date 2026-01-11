@@ -68,23 +68,15 @@ uv sync --dev
 Before committing, ensure tests and quality checks pass.
 
 ```bash
-uv run pydoclint src/pyochain
 uv run ruff check --fix src/pyochain
 uv run ruff format src/pyochain
+uv run pydoclint src/pyochain
 uv run pyright src/pyochain
 uv run pytest --doctest-modules src/pyochain
 uv run pytest tests/
-uv run stubtester README.md
-uv run stubtester docs/
+uv run pytest README.md --doctest-glob="*.md" --doctest-mdcodeblocks -v
+uv run pytest docs/ --doctest-glob="*.md" --doctest-mdcodeblocks -v
 ```
-
-Notes:
-
-- `pydoclint` checks docstrings.
-- `ruff` is used for linting and formatting.
-- `pyright` provides static type checking.
-- `pytest --doctest-modules` runs doctests embedded in docstrings.
-- `stubtester` runs block codes in markdowns as doctests.
 
 ## Building docs
 

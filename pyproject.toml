@@ -15,10 +15,10 @@
         "pydoclint>=0.8.1",
         "pyright>=1.1.407",
         "pytest>=9.0.2",
+        "pytest-doctest-mkdocstrings>=0.1.1",
         "ruff>=0.14.9",
-        "stubtester",
         "zensical>=0.0.15",
-    ]
+]
 [tool.ruff]
     lint.ignore = [
         "C417",
@@ -59,7 +59,6 @@
 
 [tool.uv.sources]
     cytoolz-stubs = { git = "https://github.com/OutSquareCapital/cytoolz-stubs.git" }
-    stubtester    = { git = "https://github.com/OutSquareCapital/stubtester.git" }
 
 [build-system]
     build-backend = "uv_build"
