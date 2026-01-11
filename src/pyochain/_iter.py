@@ -16,9 +16,7 @@ from collections.abc import (
 )
 from collections.abc import Set as AbstractSet
 from dataclasses import dataclass
-from operator import itemgetter, lt
 from typing import (
-    TYPE_CHECKING,
     Any,
     Concatenate,
     Literal,
@@ -32,18 +30,34 @@ import cytoolz as cz
 
 from ._option import NONE, Option, Some
 from ._result import Err, Ok, Result
-from ._types import SupportsComparison, SupportsRichComparison
-from .traits import Checkable, Pipeable, PyoCollection, PyoIterable
-
-if TYPE_CHECKING:
-    from random import Random
-
+from ._types import SupportsRichComparison
+from .traits import (
+    Checkable,
+    Pipeable,
+    PyoCollection,
+    PyoIterator,
+    PyoSequence,
+)
 
 Position = Literal["first", "middle", "last", "only"]
 """Literal type representing the position of an item in an iterable."""
 
 
-# transformed iterables result types
+def _get_repr(data: Collection[Any]) -> str:
+    from pprint import pformat
+
+    def _repr_inner(data: Collection[Any]) -> str:
+        return pformat(data, sort_dicts=False)[1:-1]
+
+    match data:
+        case set() | frozenset():
+            return _repr_inner(tuple(data))
+        case _:
+            match len(data):
+                case 0:
+                    return ""
+                case _:
+                    return _repr_inner(data)
 
 
 @dataclass(slots=True)
@@ -90,7 +104,7 @@ class Peekable[T](Pipeable, Checkable):
         return bool(self.peek)
 
 
-class Set[T](PyoCollection[frozenset[T], T], AbstractSet[T]):
+class Set[T](PyoCollection[T], AbstractSet[T]):
     """`Set` represent an in- memory **unordered**  collection of **unique** elements.
 
     Implements the `Collection` Protocol from `collections.abc`, so it can be used as a standard immutable collection.
@@ -105,8 +119,24 @@ class Set[T](PyoCollection[frozenset[T], T], AbstractSet[T]):
             data (Iterable[T]): The data to initialize the Set with.
     """
 
-    __slots__ = ()
+    __slots__ = ("_inner",)
+    __match_args__ = ("_inner",)
     _inner: frozenset[T]
+
+    def __init__(self, data: Iterable[T]) -> None:
+        self._inner = frozenset(data)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({_get_repr(self._inner)})"
+
+    def __contains__(self, item: object) -> bool:
+        return item in self._inner
+
+    def __iter__(self) -> Iterator[T]:
+        return iter(self._inner)
+
+    def __len__(self) -> int:
+        return len(self._inner)
 
     @overload
     def union(self, *others: Iterable[T]) -> Set[T]: ...
@@ -289,6 +319,9 @@ class SetMut[T](Set[T], MutableSet[T]):
     __slots__ = ()
     _inner: set[T]  # type: ignore[override]
 
+    def __init__(self, data: Iterable[T]) -> None:
+        self._inner = set(data)  # type: ignore[override]
+
     @staticmethod
     def from_ref[V](data: set[V]) -> SetMut[V]:
         """Create a `SetMut` from a reference to an existing `set`.
@@ -363,7 +396,7 @@ class SetMut[T](Set[T], MutableSet[T]):
         self._inner.discard(value)
 
 
-class Seq[T](PyoCollection[tuple[T, ...], T], Sequence[T]):
+class Seq[T](PyoSequence[T], Sequence[T]):
     """Represent an in memory `Sequence`.
 
     Implements the `Sequence` Protocol from `collections.abc`.
@@ -380,8 +413,17 @@ class Seq[T](PyoCollection[tuple[T, ...], T], Sequence[T]):
             data (Iterable[T]): The data to initialize the Seq with.
     """
 
-    __slots__ = ()
+    __slots__ = ("_inner",)
     _inner: tuple[T, ...]
+
+    def __init__(self, data: Iterable[T]) -> None:
+        self._inner = tuple(data)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({_get_repr(self._inner)})"
+
+    def __len__(self) -> int:
+        return len(self._inner)
 
     @overload
     def __getitem__(self, index: int) -> T: ...
@@ -389,21 +431,6 @@ class Seq[T](PyoCollection[tuple[T, ...], T], Sequence[T]):
     def __getitem__(self, index: slice) -> Sequence[T]: ...
     def __getitem__(self, index: int | slice[Any, Any, Any]) -> T | Sequence[T]:
         return self._inner.__getitem__(index)
-
-    def is_distinct(self) -> bool:
-        """Return True if all items of **self** are distinct.
-
-        Returns:
-            bool: True if all items are distinct, False otherwise.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2]).is_distinct()
-        True
-
-        ```
-        """
-        return cz.itertoolz.isdistinct(self._inner)
 
 
 class Vec[T](Seq[T], MutableSequence[T]):
@@ -421,6 +448,9 @@ class Vec[T](Seq[T], MutableSequence[T]):
 
     __slots__ = ()
     _inner: list[T]  # type: ignore[override]
+
+    def __init__(self, data: Iterable[T]) -> None:
+        self._inner = list(data)  # type: ignore[override]
 
     @staticmethod
     def from_ref[V](data: list[V]) -> Vec[V]:
@@ -534,7 +564,7 @@ class Vec[T](Seq[T], MutableSequence[T]):
         return self
 
 
-class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
+class Iter[T](PyoIterator[T], Iterator[T]):
     """A superset around Python's built-in `Iterator` Protocol, providing a rich set of functional programming tools.
 
     Implements the `Iterator` Protocol from `collections.abc`, so it can be used as a standard iterator.
@@ -564,7 +594,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
     """
 
     _inner: Iterator[T]
-    __slots__ = ()
+    __slots__ = ("_inner",)
 
     def __init__(self, data: Iterable[T]) -> None:
         self._inner = iter(data)
@@ -594,6 +624,9 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         first = tuple(itertools.islice(self._inner, 1))
         self._inner = itertools.chain(first, self._inner)
         return len(first) > 0
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self._inner.__repr__()})"
 
     @classmethod
     def from_ref(cls, other: Self) -> Self:
@@ -632,32 +665,6 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         it1, it2 = itertools.tee(other._inner)
         other._inner = it1
         return cls(it2)
-
-    def next(self) -> Option[T]:
-        """Return the next element in the `Iter`.
-
-        Note:
-            The actual `.__next__()` method is conform to the Python `Iterator` Protocol, and is what will be actually called if you iterate over the `Iter` instance.
-
-            `Iter.next()` is a convenience method that wraps the result in an `Option` to handle exhaustion gracefully, for custom use cases.
-
-            Not only for typing, but for performance reasons, and coherence (iter(`Iter`) and iter(`Iter._inner`) wouldn't behave consistently otherwise).
-
-        Returns:
-            Option[T]: The next element in the iterator. `Some[T]`, or `NONE` if the iterator is exhausted.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> it = pc.Seq([1, 2, 3]).iter()
-        >>> it.next().unwrap()
-        1
-        >>> it.next().unwrap()
-        2
-
-        ```
-        """
-        return Option(next(self, None))
 
     @staticmethod
     def once[V](value: V) -> Iter[V]:
@@ -1115,7 +1122,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
                 return res
         return Ok(None)
 
-    def array_chunks(self, size: int) -> Iter[Iter[T]]:
+    def array_chunks(self, size: int) -> Iter[Self]:
         """Yield subiterators (chunks) that each yield a fixed number elements, determined by size.
 
         The last chunk will be shorter if there are not enough elements.
@@ -1124,7 +1131,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
             size (int): Number of elements in each chunk.
 
         Returns:
-            Iter[Iter[T]]: An iterable of iterators, each yielding n elements.
+            Iter[Self]: An iterable of iterators, each yielding n elements.
 
         If the sub-iterables are read in order, the elements of *iterable*
         won't be stored in memory.
@@ -1151,7 +1158,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         from collections import deque
         from contextlib import suppress
 
-        def _chunks() -> Iterator[Iter[T]]:
+        def _chunks() -> Iterator[Self]:
             def _ichunk(
                 iterator: Iterator[T], n: int
             ) -> tuple[Iterator[T], Callable[[int], int]]:
@@ -1561,7 +1568,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         self,
         predicate: Callable[[T], bool],
         max_split: int = -1,
-    ) -> Iter[Iter[T]]:
+    ) -> Iter[Self]:
         """Yield iterator of items from iterable, where each iterator ends with an item where `predicate` returns True.
 
         By default, no limit is placed on the number of splits.
@@ -1596,7 +1603,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         ```
         """
 
-        def _split_before(data: Iterator[T], max_split: int) -> Iterator[Iter[T]]:
+        def _split_before(data: Iterator[T], max_split: int) -> Iterator[Self]:
             """Credits: more_itertools.split_before."""
             new = self.__class__  # locality help for performance
 
@@ -1809,7 +1816,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         return Iter(_gen())
 
-    def repeat(self, n: int | None = None) -> Iter[Iter[T]]:
+    def repeat(self, n: int | None = None) -> Iter[Self]:
         """Repeat the entire `Iter` **n** times (as elements).
 
         If **n** is `None`, repeat indefinitely.
@@ -1838,21 +1845,20 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         ```
         """
+        new = self.__class__
 
-        def _repeat_infinite() -> Generator[Iter[T]]:
+        def _repeat_infinite() -> Generator[Self]:
             tee = functools.partial(itertools.tee, self._inner, 1)
             iterators = tee()
             while True:
-                yield Iter(iterators[0])
+                yield new(iterators[0])
                 iterators = tee()
 
         if n is None:
             return Iter(_repeat_infinite())
-        return Iter(map(Iter, itertools.tee(self._inner, n)))
+        return Iter(map(new, itertools.tee(self._inner, n)))
 
-    def accumulate(
-        self, func: Callable[[T, T], T], initial: T | None = None
-    ) -> Iter[T]:
+    def accumulate(self, func: Callable[[T, T], T], initial: T | None = None) -> Self:
         """Return an `Iter` of accumulated binary function results.
 
         In principle, `.accumulate()` is similar to `.fold()` if you provide it with the same binary function.
@@ -1866,7 +1872,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
             initial (T | None): Optional initial value to start the accumulation.
 
         Returns:
-            Iter[T]: A new Iterable wrapper with accumulated results.
+            Self: A new `Iter` with accumulated results.
 
         Example:
         ```python
@@ -1882,7 +1888,7 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
 
         ```
         """
-        return Iter(itertools.accumulate(self._inner, func, initial=initial))
+        return self.__class__(itertools.accumulate(self._inner, func, initial=initial))
 
     def scan[U](self, initial: U, func: Callable[[U, T], Option[U]]) -> Iter[U]:
         """Transform elements by sharing state between iterations.
@@ -2089,189 +2095,6 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         ```
         """
         return Iter(itertools.filterfalse(func, self._inner))
-
-    def take_while(self, predicate: Callable[[T], bool]) -> Iter[T]:
-        """Take items while predicate holds.
-
-        Args:
-            predicate (Callable[[T], bool]): Function to evaluate each item.
-
-        Returns:
-            Iter[T]: An iterable of the items taken while the predicate is true.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1, 2, 0)).take_while(lambda x: x > 0).collect()
-        Seq(1, 2)
-
-        ```
-        """
-        return Iter(itertools.takewhile(predicate, self._inner))
-
-    def skip_while(self, predicate: Callable[[T], bool]) -> Iter[T]:
-        """Drop items while predicate holds.
-
-        Args:
-            predicate (Callable[[T], bool]): Function to evaluate each item.
-
-        Returns:
-            Iter[T]: An iterable of the items after skipping those for which the predicate is true.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1, 2, 0)).skip_while(lambda x: x > 0).collect()
-        Seq(0,)
-
-        ```
-        """
-        return Iter(itertools.dropwhile(predicate, self._inner))
-
-    def compress(self, *selectors: bool) -> Iter[T]:
-        """Filter elements using a boolean selector iterable.
-
-        Args:
-            *selectors (bool): Boolean values indicating which elements to keep.
-
-        Returns:
-            Iter[T]: An iterable of the items selected by the boolean selectors.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter("ABCDEF").compress(1, 0, 1, 0, 1, 1).collect()
-        Seq('A', 'C', 'E', 'F')
-
-        ```
-        """
-        return Iter(itertools.compress(self._inner, selectors))
-
-    def unique(self, key: Callable[[T], Any] | None = None) -> Iter[T]:
-        """Return only unique elements of the iterable.
-
-        Args:
-            key (Callable[[T], Any] | None): Function to transform items before comparison.
-
-        Returns:
-            Iter[T]: An iterable of the unique items.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter([1, 2, 3]).unique().collect()
-        Seq(1, 2, 3)
-        >>> pc.Iter([1, 2, 1, 3]).unique().collect()
-        Seq(1, 2, 3)
-
-        ```
-        Uniqueness can be defined by key keyword
-        ```python
-        >>> pc.Iter(["cat", "mouse", "dog", "hen"]).unique(key=len).collect()
-        Seq('cat', 'mouse')
-
-        ```
-        """
-        return Iter(cz.itertoolz.unique(self._inner, key=key))
-
-    def take(self, n: int) -> Iter[T]:
-        """Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner.
-
-        `Iter.take(n)` yields elements until n elements are yielded or the end of the iterator is reached (whichever happens first).
-
-        The returned iterator is either:
-
-        - A prefix of length n if the original iterator contains at least n elements
-        - All of the (fewer than n) elements of the original iterator if it contains fewer than n elements.
-
-        Args:
-            n (int): Number of elements to take.
-
-        Returns:
-            Iter[T]: An iterable of the first n items.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> data = [1, 2, 3]
-        >>> pc.Iter(data).take(2).collect()
-        Seq(1, 2)
-        >>> pc.Iter(data).take(5).collect()
-        Seq(1, 2, 3)
-
-        ```
-        """
-        return Iter(itertools.islice(self._inner, n))
-
-    def skip(self, n: int) -> Iter[T]:
-        """Drop first n elements.
-
-        Args:
-            n (int): Number of elements to skip.
-
-        Returns:
-            Iter[T]: An iterable of the items after skipping the first n items.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1, 2, 3)).skip(1).collect()
-        Seq(2, 3)
-
-        ```
-        """
-        return Iter(cz.itertoolz.drop(n, self._inner))
-
-    def step_by(self, step: int) -> Iter[T]:
-        """Creates an `Iter` starting at the same point, but stepping by the given **step** at each iteration.
-
-        Note:
-            The first element of the iterator will always be returned, regardless of the **step** given.
-
-        Args:
-            step (int): Step size for selecting items.
-
-        Returns:
-            Iter[T]: An iterable of every nth item.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter([0, 1, 2, 3, 4, 5]).step_by(2).collect()
-        Seq(0, 2, 4)
-
-        ```
-        """
-        return Iter(cz.itertoolz.take_nth(step, self._inner))
-
-    def slice(
-        self,
-        start: int | None = None,
-        stop: int | None = None,
-        step: int | None = None,
-    ) -> Iter[T]:
-        """Return a slice of the iterable.
-
-        Args:
-            start (int | None): Starting index of the slice.
-            stop (int | None): Ending index of the slice.
-            step (int | None): Step size for the slice.
-
-        Returns:
-            Iter[T]: An iterable of the sliced items.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> data = (1, 2, 3, 4, 5)
-        >>> pc.Iter(data).slice(1, 4).collect()
-        Seq(2, 3, 4)
-        >>> pc.Iter(data).slice(step=2).collect()
-        Seq(1, 3, 5)
-
-        ```
-        """
-        return Iter(itertools.islice(self._inner, start, stop, step))
 
     def filter_map[R](self, func: Callable[[T], Option[R]]) -> Iter[R]:
         """Creates an iterator that both filters and maps.
@@ -2958,133 +2781,6 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         """
         return Iter(itertools.batched(self._inner, n, strict=strict))
 
-    def cycle(self) -> Iter[T]:
-        """Repeat the `Iter` indefinitely.
-
-        Warning:
-            This creates an infinite `Iterator`.
-
-            Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken.
-
-        See Also:
-            `Iter.repeat()` to repeat *self* as elements (`Iter[Iter[T]]`).
-
-        Returns:
-            Iter[T]: A new Iterable wrapper that cycles through the elements indefinitely.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1, 2)).cycle().take(5).collect()
-        Seq(1, 2, 1, 2, 1)
-
-        ```
-        """
-        return Iter(itertools.cycle(self._inner))
-
-    def intersperse(self, element: T) -> Iter[T]:
-        """Creates a new iterator which places a copy of separator between adjacent items of the original iterator.
-
-        Args:
-            element (T): The element to interpose between items.
-
-        Returns:
-            Iter[T]: A new `Iter` with the element interposed.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> # Simple example with numbers
-        >>> pc.Iter([1, 2, 3]).intersperse(0).collect()
-        Seq(1, 0, 2, 0, 3)
-        >>> # Useful when chaining with other operations
-        >>> pc.Iter([10, 20, 30]).intersperse(5).sum()
-        70
-        >>> # Inserting separators between groups, then flattening
-        >>> pc.Iter([[1, 2], [3, 4], [5, 6]]).intersperse([-1]).flatten().collect()
-        Seq(1, 2, -1, 3, 4, -1, 5, 6)
-
-        ```
-        """
-        return Iter(cz.itertoolz.interpose(element, self._inner))
-
-    def random_sample(
-        self, probability: float, state: Random | int | None = None
-    ) -> Iter[T]:
-        """Return elements from a sequence with probability of prob.
-
-        Returns a lazy iterator of random items from seq.
-
-        random_sample considers each item independently and without replacement.
-
-        See below how the first time it returned 13 items and the next time it returned 6 items.
-
-        Args:
-            probability (float): The probability of including each element.
-            state (Random | int | None): Random state or seed for deterministic sampling.
-
-        Returns:
-            Iter[T]: A new Iterable wrapper with randomly sampled elements.
-        ```python
-        >>> import pyochain as pc
-        >>> data = pc.Iter(range(100)).collect()
-        >>> data.iter().random_sample(0.1).collect()  # doctest: +SKIP
-        Seq(6, 9, 19, 35, 45, 50, 58, 62, 68, 72, 78, 86, 95)
-        >>> data.iter().random_sample(0.1).collect()  # doctest: +SKIP
-        Seq(6, 44, 54, 61, 69, 94)
-        ```
-        Providing an integer seed for random_state will result in deterministic sampling.
-
-        Given the same seed it will return the same sample every time.
-        ```python
-        >>> data.iter().random_sample(0.1, state=2016).collect()
-        Seq(7, 9, 19, 25, 30, 32, 34, 48, 59, 60, 81, 98)
-        >>> data.iter().random_sample(0.1, state=2016).collect()
-        Seq(7, 9, 19, 25, 30, 32, 34, 48, 59, 60, 81, 98)
-
-        ```
-        random_state can also be any object with a method random that returns floats between 0.0 and 1.0 (exclusive).
-        ```python
-        >>> from random import Random
-        >>> randobj = Random(2016)
-        >>> data.iter().random_sample(0.1, state=randobj).collect()
-        Seq(7, 9, 19, 25, 30, 32, 34, 48, 59, 60, 81, 98)
-
-        ```
-        """
-        return Iter(
-            cz.itertoolz.random_sample(probability, self._inner, random_state=state)
-        )
-
-    def insert(self, value: T) -> Iter[T]:
-        """Prepend the **value** to the `Iter`.
-
-        This can be useful when you want to add an element at the beginning of an existing iterable sequence.
-
-
-        Note:
-            This can be considered the equivalent as `list.append()`, but for `Iter`.
-            However, append add the value at the **end**, while insert add it at the **beginning**.
-
-        See Also:
-            `Iter.chain()` to add multiple elements at the end of the `Iterator`.
-
-        Args:
-            value (T): The value to prepend.
-
-        Returns:
-            Iter[T]: A new Iterable wrapper with the value prepended.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((2, 3)).insert(1).collect()
-        Seq(1, 2, 3)
-
-        ```
-        """
-        return Iter(cz.itertoolz.cons(value, self._inner))
-
     def peekable(self, n: int) -> Peekable[T]:
         """Retrieve the next **n** elements from the `Iterator`, and return a `Seq` of the retrieved elements along with the original `Iterator`, unconsumed.
 
@@ -3116,106 +2812,6 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         """
         peeked = Seq(itertools.islice(self._inner, n))
         return Peekable(peeked, Iter(itertools.chain(peeked, self._inner)))
-
-    def interleave(self, *others: Iterable[T]) -> Iter[T]:
-        """Interleave multiple sequences element-wise.
-
-        Args:
-            *others (Iterable[T]): Other iterables to interleave.
-
-        Returns:
-            Iter[T]: A new Iterable wrapper with interleaved elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1, 2)).interleave((3, 4)).collect()
-        Seq(1, 3, 2, 4)
-
-        ```
-        """
-        return Iter(cz.itertoolz.interleave((self._inner, *others)))
-
-    def chain(self, *others: Iterable[T]) -> Iter[T]:
-        """Concatenate **self** with one or more `Iterables`, any of which may be infinite.
-
-        In other words, it links **self** and **others** together, in a chain. 🔗
-
-        An infinite `Iterable` will prevent the rest of the arguments from being included.
-
-        This is equivalent to `list.extend()`, except it is fully lazy and works with any `Iterable`.
-
-        See Also:
-            `Iter.insert()` to add a single element at the beginning of the `Iterator`.
-
-        Args:
-            *others (Iterable[T]): Other iterables to concatenate.
-
-        Returns:
-            Iter[T]: A new `Iter` which will first iterate over values from the first iterator and then over values from the **others** `Iterable`s.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1, 2)).chain((3, 4), [5]).collect()
-        Seq(1, 2, 3, 4, 5)
-        >>> pc.Iter((1, 2)).chain(pc.Iter.from_count(3)).take(5).collect()
-        Seq(1, 2, 3, 4, 5)
-
-        ```
-        """
-        return Iter(cz.itertoolz.concat((self._inner, *others)))
-
-    def elements(self) -> Iter[T]:
-        """Iterator over elements repeating each as many times as its count.
-
-        Note:
-            if an element's count has been set to zero or is a negative
-            number, elements() will ignore it.
-
-        Returns:
-            Iter[T]: A new Iterable wrapper with elements repeated according to their counts.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter("ABCABC").elements().sort()
-        Vec('A', 'A', 'B', 'B', 'C', 'C')
-
-        ```
-        Knuth's example for prime factors of 1836:  2**2 * 3**3 * 17**1
-        ```python
-        >>> import math
-        >>> data = [2, 2, 3, 3, 3, 17]
-        >>> pc.Iter(data).elements().into(math.prod)
-        1836
-
-        ```
-        """
-        from collections import Counter
-
-        return Iter(Counter(self._inner).elements())
-
-    def rev(self) -> Iter[T]:
-        """Return a new Iterable wrapper with elements in reverse order.
-
-        The result is a new iterable over the reversed sequence.
-
-        Note:
-            This method must consume the entire iterable to perform the reversal.
-
-        Returns:
-            Iter[T]: A new Iterable wrapper with elements in reverse order.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter([1, 2, 3]).rev().collect()
-        Seq(3, 2, 1)
-
-        ```
-        """
-        return Iter(reversed(tuple(self._inner)))
 
     def is_strictly_n(self, n: int) -> Iter[Result[T, ValueError]]:
         """Yield`Ok[T]` as long as the iterable has exactly *n* items.
@@ -3700,462 +3296,3 @@ class Iter[T](PyoIterable[Iterator[T], T], Iterator[T]):
         from collections import Counter
 
         return Vec.from_ref(Counter(self._inner).most_common(n))
-
-    def reduce(self, func: Callable[[T, T], T]) -> T:
-        """Apply a function of two arguments cumulatively to the items of an iterable, from left to right.
-
-        Args:
-            func (Callable[[T, T], T]): Function to apply cumulatively to the items of the iterable.
-
-        Returns:
-            T: Single value resulting from cumulative reduction.
-
-        This effectively reduces the iterable to a single value.
-
-        If initial is present, it is placed before the items of the iterable in the calculation.
-
-        It then serves as a default when the iterable is empty.
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter([1, 2, 3]).reduce(lambda a, b: a + b)
-        6
-
-        ```
-        """
-        return functools.reduce(func, self._inner)
-
-    def fold[B](self, init: B, func: Callable[[B, T], B]) -> B:
-        """Fold every element into an accumulator by applying an operation, returning the final result.
-
-        Args:
-            init (B): Initial value for the accumulator.
-            func (Callable[[B, T], B]): Function that takes the accumulator and current element,
-                returning the new accumulator value.
-
-        Returns:
-            B: The final accumulated value.
-
-        Note:
-            This is similar to `reduce()` but with an initial value, making it equivalent to
-            Python `functools.reduce()` with an initializer.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter([1, 2, 3]).fold(0, lambda acc, x: acc + x)
-        6
-        >>> pc.Iter([1, 2, 3]).fold(10, lambda acc, x: acc + x)
-        16
-        >>> pc.Iter(['a', 'b', 'c']).fold('', lambda acc, x: acc + x)
-        'abc'
-
-        ```
-        """
-        return functools.reduce(func, self._inner, init)
-
-    def find(self, predicate: Callable[[T], bool]) -> Option[T]:
-        """Searches for an element of an iterator that satisfies a `predicate`.
-
-        Takes a closure that returns true or false as `predicate`, and applies it to each element of the iterator.
-
-        Args:
-            predicate (Callable[[T], bool]): Function to evaluate each item.
-
-        Returns:
-            Option[T]: The first element satisfying the predicate. `Some(value)` if found, `NONE` otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> def gt_five(x: int) -> bool:
-        ...     return x > 5
-        >>>
-        >>> def gt_nine(x: int) -> bool:
-        ...     return x > 9
-        >>>
-        >>> pc.Iter(range(10)).find(predicate=gt_five)
-        Some(6)
-        >>> pc.Iter(range(10)).find(predicate=gt_nine).unwrap_or("missing")
-        'missing'
-
-        ```
-        """
-        return Option(next(filter(predicate, self._inner), None))
-
-    def try_find[E](
-        self, predicate: Callable[[T], Result[bool, E]]
-    ) -> Result[Option[T], E]:
-        """Applies a function returning `Result[bool, E]` to find first matching element.
-
-        Short-circuits: stops at the first successful `True` or on the first error.
-
-        Args:
-            predicate (Callable[[T], Result[bool, E]]): Function returning a `Result[bool, E]`.
-
-        Returns:
-            Result[Option[T], E]: The first matching element, or the first error.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> def is_even(x: int) -> pc.Result[bool, str]:
-        ...     return pc.Ok(x % 2 == 0) if x >= 0 else pc.Err("negative number")
-        >>>
-        >>> pc.Iter(range(1, 6)).try_find(is_even)
-        Ok(Some(2))
-
-        ```
-        """
-        for item in self._inner:
-            result = predicate(item)
-            if result.is_ok():
-                if result.unwrap():
-                    return Ok(Some(item))
-            else:
-                return Err(result.unwrap_err())
-        return Ok(NONE)
-
-    def try_fold[B, E](
-        self, init: B, func: Callable[[B, T], Result[B, E]]
-    ) -> Result[B, E]:
-        """Folds every element into an accumulator, short-circuiting on error.
-
-        Applies **func** cumulatively to items and the accumulator.
-
-        If **func** returns an error, stops and returns that error.
-
-        Args:
-            init (B): Initial accumulator value.
-            func (Callable[[B, T], Result[B, E]]): Function that takes the accumulator and element, returns a `Result[B, E]`.
-
-        Returns:
-            Result[B, E]: Final accumulator or the first error.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> def checked_add(acc: int, x: int) -> pc.Result[int, str]:
-        ...     new_val = acc + x
-        ...     if new_val > 100:
-        ...         return pc.Err("overflow")
-        ...     return pc.Ok(new_val)
-        >>>
-        >>> pc.Iter([1, 2, 3]).try_fold(0, checked_add)
-        Ok(6)
-        >>> pc.Iter([50, 40, 20]).try_fold(0, checked_add)
-        Err('overflow')
-        >>> pc.Iter([]).try_fold(0, checked_add)
-        Ok(0)
-
-        ```
-        """
-        accumulator = init
-
-        for item in self._inner:
-            result = func(accumulator, item)
-            if result.is_ok():
-                accumulator = result.unwrap()
-            else:
-                return result
-
-        return Ok(accumulator)
-
-    def try_reduce[E](
-        self, func: Callable[[T, T], Result[T, E]]
-    ) -> Result[Option[T], E]:
-        """Reduces elements to a single one, short-circuiting on error.
-
-        Uses the first element as the initial accumulator. If **func** returns an error, stops immediately.
-
-        Args:
-            func (Callable[[T, T], Result[T, E]]): Function that reduces two items, returns a `Result[T, E]`.
-
-        Returns:
-            Result[Option[T], E]: Final accumulated value or the first error. Returns `Ok(NONE)` for empty iterable.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> def checked_add(x: int, y: int) -> pc.Result[int, str]:
-        ...     if x + y > 100:
-        ...         return pc.Err("overflow")
-        ...     return pc.Ok(x + y)
-        >>>
-        >>> pc.Iter([1, 2, 3]).try_reduce(checked_add)
-        Ok(Some(6))
-        >>> pc.Iter([50, 60]).try_reduce(checked_add)
-        Err('overflow')
-        >>> pc.Iter([]).try_reduce(checked_add)
-        Ok(NONE)
-
-        ```
-        """
-        first = next(self._inner, None)
-
-        if first is None:
-            return Ok(NONE)
-
-        accumulator: T = first
-
-        for item in self._inner:
-            result = func(accumulator, item)
-            if result.is_ok():
-                accumulator = result.unwrap()
-            else:
-                return Err(result.unwrap_err())
-
-        return Ok(Some(accumulator))
-
-    def is_sorted[U: SupportsComparison[Any]](
-        self: Iter[U], *, reverse: bool = False, strict: bool = False
-    ) -> bool:
-        """Returns `True` if the items of the `Iter` are in sorted order.
-
-        The elements of the `Iter` must support comparison operations.
-
-        The function returns `False` after encountering the first out-of-order item.
-
-        If there are no out-of-order items, the `Iterator` is exhausted.
-
-        Credits to **more-itertools** for the implementation.
-
-        See Also:
-            - `is_sorted_by()`: If your elements do not support comparison operations directly, or you want to sort based on a specific attribute or transformation.
-
-        Args:
-            reverse (bool): Whether to check for descending order.
-            strict (bool): Whether to enforce strict sorting (no equal elements).
-
-        Returns:
-            bool: `True` if items are sorted according to the criteria, `False` otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter([1, 2, 3, 4, 5]).is_sorted()
-        True
-
-        ```
-        If strict, tests for strict sorting, that is, returns False if equal elements are found:
-        ```python
-        >>> pc.Iter([1, 2, 2]).is_sorted()
-        True
-        >>> pc.Iter([1, 2, 2]).is_sorted(strict=True)
-        False
-
-        ```
-
-        """
-        a, b = itertools.tee(self._inner)
-        next(b, None)
-        if reverse:
-            b, a = a, b
-        match strict:
-            case True:
-                return all(map(lt, a, b))
-            case False:
-                return not any(map(lt, b, a))
-
-    def is_sorted_by(
-        self,
-        key: Callable[[T], SupportsComparison[Any]],
-        *,
-        reverse: bool = False,
-        strict: bool = False,
-    ) -> bool:
-        """Returns `True` if the items of the `Iterator` are in sorted order according to the key function.
-
-        The function returns `False` after encountering the first out-of-order item.
-
-        If there are no out-of-order items, the `Iterator` is exhausted.
-
-        Credits to **more-itertools** for the implementation.
-
-        Args:
-            key (Callable[[T], SupportsComparison[Any]]): Function to extract a comparison key from each element.
-            reverse (bool): Whether to check for descending order.
-            strict (bool): Whether to enforce strict sorting (no equal elements).
-
-        Returns:
-            bool: `True` if items are sorted according to the criteria, `False` otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter(["1", "2", "3", "4", "5"]).is_sorted_by(int)
-        True
-        >>> pc.Iter(["5", "4", "3", "1", "2"]).is_sorted_by(int, reverse=True)
-        False
-
-        If strict, tests for strict sorting, that is, returns False if equal elements are found:
-        ```python
-        >>> pc.Iter(["1", "2", "2"]).is_sorted_by(int)
-        True
-        >>> pc.Iter(["1", "2", "2"]).is_sorted_by(key=int, strict=True)
-        False
-
-        ```
-        """
-        a, b = itertools.tee(map(key, self._inner))
-        next(b, None)
-        if reverse:
-            b, a = a, b
-        match strict:
-            case True:
-                return all(map(lt, a, b))
-            case False:
-                return not any(map(lt, b, a))
-
-    def all_equal[U](self, key: Callable[[T], U] | None = None) -> bool:
-        """Return `True` if all items of the `Iterator` are equal.
-
-        A function that accepts a single argument and returns a transformed version of each input item can be specified with **key**.
-
-        Credits to **more-itertools** for the implementation.
-
-        Args:
-            key (Callable[[T], U] | None): Function to transform items before comparison.
-
-        Returns:
-            bool: `True` if all items are equal, `False` otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter("AaaA").all_equal(key=str.casefold)
-        True
-        >>> pc.Iter([1, 2, 3]).all_equal(key=lambda x: x < 10)
-        True
-
-        ```
-        """
-        iterator = itertools.groupby(self._inner, key)
-        for _first in iterator:
-            for _second in iterator:
-                return False
-            return True
-        return True
-
-    def all_unique[U](self, key: Callable[[T], U] | None = None) -> bool:
-        """Returns True if all the elements of iterable are unique.
-
-        The function returns as soon as the first non-unique element is encountered.
-
-        `Iters` with a mix of hashable and unhashable items can be used, but the function will be slower for unhashable items.
-
-        A function that accepts a single argument and returns a transformed version of each input item can be specified with **key**.
-
-        Credits to **more-itertools** for the implementation.
-
-        Args:
-            key (Callable[[T], U] | None): Function to transform items before comparison.
-
-        Returns:
-            bool: `True` if all elements are unique, `False` otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter("ABCB").all_unique()
-        False
-        >>> pc.Iter("ABCb").all_unique()
-        True
-        >>> pc.Iter("ABCb").all_unique(str.lower)
-        False
-
-        ```
-        """
-        seenset: set[T | U] = set()
-        seenset_add = seenset.add
-        seenlist: list[T | U] = []
-        seenlist_add = seenlist.append
-        for element in map(key, self._inner) if key else self._inner:
-            try:
-                if element in seenset:
-                    return False
-                seenset_add(element)
-            except TypeError:
-                if element in seenlist:
-                    return False
-                seenlist_add(element)
-        return True
-
-    def argmax[U](self, key: Callable[[T], U] | None = None) -> int:
-        """Index of the first occurrence of a maximum value in the `Iter`.
-
-        A function that accepts a single argument and returns a transformed version of each input item can be specified with **key**.
-
-        Credits to more-itertools for the implementation.
-
-        Args:
-            key (Callable[[T], U] | None): Optional function to determine the value for comparison.
-
-        Returns:
-            int: The index of the maximum value.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter("abcdefghabcd").argmax()
-        7
-        >>> pc.Iter([0, 1, 2, 3, 3, 2, 1, 0]).argmax()
-        3
-
-        ```
-        For example, identify the best machine learning model:
-        ```python
-        >>> models = pc.Seq(["svm", "random forest", "knn", "naïve bayes"])
-        >>> accuracy = pc.Seq([68, 61, 84, 72])
-        >>> # Most accurate model
-        >>> models.nth(accuracy.iter().argmax())
-        'knn'
-        >>>
-        >>> # Best accuracy
-        >>> accuracy.max()
-        84
-
-        ```
-        """
-        it = self._inner
-        if key is not None:
-            it = map(key, it)
-        return max(enumerate(it), key=itemgetter(1))[0]
-
-    def argmin[U](self, key: Callable[[T], U] | None = None) -> int:
-        """Index of the first occurrence of a minimum value in the `Iter`.
-
-        A function that accepts a single argument and returns a transformed version of each input item can be specified with **key**.
-
-        Credits to more-itertools for the implementation.
-
-        Args:
-            key (Callable[[T], U] | None): Optional function to determine the value for comparison.
-
-        Returns:
-            int: The index of the minimum value.
-
-        ```python
-        >>> import pyochain as pc
-        >>> # Example 1: Basic usage
-        >>> pc.Iter("efghabcdijkl").argmin()
-        4
-        >>> pc.Iter([3, 2, 1, 0, 4, 2, 1, 0]).argmin()
-        3
-        >>> # Example 2: look up a label corresponding to the position of a value that minimizes a cost function
-        >>> def cost(x: int) -> float:
-        ...     "Days for a wound to heal given a subject's age."
-        ...     return x**2 - 20 * x + 150
-        >>>
-        >>> labels = pc.Seq(["homer", "marge", "bart", "lisa", "maggie"])
-        >>> ages = pc.Seq([35, 30, 10, 9, 1])
-        >>> # Fastest healing family member
-        >>> labels.nth(ages.iter().argmin(key=cost))
-        'bart'
-        >>> # Age with fastest healing
-        >>> ages.min_by(key=cost)
-        10
-
-        ```
-        """
-        it = self._inner
-        if key is not None:
-            it = map(key, it)
-        return min(enumerate(it), key=itemgetter(1))[0]

@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-from collections.abc import MutableMapping
-from typing import TYPE_CHECKING, Any, override
+from collections.abc import Iterator, MutableMapping
+from typing import TYPE_CHECKING, Any
 
-from ._option import NONE, Option, Some
-from ._result import Err, Ok, Result
-from .traits import PyoCollection
+from .traits import PyoMutableMapping
 
 if TYPE_CHECKING:
-    from ._iter import Iter
     from ._types import DictConvertible
 
 
-class Dict[K, V](PyoCollection[dict[K, V], K], MutableMapping[K, V]):
+class Dict[K, V](PyoMutableMapping[K, V], MutableMapping[K, V]):
     """A `Dict` is a key-value store similar to Python's built-in `dict`, but with additional methods inspired by Rust's `HashMap`.
 
     Accept the same input types as the built-in `dict`, including `Mapping`, `Iterable` of key-value pairs, and objects implementing `__getitem__()` and `keys()`.
@@ -26,11 +23,24 @@ class Dict[K, V](PyoCollection[dict[K, V], K], MutableMapping[K, V]):
         data (DictConvertible[K, V]): Initial data for the Dict that can converted to a dictionary.
     """
 
-    __slots__ = ()
+    __slots__ = ("_inner",)
     _inner: dict[K, V]
 
     def __init__(self, data: DictConvertible[K, V]) -> None:
         self._inner = dict(data)
+
+    def __repr__(self) -> str:
+        from pprint import pformat
+
+        return (
+            f"{self.__class__.__name__}({pformat(self._inner, sort_dicts=False)[1:-1]})"
+        )
+
+    def __iter__(self) -> Iterator[K]:
+        return iter(self._inner)
+
+    def __len__(self) -> int:
+        return len(self._inner)
 
     def __getitem__(self, key: K) -> V:
         return self._inner[key]
@@ -120,232 +130,3 @@ class Dict[K, V](PyoCollection[dict[K, V], K], MutableMapping[K, V]):
         ```
         """
         return Dict.from_ref(obj.__dict__)
-
-    def insert(self, key: K, value: V) -> Option[V]:
-        """Insert a key-value pair into the `Dict`.
-
-        If the `Dict` did not have this **key** present, `NONE` is returned.
-
-        If the `Dict` did have this **key** present, the **value** is updated, and the old value is returned.
-
-        The **key** is not updated.
-
-        Args:
-            key (K): The key to insert.
-            value (V): The value associated with the key.
-
-        Returns:
-            Option[V]: The previous value associated with the key, or None if the key was not present.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> data = pc.Dict.new()
-        >>> data.insert(37, "a")
-        NONE
-        >>> data.is_empty()
-        False
-
-        >>> data.insert(37, "b")
-        Some('a')
-        >>> data.insert(37, "c")
-        Some('b')
-        >>> data[37]
-        'c'
-
-        ```
-        """
-        previous = self._inner.get(key, None)
-        self._inner[key] = value
-        return Option(previous)
-
-    def try_insert(self, key: K, value: V) -> Result[V, KeyError]:
-        """Tries to insert a key-value pair into the map, and returns a `Result[V, KeyError]` containing the value in the entry (if successful).
-
-        If the map already had this key present, nothing is updated, and an error containing the occupied entry and the value is returned.
-
-        Args:
-            key (K): The key to insert.
-            value (V): The value associated with the key.
-
-        Returns:
-            Result[V, KeyError]: Ok containing the value if the key was not present, or Err containing a KeyError if the key already existed.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> d = pc.Dict.new()
-        >>> d.try_insert(37, "a").unwrap()
-        'a'
-        >>> d.try_insert(37, "b")
-        Err(KeyError('Key 37 already exists with value a.'))
-
-        ```
-        """
-        if key in self._inner:
-            return Err(
-                KeyError(f"Key {key} already exists with value {self._inner[key]}.")
-            )
-        self._inner[key] = value
-        return Ok(value)
-
-    def remove(self, key: K) -> Option[V]:
-        """Remove a key from the `Dict` and return its value if it existed.
-
-        Equivalent to `dict.pop(key, None)`, with an `Option` return type.
-
-        Args:
-            key (K): The key to remove.
-
-        Returns:
-            Option[V]: The value associated with the removed key, or None if the key was not present.
-        ```python
-        >>> import pyochain as pc
-        >>> data = pc.Dict({1: "a", 2: "b"})
-        >>> data.remove(1)
-        Some('a')
-        >>> data.remove(3)
-        NONE
-
-        ```
-        """
-        return Option(self._inner.pop(key, None))
-
-    def remove_entry(self, key: K) -> Option[tuple[K, V]]:
-        """Remove a key from the `Dict` and return the item if it existed.
-
-        Return an `Option[tuple[K, V]]` containing the (key, value) pair if the key was present.
-
-        Args:
-            key (K): The key to remove.
-
-        Returns:
-            Option[tuple[K, V]]: The (key, value) pair associated with the removed key, or None if the key was not present.
-        ```python
-        >>> import pyochain as pc
-        >>> data = pc.Dict({1: "a", 2: "b"})
-        >>> data.remove_entry(1)
-        Some((1, 'a'))
-        >>> data.remove_entry(3)
-        NONE
-
-        ```
-        """
-        if key in self._inner:
-            return Some((key, self._inner.pop(key)))
-        return NONE
-
-    def keys_iter(self) -> Iter[K]:
-        """Return an `Iter` of the dict's keys.
-
-        Returns:
-            Iter[K]: An Iter wrapping the dictionary's keys.
-
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Dict({1: 2}).keys_iter().collect()
-        Seq(1,)
-
-        ```
-        """
-        from ._iter import Iter
-
-        return Iter(self._inner.keys())
-
-    def values_iter(self) -> Iter[V]:
-        """Return an `Iter` of the `Dict` values.
-
-        Returns:
-            Iter[V]: An Iter wrapping the dictionary's values.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Dict({1: 2}).values_iter().collect()
-        Seq(2,)
-
-        ```
-        """
-        from ._iter import Iter
-
-        return Iter(self._inner.values())
-
-    @override
-    def iter(self) -> Iter[tuple[K, V]]:  # pyright: ignore[reportIncompatibleMethodOverride]
-        """Return an `Iter` of the dict's items.
-
-        Yield tuples of (key, value) pairs.
-
-        This is equivalent to calling `dict.items().__iter__()`, except the Iterator returned is wrapped in a pyochain `Iter`.
-
-        `Iter.map_star` can then be used for subsequent operations on the index and value, in a destructuring manner.
-        This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.
-
-        Note:
-            Overrides `PyoIterable.iter` to correspond to `HashMap.iter()` Rust behavior.
-            `Dict.__iter__` still yields keys only, as per Python convention.
-
-        Returns:
-            Iter[tuple[K, V]]: An `Iter` wrapping the dictionary's (key, value) pairs.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> data = pc.Dict({"a": 1, "b": 2})
-        >>> data.iter().collect()
-        Seq(('a', 1), ('b', 2))
-        >>> data.iter().map_star(lambda key, value: key).collect()
-        Seq('a', 'b')
-        >>> data.iter().map_star(lambda key, value: value).collect()
-        Seq(1, 2)
-
-        ```
-        """
-        from ._iter import Iter
-
-        return Iter(self._inner.items())
-
-    def get_item(self, key: K) -> Option[V]:
-        """Retrieve a value from the `Dict`.
-
-        Returns `Some(value)` if the key exists, or `None` if it does not.
-
-        Args:
-            key (K): The key to look up.
-
-        Returns:
-            Option[V]: Value that is associated with the key, or None if not found.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> data = {"a": 1}
-        >>> pc.Dict(data).get_item("a")
-        Some(1)
-        >>> pc.Dict(data).get_item("x").unwrap_or('Not Found')
-        'Not Found'
-
-        ```
-        """
-        return Option(self._inner.get(key, None))
-
-    def is_empty(self) -> bool:
-        """Returns true if the `Dict` contains no elements.
-
-        Returns:
-            bool: True if the Dict is empty, False otherwise.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> d = pc.Dict.new()
-        >>> d.is_empty()
-        True
-        >>> d.insert(1, "a")
-        NONE
-        >>> d.is_empty()
-        False
-
-        ```
-        """
-        return len(self._inner) == 0
