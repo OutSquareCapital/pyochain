@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import functools
 import itertools
-import operator
 from collections.abc import (
     Callable,
     Collection,
@@ -517,13 +516,6 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
     __slots__ = ()
 
-    def _check(self, other: Iterable[T], op: Comparator[T]) -> bool:
-        match other:
-            case list() | set() | frozenset():
-                return op(type(other)(self), other)
-            case _:
-                return op(tuple(self), tuple(other))
-
     def nth(self, n: int) -> Option[T]:
         """Return the nth item of the `Iterable` at the specified **index**.
 
@@ -575,7 +567,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return self._check(other, operator.eq)
+        sentinel = object()
+        for a, b in itertools.zip_longest(self, other, fillvalue=sentinel):
+            if a is sentinel or b is sentinel or a != b:
+                return False
+        return True
 
     def ne(self, other: Iterable[T]) -> bool:
         """Check if this `Iterator` and *other* are not equal based on their data.
@@ -596,7 +592,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return self._check(other, operator.ne)
+        sentinel = object()
+        for a, b in itertools.zip_longest(self, other, fillvalue=sentinel):
+            if a is sentinel or b is sentinel or a != b:
+                return True
+        return False
 
     def le(self, other: Iterable[T]) -> bool:
         """Check if this `Iterator` is less than or equal to *other* based on their data.
@@ -620,7 +620,15 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return self._check(other, operator.le)
+        sentinel = object()
+        for a, b in itertools.zip_longest(self, other, fillvalue=sentinel):
+            if a is sentinel:
+                return True
+            if b is sentinel:
+                return False
+            if a != b:
+                return a < b  # type: ignore[operator]
+        return True
 
     def lt(self, other: Iterable[T]) -> bool:
         """Check if this `Iterator` is less than *other* based on their data.
@@ -641,7 +649,15 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return self._check(other, operator.lt)
+        sentinel = object()
+        for a, b in itertools.zip_longest(self, other, fillvalue=sentinel):
+            if a is sentinel:
+                return True
+            if b is sentinel:
+                return False
+            if a != b:
+                return a < b  # type: ignore[operator]
+        return False
 
     def gt(self, other: Iterable[T]) -> bool:
         """Check if this `Iterator` is greater than *other* based on their data.
@@ -662,7 +678,15 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return self._check(other, operator.gt)
+        sentinel = object()
+        for a, b in itertools.zip_longest(self, other, fillvalue=sentinel):
+            if a is sentinel:
+                return False
+            if b is sentinel:
+                return True
+            if a != b:
+                return a > b  # type: ignore[operator]
+        return False
 
     def ge(self, other: Iterable[T]) -> bool:
         """Check if this `Iterator` is greater than or equal to *other* based on their data.
@@ -683,7 +707,15 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return self._check(other, operator.ge)
+        sentinel = object()
+        for a, b in itertools.zip_longest(self, other, fillvalue=sentinel):
+            if a is sentinel:
+                return False
+            if b is sentinel:
+                return True
+            if a != b:
+                return a > b  # type: ignore[operator]
+        return True
 
     def next(self) -> Option[T]:
         """Return the next element in the `Iterator`.
