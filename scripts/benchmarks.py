@@ -144,7 +144,7 @@ def run_all_benchmarks() -> pc.Dict[str, pc.Dict[str, int | float]]:
 
 def _summary(results: pc.Dict[str, pc.Dict[str, int | float]]) -> None:
     # Afficher chaque benchmark
-    results.iter().for_each_star(
+    results.items().iter().for_each_star(
         lambda key, value: _display_benchmark(console, key, value)
     )
 
@@ -153,7 +153,7 @@ def _summary(results: pc.Dict[str, pc.Dict[str, int | float]]) -> None:
     console.print("[bold yellow]OVERHEAD PYOCHAIN[/bold yellow]")
     console.print(f"{'=' * 60}\n")
 
-    results.iter().filter_star(
+    results.items().iter().filter_star(
         lambda _, value: "pyochain_lambda" in value
     ).for_each_star(lambda key, value: _display_overhead(console, key, value))
 
@@ -169,7 +169,7 @@ def _display_benchmark(console: Console, name: str, r: pc.Dict[str, float]) -> N
     table.add_column("Temps (s)", justify="right", style="green")
     table.add_column("vs Python", justify="right", style="yellow")
 
-    r.iter().sort(key=lambda x: x[1]).iter().for_each_star(
+    r.items().iter().sort(key=lambda x: x[1]).iter().for_each_star(
         lambda key, value: table.add_row(
             key, f"{value:.4f}", f"{value / baseline:.2f}x"
         )

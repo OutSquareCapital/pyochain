@@ -25,7 +25,10 @@ This is particularly useful when you need to pass the result to a function you d
 >>> # Flow is broken, nested function calls, read from middle -> right -> left -> right
 >>> nested = json.dumps(
 ...     dict(
-...         pc.Dict({"id": 1, "name": "Alice"}).iter().map_star(lambda k, v: (k.upper(), v))
+...         pc.Dict({"id": 1, "name": "Alice"})
+...         .items()
+...         .iter()
+...         .map_star(lambda k, v: (k.upper(), v))
 ...     )
 ... )
 >>> nested
@@ -33,6 +36,7 @@ This is particularly useful when you need to pass the result to a function you d
 >>> # Fluent chaining with .into(), read left -> right
 >>> fluent = (
 ...     pc.Dict({"id": 1, "name": "Alice"})
+...     .items()
 ...     .iter()
 ...     .map_star(lambda k, v: (k.upper(), v))
 ...     .into(lambda d: json.dumps(dict(d)))
