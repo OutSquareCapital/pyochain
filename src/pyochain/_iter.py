@@ -433,6 +433,64 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
             if predicate(self[i])
         )
 
+    def drain(self, start: int | None = None, end: int | None = None) -> Iter[T]:
+        """Removes the subslice indicated by the given *start* and *end* from the `Vec`, returning an `Iterator` over the removed subslice.
+
+        If the `Iterator` is dropped before being fully consumed, it drops the remaining removed elements.
+
+        Note:
+            In CPython, remaining elements are cleaned up when the `Iterator` is garbage collected via `__del__`.
+            However, in interactive environments like doctests, garbage collection may not happen immediately.
+            To guarantee cleanup, fully consume the `Iterator` or explicitly call `.collect()` on it.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> v = pc.Vec([1, 2, 3])
+        >>> u = v.drain(1).collect();
+        >>> v
+        Vec(1)
+        >>> u
+        Seq(2, 3)
+        >>> # A full range clears the vector, like `clear()` does
+        >>> _ = v.drain().collect();
+        >>> v
+        Vec()
+
+        ```
+        Fully consuming the `Iterator` removes all drained elements
+        ```python
+        >>> import pyochain as pc
+        >>> v = pc.Vec([1, 2, 3])
+        >>> _ = v.drain(0, 3).collect()
+        >>> v
+        Vec()
+
+        """
+
+        @dataclass(slots=True)
+        class _DrainIter:
+            _vec: Vec[T]
+            _idx: int
+            _end_idx: int
+
+            def __iter__(self) -> Self:
+                return self
+
+            def __next__(self) -> T:
+                if self._idx >= self._end_idx:
+                    raise StopIteration
+                val = self._vec.pop(self._idx)
+                self._end_idx -= 1
+                return val
+
+            def __del__(self) -> None:
+                while self._idx < self._end_idx:
+                    self._vec.pop(self._idx)
+                    self._end_idx -= 1
+
+        return Iter(_DrainIter(self, start if start else 0, end if end else len(self)))
+
 
 class Iter[T](PyoIterator[T]):
     """A superset around Python's built-in `Iterator` Protocol, providing a rich set of functional programming tools.

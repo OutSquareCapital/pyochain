@@ -2307,3 +2307,46 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):
         for i in range(len(self) - 1, -1, -1):
             if not predicate(self[i]):
                 del self[i]
+
+    def truncate(self, length: int) -> None:
+        """Shortens the `MutableSequence`, keeping the first *length* elements and dropping the rest.
+
+        If *length* is greater or equal to the `MutableSequence` current `__len__()`, this has no effect.
+
+        The `.drain()` method can emulate `.truncate()`, but causes the excess elements to be returned instead of dropped.
+
+        Args:
+            length (int): The length to truncate the `MutableSequence` to.
+
+        Examples:
+        ```python
+        >>> import pyochain as pc
+        >>> # Truncating a five element vector to two elements:
+        >>> vec = pc.Vec([1, 2, 3, 4, 5])
+        >>> vec.truncate(2)
+        >>> vec
+        Vec(1, 2)
+
+        ```
+        No truncation occurs when len is greater than the `MutableSequence` current length:
+        ```python
+        >>> import pyochain as pc
+        >>> vec = pc.Vec([1, 2, 3])
+        >>> vec.truncate(8)
+        >>> vec
+        Vec(1, 2, 3)
+
+        ```
+        Truncating when len == 0 is equivalent to calling the clear method.
+        ```python
+        >>> import pyochain as pc
+        >>> vec = pc.Vec([1, 2, 3])
+        >>> vec.truncate(0)
+        >>> vec
+        Vec()
+
+        ```
+        """
+        pop = self.pop
+        for _ in range(len(self) - length):
+            pop()
