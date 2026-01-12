@@ -1,6 +1,6 @@
 # PyoCollection
 
-::: pyochain.traits.PyoCollection
+::: pyochain.traits._iterable.PyoCollection
     options:
       inherited_members: true
       show_overloads: true

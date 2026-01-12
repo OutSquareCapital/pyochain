@@ -1,6 +1,6 @@
 # PyoValuesView
 
-::: pyochain.traits.PyoValuesView
+::: pyochain.traits._iterable.PyoValuesView
     options:
       inherited_members: true
       show_overloads: true

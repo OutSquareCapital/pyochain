@@ -1,6 +1,6 @@
 # Checkable
 
-::: pyochain.traits.Checkable
+::: pyochain.traits._converters.Checkable
 
     options:
       inherited_members: true

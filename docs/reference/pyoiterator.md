@@ -1,6 +1,6 @@
 # PyoIterator
 
-::: pyochain.traits.PyoIterator
+::: pyochain.traits._iterable.PyoIterator
     options:
       inherited_members: true
       show_overloads: true

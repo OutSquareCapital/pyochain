@@ -1,6 +1,6 @@
 # PyoMutableSequence
 
-::: pyochain.traits.PyoMutableSequence
+::: pyochain.traits._iterable.PyoMutableSequence
     options:
       inherited_members: true
       show_overloads: true

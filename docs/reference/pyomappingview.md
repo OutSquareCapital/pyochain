@@ -1,6 +1,6 @@
 # PyoMappingView
 
-::: pyochain.traits.PyoMappingView
+::: pyochain.traits._iterable.PyoMappingView
     options:
       inherited_members: true
       show_overloads: true

@@ -1,6 +1,6 @@
 # PyoMutableMapping
 
-::: pyochain.traits.PyoMutableMapping
+::: pyochain.traits._iterable.PyoMutableMapping
     options:
       inherited_members: true
       show_overloads: true
