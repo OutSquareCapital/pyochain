@@ -911,7 +911,7 @@ class Iter[T](PyoIterator[T]):
         ```
         """
         collected: list[U] = []
-        collected_add = collected.append  # Local binding for performance
+        collected_add = collected.append
         for item in self._inner:
             match item:
                 case Ok(val) | Some(val):
@@ -1161,7 +1161,7 @@ class Iter[T](PyoIterator[T]):
 
         def _split_into(data: Iterator[T]) -> Iterator[Self]:
             """Credits: more_itertools.split_into."""
-            new = self.__class__  # locality help for performance
+            new = self.__class__
             for size in sizes:
                 if size.is_none():
                     yield new(data)
@@ -1207,7 +1207,7 @@ class Iter[T](PyoIterator[T]):
 
         def _split_when(data: Iterator[T], max_split: int) -> Iterator[Self]:
             """Credits: more_itertools.split_when."""
-            new = self.__class__  # locality help for performance
+            new = self.__class__
             if max_split == 0:
                 yield self
                 return
@@ -1283,7 +1283,7 @@ class Iter[T](PyoIterator[T]):
 
         def _split_at(data: Iterator[T], max_split: int) -> Iterator[Self]:
             """Credits: more_itertools.split_at."""
-            new = self.__class__  # locality help for performance
+            new = self.__class__
             if max_split == 0:
                 yield self
                 return
@@ -1340,7 +1340,7 @@ class Iter[T](PyoIterator[T]):
 
         def _split_after(data: Iterator[T], max_split: int) -> Iterator[Self]:
             """Credits: more_itertools.split_after."""
-            new = self.__class__  # locality help for performance
+            new = self.__class__
             if max_split == 0:
                 yield new(data)
                 return
@@ -1403,7 +1403,7 @@ class Iter[T](PyoIterator[T]):
 
         def _split_before(data: Iterator[T], max_split: int) -> Iterator[Self]:
             """Credits: more_itertools.split_before."""
-            new = self.__class__  # locality help for performance
+            new = self.__class__
 
             if max_split == 0:
                 yield new(data)
@@ -2333,25 +2333,20 @@ class Iter[T](PyoIterator[T]):
         if key is None:
 
             def _gen_no_key() -> Iterator[tuple[Option[T], Option[T]]]:
-                for first, second in itertools.zip_longest(self, other, fillvalue=None):
-                    if first != second:
-                        yield Option(first), Option(second)
+                for first, second in itertools.zip_longest(
+                    map(Some, self), map(Some, other), fillvalue=NONE
+                ):
+                    if first.ne(second):
+                        yield first, second
 
             return Iter(_gen_no_key())
 
         def _gen_with_key() -> Iterator[tuple[Option[T], Option[T]]]:
-            def _key_and_val(x: T | None) -> tuple[Option[T], R | None]:
-                """We need to use None here for performance."""
-                if x is None:
-                    return NONE, None
-                return Some(x), key(x)
-
-            for first, second in itertools.zip_longest(self, other, fillvalue=None):
-                opt_first, k_first = _key_and_val(first)
-                opt_second, k_second = _key_and_val(second)
-
-                if k_first != k_second:
-                    yield opt_first, opt_second
+            for first, second in itertools.zip_longest(
+                map(Some, self), map(Some, other), fillvalue=NONE
+            ):
+                if first.map(key).ne(second.map(key)):
+                    yield first, second
 
         return Iter(_gen_with_key())
 
