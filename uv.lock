@@ -123,7 +123,7 @@ wheels = [
 [[package]]
 name = "cytoolz-stubs"
 version = "0.3.3"
-source = { git = "https://github.com/OutSquareCapital/cytoolz-stubs.git#9514911842ad59b12e9eaf839e42ba91aef04eb6" }
+source = { git = "https://github.com/OutSquareCapital/cytoolz-stubs.git#898ef1e098ff8340210e39daf04eab22835646a5" }
 dependencies = [
     { name = "stubtester" },
 ]
@@ -670,8 +670,8 @@ wheels = [
 
 [[package]]
 name = "stubtester"
-version = "0.1.5"
-source = { git = "https://github.com/OutSquareCapital/stubtester.git#aab22fef8ff5a68bb2e002d83e2512ae3e2e18af" }
+version = "0.1.6"
+source = { git = "https://github.com/OutSquareCapital/stubtester.git#7cbbaedd94c57967d42373a0d85abb6f1ee525ae" }
 dependencies = [
     { name = "pyochain" },
     { name = "pytest" },
