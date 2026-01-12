@@ -72,7 +72,7 @@ uv run ruff check --fix src/pyochain
 uv run ruff format src/pyochain
 uv run pydoclint src/pyochain
 uv run pyright src/pyochain
-uv run pytest --doctest-modules --doctest-glob="*.md" --doctest-mdcodeblocks -v src/pyochain tests/ README.md docs/
+uv run pytest --doctest-modules --doctest-glob="*.md" --doctest-mdcodeblocks -v src/pyochain tests/tests.py README.md docs/ 
 ```
 
 ## Building docs

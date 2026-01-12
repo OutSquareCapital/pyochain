@@ -425,13 +425,19 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
                     # your code here
         ```
         """
-        pop = self.pop
 
-        return Iter(
-            pop(i)
-            for i in range(start, end if end is not None else len(self))
-            if predicate(self[i])
-        )
+        def _extract_if_gen() -> Iterator[T]:
+            effective_end = end if end is not None else len(self)
+            i = start
+            pop = self.pop
+            while i < effective_end and i < len(self):
+                if predicate(self[i]):
+                    yield pop(i)
+                    effective_end -= 1
+                else:
+                    i += 1
+
+        return Iter(_extract_if_gen())
 
     def drain(self, start: int | None = None, end: int | None = None) -> Iter[T]:
         """Removes the subslice indicated by the given *start* and *end* from the `Vec`, returning an `Iterator` over the removed subslice.
@@ -442,6 +448,13 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
             In CPython, remaining elements are cleaned up when the `Iterator` is garbage collected via `__del__`.
             However, in interactive environments like doctests, garbage collection may not happen immediately.
             To guarantee cleanup, fully consume the `Iterator` or explicitly call `.collect()` on it.
+
+        Args:
+            start (int | None): Starting index of the subslice to drain. Defaults to `0` if `None`.
+            end (int | None): Ending index of the subslice to drain. Defaults to `len(self)` if `None`.
+
+        Returns:
+            Iter[T]: An `Iterator` over the drained elements.
 
         Examples:
         ```python

@@ -2408,8 +2408,8 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):
                 self[write_idx] = self[read_idx]
                 write_idx += 1
         pop = self.pop
-        while length > write_idx:
-            pop()
+        while len(self) > write_idx:
+            pop(write_idx)
 
     def truncate(self, length: int) -> None:
         """Shortens the `MutableSequence`, keeping the first *length* elements and dropping the rest.
