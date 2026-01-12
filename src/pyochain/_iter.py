@@ -505,6 +505,43 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
 
         return Iter(_DrainIter(self, start if start else 0, end if end else len(self)))
 
+    def concat(self, other: list[T] | Self) -> Vec[T]:
+        """Concatenate another `Vec` or `list` to **self** and return a new `Vec`.
+
+        Note:
+            This is equivalent to `list_1 + list_2` for standard lists.
+
+        Args:
+            other (Self): The other `Vec` to concatenate.
+
+        Returns:
+            Self: The new `Vec` after concatenation.
+
+        See Also:
+            `Vec.extend()` which modifies **self** in place.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> v1 = pc.Vec([1, 2, 3])
+        >>> v2 = [4, 5, 6] # Can also concatenate a standard list
+        >>> v3 = v1.concat(v2)
+        >>> v3
+        Vec(1, 2, 3, 4, 5, 6)
+        >>> v1.clear() # Clean up the original vec
+        >>> v1
+        Vec()
+        >>> # New vec remains unaffected
+        >>> v3
+        Vec(1, 2, 3, 4, 5, 6)
+        """
+        match other:
+            case Vec():
+                data = self._inner + other._inner
+            case list():
+                data = self._inner + other
+        return Vec.from_ref(data)
+
 
 class Iter[T](PyoIterator[T]):
     """A superset around Python's built-in `Iterator` Protocol, providing a rich set of functional programming tools.

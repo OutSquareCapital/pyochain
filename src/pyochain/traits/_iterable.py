@@ -2386,7 +2386,11 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):
     - `insert`
 
     On top of the standard `MutableSequence` protocol, it provides the additional
-    pyochain API (from `PyoSequence`, `PyoCollection`, `Pipeable`, `Checkable`, plus any helpers defined here).
+    pyochain API (from `PyoSequence`, `PyoCollection`, `Pipeable`, `Checkable`), and various methods inspired from Rust's `Vec` type.
+
+    Those methods provides memory-efficient in-place operations.
+
+    They are slower than simple `.extend()`, slices and `clear()` calls, but avoids all intermediate allocations, making them suitable for large collections where memory usage is a concern.
     """
 
     __slots__ = ()
@@ -2397,6 +2401,11 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):
         In other words, remove all elements e for which the *predicate* function returns `False`.
 
         This method operates in place, visiting each element exactly once in forward order, and preserves the order of the retained elements.
+
+        Note:
+            This is similar to filtering, but operates in place without allocating a new collection once collected.
+
+            For example `new_list = list(filter(predicate, my_list))` followed by `my_list.clear()` would allocate a new collection before clearing the original, resulting in higher peak memory usage.
 
         Args:
             predicate (Callable[[T], bool]): A function that returns `True` for elements to keep and `False` for elements to remove.
@@ -2439,6 +2448,9 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):
 
         The `.drain()` method can emulate `.truncate()`, but causes the excess elements to be returned instead of dropped.
 
+        Note:
+            This is equivalent to `del seq[length:]`, except that it won't create an intermediate slice object.
+
         Args:
             length (int): The length to truncate the `MutableSequence` to.
 
@@ -2474,3 +2486,25 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):
         pop = self.pop
         for _ in range(len(self) - length):
             pop()
+
+    def extend_move(self, other: Self | list[T]) -> None:
+        """Moves all the elements of *other* into *self*, leaving *other* empty.
+
+        Note:
+            This is equivalent to `extend(other)` followed by `other.clear()`, but avoids intermediate allocations by moving elements one at a time.
+
+        Args:
+            other (Self | list[T]): The other `MutableSequence` to move elements from.
+
+        Examples:
+        >>> import pyochain as pc
+        >>> v1 = pc.Vec([1, 2, 3])
+        >>> v2 = pc.Vec([4, 5, 6])
+        >>> v1.extend_move(v2)
+        >>> v1
+        Vec(1, 2, 3, 4, 5, 6)
+        >>> v2
+        Vec()
+        """
+        pop = functools.partial(other.pop, 0)
+        self.extend(pop() for _ in range(len(other)))
