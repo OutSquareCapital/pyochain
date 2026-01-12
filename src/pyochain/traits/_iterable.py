@@ -2056,28 +2056,83 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):
         return self.__class__(other ^ self)
 
 
-# TODO: documentation for new "View" classes
-
-
 class PyoMappingView[T](MappingView, PyoCollection[T]):
+    """Base trait for eager pyochain mapping view collections.
+
+    `PyoMappingView[T]` is the shared trait for concrete mapping views
+    returned by mapping operations.
+
+    This trait extends both `MappingView` from `collections.abc` and `PyoCollection[T]`.
+    """
+
     __slots__ = ()
 
 
 class PyoValuesView[V](ValuesView[V], PyoMappingView[V]):
+    """A view of the values in a pyochain mapping.
+
+    This class provides a view over the values contained in a pyochain mapping, with
+    additional methods from the `PyoMappingView` and `PyoCollection` traits.
+
+    See Also:
+        `PyoMapping.values()`: Method that returns this view.
+    """
+
     __slots__ = ()
 
 
 class PyoKeysView[K](KeysView[K], PyoMappingView[K], PyoSet[K]):
+    """A view of the keys in a pyochain mapping.
+
+    This class provides a view over the keys contained in a pyochain mapping, with
+    additional methods from the `PyoMappingView`, `PyoSet`, and `PyoCollection` traits.
+
+    Keys views support set-like operations since dictionary keys are unique.
+
+    See Also:
+        `PyoMapping.keys()`: Method that returns this view.
+    """
+
     __slots__ = ()
 
 
 class PyoItemsView[K, V](
     ItemsView[K, V], PyoMappingView[tuple[K, V]], PyoSet[tuple[K, V]]
 ):
+    """A view of the items (key-value pairs) in a pyochain mapping.
+
+    This class provides a view over the items contained in a pyochain mapping, with
+    additional methods from the `PyoMappingView`, `PyoSet`, and `PyoCollection` traits.
+
+    Items are represented as tuples of `(key, value)` pairs, and the view supports set-like operations.
+
+    See Also:
+        `PyoMapping.items()`: Method that returns this view.
+    """
+
     __slots__ = ()
 
 
 class PyoMapping[K, V](PyoCollection[K], Mapping[K, V]):
+    """Base trait for eager pyochain immutable mapping collections.
+
+    `PyoMapping[K, V]` is the shared trait for concrete, eager mapping-like
+    collections such as `Dict`.
+
+    It extends `PyoCollection[K]` and `collections.abc.Mapping[K, V]`.
+
+    This is equivalent to subclassing `collections.abc.Mapping[K, V]` (this trait
+    already does), meaning any concrete subclass must implement the required
+    `Mapping` dunder methods:
+
+    - `__getitem__`
+    - `__iter__`
+    - `__len__`
+
+    On top of the standard `Mapping` protocol, it provides the additional
+    pyochain API (from `PyoCollection`, `Pipeable`, `Checkable`, plus any helpers defined here).
+    """
+
     __slots__ = ()
 
     def keys(self) -> PyoKeysView[K]:
@@ -2133,6 +2188,27 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V]):
 
 
 class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):
+    """Base trait for eager pyochain mutable mapping collections.
+
+    `PyoMutableMapping[K, V]` is the shared trait for concrete, eager mutable mapping-like
+    collections such as `Dict`.
+
+    It extends `PyoMapping[K, V]` and `collections.abc.MutableMapping[K, V]`.
+
+    This is equivalent to subclassing `collections.abc.MutableMapping[K, V]` (this trait
+    already does), meaning any concrete subclass must implement the required
+    `MutableMapping` dunder methods:
+
+    - `__getitem__`
+    - `__setitem__`
+    - `__delitem__`
+    - `__iter__`
+    - `__len__`
+
+    On top of the standard `MutableMapping` protocol, it provides the additional
+    pyochain API (from `PyoMapping`, `PyoCollection`, `Pipeable`, `Checkable`, plus any helpers defined here).
+    """
+
     __slots__ = ()
 
     def insert(self, key: K, value: V) -> Option[V]:
@@ -2271,6 +2347,27 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):
 
 
 class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):
+    """Base trait for eager pyochain mutable sequence collections.
+
+    `PyoMutableSequence[T]` is the shared trait for concrete, eager mutable sequence-like
+    collections: `Vec`.
+
+    It extends `PyoSequence[T]` and `collections.abc.MutableSequence[T]`.
+
+    This is equivalent to subclassing `collections.abc.MutableSequence[T]` (this trait
+    already does), meaning any concrete subclass must implement the required
+    `MutableSequence` dunder methods:
+
+    - `__getitem__`
+    - `__setitem__`
+    - `__delitem__`
+    - `__len__`
+    - `insert`
+
+    On top of the standard `MutableSequence` protocol, it provides the additional
+    pyochain API (from `PyoSequence`, `PyoCollection`, `Pipeable`, `Checkable`, plus any helpers defined here).
+    """
+
     __slots__ = ()
 
     def retain(self, predicate: Callable[[T], bool]) -> None:

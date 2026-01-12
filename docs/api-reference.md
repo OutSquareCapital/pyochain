@@ -25,5 +25,26 @@ This page is the entry point to the **complete** public API documentation.
 
 ## Traits & mixins
 
+### Fluent Traits
+
 - [`Pipeable`](reference/pipeable.md) — `.into()`, `.inspect()`
 - [`Checkable`](reference/checkable.md) — `.then()`, `.ok_or()`, ...
+
+### Abstract Collection Traits
+
+- [`PyoIterable[T]`](reference/pyoiterable.md) — Base trait for all iterables
+- [`PyoIterator[T]`](reference/pyoiterator.md) — Iterator trait
+- [`PyoCollection[T]`](reference/pyocollection.md) — Base trait for eager collections
+- [`PyoSequence[T]`](reference/pyosequence.md) — Sequence trait
+- [`PyoMutableSequence[T]`](reference/pyomutablesequence.md) — Mutable sequence trait
+- [`PyoSet[T]`](reference/pyoset.md) — Set trait
+- [`PyoMutableSet[T]`](reference/pyomutableset.md) — Mutable set trait
+- [`PyoMappingView[T]`](reference/pyomappingview.md) — Mapping view trait
+- [`PyoMapping[K, V]`](reference/pyomapping.md) — Mapping trait
+- [`PyoMutableMapping[K, V]`](reference/pyomutablemapping.md) — Mutable mapping trait
+
+### Mapping Views
+
+- [`PyoKeysView[K]`](reference/pyokeysview.md) — Keys view
+- [`PyoValuesView[V]`](reference/pyovaluesview.md) — Values view
+- [`PyoItemsView[K, V]`](reference/pyoitemsview.md) — Items view

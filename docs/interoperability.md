@@ -109,32 +109,63 @@ Ok(Seq(1, 2, 3))
 Err('empty')
 ```
 
-### PyoIterable trait & PyoCollection trait
+### PyoIterable & PyoCollection traits
 
-Those traits are the base for all collection and iterator types in Pyochain.
+`PyoIterable[T]` and `PyoCollection[T]` are the foundational traits for all collection and iterator types in Pyochain.
 
-They combine `Pipeable` and `Checkable` with Python's `Iterable` protocol, providing a consistent interface.
+**PyoIterable[T]** extends `Pipeable`, `Checkable`, and Python's `Iterable[T]` protocol:
 
-All *mutable collections* types provide a `from_ref()` class method.
+- Provides the base interface shared by **all** pyochain types (both lazy iterators and eager collections)
+- Concrete types only need to implement `__iter__()` to satisfy the `Iterable[T]` protocol
+- Adds common methods like `.length()`, `.sum()`, `.min()`, `.max()`, `.all()`, `.any()`, etc.
 
-This method instantiates her class from a *reference* to an existing Python *mutable collection* corresponding to their underlying data structure.
+**PyoCollection[T]** extends `PyoIterable[T]` and Python's `Collection[T]` protocol:
 
-### Example
+- Represents **eager** (in-memory) collections: `Seq`, `Vec`, `Set`, `SetMut`, `Dict`, and mapping views
+- Concrete types must implement `__contains__()`, `__iter__()`, and `__len__()` to satisfy the protocol
+- `Iter[T]` (lazy iterator) does **not** extend this trait, only `PyoIterator[T]`
+
+#### from_ref() for mutable collections
+
+All mutable collection types (`Vec`, `SetMut`, `Dict`) provide a `from_ref()` class method that creates a pyochain instance from a reference to an existing Python collection **without copying**.
+
+### Examples
 
 ```python
 >>> import pyochain as pc
->>> py_list = [1, 2, 3] # standard Python list
->>> vec = pc.Vec.from_ref(py_list) # create Vec from reference
->>> vec.append(4) # modify Vec
+>>> # Vec from list
+>>> py_list = [1, 2, 3]
+>>> vec = pc.Vec.from_ref(py_list)
+>>> vec.append(4)
 >>> vec
 Vec(1, 2, 3, 4)
->>> py_list # original list is also modified. No copy was made.
+>>> py_list  # original list is modified
 [1, 2, 3, 4]
+>>> 
+>>> # SetMut from set
+>>> py_set = {1, 2, 3}
+>>> set_mut = pc.SetMut.from_ref(py_set)
+>>> set_mut.add(4)
+>>> set_mut
+SetMut(1, 2, 3, 4)
+>>> py_set  # original set is modified
+{1, 2, 3, 4}
+>>> 
+>>> # Dict from dict
+>>> py_dict = {"a": 1, "b": 2}
+>>> pyo_dict = pc.Dict.from_ref(py_dict)
+>>> pyo_dict.insert("c", 3)
+NONE
+>>> pyo_dict
+Dict('a': 1, 'b': 2, 'c': 3)
+>>> py_dict  # original dict is modified
+{'a': 1, 'b': 2, 'c': 3}
+
 ```
 
-This allows fast, efficient no-copy conversions when dealing with external functions that returns standard Python collections.
+This allows fast, efficient no-copy conversions when dealing with external functions that return standard Python collections.
 
-*Immutable collections* types don't need them, as Python already optimize this case under the hood.
+**Note:** Immutable collections (`Seq`, `Set`) don't need `from_ref()` since their underlying types (`tuple`, `frozenset`) are already immutable and Python optimizes their creation automatically.
 
 ## Conversion & Interoperability Map
 
