@@ -81,3 +81,181 @@ def test_drain_entire_vector_gc() -> None:
     next(drain_iter)  # consume only first
     del drain_iter
     assert list(v) == []
+
+
+def test_retain_basic() -> None:
+    """Test basic retain functionality."""
+    v = pc.Vec([1, 2, 3, 4, 5])
+    v.retain(lambda x: x % 2 == 0)
+    assert list(v) == [2, 4]
+
+
+def test_retain_preserves_order() -> None:
+    """Test that retain preserves element order."""
+    v = pc.Vec([5, 4, 3, 2, 1])
+    v.retain(lambda x: x > 2)
+    assert list(v) == [5, 4, 3]
+
+
+def test_retain_empty_result() -> None:
+    """Test retain that removes all elements."""
+    v = pc.Vec([1, 2, 3, 4])
+    v.retain(lambda x: x > 10)
+    assert list(v) == []
+
+
+def test_retain_all_kept() -> None:
+    """Test retain where all elements are kept."""
+    v = pc.Vec([1, 2, 3, 4])
+    v.retain(lambda x: x > 0)
+    assert list(v) == [1, 2, 3, 4]
+
+
+def test_retain_with_stateful_predicate() -> None:
+    """Test retain with external state-based predicate."""
+    v = pc.Vec([1, 2, 3, 4, 5])
+    keep = pc.Seq([False, True, True, False, True]).iter()
+    v.retain(lambda _: next(keep))
+    assert list(v) == [2, 3, 5]
+
+
+def test_retain_no_intermediate_copy() -> None:
+    """Verify that retain modifies the same Vec instance in place."""
+    v = pc.Vec([1, 2, 3, 4])
+    v_id_before = id(v._inner)  # type: ignore[private-access]
+    v.retain(lambda x: x % 2 == 0)
+    v_id_after = id(v._inner)  # type: ignore[private-access]
+    # The underlying list should be the same object (in-place modification)
+    assert v_id_before == v_id_after
+    assert list(v) == [2, 4]
+
+
+def test_truncate_basic() -> None:
+    """Test basic truncate functionality."""
+    v = pc.Vec([1, 2, 3, 4, 5])
+    v.truncate(2)
+    assert list(v) == [1, 2]
+
+
+def test_truncate_to_zero() -> None:
+    """Test truncate to zero length."""
+    v = pc.Vec([1, 2, 3])
+    v.truncate(0)
+    assert list(v) == []
+
+
+def test_truncate_no_effect() -> None:
+    """Test truncate with length greater than current size."""
+    v = pc.Vec([1, 2, 3])
+    v.truncate(10)
+    assert list(v) == [1, 2, 3]
+
+
+def test_truncate_same_length() -> None:
+    """Test truncate with length equal to current size."""
+    v = pc.Vec([1, 2, 3])
+    v.truncate(3)
+    assert list(v) == [1, 2, 3]
+
+
+def test_truncate_no_intermediate_copy() -> None:
+    """Verify that truncate modifies the same Vec instance in place."""
+    v = pc.Vec([1, 2, 3, 4, 5])
+    v_id_before = id(v._inner)  # type: ignore[private-access]
+    v.truncate(2)
+    v_id_after = id(v._inner)  # type: ignore[private-access]
+    # The underlying list should be the same object (in-place modification)
+    assert v_id_before == v_id_after
+    assert list(v) == [1, 2]
+
+
+def test_extract_if_basic() -> None:
+    """Test basic extract_if functionality."""
+    v = pc.Vec([1, 2, 3, 4, 5])
+    extracted = v.extract_if(lambda x: x % 2 == 0).collect()
+    # After extracting, only odd elements remain
+    assert list(v) == [1, 3, 5]
+    # Extracted elements should be even
+    assert list(extracted) == [2, 4]
+
+
+def test_extract_if_with_range() -> None:
+    """Test extract_if with specified range."""
+    v = pc.Vec([1, 2, 3, 4, 5])
+    extracted = v.extract_if(lambda x: x % 2 == 0, start=1, end=4).collect()
+    # Only indices 1-3 are affected, so element 2 and 4 are extracted
+    assert list(v) == [1, 3, 5]
+    assert list(extracted) == [2, 4]
+
+
+def test_extract_if_empty_result() -> None:
+    """Test extract_if that matches no elements."""
+    v = pc.Vec([1, 2, 3, 4])
+    extracted = v.extract_if(lambda x: x > 10).collect()
+    assert list(extracted) == []
+    assert list(v) == [1, 2, 3, 4]
+
+
+def test_extract_if_all_match() -> None:
+    """Test extract_if that matches all elements."""
+    v = pc.Vec([1, 2, 3, 4])
+    extracted = v.extract_if(lambda x: x > 0).collect()
+    assert list(extracted) == [1, 2, 3, 4]
+    assert list(v) == []
+
+
+def test_extract_if_partial_consumption() -> None:
+    """Test extract_if with partial consumption."""
+    v = pc.Vec([1, 2, 3, 4, 5])
+    extract_iter = v.extract_if(lambda x: x % 2 == 0)
+    # Consume only first extracted element (will be 2 since we collect first)
+    first = next(extract_iter)
+    assert first == 2
+    # Consume rest
+    remaining = list(extract_iter)
+    assert remaining == [4]
+    assert list(v) == [1, 3, 5]
+
+
+def test_memory_efficiency_retain() -> None:
+    """Test that retain doesn't create unnecessary allocations."""
+    original = list(range(1000))
+    v = pc.Vec(original)
+    original_list_id = id(v._inner)  # type: ignore[private-access]
+
+    # Retain only even numbers
+    v.retain(lambda x: x % 2 == 0)
+
+    # Verify in-place modification
+    assert id(v._inner) == original_list_id  # type: ignore[private-access]
+    assert len(v) == 500
+    assert all(x % 2 == 0 for x in v)
+
+
+def test_memory_efficiency_truncate() -> None:
+    """Test that truncate doesn't create unnecessary allocations."""
+    v = pc.Vec(list(range(100)))
+    original_list_id = id(v._inner)  # type: ignore[private-access]
+
+    v.truncate(50)
+
+    # Verify in-place modification
+    assert id(v._inner) == original_list_id  # type: ignore[private-access]
+    assert len(v) == 50
+
+
+def test_chained_memory_operations() -> None:
+    """Test multiple in-place operations in sequence."""
+    v = pc.Vec([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    original_id = id(v._inner)  # type: ignore[private-access]
+
+    # First retain
+    v.retain(lambda x: x > 2)
+    assert id(v._inner) == original_id  # type: ignore[private-access]
+
+    # Then truncate
+    v.truncate(4)
+    assert id(v._inner) == original_id  # type: ignore[private-access]
+
+    # Verify final state
+    assert list(v) == [3, 4, 5, 6]
