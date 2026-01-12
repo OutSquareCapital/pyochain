@@ -3,19 +3,20 @@
     name            = "pyochain"
     readme          = "README.md"
     requires-python = ">=3.13"
-    version         = "0.6.6"
+    version         = "0.7.0"
 
     dependencies = ["cytoolz>=1.0.1"]
 
 [dependency-groups]
     dev = [
         "cytoolz-stubs",
+        "memory-profiler>=0.61.0",
         "mkdocstrings-python>=1.18.2",
         "polars>=1.33.1",
         "pydoclint>=0.8.1",
         "pyright>=1.1.407",
-        "pytest>=9.0.2",
         "pytest-doctest-mkdocstrings>=0.1.1",
+        "pytest>=9.0.2",
         "ruff>=0.14.9",
         "zensical>=0.0.15",
 ]
