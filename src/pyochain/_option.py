@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class OptionUnwrapError(RuntimeError): ...
 
 
-class Option[T](Pipeable):
+class Option[T](Pipeable):  # noqa: PLW1641
     """Type `Option[T]` represents an optional value.
 
     Every Option is either:
@@ -308,7 +308,100 @@ class Option[T](Pipeable):
         """
         return self.and_then(lambda x: func(*x))
 
+    def ne(self, other: Option[T]) -> bool:
+        """Checks if two `Option[T]` instances are not equal.
+
+        Args:
+            other (Option[T]): The other `Option[T]` instance to compare with.
+
+        Returns:
+            bool: `True` if both instances are not equal, `False` otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some(42).ne(pc.Some(21))
+        True
+        >>> pc.Some(42).ne(pc.Some(42))
+        False
+        >>> pc.Some(42).ne(pc.NONE)
+        True
+        >>> pc.NONE.ne(pc.NONE)
+        False
+
+        ```
+        """
+        return not self.eq(other)
+
     # Abstract methods ----------------------------------------------------------------
+
+    @abstractmethod
+    def __eq__(self, other: object) -> bool:
+        """Checks if this `Option` and *other* are equal.
+
+        A plain Python `None` is considered equal to a `pyochain.NoneOption` instance.
+
+        A plain value of type `T` is considered equal to a `pyochain.Some[T]` instance.
+
+        Args:
+            other (object): The other object to compare with.
+
+        Returns:
+            bool: `True` if both instances are equal, `False` otherwise.
+
+        See Also:
+            - `Option.eq` for a type-safe, performant version that only accepts `Option[T]` instances.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some(42) == pc.Some(42)
+        True
+        >>> pc.Some(42) == pc.Some(21)
+        False
+        >>> pc.Some(42) == pc.NONE
+        False
+        >>> pc.NONE == pc.NONE
+        True
+        >>> pc.NONE == None
+        True
+        >>> pc.Some(42) == 42
+        True
+
+        ```
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def eq(self, other: Option[T]) -> bool:
+        """Checks if two `Option[T]` instances are equal.
+
+        Note:
+            This method behave similarly to `__eq__`, but only accepts `Option[T]` instances as argument.
+
+            This avoids runtime isinstance checks (we check for boolean `is_some()`, which is a simple function call), and is more type-safe.
+
+        Args:
+            other (Option[T]): The other `Option[T]` instance to compare with.
+
+        Returns:
+            bool: `True` if both instances are equal, `False` otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Some(42).eq(pc.Some(42))
+        True
+        >>> pc.Some(42).eq(pc.Some(21))
+        False
+        >>> pc.Some(42).eq(pc.NONE)
+        False
+        >>> pc.NONE.eq(pc.NONE)
+        True
+
+        ```
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def is_some(self) -> bool:
@@ -1036,8 +1129,8 @@ class Option[T](Pipeable):
 
 
 @final
-@dataclass(slots=True)
-class Some[T](Option[T]):
+@dataclass(slots=True, eq=False, repr=False)
+class Some[T](Option[T]):  # noqa: PLW1641
     """Option variant representing the presence of a value.
 
     For more documentation, see the `Option[T]` class.
@@ -1055,8 +1148,6 @@ class Some[T](Option[T]):
 
     """
 
-    __match_args__ = ("value",)
-
     value: T
 
     def __new__[V](cls, _value: V) -> Some[V]:
@@ -1065,6 +1156,20 @@ class Some[T](Option[T]):
 
     def __repr__(self) -> str:
         return f"Some({self.value!r})"
+
+    def __eq__(self, other: object) -> bool:
+        match other:
+            case Some(value):  # type: ignore[var-annotated]
+                return self.value == value  # type: ignore[return-value]
+            case _ if isinstance(other, self.value.__class__):
+                return self.value == other
+            case _:
+                return False
+
+    def eq(self, other: Option[T]) -> bool:
+        if other.is_some():
+            return self.value == other.unwrap()
+        return False
 
     def is_some(self) -> bool:
         return True
@@ -1192,8 +1297,8 @@ class Some[T](Option[T]):
 
 
 @final
-@dataclass(init=False, slots=True)
-class NoneOption[T](Option[T]):
+@dataclass(init=False, slots=True, eq=False, repr=False)
+class NoneOption[T](Option[T]):  # noqa: PLW1641
     """Option variant representing the absence of a value.
 
     This class is not supposed to be instanciated by the user.
@@ -1202,14 +1307,22 @@ class NoneOption[T](Option[T]):
     For more documentation, see the `Option[T]` class.
     """
 
-    __match_args__ = ()
-
     def __new__(cls, _value: object = None) -> NoneOption[Any]:
         """Bypass Option's redirect by directly creating a NoneOption instance."""
         return object.__new__(cls)  # type: ignore[return-value]
 
     def __repr__(self) -> str:
         return "NONE"
+
+    def __eq__(self, other: object) -> bool:
+        match other:
+            case NoneOption() | None:
+                return True
+            case _:
+                return False
+
+    def eq(self, other: Option[T]) -> bool:
+        return other.is_none()
 
     def is_some(self) -> bool:
         return False
