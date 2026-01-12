@@ -1,14 +1,8 @@
 name: Publish Package to PyPI
 
 on:
-  push:
-    branches: [master]
-  workflow_dispatch:  # ← Permet de trigger manuellement
-    inputs:
-      dry_run:
-        description: 'Dry run (ne publie pas réellement)'
-        type: boolean
-        default: true
+  release:
+    types: [published]
 permissions:
   contents: read
   id-token: write
