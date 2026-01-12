@@ -2295,44 +2295,65 @@ class Iter[T](PyoIterator[T]):
         """
         return Iter(itertools.product(self._inner, *others))
 
-    def diff_at(
-        self,
-        *others: Iterable[T],
-        default: T | None = None,
-        key: Callable[[T], Any] | None = None,
-    ) -> Iter[tuple[T, ...]]:
-        """Return those items that differ between iterables.
+    def diff_at[R](
+        self, other: Iterable[T], key: Callable[[T], R] | None = None
+    ) -> Iter[tuple[Option[T], Option[T]]]:
+        """Yields pairs of differing elements from two iterables.
 
-        Each output item is a tuple where the i-th element is from the i-th input iterable.
+        Compares elements from the source iterable and another iterable at corresponding positions.
 
-        If an input iterable is exhausted before others, then the corresponding output items will be filled with *default*.
+        If elements differ (based on equality or a provided key function), yields a tuple containing the differing elements wrapped in `Option`.
+
+        If one iterable is shorter, yields `NONE` for missing elements.
 
         Args:
-            *others (Iterable[T]): Other iterables to compare with.
-            default (T | None): Value to use for missing elements.
+            other (Iterable[T]): Other `Iterable` to compare with.
             key (Callable[[T], Any] | None): Function to apply to each item for comparison.
 
         Returns:
-            Iter[tuple[T, ...]]: An iterable of tuples containing differing elements from the input iterables.
+            Iter[tuple[Option[T], Option[T]]]: An `Iter` of item pairs containing differing elements.
 
         Example:
         ```python
         >>> import pyochain as pc
         >>> data = pc.Seq([1, 2, 3])
-        >>> data.iter().diff_at([1, 2, 10, 100], default=None).collect()
-        Seq((3, 10), (None, 100))
-        >>> data.iter().diff_at([1, 2, 10, 100, 2, 6, 7], default=0).collect()
-        Seq((3, 10), (0, 100), (0, 2), (0, 6), (0, 7))
-
-        A key function may also be applied to each item to use during comparisons:
-        ```python
-        >>> import pyochain as pc
-        >>> pc.Iter(["apples", "bananas"]).diff_at(["Apples", "Oranges"], key=str.lower).collect()
-        Seq(('bananas', 'Oranges'),)
+        >>> data.iter().diff_at([1, 2, 10, 100]).collect()
+        Seq((Some(3), Some(10)), (NONE, Some(100)))
+        >>> data.iter().diff_at([1, 2, 10, 100, 2, 6, 7]).collect() # doctest: +NORMALIZE_WHITESPACE
+        Seq((Some(3), Some(10)),
+        (NONE, Some(100)),
+        (NONE, Some(2)),
+        (NONE, Some(6)),
+        (NONE, Some(7)))
+        >>> pc.Iter(["apples", "bananas"]).diff_at(["Apples", "Oranges"], key=str.lower).collect(list)
+        [(Some('bananas'), Some('Oranges'))]
 
         ```
         """
-        return Iter(cz.itertoolz.diff(self._inner, *others, default=default, key=key))
+        if key is None:
+
+            def _gen_no_key() -> Iterator[tuple[Option[T], Option[T]]]:
+                for first, second in itertools.zip_longest(self, other, fillvalue=None):
+                    if first != second:
+                        yield Option(first), Option(second)
+
+            return Iter(_gen_no_key())
+
+        def _gen_with_key() -> Iterator[tuple[Option[T], Option[T]]]:
+            def _key_and_val(x: T | None) -> tuple[Option[T], R | None]:
+                """We need to use None here for performance."""
+                if x is None:
+                    return NONE, None
+                return Some(x), key(x)
+
+            for first, second in itertools.zip_longest(self, other, fillvalue=None):
+                opt_first, k_first = _key_and_val(first)
+                opt_second, k_second = _key_and_val(second)
+
+                if k_first != k_second:
+                    yield opt_first, opt_second
+
+        return Iter(_gen_with_key())
 
     def join_with[R, K](
         self,
