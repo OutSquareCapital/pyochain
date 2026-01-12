@@ -512,10 +512,10 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
             This is equivalent to `list_1 + list_2` for standard lists.
 
         Args:
-            other (Self): The other `Vec` to concatenate.
+            other (list[T] | Self): The other `Vec` to concatenate.
 
         Returns:
-            Self: The new `Vec` after concatenation.
+            Vec[T]: The new `Vec` after concatenation.
 
         See Also:
             `Vec.extend()` which modifies **self** in place.
@@ -2345,7 +2345,7 @@ class Iter[T](PyoIterator[T]):
 
         Args:
             other (Iterable[T]): Other `Iterable` to compare with.
-            key (Callable[[T], Any] | None): Function to apply to each item for comparison.
+            key (Callable[[T], R] | None): Function to apply to each item for comparison.
 
         Returns:
             Iter[tuple[Option[T], Option[T]]]: An `Iter` of item pairs containing differing elements.
@@ -2560,7 +2560,7 @@ class Iter[T](PyoIterator[T]):
 
         Args:
             length (int): The length of each window.
-            func (Callable[[tuple[Any, ...]], R]): Function to apply to each window.
+            func (Callable[..., R]): Function to apply to each window.
 
         Returns:
             Iter[R]: An iterator over the outputs of func.

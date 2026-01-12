@@ -370,7 +370,7 @@ class Option[T](Pipeable):  # noqa: PLW1641
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def eq(self, other: Option[T]) -> bool:
@@ -401,7 +401,7 @@ class Option[T](Pipeable):  # noqa: PLW1641
 
         ```
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def is_some(self) -> bool:
