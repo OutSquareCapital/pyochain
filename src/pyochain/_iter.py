@@ -498,8 +498,9 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
                 return val
 
             def __del__(self) -> None:
+                pop = self._vec.pop
                 while self._idx < self._end_idx:
-                    self._vec.pop(self._idx)
+                    pop(self._idx)
                     self._end_idx -= 1
 
         return Iter(_DrainIter(self, start if start else 0, end if end else len(self)))
