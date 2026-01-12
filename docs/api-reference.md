@@ -38,7 +38,6 @@ This page is the entry point to the **complete** public API documentation.
 - [`PyoSequence[T]`](reference/pyosequence.md) — Sequence trait
 - [`PyoMutableSequence[T]`](reference/pyomutablesequence.md) — Mutable sequence trait
 - [`PyoSet[T]`](reference/pyoset.md) — Set trait
-- [`PyoMutableSet[T]`](reference/pyomutableset.md) — Mutable set trait
 - [`PyoMappingView[T]`](reference/pyomappingview.md) — Mapping view trait
 - [`PyoMapping[K, V]`](reference/pyomapping.md) — Mapping trait
 - [`PyoMutableMapping[K, V]`](reference/pyomutablemapping.md) — Mutable mapping trait

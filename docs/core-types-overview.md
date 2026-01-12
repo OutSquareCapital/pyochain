@@ -34,7 +34,6 @@ Concrete types must implement the required methods (dunders) to satisfy the prot
 | `PyoSequence[T]` | `PyoCollection[T]` | `Sequence[T]` | `__getitem__`, `__len__` | `Seq[T]` |
 | `PyoMutableSequence[T]` | `PyoSequence[T]` | `MutableSequence[T]` | `__setitem__`, `__delitem__`, `insert` | `Vec[T]` |
 | `PyoSet[T]` | `PyoCollection[T]` | `Set[T]` | `__contains__`, `__iter__`, `__len__` | `Set[T]`, `PyoKeysView[K]`, `PyoItemsView[K,V]` |
-| `PyoMutableSet[T]` | `PyoSet[T]` | `MutableSet[T]` | `add`, `discard` | `SetMut[T]` |
 | `PyoMappingView[T]` | `PyoCollection[T]` | `MappingView` | `__len__` | All mapping views |
 | `PyoMapping[K, V]` | `PyoCollection[K]` | `Mapping[K, V]` | `__getitem__`, `__iter__`, `__len__` | `Dict[K,V]` (read-only interface) |
 | `PyoMutableMapping[K, V]` | `PyoMapping[K, V]` | `MutableMapping[K, V]` | `__setitem__`, `__delitem__` | `Dict[K,V]` |
@@ -102,14 +101,13 @@ flowchart TB
     PyoSequence --> PyoMutableSequence["PyoMutableSequence[T]"]
     PyoSequence ==> Seq["Seq[T]"]
     PyoMutableSequence ==> Vec["Vec[T]"]
-    PyoSet ==> PyoMutableSet["PyoMutableSet[T]"] & Set["Set[T]"] & PyoKeysView["PyoKeysView[K]"] & PyoItemsView["PyoItemsView[K,V]"]
-    PyoMutableSet ==> SetMut["SetMut[T]"]
+    PyoSet ==> Set["Set[T]"] & PyoKeysView["PyoKeysView[K]"] & PyoItemsView["PyoItemsView[K,V]"]
     PyoMappingView ==> PyoKeysView & PyoValuesView["PyoValuesView[V]"] & PyoItemsView
     PyoMapping ==> PyoMutableMapping["PyoMutableMapping[K,V]"]
     PyoMutableMapping ==> Dict["Dict[K,V]"]
     Result ==> Ok["Ok[T]"] & Err["Err[E]"]
     Option ==> Some["Some[T]"] & NONE["NONE"]
-    Set ==> SetMut
+    Set ==> SetMut["SetMut[T]"]
     Seq ==> Vec
 
     style Pipeable stroke:#9C27B0,stroke-width:2px
@@ -127,7 +125,6 @@ flowchart TB
     style PyoMutableSequence stroke:#00C853,stroke-width:2px
     style Seq stroke:#1E88E5,stroke-width:2px
     style Vec stroke:#1E88E5,stroke-width:2px
-    style PyoMutableSet stroke:#00C853,stroke-width:2px
     style Set stroke:#1E88E5,stroke-width:2px
     style PyoKeysView stroke:#1E88E5,stroke-width:2px
     style PyoItemsView stroke:#1E88E5,stroke-width:2px
@@ -161,12 +158,10 @@ flowchart TB
     linkStyle 19 stroke:#00C853,stroke-width:2px,fill:none
     linkStyle 20 stroke:#00C853,stroke-width:2px,fill:none
     linkStyle 21 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 22 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 23 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 24 stroke:#D50000,stroke-width:2px,fill:none
-    linkStyle 25 stroke:#D50000,stroke-width:2px,fill:none
-    linkStyle 26 stroke:#FFD600,stroke-width:2px,fill:none
-    linkStyle 27 stroke:#FFD600,stroke-width:2px,fill:none
-    linkStyle 28 stroke:#2962FF,fill:none,stroke-width:2px
-    linkStyle 29 stroke:#2962FF,fill:none,stroke-width:2px
+    linkStyle 22 stroke:#D50000,stroke-width:2px,fill:none
+    linkStyle 23 stroke:#D50000,stroke-width:2px,fill:none
+    linkStyle 24 stroke:#FFD600,stroke-width:2px,fill:none
+    linkStyle 25 stroke:#FFD600,stroke-width:2px,fill:none
+    linkStyle 26 stroke:#2962FF,fill:none,stroke-width:2px
+    linkStyle 27 stroke:#2962FF,fill:none,stroke-width:2px
 ```

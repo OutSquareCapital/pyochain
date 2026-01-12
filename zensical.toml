@@ -41,7 +41,6 @@
                 { "PyoMappingView" = "reference/pyomappingview.md" },
                 { "PyoMutableMapping" = "reference/pyomutablemapping.md" },
                 { "PyoMutableSequence" = "reference/pyomutablesequence.md" },
-                { "PyoMutableSet" = "reference/pyomutableset.md" },
                 { "PyoSequence" = "reference/pyosequence.md" },
                 { "PyoSet" = "reference/pyoset.md" },
                 { "PyoValuesView" = "reference/pyovaluesview.md" },
