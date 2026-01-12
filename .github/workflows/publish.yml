@@ -3,7 +3,12 @@ name: Publish Package to PyPI
 on:
   release:
     types: [published]
-
+  workflow_dispatch:  # ← Permet de trigger manuellement
+    inputs:
+      dry_run:
+        description: 'Dry run (ne publie pas réellement)'
+        type: boolean
+        default: true
 permissions:
   contents: read
   id-token: write
@@ -11,6 +16,9 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: 
+      name: pypi
+      url: https://pypi.org/project/pyochain/
     steps:
       - uses: actions/checkout@v4
       
