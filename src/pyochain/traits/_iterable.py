@@ -2055,6 +2055,27 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):
         """
         return self.__class__(other ^ self)
 
+    def is_disjoint(self, other: AbstractSet[T]) -> bool:
+        """Check if the `Set` has no elements in common with another set.
+
+        Args:
+            other (AbstractSet[T]): The other set to compare with.
+
+        Returns:
+            bool: True if the `Set` and the other set have no elements in common, False otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Set({1, 2}).is_disjoint({3, 4})
+        True
+        >>> pc.Set({1, 2}).is_disjoint({2, 3})
+        False
+
+        ```
+        """
+        return self.isdisjoint(other)
+
 
 class PyoMappingView[T](MappingView, PyoCollection[T]):
     """Base trait for eager pyochain mapping view collections.
