@@ -2395,7 +2395,6 @@ class Iter[T](PyoIterator[T]):
             )
         )
 
-    # windows and partitions ------------------------------------------------------------
     @overload
     def map_windows[R](
         self, length: Literal[1], func: Callable[[tuple[T]], R]
@@ -2418,16 +2417,38 @@ class Iter[T](PyoIterator[T]):
     ) -> Iter[R]: ...
     @overload
     def map_windows[R](
+        self, length: Literal[6], func: Callable[[tuple[T, T, T, T, T, T]], R]
+    ) -> Iter[R]: ...
+    @overload
+    def map_windows[R](
+        self, length: Literal[7], func: Callable[[tuple[T, T, T, T, T, T, T]], R]
+    ) -> Iter[R]: ...
+    @overload
+    def map_windows[R](
+        self, length: Literal[8], func: Callable[[tuple[T, T, T, T, T, T, T, T]], R]
+    ) -> Iter[R]: ...
+    @overload
+    def map_windows[R](
+        self, length: Literal[9], func: Callable[[tuple[T, T, T, T, T, T, T, T, T]], R]
+    ) -> Iter[R]: ...
+    @overload
+    def map_windows[R](
+        self,
+        length: Literal[10],
+        func: Callable[[tuple[T, T, T, T, T, T, T, T, T, T]], R],
+    ) -> Iter[R]: ...
+    @overload
+    def map_windows[R](
         self, length: int, func: Callable[[tuple[T, ...]], R]
     ) -> Iter[R]: ...
     def map_windows[R](
         self, length: int, func: Callable[[tuple[Any, ...]], R]
     ) -> Iter[R]:
-        """Calls the given **func** for each contiguous window of size **length** over **self**.
+        r"""Calls the given *func* for each contiguous window of size *length* over **self**.
 
         The windows during mapping overlaps.
 
-        The provided function must have a signature matching the length of the window.
+        The provided function is called with the entire window as a single tuple argument.
 
         Args:
             length (int): The length of each window.
@@ -2436,22 +2457,98 @@ class Iter[T](PyoIterator[T]):
         Returns:
             Iter[R]: An iterator over the outputs of func.
 
+        See Also:
+            `.map_windows_star()` for a version that unpacks the window into separate arguments.
+
         Example:
         ```python
         >>> import pyochain as pc
-
-        >>> pc.Iter("abcd").map_windows(2, lambda xy: f"{xy[0]}+{xy[1]}").collect()
-        Seq('a+b', 'b+c', 'c+d')
-        >>> pc.Iter([1, 2, 3, 4]).map_windows(2, lambda xy: xy).collect()
-        Seq((1, 2), (2, 3), (3, 4))
-        >>> def moving_average(seq: tuple[int, ...]) -> float:
-        ...     return float(sum(seq)) / len(seq)
-        >>> pc.Iter([1, 2, 3, 4]).map_windows(2, moving_average).collect()
+        >>> import statistics
+        >>> pc.Iter([1, 2, 3, 4]).map_windows(2, statistics.mean).collect()
         Seq(1.5, 2.5, 3.5)
+        >>> pc.Iter("abcd").map_windows(3, lambda window: "".join(window).upper()).collect()
+        Seq('ABC', 'BCD')
+        >>> pc.Iter([10, 20, 30, 40, 50]).map_windows(4, sum).collect()
+        Seq(100, 140)
+        >>> from pathlib import Path
+        >>> pc.Iter(["home", "src", "pyochain"]).map_windows(2, lambda p: str(Path(*p))).collect()
+        Seq('home\\src', 'src\\pyochain')
+
 
         ```
         """
         return Iter(map(func, cz.itertoolz.sliding_window(length, self._inner)))
+
+    @overload
+    def map_windows_star[R](
+        self, length: Literal[1], func: Callable[[T], R]
+    ) -> Iter[R]: ...
+    @overload
+    def map_windows_star[R](
+        self, length: Literal[2], func: Callable[[T, T], R]
+    ) -> Iter[R]: ...
+    @overload
+    def map_windows_star[R](
+        self, length: Literal[3], func: Callable[[T, T, T], R]
+    ) -> Iter[R]: ...
+    @overload
+    def map_windows_star[R](
+        self, length: Literal[4], func: Callable[[T, T, T, T], R]
+    ) -> Iter[R]: ...
+    @overload
+    def map_windows_star[R](
+        self, length: Literal[5], func: Callable[[T, T, T, T, T], R]
+    ) -> Iter[R]: ...
+    @overload
+    def map_windows_star[R](
+        self, length: Literal[6], func: Callable[[T, T, T, T, T, T], R]
+    ) -> Iter[R]: ...
+    @overload
+    def map_windows_star[R](
+        self, length: Literal[7], func: Callable[[T, T, T, T, T, T, T], R]
+    ) -> Iter[R]: ...
+    @overload
+    def map_windows_star[R](
+        self, length: Literal[8], func: Callable[[T, T, T, T, T, T, T, T], R]
+    ) -> Iter[R]: ...
+    @overload
+    def map_windows_star[R](
+        self, length: Literal[9], func: Callable[[T, T, T, T, T, T, T, T, T], R]
+    ) -> Iter[R]: ...
+    @overload
+    def map_windows_star[R](
+        self, length: Literal[10], func: Callable[[T, T, T, T, T, T, T, T, T, T], R]
+    ) -> Iter[R]: ...
+    def map_windows_star[R](self, length: int, func: Callable[..., R]) -> Iter[R]:
+        """Calls the given *func* for each contiguous window of size *length* over **self**.
+
+        The windows during mapping overlaps.
+
+        The provided function is called with each element of the window as separate arguments.
+
+        Args:
+            length (int): The length of each window.
+            func (Callable[[tuple[Any, ...]], R]): Function to apply to each window.
+
+        Returns:
+            Iter[R]: An iterator over the outputs of func.
+
+        See Also:
+            `.map_windows()` for a version that passes the entire window as a single tuple argument.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter("abcd").map_windows_star(2, lambda x, y: f"{x}+{y}").collect()
+        Seq('a+b', 'b+c', 'c+d')
+        >>> pc.Iter([1, 2, 3, 4]).map_windows_star(2, lambda x, y: x + y).collect()
+        Seq(3, 5, 7)
+
+        ```
+        """
+        return Iter(
+            itertools.starmap(func, cz.itertoolz.sliding_window(length, self._inner))
+        )
 
     @overload
     def partition(self, n: Literal[1], pad: None = None) -> Iter[tuple[T]]: ...
@@ -2468,13 +2565,13 @@ class Iter[T](PyoIterator[T]):
         pad: None = None,
     ) -> Iter[tuple[T, T, T, T, T]]: ...
     @overload
-    def partition(self, n: int, pad: int) -> Iter[tuple[T, ...]]: ...
-    def partition(self, n: int, pad: int | None = None) -> Iter[tuple[T, ...]]:
+    def partition(self, n: int, pad: T) -> Iter[tuple[T, ...]]: ...
+    def partition(self, n: int, pad: T | None = None) -> Iter[tuple[T, ...]]:
         """Partition **self** into `tuples` of length **n**.
 
         Args:
             n (int): Length of each partition.
-            pad (int | None): Value to pad the last partition if needed.
+            pad (T | None): Value to pad the last partition if needed.
 
         Returns:
             Iter[tuple[T, ...]]: An iterable of partitioned tuples.
@@ -2519,7 +2616,7 @@ class Iter[T](PyoIterator[T]):
         return Iter(cz.itertoolz.partition_all(n, self._inner))
 
     def partition_by(self, predicate: Callable[[T], bool]) -> Iter[tuple[T, ...]]:
-        """Partition the `iterable` into a sequence of `tuples` according to a predicate function.
+        """Partition the `Iterator` into a sequence of `tuples` according to a predicate function.
 
         Every time the output of `predicate` changes, a new `tuple` is started,
         and subsequent items are collected into that `tuple`.
