@@ -16,7 +16,9 @@ from pyochain import old_option
 
 app = typer.Typer(help="Option type benchmarks: Rust vs Python")
 
-N_RUNS: Final[int] = 100_000
+# timeit return total time, so we want to maximize number of runs to get stable median
+N_RUNS: Final[int] = 1_000  # nb of times to re-run the work for median val
+N_REPEATS: Final[int] = 1000  # nb of times the function is called in timeit
 TEST_VALUE: Final[int] = 42
 CHAIN_VALUE: Final[int] = 5
 CHAIN_THRESHOLD: Final[int] = 5
@@ -25,7 +27,6 @@ CHAIN_THRESHOLD: Final[int] = 5
 CONSOLE: Final = Console()
 # Store all runs for each benchmark, then compute median
 RESULTS: list[tuple[str, str, float, float, float]] = []
-N_REPEATS: Final[int] = 7  # Number of times to repeat each benchmark for median
 
 
 # =============================================================================
@@ -316,8 +317,8 @@ def bench(
     python_fn: Callable[[], object],
 ) -> None:
     """Run a single benchmark multiple times and store median results."""
-    rust_times = [timeit.timeit(rust_fn, number=N_RUNS) for _ in range(N_REPEATS)]
-    python_times = [timeit.timeit(python_fn, number=N_RUNS) for _ in range(N_REPEATS)]
+    rust_times = [timeit.timeit(rust_fn, number=N_RUNS) for _ in range(N_RUNS)]
+    python_times = [timeit.timeit(python_fn, number=N_RUNS) for _ in range(N_RUNS)]
     rust_median = statistics.median(rust_times)
     python_median = statistics.median(python_times)
     speedup = python_median / rust_median
@@ -412,8 +413,8 @@ def _display_results() -> None:
 
 def _run_focused_benchmark(old: partial[object], new: partial[object]) -> None:
     """Run focused, robust benchmark between two implementation."""
-    n_focused_runs = 200_000
-    n_focused_repeats = 20
+    n_focused_runs = 2000
+    n_focused_repeats = 2000
     old_name = old.func.__name__
     new_name = new.func.__name__
     CONSOLE.print(Text("Running Focused Robustness Benchmark...", style="bold blue"))
@@ -557,21 +558,9 @@ def all_benchmarks() -> None:
 @app.command()
 def focused() -> None:
     """Run focused build_args benchmark only."""
-
-    def _complicated_func(
-        x: int, y: int, /, a: int = 10, b: int = 20, **kwargs: int
-    ) -> dict[str, object]:
-        return {
-            "x": x,
-            "y": y,
-            "a": a,
-            "b": b,
-            "kwargs": kwargs,
-        }
-
     _run_focused_benchmark(
-        old=partial(RUST_SOME.map, _complicated_func, 2, y=3, c=30, d=40),
-        new=partial(RUST_SOME.map_unsafe, _complicated_func, 2, y=3, c=30, d=40),  # type: ignore[arg-type]
+        old=partial(RUST_SOME.eq, RUST_SOME_OTHER),
+        new=partial(RUST_SOME.eq_test, RUST_SOME_OTHER),  # type: ignore[arg-type]
     )
 
 
