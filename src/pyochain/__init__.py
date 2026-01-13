@@ -1,7 +1,5 @@
 """pyochain - A functional programming library for Python."""
 
-from . import _option as old_option
-from . import _result as old_result
 from . import traits
 from ._dict import Dict
 from ._iter import Iter, Peekable, Seq, Set, SetMut, Unzipped, Vec
@@ -35,7 +33,5 @@ __all__ = [
     "Some",
     "Unzipped",
     "Vec",
-    "old_option",
-    "old_result",
     "traits",
 ]
