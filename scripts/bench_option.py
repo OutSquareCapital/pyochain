@@ -3,30 +3,170 @@
 import statistics
 import timeit
 from collections.abc import Callable
-from functools import partial
-from typing import Final
+from enum import IntEnum, StrEnum, auto
+from functools import partial, wraps
+from typing import Final, NamedTuple, Self
 
 import typer
 from rich.console import Console
+from rich.progress import (
+    BarColumn,
+    Progress,
+    SpinnerColumn,
+    TaskProgressColumn,
+    TextColumn,
+    TimeRemainingColumn,
+)
 from rich.table import Table
 from rich.text import Text
 
 import pyochain as pc
-from pyochain import old_option
+from pyochain import old_option, old_result
 
 app = typer.Typer(help="Option type benchmarks: Rust vs Python")
 
+
+class Runs(IntEnum):
+    """Cost category for benchmarks, determining iteration counts."""
+
+    CHEAP = 5_000
+    NORMAL = 2_500
+    EXPENSIVE = 500
+
+
+class Implementation(StrEnum):
+    """Implementation type for benchmarks."""
+
+    RUST = auto()
+    PYTHON = auto()
+
+
+class BenchmarkResult(NamedTuple):
+    """Result of a single benchmark comparison."""
+
+    category: str
+    name: str
+    rust_median: float
+    python_median: float
+    speedup: float
+
+
+class Stats(NamedTuple):
+    """Statistical summary of benchmark results."""
+
+    median: float
+    mean: float
+    stddev: float
+    q1: float
+    q3: float
+
+    @classmethod
+    def from_times(cls, times: list[float]) -> Self:
+        """Compute stats from a list of times."""
+        return cls(
+            statistics.median(times),
+            statistics.mean(times),
+            statistics.stdev(times),
+            sorted(times)[len(times) // 4],
+            sorted(times)[3 * len(times) // 4],
+        )
+
+
+class RelativeStats(NamedTuple):
+    """Relative statistical summary compared to a baseline."""
+
+    rel_median: float
+    rel_mean: float
+    improvement_pct: float
+    rel_stddev_new: float
+    rel_stddev_old: float
+    q1_rel: float
+    q3_rel: float
+
+    @classmethod
+    def from_comparison(cls, old_stats: Stats, new_stats: Stats) -> Self:
+        """Compute relative stats between old and new benchmark results."""
+        return cls(
+            (old_stats.median / new_stats.median),
+            (old_stats.mean / new_stats.mean),
+            ((old_stats.median - new_stats.median) / old_stats.median) * 100,
+            (new_stats.stddev / new_stats.median) * 100,
+            (old_stats.stddev / old_stats.median) * 100,
+            old_stats.q1 / new_stats.q1,
+            old_stats.q3 / new_stats.q3,
+        )
+
+
+class BenchmarkMetadata(NamedTuple):
+    """Metadata for a benchmark function."""
+
+    category: str
+    name: str
+    cost: Runs
+    implementation: Implementation
+
+
 # timeit return total time, so we want to maximize number of runs to get stable median
-N_RUNS: Final[int] = 1_000  # nb of times to re-run the work for median val
-N_REPEATS: Final[int] = 1000  # nb of times the function is called in timeit
 TEST_VALUE: Final[int] = 42
 CHAIN_VALUE: Final[int] = 5
 CHAIN_THRESHOLD: Final[int] = 5
 
 
+# Test data: large dataset with mixed None/values (realistic scenario)
+NULLABLE_DATA: Final = [x if x % 3 != 0 else None for x in range(100)]
+INT_DATA_LARGE: Final = list(range(100))
+type BenchFn = Callable[[], object]
+
 CONSOLE: Final = Console()
 # Store all runs for each benchmark, then compute median
-RESULTS: list[tuple[str, str, float, float, float]] = []
+RESULTS: list[BenchmarkResult] = []
+# Registry of benchmark functions with their metadata
+BENCHMARK_REGISTRY: dict[BenchFn, BenchmarkMetadata] = {}
+
+
+# =============================================================================
+# DECORATOR
+# =============================================================================
+
+
+def bench(
+    category: str,
+    name: str,
+    implementation: Implementation,
+    cost: Runs = Runs.CHEAP,
+) -> Callable[[BenchFn], BenchFn]:
+    """Decorator to register a benchmark function with its metadata.
+
+    Args:
+        category (str): The category of the benchmark (e.g., "Instantiation").
+        name (str): The name of the benchmark (e.g., "Some(value)").
+        implementation (str): The implementation type ("rust" or "python").
+        cost (Runs): The cost category, defaults to CHEAP.
+
+    Returns:
+        Callable: The decorated function.
+
+    Examples:
+    ```python
+    @bench("Instantiation", "Some(value)", "rust")
+    def bench_rust_some_direct() -> object:
+        return pc.Some(TEST_VALUE)
+    ```
+    """
+
+    def decorator(func: BenchFn) -> BenchFn:
+        metadata = BenchmarkMetadata(
+            category=category, name=name, cost=cost, implementation=implementation
+        )
+        BENCHMARK_REGISTRY[func] = metadata
+
+        @wraps(func)
+        def wrapper() -> object:
+            return func()
+
+        return wrapper
+
+    return decorator
 
 
 # =============================================================================
@@ -34,104 +174,79 @@ RESULTS: list[tuple[str, str, float, float, float]] = []
 # =============================================================================
 
 
+@bench("Instantiation", "Some(value)", Implementation.RUST, Runs.CHEAP)
 def bench_rust_some_direct() -> object:
     """Direct Some instantiation via Rust."""
     return pc.Some(TEST_VALUE)
 
 
+@bench("Instantiation", "Some(value)", Implementation.PYTHON, Runs.CHEAP)
 def bench_python_some_direct() -> object:
     """Direct Some instantiation via Python."""
     return old_option.Some(TEST_VALUE)
 
 
+@bench("Instantiation", "Dispatch to Some", Implementation.RUST, Runs.CHEAP)
 def bench_rust_option_dispatch_some() -> object:
     """Option.__new__ dispatching to Some (Rust)."""
     return pc.Option(TEST_VALUE)
 
 
+@bench("Instantiation", "Dispatch to Some", Implementation.PYTHON, Runs.CHEAP)
 def bench_python_option_dispatch_some() -> object:
     """Option.__new__ dispatching to Some (Python)."""
     return old_option.Option(TEST_VALUE)
 
 
+@bench("Instantiation", "Dispatch to None", Implementation.RUST, Runs.CHEAP)
 def bench_rust_option_dispatch_none() -> pc.Option[object]:
     """Option.__new__ dispatching to None (Rust)."""
     return pc.Option(None)
 
 
+@bench("Instantiation", "Dispatch to None", Implementation.PYTHON, Runs.CHEAP)
 def bench_python_option_dispatch_none() -> old_option.Option[object]:
     """Option.__new__ dispatching to None (Python)."""
     return old_option.Option(None)
 
 
-# =============================================================================
-# 2. TYPE CHECKING (is_some / is_none)
-# =============================================================================
-
 RUST_SOME: Final = pc.Some(TEST_VALUE)
 PYTHON_SOME: Final = old_option.Some(TEST_VALUE)
 RUST_NONE: Final = pc.NONE
 PYTHON_NONE: Final = old_option.NONE
-
-
-def bench_rust_is_some() -> bool:
-    """Rust is_some() check."""
-    return RUST_SOME.is_some()
-
-
-def bench_python_is_some() -> bool:
-    """Python is_some() check."""
-    return PYTHON_SOME.is_some()
-
-
-def bench_rust_is_none() -> bool:
-    """Rust is_none() check."""
-    return RUST_NONE.is_none()
-
-
-def bench_python_is_none() -> bool:
-    """Python is_none() check."""
-    return PYTHON_NONE.is_none()
-
-
-# =============================================================================
-# 3. EQUALITY CHECKS
-# =============================================================================
-
 RUST_SOME_OTHER: Final = pc.Some(TEST_VALUE)
 PYTHON_SOME_OTHER: Final = old_option.Some(TEST_VALUE)
 RUST_SOME_DIFF: Final = pc.Some(99)
 PYTHON_SOME_DIFF: Final = old_option.Some(99)
 
 
+# =============================================================================
+# 3. EQUALITY CHECKS
+# =============================================================================
+
+
+@bench("Equality Checks", "__eq__", Implementation.RUST, Runs.CHEAP)
 def bench_rust_eq_same() -> bool:
     """Rust == check (same value)."""
     return RUST_SOME == RUST_SOME_OTHER
 
 
+@bench("Equality Checks", "__eq__", Implementation.PYTHON, Runs.CHEAP)
 def bench_python_eq_same() -> bool:
     """Python == check (same value)."""
     return PYTHON_SOME == PYTHON_SOME_OTHER
 
 
+@bench("Equality Checks", "eq_method", Implementation.RUST, Runs.CHEAP)
 def bench_rust_eq_method_same() -> bool:
     """Rust .eq() method (same value) - avoids isinstance."""
     return RUST_SOME.eq(RUST_SOME_OTHER)
 
 
+@bench("Equality Checks", "eq_method", Implementation.PYTHON, Runs.CHEAP)
 def bench_python_eq_method_same() -> bool:
     """Python .eq() method (same value) - uses is_some() instead of isinstance."""
     return PYTHON_SOME.eq(PYTHON_SOME_OTHER)
-
-
-def bench_rust_eq_diff() -> bool:
-    """Rust == check (different value)."""
-    return RUST_SOME == RUST_SOME_DIFF
-
-
-def bench_python_eq_diff() -> bool:
-    """Python == check (different value)."""
-    return PYTHON_SOME == PYTHON_SOME_DIFF
 
 
 # =============================================================================
@@ -147,39 +262,28 @@ def _add_ten(x: int) -> int:
     return x + 10
 
 
+@bench("Map with Closures", "map (identity)", Implementation.RUST, Runs.CHEAP)
 def bench_rust_map_identity() -> object:
     """Rust map with identity closure."""
     return RUST_SOME.map(_identity)
 
 
+@bench("Map with Closures", "map (identity)", Implementation.PYTHON, Runs.CHEAP)
 def bench_python_map_identity() -> object:
     """Python map with identity closure."""
     return PYTHON_SOME.map(_identity)
 
 
-def bench_rust_map_lambda() -> object:
-    """Rust map with inline lambda."""
-    return RUST_SOME.map(lambda x: x + 10)
-
-
-def bench_python_map_lambda() -> object:
-    """Python map with inline lambda."""
-    return PYTHON_SOME.map(lambda x: x + 10)
-
-
+@bench("Map with Closures", "map simple add", Implementation.RUST, Runs.CHEAP)
 def bench_rust_map_function() -> object:
     """Rust map with named function."""
     return RUST_SOME.map(_add_ten)
 
 
+@bench("Map with Closures", "map simple add", Implementation.PYTHON, Runs.CHEAP)
 def bench_python_map_function() -> object:
     """Python map with named function."""
     return PYTHON_SOME.map(_add_ten)
-
-
-# =============================================================================
-# 5. AND_THEN (flatmap)
-# =============================================================================
 
 
 def _wrap_add_ten(x: int) -> pc.Some[int]:
@@ -190,101 +294,16 @@ def _wrap_add_ten_py(x: int) -> old_option.Some[int]:
     return old_option.Some(x + 10)
 
 
-def bench_rust_and_then() -> object:
-    """Rust and_then with wrapping function."""
-    return RUST_SOME.and_then(_wrap_add_ten)
-
-
-def bench_python_and_then() -> object:
-    """Python and_then with wrapping function."""
-    return PYTHON_SOME.and_then(_wrap_add_ten_py)
-
-
-# =============================================================================
-# 6. UNWRAP OPERATIONS
-# =============================================================================
-
-
-def bench_rust_unwrap() -> int:
-    """Rust unwrap on Some."""
-    return RUST_SOME.unwrap()
-
-
-def bench_python_unwrap() -> int:
-    """Python unwrap on Some."""
-    return PYTHON_SOME.unwrap()
-
-
-def bench_rust_unwrap_or() -> int:
-    """Rust unwrap_or on Some."""
-    return RUST_SOME.unwrap_or(0)
-
-
-def bench_python_unwrap_or() -> int:
-    """Python unwrap_or on Some."""
-    return PYTHON_SOME.unwrap_or(0)
-
-
-def bench_rust_unwrap_or_none() -> int:
-    """Rust unwrap_or on None."""
-    return RUST_NONE.unwrap_or(0)
-
-
-def bench_python_unwrap_or_none() -> int:
-    """Python unwrap_or on None."""
-    return PYTHON_NONE.unwrap_or(0)
-
-
-# =============================================================================
-# 7. INTO (Pipeable trait)
-# =============================================================================
-
-
-def process_option(opt: object) -> str:
-    """Process an Option, returns repr."""
-    return repr(opt)
-
-
-def noop(opt: object) -> object:
-    """No-op function, just returns the argument."""
-    return opt
-
-
-def bench_rust_into() -> str:
-    """Rust into with function."""
-    return RUST_SOME.into(process_option)
-
-
-def bench_python_into() -> str:
-    """Python into with function."""
-    return PYTHON_SOME.into(process_option)
-
-
-def bench_rust_into_noop() -> object:
-    """Rust into with noop (pure overhead test)."""
-    return RUST_SOME.into(noop)
-
-
-def bench_python_into_noop() -> object:
-    """Python into with noop (pure overhead test)."""
-    return PYTHON_SOME.into(noop)
-
-
-def bench_rust_into_with_args() -> str:
-    """Rust into with additional args."""
-    return RUST_SOME.into(lambda opt, suffix: repr(opt) + suffix, "!")  # type: ignore[return-value]
-
-
-def bench_python_into_with_args() -> str:
-    """Python into with additional args."""
-    return PYTHON_SOME.into(lambda opt, suffix: repr(opt) + suffix, "!")  # type: ignore[return-value]
-
-
 # =============================================================================
 # 8. CHAINED OPERATIONS
 # =============================================================================
+def _repr(opt: object, suffix: str) -> str:
+    return repr(opt) + suffix
 
 
+@bench(
+    "Chained Operations", "map -> filter -> map", Implementation.RUST, Runs.EXPENSIVE
+)
 def bench_rust_chain() -> object:
     """Rust chained operations."""
     return (
@@ -292,9 +311,14 @@ def bench_rust_chain() -> object:
         .map(lambda x: x * 2)
         .filter(lambda x: x > CHAIN_THRESHOLD)
         .map(lambda x: x + 1)
+        .and_then(_wrap_add_ten)
+        .into(_repr, "!")
     )
 
 
+@bench(
+    "Chained Operations", "map -> filter -> map", Implementation.PYTHON, Runs.EXPENSIVE
+)
 def bench_python_chain() -> object:
     """Python chained operations."""
     return (
@@ -302,7 +326,195 @@ def bench_python_chain() -> object:
         .map(lambda x: x * 2)
         .filter(lambda x: x > CHAIN_THRESHOLD)
         .map(lambda x: x + 1)
+        .and_then(_wrap_add_ten_py)
+        .into(_repr, "!")
     )
+
+
+# =============================================================================
+# 9. ITER WITH OPTIONS
+# =============================================================================
+
+
+@bench("Iter with Options", "Iter.map(Option)", Implementation.RUST, Runs.EXPENSIVE)
+def bench_rust_iter_map_option() -> object:
+    """Rust: Iter.map converting nullable to Option."""
+    return pc.Iter(NULLABLE_DATA).map(pc.Option).collect()
+
+
+@bench("Iter with Options", "Iter.map(Option)", Implementation.PYTHON, Runs.EXPENSIVE)
+def bench_python_iter_map_option() -> object:
+    """Python: Iter.map converting nullable to Option."""
+    return pc.Iter(NULLABLE_DATA).map(old_option.Option).collect()
+
+
+@bench(
+    "Iter with Options", "Iter.filter_map (simple)", Implementation.RUST, Runs.EXPENSIVE
+)
+def bench_rust_iter_filter_map_simple() -> object:
+    """Rust: Iter.filter_map with simple transformation."""
+    return (
+        pc.Iter(NULLABLE_DATA)
+        .filter_map(lambda x: pc.Option(x).map(lambda v: v * 2).map(str))
+        .collect()
+    )
+
+
+@bench(
+    "Iter with Options",
+    "Iter.filter_map (simple)",
+    Implementation.PYTHON,
+    Runs.EXPENSIVE,
+)
+def bench_python_iter_filter_map_simple() -> object:
+    """Python: Iter.filter_map with simple transformation."""
+    return (
+        pc.Iter(NULLABLE_DATA)
+        .filter_map(lambda x: old_option.Option(x).map(lambda v: v * 2).map(str))  # type: ignore[arg-type]
+        .collect()  # type: ignore[return-value]
+    )
+
+
+@bench(
+    "Iter with Options",
+    "Iter.map -> filter_map -> map",
+    Implementation.RUST,
+    Runs.EXPENSIVE,
+)
+def bench_rust_iter_chain_with_filter_map() -> object:
+    """Rust: Complex chain with map -> filter_map -> map."""
+    return (
+        pc.Iter(NULLABLE_DATA)
+        .map(pc.Option)
+        .filter_map(
+            lambda opt: opt.map(lambda x: x * 2)
+            .filter(lambda x: x > 100)
+            .ok_or("Error")
+            .ok()
+        )
+        .collect()
+    )
+
+
+@bench(
+    "Iter with Options",
+    "Iter.map -> filter_map -> map",
+    Implementation.PYTHON,
+    Runs.EXPENSIVE,
+)
+def bench_python_iter_chain_with_filter_map() -> object:
+    """Python: Complex chain with map -> filter_map -> map."""
+    return (
+        pc.Iter(NULLABLE_DATA)
+        .map(old_option.Option)
+        .filter_map(
+            lambda opt: opt.map(lambda x: x * 2)
+            .filter(lambda x: x > 100)
+            .ok_or("Error")
+            .ok()  # type: ignore[return-value]
+        )
+        .collect()
+    )
+
+
+# =============================================================================
+# 10. COMPLEX METHODS
+# =============================================================================
+
+RUST_NESTED_SOME: Final[pc.Option[pc.Option[int]]] = pc.Some(pc.Some(TEST_VALUE))
+PYTHON_NESTED_SOME: Final[old_option.Option[old_option.Option[int]]] = old_option.Some(
+    old_option.Some(TEST_VALUE)
+)
+RUST_SOME_TUPLE: Final[pc.Option[tuple[int, int]]] = pc.Some((10, 20))
+PYTHON_SOME_TUPLE: Final[old_option.Option[tuple[int, int]]] = old_option.Some((10, 20))
+RUST_SOME_OK: Final[pc.Option[pc.Result[int, str]]] = pc.Some(pc.Ok(TEST_VALUE))
+PYTHON_SOME_OK: Final[old_option.Option[old_result.Result[int, str]]] = old_option.Some(
+    old_result.Ok(TEST_VALUE)
+)
+RUST_OK_SOME: Final[pc.Result[pc.Option[int], object]] = pc.Ok(pc.Some(TEST_VALUE))
+PYTHON_OK_SOME: Final[old_result.Result[old_option.Option[int], object]] = (
+    old_result.Ok(old_option.Some(TEST_VALUE))
+)
+
+
+@bench("Complex Methods", "flatten", Implementation.RUST, Runs.CHEAP)
+def bench_rust_flatten() -> object:
+    """Rust flatten nested Option."""
+    return RUST_NESTED_SOME.flatten()
+
+
+@bench("Complex Methods", "flatten", Implementation.PYTHON, Runs.CHEAP)
+def bench_python_flatten() -> object:
+    """Python flatten nested Option."""
+    return PYTHON_NESTED_SOME.flatten()
+
+
+@bench("Complex Methods", "unzip", Implementation.RUST, Runs.CHEAP)
+def bench_rust_unzip() -> object:
+    """Rust unzip Option of tuple."""
+    return RUST_SOME_TUPLE.unzip()
+
+
+@bench("Complex Methods", "unzip", Implementation.PYTHON, Runs.CHEAP)
+def bench_python_unzip() -> object:
+    """Python unzip Option of tuple."""
+    return PYTHON_SOME_TUPLE.unzip()
+
+
+@bench("Complex Methods", "zip", Implementation.RUST, Runs.CHEAP)
+def bench_rust_zip() -> object:
+    """Rust zip two Options."""
+    return RUST_SOME.zip(RUST_SOME_OTHER)
+
+
+@bench("Complex Methods", "zip", Implementation.PYTHON, Runs.CHEAP)
+def bench_python_zip() -> object:
+    """Python zip two Options."""
+    return PYTHON_SOME.zip(PYTHON_SOME_OTHER)
+
+
+def _sum_two(x: int, y: int) -> int:
+    return x + y
+
+
+@bench("Complex Methods", "zip_with", Implementation.RUST, Runs.CHEAP)
+def bench_rust_zip_with() -> object:
+    """Rust zip_with two Options."""
+    return RUST_SOME.zip_with(RUST_SOME_OTHER, _sum_two)
+
+
+@bench("Complex Methods", "zip_with", Implementation.PYTHON, Runs.CHEAP)
+def bench_python_zip_with() -> object:
+    """Python zip_with two Options."""
+    return PYTHON_SOME.zip_with(PYTHON_SOME_OTHER, _sum_two)
+
+
+@bench("Complex Methods", "transpose (Option->Result)", Implementation.RUST, Runs.CHEAP)
+def bench_rust_transpose_option_result() -> object:
+    """Rust transpose Option of Result to Result of Option."""
+    return RUST_SOME_OK.transpose()
+
+
+@bench(
+    "Complex Methods", "transpose (Option->Result)", Implementation.PYTHON, Runs.CHEAP
+)
+def bench_python_transpose_option_result() -> object:
+    """Python transpose Option of Result to Result of Option."""
+    return PYTHON_SOME_OK.transpose()
+
+
+@bench("Complex Methods", "transpose (Result->Option)", Implementation.RUST, Runs.CHEAP)
+def bench_rust_transpose_result_option() -> object:
+    """Rust transpose Result of Option to Option of Result."""
+    return RUST_OK_SOME.transpose()
+
+
+@bench(
+    "Complex Methods", "transpose (Result->Option)", Implementation.PYTHON, Runs.CHEAP
+)
+def bench_python_transpose_result_option() -> object:
+    """Python transpose Result of Option to Option of Result."""
+    return PYTHON_OK_SOME.transpose()
 
 
 # =============================================================================
@@ -310,96 +522,106 @@ def bench_python_chain() -> object:
 # =============================================================================
 
 
-def bench(
-    category: str,
-    name: str,
-    rust_fn: Callable[[], object],
-    python_fn: Callable[[], object],
+def bench_one(
+    rust_fn: BenchFn,
+    python_fn: BenchFn,
 ) -> None:
-    """Run a single benchmark multiple times and store median results."""
-    rust_times = [timeit.timeit(rust_fn, number=N_RUNS) for _ in range(N_RUNS)]
-    python_times = [timeit.timeit(python_fn, number=N_RUNS) for _ in range(N_RUNS)]
+    """Run a single benchmark multiple times and store median results.
+
+    Uses metadata from the BENCHMARK_REGISTRY to determine category, name, and iteration counts.
+
+    Args:
+        rust_fn (Callable): The Rust implementation benchmark function.
+        python_fn (Callable): The Python implementation benchmark function.
+
+    """
+    rust_meta = BENCHMARK_REGISTRY[rust_fn]
+
+    # Use the cost from rust_meta (should be same for both)
+    n_calls = rust_meta.cost.value // 10
+
+    rust_times = [
+        timeit.timeit(rust_fn, number=n_calls) for _ in range(rust_meta.cost.value)
+    ]
+    python_times = [
+        timeit.timeit(python_fn, number=n_calls) for _ in range(rust_meta.cost.value)
+    ]
     rust_median = statistics.median(rust_times)
     python_median = statistics.median(python_times)
     speedup = python_median / rust_median
-    RESULTS.append((category, name, rust_median, python_median, speedup))
+    RESULTS.append(
+        BenchmarkResult(
+            category=rust_meta.category,
+            name=rust_meta.name,
+            rust_median=rust_median,
+            python_median=python_median,
+            speedup=speedup,
+        )
+    )
 
 
 def _run_all_benchmarks() -> None:
-    # 1. Instantiation
-    bench(
-        "Instantiation", "Some(value)", bench_rust_some_direct, bench_python_some_direct
-    )
-    bench(
-        "Instantiation",
-        "Option(value)",
-        bench_rust_option_dispatch_some,
-        bench_python_option_dispatch_some,
-    )
-    bench(
-        "Instantiation",
-        "Option(None)",
-        bench_rust_option_dispatch_none,
-        bench_python_option_dispatch_none,
-    )
+    """Run all registered benchmarks by pairing Rust and Python implementations."""
+    # Group functions by (category, name) to pair Rust and Python
+    benchmark_pairs: dict[tuple[str, str], dict[str, BenchFn]] = {}
 
-    # 2. Type checking
-    bench("Type Check", "is_some()", bench_rust_is_some, bench_python_is_some)
-    bench("Type Check", "is_none()", bench_rust_is_none, bench_python_is_none)
+    for func, meta in BENCHMARK_REGISTRY.items():
+        key = (meta.category, meta.name)
+        if key not in benchmark_pairs:
+            benchmark_pairs[key] = {}
+        benchmark_pairs[key][meta.implementation] = func
 
-    # 3. Equality
-    bench("Equality", "== (same)", bench_rust_eq_same, bench_python_eq_same)
-    bench(
-        "Equality",
-        ".eq() (same)",
-        bench_rust_eq_method_same,
-        bench_python_eq_method_same,
-    )
-    bench("Equality", "== (diff)", bench_rust_eq_diff, bench_python_eq_diff)
+    # Validate and create benchmark list
+    benchmarks: list[tuple[BenchFn, BenchFn]] = []
+    for (category, name), impls in benchmark_pairs.items():
+        if "rust" not in impls or "python" not in impls:
+            CONSOLE.print(
+                f"[yellow]Warning: Skipping {category}/{name} - missing implementation[/yellow]"
+            )
+            continue
+        benchmarks.append((impls["rust"], impls["python"]))
 
-    # 4. Map
-    bench("Map", "map(identity)", bench_rust_map_identity, bench_python_map_identity)
-    bench("Map", "map(lambda)", bench_rust_map_lambda, bench_python_map_lambda)
-    bench("Map", "map(function)", bench_rust_map_function, bench_python_map_function)
-
-    # 5. And_then
-    bench("Flatmap", "and_then()", bench_rust_and_then, bench_python_and_then)
-
-    # 7. Into
-    bench("Into (FFI)", "into(func)", bench_rust_into, bench_python_into)
-    bench("Into (FFI)", "into(noop)", bench_rust_into_noop, bench_python_into_noop)
-    bench(
-        "Into (FFI)",
-        "into(func, arg)",
-        bench_rust_into_with_args,
-        bench_python_into_with_args,
-    )
-    # 8. Chain
-    bench("Chain", "map.filter.map", bench_rust_chain, bench_python_chain)
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        TimeRemainingColumn(),
+        console=CONSOLE,
+    ) as progress:
+        task = progress.add_task("[cyan]Running benchmarks...", total=len(benchmarks))
+        for rust_fn, python_fn in benchmarks:
+            meta = BENCHMARK_REGISTRY[rust_fn]
+            progress.update(task, description=f"[cyan]{meta.category}: {meta.name}")
+            bench_one(rust_fn, python_fn)
+            progress.advance(task)
 
 
 def _display_results() -> None:
-    table = Table(
-        title=f"Option Benchmarks ({N_RUNS:,} iterations, median of {N_REPEATS} runs)"
-    )
+    """Display benchmark results in a formatted table."""
+    table = Table(title="Option Type Benchmark Results (Rust vs Python)")
     table.add_column("Category", style="cyan")
     table.add_column("Operation", style="white")
     table.add_column("Rust (s, median)", justify="right", style="green")
     table.add_column("Python (s, median)", justify="right", style="yellow")
     table.add_column("Speedup", justify="right")
 
-    for category, name, rust_time, python_time, speedup in RESULTS:
-        speedup_style = "green bold" if speedup > 1 else "red bold"
-        speedup_str = Text(f"{speedup:.2f}x", style=speedup_style)
+    for result in RESULTS:
+        speedup_style = "green bold" if result.speedup > 1 else "red bold"
+        speedup_str = Text(f"{result.speedup:.2f}x", style=speedup_style)
         table.add_row(
-            category, name, f"{rust_time:.4f}", f"{python_time:.4f}", speedup_str
+            result.category,
+            result.name,
+            f"{result.rust_median:.4f}",
+            f"{result.python_median:.4f}",
+            speedup_str,
         )
 
     CONSOLE.print(table)
 
     # Summary
-    median_speedup = statistics.median([r[4] for r in RESULTS])
-    wins = sum(1 for r in RESULTS if r[4] > 1)
+    median_speedup = statistics.median([r.speedup for r in RESULTS])
+    wins = sum(1 for r in RESULTS if r.speedup > 1)
     CONSOLE.print()
     summary_line = Text("Median speedup: ", style="bold") + Text(
         f"{median_speedup:.2f}x", style="green bold"
@@ -413,81 +635,70 @@ def _display_results() -> None:
 
 def _run_focused_benchmark(old: partial[object], new: partial[object]) -> None:
     """Run focused, robust benchmark between two implementation."""
-    n_focused_runs = 2000
-    n_focused_repeats = 2000
     old_name = old.func.__name__
     new_name = new.func.__name__
     CONSOLE.print(Text("Running Focused Robustness Benchmark...", style="bold blue"))
     CONSOLE.print(
         Text(
-            f"{n_focused_runs:,} iterations x {n_focused_repeats:,} repeats for statistical significance...",
+            f"{Runs.CHEAP.value:,} runs with {Runs.CHEAP.value // 10:,} calls in each for statistical significance...",
             style="dim",
         )
     )
     CONSOLE.print()
 
-    # Benchmark new
-    new_times = [
-        timeit.timeit(new, number=n_focused_runs) for _ in range(n_focused_repeats)
-    ]
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        TimeRemainingColumn(),
+        console=CONSOLE,
+    ) as progress:
+        calls = Runs.CHEAP.value // 10
+        # Benchmark new
+        task_new = progress.add_task(f"[green]Benchmarking {new_name}...", total=calls)
+        new_times: list[float] = []
+        for _ in range(calls):
+            new_times.append(timeit.timeit(new, number=Runs.CHEAP))
+            progress.advance(task_new)
 
-    # Benchmark old
-    old_times = [
-        timeit.timeit(
-            old,
-            number=n_focused_runs,
-        )
-        for _ in range(n_focused_repeats)
-    ]
+        # Benchmark old
+        task_old = progress.add_task(f"[yellow]Benchmarking {old_name}...", total=calls)
+        old_times: list[float] = []
+        for _ in range(calls):
+            old_times.append(timeit.timeit(old, number=Runs.CHEAP))
+            progress.advance(task_old)
 
     # Benchmark eq_direct (FFI direct access, no type checking)
-    new_median = statistics.median(new_times)
-    new_mean = statistics.mean(new_times)
-    new_stddev = statistics.stdev(new_times)
-
-    old_median = statistics.median(old_times)
-    old_mean = statistics.mean(old_times)
-    old_stddev = statistics.stdev(old_times)
-
-    # Calculate relative metrics
-    speedup = (
-        old_median / new_median
-    )  # If > 1: eq_old is faster; if < 1: __eq__ is faster
-    improvement_pct = ((old_median - new_median) / old_median) * 100
-    relative_stddev_new = (new_stddev / new_median) * 100
-    relative_stddev_old = (old_stddev / old_median) * 100
-
-    # Quartiles
-    new_q1 = sorted(new_times)[len(new_times) // 4]
-    new_q3 = sorted(new_times)[3 * len(new_times) // 4]
-    old_q1 = sorted(old_times)[len(old_times) // 4]
-    old_q3 = sorted(old_times)[3 * len(old_times) // 4]
+    old_stats = Stats.from_times(old_times)
+    new_stats = Stats.from_times(new_times)
+    relative = RelativeStats.from_comparison(old_stats, new_stats)
 
     table = Table(
-        title=f"{new_name} vs {old_name} (isinstance)\n{n_focused_runs:,} ops x {n_focused_repeats} repeats"
+        title=f"{new_name} vs {old_name}\n{Runs.CHEAP.value:,} ops x {calls} repeats"
     )
     table.add_column("Metric", style="cyan")
     table.add_column("new", justify="right", style="green")
     table.add_column("old", justify="right", style="yellow")
     table.add_column("Relative", justify="right", style="magenta")
 
-    if speedup > 1:
+    if relative.rel_median > 1:
         speedup_msg = Text("new ", style="green bold") + Text(
-            f"{speedup:.2f}x faster", style="green bold"
+            f"{relative.rel_median:.2f}x faster", style="green bold"
         )
     else:
         speedup_msg = Text("old ", style="yellow bold") + Text(
-            f"{1 / speedup:.2f}x faster", style="yellow bold"
+            f"{1 / relative.rel_median:.2f}x faster", style="yellow bold"
         )
 
-    table.add_row("Speedup", "1.00x", f"{1 / speedup:.3f}x", speedup_msg)
+    table.add_row("Speedup", "1.00x", f"{1 / relative.rel_median:.3f}x", speedup_msg)
 
-    if improvement_pct > 0:
+    if relative.improvement_pct > 0:
         improvement_label = Text("faster", style="green bold")
     else:
         improvement_label = Text("slower", style="yellow bold")
     improvement_text = (
-        Text(f"{improvement_pct:+.1f}% ", style="dim") + improvement_label
+        Text(f"{relative.improvement_pct:+.1f}% ", style="dim") + improvement_label
     )
     table.add_row("Improvement", "—", "—", improvement_text)
 
@@ -495,47 +706,47 @@ def _run_focused_benchmark(old: partial[object], new: partial[object]) -> None:
     table.add_row(
         "Median (rel)",
         "1.00",
-        f"{old_median / new_median:.3f}",
-        f"{improvement_pct:+.1f}%",
+        f"{relative.rel_median:.3f}",
+        f"{relative.improvement_pct:+.1f}%",
     )
 
     # Mean
     table.add_row(
         "Mean (rel)",
         "1.00",
-        f"{old_mean / new_mean:.3f}",
-        f"{((old_mean - new_mean) / old_mean * 100):+.1f}%",
+        f"{old_stats.mean / new_stats.mean:.3f}",
+        f"{((old_stats.mean - new_stats.mean) / old_stats.mean * 100):+.1f}%",
     )
 
     # Variability (CV%)
     table.add_row(
         "Variability (CV%)",
-        f"{relative_stddev_new:.2f}%",
-        f"{relative_stddev_old:.2f}%",
-        f"{relative_stddev_old - relative_stddev_new:+.2f}%",
+        f"{relative.rel_stddev_new:.2f}%",
+        f"{relative.rel_stddev_old:.2f}%",
+        f"{relative.rel_stddev_old - relative.rel_stddev_new:+.2f}%",
     )
 
     # IQR
     table.add_row(
         "IQR (rel)",
-        f"{(new_q3 - new_q1) / new_median:.4f}",
-        f"{(old_q3 - old_q1) / old_median:.4f}",
-        f"{((old_q3 - old_q1) / old_median - (new_q3 - new_q1) / new_median):+.4f}",
+        f"{(new_stats.q3 - new_stats.q1) / new_stats.median:.4f}",
+        f"{(old_stats.q3 - old_stats.q1) / old_stats.median:.4f}",
+        f"{((old_stats.q3 - old_stats.q1) / old_stats.median - (new_stats.q3 - new_stats.q1) / new_stats.median):+.4f}",
     )
 
     CONSOLE.print(table)
     CONSOLE.print()
-    if speedup > 1:
+    if relative.rel_median > 1:
         CONSOLE.print(
             Text(
-                f"✓ {new_name} is {speedup:.2f}x faster ({improvement_pct:.1f}% improvement)",
+                f"✓ {new_name} is {relative.rel_median:.2f}x faster ({relative.improvement_pct:.1f}% improvement)",
                 style="bold green",
             )
         )
     else:
         CONSOLE.print(
             Text(
-                f"✗ {old_name} is {1 / speedup:.2f}x faster ({abs(improvement_pct):.1f}% regression)",
+                f"✗ {old_name} is {1 / relative.rel_median:.2f}x faster ({abs(relative.improvement_pct):.1f}% regression)",
                 style="bold yellow",
             )
         )
@@ -558,9 +769,14 @@ def all_benchmarks() -> None:
 @app.command()
 def focused() -> None:
     """Run focused build_args benchmark only."""
+    # Test: map_star - call1 vs call(..., None)
+    CONSOLE.print(
+        "\n[bold cyan]Test: map_star - call1 (optimized) vs call(..., None)[/bold cyan]"
+    )
+    rust_some_tuple = pc.Some((10, 20))
     _run_focused_benchmark(
-        old=partial(RUST_SOME.eq, RUST_SOME_OTHER),
-        new=partial(RUST_SOME.eq_test, RUST_SOME_OTHER),  # type: ignore[arg-type]
+        old=partial(rust_some_tuple.map_star_old, lambda x, y: x + y),  # type: ignore[arg-type]
+        new=partial(rust_some_tuple.map_star, lambda x, y: x + y),  # type: ignore[arg-type]
     )
 
 
