@@ -1,4 +1,4 @@
-use crate::option::{PyNone, PySome, PyochainOption};
+use crate::option::{PyNone, PySome, PyochainOption, get_none_singleton};
 use crate::types::{ResultUnwrapError, build_args};
 use pyderive::*;
 use pyo3::{
@@ -38,8 +38,7 @@ impl PyOk {
     }
 
     fn err(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let init = PyClassInitializer::from(PyochainOption).add_subclass(PyNone);
-        Ok(Py::new(py, init)?.into_any())
+        get_none_singleton(py)
     }
 
     fn unwrap(&self, py: Python<'_>) -> Py<PyAny> {
@@ -203,9 +202,7 @@ impl PyOk {
                 .add_subclass(PySome { value: ok_value });
             Ok(Py::new(py, some_init)?.into_any())
         } else if inner.is_instance_of::<PyNone>() {
-            let none_init =
-                PyClassInitializer::from(crate::option::PyochainOption).add_subclass(PyNone);
-            Ok(Py::new(py, none_init)?.into_any())
+            get_none_singleton(py)
         } else {
             Err(pyo3::exceptions::PyTypeError::new_err(
                 "Expected Some or NONE result",
@@ -280,8 +277,7 @@ impl PyErr {
     }
 
     fn ok(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let init = PyClassInitializer::from(PyochainOption).add_subclass(PyNone);
-        Ok(Py::new(py, init)?.into_any())
+        get_none_singleton(py)
     }
 
     fn err(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {

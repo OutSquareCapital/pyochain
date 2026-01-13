@@ -47,7 +47,8 @@ pub fn call_with_self_prepended<'py>(
     kwargs: Option<&Bound<'py, pyo3::types::PyDict>>,
 ) -> PyResult<Py<PyAny>> {
     unsafe {
-        let new_argc = args.len() + 1;
+        let args_len = args.len();
+        let new_argc = args_len + 1;
         let new_args_ptr = ffi::PyTuple_New(new_argc as ffi::Py_ssize_t);
         if new_args_ptr.is_null() {
             return Err(PyErr::fetch(py));
@@ -55,10 +56,9 @@ pub fn call_with_self_prepended<'py>(
 
         ffi::Py_INCREF(self_ptr);
         ffi::PyTuple_SetItem(new_args_ptr, 0, self_ptr);
-
-        // Copy existing args
-        for i in 0..args.len() {
-            let item = args.get_item(i).unwrap().as_ptr();
+        let args_ptr = args.as_ptr();
+        for i in 0..args_len {
+            let item = ffi::PyTuple_GET_ITEM(args_ptr, i as ffi::Py_ssize_t);
             ffi::Py_INCREF(item);
             ffi::PyTuple_SetItem(new_args_ptr, (i + 1) as ffi::Py_ssize_t, item);
         }
