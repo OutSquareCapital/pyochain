@@ -294,7 +294,7 @@ class Result[T, E](Pipeable, ABC):
         >>> pc.Err("emergency failure").unwrap()
         Traceback (most recent call last):
             ...
-        pyochain._result.ResultUnwrapError: called `unwrap` on Err: 'emergency failure'
+        ResultUnwrapError: called `unwrap` on an `Err`: 'emergency failure'
 
         ```
         """
@@ -322,7 +322,7 @@ class Result[T, E](Pipeable, ABC):
         >>> pc.Ok(2).unwrap_err()
         Traceback (most recent call last):
             ...
-        pyochain._result.ResultUnwrapError: called `unwrap_err` on Ok
+        ResultUnwrapError: called `unwrap_err` on Ok
 
         ```
         """
@@ -378,7 +378,7 @@ class Result[T, E](Pipeable, ABC):
         >>> pc.Err("emergency failure").expect("Testing expect")
         Traceback (most recent call last):
             ...
-        pyochain._result.ResultUnwrapError: Testing expect: emergency failure
+        ResultUnwrapError: Testing expect: 'emergency failure'
 
         ```
         """
@@ -407,7 +407,7 @@ class Result[T, E](Pipeable, ABC):
         >>> pc.Ok(10).expect_err("Testing expect_err")
         Traceback (most recent call last):
             ...
-        pyochain._result.ResultUnwrapError: Testing expect_err: expected Err, got Ok(10)
+        ResultUnwrapError: Testing expect_err: expected Err, got Ok(10)
 
         ```
         """

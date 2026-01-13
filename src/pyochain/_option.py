@@ -535,7 +535,7 @@ class Option[T](Pipeable):  # noqa: PLW1641
         >>> pc.NONE.unwrap()
         Traceback (most recent call last):
             ...
-        pyochain._option.OptionUnwrapError: called `unwrap` on a `None`
+        OptionUnwrapError: called `unwrap` on a `None`
 
         ```
         """
@@ -564,7 +564,7 @@ class Option[T](Pipeable):  # noqa: PLW1641
         >>> pc.NONE.expect("fruits are healthy")
         Traceback (most recent call last):
             ...
-        pyochain._option.OptionUnwrapError: fruits are healthy (called `expect` on a `None`)
+        OptionUnwrapError: fruits are healthy (called `expect` on a `None`)
 
         ```
         """
