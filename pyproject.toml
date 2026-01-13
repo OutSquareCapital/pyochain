@@ -1,5 +1,6 @@
 [project]
     description     = "Method chaining for iterables and dictionaries in Python."
+    license         = { file = "LICENSE.md" }
     name            = "pyochain"
     readme          = "README.md"
     requires-python = ">=3.13"

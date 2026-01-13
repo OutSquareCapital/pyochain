@@ -1,8 +1,7 @@
 [package]
-    edition      = "2024"
-    license-file = "LICENSE.md"
-    name         = "rs"
-    version      = "0.1.0"
+    edition = "2024"
+    name    = "rs"
+    version = "0.1.0"
 
 [lib]
     crate-type = ["cdylib"]
