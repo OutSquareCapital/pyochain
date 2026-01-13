@@ -1,6 +1,6 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections.abc import Callable, Iterable
-from typing import Any, Concatenate, Final, Never, final, overload
+from typing import Any, Concatenate, Final, final, overload
 
 from ._iter import Iter
 from .traits import Pipeable
@@ -326,7 +326,6 @@ class Option[T](Pipeable):
 
     # Abstract methods ----------------------------------------------------------------
 
-    @abstractmethod
     def __eq__(self, other: object) -> bool:
         """Checks if this `Option` and *other* are equal.
 
@@ -362,7 +361,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def eq(self, other: Option[T]) -> bool:
         """Checks if two `Option[T]` instances are equal.
 
@@ -392,7 +390,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def is_some(self) -> bool:
         """Returns `True` if the option is a `Some` value.
 
@@ -412,7 +409,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def is_some_and[**P](
         self,
         predicate: Callable[Concatenate[T, P], bool],
@@ -449,7 +445,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def is_none(self) -> bool:
         """Returns `True` if the option is a `None` value.
 
@@ -469,7 +464,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def is_none_or[**P](
         self, func: Callable[Concatenate[T, P], bool], *args: P.args, **kwargs: P.kwargs
     ) -> bool:
@@ -498,7 +492,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def unwrap(self) -> T:
         """Returns the contained `Some` value.
 
@@ -525,7 +518,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def expect(self, msg: str) -> T:
         """Returns the contained `Some` value.
 
@@ -553,7 +545,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def unwrap_or(self, default: T) -> T:
         """Returns the contained `Some` value or a provided default.
 
@@ -574,7 +565,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def unwrap_or_else(self, f: Callable[[], T]) -> T:
         """Returns the contained `Some` value or computes it from a function.
 
@@ -596,7 +586,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def map[**P, R](
         self, f: Callable[Concatenate[T, P], R], *args: P.args, **kwargs: P.kwargs
     ) -> Option[R]:
@@ -624,7 +613,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def and_[U](self, optb: Option[U]) -> Option[U]:
         """Returns `NONE` if the option is `NONE`, otherwise returns optb.
 
@@ -650,7 +638,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def or_(self, optb: Option[T]) -> Option[T]:
         """Returns the option if it contains a value, otherwise returns optb.
 
@@ -675,7 +662,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def and_then[**P, R](
         self,
         f: Callable[Concatenate[T, P], Option[R]],
@@ -711,7 +697,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def or_else(self, f: Callable[[], Option[T]]) -> Option[T]:
         """Returns the `Option[T]` if it contains a value, otherwise calls a function and returns the result.
 
@@ -738,7 +723,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def ok_or[E](self, err: E) -> Result[T, E]:
         """Converts the option to a `Result`.
 
@@ -759,7 +743,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def ok_or_else[E](self, err: Callable[[], E]) -> Result[T, E]:
         """Converts the option to a Result.
 
@@ -780,7 +763,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def map_or[**P, R](
         self,
         default: R,
@@ -810,7 +792,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def map_or_else[**P, R](self, default: Callable[[], R], f: Callable[[T], R]) -> R:
         """Returns the result of applying a function to the contained value if Some, otherwise computes a default value.
 
@@ -832,7 +813,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def filter[**P, R](
         self,
         predicate: Callable[Concatenate[T, P], R],
@@ -871,7 +851,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def iter(self) -> Iter[T]:
         """Creates an `Iter` over the optional value.
 
@@ -894,7 +873,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def inspect[**P](
         self, f: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
     ) -> Option[T]:
@@ -926,7 +904,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def unzip[U](self: Option[tuple[T, U]]) -> tuple[Option[T], Option[U]]:
         """Unzips an `Option` of a tuple into a tuple of `Option`s.
 
@@ -947,7 +924,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def zip[U](self, other: Option[U]) -> Option[tuple[T, U]]:
         """Returns an `Option[tuple[T, U]]` containing a tuple of the values if both options are `Some`, otherwise returns `NONE`.
 
@@ -969,7 +945,7 @@ class Option[T](Pipeable):
 
         ```
         """
-    @abstractmethod
+
     def zip_with[U, R](self, other: Option[U], f: Callable[[T, U], R]) -> Option[R]:
         """Zips `self` and another `Option` with function `f`.
 
@@ -1004,7 +980,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def reduce(self, other: Option[T], func: Callable[[T, T], T]) -> Option[T]:
         """Reduces two options into one, using the provided function if both are Some.
 
@@ -1042,7 +1017,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def transpose[E](self: Option[Result[T, E]]) -> Result[Option[T], E]:
         """Transposes an `Option` of a `Result` into a `Result` of an `Option`.
 
@@ -1064,7 +1038,6 @@ class Option[T](Pipeable):
         ```
         """
 
-    @abstractmethod
     def xor(self, optb: Option[T]) -> Option[T]:
         """Returns `Some` if exactly one of **self**, optb is `Some`, otherwise returns `NONE`.
 
@@ -1111,66 +1084,8 @@ class Some[T](Option[T]):
     value: T
     __match_args__ = ("value",)
 
-    def __new__[V](cls, _value: V) -> Some[V]:
+    def __new__[V](cls, value: V) -> Some[V]:
         """Bypass Option's redirect by directly creating a Some instance."""
-
-    def __eq__(self, other: object) -> bool: ...
-    def eq(self, other: Option[T]) -> bool: ...
-    def is_some(self) -> bool: ...
-    def is_none(self) -> bool: ...
-    def unwrap(self) -> T: ...
-    def is_some_and[**P](
-        self,
-        predicate: Callable[Concatenate[T, P], bool],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> bool: ...
-    def is_none_or[**P](
-        self, func: Callable[Concatenate[T, P], bool], *args: P.args, **kwargs: P.kwargs
-    ) -> bool: ...
-    def expect(self, msg: str) -> T: ...
-    def unwrap_or(self, default: T) -> T: ...
-    def unwrap_or_else(self, f: Callable[[], T]) -> T: ...
-    def map[**P, R](
-        self, f: Callable[Concatenate[T, P], R], *args: P.args, **kwargs: P.kwargs
-    ) -> Option[R]: ...
-    def and_[U](self, optb: Option[U]) -> Option[U]: ...
-    def or_(self, optb: Option[T]) -> Option[T]: ...
-    def and_then[**P, R](
-        self,
-        f: Callable[Concatenate[T, P], Option[R]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Option[R]: ...
-    def or_else(self, f: Callable[[], Option[T]]) -> Option[T]: ...
-    def ok_or[E](self, err: E) -> Result[T, E]: ...
-    def ok_or_else[E](self, err: Callable[[], E]) -> Result[T, E]: ...
-    def map_or[**P, R](
-        self,
-        default: R,
-        f: Callable[Concatenate[T, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> R: ...
-    def map_or_else[**P, R](
-        self, default: Callable[[], R], f: Callable[[T], R]
-    ) -> R: ...
-    def filter[**P, R](
-        self,
-        predicate: Callable[Concatenate[T, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Option[T]: ...
-    def iter(self) -> Iter[T]: ...
-    def inspect[**P](
-        self, f: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
-    ) -> Option[T]: ...
-    def unzip[U](self: Option[tuple[T, U]]) -> tuple[Option[T], Option[U]]: ...
-    def zip[U](self, other: Option[U]) -> Option[tuple[T, U]]: ...
-    def zip_with[U, R](self, other: Option[U], f: Callable[[T, U], R]) -> Option[R]: ...
-    def reduce[U](self, other: Option[T], func: Callable[[T, T], T]) -> Option[T]: ...
-    def transpose[E](self: Option[Result[T, E]]) -> Result[Option[T], E]: ...
-    def xor(self, optb: Option[T]) -> Option[T]: ...
 
 @final
 class NoneOption[T](Option[T]):
@@ -1182,78 +1097,11 @@ class NoneOption[T](Option[T]):
     For more documentation, see the `Option[T]` class.
     """
 
-    def __new__(cls, _value: object = None) -> NoneOption[Any]:
-        """Bypass Option's redirect by directly creating a NoneOption instance."""
-
-    def __eq__(self, other: object) -> bool: ...
-    def eq(self, other: Option[T]) -> bool: ...
-    def is_some(self) -> bool: ...
-    def is_none(self) -> bool: ...
-    def unwrap(self) -> Never: ...
-    def is_some_and[**P](
-        self,
-        predicate: Callable[Concatenate[T, P], bool],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> bool: ...
-    def is_none_or[**P](
-        self,
-        func: Callable[Concatenate[T, P], bool],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> bool: ...
-    def expect(self, msg: str) -> T: ...
-    def unwrap_or(self, default: T) -> T: ...
-    def unwrap_or_else(self, f: Callable[[], T]) -> T: ...
-    def map[**P, R](
-        self,
-        f: Callable[Concatenate[T, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Option[R]: ...
-    def and_[U](self, optb: Option[U]) -> Option[U]: ...
-    def or_(self, optb: Option[T]) -> Option[T]: ...
-    def and_then[**P, R](
-        self,
-        f: Callable[Concatenate[T, P], Option[R]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Option[R]: ...
-    def or_else(self, f: Callable[[], Option[T]]) -> Option[T]: ...
-    def ok_or[E](self, err: E) -> Result[T, E]: ...
-    def ok_or_else[E](self, err: Callable[[], E]) -> Result[T, E]: ...
-    def map_or[**P, R](
-        self,
-        default: R,
-        f: Callable[Concatenate[T, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> R: ...
-    def map_or_else[**P, R](
-        self, default: Callable[[], R], f: Callable[[T], R]
-    ) -> R: ...
-    def filter[**P, R](
-        self,
-        predicate: Callable[Concatenate[T, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Option[T]: ...
-    def iter(self) -> Iter[T]: ...
-    def inspect[**P](
-        self,
-        f: Callable[Concatenate[T, P], object],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Option[T]: ...
-    def unzip[U](self: Option[tuple[T, U]]) -> tuple[Option[T], Option[U]]: ...
-    def zip[U](self, other: Option[U]) -> Option[tuple[T, U]]: ...
-    def zip_with[U, R](self, other: Option[U], f: Callable[[T, U], R]) -> Option[R]: ...
-    def reduce[U](self, other: Option[T], func: Callable[[T, T], T]) -> Option[T]: ...
-    def transpose[E](self: Option[Result[T, E]]) -> Result[Option[T], E]: ...
-    def xor(self, optb: Option[T]) -> Option[T]: ...
-
 NONE: Final[NoneOption[Any]] = ...
-"""Singleton instance representing the absence of a value."""
+"""Singleton instance representing the absence of a value.
+This is the only instance of `NoneOption` that should be used, and is similar to the logic used by `None` in standard Python.
+This allows you to use `is pc.NONE` checks for identity, and improves performance by avoiding unnecessary allocations and instanciations.
+"""
 
 class ResultUnwrapError(RuntimeError): ...
 
@@ -1467,9 +1315,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    # abstract methods ---------------------------------------------------------------
-
-    @abstractmethod
     def is_ok(self) -> bool:
         """Returns `True` if the result is `Ok`.
 
@@ -1489,7 +1334,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def is_err(self) -> bool:
         """Returns `True` if the result is `Err`.
 
@@ -1509,7 +1353,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def unwrap(self) -> T:
         """Returns the contained `Ok` value.
 
@@ -1536,7 +1379,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def unwrap_err(self) -> E:
         """Returns the contained `Err` value.
 
@@ -1563,7 +1405,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def map_or_else[U](self, ok: Callable[[T], U], err: Callable[[E], U]) -> U:
         """Maps a `Result[T, E]` to `U`.
 
@@ -1589,7 +1430,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def expect(self, msg: str) -> T:
         """Returns the contained `Ok` value.
 
@@ -1617,7 +1457,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def expect_err(self, msg: str) -> E:
         """Returns the contained `Err` value.
 
@@ -1645,7 +1484,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def unwrap_or(self, default: T) -> T:
         """Returns the contained `Ok` value or a provided default.
 
@@ -1666,7 +1504,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def unwrap_or_else[**P](
         self, fn: Callable[Concatenate[E, P], T], *args: P.args, **kwargs: P.kwargs
     ) -> T:
@@ -1691,7 +1528,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def map[**P, R](
         self, fn: Callable[Concatenate[T, P], R], *args: P.args, **kwargs: P.kwargs
     ) -> Result[R, E]:
@@ -1719,7 +1555,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def map_err[**P, R](
         self, fn: Callable[Concatenate[E, P], R], *args: P.args, **kwargs: P.kwargs
     ) -> Result[T, R]:
@@ -1748,7 +1583,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def inspect[**P](
         self, fn: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
     ) -> Result[T, E]:
@@ -1777,7 +1611,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def inspect_err[**P](
         self, fn: Callable[Concatenate[E, P], object], *args: P.args, **kwargs: P.kwargs
     ) -> Result[T, E]:
@@ -1806,7 +1639,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def and_[U](self, res: Result[U, E]) -> Result[U, E]:
         """Returns `res` if the result is `Ok`, otherwise returns the `Err` value.
 
@@ -1843,7 +1675,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def and_then[**P, R](
         self,
         fn: Callable[Concatenate[T, P], Result[R, E]],
@@ -1875,7 +1706,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def or_else[**P](
         self,
         fn: Callable[Concatenate[E, P], Result[T, E]],
@@ -1907,7 +1737,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def ok(self) -> Option[T]:
         """Converts from `Result[T, E]` to `Option[T]`.
 
@@ -1927,7 +1756,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def err(self) -> Option[E]:
         """Converts from `Result[T, E]` to `Option[E]`.
 
@@ -1947,7 +1775,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def is_ok_and[**P](
         self, pred: Callable[Concatenate[T, P], bool], *args: P.args, **kwargs: P.kwargs
     ) -> bool:
@@ -1974,7 +1801,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def is_err_and[**P](
         self, pred: Callable[Concatenate[E, P], bool], *args: P.args, **kwargs: P.kwargs
     ) -> bool:
@@ -2001,7 +1827,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def map_or[**P, R](
         self,
         default: R,
@@ -2031,7 +1856,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def transpose(self: Result[Option[T], E]) -> Option[Result[T, E]]:
         """Transposes a Result containing an Option into an Option containing a Result.
 
@@ -2055,7 +1879,6 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    @abstractmethod
     def or_[F](self, res: Result[T, F]) -> Result[T, F]:
         """Returns res if the result is `Err`, otherwise returns the `Ok` value of **self**.
 
@@ -2094,71 +1917,6 @@ class Ok[T, E](Result[T, E]):
 
     value: T
     def __init__(self, value: T) -> None: ...
-    def is_ok(self) -> bool: ...
-    def is_err(self) -> bool: ...
-    def unwrap(self) -> T: ...
-    def unwrap_err(self) -> Never: ...
-    def map_or_else[U](self, ok: Callable[[T], U], err: Callable[[E], U]) -> U: ...
-    def expect(self, msg: str) -> T: ...
-    def expect_err(self, msg: str) -> E: ...
-    def unwrap_or(self, default: T) -> T: ...
-    def unwrap_or_else[**P](
-        self,
-        fn: Callable[Concatenate[E, P], T],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> T: ...
-    def map[**P, R](
-        self, fn: Callable[Concatenate[T, P], R], *args: P.args, **kwargs: P.kwargs
-    ) -> Result[R, E]: ...
-    def map_err[**P, R](
-        self,
-        fn: Callable[Concatenate[E, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Result[T, R]: ...  # type: ignore[return-value]
-    def inspect[**P](
-        self, fn: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
-    ) -> Result[T, E]: ...
-    def inspect_err[**P](
-        self,
-        fn: Callable[Concatenate[E, P], object],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Result[T, E]: ...
-    def and_[U](self, res: Result[U, E]) -> Result[U, E]: ...
-    def and_then[**P, R](
-        self,
-        fn: Callable[Concatenate[T, P], Result[R, E]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Result[R, E]: ...
-    def or_else[**P](
-        self,
-        fn: Callable[Concatenate[E, P], Result[T, E]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Result[T, E]: ...
-    def ok(self) -> Option[T]: ...
-    def err(self) -> Option[E]: ...
-    def is_ok_and[**P](
-        self, pred: Callable[Concatenate[T, P], bool], *args: P.args, **kwargs: P.kwargs
-    ) -> bool: ...
-    def is_err_and[**P](
-        self,
-        pred: Callable[Concatenate[E, P], bool],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> bool: ...
-    def map_or[**P, R](
-        self,
-        default: R,
-        f: Callable[Concatenate[T, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> R: ...
-    def transpose(self: Result[Option[T], E]) -> Option[Result[T, E]]: ...
-    def or_[F](self, res: Result[T, F]) -> Result[T, F]: ...
 
 @final
 class Err[T, E](Result[T, E]):
@@ -2174,65 +1932,3 @@ class Err[T, E](Result[T, E]):
 
     error: E
     def __init__(self, error: E) -> None: ...
-    def is_ok(self) -> bool: ...
-    def is_err(self) -> bool: ...
-    def unwrap(self) -> Never: ...
-    def unwrap_err(self) -> E: ...
-    def map_or_else[U](self, ok: Callable[[T], U], err: Callable[[E], U]) -> U: ...
-    def expect(self, msg: str) -> T: ...
-    def expect_err(self, msg: str) -> E: ...
-    def unwrap_or(self, default: T) -> T: ...
-    def unwrap_or_else[**P](
-        self, fn: Callable[Concatenate[E, P], T], *args: P.args, **kwargs: P.kwargs
-    ) -> T: ...
-    def map[**P, R](
-        self,
-        fn: Callable[Concatenate[T, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Result[R, E]: ...  # type: ignore[return-value]
-    def map_err[**P, R](
-        self, fn: Callable[Concatenate[E, P], R], *args: P.args, **kwargs: P.kwargs
-    ) -> Result[T, R]: ...
-    def inspect[**P](
-        self,
-        fn: Callable[Concatenate[T, P], object],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Result[T, E]: ...
-    def inspect_err[**P](
-        self, fn: Callable[Concatenate[E, P], object], *args: P.args, **kwargs: P.kwargs
-    ) -> Result[T, E]: ...
-    def and_[U](self, res: Result[U, E]) -> Result[U, E]: ...  # type: ignore[return-value]
-    def and_then[**P, R](
-        self,
-        fn: Callable[Concatenate[T, P], Result[R, E]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Result[R, E]: ...  # type: ignore[return-value]
-    def or_else[**P](
-        self,
-        fn: Callable[Concatenate[E, P], Result[T, E]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Result[T, E]: ...
-    def ok(self) -> Option[T]: ...
-    def err(self) -> Option[E]: ...
-    def is_ok_and[**P](
-        self,
-        pred: Callable[Concatenate[T, P], bool],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> bool: ...
-    def is_err_and[**P](
-        self, pred: Callable[Concatenate[E, P], bool], *args: P.args, **kwargs: P.kwargs
-    ) -> bool: ...
-    def map_or[**P, R](
-        self,
-        default: R,
-        f: Callable[Concatenate[T, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> R: ...
-    def transpose(self: Result[Option[T], E]) -> Option[Result[T, E]]: ...
-    def or_[F](self, res: Result[T, F]) -> Result[T, F]: ...
