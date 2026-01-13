@@ -1,6 +1,6 @@
-# Option
+# ResultUnwrapError
 
-::: pyochain.rs.Option
+::: pyochain.rs.ResultUnwrapError
     options:
       inherited_members: true
       show_overloads: true

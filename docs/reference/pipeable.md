@@ -1,7 +1,6 @@
 # Pipeable
 
 ::: pyochain.traits._converters.Pipeable
-
     options:
       inherited_members: true
       show_overloads: true

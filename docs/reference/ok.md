@@ -1,7 +1,6 @@
 # Ok
 
 ::: pyochain.rs.Ok
-
     options:
       inherited_members: true
       show_overloads: true

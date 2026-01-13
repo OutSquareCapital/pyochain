@@ -1,7 +1,6 @@
 # Vec
 
 ::: pyochain._iter.Vec
-
     options:
       inherited_members: true
       show_overloads: true

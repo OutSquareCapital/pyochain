@@ -1,6 +1,6 @@
-# Option
+# NoneOption
 
-::: pyochain.rs.Option
+::: pyochain.rs.NoneOption
     options:
       inherited_members: true
       show_overloads: true
