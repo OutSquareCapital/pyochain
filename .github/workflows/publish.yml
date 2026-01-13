@@ -80,13 +80,13 @@ jobs:
       - name: Build sdist
         uses: PyO3/maturin-action@v1
         with:
-          command: sdist
-          args: --out dist
+          command: build
+          args: --release --sdist --out dist
       - name: Upload sdist
         uses: actions/upload-artifact@v4
         with:
           name: wheels-sdist
-          path: dist
+          path: dist/*.tar.gz
 
   release:
     name: Release
