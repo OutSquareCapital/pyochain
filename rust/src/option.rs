@@ -1,5 +1,5 @@
 use crate::result;
-use crate::types::{OptionUnwrapError, concatenate, concatenate_self};
+use crate::types::{OptionUnwrapError, concatenate};
 use pyo3::{
     ffi,
     prelude::*,
@@ -424,11 +424,13 @@ impl PySome {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn into(
         slf: &Bound<'_, Self>,
+        py: Python<'_>,
         func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        concatenate_self(slf.py(), func, slf.as_ptr(), args, kwargs)
+        let all_args_owned = unsafe { concatenate(py, &slf.to_owned().unbind().into_any(), args) };
+        Ok(func.call(all_args_owned, kwargs)?.unbind())
     }
 }
 
@@ -656,10 +658,12 @@ impl PyNone {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn into(
         slf: &Bound<'_, Self>,
+        py: Python<'_>,
         func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        concatenate_self(slf.py(), func, slf.as_ptr(), args, kwargs)
+        let all_args_owned = unsafe { concatenate(py, &slf.to_owned().unbind().into_any(), args) };
+        Ok(func.call(all_args_owned, kwargs)?.unbind())
     }
 }

@@ -1,5 +1,5 @@
 use crate::option::{PyNone, PySome, PyochainOption, get_none_singleton};
-use crate::types::{ResultUnwrapError, concatenate, concatenate_self};
+use crate::types::{ResultUnwrapError, concatenate};
 use pyderive::*;
 use pyo3::{
     prelude::*,
@@ -138,11 +138,13 @@ impl PyOk {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn into(
         slf: &Bound<'_, Self>,
+        py: Python<'_>,
         func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        concatenate_self(slf.py(), func, slf.as_ptr(), args, kwargs)
+        let all_args_owned = unsafe { concatenate(py, &slf.to_owned().unbind().into_any(), args) };
+        Ok(func.call(all_args_owned, kwargs)?.unbind())
     }
 
     #[pyo3(signature = (pred, *args, **kwargs))]
@@ -493,10 +495,12 @@ impl PyErr {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn into(
         slf: &Bound<'_, Self>,
+        py: Python<'_>,
         func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        concatenate_self(slf.py(), func, slf.as_ptr(), args, kwargs)
+        let all_args_owned = unsafe { concatenate(py, &slf.to_owned().unbind().into_any(), args) };
+        Ok(func.call(all_args_owned, kwargs)?.unbind())
     }
 }
