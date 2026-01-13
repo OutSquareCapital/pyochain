@@ -1,5 +1,6 @@
 [package]
     edition = "2024"
+    include = ["../LICENSE.md", "src/**/*", "Cargo.toml"]
     name    = "rs"
     version = "0.1.0"
 
