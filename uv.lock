@@ -3,15 +3,6 @@ revision = 3
 requires-python = ">=3.13"
 
 [[package]]
-name = "attrs"
-version = "25.4.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/6b/5c/685e6633917e101e5dcb62b9dd76946cbb57c26e133bae9e0cd36033c0a9/attrs-25.4.0.tar.gz", hash = "sha256:16d5969b87f0859ef33a48b35d55ac1be6e42ae49d5e853b597db70c35c57e11", size = 934251, upload-time = "2025-10-06T13:54:44.725Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3a/2a/7cc015f5b9f5db42b7d48157e23356022889fc354a2813c15934b7cb5c0e/attrs-25.4.0-py3-none-any.whl", hash = "sha256:adcf7e2a1fb3b36ac48d97835bb6d8ade15b8dcce26aba8bf1d14847b57a3373", size = 67615, upload-time = "2025-10-06T13:54:43.17Z" },
-]
-
-[[package]]
 name = "click"
 version = "8.3.1"
 source = { registry = "https://pypi.org/simple" }
@@ -530,7 +521,6 @@ dev = [
     { name = "pydoclint" },
     { name = "pytest" },
     { name = "pytest-doctest-mkdocstrings" },
-    { name = "pytest-rich" },
     { name = "pytest-stubtester" },
     { name = "ruff" },
     { name = "zensical" },
@@ -548,7 +538,6 @@ dev = [
     { name = "pydoclint", specifier = ">=0.8.1" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "pytest-doctest-mkdocstrings", specifier = ">=0.1.1" },
-    { name = "pytest-rich", specifier = ">=0.2.0" },
     { name = "pytest-stubtester", git = "https://github.com/OutSquareCapital/pytest-stubtester.git" },
     { name = "ruff", specifier = ">=0.14.9" },
     { name = "zensical", specifier = ">=0.0.15" },
@@ -580,20 +569,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/86/86/3f430d371c07ac7f1a391a853d9d675a4422af2337f59ac2431331749252/pytest-doctest-mkdocstrings-0.1.1.tar.gz", hash = "sha256:a3b361e016917a79e268dc4e120a50e216e7f67527d0a53cb454392a077f003a", size = 5572, upload-time = "2024-03-02T18:34:32.981Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/02/8e/7cbab493901a48c0dc8e45e55f126c3bb100693c65c234ebcb9085d55075/pytest_doctest_mkdocstrings-0.1.1-py3-none-any.whl", hash = "sha256:2299264438723ad1b287a0ad6c2e0b30a99e80711381eb6e97284810237b71b2", size = 6092, upload-time = "2024-03-02T18:34:31.562Z" },
-]
-
-[[package]]
-name = "pytest-rich"
-version = "0.2.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "attrs" },
-    { name = "pytest" },
-    { name = "rich" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/da/bc/6885e8422b5d786b3f2866e8bd5e197c2ce7c974606c64c1b3f1e6e5dc30/pytest_rich-0.2.0.tar.gz", hash = "sha256:a5cf6c83497de65788c8a609f616fafedac50295c48f2eb3184bc08b67a9893e", size = 45835, upload-time = "2024-12-12T22:58:06.294Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/38/89/46b342174f10afd51ed150d3386de320f6dfcf787d5d5544b8d27799718a/pytest_rich-0.2.0-py3-none-any.whl", hash = "sha256:815e4bc5a832d78f3776edf912f4bae2cf21f2bfdbf049f216cd6ff207e7af0c", size = 11679, upload-time = "2024-12-12T22:58:03.042Z" },
 ]
 
 [[package]]

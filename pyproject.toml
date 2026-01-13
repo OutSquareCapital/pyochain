@@ -15,12 +15,11 @@
         "polars>=1.33.1",
         "pydoclint>=0.8.1",
         "pytest-doctest-mkdocstrings>=0.1.1",
-        "pytest-rich>=0.2.0",
         "pytest-stubtester",
         "pytest>=9.0.2",
         "ruff>=0.14.9",
         "zensical>=0.0.15",
-    ]
+]
 [tool.ruff]
     lint.ignore = [
         "C417",
