@@ -16,3 +16,4 @@ docs/sphinx/_build/
 # Virtual environments
 .venv
 *.ipynb
+target/

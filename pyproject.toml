@@ -14,12 +14,13 @@
         "mkdocstrings-python>=1.18.2",
         "polars>=1.33.1",
         "pydoclint>=0.8.1",
-        "pyright>=1.1.407",
         "pytest-doctest-mkdocstrings>=0.1.1",
+        "pytest-rich>=0.2.0",
+        "pytest-stubtester",
         "pytest>=9.0.2",
         "ruff>=0.14.9",
         "zensical>=0.0.15",
-]
+    ]
 [tool.ruff]
     lint.ignore = [
         "C417",
@@ -29,6 +30,7 @@
         "E501",
         "FIX002",
         "PLC0415",
+        "PYI021",
         "S101",
         "S608",
         "SLF001",
@@ -59,8 +61,14 @@
     style                                         = "google"
 
 [tool.uv.sources]
-    cytoolz-stubs = { git = "https://github.com/OutSquareCapital/cytoolz-stubs.git" }
+    cytoolz-stubs     = { git = "https://github.com/OutSquareCapital/cytoolz-stubs.git" }
+    pytest-stubtester = { git = "https://github.com/OutSquareCapital/pytest-stubtester.git" }
 
 [build-system]
-    build-backend = "uv_build"
-    requires      = ["uv_build>=0.9.18"]
+    build-backend = "maturin"
+    requires      = ["maturin>=1.8,<2.0"]
+
+[tool.maturin]
+    manifest-path = "rust/Cargo.toml"
+    module-name   = "pyochain.rs"
+    python-source = "src"

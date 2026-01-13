@@ -3,6 +3,15 @@ revision = 3
 requires-python = ">=3.13"
 
 [[package]]
+name = "attrs"
+version = "25.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/6b/5c/685e6633917e101e5dcb62b9dd76946cbb57c26e133bae9e0cd36033c0a9/attrs-25.4.0.tar.gz", hash = "sha256:16d5969b87f0859ef33a48b35d55ac1be6e42ae49d5e853b597db70c35c57e11", size = 934251, upload-time = "2025-10-06T13:54:44.725Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3a/2a/7cc015f5b9f5db42b7d48157e23356022889fc354a2813c15934b7cb5c0e/attrs-25.4.0-py3-none-any.whl", hash = "sha256:adcf7e2a1fb3b36ac48d97835bb6d8ade15b8dcce26aba8bf1d14847b57a3373", size = 67615, upload-time = "2025-10-06T13:54:43.17Z" },
+]
+
+[[package]]
 name = "click"
 version = "8.3.1"
 source = { registry = "https://pypi.org/simple" }
@@ -378,15 +387,6 @@ wheels = [
 ]
 
 [[package]]
-name = "nodeenv"
-version = "1.10.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/24/bf/d1bda4f6168e0b2e9e5958945e01910052158313224ada5ce1fb2e1113b8/nodeenv-1.10.0.tar.gz", hash = "sha256:996c191ad80897d076bdfba80a41994c2b47c68e224c542b48feba42ba00f8bb", size = 55611, upload-time = "2025-12-20T14:08:54.006Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/88/b2/d0896bdcdc8d28a7fc5717c305f1a861c26e18c05047949fb371034d98bd/nodeenv-1.10.0-py2.py3-none-any.whl", hash = "sha256:5bb13e3eed2923615535339b3c620e76779af4cb4c6a90deccc9e36b274d3827", size = 23438, upload-time = "2025-12-20T14:08:52.782Z" },
-]
-
-[[package]]
 name = "packaging"
 version = "25.0"
 source = { registry = "https://pypi.org/simple" }
@@ -528,9 +528,10 @@ dev = [
     { name = "mkdocstrings-python" },
     { name = "polars" },
     { name = "pydoclint" },
-    { name = "pyright" },
     { name = "pytest" },
     { name = "pytest-doctest-mkdocstrings" },
+    { name = "pytest-rich" },
+    { name = "pytest-stubtester" },
     { name = "ruff" },
     { name = "zensical" },
 ]
@@ -545,24 +546,12 @@ dev = [
     { name = "mkdocstrings-python", specifier = ">=1.18.2" },
     { name = "polars", specifier = ">=1.33.1" },
     { name = "pydoclint", specifier = ">=0.8.1" },
-    { name = "pyright", specifier = ">=1.1.407" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "pytest-doctest-mkdocstrings", specifier = ">=0.1.1" },
+    { name = "pytest-rich", specifier = ">=0.2.0" },
+    { name = "pytest-stubtester", git = "https://github.com/OutSquareCapital/pytest-stubtester.git" },
     { name = "ruff", specifier = ">=0.14.9" },
     { name = "zensical", specifier = ">=0.0.15" },
-]
-
-[[package]]
-name = "pyright"
-version = "1.1.408"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "nodeenv" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/74/b2/5db700e52554b8f025faa9c3c624c59f1f6c8841ba81ab97641b54322f16/pyright-1.1.408.tar.gz", hash = "sha256:f28f2321f96852fa50b5829ea492f6adb0e6954568d1caa3f3af3a5f555eb684", size = 4400578, upload-time = "2026-01-08T08:07:38.795Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/0c/82/a2c93e32800940d9573fb28c346772a14778b84ba7524e691b324620ab89/pyright-1.1.408-py3-none-any.whl", hash = "sha256:090b32865f4fdb1e0e6cd82bf5618480d48eecd2eb2e70f960982a3d9a4c17c1", size = 6399144, upload-time = "2026-01-08T08:07:37.082Z" },
 ]
 
 [[package]]
@@ -591,6 +580,29 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/86/86/3f430d371c07ac7f1a391a853d9d675a4422af2337f59ac2431331749252/pytest-doctest-mkdocstrings-0.1.1.tar.gz", hash = "sha256:a3b361e016917a79e268dc4e120a50e216e7f67527d0a53cb454392a077f003a", size = 5572, upload-time = "2024-03-02T18:34:32.981Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/02/8e/7cbab493901a48c0dc8e45e55f126c3bb100693c65c234ebcb9085d55075/pytest_doctest_mkdocstrings-0.1.1-py3-none-any.whl", hash = "sha256:2299264438723ad1b287a0ad6c2e0b30a99e80711381eb6e97284810237b71b2", size = 6092, upload-time = "2024-03-02T18:34:31.562Z" },
+]
+
+[[package]]
+name = "pytest-rich"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "attrs" },
+    { name = "pytest" },
+    { name = "rich" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/da/bc/6885e8422b5d786b3f2866e8bd5e197c2ce7c974606c64c1b3f1e6e5dc30/pytest_rich-0.2.0.tar.gz", hash = "sha256:a5cf6c83497de65788c8a609f616fafedac50295c48f2eb3184bc08b67a9893e", size = 45835, upload-time = "2024-12-12T22:58:06.294Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/38/89/46b342174f10afd51ed150d3386de320f6dfcf787d5d5544b8d27799718a/pytest_rich-0.2.0-py3-none-any.whl", hash = "sha256:815e4bc5a832d78f3776edf912f4bae2cf21f2bfdbf049f216cd6ff207e7af0c", size = 11679, upload-time = "2024-12-12T22:58:03.042Z" },
+]
+
+[[package]]
+name = "pytest-stubtester"
+version = "0.3.0"
+source = { git = "https://github.com/OutSquareCapital/pytest-stubtester.git#af4434a5398bfc2a837db8c77b8b871517003533" }
+dependencies = [
+    { name = "pyochain" },
+    { name = "pytest" },
 ]
 
 [[package]]
