@@ -1916,7 +1916,7 @@ class Ok[T, E](Result[T, E]):
     __match_args__ = ("value",)
 
     value: T
-    def __init__(self, value: T) -> None: ...
+    def __new__(cls, value: T) -> Ok[T, Any]: ...
 
 @final
 class Err[T, E](Result[T, E]):
@@ -1931,4 +1931,4 @@ class Err[T, E](Result[T, E]):
     __match_args__ = ("error",)
 
     error: E
-    def __init__(self, error: E) -> None: ...
+    def __new__(cls, error: E) -> Err[Any, E]: ...
