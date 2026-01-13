@@ -523,6 +523,7 @@ dev = [
     { name = "pytest-doctest-mkdocstrings" },
     { name = "pytest-stubtester" },
     { name = "ruff" },
+    { name = "typer" },
     { name = "zensical" },
 ]
 
@@ -540,6 +541,7 @@ dev = [
     { name = "pytest-doctest-mkdocstrings", specifier = ">=0.1.1" },
     { name = "pytest-stubtester", git = "https://github.com/OutSquareCapital/pytest-stubtester.git" },
     { name = "ruff", specifier = ">=0.14.9" },
+    { name = "typer", specifier = ">=0.21.1" },
     { name = "zensical", specifier = ">=0.0.15" },
 ]
 

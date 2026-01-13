@@ -3,13 +3,18 @@
 import statistics
 import timeit
 from collections.abc import Callable
+from functools import partial
 from typing import Final
 
+import typer
 from rich.console import Console
 from rich.table import Table
+from rich.text import Text
 
 import pyochain as pc
 from pyochain import old_option
+
+app = typer.Typer(help="Option type benchmarks: Rust vs Python")
 
 N_RUNS: Final[int] = 100_000
 TEST_VALUE: Final[int] = 42
@@ -384,7 +389,7 @@ def _display_results() -> None:
 
     for category, name, rust_time, python_time, speedup in RESULTS:
         speedup_style = "green bold" if speedup > 1 else "red bold"
-        speedup_str = f"[{speedup_style}]{speedup:.2f}x[/{speedup_style}]"
+        speedup_str = Text(f"{speedup:.2f}x", style=speedup_style)
         table.add_row(
             category, name, f"{rust_time:.4f}", f"{python_time:.4f}", speedup_str
         )
@@ -394,16 +399,181 @@ def _display_results() -> None:
     # Summary
     median_speedup = statistics.median([r[4] for r in RESULTS])
     wins = sum(1 for r in RESULTS if r[4] > 1)
-    CONSOLE.print(f"\n[bold]Median speedup:[/bold] {median_speedup:.2f}x")
-    CONSOLE.print(f"[bold]Rust wins:[/bold] {wins}/{len(RESULTS)}")
+    CONSOLE.print()
+    summary_line = Text("Median speedup: ", style="bold") + Text(
+        f"{median_speedup:.2f}x", style="green bold"
+    )
+    CONSOLE.print(summary_line)
+    wins_line = Text("Rust wins: ", style="bold") + Text(
+        f"{wins}/{len(RESULTS)}", style="cyan"
+    )
+    CONSOLE.print(wins_line)
+
+
+def _run_focused_benchmark(old: partial[object], new: partial[object]) -> None:
+    """Run focused, robust benchmark between two implementation."""
+    n_focused_runs = 200_000
+    n_focused_repeats = 20
+    old_name = old.func.__name__
+    new_name = new.func.__name__
+    CONSOLE.print(Text("Running Focused Robustness Benchmark...", style="bold blue"))
+    CONSOLE.print(
+        Text(
+            f"{n_focused_runs:,} iterations x {n_focused_repeats:,} repeats for statistical significance...",
+            style="dim",
+        )
+    )
+    CONSOLE.print()
+
+    # Benchmark new
+    new_times = [
+        timeit.timeit(new, number=n_focused_runs) for _ in range(n_focused_repeats)
+    ]
+
+    # Benchmark old
+    old_times = [
+        timeit.timeit(
+            old,
+            number=n_focused_runs,
+        )
+        for _ in range(n_focused_repeats)
+    ]
+
+    # Benchmark eq_direct (FFI direct access, no type checking)
+    new_median = statistics.median(new_times)
+    new_mean = statistics.mean(new_times)
+    new_stddev = statistics.stdev(new_times)
+
+    old_median = statistics.median(old_times)
+    old_mean = statistics.mean(old_times)
+    old_stddev = statistics.stdev(old_times)
+
+    # Calculate relative metrics
+    speedup = (
+        old_median / new_median
+    )  # If > 1: eq_old is faster; if < 1: __eq__ is faster
+    improvement_pct = ((old_median - new_median) / old_median) * 100
+    relative_stddev_new = (new_stddev / new_median) * 100
+    relative_stddev_old = (old_stddev / old_median) * 100
+
+    # Quartiles
+    new_q1 = sorted(new_times)[len(new_times) // 4]
+    new_q3 = sorted(new_times)[3 * len(new_times) // 4]
+    old_q1 = sorted(old_times)[len(old_times) // 4]
+    old_q3 = sorted(old_times)[3 * len(old_times) // 4]
+
+    table = Table(
+        title=f"{new_name} vs {old_name} (isinstance)\n{n_focused_runs:,} ops x {n_focused_repeats} repeats"
+    )
+    table.add_column("Metric", style="cyan")
+    table.add_column("new", justify="right", style="green")
+    table.add_column("old", justify="right", style="yellow")
+    table.add_column("Relative", justify="right", style="magenta")
+
+    if speedup > 1:
+        speedup_msg = Text("new ", style="green bold") + Text(
+            f"{speedup:.2f}x faster", style="green bold"
+        )
+    else:
+        speedup_msg = Text("old ", style="yellow bold") + Text(
+            f"{1 / speedup:.2f}x faster", style="yellow bold"
+        )
+
+    table.add_row("Speedup", "1.00x", f"{1 / speedup:.3f}x", speedup_msg)
+
+    if improvement_pct > 0:
+        improvement_label = Text("faster", style="green bold")
+    else:
+        improvement_label = Text("slower", style="yellow bold")
+    improvement_text = (
+        Text(f"{improvement_pct:+.1f}% ", style="dim") + improvement_label
+    )
+    table.add_row("Improvement", "—", "—", improvement_text)
+
+    # Median
+    table.add_row(
+        "Median (rel)",
+        "1.00",
+        f"{old_median / new_median:.3f}",
+        f"{improvement_pct:+.1f}%",
+    )
+
+    # Mean
+    table.add_row(
+        "Mean (rel)",
+        "1.00",
+        f"{old_mean / new_mean:.3f}",
+        f"{((old_mean - new_mean) / old_mean * 100):+.1f}%",
+    )
+
+    # Variability (CV%)
+    table.add_row(
+        "Variability (CV%)",
+        f"{relative_stddev_new:.2f}%",
+        f"{relative_stddev_old:.2f}%",
+        f"{relative_stddev_old - relative_stddev_new:+.2f}%",
+    )
+
+    # IQR
+    table.add_row(
+        "IQR (rel)",
+        f"{(new_q3 - new_q1) / new_median:.4f}",
+        f"{(old_q3 - old_q1) / old_median:.4f}",
+        f"{((old_q3 - old_q1) / old_median - (new_q3 - new_q1) / new_median):+.4f}",
+    )
+
+    CONSOLE.print(table)
+    CONSOLE.print()
+    if speedup > 1:
+        CONSOLE.print(
+            Text(
+                f"✓ {new_name} is {speedup:.2f}x faster ({improvement_pct:.1f}% improvement)",
+                style="bold green",
+            )
+        )
+    else:
+        CONSOLE.print(
+            Text(
+                f"✗ {old_name} is {1 / speedup:.2f}x faster ({abs(improvement_pct):.1f}% regression)",
+                style="bold yellow",
+            )
+        )
 
 
 def main() -> None:
     """Run all benchmarks and display results."""
-    CONSOLE.print("[bold blue]Running Option benchmarks...[/bold blue]\n")
+    CONSOLE.print(Text("Running Option benchmarks...", style="bold blue"))
+    CONSOLE.print()
     _run_all_benchmarks()
     _display_results()
 
 
-if __name__ == "__main__":
+@app.command()
+def all_benchmarks() -> None:
+    """Run all benchmarks (default)."""
     main()
+
+
+@app.command()
+def focused() -> None:
+    """Run focused build_args benchmark only."""
+
+    def _complicated_func(
+        x: int, y: int, /, a: int = 10, b: int = 20, **kwargs: int
+    ) -> dict[str, object]:
+        return {
+            "x": x,
+            "y": y,
+            "a": a,
+            "b": b,
+            "kwargs": kwargs,
+        }
+
+    _run_focused_benchmark(
+        old=partial(RUST_SOME.map, _complicated_func, 2, y=3, c=30, d=40),
+        new=partial(RUST_SOME.map_unsafe, _complicated_func, 2, y=3, c=30, d=40),  # type: ignore[arg-type]
+    )
+
+
+if __name__ == "__main__":
+    app()
