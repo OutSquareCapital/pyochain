@@ -1,0 +1,15 @@
+[package]
+    edition = "2024"
+    name    = "rs"
+    version = "0.1.0"
+
+[lib]
+    crate-type = ["cdylib"]
+    name       = "rs"
+
+[dependencies]
+    pyderive = "0.9"
+    pyo3 = { version = "0.27", features = [
+        "extension-module",
+        "multiple-pymethods",
+    ] }
