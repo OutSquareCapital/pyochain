@@ -12,7 +12,6 @@
         { "API Reference" = [
             { "Collections" = [
                 { "Dict" = "reference/dict.md" },
-                { "Iter" = "reference/iter.md" },
                 { "Seq" = "reference/seq.md" },
                 { "Set" = "reference/set.md" },
                 { "SetMut" = "reference/setmut.md" },
@@ -22,10 +21,17 @@
                 { "Err" = "reference/err.md" },
                 { "Ok" = "reference/ok.md" },
                 { "Result" = "reference/result.md" },
+                { "ResultUnwrapError" = "reference/resultunwraperror.md" },
+            ] },
+            { "Iterators" = [
+                { "Iter" = "reference/iter.md" },
+                { "Peekable" = "reference/peekable.md" },
+                { "Unzipped" = "reference/unzipped.md" },
             ] },
             { "Optional Values" = [
-                { "None" = "reference/none.md" },
+                { "None" = "reference/noneoption.md" },
                 { "Option" = "reference/option.md" },
+                { "OptionUnwrapError" = "reference/optionunwraperror.md" },
                 { "Some" = "reference/some.md" },
             ] },
             { "Overview" = "api-reference.md" },

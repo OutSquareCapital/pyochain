@@ -4,8 +4,18 @@ from . import _option as old_option
 from . import _result as old_result
 from . import traits
 from ._dict import Dict
-from ._iter import Iter, Seq, Set, SetMut, Unzipped, Vec
-from .rs import NONE, Err, NoneOption, Ok, Option, Result, ResultUnwrapError, Some
+from ._iter import Iter, Peekable, Seq, Set, SetMut, Unzipped, Vec
+from .rs import (
+    NONE,
+    Err,
+    NoneOption,
+    Ok,
+    Option,
+    OptionUnwrapError,
+    Result,
+    ResultUnwrapError,
+    Some,
+)
 
 __all__ = [
     "NONE",
@@ -15,6 +25,8 @@ __all__ = [
     "NoneOption",
     "Ok",
     "Option",
+    "OptionUnwrapError",
+    "Peekable",
     "Result",
     "ResultUnwrapError",
     "Seq",

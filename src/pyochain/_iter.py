@@ -52,26 +52,29 @@ def _get_repr(data: Collection[Any]) -> str:
 
 
 @dataclass(slots=True)
-class Unzipped[T, V](Pipeable):
-    """Represents the result of unzipping an iterator of pairs into two separate iterators.
+class Unzipped[T, V](Pipeable, Checkable):
+    """Represents the result of unzipping an `Iter` of pairs into two separate `Iter`.
 
     Attributes:
-        left (Iter[T]): An iterator over the first elements of the pairs.
-        right (Iter[V]): An iterator over the second elements of the pairs.
+        left (Iter[T]): An `Iter` over the first elements of the pairs.
+        right (Iter[V]): An `Iter` over the second elements of the pairs.
 
     See Also:
         `Iter.unzip()`
     """
 
     left: Iter[T]
-    """An iterator over the first elements of the pairs."""
+    """An `Iter` over the first elements of the pairs."""
     right: Iter[V]
-    """An iterator over the second elements of the pairs."""
+    """An `Iter` over the second elements of the pairs."""
+
+    def __bool__(self) -> bool:
+        return bool(self.left) and bool(self.right)
 
 
 @dataclass(slots=True)
 class Peekable[T](Pipeable, Checkable):
-    """Represents the result of peeking into an iterator.
+    """Represents the result of peeking into an `Iter`.
 
     Inerhit from `Checkable` to provide truthiness based on whether any elements were peeked.
 
@@ -93,6 +96,36 @@ class Peekable[T](Pipeable, Checkable):
 
     def __bool__(self) -> bool:
         return bool(self.peek)
+
+
+@dataclass(slots=True)
+class DrainIterator[T](Iterator[T]):
+    """An `Iterator` that drains elements from a `Vec` within a specified range.
+
+    This class is not supposed to be used directly. Use `Vec.drain()` instead to obtain an `Iter` wrapper around it.
+
+    See `Vec.drain()` for details.
+    """
+
+    _vec: MutableSequence[T]
+    _idx: int
+    _end_idx: int
+
+    def __iter__(self) -> Self:
+        return self
+
+    def __next__(self) -> T:
+        if self._idx >= self._end_idx:
+            raise StopIteration
+        val = self._vec.pop(self._idx)
+        self._end_idx -= 1
+        return val
+
+    def __del__(self) -> None:
+        pop = self._vec.pop
+        while self._idx < self._end_idx:
+            pop(self._idx)
+            self._end_idx -= 1
 
 
 class Set[T](PyoSet[T]):
@@ -472,30 +505,9 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
         Vec()
 
         """
-
-        @dataclass(slots=True)
-        class _DrainIter:
-            _vec: Vec[T]
-            _idx: int
-            _end_idx: int
-
-            def __iter__(self) -> Self:
-                return self
-
-            def __next__(self) -> T:
-                if self._idx >= self._end_idx:
-                    raise StopIteration
-                val = self._vec.pop(self._idx)
-                self._end_idx -= 1
-                return val
-
-            def __del__(self) -> None:
-                pop = self._vec.pop
-                while self._idx < self._end_idx:
-                    pop(self._idx)
-                    self._end_idx -= 1
-
-        return Iter(_DrainIter(self, start if start else 0, end if end else len(self)))
+        return Iter(
+            DrainIterator(self, start if start else 0, end if end else len(self))
+        )
 
     def concat(self, other: list[T] | Self) -> Vec[T]:
         """Concatenate another `Vec` or `list` to **self** and return a new `Vec`.
