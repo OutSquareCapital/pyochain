@@ -71,7 +71,6 @@
     requires      = ["maturin>=1.8,<2.0"]
 
 [tool.maturin]
-    include       = ["LICENSE.md"]
     manifest-path = "rust/Cargo.toml"
     module-name   = "pyochain.rs"
     python-source = "src"
