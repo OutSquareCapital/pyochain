@@ -1,6 +1,6 @@
 # Err
 
-::: pyochain._result.Err
+::: pyochain.rs.Err
     options:
       inherited_members: true
       show_overloads: true

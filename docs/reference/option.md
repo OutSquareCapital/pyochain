@@ -1,6 +1,6 @@
 # Option
 
-::: pyochain._option.Option
+::: pyochain.rs.Option
 
     options:
       inherited_members: true
