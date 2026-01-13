@@ -225,6 +225,8 @@ class Option[T](Pipeable):
         >>> import pyochain as pc
         >>> pc.Some((2, 3)).map_star(lambda x, y: x + y)
         Some(5)
+        >>> pc.NONE.map_star(lambda x, y: x + y)
+        NONE
 
         ```
         """
@@ -296,6 +298,8 @@ class Option[T](Pipeable):
         >>> import pyochain as pc
         >>> pc.Some((2, 3)).and_then_star(lambda x, y: pc.Some(x + y))
         Some(5)
+        >>> pc.NONE.and_then_star(lambda x, y: pc.Some(x + y))
+        NONE
 
         ```
         """
@@ -975,6 +979,8 @@ class Option[T](Pipeable):
         >>> x.zip_with(y, Point)
         Some(Point(x=17.5, y=42.7))
         >>> x.zip_with(pc.NONE, Point)
+        NONE
+        >>> pc.NONE.zip_with(y, Point)
         NONE
 
         ```
