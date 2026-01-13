@@ -428,18 +428,6 @@ impl PySome {
     ) -> PyResult<Py<PyAny>> {
         crate::types::call_with_self_prepended(slf.py(), func, slf.as_ptr(), args, kwargs)
     }
-
-    #[pyo3(signature = (func, *args, **kwargs))]
-    fn into_safe(
-        slf: &Bound<'_, Self>,
-        func: &Bound<'_, PyAny>,
-        args: &Bound<'_, PyTuple>,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<Py<PyAny>> {
-        let self_py: Py<PyAny> = slf.clone().unbind().into();
-        let all_args = build_args(slf.py(), &self_py, args)?;
-        Ok(func.call(&all_args, kwargs)?.unbind())
-    }
 }
 
 #[pyclass(frozen, name = "NoneOption", extends = PyochainOption)]
@@ -666,17 +654,5 @@ impl PyNone {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         crate::types::call_with_self_prepended(slf.py(), func, slf.as_ptr(), args, kwargs)
-    }
-
-    #[pyo3(signature = (func, *args, **kwargs))]
-    fn into_safe(
-        slf: &Bound<'_, Self>,
-        func: &Bound<'_, PyAny>,
-        args: &Bound<'_, PyTuple>,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<Py<PyAny>> {
-        let self_py: Py<PyAny> = slf.clone().unbind().into();
-        let all_args = build_args(slf.py(), &self_py, args)?;
-        Ok(func.call(&all_args, kwargs)?.unbind())
     }
 }
