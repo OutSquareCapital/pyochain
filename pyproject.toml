@@ -3,9 +3,11 @@
     name            = "pyochain"
     readme          = "README.md"
     requires-python = ">=3.13"
-    version         = "0.8.0"
+    version         = "0.8.3"
 
     dependencies = ["cytoolz>=1.0.1"]
+
+    classifiers = ["License :: OSI Approved :: MIT License"]
 
 [dependency-groups]
     dev = [
