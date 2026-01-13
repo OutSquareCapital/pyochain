@@ -67,8 +67,7 @@ impl PyochainOption {
         value: Py<PyAny>,
         predicate: &Bound<'_, PyAny>,
     ) -> PyResult<Py<PyAny>> {
-        let result = predicate.call1((value.bind(py),))?;
-        if result.is_truthy()? {
+        if predicate.call1((value.bind(py),))?.is_truthy()? {
             let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome { value });
             Ok(Py::new(py, init)?.into_any())
         } else {
@@ -292,17 +291,12 @@ impl PySome {
     }
 
     fn map_star(&self, py: Python<'_>, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        let value = func
-            .call(self.value.bind(py).cast::<PyTuple>()?, None)?
-            .unbind();
+        let value = func.call1(self.value.bind(py).cast::<PyTuple>()?)?.unbind();
         let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome { value });
         Ok(Py::new(py, init)?.into_any())
     }
-
     fn and_then_star(&self, py: Python<'_>, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        Ok(func
-            .call(self.value.bind(py).cast::<PyTuple>()?, None)?
-            .unbind())
+        Ok(func.call1(self.value.bind(py).cast::<PyTuple>()?)?.unbind())
     }
 
     fn zip(&self, py: Python<'_>, other: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
