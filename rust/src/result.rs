@@ -1,5 +1,5 @@
 use crate::option::{PyNone, PySome, PyochainOption, get_none_singleton};
-use crate::types::{ResultUnwrapError, build_args};
+use crate::types::{ResultUnwrapError, concatenate, concatenate_self};
 use pyderive::*;
 use pyo3::{
     prelude::*,
@@ -65,7 +65,7 @@ impl PyOk {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
-        let all_args = build_args(py, &self.value, args)?;
+        let all_args = unsafe { concatenate(py, &self.value, args) };
         Ok(PyOk {
             value: func.call(&all_args, kwargs)?.unbind(),
         })
@@ -89,7 +89,7 @@ impl PyOk {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let all_args = build_args(py, &self.value, args)?;
+        let all_args = unsafe { concatenate(py, &self.value, args) };
         Ok(func.call(&all_args, kwargs)?.unbind())
     }
 
@@ -142,7 +142,7 @@ impl PyOk {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        crate::types::call_with_self_prepended(slf.py(), func, slf.as_ptr(), args, kwargs)
+        concatenate_self(slf.py(), func, slf.as_ptr(), args, kwargs)
     }
 
     #[pyo3(signature = (pred, *args, **kwargs))]
@@ -153,7 +153,7 @@ impl PyOk {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
-        let all_args = build_args(py, &self.value, args)?;
+        let all_args = unsafe { concatenate(py, &self.value, args) };
         pred.call(&all_args, kwargs)?.is_truthy()
     }
 
@@ -219,7 +219,7 @@ impl PyOk {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let all_args = build_args(py, &self.value, args)?;
+        let all_args = unsafe { concatenate(py, &self.value, args) };
         Ok(func.call(&all_args, kwargs)?.unbind())
     }
 
@@ -240,7 +240,7 @@ impl PyOk {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
-        let all_args = build_args(py, &self.value, args)?;
+        let all_args = unsafe { concatenate(py, &self.value, args) };
         f.call(&all_args, kwargs)?;
         Ok(PyOk {
             value: self.value.clone_ref(py),
@@ -397,7 +397,7 @@ impl PyErr {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
-        let all_args = build_args(py, &self.error, args)?;
+        let all_args = unsafe { concatenate(py, &self.error, args) };
         pred.call(&all_args, kwargs)?.is_truthy()
     }
 
@@ -409,7 +409,7 @@ impl PyErr {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
-        let all_args = build_args(py, &self.error, args)?;
+        let all_args = unsafe { concatenate(py, &self.error, args) };
         let result = func.call(&all_args, kwargs)?;
         Ok(PyErr {
             error: result.unbind(),
@@ -424,7 +424,7 @@ impl PyErr {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
-        let all_args = build_args(py, &self.error, args)?;
+        let all_args = unsafe { concatenate(py, &self.error, args) };
         func.call(&all_args, kwargs)?;
         Ok(PyErr {
             error: self.error.clone_ref(py),
@@ -497,6 +497,6 @@ impl PyErr {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        crate::types::call_with_self_prepended(slf.py(), func, slf.as_ptr(), args, kwargs)
+        concatenate_self(slf.py(), func, slf.as_ptr(), args, kwargs)
     }
 }

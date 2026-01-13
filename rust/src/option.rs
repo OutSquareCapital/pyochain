@@ -1,5 +1,5 @@
 use crate::result;
-use crate::types::{OptionUnwrapError, build_args};
+use crate::types::{OptionUnwrapError, concatenate, concatenate_self};
 use pyo3::{
     ffi,
     prelude::*,
@@ -137,7 +137,7 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
-        let all_args = build_args(py, &self.value, args)?;
+        let all_args = unsafe { concatenate(py, &self.value, args) };
         predicate.call(&all_args, kwargs)?.is_truthy()
     }
 
@@ -149,7 +149,7 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
-        let all_args = build_args(py, &self.value, args)?;
+        let all_args = unsafe { concatenate(py, &self.value, args) };
         func.call(&all_args, kwargs)?.is_truthy()
     }
 
@@ -177,10 +177,9 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let all_args = build_args(py, &self.value, args)?;
-        let result = func.call(&all_args, kwargs)?;
+        let all_args_owned = unsafe { concatenate(py, &self.value, args) };
         let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
-            value: result.unbind(),
+            value: func.call(all_args_owned, kwargs)?.unbind(),
         });
         Ok(Py::new(py, init)?.into_any())
     }
@@ -204,7 +203,7 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let all_args = build_args(py, &self.value, args)?;
+        let all_args = unsafe { concatenate(py, &self.value, args) };
         Ok(func.call(&all_args, kwargs)?.unbind())
     }
 
@@ -236,7 +235,7 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let all_args = build_args(py, &self.value, args)?;
+        let all_args = unsafe { concatenate(py, &self.value, args) };
         Ok(f.call(&all_args, kwargs)?.unbind())
     }
 
@@ -257,7 +256,7 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let all_args = build_args(py, &self.value, args)?;
+        let all_args = unsafe { concatenate(py, &self.value, args) };
         if predicate.call(&all_args, kwargs)?.is_truthy()? {
             let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
                 value: self.value.clone_ref(py),
@@ -280,7 +279,7 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let all_args = build_args(py, &self.value, args)?;
+        let all_args = unsafe { concatenate(py, &self.value, args) };
         f.call(&all_args, kwargs)?;
         let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
             value: self.value.clone_ref(py),
@@ -384,8 +383,6 @@ impl PySome {
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let inner = self.value.bind(py);
-
-        // Extract as a result to match on is_ok/is_err
         if let Ok(ok_ref) = inner.extract::<PyRef<result::PyOk>>() {
             let unwrapped = ok_ref.value.clone_ref(py);
             let some_init =
@@ -431,7 +428,7 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        crate::types::call_with_self_prepended(slf.py(), func, slf.as_ptr(), args, kwargs)
+        concatenate_self(slf.py(), func, slf.as_ptr(), args, kwargs)
     }
 }
 
@@ -631,8 +628,13 @@ impl PyNone {
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let none_value = get_none_singleton(py)?;
-        Ok(Py::new(py, result::PyOk { value: none_value })?.into_any())
+        Ok(Py::new(
+            py,
+            result::PyOk {
+                value: get_none_singleton(py)?,
+            },
+        )?
+        .into_any())
     }
 
     fn eq(&self, other: &Bound<'_, PyAny>) -> bool {
@@ -658,6 +660,6 @@ impl PyNone {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        crate::types::call_with_self_prepended(slf.py(), func, slf.as_ptr(), args, kwargs)
+        concatenate_self(slf.py(), func, slf.as_ptr(), args, kwargs)
     }
 }
