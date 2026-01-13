@@ -1,19 +1,26 @@
 use crate::result;
 use crate::types::{OptionUnwrapError, build_args};
 use pyo3::{
+    ffi,
     prelude::*,
     sync::PyOnceLock,
     types::{PyDict, PyTuple},
 };
+use std::sync::atomic::{AtomicPtr, Ordering};
 
 // Singleton for NONE - initialized once per Python interpreter
-static NONE_SINGLETON: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+pub static NONE_SINGLETON: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
 
+// Raw pointer for fast identity comparison (avoids clone_ref + bind overhead)
+static NONE_PTR: AtomicPtr<ffi::PyObject> = AtomicPtr::new(std::ptr::null_mut());
+#[inline]
 pub fn get_none_singleton(py: Python<'_>) -> PyResult<Py<PyAny>> {
     NONE_SINGLETON
         .get_or_try_init(py, || {
             let init = PyClassInitializer::from(PyochainOption).add_subclass(PyNone);
-            Ok(Py::new(py, init)?.into_any())
+            let singleton = Py::new(py, init)?.into_any();
+            NONE_PTR.store(singleton.as_ptr(), Ordering::Release);
+            Ok(singleton)
         })
         .map(|singleton| singleton.clone_ref(py))
 }
@@ -39,7 +46,6 @@ impl PyochainOption {
         unsafe {
             let py = value.py();
             let result_ptr = if value.is_none() {
-                // Use singleton NONE (same optimization as Python)
                 get_none_singleton(py)?.into_ptr()
             } else {
                 let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
@@ -311,15 +317,16 @@ impl PySome {
         if other.is_instance_of::<PyNone>() {
             return get_none_singleton(py);
         }
-        let tuple = PyTuple::new(
-            py,
-            [
-                self.value.bind(py).clone(),
-                other.extract::<PyRef<PySome>>()?.value.bind(py).clone(),
-            ],
-        )?;
         let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
-            value: tuple.unbind().into_any(),
+            value: PyTuple::new(
+                py,
+                [
+                    self.value.bind(py).clone(),
+                    other.extract::<PyRef<PySome>>()?.value.bind(py).clone(),
+                ],
+            )?
+            .unbind()
+            .into_any(),
         });
         Ok(Py::new(py, init)?.into_any())
     }
@@ -403,8 +410,6 @@ impl PySome {
     fn eq(&self, py: Python<'_>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
         if let Ok(other_some) = other.extract::<PyRef<PySome>>() {
             self.value.bind(py).eq(&other_some.value)
-        } else if other.is_instance_of::<PyNone>() {
-            Ok(false)
         } else {
             Ok(false)
         }

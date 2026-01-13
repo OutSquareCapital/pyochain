@@ -28,6 +28,7 @@ impl ResultUnwrapError {
 }
 
 /// Helper to build args tuple: prepend value to args
+#[inline]
 pub fn build_args<'py>(
     py: Python<'py>,
     value: &Py<PyAny>,
@@ -38,7 +39,7 @@ pub fn build_args<'py>(
     v.extend(args.iter());
     PyTuple::new(py, v)
 }
-
+#[inline]
 pub fn call_with_self_prepended<'py>(
     py: Python<'py>,
     func: &Bound<'py, PyAny>,
