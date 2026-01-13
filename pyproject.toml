@@ -1,12 +1,13 @@
 [project]
     description     = "Method chaining for iterables and dictionaries in Python."
-    license         = { file = "LICENSE.md" }
     name            = "pyochain"
     readme          = "README.md"
     requires-python = ">=3.13"
     version         = "0.8.0"
 
     dependencies = ["cytoolz>=1.0.1"]
+
+    classifiers = ["License :: OSI Approved :: MIT License"]
 
 [dependency-groups]
     dev = [
