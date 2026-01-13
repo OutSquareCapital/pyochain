@@ -138,14 +138,12 @@ impl PyOk {
 
     #[pyo3(signature = (func, *args, **kwargs))]
     fn into(
-        &self,
-        py: Python<'_>,
+        slf: &Bound<'_, Self>,
         func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let self_ptr = self as *const _ as *mut pyo3::ffi::PyObject;
-        crate::types::call_with_self_prepended(py, func, self_ptr, args, kwargs)
+        crate::types::call_with_self_prepended(slf.py(), func, slf.as_ptr(), args, kwargs)
     }
 
     #[pyo3(signature = (pred, *args, **kwargs))]
@@ -498,13 +496,11 @@ impl PyErr {
 
     #[pyo3(signature = (func, *args, **kwargs))]
     fn into(
-        &self,
-        py: Python<'_>,
+        slf: &Bound<'_, Self>,
         func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let self_ptr = self as *const _ as *mut pyo3::ffi::PyObject;
-        crate::types::call_with_self_prepended(py, func, self_ptr, args, kwargs)
+        crate::types::call_with_self_prepended(slf.py(), func, slf.as_ptr(), args, kwargs)
     }
 }

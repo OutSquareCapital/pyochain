@@ -39,8 +39,6 @@ pub fn build_args<'py>(
     PyTuple::new(py, v)
 }
 
-/// Call a function with self prepended to args at FFI level
-/// Directly uses PyObject_Call with a tuple constructed from self + args
 pub fn call_with_self_prepended<'py>(
     py: Python<'py>,
     func: &Bound<'py, PyAny>,
@@ -49,17 +47,13 @@ pub fn call_with_self_prepended<'py>(
     kwargs: Option<&Bound<'py, pyo3::types::PyDict>>,
 ) -> PyResult<Py<PyAny>> {
     unsafe {
-        ffi::Py_INCREF(self_ptr);
-
-        // Create new tuple with self prepended
         let new_argc = args.len() + 1;
         let new_args_ptr = ffi::PyTuple_New(new_argc as ffi::Py_ssize_t);
         if new_args_ptr.is_null() {
-            ffi::Py_DECREF(self_ptr);
             return Err(PyErr::fetch(py));
         }
 
-        // Set first element to self
+        ffi::Py_INCREF(self_ptr);
         ffi::PyTuple_SetItem(new_args_ptr, 0, self_ptr);
 
         // Copy existing args
@@ -69,7 +63,6 @@ pub fn call_with_self_prepended<'py>(
             ffi::PyTuple_SetItem(new_args_ptr, (i + 1) as ffi::Py_ssize_t, item);
         }
 
-        // Call with new args
         let result = ffi::PyObject_Call(
             func.as_ptr(),
             new_args_ptr,
