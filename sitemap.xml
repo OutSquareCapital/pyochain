@@ -4,9 +4,6 @@
         <loc>https://outsquarecapital.github.io/pyochain/reference/dict/</loc>
       </url>
       <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/iter/</loc>
-      </url>
-      <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/seq/</loc>
       </url>
       <url>
@@ -28,10 +25,25 @@
         <loc>https://outsquarecapital.github.io/pyochain/reference/result/</loc>
       </url>
       <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/none/</loc>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/resultunwraperror/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/iter/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/peekable/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/unzipped/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/noneoption/</loc>
       </url>
       <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/option/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/optionunwraperror/</loc>
       </url>
       <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/some/</loc>
