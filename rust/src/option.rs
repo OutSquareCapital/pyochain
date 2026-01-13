@@ -588,6 +588,14 @@ impl PyNone {
         Ok((none.clone_ref(py), none))
     }
 
+    fn map_star(&self, py: Python<'_>, _func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+        get_none_singleton(py)
+    }
+
+    fn and_then_star(&self, py: Python<'_>, _func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+        get_none_singleton(py)
+    }
+
     fn zip(&self, py: Python<'_>, _other: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         get_none_singleton(py)
     }
