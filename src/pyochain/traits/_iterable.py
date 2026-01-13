@@ -22,9 +22,8 @@ from typing import TYPE_CHECKING, Any, Concatenate, Self, overload
 
 import cytoolz as cz
 
-from .._option import NONE, Option, Some
-from .._result import Err, Ok, Result
 from .._types import SupportsComparison, SupportsRichComparison
+from ..rs import NONE, Err, Ok, Option, Result, Some
 from ._converters import Checkable, Pipeable
 
 if TYPE_CHECKING:

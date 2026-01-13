@@ -3,8 +3,7 @@
 from . import traits
 from ._dict import Dict
 from ._iter import Iter, Seq, Set, SetMut, Unzipped, Vec
-from ._option import NONE, NoneOption, Option, Some
-from ._result import Err, Ok, Result, ResultUnwrapError
+from .rs import NONE, Err, NoneOption, Ok, Option, Result, ResultUnwrapError, Some
 
 __all__ = [
     "NONE",

@@ -15,20 +15,12 @@ from collections.abc import (
     ValuesView,
 )
 from dataclasses import dataclass
-from typing import (
-    Any,
-    Literal,
-    Never,
-    Self,
-    TypeIs,
-    overload,
-)
+from typing import Any, Literal, Never, Self, TypeIs, overload
 
 import cytoolz as cz
 
-from ._option import NONE, Option, Some
-from ._result import Err, Ok, Result
 from ._types import SupportsRichComparison
+from .rs import NONE, Err, Ok, Option, Result, Some
 from .traits import (
     Checkable,
     Pipeable,

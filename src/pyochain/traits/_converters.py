@@ -1,15 +1,9 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import (
-    TYPE_CHECKING,
-    Concatenate,
-    Self,
-)
+from typing import Concatenate, Self
 
-if TYPE_CHECKING:
-    from .._option import Option
-    from .._result import Result
+from ..rs import NONE, Err, Ok, Option, Result, Some
 
 
 class Pipeable:
@@ -126,8 +120,6 @@ class Checkable:
 
         ```
         """
-        from .._option import NONE, Some
-
         return Some(func(self, *args, **kwargs)) if self else NONE
 
     def then_some(self) -> Option[Self]:
@@ -148,8 +140,6 @@ class Checkable:
 
         ```
         """
-        from .._option import NONE, Some
-
         return Some(self) if self else NONE
 
     def ok_or[E](self, err: E) -> Result[Self, E]:
@@ -173,8 +163,6 @@ class Checkable:
 
         ```
         """
-        from .._result import Err, Ok
-
         return Ok(self) if self else Err(err)
 
     def ok_or_else[**P, E](
@@ -209,6 +197,4 @@ class Checkable:
 
         ```
         """
-        from .._result import Err, Ok
-
         return Ok(self) if self else Err(func(self, *args, **kwargs))
