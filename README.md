@@ -10,10 +10,10 @@ Inspired by Rust's `Iterator`, `Result`, `Option`, and DataFrame libraries like 
 - 🦥 **Lazy-first,  🔒 explicit mutability** — `Iter[T]` for lazy, efficient iterations; `Seq` and `Set` for immutable data; `Vec` and `SetMut` when you need to mutate.
 - **Memory efficient** - Almost all methods from `Iter[T]` operate in streaming fashion, and `Vec[T]` provides in-place methods with more memory efficiency than standard list methods (e.g. `x.extend_move(y)` won't create intermediate allocations like `x.extend(y)` followed by `y.clear()`).
 - 🎯 **Result and Option types** - Handle `None` and exceptions in a fluent, explicit way.
+- 🔥 **Blazingly fast** — Core `Option` and `Result` types are written in Rust for minimal overhead, and iterators use functions from `cytoolz` (Cython) and the stdlib `itertools` for maximum efficiency.
 - 🛡️ **100% type-safe** — Full generic support and autocompletion in your IDE.
 - 📚 **Accurate Documentation** — Every method is documented and tested with runnable examples.
 Every code example in the website (or this README) is also tested, ensuring accuracy and reliability.
-- ⚡ **Performance-conscious** — Built on `cytoolz` (Cython), `more-itertools`, and stdlib `itertools` for efficiency.
 - 🔄 **Interoperable** — Seamlessly convert to/from types with various methods like `.into()` and `.collect()`, convert `Iterables` to `Option` or `Result` based on their truthiness, and more.
 - 🐍 **Mixins traits** — Extend your own classes with the methods in the mixins provided by the `traits` module.
 
