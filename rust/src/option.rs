@@ -1,5 +1,5 @@
 use crate::result;
-use crate::types::{OptionUnwrapError, concatenate};
+use crate::types::{OptionUnwrapError, call_func};
 use pyo3::{
     ffi,
     prelude::*,
@@ -137,8 +137,7 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
-        let all_args = unsafe { concatenate(py, &self.value, args) };
-        predicate.call(&all_args, kwargs)?.is_truthy()
+        call_func(py, predicate, &self.value, args, kwargs)?.is_truthy()
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]
@@ -149,8 +148,7 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
-        let all_args = unsafe { concatenate(py, &self.value, args) };
-        func.call(&all_args, kwargs)?.is_truthy()
+        call_func(py, func, &self.value, args, kwargs)?.is_truthy()
     }
 
     fn unwrap(&self, py: Python<'_>) -> Py<PyAny> {
@@ -177,9 +175,8 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let all_args_owned = unsafe { concatenate(py, &self.value, args) };
         let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
-            value: func.call(all_args_owned, kwargs)?.unbind(),
+            value: call_func(py, func, &self.value, args, kwargs)?.unbind(),
         });
         Ok(Py::new(py, init)?.into_any())
     }
@@ -203,8 +200,7 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let all_args = unsafe { concatenate(py, &self.value, args) };
-        Ok(func.call(&all_args, kwargs)?.unbind())
+        Ok(call_func(py, func, &self.value, args, kwargs)?.unbind())
     }
 
     fn or_else(&self, py: Python<'_>, _f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
@@ -235,8 +231,7 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let all_args = unsafe { concatenate(py, &self.value, args) };
-        Ok(f.call(&all_args, kwargs)?.unbind())
+        Ok(call_func(py, f, &self.value, args, kwargs)?.unbind())
     }
 
     fn map_or_else(
@@ -256,8 +251,7 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let all_args = unsafe { concatenate(py, &self.value, args) };
-        if predicate.call(&all_args, kwargs)?.is_truthy()? {
+        if call_func(py, predicate, &self.value, args, kwargs)?.is_truthy()? {
             let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
                 value: self.value.clone_ref(py),
             });
@@ -279,8 +273,7 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let all_args = unsafe { concatenate(py, &self.value, args) };
-        f.call(&all_args, kwargs)?;
+        call_func(py, f, &self.value, args, kwargs)?;
         let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
             value: self.value.clone_ref(py),
         });
@@ -429,8 +422,7 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let all_args_owned = unsafe { concatenate(py, &slf.to_owned().unbind().into_any(), args) };
-        Ok(func.call(all_args_owned, kwargs)?.unbind())
+        Ok(call_func(py, func, &slf.to_owned().unbind().into_any(), args, kwargs)?.unbind())
     }
 }
 
@@ -663,7 +655,6 @@ impl PyNone {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let all_args_owned = unsafe { concatenate(py, &slf.to_owned().unbind().into_any(), args) };
-        Ok(func.call(all_args_owned, kwargs)?.unbind())
+        Ok(call_func(py, func, &slf.to_owned().unbind().into_any(), args, kwargs)?.unbind())
     }
 }

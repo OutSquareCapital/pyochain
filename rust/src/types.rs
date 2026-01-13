@@ -1,7 +1,7 @@
 use pyo3::exceptions::PyValueError;
 use pyo3::ffi;
 use pyo3::prelude::*;
-use pyo3::types::{PyAny, PyTuple};
+use pyo3::types::{PyAny, PyDict, PyTuple};
 
 /// Exception raised when unwrapping fails on Option types
 #[pyclass(extends = PyValueError)]
@@ -27,6 +27,29 @@ impl ResultUnwrapError {
     }
 }
 
+#[inline]
+pub fn call_func<'py>(
+    py: Python<'py>,
+    func: &Bound<'py, PyAny>,
+    value: &Py<PyAny>,
+    args: &Bound<'py, PyTuple>,
+    kwargs: Option<&Bound<'py, PyDict>>,
+) -> PyResult<Bound<'py, PyAny>> {
+    match (args.is_empty(), kwargs) {
+        (true, None) => {
+            // Fast path: single arg, no kwargs - use call1
+            func.call1((&value,))
+        }
+        (true, Some(kw)) => {
+            // Fast path: single arg with kwargs
+            func.call((&value,), Some(kw))
+        }
+        _ => {
+            // Slow path: concatenate
+            func.call(&unsafe { concatenate(py, value, args) }, kwargs)
+        }
+    }
+}
 /// Helper to build args tuple: prepend value to args
 /// This is equivalent to `Concatenate[T, P]` in Python typing.
 /// Safety: caller must ensure that `args` contains valid borrowed references

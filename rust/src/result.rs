@@ -1,5 +1,5 @@
 use crate::option::{PyNone, PySome, PyochainOption, get_none_singleton};
-use crate::types::{ResultUnwrapError, concatenate};
+use crate::types::{ResultUnwrapError, call_func};
 use pyderive::*;
 use pyo3::{
     prelude::*,
@@ -65,9 +65,8 @@ impl PyOk {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
-        let all_args = unsafe { concatenate(py, &self.value, args) };
         Ok(PyOk {
-            value: func.call(&all_args, kwargs)?.unbind(),
+            value: call_func(py, func, &self.value, args, kwargs)?.unbind(),
         })
     }
 
@@ -89,8 +88,7 @@ impl PyOk {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let all_args = unsafe { concatenate(py, &self.value, args) };
-        Ok(func.call(&all_args, kwargs)?.unbind())
+        Ok(call_func(py, func, &self.value, args, kwargs)?.unbind())
     }
 
     fn or_else(&self, py: Python<'_>, _f: &Bound<'_, PyAny>) -> PyResult<Self> {
@@ -143,8 +141,7 @@ impl PyOk {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let all_args_owned = unsafe { concatenate(py, &slf.to_owned().unbind().into_any(), args) };
-        Ok(func.call(all_args_owned, kwargs)?.unbind())
+        Ok(call_func(py, func, &slf.to_owned().unbind().into_any(), args, kwargs)?.unbind())
     }
 
     #[pyo3(signature = (pred, *args, **kwargs))]
@@ -155,8 +152,7 @@ impl PyOk {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
-        let all_args = unsafe { concatenate(py, &self.value, args) };
-        pred.call(&all_args, kwargs)?.is_truthy()
+        call_func(py, pred, &self.value, args, kwargs)?.is_truthy()
     }
 
     #[pyo3(signature = (_pred, *_args, **_kwargs))]
@@ -221,8 +217,7 @@ impl PyOk {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let all_args = unsafe { concatenate(py, &self.value, args) };
-        Ok(func.call(&all_args, kwargs)?.unbind())
+        Ok(call_func(py, func, &self.value, args, kwargs)?.unbind())
     }
 
     fn map_or_else(
@@ -242,8 +237,7 @@ impl PyOk {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
-        let all_args = unsafe { concatenate(py, &self.value, args) };
-        f.call(&all_args, kwargs)?;
+        call_func(py, f, &self.value, args, kwargs)?;
         Ok(PyOk {
             value: self.value.clone_ref(py),
         })
@@ -399,8 +393,7 @@ impl PyErr {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
-        let all_args = unsafe { concatenate(py, &self.error, args) };
-        pred.call(&all_args, kwargs)?.is_truthy()
+        call_func(py, pred, &self.error, args, kwargs)?.is_truthy()
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]
@@ -411,8 +404,7 @@ impl PyErr {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
-        let all_args = unsafe { concatenate(py, &self.error, args) };
-        let result = func.call(&all_args, kwargs)?;
+        let result = call_func(py, func, &self.error, args, kwargs)?;
         Ok(PyErr {
             error: result.unbind(),
         })
@@ -426,8 +418,7 @@ impl PyErr {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
-        let all_args = unsafe { concatenate(py, &self.error, args) };
-        func.call(&all_args, kwargs)?;
+        call_func(py, func, &self.error, args, kwargs)?;
         Ok(PyErr {
             error: self.error.clone_ref(py),
         })
@@ -500,7 +491,6 @@ impl PyErr {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let all_args_owned = unsafe { concatenate(py, &slf.to_owned().unbind().into_any(), args) };
-        Ok(func.call(all_args_owned, kwargs)?.unbind())
+        Ok(call_func(py, func, &slf.to_owned().unbind().into_any(), args, kwargs)?.unbind())
     }
 }
