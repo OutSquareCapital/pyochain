@@ -23,6 +23,7 @@ from rich.table import Table
 from rich.text import Text
 
 import pyochain as pc
+from pyochain.rs import Checkable
 
 app = typer.Typer(help="Benchmarks for pyochain developments.")
 
@@ -150,7 +151,7 @@ class RelativeStats(NamedTuple):
         improvement_pct = (1 - self.rel_median) * 100
         return Text(
             f"✗ {old_name} is +{improvement_pct:.1f}% faster",
-            style="bold yellow",
+            style="bold red",
         )
 
 
@@ -174,7 +175,6 @@ BENCHMARK_REGISTRY = pc.Dict[BenchFn, BenchmarkMetadata].new()
 
 def bench[O, N, R](
     category: str,
-    name: str,
     *,
     old: O,
     new: N,
@@ -193,12 +193,15 @@ def bench[O, N, R](
 
         old_meta = BenchmarkMetadata(
             category=category,
-            name=name,
+            name=func.__name__,
             cost=cost,
             implementation=Implementation.PYTHON,
         )
         new_meta = BenchmarkMetadata(
-            category=category, name=name, cost=cost, implementation=Implementation.RUST
+            category=category,
+            name=func.__name__,
+            cost=cost,
+            implementation=Implementation.RUST,
         )
 
         BENCHMARK_REGISTRY[old_wrapper] = old_meta
@@ -209,11 +212,10 @@ def bench[O, N, R](
     return decorator
 
 
-def _run_all_benchmarks() -> tuple[pc.Vec[BenchResult], pc.Vec[BenchResult]]:
+def _run_all_benchmarks() -> pc.Vec[BenchResult]:
     """Run all registered benchmarks by pairing Rust and Python implementations."""
     benchmark_pairs: dict[tuple[str, str], dict[str, BenchFn]] = {}
     timing_results = pc.Vec[BenchResult].new()
-    memory_results = pc.Vec[BenchResult].new()
     for func, meta in BENCHMARK_REGISTRY.items():
         key = (meta.category, meta.name)
         if key not in benchmark_pairs:
@@ -247,14 +249,17 @@ def _run_all_benchmarks() -> tuple[pc.Vec[BenchResult], pc.Vec[BenchResult]]:
 
             # Timing benchmark
             progress.update(
-                task, description=f"[cyan]{meta.category}: {meta.name} (timing)"
+                task, description=f"[cyan]{meta.category}: {meta.name} (New)"
             )
-            rust_times = _run_timing_measurements(
-                "Rust", rust_fn, meta.cost.value, n_calls
+            rust_times = _run_timing_measurements(rust_fn, meta.cost.value, n_calls)
+            progress.advance(task)
+
+            progress.update(
+                task, description=f"[cyan]{meta.category}: {meta.name} (Old)"
             )
-            python_times = _run_timing_measurements(
-                "Python", python_fn, meta.cost.value, n_calls
-            )
+            python_times = _run_timing_measurements(python_fn, meta.cost.value, n_calls)
+            progress.advance(task)
+
             timing_results.append(
                 BenchResult(
                     category=meta.category,
@@ -263,61 +268,8 @@ def _run_all_benchmarks() -> tuple[pc.Vec[BenchResult], pc.Vec[BenchResult]]:
                     python_result=python_times.into(statistics.median),
                 )
             )
-            progress.advance(task)
 
-            # Memory benchmark
-            progress.update(
-                task, description=f"[cyan]{meta.category}: {meta.name} (memory)"
-            )
-            rust_memories = _run_memory_measurements(
-                "Rust", rust_fn, meta.cost.value, n_calls
-            )
-            python_memories = _run_memory_measurements(
-                "Python", python_fn, meta.cost.value, n_calls
-            )
-            rust_peak = rust_memories.into(statistics.median)
-            python_peak = python_memories.into(statistics.median)
-            memory_results.append(
-                BenchResult(
-                    category=meta.category,
-                    name=meta.name,
-                    rust_result=rust_peak,
-                    python_result=python_peak,
-                )
-            )
-            progress.advance(task)
-
-    return timing_results, memory_results
-
-
-def _display_memory_results(results: pc.Vec[BenchResult]) -> None:
-    """Display memory consumption comparison."""
-    table = Table(title="Memory Consumption Results")
-    table.add_column("Category", style="cyan")
-    table.add_column("Operation", style="white")
-    table.add_column("Rust (MB, peak)", justify="right", style="green")
-    table.add_column("Python (MB, peak)", justify="right", style="yellow")
-    table.add_column("Ratio (Python/Rust)", justify="right")
-
-    for result in results:
-        table.add_row(*result.to_row())
-
-    CONSOLE.print(table)
-
-    # Summary
-    ratios = results.iter().map(lambda r: r.ratio).collect()
-    median_ratio = ratios.into(statistics.median)
-
-    rust_efficient = ratios.iter().filter(lambda x: x > 1).length()
-    CONSOLE.print()
-    summary_line = Text("Median ratio: ", style="bold") + Text(
-        f"{median_ratio:.2f}x", style="cyan bold"
-    )
-    CONSOLE.print(summary_line)
-    efficiency_line = Text("Python more efficient: ", style="bold") + Text(
-        f"{rust_efficient}/{results.length()}", style="cyan"
-    )
-    CONSOLE.print(efficiency_line)
+    return timing_results
 
 
 def _display_results(results: pc.Vec[BenchResult]) -> None:
@@ -349,56 +301,32 @@ def _display_results(results: pc.Vec[BenchResult]) -> None:
     CONSOLE.print(wins_line)
 
 
-def _run_timing_measurements(
-    name: str, fn: BenchFn, runs: int, iterations: int
-) -> pc.Vec[float]:
+def _run_timing_measurements(fn: BenchFn, runs: int, iterations: int) -> pc.Vec[float]:
     """Run timing measurements for a function and return execution times."""
     times = pc.Vec[float].new()
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TaskProgressColumn(),
-        TimeRemainingColumn(),
-        console=CONSOLE,
-    ) as progress:
-        task = progress.add_task(f"[green]Timing {name}...", total=runs)
-        for _ in range(runs):
-            times.append(timeit.timeit(fn, number=iterations))
-            progress.advance(task)
+    for _ in range(runs):
+        times.append(timeit.timeit(fn, number=iterations))
     return times
 
 
-def _run_memory_measurements(
-    name: str, fn: BenchFn, runs: int, iterations: int
-) -> pc.Vec[float]:
+def _run_memory_measurements(fn: BenchFn, runs: int, iterations: int) -> pc.Vec[float]:
     """Run memory measurements for a function and return peak memory values."""
     memories = pc.Vec[float].new()
     tracemalloc.start()
 
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TaskProgressColumn(),
-        TimeRemainingColumn(),
-        console=CONSOLE,
-    ) as progress:
-        task = progress.add_task(f"[green]Memory {name}...", total=runs)
-        for _ in range(runs):
-            # Get baseline before test
-            baseline_current, _ = tracemalloc.get_traced_memory()
-            tracemalloc.reset_peak()
+    for _ in range(runs):
+        # Get baseline before test
+        baseline_current, _ = tracemalloc.get_traced_memory()
+        tracemalloc.reset_peak()
 
-            # Run test iterations
-            for _ in range(iterations):
-                fn()
+        # Run test iterations
+        for _ in range(iterations):
+            fn()
 
-            # Measure peak relative to baseline
-            _current, peak = tracemalloc.get_traced_memory()
-            net_peak = max(0.0, peak - baseline_current)
-            memories.append(net_peak / 1024 / 1024)
-            progress.advance(task)
+        # Measure peak relative to baseline
+        _current, peak = tracemalloc.get_traced_memory()
+        net_peak = max(0.0, peak - baseline_current)
+        memories.append(net_peak / 1024 / 1024)
 
     tracemalloc.stop()
     return memories
@@ -427,8 +355,8 @@ def _display_speed_comparison(
     old_name: str, new_name: str, old: BenchFn, new: BenchFn, calls: int
 ) -> None:
     CONSOLE.print()
-    old_times = _run_timing_measurements(old_name, old, calls, Runs.FOCUSED)
-    new_times = _run_timing_measurements(new_name, new, calls, Runs.FOCUSED)
+    old_times = _run_timing_measurements(old, calls, Runs.FOCUSED)
+    new_times = _run_timing_measurements(new, calls, Runs.FOCUSED)
     old_stats = old_times.into(Stats.from_times)
     new_stats = new_times.into(Stats.from_times)
     relative = RelativeStats.from_comparison(old_stats, new_stats)
@@ -444,10 +372,10 @@ def _display_memory_comparison(
     # Memory measurements
     CONSOLE.print()
     CONSOLE.print(Text("Memory Profiling...", style="bold blue"))
-    old_mem_stats = _run_memory_measurements(old_name, old, calls, Runs.FOCUSED).into(
+    old_mem_stats = _run_memory_measurements(old, calls, Runs.FOCUSED).into(
         MemoryStats.from_memories
     )
-    new_mem_stats = _run_memory_measurements(new_name, new, calls, Runs.FOCUSED).into(
+    new_mem_stats = _run_memory_measurements(new, calls, Runs.FOCUSED).into(
         MemoryStats.from_memories
     )
     CONSOLE.print()
@@ -556,18 +484,115 @@ def _get_table(relative: RelativeStats, old_stats: Stats, new_stats: Stats) -> T
     return table
 
 
+class _OldCheckableTrue(pc.traits.Checkable):
+    def __bool__(self) -> bool:
+        return True
+
+
+class _NewCheckableTrue(pc.rs.Checkable):
+    def __bool__(self) -> bool:
+        return True
+
+
+class _OldCheckableFalse(pc.traits.Checkable):
+    def __bool__(self) -> bool:
+        return False
+
+
+class _NewCheckableFalse(pc.rs.Checkable):
+    def __bool__(self) -> bool:
+        return False
+
+
+@bench(
+    "ok_or_else",
+    old=_OldCheckableFalse,
+    new=_NewCheckableFalse,
+    cost=Runs.CHEAP,
+)
+def no_args(obj: type[Checkable]):  # noqa: ANN201, D103
+    def _foo(val: Checkable) -> Checkable:
+        return val
+
+    return obj().ok_or_else(_foo)
+
+
+@bench(
+    "ok_or_else",
+    old=_OldCheckableFalse,
+    new=_NewCheckableFalse,
+    cost=Runs.CHEAP,
+)
+def args(obj: type[Checkable]):  # noqa: ANN201, D103
+    def _foo(val: Checkable, _x: int, _y: str, /) -> Checkable:
+        return val
+
+    return obj().ok_or_else(_foo, 42, "hello")
+
+
+@bench(
+    "ok_or_else",
+    old=_OldCheckableFalse,
+    new=_NewCheckableFalse,
+    cost=Runs.CHEAP,
+)
+def kwargs(obj: type[Checkable]):  # noqa: ANN201, D103
+    def _foo(val: Checkable, _x: int, *, _y: str, **_kwargs: object) -> Checkable:
+        return val
+
+    return obj().ok_or_else(_foo, 42, _y="hello", extra=True)
+
+
+@bench(
+    "then",
+    old=_OldCheckableTrue,
+    new=_NewCheckableTrue,
+    cost=Runs.CHEAP,
+)
+def no_args_then(obj: type[Checkable]):  # noqa: ANN201, D103
+    def _foo(val: Checkable) -> Checkable:
+        return val
+
+    return obj().then(_foo)
+
+
+@bench(
+    "then",
+    old=_OldCheckableTrue,
+    new=_NewCheckableTrue,
+    cost=Runs.CHEAP,
+)
+def args_then(obj: type[Checkable]):  # noqa: ANN201, D103
+    def _foo(val: Checkable, _x: int, _y: str, /) -> Checkable:
+        return val
+
+    return obj().then(_foo, 42, "hello")
+
+
+@bench(
+    "then",
+    old=_OldCheckableTrue,
+    new=_NewCheckableTrue,
+    cost=Runs.CHEAP,
+)
+def kwargs_then(obj: type[Checkable]):  # noqa: ANN201, D103
+    def _foo(val: Checkable, _x: int, *, _y: str, **_kwargs: object) -> Checkable:
+        return val
+
+    return obj().then(_foo, 42, _y="hello", extra=True)
+
+
 def main() -> None:
     """Run all benchmarks and display results."""
     CONSOLE.print(Text("Running Option benchmarks...", style="bold blue"))
     CONSOLE.print()
-    timing_results, memory_results = _run_all_benchmarks()
+    timing_results = _run_all_benchmarks()
     CONSOLE.print()
     _display_results(timing_results)
     CONSOLE.print()
-    _display_memory_results(memory_results)
 
 
-@app.command()
+@app.command(name="all")
 def all_benchmarks() -> None:
     """Run all benchmarks (default)."""
     main()
@@ -579,12 +604,9 @@ def focused(
     mem: Annotated[bool, typer.Option(help="Run memory benchmarks")] = False,
 ) -> None:
     """Run focused build_args benchmark only."""
-    val = pc.Some(42)
-    msg = "Testing"
-
     _run_focused_benchmark(
-        old=partial(val.expect, msg),  # type: ignore[arg-type]
-        new=partial(val.expect_test_3, msg),  # type: ignore[arg-type]
+        old=partial(pc.NONE.or_else),  # type: ignore[arg-type]
+        new=partial(pc.NONE.or_else_test),  # type: ignore[arg-type]
         memory=mem,
     )
 
