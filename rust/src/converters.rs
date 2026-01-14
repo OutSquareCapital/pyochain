@@ -1,6 +1,6 @@
-use crate::option::{PySome, PyochainOption, get_none_singleton};
+use crate::option::{PySome, get_none_singleton};
 use crate::result::{PyErr, PyOk};
-use crate::types::call_func;
+use crate::types::{PyClassInit, call_func};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyFunction, PyTuple};
 #[pyclass(frozen, subclass)]
@@ -52,21 +52,18 @@ impl Checkable {
         if slf.is_truthy()? {
             get_none_singleton(py)
         } else {
-            Ok(Py::new(
-                py,
-                PySome::new(call_func(func, &slf, args, kwargs)?.unbind()),
-            )?
-            .into_any())
+            Ok(PySome::new(call_func(func, &slf, args, kwargs)?.unbind())
+                .init(py)?
+                .into_any())
         }
     }
 
     fn then_some(slf: &Bound<'_, Self>) -> PyResult<Py<PyAny>> {
         let py = slf.py();
         if slf.is_truthy()? {
-            let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
-                value: slf.to_owned().unbind().into_any(),
-            });
-            Ok(Py::new(py, init)?.into_any())
+            Ok(PySome::new(slf.to_owned().unbind().into_any())
+                .init(py)?
+                .into_any())
         } else {
             get_none_singleton(py)
         }

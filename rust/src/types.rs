@@ -1,29 +1,21 @@
-use pyo3::exceptions::PyValueError;
+use pyo3::PyClass;
+
 use pyo3::ffi;
 use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyDict, PyFunction, PyTuple};
 
-/// Exception raised when unwrapping fails on Option types
-#[pyclass(extends = PyValueError)]
-pub struct OptionUnwrapError;
-
-#[pymethods]
-impl OptionUnwrapError {
-    #[new]
-    fn new(_exc_arg: &Bound<'_, PyAny>) -> Self {
-        OptionUnwrapError
-    }
+// Convenience helper to avoid nested calls
+pub trait PyClassInit {
+    type Class: PyClass;
+    /// Creates a new instance Py<T> of a #[pyclass] on the Python heap.
+    fn init(self, py: Python<'_>) -> PyResult<Py<Self::Class>>;
 }
 
-/// Exception raised when unwrapping fails on Result types
-#[pyclass(extends = PyValueError)]
-pub struct ResultUnwrapError;
-
-#[pymethods]
-impl ResultUnwrapError {
-    #[new]
-    fn new(_exc_arg: &Bound<'_, PyAny>) -> Self {
-        ResultUnwrapError
+impl<T: PyClass> PyClassInit for PyClassInitializer<T> {
+    type Class = T;
+    #[inline]
+    fn init(self, py: Python<'_>) -> PyResult<Py<T>> {
+        Py::new(py, self)
     }
 }
 

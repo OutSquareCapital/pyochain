@@ -1,10 +1,22 @@
-use crate::option::{PyNone, PySome, PyochainOption, get_none_singleton};
-use crate::types::{ResultUnwrapError, call_func};
+use crate::option::{PyNone, PySome, get_none_singleton};
+use crate::types::{PyClassInit, call_func};
 use pyderive::*;
+use pyo3::exceptions::PyValueError;
 use pyo3::{
     prelude::*,
     types::{PyDict, PyFunction, PyString, PyTuple},
 };
+/// Exception raised when unwrapping fails on Result types
+#[pyclass(extends = PyValueError)]
+pub struct ResultUnwrapError;
+
+#[pymethods]
+impl ResultUnwrapError {
+    #[new]
+    fn new(_exc_arg: &Bound<'_, PyAny>) -> Self {
+        ResultUnwrapError
+    }
+}
 #[pyclass(frozen, name = "Result", generic)]
 pub struct PyochainResult;
 
@@ -31,10 +43,7 @@ impl PyOk {
     }
 
     fn ok(&self, py: Python<'_>) -> PyResult<Py<PySome>> {
-        let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
-            value: self.value.clone_ref(py),
-        });
-        Ok(Py::new(py, init)?)
+        Ok(PySome::new(self.value.clone_ref(py)).init(py)?)
     }
 
     fn err(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
@@ -188,11 +197,14 @@ impl PyOk {
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let inner = self.value.bind(py);
         if let Ok(some_ref) = inner.extract::<PyRef<PySome>>() {
-            let unwrapped = some_ref.value.clone_ref(py);
-            let ok_value = Py::new(py, PyOk { value: unwrapped })?.into_any();
-            let some_init = PyClassInitializer::from(crate::option::PyochainOption)
-                .add_subclass(PySome { value: ok_value });
-            Ok(Py::new(py, some_init)?.into_any())
+            let ok_value = Py::new(
+                py,
+                PyOk {
+                    value: some_ref.value.clone_ref(py),
+                },
+            )?
+            .into_any();
+            Ok(PySome::new(ok_value).init(py)?.into_any())
         } else if inner.is_instance_of::<PyNone>() {
             get_none_singleton(py)
         } else {
@@ -265,10 +277,7 @@ impl PyErr {
     }
 
     fn err(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
-            value: self.error.clone_ref(py),
-        });
-        Ok(Py::new(py, init)?.into_any())
+        Ok(PySome::new(self.error.clone_ref(py)).init(py)?.into_any())
     }
 
     fn unwrap(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
@@ -388,9 +397,8 @@ impl PyErr {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
-        let result = call_func(func, &self.error.bind(func.py()), args, kwargs)?;
         Ok(PyErr {
-            error: result.unbind(),
+            error: call_func(func, &self.error.bind(func.py()), args, kwargs)?.unbind(),
         })
     }
 
@@ -416,9 +424,7 @@ impl PyErr {
             },
         )?
         .into_any();
-        let some_init = PyClassInitializer::from(crate::option::PyochainOption)
-            .add_subclass(PySome { value: err_value });
-        Ok(Py::new(py, some_init)?.into_any())
+        Ok(PySome::new(err_value).init(py)?.into_any())
     }
 
     #[pyo3(signature = (default, _func, *_args, **_kwargs))]

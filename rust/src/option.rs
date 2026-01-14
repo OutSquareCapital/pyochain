@@ -1,5 +1,6 @@
 use crate::result;
-use crate::types::{OptionUnwrapError, call_func};
+use crate::types::{PyClassInit, call_func};
+use pyo3::exceptions::PyValueError;
 use pyo3::{
     ffi,
     prelude::*,
@@ -7,6 +8,17 @@ use pyo3::{
     types::{PyDict, PyFunction, PyString, PyTuple},
 };
 use std::sync::atomic::{AtomicPtr, Ordering};
+/// Exception raised when unwrapping fails on Option types
+#[pyclass(extends = PyValueError)]
+pub struct OptionUnwrapError;
+
+#[pymethods]
+impl OptionUnwrapError {
+    #[new]
+    fn new(_exc_arg: &Bound<'_, PyAny>) -> Self {
+        OptionUnwrapError
+    }
+}
 
 // Singleton for NONE - initialized once per Python interpreter
 pub static NONE_SINGLETON: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
@@ -17,8 +29,7 @@ static NONE_PTR: AtomicPtr<ffi::PyObject> = AtomicPtr::new(std::ptr::null_mut())
 pub fn get_none_singleton(py: Python<'_>) -> PyResult<Py<PyAny>> {
     NONE_SINGLETON
         .get_or_try_init(py, || {
-            let init = PyClassInitializer::from(PyochainOption).add_subclass(PyNone);
-            let singleton = Py::new(py, init)?.into_any();
+            let singleton = PyNone::new().init(py)?.into_any();
             NONE_PTR.store(singleton.as_ptr(), Ordering::Release);
             Ok(singleton)
         })
@@ -37,21 +48,15 @@ impl PyochainOption {
         // 2. We immediately reconstruct Py<PyAny> via `from_owned_ptr` with the same Python context
         // 3. No other code touches the pointer between these operations
         // 4. PyO3's lifetime guarantees ensure `py` remains valid throughout
-        //
-        // Performance optimizations:
-        // - Avoids call_method1("__internal_new__") overhead (~48% faster)
-        // - Eliminates: get_type(), Python method lookup, descriptor protocol, tuple allocation
-        // - Inlines: Direct is_none() check + PyClassInitializer construction
-        // - Singleton: Returns cached NONE instance (like Python), avoiding allocation
         unsafe {
             let py = value.py();
             let result_ptr = if value.is_none() {
                 get_none_singleton(py)?.into_ptr()
             } else {
-                let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
-                    value: value.to_owned().unbind(),
-                });
-                Py::new(py, init)?.into_any().into_ptr()
+                PySome::new(value.to_owned().unbind())
+                    .init(py)?
+                    .into_any()
+                    .into_ptr()
             };
             let py_any: Py<PyAny> = Py::from_owned_ptr(py, result_ptr);
             py_any
@@ -65,10 +70,7 @@ impl PyochainOption {
     fn if_true(value: &Bound<'_, PyAny>, predicate: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = value.py();
         if predicate.call1((value,))?.is_truthy()? {
-            let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
-                value: value.to_owned().unbind(),
-            });
-            Ok(Py::new(py, init)?.into_any())
+            Ok(PySome::new(value.to_owned().unbind()).init(py)?.into_any())
         } else {
             get_none_singleton(py)
         }
@@ -78,10 +80,7 @@ impl PyochainOption {
     fn if_some(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = value.py();
         if value.is_truthy()? {
-            let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
-                value: value.to_owned().unbind(),
-            });
-            Ok(Py::new(py, init)?.into_any())
+            Ok(PySome::new(value.to_owned().unbind()).init(py)?.into_any())
         } else {
             get_none_singleton(py)
         }
@@ -102,7 +101,7 @@ impl PySome {
     }
 
     #[new]
-    fn new(value: Py<PyAny>) -> PyClassInitializer<Self> {
+    pub fn new(value: Py<PyAny>) -> PyClassInitializer<Self> {
         PyClassInitializer::from(PyochainOption).add_subclass(PySome { value })
     }
 
@@ -175,10 +174,11 @@ impl PySome {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         let py = func.py();
-        let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
-            value: call_func(func, &self.value.bind(py), args, kwargs)?.unbind(),
-        });
-        Ok(Py::new(py, init)?.into_any())
+        Ok(
+            PySome::new(call_func(func, &self.value.bind(py), args, kwargs)?.unbind())
+                .init(py)?
+                .into_any(),
+        )
     }
 
     fn and_(&self, optb: &Bound<'_, PyAny>) -> Py<PyAny> {
@@ -186,10 +186,7 @@ impl PySome {
     }
     fn or_(&self, optb: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = optb.py();
-        let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
-            value: self.value.clone_ref(py),
-        });
-        Ok(Py::new(py, init)?.into_any())
+        Ok(PySome::new(self.value.clone_ref(py)).init(py)?.into_any())
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]
@@ -205,10 +202,7 @@ impl PySome {
 
     fn or_else(&self, f: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
         let py = f.py();
-        let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
-            value: self.value.clone_ref(py),
-        });
-        Ok(Py::new(py, init)?.into_any())
+        Ok(PySome::new(self.value.clone_ref(py)).init(py)?.into_any())
     }
 
     fn ok_or(&self, err: &Bound<'_, PyAny>) -> PyResult<result::PyOk> {
@@ -252,10 +246,7 @@ impl PySome {
     ) -> PyResult<Py<PyAny>> {
         let py = predicate.py();
         if call_func(predicate, &self.value.bind(py), args, kwargs)?.is_truthy()? {
-            let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
-                value: self.value.clone_ref(py),
-            });
-            Ok(Py::new(py, init)?.into_any())
+            Ok(PySome::new(self.value.clone_ref(py)).init(py)?.into_any())
         } else {
             get_none_singleton(py)
         }
@@ -274,27 +265,25 @@ impl PySome {
     ) -> PyResult<Py<PyAny>> {
         let py = f.py();
         call_func(f, &self.value.bind(py), args, kwargs)?;
-        let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
-            value: self.value.clone_ref(py),
-        });
-        Ok(Py::new(py, init)?.into_any())
+        Ok(PySome::new(self.value.clone_ref(py)).init(py)?.into_any())
     }
 
     fn unzip(&self, py: Python<'_>) -> PyResult<(Py<PyAny>, Py<PyAny>)> {
         let (a, b) = self.value.bind(py).extract::<(Py<PyAny>, Py<PyAny>)>()?;
-        let init_a = PyClassInitializer::from(PyochainOption).add_subclass(PySome { value: a });
-        let init_b = PyClassInitializer::from(PyochainOption).add_subclass(PySome { value: b });
         Ok((
-            Py::new(py, init_a)?.into_any(),
-            Py::new(py, init_b)?.into_any(),
+            PySome::new(a).init(py)?.into_any(),
+            PySome::new(b).init(py)?.into_any(),
         ))
     }
 
     fn map_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = func.py();
-        let value = func.call1(self.value.bind(py).cast::<PyTuple>()?)?.unbind();
-        let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome { value });
-        Ok(Py::new(py, init)?.into_any())
+
+        Ok(
+            PySome::new(func.call1(self.value.bind(py).cast::<PyTuple>()?)?.unbind())
+                .init(py)?
+                .into_any(),
+        )
     }
     fn and_then_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         Ok(func
@@ -307,8 +296,8 @@ impl PySome {
         if other.is_instance_of::<PyNone>() {
             return get_none_singleton(py);
         }
-        let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
-            value: PyTuple::new(
+        let init = PySome::new(
+            PyTuple::new(
                 py,
                 [
                     self.value.bind(py).clone(),
@@ -317,8 +306,8 @@ impl PySome {
             )?
             .unbind()
             .into_any(),
-        });
-        Ok(Py::new(py, init)?.into_any())
+        );
+        Ok(init.init(py)?.into_any())
     }
 
     fn zip_with(&self, other: &Bound<'_, PyAny>, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
@@ -329,8 +318,7 @@ impl PySome {
         let value = f
             .call1((&self.value, &other.extract::<PyRef<PySome>>()?.value))?
             .unbind();
-        let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome { value });
-        Ok(Py::new(py, init)?.into_any())
+        Ok(PySome::new(value).init(py)?.into_any())
     }
 
     fn reduce(
@@ -345,17 +333,13 @@ impl PySome {
             let other_some = other.extract::<PyRef<PySome>>()?;
             func.call1((&self.value, &other_some.value))?.unbind()
         };
-        let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome { value });
-        Ok(Py::new(py, init)?.into_any())
+        Ok(PySome::new(value).init(py)?.into_any())
     }
 
     fn xor(&self, optb: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = optb.py();
         if optb.is_instance_of::<PyNone>() {
-            let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
-                value: self.value.clone_ref(py),
-            });
-            Ok(Py::new(py, init)?.into_any())
+            Ok(PySome::new(self.value.clone_ref(py)).init(py)?.into_any())
         } else {
             get_none_singleton(py)
         }
@@ -373,9 +357,7 @@ impl PySome {
         let inner = self.value.bind(py);
         if let Ok(ok_ref) = inner.extract::<PyRef<result::PyOk>>() {
             let unwrapped = ok_ref.value.clone_ref(py);
-            let some_init =
-                PyClassInitializer::from(PyochainOption).add_subclass(PySome { value: unwrapped });
-            let some_value = Py::new(py, some_init)?.into_any();
+            let some_value = PySome::new(unwrapped).init(py)?.into_any();
             Ok(Py::new(py, result::PyOk { value: some_value })?.into_any())
         } else if let Ok(err_ref) = inner.extract::<PyRef<result::PyErr>>() {
             Ok(Py::new(
