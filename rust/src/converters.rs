@@ -2,20 +2,21 @@ use crate::option::{PySome, get_none_singleton};
 use crate::result::{PyErr, PyOk};
 use crate::types::{PyClassInit, call_func};
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyFunction, PyTuple};
+use pyo3::types::{PyDict, PyTuple};
 #[pyclass(frozen, subclass)]
 pub struct Pipeable;
 
 #[pymethods]
 impl Pipeable {
     #[new]
-    fn new() -> Self {
+    #[pyo3(signature = (*_args, **_kwargs))]
+    fn new(_args: &Bound<'_, PyTuple>, _kwargs: Option<&Bound<'_, PyDict>>) -> Self {
         Pipeable {}
     }
     #[pyo3(signature = (func, *args, **kwargs))]
     fn into(
         slf: &Bound<'_, Self>,
-        func: &Bound<'_, PyFunction>,
+        func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
@@ -24,7 +25,7 @@ impl Pipeable {
     #[pyo3(signature = (f, *args, **kwargs))]
     fn inspect(
         slf: &Bound<'_, Self>,
-        f: &Bound<'_, PyFunction>,
+        f: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
@@ -37,13 +38,14 @@ pub struct Checkable;
 #[pymethods]
 impl Checkable {
     #[new]
-    fn new() -> Self {
+    #[pyo3(signature = (*_args, **_kwargs))]
+    fn new(_args: &Bound<'_, PyTuple>, _kwargs: Option<&Bound<'_, PyDict>>) -> Self {
         Checkable {}
     }
     #[pyo3(signature = (func, *args, **kwargs))]
     fn then(
         slf: &Bound<'_, Self>,
-        func: &Bound<'_, PyFunction>,
+        func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
@@ -92,7 +94,7 @@ impl Checkable {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn ok_or_else(
         slf: &Bound<'_, Self>,
-        func: &Bound<'_, PyFunction>,
+        func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
