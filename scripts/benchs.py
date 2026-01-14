@@ -24,10 +24,13 @@ import pyochain as pc
 
 app = typer.Typer(help="Option type benchmarks: Rust vs Python")
 
+type BenchFn = Callable[[], object]
+
 
 class Runs(IntEnum):
     """Cost category for benchmarks, determining iteration counts."""
 
+    FOCUSED = 20_000
     CHEAP = 5_000
     NORMAL = 2_500
     EXPENSIVE = 500
@@ -60,7 +63,7 @@ class Stats(NamedTuple):
     q3: float
 
     @classmethod
-    def from_times(cls, times: list[float]) -> Self:
+    def from_times(cls, times: pc.Vec[float]) -> Self:
         """Compute stats from a list of times."""
         return cls(
             statistics.median(times),
@@ -95,6 +98,18 @@ class RelativeStats(NamedTuple):
             old_stats.q3 / new_stats.q3,
         )
 
+    def get_conclusion(self, old_name: str, new_name: str) -> Text:
+        """Generate a conclusion text based on relative performance."""
+        if self.rel_median > 1:
+            return Text(
+                f"✓ {new_name} is {self.rel_median:.2f}x faster ({self.improvement_pct:.1f}% improvement)",
+                style="bold green",
+            )
+        return Text(
+            f"✗ {old_name} is {1 / self.rel_median:.2f}x faster ({abs(self.improvement_pct):.1f}% regression)",
+            style="bold yellow",
+        )
+
 
 class BenchmarkMetadata(NamedTuple):
     """Metadata for a benchmark function."""
@@ -103,6 +118,32 @@ class BenchmarkMetadata(NamedTuple):
     name: str
     cost: Runs
     implementation: Implementation
+
+    def get_median(self, fn: BenchFn) -> float:
+        """Get the median execution time for the given function."""
+        return (
+            pc.Iter(range(self.cost.value))
+            .map(lambda _: timeit.timeit(fn, number=self.n_calls))
+            .into(statistics.median)
+        )
+
+    @property
+    def n_calls(self) -> int:
+        """Number of calls per timing iteration."""
+        return self.cost.value // 10
+
+    def to_result(self, rust_fn: BenchFn, python_fn: BenchFn) -> BenchmarkResult:
+        """Run the benchmark and return the result."""
+        rust_median = self.get_median(rust_fn)
+        python_median = self.get_median(python_fn)
+
+        return BenchmarkResult(
+            category=self.category,
+            name=self.name,
+            rust_median=rust_median,
+            python_median=python_median,
+            speedup=python_median / rust_median,
+        )
 
 
 # timeit return total time, so we want to maximize number of runs to get stable median
@@ -117,11 +158,10 @@ NULLABLE_DATA: Final = (
     pc.Iter(range(100)).map(lambda x: x if x % 3 != 0 else None).collect()
 )
 INT_DATA_LARGE: Final = pc.Iter(range(100)).collect()
-type BenchFn = Callable[[], object]
+
 
 CONSOLE: Final = Console()
 # Store all runs for each benchmark, then compute median
-RESULTS = pc.Vec[BenchmarkResult].new()
 # Registry of benchmark functions with their metadata
 BENCHMARK_REGISTRY = pc.Dict[BenchFn, BenchmarkMetadata].new()
 
@@ -168,43 +208,10 @@ def bench[O, N, R](
     return decorator
 
 
-def bench_one(
-    rust_fn: BenchFn,
-    python_fn: BenchFn,
-) -> None:
-    """Benchmark a single pair of Rust and Python functions."""
-    rust_meta = BENCHMARK_REGISTRY[rust_fn]
-
-    # Use the cost from rust_meta (should be same for both)
-    n_calls = rust_meta.cost.value // 10
-
-    rust_median = (
-        pc.Iter(range(rust_meta.cost.value))
-        .map(lambda _: timeit.timeit(rust_fn, number=n_calls))
-        .into(statistics.median)
-    )
-    python_median = (
-        pc.Iter(range(rust_meta.cost.value))
-        .map(lambda _: timeit.timeit(python_fn, number=n_calls))
-        .into(statistics.median)
-    )
-
-    speedup = python_median / rust_median
-    RESULTS.append(
-        BenchmarkResult(
-            category=rust_meta.category,
-            name=rust_meta.name,
-            rust_median=rust_median,
-            python_median=python_median,
-            speedup=speedup,
-        )
-    )
-
-
-def _run_all_benchmarks() -> None:
+def _run_all_benchmarks() -> pc.Vec[BenchmarkResult]:
     """Run all registered benchmarks by pairing Rust and Python implementations."""
-    # Group functions by (category, name) to pair Rust and Python
     benchmark_pairs: dict[tuple[str, str], dict[str, BenchFn]] = {}
+    results = pc.Vec[BenchmarkResult].new()
 
     for func, meta in BENCHMARK_REGISTRY.items():
         key = (meta.category, meta.name)
@@ -234,20 +241,20 @@ def _run_all_benchmarks() -> None:
         for rust_fn, python_fn in benchmarks:
             meta = BENCHMARK_REGISTRY[rust_fn]
             progress.update(task, description=f"[cyan]{meta.category}: {meta.name}")
-            bench_one(rust_fn, python_fn)
+            results.append(BENCHMARK_REGISTRY[rust_fn].to_result(rust_fn, python_fn))
             progress.advance(task)
+    return results
 
 
-def _display_results() -> None:
-    """Display benchmark results in a formatted table."""
-    table = Table(title="Option Type Benchmark Results (Rust vs Python)")
+def _display_results(results: pc.Vec[BenchmarkResult]) -> None:
+    table = Table(title="Benchmark Results")
     table.add_column("Category", style="cyan")
     table.add_column("Operation", style="white")
     table.add_column("Rust (s, median)", justify="right", style="green")
     table.add_column("Python (s, median)", justify="right", style="yellow")
     table.add_column("Speedup", justify="right")
 
-    for result in RESULTS:
+    for result in results:
         speedup_style = "green bold" if result.speedup > 1 else "red bold"
         speedup_str = Text(f"{result.speedup:.2f}x", style=speedup_style)
         table.add_row(
@@ -261,15 +268,17 @@ def _display_results() -> None:
     CONSOLE.print(table)
 
     # Summary
-    median_speedup = statistics.median([r.speedup for r in RESULTS])
-    wins = sum(1 for r in RESULTS if r.speedup > 1)
+    medians = results.iter().map(lambda r: r.speedup).collect()
+    median_speedup = medians.into(statistics.median)
+
+    wins = medians.iter().filter(lambda x: x > 1).length()
     CONSOLE.print()
     summary_line = Text("Median speedup: ", style="bold") + Text(
         f"{median_speedup:.2f}x", style="green bold"
     )
     CONSOLE.print(summary_line)
     wins_line = Text("Rust wins: ", style="bold") + Text(
-        f"{wins}/{len(RESULTS)}", style="cyan"
+        f"{wins}/{results.length()}", style="cyan"
     )
     CONSOLE.print(wins_line)
 
@@ -278,10 +287,11 @@ def _run_focused_benchmark(old: partial[object], new: partial[object]) -> None:
     """Run focused, robust benchmark between two implementation."""
     old_name = old.func.__name__
     new_name = new.func.__name__
+    calls = Runs.FOCUSED.value // 10
     CONSOLE.print(Text("Running Focused Robustness Benchmark...", style="bold blue"))
     CONSOLE.print(
         Text(
-            f"{Runs.CHEAP.value:,} runs with {Runs.CHEAP.value // 10:,} calls in each for statistical significance...",
+            f"{Runs.FOCUSED.value:,} runs with {calls:,} calls in each for statistical significance...",
             style="dim",
         )
     )
@@ -295,29 +305,26 @@ def _run_focused_benchmark(old: partial[object], new: partial[object]) -> None:
         TimeRemainingColumn(),
         console=CONSOLE,
     ) as progress:
-        calls = Runs.CHEAP.value // 10
-        # Benchmark new
-        task_new = progress.add_task(f"[green]Benchmarking {new_name}...", total=calls)
-        new_times: list[float] = []
-        for _ in range(calls):
-            new_times.append(timeit.timeit(new, number=Runs.CHEAP))
-            progress.advance(task_new)
 
-        # Benchmark old
-        task_old = progress.add_task(f"[yellow]Benchmarking {old_name}...", total=calls)
-        old_times: list[float] = []
-        for _ in range(calls):
-            old_times.append(timeit.timeit(old, number=Runs.CHEAP))
-            progress.advance(task_old)
+        def _run_bench(name: str, fn: partial[object]) -> pc.Vec[float]:
+            task = progress.add_task(f"[green]Benchmarking {name}...", total=calls)
+            times = pc.Vec[float].new()
+            for _ in range(calls):
+                times.append(timeit.timeit(fn, number=Runs.FOCUSED))
+                progress.advance(task)
+            return times
 
-    # Benchmark eq_direct (FFI direct access, no type checking)
-    old_stats = Stats.from_times(old_times)
-    new_stats = Stats.from_times(new_times)
+    old_stats = _run_bench(new_name, new).into(Stats.from_times)
+    new_stats = _run_bench(old_name, old).into(Stats.from_times)
     relative = RelativeStats.from_comparison(old_stats, new_stats)
+    table = _get_table(relative, old_stats, new_stats)
+    CONSOLE.print(table)
+    CONSOLE.print()
+    CONSOLE.print(relative.get_conclusion(old_name, new_name))
 
-    table = Table(
-        title=f"{new_name} vs {old_name}\n{Runs.CHEAP.value:,} ops x {calls} repeats"
-    )
+
+def _get_table(relative: RelativeStats, old_stats: Stats, new_stats: Stats) -> Table:
+    table = Table()
     table.add_column("Metric", style="cyan")
     table.add_column("new", justify="right", style="green")
     table.add_column("old", justify="right", style="yellow")
@@ -374,31 +381,14 @@ def _run_focused_benchmark(old: partial[object], new: partial[object]) -> None:
         f"{(old_stats.q3 - old_stats.q1) / old_stats.median:.4f}",
         f"{((old_stats.q3 - old_stats.q1) / old_stats.median - (new_stats.q3 - new_stats.q1) / new_stats.median):+.4f}",
     )
-
-    CONSOLE.print(table)
-    CONSOLE.print()
-    if relative.rel_median > 1:
-        CONSOLE.print(
-            Text(
-                f"✓ {new_name} is {relative.rel_median:.2f}x faster ({relative.improvement_pct:.1f}% improvement)",
-                style="bold green",
-            )
-        )
-    else:
-        CONSOLE.print(
-            Text(
-                f"✗ {old_name} is {1 / relative.rel_median:.2f}x faster ({abs(relative.improvement_pct):.1f}% regression)",
-                style="bold yellow",
-            )
-        )
+    return table
 
 
 def main() -> None:
     """Run all benchmarks and display results."""
     CONSOLE.print(Text("Running Option benchmarks...", style="bold blue"))
     CONSOLE.print()
-    _run_all_benchmarks()
-    _display_results()
+    _run_all_benchmarks().into(_display_results)
 
 
 @app.command()
@@ -410,13 +400,15 @@ def all_benchmarks() -> None:
 @app.command()
 def focused() -> None:
     """Run focused build_args benchmark only."""
-    CONSOLE.print(
-        "\n[bold cyan]Test: map_star - call1 (optimized) vs call(..., None)[/bold cyan]"
-    )
-    rust_some_tuple = pc.Some((10, 20))
+    from pyochain.rs import Pipeable
+
+    def foo(x: object) -> object:
+        return x
+
+    a = Pipeable()
     _run_focused_benchmark(
-        old=partial(rust_some_tuple.map_star_old, lambda x, y: x + y),  # type: ignore[arg-type]
-        new=partial(rust_some_tuple.map_star, lambda x, y: x + y),  # type: ignore[arg-type]
+        old=partial(a.into, foo),  # type: ignore[arg-type]
+        new=partial(a.into_test, foo),  # type: ignore[arg-type]
     )
 
 
