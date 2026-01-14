@@ -206,15 +206,11 @@ impl PySome {
     }
 
     fn ok_or(&self, err: &Bound<'_, PyAny>) -> PyResult<result::PyOk> {
-        Ok(result::PyOk {
-            value: self.value.clone_ref(err.py()),
-        })
+        Ok(result::PyOk::new(self.value.clone_ref(err.py())))
     }
 
     fn ok_or_else(&self, err: &Bound<'_, PyAny>) -> PyResult<result::PyOk> {
-        Ok(result::PyOk {
-            value: self.value.clone_ref(err.py()),
-        })
+        Ok(result::PyOk::new(self.value.clone_ref(err.py())))
     }
 
     #[pyo3(signature = (default, f, *args, **kwargs))]
@@ -354,15 +350,9 @@ impl PySome {
         if let Ok(ok_ref) = inner.extract::<PyRef<result::PyOk>>() {
             let unwrapped = ok_ref.value.clone_ref(py);
             let some_value = PySome::new(unwrapped).init(py)?.into_any();
-            Ok(Py::new(py, result::PyOk { value: some_value })?.into_any())
+            Ok(Py::new(py, result::PyOk::new(some_value))?.into_any())
         } else if let Ok(err_ref) = inner.extract::<PyRef<result::PyErr>>() {
-            Ok(Py::new(
-                py,
-                result::PyErr {
-                    error: err_ref.error.clone_ref(py),
-                },
-            )?
-            .into_any())
+            Ok(Py::new(py, result::PyErr::new(err_ref.error.clone_ref(py)))?.into_any())
         } else {
             Err(pyo3::exceptions::PyTypeError::new_err(
                 "Expected Ok or Err result",
@@ -592,13 +582,7 @@ impl PyNone {
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        Ok(Py::new(
-            py,
-            result::PyOk {
-                value: get_none_singleton(py)?,
-            },
-        )?
-        .into_any())
+        Ok(Py::new(py, result::PyOk::new(get_none_singleton(py)?))?.into_any())
     }
 
     fn eq(slf: &Bound<'_, Self>, other: &Bound<'_, PyAny>) -> bool {

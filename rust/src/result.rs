@@ -30,7 +30,7 @@ pub struct PyOk {
 #[pymethods]
 impl PyOk {
     #[new]
-    fn new(value: Py<PyAny>) -> Self {
+    pub fn new(value: Py<PyAny>) -> Self {
         PyOk { value }
     }
 
@@ -73,9 +73,9 @@ impl PyOk {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
-        Ok(PyOk {
-            value: call_func(func, &self.value.bind(func.py()), args, kwargs)?.unbind(),
-        })
+        Ok(PyOk::new(
+            call_func(func, &self.value.bind(func.py()), args, kwargs)?.unbind(),
+        ))
     }
 
     fn and_(&self, resb: &Bound<'_, PyAny>) -> Py<PyAny> {
@@ -83,9 +83,7 @@ impl PyOk {
     }
 
     fn or_(&self, rese: &Bound<'_, PyAny>) -> PyResult<Self> {
-        Ok(PyOk {
-            value: self.value.clone_ref(rese.py()),
-        })
+        Ok(PyOk::new(self.value.clone_ref(rese.py())))
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]
@@ -99,9 +97,7 @@ impl PyOk {
     }
 
     fn or_else(&self, f: &Bound<'_, PyAny>) -> Self {
-        PyOk {
-            value: self.value.clone_ref(f.py()),
-        }
+        PyOk::new(self.value.clone_ref(f.py()))
     }
 
     fn unwrap_err(&self) -> PyResult<Py<PyAny>> {
@@ -128,11 +124,10 @@ impl PyOk {
     }
 
     fn map_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Self> {
-        Ok(PyOk {
-            value: func
-                .call(self.value.bind(func.py()).cast::<PyTuple>()?, None)?
+        Ok(PyOk::new(
+            func.call(self.value.bind(func.py()).cast::<PyTuple>()?, None)?
                 .unbind(),
-        })
+        ))
     }
 
     fn and_then_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
@@ -177,9 +172,7 @@ impl PyOk {
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Self {
-        PyOk {
-            value: self.value.clone_ref(func.py()),
-        }
+        PyOk::new(self.value.clone_ref(func.py()))
     }
 
     #[pyo3(signature = (func, *_args, **_kwargs))]
@@ -189,21 +182,13 @@ impl PyOk {
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Self {
-        PyOk {
-            value: self.value.clone_ref(func.py()),
-        }
+        PyOk::new(self.value.clone_ref(func.py()))
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let inner = self.value.bind(py);
         if let Ok(some_ref) = inner.extract::<PyRef<PySome>>() {
-            let ok_value = Py::new(
-                py,
-                PyOk {
-                    value: some_ref.value.clone_ref(py),
-                },
-            )?
-            .into_any();
+            let ok_value = Py::new(py, PyOk::new(some_ref.value.clone_ref(py)))?.into_any();
             Ok(PySome::new(ok_value).init(py)?.into_any())
         } else if inner.is_instance_of::<PyNone>() {
             get_none_singleton(py)
@@ -238,9 +223,7 @@ impl PyOk {
     ) -> PyResult<Self> {
         let py = f.py();
         call_func(f, &self.value.bind(py), args, kwargs)?;
-        Ok(PyOk {
-            value: self.value.clone_ref(py),
-        })
+        Ok(PyOk::new(self.value.clone_ref(py)))
     }
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
@@ -260,7 +243,7 @@ pub struct PyErr {
 #[pymethods]
 impl PyErr {
     #[new]
-    fn new(error: Py<PyAny>) -> Self {
+    pub fn new(error: Py<PyAny>) -> Self {
         PyErr { error }
     }
 
@@ -417,13 +400,7 @@ impl PyErr {
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let err_value = Py::new(
-            py,
-            PyErr {
-                error: self.error.clone_ref(py),
-            },
-        )?
-        .into_any();
+        let err_value = Py::new(py, PyErr::new(self.error.clone_ref(py)))?.into_any();
         Ok(PySome::new(err_value).init(py)?.into_any())
     }
 
@@ -449,9 +426,7 @@ impl PyErr {
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Self {
-        PyErr {
-            error: self.error.clone_ref(func.py()),
-        }
+        PyErr::new(self.error.clone_ref(func.py()))
     }
 
     #[pyo3(signature = (f, *_args, **_kwargs))]
@@ -461,9 +436,7 @@ impl PyErr {
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Self {
-        PyErr {
-            error: self.error.clone_ref(f.py()),
-        }
+        PyErr::new(self.error.clone_ref(f.py()))
     }
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
