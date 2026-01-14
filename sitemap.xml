@@ -1,111 +1,13 @@
+{#-
+  This file was automatically generated - do not edit
+-#}
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  {%- for page in pages -%}
+    {%- if page.canonical_url %}
       <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/dict/</loc>
+        <loc>{{ page.canonical_url }}</loc>
       </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/seq/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/set/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/setmut/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/vec/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/err/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/ok/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/result/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/resultunwraperror/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/iter/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/peekable/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/unzipped/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/noneoption/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/option/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/optionunwraperror/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/some/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/api-reference/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/checkable/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pipeable/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyocollection/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyoitemsview/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyoiterable/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyoiterator/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyokeysview/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyomapping/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyomappingview/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyomutablemapping/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyomutablesequence/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyosequence/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyoset/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyovaluesview/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/core-types-overview/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/examples/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/interoperability/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/getting-started/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/</loc>
-      </url>
+    {%- endif -%}
+  {%- endfor %}
 </urlset>
