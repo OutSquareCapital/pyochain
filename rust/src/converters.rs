@@ -50,11 +50,11 @@ impl Checkable {
         let py = slf.py();
 
         if slf.is_truthy()? {
-            get_none_singleton(py)
-        } else {
             Ok(PySome::new(call_func(func, &slf, args, kwargs)?.unbind())
                 .init(py)?
                 .into_any())
+        } else {
+            get_none_singleton(py)
         }
     }
 
