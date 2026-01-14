@@ -4,7 +4,7 @@ use pyo3::{
     ffi,
     prelude::*,
     sync::PyOnceLock,
-    types::{PyDict, PyTuple},
+    types::{PyDict, PyFunction, PyString, PyTuple},
 };
 use std::sync::atomic::{AtomicPtr, Ordering};
 
@@ -62,13 +62,12 @@ impl PyochainOption {
 
     #[staticmethod]
     #[pyo3(signature = (value, *, predicate))]
-    fn if_true(
-        py: Python<'_>,
-        value: Py<PyAny>,
-        predicate: &Bound<'_, PyAny>,
-    ) -> PyResult<Py<PyAny>> {
-        if predicate.call1((value.bind(py),))?.is_truthy()? {
-            let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome { value });
+    fn if_true(value: &Bound<'_, PyAny>, predicate: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+        let py = value.py();
+        if predicate.call1((value,))?.is_truthy()? {
+            let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
+                value: value.to_owned().unbind(),
+            });
             Ok(Py::new(py, init)?.into_any())
         } else {
             get_none_singleton(py)
@@ -76,9 +75,12 @@ impl PyochainOption {
     }
 
     #[staticmethod]
-    fn if_some(py: Python<'_>, value: Py<PyAny>) -> PyResult<Py<PyAny>> {
-        if value.bind(py).is_truthy()? {
-            let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome { value });
+    fn if_some(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+        let py = value.py();
+        if value.is_truthy()? {
+            let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
+                value: value.to_owned().unbind(),
+            });
             Ok(Py::new(py, init)?.into_any())
         } else {
             get_none_singleton(py)
@@ -104,7 +106,8 @@ impl PySome {
         PyClassInitializer::from(PyochainOption).add_subclass(PySome { value })
     }
 
-    fn __eq__(&self, py: Python<'_>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __eq__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+        let py = other.py();
         if let Ok(other_some) = other.extract::<PyRef<PySome>>() {
             self.value.bind(py).eq(&other_some.value)
         } else if other.is_instance_of::<PyNone>() {
@@ -131,60 +134,58 @@ impl PySome {
     #[pyo3(signature = (predicate, *args, **kwargs))]
     fn is_some_and(
         &self,
-        py: Python<'_>,
-        predicate: &Bound<'_, PyAny>,
+        predicate: &Bound<'_, PyFunction>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
-        call_func(py, predicate, &self.value, args, kwargs)?.is_truthy()
+        let py = predicate.py();
+        call_func(predicate, &self.value.bind(py), args, kwargs)?.is_truthy()
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]
     fn is_none_or(
         &self,
-        py: Python<'_>,
-        func: &Bound<'_, PyAny>,
+        func: &Bound<'_, PyFunction>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
-        call_func(py, func, &self.value, args, kwargs)?.is_truthy()
+        let py = func.py();
+        call_func(func, &self.value.bind(py), args, kwargs)?.is_truthy()
     }
 
     fn unwrap(&self, py: Python<'_>) -> Py<PyAny> {
         self.value.clone_ref(py)
     }
-
-    fn expect(&self, py: Python<'_>, _msg: String) -> Py<PyAny> {
-        self.value.clone_ref(py)
+    fn expect(&self, msg: &Bound<'_, PyString>) -> Py<PyAny> {
+        self.value.clone_ref(msg.py())
+    }
+    fn unwrap_or(&self, default: &Bound<'_, PyAny>) -> Py<PyAny> {
+        self.value.clone_ref(default.py())
     }
 
-    fn unwrap_or(&self, py: Python<'_>, _default: Py<PyAny>) -> Py<PyAny> {
-        self.value.clone_ref(py)
-    }
-
-    fn unwrap_or_else(&self, py: Python<'_>, _f: &Bound<'_, PyAny>) -> Py<PyAny> {
-        self.value.clone_ref(py)
+    fn unwrap_or_else(&self, f: &Bound<'_, PyAny>) -> Py<PyAny> {
+        self.value.clone_ref(f.py())
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]
     fn map(
         &self,
-        py: Python<'_>,
-        func: &Bound<'_, PyAny>,
+        func: &Bound<'_, PyFunction>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
+        let py = func.py();
         let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
-            value: call_func(py, func, &self.value, args, kwargs)?.unbind(),
+            value: call_func(func, &self.value.bind(py), args, kwargs)?.unbind(),
         });
         Ok(Py::new(py, init)?.into_any())
     }
 
-    fn and_(&self, _py: Python<'_>, optb: &Bound<'_, PyAny>) -> Py<PyAny> {
+    fn and_(&self, optb: &Bound<'_, PyAny>) -> Py<PyAny> {
         optb.to_owned().unbind()
     }
-
-    fn or_(&self, py: Python<'_>, _optb: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+    fn or_(&self, optb: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+        let py = optb.py();
         let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
             value: self.value.clone_ref(py),
         });
@@ -194,48 +195,48 @@ impl PySome {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn and_then(
         &self,
-        py: Python<'_>,
-        func: &Bound<'_, PyAny>,
+        func: &Bound<'_, PyFunction>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        Ok(call_func(py, func, &self.value, args, kwargs)?.unbind())
+        let py = func.py();
+        Ok(call_func(func, &self.value.bind(py), args, kwargs)?.unbind())
     }
 
-    fn or_else(&self, py: Python<'_>, _f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+    fn or_else(&self, f: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
+        let py = f.py();
         let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
             value: self.value.clone_ref(py),
         });
         Ok(Py::new(py, init)?.into_any())
     }
 
-    fn ok_or(&self, py: Python<'_>, _err: &Bound<'_, PyAny>) -> PyResult<result::PyOk> {
+    fn ok_or(&self, err: &Bound<'_, PyAny>) -> PyResult<result::PyOk> {
         Ok(result::PyOk {
-            value: self.value.clone_ref(py),
+            value: self.value.clone_ref(err.py()),
         })
     }
 
-    fn ok_or_else(&self, py: Python<'_>, _err: &Bound<'_, PyAny>) -> PyResult<result::PyOk> {
+    fn ok_or_else(&self, err: &Bound<'_, PyAny>) -> PyResult<result::PyOk> {
         Ok(result::PyOk {
-            value: self.value.clone_ref(py),
+            value: self.value.clone_ref(err.py()),
         })
     }
 
-    #[pyo3(signature = (_default, f, *args, **kwargs))]
+    #[pyo3(signature = (default, f, *args, **kwargs))]
     fn map_or(
         &self,
-        py: Python<'_>,
-        _default: &Bound<'_, PyAny>,
-        f: &Bound<'_, PyAny>,
+        default: &Bound<'_, PyAny>,
+        f: &Bound<'_, PyFunction>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        Ok(call_func(py, f, &self.value, args, kwargs)?.unbind())
+        let py = default.py();
+        Ok(call_func(f, &self.value.bind(py), args, kwargs)?.unbind())
     }
 
     fn map_or_else(
         &self,
-        _py: Python<'_>,
         _default: &Bound<'_, PyAny>,
         f: &Bound<'_, PyAny>,
     ) -> PyResult<Py<PyAny>> {
@@ -245,12 +246,12 @@ impl PySome {
     #[pyo3(signature = (predicate, *args, **kwargs))]
     fn filter(
         &self,
-        py: Python<'_>,
-        predicate: &Bound<'_, PyAny>,
+        predicate: &Bound<'_, PyFunction>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        if call_func(py, predicate, &self.value, args, kwargs)?.is_truthy()? {
+        let py = predicate.py();
+        if call_func(predicate, &self.value.bind(py), args, kwargs)?.is_truthy()? {
             let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
                 value: self.value.clone_ref(py),
             });
@@ -267,12 +268,12 @@ impl PySome {
     #[pyo3(signature = (f, *args, **kwargs))]
     fn inspect(
         &self,
-        py: Python<'_>,
-        f: &Bound<'_, PyAny>,
+        f: &Bound<'_, PyFunction>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        call_func(py, f, &self.value, args, kwargs)?;
+        let py = f.py();
+        call_func(f, &self.value.bind(py), args, kwargs)?;
         let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
             value: self.value.clone_ref(py),
         });
@@ -280,8 +281,7 @@ impl PySome {
     }
 
     fn unzip(&self, py: Python<'_>) -> PyResult<(Py<PyAny>, Py<PyAny>)> {
-        let tuple = self.value.bind(py);
-        let (a, b) = tuple.extract::<(Py<PyAny>, Py<PyAny>)>()?;
+        let (a, b) = self.value.bind(py).extract::<(Py<PyAny>, Py<PyAny>)>()?;
         let init_a = PyClassInitializer::from(PyochainOption).add_subclass(PySome { value: a });
         let init_b = PyClassInitializer::from(PyochainOption).add_subclass(PySome { value: b });
         Ok((
@@ -290,16 +290,20 @@ impl PySome {
         ))
     }
 
-    fn map_star(&self, py: Python<'_>, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+    fn map_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+        let py = func.py();
         let value = func.call1(self.value.bind(py).cast::<PyTuple>()?)?.unbind();
         let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome { value });
         Ok(Py::new(py, init)?.into_any())
     }
-    fn and_then_star(&self, py: Python<'_>, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        Ok(func.call1(self.value.bind(py).cast::<PyTuple>()?)?.unbind())
+    fn and_then_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+        Ok(func
+            .call1(self.value.bind(func.py()).cast::<PyTuple>()?)?
+            .unbind())
     }
 
-    fn zip(&self, py: Python<'_>, other: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+    fn zip(&self, other: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+        let py = other.py();
         if other.is_instance_of::<PyNone>() {
             return get_none_singleton(py);
         }
@@ -317,12 +321,8 @@ impl PySome {
         Ok(Py::new(py, init)?.into_any())
     }
 
-    fn zip_with(
-        &self,
-        py: Python<'_>,
-        other: &Bound<'_, PyAny>,
-        f: &Bound<'_, PyAny>,
-    ) -> PyResult<Py<PyAny>> {
+    fn zip_with(&self, other: &Bound<'_, PyAny>, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+        let py = other.py();
         if other.is_instance_of::<PyNone>() {
             return get_none_singleton(py);
         }
@@ -335,10 +335,10 @@ impl PySome {
 
     fn reduce(
         &self,
-        py: Python<'_>,
         other: &Bound<'_, PyAny>,
-        func: &Bound<'_, PyAny>,
+        func: &Bound<'_, PyFunction>,
     ) -> PyResult<Py<PyAny>> {
+        let py = other.py();
         let value = if other.is_instance_of::<PyNone>() {
             self.value.clone_ref(py)
         } else {
@@ -349,7 +349,8 @@ impl PySome {
         Ok(Py::new(py, init)?.into_any())
     }
 
-    fn xor(&self, py: Python<'_>, optb: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+    fn xor(&self, optb: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+        let py = optb.py();
         if optb.is_instance_of::<PyNone>() {
             let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
                 value: self.value.clone_ref(py),
@@ -391,16 +392,16 @@ impl PySome {
         }
     }
 
-    fn eq(&self, py: Python<'_>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn eq(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
         if let Ok(other_some) = other.extract::<PyRef<PySome>>() {
-            self.value.bind(py).eq(&other_some.value)
+            self.value.bind(other.py()).eq(&other_some.value)
         } else {
             Ok(false)
         }
     }
 
-    fn ne(&self, py: Python<'_>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-        Ok(!self.eq(py, other)?)
+    fn ne(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+        Ok(!self.eq(other)?)
     }
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
@@ -411,12 +412,11 @@ impl PySome {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn into(
         slf: &Bound<'_, Self>,
-        py: Python<'_>,
-        func: &Bound<'_, PyAny>,
+        func: &Bound<'_, PyFunction>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        Ok(call_func(py, func, &slf.to_owned().unbind().into_any(), args, kwargs)?.unbind())
+        Ok(call_func(func, &slf, args, kwargs)?.unbind())
     }
 }
 
@@ -448,7 +448,7 @@ impl PyNone {
     #[pyo3(signature = (_predicate, *_args, **_kwargs))]
     fn is_some_and(
         &self,
-        _predicate: &Bound<'_, PyAny>,
+        _predicate: &Bound<'_, PyFunction>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> bool {
@@ -458,7 +458,7 @@ impl PyNone {
     #[pyo3(signature = (_func, *_args, **_kwargs))]
     fn is_none_or(
         &self,
-        _func: &Bound<'_, PyAny>,
+        _func: &Bound<'_, PyFunction>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> bool {
@@ -486,47 +486,44 @@ impl PyNone {
         Ok(f.call0()?.unbind())
     }
 
-    #[pyo3(signature = (_func, *_args, **_kwargs))]
+    #[pyo3(signature = (func, *_args, **_kwargs))]
     fn map(
         &self,
-        py: Python<'_>,
-        _func: &Bound<'_, PyAny>,
+        func: &Bound<'_, PyFunction>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        get_none_singleton(py)
+        get_none_singleton(func.py())
     }
-
-    fn and_(&self, py: Python<'_>, _optb: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        get_none_singleton(py)
+    fn and_(&self, optb: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+        get_none_singleton(optb.py())
     }
 
     fn or_(&self, optb: Py<PyAny>) -> Py<PyAny> {
         optb
     }
 
-    #[pyo3(signature = (_func, *_args, **_kwargs))]
+    #[pyo3(signature = (func, *_args, **_kwargs))]
     fn and_then(
         &self,
-        py: Python<'_>,
-        _func: &Bound<'_, PyAny>,
+        func: &Bound<'_, PyFunction>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        get_none_singleton(py)
+        get_none_singleton(func.py())
     }
 
-    fn or_else(&self, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+    fn or_else(&self, f: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
         Ok(f.call0()?.unbind())
     }
 
-    fn ok_or(&self, _py: Python<'_>, err: &Bound<'_, PyAny>) -> PyResult<result::PyErr> {
-        Ok(result::PyErr {
+    fn ok_or(&self, err: &Bound<'_, PyAny>) -> result::PyErr {
+        result::PyErr {
             error: err.to_owned().unbind(),
-        })
+        }
     }
 
-    fn ok_or_else(&self, _py: Python<'_>, err: &Bound<'_, PyAny>) -> PyResult<result::PyErr> {
+    fn ok_or_else(&self, err: &Bound<'_, PyFunction>) -> PyResult<result::PyErr> {
         Ok(result::PyErr {
             error: err.call0()?.unbind(),
         })
@@ -536,7 +533,7 @@ impl PyNone {
     fn map_or(
         &self,
         default: Py<PyAny>,
-        _f: &Bound<'_, PyAny>,
+        _f: &Bound<'_, PyFunction>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Py<PyAny> {
@@ -546,35 +543,33 @@ impl PyNone {
     fn map_or_else(
         &self,
         default: &Bound<'_, PyAny>,
-        _f: &Bound<'_, PyAny>,
+        _f: &Bound<'_, PyFunction>,
     ) -> PyResult<Py<PyAny>> {
         Ok(default.call0()?.unbind())
     }
 
-    #[pyo3(signature = (_predicate, *_args, **_kwargs))]
+    #[pyo3(signature = (predicate, *_args, **_kwargs))]
     fn filter(
         &self,
-        py: Python<'_>,
-        _predicate: &Bound<'_, PyAny>,
+        predicate: &Bound<'_, PyFunction>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        get_none_singleton(py)
+        get_none_singleton(predicate.py())
     }
 
     fn flatten(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         get_none_singleton(py)
     }
 
-    #[pyo3(signature = (_f, *_args, **_kwargs))]
+    #[pyo3(signature = (f, *_args, **_kwargs))]
     fn inspect(
         &self,
-        py: Python<'_>,
-        _f: &Bound<'_, PyAny>,
+        f: &Bound<'_, PyFunction>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        get_none_singleton(py)
+        get_none_singleton(f.py())
     }
 
     fn unzip(&self, py: Python<'_>) -> PyResult<(Py<PyAny>, Py<PyAny>)> {
@@ -582,34 +577,33 @@ impl PyNone {
         Ok((none.clone_ref(py), none))
     }
 
-    fn map_star(&self, py: Python<'_>, _func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        get_none_singleton(py)
+    fn map_star(&self, func: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
+        get_none_singleton(func.py())
     }
 
-    fn and_then_star(&self, py: Python<'_>, _func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        get_none_singleton(py)
+    fn and_then_star(&self, func: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
+        get_none_singleton(func.py())
     }
 
-    fn zip(&self, py: Python<'_>, _other: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        get_none_singleton(py)
+    fn zip(&self, other: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+        get_none_singleton(other.py())
     }
 
     fn zip_with(
         &self,
-        py: Python<'_>,
-        _other: &Bound<'_, PyAny>,
-        _f: &Bound<'_, PyAny>,
+        other: &Bound<'_, PyAny>,
+        _f: &Bound<'_, PyFunction>,
     ) -> PyResult<Py<PyAny>> {
-        get_none_singleton(py)
+        get_none_singleton(other.py())
     }
 
-    fn reduce(&self, other: Py<PyAny>, _func: &Bound<'_, PyAny>) -> Py<PyAny> {
+    fn reduce(&self, other: Py<PyAny>, _func: &Bound<'_, PyFunction>) -> Py<PyAny> {
         other
     }
 
-    fn xor(&self, py: Python<'_>, optb: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+    fn xor(&self, optb: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         if optb.is_instance_of::<PyNone>() {
-            get_none_singleton(py)
+            get_none_singleton(optb.py())
         } else {
             Ok(optb.clone().unbind())
         }
@@ -633,12 +627,12 @@ impl PyNone {
         .into_any())
     }
 
-    fn eq(&self, other: &Bound<'_, PyAny>) -> bool {
-        other.is_instance_of::<PyNone>()
+    fn eq(slf: &Bound<'_, Self>, other: &Bound<'_, PyAny>) -> bool {
+        slf.is(other)
     }
 
-    fn ne(&self, other: &Bound<'_, PyAny>) -> bool {
-        !self.eq(other)
+    fn ne(slf: &Bound<'_, Self>, other: &Bound<'_, PyAny>) -> bool {
+        !slf.is(other)
     }
 
     fn __repr__(&self) -> &'static str {
@@ -652,11 +646,10 @@ impl PyNone {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn into(
         slf: &Bound<'_, Self>,
-        py: Python<'_>,
-        func: &Bound<'_, PyAny>,
+        func: &Bound<'_, PyFunction>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        Ok(call_func(py, func, &slf.to_owned().unbind().into_any(), args, kwargs)?.unbind())
+        Ok(call_func(func, &slf, args, kwargs)?.unbind())
     }
 }

@@ -3,7 +3,7 @@ use crate::types::{ResultUnwrapError, call_func};
 use pyderive::*;
 use pyo3::{
     prelude::*,
-    types::{PyDict, PyTuple},
+    types::{PyDict, PyFunction, PyString, PyTuple},
 };
 #[pyclass(frozen, name = "Result", generic)]
 pub struct PyochainResult;
@@ -30,11 +30,11 @@ impl PyOk {
         false
     }
 
-    fn ok(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+    fn ok(&self, py: Python<'_>) -> PyResult<Py<PySome>> {
         let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
             value: self.value.clone_ref(py),
         });
-        Ok(Py::new(py, init)?.into_any())
+        Ok(Py::new(py, init)?)
     }
 
     fn err(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
@@ -45,56 +45,54 @@ impl PyOk {
         self.value.clone_ref(py)
     }
 
-    fn expect(&self, py: Python<'_>, _msg: String) -> Py<PyAny> {
-        self.value.clone_ref(py)
+    fn expect(&self, msg: &Bound<'_, PyString>) -> Py<PyAny> {
+        self.value.clone_ref(msg.py())
     }
 
-    fn unwrap_or(&self, py: Python<'_>, _default: Py<PyAny>) -> Py<PyAny> {
-        self.value.clone_ref(py)
+    fn unwrap_or(&self, default: &Bound<'_, PyAny>) -> Py<PyAny> {
+        self.value.clone_ref(default.py())
     }
 
-    fn unwrap_or_else(&self, py: Python<'_>, _f: &Bound<'_, PyAny>) -> Py<PyAny> {
-        self.value.clone_ref(py)
+    fn unwrap_or_else(&self, f: &Bound<'_, PyAny>) -> Py<PyAny> {
+        self.value.clone_ref(f.py())
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]
     fn map(
         &self,
-        py: Python<'_>,
-        func: &Bound<'_, PyAny>,
+        func: &Bound<'_, PyFunction>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
         Ok(PyOk {
-            value: call_func(py, func, &self.value, args, kwargs)?.unbind(),
+            value: call_func(func, &self.value.bind(func.py()), args, kwargs)?.unbind(),
         })
     }
 
-    fn and_(&self, _py: Python<'_>, resb: &Bound<'_, PyAny>) -> Py<PyAny> {
+    fn and_(&self, resb: &Bound<'_, PyAny>) -> Py<PyAny> {
         resb.to_owned().unbind()
     }
 
-    fn or_(&self, py: Python<'_>, _rese: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn or_(&self, rese: &Bound<'_, PyAny>) -> PyResult<Self> {
         Ok(PyOk {
-            value: self.value.clone_ref(py),
+            value: self.value.clone_ref(rese.py()),
         })
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]
     fn and_then(
         &self,
-        py: Python<'_>,
-        func: &Bound<'_, PyAny>,
+        func: &Bound<'_, PyFunction>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        Ok(call_func(py, func, &self.value, args, kwargs)?.unbind())
+        Ok(call_func(func, &self.value.bind(func.py()), args, kwargs)?.unbind())
     }
 
-    fn or_else(&self, py: Python<'_>, _f: &Bound<'_, PyAny>) -> PyResult<Self> {
-        Ok(PyOk {
-            value: self.value.clone_ref(py),
-        })
+    fn or_else(&self, f: &Bound<'_, PyAny>) -> Self {
+        PyOk {
+            value: self.value.clone_ref(f.py()),
+        }
     }
 
     fn unwrap_err(&self) -> PyResult<Py<PyAny>> {
@@ -103,56 +101,54 @@ impl PyOk {
         ))
     }
 
-    fn expect_err(&self, py: Python<'_>, msg: String) -> PyResult<Py<PyAny>> {
-        let ok_repr = self.value.bind(py).repr()?.to_string();
+    fn expect_err(&self, msg: &Bound<'_, PyString>) -> PyResult<Py<PyAny>> {
+        let ok_repr = self.value.bind(msg.py()).repr()?.to_string();
         Err(pyo3::PyErr::new::<ResultUnwrapError, _>(format!(
             "{}: expected Err, got Ok({})",
             msg, ok_repr
         )))
     }
 
-    fn flatten(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+    fn flatten(&self, py: Python<'_>) -> Py<PyAny> {
         // For Ok[Result[T, E], E], the self.value IS the inner Result
-        Ok(self.value.clone_ref(py))
+        self.value.clone_ref(py)
     }
 
     fn iter(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         Ok(self.ok(py)?.bind(py).call_method0("iter")?.unbind())
     }
 
-    fn map_star(&self, py: Python<'_>, func: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn map_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Self> {
         Ok(PyOk {
             value: func
-                .call(self.value.bind(py).cast::<PyTuple>()?, None)?
+                .call(self.value.bind(func.py()).cast::<PyTuple>()?, None)?
                 .unbind(),
         })
     }
 
-    fn and_then_star(&self, py: Python<'_>, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        let value_tuple = self.value.bind(py).cast::<PyTuple>()?;
+    fn and_then_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+        let value_tuple = self.value.bind(func.py()).cast::<PyTuple>()?;
         Ok(func.call(value_tuple, None)?.unbind())
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]
     fn into(
         slf: &Bound<'_, Self>,
-        py: Python<'_>,
-        func: &Bound<'_, PyAny>,
+        func: &Bound<'_, PyFunction>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        Ok(call_func(py, func, &slf.to_owned().unbind().into_any(), args, kwargs)?.unbind())
+        Ok(call_func(func, &slf, args, kwargs)?.unbind())
     }
 
     #[pyo3(signature = (pred, *args, **kwargs))]
     fn is_ok_and(
         &self,
-        py: Python<'_>,
-        pred: &Bound<'_, PyAny>,
+        pred: &Bound<'_, PyFunction>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
-        call_func(py, pred, &self.value, args, kwargs)?.is_truthy()
+        call_func(pred, &self.value.bind(pred.py()), args, kwargs)?.is_truthy()
     }
 
     #[pyo3(signature = (_pred, *_args, **_kwargs))]
@@ -165,29 +161,27 @@ impl PyOk {
         false
     }
 
-    #[pyo3(signature = (_func, *_args, **_kwargs))]
+    #[pyo3(signature = (func, *_args, **_kwargs))]
     fn map_err(
         &self,
-        py: Python<'_>,
-        _func: &Bound<'_, PyAny>,
+        func: &Bound<'_, PyAny>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Self {
         PyOk {
-            value: self.value.clone_ref(py),
+            value: self.value.clone_ref(func.py()),
         }
     }
 
-    #[pyo3(signature = (_func, *_args, **_kwargs))]
+    #[pyo3(signature = (func, *_args, **_kwargs))]
     fn inspect_err(
         &self,
-        py: Python<'_>,
-        _func: &Bound<'_, PyAny>,
+        func: &Bound<'_, PyAny>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Self {
         PyOk {
-            value: self.value.clone_ref(py),
+            value: self.value.clone_ref(func.py()),
         }
     }
 
@@ -208,36 +202,30 @@ impl PyOk {
         }
     }
 
-    #[pyo3(signature = (_default, func, *args, **kwargs))]
+    #[pyo3(signature = (default, func, *args, **kwargs))]
     fn map_or(
         &self,
-        py: Python<'_>,
-        _default: &Bound<'_, PyAny>,
-        func: &Bound<'_, PyAny>,
+        default: &Bound<'_, PyAny>,
+        func: &Bound<'_, PyFunction>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        Ok(call_func(py, func, &self.value, args, kwargs)?.unbind())
+        Ok(call_func(func, &self.value.bind(default.py()), args, kwargs)?.unbind())
     }
 
-    fn map_or_else(
-        &self,
-        _py: Python<'_>,
-        ok: &Bound<'_, PyAny>,
-        _err: &Bound<'_, PyAny>,
-    ) -> PyResult<Py<PyAny>> {
+    fn map_or_else(&self, ok: &Bound<'_, PyAny>, _err: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         Ok(ok.call1((&self.value,))?.unbind())
     }
 
     #[pyo3(signature = (f, *args, **kwargs))]
     fn inspect(
         &self,
-        py: Python<'_>,
-        f: &Bound<'_, PyAny>,
+        f: &Bound<'_, PyFunction>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
-        call_func(py, f, &self.value, args, kwargs)?;
+        let py = f.py();
+        call_func(f, &self.value.bind(py), args, kwargs)?;
         Ok(PyOk {
             value: self.value.clone_ref(py),
         })
@@ -291,8 +279,8 @@ impl PyErr {
         )))
     }
 
-    fn expect(&self, py: Python<'_>, msg: String) -> PyResult<Py<PyAny>> {
-        let err_repr = self.error.bind(py).repr()?.to_string();
+    fn expect(&self, msg: &Bound<'_, PyString>) -> PyResult<Py<PyAny>> {
+        let err_repr = self.error.bind(msg.py()).repr()?.to_string();
         Err(pyo3::PyErr::new::<ResultUnwrapError, _>(format!(
             "{}: {}",
             msg, err_repr
@@ -310,7 +298,7 @@ impl PyErr {
             .unbind())
     }
 
-    fn unwrap_or(&self, _py: Python<'_>, default: Py<PyAny>) -> Py<PyAny> {
+    fn unwrap_or(&self, default: Py<PyAny>) -> Py<PyAny> {
         default
     }
 
@@ -319,39 +307,37 @@ impl PyErr {
         Ok(result.unbind())
     }
 
-    #[pyo3(signature = (_func, *_args, **_kwargs))]
+    #[pyo3(signature = (func, *_args, **_kwargs))]
     fn map(
         &self,
-        py: Python<'_>,
-        _func: &Bound<'_, PyAny>,
+        func: &Bound<'_, PyAny>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Self {
         PyErr {
-            error: self.error.clone_ref(py),
+            error: self.error.clone_ref(func.py()),
         }
     }
 
-    fn and_(&self, py: Python<'_>, _resb: &Bound<'_, PyAny>) -> Self {
+    fn and_(&self, resb: &Bound<'_, PyAny>) -> Self {
         PyErr {
-            error: self.error.clone_ref(py),
+            error: self.error.clone_ref(resb.py()),
         }
     }
 
-    fn or_(&self, _py: Python<'_>, rese: &Bound<'_, PyAny>) -> Py<PyAny> {
+    fn or_(&self, rese: &Bound<'_, PyAny>) -> Py<PyAny> {
         rese.to_owned().unbind()
     }
 
-    #[pyo3(signature = (_func, *_args, **_kwargs))]
+    #[pyo3(signature = (func, *_args, **_kwargs))]
     fn and_then(
         &self,
-        py: Python<'_>,
-        _func: &Bound<'_, PyAny>,
+        func: &Bound<'_, PyAny>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Self {
         PyErr {
-            error: self.error.clone_ref(py),
+            error: self.error.clone_ref(func.py()),
         }
     }
 
@@ -359,15 +345,15 @@ impl PyErr {
         Ok(f.call1((&self.error,))?.unbind())
     }
 
-    fn map_star(&self, py: Python<'_>, _func: &Bound<'_, PyAny>) -> Self {
+    fn map_star(&self, func: &Bound<'_, PyAny>) -> Self {
         PyErr {
-            error: self.error.clone_ref(py),
+            error: self.error.clone_ref(func.py()),
         }
     }
 
-    fn and_then_star(&self, py: Python<'_>, _func: &Bound<'_, PyAny>) -> Self {
+    fn and_then_star(&self, func: &Bound<'_, PyAny>) -> Self {
         PyErr {
-            error: self.error.clone_ref(py),
+            error: self.error.clone_ref(func.py()),
         }
     }
 
@@ -388,23 +374,21 @@ impl PyErr {
     #[pyo3(signature = (pred, *args, **kwargs))]
     fn is_err_and(
         &self,
-        py: Python<'_>,
-        pred: &Bound<'_, PyAny>,
+        pred: &Bound<'_, PyFunction>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
-        call_func(py, pred, &self.error, args, kwargs)?.is_truthy()
+        call_func(pred, &self.error.bind(pred.py()), args, kwargs)?.is_truthy()
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]
     fn map_err(
         &self,
-        py: Python<'_>,
-        func: &Bound<'_, PyAny>,
+        func: &Bound<'_, PyFunction>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
-        let result = call_func(py, func, &self.error, args, kwargs)?;
+        let result = call_func(func, &self.error.bind(func.py()), args, kwargs)?;
         Ok(PyErr {
             error: result.unbind(),
         })
@@ -413,12 +397,12 @@ impl PyErr {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn inspect_err(
         &self,
-        py: Python<'_>,
-        func: &Bound<'_, PyAny>,
+        func: &Bound<'_, PyFunction>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
-        call_func(py, func, &self.error, args, kwargs)?;
+        let py = func.py();
+        call_func(func, &self.error.bind(py), args, kwargs)?;
         Ok(PyErr {
             error: self.error.clone_ref(py),
         })
@@ -452,29 +436,27 @@ impl PyErr {
         Ok(err.call1((&self.error,))?.unbind())
     }
 
-    #[pyo3(signature = (_func, *_args, **_kwargs))]
+    #[pyo3(signature = (func, *_args, **_kwargs))]
     fn filter(
         &self,
-        py: Python<'_>,
-        _func: &Bound<'_, PyAny>,
+        func: &Bound<'_, PyAny>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Self {
         PyErr {
-            error: self.error.clone_ref(py),
+            error: self.error.clone_ref(func.py()),
         }
     }
 
-    #[pyo3(signature = (_f, *_args, **_kwargs))]
+    #[pyo3(signature = (f, *_args, **_kwargs))]
     fn inspect(
         &self,
-        py: Python<'_>,
-        _f: &Bound<'_, PyAny>,
+        f: &Bound<'_, PyAny>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Self {
         PyErr {
-            error: self.error.clone_ref(py),
+            error: self.error.clone_ref(f.py()),
         }
     }
 
@@ -486,11 +468,10 @@ impl PyErr {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn into(
         slf: &Bound<'_, Self>,
-        py: Python<'_>,
-        func: &Bound<'_, PyAny>,
+        func: &Bound<'_, PyFunction>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        Ok(call_func(py, func, &slf.to_owned().unbind().into_any(), args, kwargs)?.unbind())
+        Ok(call_func(func, &slf, args, kwargs)?.unbind())
     }
 }

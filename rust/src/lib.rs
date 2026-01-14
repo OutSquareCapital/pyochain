@@ -1,3 +1,4 @@
+mod converters;
 mod option;
 mod result;
 mod types;
@@ -15,5 +16,7 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<types::OptionUnwrapError>()?;
     m.add_class::<types::ResultUnwrapError>()?;
     m.add_class::<result::PyochainResult>()?;
+    m.add_class::<converters::Checkable>()?;
+    m.add_class::<converters::Pipeable>()?;
     Ok(())
 }
