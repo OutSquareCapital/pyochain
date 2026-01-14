@@ -2391,46 +2391,6 @@ class Iter[T](PyoIterator[T]):
 
         return Iter(_gen_with_key())
 
-    def join_with[R, K](
-        self,
-        other: Iterable[R],
-        left_on: Callable[[T], K],
-        right_on: Callable[[R], K],
-        left_default: T | None = None,
-        right_default: R | None = None,
-    ) -> Iter[tuple[T, R]]:
-        """Perform a relational join with another iterable.
-
-        Args:
-            other (Iterable[R]): Iterable to join with.
-            left_on (Callable[[T], K]): Function to extract the join key from the left iterable.
-            right_on (Callable[[R], K]): Function to extract the join key from the right iterable.
-            left_default (T | None): Default value for missing elements in the left iterable.
-            right_default (R | None): Default value for missing elements in the right iterable.
-
-        Returns:
-            Iter[tuple[T, R]]: An iterator yielding tuples of joined elements.
-
-        Example:
-        ```python
-        >>> import pyochain as pc
-        >>> sizes = ["S", "M"]
-        >>> pc.Iter(["blue", "red"]).join_with(sizes, left_on=lambda c: c, right_on=lambda s: s).collect()
-        Seq((None, 'S'), (None, 'M'), ('blue', None), ('red', None))
-
-        ```
-        """
-        return Iter(
-            cz.itertoolz.join(
-                leftkey=left_on,
-                leftseq=self._inner,
-                rightkey=right_on,
-                rightseq=other,
-                left_default=left_default,
-                right_default=right_default,
-            )
-        )
-
     @overload
     def map_windows[R](
         self, length: Literal[1], func: Callable[[tuple[T]], R]
