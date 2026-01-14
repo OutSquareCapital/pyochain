@@ -48,19 +48,21 @@ impl Checkable {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         let py = slf.py();
-        if slf.call_method0("__bool__")?.unbind().is_truthy(py)? {
+
+        if slf.is_truthy()? {
             get_none_singleton(py)
         } else {
-            let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
-                value: call_func(func, &slf, args, kwargs)?.unbind(),
-            });
-            Ok(Py::new(py, init)?.into_any())
+            Ok(Py::new(
+                py,
+                PySome::new(call_func(func, &slf, args, kwargs)?.unbind()),
+            )?
+            .into_any())
         }
     }
 
     fn then_some(slf: &Bound<'_, Self>) -> PyResult<Py<PyAny>> {
         let py = slf.py();
-        if slf.call_method0("__bool__")?.unbind().is_truthy(py)? {
+        if slf.is_truthy()? {
             let init = PyClassInitializer::from(PyochainOption).add_subclass(PySome {
                 value: slf.to_owned().unbind().into_any(),
             });
@@ -72,7 +74,7 @@ impl Checkable {
 
     fn ok_or(slf: &Bound<'_, Self>, err: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = slf.py();
-        if slf.call_method0("__bool__")?.unbind().is_truthy(py)? {
+        if slf.is_truthy()? {
             Ok(Py::new(
                 py,
                 PyOk {
@@ -98,7 +100,7 @@ impl Checkable {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         let py = slf.py();
-        if slf.call_method0("__bool__")?.unbind().is_truthy(py)? {
+        if slf.is_truthy()? {
             Ok(Py::new(
                 py,
                 PyOk {
