@@ -139,6 +139,8 @@ def bench[O, N, R](
     new: N,
     cost: Runs = Runs.CHEAP,
 ) -> Callable[[Callable[[O | N], R]], Callable[[O | N], R]]:
+    """Decorator to register a benchmark function for both old and new implementations."""
+
     def decorator(func: Callable[[O | N], R]) -> Callable[[O | N], R]:
         @wraps(func, updated=())
         def old_wrapper() -> R:
