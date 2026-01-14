@@ -23,7 +23,6 @@ from rich.table import Table
 from rich.text import Text
 
 import pyochain as pc
-from pyochain.rs import Checkable
 
 app = typer.Typer(help="Benchmarks for pyochain developments.")
 
@@ -482,104 +481,6 @@ def _get_table(relative: RelativeStats, old_stats: Stats, new_stats: Stats) -> T
         f"{((old_stats.q3 - old_stats.q1) / old_stats.median - (new_stats.q3 - new_stats.q1) / new_stats.median):+.4f}",
     )
     return table
-
-
-class _OldCheckableTrue(pc.traits.Checkable):
-    def __bool__(self) -> bool:
-        return True
-
-
-class _NewCheckableTrue(pc.rs.Checkable):
-    def __bool__(self) -> bool:
-        return True
-
-
-class _OldCheckableFalse(pc.traits.Checkable):
-    def __bool__(self) -> bool:
-        return False
-
-
-class _NewCheckableFalse(pc.rs.Checkable):
-    def __bool__(self) -> bool:
-        return False
-
-
-@bench(
-    "ok_or_else",
-    old=_OldCheckableFalse,
-    new=_NewCheckableFalse,
-    cost=Runs.CHEAP,
-)
-def no_args(obj: type[Checkable]):  # noqa: ANN201, D103
-    def _foo(val: Checkable) -> Checkable:
-        return val
-
-    return obj().ok_or_else(_foo)
-
-
-@bench(
-    "ok_or_else",
-    old=_OldCheckableFalse,
-    new=_NewCheckableFalse,
-    cost=Runs.CHEAP,
-)
-def args(obj: type[Checkable]):  # noqa: ANN201, D103
-    def _foo(val: Checkable, _x: int, _y: str, /) -> Checkable:
-        return val
-
-    return obj().ok_or_else(_foo, 42, "hello")
-
-
-@bench(
-    "ok_or_else",
-    old=_OldCheckableFalse,
-    new=_NewCheckableFalse,
-    cost=Runs.CHEAP,
-)
-def kwargs(obj: type[Checkable]):  # noqa: ANN201, D103
-    def _foo(val: Checkable, _x: int, *, _y: str, **_kwargs: object) -> Checkable:
-        return val
-
-    return obj().ok_or_else(_foo, 42, _y="hello", extra=True)
-
-
-@bench(
-    "then",
-    old=_OldCheckableTrue,
-    new=_NewCheckableTrue,
-    cost=Runs.CHEAP,
-)
-def no_args_then(obj: type[Checkable]):  # noqa: ANN201, D103
-    def _foo(val: Checkable) -> Checkable:
-        return val
-
-    return obj().then(_foo)
-
-
-@bench(
-    "then",
-    old=_OldCheckableTrue,
-    new=_NewCheckableTrue,
-    cost=Runs.CHEAP,
-)
-def args_then(obj: type[Checkable]):  # noqa: ANN201, D103
-    def _foo(val: Checkable, _x: int, _y: str, /) -> Checkable:
-        return val
-
-    return obj().then(_foo, 42, "hello")
-
-
-@bench(
-    "then",
-    old=_OldCheckableTrue,
-    new=_NewCheckableTrue,
-    cost=Runs.CHEAP,
-)
-def kwargs_then(obj: type[Checkable]):  # noqa: ANN201, D103
-    def _foo(val: Checkable, _x: int, *, _y: str, **_kwargs: object) -> Checkable:
-        return val
-
-    return obj().then(_foo, 42, _y="hello", extra=True)
 
 
 def main() -> None:
