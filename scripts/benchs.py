@@ -112,15 +112,18 @@ CHAIN_THRESHOLD: Final[int] = 5
 
 
 # Test data: large dataset with mixed None/values (realistic scenario)
-NULLABLE_DATA: Final = [x if x % 3 != 0 else None for x in range(100)]
-INT_DATA_LARGE: Final = list(range(100))
+
+NULLABLE_DATA: Final = (
+    pc.Iter(range(100)).map(lambda x: x if x % 3 != 0 else None).collect()
+)
+INT_DATA_LARGE: Final = pc.Iter(range(100)).collect()
 type BenchFn = Callable[[], object]
 
 CONSOLE: Final = Console()
 # Store all runs for each benchmark, then compute median
-RESULTS: list[BenchmarkResult] = []
+RESULTS = pc.Vec[BenchmarkResult].new()
 # Registry of benchmark functions with their metadata
-BENCHMARK_REGISTRY: dict[BenchFn, BenchmarkMetadata] = {}
+BENCHMARK_REGISTRY = pc.Dict[BenchFn, BenchmarkMetadata].new()
 
 
 # =============================================================================
@@ -128,42 +131,37 @@ BENCHMARK_REGISTRY: dict[BenchFn, BenchmarkMetadata] = {}
 # =============================================================================
 
 
-def bench(
+def bench[O, N, R](
     category: str,
     name: str,
-    implementation: Implementation,
+    *,
+    old: O,
+    new: N,
     cost: Runs = Runs.CHEAP,
-) -> Callable[[BenchFn], BenchFn]:
-    """Decorator to register a benchmark function with its metadata.
+) -> Callable[[Callable[[O | N], R]], Callable[[O | N], R]]:
+    def decorator(func: Callable[[O | N], R]) -> Callable[[O | N], R]:
+        @wraps(func, updated=())
+        def old_wrapper() -> R:
+            return func(old)
 
-    Args:
-        category (str): The category of the benchmark (e.g., "Instantiation").
-        name (str): The name of the benchmark (e.g., "Some(value)").
-        implementation (str): The implementation type ("rust" or "python").
-        cost (Runs): The cost category, defaults to CHEAP.
+        @wraps(func, updated=())
+        def new_wrapper() -> R:
+            return func(new)
 
-    Returns:
-        Callable: The decorated function.
-
-    Examples:
-    ```python
-    @bench("Instantiation", "Some(value)", "rust")
-    def bench_rust_some_direct() -> object:
-        return pc.Some(TEST_VALUE)
-    ```
-    """
-
-    def decorator(func: BenchFn) -> BenchFn:
-        metadata = BenchmarkMetadata(
-            category=category, name=name, cost=cost, implementation=implementation
+        old_meta = BenchmarkMetadata(
+            category=category,
+            name=name,
+            cost=cost,
+            implementation=Implementation.PYTHON,
         )
-        BENCHMARK_REGISTRY[func] = metadata
+        new_meta = BenchmarkMetadata(
+            category=category, name=name, cost=cost, implementation=Implementation.RUST
+        )
 
-        @wraps(func)
-        def wrapper() -> object:
-            return func()
+        BENCHMARK_REGISTRY[old_wrapper] = old_meta
+        BENCHMARK_REGISTRY[new_wrapper] = new_meta
 
-        return wrapper
+        return func
 
     return decorator
 
@@ -172,28 +170,23 @@ def bench_one(
     rust_fn: BenchFn,
     python_fn: BenchFn,
 ) -> None:
-    """Run a single benchmark multiple times and store median results.
-
-    Uses metadata from the BENCHMARK_REGISTRY to determine category, name, and iteration counts.
-
-    Args:
-        rust_fn (Callable): The Rust implementation benchmark function.
-        python_fn (Callable): The Python implementation benchmark function.
-
-    """
+    """Benchmark a single pair of Rust and Python functions."""
     rust_meta = BENCHMARK_REGISTRY[rust_fn]
 
     # Use the cost from rust_meta (should be same for both)
     n_calls = rust_meta.cost.value // 10
 
-    rust_times = [
-        timeit.timeit(rust_fn, number=n_calls) for _ in range(rust_meta.cost.value)
-    ]
-    python_times = [
-        timeit.timeit(python_fn, number=n_calls) for _ in range(rust_meta.cost.value)
-    ]
-    rust_median = statistics.median(rust_times)
-    python_median = statistics.median(python_times)
+    rust_median = (
+        pc.Iter(range(rust_meta.cost.value))
+        .map(lambda _: timeit.timeit(rust_fn, number=n_calls))
+        .into(statistics.median)
+    )
+    python_median = (
+        pc.Iter(range(rust_meta.cost.value))
+        .map(lambda _: timeit.timeit(python_fn, number=n_calls))
+        .into(statistics.median)
+    )
+
     speedup = python_median / rust_median
     RESULTS.append(
         BenchmarkResult(
@@ -415,7 +408,6 @@ def all_benchmarks() -> None:
 @app.command()
 def focused() -> None:
     """Run focused build_args benchmark only."""
-    # Test: map_star - call1 vs call(..., None)
     CONSOLE.print(
         "\n[bold cyan]Test: map_star - call1 (optimized) vs call(..., None)[/bold cyan]"
     )
