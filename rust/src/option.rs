@@ -5,7 +5,7 @@ use pyo3::{
     ffi,
     prelude::*,
     sync::PyOnceLock,
-    types::{PyDict, PyFunction, PyString, PyTuple},
+    types::{PyDict, PyString, PyTuple},
 };
 use std::sync::atomic::{AtomicPtr, Ordering};
 /// Exception raised when unwrapping fails on Option types
@@ -133,7 +133,7 @@ impl PySome {
     #[pyo3(signature = (predicate, *args, **kwargs))]
     fn is_some_and(
         &self,
-        predicate: &Bound<'_, PyFunction>,
+        predicate: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
@@ -144,7 +144,7 @@ impl PySome {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn is_none_or(
         &self,
-        func: &Bound<'_, PyFunction>,
+        func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
@@ -169,7 +169,7 @@ impl PySome {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn map(
         &self,
-        func: &Bound<'_, PyFunction>,
+        func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
@@ -192,7 +192,7 @@ impl PySome {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn and_then(
         &self,
-        func: &Bound<'_, PyFunction>,
+        func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
@@ -200,7 +200,7 @@ impl PySome {
         Ok(call_func(func, &self.value.bind(py), args, kwargs)?.unbind())
     }
 
-    fn or_else(&self, f: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
+    fn or_else(&self, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = f.py();
         Ok(PySome::new(self.value.clone_ref(py)).init(py)?.into_any())
     }
@@ -221,7 +221,7 @@ impl PySome {
     fn map_or(
         &self,
         default: &Bound<'_, PyAny>,
-        f: &Bound<'_, PyFunction>,
+        f: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
@@ -240,7 +240,7 @@ impl PySome {
     #[pyo3(signature = (predicate, *args, **kwargs))]
     fn filter(
         &self,
-        predicate: &Bound<'_, PyFunction>,
+        predicate: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
@@ -259,7 +259,7 @@ impl PySome {
     #[pyo3(signature = (f, *args, **kwargs))]
     fn inspect(
         &self,
-        f: &Bound<'_, PyFunction>,
+        f: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
@@ -321,11 +321,7 @@ impl PySome {
         Ok(PySome::new(value).init(py)?.into_any())
     }
 
-    fn reduce(
-        &self,
-        other: &Bound<'_, PyAny>,
-        func: &Bound<'_, PyFunction>,
-    ) -> PyResult<Py<PyAny>> {
+    fn reduce(&self, other: &Bound<'_, PyAny>, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = other.py();
         let value = if other.is_instance_of::<PyNone>() {
             self.value.clone_ref(py)
@@ -394,7 +390,7 @@ impl PySome {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn into(
         slf: &Bound<'_, Self>,
-        func: &Bound<'_, PyFunction>,
+        func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
@@ -430,7 +426,7 @@ impl PyNone {
     #[pyo3(signature = (_predicate, *_args, **_kwargs))]
     fn is_some_and(
         &self,
-        _predicate: &Bound<'_, PyFunction>,
+        _predicate: &Bound<'_, PyAny>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> bool {
@@ -440,7 +436,7 @@ impl PyNone {
     #[pyo3(signature = (_func, *_args, **_kwargs))]
     fn is_none_or(
         &self,
-        _func: &Bound<'_, PyFunction>,
+        _func: &Bound<'_, PyAny>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> bool {
@@ -471,7 +467,7 @@ impl PyNone {
     #[pyo3(signature = (func, *_args, **_kwargs))]
     fn map(
         &self,
-        func: &Bound<'_, PyFunction>,
+        func: &Bound<'_, PyAny>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
@@ -488,14 +484,14 @@ impl PyNone {
     #[pyo3(signature = (func, *_args, **_kwargs))]
     fn and_then(
         &self,
-        func: &Bound<'_, PyFunction>,
+        func: &Bound<'_, PyAny>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         get_none_singleton(func.py())
     }
 
-    fn or_else(&self, f: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
+    fn or_else(&self, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         Ok(f.call0()?.unbind())
     }
 
@@ -505,7 +501,7 @@ impl PyNone {
         }
     }
 
-    fn ok_or_else(&self, err: &Bound<'_, PyFunction>) -> PyResult<result::PyErr> {
+    fn ok_or_else(&self, err: &Bound<'_, PyAny>) -> PyResult<result::PyErr> {
         Ok(result::PyErr {
             error: err.call0()?.unbind(),
         })
@@ -515,7 +511,7 @@ impl PyNone {
     fn map_or(
         &self,
         default: Py<PyAny>,
-        _f: &Bound<'_, PyFunction>,
+        _f: &Bound<'_, PyAny>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Py<PyAny> {
@@ -525,7 +521,7 @@ impl PyNone {
     fn map_or_else(
         &self,
         default: &Bound<'_, PyAny>,
-        _f: &Bound<'_, PyFunction>,
+        _f: &Bound<'_, PyAny>,
     ) -> PyResult<Py<PyAny>> {
         Ok(default.call0()?.unbind())
     }
@@ -533,7 +529,7 @@ impl PyNone {
     #[pyo3(signature = (predicate, *_args, **_kwargs))]
     fn filter(
         &self,
-        predicate: &Bound<'_, PyFunction>,
+        predicate: &Bound<'_, PyAny>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
@@ -547,7 +543,7 @@ impl PyNone {
     #[pyo3(signature = (f, *_args, **_kwargs))]
     fn inspect(
         &self,
-        f: &Bound<'_, PyFunction>,
+        f: &Bound<'_, PyAny>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
@@ -559,11 +555,11 @@ impl PyNone {
         Ok((none.clone_ref(py), none))
     }
 
-    fn map_star(&self, func: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
+    fn map_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         get_none_singleton(func.py())
     }
 
-    fn and_then_star(&self, func: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
+    fn and_then_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         get_none_singleton(func.py())
     }
 
@@ -571,15 +567,11 @@ impl PyNone {
         get_none_singleton(other.py())
     }
 
-    fn zip_with(
-        &self,
-        other: &Bound<'_, PyAny>,
-        _f: &Bound<'_, PyFunction>,
-    ) -> PyResult<Py<PyAny>> {
+    fn zip_with(&self, other: &Bound<'_, PyAny>, _f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         get_none_singleton(other.py())
     }
 
-    fn reduce(&self, other: Py<PyAny>, _func: &Bound<'_, PyFunction>) -> Py<PyAny> {
+    fn reduce(&self, other: Py<PyAny>, _func: &Bound<'_, PyAny>) -> Py<PyAny> {
         other
     }
 
@@ -628,7 +620,7 @@ impl PyNone {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn into(
         slf: &Bound<'_, Self>,
-        func: &Bound<'_, PyFunction>,
+        func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {

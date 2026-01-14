@@ -2,7 +2,7 @@ use pyo3::PyClass;
 
 use pyo3::ffi;
 use pyo3::prelude::*;
-use pyo3::types::{PyAny, PyDict, PyFunction, PyTuple};
+use pyo3::types::{PyDict, PyTuple};
 
 // Convenience helper to avoid nested calls
 pub trait PyClassInit {
@@ -21,7 +21,7 @@ impl<T: PyClass> PyClassInit for PyClassInitializer<T> {
 
 #[inline]
 pub fn call_func<'py>(
-    func: &Bound<'py, PyFunction>,
+    func: &Bound<'py, PyAny>,
     value: &Bound<'py, PyAny>,
     args: &Bound<'py, PyTuple>,
     kwargs: Option<&Bound<'py, PyDict>>,

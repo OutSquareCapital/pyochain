@@ -4,7 +4,7 @@ use pyderive::*;
 use pyo3::exceptions::PyValueError;
 use pyo3::{
     prelude::*,
-    types::{PyDict, PyFunction, PyString, PyTuple},
+    types::{PyDict, PyString, PyTuple},
 };
 /// Exception raised when unwrapping fails on Result types
 #[pyclass(extends = PyValueError)]
@@ -69,7 +69,7 @@ impl PyOk {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn map(
         &self,
-        func: &Bound<'_, PyFunction>,
+        func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
@@ -91,7 +91,7 @@ impl PyOk {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn and_then(
         &self,
-        func: &Bound<'_, PyFunction>,
+        func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
@@ -143,7 +143,7 @@ impl PyOk {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn into(
         slf: &Bound<'_, Self>,
-        func: &Bound<'_, PyFunction>,
+        func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
@@ -153,7 +153,7 @@ impl PyOk {
     #[pyo3(signature = (pred, *args, **kwargs))]
     fn is_ok_and(
         &self,
-        pred: &Bound<'_, PyFunction>,
+        pred: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
@@ -218,7 +218,7 @@ impl PyOk {
     fn map_or(
         &self,
         default: &Bound<'_, PyAny>,
-        func: &Bound<'_, PyFunction>,
+        func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
@@ -232,7 +232,7 @@ impl PyOk {
     #[pyo3(signature = (f, *args, **kwargs))]
     fn inspect(
         &self,
-        f: &Bound<'_, PyFunction>,
+        f: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
@@ -383,7 +383,7 @@ impl PyErr {
     #[pyo3(signature = (pred, *args, **kwargs))]
     fn is_err_and(
         &self,
-        pred: &Bound<'_, PyFunction>,
+        pred: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
@@ -393,7 +393,7 @@ impl PyErr {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn map_err(
         &self,
-        func: &Bound<'_, PyFunction>,
+        func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
@@ -405,7 +405,7 @@ impl PyErr {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn inspect_err(
         &self,
-        func: &Bound<'_, PyFunction>,
+        func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
@@ -474,7 +474,7 @@ impl PyErr {
     #[pyo3(signature = (func, *args, **kwargs))]
     fn into(
         slf: &Bound<'_, Self>,
-        func: &Bound<'_, PyFunction>,
+        func: &Bound<'_, PyAny>,
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
