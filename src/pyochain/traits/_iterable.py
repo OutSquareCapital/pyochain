@@ -23,8 +23,7 @@ from typing import TYPE_CHECKING, Any, Concatenate, Self, overload
 import cytoolz as cz
 
 from .._types import SupportsComparison, SupportsRichComparison
-from ..rs import NONE, Err, Ok, Option, Result, Some
-from ._converters import Checkable, Pipeable
+from ..rs import NONE, Checkable, Err, Ok, Option, Pipeable, Result, Some
 
 if TYPE_CHECKING:
     from random import Random

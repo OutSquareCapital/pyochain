@@ -5,7 +5,7 @@ Since `Pipeable` and `Checkable` depend only on Self for arguments, returns type
 `PyoIterable` is a more specific trait, equivalent to subclassing `abc.Iterable`, but with additional methods and requirements specific to pyochain.
 """
 
-from ._converters import Checkable, Pipeable
+from ..rs import Checkable, Pipeable
 from ._iterable import (
     PyoCollection,
     PyoItemsView,

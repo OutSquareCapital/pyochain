@@ -118,7 +118,6 @@ uv run maturin develop --release --uv
 Before committing, ensure all checks pass:
 
 ```bash
-# Format and lint Python
 uv run ruff check --fix src/pyochain
 uv run ruff format src/pyochain
 uv run pydoclint src/pyochain
