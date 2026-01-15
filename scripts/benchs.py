@@ -308,7 +308,7 @@ def _run_timing_measurements(fn: BenchFn, runs: int, iterations: int) -> pc.Vec[
     return times
 
 
-def _run_timing_measurements_with_progress(
+def _run_timing_measurements_with_progress(  # noqa: PLR0913
     fn: BenchFn,
     runs: int,
     iterations: Runs,
@@ -531,10 +531,10 @@ def focused(
 ) -> None:
     """Run focused build_args benchmark only."""
 
-    def _old():
+    def _old() -> int:
         return 1
 
-    def _new():
+    def _new() -> int:
         return 1
 
     assert _old() == _new()
