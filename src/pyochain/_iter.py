@@ -282,6 +282,9 @@ class Seq[T](PyoSequence[T]):
     def __init__(self, data: Iterable[T]) -> None:
         self._inner = tuple(data)
 
+    def __iter__(self) -> Iterator[T]:
+        return iter(self._inner)
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({_get_repr(self._inner)})"
 
@@ -581,6 +584,9 @@ class Iter[T](PyoIterator[T]):
 
     def __init__(self, data: Iterable[T]) -> None:
         self._inner = iter(data)
+
+    def __iter__(self) -> Iterator[T]:
+        return self._inner
 
     def __next__(self) -> T:
         return next(self._inner)
