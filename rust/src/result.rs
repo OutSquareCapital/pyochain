@@ -1,4 +1,4 @@
-use crate::option::{PyNone, PySome, get_none_singleton};
+use crate::option::{PySome, get_none_singleton};
 use crate::types::{PyClassInit, call_func};
 use pyderive::*;
 use pyo3::exceptions::PyValueError;
@@ -17,6 +17,14 @@ impl ResultUnwrapError {
         ResultUnwrapError
     }
 }
+#[derive(FromPyObject)]
+pub enum PyResultEnum<'py> {
+    #[pyo3(transparent)]
+    Ok(Bound<'py, PyOk>),
+    #[pyo3(transparent)]
+    Err(Bound<'py, PyErr>),
+}
+/// Result[T, E] - Generic Result type with Ok and Err variants for Python typing
 #[pyclass(frozen, name = "Result", generic)]
 pub struct PyochainResult;
 
@@ -186,16 +194,12 @@ impl PyOk {
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let inner = self.value.bind(py);
-        if let Ok(some_ref) = inner.extract::<PyRef<PySome>>() {
-            let ok_value = Py::new(py, PyOk::new(some_ref.value.clone_ref(py)))?.into_any();
-            Ok(PySome::new(ok_value).init(py)?.into_any())
-        } else if inner.is_instance_of::<PyNone>() {
-            get_none_singleton(py)
-        } else {
-            Err(pyo3::exceptions::PyTypeError::new_err(
-                "Expected Some or NONE result",
-            ))
+        match self.value.bind(py).extract::<PyRef<PySome>>() {
+            Ok(some_ref) => {
+                let ok_value = Py::new(py, PyOk::new(some_ref.value.clone_ref(py)))?.into_any();
+                Ok(PySome::new(ok_value).init(py)?.into_any())
+            }
+            Err(_) => get_none_singleton(py),
         }
     }
 

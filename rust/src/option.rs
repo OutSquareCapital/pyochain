@@ -1,4 +1,4 @@
-use crate::result;
+use crate::result::{self, PyResultEnum};
 use crate::types::{PyClassInit, call_func};
 use pyo3::exceptions::PyValueError;
 use pyo3::{
@@ -35,7 +35,7 @@ pub fn get_none_singleton(py: Python<'_>) -> PyResult<Py<PyAny>> {
         })
         .map(|singleton| singleton.clone_ref(py))
 }
-
+/// Option[T] - Generic Option type with Some and None variants for Python typing
 #[pyclass(frozen, name = "Option", generic, subclass)]
 pub struct PyochainOption;
 
@@ -115,7 +115,6 @@ impl PySome {
             self.value.bind(py).eq(other)
         }
     }
-
     fn __bool__(&self) -> PyResult<bool> {
         Err(pyo3::exceptions::PyTypeError::new_err(
             "Option instances cannot be used in boolean contexts for implicit `Some|None` value checking. Use is_some() or is_none() instead.",
@@ -347,24 +346,22 @@ impl PySome {
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let inner = self.value.bind(py);
-        if let Ok(ok_ref) = inner.extract::<PyRef<result::PyOk>>() {
-            let unwrapped = ok_ref.value.clone_ref(py);
-            let some_value = PySome::new(unwrapped).init(py)?.into_any();
-            Ok(Py::new(py, result::PyOk::new(some_value))?.into_any())
-        } else if let Ok(err_ref) = inner.extract::<PyRef<result::PyErr>>() {
-            Ok(Py::new(py, result::PyErr::new(err_ref.error.clone_ref(py)))?.into_any())
-        } else {
-            Err(pyo3::exceptions::PyTypeError::new_err(
-                "Expected Ok or Err result",
-            ))
+        match inner.extract::<PyResultEnum>()? {
+            PyResultEnum::Ok(ok_ref) => {
+                let some_value = PySome::new(ok_ref.get().value.clone_ref(py))
+                    .init(py)?
+                    .into_any();
+                Ok(Py::new(py, result::PyOk::new(some_value))?.into_any())
+            }
+            PyResultEnum::Err(err_ref) => {
+                Ok(Py::new(py, result::PyErr::new(err_ref.get().error.clone_ref(py)))?.into_any())
+            }
         }
     }
-
     fn eq(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-        if let Ok(other_some) = other.extract::<PyRef<PySome>>() {
-            self.value.bind(other.py()).eq(&other_some.value)
-        } else {
-            Ok(false)
+        match other.extract::<PyRef<PySome>>() {
+            Ok(other_some) => self.value.bind(other.py()).eq(&other_some.value),
+            Err(_) => Ok(false),
         }
     }
 
