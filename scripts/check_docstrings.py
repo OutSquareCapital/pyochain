@@ -13,7 +13,7 @@ import pyochain as pc
 
 SRC_DIR = Path().joinpath("src", "pyochain")
 CODE_BLOCK_PATTERN = re.compile(r"^```(\w*)", re.MULTILINE)
-SKIP_DECORATORS = frozenset({"overload", "override"})
+SKIP_DECORATORS = frozenset({"overload", "override", "no_doctest"})
 
 
 class DocstringInfo(NamedTuple):
@@ -113,7 +113,9 @@ def _process_node(
             )
         return pc.NONE
 
-    result = _check_code_blocks(docstring, node.lineno, node.name)
+    result = _check_code_blocks(
+        docstring, node.lineno, node.name, skip_doctest=_has_skip_decorator(node)
+    )
     match result:
         case pc.Err(errors):
             return pc.Some(
@@ -139,9 +141,12 @@ def _has_skip_decorator(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
 
 
 def _check_code_blocks(
-    docstring: str, start_line: int, func_name: str
+    docstring: str, start_line: int, func_name: str, *, skip_doctest: bool = False
 ) -> pc.Result[None, pc.Seq[ErrorDetail]]:
-    """Check that all code blocks in docstring are properly closed and that at least one python block exists."""
+    """Check that all code blocks in docstring are properly closed and that at least one python block exists.
+
+    If skip_doctest is True or docstring contains @no_doctest flag, skips the python block requirement.
+    """
 
     def _process_line(state: State, item: tuple[int, str]) -> State:
         """Process a single line and update state."""
@@ -184,6 +189,9 @@ def _check_code_blocks(
         )
     )
 
+    # Check for @no_doctest flag in docstring
+    has_no_doctest_flag = docstring.find("@no_doctest") != -1 or skip_doctest
+
     all_errors = (
         final_state.errors.iter()
         .chain(
@@ -196,7 +204,7 @@ def _check_code_blocks(
         )
         .chain(
             []
-            if func_name.startswith("_") or func_name.istitle()
+            if (func_name.startswith("_") or func_name.istitle() or has_no_doctest_flag)
             else (
                 [
                     ErrorDetail(
