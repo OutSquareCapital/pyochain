@@ -425,6 +425,7 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
         >>> pc.Iter((3, 1, 2)).map(str).collect(pc.Vec).sort(key=int)
         Vec('1', '2', '3')
 
+        ```
         """
         self._inner.sort(key=key, reverse=reverse)  # type: ignore[arg-type]
         return self
@@ -507,6 +508,7 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
         >>> v
         Vec()
 
+        ```
         """
         return Iter(
             DrainIterator(self, start if start else 0, end if end else len(self))
@@ -541,6 +543,8 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
         >>> # New vec remains unaffected
         >>> v3
         Vec(1, 2, 3, 4, 5, 6)
+
+        ```
         """
         match other:
             case Vec():
@@ -1075,18 +1079,52 @@ class Iter[T](PyoIterator[T]):
     @overload
     def flatten(self: Iter[range]) -> Iter[int]: ...
     def flatten[U: Iterable[Any]](self: Iter[U]) -> Iter[Any]:
-        """Flatten one level of nesting and return a new Iterable wrapper.
-
-        This is a shortcut for `.apply(itertools.chain.from_iterable)`.
+        """Creates an `Iter` that flattens nested structure.
 
         Returns:
-            Iter[Any]: An iterable of flattened elements.
+            Iter[Any]: An `Iter` of flattened elements.
+
+        This is useful when you have an `Iter` of `Iterable` and you want to remove one level of indirection.
+
+        Examples:
+        Basic usage:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter([[1, 2], [3]]).flatten().collect()
-        Seq(1, 2, 3)
+        >>> data = [[1, 2, 3, 4], [5, 6]]
+        >>> flattened = pc.Iter(data).flatten().collect()
+        >>> flattened
+        Seq(1, 2, 3, 4, 5, 6)
 
         ```
+        Mapping and then flattening:
+        ```python
+        >>> import pyochain as pc
+        >>> words = pc.Iter(["alpha", "beta", "gamma"])
+        >>> merged = words.flatten().collect()
+        >>> merged
+        Seq('a', 'l', 'p', 'h', 'a', 'b', 'e', 't', 'a', 'g', 'a', 'm', 'm', 'a')
+
+        ```
+        Flattening only removes one level of nesting at a time:
+        ```python
+        >>> import pyochain as pc
+        >>> d3 = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
+        >>> d2 = pc.Iter(d3).flatten().collect()
+        >>> d2
+        Seq([1, 2], [3, 4], [5, 6], [7, 8])
+        >>> d1 = pc.Iter(d3).flatten().flatten().collect()
+        >>> d1
+        Seq(1, 2, 3, 4, 5, 6, 7, 8)
+
+        ```
+        Here we see that `flatten()` does not perform a “deep” flatten.
+
+        Instead, only **one** level of nesting is removed.
+
+        That is, if you `flatten()` a three-dimensional array, the result will be two-dimensional and not one-dimensional.
+
+        To get a one-dimensional structure, you have to `flatten()` again.
+
         """
         return Iter(itertools.chain.from_iterable(self._inner))
 

@@ -1603,7 +1603,6 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
         >>> pc.Iter((1, 2, 3)).accumulate(lambda a, b: a * b).collect()
         Seq(1, 2, 6)
 
-
         ```
         """
         return self.__class__(
@@ -2003,6 +2002,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):
         >>> pc.Set({1, 2, 2}).difference([2, 3])
         Set(1,)
 
+        ```
         """
         return self.__class__(self - other)
 
@@ -2423,7 +2423,6 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):
         Vec(2, 3, 5)
 
         ```
-
         """
         write_idx = 0
         length = len(self)
@@ -2499,6 +2498,8 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):
         Vec(1, 2, 3, 4, 5, 6)
         >>> v2
         Vec()
+
+        ```
         """
         pop = functools.partial(other.pop, 0)
         self.extend(pop() for _ in range(len(other)))
