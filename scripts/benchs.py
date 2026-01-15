@@ -1,14 +1,12 @@
 """Comprehensive benchmarks for Option types: Rust vs Python implementations."""
 
-import statistics
 import timeit
-import tracemalloc
 from collections.abc import Callable
-from dataclasses import dataclass
 from enum import IntEnum, StrEnum, auto
 from functools import partial, wraps
-from typing import Annotated, Final, NamedTuple, Self
+from typing import Final, NamedTuple
 
+import polars as pl
 import typer
 from rich.console import Console
 from rich.progress import (
@@ -26,7 +24,7 @@ import pyochain as pc
 
 app = typer.Typer(help="Benchmarks for pyochain developments.")
 
-type BenchFn = Callable[[], object]
+CONSOLE: Final = Console()
 
 
 class Runs(IntEnum):
@@ -41,117 +39,8 @@ class Runs(IntEnum):
 class Implementation(StrEnum):
     """Implementation type for benchmarks."""
 
-    RUST = auto()
-    PYTHON = auto()
-
-
-@dataclass(slots=True)
-class BenchResult:
-    """Base class for benchmark results."""
-
-    category: str
-    name: str
-    rust_result: float
-    python_result: float
-
-    @property
-    def style(self) -> str:
-        """Get style based on speedup."""
-        return "green bold" if self.ratio > 1 else "red bold"
-
-    def to_row(self) -> tuple[str, str, str, str, Text]:
-        """Convert the result to a table row."""
-        return (
-            self.category,
-            self.name,
-            f"{self.rust_result:.4f}",
-            f"{self.python_result:.4f}",
-            Text(f"{self.ratio:.2f}x", style=self.style),
-        )
-
-    @property
-    def ratio(self) -> float:
-        """Get the ratio of Python to Rust results."""
-        return self.python_result / self.rust_result
-
-
-class MemoryStats(NamedTuple):
-    """Statistical summary of memory measurements."""
-
-    median: float
-    mean: float
-    min: float
-    max: float
-
-    @classmethod
-    def from_memories(cls, memories: pc.Vec[float]) -> Self:
-        """Compute stats from a list of memory measurements (in MB)."""
-        return cls(
-            statistics.median(memories),
-            statistics.mean(memories),
-            pc.Seq(memories).iter().min(),
-            pc.Seq(memories).iter().max(),
-        )
-
-
-class Stats(NamedTuple):
-    """Statistical summary of benchmark results."""
-
-    median: float
-    mean: float
-    stddev: float
-    q1: float
-    q3: float
-
-    @classmethod
-    def from_times(cls, times: pc.Vec[float]) -> Self:
-        """Compute stats from a list of times."""
-        return cls(
-            statistics.median(times),
-            statistics.mean(times),
-            statistics.stdev(times),
-            sorted(times)[len(times) // 4],
-            sorted(times)[3 * len(times) // 4],
-        )
-
-
-class RelativeStats(NamedTuple):
-    """Relative statistical summary compared to a baseline."""
-
-    rel_median: float
-    rel_mean: float
-    improvement_pct: float
-    rel_stddev_new: float
-    rel_stddev_old: float
-    q1_rel: float
-    q3_rel: float
-
-    @classmethod
-    def from_comparison(cls, old_stats: Stats, new_stats: Stats) -> Self:
-        """Compute relative stats between old and new benchmark results."""
-        return cls(
-            (old_stats.median / new_stats.median),
-            (old_stats.mean / new_stats.mean),
-            ((old_stats.median - new_stats.median) / old_stats.median) * 100,
-            (new_stats.stddev / new_stats.median) * 100,
-            (old_stats.stddev / old_stats.median) * 100,
-            old_stats.q1 / new_stats.q1,
-            old_stats.q3 / new_stats.q3,
-        )
-
-    def get_conclusion(self, old_name: str, new_name: str) -> Text:
-        """Generate a conclusion text based on relative performance."""
-        if self.rel_median > 1:
-            improvement_pct = (self.rel_median - 1) * 100
-            return Text(
-                f"✓ {new_name} is +{improvement_pct:.1f}% faster",
-                style="bold green",
-            )
-        improvement_pct = (1 - self.rel_median) * 100
-        return Text(
-            f"✗ {old_name} is +{improvement_pct:.1f}% faster",
-            style="bold red",
-        )
+    OLD = auto()
+    NEW = auto()
 
 
 class BenchmarkMetadata(NamedTuple):
@@ -168,20 +57,20 @@ class BenchmarkMetadata(NamedTuple):
         return self.cost.value // 10
 
 
-CONSOLE: Final = Console()
+type BenchFn = Callable[[], object]
 BENCHMARK_REGISTRY = pc.Dict[BenchFn, BenchmarkMetadata].new()
 
 
-def bench[O, N, R](
+def bench[T, N, R](
     category: str,
     *,
-    old: O,
-    new: N,
+    old: T,
+    new: T,
     cost: Runs = Runs.CHEAP,
-) -> Callable[[Callable[[O | N], R]], Callable[[O | N], R]]:
+) -> Callable[[Callable[[T], R]], Callable[[T], R]]:
     """Decorator to register a benchmark function for both old and new implementations."""
 
-    def decorator(func: Callable[[O | N], R]) -> Callable[[O | N], R]:
+    def decorator(func: Callable[[T], R]) -> Callable[[T], R]:
         @wraps(func, updated=())
         def old_wrapper() -> R:
             return func(old)
@@ -194,42 +83,43 @@ def bench[O, N, R](
             category=category,
             name=func.__name__,
             cost=cost,
-            implementation=Implementation.PYTHON,
+            implementation=Implementation.OLD,
         )
         new_meta = BenchmarkMetadata(
             category=category,
             name=func.__name__,
             cost=cost,
-            implementation=Implementation.RUST,
+            implementation=Implementation.NEW,
         )
-
-        BENCHMARK_REGISTRY[old_wrapper] = old_meta
-        BENCHMARK_REGISTRY[new_wrapper] = new_meta
+        BENCHMARK_REGISTRY.try_insert(old_wrapper, old_meta).expect(
+            "Failed to register benchmark"
+        )
+        BENCHMARK_REGISTRY.try_insert(new_wrapper, new_meta).expect(
+            "Failed to register benchmark"
+        )
 
         return func
 
     return decorator
 
 
-def _run_all_benchmarks() -> pc.Vec[BenchResult]:
+def _run_all_benchmarks() -> pl.DataFrame:
     """Run all registered benchmarks by pairing Rust and Python implementations."""
-    benchmark_pairs: dict[tuple[str, str], dict[str, BenchFn]] = {}
-    timing_results = pc.Vec[BenchResult].new()
-    for func, meta in BENCHMARK_REGISTRY.items():
+    benchmark_pairs = pc.Dict[tuple[str, str], dict[Implementation, BenchFn]].new()
+    results = pc.Vec[dict[str, object]].new()
+
+    for func, meta in BENCHMARK_REGISTRY.items().iter():
         key = (meta.category, meta.name)
         if key not in benchmark_pairs:
             benchmark_pairs[key] = {}
         benchmark_pairs[key][meta.implementation] = func
 
-    # Validate and create benchmark list
-    benchmarks: list[tuple[BenchFn, BenchFn]] = []
-    for (category, name), impls in benchmark_pairs.items():
-        if "rust" not in impls or "python" not in impls:
-            CONSOLE.print(
-                f"[yellow]Warning: Skipping {category}/{name} - missing implementation[/yellow]"
-            )
-            continue
-        benchmarks.append((impls["rust"], impls["python"]))
+    benchmarks = (
+        benchmark_pairs.values()
+        .iter()
+        .map(lambda impls: (impls[Implementation.NEW], impls[Implementation.OLD]))
+        .collect()
+    )
 
     with Progress(
         SpinnerColumn(),
@@ -243,10 +133,9 @@ def _run_all_benchmarks() -> pc.Vec[BenchResult]:
             "[cyan]Running benchmarks...", total=len(benchmarks) * 2
         )
         for rust_fn, python_fn in benchmarks:
-            meta = BENCHMARK_REGISTRY[rust_fn]
+            meta = BENCHMARK_REGISTRY.get_item(rust_fn).unwrap()
             n_calls = meta.n_calls
 
-            # Timing benchmark
             progress.update(
                 task, description=f"[cyan]{meta.category}: {meta.name} (New)"
             )
@@ -259,19 +148,25 @@ def _run_all_benchmarks() -> pc.Vec[BenchResult]:
             python_times = _run_timing_measurements(python_fn, meta.cost.value, n_calls)
             progress.advance(task)
 
-            timing_results.append(
-                BenchResult(
-                    category=meta.category,
-                    name=meta.name,
-                    rust_result=rust_times.into(statistics.median),
-                    python_result=python_times.into(statistics.median),
-                )
+            rust_median = pl.Series(rust_times).median()
+            python_median = pl.Series(python_times).median()
+
+            results.append(
+                {
+                    "category": meta.category,
+                    "name": meta.name,
+                    "rust_median": rust_median,
+                    "python_median": python_median,
+                }
             )
 
-    return timing_results
+    return pl.DataFrame(results).with_columns(
+        pl.col("python_median").truediv(pl.col("rust_median")).alias("ratio")
+    )
 
 
-def _display_results(results: pc.Vec[BenchResult]) -> None:
+def _display_results(results: pl.DataFrame) -> None:
+    """Display benchmark results table and summary."""
     table = Table(title="Benchmark Results")
     table.add_column("Category", style="cyan")
     table.add_column("Operation", style="white")
@@ -279,33 +174,44 @@ def _display_results(results: pc.Vec[BenchResult]) -> None:
     table.add_column("Python (s, median)", justify="right", style="yellow")
     table.add_column("Speedup", justify="right")
 
-    for result in results:
-        table.add_row(*result.to_row())
+    def _add_row(row: dict[str, object]) -> None:
+        ratio: float = row["ratio"]  # type: ignore[assignment]
+        style = "green bold" if ratio > 1 else "red bold"
+        table.add_row(
+            str(row["category"]),
+            str(row["name"]),
+            f"{row['rust_median']:.4f}",
+            f"{row['python_median']:.4f}",
+            Text(f"{ratio:.2f}x", style=style),
+        )
 
+    pc.Iter(results.iter_rows(named=True)).for_each(_add_row)
     CONSOLE.print(table)
 
-    # Summary
-    medians = results.iter().map(lambda r: r.ratio).collect()
-    median_speedup = medians.into(statistics.median)
+    summary = results.select(
+        pl.col("ratio").median().alias("median_speedup"),
+        pl.col("ratio").gt(1).sum().alias("wins"),
+        pl.len().alias("total"),
+    ).row(0, named=True)
 
-    wins = medians.iter().filter(lambda x: x > 1).length()
     CONSOLE.print()
     summary_line = Text("Median speedup: ", style="bold") + Text(
-        f"{median_speedup:.2f}x", style="green bold"
+        f"{summary['median_speedup']:.2f}x", style="green bold"
     )
     CONSOLE.print(summary_line)
     wins_line = Text("Rust wins: ", style="bold") + Text(
-        f"{wins}/{results.length()}", style="cyan"
+        f"{summary['wins']}/{summary['total']}", style="cyan"
     )
     CONSOLE.print(wins_line)
 
 
-def _run_timing_measurements(fn: BenchFn, runs: int, iterations: int) -> pc.Vec[float]:
+def _run_timing_measurements(fn: BenchFn, runs: int, iterations: int) -> pc.Seq[float]:
     """Run timing measurements for a function and return execution times."""
-    times = pc.Vec[float].new()
-    for _ in range(runs):
-        times.append(timeit.timeit(fn, number=iterations))
-    return times
+    return (
+        pc.Iter(range(runs))
+        .map(lambda _: timeit.timeit(fn, number=iterations))
+        .collect()
+    )
 
 
 def _run_timing_measurements_with_progress(  # noqa: PLR0913
@@ -315,45 +221,20 @@ def _run_timing_measurements_with_progress(  # noqa: PLR0913
     progress: Progress,
     task_id: object,
     description: str,
-) -> pc.Vec[float]:
+) -> pc.Seq[float]:
     """Run timing measurements with progress bar updates."""
-    times = pc.Vec[float].new()
     progress.update(task_id, description=description)  # type: ignore[arg-type]
-    for _ in range(runs):
-        times.append(timeit.timeit(fn, number=iterations.value // 10))
+
+    def _measure(_: int) -> float:
+        result = timeit.timeit(fn, number=iterations.value // 10)
         progress.advance(task_id)  # type: ignore[arg-type]
-    return times
+        return result
+
+    return pc.Iter(range(runs)).map(_measure).collect()
 
 
-def _run_memory_measurements(fn: BenchFn, runs: int, iterations: int) -> pc.Vec[float]:
-    """Run memory measurements for a function and return peak memory values."""
-    memories = pc.Vec[float].new()
-    tracemalloc.start()
-
-    for _ in range(runs):
-        # Get baseline before test
-        baseline_current, _ = tracemalloc.get_traced_memory()
-        tracemalloc.reset_peak()
-
-        # Run test iterations
-        for _ in range(iterations):
-            fn()
-
-        # Measure peak relative to baseline
-        _current, peak = tracemalloc.get_traced_memory()
-        net_peak = max(0.0, peak - baseline_current)
-        memories.append(net_peak / 1024 / 1024)
-
-    tracemalloc.stop()
-    return memories
-
-
-def _run_focused_benchmark(
-    old: partial[object], new: partial[object], *, memory: bool
-) -> None:
-    """Run focused, robust benchmark between two implementations with timing and memory."""
-    old_name = old.func.__name__
-    new_name = new.func.__name__
+def _run_focused_benchmark[T](old: partial[T], new: partial[T]) -> None:
+    """Run focused, robust benchmark between two implementations."""
     calls = Runs.FOCUSED.value // 10
     CONSOLE.print(Text("Running Focused Robustness Benchmark...", style="bold blue"))
     CONSOLE.print(
@@ -362,14 +243,13 @@ def _run_focused_benchmark(
             style="dim",
         )
     )
-    _display_speed_comparison(old_name, new_name, old, new, calls)
-    if memory:
-        _display_memory_comparison(old_name, new_name, old, new, calls)
+    _display_speed_comparison(old.func.__name__, new.func.__name__, old, new, calls)
 
 
 def _display_speed_comparison(
     old_name: str, new_name: str, old: BenchFn, new: BenchFn, calls: int
 ) -> None:
+    """Display speed comparison between two implementations using Polars for stats."""
     CONSOLE.print()
     with Progress(
         SpinnerColumn(),
@@ -386,131 +266,130 @@ def _display_speed_comparison(
         new_times = _run_timing_measurements_with_progress(
             new, calls, Runs.FOCUSED, progress, task, f"[cyan]Timing {new_name}"
         )
-    old_stats = old_times.into(Stats.from_times)
-    new_stats = new_times.into(Stats.from_times)
-    relative = RelativeStats.from_comparison(old_stats, new_stats)
-    table = _get_table(relative, old_stats, new_stats)
+
+    comparison_df = _compute_comparison_stats(old_times, new_times)
+    table = _build_comparison_table(comparison_df)
     CONSOLE.print(table)
     CONSOLE.print()
-    CONSOLE.print(relative.get_conclusion(old_name, new_name))
+    _print_conclusion(comparison_df, old_name, new_name)
 
 
-def _display_memory_comparison(
-    old_name: str, new_name: str, old: BenchFn, new: BenchFn, calls: int
-) -> None:
-    # Memory measurements
-    CONSOLE.print()
-    CONSOLE.print(Text("Memory Profiling...", style="bold blue"))
-    old_mem_stats = _run_memory_measurements(old, calls, Runs.FOCUSED).into(
-        MemoryStats.from_memories
+def _compute_comparison_stats(
+    old_times: pc.Seq[float], new_times: pc.Seq[float]
+) -> pl.DataFrame:
+    """Compute comparison statistics using Polars long format."""
+    time_col = pl.col("time")
+    sources = (
+        pc.Iter.once("old")
+        .cycle()
+        .take(old_times.length())
+        .chain(pc.Iter.once("new").cycle().take(new_times.length()))
+        .collect()
     )
-    new_mem_stats = _run_memory_measurements(new, calls, Runs.FOCUSED).into(
-        MemoryStats.from_memories
+    times = old_times.iter().chain(new_times).collect()
+    return (
+        pl.DataFrame({"source": sources, "time": times})
+        .group_by("source")
+        .agg(
+            time_col.median().alias("median"),
+            time_col.mean().alias("mean"),
+            time_col.std().alias("std"),
+            time_col.quantile(0.25).alias("q1"),
+            time_col.quantile(0.75).alias("q3"),
+        )
+        .with_columns(
+            pl.col("std").truediv(pl.col("median")).mul(100).alias("cv_pct"),
+            pl.col("q3").sub(pl.col("q1")).truediv(pl.col("median")).alias("iqr_rel"),
+        )
     )
-    CONSOLE.print()
-    mem_table = Table()
-    mem_table.add_column("Metric", style="cyan")
-    mem_table.add_column(old_name, justify="right", style="yellow")
-    mem_table.add_column(new_name, justify="right", style="green")
-    mem_table.add_column("Ratio", justify="right", style="magenta")
-
-    ratio = (
-        old_mem_stats.median / new_mem_stats.median if new_mem_stats.median > 0 else 1.0
-    )
-    ratio_style = "green bold" if ratio > 1 else "red bold"
-
-    mem_table.add_row(
-        "Median (MB)",
-        f"{old_mem_stats.median:.4f}",
-        f"{new_mem_stats.median:.4f}",
-        Text(f"{ratio:.4f}x", style=ratio_style),
-    )
-    mem_table.add_row(
-        "Mean (MB)",
-        f"{old_mem_stats.mean:.4f}",
-        f"{new_mem_stats.mean:.4f}",
-        f"{old_mem_stats.mean / new_mem_stats.mean if new_mem_stats.mean > 0 else 1.0:.4f}x",
-    )
-    mem_table.add_row(
-        "Min (MB)",
-        f"{old_mem_stats.min:.4f}",
-        f"{new_mem_stats.min:.4f}",
-        f"{old_mem_stats.min / new_mem_stats.min if new_mem_stats.min > 0 else 1.0:.4f}x",
-    )
-    mem_table.add_row(
-        "Max (MB)",
-        f"{old_mem_stats.max:.4f}",
-        f"{new_mem_stats.max:.4f}",
-        f"{old_mem_stats.max / new_mem_stats.max if new_mem_stats.max > 0 else 1.0:.4f}x",
-    )
-    CONSOLE.print(mem_table)
 
 
-def _get_table(relative: RelativeStats, old_stats: Stats, new_stats: Stats) -> Table:
+def _build_comparison_table(stats_df: pl.DataFrame) -> Table:
+    """Build Rich table from pre-computed stats DataFrame."""
+    stats = (
+        pc.Iter(stats_df.iter_rows(named=True))
+        .map(lambda r: (r["source"], r))
+        .collect(pc.Dict)
+    )
+    old = stats.get_item("old").unwrap()
+    new = stats.get_item("new").unwrap()
+    rel_median = old["median"] / new["median"]
+    rel_mean = old["mean"] / new["mean"]
+    improvement_pct = (1 - new["median"] / old["median"]) * 100
+
     table = Table()
     table.add_column("Metric", style="cyan")
     table.add_column("new", justify="right", style="green")
     table.add_column("old", justify="right", style="yellow")
     table.add_column("Relative", justify="right", style="magenta")
 
-    if relative.rel_median > 1:
-        speedup_msg = Text("new ", style="green bold") + Text(
-            f"{relative.rel_median:.2f}x faster", style="green bold"
-        )
-        new_speedup = f"{1 / relative.rel_median:.3f}x"
-        old_speedup = "1.00x"
-    else:
-        speedup_msg = Text("old ", style="yellow bold") + Text(
-            f"{1 / relative.rel_median:.2f}x faster", style="yellow bold"
-        )
-        new_speedup = "1.00x"
-        old_speedup = f"{relative.rel_median:.3f}x"
-
-    table.add_row("Speedup", new_speedup, old_speedup, speedup_msg)
-
-    if relative.rel_median > 1:
-        improvement_label = Text("faster", style="green bold")
-        improvement_value = (relative.rel_median - 1) * 100
-    else:
-        improvement_label = Text("slower", style="yellow bold")
-        improvement_value = (1 - relative.rel_median) * 100
-    improvement_text = (
-        Text(f"{improvement_value:+.1f}% ", style="dim") + improvement_label
+    new_faster = rel_median > 1
+    winner, loser_style = (
+        ("new", "green bold") if new_faster else ("old", "yellow bold")
     )
-    table.add_row("Improvement", "—", "—", improvement_text)
-
-    # Median
+    speedup = rel_median if new_faster else 1 / rel_median
     table.add_row(
-        "Median (rel)",
-        "1.00",
-        f"{relative.rel_median:.3f}",
-        f"{relative.improvement_pct:+.1f}%",
+        "Speedup",
+        f"{1 / rel_median:.3f}x" if new_faster else "1.00x",
+        "1.00x" if new_faster else f"{rel_median:.3f}x",
+        Text(f"{winner} {speedup:.2f}x faster", style=loser_style),
     )
 
-    # Mean
+    improvement_value = (speedup - 1) * 100
+    label = "faster" if new_faster else "slower"
+    table.add_row(
+        "Improvement",
+        "—",
+        "—",
+        Text(f"{improvement_value:+.1f}% ", style="dim")
+        + Text(label, style=loser_style),
+    )
+
+    table.add_row(
+        "Median (rel)", "1.00", f"{rel_median:.3f}", f"{improvement_pct:+.1f}%"
+    )
     table.add_row(
         "Mean (rel)",
         "1.00",
-        f"{old_stats.mean / new_stats.mean:.3f}",
-        f"{((old_stats.mean - new_stats.mean) / old_stats.mean * 100):+.1f}%",
+        f"{rel_mean:.3f}",
+        f"{(1 - new['mean'] / old['mean']) * 100:+.1f}%",
     )
-
-    # Variability (CV%)
     table.add_row(
         "Variability (CV%)",
-        f"{relative.rel_stddev_new:.2f}%",
-        f"{relative.rel_stddev_old:.2f}%",
-        f"{relative.rel_stddev_old - relative.rel_stddev_new:+.2f}%",
+        f"{new['cv_pct']:.2f}%",
+        f"{old['cv_pct']:.2f}%",
+        f"{old['cv_pct'] - new['cv_pct']:+.2f}%",
     )
-
-    # IQR
     table.add_row(
         "IQR (rel)",
-        f"{(new_stats.q3 - new_stats.q1) / new_stats.median:.4f}",
-        f"{(old_stats.q3 - old_stats.q1) / old_stats.median:.4f}",
-        f"{((old_stats.q3 - old_stats.q1) / old_stats.median - (new_stats.q3 - new_stats.q1) / new_stats.median):+.4f}",
+        f"{new['iqr_rel']:.4f}",
+        f"{old['iqr_rel']:.4f}",
+        f"{old['iqr_rel'] - new['iqr_rel']:+.4f}",
     )
     return table
+
+
+def _print_conclusion(stats_df: pl.DataFrame, old_name: str, new_name: str) -> None:
+    """Print conclusion message based on comparison stats."""
+    stats = pc.Iter(stats_df.iter_rows(named=True)).into(
+        lambda rows: pc.Dict({r["source"]: r["median"] for r in rows})
+    )
+    rel_median = stats.get_item("old").unwrap() / stats.get_item("new").unwrap()
+
+    if rel_median > 1:
+        CONSOLE.print(
+            Text(
+                f"✓ {new_name} is +{(rel_median - 1) * 100:.1f}% faster",
+                style="bold green",
+            )
+        )
+    else:
+        CONSOLE.print(
+            Text(
+                f"✗ {old_name} is +{(1 - rel_median) * 100:.1f}% faster",
+                style="bold red",
+            )
+        )
 
 
 @app.command(name="all")
@@ -525,10 +404,7 @@ def all_benchmarks() -> None:
 
 
 @app.command()
-def focused(
-    *,
-    mem: Annotated[bool, typer.Option(help="Run memory benchmarks")] = False,
-) -> None:
+def focused() -> None:
     """Run focused build_args benchmark only."""
 
     def _old() -> int:
@@ -542,7 +418,6 @@ def focused(
     _run_focused_benchmark(
         old=partial(_old),  # type: ignore[arg-type]
         new=partial(_new),  # type: ignore[arg-type]
-        memory=mem,
     )
 
 
