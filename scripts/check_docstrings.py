@@ -13,7 +13,7 @@ import pyochain as pc
 
 SRC_DIR = Path().joinpath("src", "pyochain")
 CODE_BLOCK_PATTERN = re.compile(r"^```(\w*)", re.MULTILINE)
-SKIP_DECORATORS = frozenset({"overload", "override", "no_doctest"})
+SKIP_DECORATORS = frozenset({"overload", "override", "no_doctest", "wraps"})
 
 
 class DocstringInfo(NamedTuple):

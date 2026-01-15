@@ -1,9 +1,25 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
+from functools import wraps
 from typing import Any, Protocol
 
-# typeshed protocols
+
+def no_doctest[**P, R](func: Callable[P, R]) -> Callable[P, R]:
+    """Decorator to mark functions that should skip doctest checks.
+
+    This is type-checking only and has no runtime effect.
+
+    Can also be marked in docstrings like so:
+
+    @no_doctest
+    """
+
+    @wraps(func)
+    def _wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        return func(*args, **kwargs)
+
+    return _wrapper
 
 
 class SupportsDunderLT[T](Protocol):
