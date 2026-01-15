@@ -30,10 +30,10 @@ CONSOLE: Final = Console()
 class Runs(IntEnum):
     """Cost category for benchmarks, determining iteration counts."""
 
-    FOCUSED = 1000
+    FOCUSED = 10_000
     CHEAP = 5_000
     NORMAL = 2_500
-    EXPENSIVE = 1000
+    EXPENSIVE = 100
 
 
 class Implementation(StrEnum):
@@ -103,10 +103,10 @@ def bench[T, N, R](
     return decorator
 
 
-def _run_all_benchmarks() -> pl.DataFrame:
-    """Run all registered benchmarks by pairing Rust and Python implementations."""
+def _collect_raw_timings() -> pl.DataFrame:
+    """Collect raw timing data for all benchmarks. Stats computed at the end."""
     benchmark_pairs = pc.Dict[tuple[str, str], dict[Implementation, BenchFn]].new()
-    results = pc.Vec[dict[str, object]].new()
+    raw_rows = pc.Vec[tuple[str, str, str, int, float]].new()
 
     for func, meta in BENCHMARK_REGISTRY.items().iter():
         key = (meta.category, meta.name)
@@ -130,172 +130,42 @@ def _run_all_benchmarks() -> pl.DataFrame:
         console=CONSOLE,
     ) as progress:
         task = progress.add_task(
-            "[cyan]Running benchmarks...", total=len(benchmarks) * 2
-        )
-        for rust_fn, python_fn in benchmarks:
-            meta = BENCHMARK_REGISTRY.get_item(rust_fn).unwrap()
-            n_calls = meta.n_calls
-
-            progress.update(
-                task, description=f"[cyan]{meta.category}: {meta.name} (New)"
-            )
-            rust_times = _run_timing_measurements(rust_fn, meta.cost.value, n_calls)
-            progress.advance(task)
-
-            progress.update(
-                task, description=f"[cyan]{meta.category}: {meta.name} (Old)"
-            )
-            python_times = _run_timing_measurements(python_fn, meta.cost.value, n_calls)
-            progress.advance(task)
-
-            rust_median = pl.Series(rust_times).median()
-            python_median = pl.Series(python_times).median()
-
-            results.append(
-                {
-                    "category": meta.category,
-                    "name": meta.name,
-                    "rust_median": rust_median,
-                    "python_median": python_median,
-                }
-            )
-
-    return pl.DataFrame(results).with_columns(
-        pl.col("python_median").truediv(pl.col("rust_median")).alias("ratio")
-    )
-
-
-def _display_results(results: pl.DataFrame) -> None:
-    """Display benchmark results table and summary."""
-    table = Table(title="Benchmark Results")
-    table.add_column("Category", style="cyan")
-    table.add_column("Operation", style="white")
-    table.add_column("Rust (s, median)", justify="right", style="green")
-    table.add_column("Python (s, median)", justify="right", style="yellow")
-    table.add_column("Speedup", justify="right")
-
-    def _add_row(row: dict[str, object]) -> None:
-        ratio: float = row["ratio"]  # type: ignore[assignment]
-        style = "green bold" if ratio > 1 else "red bold"
-        table.add_row(
-            str(row["category"]),
-            str(row["name"]),
-            f"{row['rust_median']:.4f}",
-            f"{row['python_median']:.4f}",
-            Text(f"{ratio:.2f}x", style=style),
+            "[cyan]Running benchmarks...", total=benchmarks.length() * 2
         )
 
-    pc.Iter(results.iter_rows(named=True)).for_each(_add_row)
-    CONSOLE.print(table)
+        for new_fn, old_fn in benchmarks:
+            meta = BENCHMARK_REGISTRY.get_item(new_fn).unwrap()
 
-    summary = results.select(
-        pl.col("ratio").median().alias("median_speedup"),
-        pl.col("ratio").gt(1).sum().alias("wins"),
-        pl.len().alias("total"),
-    ).row(0, named=True)
+            for impl_name, fn in [("new", new_fn), ("old", old_fn)]:
+                progress.update(
+                    task,
+                    description=f"[cyan]{meta.category}: {meta.name} ({impl_name})",
+                )
+                for run_idx in range(meta.cost.value):
+                    time_val = timeit.timeit(fn, number=meta.n_calls)
+                    raw_rows.append(
+                        (meta.category, meta.name, impl_name, run_idx, time_val)
+                    )
+                progress.advance(task)
 
-    CONSOLE.print()
-    summary_line = Text("Median speedup: ", style="bold") + Text(
-        f"{summary['median_speedup']:.2f}x", style="green bold"
+    return pl.DataFrame(
+        raw_rows.into(list),
+        schema=["category", "name", "impl", "run_idx", "time"],
+        orient="row",
     )
-    CONSOLE.print(summary_line)
-    wins_line = Text("Rust wins: ", style="bold") + Text(
-        f"{summary['wins']}/{summary['total']}", style="cyan"
-    )
-    CONSOLE.print(wins_line)
 
 
-def _run_timing_measurements(fn: BenchFn, runs: int, iterations: int) -> pc.Seq[float]:
-    """Run timing measurements for a function and return execution times."""
+def _compute_all_stats(raw_df: pl.DataFrame) -> pl.DataFrame:
+    """Compute all stats from raw timings using Polars expressions only."""
+    time = pl.col("time")
     return (
-        pc.Iter(range(runs))
-        .map(lambda _: timeit.timeit(fn, number=iterations))
-        .collect()
-    )
-
-
-def _run_timing_measurements_with_progress(  # noqa: PLR0913
-    fn: BenchFn,
-    runs: int,
-    iterations: Runs,
-    progress: Progress,
-    task_id: object,
-    description: str,
-) -> pc.Seq[float]:
-    """Run timing measurements with progress bar updates."""
-    progress.update(task_id, description=description)  # type: ignore[arg-type]
-
-    def _measure(_: int) -> float:
-        result = timeit.timeit(fn, number=iterations.value // 10)
-        progress.advance(task_id)  # type: ignore[arg-type]
-        return result
-
-    return pc.Iter(range(runs)).map(_measure).collect()
-
-
-def _run_focused_benchmark[T](old: partial[T], new: partial[T]) -> None:
-    """Run focused, robust benchmark between two implementations."""
-    calls = Runs.FOCUSED.value // 10
-    CONSOLE.print(Text("Running Focused Robustness Benchmark...", style="bold blue"))
-    CONSOLE.print(
-        Text(
-            f"{Runs.FOCUSED.value:,} runs with {calls:,} calls in each for statistical significance...",
-            style="dim",
-        )
-    )
-    _display_speed_comparison(old.func.__name__, new.func.__name__, old, new, calls)
-
-
-def _display_speed_comparison(
-    old_name: str, new_name: str, old: BenchFn, new: BenchFn, calls: int
-) -> None:
-    """Display speed comparison between two implementations using Polars for stats."""
-    CONSOLE.print()
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TaskProgressColumn(),
-        TimeRemainingColumn(),
-        console=CONSOLE,
-    ) as progress:
-        task = progress.add_task("[cyan]Timing benchmarks...", total=calls * 2)
-        old_times = _run_timing_measurements_with_progress(
-            old, calls, Runs.FOCUSED, progress, task, f"[cyan]Timing {old_name}"
-        )
-        new_times = _run_timing_measurements_with_progress(
-            new, calls, Runs.FOCUSED, progress, task, f"[cyan]Timing {new_name}"
-        )
-
-    comparison_df = _compute_comparison_stats(old_times, new_times)
-    table = _build_comparison_table(comparison_df)
-    CONSOLE.print(table)
-    CONSOLE.print()
-    _print_conclusion(comparison_df, old_name, new_name)
-
-
-def _compute_comparison_stats(
-    old_times: pc.Seq[float], new_times: pc.Seq[float]
-) -> pl.DataFrame:
-    """Compute comparison statistics using Polars long format."""
-    time_col = pl.col("time")
-    sources = (
-        pc.Iter.once("old")
-        .cycle()
-        .take(old_times.length())
-        .chain(pc.Iter.once("new").cycle().take(new_times.length()))
-        .collect()
-    )
-    times = old_times.iter().chain(new_times).collect()
-    return (
-        pl.DataFrame({"source": sources, "time": times})
-        .group_by("source")
+        raw_df.group_by("category", "name", "impl")
         .agg(
-            time_col.median().alias("median"),
-            time_col.mean().alias("mean"),
-            time_col.std().alias("std"),
-            time_col.quantile(0.25).alias("q1"),
-            time_col.quantile(0.75).alias("q3"),
+            time.median().alias("median"),
+            time.mean().alias("mean"),
+            time.std().alias("std"),
+            time.quantile(0.25).alias("q1"),
+            time.quantile(0.75).alias("q3"),
         )
         .with_columns(
             pl.col("std").truediv(pl.col("median")).mul(100).alias("cv_pct"),
@@ -304,77 +174,181 @@ def _compute_comparison_stats(
     )
 
 
-def _build_comparison_table(stats_df: pl.DataFrame) -> Table:
-    """Build Rich table from pre-computed stats DataFrame."""
-    stats = (
-        pc.Iter(stats_df.iter_rows(named=True))
-        .map(lambda r: (r["source"], r))
-        .collect(pc.Dict)
+def _pivot_for_comparison(stats_df: pl.DataFrame) -> pl.DataFrame:
+    """Pivot stats to have old/new columns side by side with ratio."""
+    return (
+        stats_df.unpivot(
+            index=["category", "name", "impl"],
+            on=["median", "mean", "std", "q1", "q3", "cv_pct", "iqr_rel"],
+        )
+        .pivot(on="impl", index=["category", "name", "variable"], values="value")
+        .pivot(on="variable", index=["category", "name"], values=["new", "old"])
+        .with_columns(
+            pl.col("old_median").truediv(pl.col("new_median")).alias("ratio"),
+            pl.lit(1)
+            .sub(pl.col("new_median").truediv(pl.col("old_median")))
+            .mul(100)
+            .alias("improvement_pct"),
+        )
     )
-    old = stats.get_item("old").unwrap()
-    new = stats.get_item("new").unwrap()
-    rel_median = old["median"] / new["median"]
-    rel_mean = old["mean"] / new["mean"]
-    improvement_pct = (1 - new["median"] / old["median"]) * 100
 
+
+def _print_summary(pivoted: pl.DataFrame) -> None:
+    """Print summary stats from pivoted DataFrame."""
+    summary = pivoted.select(
+        pl.col("ratio").median().alias("median_speedup"),
+        pl.col("ratio").gt(1).sum().alias("wins"),
+        pl.len().alias("total"),
+    )
+    median_speedup = summary.get_column("median_speedup").item(0)
+    wins = summary.get_column("wins").item(0)
+    total = summary.get_column("total").item(0)
+
+    CONSOLE.print()
+    CONSOLE.print(
+        Text("Median speedup: ", style="bold").append(
+            Text(f"{median_speedup:.2f}x", style="green bold")
+        )
+    )
+    CONSOLE.print(
+        Text("New wins: ", style="bold").append(Text(f"{wins}/{total}", style="cyan"))
+    )
+
+
+def _collect_focused_timings(
+    old: BenchFn, new: BenchFn, runs: int, calls: int
+) -> pl.LazyFrame:
+    """Collect raw timings for focused benchmark."""
+    raw_rows = pc.Vec[tuple[str, int, float]].new()
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        TimeRemainingColumn(),
+        console=CONSOLE,
+    ) as progress:
+        task = progress.add_task("[cyan]Timing benchmarks...", total=runs * 2)
+
+        for impl_name, fn in [("new", new), ("old", old)]:
+            progress.update(task, description=f"[cyan]Timing {impl_name}")
+            for run_idx in range(runs):
+                time_val = timeit.timeit(fn, number=calls)
+                raw_rows.append((impl_name, run_idx, time_val))
+                progress.advance(task)
+
+    return pl.LazyFrame(
+        raw_rows.into(list),
+        schema=["impl", "run_idx", "time"],
+        orient="row",
+    )
+
+
+def _compute_focused_stats(raw_df: pl.LazyFrame) -> pl.DataFrame:
+    """Compute stats for focused benchmark."""
+    time = pl.col("time")
+    return (
+        raw_df.group_by("impl")
+        .agg(
+            time.median().alias("median"),
+            time.mean().alias("mean"),
+            time.std().alias("std"),
+            time.quantile(0.25).alias("q1"),
+            time.quantile(0.75).alias("q3"),
+        )
+        .with_columns(
+            pl.col("std").truediv(pl.col("median")).mul(100).alias("cv_pct"),
+            pl.col("q3").sub(pl.col("q1")).truediv(pl.col("median")).alias("iqr_rel"),
+        )
+        .unpivot(
+            index="impl", on=["median", "mean", "std", "q1", "q3", "cv_pct", "iqr_rel"]
+        )
+        .collect()
+        .pivot(on="impl", index="variable", values="value")
+        .with_columns(
+            pl.col("old").truediv(pl.col("new")).alias("ratio"),
+        )
+    )
+
+
+def _build_focused_table(stats: pl.DataFrame) -> Table:
+    """Build focused comparison table from pivoted stats."""
     table = Table()
     table.add_column("Metric", style="cyan")
     table.add_column("new", justify="right", style="green")
     table.add_column("old", justify="right", style="yellow")
     table.add_column("Relative", justify="right", style="magenta")
 
+    def _get_stat(name: str) -> tuple[float, float, float]:
+        return stats.filter(pl.col("variable").eq(name)).pipe(
+            lambda row: (
+                row.get_column("new").item(0),
+                row.get_column("old").item(0),
+                row.get_column("ratio").item(0),
+            )
+        )
+
+    new_med, old_med, rel_median = _get_stat("median")
+    new_mean, old_mean, rel_mean = _get_stat("mean")
+    new_cv, old_cv, _ = _get_stat("cv_pct")
+    new_iqr, old_iqr, _ = _get_stat("iqr_rel")
+
     new_faster = rel_median > 1
-    winner, loser_style = (
-        ("new", "green bold") if new_faster else ("old", "yellow bold")
-    )
+    winner = "new" if new_faster else "old"
+    style = "green bold" if new_faster else "yellow bold"
     speedup = rel_median if new_faster else 1 / rel_median
+
     table.add_row(
         "Speedup",
         f"{1 / rel_median:.3f}x" if new_faster else "1.00x",
         "1.00x" if new_faster else f"{rel_median:.3f}x",
-        Text(f"{winner} {speedup:.2f}x faster", style=loser_style),
+        Text(f"{winner} {speedup:.2f}x faster", style=style),
     )
 
-    improvement_value = (speedup - 1) * 100
+    improvement_pct = (speedup - 1) * 100
     label = "faster" if new_faster else "slower"
     table.add_row(
         "Improvement",
         "—",
         "—",
-        Text(f"{improvement_value:+.1f}% ", style="dim")
-        + Text(label, style=loser_style),
+        Text(f"{improvement_pct:+.1f}% ", style="dim").append(Text(label, style=style)),
     )
 
     table.add_row(
-        "Median (rel)", "1.00", f"{rel_median:.3f}", f"{improvement_pct:+.1f}%"
+        "Median (rel)",
+        "1.00",
+        f"{rel_median:.3f}",
+        f"{(1 - new_med / old_med) * 100:+.1f}%",
     )
     table.add_row(
         "Mean (rel)",
         "1.00",
         f"{rel_mean:.3f}",
-        f"{(1 - new['mean'] / old['mean']) * 100:+.1f}%",
+        f"{(1 - new_mean / old_mean) * 100:+.1f}%",
     )
     table.add_row(
         "Variability (CV%)",
-        f"{new['cv_pct']:.2f}%",
-        f"{old['cv_pct']:.2f}%",
-        f"{old['cv_pct'] - new['cv_pct']:+.2f}%",
+        f"{new_cv:.2f}%",
+        f"{old_cv:.2f}%",
+        f"{old_cv - new_cv:+.2f}%",
     )
     table.add_row(
         "IQR (rel)",
-        f"{new['iqr_rel']:.4f}",
-        f"{old['iqr_rel']:.4f}",
-        f"{old['iqr_rel'] - new['iqr_rel']:+.4f}",
+        f"{new_iqr:.4f}",
+        f"{old_iqr:.4f}",
+        f"{old_iqr - new_iqr:+.4f}",
     )
     return table
 
 
-def _print_conclusion(stats_df: pl.DataFrame, old_name: str, new_name: str) -> None:
-    """Print conclusion message based on comparison stats."""
-    stats = pc.Iter(stats_df.iter_rows(named=True)).into(
-        lambda rows: pc.Dict({r["source"]: r["median"] for r in rows})
+def _print_focused_conclusion(
+    stats: pl.DataFrame, old_name: str, new_name: str
+) -> None:
+    """Print conclusion for focused benchmark."""
+    rel_median = (
+        stats.filter(pl.col("variable").eq("median")).get_column("ratio").item(0)
     )
-    rel_median = stats.get_item("old").unwrap() / stats.get_item("new").unwrap()
 
     if rel_median > 1:
         CONSOLE.print(
@@ -392,26 +366,81 @@ def _print_conclusion(stats_df: pl.DataFrame, old_name: str, new_name: str) -> N
         )
 
 
+def _run_focused_benchmark[T](old: partial[T], new: partial[T]) -> None:
+    """Run focused, robust benchmark between two implementations."""
+    runs = Runs.FOCUSED.value
+    calls = runs // 10
+    CONSOLE.print(Text("Running Focused Robustness Benchmark...", style="bold blue"))
+    CONSOLE.print(
+        Text(
+            f"{runs:,} runs with {calls:,} calls in each for statistical significance...",
+            style="dim",
+        )
+    )
+    CONSOLE.print()
+    stats = _collect_focused_timings(old, new, runs, calls).pipe(_compute_focused_stats)
+    table = _build_focused_table(stats)
+    CONSOLE.print(table)
+    CONSOLE.print()
+    _print_focused_conclusion(stats, old.func.__name__, new.func.__name__)
+
+
 @app.command(name="all")
 def all_benchmarks() -> None:
     """Run all benchmarks (default)."""
     CONSOLE.print(Text("Running Option benchmarks...", style="bold blue"))
     CONSOLE.print()
-    timing_results = _run_all_benchmarks()
+    pivoted = (
+        _collect_raw_timings().pipe(_compute_all_stats).pipe(_pivot_for_comparison)
+    )
     CONSOLE.print()
-    _display_results(timing_results)
+    table = _build_results_table(pivoted)
+    CONSOLE.print(table)
+    _print_summary(pivoted)
     CONSOLE.print()
+
+
+def _build_results_table(pivoted: pl.DataFrame) -> Table:
+    """Build Rich table directly from Polars columns."""
+    table = Table(title="Benchmark Results")
+    table.add_column("Category", style="cyan")
+    table.add_column("Operation", style="white")
+    table.add_column("New (s, median)", justify="right", style="green")
+    table.add_column("Old (s, median)", justify="right", style="yellow")
+    table.add_column("Speedup", justify="right")
+
+    (
+        pc.Iter(pivoted.get_column("category"))
+        .zip(pivoted.get_column("name"))
+        .zip(pivoted.get_column("new_median"))
+        .zip(pivoted.get_column("old_median"))
+        .zip(pivoted.get_column("ratio"))
+        .map(lambda t: (t[0][0][0][0], t[0][0][0][1], t[0][0][1], t[0][1], t[1]))
+        .for_each(
+            lambda row: table.add_row(
+                str(row[0]),
+                str(row[1]),
+                f"{row[2]:.4f}",
+                f"{row[3]:.4f}",
+                Text(
+                    f"{row[4]:.2f}x", style="green bold" if row[4] > 1 else "red bold"
+                ),
+            )
+        )
+    )
+    return table
 
 
 @app.command()
 def focused() -> None:
     """Run focused build_args benchmark only."""
+    data = pc.Seq(range(1_000_000))
 
     def _old() -> int:
-        return 1
+        return data.iter().eq(range(1_000_000))
 
     def _new() -> int:
-        return 1
+        return data.iter().eq_test(range(1_000_000))
 
     assert _old() == _new()
 
