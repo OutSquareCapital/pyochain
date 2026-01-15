@@ -1,13 +1,22 @@
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 
 from pyochain import Option, Result
 
+from ._types import no_doctest
+
+@no_doctest
 def try_find[T, E](
     data: Iterator[T], predicate: Callable[[T], Result[bool, E]]
-) -> Result[Option[T], E]:
-    """Attempts to find the first element in the iterator that satisfies the given fallible predicate.
-
-    Example:
-    ```python
-    ```
-    """
+) -> Result[Option[T], E]: ...
+@no_doctest
+def eq[T](data: Iterator[T], other: Iterable[T]) -> bool: ...
+@no_doctest
+def ne[T](data: Iterator[T], other: Iterable[T]) -> bool: ...
+@no_doctest
+def lt[T](data: Iterator[T], other: Iterable[T]) -> bool: ...
+@no_doctest
+def gt[T](data: Iterator[T], other: Iterable[T]) -> bool: ...
+@no_doctest
+def le[T](data: Iterator[T], other: Iterable[T]) -> bool: ...
+@no_doctest
+def ge[T](data: Iterator[T], other: Iterable[T]) -> bool: ...

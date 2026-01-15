@@ -583,11 +583,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        sentinel = object()
-        for a, b in itertools.zip_longest(self.__iter__(), other, fillvalue=sentinel):
-            if a is sentinel or b is sentinel or a != b:
-                return False
-        return True
+        return tls.eq(self.__iter__(), other)
 
     def ne(self, other: Iterable[T]) -> bool:
         """Check if this `Iterator` and *other* are not equal based on their data.
@@ -608,11 +604,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        sentinel = object()
-        for a, b in itertools.zip_longest(self.__iter__(), other, fillvalue=sentinel):
-            if a is sentinel or b is sentinel or a != b:
-                return True
-        return False
+        return tls.ne(self.__iter__(), other)
 
     def le(self, other: Iterable[T]) -> bool:
         """Check if this `Iterator` is less than or equal to *other* based on their data.
@@ -633,15 +625,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        sentinel = object()
-        for a, b in itertools.zip_longest(self.__iter__(), other, fillvalue=sentinel):
-            if a is sentinel:
-                return True
-            if b is sentinel:
-                return False
-            if a != b:
-                return a < b  # type: ignore[operator]
-        return True
+        return tls.le(self.__iter__(), other)
 
     def lt(self, other: Iterable[T]) -> bool:
         """Check if this `Iterator` is less than *other* based on their data.
@@ -662,15 +646,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        sentinel = object()
-        for a, b in itertools.zip_longest(self, other, fillvalue=sentinel):
-            if a is sentinel:
-                return True
-            if b is sentinel:
-                return False
-            if a != b:
-                return a < b  # type: ignore[operator]
-        return False
+        return tls.lt(self.__iter__(), other)
 
     def gt(self, other: Iterable[T]) -> bool:
         """Check if this `Iterator` is greater than *other* based on their data.
@@ -691,15 +667,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        sentinel = object()
-        for a, b in itertools.zip_longest(self, other, fillvalue=sentinel):
-            if a is sentinel:
-                return False
-            if b is sentinel:
-                return True
-            if a != b:
-                return a > b  # type: ignore[operator]
-        return False
+        return tls.gt(self.__iter__(), other)
 
     def ge(self, other: Iterable[T]) -> bool:
         """Check if this `Iterator` is greater than or equal to *other* based on their data.
@@ -720,15 +688,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        sentinel = object()
-        for a, b in itertools.zip_longest(self, other, fillvalue=sentinel):
-            if a is sentinel:
-                return False
-            if b is sentinel:
-                return True
-            if a != b:
-                return a > b  # type: ignore[operator]
-        return True
+        return tls.ge(self.__iter__(), other)
 
     def next(self) -> Option[T]:
         """Return the next element in the `Iterator`.
