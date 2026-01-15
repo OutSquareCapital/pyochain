@@ -1307,8 +1307,7 @@ class Result[T, E](Pipeable, ABC):
     """
 
     __slots__ = ()
-
-    def flatten(self: Result[Result[T, E], E]) -> Result[T, E]:
+    def flatten[T1, E1, E2](self: Result[Result[T1, E1], E2]) -> Result[T1, E1]:
         """Flattens a nested `Result`.
 
         Converts from `Result[Result[T, E], E]` to `Result[T, E]`.
