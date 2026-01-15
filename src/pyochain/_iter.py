@@ -61,6 +61,15 @@ class Unzipped[T, V](Pipeable, Checkable):
 
     See Also:
         `Iter.unzip()`
+    Example:
+    ```python
+    >>> import pyochain as pc
+    >>> pairs = pc.Iter(((1, 'a'), (2, 'b'), (3, 'c')))
+    >>> unzipped = pairs.unzip()
+    >>> unzipped.left.collect()
+    Seq(1, 2, 3)
+
+    ```
     """
 
     left: Iter[T]
@@ -86,7 +95,17 @@ class Peekable[T](Pipeable, Checkable):
         `Iter.peekable()`
         `Iter.cloned()`
 
+    Example:
+    ```python
+    >>> import pyochain as pc
+    >>> it = pc.Iter([1, 2, 3, 4, 5])
+    >>> peekable = it.peekable(3)
+    >>> peekable.peek
+    Seq(1, 2, 3)
+    >>> peekable.values.collect()
+    Seq(1, 2, 3, 4, 5)
 
+    ```
     """
 
     peek: Seq[T]

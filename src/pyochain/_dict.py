@@ -21,6 +21,19 @@ class Dict[K, V](PyoMutableMapping[K, V]):
 
     Args:
         data (DictConvertible[K, V]): Initial data for the Dict that can converted to a dictionary.
+
+    Example:
+    ```python
+    >>> import pyochain as pc
+    >>> dict_obj = pc.Dict({1: "a", 2: "b"})
+    >>> dict_obj
+    Dict(1: 'a', 2: 'b')
+    >>> dict_obj.get_item(1)
+    Some('a')
+    >>> dict_obj.items().iter().collect()
+    Seq((1, 'a'), (2, 'b'))
+
+    ```
     """
 
     __slots__ = ("_inner",)

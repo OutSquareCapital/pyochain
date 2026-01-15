@@ -113,6 +113,19 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T]):
 
         Returns:
             Iter[T]: An `Iterator` over the `Iterable`. The element type is inferred from the actual subclass.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> seq = pc.Seq([1, 2, 3])
+        >>> iterator = seq.iter()
+        >>> iterator.collect()
+        Seq(1, 2, 3)
+        >>> # iterator is now empty
+        >>> iterator.collect()
+        Seq()
+
+        ```
         """
         from .._iter import Iter
 
@@ -1018,6 +1031,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
         >>> pc.Iter(["5", "4", "3", "1", "2"]).is_sorted_by(int, reverse=True)
         False
 
+        ```
         If strict, tests for strict sorting, that is, returns False if equal elements are found:
         ```python
         >>> pc.Iter(["1", "2", "2"]).is_sorted_by(int)
@@ -1891,7 +1905,17 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):
             other (AbstractSet[T]): The other set to compare with.
 
         Returns:
-            bool: True if the `Set` is a proper subset of the other set, False otherwise.
+            bool: `True` if the `Set` is a proper subset of the other set, `False` otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Set({1, 2}).is_subset_strict({1, 2, 3})
+        True
+        >>> pc.Set({1, 2}).is_subset_strict({1, 2})
+        False
+
+        ```
         """
         return self < other
 
@@ -1903,6 +1927,16 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):
 
         Returns:
             bool: True if the `Set` is equal to the other set, False otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Set({1, 2}).eq({2, 1})
+        True
+        >>> pc.Set({1, 2}).eq({1, 2, 3})
+        False
+
+        ```
         """
         return self == other
 
@@ -1954,6 +1988,14 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):
 
         Returns:
             Self: A new `Set` containing the intersection of the two sets.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Set({2, 3}).r_intersection({1, 2})
+        Set(2,)
+
+        ```
         """
         return self.__class__(other & self)
 
@@ -1984,6 +2026,14 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):
 
         Returns:
             Self: A new `Set` containing the union of the two sets.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Set({2, 3}).r_union({1, 2}).iter().sort()
+        Vec(1, 2, 3)
+
+        ```
         """
         return self.__class__(other | self)
 
@@ -2014,6 +2064,14 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):
 
         Returns:
             Self: A new `Set` containing the reverse difference of the two sets.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Set({2, 3}).r_difference({1, 2})
+        Set(1,)
+
+        ```
         """
         return self.__class__(other - self)
 
@@ -2045,7 +2103,13 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):
         Returns:
             Self: A new `Set` containing the symmetric difference of the two sets.
 
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Set({2, 3}).r_symmetric_difference({1, 2}).iter().sort()
+        Vec(1, 3)
 
+        ```
         """
         return self.__class__(other ^ self)
 
@@ -2490,6 +2554,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):
             other (Self | list[T]): The other `MutableSequence` to move elements from.
 
         Examples:
+        ```python
         >>> import pyochain as pc
         >>> v1 = pc.Vec([1, 2, 3])
         >>> v2 = pc.Vec([4, 5, 6])
