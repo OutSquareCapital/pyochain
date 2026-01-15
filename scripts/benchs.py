@@ -32,10 +32,10 @@ type BenchFn = Callable[[], object]
 class Runs(IntEnum):
     """Cost category for benchmarks, determining iteration counts."""
 
-    FOCUSED = 100_000
+    FOCUSED = 1000
     CHEAP = 5_000
     NORMAL = 2_500
-    EXPENSIVE = 500
+    EXPENSIVE = 1000
 
 
 class Implementation(StrEnum):
@@ -513,8 +513,109 @@ def _get_table(relative: RelativeStats, old_stats: Stats, new_stats: Stats) -> T
     return table
 
 
-def main() -> None:
-    """Run all benchmarks and display results."""
+# ═══════════════════════════════════════════════════════════════════════════════
+# try_find vs try_find_test Benchmarks
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_SIZE_SMALL: Final = 50
+_SIZE_MEDIUM: Final = 500
+_DATA_SMALL: Final = pc.Seq(range(_SIZE_SMALL))
+_DATA_MEDIUM: Final = pc.Seq(range(_SIZE_MEDIUM))
+
+
+@bench(
+    "try_find",
+    old=lambda pred: _DATA_MEDIUM.iter().try_find(pred),
+    new=lambda pred: _DATA_MEDIUM.iter().try_find_test(pred),
+    cost=Runs.EXPENSIVE,
+)
+def find_at_middle(impl: object) -> object:
+    """Benchmark when element is found in the middle."""
+    target = _SIZE_MEDIUM // 2
+
+    def predicate(x: int) -> pc.Result[bool, str]:
+        return pc.Ok(x == target)
+
+    return impl(predicate)
+
+
+@bench(
+    "try_find",
+    old=lambda pred: _DATA_MEDIUM.iter().try_find(pred),
+    new=lambda pred: _DATA_MEDIUM.iter().try_find_test(pred),
+    cost=Runs.EXPENSIVE,
+)
+def find_at_end(impl: object) -> object:
+    """Benchmark when element is found at the very end."""
+    target = _SIZE_MEDIUM - 1
+
+    def predicate(x: int) -> pc.Result[bool, str]:
+        return pc.Ok(x == target)
+
+    return impl(predicate)
+
+
+@bench(
+    "try_find",
+    old=lambda pred: _DATA_MEDIUM.iter().try_find(pred),
+    new=lambda pred: _DATA_MEDIUM.iter().try_find_test(pred),
+    cost=Runs.EXPENSIVE,
+)
+def find_not_found(impl: object) -> object:
+    """Benchmark when element is not found (full traversal)."""
+
+    def predicate(x: int) -> pc.Result[bool, str]:
+        return pc.Ok(x == _SIZE_MEDIUM + 1000)
+
+    return impl(predicate)
+
+
+@bench(
+    "try_find",
+    old=lambda pred: _DATA_MEDIUM.iter().try_find(pred),
+    new=lambda pred: _DATA_MEDIUM.iter().try_find_test(pred),
+    cost=Runs.EXPENSIVE,
+)
+@bench(
+    "try_find",
+    old=lambda pred: _DATA_MEDIUM.iter().try_find(pred),
+    new=lambda pred: _DATA_MEDIUM.iter().try_find_test(pred),
+    cost=Runs.EXPENSIVE,
+)
+def find_error_late(impl: object) -> object:
+    """Benchmark when error occurs late in iteration."""
+    error_at = _SIZE_MEDIUM - 100
+
+    def predicate(x: int) -> pc.Result[bool, str]:
+        if x == error_at:
+            return pc.Err("error")
+        return pc.Ok(value=False)
+
+    return impl(predicate)
+
+
+@bench(
+    "try_find",
+    old=lambda pred: _DATA_SMALL.iter().try_find(pred),
+    new=lambda pred: _DATA_SMALL.iter().try_find_test(pred),
+    cost=Runs.EXPENSIVE,
+)
+def find_with_complex_predicate(impl: object) -> object:
+    """Benchmark with a more complex predicate function."""
+    target = _SIZE_SMALL // 2
+
+    def predicate(x: int) -> pc.Result[bool, str]:
+        if x < 0:
+            return pc.Err("negative")
+        is_target = x == target and x % 2 == 0 and x % 3 == 1
+        return pc.Ok(is_target)
+
+    return impl(predicate)
+
+
+@app.command(name="all")
+def all_benchmarks() -> None:
+    """Run all benchmarks (default)."""
     CONSOLE.print(Text("Running Option benchmarks...", style="bold blue"))
     CONSOLE.print()
     timing_results = _run_all_benchmarks()
@@ -523,31 +624,29 @@ def main() -> None:
     CONSOLE.print()
 
 
-@app.command(name="all")
-def all_benchmarks() -> None:
-    """Run all benchmarks (default)."""
-    main()
-
-
 @app.command()
 def focused(
     *,
     mem: Annotated[bool, typer.Option(help="Run memory benchmarks")] = False,
 ) -> None:
     """Run focused build_args benchmark only."""
-    some_val: pc.Result[pc.Option[int], str] = pc.Ok(pc.Some(42))
+    size = 1_000
+    data: pc.Seq[int] = pc.Iter(range(size)).collect()
+
+    def foo(x: int) -> pc.Result[bool, str]:
+        return pc.Ok(x == size - 1) if x >= 0 else pc.Err("negative number")
 
     def _old():
-        return some_val.transpose()
+        return data.iter().try_find(foo)
 
     def _new():
-        return some_val.transpose_test()
+        return data.iter().try_find_test(foo)
 
-    assert _old().unwrap().unwrap() == _new().unwrap().unwrap()
+    assert _old().unwrap() == _new().unwrap()
 
     _run_focused_benchmark(
-        old=partial(_old),  # type: ignore[arg-type]
-        new=partial(_new),  # type: ignore[arg-type]
+        old=partial(lambda: data.iter().try_find(foo)),  # type: ignore[arg-type]
+        new=partial(lambda: data.iter().try_find_test(foo)),  # type: ignore[arg-type]
         memory=mem,
     )
 
