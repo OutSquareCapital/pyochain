@@ -33,7 +33,7 @@ class Runs(IntEnum):
     FOCUSED = 10_000
     CHEAP = 5_000
     NORMAL = 2_500
-    EXPENSIVE = 10
+    EXPENSIVE = 1000
 
 
 class Implementation(StrEnum):
@@ -50,11 +50,6 @@ class BenchmarkMetadata(NamedTuple):
     name: str
     cost: Runs
     implementation: Implementation
-
-    @property
-    def n_calls(self) -> int:
-        """Number of calls per timing iteration."""
-        return self.cost.value // 10
 
 
 type BenchFn = Callable[[], object]
@@ -142,7 +137,7 @@ def _collect_raw_timings() -> pl.LazyFrame:
                     description=f"[cyan]{meta.category}: {meta.name} ({impl_name})",
                 )
                 for run_idx in range(meta.cost.value):
-                    time_val = timeit.timeit(fn, number=meta.n_calls)
+                    time_val = timeit.timeit(fn, number=10)
                     raw_rows.append(
                         (meta.category, meta.name, impl_name, run_idx, time_val)
                     )
@@ -244,6 +239,77 @@ def _build_results_table(pivoted: pl.DataFrame) -> Table:
     )
 
     return table
+
+
+SIZE = 1_000
+data = pc.Iter(range(SIZE)).map(str).collect()
+other = pc.Iter(range(SIZE)).map(str).collect()
+
+
+@bench(
+    "comparisons",
+    old=lambda: data.iter().eq(other),
+    new=lambda: data.iter().eq_test(other),
+    cost=Runs.EXPENSIVE,
+)
+def benchmark_eq(fn: BenchFn) -> object:
+    """Benchmark equality comparison."""
+    return fn()
+
+
+@bench(
+    "comparisons",
+    old=lambda: data.iter().ne(other),
+    new=lambda: data.iter().ne_test(other),
+    cost=Runs.EXPENSIVE,
+)
+def benchmark_ne(fn: BenchFn) -> object:
+    """Benchmark inequality comparison."""
+    return fn()
+
+
+@bench(
+    "comparisons",
+    old=lambda: data.iter().le(other),
+    new=lambda: data.iter().le_test(other),
+    cost=Runs.EXPENSIVE,
+)
+def benchmark_le(fn: BenchFn) -> object:
+    """Benchmark less than or equal comparison."""
+    return fn()
+
+
+@bench(
+    "comparisons",
+    old=lambda: data.iter().lt(other),
+    new=lambda: data.iter().lt_test(other),
+    cost=Runs.EXPENSIVE,
+)
+def benchmark_lt(fn: BenchFn) -> object:
+    """Benchmark less than comparison."""
+    return fn()
+
+
+@bench(
+    "comparisons",
+    old=lambda: data.iter().gt(other),
+    new=lambda: data.iter().gt_test(other),
+    cost=Runs.EXPENSIVE,
+)
+def benchmark_gt(fn: BenchFn) -> object:
+    """Benchmark greater than comparison."""
+    return fn()
+
+
+@bench(
+    "comparisons",
+    old=lambda: data.iter().ge(other),
+    new=lambda: data.iter().ge_test(other),
+    cost=Runs.EXPENSIVE,
+)
+def benchmark_ge(fn: BenchFn) -> object:
+    """Benchmark greater than or equal comparison."""
+    return fn()
 
 
 if __name__ == "__main__":
