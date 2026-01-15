@@ -1,8 +1,8 @@
 use crate::option::{PySome, get_none_singleton};
 use crate::result::{PyErr, PyOk};
 use crate::types::{PyClassInit, call_func};
-use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyTuple};
+use pyo3::{IntoPyObjectExt, prelude::*};
 #[pyclass(frozen, subclass)]
 pub struct Pipeable;
 
@@ -74,9 +74,9 @@ impl Checkable {
     fn ok_or(slf: &Bound<'_, Self>, err: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = slf.py();
         if slf.is_truthy()? {
-            Ok(Py::new(py, PyOk::new(slf.to_owned().unbind().into_any()))?.into_any())
+            Ok(PyOk::new(slf.to_owned().unbind().into_any()).into_py_any(py)?)
         } else {
-            Ok(Py::new(py, PyErr::new(err.to_owned().unbind()))?.into_any())
+            Ok(PyErr::new(err.to_owned().unbind()).into_py_any(py)?)
         }
     }
     #[pyo3(signature = (func, *args, **kwargs))]
@@ -88,13 +88,9 @@ impl Checkable {
     ) -> PyResult<Py<PyAny>> {
         let py = slf.py();
         if slf.is_truthy()? {
-            Ok(Py::new(py, PyOk::new(slf.to_owned().unbind().into_any()))?.into_any())
+            Ok(PyOk::new(slf.to_owned().unbind().into_any()).into_py_any(py)?)
         } else {
-            Ok(Py::new(
-                py,
-                PyErr::new(call_func(func, &slf, args, kwargs)?.unbind()),
-            )?
-            .into_any())
+            Ok(PyErr::new(call_func(func, &slf, args, kwargs)?.unbind()).into_py_any(py)?)
         }
     }
 }

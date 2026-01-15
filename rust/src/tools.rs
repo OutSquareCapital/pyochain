@@ -2,8 +2,8 @@
 use crate::option::{PySome, get_none_singleton};
 use crate::result::{PyErr as PyochainErr, PyOk, PyResultEnum};
 use crate::types::PyClassInit;
-use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyBool, PyFunction};
+use pyo3::{IntoPyObjectExt, prelude::*};
 
 #[pymodule(name = "_tools")]
 pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -25,15 +25,15 @@ pub fn try_find(data: &Bound<'_, PyAny>, predicate: &Bound<'_, PyFunction>) -> P
                         .is_true()
                 } {
                     let some_val = PySome::new(val.unbind()).init(py)?.into_any();
-                    return Ok(Py::new(py, PyOk::new(some_val))?.into_any());
+                    return Ok(PyOk::new(some_val).into_py_any(py)?);
                 }
             }
             PyResultEnum::Err(err_ref) => {
                 let err_val = err_ref.get().error.clone_ref(py);
-                return Ok(Py::new(py, PyochainErr::new(err_val))?.into_any());
+                return Ok(PyochainErr::new(err_val).into_py_any(py)?);
             }
         }
     }
     let none = get_none_singleton(py)?;
-    Ok(Py::new(py, PyOk::new(none))?.into_any())
+    Ok(PyOk::new(none).into_py_any(py)?)
 }

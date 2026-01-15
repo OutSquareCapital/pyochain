@@ -1,6 +1,7 @@
 use crate::option::{PySome, get_none_singleton};
 use crate::types::{PyClassInit, call_func};
 use pyderive::*;
+use pyo3::IntoPyObjectExt;
 use pyo3::exceptions::PyValueError;
 use pyo3::{
     prelude::*,
@@ -196,7 +197,7 @@ impl PyOk {
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         match self.value.bind(py).extract::<PyRef<PySome>>() {
             Ok(some_ref) => {
-                let ok_value = Py::new(py, PyOk::new(some_ref.value.clone_ref(py)))?.into_any();
+                let ok_value = PyOk::new(some_ref.value.clone_ref(py)).into_py_any(py)?;
                 Ok(PySome::new(ok_value).init(py)?.into_any())
             }
             Err(_) => get_none_singleton(py),
@@ -404,7 +405,7 @@ impl PyErr {
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let err_value = Py::new(py, PyErr::new(self.error.clone_ref(py)))?.into_any();
+        let err_value = PyErr::new(self.error.clone_ref(py)).into_py_any(py)?;
         Ok(PySome::new(err_value).init(py)?.into_any())
     }
 

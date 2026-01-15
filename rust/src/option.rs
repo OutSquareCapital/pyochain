@@ -1,5 +1,6 @@
 use crate::result::{self, PyResultEnum};
 use crate::types::{PyClassInit, call_func};
+use pyo3::IntoPyObjectExt;
 use pyo3::exceptions::PyValueError;
 use pyo3::{
     ffi,
@@ -351,10 +352,10 @@ impl PySome {
                 let some_value = PySome::new(ok_ref.get().value.clone_ref(py))
                     .init(py)?
                     .into_any();
-                Ok(Py::new(py, result::PyOk::new(some_value))?.into_any())
+                Ok(result::PyOk::new(some_value).into_py_any(py)?)
             }
             PyResultEnum::Err(err_ref) => {
-                Ok(Py::new(py, result::PyErr::new(err_ref.get().error.clone_ref(py)))?.into_any())
+                Ok(result::PyErr::new(err_ref.get().error.clone_ref(py)).into_py_any(py)?)
             }
         }
     }
@@ -579,7 +580,7 @@ impl PyNone {
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        Ok(Py::new(py, result::PyOk::new(get_none_singleton(py)?))?.into_any())
+        Ok(result::PyOk::new(get_none_singleton(py)?).into_py_any(py)?)
     }
 
     fn eq(slf: &Bound<'_, Self>, other: &Bound<'_, PyAny>) -> bool {
