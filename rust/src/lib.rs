@@ -1,4 +1,5 @@
 mod converters;
+mod errors;
 mod option;
 mod result;
 mod tools;
@@ -14,8 +15,8 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("NONE", option::get_none_singleton(py)?)?;
     m.add_class::<result::PyOk>()?;
     m.add_class::<result::PyErr>()?;
-    m.add_class::<option::OptionUnwrapError>()?;
-    m.add_class::<result::ResultUnwrapError>()?;
+    m.add_class::<errors::OptionUnwrapError>()?;
+    m.add_class::<errors::ResultUnwrapError>()?;
     m.add_class::<result::PyochainResult>()?;
     m.add_class::<converters::Checkable>()?;
     m.add_class::<converters::Pipeable>()?;
