@@ -21,10 +21,10 @@ impl OptionUnwrapError {
     }
 }
 
-// Singleton for NONE - initialized once per Python interpreter
+/// Singleton for NONE - initialized once per Python interpreter
 pub static NONE_SINGLETON: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
 
-// Raw pointer for fast identity comparison (avoids clone_ref + bind overhead)
+/// Raw pointer for fast identity comparison (avoids clone_ref + bind overhead)
 static NONE_PTR: AtomicPtr<ffi::PyObject> = AtomicPtr::new(std::ptr::null_mut());
 #[inline]
 pub fn get_none_singleton(py: Python<'_>) -> PyResult<Py<PyAny>> {
