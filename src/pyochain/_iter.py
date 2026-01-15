@@ -1033,7 +1033,7 @@ class Iter[T](PyoIterator[T]):
                 cache: deque[T] = deque()
                 chunk = itertools.islice(iterator, n)
 
-                def generator() -> Iterator[T]:
+                def _generator() -> Iterator[T]:
                     with suppress(StopIteration):
                         while True:
                             if cache:
@@ -1041,7 +1041,7 @@ class Iter[T](PyoIterator[T]):
                             else:
                                 yield next(chunk)
 
-                def materialize_next(n: int) -> int:
+                def _materialize_next(n: int) -> int:
                     to_cache = n - len(cache)
 
                     # materialize up to n
@@ -1051,19 +1051,19 @@ class Iter[T](PyoIterator[T]):
                     # return number materialized up to n
                     return min(n, len(cache))
 
-                return (generator(), materialize_next)
+                return (_generator(), _materialize_next)
 
             new = self.__class__
             while True:
                 # Create new chunk
-                chunk, materialize_next = _ichunk(self._inner, size)
+                chunk, _materialize_next = _ichunk(self._inner, size)
 
                 # Check to see whether we're at the end of the source iterable
-                if not materialize_next(size):
+                if not _materialize_next(size):
                     return
 
                 yield new(chunk)
-                materialize_next(size)
+                _materialize_next(size)
 
         return Iter(_chunks())
 
@@ -1798,7 +1798,7 @@ class Iter[T](PyoIterator[T]):
         ```
         """
 
-        def gen(data: Iterable[T]) -> Iterator[U]:
+        def _gen(data: Iterable[T]) -> Iterator[U]:
             current: U = initial
             for item in data:
                 res = func(current, item)
@@ -1807,7 +1807,7 @@ class Iter[T](PyoIterator[T]):
                 current = res.unwrap()
                 yield res.unwrap()
 
-        return Iter(gen(self._inner))
+        return Iter(_gen(self._inner))
 
     # filters ------------------------------------------------------------
     @overload
@@ -3017,7 +3017,7 @@ class Iter[T](PyoIterator[T]):
         ```
         """
 
-        def gen(data: Iterator[T]) -> Iterator[tuple[Position, T]]:
+        def _gen(data: Iterator[T]) -> Iterator[tuple[Position, T]]:
             try:
                 first = next(data)
             except StopIteration:
@@ -3036,7 +3036,7 @@ class Iter[T](PyoIterator[T]):
                 current = nxt
             yield ("last", current)
 
-        return Iter(gen(self._inner))
+        return Iter(_gen(self._inner))
 
     @overload
     def group_by(self, key: None = None) -> Iter[tuple[T, Self]]: ...

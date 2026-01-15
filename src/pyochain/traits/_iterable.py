@@ -18,7 +18,7 @@ from collections.abc import (
 )
 from collections.abc import Set as AbstractSet
 from operator import itemgetter, lt
-from typing import TYPE_CHECKING, Any, Concatenate, Self, overload
+from typing import TYPE_CHECKING, Any, Concatenate, Self, overload, override
 
 import cytoolz as cz
 
@@ -433,6 +433,7 @@ class PyoCollection[T](PyoIterable[T], Collection[T]):
 
     __slots__ = ()
 
+    @override
     def length(self) -> int:
         return len(self)
 
