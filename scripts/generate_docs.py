@@ -21,12 +21,6 @@ def _generate_markdown(full_path: str, class_name: str) -> str:
     return f"""# {class_name}
 
 ::: {full_path}
-    options:
-      inherited_members: true
-      show_overloads: true
-      members_order: alphabetical
-      filters:
-        - "!^_"
 """
 
 

@@ -72,7 +72,7 @@
         docstring_style   = "google"
         filters           = ["!^_"]
         inherited_members = true
-        members_order     = "source"
+        members_order     = "alphabetical"
         show_overloads    = true
         show_source       = true
 
