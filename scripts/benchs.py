@@ -32,7 +32,7 @@ type BenchFn = Callable[[], object]
 class Runs(IntEnum):
     """Cost category for benchmarks, determining iteration counts."""
 
-    FOCUSED = 20_000
+    FOCUSED = 100_000
     CHEAP = 5_000
     NORMAL = 2_500
     EXPENSIVE = 500
@@ -308,6 +308,23 @@ def _run_timing_measurements(fn: BenchFn, runs: int, iterations: int) -> pc.Vec[
     return times
 
 
+def _run_timing_measurements_with_progress(
+    fn: BenchFn,
+    runs: int,
+    iterations: Runs,
+    progress: Progress,
+    task_id: object,
+    description: str,
+) -> pc.Vec[float]:
+    """Run timing measurements with progress bar updates."""
+    times = pc.Vec[float].new()
+    progress.update(task_id, description=description)  # type: ignore[arg-type]
+    for _ in range(runs):
+        times.append(timeit.timeit(fn, number=iterations.value // 10))
+        progress.advance(task_id)  # type: ignore[arg-type]
+    return times
+
+
 def _run_memory_measurements(fn: BenchFn, runs: int, iterations: int) -> pc.Vec[float]:
     """Run memory measurements for a function and return peak memory values."""
     memories = pc.Vec[float].new()
@@ -354,8 +371,21 @@ def _display_speed_comparison(
     old_name: str, new_name: str, old: BenchFn, new: BenchFn, calls: int
 ) -> None:
     CONSOLE.print()
-    old_times = _run_timing_measurements(old, calls, Runs.FOCUSED)
-    new_times = _run_timing_measurements(new, calls, Runs.FOCUSED)
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        TimeRemainingColumn(),
+        console=CONSOLE,
+    ) as progress:
+        task = progress.add_task("[cyan]Timing benchmarks...", total=calls * 2)
+        old_times = _run_timing_measurements_with_progress(
+            old, calls, Runs.FOCUSED, progress, task, f"[cyan]Timing {old_name}"
+        )
+        new_times = _run_timing_measurements_with_progress(
+            new, calls, Runs.FOCUSED, progress, task, f"[cyan]Timing {new_name}"
+        )
     old_stats = old_times.into(Stats.from_times)
     new_stats = new_times.into(Stats.from_times)
     relative = RelativeStats.from_comparison(old_stats, new_stats)
@@ -505,9 +535,19 @@ def focused(
     mem: Annotated[bool, typer.Option(help="Run memory benchmarks")] = False,
 ) -> None:
     """Run focused build_args benchmark only."""
+    some_val: pc.Result[pc.Option[int], str] = pc.Ok(pc.Some(42))
+
+    def _old():
+        return some_val.transpose()
+
+    def _new():
+        return some_val.transpose_test()
+
+    assert _old().unwrap().unwrap() == _new().unwrap().unwrap()
+
     _run_focused_benchmark(
-        old=partial(pc.NONE.or_else),  # type: ignore[arg-type]
-        new=partial(pc.NONE.or_else_test),  # type: ignore[arg-type]
+        old=partial(_old),  # type: ignore[arg-type]
+        new=partial(_new),  # type: ignore[arg-type]
         memory=mem,
     )
 
