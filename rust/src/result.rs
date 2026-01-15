@@ -1,23 +1,12 @@
+use crate::errors::ResultUnwrapError;
 use crate::option::{PySome, get_none_singleton};
 use crate::types::{PyClassInit, call_func};
 use pyderive::*;
 use pyo3::IntoPyObjectExt;
-use pyo3::exceptions::PyValueError;
 use pyo3::{
     prelude::*,
     types::{PyDict, PyString, PyTuple},
 };
-/// Exception raised when unwrapping fails on Result types
-#[pyclass(extends = PyValueError)]
-pub struct ResultUnwrapError;
-
-#[pymethods]
-impl ResultUnwrapError {
-    #[new]
-    fn new(_exc_arg: &Bound<'_, PyAny>) -> Self {
-        ResultUnwrapError
-    }
-}
 #[derive(FromPyObject)]
 pub enum PyResultEnum<'py> {
     #[pyo3(transparent)]

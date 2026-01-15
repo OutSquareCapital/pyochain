@@ -1,7 +1,7 @@
+use crate::errors::OptionUnwrapError;
 use crate::result::{self, PyResultEnum};
 use crate::types::{PyClassInit, call_func};
 use pyo3::IntoPyObjectExt;
-use pyo3::exceptions::PyValueError;
 use pyo3::{
     ffi,
     prelude::*,
@@ -9,17 +9,6 @@ use pyo3::{
     types::{PyDict, PyString, PyTuple},
 };
 use std::sync::atomic::{AtomicPtr, Ordering};
-/// Exception raised when unwrapping fails on Option types
-#[pyclass(extends = PyValueError)]
-pub struct OptionUnwrapError;
-
-#[pymethods]
-impl OptionUnwrapError {
-    #[new]
-    fn new(_exc_arg: &Bound<'_, PyAny>) -> Self {
-        OptionUnwrapError
-    }
-}
 
 /// Singleton for NONE - initialized once per Python interpreter
 pub static NONE_SINGLETON: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
