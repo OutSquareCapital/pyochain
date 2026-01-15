@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Any, Concatenate, Self, overload
 
 import cytoolz as cz
 
+from .. import _tools as tls  # type: ignore[import]
 from .._types import SupportsComparison, SupportsRichComparison
 from ..rs import NONE, Checkable, Err, Ok, Option, Pipeable, Result, Some
 
@@ -843,26 +844,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        for item in self.__iter__():
-            result = predicate(item)
-            if result.is_ok():
-                if result.unwrap():
-                    return Ok(Some(item))
-            else:
-                return Err(result.unwrap_err())
-        return Ok(NONE)
-
-    def try_find_test[E](
-        self, predicate: Callable[[T], Result[bool, E]]
-    ) -> Result[Option[T], E]:
-        """Rust implementation of try_find."""
-        from .._tools import try_find
-
-        return try_find(self.__iter__(), predicate)  # type: ignore[return-value]
-
-    def consume(self) -> None:
-        for _ in self:
-            pass
+        return tls.try_find(self.__iter__(), predicate)
 
     def try_fold[B, E](
         self, init: B, func: Callable[[B, T], Result[B, E]]

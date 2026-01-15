@@ -1,6 +1,7 @@
 mod converters;
 mod option;
 mod result;
+mod tools;
 mod types;
 use pyo3::prelude::*;
 
@@ -18,5 +19,10 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<result::PyochainResult>()?;
     m.add_class::<converters::Checkable>()?;
     m.add_class::<converters::Pipeable>()?;
+    m.add_wrapped(pyo3::wrap_pymodule!(tools::tools))?;
+    py.import("sys")?
+        .getattr("modules")?
+        .set_item("pyochain._tools", m.getattr("_tools")?)?;
+
     Ok(())
 }
