@@ -225,11 +225,8 @@ impl PySome {
         Ok(call_func(f, &self.value.bind(py), args, kwargs)?.unbind())
     }
 
-    fn map_or_else(
-        &self,
-        _default: &Bound<'_, PyAny>,
-        f: &Bound<'_, PyAny>,
-    ) -> PyResult<Py<PyAny>> {
+    #[allow(unused_variables)]
+    fn map_or_else(&self, default: &Bound<'_, PyAny>, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         Ok(f.call1((&self.value,))?.unbind())
     }
 
@@ -410,11 +407,11 @@ impl PyNone {
     fn is_none(&self) -> bool {
         true
     }
-
-    #[pyo3(signature = (_predicate, *_args, **_kwargs))]
+    #[allow(unused_variables)]
+    #[pyo3(signature = (predicate, *_args, **_kwargs))]
     fn is_some_and(
         &self,
-        _predicate: &Bound<'_, PyAny>,
+        predicate: &Bound<'_, PyAny>,
         _args: &Bound<'_, PyTuple>,
         _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> bool {
@@ -505,12 +502,8 @@ impl PyNone {
     ) -> Py<PyAny> {
         default
     }
-
-    fn map_or_else(
-        &self,
-        default: &Bound<'_, PyAny>,
-        _f: &Bound<'_, PyAny>,
-    ) -> PyResult<Py<PyAny>> {
+    #[allow(unused_variables)]
+    fn map_or_else(&self, default: &Bound<'_, PyAny>, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         Ok(default.call0()?.unbind())
     }
 
