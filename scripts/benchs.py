@@ -53,6 +53,7 @@ class BenchmarkMetadata(NamedTuple):
 
 
 type BenchFn = Callable[[], object]
+type BenchRegistery = pc.Dict[Implementation, BenchFn]
 BENCHMARK_REGISTRY = pc.Dict[BenchFn, BenchmarkMetadata].new()
 
 
@@ -100,14 +101,8 @@ def bench[T, N, R](
 
 def _collect_raw_timings() -> pl.LazyFrame:
     """Collect raw timing data for all benchmarks. Stats computed at the end."""
-    benchmark_pairs = pc.Dict[tuple[str, str], dict[Implementation, BenchFn]].new()
+    benchmark_pairs = _get_pairs()
     raw_rows = pc.Vec[tuple[str, str, str, int, float]].new()
-
-    for func, meta in BENCHMARK_REGISTRY.items().iter():
-        key = (meta.category, meta.name)
-        if key not in benchmark_pairs:
-            benchmark_pairs[key] = {}
-        benchmark_pairs[key][meta.implementation] = func
 
     benchmarks = (
         benchmark_pairs.values()
@@ -148,6 +143,24 @@ def _collect_raw_timings() -> pl.LazyFrame:
         schema=["category", "name", "impl", "run_idx", "time"],
         orient="row",
     )
+
+
+def _get_pairs() -> pc.Dict[tuple[str, str], pc.Dict[Implementation, BenchFn]]:
+    benchmark_pairs = pc.Dict[tuple[str, str], pc.Dict[Implementation, BenchFn]].new()
+    (
+        BENCHMARK_REGISTRY.items()
+        .ok_or("Error, no benchmarks registered")
+        .unwrap()
+        .iter()
+        .for_each_star(
+            lambda func, meta: benchmark_pairs.try_insert(
+                (meta.category, meta.name), pc.Dict[Implementation, BenchFn].new()
+            )
+            .ok()
+            .map(lambda d: d.insert(meta.implementation, func))
+        )
+    )
+    return benchmark_pairs
 
 
 def _compute_all_stats(raw_df: pl.LazyFrame) -> pl.DataFrame:
@@ -217,15 +230,15 @@ def _build_results_table(pivoted: pl.DataFrame) -> Table:
     table = Table(title="Benchmark Results")
     table.add_column("Category", style="cyan")
     table.add_column("Operation", style="white")
-    table.add_column("New (s, median)", justify="right", style="green")
-    table.add_column("Old (s, median)", justify="right", style="yellow")
+    table.add_column("New (ms, median)", justify="right", style="green")
+    table.add_column("Old (ms, median)", justify="right", style="yellow")
     table.add_column("Speedup", justify="right")
     pc.Iter(
         pivoted.select(
             "category",
             "name",
-            pl.col("new_median").round(4).cast(pl.String),
-            pl.col("old_median").round(4).cast(pl.String),
+            pl.col("new_median").mul(1000).round(2).cast(pl.String),
+            pl.col("old_median").mul(1000).round(2).cast(pl.String),
             pl.col("ratio").round(2).cast(pl.String).add("x").alias("ratio_str"),
             pl.when(pl.col("ratio").gt(1))
             .then(pl.lit("green bold"))
