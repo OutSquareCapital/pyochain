@@ -55,10 +55,6 @@ def _get_repr(data: Collection[Any]) -> str:
 class Unzipped[T, V](Pipeable, Checkable):
     """Represents the result of unzipping an `Iter` of pairs into two separate `Iter`.
 
-    Attributes:
-        left (Iter[T]): An `Iter` over the first elements of the pairs.
-        right (Iter[V]): An `Iter` over the second elements of the pairs.
-
     See Also:
         `Iter.unzip()`
     Example:

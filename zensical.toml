@@ -1,5 +1,5 @@
 [project]
-    site_author      = "Outside Square Capital"
+    site_author      = "Thibaud Wilson Stettler"
     site_description = "A modern Python library for functional programming with chainable operations"
     site_name        = "pyochain"
     site_url         = "https://outsquarecapital.github.io/pyochain/"
@@ -69,12 +69,15 @@
         paths = ["src"]
 
     [project.plugins.mkdocstrings.handlers.python.options]
-        docstring_style   = "google"
-        filters           = ["!^_"]
-        inherited_members = true
-        members_order     = "alphabetical"
-        show_overloads    = true
-        show_source       = true
+        docstring_style     = "google"
+        filters             = ["!^_[^_]"]
+        inherited_members   = false
+        members_order       = "alphabetical"
+        scoped_crossrefs    = true
+        show_overloads      = true
+        show_source         = true
+        signature_crossrefs = true
+
 
     [project.markdown_extensions.pymdownx.superfences]
         custom_fences = [
