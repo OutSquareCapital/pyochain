@@ -1,6 +1,6 @@
 use crate::errors::ResultUnwrapError;
 use crate::option::{PySome, get_none_singleton};
-use crate::types::{PyClassInit, call_func};
+use crate::types::{ConcatArgs, PyClassInit};
 use pyderive::*;
 use pyo3::IntoPyObjectExt;
 use pyo3::{
@@ -72,7 +72,8 @@ impl PyOk {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
         Ok(PyOk::new(
-            call_func(func, &self.value.bind(func.py()), args, kwargs)?.unbind(),
+            func.concat(&self.value.bind(func.py()), args, kwargs)?
+                .unbind(),
         ))
     }
 
@@ -91,7 +92,9 @@ impl PyOk {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        Ok(call_func(func, &self.value.bind(func.py()), args, kwargs)?.unbind())
+        Ok(func
+            .concat(&self.value.bind(func.py()), args, kwargs)?
+            .unbind())
     }
 
     fn or_else(&self, f: &Bound<'_, PyAny>) -> Self {
@@ -140,7 +143,7 @@ impl PyOk {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        Ok(call_func(func, &slf, args, kwargs)?.unbind())
+        Ok(func.concat(&slf, args, kwargs)?.unbind())
     }
 
     #[pyo3(signature = (pred, *args, **kwargs))]
@@ -150,7 +153,8 @@ impl PyOk {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
-        call_func(pred, &self.value.bind(pred.py()), args, kwargs)?.is_truthy()
+        pred.concat(&self.value.bind(pred.py()), args, kwargs)?
+            .is_truthy()
     }
 
     #[pyo3(signature = (_pred, *_args, **_kwargs))]
@@ -201,7 +205,9 @@ impl PyOk {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        Ok(call_func(func, &self.value.bind(default.py()), args, kwargs)?.unbind())
+        Ok(func
+            .concat(&self.value.bind(default.py()), args, kwargs)?
+            .unbind())
     }
 
     fn map_or_else(&self, ok: &Bound<'_, PyAny>, _err: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
@@ -216,7 +222,7 @@ impl PyOk {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
         let py = f.py();
-        call_func(f, &self.value.bind(py), args, kwargs)?;
+        f.concat(&self.value.bind(py), args, kwargs)?;
         Ok(PyOk::new(self.value.clone_ref(py)))
     }
 
@@ -364,7 +370,8 @@ impl PyErr {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
-        call_func(pred, &self.error.bind(pred.py()), args, kwargs)?.is_truthy()
+        pred.concat(&self.error.bind(pred.py()), args, kwargs)?
+            .is_truthy()
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]
@@ -374,9 +381,10 @@ impl PyErr {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
-        Ok(PyErr {
-            error: call_func(func, &self.error.bind(func.py()), args, kwargs)?.unbind(),
-        })
+        Ok(PyErr::new(
+            func.concat(&self.error.bind(func.py()), args, kwargs)?
+                .unbind(),
+        ))
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]
@@ -387,10 +395,8 @@ impl PyErr {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
         let py = func.py();
-        call_func(func, &self.error.bind(py), args, kwargs)?;
-        Ok(PyErr {
-            error: self.error.clone_ref(py),
-        })
+        func.concat(&self.error.bind(py), args, kwargs)?;
+        Ok(PyErr::new(self.error.clone_ref(py)))
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
@@ -445,6 +451,6 @@ impl PyErr {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        Ok(call_func(func, &slf, args, kwargs)?.unbind())
+        Ok(func.concat(&slf, args, kwargs)?.unbind())
     }
 }

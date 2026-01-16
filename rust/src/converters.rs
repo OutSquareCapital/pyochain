@@ -1,6 +1,6 @@
 use crate::option::{PySome, get_none_singleton};
 use crate::result::{PyErr, PyOk};
-use crate::types::{PyClassInit, call_func};
+use crate::types::{ConcatArgs, PyClassInit};
 use pyo3::types::{PyDict, PyTuple};
 use pyo3::{IntoPyObjectExt, prelude::*};
 #[pyclass(frozen, subclass)]
@@ -20,7 +20,7 @@ impl Pipeable {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        Ok(call_func(func, &slf, args, kwargs)?.unbind())
+        Ok(func.concat(&slf, args, kwargs)?.unbind())
     }
     #[pyo3(signature = (f, *args, **kwargs))]
     fn inspect(
@@ -29,7 +29,7 @@ impl Pipeable {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        call_func(f, &slf, args, kwargs)?;
+        f.concat(&slf, args, kwargs)?;
         Ok(slf.to_owned().into_any().unbind())
     }
 }
@@ -52,7 +52,7 @@ impl Checkable {
         let py = slf.py();
 
         if slf.is_truthy()? {
-            Ok(PySome::new(call_func(func, &slf, args, kwargs)?.unbind())
+            Ok(PySome::new(func.concat(&slf, args, kwargs)?.unbind())
                 .init(py)?
                 .into_any())
         } else {
@@ -90,7 +90,7 @@ impl Checkable {
         if slf.is_truthy()? {
             Ok(PyOk::new(slf.to_owned().unbind().into_any()).into_py_any(py)?)
         } else {
-            Ok(PyErr::new(call_func(func, &slf, args, kwargs)?.unbind()).into_py_any(py)?)
+            Ok(PyErr::new(func.concat(&slf, args, kwargs)?.unbind()).into_py_any(py)?)
         }
     }
 }
