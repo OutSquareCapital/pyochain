@@ -1,9 +1,9 @@
 """Comprehensive benchmarks for Option types: Rust vs Python implementations."""
 
+import functools
 import timeit
 from collections.abc import Callable
-from enum import IntEnum, StrEnum, auto
-from functools import wraps
+from enum import IntEnum
 from typing import Final, NamedTuple
 
 import polars as pl
@@ -13,6 +13,7 @@ from rich.progress import (
     BarColumn,
     Progress,
     SpinnerColumn,
+    TaskID,
     TaskProgressColumn,
     TextColumn,
     TimeRemainingColumn,
@@ -34,85 +35,57 @@ class Runs(IntEnum):
     FOCUSED = 20_000
     CHEAP = 5_000
     NORMAL = 2_500
-    EXPENSIVE = 1000
-
-
-class Implementation(StrEnum):
-    """Implementation type for benchmarks."""
-
-    OLD = auto()
-    NEW = auto()
-
-
-class BenchmarkMetadata(NamedTuple):
-    """Metadata for a benchmark function."""
-
-    category: str
-    name: str
-    cost: Runs
-    implementation: Implementation
+    EXPENSIVE = 50
 
 
 type BenchFn = Callable[[], object]
-BENCHMARK_REGISTRY = pc.Dict[BenchFn, BenchmarkMetadata].new()
 
 
-def bench[T, N, R](
+class Benchmark(NamedTuple):
+    """A benchmark with both implementations."""
+
+    category: str
+    name: str
+    n_runs: Runs
+    old_fn: BenchFn
+    new_fn: BenchFn
+
+
+BENCHMARKS = pc.Vec[Benchmark].new()
+
+
+def bench[T, R](
     category: str,
     *,
     old: T,
     new: T,
-    cost: Runs = Runs.CHEAP,
+    n_runs: Runs = Runs.CHEAP,
 ) -> Callable[[Callable[[T], R]], Callable[[T], R]]:
     """Decorator to register a benchmark function for both old and new implementations."""
 
     def decorator(func: Callable[[T], R]) -> Callable[[T], R]:
-        @wraps(func, updated=())
-        def old_wrapper() -> R:
+        def old_fn() -> R:
             return func(old)
 
-        @wraps(func, updated=())
-        def new_wrapper() -> R:
+        def new_fn() -> R:
             return func(new)
 
-        assert old_wrapper() == new_wrapper(), (
-            "Old and new implementations must produce the same result"
+        assert old_fn() == new_fn(), (
+            f"{func.__name__}: Old and new implementations must produce the same result"
         )
 
-        old_meta = BenchmarkMetadata(
-            category=category,
-            name=func.__name__,
-            cost=cost,
-            implementation=Implementation.OLD,
-        )
-        new_meta = BenchmarkMetadata(
-            category=category,
-            name=func.__name__,
-            cost=cost,
-            implementation=Implementation.NEW,
-        )
-        BENCHMARK_REGISTRY.try_insert(old_wrapper, old_meta).expect(
-            "Failed to register benchmark"
-        )
-        BENCHMARK_REGISTRY.try_insert(new_wrapper, new_meta).expect(
-            "Failed to register benchmark"
-        )
-
+        BENCHMARKS.append(Benchmark(category, func.__name__, n_runs, old_fn, new_fn))
         return func
 
     return decorator
 
 
-def _collect_raw_timings() -> pl.LazyFrame:
+def _collect_raw_timings() -> pc.Iter[Row]:
     """Collect raw timing data for all benchmarks. Stats computed at the end."""
-    benchmark_pairs = _get_pairs()
-    raw_rows = pc.Vec[Row].new()
-
-    benchmarks = (
-        benchmark_pairs.values()
-        .iter()
-        .map(lambda impls: (impls[Implementation.NEW], impls[Implementation.OLD]))
-        .collect()
+    n_benchmarks = BENCHMARKS.length()
+    total_runs: int = BENCHMARKS.iter().map(lambda b: b.n_runs).sum() * 2
+    CONSOLE.print(
+        f"[dim]Found {n_benchmarks} benchmarks, {total_runs} total runs[/dim]"
     )
 
     with Progress(
@@ -123,80 +96,47 @@ def _collect_raw_timings() -> pl.LazyFrame:
         TimeRemainingColumn(),
         console=CONSOLE,
     ) as progress:
-        task = progress.add_task(
-            "[cyan]Running benchmarks...", total=benchmarks.length() * 2
+        task = progress.add_task("[cyan]Running benchmarks...", total=total_runs)
+        f = functools.partial(_run_benchmark, progress, task)
+
+        return BENCHMARKS.iter().flat_map(
+            lambda b: f(b, "new", b.new_fn).chain(f(b, "old", b.old_fn))
         )
-        benchmarks.iter()
-        for new_fn, old_fn in benchmarks:
-            meta = BENCHMARK_REGISTRY.get_item(new_fn).unwrap()
-
-            for impl_name, fn in [("new", new_fn), ("old", old_fn)]:
-                progress.update(
-                    task,
-                    description=f"[cyan]{meta.category}: {meta.name} ({impl_name})",
-                )
-                raw_rows.into(_timeit, meta, fn, impl_name)
-                progress.advance(task)
-
-    return pl.LazyFrame(
-        raw_rows.into(list),
-        schema=["category", "name", "impl", "run_idx", "time"],
-        orient="row",
-    )
 
 
-def _timeit(
-    raw_rows: pc.Vec[Row], meta: BenchmarkMetadata, fn: BenchFn, impl_name: str
-) -> pc.Vec[Row]:
-    return (
-        pc.Iter(range(meta.cost))
-        .map(
-            lambda run_idx: (
-                meta.category,
-                meta.name,
-                impl_name,
-                run_idx,
-                timeit.timeit(fn, number=10),
-            )
+def _run_benchmark(
+    progress: Progress, task: TaskID, bench: Benchmark, impl_name: str, fn: BenchFn
+) -> pc.Iter[Row]:
+    def _update_progress(run_idx: int) -> tuple[str, str, str, int, float]:
+        progress.update(
+            task,
+            description=f"[cyan]{bench.category}: {bench.name} ({impl_name})",
         )
-        .collect_into(raw_rows)
-    )
+        progress.advance(task)
 
-
-def _get_pairs() -> pc.Dict[tuple[str, str], pc.Dict[Implementation, BenchFn]]:
-    def _maybe_get_or_create(
-        pairs: pc.Dict[tuple[str, str], pc.Dict[Implementation, BenchFn]],
-        key: tuple[str, str],
-    ) -> pc.Dict[Implementation, BenchFn]:
-        """Get existing Dict or create new one."""
-        return pairs.get_item(key).unwrap_or(pc.Dict[Implementation, BenchFn].new())
-
-    benchmark_pairs = pc.Dict[tuple[str, str], pc.Dict[Implementation, BenchFn]].new()
-    (
-        BENCHMARK_REGISTRY.items()
-        .ok_or("Error, no benchmarks registered")
-        .unwrap()
-        .iter()
-        .for_each_star(
-            lambda func, meta: (
-                _maybe_get_or_create(benchmark_pairs, (meta.category, meta.name))
-                .inspect(lambda d: d.insert(meta.implementation, func))
-                .inspect(
-                    lambda d: benchmark_pairs.insert((meta.category, meta.name), d)
-                )
-            )
+        return (
+            bench.category,
+            bench.name,
+            impl_name,
+            run_idx,
+            timeit.timeit(fn, number=10),
         )
-    )
-    return benchmark_pairs
+
+    return pc.Iter(range(bench.n_runs)).map(_update_progress)
 
 
-def _compute_all_stats(raw_df: pl.LazyFrame) -> pl.DataFrame:
+def _compute_all_stats(raw_rows: pc.Iter[Row]) -> pl.DataFrame:
     """Compute all stats from raw timings using Polars expressions + over."""
     time = pl.col("time")
     median = pl.col("median")
     group = ["category", "name"]
     return (
-        raw_df.group_by("category", "name", "impl")
+        pl.LazyFrame(
+            raw_rows,
+            schema=["category", "name", "impl", "run_idx", "time"],
+            orient="row",
+        )
+        .group_by("category", "name", "impl")
         .agg(
             time.median().alias("median"),
             pl.len().alias("runs"),
@@ -246,7 +186,7 @@ def all_benchmarks() -> None:
     """Run all benchmarks."""
     CONSOLE.print(Text("Running benchmarks...", style="bold blue"))
     CONSOLE.print()
-    pivoted = _collect_raw_timings().pipe(_compute_all_stats)
+    pivoted = _collect_raw_timings().into(_compute_all_stats)
     CONSOLE.print()
     table = _build_results_table(pivoted)
     CONSOLE.print(table)
