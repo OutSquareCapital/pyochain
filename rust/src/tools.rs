@@ -1,9 +1,9 @@
 /// Pure functions tools for pyochain
 use crate::option::{PySome, get_none_singleton};
 use crate::result::{PyOk, PyResultEnum};
-use crate::types::PyClassInit;
+use crate::types::{ConcatArgs, PyClassInit};
 use pyo3::intern;
-use pyo3::types::{PyAny, PyBool, PyFunction, PyModule};
+use pyo3::types::{PyAny, PyBool, PyDict, PyFunction, PyModule, PyTuple};
 use pyo3::{IntoPyObjectExt, prelude::*};
 /// Create a unique sentinel object
 #[inline]
@@ -20,6 +20,8 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(try_reduce, m)?)?;
     m.add_function(wrap_pyfunction!(is_sorted, m)?)?;
     m.add_function(wrap_pyfunction!(is_sorted_by, m)?)?;
+    m.add_function(wrap_pyfunction!(for_each, m)?)?;
+    m.add_function(wrap_pyfunction!(for_each_star, m)?)?;
     m.add_function(wrap_pyfunction!(eq, m)?)?;
     m.add_function(wrap_pyfunction!(ne, m)?)?;
     m.add_function(wrap_pyfunction!(le, m)?)?;
@@ -27,6 +29,33 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(gt, m)?)?;
     m.add_function(wrap_pyfunction!(ge, m)?)?;
     Ok(())
+}
+
+#[pyfunction]
+#[pyo3(signature = (data, func, *args, **kwargs))]
+pub fn for_each(
+    data: &Bound<'_, PyAny>,
+    func: &Bound<'_, PyAny>,
+    args: &Bound<'_, PyTuple>,
+    kwargs: Option<&Bound<'_, PyDict>>,
+) -> PyResult<()> {
+    data.try_iter()?.try_for_each(|item| {
+        func.concat(&item?, args, kwargs)?;
+        Ok(())
+    })
+}
+#[pyfunction]
+#[pyo3(signature = (data, func, *args, **kwargs))]
+pub fn for_each_star(
+    data: &Bound<'_, PyAny>,
+    func: &Bound<'_, PyAny>,
+    args: &Bound<'_, PyTuple>,
+    kwargs: Option<&Bound<'_, PyDict>>,
+) -> PyResult<()> {
+    data.try_iter()?.try_for_each(|item| {
+        func.concat_star(&item?.cast_into::<PyTuple>()?, args, kwargs)?;
+        Ok(())
+    })
 }
 
 #[pyfunction]
