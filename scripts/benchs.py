@@ -1,4 +1,4 @@
-"""Comprehensive benchmarks for Option types: Rust vs Python implementations."""
+"""Benchmarks for pyochain developments."""
 
 import functools
 import timeit
@@ -80,10 +80,10 @@ def bench[T, R](
     return decorator
 
 
-def _collect_raw_timings() -> pc.Iter[Row]:
+def _collect_raw_timings(benchmarks: pc.Vec[Benchmark]) -> pc.Iter[Row]:
     """Collect raw timing data for all benchmarks. Stats computed at the end."""
-    n_benchmarks = BENCHMARKS.length()
-    total_runs: int = BENCHMARKS.iter().map(lambda b: b.n_runs).sum() * 2
+    n_benchmarks = benchmarks.length()
+    total_runs: int = benchmarks.iter().map(lambda b: b.n_runs).sum() * 2
     CONSOLE.print(
         f"[dim]Found {n_benchmarks} benchmarks, {total_runs} total runs[/dim]"
     )
@@ -125,7 +125,7 @@ def _run_benchmark(
     return pc.Iter(range(bench.n_runs)).map(_update_progress)
 
 
-def _compute_all_stats(raw_rows: pc.Iter[Row]) -> pl.DataFrame:
+def _compute_all_stats(raw_rows: pc.Iter[Row]) -> pl.LazyFrame:
     """Compute all stats from raw timings using Polars expressions + over."""
     time = pl.col("time")
     median = pl.col("median")
@@ -155,8 +155,18 @@ def _compute_all_stats(raw_rows: pc.Iter[Row]) -> pl.DataFrame:
             pl.col("old_median").truediv(pl.col("new_median")).alias("ratio"),
         )
         .sort("ratio", descending=True)
-        .collect()
     )
+
+
+def _try_collect(lf: pl.LazyFrame) -> pc.Result[pl.DataFrame, str]:
+    """Try to collect a LazyFrame, with error handling."""
+    try:
+        return pc.Ok(lf.collect())
+    except (
+        pl.exceptions.ColumnNotFoundError,
+        pl.exceptions.InvalidOperationError,
+    ) as e:
+        return pc.Err(f"{e}")
 
 
 def _print_summary(pivoted: pl.DataFrame) -> None:
@@ -186,7 +196,13 @@ def all_benchmarks() -> None:
     """Run all benchmarks."""
     CONSOLE.print(Text("Running benchmarks...", style="bold blue"))
     CONSOLE.print()
-    pivoted = _collect_raw_timings().into(_compute_all_stats)
+    pivoted = (
+        BENCHMARKS.ok_or("No benchmarks registered!")
+        .map(_collect_raw_timings)
+        .map(_compute_all_stats)
+        .and_then(_try_collect)
+        .unwrap()
+    )
     CONSOLE.print()
     table = _build_results_table(pivoted)
     CONSOLE.print(table)
