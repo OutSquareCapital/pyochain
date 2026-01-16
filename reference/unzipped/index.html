@@ -9,7 +9,7 @@
         <meta name="description" content="A modern Python library for functional programming with chainable operations">
       
       
-        <meta name="author" content="Outside Square Capital">
+        <meta name="author" content="Thibaud Wilson Stettler">
       
       
         <link rel="canonical" href="https://outsquarecapital.github.io/pyochain/reference/unzipped/">
@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.15">
+      <meta name="generator" content="zensical-0.0.16">
     
     
       
@@ -36,7 +36,7 @@
       
         
       
-      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.f1b6466b.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.dfcb43b2.min.css">
       
         
           
@@ -44,35 +44,6 @@
         <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.dfe2e883.min.css">
       
       
-  
-  
-    
-  
-    
-  
-    
-  
-    
-  
-    
-  
-    
-  
-    
-  
-    
-  
-    
-  
-    
-  
-    
-  
-    
-  
-  
-  <style>:root{}</style>
-
 
 
     
@@ -850,72 +821,6 @@
     <span class="md-ellipsis">
       
         right
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain._iter.Unzipped.inspect" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        inspect
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain._iter.Unzipped.into" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        into
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain._iter.Unzipped.ok_or" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ok_or
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain._iter.Unzipped.ok_or_else" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ok_or_else
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain._iter.Unzipped.then" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        then
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain._iter.Unzipped.then_some" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        then_some
       
     </span>
   </a>
@@ -1841,72 +1746,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#pyochain._iter.Unzipped.inspect" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        inspect
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain._iter.Unzipped.into" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        into
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain._iter.Unzipped.ok_or" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ok_or
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain._iter.Unzipped.ok_or_else" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ok_or_else
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain._iter.Unzipped.then" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        then
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain._iter.Unzipped.then_some" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        then_some
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -1939,46 +1778,17 @@
         <p>Represents the result of unzipping an <code>Iter</code> of pairs into two separate <code>Iter</code>.</p>
 
 
-<p><span class="doc-section-title">Attributes:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td><code><autoref identifier="pyochain._iter.Unzipped.left" optional hover>left</autoref></code></td>
-            <td>
-                  <code><autoref identifier="pyochain._iter.Iter" optional hover>Iter</autoref>[<autoref identifier="pyochain._iter.Unzipped[T]" optional>T</autoref>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An <code>Iter</code> over the first elements of the pairs.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code><autoref identifier="pyochain._iter.Unzipped.right" optional hover>right</autoref></code></td>
-            <td>
-                  <code><autoref identifier="pyochain._iter.Iter" optional hover>Iter</autoref>[<autoref identifier="pyochain._iter.Unzipped[V]" optional>V</autoref>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An <code>Iter</code> over the second elements of the pairs.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
 <details class="see-also" open>
   <summary>See Also</summary>
   <p><code>Iter.unzip()</code></p>
-</details>
+</details>        <p>Example:
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pairs</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Iter</span><span class="p">(((</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">)))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">unzipped</span> <span class="o">=</span> <span class="n">pairs</span><span class="o">.</span><span class="n">unzip</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">unzipped</span><span class="o">.</span><span class="n">left</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+<span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+</code></pre></div></p>
+
 
 
 
@@ -2006,17 +1816,27 @@
 <span class="normal">69</span>
 <span class="normal">70</span>
 <span class="normal">71</span>
-<span class="normal">72</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Unzipped</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">V</span><span class="p">](</span><span class="n">Pipeable</span><span class="p">,</span> <span class="n">Checkable</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents the result of unzipping an `Iter` of pairs into two separate `Iter`.</span>
 
-<span class="sd">    Attributes:</span>
-<span class="sd">        left (Iter[T]): An `Iter` over the first elements of the pairs.</span>
-<span class="sd">        right (Iter[V]): An `Iter` over the second elements of the pairs.</span>
-
 <span class="sd">    See Also:</span>
 <span class="sd">        `Iter.unzip()`</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    Example:</span>
+<span class="sd">    ```python</span>
+<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
+<span class="sd">    &gt;&gt;&gt; pairs = pc.Iter(((1, &#39;a&#39;), (2, &#39;b&#39;), (3, &#39;c&#39;)))</span>
+<span class="sd">    &gt;&gt;&gt; unzipped = pairs.unzip()</span>
+<span class="sd">    &gt;&gt;&gt; unzipped.left.collect()</span>
+<span class="sd">    Seq(1, 2, 3)</span>
+
+<span class="sd">    ```</span>
+<span class="sd">    &quot;&quot;&quot;</span>  <span class="c1"># noqa: DOC601, DOC603</span>
 
     <span class="n">left</span><span class="p">:</span> <span class="n">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An `Iter` over the first elements of the pairs.&quot;&quot;&quot;</span>
@@ -2085,590 +1905,6 @@
 
 
 
-<div class="doc doc-object doc-function">
-
-
-<h2 id="pyochain._iter.Unzipped.inspect" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">inspect</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
-
-</h2>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Pass <code>Self</code> to <strong>func</strong> to perform side effects without altering the data.</p>
-<p>This method is very useful for debugging or passing the instance to other functions for side effects, without breaking the fluent method chaining.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>func</code>
-            </td>
-            <td>
-                  <code><autoref identifier="collections.abc.Callable" backlink-type="used-by" backlink-anchor="pyochain._iter.Unzipped.inspect" optional hover>Callable</autoref>[<autoref identifier="typing.Concatenate" backlink-type="used-by" backlink-anchor="pyochain._iter.Unzipped.inspect" optional hover>Concatenate</autoref>[<autoref identifier="typing.Self" backlink-type="used-by" backlink-anchor="pyochain._iter.Unzipped.inspect" optional hover>Self</autoref>, <autoref identifier="pyochain.rs.Pipeable.inspect[**P]" optional>P</autoref>], <autoref identifier="object" backlink-type="used-by" backlink-anchor="pyochain._iter.Unzipped.inspect" optional>object</autoref>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Function to apply to the instance for side effects.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>*args</code>
-            </td>
-            <td>
-                  <code><autoref identifier="pyochain.rs.Pipeable.inspect[**P]" optional>P</autoref>.<autoref identifier="pyochain.rs.Pipeable.inspect[**P].args" optional hover>args</autoref></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Positional arguments to pass to <strong>func</strong>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>()</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>**kwargs</code>
-            </td>
-            <td>
-                  <code><autoref identifier="pyochain.rs.Pipeable.inspect[**P]" optional>P</autoref>.<autoref identifier="pyochain.rs.Pipeable.inspect[**P].kwargs" optional hover>kwargs</autoref></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Keyword arguments to pass to <strong>func</strong>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>{}</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-<th>Name</th>          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-<td><code>Self</code></td>            <td>
-                  <code><autoref identifier="typing.Self" backlink-type="returned-by" backlink-anchor="pyochain._iter.Unzipped.inspect" optional hover>Self</autoref></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The instance itself, unchanged.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span><span class="o">.</span><span class="n">inspect</span><span class="p">(</span><span class="nb">print</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
-<span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
-<span class="mi">4</span>
-</code></pre></div></p>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h2 id="pyochain._iter.Unzipped.into" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">into</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
-
-</h2>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Convert <code>Self</code> to <code>R</code>.</p>
-<p>This method allows to pipe the instance into an object or function that can convert <code>Self</code> into another type.</p>
-<p>Conceptually, this allow to do <code>x.into(f)</code> instead of <code>f(x)</code>, hence keeping a fluent chaining style.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>func</code>
-            </td>
-            <td>
-                  <code><autoref identifier="collections.abc.Callable" backlink-type="used-by" backlink-anchor="pyochain._iter.Unzipped.into" optional hover>Callable</autoref>[<autoref identifier="typing.Concatenate" backlink-type="used-by" backlink-anchor="pyochain._iter.Unzipped.into" optional hover>Concatenate</autoref>[<autoref identifier="typing.Self" backlink-type="used-by" backlink-anchor="pyochain._iter.Unzipped.into" optional hover>Self</autoref>, <autoref identifier="pyochain.rs.Pipeable.into[**P]" optional>P</autoref>], <autoref identifier="pyochain.rs.Pipeable.into[R]" optional>R</autoref>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Function for conversion.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>*args</code>
-            </td>
-            <td>
-                  <code><autoref identifier="pyochain.rs.Pipeable.into[**P]" optional>P</autoref>.<autoref identifier="pyochain.rs.Pipeable.into[**P].args" optional hover>args</autoref></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Positional arguments to pass to <strong>func</strong>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>()</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>**kwargs</code>
-            </td>
-            <td>
-                  <code><autoref identifier="pyochain.rs.Pipeable.into[**P]" optional>P</autoref>.<autoref identifier="pyochain.rs.Pipeable.into[**P].kwargs" optional hover>kwargs</autoref></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Keyword arguments to pass to <strong>func</strong>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>{}</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-<th>Name</th>          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-<td><code>R</code></td>            <td>
-                  <code><autoref identifier="pyochain.rs.Pipeable.into[R]" optional>R</autoref></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The converted value.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">sha256_hex</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="o">...</span>     <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="n">data</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
-<span class="o">&gt;&gt;&gt;</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="n">sha256_hex</span><span class="p">)</span>
-<span class="s1">&#39;039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81&#39;</span>
-</code></pre></div></p>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h2 id="pyochain._iter.Unzipped.ok_or" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">ok_or</span><span class="p">(</span><span class="n">err</span><span class="p">)</span></code>
-
-</h2>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Wrap <code>Self</code> in a <code>Result[Self, E]</code> based on its truthiness.</p>
-<p>Truthiness is determined by <code>__bool__()</code> if defined, otherwise by <code>__len__()</code> if defined (returning <code>False</code> if length is 0), otherwise all instances are truthy (Python's default behavior).</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>err</code>
-            </td>
-            <td>
-                  <code><autoref identifier="pyochain.rs.Checkable.ok_or[E]" optional>E</autoref></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The error value to wrap in Err if self is falsy.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><autoref identifier="pyochain.rs.Result" backlink-type="returned-by" backlink-anchor="pyochain._iter.Unzipped.ok_or" optional hover>Result</autoref>[<autoref identifier="typing.Self" backlink-type="returned-by" backlink-anchor="pyochain._iter.Unzipped.ok_or" optional hover>Self</autoref>, <autoref identifier="pyochain.rs.Checkable.ok_or[E]" optional>E</autoref>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Result[Self, E]: <code>Ok(self)</code> if self is truthy, <code>Err(err)</code> otherwise.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">&quot;empty&quot;</span><span class="p">)</span>
-<span class="n">Ok</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([])</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">&quot;empty&quot;</span><span class="p">)</span>
-<span class="n">Err</span><span class="p">(</span><span class="s1">&#39;empty&#39;</span><span class="p">)</span>
-</code></pre></div></p>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h2 id="pyochain._iter.Unzipped.ok_or_else" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">ok_or_else</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
-
-</h2>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Wrap <code>Self</code> in a <code>Result[Self, E]</code> based on its truthiness.</p>
-<p><code>E</code> being the return type of <strong>func</strong>.</p>
-<p>The function is only called if self evaluates to False.</p>
-<p>Truthiness is determined by <code>__bool__()</code> if defined, otherwise by <code>__len__()</code> if defined (returning <code>False</code> if length is 0), otherwise all instances are truthy (Python's default behavior).</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>func</code>
-            </td>
-            <td>
-                  <code><autoref identifier="collections.abc.Callable" backlink-type="used-by" backlink-anchor="pyochain._iter.Unzipped.ok_or_else" optional hover>Callable</autoref>[<autoref identifier="typing.Concatenate" backlink-type="used-by" backlink-anchor="pyochain._iter.Unzipped.ok_or_else" optional hover>Concatenate</autoref>[<autoref identifier="typing.Self" backlink-type="used-by" backlink-anchor="pyochain._iter.Unzipped.ok_or_else" optional hover>Self</autoref>, <autoref identifier="pyochain.rs.Checkable.ok_or_else[**P]" optional>P</autoref>], <autoref identifier="pyochain.rs.Checkable.ok_or_else[E]" optional>E</autoref>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>A callable that returns the error value to wrap in Err.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>*args</code>
-            </td>
-            <td>
-                  <code><autoref identifier="pyochain.rs.Checkable.ok_or_else[**P]" optional>P</autoref>.<autoref identifier="pyochain.rs.Checkable.ok_or_else[**P].args" optional hover>args</autoref></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Positional arguments to pass to the function.</p>
-              </div>
-            </td>
-            <td>
-                  <code>()</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>**kwargs</code>
-            </td>
-            <td>
-                  <code><autoref identifier="pyochain.rs.Checkable.ok_or_else[**P]" optional>P</autoref>.<autoref identifier="pyochain.rs.Checkable.ok_or_else[**P].kwargs" optional hover>kwargs</autoref></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Keyword arguments to pass to the function.</p>
-              </div>
-            </td>
-            <td>
-                  <code>{}</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><autoref identifier="pyochain.rs.Result" backlink-type="returned-by" backlink-anchor="pyochain._iter.Unzipped.ok_or_else" optional hover>Result</autoref>[<autoref identifier="typing.Self" backlink-type="returned-by" backlink-anchor="pyochain._iter.Unzipped.ok_or_else" optional hover>Self</autoref>, <autoref identifier="pyochain.rs.Checkable.ok_or_else[E]" optional>E</autoref>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Result[Self, E]: Ok(self) if self is truthy, Err(f(...)) otherwise.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;empty seq&quot;</span><span class="p">)</span>
-<span class="n">Ok</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([])</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;empty seq&quot;</span><span class="p">)</span>
-<span class="n">Err</span><span class="p">(</span><span class="s1">&#39;empty seq&#39;</span><span class="p">)</span>
-</code></pre></div></p>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h2 id="pyochain._iter.Unzipped.then" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">then</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
-
-</h2>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Wrap <code>Self</code> in an <code>Option[R]</code> based on its truthiness.</p>
-<p><code>R</code> being the return type of <strong>func</strong>.</p>
-<p>The function is only called if <code>Self</code> evaluates to <code>True</code> (lazy evaluation).</p>
-<p>Truthiness is determined by <code>__bool__()</code> if defined, otherwise by <code>__len__()</code> if defined (returning <code>False</code> if length is 0), otherwise all instances are truthy (Python's default behavior).</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>func</code>
-            </td>
-            <td>
-                  <code><autoref identifier="collections.abc.Callable" backlink-type="used-by" backlink-anchor="pyochain._iter.Unzipped.then" optional hover>Callable</autoref>[<autoref identifier="typing.Concatenate" backlink-type="used-by" backlink-anchor="pyochain._iter.Unzipped.then" optional hover>Concatenate</autoref>[<autoref identifier="typing.Self" backlink-type="used-by" backlink-anchor="pyochain._iter.Unzipped.then" optional hover>Self</autoref>, <autoref identifier="pyochain.rs.Checkable.then[**P]" optional>P</autoref>], <autoref identifier="pyochain.rs.Checkable.then[R]" optional>R</autoref>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>A callable that returns the value to wrap in Some.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>*args</code>
-            </td>
-            <td>
-                  <code><autoref identifier="pyochain.rs.Checkable.then[**P]" optional>P</autoref>.<autoref identifier="pyochain.rs.Checkable.then[**P].args" optional hover>args</autoref></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Positional arguments to pass to <strong>func</strong>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>()</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>**kwargs</code>
-            </td>
-            <td>
-                  <code><autoref identifier="pyochain.rs.Checkable.then[**P]" optional>P</autoref>.<autoref identifier="pyochain.rs.Checkable.then[**P].kwargs" optional hover>kwargs</autoref></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Keyword arguments to pass to <strong>func</strong>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>{}</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><autoref identifier="pyochain.rs.Option" backlink-type="returned-by" backlink-anchor="pyochain._iter.Unzipped.then" optional hover>Option</autoref>[<autoref identifier="pyochain.rs.Checkable.then[R]" optional>R</autoref>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Option[R]: <code>Some(R)</code> if self is truthy, <code>NONE</code> otherwise.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
-<span class="n">Some</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([])</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
-<span class="n">NONE</span>
-</code></pre></div></p>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h2 id="pyochain._iter.Unzipped.then_some" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">then_some</span><span class="p">()</span></code>
-
-</h2>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Wraps <code>Self</code> in an <code>Option[Self]</code> based on its truthiness.</p>
-<p>Truthiness is determined by <code>__bool__()</code> if defined, otherwise by <code>__len__()</code> if defined (returning <code>False</code> if length is 0), otherwise all instances are truthy (Python's default behavior).</p>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><autoref identifier="pyochain.rs.Option" backlink-type="returned-by" backlink-anchor="pyochain._iter.Unzipped.then_some" optional hover>Option</autoref>[<autoref identifier="typing.Self" backlink-type="returned-by" backlink-anchor="pyochain._iter.Unzipped.then_some" optional hover>Self</autoref>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Option[Self]: <code>Some(self)</code> if self is truthy, <code>NONE</code> otherwise.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">then_some</span><span class="p">()</span>
-<span class="n">Some</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([])</span><span class="o">.</span><span class="n">then_some</span><span class="p">()</span>
-<span class="n">NONE</span>
-</code></pre></div></p>
-
-
-    </div>
-
-</div>
-
 
 
   </div>
@@ -2731,7 +1967,7 @@
       <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.e2d2d235.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.00c35305.min.js"></script>
+      <script src="../../assets/javascripts/bundle.8ffeb9c9.min.js"></script>
       
         <script src="../../javascripts/mermaid.mjs" type="module"></script>
       
