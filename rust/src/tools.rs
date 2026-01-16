@@ -90,7 +90,7 @@ pub fn try_reduce(
     let mut iterator = self_iter.try_iter()?;
     let first = iterator.next();
     if first.is_none() {
-        return Ok(get_none_singleton(py)?.into_py_any(py)?);
+        return Ok(PyOk::new(get_none_singleton(py)?).into_py_any(py)?);
     }
 
     let mut accumulator = first.unwrap()?.to_owned().unbind();
