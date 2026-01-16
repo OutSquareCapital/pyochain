@@ -66,7 +66,7 @@ class Unzipped[T, V](Pipeable, Checkable):
     Seq(1, 2, 3)
 
     ```
-    """
+    """  # noqa: DOC601, DOC603
 
     left: Iter[T]
     """An `Iter` over the first elements of the pairs."""

@@ -25,6 +25,7 @@
         "zensical>=0.0.15",
     ]
 [tool.ruff]
+    lint.external = ["DOC"]
     lint.ignore = [
         "C417",
         "COM812",
@@ -45,6 +46,7 @@
         "TD003",
         "TID252",
     ]
+
     lint.select = ["ALL"]
     [tool.ruff.format]
         docstring-code-format = true
