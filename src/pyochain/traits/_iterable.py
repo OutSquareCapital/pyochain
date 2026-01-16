@@ -583,6 +583,13 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
+        sentinel = object()
+        for a, b in itertools.zip_longest(self.__iter__(), other, fillvalue=sentinel):
+            if a is sentinel or b is sentinel or a != b:
+                return False
+        return True
+
+    def eq_test(self, other: Iterable[T]) -> bool:
         return tls.eq(self.__iter__(), other)
 
     def ne(self, other: Iterable[T]) -> bool:
@@ -597,13 +604,24 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
         Example:
         ```python
         >>> import pyochain as pc
+        >>> pc.Iter((1,2,3)).ne(pc.Iter((1,2,3)))
+        False
+        >>> pc.Iter((1,2,3)).ne(pc.Seq([1,2]))
+        True
         >>> pc.Iter((1,2,3)).ne(pc.Iter((1,2)))
         True
-        >>> pc.Iter((1,2,3)).ne(pc.Iter((1,2,3)))
+        >>> pc.Iter((1,2,3)).ne(pc.Vec([1,2,3]))
         False
 
         ```
         """
+        sentinel = object()
+        for a, b in itertools.zip_longest(self.__iter__(), other, fillvalue=sentinel):
+            if a is sentinel or b is sentinel or a != b:
+                return True
+        return False
+
+    def ne_test(self, other: Iterable[T]) -> bool:
         return tls.ne(self.__iter__(), other)
 
     def le(self, other: Iterable[T]) -> bool:
@@ -625,6 +643,17 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
+        sentinel = object()
+        for a, b in itertools.zip_longest(self.__iter__(), other, fillvalue=sentinel):
+            if a is sentinel:
+                return True
+            if b is sentinel:
+                return False
+            if a != b:
+                return a < b  # type: ignore[operator]
+        return True
+
+    def le_test(self, other: Iterable[T]) -> bool:
         return tls.le(self.__iter__(), other)
 
     def lt(self, other: Iterable[T]) -> bool:
@@ -646,6 +675,17 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
+        sentinel = object()
+        for a, b in itertools.zip_longest(self, other, fillvalue=sentinel):
+            if a is sentinel:
+                return True
+            if b is sentinel:
+                return False
+            if a != b:
+                return a < b  # type: ignore[operator]
+        return False
+
+    def lt_test(self, other: Iterable[T]) -> bool:
         return tls.lt(self.__iter__(), other)
 
     def gt(self, other: Iterable[T]) -> bool:
@@ -667,6 +707,17 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
+        sentinel = object()
+        for a, b in itertools.zip_longest(self, other, fillvalue=sentinel):
+            if a is sentinel:
+                return False
+            if b is sentinel:
+                return True
+            if a != b:
+                return a > b  # type: ignore[operator]
+        return False
+
+    def gt_test(self, other: Iterable[T]) -> bool:
         return tls.gt(self.__iter__(), other)
 
     def ge(self, other: Iterable[T]) -> bool:
@@ -688,6 +739,17 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
+        sentinel = object()
+        for a, b in itertools.zip_longest(self, other, fillvalue=sentinel):
+            if a is sentinel:
+                return False
+            if b is sentinel:
+                return True
+            if a != b:
+                return a > b  # type: ignore[operator]
+        return True
+
+    def ge_test(self, other: Iterable[T]) -> bool:
         return tls.ge(self.__iter__(), other)
 
     def next(self) -> Option[T]:
@@ -865,6 +927,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         return Ok(accumulator)
 
+    def try_fold_test[B, E](
+        self, init: B, func: Callable[[B, T], Result[B, E]]
+    ) -> Result[B, E]:
+        return tls.try_fold(self.__iter__(), init, func)
+
     def try_reduce[E](
         self, func: Callable[[T, T], Result[T, E]]
     ) -> Result[Option[T], E]:
@@ -910,6 +977,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
                 return Err(result.unwrap_err())
 
         return Ok(Some(accumulator))
+
+    def try_reduce_test[E](
+        self, func: Callable[[T, T], Result[T, E]]
+    ) -> Result[Option[T], E]:
+        return tls.try_reduce(self.__iter__(), func)
 
     def is_sorted[U: SupportsComparison[Any]](
         self: PyoIterator[U], *, reverse: bool = False, strict: bool = False
@@ -961,6 +1033,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
             case False:
                 return not any(map(lt, b, a))
 
+    def is_sorted_test[U: SupportsComparison[Any]](
+        self: PyoIterator[U], *, reverse: bool = False, strict: bool = False
+    ) -> bool:
+        return tls.is_sorted(self.__iter__(), reverse=reverse, strict=strict)
+
     def is_sorted_by(
         self,
         key: Callable[[T], SupportsComparison[Any]],
@@ -1011,6 +1088,15 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
                 return all(map(lt, a, b))
             case False:
                 return not any(map(lt, b, a))
+
+    def is_sorted_by_test(
+        self,
+        key: Callable[[T], SupportsComparison[Any]],
+        *,
+        reverse: bool = False,
+        strict: bool = False,
+    ) -> bool:
+        return tls.is_sorted_by(self.__iter__(), key, reverse=reverse, strict=strict)
 
     def all_equal[U](self, key: Callable[[T], U] | None = None) -> bool:
         """Return `True` if all items of the `Iterator` are equal.
