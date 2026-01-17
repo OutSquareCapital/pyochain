@@ -1307,6 +1307,27 @@ class Result[T, E](Pipeable, ABC):
     """
 
     __slots__ = ()
+    def swap(self) -> Result[E, T]:
+        """Swaps the `Ok` and `Err` variants.
+
+        Converts an `Ok[T]` into an `Err[T]` and an `Err[E]` into an `Ok[E]`.
+
+        Returns:
+            Result[E, T]: The swapped result.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Ok(2).swap()
+        Err(2)
+        >>> pc.Err("error").swap()
+        Ok('error')
+        >>> # transform a non-empty Iterable into an Err Result
+        >>> pc.Seq((1, 2, 3)).then_some().ok().swap()
+        Err(Iter(1, 2, 3))
+
+        ```
+        """
     def flatten[T1, E1, E2](self: Result[Result[T1, E1], E2]) -> Result[T1, E1]:
         """Flattens a nested `Result`.
 

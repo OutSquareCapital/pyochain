@@ -31,7 +31,10 @@ impl PyOk {
     pub fn new(value: Py<PyAny>) -> Self {
         PyOk { value }
     }
-
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        let value_repr = self.value.bind(py).repr()?;
+        Ok(format!("Ok({})", value_repr))
+    }
     fn is_ok(&self) -> bool {
         true
     }
@@ -225,10 +228,8 @@ impl PyOk {
         f.concat(&self.value.bind(py), args, kwargs)?;
         Ok(PyOk::new(self.value.clone_ref(py)))
     }
-
-    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let value_repr = self.value.bind(py).repr()?;
-        Ok(format!("Ok({})", value_repr))
+    fn swap(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        Ok(PyErr::new(self.value.clone_ref(py)).into_py_any(py)?)
     }
 }
 
@@ -246,7 +247,10 @@ impl PyErr {
     pub fn new(error: Py<PyAny>) -> Self {
         PyErr { error }
     }
-
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        let error_repr = self.error.bind(py).repr()?;
+        Ok(format!("Err({})", error_repr))
+    }
     fn is_ok(&self) -> bool {
         false
     }
@@ -439,11 +443,6 @@ impl PyErr {
         PyErr::new(self.error.clone_ref(f.py()))
     }
 
-    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let error_repr = self.error.bind(py).repr()?;
-        Ok(format!("Err({})", error_repr))
-    }
-
     #[pyo3(signature = (func, *args, **kwargs))]
     fn into(
         slf: &Bound<'_, Self>,
@@ -452,5 +451,8 @@ impl PyErr {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         Ok(func.concat(&slf, args, kwargs)?.unbind())
+    }
+    fn swap(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        Ok(PyOk::new(self.error.clone_ref(py)).into_py_any(py)?)
     }
 }
