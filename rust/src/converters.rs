@@ -79,6 +79,14 @@ impl Checkable {
             Ok(PyErr::new(err.to_owned().unbind()).into_py_any(py)?)
         }
     }
+    fn err_or(slf: &Bound<'_, Self>, err: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+        let py = slf.py();
+        if slf.is_truthy()? {
+            Ok(PyErr::new(slf.to_owned().unbind().into_any()).into_py_any(py)?)
+        } else {
+            Ok(PyOk::new(err.to_owned().unbind()).into_py_any(py)?)
+        }
+    }
     #[pyo3(signature = (func, *args, **kwargs))]
     fn ok_or_else(
         slf: &Bound<'_, Self>,
@@ -91,6 +99,20 @@ impl Checkable {
             Ok(PyOk::new(slf.to_owned().unbind().into_any()).into_py_any(py)?)
         } else {
             Ok(PyErr::new(func.concat(&slf, args, kwargs)?.unbind()).into_py_any(py)?)
+        }
+    }
+    #[pyo3(signature = (func, *args, **kwargs))]
+    fn err_or_else(
+        slf: &Bound<'_, Self>,
+        func: &Bound<'_, PyAny>,
+        args: &Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<Py<PyAny>> {
+        let py = slf.py();
+        if slf.is_truthy()? {
+            Ok(PyErr::new(slf.to_owned().unbind().into_any()).into_py_any(py)?)
+        } else {
+            Ok(PyOk::new(func.concat(&slf, args, kwargs)?.unbind()).into_py_any(py)?)
         }
     }
 }

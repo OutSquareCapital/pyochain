@@ -136,6 +136,8 @@ class Checkable(Protocol):
 
         Truthiness is determined by `__bool__()` if defined, otherwise by `__len__()` if defined (returning `False` if length is 0), otherwise all instances are truthy (Python's default behavior).
 
+        This method is the inverse of `err_or`.
+
         Args:
             err (E): The error value to wrap in Err if self is falsy.
 
@@ -145,10 +147,33 @@ class Checkable(Protocol):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).ok_or("empty")
+        >>> pc.Seq((1, 2, 3)).ok_or("empty")
         Ok(Seq(1, 2, 3))
         >>> pc.Seq([]).ok_or("empty")
         Err('empty')
+
+        ```
+        """
+    def err_or[T](self, ok: T) -> Result[T, Self]:
+        """Wrap `Self` in a `Result[T, Self]` based on its truthiness.
+
+        Truthiness is determined by `__bool__()` if defined, otherwise by `__len__()` if defined (returning `False` if length is 0), otherwise all instances are truthy (Python's default behavior).
+
+        This method is the inverse of `ok_or`.
+
+        Args:
+            ok (T): The ok value to wrap in Ok if self is falsy.
+
+        Returns:
+            Result[T, Self]: `Ok(ok)` if self is truthy, `Err(self)` otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Seq((1, 2, 3)).err_or("should be empty")
+        Err(Seq(1, 2, 3))
+        >>> pc.Seq(()).err_or("should be empty")
+        Ok('should be empty')
 
         ```
         """
@@ -182,6 +207,38 @@ class Checkable(Protocol):
         Ok(Seq(1, 2, 3))
         >>> pc.Seq([]).ok_or_else(lambda s: f"empty seq")
         Err('empty seq')
+
+        ```
+        """
+    def err_or_else[**P, T](
+        self,
+        func: Callable[Concatenate[Self, P], T],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Result[T, Self]:
+        """Wrap `Self` in a `Result[Self, E]` based on its truthiness.
+
+        `E` being the return type of **func**.
+
+        The function is only called if self evaluates to False.
+
+        Truthiness is determined by `__bool__()` if defined, otherwise by `__len__()` if defined (returning `False` if length is 0), otherwise all instances are truthy (Python's default behavior).
+
+        Args:
+            func (Callable[Concatenate[Self, P], E]): A callable that returns the error value to wrap in Err.
+            *args (P.args): Positional arguments to pass to the function.
+            **kwargs (P.kwargs): Keyword arguments to pass to the function.
+
+        Returns:
+            Result[Self, E]: Ok(self) if self is truthy, Err(f(...)) otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Seq((1, 2, 3)).err_or_else(lambda s: "should be empty" )
+        Err(Seq(1, 2, 3))
+        >>> pc.Seq(()).err_or_else(lambda s: "should be empty")
+        Ok('should be empty')
 
         ```
         """
@@ -1322,9 +1379,6 @@ class Result[T, E](Pipeable, ABC):
         Err(2)
         >>> pc.Err("error").swap()
         Ok('error')
-        >>> # transform a non-empty Iterable into an Err Result
-        >>> pc.Seq((1, 2, 3)).then_some().ok().swap()
-        Err(Iter(1, 2, 3))
 
         ```
         """
