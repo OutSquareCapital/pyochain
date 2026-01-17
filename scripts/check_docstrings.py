@@ -95,8 +95,8 @@ def _process_node(
     def _is_public(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
         return not node.name.startswith("_") and not node.name.istitle()
 
-    docstring = ast.get_docstring(node)
-    if docstring is None:
+    docstring = pc.Option(ast.get_docstring(node))
+    if docstring.is_none():
         if (
             _is_public(node)
             and not _has_skip_decorator(node)
@@ -114,7 +114,10 @@ def _process_node(
         return pc.NONE
 
     result = _check_code_blocks(
-        docstring, node.lineno, node.name, skip_doctest=_has_skip_decorator(node)
+        docstring.unwrap(),
+        node.lineno,
+        node.name,
+        skip_doctest=_has_skip_decorator(node),
     )
     match result:
         case pc.Err(errors):
@@ -133,10 +136,9 @@ def _process_node(
 
 def _has_skip_decorator(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
     """Check if function has a decorator that should skip docstring check."""
-    return any(
-        (isinstance(d, ast.Name) and d.id in SKIP_DECORATORS)
+    return pc.Iter(node.decorator_list).any(
+        lambda d: (isinstance(d, ast.Name) and d.id in SKIP_DECORATORS)
         or (isinstance(d, ast.Attribute) and d.attr in SKIP_DECORATORS)
-        for d in node.decorator_list
     )
 
 
@@ -148,14 +150,14 @@ def _check_code_blocks(
     If skip_doctest is True or docstring contains @no_doctest flag, skips the python block requirement.
     """
 
-    def _process_line(state: State, item: tuple[int, str]) -> State:
+    def _process_line(state: State, line_num: int, line: str) -> State:
         """Process a single line and update state."""
-        line_num, line = item
+        marker = "```"
         match = CODE_BLOCK_PATTERN.search(line)
-        if not (match and line.strip().startswith("```")):
+        if not (match and line.strip().startswith(marker)):
             return state
         language = match.group(1) or "plaintext"
-        if line.strip() == "```":
+        if line.strip() == marker:
             if not state.stack.is_empty():
                 return State(
                     errors=state.errors,
@@ -166,7 +168,7 @@ def _check_code_blocks(
                 .chain(
                     [
                         ErrorDetail(
-                            line_no=start_line + line_num - 1,
+                            line_no=start_line + line_num,
                             message="Closing block ``` without matching opening",
                         )
                     ]
@@ -176,23 +178,17 @@ def _check_code_blocks(
             )
         return State(
             errors=state.errors,
-            stack=state.stack.iter().chain([(line_num, language)]).collect(),
+            stack=state.stack.iter().chain([(line_num + 1, language)]).collect(),
         )
 
     lines = pc.Vec.from_ref(docstring.split("\n"))
     final_state = (
         lines.iter()
         .enumerate()
-        .fold(
-            State(errors=pc.Seq([]), stack=pc.Seq([])),
-            lambda state, item: _process_line(state, (item[0] + 1, item[1])),
-        )
+        .fold_star(State(errors=pc.Seq([]), stack=pc.Seq([])), _process_line)
     )
 
-    # Check for @no_doctest flag in docstring
-    has_no_doctest_flag = docstring.find("@no_doctest") != -1 or skip_doctest
-
-    all_errors = (
+    return (
         final_state.errors.iter()
         .chain(
             final_state.stack.iter().map_star(
@@ -203,27 +199,44 @@ def _check_code_blocks(
             )
         )
         .chain(
-            []
-            if (func_name.startswith("_") or func_name.istitle() or has_no_doctest_flag)
-            else (
-                [
-                    ErrorDetail(
-                        line_no=start_line,
-                        message="Missing doctest: No ```python block found in docstring",
-                    )
-                ]
-                if not lines.any(
-                    lambda line: bool(
-                        CODE_BLOCK_PATTERN.search(line) and "python" in line
-                    )
-                )
-                else []
+            _check_errs(
+                lines,
+                func_name,
+                start_line,
+                has_no_doctest_flag=docstring.find("@no_doctest") != -1 or skip_doctest,
             )
         )
         .collect()
+        .into(
+            lambda all_errors: all_errors.then_some().map_or_else(
+                default=lambda: pc.Ok(None), f=lambda _: pc.Err(all_errors)
+            )
+        )
     )
-    return all_errors.then_some().map_or_else(
-        default=lambda: pc.Ok(None), f=lambda _: pc.Err(all_errors)
+
+
+def _check_errs(
+    lines: pc.Vec[str],
+    func_name: str,
+    start_line: int,
+    *,
+    has_no_doctest_flag: bool,
+) -> list[ErrorDetail]:
+    return (
+        []
+        if (func_name.startswith("_") or func_name.istitle() or has_no_doctest_flag)
+        else (
+            [
+                ErrorDetail(
+                    line_no=start_line,
+                    message="Missing doctest: No ```python block found in docstring",
+                )
+            ]
+            if not lines.any(
+                lambda line: bool(CODE_BLOCK_PATTERN.search(line) and "python" in line)
+            )
+            else []
+        )
     )
 
 
