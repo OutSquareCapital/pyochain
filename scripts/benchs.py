@@ -80,7 +80,7 @@ def bench[T, R](
     return decorator
 
 
-def _collect_raw_timings(benchmarks: pc.Vec[Benchmark]) -> pc.Iter[Row]:
+def _collect_raw_timings(benchmarks: pc.Vec[Benchmark]) -> pc.Seq[Row]:
     """Collect raw timing data for all benchmarks. Stats computed at the end."""
     n_benchmarks = benchmarks.length()
     total_runs: int = benchmarks.iter().map(lambda b: b.n_runs).sum() * 2
@@ -99,8 +99,10 @@ def _collect_raw_timings(benchmarks: pc.Vec[Benchmark]) -> pc.Iter[Row]:
         task = progress.add_task("[cyan]Running benchmarks...", total=total_runs)
         f = functools.partial(_run_benchmark, progress, task)
 
-        return BENCHMARKS.iter().flat_map(
-            lambda b: f(b, "new", b.new_fn).chain(f(b, "old", b.old_fn))
+        return (
+            BENCHMARKS.iter()
+            .flat_map(lambda b: f(b, "new", b.new_fn).chain(f(b, "old", b.old_fn)))
+            .collect()
         )
 
 
@@ -125,10 +127,8 @@ def _run_benchmark(
     return pc.Iter(range(bench.n_runs)).map(_update_progress)
 
 
-def _compute_all_stats(raw_rows: pc.Iter[Row]) -> pl.LazyFrame:
+def _compute_all_stats(raw_rows: pc.Seq[Row]) -> pl.LazyFrame:
     """Compute all stats from raw timings using Polars expressions + over."""
-    time = pl.col("time")
-    median = pl.col("median")
     group = ["category", "name"]
     return (
         pl.LazyFrame(
@@ -138,13 +138,13 @@ def _compute_all_stats(raw_rows: pc.Iter[Row]) -> pl.LazyFrame:
         )
         .group_by("category", "name", "impl")
         .agg(
-            time.median().alias("median"),
+            pl.col("time").median().alias("median"),
             pl.len().alias("runs"),
         )
         .pipe(
             lambda stats: stats.filter(pl.col("impl").eq("new")).join(
                 stats.filter(pl.col("impl").eq("old")).select(
-                    *group, median.alias("old_median")
+                    *group, pl.col("median").alias("old_median")
                 ),
                 on=group,
             )
@@ -152,9 +152,13 @@ def _compute_all_stats(raw_rows: pc.Iter[Row]) -> pl.LazyFrame:
         .rename({"median": "new_median"})
         .drop("impl")
         .with_columns(
-            pl.col("old_median").truediv(pl.col("new_median")).alias("ratio"),
+            pl.col("old_median")
+            .truediv("new_median")
+            .sub(1)
+            .mul(100)
+            .alias("pct_change"),
         )
-        .sort("ratio", descending=True)
+        .sort("pct_change", descending=True)
     )
 
 
@@ -172,8 +176,8 @@ def _try_collect(lf: pl.LazyFrame) -> pc.Result[pl.DataFrame, str]:
 def _print_summary(pivoted: pl.DataFrame) -> None:
     """Print summary stats from pivoted DataFrame."""
     summary = pivoted.select(
-        pl.col("ratio").median().alias("median_speedup"),
-        pl.col("ratio").gt(1).sum().alias("wins"),
+        pl.col("pct_change").median().alias("median_speedup"),
+        pl.col("pct_change").gt(0).sum().alias("wins"),
         pl.len().alias("total"),
     )
     median_speedup = summary.get_column("median_speedup").item(0)
@@ -183,11 +187,12 @@ def _print_summary(pivoted: pl.DataFrame) -> None:
     CONSOLE.print()
     CONSOLE.print(
         Text("Median speedup: ", style="bold").append(
-            Text(f"{median_speedup:.2f}x", style="green bold")
+            f"{median_speedup:+.1f}%",
+            style="green bold" if median_speedup >= 0 else "red bold",
         )
     )
     CONSOLE.print(
-        Text("New wins: ", style="bold").append(Text(f"{wins}/{total}", style="cyan"))
+        Text("New wins: ", style="bold").append(f"{wins}/{total}", style="cyan")
     )
 
 
@@ -204,13 +209,14 @@ def all_benchmarks() -> None:
         .unwrap()
     )
     CONSOLE.print()
-    table = _build_results_table(pivoted)
+    table = _build_results_table()
+    pivoted.pipe(_fill_table, table)
     CONSOLE.print(table)
     _print_summary(pivoted)
     CONSOLE.print()
 
 
-def _build_results_table(pivoted: pl.DataFrame) -> Table:
+def _build_results_table() -> Table:
     """Build Rich table directly from Polars columns."""
     table = Table(title="Benchmark Results")
     table.add_column("Category", style="cyan")
@@ -218,27 +224,32 @@ def _build_results_table(pivoted: pl.DataFrame) -> Table:
     table.add_column("Runs", justify="right", style="magenta")
     table.add_column("New (μs, median)", justify="right", style="green")
     table.add_column("Old (μs, median)", justify="right", style="yellow")
-    table.add_column("Speedup", justify="right")
-    pc.Iter(
-        pivoted.select(
+    table.add_column("Change", justify="right")
+
+    return table
+
+
+def _fill_table(df: pl.DataFrame, table: Table) -> None:
+    return (
+        df.select(
             "category",
             "name",
             pl.col("runs").cast(pl.String),
             pl.col("new_median").mul(1_000_000).round(2).cast(pl.String),
             pl.col("old_median").mul(1_000_000).round(2).cast(pl.String),
-            pl.col("ratio").round(2).cast(pl.String).add("x").alias("ratio_str"),
-            pl.when(pl.col("ratio").gt(1))
+            pl.col("pct_change").round(1).cast(pl.String).add("%").alias("pct_str"),
+            pl.when(pl.col("pct_change").gt(0))
             .then(pl.lit("green bold"))
             .otherwise(pl.lit("red bold"))
             .alias("style"),
-        ).iter_rows()
-    ).for_each_star(
-        lambda cat, name, runs, new_med, old_med, ratio_str, style: table.add_row(
-            cat, name, runs, new_med, old_med, Text(ratio_str, style=style)
+        )
+        .pipe(lambda df: pc.Iter(df.iter_rows()))
+        .for_each_star(
+            lambda cat, name, runs, new_med, old_med, pct_str, style: table.add_row(
+                cat, name, runs, new_med, old_med, Text(pct_str, style=style)
+            )
         )
     )
-
-    return table
 
 
 if __name__ == "__main__":
