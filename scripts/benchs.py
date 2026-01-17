@@ -4,7 +4,6 @@ import functools
 import timeit
 from collections.abc import Callable
 from dataclasses import dataclass
-from enum import IntEnum
 from typing import Final, NamedTuple
 
 import polars as pl
@@ -25,18 +24,16 @@ from rich.text import Text
 import pyochain as pc
 
 type Row = tuple[str, str, str, int, float]
+
+WARMUP_RUNS: Final = 5
+CALLS_BY_RUN: Final = 10
+TARGET_BENCH_SEC: Final = 1.0
+MIN_RUNS: Final = 20
+
+
 app = typer.Typer(help="Benchmarks for pyochain developments.")
 
 CONSOLE: Final = Console()
-
-
-class Runs(IntEnum):
-    """Cost category for benchmarks, determining iteration counts."""
-
-    FOCUSED = 20_000
-    CHEAP = 5_000
-    NORMAL = 2_500
-    EXPENSIVE = 50
 
 
 type BenchFn = Callable[[], object]
@@ -47,7 +44,7 @@ class Benchmark(NamedTuple):
 
     category: str
     name: str
-    n_runs: Runs
+    n_runs: int
     old_fn: BenchFn
     new_fn: BenchFn
 
@@ -60,7 +57,6 @@ def bench[T, R](
     *,
     old: T,
     new: T,
-    n_runs: Runs = Runs.CHEAP,
 ) -> Callable[[Callable[[T], R]], Callable[[T], R]]:
     """Decorator to register a benchmark function for both old and new implementations."""
 
@@ -74,11 +70,18 @@ def bench[T, R](
         assert old_fn() == new_fn(), (
             f"{func.__name__}: Old and new implementations must produce the same result"
         )
+        n_runs = max(_estimate_n_runs(old_fn), _estimate_n_runs(new_fn))
 
         BENCHMARKS.append(Benchmark(category, func.__name__, n_runs, old_fn, new_fn))
         return func
 
     return decorator
+
+
+def _estimate_n_runs(fn: Callable[[], object]) -> int:
+    warmup_time = timeit.timeit(fn, number=WARMUP_RUNS) / WARMUP_RUNS
+    est = int(TARGET_BENCH_SEC / 2 / warmup_time / CALLS_BY_RUN)
+    return max(MIN_RUNS, est)
 
 
 def _collect_raw_timings(benchmarks: pc.Vec[Benchmark]) -> pc.Seq[Row]:
@@ -122,7 +125,7 @@ def _run_benchmark(
             bench.name,
             impl_name,
             run_idx,
-            timeit.timeit(fn, number=10),
+            timeit.timeit(fn, number=CALLS_BY_RUN),
         )
 
     return pc.Iter(range(bench.n_runs)).map(_update_progress)
