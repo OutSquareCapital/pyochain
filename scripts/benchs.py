@@ -3,6 +3,7 @@
 import functools
 import timeit
 from collections.abc import Callable
+from dataclasses import dataclass
 from enum import IntEnum
 from typing import Final, NamedTuple
 
@@ -173,47 +174,72 @@ def _try_collect(lf: pl.LazyFrame) -> pc.Result[pl.DataFrame, str]:
         return pc.Err(f"{e}")
 
 
+@dataclass(slots=True)
+class SummaryStats:
+    """Summary statistics for benchmark results."""
+
+    median_speedup: float
+    wins: int
+    total: int
+
+    def _speedup(self) -> Text:
+        return Text("Median speedup: ", style="bold").append(
+            f"{self.median_speedup:+.1f}%",
+            style="green bold" if self.median_speedup >= 0 else "red bold",
+        )
+
+    def _win_rate(self) -> Text:
+        return Text("New wins: ", style="bold").append(
+            f"{self.wins}/{self.total}", style="cyan"
+        )
+
+    def show(self) -> None:
+        """Display the summary statistics to the console."""
+        CONSOLE.print()
+        CONSOLE.print(self._speedup())
+        CONSOLE.print(self._win_rate())
+
+
 def _print_summary(pivoted: pl.DataFrame) -> None:
     """Print summary stats from pivoted DataFrame."""
-    summary = pivoted.select(
-        pl.col("pct_change").median().alias("median_speedup"),
-        pl.col("pct_change").gt(0).sum().alias("wins"),
-        pl.len().alias("total"),
-    )
-    median_speedup = summary.get_column("median_speedup").item(0)
-    wins = summary.get_column("wins").item(0)
-    total = summary.get_column("total").item(0)
-
-    CONSOLE.print()
-    CONSOLE.print(
-        Text("Median speedup: ", style="bold").append(
-            f"{median_speedup:+.1f}%",
-            style="green bold" if median_speedup >= 0 else "red bold",
+    return (
+        pivoted.select(
+            pl.col("pct_change").median().alias("median_speedup"),
+            pl.col("pct_change").gt(0).sum().alias("wins"),
+            pl.len().alias("total"),
         )
-    )
-    CONSOLE.print(
-        Text("New wins: ", style="bold").append(f"{wins}/{total}", style="cyan")
+        .pipe(
+            lambda df: SummaryStats(
+                median_speedup=df.get_column("median_speedup").item(0),
+                wins=df.get_column("wins").item(0),
+                total=df.get_column("total").item(0),
+            )
+        )
+        .show()
     )
 
 
 @app.command()
-def all_benchmarks() -> None:
-    """Run all benchmarks."""
-    CONSOLE.print(Text("Running benchmarks...", style="bold blue"))
+def main() -> None:
+    """Run benchmarks."""
+    CONSOLE.print("Running benchmarks...", style="bold blue")
     CONSOLE.print()
-    pivoted = (
+    df = _run_pipeline()
+    CONSOLE.print()
+    table = _build_results_table()
+    df.pipe(_fill_table, table)
+    CONSOLE.print(table)
+    df.pipe(_print_summary)
+
+
+def _run_pipeline() -> pl.DataFrame:
+    return (
         BENCHMARKS.ok_or("No benchmarks registered!")
         .map(_collect_raw_timings)
         .map(_compute_all_stats)
         .and_then(_try_collect)
         .unwrap()
     )
-    CONSOLE.print()
-    table = _build_results_table()
-    pivoted.pipe(_fill_table, table)
-    CONSOLE.print(table)
-    _print_summary(pivoted)
-    CONSOLE.print()
 
 
 def _build_results_table() -> Table:
@@ -230,13 +256,16 @@ def _build_results_table() -> Table:
 
 
 def _fill_table(df: pl.DataFrame, table: Table) -> None:
+    def _format_median(expr: pl.Expr) -> pl.Expr:
+        return expr.mul(1_000_000).round(2).cast(pl.String)
+
     return (
         df.select(
             "category",
             "name",
             pl.col("runs").cast(pl.String),
-            pl.col("new_median").mul(1_000_000).round(2).cast(pl.String),
-            pl.col("old_median").mul(1_000_000).round(2).cast(pl.String),
+            pl.col("new_median").pipe(_format_median),
+            pl.col("old_median").pipe(_format_median),
             pl.col("pct_change").round(1).cast(pl.String).add("%").alias("pct_str"),
             pl.when(pl.col("pct_change").gt(0))
             .then(pl.lit("green bold"))
