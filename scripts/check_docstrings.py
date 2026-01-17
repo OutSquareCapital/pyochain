@@ -47,30 +47,19 @@ class State(NamedTuple):
     errors: pc.Seq[ErrorDetail]
     stack: pc.Seq[tuple[int, str]]
 
+    def to_blocks(self, start_line: int) -> pc.Iter[ErrorDetail]:
+        """Convert unclosed blocks in the stack to error details."""
+        return self.errors.iter().chain(
+            self.stack.iter().map_star(
+                lambda idx, lang: ErrorDetail(
+                    line_no=start_line + idx - 1,
+                    message=f"Unclosed ```{lang} block",
+                )
+            )
+        )
+
 
 def _check_file(file_path: Path) -> pc.Seq[DocstringError]:
-    def _is_documentable(
-        node: ast.AST,
-    ) -> TypeIs[ast.FunctionDef | ast.AsyncFunctionDef]:
-        return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-
-    def _get_protocol_methods(tree: ast.Module) -> frozenset[int]:
-        """Get line numbers of all methods inside Protocol classes."""
-        protocol_method_lines: set[int] = set()
-        for node in ast.walk(tree):
-            if not isinstance(node, ast.ClassDef):
-                continue
-            is_protocol = any(
-                (isinstance(b, ast.Name) and b.id == "Protocol")
-                or (isinstance(b, ast.Attribute) and b.attr == "Protocol")
-                for b in node.bases
-            )
-            if is_protocol:
-                for child in ast.walk(node):
-                    if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                        protocol_method_lines.add(child.lineno)
-        return frozenset(protocol_method_lines)
-
     try:
         tree = ast.parse(file_path.read_text(encoding="utf-8"))
     except SyntaxError:
@@ -87,10 +76,35 @@ def _check_file(file_path: Path) -> pc.Seq[DocstringError]:
     )
 
 
+def _get_protocol_methods(tree: ast.Module) -> pc.Set[int]:
+    """Get line numbers of all methods inside Protocol classes."""
+
+    def _is_class_def(node: ast.AST) -> TypeIs[ast.ClassDef]:
+        return isinstance(node, ast.ClassDef)
+
+    def _is_protocol(expr: ast.expr) -> TypeIs[ast.Name | ast.Attribute]:
+        return (isinstance(expr, ast.Name) and expr.id == "Protocol") or (
+            isinstance(expr, ast.Attribute) and expr.attr == "Protocol"
+        )
+
+    return (
+        pc.Iter(ast.walk(tree))
+        .filter(_is_class_def)
+        .filter(lambda node: pc.Iter(node.bases).any(_is_protocol))
+        .flat_map(lambda node: pc.Iter(ast.walk(node)).filter(_is_documentable))
+        .map(lambda node: node.lineno)
+        .collect(pc.Set)
+    )
+
+
+def _is_documentable(node: ast.AST) -> TypeIs[ast.FunctionDef | ast.AsyncFunctionDef]:
+    return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+
+
 def _process_node(
     file_path: Path,
     node: ast.FunctionDef | ast.AsyncFunctionDef,
-    protocol_methods: frozenset[int],
+    protocol_methods: pc.Set[int],
 ) -> pc.Option[DocstringError]:
     def _is_public(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
         return not node.name.startswith("_") and not node.name.istitle()
@@ -127,7 +141,7 @@ def _process_node(
                     func_name=node.name,
                     line_no=node.lineno,
                     error_line_no=errors.first().line_no,
-                    errors=errors.iter().map(lambda e: e.message).collect(),
+                    errors=errors.map(lambda e: e.message).collect(),
                 )
             )
         case _:
@@ -144,7 +158,7 @@ def _has_skip_decorator(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
 
 def _check_code_blocks(
     docstring: str, start_line: int, func_name: str, *, skip_doctest: bool = False
-) -> pc.Result[None, pc.Seq[ErrorDetail]]:
+) -> pc.Result[None, pc.Iter[ErrorDetail]]:
     """Check that all code blocks in docstring are properly closed and that at least one python block exists.
 
     If skip_doctest is True or docstring contains @no_doctest flag, skips the python block requirement.
@@ -182,36 +196,22 @@ def _check_code_blocks(
         )
 
     lines = pc.Vec.from_ref(docstring.split("\n"))
-    final_state = (
+    all_block_errors = (
         lines.iter()
         .enumerate()
-        .fold_star(State(errors=pc.Seq([]), stack=pc.Seq([])), _process_line)
+        .fold_star(State(errors=pc.Seq.new(), stack=pc.Seq.new()), _process_line)
+        .to_blocks(start_line)
     )
 
     return (
-        final_state.errors.iter()
-        .chain(
-            final_state.stack.iter().map_star(
-                lambda idx, lang: ErrorDetail(
-                    line_no=start_line + idx - 1,
-                    message=f"Unclosed ```{lang} block",
-                )
-            )
+        lines.into(
+            _check_errs,
+            func_name,
+            start_line,
+            has_no_doctest_flag=docstring.find("@no_doctest") != -1 or skip_doctest,
         )
-        .chain(
-            _check_errs(
-                lines,
-                func_name,
-                start_line,
-                has_no_doctest_flag=docstring.find("@no_doctest") != -1 or skip_doctest,
-            )
-        )
-        .collect()
-        .into(
-            lambda all_errors: all_errors.then_some().map_or_else(
-                default=lambda: pc.Ok(None), f=lambda _: pc.Err(all_errors)
-            )
-        )
+        .map_err(lambda doctest_errors: all_block_errors.chain(doctest_errors))
+        .or_else(lambda _: all_block_errors.ok_or(None).swap())
     )
 
 
@@ -221,23 +221,27 @@ def _check_errs(
     start_line: int,
     *,
     has_no_doctest_flag: bool,
-) -> list[ErrorDetail]:
-    return (
-        []
-        if (func_name.startswith("_") or func_name.istitle() or has_no_doctest_flag)
-        else (
-            [
-                ErrorDetail(
-                    line_no=start_line,
-                    message="Missing doctest: No ```python block found in docstring",
-                )
-            ]
-            if not lines.any(
-                lambda line: bool(CODE_BLOCK_PATTERN.search(line) and "python" in line)
-            )
-            else []
+) -> pc.Result[None, pc.Seq[ErrorDetail]]:
+    should_skip = (
+        func_name.startswith("_")
+        or func_name.istitle()
+        or has_no_doctest_flag
+        or lines.any(
+            lambda line: bool(CODE_BLOCK_PATTERN.search(line) and "python" in line)
         )
     )
+    match should_skip:
+        case True:
+            return pc.Ok(None)
+        case False:
+            return pc.Err(
+                pc.Iter.once(
+                    ErrorDetail(
+                        line_no=start_line,
+                        message="Missing doctest: No ```python block found in docstring",
+                    )
+                ).collect()
+            )
 
 
 def main() -> None:
