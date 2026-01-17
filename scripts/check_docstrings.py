@@ -211,7 +211,7 @@ def _check_code_blocks(
             has_no_doctest_flag=docstring.find("@no_doctest") != -1 or skip_doctest,
         )
         .map_err(lambda doctest_errors: all_block_errors.chain(doctest_errors))
-        .or_else(lambda _: all_block_errors.ok_or(None).swap())
+        .or_else(lambda _: all_block_errors.err_or(None))
     )
 
 
