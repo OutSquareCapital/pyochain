@@ -1,10 +1,10 @@
 """Benchmarks for pyochain developments."""
 
-import functools
 import timeit
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Final, NamedTuple
+from functools import partial
+from typing import Any, Final, NamedTuple
 
 import polars as pl
 import typer
@@ -13,7 +13,6 @@ from rich.progress import (
     BarColumn,
     Progress,
     SpinnerColumn,
-    TaskID,
     TaskProgressColumn,
     TextColumn,
     TimeRemainingColumn,
@@ -23,11 +22,62 @@ from rich.text import Text
 
 import pyochain as pc
 
-type Row = tuple[str, str, str, int, float]
+
+@dataclass(slots=True)
+class _BaseRow:
+    category: str
+    name: str
+
+
+@dataclass(slots=True)
+class Row(_BaseRow):
+    """Raw row of timing data."""
+
+    impl: str
+    size: int
+    run_idx: int
+    time: float
+
+
+@dataclass(slots=True)
+class TableRow(_BaseRow):
+    """Finalized row out from polars."""
+
+    size: str
+    runs: str
+    new_med: str
+    old_med: str
+    pct_str: str
+    style: str
+
+    def add_to_table(self, table: Table) -> None:
+        """Add this row to a Rich table."""
+        return table.add_row(
+            self.category,
+            self.name,
+            self.size,
+            self.runs,
+            self.new_med,
+            self.old_med,
+            Text(self.pct_str, style=self.style),
+        )
+
+
+type BenchFn = Callable[[], object]
+
+
+class Variant(NamedTuple):
+    """A specific benchmark variant size."""
+
+    size: int
+    n_runs: int
+    old_fn: BenchFn
+    new_fn: BenchFn
+
 
 WARMUP_RUNS: Final = 5
 CALLS_BY_RUN: Final = 10
-TARGET_BENCH_SEC: Final = 1.0
+TARGET_BENCH_SEC: Final = 1
 MIN_RUNS: Final = 20
 
 
@@ -36,49 +86,49 @@ app = typer.Typer(help="Benchmarks for pyochain developments.")
 CONSOLE: Final = Console()
 
 
-type BenchFn = Callable[[], object]
-
-
 class Benchmark(NamedTuple):
-    """A benchmark with both implementations."""
+    """A benchmark with multiple data sizes."""
 
     category: str
     name: str
-    n_runs: int
-    old_fn: BenchFn
-    new_fn: BenchFn
+    variants: pc.Vec[Variant]
 
 
 BENCHMARKS = pc.Vec[Benchmark].new()
 
 
-def bench[T, R](
+def bench[P, T, R](
     category: str,
     *,
-    old: T,
-    new: T,
-) -> Callable[[Callable[[T], R]], Callable[[T], R]]:
-    """Decorator to register a benchmark function for both old and new implementations."""
+    old: Callable[[P], R],
+    new: Callable[[P], R],
+    data_gen: Callable[[pc.Iter[int]], P],
+) -> Callable[..., Callable[[], None]]:
+    """Decorator to register benchmarks with multiple data sizes."""
 
-    def decorator(func: Callable[[T], R]) -> Callable[[T], R]:
-        def old_fn() -> R:
-            return func(old)
+    def decorator(func: Callable[[], None]) -> Callable[[], None]:
+        variants = pc.Vec[Variant].new()
 
-        def new_fn() -> R:
-            return func(new)
+        for size in (256, 512, 1024, 2048):
+            data = pc.Iter(range(size)).into(data_gen)
 
-        assert old_fn() == new_fn(), (
-            f"{func.__name__}: Old and new implementations must produce the same result"
-        )
-        n_runs = max(_estimate_n_runs(old_fn), _estimate_n_runs(new_fn))
+            assert old(data) == new(data), (
+                f"{func.__name__}: Old and new implementations must produce the same result for size {size}"
+            )
+            old_fn = partial(old, data)
+            new_fn = partial(new, data)
 
-        BENCHMARKS.append(Benchmark(category, func.__name__, n_runs, old_fn, new_fn))
+            n_runs = max(_estimate_n_runs(old_fn), _estimate_n_runs(new_fn))
+
+            variants.append(Variant(size, n_runs, old_fn, new_fn))
+
+        BENCHMARKS.append(Benchmark(category, func.__name__, variants))
         return func
 
     return decorator
 
 
-def _estimate_n_runs(fn: Callable[[], object]) -> int:
+def _estimate_n_runs(fn: BenchFn) -> int:
     warmup_time = timeit.timeit(fn, number=WARMUP_RUNS) / WARMUP_RUNS
     est = int(TARGET_BENCH_SEC / 2 / warmup_time / CALLS_BY_RUN)
     return max(MIN_RUNS, est)
@@ -87,7 +137,10 @@ def _estimate_n_runs(fn: Callable[[], object]) -> int:
 def _collect_raw_timings(benchmarks: pc.Vec[Benchmark]) -> pc.Seq[Row]:
     """Collect raw timing data for all benchmarks. Stats computed at the end."""
     n_benchmarks = benchmarks.length()
-    total_runs: int = benchmarks.iter().map(lambda b: b.n_runs).sum() * 2
+    total_runs: int = (
+        benchmarks.iter().flat_map(lambda b: b.variants).map(lambda v: v.n_runs).sum()
+        * 2
+    )
     CONSOLE.print(
         f"[dim]Found {n_benchmarks} benchmarks, {total_runs} total runs[/dim]"
     )
@@ -101,46 +154,58 @@ def _collect_raw_timings(benchmarks: pc.Vec[Benchmark]) -> pc.Seq[Row]:
         console=CONSOLE,
     ) as progress:
         task = progress.add_task("[cyan]Running benchmarks...", total=total_runs)
-        f = functools.partial(_run_benchmark, progress, task)
-
+        f = partial(_run_variant, progress, task)
         return (
-            BENCHMARKS.iter()
-            .flat_map(lambda b: f(b, "new", b.new_fn).chain(f(b, "old", b.old_fn)))
+            benchmarks.iter()
+            .flat_map(
+                lambda bench: bench.variants.iter().flat_map(lambda v: f(v, bench))
+            )
             .collect()
         )
 
 
-def _run_benchmark(
-    progress: Progress, task: TaskID, bench: Benchmark, impl_name: str, fn: BenchFn
+def _run_variant(
+    progress: Progress,
+    task: Any,  # noqa: ANN401
+    variant: Variant,
+    bench: Benchmark,
 ) -> pc.Iter[Row]:
-    def _update_progress(run_idx: int) -> tuple[str, str, str, int, float]:
+    def _update_progress(run_idx: int, impl: str, fn: BenchFn) -> Row:
         progress.update(
             task,
-            description=f"[cyan]{bench.category}: {bench.name} ({impl_name})",
+            description=f"[cyan]{bench.category}: {bench.name} @ {variant.size} ({impl})",
         )
+        time_taken = timeit.timeit(fn, number=CALLS_BY_RUN)
         progress.advance(task)
-
-        return (
+        return Row(
             bench.category,
             bench.name,
-            impl_name,
+            impl,
+            variant.size,
             run_idx,
-            timeit.timeit(fn, number=CALLS_BY_RUN),
+            time_taken,
         )
 
-    return pc.Iter(range(bench.n_runs)).map(_update_progress)
+    def _run(runs: int, impl: str, fn: BenchFn) -> pc.Iter[Row]:
+        return pc.Iter(range(runs)).map(
+            lambda run_idx: _update_progress(run_idx, impl, fn)
+        )
+
+    return _run(variant.n_runs, "new", variant.new_fn).chain(
+        _run(variant.n_runs, "old", variant.old_fn)
+    )
 
 
 def _compute_all_stats(raw_rows: pc.Seq[Row]) -> pl.LazyFrame:
     """Compute all stats from raw timings using Polars expressions + over."""
-    group = ["category", "name"]
+    group = ["category", "name", "size"]
     return (
         pl.LazyFrame(
             raw_rows,
-            schema=["category", "name", "impl", "run_idx", "time"],
+            schema=["category", "name", "impl", "size", "run_idx", "time"],
             orient="row",
         )
-        .group_by("category", "name", "impl")
+        .group_by("category", "name", "size", "impl")
         .agg(
             pl.col("time").median().alias("median"),
             pl.len().alias("runs"),
@@ -250,6 +315,7 @@ def _build_results_table() -> Table:
     table = Table(title="Benchmark Results")
     table.add_column("Category", style="cyan")
     table.add_column("Operation", style="white")
+    table.add_column("Size", justify="right", style="magenta")
     table.add_column("Runs", justify="right", style="magenta")
     table.add_column("New (μs, median)", justify="right", style="green")
     table.add_column("Old (μs, median)", justify="right", style="yellow")
@@ -266,6 +332,7 @@ def _fill_table(df: pl.DataFrame, table: Table) -> None:
         df.select(
             "category",
             "name",
+            pl.col("size").cast(pl.String),
             pl.col("runs").cast(pl.String),
             pl.col("new_median").pipe(_format_median),
             pl.col("old_median").pipe(_format_median),
@@ -276,11 +343,8 @@ def _fill_table(df: pl.DataFrame, table: Table) -> None:
             .alias("style"),
         )
         .pipe(lambda df: pc.Iter(df.iter_rows()))
-        .for_each_star(
-            lambda cat, name, runs, new_med, old_med, pct_str, style: table.add_row(
-                cat, name, runs, new_med, old_med, Text(pct_str, style=style)
-            )
-        )
+        .map_star(TableRow)
+        .for_each(lambda row: row.add_to_table(table))
     )
 
 
