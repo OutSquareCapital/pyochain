@@ -13,24 +13,51 @@ app = typer.Typer(help="Benchmarks for pyochain developments.")
 
 @app.command()
 @Benchmarks.db
-def main(
+def show() -> None:
+    """Show all benchmark results from the database."""
+    return (
+        Benchmarks.db.results.scan()
+        .select("category", "name", "size", "runs", "median", "git_hash")
+        .pipe(print)
+    )
+
+
+@app.command()
+@Benchmarks.db
+def setup(
     *,
-    setup: Annotated[
-        bool, typer.Option("--setup", help="Setup database on first run")
+    overwrite: Annotated[
+        bool, typer.Option("--overwrite", help="Overwrite existing benchmark database.")
+    ] = False,
+) -> None:
+    """Setup the benchmark database."""
+    Benchmarks.source().mkdir(exist_ok=True)
+    if overwrite:
+        Benchmarks.db.results.create_or_replace()
+    else:
+        Benchmarks.db.results.create()
+    CONSOLE.print("✓ Benchmark database setup complete", style="bold green")
+
+
+@app.command()
+@Benchmarks.db
+def run(
+    *,
+    debug: Annotated[
+        bool, typer.Option("--dry", help="Don't persist results to database.")
     ] = False,
 ) -> None:
     """Run benchmarks and persist results to database."""
-    if setup:
-        Benchmarks.source().mkdir(exist_ok=True)
     CONSOLE.print("Running benchmarks...", style="bold blue")
-    df = run_pipeline()
+    match debug:
+        case True:
+            CONSOLE.print("✓ Debug mode: results not persisted", style="bold yellow")
+            return run_pipeline().pipe(print)
+        case False:
+            run_pipeline().pipe(Benchmarks.db.results.insert_into)
 
-    if setup:
-        Benchmarks.db.results.create_or_replace_from(df)
-    else:
-        Benchmarks.db.results.insert_into(df)
-    CONSOLE.print()
-    CONSOLE.print("✓ Results persisted to database", style="bold green")
+            CONSOLE.print()
+            return CONSOLE.print("✓ Results persisted to database", style="bold green")
 
 
 if __name__ == "__main__":
