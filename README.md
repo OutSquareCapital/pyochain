@@ -75,17 +75,21 @@ For comparison, the above can be written in pure Python as the following (note t
 ...     return pc.NONE if b == 0 else pc.Some(a / b)
 >>> divide(10, 2)
 Some(5.0)
->>> divide (10, 0).unwrap_or(-1.0) # Provide a default value
+>>> divide(10, 0).unwrap_or(-1.0) # Provide a default value
 -1.0
 >>> # Convert between Collections -> Option -> Result
 >>> data = pc.Seq([1, 2, 3])
 >>> data.then_some() # Convert Seq to Option
 Some(Seq(1, 2, 3))
->>> data.then_some().map(lambda x: x.sum()).ok_or("No values") # Convert Option to Result
-Ok(6)
->>> pc.Seq[int](()).then_some().map(lambda x: x.sum()).ok_or("No values")
+>>>
+>>> def _process(data: pc.traits.PyoIterable[int]) -> str: # Accept any Pyochain Iterable
+...     return data.iter().map(str).join(", ")
+>>>
+>>> data.then_some().map(_process).ok_or("No values") # Convert Option to Result
+Ok('1, 2, 3')
+>>> pc.Vec[int].new().then_some().map(_process).ok_or("No values")
 Err('No values')
->>> pc.Seq[int](()).then_some().map(lambda x: x.sum()).ok_or("No values").ok() # Get the Option back
+>>> pc.Set[int].new().then_some().map(_process).ok_or("No values").ok() # Get the Option back
 NONE
 
 ```
