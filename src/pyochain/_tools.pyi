@@ -1,4 +1,5 @@
 from collections.abc import Callable, Iterable, Iterator
+from typing import Any, Concatenate
 
 from pyochain import Option, Result
 
@@ -39,4 +40,24 @@ def is_sorted_by[T, U](
     *,
     reverse: bool = False,
     strict: bool = False,
+) -> bool: ...
+@no_doctest
+def for_each[**P, T](
+    data: Iterator[T],
+    func: Callable[Concatenate[T, P], None],
+    *args: P.args,
+    **kwargs: P.kwargs,
+) -> None: ...
+@no_doctest
+def for_each_star[**P, T](
+    data: Iterator[T],
+    func: Callable[..., Any],
+    *args: P.args,
+    **kwargs: P.kwargs,
+) -> None: ...
+@no_doctest
+def all_equal[T, U](data: Iterator[T]) -> bool: ...
+@no_doctest
+def all_equal_by[T, U](
+    data: Iterator[T], key: Callable[[T], U] | None = None
 ) -> bool: ...

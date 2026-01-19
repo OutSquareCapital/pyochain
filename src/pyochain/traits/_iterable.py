@@ -769,6 +769,125 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
         """
         return functools.reduce(func, self, init)
 
+    @overload
+    def fold_star[**P, B](
+        self: PyoIterator[tuple[Any]],
+        init: B,
+        func: Callable[[Any], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, **P, B](
+        self: PyoIterator[tuple[T1, T2]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, T5, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, T5, T6, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, T5, T6, T7, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, T5, T6, T7, T8, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, T8, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, T8, T9, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    def fold_star[U: Iterable[Any], **P, B](
+        self: PyoIterator[U],
+        init: B,
+        func: Callable[..., B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B:
+        """Fold every element of the `Iterator` into an accumulator by applying an operation, returning the final result.
+
+        Args:
+            init (B): Initial value for the accumulator.
+            func (Callable[..., B]): Function that takes the accumulator and current element, returning the new accumulator value.
+            *args (P.args): Additional positional arguments to pass to **func**.
+            **kwargs (P.kwargs): Additional keyword arguments to pass to **func**.
+
+        Returns:
+            B: The final accumulated value.
+
+        Note:
+            This is similar to `reduce()` but with an initial value, making it equivalent to
+            Python `functools.reduce()` with an initializer.
+
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter([1, 2, 3]).fold(0, lambda acc, x: acc + x)
+        6
+        >>> pc.Iter([1, 2, 3]).fold(10, lambda acc, x: acc + x)
+        16
+        >>> pc.Iter(['a', 'b', 'c']).fold('', lambda acc, x: acc + x)
+        'abc'
+
+        ```
+        """
+
+        def _reducer(acc: B, item: U) -> B:
+            return func(acc, *item, *args, **kwargs)
+
+        return functools.reduce(_reducer, self, init)
+
     def find(self, predicate: Callable[[T], bool]) -> Option[T]:
         """Searches for an element of an iterator that satisfies a `predicate`.
 
@@ -977,7 +1096,33 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
         """
         return tls.is_sorted_by(self.__iter__(), key, reverse=reverse, strict=strict)
 
-    def all_equal[U](self, key: Callable[[T], U] | None = None) -> bool:
+    def all_equal(self) -> bool:
+        """Return `True` if all items of the `Iterator` are equal.
+
+        Returns:
+            bool: `True` if all items are equal, `False` otherwise.
+
+        Example:
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter("aaaa").all_equal()
+        True
+        >>> pc.Iter([1, 2, 3]).all_equal()
+        False
+
+        ```
+        """
+        iterator = itertools.groupby(self.__iter__())
+        for _first in iterator:
+            for _second in iterator:
+                return False
+            return True
+        return True
+
+    def all_equal_test(self) -> bool:
+        return tls.all_equal(self.__iter__())
+
+    def all_equal_by[U](self, key: Callable[[T], U] | None = None) -> bool:
         """Return `True` if all items of the `Iterator` are equal.
 
         A function that accepts a single argument and returns a transformed version of each input item can be specified with **key**.
@@ -993,9 +1138,9 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Iter("AaaA").all_equal(key=str.casefold)
+        >>> pc.Iter("AaaA").all_equal_by(key=str.casefold)
         True
-        >>> pc.Iter([1, 2, 3]).all_equal(key=lambda x: x < 10)
+        >>> pc.Iter([1, 1, 1]).all_equal_by(key=lambda x: x < 10)
         True
 
         ```
@@ -1006,6 +1151,9 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
                 return False
             return True
         return True
+
+    def all_equal_by_test[U](self, key: Callable[[T], U] | None = None) -> bool:
+        return tls.all_equal_by(self.__iter__(), key)
 
     def all_unique[U](self, key: Callable[[T], U] | None = None) -> bool:
         """Returns True if all the elements of iterable are unique.
@@ -1582,59 +1730,89 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
         for v in self.__iter__():
             func(v, *args, **kwargs)
 
+    def for_each_test[**P](
+        self,
+        func: Callable[Concatenate[T, P], Any],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None:
+        return tls.for_each(self.__iter__(), func, *args, **kwargs)
+
     @overload
-    def for_each_star[R](
+    def for_each_star[**P, R](
         self: PyoIterator[tuple[Any]],
         func: Callable[[Any], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
     ) -> None: ...
     @overload
-    def for_each_star[T1, T2, R](
+    def for_each_star[T1, T2, **P, R](
         self: PyoIterator[tuple[T1, T2]],
-        func: Callable[[T1, T2], R],
+        func: Callable[Concatenate[T1, T2, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
     ) -> None: ...
     @overload
-    def for_each_star[T1, T2, T3, R](
+    def for_each_star[T1, T2, T3, **P, R](
         self: PyoIterator[tuple[T1, T2, T3]],
-        func: Callable[[T1, T2, T3], R],
+        func: Callable[Concatenate[T1, T2, T3, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
     ) -> None: ...
     @overload
-    def for_each_star[T1, T2, T3, T4, R](
+    def for_each_star[T1, T2, T3, T4, **P, R](
         self: PyoIterator[tuple[T1, T2, T3, T4]],
-        func: Callable[[T1, T2, T3, T4], R],
+        func: Callable[Concatenate[T1, T2, T3, T4, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
     ) -> None: ...
     @overload
-    def for_each_star[T1, T2, T3, T4, T5, R](
+    def for_each_star[T1, T2, T3, T4, T5, **P, R](
         self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
-        func: Callable[[T1, T2, T3, T4, T5], R],
+        func: Callable[Concatenate[T1, T2, T3, T4, T5, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
     ) -> None: ...
     @overload
-    def for_each_star[T1, T2, T3, T4, T5, T6, R](
+    def for_each_star[T1, T2, T3, T4, T5, T6, **P, R](
         self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
-        func: Callable[[T1, T2, T3, T4, T5, T6], R],
+        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
     ) -> None: ...
     @overload
-    def for_each_star[T1, T2, T3, T4, T5, T6, T7, R](
+    def for_each_star[T1, T2, T3, T4, T5, T6, T7, **P, R](
         self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7], R],
+        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
     ) -> None: ...
     @overload
-    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
+    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, **P, R](
         self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], R],
+        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
     ) -> None: ...
     @overload
-    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
+    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, **P, R](
         self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], R],
+        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, T9, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
     ) -> None: ...
     @overload
-    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
+    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, **P, R](
         self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
+        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
     ) -> None: ...
-    def for_each_star[U: Iterable[Any], R](
+    def for_each_star[U: Iterable[Any], **P, R](
         self: PyoIterator[U],
         func: Callable[..., R],
+        *args: P.args,
+        **kwargs: P.kwargs,
     ) -> None:
         """Consume the `Iterator` by applying a function to each unpacked item in the `Iterable` element.
 
@@ -1648,6 +1826,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         Args:
             func (Callable[..., R]): Function to apply to each unpacked element.
+            *args (P.args): Positional arguments for the function.
+            **kwargs (P.kwargs): Keyword arguments for the function.
 
         Example:
         ```python
@@ -1659,7 +1839,85 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
         ```
         """
         for item in self.__iter__():
-            func(*item)
+            func(*item, *args, **kwargs)
+
+    @overload
+    def for_each_star_test[**P, R](
+        self: PyoIterator[tuple[Any]],
+        func: Callable[[Any], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None: ...
+    @overload
+    def for_each_star_test[T1, T2, **P, R](
+        self: PyoIterator[tuple[T1, T2]],
+        func: Callable[Concatenate[T1, T2, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None: ...
+    @overload
+    def for_each_star_test[T1, T2, T3, **P, R](
+        self: PyoIterator[tuple[T1, T2, T3]],
+        func: Callable[Concatenate[T1, T2, T3, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None: ...
+    @overload
+    def for_each_star_test[T1, T2, T3, T4, **P, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4]],
+        func: Callable[Concatenate[T1, T2, T3, T4, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None: ...
+    @overload
+    def for_each_star_test[T1, T2, T3, T4, T5, **P, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
+        func: Callable[Concatenate[T1, T2, T3, T4, T5, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None: ...
+    @overload
+    def for_each_star_test[T1, T2, T3, T4, T5, T6, **P, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
+        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None: ...
+    @overload
+    def for_each_star_test[T1, T2, T3, T4, T5, T6, T7, **P, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None: ...
+    @overload
+    def for_each_star_test[T1, T2, T3, T4, T5, T6, T7, T8, **P, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None: ...
+    @overload
+    def for_each_star_test[T1, T2, T3, T4, T5, T6, T7, T8, T9, **P, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, T9, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None: ...
+    @overload
+    def for_each_star_test[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, **P, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None: ...
+    def for_each_star_test[U: Iterable[Any], **P, R](
+        self: PyoIterator[U],
+        func: Callable[..., R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None:
+        tls.for_each_star(self.__iter__(), func, *args, **kwargs)
 
     def try_for_each[E](self, f: Callable[[T], Result[Any, E]]) -> Result[None, E]:
         """Applies a fallible function to each item in the `Iterator`, stopping at the first error and returning that error.

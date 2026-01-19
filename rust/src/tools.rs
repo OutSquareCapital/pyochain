@@ -5,10 +5,22 @@ use crate::types::{ConcatArgs, PyClassInit};
 use pyo3::intern;
 use pyo3::types::{PyAny, PyBool, PyDict, PyFunction, PyModule, PyTuple};
 use pyo3::{IntoPyObjectExt, prelude::*};
+
+mod itertools {
+    use super::*;
+    #[inline]
+    fn import(py: Python<'_>) -> PyResult<Bound<PyModule>> {
+        PyModule::import(py, intern!(py, "itertools"))
+    }
+    #[inline]
+    pub fn groupby(py: Python<'_>) -> PyResult<Bound<PyAny>> {
+        import(py)?.getattr(intern!(py, "groupby"))
+    }
+}
 /// Create a unique sentinel object
 #[inline]
 fn sentinel(py: Python<'_>) -> PyResult<Bound<PyAny>> {
-    let sentinel = PyModule::import(py, "builtins")?
+    let sentinel = PyModule::import(py, intern!(py, "builtins"))?
         .getattr(intern!(py, "object"))?
         .call0()?;
     Ok(sentinel)
@@ -28,6 +40,8 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(lt, m)?)?;
     m.add_function(wrap_pyfunction!(gt, m)?)?;
     m.add_function(wrap_pyfunction!(ge, m)?)?;
+    m.add_function(wrap_pyfunction!(all_equal, m)?)?;
+    m.add_function(wrap_pyfunction!(all_equal_by, m)?)?;
     Ok(())
 }
 
@@ -39,10 +53,24 @@ pub fn for_each(
     args: &Bound<'_, PyTuple>,
     kwargs: Option<&Bound<'_, PyDict>>,
 ) -> PyResult<()> {
-    data.try_iter()?.try_for_each(|item| {
-        func.concat(&item?, args, kwargs)?;
-        Ok(())
-    })
+    match (args.is_empty(), kwargs) {
+        (true, None) => data.try_iter()?.try_for_each(|item| {
+            func.call1((&item?,))?;
+            Ok(())
+        }),
+        (true, Some(_)) => data.try_iter()?.try_for_each(|item| {
+            func.call((&item?,), kwargs)?;
+            Ok(())
+        }),
+        (false, Some(_)) => data.try_iter()?.try_for_each(|item| {
+            func.concat(&item?, args, kwargs)?;
+            Ok(())
+        }),
+        (false, None) => data.try_iter()?.try_for_each(|item| {
+            func.concat1(&item?, args)?;
+            Ok(())
+        }),
+    }
 }
 #[pyfunction]
 #[pyo3(signature = (data, func, *args, **kwargs))]
@@ -52,10 +80,24 @@ pub fn for_each_star(
     args: &Bound<'_, PyTuple>,
     kwargs: Option<&Bound<'_, PyDict>>,
 ) -> PyResult<()> {
-    data.try_iter()?.try_for_each(|item| {
-        func.concat_star(&item?.cast_into::<PyTuple>()?, args, kwargs)?;
-        Ok(())
-    })
+    match (args.is_empty(), kwargs) {
+        (true, Some(_)) => data.try_iter()?.try_for_each(|item| {
+            func.call(&item?.cast_into::<PyTuple>()?, kwargs)?;
+            Ok(())
+        }),
+        (true, None) => data.try_iter()?.try_for_each(|item| {
+            func.call1(item?.cast_into::<PyTuple>()?)?;
+            Ok(())
+        }),
+        (false, Some(_)) => data.try_iter()?.try_for_each(|item| {
+            func.concat_star(&item?.cast_into::<PyTuple>()?, args, kwargs)?;
+            Ok(())
+        }),
+        (false, None) => data.try_iter()?.try_for_each(|item| {
+            func.concat_star1(&item?.cast_into::<PyTuple>()?, args)?;
+            Ok(())
+        }),
+    }
 }
 
 #[pyfunction]
@@ -81,19 +123,18 @@ pub fn try_find(data: &Bound<'_, PyAny>, predicate: &Bound<'_, PyFunction>) -> P
             }
         }
     }
-    let none = get_none_singleton(py)?;
-    Ok(PyOk::new(none).into_py_any(py)?)
+    Ok(PyOk::new(get_none_singleton(py)?).into_py_any(py)?)
 }
 #[pyfunction]
 pub fn try_fold(
-    self_iter: &Bound<'_, PyAny>,
+    data: &Bound<'_, PyAny>,
     init: &Bound<'_, PyAny>,
     func: &Bound<'_, PyFunction>,
 ) -> PyResult<Py<PyAny>> {
-    let py = self_iter.py();
+    let py = data.py();
     let mut accumulator = init.to_owned().unbind();
 
-    for item in self_iter.try_iter()? {
+    for item in data.try_iter()? {
         let item = item?;
         match func
             .call1((accumulator, item))?
@@ -111,12 +152,9 @@ pub fn try_fold(
 }
 
 #[pyfunction]
-pub fn try_reduce(
-    self_iter: &Bound<'_, PyAny>,
-    func: &Bound<'_, PyFunction>,
-) -> PyResult<Py<PyAny>> {
-    let py = self_iter.py();
-    let mut iterator = self_iter.try_iter()?;
+pub fn try_reduce(data: &Bound<'_, PyAny>, func: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
+    let py = data.py();
+    let mut iterator = data.try_iter()?;
     let first = iterator.next();
     if first.is_none() {
         return Ok(PyOk::new(get_none_singleton(py)?).into_py_any(py)?);
@@ -143,11 +181,11 @@ pub fn try_reduce(
 }
 #[pyfunction]
 pub fn is_sorted(
-    self_iter: &Bound<'_, PyAny>,
+    data: &Bound<'_, PyAny>,
     reverse: &Bound<'_, PyBool>,
     strict: &Bound<'_, PyBool>,
 ) -> PyResult<bool> {
-    let mut iter = self_iter.try_iter()?;
+    let mut iter = data.try_iter()?;
     let Some(first) = iter.next() else {
         return Ok(true);
     };
@@ -195,12 +233,12 @@ pub fn is_sorted(
 }
 #[pyfunction]
 pub fn is_sorted_by(
-    self_iter: &Bound<'_, PyAny>,
+    data: &Bound<'_, PyAny>,
     key: &Bound<'_, PyAny>,
     reverse: &Bound<'_, PyBool>,
     strict: &Bound<'_, PyBool>,
 ) -> PyResult<bool> {
-    let mut iter = self_iter.try_iter()?;
+    let mut iter = data.try_iter()?;
     let Some(first) = iter.next() else {
         return Ok(true);
     };
@@ -247,11 +285,11 @@ pub fn is_sorted_by(
 }
 
 #[pyfunction]
-pub fn eq(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-    let py = self_iter.py();
+pub fn eq(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+    let py = data.py();
     let sentinel = sentinel(py)?;
 
-    let mut left_iter = self_iter.try_iter()?;
+    let mut left_iter = data.try_iter()?;
     let mut right_iter = other.try_iter()?;
 
     loop {
@@ -269,8 +307,8 @@ pub fn eq(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bo
     }
 }
 #[pyfunction]
-pub fn ne(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-    let mut left_iter = self_iter.try_iter()?;
+pub fn ne(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+    let mut left_iter = data.try_iter()?;
     let mut right_iter = other.try_iter()?;
 
     loop {
@@ -288,8 +326,8 @@ pub fn ne(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bo
     }
 }
 #[pyfunction]
-pub fn le(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-    let mut left_iter = self_iter.try_iter()?;
+pub fn le(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+    let mut left_iter = data.try_iter()?;
     let mut right_iter = other.try_iter()?;
 
     loop {
@@ -308,8 +346,8 @@ pub fn le(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bo
     }
 }
 #[pyfunction]
-pub fn lt(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-    let mut left_iter = self_iter.try_iter()?;
+pub fn lt(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+    let mut left_iter = data.try_iter()?;
     let mut right_iter = other.try_iter()?;
 
     loop {
@@ -328,8 +366,8 @@ pub fn lt(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bo
     }
 }
 #[pyfunction]
-pub fn gt(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-    let mut left_iter = self_iter.try_iter()?;
+pub fn gt(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+    let mut left_iter = data.try_iter()?;
     let mut right_iter = other.try_iter()?;
 
     loop {
@@ -348,8 +386,8 @@ pub fn gt(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bo
     }
 }
 #[pyfunction]
-pub fn ge(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-    let mut left_iter = self_iter.try_iter()?;
+pub fn ge(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+    let mut left_iter = data.try_iter()?;
     let mut right_iter = other.try_iter()?;
 
     loop {
@@ -366,4 +404,86 @@ pub fn ge(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bo
             (Some(_), None) => return Ok(true),
         }
     }
+}
+
+/// Enum to hold the extracted first value type for specialization
+enum FirstValue {
+    Int(i64),
+    Bool(bool),
+    Other,
+}
+#[pyfunction]
+pub fn all_equal(data: &Bound<'_, PyAny>) -> PyResult<bool> {
+    let mut iter = data.try_iter()?;
+    let Some(first) = iter.next() else {
+        return Ok(true);
+    };
+    let first = first?;
+
+    let first_val = match first.extract::<i64>() {
+        Ok(v) => FirstValue::Int(v),
+        Err(_) => match first.extract::<bool>() {
+            Ok(v) => FirstValue::Bool(v),
+            Err(_) => FirstValue::Other,
+        },
+    };
+
+    match first_val {
+        FirstValue::Int(first_int) => {
+            for item in iter {
+                let item = item?;
+                match item.extract::<i64>() {
+                    Ok(val) => {
+                        if val != first_int {
+                            return Ok(false);
+                        }
+                    }
+                    Err(_) => {
+                        return Ok(false);
+                    }
+                }
+            }
+        }
+        FirstValue::Bool(first_bool) => {
+            for item in iter {
+                let item = item?;
+                match item.extract::<bool>() {
+                    Ok(val) => {
+                        if val != first_bool {
+                            return Ok(false);
+                        }
+                    }
+                    Err(_) => {
+                        return Ok(false);
+                    }
+                }
+            }
+        }
+        FirstValue::Other => {
+            let iterator = itertools::groupby(data.py())?.call1((data,))?.try_iter()?;
+            for _first in &iterator {
+                for _second in &iterator {
+                    return Ok(false);
+                }
+                return Ok(true);
+            }
+        }
+    }
+    Ok(true)
+}
+
+#[pyfunction]
+pub fn all_equal_by(data: &Bound<'_, PyAny>, key: &Bound<'_, PyAny>) -> PyResult<bool> {
+    let mut iter = data.try_iter()?;
+    let Some(first) = iter.next() else {
+        return Ok(true);
+    };
+    let first_key = key.call1((first?,))?;
+
+    for item in iter {
+        if !first_key.eq(&key.call1((item?,))?)? {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
