@@ -12,6 +12,7 @@
 [dependency-groups]
     dev = [
         "cytoolz-stubs",
+        "framelib",
         "memory-profiler>=0.61.0",
         "mkdocstrings-python>=1.18.2",
         "polars>=1.33.1",
@@ -68,6 +69,7 @@
 
 [tool.uv.sources]
     cytoolz-stubs     = { git = "https://github.com/OutSquareCapital/cytoolz-stubs.git" }
+    framelib          = { git = "https://github.com/OutSquareCapital/framelib.git" }
     pytest-stubtester = { git = "https://github.com/OutSquareCapital/pytest-stubtester.git" }
 
 [build-system]
