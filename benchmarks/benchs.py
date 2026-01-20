@@ -1,10 +1,10 @@
-"""Benchmarks for pyochain package - benchs.py."""
+"""Benchmarks for pyochain package."""
 
 from dataclasses import dataclass
 
-import pyochain as pc
+from pyobench import bench
 
-from ._registery import bench
+import pyochain as pc
 
 # Helper functions
 # ------------------------------------------------------------

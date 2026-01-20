@@ -12,19 +12,17 @@
 [dependency-groups]
     dev = [
         "cytoolz-stubs",
-        "framelib",
-        "memory-profiler>=0.61.0",
         "mkdocstrings-python>=1.18.2",
-        "polars>=1.33.1",
         "pydoclint>=0.8.1",
+        "pyobench",
         "pytest-doctest-mkdocstrings>=0.1.1",
         "pytest-stubtester",
         "pytest>=9.0.2",
+        "rich>=14.2.0",
         "ruff>=0.14.9",
         "toml>=0.10.2",
-        "typer>=0.21.1",
         "zensical>=0.0.15",
-    ]
+]
 [tool.ruff]
     lint.external = ["DOC"]
     lint.ignore = [
@@ -69,8 +67,8 @@
 
 [tool.uv.sources]
     cytoolz-stubs     = { git = "https://github.com/OutSquareCapital/cytoolz-stubs.git" }
-    framelib          = { git = "https://github.com/OutSquareCapital/framelib.git" }
     pytest-stubtester = { git = "https://github.com/OutSquareCapital/pytest-stubtester.git" }
+pyobench = { git = "https://github.com/OutSquareCapital/pyobench.git" }
 
 [build-system]
     build-backend = "maturin"

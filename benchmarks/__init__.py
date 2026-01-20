@@ -1,1 +1,1 @@
-"""Benchmarks for pyochain package."""
+"""Benchmarks for pyochain."""
