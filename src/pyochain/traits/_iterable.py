@@ -1711,16 +1711,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        for v in self.__iter__():
-            func(v, *args, **kwargs)
-
-    def for_each_test[**P](
-        self,
-        func: Callable[Concatenate[T, P], Any],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None:
-        return tls.for_each(self.__iter__(), func, *args, **kwargs)
+        tls.for_each(self.__iter__(), func, *args, **kwargs)
 
     @overload
     def for_each_star[**P, R](
@@ -1822,85 +1813,6 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        for item in self.__iter__():
-            func(*item, *args, **kwargs)
-
-    @overload
-    def for_each_star_test[**P, R](
-        self: PyoIterator[tuple[Any]],
-        func: Callable[[Any], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star_test[T1, T2, **P, R](
-        self: PyoIterator[tuple[T1, T2]],
-        func: Callable[Concatenate[T1, T2, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star_test[T1, T2, T3, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3]],
-        func: Callable[Concatenate[T1, T2, T3, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star_test[T1, T2, T3, T4, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4]],
-        func: Callable[Concatenate[T1, T2, T3, T4, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star_test[T1, T2, T3, T4, T5, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
-        func: Callable[Concatenate[T1, T2, T3, T4, T5, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star_test[T1, T2, T3, T4, T5, T6, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
-        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star_test[T1, T2, T3, T4, T5, T6, T7, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
-        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star_test[T1, T2, T3, T4, T5, T6, T7, T8, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
-        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star_test[T1, T2, T3, T4, T5, T6, T7, T8, T9, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
-        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, T9, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star_test[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
-        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    def for_each_star_test[U: Iterable[Any], **P, R](
-        self: PyoIterator[U],
-        func: Callable[..., R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None:
         tls.for_each_star(self.__iter__(), func, *args, **kwargs)
 
     def try_for_each[E](self, f: Callable[[T], Result[Any, E]]) -> Result[None, E]:

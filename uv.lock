@@ -615,7 +615,7 @@ wheels = [
 [[package]]
 name = "pyobench"
 version = "0.1.0"
-source = { git = "https://github.com/OutSquareCapital/pyobench.git#1934794061cd1c5f247213bd62a60f2dba34bf10" }
+source = { git = "https://github.com/OutSquareCapital/pyobench.git#e0e225b89452c8085258fa6d6aa7ecfe8a761b9d" }
 dependencies = [
     { name = "framelib" },
     { name = "plotly", extra = ["express"] },
