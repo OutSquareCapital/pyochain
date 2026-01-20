@@ -1112,14 +1112,6 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        iterator = itertools.groupby(self.__iter__())
-        for _first in iterator:
-            for _second in iterator:
-                return False
-            return True
-        return True
-
-    def all_equal_test(self) -> bool:
         return tls.all_equal(self.__iter__())
 
     def all_equal_by[U](self, key: Callable[[T], U] | None = None) -> bool:
@@ -1145,14 +1137,6 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        iterator = itertools.groupby(self.__iter__(), key)
-        for _first in iterator:
-            for _second in iterator:
-                return False
-            return True
-        return True
-
-    def all_equal_by_test[U](self, key: Callable[[T], U] | None = None) -> bool:
         return tls.all_equal_by(self.__iter__(), key)
 
     def all_unique[U](self, key: Callable[[T], U] | None = None) -> bool:
