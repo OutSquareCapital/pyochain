@@ -22,7 +22,7 @@
         "ruff>=0.14.9",
         "toml>=0.10.2",
         "zensical>=0.0.15",
-]
+    ]
 [tool.ruff]
     lint.external = ["DOC"]
     lint.ignore = [
@@ -67,8 +67,8 @@
 
 [tool.uv.sources]
     cytoolz-stubs     = { git = "https://github.com/OutSquareCapital/cytoolz-stubs.git" }
+    pyobench          = { git = "https://github.com/OutSquareCapital/pyobench.git" }
     pytest-stubtester = { git = "https://github.com/OutSquareCapital/pytest-stubtester.git" }
-pyobench = { git = "https://github.com/OutSquareCapital/pyobench.git" }
 
 [build-system]
     build-backend = "maturin"

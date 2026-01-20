@@ -17,4 +17,4 @@ docs/sphinx/_build/
 .venv
 *.ipynb
 target/
-*.ddb
+*data/
