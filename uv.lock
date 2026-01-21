@@ -172,7 +172,7 @@ wheels = [
 [[package]]
 name = "framelib"
 version = "0.1.45"
-source = { git = "https://github.com/OutSquareCapital/framelib.git#eeca926d50f3d587a98850000fcae4a307c4576a" }
+source = { git = "https://github.com/OutSquareCapital/framelib.git#0e58772ee303b9a118ab6b7b22bffafdbe7ff090" }
 dependencies = [
     { name = "duckdb" },
     { name = "narwhals" },
@@ -615,7 +615,7 @@ wheels = [
 [[package]]
 name = "pyobench"
 version = "0.1.0"
-source = { git = "https://github.com/OutSquareCapital/pyobench.git#e0e225b89452c8085258fa6d6aa7ecfe8a761b9d" }
+source = { git = "https://github.com/OutSquareCapital/pyobench.git#52a1b748fa831a70b3b92e8958884eeefa3d88b5" }
 dependencies = [
     { name = "framelib" },
     { name = "plotly", extra = ["express"] },
