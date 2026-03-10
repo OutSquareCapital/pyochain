@@ -18,3 +18,4 @@ docs/sphinx/_build/
 *.ipynb
 target/
 *data/
+.coverage

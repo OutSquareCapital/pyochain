@@ -525,9 +525,7 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
 
         ```
         """
-        return Iter(
-            DrainIterator(self, start if start else 0, end if end else len(self))
-        )
+        return Iter(DrainIterator(self, start or 0, end or len(self)))
 
     def concat(self, other: list[T] | Self) -> Vec[T]:
         """Concatenate another `Vec` or `list` to **self** and return a new `Vec`.

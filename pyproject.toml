@@ -11,10 +11,12 @@
 
 [dependency-groups]
     dev = [
+        "basedpyright>=1.38.2",
         "cytoolz-stubs",
         "mkdocstrings-python>=1.18.2",
         "pydoclint>=0.8.1",
         "pyobench",
+        "pytest-cov>=7.0.0",
         "pytest-doctest-mkdocstrings>=0.1.1",
         "pytest-stubtester",
         "pytest>=9.0.2",
@@ -22,7 +24,7 @@
         "ruff>=0.14.9",
         "toml>=0.10.2",
         "zensical>=0.0.15",
-    ]
+]
 [tool.ruff]
     lint.external = ["DOC"]
     lint.ignore = [
@@ -78,3 +80,7 @@
     manifest-path = "rust/Cargo.toml"
     module-name   = "pyochain.rs"
     python-source = "src"
+[tool.basedpyright]
+    reportImportCycles     = false
+    reportMissingSuperCall = false
+    typeCheckingMode       = "all"

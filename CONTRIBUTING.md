@@ -120,9 +120,10 @@ Before committing, ensure all checks pass:
 ```bash
 uv run ruff check --fix src/pyochain
 uv run ruff format src/pyochain
+uv run basedpyright src/pyochain
 uv run scripts\check_docstrings.py
 uv run pydoclint src/pyochain
-uv run pytest --doctest-modules --doctest-glob="*.md" --stubs --doctest-mdcodeblocks src/pyochain tests/ README.md docs/
+uv run pytest --doctest-modules --doctest-glob="*.md" --stubs --doctest-mdcodeblocks src/pyochain tests/ README.md docs/ --cov=src --cov-report=term-missing
 ```
 
 ## Building docs
