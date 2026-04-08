@@ -1,5 +1,6 @@
 [package]
     edition = "2024"
+    license = "MIT"
     name    = "rs"
     version = "0.1.0"
 
