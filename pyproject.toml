@@ -24,17 +24,19 @@
         "ruff>=0.14.9",
         "toml>=0.10.2",
         "zensical>=0.0.15",
-]
+    ]
 [tool.ruff]
     lint.external = ["DOC"]
     lint.ignore = [
         "C417",
         "COM812",
         "COM812",
+        "CPY001",
         "D401",
         "E501",
         "FIX002",
         "PLC0415",
+        "PLR0904",
         "PLR2004",
         "PYI021",
         "S101",
@@ -48,7 +50,8 @@
         "TID252",
     ]
 
-    lint.select = ["ALL"]
+    lint.preview = true
+    lint.select  = ["ALL"]
     [tool.ruff.format]
         docstring-code-format = true
     [tool.ruff.lint.pydocstyle]
