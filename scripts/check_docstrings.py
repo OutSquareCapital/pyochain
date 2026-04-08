@@ -48,7 +48,11 @@ class State(NamedTuple):
     stack: pc.Seq[tuple[int, str]]
 
     def to_blocks(self, start_line: int) -> pc.Iter[ErrorDetail]:
-        """Convert unclosed blocks in the stack to error details."""
+        """Convert unclosed blocks in the stack to error details.
+
+        Returns:
+            pc.Iter[ErrorDetail]: An iterable of error details for unclosed blocks.
+        """
         return self.errors.iter().chain(
             self.stack.iter().map_star(
                 lambda idx, lang: ErrorDetail(
@@ -70,14 +74,18 @@ def _check_file(file_path: Path) -> pc.Seq[DocstringError]:
     return (
         pc.Iter(ast.walk(tree))
         .filter(_is_documentable)
-        .filter(lambda node: not _has_skip_decorator(node))  # type: ignore[arg-type]
+        .filter(lambda node: not _has_skip_decorator(node))
         .filter_map(lambda node: _process_node(file_path, node, protocol_methods))
         .collect()
     )
 
 
 def _get_protocol_methods(tree: ast.Module) -> pc.Set[int]:
-    """Get line numbers of all methods inside Protocol classes."""
+    """Get line numbers of all methods inside Protocol classes.
+
+    Returns:
+        pc.Set[int]: A set of line numbers of methods inside Protocol classes.
+    """
 
     def _is_class_def(node: ast.AST) -> TypeIs[ast.ClassDef]:
         return isinstance(node, ast.ClassDef)
@@ -149,10 +157,16 @@ def _process_node(
 
 
 def _has_skip_decorator(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
-    """Check if function has a decorator that should skip docstring check."""
+    """Check if function has a decorator that should skip docstring check.
+
+    Returns:
+        bool: True if function has a decorator that should skip docstring check, False otherwise.
+    """
     return pc.Iter(node.decorator_list).any(
-        lambda d: (isinstance(d, ast.Name) and d.id in SKIP_DECORATORS)
-        or (isinstance(d, ast.Attribute) and d.attr in SKIP_DECORATORS)
+        lambda d: (
+            (isinstance(d, ast.Name) and d.id in SKIP_DECORATORS)
+            or (isinstance(d, ast.Attribute) and d.attr in SKIP_DECORATORS)
+        )
     )
 
 
@@ -162,10 +176,22 @@ def _check_code_blocks(
     """Check that all code blocks in docstring are properly closed and that at least one python block exists.
 
     If skip_doctest is True or docstring contains @no_doctest flag, skips the python block requirement.
+
+    Returns:
+        pc.Result[None, pc.Iter[ErrorDetail]]: Ok if no issues, Err with details if issues found.
     """
 
     def _process_line(state: State, line_num: int, line: str) -> State:
-        """Process a single line and update state."""
+        """Process a single line and update state.
+
+        Args:
+            state (State): The current state of the docstring processing.
+            line_num (int): The line number of the current line.
+            line (str): The content of the current line.
+
+        Returns:
+            State: The updated state after processing the line.
+        """
         marker = "```"
         match = CODE_BLOCK_PATTERN.search(line)
         if not (match and line.strip().startswith(marker)):
@@ -210,7 +236,7 @@ def _check_code_blocks(
             start_line,
             has_no_doctest_flag=docstring.find("@no_doctest") != -1 or skip_doctest,
         )
-        .map_err(lambda doctest_errors: all_block_errors.chain(doctest_errors))
+        .map_err(all_block_errors.chain)
         .or_else(lambda _: all_block_errors.err_or(None))
     )
 

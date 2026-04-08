@@ -3,7 +3,7 @@
 from collections.abc import Iterator
 from pathlib import Path
 from types import ModuleType
-from typing import Any, TypeIs
+from typing import Any
 
 import rich
 import rich.text
@@ -11,13 +11,13 @@ import toml
 
 import pyochain as pc
 
-type JsonData = dict[str, Any] | list[str] | str
+type JsonData = dict[str, Any] | list[str] | str  # pyright: ignore[reportExplicitAny]
 # Setup paths
 DOCS_REF = Path().joinpath("docs", "reference")
+ZENSICAL_CONFIG = Path("zensical.toml")
 
 
 def _generate_markdown(full_path: str, class_name: str) -> str:
-    """Generate markdown content for a class."""
     return f"""# {class_name}
 
 ::: {full_path}
@@ -30,11 +30,10 @@ def _ensure_docs_dir() -> None:
 
 
 def _discover_modules(module: ModuleType) -> pc.Seq[ModuleType]:
-    """Recursively discover all submodules in a package."""
 
     def _recurse(mod: ModuleType) -> Iterator[ModuleType]:
         yield mod
-        for obj in vars(mod).values():
+        for obj in vars(mod).values():  # pyright: ignore[reportAny]
             if isinstance(obj, ModuleType) and obj.__name__.startswith(mod.__name__):
                 yield from _recurse(obj)
 
@@ -47,35 +46,35 @@ def _generate_markdown_for_module(module: object) -> None:
 
     public_api = set(getattr(module, "__all__", []))
 
-    def _is_class(x: object) -> TypeIs[type]:
-        """Check if object is a class."""
-        return isinstance(x, type)
-
     def _write(path: Path, cls_name: str, cls_path: str) -> None:
-        path.write_text(_generate_markdown(cls_path, cls_name))
+        _ = path.write_text(_generate_markdown(cls_path, cls_name), encoding="utf-8")
         rich.print(rich.text.Text(f"✓ Generated {path!s}", style="green"))
 
     return (
         pc.Dict.from_object(module)
         .items()
         .iter()
-        .filter_star(lambda name, cls: name in public_api and _is_class(cls))
+        .filter_star(lambda name, cls: name in public_api and isinstance(cls, type))  # pyright: ignore[reportAny]
         .map_star(
-            lambda name, cls: (
+            lambda name, cls: (  # pyright: ignore[reportAny]
                 DOCS_REF.joinpath(f"{name.lower()}.md"),
                 name,
-                f"{cls.__module__}.{cls.__name__}".replace("builtins", "pyochain.rs"),
+                f"{cls.__module__}.{cls.__name__}".replace("builtins", "pyochain.rs"),  # pyright: ignore[reportAny]
             )
         )
         .for_each_star(_write)
     )
 
 
-def _check_nav_completeness(config_path: Path = Path("zensical.toml")) -> None:
+def _check_nav_completeness(config_path: Path = ZENSICAL_CONFIG) -> None:
     """Check that all generated markdown files are in the navigation."""
 
     def _collect_paths(acc: pc.SetMut[str], item: JsonData) -> pc.SetMut[str]:
-        """Accumulate all .md file paths from nested structure."""
+        """Accumulate all .md file paths from nested structure.
+
+        Returns:
+            pc.SetMut[str]: A set of all .md file paths found.
+        """
         match item:
             case dict():
                 return pc.Iter(item.values()).fold(acc, _collect_paths)
@@ -84,13 +83,10 @@ def _check_nav_completeness(config_path: Path = Path("zensical.toml")) -> None:
             case str():
                 acc.add(item)
                 return acc
-        return acc
 
-    nav_paths = (
-        pc.SetMut[str]
-        .new()
-        .into(_collect_paths, toml.load(config_path)["project"]["nav"])
-    )
+    items: JsonData = toml.load(config_path)["project"]["nav"]  # pyright: ignore[reportAny]
+
+    nav_paths = pc.SetMut[str].new().into(_collect_paths, items)
 
     return (
         pc.Iter(DOCS_REF.glob("*.md"))

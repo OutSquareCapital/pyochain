@@ -13,6 +13,12 @@ def no_doctest[**P, R](func: Callable[P, R]) -> Callable[P, R]:
     Can also be marked in docstrings like so:
 
     @no_doctest
+
+    Args:
+        func (Callable[P, R]): The function to mark.
+
+    Returns:
+        Callable[P, R]: The original function, unmodified.
     """
 
     @wraps(func)
@@ -52,7 +58,9 @@ class SupportsKeysAndGetItem[K, V](Protocol):
 
 
 class SupportsSumWithNoDefaultGiven[T](
-    SupportsAdd[T, Any], SupportsRAdd[int, T], Protocol
+    SupportsAdd[T, Any],  # pyright: ignore[reportExplicitAny]
+    SupportsRAdd[int, T],
+    Protocol,
 ): ...
 
 

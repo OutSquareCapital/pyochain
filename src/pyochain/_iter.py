@@ -15,7 +15,7 @@ from collections.abc import (
     ValuesView,
 )
 from dataclasses import dataclass
-from typing import Any, Literal, Never, Self, TypeIs, overload
+from typing import Any, Literal, Never, Self, TypeIs, overload, override
 
 import cytoolz as cz
 
@@ -34,10 +34,10 @@ Position = Literal["first", "middle", "last", "only"]
 """Literal type representing the position of an item in an iterable."""
 
 
-def _get_repr(data: Collection[Any]) -> str:
+def _get_repr(data: Collection[object]) -> str:
     from pprint import pformat
 
-    def _repr_inner(data: Collection[Any]) -> str:
+    def _repr_inner(data: Collection[object]) -> str:
         return pformat(data, sort_dicts=False)[1:-1]
 
     match data:
@@ -126,9 +126,11 @@ class DrainIterator[T](Iterator[T]):
     _idx: int
     _end_idx: int
 
+    @override
     def __iter__(self) -> Self:
         return self
 
+    @override
     def __next__(self) -> T:
         if self._idx >= self._end_idx:
             raise StopIteration
@@ -139,7 +141,7 @@ class DrainIterator[T](Iterator[T]):
     def __del__(self) -> None:
         pop = self._vec.pop
         while self._idx < self._end_idx:
-            pop(self._idx)
+            _ = pop(self._idx)
             self._end_idx -= 1
 
 
@@ -158,22 +160,26 @@ class Set[T](PyoSet[T]):
             data (Iterable[T]): The data to initialize the Set with.
     """
 
-    __slots__ = ("_inner",)
-    __match_args__ = ("_inner",)
+    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
+    __match_args__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
     _inner: frozenset[T]
 
     def __init__(self, data: Iterable[T]) -> None:
         self._inner = frozenset(data)
 
+    @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({_get_repr(self._inner)})"
 
+    @override
     def __contains__(self, item: object) -> bool:
         return item in self._inner
 
+    @override
     def __iter__(self) -> Iterator[T]:
         return iter(self._inner)
 
+    @override
     def __len__(self) -> int:
         return len(self._inner)
 
@@ -194,11 +200,11 @@ class SetMut[T](Set[T], MutableSet[T]):
         data (Iterable[T]): The mutable set to wrap.
     """
 
-    __slots__ = ()
-    _inner: set[T]  # type: ignore[override]
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
+    _inner: set[T]
 
     def __init__(self, data: Iterable[T]) -> None:
-        self._inner = set(data)  # type: ignore[override]
+        self._inner = set(data)  # pyright: ignore[reportIncompatibleVariableOverride]
 
     @staticmethod
     def from_ref[V](data: set[V]) -> SetMut[V]:
@@ -235,6 +241,7 @@ class SetMut[T](Set[T], MutableSet[T]):
         instance._inner = data
         return instance
 
+    @override
     def add(self, value: T) -> None:
         """Add an element to **self**.
 
@@ -253,6 +260,7 @@ class SetMut[T](Set[T], MutableSet[T]):
         """
         self._inner.add(value)
 
+    @override
     def discard(self, value: T) -> None:
         """Remove an element from **self** if it is a member.
 
@@ -291,18 +299,21 @@ class Seq[T](PyoSequence[T]):
             data (Iterable[T]): The data to initialize the Seq with.
     """
 
-    __slots__ = ("_inner",)
+    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
     _inner: tuple[T, ...]
 
     def __init__(self, data: Iterable[T]) -> None:
         self._inner = tuple(data)
 
+    @override
     def __iter__(self) -> Iterator[T]:
         return iter(self._inner)
 
+    @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({_get_repr(self._inner)})"
 
+    @override
     def __len__(self) -> int:
         return len(self._inner)
 
@@ -310,11 +321,12 @@ class Seq[T](PyoSequence[T]):
     def __getitem__(self, index: int) -> T: ...
     @overload
     def __getitem__(self, index: slice) -> Sequence[T]: ...
-    def __getitem__(self, index: int | slice[Any, Any, Any]) -> T | Sequence[T]:
+    @override
+    def __getitem__(self, index: int | slice[Any, Any, Any]) -> T | Sequence[T]:  # pyright: ignore[reportExplicitAny]
         return self._inner.__getitem__(index)
 
 
-class Vec[T](Seq[T], PyoMutableSequence[T]):
+class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """A `MutableSequence` wrapper with functional API.
 
     Implement `MutableSequence` Protocol from `collections.abc`.
@@ -327,11 +339,11 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
         data (Iterable[T]): The `Iterable` to wrap.
     """
 
-    __slots__ = ()
-    _inner: list[T]  # type: ignore[override]
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
+    _inner: list[T]
 
     def __init__(self, data: Iterable[T]) -> None:
-        self._inner = list(data)  # type: ignore[override]
+        self._inner = list(data)  # pyright: ignore[reportIncompatibleVariableOverride]
 
     @staticmethod
     def from_ref[V](data: list[V]) -> Vec[V]:
@@ -371,12 +383,15 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
     def __setitem__(self, index: int, value: T) -> None: ...
     @overload
     def __setitem__(self, index: slice, value: Iterable[T]) -> None: ...
+    @override
     def __setitem__(self, index: int | slice, value: T | Iterable[T]) -> None:
-        return self._inner.__setitem__(index, value)  # type: ignore[arg-type]
+        return self._inner.__setitem__(index, value)  # pyright: ignore[reportCallIssue, reportUnknownVariableType, reportArgumentType]
 
+    @override
     def __delitem__(self, index: int | slice) -> None:
         del self._inner[index]
 
+    @override
     def insert(self, index: int, value: T) -> None:
         """Inserts an element at position index within the vector, shifting all elements after it to the right.
 
@@ -405,7 +420,10 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
     ) -> Vec[U]: ...
     @overload
     def sort(
-        self, *, key: Callable[[T], SupportsRichComparison[Any]], reverse: bool = False
+        self,
+        *,
+        key: Callable[[T], SupportsRichComparison[Any]],  # pyright: ignore[reportExplicitAny]
+        reverse: bool = False,
     ) -> Vec[T]: ...
     @overload
     def sort(
@@ -417,9 +435,9 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
     def sort(
         self,
         *,
-        key: Callable[[T], SupportsRichComparison[Any]] | None = None,
+        key: Callable[[T], SupportsRichComparison[Any]] | None = None,  # pyright: ignore[reportExplicitAny]
         reverse: bool = False,
-    ) -> Vec[Any]:
+    ) -> Vec[Any]:  # pyright: ignore[reportExplicitAny]
         """Sort the elements of the `Vec` in place.
 
         Warning:
@@ -442,7 +460,7 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
 
         ```
         """
-        self._inner.sort(key=key, reverse=reverse)  # type: ignore[arg-type]
+        self._inner.sort(key=key, reverse=reverse)  # pyright: ignore[reportArgumentType]
         return self
 
     def extract_if(
@@ -468,6 +486,13 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
                     val = data.pop(i)
                     # your code here
         ```
+        Args:
+            predicate (Callable[[T], bool]): A function that takes an element and returns `True` if it should be extracted, or `False` if it should be retained.
+            start (int): The starting index of the range to consider for extraction. Defaults to `0`.
+            end (int | None): The ending index of the range to consider for extraction. Defaults to `None`, which means the end of the `Vec`.
+
+        Returns:
+            Iter[T]: An `Iter` that yields the extracted elements.
         """
 
         def _extract_if_gen() -> Iterator[T]:
@@ -597,14 +622,16 @@ class Iter[T](PyoIterator[T]):
     """
 
     _inner: Iterator[T]
-    __slots__ = ("_inner",)
+    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
     def __init__(self, data: Iterable[T]) -> None:
         self._inner = iter(data)
 
+    @override
     def __iter__(self) -> Iterator[T]:
         return self._inner
 
+    @override
     def __next__(self) -> T:
         return next(self._inner)
 
@@ -631,6 +658,7 @@ class Iter[T](PyoIterator[T]):
         self._inner = itertools.chain(first, self._inner)
         return len(first) > 0
 
+    @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self._inner.__repr__()})"
 
@@ -928,7 +956,7 @@ class Iter[T](PyoIterator[T]):
         collection.extend(self._inner)
         return collection
 
-    def try_collect[U](self: Iter[Option[U]] | Iter[Result[U, Any]]) -> Option[Vec[U]]:
+    def try_collect[U](self: Iter[Option[U]] | Iter[Result[U, Any]]) -> Option[Vec[U]]:  # pyright: ignore[reportExplicitAny]
         """Fallibly transforms **self** into a `Vec`, short circuiting if a failure is encountered.
 
         `try_collect()` is a variation of `collect()` that allows fallible conversions during collection.
@@ -1050,14 +1078,14 @@ class Iter[T](PyoIterator[T]):
             new = self.__class__
             while True:
                 # Create new chunk
-                chunk, _materialize_next = _ichunk(self._inner, size)
+                chunk, materialize_next = _ichunk(self._inner, size)
 
                 # Check to see whether we're at the end of the source iterable
-                if not _materialize_next(size):
+                if not materialize_next(size):
                     return
 
                 yield new(chunk)
-                _materialize_next(size)
+                _ = materialize_next(size)
 
         return Iter(_chunks())
 
@@ -1091,7 +1119,7 @@ class Iter[T](PyoIterator[T]):
     def flatten[U](self: Iter[Vec[U]]) -> Iter[U]: ...
     @overload
     def flatten(self: Iter[range]) -> Iter[int]: ...
-    def flatten[U: Iterable[Any]](self: Iter[U]) -> Iter[Any]:
+    def flatten[U: Iterable[Any]](self: Iter[U]) -> Iter[Any]:  # pyright: ignore[reportExplicitAny]
         """Creates an `Iter` that flattens nested structure.
 
         Returns:
@@ -1237,6 +1265,9 @@ class Iter[T](PyoIterator[T]):
         - multiple columns represent elements of the same feature (e.g. a point represented by x,y,z)
         - the format is not the same for all columns.
 
+        Credits:
+            `more_itertools.split_into`
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -1258,7 +1289,6 @@ class Iter[T](PyoIterator[T]):
         """
 
         def _split_into(data: Iterator[T]) -> Iterator[Self]:
-            """Credits: more_itertools.split_into."""
             new = self.__class__
             for size in sizes:
                 if size.is_none():
@@ -1291,6 +1321,9 @@ class Iter[T](PyoIterator[T]):
 
         The example below shows how to find runs of increasing numbers, by splitting the iterable when element i is larger than element i + 1.
 
+        Credits:
+            `more_itertools.split_when`
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -1304,7 +1337,6 @@ class Iter[T](PyoIterator[T]):
         """
 
         def _split_when(data: Iterator[T], max_split: int) -> Iterator[Self]:
-            """Credits: more_itertools.split_when."""
             new = self.__class__
             if max_split == 0:
                 yield self
@@ -1357,6 +1389,9 @@ class Iter[T](PyoIterator[T]):
 
         If *max_split* is not specified or -1, then there is no limit on the number of splits.
 
+        Credits:
+            `more_itertools.split_at`
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -1380,7 +1415,6 @@ class Iter[T](PyoIterator[T]):
         """
 
         def _split_at(data: Iterator[T], max_split: int) -> Iterator[Self]:
-            """Credits: more_itertools.split_at."""
             new = self.__class__
             if max_split == 0:
                 yield self
@@ -1419,6 +1453,9 @@ class Iter[T](PyoIterator[T]):
         Returns:
             Iter[Self]: An iterable of lists of items.
 
+        Credits:
+            `more_itertools.split_after`
+
         Example:
         ```python
         >>> import pyochain as pc
@@ -1437,7 +1474,6 @@ class Iter[T](PyoIterator[T]):
         """
 
         def _split_after(data: Iterator[T], max_split: int) -> Iterator[Self]:
-            """Credits: more_itertools.split_after."""
             new = self.__class__
             if max_split == 0:
                 yield new(data)
@@ -1476,6 +1512,9 @@ class Iter[T](PyoIterator[T]):
         Returns:
             Iter[Self]: An iterable of lists of items.
 
+        Credits:
+            `more_itertools.split_before`
+
 
         At most *max_split* are done.
 
@@ -1500,7 +1539,6 @@ class Iter[T](PyoIterator[T]):
         """
 
         def _split_before(data: Iterator[T], max_split: int) -> Iterator[Self]:
-            """Credits: more_itertools.split_before."""
             new = self.__class__
 
             if max_split == 0:
@@ -1589,8 +1627,8 @@ class Iter[T](PyoIterator[T]):
 
     @overload
     def map_star[R](
-        self: Iter[tuple[Any]],
-        func: Callable[[Any], R],
+        self: Iter[tuple[Any]],  # pyright: ignore[reportExplicitAny]
+        func: Callable[[Any], R],  # pyright: ignore[reportExplicitAny]
     ) -> Iter[R]: ...
     @overload
     def map_star[T1, T2, R](
@@ -1853,9 +1891,9 @@ class Iter[T](PyoIterator[T]):
 
     @overload
     def filter_star(
-        self: Iter[tuple[Any]],
-        func: Callable[[Any], bool],
-    ) -> Iter[tuple[Any]]: ...
+        self: Iter[tuple[Any]],  # pyright: ignore[reportExplicitAny]
+        func: Callable[[Any], bool],  # pyright: ignore[reportExplicitAny]
+    ) -> Iter[tuple[Any]]: ...  # pyright: ignore[reportExplicitAny]
     @overload
     def filter_star[T1, T2](
         self: Iter[tuple[T1, T2]],
@@ -2010,8 +2048,8 @@ class Iter[T](PyoIterator[T]):
 
     @overload
     def filter_map_star[R](
-        self: Iter[tuple[Any]],
-        func: Callable[[Any], Option[R]],
+        self: Iter[tuple[Any]],  # pyright: ignore[reportExplicitAny]
+        func: Callable[[Any], Option[R]],  # pyright: ignore[reportExplicitAny]
     ) -> Iter[R]: ...
     @overload
     def filter_map_star[T1, T2, R](
@@ -2141,9 +2179,9 @@ class Iter[T](PyoIterator[T]):
     ) -> Iter[tuple[T, T1, T2, T3, T4]]: ...
     def zip(
         self,
-        *others: Iterable[Any],
+        *others: Iterable[Any],  # pyright: ignore[reportExplicitAny]
         strict: bool = False,
-    ) -> Iter[tuple[Any, ...]]:
+    ) -> Iter[tuple[Any, ...]]:  # pyright: ignore[reportExplicitAny]
         """Yields n-length tuples, where n is the number of iterables passed as positional arguments.
 
         The i-th element in every tuple comes from the i-th iterable argument to `.zip()`.
@@ -2217,7 +2255,7 @@ class Iter[T](PyoIterator[T]):
         /,
         *iterables: Iterable[T],
     ) -> Iter[tuple[Option[T], ...]]: ...
-    def zip_longest(self, *others: Iterable[Any]) -> Iter[tuple[Option[Any], ...]]:
+    def zip_longest(self, *others: Iterable[Any]) -> Iter[tuple[Option[Any], ...]]:  # pyright: ignore[reportExplicitAny]
         """Return a zip Iterator who yield a tuple where the i-th element comes from the i-th iterable argument.
 
         Yield values until the longest iterable in the argument sequence is exhausted, and then it raises StopIteration.
@@ -2343,7 +2381,7 @@ class Iter[T](PyoIterator[T]):
         /,
     ) -> Iter[tuple[T, T1, T2, T3, T4]]: ...
 
-    def product(self, *others: Iterable[Any]) -> Iter[tuple[Any, ...]]:
+    def product(self, *others: Iterable[Any]) -> Iter[tuple[Any, ...]]:  # pyright: ignore[reportExplicitAny]
         """Computes the Cartesian product with another iterable.
 
         This is the declarative equivalent of nested for-loops.
@@ -2495,7 +2533,9 @@ class Iter[T](PyoIterator[T]):
         self, length: int, func: Callable[[tuple[T, ...]], R]
     ) -> Iter[R]: ...
     def map_windows[R](
-        self, length: int, func: Callable[[tuple[Any, ...]], R]
+        self,
+        length: int,
+        func: Callable[[tuple[Any, ...]], R],  # pyright: ignore[reportExplicitAny]
     ) -> Iter[R]:
         r"""Calls the given *func* for each contiguous window of size *length* over **self**.
 
@@ -3041,8 +3081,9 @@ class Iter[T](PyoIterator[T]):
         self, key: Callable[[T], K] | None = None
     ) -> Iter[tuple[K, Self] | tuple[T, Self]]: ...
     def group_by(
-        self, key: Callable[[T], Any] | None = None
-    ) -> Iter[tuple[Any | T, Self]]:
+        self,
+        key: Callable[[T], Any] | None = None,  # pyright: ignore[reportExplicitAny]
+    ) -> Iter[tuple[Any | T, Self]]:  # pyright: ignore[reportExplicitAny]
         """Make an `Iter` that returns consecutive keys and groups from the iterable.
 
         Args:
@@ -3132,7 +3173,7 @@ class Iter[T](PyoIterator[T]):
     def sort(
         self,
         *,
-        key: Callable[[T], SupportsRichComparison[Any]],
+        key: Callable[[T], SupportsRichComparison[Any]],  # pyright: ignore[reportExplicitAny]
         reverse: bool = False,
     ) -> Vec[T]: ...
     @overload
@@ -3145,9 +3186,9 @@ class Iter[T](PyoIterator[T]):
     def sort(
         self,
         *,
-        key: Callable[[T], SupportsRichComparison[Any]] | None = None,
+        key: Callable[[T], SupportsRichComparison[Any]] | None = None,  # pyright: ignore[reportExplicitAny]
         reverse: bool = False,
-    ) -> Vec[Any]:
+    ) -> Vec[Any]:  # pyright: ignore[reportExplicitAny]
         """Sort the elements of the sequence.
 
         If a key function is provided, it is used to extract a comparison key from each element.
@@ -3192,7 +3233,7 @@ class Iter[T](PyoIterator[T]):
         """
         return Seq(cz.itertoolz.tail(n, self._inner))
 
-    def top_n(self, n: int, key: Callable[[T], Any] | None = None) -> Seq[T]:
+    def top_n(self, n: int, key: Callable[[T], Any] | None = None) -> Seq[T]:  # pyright: ignore[reportExplicitAny]
         """Return a tuple of the top-n items according to key.
 
         Args:

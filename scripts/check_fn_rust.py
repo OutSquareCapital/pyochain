@@ -2,7 +2,7 @@
 
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 import polars as pl
 
@@ -136,9 +136,9 @@ def _iter_filter() -> pc.Set[str]:
     )
 
 
-def _decorated(fn: Callable[..., Any]) -> Callable[..., Any]:
+def _decorated(fn: Callable[..., object]) -> Callable[..., object]:
     if isinstance(fn, (staticmethod, classmethod)):
-        return fn.__func__  # type: ignore[return-value]
+        return fn.__func__
     return fn
 
 
@@ -153,7 +153,7 @@ def main(dtype: type, rust_fns: pc.Set[str], filters: pc.Set[str]) -> None:
     return (
         pc.Iter(dtype.mro())
         .flat_map(lambda x: x.__dict__.values())
-        .filter(lambda x: callable(x) or isinstance(x, (staticmethod, classmethod)))
+        .filter(lambda x: callable(x) or isinstance(x, (staticmethod, classmethod)))  # pyright: ignore[reportAny]
         .map(_decorated)
         .map(lambda x: _with_source(x.__name__, "python"))
         .chain(rust_fns.iter().map(lambda x: _with_source(x, "rust")))

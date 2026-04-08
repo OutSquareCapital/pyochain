@@ -51,7 +51,7 @@ def for_each[**P, T](
 @no_doctest
 def for_each_star[**P, T](
     data: Iterator[T],
-    func: Callable[..., Any],
+    func: Callable[..., Any],  # pyright: ignore[reportExplicitAny]
     *args: P.args,
     **kwargs: P.kwargs,
 ) -> None: ...

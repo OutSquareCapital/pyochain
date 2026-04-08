@@ -1,6 +1,9 @@
-"""Benchmarks for pyochain package."""
+"""Benchmarks for pyochain."""
 
+import math
+import operator
 from dataclasses import dataclass
+from typing import override
 
 from pyobench import bench
 
@@ -8,10 +11,6 @@ import pyochain as pc
 
 # Helper functions
 # ------------------------------------------------------------
-
-
-def _args_fn(x: int, y: int) -> int:
-    return x + y
 
 
 def _kwargs_fn(x: int, y: int, *, z: int) -> int:
@@ -39,8 +38,13 @@ class Point:  # noqa: D101, PLW1641
     x: int
     y: int
 
+    @override
     def __eq__(self, other: object) -> bool:
-        """Equality comparison for Point dataclass."""
+        """Equality comparison for Point dataclass.
+
+        Returns:
+            object
+        """
         if not isinstance(other, Point):
             return NotImplemented
         return self.x == other.x and self.y == other.y
@@ -56,31 +60,51 @@ class AllEqual:
     @bench(gen=lambda size: size.map(lambda _: 42).collect())
     @staticmethod
     def with_int(data: pc.Seq[int]) -> object:
-        """Benchmark all_equal with int data."""
+        """Benchmark all_equal with int data.
+
+        Returns:
+            object
+        """
         return data.iter().all_equal()
 
-    @bench(gen=lambda size: size.map(lambda _: 3.14159).collect())
+    @bench(gen=lambda size: size.map(lambda _: math.pi).collect())
     @staticmethod
     def with_float(data: pc.Seq[float]) -> object:
-        """Benchmark all_equal with float data."""
+        """Benchmark all_equal with float data.
+
+        Returns:
+            object
+        """
         return data.iter().all_equal()
 
     @bench(gen=lambda size: size.map(lambda _: True).collect())
     @staticmethod
     def with_bool(data: pc.Seq[bool]) -> object:
-        """Benchmark all_equal with bool data."""
+        """Benchmark all_equal with bool data.
+
+        Returns:
+            object
+        """
         return data.iter().all_equal()
 
     @bench(gen=lambda size: size.map(lambda _: "hello world").collect())
     @staticmethod
     def with_str(data: pc.Seq[str]) -> object:
-        """Benchmark all_equal with str data."""
+        """Benchmark all_equal with str data.
+
+        Returns:
+            object
+        """
         return data.iter().all_equal()
 
     @bench(gen=lambda size: size.map(lambda _: Point(1, 2)).collect())
     @staticmethod
     def with_dataclass(data: pc.Seq[Point]) -> object:
-        """Benchmark all_equal with custom dataclass (uses __eq__)."""
+        """Benchmark all_equal with custom dataclass (uses __eq__).
+
+        Returns:
+            object
+        """
         return data.iter().all_equal()
 
 
@@ -90,51 +114,87 @@ class ForEach:
     @bench()
     @staticmethod
     def for_each(data: pc.Seq[int]) -> object:
-        """Benchmark for_each implementation."""
+        """Benchmark for_each implementation.
+
+        Returns:
+            object
+        """
         return data.iter().for_each(lambda x: x * 2)
 
     @bench()
     @staticmethod
     def for_each_args(data: pc.Seq[int]) -> object:
-        """Benchmark for_each implementation."""
-        return data.iter().for_each(_args_fn, 20)
+        """Benchmark for_each implementation.
+
+        Returns:
+            object
+        """
+        return data.iter().for_each(operator.add, 20)
 
     @bench()
     @staticmethod
     def for_each_kwargs(data: pc.Seq[int]) -> object:
-        """Benchmark for_each implementation."""
+        """Benchmark for_each implementation.
+
+        Returns:
+            object
+        """
         return data.iter().for_each(_kwargs_fn, 20, z=30)
 
     @bench()
     @staticmethod
     def for_each_kwargs_no_args(data: pc.Seq[int]) -> object:
-        """Benchmark for_each implementation."""
+        """Benchmark for_each implementation.
+
+        Returns:
+            object
+        """
         return data.iter().for_each(_kwargs_no_args_fn, z=50)
 
 
 class ForEachStar:
-    """Benchmark `for_each_star` with different argument types."""
+    """Benchmark `for_each_star` with different argument types.
+
+    Returns:
+        object
+    """
 
     @bench(gen=lambda size: size.map(lambda x: (x, x)).collect())
     @staticmethod
     def for_each_star(data: pc.Seq[tuple[int, int]]) -> object:
-        """Benchmark for_each_star implementation."""
-        return data.iter().for_each_star(lambda x, y: x + y)
+        """Benchmark for_each_star implementation.
+
+        Returns:
+            object
+        """
+        return data.iter().for_each_star(operator.add)
 
     @bench(gen=lambda size: size.map(lambda x: (x, x)).collect())
     @staticmethod
     def for_each_star_args(data: pc.Seq[tuple[int, int]]) -> object:
-        """Benchmark for_each implementation."""
+        """Benchmark for_each implementation.
+
+        Returns:
+            object
+        """
         return data.iter().for_each_star(_args_fn_star, 20)
 
     @bench(gen=lambda size: size.map(lambda x: (x, x)).collect())
     @staticmethod
     def for_each_star_kwargs(data: pc.Seq[tuple[int, int]]) -> object:
-        """Benchmark for_each implementation."""
+        """Benchmark for_each implementation.
+
+        Returns:
+            object
+        """
         return data.iter().for_each_star(_kwargs_fn_star, 20, d=30)
 
     @bench(gen=lambda size: size.map(lambda x: (x, x)).collect())
     @staticmethod
     def for_each_star_kwargs_no_args(data: pc.Seq[tuple[int, int]]) -> object:
-        """Benchmark for_each implementation."""
+        """Benchmark for_each implementation.
+
+        Returns:
+            object
+        """
         return data.iter().for_each_star(_kwargs_no_args_fn_star, c=50)
