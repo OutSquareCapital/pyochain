@@ -9,9 +9,3 @@ Welcome to the `pyochain` documentation! This library brings a fluent, declarati
 - [**GitHub Repository**](https://github.com/OutSquareCapital/pyochain)
 - [**Contributing Guide**](https://github.com/OutSquareCapital/pyochain/blob/master/CONTRIBUTING.md)
 - [**PyPI Package**](https://pypi.org/project/pyochain/)
-
-## Test Cross-References
-
-[`pyochain.Iter`][]
-
-[`pyochain._iter.Seq`][]

@@ -26,6 +26,9 @@ jobs:
       - name: Build documentation
         run: uv run zensical build
       
+      - name: Resolve cross-references
+        run: uv run scripts/fix_autorefs.py
+      
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
