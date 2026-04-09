@@ -79,7 +79,9 @@ def _parse_attrs(attrs_str: str) -> dict[str, str | None]:
     """
     result: dict[str, str | None] = {}
     for m in _ATTR_RE.finditer(attrs_str):
-        result[m.group("key")] = m.group("value")
+        key = m.group("key")
+        value = m.group("value")  # None when flag-only
+        result[key] = value
     return result
 
 
@@ -273,7 +275,7 @@ def _add_reexport_aliases(anchor_map: dict[str, str]) -> None:
     (
         pc.Iter(dir(pyochain))
         .filter_map(_try_import_module)
-        .flat_map(lambda t: _module_aliases(t[0], t[1]))
+        .flat_map(lambda module_info: _module_aliases(*module_info))
         .filter_star(lambda _alias, canonical: canonical in anchor_map)
         .for_each_star(
             lambda alias, canonical: anchor_map.setdefault(alias, anchor_map[canonical])
@@ -321,7 +323,7 @@ def _make_replacer(
     anchor_map: dict[str, str],
     page_url: str,
 ) -> Callable[[re.Match[str]], str]:
-    """Return a replacement callable for :func:`re.sub`.
+    """Return a replacement callable for ``re.sub``.
 
     Args:
         anchor_map: Mapping built by :func:`_build_anchor_map`.
@@ -432,7 +434,7 @@ def main(site_dir: Path | None = None) -> None:
     anchor_map = _build_anchor_map(site_dir)
     rich.print(f"  Found {len(anchor_map)} anchors.")
 
-    counts = (
+    replaced_counts = (
         pc.Iter(sorted(site_dir.rglob("index.html")))
         .map(lambda f: _fix_file(f, anchor_map, site_dir))
         .filter(lambda n: n > 0)
@@ -440,7 +442,7 @@ def main(site_dir: Path | None = None) -> None:
     )
     rich.print(
         rich.text.Text(
-            f"Resolved {counts.sum()} cross-reference(s) across {counts.length()} file(s).",
+            f"Resolved {replaced_counts.sum()} cross-reference(s) across {replaced_counts.length()} file(s).",
             style="green",
         )
     )
