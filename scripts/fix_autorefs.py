@@ -28,6 +28,9 @@ from collections.abc import Callable
 from html import escape
 from pathlib import Path
 
+import pyochain as pc
+import rich
+import rich.text
 
 # ---------------------------------------------------------------------------
 # Regex patterns
@@ -61,12 +64,22 @@ def _parse_attrs(attrs_str: str) -> dict[str, str | None]:
     """Parse a space-separated HTML attribute string into a dict.
 
     Bare flags (no value) are stored as ``{key: None}``.
+
+    Args:
+        attrs_str: The HTML attributes string to parse.
+
+    Returns:
+        A dict mapping attribute names to values (or None for flags).
+
+    Examples:
+        ```python
+        >>> _parse_attrs('identifier="foo.bar" optional hover')
+        {'identifier': 'foo.bar', 'optional': None, 'hover': None}
+        ```
     """
     result: dict[str, str | None] = {}
     for m in _ATTR_RE.finditer(attrs_str):
-        key = m.group("key")
-        value = m.group("value")  # None when flag-only
-        result[key] = value
+        result[m.group("key")] = m.group("value")
     return result
 
 
@@ -82,6 +95,12 @@ def _relative_url(from_page: str, to_url: str) -> str:
 
     Returns:
         A relative URL string.
+
+    Examples:
+        ```python
+        >>> _relative_url("/reference/iter/", "/reference/seq/#pyochain._iter.Seq")
+        '../seq#pyochain._iter.Seq'
+        ```
     """
     to_url_no_anchor, *anchor_parts = to_url.split("#", 1)
     anchor = anchor_parts[0] if anchor_parts else ""
@@ -89,22 +108,177 @@ def _relative_url(from_page: str, to_url: str) -> str:
     parts_a = from_page.strip("/").split("/")
     parts_b = to_url_no_anchor.strip("/").split("/")
 
-    # Remove common prefix segments.
     while parts_a and parts_b and parts_a[0] == parts_b[0]:
         parts_a.pop(0)
         parts_b.pop(0)
 
-    ups = len(parts_a)
-    relative_parts = [".."] * ups + parts_b
-    relative = "/".join(relative_parts) or "."
-    if anchor:
-        return f"{relative}#{anchor}"
-    return relative
+    relative = "/".join([".."] * len(parts_a) + parts_b) or "."
+    return f"{relative}#{anchor}" if anchor else relative
+
+
+def _get_page_url(html_file: Path, site_dir: Path) -> str:
+    """Return the absolute-root URL for the page at *html_file*.
+
+    Args:
+        html_file: Path to the HTML file.
+        site_dir: Root of the built site.
+
+    Returns:
+        An absolute URL string ending with ``/``.
+
+    Examples:
+        ```python
+        >>> _get_page_url(Path("site/reference/iter/index.html"), Path("site"))
+        '/reference/iter/'
+        ```
+    """
+    rel = html_file.parent.relative_to(site_dir)
+    page_url = "/" + str(rel).replace("\\", "/").strip("/")
+    return page_url + "/" if page_url != "/" else page_url
 
 
 # ---------------------------------------------------------------------------
 # Pass 1 – collect anchor map
 # ---------------------------------------------------------------------------
+
+
+def _file_anchors(html_file: Path, site_dir: Path) -> pc.Iter[tuple[str, str]]:
+    """Yield ``(anchor_id, absolute_url)`` pairs for all anchors in *html_file*.
+
+    Args:
+        html_file: Path to the HTML file to scan.
+        site_dir: Root of the built site.
+
+    Returns:
+        An iterator of ``(anchor_id, url)`` pairs.
+
+    Examples:
+        ```python
+        >>> # Each anchor id found in the file is mapped to its full URL.
+        >>> pairs = _file_anchors(Path("site/reference/iter/index.html"), Path("site"))
+        ```
+    """
+    page_url = _get_page_url(html_file, site_dir)
+    content = html_file.read_text(encoding="utf-8")
+    return pc.Iter(_ID_RE.findall(content)).map(
+        lambda anchor_id: (anchor_id, f"{page_url}#{anchor_id}")
+    )
+
+
+def _class_alias(
+    module_path: str, name: str, obj: type
+) -> pc.Option[tuple[str, str]]:
+    """Return ``Some((alias_id, canonical_id))`` if the class is re-exported.
+
+    Returns ``NONE`` when the alias and canonical paths are identical.
+
+    Args:
+        module_path: The module where the class is re-exported (e.g. ``pyochain.traits``).
+        name: The public name under which the class is available.
+        obj: The class object.
+
+    Returns:
+        An option containing ``(alias_id, canonical_id)`` or ``NONE``.
+
+    Examples:
+        ```python
+        >>> import pyochain.traits as t
+        >>> _class_alias("pyochain.traits", "PyoIterator", t.PyoIterator)
+        Some(('pyochain.traits.PyoIterator', 'pyochain.traits._iterable.PyoIterator'))
+        ```
+    """
+    canonical_mod = getattr(obj, "__module__", None) or ""
+    if canonical_mod == "builtins":
+        canonical_mod = "pyochain.rs"
+    canonical_id = f"{canonical_mod}.{obj.__qualname__}"
+    alias_id = f"{module_path}.{name}"
+    return pc.NONE if alias_id == canonical_id else pc.Some((alias_id, canonical_id))
+
+
+def _module_aliases(module_path: str, module: object) -> pc.Iter[tuple[str, str]]:
+    """Yield ``(alias_id, canonical_id)`` pairs for re-exported classes.
+
+    Args:
+        module_path: The dotted Python path of *module*.
+        module: The module object to inspect.
+
+    Returns:
+        An iterator of ``(alias_id, canonical_id)`` pairs.
+
+    Examples:
+        ```python
+        >>> import pyochain.traits as t
+        >>> list(_module_aliases("pyochain.traits", t))  # doctest: +ELLIPSIS
+        [('pyochain.traits.Checkable', 'pyochain.rs.Checkable'), ...]
+        ```
+    """
+    public_names = getattr(module, "__all__", None)
+    if public_names is None:
+        return pc.Iter([])
+    return (
+        pc.Iter(public_names)
+        .map(lambda name: (name, getattr(module, name, None)))
+        .filter_star(lambda _name, obj: isinstance(obj, type))
+        .map_star(lambda name, obj: _class_alias(module_path, name, obj))
+        .filter_map(lambda opt: opt)
+    )
+
+
+def _try_import_module(attr: str) -> pc.Option[tuple[str, object]]:
+    """Attempt to import ``pyochain.<attr>`` and return ``Some((path, mod))``.
+
+    Args:
+        attr: Attribute name under the ``pyochain`` namespace.
+
+    Returns:
+        ``Some((module_path, module))`` on success, ``NONE`` on import error.
+
+    Examples:
+        ```python
+        >>> _try_import_module("traits")
+        Some(('pyochain.traits', <module 'pyochain.traits' ...>))
+        ```
+    """
+    try:
+        mod = importlib.import_module(f"pyochain.{attr}")
+        return pc.Some((f"pyochain.{attr}", mod))
+    except (ImportError, ModuleNotFoundError):
+        return pc.NONE
+
+
+def _add_reexport_aliases(anchor_map: dict[str, str]) -> None:
+    """Extend *anchor_map* with aliases for re-exported public names.
+
+    For every module ``M`` that re-exports a class ``C`` originally defined
+    in ``M._sub`` (or ``pyochain.rs``), we add the entry
+    ``M.C → anchor_map["M._sub.C"]`` so that cross-references using the
+    public path resolve correctly.
+
+    Args:
+        anchor_map: The anchor map to extend in-place.
+
+    Examples:
+        ```python
+        >>> m: dict[str, str] = {"pyochain.traits._iterable.PyoIterator": "/reference/pyoiterator/"}
+        >>> _add_reexport_aliases(m)
+        >>> "pyochain.traits.PyoIterator" in m
+        True
+        ```
+    """
+    try:
+        import pyochain  # noqa: PLC0415
+    except ImportError:
+        return
+
+    (
+        pc.Iter(dir(pyochain))
+        .filter_map(_try_import_module)
+        .flat_map(lambda t: _module_aliases(t[0], t[1]))
+        .filter_star(lambda _alias, canonical: canonical in anchor_map)
+        .for_each_star(
+            lambda alias, canonical: anchor_map.setdefault(alias, anchor_map[canonical])
+        )
+    )
 
 
 def _build_anchor_map(site_dir: Path) -> dict[str, str]:
@@ -121,71 +295,21 @@ def _build_anchor_map(site_dir: Path) -> dict[str, str]:
     Returns:
         A dict mapping anchor ``id`` values to their absolute URLs
         (e.g. ``/reference/iter/#pyochain._iter.Iter``).
+
+    Examples:
+        ```python
+        >>> # Returns a non-empty dict after scanning the built site.
+        >>> anchor_map = _build_anchor_map(Path("site"))
+        ```
     """
     anchor_map: dict[str, str] = {}
-
-    for html_file in sorted(site_dir.rglob("index.html")):
-        rel = html_file.parent.relative_to(site_dir)
-        # Convert to a URL path, e.g. "reference/iter" → "/reference/iter/"
-        page_url = "/" + str(rel).replace("\\", "/").strip("/")
-        if page_url != "/":
-            page_url += "/"
-
-        content = html_file.read_text(encoding="utf-8")
-        for anchor_id in _ID_RE.findall(content):
-            full_url = f"{page_url}#{anchor_id}"
-            # First registration wins (keeps stable ordering).
-            anchor_map.setdefault(anchor_id, full_url)
-
-    # Add aliases for re-exported names discovered by inspecting the package.
+    (
+        pc.Iter(sorted(site_dir.rglob("index.html")))
+        .flat_map(lambda f: _file_anchors(f, site_dir))
+        .for_each_star(lambda k, v: anchor_map.setdefault(k, v))
+    )
     _add_reexport_aliases(anchor_map)
-
     return anchor_map
-
-
-def _add_reexport_aliases(anchor_map: dict[str, str]) -> None:
-    """Extend *anchor_map* with aliases for re-exported public names.
-
-    For every module ``M`` that re-exports a class ``C`` originally defined
-    in ``M._sub`` (or ``pyochain.rs``), we add the entry
-    ``M.C → anchor_map["M._sub.C"]`` so that cross-references using the
-    public path are resolved correctly.
-
-    Args:
-        anchor_map: The anchor map to extend in-place.
-    """
-    try:
-        import pyochain  # noqa: PLC0415
-    except ImportError:
-        return  # Can't introspect; skip silently.
-
-    # Collect all pyochain (sub-)modules to inspect.
-    modules_to_inspect: list[tuple[str, object]] = []
-    for attr in dir(pyochain):
-        try:
-            mod = importlib.import_module(f"pyochain.{attr}")
-            modules_to_inspect.append((f"pyochain.{attr}", mod))
-        except (ImportError, ModuleNotFoundError):
-            pass
-
-    for module_path, module in modules_to_inspect:
-        public_names = getattr(module, "__all__", None)
-        if public_names is None:
-            continue
-        for name in public_names:
-            obj = getattr(module, name, None)
-            if obj is None or not isinstance(obj, type):
-                continue
-            canonical_mod = getattr(obj, "__module__", None)
-            if canonical_mod is None:
-                continue
-            # Normalise: builtins → pyochain.rs (Rust extension types).
-            if canonical_mod == "builtins":
-                canonical_mod = "pyochain.rs"
-            canonical_id = f"{canonical_mod}.{obj.__qualname__}"
-            alias_id = f"{module_path}.{name}"
-            if alias_id != canonical_id and canonical_id in anchor_map:
-                anchor_map.setdefault(alias_id, anchor_map[canonical_id])
 
 
 # ---------------------------------------------------------------------------
@@ -197,7 +321,7 @@ def _make_replacer(
     anchor_map: dict[str, str],
     page_url: str,
 ) -> Callable[[re.Match[str]], str]:
-    """Return a replacement callable for ``re.sub``.
+    """Return a replacement callable for :func:`re.sub`.
 
     Args:
         anchor_map: Mapping built by :func:`_build_anchor_map`.
@@ -205,6 +329,15 @@ def _make_replacer(
 
     Returns:
         A function suitable as the ``repl`` argument of ``re.sub``.
+
+    Examples:
+        ```python
+        >>> replacer = _make_replacer({"foo.Bar": "/reference/bar/#foo.Bar"}, "/")
+        >>> import re
+        >>> m = re.match(r'<autoref (?P<attrs>[^>]*?)>(?P<title>.*?)</autoref>', '<autoref identifier="foo.Bar">Bar</autoref>', re.DOTALL)
+        >>> replacer(m)
+        '<a class="autorefs autorefs-internal" href="reference/bar#foo.Bar">Bar</a>'
+        ```
     """
 
     def _replace(match: re.Match[str]) -> str:
@@ -222,16 +355,15 @@ def _make_replacer(
             stripped = _GENERIC_STRIP_RE.sub("", identifier)
             target_url = anchor_map.get(stripped)
         if target_url is None and "." in identifier:
-            parent = identifier.rsplit(".", 1)[0]
-            target_url = anchor_map.get(parent)
+            target_url = anchor_map.get(identifier.rsplit(".", 1)[0])
 
         if target_url is None:
-            # Render as a <span> with the identifier as tooltip.
-            # Optional refs are silently unresolved; non-optional ones emit a warning.
             if not optional:
-                print(
-                    f"WARNING: unresolved cross-reference in {page_url}: {identifier!r}",
-                    file=sys.stderr,
+                rich.print(
+                    rich.text.Text(
+                        f"WARNING: unresolved cross-reference in {page_url}: {identifier!r}",
+                        style="yellow",
+                    )
                 )
             return f'<span title="{escape(identifier)}">{title}</span>'
 
@@ -254,18 +386,20 @@ def _fix_file(html_file: Path, anchor_map: dict[str, str], site_dir: Path) -> in
 
     Returns:
         The number of ``<autoref>`` tags that were replaced.
+
+    Examples:
+        ```python
+        >>> # Returns 0 for a file with no <autoref> tags.
+        >>> _fix_file(Path("site/index.html"), {}, Path("site"))
+        0
+        ```
     """
     content = html_file.read_text(encoding="utf-8")
     if "<autoref " not in content:
         return 0
 
-    rel = html_file.parent.relative_to(site_dir)
-    page_url = "/" + str(rel).replace("\\", "/").strip("/")
-    if page_url != "/":
-        page_url += "/"
-
-    replacer = _make_replacer(anchor_map, page_url)
-    new_content, count = _AUTOREF_RE.subn(replacer, content)
+    page_url = _get_page_url(html_file, site_dir)
+    new_content, count = _AUTOREF_RE.subn(_make_replacer(anchor_map, page_url), content)
     if count:
         html_file.write_text(new_content, encoding="utf-8")
     return count
@@ -281,27 +415,35 @@ def main(site_dir: Path | None = None) -> None:
 
     Args:
         site_dir: Root of the built site. Defaults to ``./site``.
+
+    Examples:
+        ```python
+        >>> main(Path("site"))
+        ```
     """
     if site_dir is None:
         site_dir = Path("site")
 
     if not site_dir.is_dir():
-        print(f"Site directory not found: {site_dir}", file=sys.stderr)
+        rich.print(rich.text.Text(f"Site directory not found: {site_dir}", style="red"))
         sys.exit(1)
 
-    print("Building anchor map…")
+    rich.print(rich.text.Text("Building anchor map…", style="cyan"))
     anchor_map = _build_anchor_map(site_dir)
-    print(f"  Found {len(anchor_map)} anchors.")
+    rich.print(f"  Found {len(anchor_map)} anchors.")
 
-    total = 0
-    files = 0
-    for html_file in sorted(site_dir.rglob("index.html")):
-        replaced = _fix_file(html_file, anchor_map, site_dir)
-        if replaced:
-            files += 1
-            total += replaced
-
-    print(f"Resolved {total} cross-reference(s) across {files} file(s).")
+    counts = (
+        pc.Iter(sorted(site_dir.rglob("index.html")))
+        .map(lambda f: _fix_file(f, anchor_map, site_dir))
+        .filter(lambda n: n > 0)
+        .collect()
+    )
+    rich.print(
+        rich.text.Text(
+            f"Resolved {counts.sum()} cross-reference(s) across {counts.length()} file(s).",
+            style="green",
+        )
+    )
 
 
 if __name__ == "__main__":
