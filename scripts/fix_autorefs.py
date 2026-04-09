@@ -230,7 +230,7 @@ def _make_replacer(
             # Optional refs are silently unresolved; non-optional ones emit a warning.
             if not optional:
                 print(
-                    f"WARNING: unresolved cross-reference: {identifier!r}",
+                    f"WARNING: unresolved cross-reference in {page_url}: {identifier!r}",
                     file=sys.stderr,
                 )
             return f'<span title="{escape(identifier)}">{title}</span>'
