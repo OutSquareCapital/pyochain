@@ -9,8 +9,8 @@ generated HTML.  This script performs a two-pass fix:
    ``/reference/iter/#pyochain._iter.Iter``).
 2. Walk every ``index.html`` file again and replace each ``<autoref …>``
    tag with either a proper ``<a>`` link (when the identifier can be
-   resolved) or a ``<span title="…">`` (when the identifier is optional and
-   cannot be resolved).
+   resolved) or a ``<span title="…">`` (when the identifier cannot be
+   resolved).  Non-optional unresolved references also emit a warning.
 
 Usage::
 
@@ -24,6 +24,7 @@ from __future__ import annotations
 import importlib
 import re
 import sys
+from collections.abc import Callable
 from html import escape
 from pathlib import Path
 
@@ -195,7 +196,7 @@ def _add_reexport_aliases(anchor_map: dict[str, str]) -> None:
 def _make_replacer(
     anchor_map: dict[str, str],
     page_url: str,
-) -> re.Pattern[str]:
+) -> Callable[[re.Match[str]], str]:
     """Return a replacement callable for ``re.sub``.
 
     Args:
@@ -206,7 +207,7 @@ def _make_replacer(
         A function suitable as the ``repl`` argument of ``re.sub``.
     """
 
-    def _replace(match: re.Match) -> str:
+    def _replace(match: re.Match[str]) -> str:
         attrs = _parse_attrs(match.group("attrs"))
         title: str = match.group("title")
         identifier: str = attrs.get("identifier") or ""
@@ -225,11 +226,14 @@ def _make_replacer(
             target_url = anchor_map.get(parent)
 
         if target_url is None:
-            if optional:
-                # Render as a <span> with the identifier as tooltip.
-                return f'<span title="{escape(identifier)}">{title}</span>'
-            # Non-optional unresolved reference: leave as Markdown cross-ref.
-            return f"[{title}][{identifier}]"
+            # Render as a <span> with the identifier as tooltip.
+            # Optional refs are silently unresolved; non-optional ones emit a warning.
+            if not optional:
+                print(
+                    f"WARNING: unresolved cross-reference: {identifier!r}",
+                    file=sys.stderr,
+                )
+            return f'<span title="{escape(identifier)}">{title}</span>'
 
         rel = _relative_url(page_url, target_url)
         return (

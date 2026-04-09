@@ -10,5 +10,3 @@ uv run zensical build
 
 Write-Host "Resolving cross-references..." -ForegroundColor Cyan
 uv run scripts/fix_autorefs.py
-
-uv run zensical serve
