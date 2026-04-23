@@ -148,7 +148,7 @@ If an issue on a release appear, AND the package is NOT published on Pypi, runni
 
 ```bash
 git tag -d <tag_name>
-git push origin <--delete 0.9.3>
+git push origin --delete <tag_name>
 ```
 
 This will convert the last tag into a draft release, allowing you to fix the issue and publish the release again without creating a new one.
