@@ -14,6 +14,12 @@ import rich
 import rich.text
 
 # ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
+SITE_DIR = Path("site")
+
+# ---------------------------------------------------------------------------
 # Regex patterns
 # ---------------------------------------------------------------------------
 
@@ -125,13 +131,8 @@ def _try_import_module(attr: str) -> pc.Option[tuple[str, object]]:
 
 def _add_reexport_aliases(anchor_map: dict[str, str]) -> None:
     """Extend *anchor_map* with aliases for re-exported public names."""
-    try:
-        import pyochain  # noqa: PLC0415
-    except ImportError:
-        return
-
     (
-        pc.Iter(dir(pyochain))
+        pc.Iter(dir(pc))
         .filter_map(_try_import_module)
         .flat_map(lambda module_info: _module_aliases(*module_info))
         .filter_star(lambda _alias, canonical: canonical in anchor_map)
@@ -139,18 +140,6 @@ def _add_reexport_aliases(anchor_map: dict[str, str]) -> None:
             lambda alias, canonical: anchor_map.setdefault(alias, anchor_map[canonical])
         )
     )
-
-
-def _build_anchor_map(site_dir: Path) -> dict[str, str]:
-    """Return a mapping of anchor identifier → absolute-root URL."""
-    anchor_map: dict[str, str] = {}
-    (
-        pc.Iter(sorted(site_dir.rglob("index.html")))
-        .flat_map(lambda f: _file_anchors(f, site_dir))
-        .for_each_star(lambda k, v: anchor_map.setdefault(k, v))
-    )
-    _add_reexport_aliases(anchor_map)
-    return anchor_map
 
 
 # ---------------------------------------------------------------------------
@@ -170,18 +159,16 @@ def _make_replacer(
         identifier: str = attrs.get("identifier") or ""
         optional: bool = "optional" in attrs
 
-        # Resolution strategy (first match wins):
-        #  1. Exact identifier.
-        #  2. Strip trailing generic parameters: Iter.collect[R] → Iter.collect
-        #  3. Strip trailing attribute name: Err.error → Err
-        target_url = anchor_map.get(identifier)
-        if target_url is None:
-            stripped = _GENERIC_STRIP_RE.sub("", identifier)
-            target_url = anchor_map.get(stripped)
-        if target_url is None and "." in identifier:
-            target_url = anchor_map.get(identifier.rsplit(".", 1)[0])
+        stripped = _GENERIC_STRIP_RE.sub("", identifier)
+        target = (
+            pc.Option(anchor_map.get(identifier))
+            .or_else(lambda: pc.Option(anchor_map.get(stripped)))
+        )
+        if "." in identifier:
+            parent = identifier.rsplit(".", 1)[0]
+            target = target.or_else(lambda: pc.Option(anchor_map.get(parent)))
 
-        if target_url is None:
+        def _unresolved() -> str:
             if not optional:
                 rich.print(
                     rich.text.Text(
@@ -191,10 +178,12 @@ def _make_replacer(
                 )
             return f'<span title="{escape(identifier)}">{title}</span>'
 
-        rel = _relative_url(page_url, target_url)
-        return (
-            f'<a class="autorefs autorefs-internal" href="{escape(rel)}">'
-            f"{title}</a>"
+        return target.map_or_else(
+            default=_unresolved,
+            f=lambda url: (
+                f'<a class="autorefs autorefs-internal" href="{escape(_relative_url(page_url, url))}">'
+                f"{title}</a>"
+            ),
         )
 
     return _replace
@@ -218,33 +207,38 @@ def _fix_file(html_file: Path, anchor_map: dict[str, str], site_dir: Path) -> in
 # ---------------------------------------------------------------------------
 
 
-def main(site_dir: Path | None = None) -> None:
+def main(site_dir: Path = SITE_DIR) -> None:
     """Run the two-pass fix on every HTML file inside *site_dir*."""
-    if site_dir is None:
-        site_dir = Path("site")
-
     if not site_dir.is_dir():
         rich.print(rich.text.Text(f"Site directory not found: {site_dir}", style="red"))
         sys.exit(1)
 
     rich.print(rich.text.Text("Building anchor map…", style="cyan"))
-    anchor_map = _build_anchor_map(site_dir)
+    anchor_map: dict[str, str] = {}
+    (
+        pc.Iter(site_dir.rglob("index.html"))
+        .sort()
+        .iter()
+        .flat_map(lambda f: _file_anchors(f, site_dir))
+        .for_each_star(lambda k, v: anchor_map.setdefault(k, v))
+    )
+    _add_reexport_aliases(anchor_map)
     rich.print(f"  Found {len(anchor_map)} anchors.")
 
-    replaced_counts = (
-        pc.Iter(sorted(site_dir.rglob("index.html")))
+    total = (
+        pc.Iter(site_dir.rglob("index.html"))
+        .sort()
+        .iter()
         .map(lambda f: _fix_file(f, anchor_map, site_dir))
-        .filter(lambda n: n > 0)
-        .collect()
+        .sum()
     )
     rich.print(
         rich.text.Text(
-            f"Resolved {replaced_counts.sum()} cross-reference(s) across {replaced_counts.length()} file(s).",
+            f"Resolved {total} cross-reference(s).",
             style="green",
         )
     )
 
 
 if __name__ == "__main__":
-    site_arg = Path(sys.argv[1]) if len(sys.argv) > 1 else None
-    main(site_arg)
+    main(Path(sys.argv[1]) if len(sys.argv) > 1 else SITE_DIR)
