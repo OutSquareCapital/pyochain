@@ -83,8 +83,8 @@ jobs:
       - name: Build sdist
         uses: PyO3/maturin-action@v1
         with:
-          command: build
-          args: --release --sdist --out dist
+          command: sdist
+          args: --out dist
       - name: Upload sdist
         uses: actions/upload-artifact@v4
         with:
