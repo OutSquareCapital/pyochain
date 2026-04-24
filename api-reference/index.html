@@ -1885,55 +1885,55 @@
 <p>This page is the entry point to the <strong>complete</strong> public API documentation.</p>
 <h2 id="collections">Collections</h2>
 <ul>
-<li><a href="../reference/seq/"><code>Seq[T]</code></a> — Immutable collections (tuple-backed)</li>
-<li><a href="../reference/vec/"><code>Vec[T]</code></a> — Mutable collections (list-backed)</li>
-<li><a href="../reference/set/"><code>Set[T]</code></a> — Immutable collections (frozenset-backed)</li>
-<li><a href="../reference/setmut/"><code>SetMut[T]</code></a> — Mutable sets (set-backed)</li>
-<li><a href="../reference/dict/"><code>Dict[K, V]</code></a> — Chainable dictionaries</li>
+<li><a class="autorefs autorefs-internal" href="../reference/seq#pyochain._iter.Seq"><code>Seq[T]</code></a> — Immutable collections (tuple-backed)</li>
+<li><a class="autorefs autorefs-internal" href="../reference/vec#pyochain._iter.Vec"><code>Vec[T]</code></a> — Mutable collections (list-backed)</li>
+<li><a class="autorefs autorefs-internal" href="../reference/set#pyochain._iter.Set"><code>Set[T]</code></a> — Immutable collections (frozenset-backed)</li>
+<li><a class="autorefs autorefs-internal" href="../reference/setmut#pyochain._iter.SetMut"><code>SetMut[T]</code></a> — Mutable sets (set-backed)</li>
+<li><a class="autorefs autorefs-internal" href="../reference/dict#pyochain._dict.Dict"><code>Dict[K, V]</code></a> — Chainable dictionaries</li>
 </ul>
 <h2 id="iterators">Iterators</h2>
 <ul>
-<li><a href="../reference/iter/"><code>Iter[T]</code></a> — Lazy processing of iterators</li>
-<li><a href="../reference/peekable/"><code>Peekable</code></a> — Peeking iterator</li>
-<li><a href="../reference/unzipped/"><code>Unzipped</code></a> — Unzipped iterator results</li>
+<li><a class="autorefs autorefs-internal" href="../reference/iter#pyochain._iter.Iter"><code>Iter[T]</code></a> — Lazy processing of iterators</li>
+<li><a class="autorefs autorefs-internal" href="../reference/peekable#pyochain._iter.Peekable"><code>Peekable</code></a> — Peeking iterator</li>
+<li><a class="autorefs autorefs-internal" href="../reference/unzipped#pyochain._iter.Unzipped"><code>Unzipped</code></a> — Unzipped iterator results</li>
 </ul>
 <h2 id="error-handling">Error handling</h2>
 <ul>
-<li><a href="../reference/result/"><code>Result[T, E]</code></a> — Explicit error handling (<code>Ok</code> / <code>Err</code>)</li>
-<li><a href="../reference/ok/"><code>Ok</code></a></li>
-<li><a href="../reference/err/"><code>Err</code></a></li>
-<li><a href="../reference/resultunwraperror/"><code>ResultUnwrapError</code></a></li>
+<li><a class="autorefs autorefs-internal" href="../reference/result#pyochain.rs.Result"><code>Result[T, E]</code></a> — Explicit error handling (<code>Ok</code> / <code>Err</code>)</li>
+<li><a class="autorefs autorefs-internal" href="../reference/ok#pyochain.rs.Ok"><code>Ok</code></a></li>
+<li><a class="autorefs autorefs-internal" href="../reference/err#pyochain.rs.Err"><code>Err</code></a></li>
+<li><a class="autorefs autorefs-internal" href="../reference/resultunwraperror#pyochain.rs.ResultUnwrapError"><code>ResultUnwrapError</code></a></li>
 </ul>
 <h2 id="optional-values">Optional values</h2>
 <ul>
-<li><a href="../reference/option/"><code>Option[T]</code></a> — Optional values (<code>Some</code> / <code>NONE</code>)</li>
-<li><a href="../reference/some/"><code>Some</code></a></li>
-<li><a href="../reference/noneoption/"><code>None</code></a></li>
-<li><a href="../reference/optionunwraperror/"><code>OptionUnwrapError</code></a></li>
+<li><a class="autorefs autorefs-internal" href="../reference/option#pyochain.rs.Option"><code>Option[T]</code></a> — Optional values (<code>Some</code> / <code>NONE</code>)</li>
+<li><a class="autorefs autorefs-internal" href="../reference/some#pyochain.rs.Some"><code>Some</code></a></li>
+<li><a class="autorefs autorefs-internal" href="../reference/noneoption#pyochain.rs.NoneOption"><code>None</code></a></li>
+<li><a class="autorefs autorefs-internal" href="../reference/optionunwraperror#pyochain.rs.OptionUnwrapError"><code>OptionUnwrapError</code></a></li>
 </ul>
 <h2 id="traits-mixins">Traits &amp; mixins</h2>
 <h3 id="fluent-traits">Fluent Traits</h3>
 <ul>
-<li><a href="../reference/pipeable/"><code>Pipeable</code></a> — <code>.into()</code>, <code>.inspect()</code></li>
-<li><a href="../reference/checkable/"><code>Checkable</code></a> — <code>.then()</code>, <code>.ok_or()</code>, ...</li>
+<li><a class="autorefs autorefs-internal" href="../reference/pipeable#pyochain.rs.Pipeable"><code>Pipeable</code></a> — <code>.into()</code>, <code>.inspect()</code></li>
+<li><a class="autorefs autorefs-internal" href="../reference/checkable#pyochain.rs.Checkable"><code>Checkable</code></a> — <code>.then()</code>, <code>.ok_or()</code>, ...</li>
 </ul>
 <h3 id="abstract-collection-traits">Abstract Collection Traits</h3>
 <ul>
-<li><a href="../reference/pyoiterable/"><code>PyoIterable[T]</code></a> — Base trait for all iterables</li>
-<li><a href="../reference/pyoiterator/"><code>PyoIterator[T]</code></a> — Iterator trait</li>
-<li><a href="../reference/pyocollection/"><code>PyoCollection[T]</code></a> — Base trait for eager collections</li>
-<li><a href="../reference/pyosequence/"><code>PyoSequence[T]</code></a> — Sequence trait</li>
-<li><a href="../reference/pyomutablesequence/"><code>PyoMutableSequence[T]</code></a> — Mutable sequence trait</li>
-<li><a href="../reference/pyoset/"><code>PyoSet[T]</code></a> — Set trait</li>
-<li><a href="../reference/pyomappingview/"><code>PyoMappingView[T]</code></a> — Mapping view trait</li>
-<li><a href="../reference/pyomapping/"><code>PyoMapping[K, V]</code></a> — Mapping trait</li>
-<li><a href="../reference/pyomutablemapping/"><code>PyoMutableMapping[K, V]</code></a> — Mutable mapping trait</li>
+<li><a class="autorefs autorefs-internal" href="../reference/pyoiterable#pyochain.traits._iterable.PyoIterable"><code>PyoIterable[T]</code></a> — Base trait for all iterables</li>
+<li><a class="autorefs autorefs-internal" href="../reference/pyoiterator#pyochain.traits._iterable.PyoIterator"><code>PyoIterator[T]</code></a> — Iterator trait</li>
+<li><a class="autorefs autorefs-internal" href="../reference/pyocollection#pyochain.traits._iterable.PyoCollection"><code>PyoCollection[T]</code></a> — Base trait for eager collections</li>
+<li><a class="autorefs autorefs-internal" href="../reference/pyosequence#pyochain.traits._iterable.PyoSequence"><code>PyoSequence[T]</code></a> — Sequence trait</li>
+<li><a class="autorefs autorefs-internal" href="../reference/pyomutablesequence#pyochain.traits._iterable.PyoMutableSequence"><code>PyoMutableSequence[T]</code></a> — Mutable sequence trait</li>
+<li><a class="autorefs autorefs-internal" href="../reference/pyoset#pyochain.traits._iterable.PyoSet"><code>PyoSet[T]</code></a> — Set trait</li>
+<li><a class="autorefs autorefs-internal" href="../reference/pyomappingview#pyochain.traits._iterable.PyoMappingView"><code>PyoMappingView[T]</code></a> — Mapping view trait</li>
+<li><a class="autorefs autorefs-internal" href="../reference/pyomapping#pyochain.traits._iterable.PyoMapping"><code>PyoMapping[K, V]</code></a> — Mapping trait</li>
+<li><a class="autorefs autorefs-internal" href="../reference/pyomutablemapping#pyochain.traits._iterable.PyoMutableMapping"><code>PyoMutableMapping[K, V]</code></a> — Mutable mapping trait</li>
 </ul>
 <h3 id="mapping-views">Mapping Views</h3>
 <ul>
-<li><a href="../reference/pyokeysview/"><code>PyoKeysView[K]</code></a> — Keys view</li>
-<li><a href="../reference/pyovaluesview/"><code>PyoValuesView[V]</code></a> — Values view</li>
-<li><a href="../reference/pyoitemsview/"><code>PyoItemsView[K, V]</code></a> — Items view</li>
+<li><a class="autorefs autorefs-internal" href="../reference/pyokeysview#pyochain.traits._iterable.PyoKeysView"><code>PyoKeysView[K]</code></a> — Keys view</li>
+<li><a class="autorefs autorefs-internal" href="../reference/pyovaluesview#pyochain.traits._iterable.PyoValuesView"><code>PyoValuesView[V]</code></a> — Values view</li>
+<li><a class="autorefs autorefs-internal" href="../reference/pyoitemsview#pyochain.traits._iterable.PyoItemsView"><code>PyoItemsView[K, V]</code></a> — Items view</li>
 </ul>
 
 
