@@ -80,7 +80,7 @@ def _check_file(file_path: Path) -> pc.Seq[DocstringError]:
     return (
         pc.Iter(ast.walk(tree))
         .filter(_is_documentable)
-        .filter(lambda node: not _has_skip_decorator(node))  # type: ignore[arg-type]
+        .filter(lambda node: not _has_skip_decorator(node))
         .filter_map(lambda node: _process_node(file_path, node, protocol_methods))
         .collect()
     )

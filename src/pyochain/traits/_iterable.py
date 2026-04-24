@@ -23,9 +23,7 @@ from typing import TYPE_CHECKING, Any, Concatenate, Self, overload, override
 
 import cytoolz as cz
 
-from .. import (
-    _tools as tls,  # type: ignore[import]  # pyright: ignore[reportMissingModuleSource]
-)
+from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
 from .._types import SupportsComparison, SupportsRichComparison
 from ..rs import NONE, Checkable, Err, Ok, Option, Pipeable, Result, Some
 

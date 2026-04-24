@@ -122,9 +122,9 @@ def test_retain_with_stateful_predicate() -> None:
 def test_retain_no_intermediate_copy() -> None:
     """Verify that retain modifies the same Vec instance in place."""
     v = pc.Vec([1, 2, 3, 4])
-    v_id_before = id(v._inner)  # type: ignore[private-access]  # pyright: ignore[reportPrivateUsage]
+    v_id_before = id(v._inner)  # pyright: ignore[reportPrivateUsage]
     v.retain(lambda x: x % 2 == 0)
-    v_id_after = id(v._inner)  # type: ignore[private-access]  # pyright: ignore[reportPrivateUsage]
+    v_id_after = id(v._inner)  # pyright: ignore[reportPrivateUsage]
     # The underlying list should be the same object (in-place modification)
     assert v_id_before == v_id_after
     assert list(v) == [2, 4]
@@ -161,9 +161,9 @@ def test_truncate_same_length() -> None:
 def test_truncate_no_intermediate_copy() -> None:
     """Verify that truncate modifies the same Vec instance in place."""
     v = pc.Vec([1, 2, 3, 4, 5])
-    v_id_before = id(v._inner)  # type: ignore[private-access]  # pyright: ignore[reportPrivateUsage]
+    v_id_before = id(v._inner)  # pyright: ignore[reportPrivateUsage]
     v.truncate(2)
-    v_id_after = id(v._inner)  # type: ignore[private-access]  # pyright: ignore[reportPrivateUsage]
+    v_id_after = id(v._inner)  # pyright: ignore[reportPrivateUsage]
     # The underlying list should be the same object (in-place modification)
     assert v_id_before == v_id_after
     assert list(v) == [1, 2]
@@ -221,13 +221,13 @@ def test_memory_efficiency_retain() -> None:
     """Test that retain doesn't create unnecessary allocations."""
     original = list(range(1000))
     v = pc.Vec(original)
-    original_list_id = id(v._inner)  # type: ignore[private-access]  # pyright: ignore[reportPrivateUsage]
+    original_list_id = id(v._inner)  # pyright: ignore[reportPrivateUsage]
 
     # Retain only even numbers
     v.retain(lambda x: x % 2 == 0)
 
     # Verify in-place modification
-    assert id(v._inner) == original_list_id  # type: ignore[private-access]  # pyright: ignore[reportPrivateUsage]
+    assert id(v._inner) == original_list_id  # pyright: ignore[reportPrivateUsage]
     assert len(v) == 500
     assert all(x % 2 == 0 for x in v)
 
@@ -235,27 +235,27 @@ def test_memory_efficiency_retain() -> None:
 def test_memory_efficiency_truncate() -> None:
     """Test that truncate doesn't create unnecessary allocations."""
     v = pc.Vec(list(range(100)))
-    original_list_id = id(v._inner)  # type: ignore[private-access]  # pyright: ignore[reportPrivateUsage]
+    original_list_id = id(v._inner)  # pyright: ignore[reportPrivateUsage]
 
     v.truncate(50)
 
     # Verify in-place modification
-    assert id(v._inner) == original_list_id  # type: ignore[private-access]  # pyright: ignore[reportPrivateUsage]
+    assert id(v._inner) == original_list_id  # pyright: ignore[reportPrivateUsage]
     assert len(v) == 50
 
 
 def test_chained_memory_operations() -> None:
     """Test multiple in-place operations in sequence."""
     v = pc.Vec([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-    original_id = id(v._inner)  # type: ignore[private-access]  # pyright: ignore[reportPrivateUsage]
+    original_id = id(v._inner)  # pyright: ignore[reportPrivateUsage]
 
     # First retain
     v.retain(lambda x: x > 2)
-    assert id(v._inner) == original_id  # type: ignore[private-access]  # pyright: ignore[reportPrivateUsage]
+    assert id(v._inner) == original_id  # pyright: ignore[reportPrivateUsage]
 
     # Then truncate
     v.truncate(4)
-    assert id(v._inner) == original_id  # type: ignore[private-access]  # pyright: ignore[reportPrivateUsage]
+    assert id(v._inner) == original_id  # pyright: ignore[reportPrivateUsage]
 
     # Verify final state
     assert list(v) == [3, 4, 5, 6]

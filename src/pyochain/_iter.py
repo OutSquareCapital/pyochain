@@ -201,10 +201,10 @@ class SetMut[T](Set[T], MutableSet[T]):
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
-    _inner: set[T]  # type: ignore[override]
+    _inner: set[T]
 
     def __init__(self, data: Iterable[T]) -> None:
-        self._inner = set(data)  # type: ignore[override]  # pyright: ignore[reportIncompatibleVariableOverride]
+        self._inner = set(data)  # pyright: ignore[reportIncompatibleVariableOverride]
 
     @staticmethod
     def from_ref[V](data: set[V]) -> SetMut[V]:
@@ -340,10 +340,10 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMult
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
-    _inner: list[T]  # type: ignore[override]
+    _inner: list[T]
 
     def __init__(self, data: Iterable[T]) -> None:
-        self._inner = list(data)  # type: ignore[override]  # pyright: ignore[reportIncompatibleVariableOverride]
+        self._inner = list(data)  # pyright: ignore[reportIncompatibleVariableOverride]
 
     @staticmethod
     def from_ref[V](data: list[V]) -> Vec[V]:
@@ -385,7 +385,7 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMult
     def __setitem__(self, index: slice, value: Iterable[T]) -> None: ...
     @override
     def __setitem__(self, index: int | slice, value: T | Iterable[T]) -> None:
-        return self._inner.__setitem__(index, value)  # type: ignore[arg-type]  # pyright: ignore[reportCallIssue, reportUnknownVariableType, reportArgumentType]
+        return self._inner.__setitem__(index, value)  # pyright: ignore[reportCallIssue, reportUnknownVariableType, reportArgumentType]
 
     @override
     def __delitem__(self, index: int | slice) -> None:
@@ -460,7 +460,7 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMult
 
         ```
         """
-        self._inner.sort(key=key, reverse=reverse)  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+        self._inner.sort(key=key, reverse=reverse)  # pyright: ignore[reportArgumentType]
         return self
 
     def extract_if(

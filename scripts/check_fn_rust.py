@@ -138,7 +138,7 @@ def _iter_filter() -> pc.Set[str]:
 
 def _decorated(fn: Callable[..., object]) -> Callable[..., object]:
     if isinstance(fn, (staticmethod, classmethod)):
-        return fn.__func__  # type: ignore[return-value]
+        return fn.__func__
     return fn
 
 

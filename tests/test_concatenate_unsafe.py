@@ -58,20 +58,20 @@ def test_simple_lambda() -> None:
 
 def test_lambda_with_extra_args() -> None:
     """Test lambda with extra positional arguments."""
-    result: pc.Option[int] = pc.Some(5).map(lambda x, y, z: x + y + z, 10, 20)  # type: ignore[arg-type]  # pyright: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
+    result: pc.Option[int] = pc.Some(5).map(lambda x, y, z: x + y + z, 10, 20)  # pyright: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
     assert result.unwrap() == 35
 
 
 def test_lambda_with_kwargs() -> None:
     """Test lambda with keyword arguments."""
-    result: pc.Option[int] = pc.Some(5).map(lambda x, y=10: x + y, y=20)  # type: ignore[arg-type]  # pyright: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
+    result: pc.Option[int] = pc.Some(5).map(lambda x, y=10: x + y, y=20)  # pyright: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
     assert result.unwrap() == 25
 
 
 def test_nested_lambdas() -> None:
     """Test nested lambda calls through chained map."""
     result: pc.Option[int] = (
-        pc.Some(5).map(lambda x: lambda y: x + y).map(lambda f: f(10))  # type: ignore[arg-type]  # pyright: ignore[reportUnknownMemberType, reportUnknownLambdaType]
+        pc.Some(5).map(lambda x: lambda y: x + y).map(lambda f: f(10))  # pyright: ignore[reportUnknownMemberType, reportUnknownLambdaType]
     )
     assert result.unwrap() == 15
 
