@@ -1972,10 +1972,10 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>  <span class="c1"># pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]</span>
-    <span class="n">_inner</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">T</span><span class="p">]</span>  <span class="c1"># type: ignore[override]</span>
+    <span class="n">_inner</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">T</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>  <span class="c1"># type: ignore[override]  # pyright: ignore[reportIncompatibleVariableOverride]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>  <span class="c1"># pyright: ignore[reportIncompatibleVariableOverride]</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_ref</span><span class="p">[</span><span class="n">V</span><span class="p">](</span><span class="n">data</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">V</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">SetMut</span><span class="p">[</span><span class="n">V</span><span class="p">]:</span>

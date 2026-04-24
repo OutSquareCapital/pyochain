@@ -1838,7 +1838,9 @@ pyochain API (from <code>PyoSequence</code>, <code>PyoCollection</code>, <code>P
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2354</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2352</span>
+<span class="normal">2353</span>
+<span class="normal">2354</span>
 <span class="normal">2355</span>
 <span class="normal">2356</span>
 <span class="normal">2357</span>
@@ -1978,9 +1980,7 @@ pyochain API (from <code>PyoSequence</code>, <code>PyoCollection</code>, <code>P
 <span class="normal">2491</span>
 <span class="normal">2492</span>
 <span class="normal">2493</span>
-<span class="normal">2494</span>
-<span class="normal">2495</span>
-<span class="normal">2496</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoMutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoSequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">MutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="normal">2494</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoMutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoSequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">MutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base trait for eager pyochain mutable sequence collections.</span>
 
 <span class="sd">    `PyoMutableSequence[T]` is the shared trait for concrete, eager mutable sequence-like</span>
@@ -2201,7 +2201,9 @@ pyochain API (from <code>PyoSequence</code>, <code>PyoCollection</code>, <code>P
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2473</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2471</span>
+<span class="normal">2472</span>
+<span class="normal">2473</span>
 <span class="normal">2474</span>
 <span class="normal">2475</span>
 <span class="normal">2476</span>
@@ -2222,9 +2224,7 @@ pyochain API (from <code>PyoSequence</code>, <code>PyoCollection</code>, <code>P
 <span class="normal">2491</span>
 <span class="normal">2492</span>
 <span class="normal">2493</span>
-<span class="normal">2494</span>
-<span class="normal">2495</span>
-<span class="normal">2496</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extend_move</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Self</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">2494</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extend_move</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Self</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Moves all the elements of *other* into *self*, leaving *other* empty.</span>
 
 <span class="sd">    Note:</span>
@@ -2323,7 +2323,9 @@ External state may be used to decide which elements to keep.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2382</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2380</span>
+<span class="normal">2381</span>
+<span class="normal">2382</span>
 <span class="normal">2383</span>
 <span class="normal">2384</span>
 <span class="normal">2385</span>
@@ -2364,9 +2366,7 @@ External state may be used to decide which elements to keep.</p>
 <span class="normal">2420</span>
 <span class="normal">2421</span>
 <span class="normal">2422</span>
-<span class="normal">2423</span>
-<span class="normal">2424</span>
-<span class="normal">2425</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">retain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">predicate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">bool</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">2423</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">retain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">predicate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">bool</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Retains only the elements specified by the *predicate*.</span>
 
 <span class="sd">    In other words, remove all elements e for which the *predicate* function returns `False`.</span>
@@ -2492,7 +2492,9 @@ Truncating when len == 0 is equivalent to calling the clear method.
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2427</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2425</span>
+<span class="normal">2426</span>
+<span class="normal">2427</span>
 <span class="normal">2428</span>
 <span class="normal">2429</span>
 <span class="normal">2430</span>
@@ -2534,9 +2536,7 @@ Truncating when len == 0 is equivalent to calling the clear method.
 <span class="normal">2466</span>
 <span class="normal">2467</span>
 <span class="normal">2468</span>
-<span class="normal">2469</span>
-<span class="normal">2470</span>
-<span class="normal">2471</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">truncate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">2469</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">truncate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Shortens the `MutableSequence`, keeping the first *length* elements and dropping the rest.</span>
 
 <span class="sd">    If *length* is greater or equal to the `MutableSequence` current `__len__()`, this has no effect.</span>

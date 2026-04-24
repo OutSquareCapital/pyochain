@@ -1758,16 +1758,16 @@ returned by mapping operations.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2061</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2059</span>
+<span class="normal">2060</span>
+<span class="normal">2061</span>
 <span class="normal">2062</span>
 <span class="normal">2063</span>
 <span class="normal">2064</span>
 <span class="normal">2065</span>
 <span class="normal">2066</span>
 <span class="normal">2067</span>
-<span class="normal">2068</span>
-<span class="normal">2069</span>
-<span class="normal">2070</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoMappingView</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">MappingView</span><span class="p">,</span> <span class="n">PyoCollection</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
+<span class="normal">2068</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoMappingView</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">MappingView</span><span class="p">,</span> <span class="n">PyoCollection</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base trait for eager pyochain mapping view collections.</span>
 
 <span class="sd">    `PyoMappingView[T]` is the shared trait for concrete mapping views</span>

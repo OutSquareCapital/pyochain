@@ -1763,7 +1763,9 @@ additional methods from the <code>PyoMappingView</code>, <code>PyoSet</code>, an
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2086</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2084</span>
+<span class="normal">2085</span>
+<span class="normal">2086</span>
 <span class="normal">2087</span>
 <span class="normal">2088</span>
 <span class="normal">2089</span>
@@ -1773,9 +1775,7 @@ additional methods from the <code>PyoMappingView</code>, <code>PyoSet</code>, an
 <span class="normal">2093</span>
 <span class="normal">2094</span>
 <span class="normal">2095</span>
-<span class="normal">2096</span>
-<span class="normal">2097</span>
-<span class="normal">2098</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoKeysView</span><span class="p">[</span><span class="n">K</span><span class="p">](</span><span class="n">KeysView</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">PyoMappingView</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">PyoSet</span><span class="p">[</span><span class="n">K</span><span class="p">]):</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
+<span class="normal">2096</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoKeysView</span><span class="p">[</span><span class="n">K</span><span class="p">](</span><span class="n">KeysView</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">PyoMappingView</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">PyoSet</span><span class="p">[</span><span class="n">K</span><span class="p">]):</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A view of the keys in a pyochain mapping.</span>
 
 <span class="sd">    This class provides a view over the keys contained in a pyochain mapping, with</span>
