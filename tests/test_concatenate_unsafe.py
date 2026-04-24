@@ -56,12 +56,6 @@ def test_simple_lambda() -> None:
     assert result.unwrap() == 15
 
 
-def test_simple_lambda() -> None:
-    """Test concatenate with simple lambda."""
-    result = pc.Some(5).map(lambda x: x + 10)
-    assert result.unwrap() == 15
-
-
 def test_lambda_with_extra_args() -> None:
     """Test lambda with extra positional arguments."""
     result: pc.Option[int] = pc.Some(5).map(lambda x, y, z: x + y + z, 10, 20)  # pyright: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
