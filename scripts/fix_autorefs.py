@@ -46,18 +46,18 @@ def _relative_url(from_page: str, to_url: str) -> str:
     to_url_no_anchor = split[0]
     anchor = pc.Iter(split).nth(1).unwrap_or("")
 
-    parts_a = from_page.strip("/").split("/")
-    parts_b = to_url_no_anchor.strip("/").split("/")
+    parts_a = pc.Vec.from_ref(from_page.strip("/").split("/"))
+    parts_b = pc.Vec.from_ref(to_url_no_anchor.strip("/").split("/"))
 
     common = (
-        pc.Iter(zip(parts_a, parts_b))
+        parts_a.iter().zip(parts_b)
         .take_while(lambda pair: pair[0] == pair[1])
         .length()
     )
-    parts_a = parts_a[common:]
-    parts_b = parts_b[common:]
+    parts_a = parts_a.slice(start=common)
+    parts_b = parts_b.slice(start=common)
 
-    relative = pc.Iter([".."] * len(parts_a)).chain(parts_b).join("/") or "."
+    relative = pc.Iter([".."]).cycle().take(parts_a.length()).chain(parts_b).join("/") or "."
     return f"{relative}#{anchor}" if anchor else relative
 
 
@@ -106,9 +106,9 @@ def _module_aliases(module_path: str, module: object) -> pc.Iter[tuple[str, str]
             )
 
 
-def _add_reexport_aliases(anchor_map: dict[str, str]) -> None:
-    """Extend *anchor_map* with aliases for re-exported public names."""
-    (
+def _reexport_alias_pairs(anchor_map: dict[str, str]) -> pc.Iter[tuple[str, str]]:
+    """Yield ``(alias_id, url)`` pairs for re-exported public names not already in the map."""
+    return (
         pc.Iter(vars(pc).values())
         .filter(
             lambda obj: isinstance(obj, ModuleType)
@@ -116,9 +116,8 @@ def _add_reexport_aliases(anchor_map: dict[str, str]) -> None:
         )
         .flat_map(lambda mod: _module_aliases(mod.__name__, mod))
         .filter_star(lambda _alias, canonical: canonical in anchor_map)
-        .for_each_star(
-            lambda alias, canonical: anchor_map.setdefault(alias, anchor_map[canonical])
-        )
+        .filter_star(lambda alias, _canonical: alias not in anchor_map)
+        .map_star(lambda alias, canonical: (alias, anchor_map[canonical]))
     )
 
 
@@ -185,14 +184,18 @@ def main(site_dir: Path = SITE_DIR) -> None:
         raise typer.Exit(code=1)
 
     rich.print(rich.text.Text("Building anchor map…", style="cyan"))
-    anchor_map: dict[str, str] = (
+    file_anchors: dict[str, str] = (
         pc.Iter(site_dir.rglob("index.html"))
         .sort()
         .iter()
         .flat_map(lambda f: _file_anchors(f, site_dir))
         .collect(dict)
     )
-    _add_reexport_aliases(anchor_map)
+    anchor_map: dict[str, str] = (
+        pc.Iter(file_anchors.items())
+        .chain(_reexport_alias_pairs(file_anchors))
+        .collect(dict)
+    )
     rich.print(f"  Found {len(anchor_map)} anchors.")
 
     total = (
