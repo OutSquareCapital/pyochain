@@ -8,10 +8,11 @@ from html import escape
 from pathlib import Path
 from types import ModuleType
 
-import pyochain as pc
 import rich
 import rich.text
 import typer
+
+import pyochain as pc
 
 SITE_DIR = Path("site")
 """Default output directory produced by ``zensical build``."""
