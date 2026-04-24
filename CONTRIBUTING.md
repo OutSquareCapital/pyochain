@@ -142,3 +142,14 @@ Then open your browser at the address shown.
 - Run all quality checks locally before opening a pull request.
 - Include tests or doctest examples for behavior changes whenever possible.
 - For Rust changes, consider adding benchmarks to verify performance impact.
+
+## Issue on release
+
+If an issue on a release appear, AND the package is NOT published on Pypi, running the following commands can help going back to a clean state without needing to create a new release:
+
+```bash
+git tag -d <tag_name>
+git push origin --delete <tag_name>
+```
+
+This will convert the last tag into a draft release, allowing you to fix the issue and publish the release again without creating a new one.

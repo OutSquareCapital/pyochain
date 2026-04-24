@@ -384,6 +384,7 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMult
     @overload
     def __setitem__(self, index: slice, value: Iterable[T]) -> None: ...
     @override
+    @override
     def __setitem__(self, index: int | slice, value: T | Iterable[T]) -> None:
         return self._inner.__setitem__(index, value)  # pyright: ignore[reportCallIssue, reportUnknownVariableType, reportArgumentType]
 

@@ -14,7 +14,7 @@ import pyochain as pc
 type JsonData = dict[str, Any] | list[str] | str  # pyright: ignore[reportExplicitAny]
 # Setup paths
 DOCS_REF = Path().joinpath("docs", "reference")
-ZENSICAL_CONFIG = Path("zensical.toml")
+ZENSICAL_PATH = Path("zensical.toml")
 
 
 def _generate_markdown(full_path: str, class_name: str) -> str:
@@ -66,15 +66,10 @@ def _generate_markdown_for_module(module: object) -> None:
     )
 
 
-def _check_nav_completeness(config_path: Path = ZENSICAL_CONFIG) -> None:
+def _check_nav_completeness(config_path: Path = ZENSICAL_PATH) -> None:
     """Check that all generated markdown files are in the navigation."""
 
     def _collect_paths(acc: pc.SetMut[str], item: JsonData) -> pc.SetMut[str]:
-        """Accumulate all .md file paths from nested structure.
-
-        Returns:
-            pc.SetMut[str]: A set of all .md file paths found.
-        """
         match item:
             case dict():
                 return pc.Iter(item.values()).fold(acc, _collect_paths)
@@ -84,9 +79,11 @@ def _check_nav_completeness(config_path: Path = ZENSICAL_CONFIG) -> None:
                 acc.add(item)
                 return acc
 
-    items: JsonData = toml.load(config_path)["project"]["nav"]  # pyright: ignore[reportAny]
-
-    nav_paths = pc.SetMut[str].new().into(_collect_paths, items)
+    nav_paths = (
+        pc.SetMut[str]
+        .new()
+        .into(_collect_paths, toml.load(config_path)["project"]["nav"])  # pyright: ignore[reportAny]
+    )
 
     return (
         pc.Iter(DOCS_REF.glob("*.md"))

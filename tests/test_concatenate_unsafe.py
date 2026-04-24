@@ -56,6 +56,12 @@ def test_simple_lambda() -> None:
     assert result.unwrap() == 15
 
 
+def test_simple_lambda() -> None:
+    """Test concatenate with simple lambda."""
+    result = pc.Some(5).map(lambda x: x + 10)
+    assert result.unwrap() == 15
+
+
 def test_lambda_with_extra_args() -> None:
     """Test lambda with extra positional arguments."""
     result: pc.Option[int] = pc.Some(5).map(lambda x, y, z: x + y + z, 10, 20)  # pyright: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
@@ -162,9 +168,9 @@ def test_nested_closures() -> None:
 def test_closure_with_class_context() -> None:
     """Test closure defined inside a class method."""
 
+    @dataclass
     class Calculator:
-        def __init__(self, base: int) -> None:
-            self.base: int = base
+        base: int
 
         def make_adder(self) -> Callable[..., int]:
             def adder(x: int) -> int:
@@ -251,9 +257,9 @@ def test_class_as_callable() -> None:
 def test_callable_object() -> None:
     """Test object with __call__ method."""
 
+    @dataclass
     class Multiplier:
-        def __init__(self, factor: int) -> None:
-            self.factor: int = factor
+        factor: int
 
         def __call__(self, x: int) -> int:
             return x * self.factor

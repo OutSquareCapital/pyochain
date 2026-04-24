@@ -157,16 +157,10 @@ def _process_node(
 
 
 def _has_skip_decorator(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
-    """Check if function has a decorator that should skip docstring check.
-
-    Returns:
-        bool: True if function has a decorator that should skip docstring check, False otherwise.
-    """
-    return pc.Iter(node.decorator_list).any(
-        lambda d: (
-            (isinstance(d, ast.Name) and d.id in SKIP_DECORATORS)
-            or (isinstance(d, ast.Attribute) and d.attr in SKIP_DECORATORS)
-        )
+    return any(
+        (isinstance(d, ast.Name) and d.id in SKIP_DECORATORS)
+        or (isinstance(d, ast.Attribute) and d.attr in SKIP_DECORATORS)
+        for d in node.decorator_list
     )
 
 

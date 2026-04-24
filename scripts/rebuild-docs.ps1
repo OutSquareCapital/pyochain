@@ -6,4 +6,4 @@ Remove-Item -Recurse -Force site/ -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force .cache/ -ErrorAction SilentlyContinue
 
 Write-Host "Building documentation..." -ForegroundColor Cyan
-uv run zensical serve
+uv run zensical build
