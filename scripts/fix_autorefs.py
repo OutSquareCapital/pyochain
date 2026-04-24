@@ -44,7 +44,7 @@ def _relative_url(from_page: str, to_url: str) -> str:
     """Compute the relative URL from *from_page* to *to_url*."""
     split = pc.Iter(to_url.split("#", 1))
     to_url_no_anchor = split.first()
-    anchor = split.next().unwrap_or("")
+    anchor: pc.Option[str] = split.next()
 
     parts_a = pc.Vec.from_ref(from_page.strip("/").split("/"))
     parts_b = pc.Vec.from_ref(to_url_no_anchor.strip("/").split("/"))
@@ -60,7 +60,7 @@ def _relative_url(from_page: str, to_url: str) -> str:
         .chain(parts_b.iter().slice(start=common))
         .join("/")
     ) or "."
-    return f"{relative}#{anchor}" if anchor else relative
+    return anchor.map_or_else(default=lambda: relative, f=lambda a: f"{relative}#{a}")
 
 
 def _get_page_url(html_file: Path, site_dir: Path) -> str:
@@ -124,7 +124,7 @@ def _reexport_alias_pairs(anchor_map: Mapping[str, str]) -> pc.Iter[tuple[str, s
 
 
 def _make_replacer(
-    anchor_map: dict[str, str],
+    anchor_map: pc.Dict[str, str],
     page_url: str,
 ) -> Callable[[re.Match[str]], str]:
     """Return a replacement callable for ``re.sub``."""
@@ -137,12 +137,12 @@ def _make_replacer(
 
         stripped = _GENERIC_STRIP_RE.sub("", identifier)
         target = (
-            pc.Option(anchor_map.get(identifier))
-            .or_else(lambda: pc.Option(anchor_map.get(stripped)))
+            anchor_map.get_item(identifier)
+            .or_else(lambda: anchor_map.get_item(stripped))
         )
         if "." in identifier:
             parent = identifier.rsplit(".", 1)[0]
-            target = target.or_else(lambda: pc.Option(anchor_map.get(parent)))
+            target = target.or_else(lambda: anchor_map.get_item(parent))
 
         def _unresolved() -> str:
             if not optional:
@@ -165,7 +165,7 @@ def _make_replacer(
     return _replace
 
 
-def _fix_file(html_file: Path, anchor_map: dict[str, str], site_dir: Path) -> int:
+def _fix_file(html_file: Path, anchor_map: pc.Dict[str, str], site_dir: Path) -> int:
     """Rewrite *html_file* in-place, resolving all ``<autoref>`` tags."""
     content = html_file.read_text(encoding="utf-8")
     if "<autoref " not in content:
@@ -193,10 +193,10 @@ def main(site_dir: Path = SITE_DIR) -> None:
         .flat_map(lambda f: _file_anchors(f, site_dir))
         .collect(pc.Dict)
     )
-    anchor_map: dict[str, str] = (
+    anchor_map: pc.Dict[str, str] = (
         file_anchors.items().iter()
         .chain(_reexport_alias_pairs(file_anchors))
-        .collect(dict)
+        .collect(pc.Dict)
     )
     rich.print(f"  Found {len(anchor_map)} anchors.")
 
