@@ -83,3 +83,5 @@
         custom_fences = [
             { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
         ]
+
+    [project.markdown_extensions."mkdocs_autorefs._internal.references:AutorefsExtension"]
