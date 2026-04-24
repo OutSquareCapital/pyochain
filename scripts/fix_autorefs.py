@@ -54,10 +54,12 @@ def _relative_url(from_page: str, to_url: str) -> str:
         .take_while(lambda pair: pair[0] == pair[1])
         .length()
     )
-    parts_a = parts_a.slice(start=common)
-    parts_b = parts_b.slice(start=common)
-
-    relative = pc.Iter([".."]).cycle().take(parts_a.length()).chain(parts_b).join("/") or "."
+    up_count = parts_a.length() - common
+    relative = (
+        pc.Iter([".."]).cycle().take(up_count)
+        .chain(parts_b.iter().slice(start=common))
+        .join("/")
+    ) or "."
     return f"{relative}#{anchor}" if anchor else relative
 
 
