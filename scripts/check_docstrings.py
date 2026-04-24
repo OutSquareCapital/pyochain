@@ -55,7 +55,6 @@ def _check_file(file_path: Path) -> pc.Seq[DocstringError]:
         return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
 
     def _get_protocol_methods(tree: ast.Module) -> frozenset[int]:
-        """Get line numbers of all methods inside Protocol classes."""
         protocol_method_lines: set[int] = set()
         for node in ast.walk(tree):
             if not isinstance(node, ast.ClassDef):
@@ -132,7 +131,6 @@ def _process_node(
 
 
 def _has_skip_decorator(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
-    """Check if function has a decorator that should skip docstring check."""
     return any(
         (isinstance(d, ast.Name) and d.id in SKIP_DECORATORS)
         or (isinstance(d, ast.Attribute) and d.attr in SKIP_DECORATORS)
@@ -146,10 +144,12 @@ def _check_code_blocks(
     """Check that all code blocks in docstring are properly closed and that at least one python block exists.
 
     If skip_doctest is True or docstring contains @no_doctest flag, skips the python block requirement.
+
+    Returns:
+        pc.Result[None, pc.Seq[ErrorDetail]]: Ok(None) if no issues found, Err(errors) with details otherwise.
     """
 
     def _process_line(state: State, item: tuple[int, str]) -> State:
-        """Process a single line and update state."""
         line_num, line = item
         match = CODE_BLOCK_PATTERN.search(line)
         if not (match and line.strip().startswith("```")):
