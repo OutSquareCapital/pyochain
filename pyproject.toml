@@ -9,8 +9,10 @@
 
     classifiers = ["License :: OSI Approved :: MIT License"]
 
+
 [dependency-groups]
     dev = [
+        "basedpyright>=1.38.2",
         "cytoolz-stubs",
         "memory-profiler>=0.61.0",
         "mkdocstrings-python>=1.18.2",
@@ -30,10 +32,12 @@
         "C417",
         "COM812",
         "COM812",
+        "CPY001",
         "D401",
         "E501",
         "FIX002",
         "PLC0415",
+        "PLR0904",
         "PLR2004",
         "PYI021",
         "S101",
@@ -47,7 +51,8 @@
         "TID252",
     ]
 
-    lint.select = ["ALL"]
+    lint.preview = true
+    lint.select  = ["ALL"]
     [tool.ruff.format]
         docstring-code-format = true
     [tool.ruff.lint.pydocstyle]
@@ -78,3 +83,7 @@
     manifest-path = "rust/Cargo.toml"
     module-name   = "pyochain.rs"
     python-source = "src"
+[tool.basedpyright]
+    reportImportCycles     = false
+    reportMissingSuperCall = false
+    typeCheckingMode       = "all"
