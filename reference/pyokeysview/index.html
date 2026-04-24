@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.16">
+      <meta name="generator" content="zensical-0.0.36">
     
     
       
@@ -36,7 +36,7 @@
       
         
       
-      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.dfcb43b2.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.1e981d71.min.css">
       
         
           
@@ -55,7 +55,7 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
         <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
       
     
@@ -81,7 +81,7 @@
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
-    <label class="md-overlay" for="__drawer"></label>
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
     <div data-md-component="skip">
       
         
@@ -107,7 +107,7 @@
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
 
     </a>
-    <label class="md-header__button md-icon" for="__drawer">
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
       
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
     </label>
@@ -161,7 +161,7 @@
     
       
       
-        <label class="md-header__button md-icon" for="__search">
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
           
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
         </label>
@@ -1183,7 +1183,7 @@
   
     <li class="md-nav__item md-nav__item--active">
       
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
       
       
         
@@ -1207,7 +1207,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <a href="./" class="md-nav__link md-nav__link--active">
+      <a href="././" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1243,9 +1243,9 @@
         <li class="md-nav__item">
   <a href="#pyochain.traits._iterable.PyoKeysView" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         PyoKeysView
-      
+      </span>
     </span>
   </a>
   
@@ -1674,6 +1674,19 @@
               
               <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
                 <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
                   <div class="md-sidebar__inner">
                     
 
@@ -1694,9 +1707,9 @@
         <li class="md-nav__item">
   <a href="#pyochain.traits._iterable.PyoKeysView" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         PyoKeysView
-      
+      </span>
     </span>
   </a>
   
@@ -1727,7 +1740,7 @@
 <a id="pyochain.traits._iterable.PyoKeysView"></a>
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="collections.abc.KeysView">KeysView</span>[<a class="autorefs autorefs-internal" href=".#pyochain.traits._iterable.PyoKeysView">K</a>]</code>, <code><a class="autorefs autorefs-internal" href="../pyomappingview#pyochain.traits._iterable.PyoMappingView">PyoMappingView</a>[<a class="autorefs autorefs-internal" href=".#pyochain.traits._iterable.PyoKeysView">K</a>]</code>, <code><a class="autorefs autorefs-internal" href="../pyoset#pyochain.traits._iterable.PyoSet">PyoSet</a>[<a class="autorefs autorefs-internal" href=".#pyochain.traits._iterable.PyoKeysView">K</a>]</code></p>
+              Bases: <code><span title="collections.abc.KeysView">KeysView</span>[<span title="pyochain.traits._iterable.PyoKeysView[K]">K</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.traits._iterable.PyoMappingView" href="../pyomappingview/#pyochain.traits._iterable.PyoMappingView">PyoMappingView</a>[<span title="pyochain.traits._iterable.PyoKeysView[K]">K</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.traits._iterable.PyoSet" href="../pyoset/#pyochain.traits._iterable.PyoSet">PyoSet</a>[<span title="pyochain.traits._iterable.PyoKeysView[K]">K</span>]</code></p>
 
 
 
@@ -1750,7 +1763,10 @@ additional methods from the <code>PyoMappingView</code>, <code>PyoSet</code>, an
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2089</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2086</span>
+<span class="normal">2087</span>
+<span class="normal">2088</span>
+<span class="normal">2089</span>
 <span class="normal">2090</span>
 <span class="normal">2091</span>
 <span class="normal">2092</span>
@@ -1759,10 +1775,7 @@ additional methods from the <code>PyoMappingView</code>, <code>PyoSet</code>, an
 <span class="normal">2095</span>
 <span class="normal">2096</span>
 <span class="normal">2097</span>
-<span class="normal">2098</span>
-<span class="normal">2099</span>
-<span class="normal">2100</span>
-<span class="normal">2101</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoKeysView</span><span class="p">[</span><span class="n">K</span><span class="p">](</span><span class="n">KeysView</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">PyoMappingView</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">PyoSet</span><span class="p">[</span><span class="n">K</span><span class="p">]):</span>
+<span class="normal">2098</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoKeysView</span><span class="p">[</span><span class="n">K</span><span class="p">](</span><span class="n">KeysView</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">PyoMappingView</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">PyoSet</span><span class="p">[</span><span class="n">K</span><span class="p">]):</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A view of the keys in a pyochain mapping.</span>
 
 <span class="sd">    This class provides a view over the keys contained in a pyochain mapping, with</span>
@@ -1774,7 +1787,7 @@ additional methods from the <code>PyoMappingView</code>, <code>PyoSet</code>, an
 <span class="sd">        `PyoMapping.keys()`: Method that returns this view.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>  <span class="c1"># pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -1849,11 +1862,10 @@ additional methods from the <code>PyoMappingView</code>, <code>PyoSet</code>, an
     
       
       
-      
       <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.e2d2d235.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.8ffeb9c9.min.js"></script>
+      <script src="../../assets/javascripts/bundle.dbc0afdc.min.js"></script>
       
         <script src="../../javascripts/mermaid.mjs" type="module"></script>
       

@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.16">
+      <meta name="generator" content="zensical-0.0.36">
     
     
       
@@ -36,7 +36,7 @@
       
         
       
-      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.dfcb43b2.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.1e981d71.min.css">
       
         
           
@@ -55,7 +55,7 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
         <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
       
     
@@ -81,7 +81,7 @@
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
-    <label class="md-overlay" for="__drawer"></label>
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
     <div data-md-component="skip">
       
         
@@ -107,7 +107,7 @@
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
 
     </a>
-    <label class="md-header__button md-icon" for="__drawer">
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
       
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
     </label>
@@ -161,7 +161,7 @@
     
       
       
-        <label class="md-header__button md-icon" for="__search">
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
           
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
         </label>
@@ -1015,7 +1015,7 @@
   
     <li class="md-nav__item md-nav__item--active">
       
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
       
       
         
@@ -1039,7 +1039,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <a href="./" class="md-nav__link md-nav__link--active">
+      <a href="././" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1075,9 +1075,9 @@
         <li class="md-nav__item">
   <a href="#pyochain.rs.Checkable" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Checkable
-      
+      </span>
     </span>
   </a>
   
@@ -1086,9 +1086,9 @@
         <li class="md-nav__item">
   <a href="#pyochain.rs.Checkable.ok_or" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         ok_or
-      
+      </span>
     </span>
   </a>
   
@@ -1097,9 +1097,9 @@
         <li class="md-nav__item">
   <a href="#pyochain.rs.Checkable.ok_or_else" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         ok_or_else
-      
+      </span>
     </span>
   </a>
   
@@ -1108,9 +1108,9 @@
         <li class="md-nav__item">
   <a href="#pyochain.rs.Checkable.then" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         then
-      
+      </span>
     </span>
   </a>
   
@@ -1119,9 +1119,9 @@
         <li class="md-nav__item">
   <a href="#pyochain.rs.Checkable.then_some" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         then_some
-      
+      </span>
     </span>
   </a>
   
@@ -1718,6 +1718,19 @@
               
               <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
                 <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
                   <div class="md-sidebar__inner">
                     
 
@@ -1738,9 +1751,9 @@
         <li class="md-nav__item">
   <a href="#pyochain.rs.Checkable" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Checkable
-      
+      </span>
     </span>
   </a>
   
@@ -1749,9 +1762,9 @@
         <li class="md-nav__item">
   <a href="#pyochain.rs.Checkable.ok_or" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         ok_or
-      
+      </span>
     </span>
   </a>
   
@@ -1760,9 +1773,9 @@
         <li class="md-nav__item">
   <a href="#pyochain.rs.Checkable.ok_or_else" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         ok_or_else
-      
+      </span>
     </span>
   </a>
   
@@ -1771,9 +1784,9 @@
         <li class="md-nav__item">
   <a href="#pyochain.rs.Checkable.then" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         then
-      
+      </span>
     </span>
   </a>
   
@@ -1782,9 +1795,9 @@
         <li class="md-nav__item">
   <a href="#pyochain.rs.Checkable.then_some" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         then_some
-      
+      </span>
     </span>
   </a>
   
@@ -1876,7 +1889,7 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
                 <code>err</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" href=".#pyochain.rs.Checkable.ok_or">E</a></code>
+                  <code><span title="pyochain.rs.Checkable.ok_or[E]">E</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1902,7 +1915,7 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" href="../result#pyochain.rs.Result">Result</a>[<span title="typing.Self">Self</span>, <a class="autorefs autorefs-internal" href=".#pyochain.rs.Checkable.ok_or">E</a>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Result" href="../result/#pyochain.rs.Result">Result</a>[<span title="typing.Self">Self</span>, <span title="pyochain.rs.Checkable.ok_or[E]">E</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1958,7 +1971,7 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
                 <code>func</code>
             </td>
             <td>
-                  <code><span title="collections.abc.Callable">Callable</span>[<span title="typing.Concatenate">Concatenate</span>[<span title="typing.Self">Self</span>, <a class="autorefs autorefs-internal" href=".#pyochain.rs.Checkable.ok_or_else">P</a>], <a class="autorefs autorefs-internal" href=".#pyochain.rs.Checkable.ok_or_else">E</a>]</code>
+                  <code><span title="collections.abc.Callable">Callable</span>[<span title="typing.Concatenate">Concatenate</span>[<span title="typing.Self">Self</span>, <span title="pyochain.rs.Checkable.ok_or_else[**P]">P</span>], <span title="pyochain.rs.Checkable.ok_or_else[E]">E</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1974,7 +1987,7 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
                 <code>*args</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" href=".#pyochain.rs.Checkable.ok_or_else">P</a>.<a class="autorefs autorefs-internal" href=".#pyochain.rs.Checkable.ok_or_else">args</a></code>
+                  <code><span title="pyochain.rs.Checkable.ok_or_else[**P]">P</span>.<span title="pyochain.rs.Checkable.ok_or_else[**P].args">args</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1990,7 +2003,7 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
                 <code>**kwargs</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" href=".#pyochain.rs.Checkable.ok_or_else">P</a>.<a class="autorefs autorefs-internal" href=".#pyochain.rs.Checkable.ok_or_else">kwargs</a></code>
+                  <code><span title="pyochain.rs.Checkable.ok_or_else[**P]">P</span>.<span title="pyochain.rs.Checkable.ok_or_else[**P].kwargs">kwargs</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2016,7 +2029,7 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" href="../result#pyochain.rs.Result">Result</a>[<span title="typing.Self">Self</span>, <a class="autorefs autorefs-internal" href=".#pyochain.rs.Checkable.ok_or_else">E</a>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Result" href="../result/#pyochain.rs.Result">Result</a>[<span title="typing.Self">Self</span>, <span title="pyochain.rs.Checkable.ok_or_else[E]">E</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2072,7 +2085,7 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
                 <code>func</code>
             </td>
             <td>
-                  <code><span title="collections.abc.Callable">Callable</span>[<span title="typing.Concatenate">Concatenate</span>[<span title="typing.Self">Self</span>, <a class="autorefs autorefs-internal" href=".#pyochain.rs.Checkable.then">P</a>], <a class="autorefs autorefs-internal" href=".#pyochain.rs.Checkable.then">R</a>]</code>
+                  <code><span title="collections.abc.Callable">Callable</span>[<span title="typing.Concatenate">Concatenate</span>[<span title="typing.Self">Self</span>, <span title="pyochain.rs.Checkable.then[**P]">P</span>], <span title="pyochain.rs.Checkable.then[R]">R</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2088,7 +2101,7 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
                 <code>*args</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" href=".#pyochain.rs.Checkable.then">P</a>.<a class="autorefs autorefs-internal" href=".#pyochain.rs.Checkable.then">args</a></code>
+                  <code><span title="pyochain.rs.Checkable.then[**P]">P</span>.<span title="pyochain.rs.Checkable.then[**P].args">args</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2104,7 +2117,7 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
                 <code>**kwargs</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" href=".#pyochain.rs.Checkable.then">P</a>.<a class="autorefs autorefs-internal" href=".#pyochain.rs.Checkable.then">kwargs</a></code>
+                  <code><span title="pyochain.rs.Checkable.then[**P]">P</span>.<span title="pyochain.rs.Checkable.then[**P].kwargs">kwargs</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2130,7 +2143,7 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" href="../option#pyochain.rs.Option">Option</a>[<a class="autorefs autorefs-internal" href=".#pyochain.rs.Checkable.then">R</a>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Option" href="../option/#pyochain.rs.Option">Option</a>[<span title="pyochain.rs.Checkable.then[R]">R</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2179,7 +2192,7 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" href="../option#pyochain.rs.Option">Option</a>[<span title="typing.Self">Self</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Option" href="../option/#pyochain.rs.Option">Option</a>[<span title="typing.Self">Self</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2260,11 +2273,10 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
     
       
       
-      
       <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.e2d2d235.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.8ffeb9c9.min.js"></script>
+      <script src="../../assets/javascripts/bundle.dbc0afdc.min.js"></script>
       
         <script src="../../javascripts/mermaid.mjs" type="module"></script>
       
