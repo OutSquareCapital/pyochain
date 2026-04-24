@@ -17,3 +17,5 @@ docs/sphinx/_build/
 .venv
 *.ipynb
 target/
+*data/
+.coverage
