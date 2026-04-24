@@ -44,7 +44,6 @@ def _relative_url(from_page: str, to_url: str) -> str:
     """Compute the relative URL from *from_page* to *to_url*."""
     split = pc.Iter(to_url.split("#", 1))
     to_url_no_anchor = split.first()
-    anchor: pc.Option[str] = split.next()
 
     parts_a = pc.Vec.from_ref(from_page.strip("/").split("/"))
     parts_b = pc.Vec.from_ref(to_url_no_anchor.strip("/").split("/"))
@@ -60,7 +59,7 @@ def _relative_url(from_page: str, to_url: str) -> str:
         .chain(parts_b.iter().slice(start=common))
         .join("/")
     ) or "."
-    return anchor.map_or_else(default=lambda: relative, f=lambda a: f"{relative}#{a}")
+    return split.next().map_or_else(default=lambda: relative, f=lambda a: f"{relative}#{a}")
 
 
 def _get_page_url(html_file: Path, site_dir: Path) -> str:
