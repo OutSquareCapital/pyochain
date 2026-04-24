@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from html import escape
 from pathlib import Path
 from types import ModuleType
@@ -42,9 +42,9 @@ def _parse_attrs(attrs_str: str) -> dict[str, str | None]:
 
 def _relative_url(from_page: str, to_url: str) -> str:
     """Compute the relative URL from *from_page* to *to_url*."""
-    split = to_url.split("#", 1)
-    to_url_no_anchor = split[0]
-    anchor = pc.Iter(split).nth(1).unwrap_or("")
+    split = pc.Iter(to_url.split("#", 1))
+    to_url_no_anchor = split.first()
+    anchor = split.next().unwrap_or("")
 
     parts_a = pc.Vec.from_ref(from_page.strip("/").split("/"))
     parts_b = pc.Vec.from_ref(to_url_no_anchor.strip("/").split("/"))
@@ -108,7 +108,7 @@ def _module_aliases(module_path: str, module: object) -> pc.Iter[tuple[str, str]
             )
 
 
-def _reexport_alias_pairs(anchor_map: dict[str, str]) -> pc.Iter[tuple[str, str]]:
+def _reexport_alias_pairs(anchor_map: Mapping[str, str]) -> pc.Iter[tuple[str, str]]:
     """Yield ``(alias_id, url)`` pairs for re-exported public names not already in the map."""
     return (
         pc.Iter(vars(pc).values())
@@ -154,13 +154,13 @@ def _make_replacer(
                 )
             return f'<span title="{escape(identifier)}">{title}</span>'
 
-        return target.map_or_else(
-            default=_unresolved,
-            f=lambda url: (
+        def _resolved(url: str) -> str:
+            return (
                 f'<a class="autorefs autorefs-internal" href="{escape(_relative_url(page_url, url))}">'
                 f"{title}</a>"
-            ),
-        )
+            )
+
+        return target.map_or_else(default=_unresolved, f=_resolved)
 
     return _replace
 
@@ -186,15 +186,15 @@ def main(site_dir: Path = SITE_DIR) -> None:
         raise typer.Exit(code=1)
 
     rich.print(rich.text.Text("Building anchor map…", style="cyan"))
-    file_anchors: dict[str, str] = (
+    file_anchors: pc.Dict[str, str] = (
         pc.Iter(site_dir.rglob("index.html"))
         .sort()
         .iter()
         .flat_map(lambda f: _file_anchors(f, site_dir))
-        .collect(dict)
+        .collect(pc.Dict)
     )
     anchor_map: dict[str, str] = (
-        pc.Iter(file_anchors.items())
+        file_anchors.items().iter()
         .chain(_reexport_alias_pairs(file_anchors))
         .collect(dict)
     )
