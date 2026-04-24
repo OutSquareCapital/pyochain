@@ -1,5 +1,6 @@
 """Comprehensive benchmarks for Option types: Rust vs Python implementations."""
 
+import operator
 import timeit
 from collections.abc import Callable
 from enum import IntEnum, StrEnum, auto
@@ -58,13 +59,13 @@ BENCHMARK_REGISTRY = pc.Dict[BenchFn, BenchmarkMetadata].new()
 
 
 def bench[T, N, R](
-    category: str,
-    *,
-    old: T,
-    new: T,
-    cost: Runs = Runs.CHEAP,
+    category: str, *, old: T, new: T, cost: Runs = Runs.CHEAP
 ) -> Callable[[Callable[[T], R]], Callable[[T], R]]:
-    """Decorator to register a benchmark function for both old and new implementations."""
+    """Decorator to register a benchmark function for both old and new implementations.
+
+    Returns:
+        Callable[[Callable[[T], R]], Callable[[T], R]]: Decorator function to register benchmarks.
+    """
 
     def decorator(func: Callable[[T], R]) -> Callable[[T], R]:
         @wraps(func, updated=())
@@ -91,12 +92,9 @@ def bench[T, N, R](
             cost=cost,
             implementation=Implementation.NEW,
         )
-        BENCHMARK_REGISTRY.try_insert(old_wrapper, old_meta).expect(
-            "Failed to register benchmark"
-        )
-        BENCHMARK_REGISTRY.try_insert(new_wrapper, new_meta).expect(
-            "Failed to register benchmark"
-        )
+        msg = "Failed to register benchmark"
+        _ = BENCHMARK_REGISTRY.try_insert(old_wrapper, old_meta).expect(msg)
+        _ = BENCHMARK_REGISTRY.try_insert(new_wrapper, new_meta).expect(msg)
 
         return func
 
@@ -104,14 +102,18 @@ def bench[T, N, R](
 
 
 def _collect_raw_timings() -> pl.LazyFrame:
-    """Collect raw timing data for all benchmarks. Stats computed at the end."""
+    """Collect raw timing data for all benchmarks. Stats computed at the end.
+
+    Returns:
+        pl.LazyFrame: LazyFrame containing raw timing data for all benchmark runs.
+    """
     benchmark_pairs = _get_pairs()
     raw_rows = pc.Vec[Row].new()
 
     benchmarks = (
         benchmark_pairs.values()
         .iter()
-        .map(lambda impls: (impls[Implementation.NEW], impls[Implementation.OLD]))
+        .map(operator.itemgetter(Implementation.NEW, Implementation.OLD))
         .collect()
     )
 
@@ -126,16 +128,15 @@ def _collect_raw_timings() -> pl.LazyFrame:
         task = progress.add_task(
             "[cyan]Running benchmarks...", total=benchmarks.length() * 2
         )
-        benchmarks.iter()
-        for new_fn, old_fn in benchmarks:
-            meta = BENCHMARK_REGISTRY.get_item(new_fn).unwrap()
+        for new_fn, old_fn in benchmarks.iter():  # pyright: ignore[reportAny]
+            meta = BENCHMARK_REGISTRY.get_item(new_fn).unwrap()  # pyright: ignore[reportAny]
 
-            for impl_name, fn in [("new", new_fn), ("old", old_fn)]:
+            for impl_name, fn in [("new", new_fn), ("old", old_fn)]:  # pyright: ignore[reportAny]
                 progress.update(
                     task,
                     description=f"[cyan]{meta.category}: {meta.name} ({impl_name})",
                 )
-                raw_rows.into(_timeit, meta, fn, impl_name)
+                raw_rows.into(_timeit, meta, fn, impl_name)  # pyright: ignore[reportAny]
                 progress.advance(task)
 
     return pl.LazyFrame(
@@ -147,8 +148,8 @@ def _collect_raw_timings() -> pl.LazyFrame:
 
 def _timeit(
     raw_rows: pc.Vec[Row], meta: BenchmarkMetadata, fn: BenchFn, impl_name: str
-) -> pc.Vec[Row]:
-    return (
+) -> None:
+    _ = (
         pc.Iter(range(meta.cost))
         .map(
             lambda run_idx: (
@@ -168,7 +169,6 @@ def _get_pairs() -> pc.Dict[tuple[str, str], pc.Dict[Implementation, BenchFn]]:
         pairs: pc.Dict[tuple[str, str], pc.Dict[Implementation, BenchFn]],
         key: tuple[str, str],
     ) -> pc.Dict[Implementation, BenchFn]:
-        """Get existing Dict or create new one."""
         return pairs.get_item(key).unwrap_or(pc.Dict[Implementation, BenchFn].new())
 
     benchmark_pairs = pc.Dict[tuple[str, str], pc.Dict[Implementation, BenchFn]].new()
@@ -191,7 +191,11 @@ def _get_pairs() -> pc.Dict[tuple[str, str], pc.Dict[Implementation, BenchFn]]:
 
 
 def _compute_all_stats(raw_df: pl.LazyFrame) -> pl.DataFrame:
-    """Compute all stats from raw timings using Polars expressions + over."""
+    """Compute all stats from raw timings using Polars expressions + over.
+
+    Returns:
+        pl.DataFrame: DataFrame containing median timings and speedup ratios for all benchmarks.
+    """
     time = pl.col("time")
     median = pl.col("median")
     group = ["category", "name"]
@@ -226,9 +230,9 @@ def _print_summary(pivoted: pl.DataFrame) -> None:
         pl.col("ratio").gt(1).sum().alias("wins"),
         pl.len().alias("total"),
     )
-    median_speedup = summary.get_column("median_speedup").item(0)
-    wins = summary.get_column("wins").item(0)
-    total = summary.get_column("total").item(0)
+    median_speedup = summary.get_column("median_speedup").item(0)  # pyright: ignore[reportAny]
+    wins = summary.get_column("wins").item(0)  # pyright: ignore[reportAny]
+    total = summary.get_column("total").item(0)  # pyright: ignore[reportAny]
 
     CONSOLE.print()
     CONSOLE.print(
@@ -255,7 +259,11 @@ def all_benchmarks() -> None:
 
 
 def _build_results_table(pivoted: pl.DataFrame) -> Table:
-    """Build Rich table directly from Polars columns."""
+    """Build Rich table directly from Polars columns.
+
+    Returns:
+        Table: Rich Table object ready to be printed.
+    """
     table = Table(title="Benchmark Results")
     table.add_column("Category", style="cyan")
     table.add_column("Operation", style="white")
@@ -277,8 +285,13 @@ def _build_results_table(pivoted: pl.DataFrame) -> Table:
             .alias("style"),
         ).iter_rows()
     ).for_each_star(
-        lambda cat, name, runs, new_med, old_med, ratio_str, style: table.add_row(
-            cat, name, runs, new_med, old_med, Text(ratio_str, style=style)
+        lambda cat, name, runs, new_med, old_med, ratio_str, style: table.add_row(  # pyright: ignore[reportAny]
+            cat,  # pyright: ignore[reportAny]
+            name,  # pyright: ignore[reportAny]
+            runs,  # pyright: ignore[reportAny]
+            new_med,  # pyright: ignore[reportAny]
+            old_med,  # pyright: ignore[reportAny]
+            Text(ratio_str, style=style),  # pyright: ignore[reportAny]
         )
     )
 

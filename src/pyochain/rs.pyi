@@ -1,6 +1,6 @@
 from abc import ABC
 from collections.abc import Callable, Iterable
-from typing import Any, Concatenate, Final, Protocol, Self, final, overload
+from typing import Any, Concatenate, Final, Protocol, Self, final, overload, override
 
 from ._iter import Iter
 
@@ -339,8 +339,8 @@ class Option[T](Pipeable):
 
     @overload
     def map_star[R](
-        self: Option[tuple[Any]],
-        func: Callable[[Any], R],
+        self: Option[tuple[Any]],  # pyright: ignore[reportExplicitAny]
+        func: Callable[[Any], R],  # pyright: ignore[reportExplicitAny]
     ) -> Option[R]: ...
     @overload
     def map_star[T1, T2, R](
@@ -415,8 +415,8 @@ class Option[T](Pipeable):
 
     @overload
     def and_then_star[R](
-        self: Option[tuple[Any]],
-        func: Callable[[Any], Option[R]],
+        self: Option[tuple[Any]],  # pyright: ignore[reportExplicitAny]
+        func: Callable[[Any], Option[R]],  # pyright: ignore[reportExplicitAny]
     ) -> Option[R]: ...
     @overload
     def and_then_star[T1, T2, R](
@@ -511,7 +511,7 @@ class Option[T](Pipeable):
         """
 
     # Abstract methods ----------------------------------------------------------------
-
+    @override
     def __eq__(self, other: object) -> bool:
         """Checks if this `Option` and *other* are equal.
 
@@ -1058,7 +1058,7 @@ class Option[T](Pipeable):
 
         ```
         """
-
+    @override
     def inspect[**P](
         self, f: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
     ) -> Option[T]:
@@ -1285,7 +1285,7 @@ class NoneOption[T](Option[T]):
     For more documentation, see the `Option[T]` class.
     """
 
-NONE: Final[NoneOption[Any]] = ...
+NONE: Final[NoneOption[Any]] = ...  # pyright: ignore[reportExplicitAny, reportAny]
 """Singleton instance representing the absence of a value.
 This is the only instance of `NoneOption` that should be used, and is similar to the logic used by `None` in standard Python.
 This allows you to use `is pc.NONE` checks for identity, and improves performance by avoiding unnecessary allocations and instanciations.
@@ -1306,7 +1306,7 @@ class Result[T, E](Pipeable, ABC):
 
     """
 
-    __slots__ = ()
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
     def flatten[T1, E1, E2](self: Result[Result[T1, E1], E2]) -> Result[T1, E1]:
         """Flattens a nested `Result`.
 
@@ -1351,8 +1351,8 @@ class Result[T, E](Pipeable, ABC):
 
     @overload
     def map_star[R](
-        self: Result[tuple[Any], E],
-        func: Callable[[Any], R],
+        self: Result[tuple[Any], E],  # pyright: ignore[reportExplicitAny]
+        func: Callable[[Any], R],  # pyright: ignore[reportExplicitAny]
     ) -> Result[R, E]: ...
     @overload
     def map_star[T1, T2, R](
@@ -1426,8 +1426,8 @@ class Result[T, E](Pipeable, ABC):
 
     @overload
     def and_then_star[R](
-        self: Result[tuple[Any], E],
-        func: Callable[[Any], Result[R, E]],
+        self: Result[tuple[Any], E],  # pyright: ignore[reportExplicitAny]
+        func: Callable[[Any], Result[R, E]],  # pyright: ignore[reportExplicitAny]
     ) -> Result[R, E]: ...
     @overload
     def and_then_star[T1, T2, R](
@@ -1769,7 +1769,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-
+    @override
     def inspect[**P](
         self, fn: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
     ) -> Result[T, E]:
@@ -2103,7 +2103,7 @@ class Ok[T, E](Result[T, E]):
     __match_args__ = ("value",)
 
     value: T
-    def __new__(cls, value: T) -> Ok[T, Any]: ...
+    def __new__(cls, value: T) -> Ok[T, Any]: ...  # pyright: ignore[reportExplicitAny]
 
 @final
 class Err[T, E](Result[T, E]):
@@ -2118,4 +2118,4 @@ class Err[T, E](Result[T, E]):
     __match_args__ = ("error",)
 
     error: E
-    def __new__(cls, error: E) -> Err[Any, E]: ...
+    def __new__(cls, error: E) -> Err[Any, E]: ...  # pyright: ignore[reportExplicitAny]

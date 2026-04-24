@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, override
 
 from .traits import PyoMutableMapping
 
@@ -36,12 +36,13 @@ class Dict[K, V](PyoMutableMapping[K, V]):
     ```
     """
 
-    __slots__ = ("_inner",)
+    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
     _inner: dict[K, V]
 
     def __init__(self, data: DictConvertible[K, V]) -> None:
         self._inner = dict(data)
 
+    @override
     def __repr__(self) -> str:
         from pprint import pformat
 
@@ -49,18 +50,23 @@ class Dict[K, V](PyoMutableMapping[K, V]):
             f"{self.__class__.__name__}({pformat(self._inner, sort_dicts=False)[1:-1]})"
         )
 
+    @override
     def __iter__(self) -> Iterator[K]:
         return iter(self._inner)
 
+    @override
     def __len__(self) -> int:
         return len(self._inner)
 
+    @override
     def __getitem__(self, key: K) -> V:
         return self._inner[key]
 
+    @override
     def __setitem__(self, key: K, value: V) -> None:
         self._inner[key] = value
 
+    @override
     def __delitem__(self, key: K) -> None:
         del self._inner[key]
 
@@ -118,7 +124,7 @@ class Dict[K, V](PyoMutableMapping[K, V]):
         return Dict.from_ref(kwargs)
 
     @staticmethod
-    def from_object(obj: object) -> Dict[str, Any]:
+    def from_object(obj: object) -> Dict[str, Any]:  # pyright: ignore[reportExplicitAny]
         """Create a `Dict` from an object `__dict__` attribute.
 
         We can't know in advance the values types, so we use `Any`.

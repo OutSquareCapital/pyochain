@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import functools
 import itertools
+from abc import ABC
 from collections.abc import (
     Callable,
     Collection,
@@ -22,7 +23,9 @@ from typing import TYPE_CHECKING, Any, Concatenate, Self, overload, override
 
 import cytoolz as cz
 
-from .. import _tools as tls  # type: ignore[import]
+from .. import (
+    _tools as tls,  # type: ignore[import]  # pyright: ignore[reportMissingModuleSource]
+)
 from .._types import SupportsComparison, SupportsRichComparison
 from ..rs import NONE, Checkable, Err, Ok, Option, Pipeable, Result, Some
 
@@ -35,7 +38,7 @@ type Comparable[T] = list[T] | tuple[T, ...] | set[T] | frozenset[T]
 type Comparator[T] = Callable[[Comparable[T], Comparable[T]], bool]
 
 
-class PyoIterable[T](Pipeable, Checkable, Iterable[T]):
+class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
     """Base trait for all pyochain `Iterables`.
 
     `PyoIterable[T]` is the common API surface shared by:
@@ -62,7 +65,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T]):
         TypeError: Always raised when instantiating `PyoIterable` directly.
     """
 
-    __slots__ = ()
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     def __init__(self, data: Iterable[T]) -> None:  # noqa: ARG002
         msg = f"Cannot instantiate {self.__class__.__name__} directly. "
@@ -145,7 +148,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T]):
 
         ```
         """
-        return cz.itertoolz.count(self.__iter__())
+        return cz.itertoolz.count(iter(self))
 
     def join(self: PyoIterable[str], sep: str) -> str:
         """Join all elements of the `Iterable` into a single `str`, with a specified separator.
@@ -164,7 +167,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T]):
 
         ```
         """
-        return sep.join(self.__iter__())
+        return sep.join(iter(self))
 
     def first(self) -> T:
         """Return the first element of the `Iterable`.
@@ -181,7 +184,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T]):
 
         ```
         """
-        return cz.itertoolz.first(self.__iter__())
+        return cz.itertoolz.first(iter(self))
 
     def second(self) -> T:
         """Return the second element of the `Iterable`.
@@ -198,7 +201,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T]):
 
         ```
         """
-        return cz.itertoolz.second(self.__iter__())
+        return cz.itertoolz.second(iter(self))
 
     def last(self) -> T:
         """Return the last element of the `Iterable`.
@@ -215,7 +218,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T]):
 
         ```
         """
-        return cz.itertoolz.last(self.__iter__())
+        return cz.itertoolz.last(iter(self))
 
     def sum[U: int | bool](self: PyoIterable[U]) -> int:
         """Return the sum of the `Iterable`.
@@ -232,7 +235,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T]):
 
         ```
         """
-        return sum(self.__iter__())
+        return sum(iter(self))
 
     def min[U: SupportsRichComparison[Any]](self: PyoIterable[U]) -> U:
         """Return the minimum of the `Iterable`.
@@ -254,7 +257,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T]):
 
         ```
         """
-        return min(self.__iter__())
+        return min(iter(self))
 
     def min_by[U: SupportsRichComparison[Any]](self, *, key: Callable[[T], U]) -> T:
         """Return the minimum element of the `Iterable` using a custom **key** function.
@@ -283,7 +286,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T]):
 
         ```
         """
-        return min(self.__iter__(), key=key)
+        return min(iter(self), key=key)
 
     def max[U: SupportsRichComparison[Any]](self: PyoIterable[U]) -> U:
         """Return the maximum element of the `Iterable`.
@@ -305,7 +308,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T]):
 
         ```
         """
-        return max(self.__iter__())
+        return max(iter(self))
 
     def max_by[U: SupportsRichComparison[Any]](self, *, key: Callable[[T], U]) -> T:
         """Return the maximum element of the `Iterable` using a custom **key** function.
@@ -334,7 +337,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T]):
 
         ```
         """
-        return max(self.__iter__(), key=key)
+        return max(iter(self), key=key)
 
     def all(self, predicate: Callable[[T], bool] | None = None) -> bool:
         """Tests if every element of the `Iterable` is truthy.
@@ -370,8 +373,8 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T]):
         ```
         """
         if predicate is None:
-            return all(self.__iter__())
-        return all(predicate(x) for x in self.__iter__())
+            return all(iter(self))
+        return all(predicate(x) for x in iter(self))
 
     def any(self, predicate: Callable[[T], bool] | None = None) -> bool:
         """Tests if any element of the `Iterable` is truthy.
@@ -404,11 +407,11 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T]):
         ```
         """
         if predicate is None:
-            return any(self.__iter__())
-        return any(predicate(x) for x in self.__iter__())
+            return any(iter(self))
+        return any(predicate(x) for x in iter(self))
 
 
-class PyoCollection[T](PyoIterable[T], Collection[T]):
+class PyoCollection[T](PyoIterable[T], Collection[T], ABC):
     """Base trait for eager pyochain collections.
 
     `PyoCollection[T]` is the shared trait for concrete, eager collections:
@@ -431,7 +434,7 @@ class PyoCollection[T](PyoIterable[T], Collection[T]):
 
     """
 
-    __slots__ = ()
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     @override
     def length(self) -> int:
@@ -520,7 +523,7 @@ class PyoCollection[T](PyoIterable[T], Collection[T]):
         return len(self) == 0
 
 
-class PyoIterator[T](PyoIterable[T], Iterator[T]):
+class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
     """Base trait for lazy `Iterator` classes.
 
     Pyochain's `Iter[T]` implements this trait.
@@ -528,7 +531,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
     additional methods for working with lazy sequences.
     """
 
-    __slots__ = ()
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     def nth(self, n: int) -> Option[T]:
         """Return the nth item of the `Iterable` at the specified *n*.
@@ -553,7 +556,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
         ```
         """
         try:
-            return Some(next(itertools.islice(self.__iter__(), n, n + 1)))
+            return Some(next(itertools.islice(iter(self), n, n + 1)))
         except StopIteration:
             return NONE
 
@@ -583,7 +586,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return tls.eq(self.__iter__(), other)
+        return tls.eq(iter(self), other)
 
     def ne(self, other: Iterable[T]) -> bool:
         """Check if this `Iterator` and *other* are not equal based on their data.
@@ -608,7 +611,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return tls.ne(self.__iter__(), other)
+        return tls.ne(iter(self), other)
 
     def le(self, other: Iterable[T]) -> bool:
         """Check if this `Iterator` is less than or equal to *other* based on their data.
@@ -629,7 +632,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return tls.le(self.__iter__(), other)
+        return tls.le(iter(self), other)
 
     def lt(self, other: Iterable[T]) -> bool:
         """Check if this `Iterator` is less than *other* based on their data.
@@ -650,7 +653,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return tls.lt(self.__iter__(), other)
+        return tls.lt(iter(self), other)
 
     def gt(self, other: Iterable[T]) -> bool:
         """Check if this `Iterator` is greater than *other* based on their data.
@@ -671,7 +674,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return tls.gt(self.__iter__(), other)
+        return tls.gt(iter(self), other)
 
     def ge(self, other: Iterable[T]) -> bool:
         """Check if this `Iterator` is greater than or equal to *other* based on their data.
@@ -692,7 +695,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return tls.ge(self.__iter__(), other)
+        return tls.ge(iter(self), other)
 
     def next(self) -> Option[T]:
         """Return the next element in the `Iterator`.
@@ -822,7 +825,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return tls.try_find(self.__iter__(), predicate)
+        return tls.try_find(iter(self), predicate)
 
     def try_fold[B, E](
         self, init: B, func: Callable[[B, T], Result[B, E]]
@@ -858,7 +861,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return tls.try_fold(self.__iter__(), init, func)
+        return tls.try_fold(iter(self), init, func)
 
     def try_reduce[E](
         self, func: Callable[[T, T], Result[T, E]]
@@ -890,7 +893,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return tls.try_reduce(self.__iter__(), func)
+        return tls.try_reduce(iter(self), func)
 
     def is_sorted[U: SupportsComparison[Any]](
         self: PyoIterator[U], *, reverse: bool = False, strict: bool = False
@@ -932,11 +935,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
         ```
 
         """
-        return tls.is_sorted(self.__iter__(), reverse=reverse, strict=strict)
+        return tls.is_sorted(iter(self), reverse=reverse, strict=strict)
 
     def is_sorted_by(
         self,
-        key: Callable[[T], SupportsComparison[Any]],
+        key: Callable[[T], SupportsComparison[Any]],  # pyright: ignore[reportExplicitAny]
         *,
         reverse: bool = False,
         strict: bool = False,
@@ -975,7 +978,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return tls.is_sorted_by(self.__iter__(), key, reverse=reverse, strict=strict)
+        return tls.is_sorted_by(iter(self), key, reverse=reverse, strict=strict)
 
     def all_equal[U](self, key: Callable[[T], U] | None = None) -> bool:
         """Return `True` if all items of the `Iterator` are equal.
@@ -1000,7 +1003,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        iterator = itertools.groupby(self.__iter__(), key)
+        iterator = itertools.groupby(iter(self), key)
         for _first in iterator:
             for _second in iterator:
                 return False
@@ -1040,7 +1043,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
         seenset_add = seenset.add
         seenlist: list[T | U] = []
         seenlist_add = seenlist.append
-        for element in map(key, self.__iter__()) if key else self.__iter__():
+        for element in map(key, iter(self)) if key else iter(self):
             try:
                 if element in seenset:
                     return False
@@ -1086,7 +1089,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        it = self.__iter__()
+        it = iter(self)
         if key is not None:
             it = map(key, it)
         return max(enumerate(it), key=itemgetter(1))[0]
@@ -1127,7 +1130,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        it = self.__iter__()
+        it = iter(self)
         if key is not None:
             it = map(key, it)
         return min(enumerate(it), key=itemgetter(1))[0]
@@ -1149,7 +1152,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return self.__class__(itertools.takewhile(predicate, self.__iter__()))
+        return self.__class__(itertools.takewhile(predicate, iter(self)))
 
     def skip_while(self, predicate: Callable[[T], bool]) -> Self:
         """Drop items while predicate holds.
@@ -1168,7 +1171,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return self.__class__(itertools.dropwhile(predicate, self.__iter__()))
+        return self.__class__(itertools.dropwhile(predicate, iter(self)))
 
     def compress(self, *selectors: bool) -> Self:
         """Filter elements using a boolean selector iterable.
@@ -1187,9 +1190,9 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return self.__class__(itertools.compress(self.__iter__(), selectors))
+        return self.__class__(itertools.compress(iter(self), selectors))
 
-    def unique(self, key: Callable[[T], Any] | None = None) -> Self:
+    def unique(self, key: Callable[[T], Any] | None = None) -> Self:  # pyright: ignore[reportExplicitAny]
         """Return only unique elements of the iterable.
 
         Args:
@@ -1214,7 +1217,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return self.__class__(cz.itertoolz.unique(self.__iter__(), key=key))
+        return self.__class__(cz.itertoolz.unique(iter(self), key=key))
 
     def take(self, n: int) -> Self:
         """Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner.
@@ -1243,7 +1246,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return self.__class__(itertools.islice(self.__iter__(), n))
+        return self.__class__(itertools.islice(iter(self), n))
 
     def skip(self, n: int) -> Self:
         """Drop first n elements.
@@ -1262,7 +1265,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return self.__class__(cz.itertoolz.drop(n, self.__iter__()))
+        return self.__class__(cz.itertoolz.drop(n, iter(self)))
 
     def step_by(self, step: int) -> Self:
         """Creates an `Iterator` starting at the same point, but stepping by the given **step** at each iteration.
@@ -1284,7 +1287,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return self.__class__(cz.itertoolz.take_nth(step, self.__iter__()))
+        return self.__class__(cz.itertoolz.take_nth(step, iter(self)))
 
     def slice(
         self,
@@ -1313,7 +1316,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return self.__class__(itertools.islice(self.__iter__(), start, stop, step))
+        return self.__class__(itertools.islice(iter(self), start, stop, step))
 
     def cycle(self) -> Self:
         """Repeat the `Iterator` indefinitely.
@@ -1337,7 +1340,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return self.__class__(itertools.cycle(self.__iter__()))
+        return self.__class__(itertools.cycle(iter(self)))
 
     def intersperse(self, element: T) -> Self:
         """Creates a new `Iterator` which places a copy of separator between adjacent items of the original iterator.
@@ -1363,7 +1366,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return self.__class__(cz.itertoolz.interpose(element, self.__iter__()))
+        return self.__class__(cz.itertoolz.interpose(element, iter(self)))
 
     def random_sample(
         self, probability: float, state: Random | int | None = None
@@ -1408,7 +1411,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
         ```
         """
         return self.__class__(
-            cz.itertoolz.random_sample(probability, self.__iter__(), random_state=state)
+            cz.itertoolz.random_sample(probability, iter(self), random_state=state)
         )
 
     def insert(self, value: T) -> Self:
@@ -1435,7 +1438,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return self.__class__(cz.itertoolz.cons(value, self.__iter__()))
+        return self.__class__(cz.itertoolz.cons(value, iter(self)))
 
     def interleave(self, *others: Iterable[T]) -> Self:
         """Interleave multiple sequences element-wise.
@@ -1454,7 +1457,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return self.__class__(cz.itertoolz.interleave((self.__iter__(), *others)))
+        return self.__class__(cz.itertoolz.interleave((iter(self), *others)))
 
     def chain(self, *others: Iterable[T]) -> Self:
         """Concatenate **self** with one or more `Iterables`, any of which may be infinite.
@@ -1484,7 +1487,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return self.__class__(cz.itertoolz.concat((self.__iter__(), *others)))
+        return self.__class__(cz.itertoolz.concat((iter(self), *others)))
 
     def elements(self) -> Self:
         """Iterator over elements repeating each as many times as its count.
@@ -1514,7 +1517,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
         """
         from collections import Counter
 
-        return self.__class__(Counter(self.__iter__()).elements())
+        return self.__class__(Counter(iter(self)).elements())
 
     def accumulate(self, func: Callable[[T, T], T], initial: T | None = None) -> Self:
         """Return an `Iterator` of accumulated binary function results.
@@ -1545,13 +1548,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        return self.__class__(
-            itertools.accumulate(self.__iter__(), func, initial=initial)
-        )
+        return self.__class__(itertools.accumulate(iter(self), func, initial=initial))
 
     def for_each[**P](
         self,
-        func: Callable[Concatenate[T, P], Any],
+        func: Callable[Concatenate[T, P], Any],  # pyright: ignore[reportExplicitAny]
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> None:
@@ -1565,10 +1566,6 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
             *args (P.args): Positional arguments for the function.
             **kwargs (P.kwargs): Keyword arguments for the function.
 
-        Returns:
-            None: This is a terminal operation with no return value.
-
-
         Example:
         ```python
         >>> import pyochain as pc
@@ -1579,13 +1576,13 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        for v in self.__iter__():
+        for v in iter(self):
             func(v, *args, **kwargs)
 
     @overload
     def for_each_star[R](
-        self: PyoIterator[tuple[Any]],
-        func: Callable[[Any], R],
+        self: PyoIterator[tuple[Any]],  # pyright: ignore[reportExplicitAny]
+        func: Callable[[Any], R],  # pyright: ignore[reportExplicitAny]
     ) -> None: ...
     @overload
     def for_each_star[T1, T2, R](
@@ -1658,10 +1655,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        for item in self.__iter__():
-            func(*item)
+        for item in iter(self):
+            _ = func(*item)
 
-    def try_for_each[E](self, f: Callable[[T], Result[Any, E]]) -> Result[None, E]:
+    def try_for_each[E](self, f: Callable[[T], Result[Any, E]]) -> Result[None, E]:  # pyright: ignore[reportExplicitAny]
         """Applies a fallible function to each item in the `Iterator`, stopping at the first error and returning that error.
 
         This can also be thought of as the fallible form of `.for_each()`.
@@ -1687,14 +1684,14 @@ class PyoIterator[T](PyoIterable[T], Iterator[T]):
 
         ```
         """
-        for item in self.__iter__():
+        for item in iter(self):
             res = f(item)
             if res.is_err():
                 return res
         return Ok(None)
 
 
-class PyoSequence[T](PyoCollection[T], Sequence[T]):
+class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
     """Base trait for eager pyochain sequences.
 
     `PyoSequence[T]` is the shared trait for concrete, eager sequence-like
@@ -1716,7 +1713,7 @@ class PyoSequence[T](PyoCollection[T], Sequence[T]):
 
     """
 
-    __slots__ = ()
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     @overload
     def get(self, index: int) -> Option[T]: ...
@@ -1742,7 +1739,7 @@ class PyoSequence[T](PyoCollection[T], Sequence[T]):
         ```
         """
         try:
-            return Some(self.__getitem__(index))  # pyright: ignore[reportReturnType]
+            return Some(self[index])  # pyright: ignore[reportReturnType]
         except IndexError:
             return NONE
 
@@ -1780,7 +1777,7 @@ class PyoSequence[T](PyoCollection[T], Sequence[T]):
         return cz.itertoolz.isdistinct(self)
 
 
-class PyoSet[T](PyoCollection[T], AbstractSet[T]):
+class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
     """Base trait for eager pyochain set-like collections.
 
     `PyoSet[T]` is the shared trait for concrete, eager set-like
@@ -1801,7 +1798,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):
 
     """
 
-    __slots__ = ()
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     def is_subset(self, other: AbstractSet[T]) -> bool:
         """Check if the `Set` is a subset of another set.
@@ -2061,7 +2058,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):
         return self.isdisjoint(other)
 
 
-class PyoMappingView[T](MappingView, PyoCollection[T]):
+class PyoMappingView[T](MappingView, PyoCollection[T], ABC):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """Base trait for eager pyochain mapping view collections.
 
     `PyoMappingView[T]` is the shared trait for concrete mapping views
@@ -2070,10 +2067,10 @@ class PyoMappingView[T](MappingView, PyoCollection[T]):
     This trait extends both `MappingView` from `collections.abc` and `PyoCollection[T]`.
     """
 
-    __slots__ = ()
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
 
-class PyoValuesView[V](ValuesView[V], PyoMappingView[V]):
+class PyoValuesView[V](ValuesView[V], PyoMappingView[V]):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """A view of the values in a pyochain mapping.
 
     This class provides a view over the values contained in a pyochain mapping, with
@@ -2083,10 +2080,10 @@ class PyoValuesView[V](ValuesView[V], PyoMappingView[V]):
         `PyoMapping.values()`: Method that returns this view.
     """
 
-    __slots__ = ()
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
 
-class PyoKeysView[K](KeysView[K], PyoMappingView[K], PyoSet[K]):
+class PyoKeysView[K](KeysView[K], PyoMappingView[K], PyoSet[K]):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """A view of the keys in a pyochain mapping.
 
     This class provides a view over the keys contained in a pyochain mapping, with
@@ -2098,10 +2095,10 @@ class PyoKeysView[K](KeysView[K], PyoMappingView[K], PyoSet[K]):
         `PyoMapping.keys()`: Method that returns this view.
     """
 
-    __slots__ = ()
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
 
-class PyoItemsView[K, V](
+class PyoItemsView[K, V](  # pyright: ignore[reportUnsafeMultipleInheritance]
     ItemsView[K, V], PyoMappingView[tuple[K, V]], PyoSet[tuple[K, V]]
 ):
     """A view of the items (key-value pairs) in a pyochain mapping.
@@ -2115,10 +2112,10 @@ class PyoItemsView[K, V](
         `PyoMapping.items()`: Method that returns this view.
     """
 
-    __slots__ = ()
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
 
-class PyoMapping[K, V](PyoCollection[K], Mapping[K, V]):
+class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
     """Base trait for eager pyochain immutable mapping collections.
 
     `PyoMapping[K, V]` is the shared trait for concrete, eager mapping-like
@@ -2138,8 +2135,9 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V]):
     pyochain API (from `PyoCollection`, `Pipeable`, `Checkable`, plus any helpers defined here).
     """
 
-    __slots__ = ()
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
+    @override
     def keys(self) -> PyoKeysView[K]:
         """Return a view of the `Mapping` keys.
 
@@ -2157,6 +2155,7 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V]):
         """
         return PyoKeysView(self)
 
+    @override
     def values(self) -> PyoValuesView[V]:
         """Return a view of the `Mapping` values.
 
@@ -2174,6 +2173,7 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V]):
         """
         return PyoValuesView(self)
 
+    @override
     def items(self) -> PyoItemsView[K, V]:
         """Return a view of the `Mapping` items.
 
@@ -2192,7 +2192,7 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V]):
         return PyoItemsView(self)
 
 
-class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):
+class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
     """Base trait for eager pyochain mutable mapping collections.
 
     `PyoMutableMapping[K, V]` is the shared trait for concrete, eager mutable mapping-like
@@ -2214,7 +2214,7 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):
     pyochain API (from `PyoMapping`, `PyoCollection`, `Pipeable`, `Checkable`, plus any helpers defined here).
     """
 
-    __slots__ = ()
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     def insert(self, key: K, value: V) -> Option[V]:
         """Insert a key-value pair into the `MutableMapping`.
@@ -2351,7 +2351,7 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):
         return Option(self.get(key, None))
 
 
-class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):
+class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
     """Base trait for eager pyochain mutable sequence collections.
 
     `PyoMutableSequence[T]` is the shared trait for concrete, eager mutable sequence-like
@@ -2377,7 +2377,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):
     They are slower than simple `.extend()`, slices and `clear()` calls, but avoids all intermediate allocations, making them suitable for large collections where memory usage is a concern.
     """
 
-    __slots__ = ()
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     def retain(self, predicate: Callable[[T], bool]) -> None:
         """Retains only the elements specified by the *predicate*.
@@ -2422,7 +2422,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):
                 write_idx += 1
         pop = self.pop
         while len(self) > write_idx:
-            pop(write_idx)
+            _ = pop(write_idx)
 
     def truncate(self, length: int) -> None:
         """Shortens the `MutableSequence`, keeping the first *length* elements and dropping the rest.
@@ -2468,7 +2468,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):
         """
         pop = self.pop
         for _ in range(len(self) - length):
-            pop()
+            _ = pop()
 
     def extend_move(self, other: Self | list[T]) -> None:
         """Moves all the elements of *other* into *self*, leaving *other* empty.
