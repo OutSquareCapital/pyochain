@@ -29,7 +29,6 @@ def test_drain_basic() -> None:
     drain_iter = v.drain(1, 4)
     # Don't consume fully, let garbage collection handle remaining elements
     _ = next(drain_iter)  # consume only first element (2)
-    _ = next(drain_iter)  # consume only first element (2)
     del drain_iter  # Trigger cleanup via __del__
     assert list(v) == [1, 5]
 
