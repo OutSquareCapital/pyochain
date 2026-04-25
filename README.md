@@ -112,7 +112,7 @@ Want to contribute? Read our [contributing guide](CONTRIBUTING.md)
 
 ## Key Dependencies and credits
 
-Most of the computations are done with implementations from, itertools, `cytoolz` and `more-itertools`.
+Most of the computations are done with implementations from itertools, `cytoolz` and `more-itertools`.
 
 pyochain acts as a unifying API layer over these powerful tools.
 
