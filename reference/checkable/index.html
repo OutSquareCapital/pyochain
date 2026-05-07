@@ -1871,6 +1871,7 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
 
         <p>Wrap <code>Self</code> in a <code>Result[Self, E]</code> based on its truthiness.</p>
 <p>Truthiness is determined by <code>__bool__()</code> if defined, otherwise by <code>__len__()</code> if defined (returning <code>False</code> if length is 0), otherwise all instances are truthy (Python's default behavior).</p>
+<p>This method is the inverse of <code>err_or</code>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1927,7 +1928,7 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
     </table>
         <p>Example:
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">&quot;empty&quot;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">&quot;empty&quot;</span><span class="p">)</span>
 <span class="n">Ok</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([])</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">&quot;empty&quot;</span><span class="p">)</span>
 <span class="n">Err</span><span class="p">(</span><span class="s1">&#39;empty&#39;</span><span class="p">)</span>

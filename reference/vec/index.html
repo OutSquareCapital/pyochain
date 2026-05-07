@@ -2180,7 +2180,11 @@
 <span class="normal">585</span>
 <span class="normal">586</span>
 <span class="normal">587</span>
-<span class="normal">588</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Vec</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">Seq</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">PyoMutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
+<span class="normal">588</span>
+<span class="normal">589</span>
+<span class="normal">590</span>
+<span class="normal">591</span>
+<span class="normal">592</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Vec</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">Seq</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">PyoMutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A `MutableSequence` wrapper with functional API.</span>
 
 <span class="sd">    Implement `MutableSequence` Protocol from `collections.abc`.</span>
@@ -2340,6 +2344,10 @@
 <span class="sd">                    val = data.pop(i)</span>
 <span class="sd">                    # your code here</span>
 <span class="sd">        ```</span>
+<span class="sd">        Args:</span>
+<span class="sd">            predicate (Callable[[T], bool]): A function that takes an element and returns `True` if it should be extracted, or `False` if it should be retained.</span>
+<span class="sd">            start (int): The starting index of the range to consider for extraction. Defaults to `0`.</span>
+<span class="sd">            end (int | None): The ending index of the range to consider for extraction. Defaults to `None`, which means the end of the `Vec`.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Iter[T]: An `Iter` that yields the extracted elements.</span>
@@ -2550,11 +2558,7 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">551</span>
-<span class="normal">552</span>
-<span class="normal">553</span>
-<span class="normal">554</span>
-<span class="normal">555</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">555</span>
 <span class="normal">556</span>
 <span class="normal">557</span>
 <span class="normal">558</span>
@@ -2587,7 +2591,11 @@
 <span class="normal">585</span>
 <span class="normal">586</span>
 <span class="normal">587</span>
-<span class="normal">588</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">concat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">Self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Vec</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+<span class="normal">588</span>
+<span class="normal">589</span>
+<span class="normal">590</span>
+<span class="normal">591</span>
+<span class="normal">592</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">concat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">Self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Vec</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Concatenate another `Vec` or `list` to **self** and return a new `Vec`.</span>
 
 <span class="sd">    Note:</span>
@@ -2745,11 +2753,7 @@ Fully consuming the <code>Iterator</code> removes all drained elements
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">507</span>
-<span class="normal">508</span>
-<span class="normal">509</span>
-<span class="normal">510</span>
-<span class="normal">511</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">511</span>
 <span class="normal">512</span>
 <span class="normal">513</span>
 <span class="normal">514</span>
@@ -2787,7 +2791,11 @@ Fully consuming the <code>Iterator</code> removes all drained elements
 <span class="normal">546</span>
 <span class="normal">547</span>
 <span class="normal">548</span>
-<span class="normal">549</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">drain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+<span class="normal">549</span>
+<span class="normal">550</span>
+<span class="normal">551</span>
+<span class="normal">552</span>
+<span class="normal">553</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">drain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Removes the subslice indicated by the given *start* and *end* from the `Vec`, returning an `Iterator` over the removed subslice.</span>
 
 <span class="sd">    If the `Iterator` is dropped before being fully consumed, it drops the remaining removed elements.</span>
@@ -2859,7 +2867,11 @@ Fully consuming the <code>Iterator</code> removes all drained elements
         <span class="k">if</span> <span class="n">predicate</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
             <span class="n">val</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
             <span class="c1"># your code here</span>
-</code></pre></div></p>
+</code></pre></div>
+Args:
+    predicate (Callable[[T], bool]): A function that takes an element and returns <code>True</code> if it should be extracted, or <code>False</code> if it should be retained.
+    start (int): The starting index of the range to consider for extraction. Defaults to <code>0</code>.
+    end (int | None): The ending index of the range to consider for extraction. Defaults to <code>None</code>, which means the end of the <code>Vec</code>.</p>
 
 
     <p><span class="doc-section-title">Returns:</span></p>
@@ -2926,7 +2938,11 @@ Fully consuming the <code>Iterator</code> removes all drained elements
 <span class="normal">502</span>
 <span class="normal">503</span>
 <span class="normal">504</span>
-<span class="normal">505</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_if</span><span class="p">(</span>
+<span class="normal">505</span>
+<span class="normal">506</span>
+<span class="normal">507</span>
+<span class="normal">508</span>
+<span class="normal">509</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_if</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">predicate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">bool</span><span class="p">],</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates an `Iter` which uses a *predicate* to determine if an element in the `Vec` should be removed.</span>
@@ -2949,6 +2965,10 @@ Fully consuming the <code>Iterator</code> removes all drained elements
 <span class="sd">                val = data.pop(i)</span>
 <span class="sd">                # your code here</span>
 <span class="sd">    ```</span>
+<span class="sd">    Args:</span>
+<span class="sd">        predicate (Callable[[T], bool]): A function that takes an element and returns `True` if it should be extracted, or `False` if it should be retained.</span>
+<span class="sd">        start (int): The starting index of the range to consider for extraction. Defaults to `0`.</span>
+<span class="sd">        end (int | None): The ending index of the range to consider for extraction. Defaults to `None`, which means the end of the `Vec`.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Iter[T]: An `Iter` that yields the extracted elements.</span>
