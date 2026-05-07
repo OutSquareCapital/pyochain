@@ -770,6 +770,123 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         """
         return functools.reduce(func, self, init)
 
+    @overload
+    def fold_star[**P, B](
+        self: PyoIterator[tuple[Any]],  # pyright: ignore[reportExplicitAny]
+        init: B,
+        func: Callable[[Any], B],  # pyright: ignore[reportExplicitAny]
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, **P, B](
+        self: PyoIterator[tuple[T1, T2]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, T5, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, T5, T6, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, T5, T6, T7, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, T5, T6, T7, T8, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, T8, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, T8, T9, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    def fold_star[U: Iterable[Any], **P, B](
+        self: PyoIterator[U],
+        init: B,
+        func: Callable[..., B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B:
+        """Fold every element of the `Iterator` into an accumulator by applying an operation, returning the final result.
+
+        Args:
+            init (B): Initial value for the accumulator.
+            func (Callable[..., B]): Function that takes the accumulator and current element, returning the new accumulator value.
+            *args (P.args): Additional positional arguments to pass to **func**.
+            **kwargs (P.kwargs): Additional keyword arguments to pass to **func**.
+
+        Returns:
+            B: The final accumulated value.
+
+        Note:
+            This is similar to `reduce()` but with an initial value, making it equivalent to
+            Python `functools.reduce()` with an initializer.
+        ```python
+        >>> import pyochain as pc
+        >>> pc.Iter([1, 2, 3]).fold(0, lambda acc, x: acc + x)
+        6
+        >>> pc.Iter([1, 2, 3]).fold(10, lambda acc, x: acc + x)
+        16
+        >>> pc.Iter(['a', 'b', 'c']).fold('', lambda acc, x: acc + x)
+        'abc'
+        ```
+        """
+
+        def _reducer(acc: B, item: U) -> B:
+            return func(acc, *item, *args, **kwargs)
+
+        return functools.reduce(_reducer, self, init)
+
     def find(self, predicate: Callable[[T], bool]) -> Option[T]:
         """Searches for an element of an iterator that satisfies a `predicate`.
 
