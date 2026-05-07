@@ -14,6 +14,9 @@ def no_doctest[**P, R](func: Callable[P, R]) -> Callable[P, R]:
 
     @no_doctest
 
+    Args:
+        func (Callable[P, R]): The function to mark.
+
     Returns:
         Callable[P, R]: The original function, unmodified.
     """

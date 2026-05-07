@@ -136,6 +136,8 @@ class Checkable(Protocol):
 
         Truthiness is determined by `__bool__()` if defined, otherwise by `__len__()` if defined (returning `False` if length is 0), otherwise all instances are truthy (Python's default behavior).
 
+        This method is the inverse of `err_or`.
+
         Args:
             err (E): The error value to wrap in Err if self is falsy.
 
@@ -145,7 +147,7 @@ class Checkable(Protocol):
         Example:
         ```python
         >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).ok_or("empty")
+        >>> pc.Seq((1, 2, 3)).ok_or("empty")
         Ok(Seq(1, 2, 3))
         >>> pc.Seq([]).ok_or("empty")
         Err('empty')

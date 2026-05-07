@@ -486,6 +486,10 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMult
                     val = data.pop(i)
                     # your code here
         ```
+        Args:
+            predicate (Callable[[T], bool]): A function that takes an element and returns `True` if it should be extracted, or `False` if it should be retained.
+            start (int): The starting index of the range to consider for extraction. Defaults to `0`.
+            end (int | None): The ending index of the range to consider for extraction. Defaults to `None`, which means the end of the `Vec`.
 
         Returns:
             Iter[T]: An `Iter` that yields the extracted elements.
