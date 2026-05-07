@@ -879,6 +879,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         16
         >>> pc.Iter(['a', 'b', 'c']).fold('', lambda acc, x: acc + x)
         'abc'
+
         ```
         """
 
