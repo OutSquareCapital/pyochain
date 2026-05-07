@@ -449,6 +449,18 @@ def test_function_raises_exception() -> None:
         _ = pc.Some(5).map(failing_func).unwrap()
 
 
+def test_function_with_type_error() -> None:  # noqa: D103
+    def type_strict(x: int) -> int:
+        return x + "string"  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+
+    try:
+        _ = pc.Some(5).map(type_strict).unwrap()
+        msg = "Should have raised TypeError"
+        raise AssertionError(msg)
+    except TypeError:
+        pass
+
+
 def test_and_then_with_exception() -> None:
     """Test and_then when function raises."""
 
