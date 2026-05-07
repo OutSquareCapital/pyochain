@@ -3,7 +3,7 @@
 from collections.abc import Iterator
 from pathlib import Path
 from types import ModuleType
-from typing import Any, TypeIs
+from typing import Any
 
 import rich
 import rich.text
@@ -30,11 +30,6 @@ def _ensure_docs_dir() -> None:
 
 
 def _discover_modules(module: ModuleType) -> pc.Seq[ModuleType]:
-    """Recursively discover all submodules in a package.
-
-    Returns:
-        pc.Seq[ModuleType]: A sequence of all discovered modules.
-    """
 
     def _recurse(mod: ModuleType) -> Iterator[ModuleType]:
         yield mod
@@ -51,9 +46,6 @@ def _generate_markdown_for_module(module: object) -> None:
 
     public_api = set(getattr(module, "__all__", []))
 
-    def _is_class(x: object) -> TypeIs[type]:
-        return isinstance(x, type)
-
     def _write(path: Path, cls_name: str, cls_path: str) -> None:
         _ = path.write_text(_generate_markdown(cls_path, cls_name), encoding="utf-8")
         rich.print(rich.text.Text(f"✓ Generated {path!s}", style="green"))
@@ -62,7 +54,7 @@ def _generate_markdown_for_module(module: object) -> None:
         pc.Dict.from_object(module)
         .items()
         .iter()
-        .filter_star(lambda name, cls: name in public_api and _is_class(cls))  # pyright: ignore[reportAny]
+        .filter_star(lambda name, cls: name in public_api and isinstance(cls, type))  # pyright: ignore[reportAny]
         .map_star(
             lambda name, cls: (  # pyright: ignore[reportAny]
                 DOCS_REF.joinpath(f"{name.lower()}.md"),
