@@ -859,6 +859,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
     ) -> B:
         """Fold every element of the `Iterator` into an accumulator by applying an operation, returning the final result.
 
+        Use this when the items of the `Iterator` are themselves iterables (e.g., tuples), and you want to unpack them as arguments to the folding function.
+
         Args:
             init (B): Initial value for the accumulator.
             func (Callable[..., B]): Function that takes the accumulator and current element, returning the new accumulator value.
@@ -869,16 +871,16 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             B: The final accumulated value.
 
         Note:
-            This is similar to `reduce()` but with an initial value, making it equivalent to
-            Python `functools.reduce()` with an initializer.
+            This is similar to `Iter::reduce` but with an initial value.
+
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter([1, 2, 3]).fold(0, lambda acc, x: acc + x)
-        6
-        >>> pc.Iter([1, 2, 3]).fold(10, lambda acc, x: acc + x)
-        16
-        >>> pc.Iter(['a', 'b', 'c']).fold('', lambda acc, x: acc + x)
-        'abc'
+        >>> from pyochain import Iter
+        >>> data = [(1, 2), (3, 4)]
+        >>> Iter(data).fold_star(0, lambda acc, x, y: acc + x + y)
+        10
+        >>> data = [("a", "b"), ("c", "d")]
+        >>> Iter(data).fold_star('', lambda acc, x, y: acc + x + y)
+        'abcd'
 
         ```
         """
