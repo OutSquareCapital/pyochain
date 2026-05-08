@@ -517,7 +517,7 @@ class Option[T](Pipeable):
     def __eq__(self, other: object) -> bool:
         """Checks if this `Option` and *other* are equal.
 
-        A plain Python `None` is considered equal to a `pyochain.NoneOption` instance.
+        A plain Python `None` is considered equal to a `pyochain.Null` instance.
 
         A plain value of type `T` is considered equal to a `pyochain.Some[T]` instance.
 
@@ -1278,7 +1278,7 @@ class Some[T](Option[T]):
         """Bypass Option's redirect by directly creating a Some instance."""
 
 @final
-class NoneOption[T](Option[T]):
+class Null[T](Option[T]):
     """Option variant representing the absence of a value.
 
     This class is not supposed to be instanciated by the user.
@@ -1287,9 +1287,9 @@ class NoneOption[T](Option[T]):
     For more documentation, see the `Option[T]` class.
     """
 
-NONE: Final[NoneOption[Any]] = ...  # pyright: ignore[reportExplicitAny, reportAny]
+NONE: Final[Null[Any]] = ...  # pyright: ignore[reportExplicitAny, reportAny]
 """Singleton instance representing the absence of a value.
-This is the only instance of `NoneOption` that should be used, and is similar to the logic used by `None` in standard Python.
+This is the only instance of `Null` that should be used, and is similar to the logic used by `None` in standard Python.
 This allows you to use `is pc.NONE` checks for identity, and improves performance by avoiding unnecessary allocations and instanciations.
 """
 

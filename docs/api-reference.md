@@ -27,7 +27,7 @@ This page is the entry point to the **complete** public API documentation.
 
 - [`Option[T]`][pyochain.rs.Option] — Optional values (`Some` / `NONE`)
 - [`Some`][pyochain.rs.Some]
-- [`None`][pyochain.rs.NoneOption]
+- [`None`][pyochain.rs.Null]
 - [`OptionUnwrapError`][pyochain.rs.OptionUnwrapError]
 
 ## Traits & mixins

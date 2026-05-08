@@ -372,7 +372,7 @@ impl PySome {
     }
 }
 
-#[pyclass(frozen, name = "NoneOption", extends = PyochainOption)]
+#[pyclass(frozen, name = "Null", extends = PyochainOption)]
 #[derive(Clone, Copy)]
 pub struct PyNone;
 

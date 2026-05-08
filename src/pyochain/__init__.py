@@ -6,7 +6,7 @@ from ._iter import Iter, Peekable, Seq, Set, SetMut, Unzipped, Vec
 from .rs import (
     NONE,
     Err,
-    NoneOption,
+    Null,
     Ok,
     Option,
     OptionUnwrapError,
@@ -20,7 +20,7 @@ __all__ = [
     "Dict",
     "Err",
     "Iter",
-    "NoneOption",
+    "Null",
     "Ok",
     "Option",
     "OptionUnwrapError",
