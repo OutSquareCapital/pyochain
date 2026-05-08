@@ -207,6 +207,9 @@ impl PyOk {
     fn map_or_else(&self, ok: &Bound<'_, PyAny>, _err: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         Ok(ok.call1((&self.value,))?.unbind())
     }
+    fn swap(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        Ok(PyErr::new(self.value.clone_ref(py)).into_py_any(py)?)
+    }
 
     #[pyo3(signature = (f, *args, **kwargs))]
     fn inspect(
@@ -446,5 +449,8 @@ impl PyErr {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         Ok(call_func(func, &slf, args, kwargs)?.unbind())
+    }
+    fn swap(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        Ok(PyOk::new(self.error.clone_ref(py)).into_py_any(py)?)
     }
 }
