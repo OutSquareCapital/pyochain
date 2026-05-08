@@ -881,6 +881,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pyochain.rs.Result.swap" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        swap
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#pyochain.rs.Result.transpose" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1173,7 +1184,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../noneoption/" class="md-nav__link">
+      <a href="../null.md" class="md-nav__link">
         
   
   
@@ -2248,6 +2259,17 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         or_else
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyochain.rs.Result.swap" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        swap
       </span>
     </span>
   </a>
@@ -4408,6 +4430,55 @@ or a default function to a contained <code>Ok</code> value.</p>
 <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Err</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">or_else</span><span class="p">(</span><span class="n">fallback</span><span class="p">)</span>
 <span class="n">Ok</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</code></pre></div></p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="pyochain.rs.Result.swap" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">swap</span><span class="p">()</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Swaps the <code>Ok</code> and <code>Err</code> variants.</p>
+<p>Converts an <code>Ok[T]</code> into an <code>Err[T]</code> and an <code>Err[E]</code> into an <code>Ok[E]</code>.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Result" href="./#pyochain.rs.Result">Result</a>[<span title="pyochain.rs.Result[E]">E</span>, <span title="pyochain.rs.Result[T]">T</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Result[E, T]: The swapped result.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+        <p>Example:
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">swap</span><span class="p">()</span>
+<span class="n">Err</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Err</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">swap</span><span class="p">()</span>
+<span class="n">Ok</span><span class="p">(</span><span class="s1">&#39;error&#39;</span><span class="p">)</span>
 </code></pre></div></p>
 
 

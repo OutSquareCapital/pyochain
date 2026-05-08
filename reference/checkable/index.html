@@ -815,7 +815,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../noneoption/" class="md-nav__link">
+      <a href="../null.md" class="md-nav__link">
         
   
   
@@ -1077,6 +1077,28 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         Checkable
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyochain.rs.Checkable.err_or" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        err_or
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyochain.rs.Checkable.err_or_else" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        err_or_else
       </span>
     </span>
   </a>
@@ -1760,6 +1782,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pyochain.rs.Checkable.err_or" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        err_or
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyochain.rs.Checkable.err_or_else" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        err_or_else
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#pyochain.rs.Checkable.ok_or" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1857,6 +1901,201 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="pyochain.rs.Checkable.err_or" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">err_or</span><span class="p">(</span><span class="n">ok</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Wrap <code>Self</code> in a <code>Result[T, Self]</code> based on its truthiness.</p>
+<p>Truthiness is determined by <code>__bool__()</code> if defined, otherwise by <code>__len__()</code> if defined (returning <code>False</code> if length is 0), otherwise all instances are truthy (Python's default behavior).</p>
+<p>This method is the inverse of <code>ok_or</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>ok</code>
+            </td>
+            <td>
+                  <code><span title="pyochain.rs.Checkable.err_or[T]">T</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ok value to wrap in Ok if self is falsy.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Result" href="../result/#pyochain.rs.Result">Result</a>[<span title="pyochain.rs.Checkable.err_or[T]">T</span>, <span title="typing.Self">Self</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Result[T, Self]: <code>Ok(ok)</code> if self is truthy, <code>Err(self)</code> otherwise.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+        <p>Example:
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">err_or</span><span class="p">(</span><span class="s2">&quot;should be empty&quot;</span><span class="p">)</span>
+<span class="n">Err</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">err_or</span><span class="p">(</span><span class="s2">&quot;should be empty&quot;</span><span class="p">)</span>
+<span class="n">Ok</span><span class="p">(</span><span class="s1">&#39;should be empty&#39;</span><span class="p">)</span>
+</code></pre></div></p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="pyochain.rs.Checkable.err_or_else" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">err_or_else</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Wrap <code>Self</code> in a <code>Result[Self, E]</code> based on its truthiness.</p>
+<p><code>E</code> being the return type of <strong>func</strong>.</p>
+<p>The function is only called if self evaluates to False.</p>
+<p>Truthiness is determined by <code>__bool__()</code> if defined, otherwise by <code>__len__()</code> if defined (returning <code>False</code> if length is 0), otherwise all instances are truthy (Python's default behavior).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>func</code>
+            </td>
+            <td>
+                  <code><span title="collections.abc.Callable">Callable</span>[<span title="typing.Concatenate">Concatenate</span>[<span title="typing.Self">Self</span>, <span title="pyochain.rs.Checkable.err_or_else[**P]">P</span>], <span title="E">E</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A callable that returns the error value to wrap in Err.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>*args</code>
+            </td>
+            <td>
+                  <code><span title="pyochain.rs.Checkable.err_or_else[**P]">P</span>.<span title="pyochain.rs.Checkable.err_or_else[**P].args">args</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Positional arguments to pass to the function.</p>
+              </div>
+            </td>
+            <td>
+                  <code>()</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>**kwargs</code>
+            </td>
+            <td>
+                  <code><span title="pyochain.rs.Checkable.err_or_else[**P]">P</span>.<span title="pyochain.rs.Checkable.err_or_else[**P].kwargs">kwargs</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Keyword arguments to pass to the function.</p>
+              </div>
+            </td>
+            <td>
+                  <code>{}</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Result" href="../result/#pyochain.rs.Result">Result</a>[<span title="pyochain.rs.Checkable.err_or_else[T]">T</span>, <span title="typing.Self">Self</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Result[Self, E]: Ok(self) if self is truthy, Err(f(...)) otherwise.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+        <p>Example:
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">err_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="s2">&quot;should be empty&quot;</span> <span class="p">)</span>
+<span class="n">Err</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">err_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="s2">&quot;should be empty&quot;</span><span class="p">)</span>
+<span class="n">Ok</span><span class="p">(</span><span class="s1">&#39;should be empty&#39;</span><span class="p">)</span>
+</code></pre></div></p>
+
+
+    </div>
+
+</div>
 
 <div class="doc doc-object doc-function">
 
