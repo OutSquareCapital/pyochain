@@ -12,7 +12,7 @@
         <meta name="author" content="Thibaud Wilson Stettler">
       
       
-        <link rel="canonical" href="https://outsquarecapital.github.io/pyochain/reference/noneoption/">
+        <link rel="canonical" href="https://outsquarecapital.github.io/pyochain/reference/range/">
       
       
       
@@ -25,7 +25,7 @@
     
     
       
-        <title>Null - pyochain</title>
+        <title>Range - pyochain</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#null" class="md-skip">
+        <a href="#range" class="md-skip">
           Skip to content
         </a>
       
@@ -117,7 +117,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Null
+              Range
             
           </span>
         </div>
@@ -809,7 +809,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../null.md" class="md-nav__link">
+      <a href="../null/" class="md-nav__link">
         
   
   
@@ -1638,10 +1638,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.rs.Null" class="md-nav__link">
+  <a href="#pyochain._range.Range" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Null
+        Range
       </span>
     </span>
   </a>
@@ -1663,25 +1663,22 @@
                 
                   
 
-<h1 id="null">Null</h1>
+<h1 id="range">Range</h1>
 
 
 <div class="doc doc-object doc-class">
 
 
 
-<a id="pyochain.rs.Null"></a>
+<a id="pyochain._range.Range"></a>
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="pyochain.rs.Option" href="../option/#pyochain.rs.Option">Option</a>[<span title="pyochain.rs.Null[T]">T</span>]</code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="pyochain.traits.PyoSequence" href="../pyosequence/#pyochain.traits._iterable.PyoSequence">PyoSequence</a>[<span title="int">int</span>]</code></p>
 
 
 
-        <p>Option variant representing the absence of a value.</p>
-<p>This class is not supposed to be instanciated by the user.
-Instead, pyochain provide the <code>NONE</code> singleton (for performance reasons).</p>
-<p>For more documentation, see the <code>Option[T]</code> class.</p>
-
+        <p>A wrapper around the built-in <code>range</code> type that implements the <code>PyoSequence</code> protocol.</p>
+<p><code>start</code> must be specified, unlike the built-in type, but everything else is the same.</p>
 
 
 
@@ -1689,6 +1686,62 @@ Instead, pyochain provide the <code>NONE</code> singleton (for performance reaso
 
 
 
+
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src/pyochain/_range.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Range</span><span class="p">(</span><span class="n">PyoSequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A wrapper around the built-in `range` type that implements the `PyoSequence` protocol.</span>
+
+<span class="sd">    `start` must be specified, unlike the built-in type, but everything else is the same.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_inner</span><span class="p">:</span> <span class="nb">range</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">stop</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="p">)</span>
+
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="p">)</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span> <span class="o">...</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">slice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span> <span class="o">...</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">slice</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+              </details>
 
 
 
