@@ -1536,15 +1536,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#core-traits" class="md-nav__link">
+  <a href="#core-classes" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Core Traits
+        Core classes
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Core Traits">
+    <nav class="md-nav" aria-label="Core classes">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1820,15 +1820,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#core-traits" class="md-nav__link">
+  <a href="#core-classes" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Core Traits
+        Core classes
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Core Traits">
+    <nav class="md-nav" aria-label="Core classes">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2028,13 +2028,15 @@ flowchart TB
     linkStyle 25 stroke:#FFD600,stroke-width:2px,fill:none
     linkStyle 26 stroke:#2962FF,fill:none,stroke-width:2px
     linkStyle 27 stroke:#2962FF,fill:none,stroke-width:2px</code></pre>
-<h2 id="core-traits">Core Traits</h2>
-<p>Pyochain's type system is built on two categories of traits:</p>
+<h2 id="core-classes">Core classes</h2>
+<p>Pyochain's API is built around 4 categories of types:</p>
 <ol>
 <li><strong>Fluent mixins</strong> — providing methods for fluent method chaining and conversion to <code>Option</code> and <code>Result</code> types</li>
 <li><strong>Abstract collection protocols</strong> — mirroring Python's <code>collections.abc</code> hierarchy to ensure protocol compatibility</li>
+<li><strong>Concrete collection types</strong> — implementing the abstract protocols and mirroring Python's standard library collections</li>
+<li><strong>Option and Result types</strong> — for explicit handling of nullable values and errors.</li>
 </ol>
-<p>For concrete examples of these traits in action, see the <a href="../interoperability/">interoperability section</a>.</p>
+<p>For concrete examples of these classes in action, see the <a href="../interoperability/">interoperability section</a>.</p>
 <h3 id="fluent-mixins">Fluent mixins</h3>
 <p>Fluent mixins are standalone classes that can be subclassed to enable functional method composition.</p>
 <p>They depend only on <code>Self</code> for their implementation, making them universally applicable.</p>
@@ -2234,10 +2236,9 @@ flowchart TB
 </tbody>
 </table>
 <h2 id="option-result-types">Option &amp; Result Types</h2>
-<p>Pyochain provides two fundamental types for explicit handling of nullable values and errors, both implementing the fluent traits (<code>Pipeable</code> and <code>Checkable</code>).</p>
+<p>Pyochain provides two fundamental types for explicit handling of nullable values and errors: <code>Option[T]</code> and <code>Result[T, E]</code>.</p>
 <h3 id="optiont">Option[T]</h3>
 <p><code>Option[T]</code> represents values that may or may not be present, serving as a type-safe alternative to using <code>None</code>.</p>
-<p>It provides methods to handle absence safely and fluently.</p>
 <h3 id="resultt-e">Result[T, E]</h3>
 <p><code>Result[T, E]</code> represents the outcome of operations that can succeed or fail, promoting explicit error handling without exceptions.</p>
 <p>A <code>Result[T, E]</code> is either <code>Ok(value)</code> for successful operations, or <code>Err(error)</code> for failures.</p>
