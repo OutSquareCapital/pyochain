@@ -58,7 +58,9 @@
         docstring-code-format = true
     [tool.ruff.lint.pydocstyle]
         convention = "google"
-
+    [tool.ruff.lint.per-file-ignores]
+        "t.py"    = ["ANN201", "D100", "D101", "D103"]
+        "tests/*" = ["D100", "D101", "D102", "D103", "D104", "DTZ001", "FBT001"]
 [tool.pydoclint]
     arg-type-hints-in-docstring                   = true
     arg-type-hints-in-signature                   = true
