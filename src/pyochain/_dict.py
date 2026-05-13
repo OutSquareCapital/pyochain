@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, override
+from typing import TYPE_CHECKING, Any, Self, override
 
 from .traits import PyoMutableMapping
 
@@ -149,3 +149,33 @@ class Dict[K, V](PyoMutableMapping[K, V]):
         ```
         """
         return Dict.from_ref(obj.__dict__)
+
+    def merge(self, other: dict[K, V] | Self) -> Dict[K, V]:
+        """Merge another `dict` or `Dict` with this `Dict`, returning a new one with the combined key-value pairs.
+
+        If there are duplicate keys, the values from *other* will overwrite those in `Self`.
+
+        This is a **copy** operation. If you want to merge in-place, use the `update` method instead.
+
+        Args:
+            other (dict[K, V] | Self): The other mapping to merge with.
+
+        Returns:
+            Dict[K, V]: A new mapping containing the merged key-value pairs.
+
+        Example:
+        ```python
+        >>> from pyochain import Dict
+        >>> d1 = Dict({1: "a", 2: "b"})
+        >>> d2 = Dict({2: "c", 3: "d"})
+        >>> d1.merge(d2)
+        Dict(1: 'a', 2: 'c', 3: 'd')
+
+        ```
+        """
+        match other:
+            case Dict():
+                new = self._inner | other._inner
+            case dict():
+                new = self._inner | other
+        return self.from_ref(new)
