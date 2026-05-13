@@ -574,8 +574,6 @@ class Option[T](Pipeable):
 
         A plain Python `None` is considered equal to a `pyochain.Null` instance.
 
-        A plain value of type `T` is considered equal to a `pyochain.Some[T]` instance.
-
         Args:
             other (object): The other object to compare with.
 
@@ -599,7 +597,7 @@ class Option[T](Pipeable):
         >>> pc.NONE == None
         True
         >>> pc.Some(42) == 42
-        True
+        False
 
         ```
         """

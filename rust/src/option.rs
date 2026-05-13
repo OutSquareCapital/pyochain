@@ -1,4 +1,5 @@
 use crate::errors::OptionUnwrapError;
+use crate::hasher::hash_fn;
 use crate::result::{self, PyResultEnum};
 use crate::types::{PyClassInit, call_func};
 use pyo3::IntoPyObjectExt;
@@ -96,19 +97,19 @@ impl PySome {
     }
 
     fn __eq__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-        let py = other.py();
-        if let Ok(other_some) = other.extract::<PyRef<PySome>>() {
-            self.value.bind(py).eq(&other_some.value)
-        } else if other.is_instance_of::<PyNone>() {
-            Ok(false)
-        } else {
-            self.value.bind(py).eq(other)
+        match other.extract::<PyRef<PySome>>() {
+            Ok(other_some) => self.value.bind(other.py()).eq(&other_some.value),
+            Err(_) => Ok(false),
         }
     }
     fn __bool__(&self) -> PyResult<bool> {
         Err(pyo3::exceptions::PyTypeError::new_err(
             "Option instances cannot be used in boolean contexts for implicit `Some|None` value checking. Use is_some() or is_none() instead.",
         ))
+    }
+
+    fn __hash__(&self, py: Python<'_>) -> PyResult<u64> {
+        Ok(hash_fn(0_u8, self.value.bind(py).hash()?))
     }
 
     fn is_some(&self) -> bool {
@@ -390,6 +391,10 @@ impl PyNone {
         Err(pyo3::exceptions::PyTypeError::new_err(
             "Option instances cannot be used in boolean contexts for implicit `Some|None` value checking. Use is_some() or is_none() instead.",
         ))
+    }
+
+    fn __hash__(&self, py: Python<'_>) -> PyResult<isize> {
+        py.None().bind(py).hash()
     }
 
     fn is_some(&self) -> bool {

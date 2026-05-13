@@ -11,7 +11,7 @@ def _check_slots(obj: object) -> bool:
         return True
 
 
-def test_slots() -> None:  # noqa: D103
+def test_slots() -> None:
     assert _check_slots(pc.Iter(()))
     assert _check_slots(pc.Seq(()))
     assert _check_slots(pc.Set(()))

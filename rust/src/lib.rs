@@ -1,5 +1,6 @@
 mod converters;
 mod errors;
+mod hasher;
 mod option;
 mod result;
 mod tools;

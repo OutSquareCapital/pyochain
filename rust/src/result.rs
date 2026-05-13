@@ -1,4 +1,5 @@
 use crate::errors::ResultUnwrapError;
+use crate::hasher::hash_fn;
 use crate::option::{PySome, get_none_singleton};
 use crate::types::{PyClassInit, call_func};
 use pyderive::*;
@@ -60,6 +61,10 @@ impl PyOk {
 
     fn is_err(&self) -> bool {
         false
+    }
+
+    fn __hash__(&self, py: Python<'_>) -> PyResult<u64> {
+        Ok(hash_fn(0_u8, self.value.bind(py).hash()?))
     }
 
     fn ok(&self, py: Python<'_>) -> PyResult<Py<PySome>> {
@@ -272,6 +277,10 @@ impl PyErr {
 
     fn is_err(&self) -> bool {
         true
+    }
+
+    fn __hash__(&self, py: Python<'_>) -> PyResult<u64> {
+        Ok(hash_fn(1, self.error.bind(py).hash()?))
     }
 
     fn ok(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
