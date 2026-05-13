@@ -2668,7 +2668,6 @@ This allow to query the presence of a value and take action, always accounting f
 
         <p>Checks if this <code>Option</code> and <em>other</em> are equal.</p>
 <p>A plain Python <code>None</code> is considered equal to a <code>pyochain.Null</code> instance.</p>
-<p>A plain value of type <code>T</code> is considered equal to a <code>pyochain.Some[T]</code> instance.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2743,7 +2742,7 @@ This allow to query the presence of a value and take action, always accounting f
 <span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span> <span class="o">==</span> <span class="kc">None</span>
 <span class="kc">True</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span> <span class="o">==</span> <span class="mi">42</span>
-<span class="kc">True</span>
+<span class="kc">False</span>
 </code></pre></div></p>
 
 
