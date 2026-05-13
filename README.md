@@ -4,6 +4,97 @@
 
 Inspired by Rust's `Iterator`, `Result`, `Option`, and DataFrame libraries like `Polars`, `pyochain` provide a set of classes with a fluent and declarative API, to work with collections, handle optional values, or manage errors.
 
+## Graphical Overview
+
+Below is a diagram showing the pyochain API, and the relationships between its core types.
+
+the colors represent the different categories of types:
+
+- **Purple**: small mixins classes
+- **Green**: abstract collection protocols, mirroring `collections.abc`
+- **Blue**: concrete collection types, implementing the abstract protocols and mirroring python standard library collections
+- **Red**: `Result` and its variants
+- **Yellow**: `Option` and its variants
+
+```mermaid
+---
+config:
+  layout: elk
+---
+flowchart TB
+    Pipeable["Pipeable"] ==> PyoIterable["PyoIterable[T]"] & Result["Result[T, E]"] & Option["Option[T]"]
+    Checkable["Checkable"] ==> PyoIterable
+    PyoIterable --> PyoIterator["PyoIterator[T]"] & PyoCollection["PyoCollection[T]"]
+    PyoIterator ==> Iter["Iter[T]"]
+    PyoCollection --> PyoSequence["PyoSequence[T]"] & PyoSet["PyoSet[T]"] & PyoMappingView["PyoMappingView[T]"] & PyoMapping["PyoMapping[K,V]"]
+    PyoSequence --> PyoMutableSequence["PyoMutableSequence[T]"]
+    PyoSequence ==> Seq["Seq[T]"]
+    PyoMutableSequence ==> Vec["Vec[T]"]
+    PyoSet ==> Set["Set[T]"] & PyoKeysView["PyoKeysView[K]"] & PyoItemsView["PyoItemsView[K,V]"]
+    PyoMappingView ==> PyoKeysView & PyoValuesView["PyoValuesView[V]"] & PyoItemsView
+    PyoMapping ==> PyoMutableMapping["PyoMutableMapping[K,V]"]
+    PyoMutableMapping ==> Dict["Dict[K,V]"]
+    Result ==> Ok["Ok[T]"] & Err["Err[E]"]
+    Option ==> Some["Some[T]"] & NONE["NONE"]
+    Set ==> SetMut["SetMut[T]"]
+    Seq ==> Vec
+
+    style Pipeable stroke:#9C27B0,stroke-width:2px
+    style PyoIterable stroke:#00C853,stroke-width:2px
+    style Result stroke:#E53935,stroke-width:2px
+    style Option stroke:#FDD835,stroke-width:2px
+    style Checkable stroke:#9C27B0,stroke-width:2px
+    style PyoIterator stroke:#00C853,stroke-width:2px
+    style PyoCollection stroke:#00C853,stroke-width:2px
+    style Iter stroke:#1E88E5,stroke-width:2px
+    style PyoSequence stroke:#00C853,stroke-width:2px
+    style PyoSet stroke:#00C853,stroke-width:2px
+    style PyoMappingView stroke:#00C853,stroke-width:2px
+    style PyoMapping stroke:#00C853,stroke-width:2px
+    style PyoMutableSequence stroke:#00C853,stroke-width:2px
+    style Seq stroke:#1E88E5,stroke-width:2px
+    style Vec stroke:#1E88E5,stroke-width:2px
+    style Set stroke:#1E88E5,stroke-width:2px
+    style PyoKeysView stroke:#1E88E5,stroke-width:2px
+    style PyoItemsView stroke:#1E88E5,stroke-width:2px
+    style SetMut stroke:#1E88E5,stroke-width:2px
+    style PyoValuesView stroke:#1E88E5,stroke-width:2px
+    style PyoMutableMapping stroke:#00C853,stroke-width:2px
+    style Dict stroke:#1E88E5,stroke-width:2px
+    style Ok stroke:#E53935,stroke-width:2px
+    style Err stroke:#E53935,stroke-width:2px
+    style Some stroke:#FDD835,stroke-width:2px
+    style NONE stroke:#FDD835,stroke-width:2px
+    linkStyle 0 stroke:#9C27B0,stroke-width:2px,fill:none
+    linkStyle 1 stroke:#9C27B0,stroke-width:2px,fill:none
+    linkStyle 2 stroke:#AA00FF,stroke-width:2px,fill:none
+    linkStyle 3 stroke:#00C853,stroke-width:2px,fill:none
+    linkStyle 4 stroke:#00C853,stroke-width:2px,fill:none
+    linkStyle 5 stroke:#00C853,stroke-width:2px,fill:none
+    linkStyle 6 stroke:#00C853,stroke-width:2px,fill:none
+    linkStyle 7 stroke:#00C853,stroke-width:2px,fill:none
+    linkStyle 8 stroke:#00C853,stroke-width:2px,fill:none
+    linkStyle 9 stroke:#00C853,stroke-width:2px,fill:none
+    linkStyle 10 stroke:#00C853,stroke-width:2px,fill:none
+    linkStyle 11 stroke:#00C853,stroke-width:2px,fill:none
+    linkStyle 12 stroke:#00C853,stroke-width:2px,fill:none
+    linkStyle 13 stroke:#00C853,fill:none,stroke-width:2px
+    linkStyle 14 stroke:#00C853,stroke-width:2px,fill:none
+    linkStyle 15 stroke:#00C853,stroke-width:2px,fill:none
+    linkStyle 16 stroke:#00C853,stroke-width:2px,fill:none
+    linkStyle 17 stroke:#00C853,stroke-width:2px,fill:none
+    linkStyle 18 stroke:#00C853,stroke-width:2px,fill:none
+    linkStyle 19 stroke:#00C853,stroke-width:2px,fill:none
+    linkStyle 20 stroke:#00C853,stroke-width:2px,fill:none
+    linkStyle 21 stroke:#00C853,stroke-width:2px,fill:none
+    linkStyle 22 stroke:#D50000,stroke-width:2px,fill:none
+    linkStyle 23 stroke:#D50000,stroke-width:2px,fill:none
+    linkStyle 24 stroke:#FFD600,stroke-width:2px,fill:none
+    linkStyle 25 stroke:#FFD600,stroke-width:2px,fill:none
+    linkStyle 26 stroke:#2962FF,fill:none,stroke-width:2px
+    linkStyle 27 stroke:#2962FF,fill:none,stroke-width:2px
+```
+
 ## Key Features
 
 - ⛓️ **Declarative & fluent chaining** — Replace `for` loops, None checks, and error handling with chainable methods.
