@@ -18,7 +18,7 @@
         <link rel="prev" href="../reference/pyovaluesview/">
       
       
-        <link rel="next" href="../examples/">
+        <link rel="next" href="../examples.md">
       
       
         
@@ -1537,10 +1537,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#fluent-traits-mixins" class="md-nav__link">
+  <a href="#fluent-mixins" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Fluent Traits (Mixins)
+        Fluent mixins
       </span>
     </span>
   </a>
@@ -1548,10 +1548,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#abstract-collection-traits" class="md-nav__link">
+  <a href="#abstract-collection-protocols" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Abstract Collection Traits
+        Abstract Collection protocols
       </span>
     </span>
   </a>
@@ -1630,17 +1630,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#graphical-overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Graphical Overview
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -1657,7 +1646,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/" class="md-nav__link">
+      <a href="../examples.md" class="md-nav__link">
         
   
   
@@ -1821,10 +1810,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#fluent-traits-mixins" class="md-nav__link">
+  <a href="#fluent-mixins" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Fluent Traits (Mixins)
+        Fluent mixins
       </span>
     </span>
   </a>
@@ -1832,10 +1821,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#abstract-collection-traits" class="md-nav__link">
+  <a href="#abstract-collection-protocols" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Abstract Collection Traits
+        Abstract Collection protocols
       </span>
     </span>
   </a>
@@ -1914,17 +1903,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#graphical-overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Graphical Overview
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -1945,12 +1923,13 @@
 <h2 id="core-traits">Core Traits</h2>
 <p>Pyochain's type system is built on two categories of traits:</p>
 <ol>
-<li><strong>Fluent traits (mixins)</strong> — providing methods for fluent method chaining and conversion to <code>Option</code> and <code>Result</code> types</li>
-<li><strong>Abstract collection traits</strong> — mirroring Python's <code>collections.abc</code> hierarchy to ensure protocol compatibility</li>
+<li><strong>Fluent mixins</strong> — providing methods for fluent method chaining and conversion to <code>Option</code> and <code>Result</code> types</li>
+<li><strong>Abstract collection protocols</strong> — mirroring Python's <code>collections.abc</code> hierarchy to ensure protocol compatibility</li>
 </ol>
 <p>For concrete examples of these traits in action, see the <a href="../interoperability/">interoperability section</a>.</p>
-<h3 id="fluent-traits-mixins">Fluent Traits (Mixins)</h3>
-<p>Fluent traits are mixins that can be added to any class to enable functional method composition. They depend only on <code>Self</code> for their implementation, making them universally applicable.</p>
+<h3 id="fluent-mixins">Fluent mixins</h3>
+<p>Fluent mixins are standalone classes that can be subclassed to enable functional method composition.</p>
+<p>They depend only on <code>Self</code> for their implementation, making them universally applicable.</p>
 <table>
 <thead>
 <tr>
@@ -1975,8 +1954,9 @@
 </tr>
 </tbody>
 </table>
-<h3 id="abstract-collection-traits">Abstract Collection Traits</h3>
-<p>Abstract collection traits form a hierarchy that mirrors Python's <code>collections.abc</code> module. Each trait extends a specific protocol from <code>collections.abc</code>, inheriting its interface while adding pyochain-specific functionality through fluent traits.</p>
+<h3 id="abstract-collection-protocols">Abstract Collection protocols</h3>
+<p>Abstract collection protocols form a hierarchy that mirrors Python's <code>collections.abc</code> module.</p>
+<p>Each protocol extends the corresponding one from <code>collections.abc</code>, inheriting its interface while adding pyochain-specific functionality.</p>
 <p>Concrete types must implement the required methods (dunders) to satisfy the protocol contract.</p>
 <table>
 <thead>
@@ -2055,8 +2035,9 @@
 </tbody>
 </table>
 <h2 id="concrete-collections-iterators">Concrete Collections &amp; Iterators</h2>
-<p>Pyochain provides concrete collection types that implement the abstract traits described above. All collections can be created from any object implementing Python's <code>Iterable</code> protocol.</p>
-<p>Since these types fully implement their corresponding <code>collections.abc</code> protocols by providing all required dunder methods, they can act as drop-in replacements for their Python standard library counterparts.</p>
+<p>Pyochain provides concrete collection types that implement the abstract protocols described above.</p>
+<p>All collections can be created from any object implementing Python's <code>Iterable</code> protocol.</p>
+<p>Since these types fully implement their corresponding <code>collections.abc</code> protocols , they can act as drop-in replacements for their Python standard library counterparts.</p>
 <h3 id="concrete-collection-types">Concrete Collection Types</h3>
 <table>
 <thead>
@@ -2147,137 +2128,12 @@
 <h2 id="option-result-types">Option &amp; Result Types</h2>
 <p>Pyochain provides two fundamental types for explicit handling of nullable values and errors, both implementing the fluent traits (<code>Pipeable</code> and <code>Checkable</code>).</p>
 <h3 id="optiont">Option[T]</h3>
-<p><code>Option[T]</code> represents values that may or may not be present, serving as a type-safe alternative to using <code>None</code>. It provides methods to handle absence safely and fluently through method chaining.</p>
-<p>An <code>Option[T]</code> is either <code>Some(value)</code> when a value is present, or <code>NONE</code> when absent.</p>
+<p><code>Option[T]</code> represents values that may or may not be present, serving as a type-safe alternative to using <code>None</code>.</p>
+<p>It provides methods to handle absence safely and fluently.</p>
 <h3 id="resultt-e">Result[T, E]</h3>
 <p><code>Result[T, E]</code> represents the outcome of operations that can succeed or fail, promoting explicit error handling without exceptions.</p>
-<p>A <code>Result[T, E]</code> is either <code>Ok(value)</code> for successful operations, or <code>Err(error)</code> for failures. Using <code>Result</code> as a return type clearly signals to callers that error handling is required.</p>
-<table>
-<thead>
-<tr>
-<th>Type</th>
-<th>Description</th>
-<th>Creation</th>
-<th>Python Equivalent</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>Option[T]</code></td>
-<td>Optional value container (abstract)</td>
-<td><code>Option(value)</code> - auto-dispatches to <code>Some</code> or <code>NONE</code></td>
-<td><code>T \| None</code></td>
-</tr>
-<tr>
-<td><code>Some[T]</code></td>
-<td>Represents a present value</td>
-<td><code>Some(value)</code> or via <code>Option(value)</code> when value is not <code>None</code></td>
-<td><code>T</code></td>
-</tr>
-<tr>
-<td><code>NONE</code></td>
-<td>Represents absence of value</td>
-<td><code>NONE</code> (singleton) or via <code>Option(None)</code></td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>Result[T, E]</code></td>
-<td>Success or failure container (abstract)</td>
-<td>In functions with try/except pattern</td>
-<td><code>T \| E</code></td>
-</tr>
-<tr>
-<td><code>Ok[T]</code></td>
-<td>Represents a successful result</td>
-<td><code>Ok(value)</code> in try block or success path</td>
-<td><code>T</code></td>
-</tr>
-<tr>
-<td><code>Err[E]</code></td>
-<td>Represents a failed result</td>
-<td><code>Err(error)</code> in except block or error path</td>
-<td><code>Exception</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="graphical-overview">Graphical Overview</h2>
-<p>Below is a diagram showing the inheritance structure and trait implementation of shared types.</p>
-<pre class="mermaid"><code>---
-config:
-  layout: elk
----
-flowchart TB
-    Pipeable["Pipeable"] ==&gt; PyoIterable["PyoIterable[T]"] &amp; Result["Result[T, E]"] &amp; Option["Option[T]"]
-    Checkable["Checkable"] ==&gt; PyoIterable
-    PyoIterable --&gt; PyoIterator["PyoIterator[T]"] &amp; PyoCollection["PyoCollection[T]"]
-    PyoIterator ==&gt; Iter["Iter[T]"]
-    PyoCollection --&gt; PyoSequence["PyoSequence[T]"] &amp; PyoSet["PyoSet[T]"] &amp; PyoMappingView["PyoMappingView[T]"] &amp; PyoMapping["PyoMapping[K,V]"]
-    PyoSequence --&gt; PyoMutableSequence["PyoMutableSequence[T]"]
-    PyoSequence ==&gt; Seq["Seq[T]"]
-    PyoMutableSequence ==&gt; Vec["Vec[T]"]
-    PyoSet ==&gt; Set["Set[T]"] &amp; PyoKeysView["PyoKeysView[K]"] &amp; PyoItemsView["PyoItemsView[K,V]"]
-    PyoMappingView ==&gt; PyoKeysView &amp; PyoValuesView["PyoValuesView[V]"] &amp; PyoItemsView
-    PyoMapping ==&gt; PyoMutableMapping["PyoMutableMapping[K,V]"]
-    PyoMutableMapping ==&gt; Dict["Dict[K,V]"]
-    Result ==&gt; Ok["Ok[T]"] &amp; Err["Err[E]"]
-    Option ==&gt; Some["Some[T]"] &amp; NONE["NONE"]
-    Set ==&gt; SetMut["SetMut[T]"]
-    Seq ==&gt; Vec
-
-    style Pipeable stroke:#9C27B0,stroke-width:2px
-    style PyoIterable stroke:#00C853,stroke-width:2px
-    style Result stroke:#E53935,stroke-width:2px
-    style Option stroke:#FDD835,stroke-width:2px
-    style Checkable stroke:#9C27B0,stroke-width:2px
-    style PyoIterator stroke:#00C853,stroke-width:2px
-    style PyoCollection stroke:#00C853,stroke-width:2px
-    style Iter stroke:#1E88E5,stroke-width:2px
-    style PyoSequence stroke:#00C853,stroke-width:2px
-    style PyoSet stroke:#00C853,stroke-width:2px
-    style PyoMappingView stroke:#00C853,stroke-width:2px
-    style PyoMapping stroke:#00C853,stroke-width:2px
-    style PyoMutableSequence stroke:#00C853,stroke-width:2px
-    style Seq stroke:#1E88E5,stroke-width:2px
-    style Vec stroke:#1E88E5,stroke-width:2px
-    style Set stroke:#1E88E5,stroke-width:2px
-    style PyoKeysView stroke:#1E88E5,stroke-width:2px
-    style PyoItemsView stroke:#1E88E5,stroke-width:2px
-    style SetMut stroke:#1E88E5,stroke-width:2px
-    style PyoValuesView stroke:#1E88E5,stroke-width:2px
-    style PyoMutableMapping stroke:#00C853,stroke-width:2px
-    style Dict stroke:#1E88E5,stroke-width:2px
-    style Ok stroke:#E53935,stroke-width:2px
-    style Err stroke:#E53935,stroke-width:2px
-    style Some stroke:#FDD835,stroke-width:2px
-    style NONE stroke:#FDD835,stroke-width:2px
-    linkStyle 0 stroke:#9C27B0,stroke-width:2px,fill:none
-    linkStyle 1 stroke:#9C27B0,stroke-width:2px,fill:none
-    linkStyle 2 stroke:#AA00FF,stroke-width:2px,fill:none
-    linkStyle 3 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 4 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 5 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 6 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 7 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 8 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 9 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 10 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 11 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 12 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 13 stroke:#00C853,fill:none,stroke-width:2px
-    linkStyle 14 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 15 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 16 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 17 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 18 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 19 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 20 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 21 stroke:#00C853,stroke-width:2px,fill:none
-    linkStyle 22 stroke:#D50000,stroke-width:2px,fill:none
-    linkStyle 23 stroke:#D50000,stroke-width:2px,fill:none
-    linkStyle 24 stroke:#FFD600,stroke-width:2px,fill:none
-    linkStyle 25 stroke:#FFD600,stroke-width:2px,fill:none
-    linkStyle 26 stroke:#2962FF,fill:none,stroke-width:2px
-    linkStyle 27 stroke:#2962FF,fill:none,stroke-width:2px</code></pre>
+<p>A <code>Result[T, E]</code> is either <code>Ok(value)</code> for successful operations, or <code>Err(error)</code> for failures.</p>
+<p>Using <code>Result</code> as a return type clearly signals to callers that error handling is required.</p>
 
 
 
