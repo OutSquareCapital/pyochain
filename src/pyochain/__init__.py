@@ -3,6 +3,7 @@
 from . import traits
 from ._dict import Dict
 from ._iter import Iter, Peekable, Seq, Set, SetMut, Unzipped, Vec
+from ._range import Range
 from .rs import (
     NONE,
     Err,
@@ -25,6 +26,7 @@ __all__ = [
     "Option",
     "OptionUnwrapError",
     "Peekable",
+    "Range",
     "Result",
     "ResultUnwrapError",
     "Seq",
