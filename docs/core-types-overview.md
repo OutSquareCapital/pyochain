@@ -93,14 +93,16 @@ flowchart TB
     linkStyle 27 stroke:#2962FF,fill:none,stroke-width:2px
 ```
 
-## Core Traits
+## Core classes
 
-Pyochain's type system is built on two categories of traits:
+Pyochain's API is built around 4 categories of types:
 
 1. **Fluent mixins** — providing methods for fluent method chaining and conversion to `Option` and `Result` types
 2. **Abstract collection protocols** — mirroring Python's `collections.abc` hierarchy to ensure protocol compatibility
+3. **Concrete collection types** — implementing the abstract protocols and mirroring Python's standard library collections
+4. **Option and Result types** — for explicit handling of nullable values and errors.
 
-For concrete examples of these traits in action, see the [interoperability section](interoperability.md).
+For concrete examples of these classes in action, see the [interoperability section](interoperability.md).
 
 ### Fluent mixins
 
@@ -157,13 +159,11 @@ Since these types fully implement their corresponding `collections.abc` protocol
 
 ## Option & Result Types
 
-Pyochain provides two fundamental types for explicit handling of nullable values and errors, both implementing the fluent traits (`Pipeable` and `Checkable`).
+Pyochain provides two fundamental types for explicit handling of nullable values and errors: `Option[T]` and `Result[T, E]`.
 
 ### Option[T]
 
 `Option[T]` represents values that may or may not be present, serving as a type-safe alternative to using `None`.
-
-It provides methods to handle absence safely and fluently.
 
 ### Result[T, E]
 
