@@ -1306,6 +1306,28 @@ class Option[T](Pipeable):
 
         ```
         """
+    def unwrap_or_none(self) -> T | None:
+        """Returns the contained `Some` value or `None`.
+
+        This is a convenience method for interoperability with APIs that use `None` to represent the absence of a value,
+
+        e.g. when interacting with standard Python libraries, or external dependencies.
+
+        This is **NOT** the recommended use for handling `Option` in any code that can be controlled, as it defeats the purpose of using `Option` for explicit handling of optional values.
+
+        Returns:
+            T | None: The contained `Some` value or `None`.
+
+        Example:
+        ```python
+        >>> from pyochain import Option, Some, NONE
+        >>> NONE.unwrap_or_none() is None
+        True
+        >>> Some(42).unwrap_or_none()
+        42
+
+        ```
+        """
 
 @final
 class Some[T](Option[T]):

@@ -355,6 +355,9 @@ impl PySome {
     fn ne(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
         Ok(!self.eq(other)?)
     }
+    fn unwrap_or_none(&self, py: Python<'_>) -> Py<PyAny> {
+        self.value.clone_ref(py)
+    }
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let value_repr = self.value.bind(py).repr()?;
@@ -572,7 +575,9 @@ impl PyNone {
     fn ne(slf: &Bound<'_, Self>, other: &Bound<'_, PyAny>) -> bool {
         !slf.is(other)
     }
-
+    fn unwrap_or_none(&self, py: Python<'_>) -> Py<PyAny> {
+        py.None()
+    }
     fn __repr__(&self) -> &'static str {
         "NONE"
     }
