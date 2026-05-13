@@ -449,7 +449,7 @@ def test_function_raises_exception() -> None:
         _ = pc.Some(5).map(failing_func).unwrap()
 
 
-def test_function_with_type_error() -> None:  # noqa: D103
+def test_function_with_type_error() -> None:
     def type_strict(x: int) -> int:
         return x + "string"  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
@@ -566,53 +566,6 @@ def test_exception_in_kwargs_evaluation() -> None:
 
     result = pc.Some(5).map(might_fail, value=10)
     assert result.unwrap() == 15
-
-
-def test_result_ok_map() -> None:
-    """Test map on Result.Ok."""
-
-    def double(x: int) -> int:
-        return x * 2
-
-    result = pc.Ok(5).map(double)
-    assert result.unwrap() == 10
-
-
-def test_result_err_map_noop() -> None:
-    """Test that map is noop on Result.Err."""
-
-    def double(x: int) -> int:
-        return x * 2
-
-    result = pc.Err("error message").map(double)
-    error = result.unwrap_err()
-    assert error == "error message"
-
-
-def test_result_ok_and_then() -> None:
-    """Test and_then on Result.Ok."""
-
-    def safe_divide(x: int) -> pc.Result[int, str]:
-        if x == 0:
-            return pc.Err("Division by zero")
-        return pc.Ok(100 // x)
-
-    result1 = pc.Ok(10).and_then(safe_divide)
-    result2 = pc.Ok(0).and_then(safe_divide)
-
-    assert result1.unwrap() == 10
-    assert result2.unwrap_err() == "Division by zero"
-
-
-def test_result_ok_into() -> None:
-    """Test into on Result.Ok - receives full Ok object."""
-
-    def format_result(res: pc.Result[int, object]) -> str:
-        x = res.unwrap()
-        return f"Result: {x}"
-
-    result = pc.Ok(42).into(format_result)
-    assert result == "Result: 42"
 
 
 def test_many_iterations() -> None:

@@ -3,6 +3,7 @@ use crate::option::{PySome, get_none_singleton};
 use crate::types::{PyClassInit, call_func};
 use pyderive::*;
 use pyo3::IntoPyObjectExt;
+use pyo3::exceptions::PyBaseException;
 use pyo3::{
     prelude::*,
     types::{PyDict, PyString, PyTuple},
@@ -14,6 +15,27 @@ pub enum PyResultEnum<'py> {
     #[pyo3(transparent)]
     Err(Bound<'py, PyErr>),
 }
+
+fn format_err_value(error: &Bound<'_, PyAny>) -> PyResult<String> {
+    match error.is_instance_of::<PyBaseException>() {
+        true => {
+            let error_type = error.get_type();
+            let module_name = error_type.getattr("__module__")?.extract::<String>()?;
+            let type_name = error_type.getattr("__qualname__")?.extract::<String>()?;
+            let display_name = match module_name.as_str() {
+                "builtins" => type_name,
+                _ => format!("{}.{}", module_name, type_name),
+            };
+            let error_message = error.str()?.extract::<String>()?;
+            match error_message.is_empty() {
+                true => Ok(display_name),
+                false => Ok(format!("{}: {}", display_name, error_message)),
+            }
+        }
+        false => error.repr()?.extract::<String>(),
+    }
+}
+
 /// Result[T, E] - Generic Result type with Ok and Err variants for Python typing
 #[pyclass(frozen, name = "Result", generic)]
 pub struct PyochainResult;
@@ -261,7 +283,7 @@ impl PyErr {
     }
 
     fn unwrap(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let err_repr = self.error.bind(py).repr()?.to_string();
+        let err_repr = format_err_value(&self.error.bind(py))?;
         Err(pyo3::PyErr::new::<ResultUnwrapError, _>(format!(
             "called `unwrap` on an `Err`: {}",
             err_repr
@@ -269,7 +291,7 @@ impl PyErr {
     }
 
     fn expect(&self, msg: &Bound<'_, PyString>) -> PyResult<Py<PyAny>> {
-        let err_repr = self.error.bind(msg.py()).repr()?.to_string();
+        let err_repr = format_err_value(&self.error.bind(msg.py()))?;
         Err(pyo3::PyErr::new::<ResultUnwrapError, _>(format!(
             "{}: {}",
             msg, err_repr
