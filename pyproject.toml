@@ -88,3 +88,5 @@
     reportImportCycles     = false
     reportMissingSuperCall = false
     typeCheckingMode       = "all"
+[tool.pyrefly]
+    preset = "strict"
