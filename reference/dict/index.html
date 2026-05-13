@@ -418,6 +418,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#pyochain._dict.Dict.merge" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        merge
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1779,6 +1790,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#pyochain._dict.Dict.merge" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        merge
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2006,7 +2028,37 @@
 <span class="normal">148</span>
 <span class="normal">149</span>
 <span class="normal">150</span>
-<span class="normal">151</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Dict</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">](</span><span class="n">PyoMutableMapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]):</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Dict</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">](</span><span class="n">PyoMutableMapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A `Dict` is a key-value store similar to Python&#39;s built-in `dict`, but with additional methods inspired by Rust&#39;s `HashMap`.</span>
 
 <span class="sd">    Accept the same input types as the built-in `dict`, including `Mapping`, `Iterable` of key-value pairs, and objects implementing `__getitem__()` and `keys()`.</span>
@@ -2146,6 +2198,36 @@
 <span class="sd">        ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Dict</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]</span> <span class="o">|</span> <span class="n">Self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Merge another `dict` or `Dict` with this `Dict`, returning a new one with the combined key-value pairs.</span>
+
+<span class="sd">        If there are duplicate keys, the values from *other* will overwrite those in `Self`.</span>
+
+<span class="sd">        This is a **copy** operation. If you want to merge in-place, use the `update` method instead.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            other (dict[K, V] | Self): The other mapping to merge with.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict[K, V]: A new mapping containing the merged key-value pairs.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Dict</span>
+<span class="sd">        &gt;&gt;&gt; d1 = Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
+<span class="sd">        &gt;&gt;&gt; d2 = Dict({2: &quot;c&quot;, 3: &quot;d&quot;})</span>
+<span class="sd">        &gt;&gt;&gt; d1.merge(d2)</span>
+<span class="sd">        Dict(1: &#39;a&#39;, 2: &#39;c&#39;, 3: &#39;d&#39;)</span>
+
+<span class="sd">        ```</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">match</span> <span class="n">other</span><span class="p">:</span>
+            <span class="k">case</span> <span class="n">Dict</span><span class="p">():</span>
+                <span class="n">new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span> <span class="o">|</span> <span class="n">other</span><span class="o">.</span><span class="n">_inner</span>
+            <span class="k">case</span> <span class="nb">dict</span><span class="p">():</span>
+                <span class="n">new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span> <span class="o">|</span> <span class="n">other</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -2580,6 +2662,148 @@
     <span class="n">instance</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">K1</span><span class="p">,</span> <span class="n">V1</span><span class="p">]</span> <span class="o">=</span> <span class="n">Dict</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="n">Dict</span><span class="p">)</span>  <span class="c1"># pyright: ignore[reportUnknownVariableType]</span>
     <span class="n">instance</span><span class="o">.</span><span class="n">_inner</span> <span class="o">=</span> <span class="n">data</span>
     <span class="k">return</span> <span class="n">instance</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="pyochain._dict.Dict.merge" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">merge</span><span class="p">(</span><span class="n">other</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Merge another <code>dict</code> or <code>Dict</code> with this <code>Dict</code>, returning a new one with the combined key-value pairs.</p>
+<p>If there are duplicate keys, the values from <em>other</em> will overwrite those in <code>Self</code>.</p>
+<p>This is a <strong>copy</strong> operation. If you want to merge in-place, use the <code>update</code> method instead.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>other</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="Dict" href="./#dict">dict</a>[<span title="pyochain._dict.Dict[K]">K</span>, <span title="pyochain._dict.Dict[V]">V</span>] | <span title="typing.Self">Self</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The other mapping to merge with.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="pyochain._dict.Dict" href="./#pyochain._dict.Dict">Dict</a>[<span title="pyochain._dict.Dict[K]">K</span>, <span title="pyochain._dict.Dict[V]">V</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dict[K, V]: A new mapping containing the merged key-value pairs.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+        <p>Example:
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">d1</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;b&quot;</span><span class="p">})</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">d2</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">({</span><span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s2">&quot;d&quot;</span><span class="p">})</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">d1</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">d2</span><span class="p">)</span>
+<span class="n">Dict</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s1">&#39;d&#39;</span><span class="p">)</span>
+</code></pre></div></p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/pyochain/_dict.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]</span> <span class="o">|</span> <span class="n">Self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge another `dict` or `Dict` with this `Dict`, returning a new one with the combined key-value pairs.</span>
+
+<span class="sd">    If there are duplicate keys, the values from *other* will overwrite those in `Self`.</span>
+
+<span class="sd">    This is a **copy** operation. If you want to merge in-place, use the `update` method instead.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        other (dict[K, V] | Self): The other mapping to merge with.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Dict[K, V]: A new mapping containing the merged key-value pairs.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">    ```python</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Dict</span>
+<span class="sd">    &gt;&gt;&gt; d1 = Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
+<span class="sd">    &gt;&gt;&gt; d2 = Dict({2: &quot;c&quot;, 3: &quot;d&quot;})</span>
+<span class="sd">    &gt;&gt;&gt; d1.merge(d2)</span>
+<span class="sd">    Dict(1: &#39;a&#39;, 2: &#39;c&#39;, 3: &#39;d&#39;)</span>
+
+<span class="sd">    ```</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">match</span> <span class="n">other</span><span class="p">:</span>
+        <span class="k">case</span> <span class="n">Dict</span><span class="p">():</span>
+            <span class="n">new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span> <span class="o">|</span> <span class="n">other</span><span class="o">.</span><span class="n">_inner</span>
+        <span class="k">case</span> <span class="nb">dict</span><span class="p">():</span>
+            <span class="n">new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span> <span class="o">|</span> <span class="n">other</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>

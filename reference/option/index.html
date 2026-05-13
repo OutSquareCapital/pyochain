@@ -1269,6 +1269,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pyochain.rs.Option.unwrap_or_none" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        unwrap_or_none
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#pyochain.rs.Option.unzip" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -2457,6 +2468,17 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         unwrap_or_else
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyochain.rs.Option.unwrap_or_none" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        unwrap_or_none
       </span>
     </span>
   </a>
@@ -5408,6 +5430,57 @@ leaving a <code>None</code> value untouched.</p>
 <span class="mi">4</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">unwrap_or_else</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">k</span><span class="p">)</span>
 <span class="mi">20</span>
+</code></pre></div></p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="pyochain.rs.Option.unwrap_or_none" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">unwrap_or_none</span><span class="p">()</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Returns the contained <code>Some</code> value or <code>None</code>.</p>
+<p>This is a convenience method for interoperability with APIs that use <code>None</code> to represent the absence of a value,</p>
+<p>e.g. when interacting with standard Python libraries, or external dependencies.</p>
+<p>This is <strong>NOT</strong> the recommended use for handling <code>Option</code> in any code that can be controlled, as it defeats the purpose of using <code>Option</code> for explicit handling of optional values.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="pyochain.rs.Option[T]">T</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>T | None: The contained <code>Some</code> value or <code>None</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+        <p>Example:
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Option</span><span class="p">,</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">unwrap_or_none</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span>
+<span class="kc">True</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap_or_none</span><span class="p">()</span>
+<span class="mi">42</span>
 </code></pre></div></p>
 
 
