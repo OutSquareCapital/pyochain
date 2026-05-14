@@ -157,6 +157,19 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
         Returns:
             R: The result of calling *func* with the unpacked elements of the `Iterable` and any additional arguments.
 
+        Example:
+        ```python
+        >>> from pyochain import Seq
+
+        >>> data = Seq((1, 2, 3))
+        >>> def foo(*a: int, x: str) -> str:
+        ...     return x + str(sum(a))
+        >>> data.unpack_into(foo, x="Result: ")
+        'Result: 6'
+        >>> # The example below will work, but is not type safe, as the unpacked elements are passed as explicit positional arguments.
+        >>> data.unpack_into(lambda a, b, c: a + b + c)
+        6
+
         """
         return func(*self, *args, **kwargs)
 

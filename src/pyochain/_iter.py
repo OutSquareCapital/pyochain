@@ -858,7 +858,7 @@ class Iter[T](PyoIterator[T]):
         return Iter(_successors())
 
     def collect[R: Collection[Any]](
-        self, collector: Callable[[Iterator[T]], R] = Seq[T]
+        self, collector: Callable[[Iterator[T] | Iterable[T]], R] = Seq[T]
     ) -> R:
         """Transforms an `Iter` into a collection.
 
@@ -871,38 +871,41 @@ class Iter[T](PyoIterator[T]):
         This can be any `Callable` that takes an `Iterator[T]` and returns a `Collection[T]` of those types.
 
         Note:
-            This can be tought as `.into()` with a default value (`Seq[T]`), and a different constraint (`Collection[Any]`).
-            However, the runtime behavior is identical in both cases: pass **self** to the provided function, return the result.
+            This is equivalent to `Pipeable::into()` at runtime, but with a few differences:
+
+                - A default value (`Seq[T]`)
+                - Different constraint (`Collection[Any]`) to specify the intent
+                - Better performance (no args/kwargs unpacking).
+
+            If you need to pass additional arguments, you can use `Iter::into()` instead.
 
         Args:
-            collector (Callable[[Iterator[T]], R]): Function|type that defines the target collection. `R` is constrained to a `Collection`.
+            collector (Callable[[Iterator[T] | Iterable[T]], R]): Function|type that defines the target collection. `R` is constrained to a `Collection`.
 
         Returns:
             R: A materialized collection containing the collected elements.
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter(range(5)).collect()
+        >>> from pyochain import Iter, Range
+        >>> data = (0, 1, 2, 3, 4)
+        >>> Iter(data).collect()
         Seq(0, 1, 2, 3, 4)
-        >>> iterator = pc.Iter((1, 2, 3))
+        >>> iterator = Iter(data)
         >>> iterator._inner.__class__.__name__
         'tuple_iterator'
         >>> mapped = iterator.map(lambda x: x * 2)
         >>> mapped._inner.__class__.__name__
         'map'
         >>> mapped.collect()
-        Seq(2, 4, 6)
+        Seq(0, 2, 4, 6, 8)
         >>> # iterator is now exhausted
         >>> iterator.collect()
         Seq()
-        >>> pc.Iter(range(5)).collect(list)
+        >>> Range(0, 5).iter().collect(list)
         [0, 1, 2, 3, 4]
-        >>> pc.Iter(range(5)).collect(pc.Vec)
+        >>> Iter(range(5)).collect(Vec)
         Vec(0, 1, 2, 3, 4)
-        >>> iterator = pc.Iter([1, 2, 3])
-        >>> iterator._inner.__class__.__name__
-        'list_iterator'
 
         ```
         """
