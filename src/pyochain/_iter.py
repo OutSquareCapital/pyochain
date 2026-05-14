@@ -473,10 +473,9 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMult
         If the *predicate* returns `False`, the element remains in the `Vec` and will not be yielded.
 
         You can specify a range for the extraction.
+        If the returned `Iterator` is not exhausted, e.g. because it is dropped without iterating or the iteration short-circuits,
 
-        If the returned ExtractIf is not exhausted, e.g. because it is dropped without iterating or the iteration short-circuits, then the remaining elements will be retained.
-
-        Use retain_mut with a negated predicate if you do not need the returned iterator.
+        then the remaining elements will be retained.
 
         Using this method is equivalent to the following code:
         ```python
@@ -486,6 +485,7 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMult
                     val = data.pop(i)
                     # your code here
         ```
+
         Args:
             predicate (Callable[[T], bool]): A function that takes an element and returns `True` if it should be extracted, or `False` if it should be retained.
             start (int): The starting index of the range to consider for extraction. Defaults to `0`.
@@ -493,6 +493,25 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMult
 
         Returns:
             Iter[T]: An `Iter` that yields the extracted elements.
+
+        Example:
+        ```python
+        >>> from pyochain import Vec
+        >>> data = (1, 2, 3, 4, 5)
+        >>> vec = Vec(data)
+        >>> extracted = vec.extract_if(lambda x: x % 2 == 0).collect()
+        >>> extracted
+        Seq(2, 4)
+        >>> vec
+        Vec(1, 3, 5)
+        >>> # Extracting with a range
+        >>> vec = Vec(data)
+        >>> extracted = vec.extract_if(lambda x: x % 2 == 0, start=1, end=4).collect()
+        >>> extracted
+        Seq(2, 4)
+        >>> vec
+        Vec(1, 3, 5)
+
         """
 
         def _extract_if_gen() -> Iterator[T]:
@@ -868,7 +887,7 @@ class Iter[T](PyoIterator[T]):
 
         You can specify the target collection type by providing a **collector** function or type.
 
-        This can be any `Callable` that takes an `Iterator[T]` and returns a `Collection[T]` of those types.
+        This can be any `Callable` that takes an `Iterable[T] | Iterator[T]` and returns a `Collection[T]` of those types.
 
         Note:
             This is equivalent to `Pipeable::into()` at runtime, but with a few differences:
