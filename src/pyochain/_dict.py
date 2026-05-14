@@ -50,6 +50,17 @@ class Dict[K, V](PyoMutableMapping[K, V]):
             f"{self.__class__.__name__}({pformat(self._inner, sort_dicts=False)[1:-1]})"
         )
 
+    @property
+    def inner(self) -> dict[K, V]:
+        """Get the underlying `dict` data structure.
+
+        Useful when interoperating with functions that require a standard Python `dict`.
+
+        Returns:
+            dict[K, V]: The underlying dictionary.
+        """
+        return self._inner
+
     @override
     def __iter__(self) -> Iterator[K]:
         return iter(self._inner)

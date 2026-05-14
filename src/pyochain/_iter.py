@@ -167,6 +167,17 @@ class Set[T](PyoSet[T]):
     def __init__(self, data: Iterable[T]) -> None:
         self._inner = frozenset(data)
 
+    @property
+    def inner(self) -> frozenset[T]:
+        """Get the underlying `frozenset` data structure.
+
+        Useful when interoperating with functions that require a standard Python `frozenset`.
+
+        Returns:
+            frozenset[T]: The underlying frozenset.
+        """
+        return self._inner
+
     @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({_get_repr(self._inner)})"
@@ -205,6 +216,18 @@ class SetMut[T](Set[T], MutableSet[T]):
 
     def __init__(self, data: Iterable[T]) -> None:
         self._inner = set(data)  # pyright: ignore[reportIncompatibleVariableOverride]
+
+    @property
+    @override
+    def inner(self) -> set[T]:  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Get the underlying `set` data structure.
+
+        Useful when interoperating with functions that require a standard Python `set`.
+
+        Returns:
+            set[T]: The underlying set.
+        """
+        return self._inner
 
     @staticmethod
     def from_ref[V](data: set[V]) -> SetMut[V]:
@@ -305,6 +328,17 @@ class Seq[T](PyoSequence[T]):
     def __init__(self, data: Iterable[T]) -> None:
         self._inner = tuple(data)
 
+    @property
+    def inner(self) -> tuple[T, ...]:
+        """Get the underlying `tuple` data structure.
+
+        Useful when interoperating with functions that require a standard Python `tuple`.
+
+        Returns:
+            tuple[T, ...]: The underlying tuple.
+        """
+        return self._inner
+
     @override
     def __iter__(self) -> Iterator[T]:
         return iter(self._inner)
@@ -344,6 +378,18 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMult
 
     def __init__(self, data: Iterable[T]) -> None:
         self._inner = list(data)  # pyright: ignore[reportIncompatibleVariableOverride]
+
+    @property
+    @override
+    def inner(self) -> list[T]:  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Get the underlying `list` data structure.
+
+        Useful when interoperating with functions that require a standard Python `list`.
+
+        Returns:
+            list[T]: The underlying list.
+        """
+        return self._inner
 
     @staticmethod
     def from_ref[V](data: list[V]) -> Vec[V]:
@@ -512,6 +558,7 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMult
         >>> vec
         Vec(1, 3, 5)
 
+        ```
         """
 
         def _extract_if_gen() -> Iterator[T]:
