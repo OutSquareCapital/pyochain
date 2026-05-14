@@ -132,6 +132,34 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
 
         return Iter(self)
 
+    def unpack_into[**P, R](
+        self,
+        func: Callable[Concatenate[T, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> R:
+        """Unpack the `Iterable` in the provided *func*, and return the result.
+
+        This is similar to `Pipeable::into`, but instead of passing `Self`, we pass the elements inside `Self`.
+
+        This avoids you to do `iterable.into(lambda x: (*x))`, improving performance and readability.
+
+        Note:
+            This method, if called on a lazy `Iterator`, will consume it.
+
+            As such, this can be considered as an alternative `Iter::collect` method.
+
+        Args:
+            func (Callable[Concatenate[T, P], R]): Function to call with the unpacked elements of the `Iterable`.
+            *args (P.args): Additional positional arguments to pass to *func*
+            **kwargs (P.kwargs): Additional keyword arguments to pass to *func*
+
+        Returns:
+            R: The result of calling *func* with the unpacked elements of the `Iterable` and any additional arguments.
+
+        """
+        return func(*self, *args, **kwargs)
+
     def length(self) -> int:
         """Return the length of the `Iterable`.
 
