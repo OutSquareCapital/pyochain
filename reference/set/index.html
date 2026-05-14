@@ -435,6 +435,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#pyochain._iter.Set.inner" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        inner
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1014,7 +1025,7 @@
   <span class="md-ellipsis">
     
   
-  Traits & Mixins
+  abc's & Mixins
 
     
   </span>
@@ -1029,7 +1040,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-  Traits & Mixins
+  abc's & Mixins
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
@@ -1664,6 +1675,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#pyochain._iter.Set.inner" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        inner
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1781,7 +1803,18 @@
 <span class="normal">181</span>
 <span class="normal">182</span>
 <span class="normal">183</span>
-<span class="normal">184</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Set</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoSet</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Set</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoSet</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;`Set` represent an in- memory **unordered**  collection of **unique** elements.</span>
 
 <span class="sd">    Implements the `Collection` Protocol from `collections.abc`, so it can be used as a standard immutable collection.</span>
@@ -1802,6 +1835,17 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inner</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the underlying `frozenset` data structure.</span>
+
+<span class="sd">        Useful when interoperating with functions that require a standard Python `frozenset`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            frozenset[T]: The underlying frozenset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span>
 
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -1830,6 +1874,52 @@
 
 
 
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="pyochain._iter.Set.inner" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">inner</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Get the underlying <code>frozenset</code> data structure.</p>
+<p>Useful when interoperating with functions that require a standard Python <code>frozenset</code>.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="frozenset">frozenset</span>[<span title="pyochain._iter.Set[T]">T</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>frozenset[T]: The underlying frozenset.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
 
 
 
