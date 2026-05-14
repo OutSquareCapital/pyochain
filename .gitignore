@@ -19,3 +19,5 @@ docs/sphinx/_build/
 target/
 *data/
 .coverage
+# temp file for tests
+t.py

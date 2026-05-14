@@ -35,7 +35,7 @@
                 { "Some" = "reference/some.md" },
             ] },
             { "Overview" = "api-reference.md" },
-            { "Traits & Mixins" = [
+            { "abc's & Mixins" = [
                 { "Checkable" = "reference/checkable.md" },
                 { "Pipeable" = "reference/pipeable.md" },
                 { "PyoCollection" = "reference/pyocollection.md" },
