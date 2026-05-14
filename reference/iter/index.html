@@ -5664,7 +5664,10 @@
 <span class="normal">3275</span>
 <span class="normal">3276</span>
 <span class="normal">3277</span>
-<span class="normal">3278</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoIterator</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+<span class="normal">3278</span>
+<span class="normal">3279</span>
+<span class="normal">3280</span>
+<span class="normal">3281</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoIterator</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A superset around Python&#39;s built-in `Iterator` Protocol, providing a rich set of functional programming tools.</span>
 
 <span class="sd">    Implements the `Iterator` Protocol from `collections.abc`, so it can be used as a standard iterator.</span>
@@ -5930,7 +5933,7 @@
         <span class="k">return</span> <span class="n">Iter</span><span class="p">(</span><span class="n">_successors</span><span class="p">())</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">collect</span><span class="p">[</span><span class="n">R</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">Any</span><span class="p">]](</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">collector</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Iterator</span><span class="p">[</span><span class="n">T</span><span class="p">]],</span> <span class="n">R</span><span class="p">]</span> <span class="o">=</span> <span class="n">Seq</span><span class="p">[</span><span class="n">T</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">collector</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Iterator</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">T</span><span class="p">]],</span> <span class="n">R</span><span class="p">]</span> <span class="o">=</span> <span class="n">Seq</span><span class="p">[</span><span class="n">T</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">R</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Transforms an `Iter` into a collection.</span>
 
@@ -5943,38 +5946,41 @@
 <span class="sd">        This can be any `Callable` that takes an `Iterator[T]` and returns a `Collection[T]` of those types.</span>
 
 <span class="sd">        Note:</span>
-<span class="sd">            This can be tought as `.into()` with a default value (`Seq[T]`), and a different constraint (`Collection[Any]`).</span>
-<span class="sd">            However, the runtime behavior is identical in both cases: pass **self** to the provided function, return the result.</span>
+<span class="sd">            This is equivalent to `Pipeable::into()` at runtime, but with a few differences:</span>
+
+<span class="sd">                - A default value (`Seq[T]`)</span>
+<span class="sd">                - Different constraint (`Collection[Any]`) to specify the intent</span>
+<span class="sd">                - Better performance (no args/kwargs unpacking).</span>
+
+<span class="sd">            If you need to pass additional arguments, you can use `Iter::into()` instead.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            collector (Callable[[Iterator[T]], R]): Function|type that defines the target collection. `R` is constrained to a `Collection`.</span>
+<span class="sd">            collector (Callable[[Iterator[T] | Iterable[T]], R]): Function|type that defines the target collection. `R` is constrained to a `Collection`.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            R: A materialized collection containing the collected elements.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; pc.Iter(range(5)).collect()</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Iter, Range</span>
+<span class="sd">        &gt;&gt;&gt; data = (0, 1, 2, 3, 4)</span>
+<span class="sd">        &gt;&gt;&gt; Iter(data).collect()</span>
 <span class="sd">        Seq(0, 1, 2, 3, 4)</span>
-<span class="sd">        &gt;&gt;&gt; iterator = pc.Iter((1, 2, 3))</span>
+<span class="sd">        &gt;&gt;&gt; iterator = Iter(data)</span>
 <span class="sd">        &gt;&gt;&gt; iterator._inner.__class__.__name__</span>
 <span class="sd">        &#39;tuple_iterator&#39;</span>
 <span class="sd">        &gt;&gt;&gt; mapped = iterator.map(lambda x: x * 2)</span>
 <span class="sd">        &gt;&gt;&gt; mapped._inner.__class__.__name__</span>
 <span class="sd">        &#39;map&#39;</span>
 <span class="sd">        &gt;&gt;&gt; mapped.collect()</span>
-<span class="sd">        Seq(2, 4, 6)</span>
+<span class="sd">        Seq(0, 2, 4, 6, 8)</span>
 <span class="sd">        &gt;&gt;&gt; # iterator is now exhausted</span>
 <span class="sd">        &gt;&gt;&gt; iterator.collect()</span>
 <span class="sd">        Seq()</span>
-<span class="sd">        &gt;&gt;&gt; pc.Iter(range(5)).collect(list)</span>
+<span class="sd">        &gt;&gt;&gt; Range(0, 5).iter().collect(list)</span>
 <span class="sd">        [0, 1, 2, 3, 4]</span>
-<span class="sd">        &gt;&gt;&gt; pc.Iter(range(5)).collect(pc.Vec)</span>
+<span class="sd">        &gt;&gt;&gt; Iter(range(5)).collect(Vec)</span>
 <span class="sd">        Vec(0, 1, 2, 3, 4)</span>
-<span class="sd">        &gt;&gt;&gt; iterator = pc.Iter([1, 2, 3])</span>
-<span class="sd">        &gt;&gt;&gt; iterator._inner.__class__.__name__</span>
-<span class="sd">        &#39;list_iterator&#39;</span>
 
 <span class="sd">        ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -8550,10 +8556,7 @@ elements as necessary.
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1015</span>
-<span class="normal">1016</span>
-<span class="normal">1017</span>
-<span class="normal">1018</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1018</span>
 <span class="normal">1019</span>
 <span class="normal">1020</span>
 <span class="normal">1021</span>
@@ -8625,7 +8628,10 @@ elements as necessary.
 <span class="normal">1087</span>
 <span class="normal">1088</span>
 <span class="normal">1089</span>
-<span class="normal">1090</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">array_chunks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">Self</span><span class="p">]:</span>
+<span class="normal">1090</span>
+<span class="normal">1091</span>
+<span class="normal">1092</span>
+<span class="normal">1093</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">array_chunks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">Self</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Yield subiterators (chunks) that each yield a fixed number elements, determined by size.</span>
 
 <span class="sd">    The last chunk will be shorter if there are not enough elements.</span>
@@ -8803,10 +8809,7 @@ elements as necessary.
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2738</span>
-<span class="normal">2739</span>
-<span class="normal">2740</span>
-<span class="normal">2741</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2741</span>
 <span class="normal">2742</span>
 <span class="normal">2743</span>
 <span class="normal">2744</span>
@@ -8825,7 +8828,10 @@ elements as necessary.
 <span class="normal">2757</span>
 <span class="normal">2758</span>
 <span class="normal">2759</span>
-<span class="normal">2760</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
+<span class="normal">2760</span>
+<span class="normal">2761</span>
+<span class="normal">2762</span>
+<span class="normal">2763</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Batch elements into tuples of length n and return a new Iter.</span>
 
 <span class="sd">    - The last batch may be shorter than n.</span>
@@ -8910,10 +8916,7 @@ elements as necessary.
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2325</span>
-<span class="normal">2326</span>
-<span class="normal">2327</span>
-<span class="normal">2328</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2328</span>
 <span class="normal">2329</span>
 <span class="normal">2330</span>
 <span class="normal">2331</span>
@@ -8939,7 +8942,10 @@ elements as necessary.
 <span class="normal">2351</span>
 <span class="normal">2352</span>
 <span class="normal">2353</span>
-<span class="normal">2354</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">cloned</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="normal">2354</span>
+<span class="normal">2355</span>
+<span class="normal">2356</span>
+<span class="normal">2357</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">cloned</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Clone the `Iter` into a new independent `Iter` using `itertools.tee`.</span>
 
 <span class="sd">    After calling this method, the original `Iter` will continue to yield elements independently of the cloned one.</span>
@@ -8995,8 +9001,12 @@ elements as necessary.
 
 <details class="note" open>
   <summary>Note</summary>
-  <p>This can be tought as <code>.into()</code> with a default value (<code>Seq[T]</code>), and a different constraint (<code>Collection[Any]</code>).
-However, the runtime behavior is identical in both cases: pass <strong>self</strong> to the provided function, return the result.</p>
+  <p>This is equivalent to <code>Pipeable::into()</code> at runtime, but with a few differences:</p>
+<pre><code>- A default value (`Seq[T]`)
+- Different constraint (`Collection[Any]`) to specify the intent
+- Better performance (no args/kwargs unpacking).
+</code></pre>
+<p>If you need to pass additional arguments, you can use <code>Iter::into()</code> instead.</p>
 </details>
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -9015,7 +9025,7 @@ However, the runtime behavior is identical in both cases: pass <strong>self</str
                 <code>collector</code>
             </td>
             <td>
-                  <code><span title="collections.abc.Callable">Callable</span>[[<span title="collections.abc.Iterator">Iterator</span>[<span title="pyochain._iter.Iter[T]">T</span>]], <span title="pyochain._iter.Iter.collect[R]">R</span>]</code>
+                  <code><span title="collections.abc.Callable">Callable</span>[[<span title="collections.abc.Iterator">Iterator</span>[<span title="pyochain._iter.Iter[T]">T</span>] | <span title="collections.abc.Iterable">Iterable</span>[<span title="pyochain._iter.Iter[T]">T</span>]], <span title="pyochain._iter.Iter.collect[R]">R</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -9052,27 +9062,25 @@ However, the runtime behavior is identical in both cases: pass <strong>self</str
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Iter</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iter</span><span class="p">,</span> <span class="n">Range</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Iter</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
 <span class="n">Seq</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">iterator</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Iter</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">iterator</span> <span class="o">=</span> <span class="n">Iter</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">iterator</span><span class="o">.</span><span class="n">_inner</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
 <span class="s1">&#39;tuple_iterator&#39;</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">mapped</span> <span class="o">=</span> <span class="n">iterator</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">mapped</span><span class="o">.</span><span class="n">_inner</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
 <span class="s1">&#39;map&#39;</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">mapped</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
-<span class="n">Seq</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="n">Seq</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="c1"># iterator is now exhausted</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">iterator</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
 <span class="n">Seq</span><span class="p">()</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Iter</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
 <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Iter</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">Vec</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Iter</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">Vec</span><span class="p">)</span>
 <span class="n">Vec</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">iterator</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Iter</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">iterator</span><span class="o">.</span><span class="n">_inner</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
-<span class="s1">&#39;list_iterator&#39;</span>
 </code></pre></div></p>
 
 
@@ -9127,8 +9135,11 @@ However, the runtime behavior is identical in both cases: pass <strong>self</str
 <span class="normal">906</span>
 <span class="normal">907</span>
 <span class="normal">908</span>
-<span class="normal">909</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">collect</span><span class="p">[</span><span class="n">R</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">Any</span><span class="p">]](</span>
-    <span class="bp">self</span><span class="p">,</span> <span class="n">collector</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Iterator</span><span class="p">[</span><span class="n">T</span><span class="p">]],</span> <span class="n">R</span><span class="p">]</span> <span class="o">=</span> <span class="n">Seq</span><span class="p">[</span><span class="n">T</span><span class="p">]</span>
+<span class="normal">909</span>
+<span class="normal">910</span>
+<span class="normal">911</span>
+<span class="normal">912</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">collect</span><span class="p">[</span><span class="n">R</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">Any</span><span class="p">]](</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">collector</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Iterator</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">T</span><span class="p">]],</span> <span class="n">R</span><span class="p">]</span> <span class="o">=</span> <span class="n">Seq</span><span class="p">[</span><span class="n">T</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">R</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Transforms an `Iter` into a collection.</span>
 
@@ -9141,38 +9152,41 @@ However, the runtime behavior is identical in both cases: pass <strong>self</str
 <span class="sd">    This can be any `Callable` that takes an `Iterator[T]` and returns a `Collection[T]` of those types.</span>
 
 <span class="sd">    Note:</span>
-<span class="sd">        This can be tought as `.into()` with a default value (`Seq[T]`), and a different constraint (`Collection[Any]`).</span>
-<span class="sd">        However, the runtime behavior is identical in both cases: pass **self** to the provided function, return the result.</span>
+<span class="sd">        This is equivalent to `Pipeable::into()` at runtime, but with a few differences:</span>
+
+<span class="sd">            - A default value (`Seq[T]`)</span>
+<span class="sd">            - Different constraint (`Collection[Any]`) to specify the intent</span>
+<span class="sd">            - Better performance (no args/kwargs unpacking).</span>
+
+<span class="sd">        If you need to pass additional arguments, you can use `Iter::into()` instead.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        collector (Callable[[Iterator[T]], R]): Function|type that defines the target collection. `R` is constrained to a `Collection`.</span>
+<span class="sd">        collector (Callable[[Iterator[T] | Iterable[T]], R]): Function|type that defines the target collection. `R` is constrained to a `Collection`.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        R: A materialized collection containing the collected elements.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; pc.Iter(range(5)).collect()</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Iter, Range</span>
+<span class="sd">    &gt;&gt;&gt; data = (0, 1, 2, 3, 4)</span>
+<span class="sd">    &gt;&gt;&gt; Iter(data).collect()</span>
 <span class="sd">    Seq(0, 1, 2, 3, 4)</span>
-<span class="sd">    &gt;&gt;&gt; iterator = pc.Iter((1, 2, 3))</span>
+<span class="sd">    &gt;&gt;&gt; iterator = Iter(data)</span>
 <span class="sd">    &gt;&gt;&gt; iterator._inner.__class__.__name__</span>
 <span class="sd">    &#39;tuple_iterator&#39;</span>
 <span class="sd">    &gt;&gt;&gt; mapped = iterator.map(lambda x: x * 2)</span>
 <span class="sd">    &gt;&gt;&gt; mapped._inner.__class__.__name__</span>
 <span class="sd">    &#39;map&#39;</span>
 <span class="sd">    &gt;&gt;&gt; mapped.collect()</span>
-<span class="sd">    Seq(2, 4, 6)</span>
+<span class="sd">    Seq(0, 2, 4, 6, 8)</span>
 <span class="sd">    &gt;&gt;&gt; # iterator is now exhausted</span>
 <span class="sd">    &gt;&gt;&gt; iterator.collect()</span>
 <span class="sd">    Seq()</span>
-<span class="sd">    &gt;&gt;&gt; pc.Iter(range(5)).collect(list)</span>
+<span class="sd">    &gt;&gt;&gt; Range(0, 5).iter().collect(list)</span>
 <span class="sd">    [0, 1, 2, 3, 4]</span>
-<span class="sd">    &gt;&gt;&gt; pc.Iter(range(5)).collect(pc.Vec)</span>
+<span class="sd">    &gt;&gt;&gt; Iter(range(5)).collect(Vec)</span>
 <span class="sd">    Vec(0, 1, 2, 3, 4)</span>
-<span class="sd">    &gt;&gt;&gt; iterator = pc.Iter([1, 2, 3])</span>
-<span class="sd">    &gt;&gt;&gt; iterator._inner.__class__.__name__</span>
-<span class="sd">    &#39;list_iterator&#39;</span>
 
 <span class="sd">    ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -9280,10 +9294,7 @@ The returned mutable sequence can be used to continue the call chain:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">915</span>
-<span class="normal">916</span>
-<span class="normal">917</span>
-<span class="normal">918</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">918</span>
 <span class="normal">919</span>
 <span class="normal">920</span>
 <span class="normal">921</span>
@@ -9322,7 +9333,10 @@ The returned mutable sequence can be used to continue the call chain:
 <span class="normal">954</span>
 <span class="normal">955</span>
 <span class="normal">956</span>
-<span class="normal">957</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">collect_into</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">collection</span><span class="p">:</span> <span class="n">MutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">MutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+<span class="normal">957</span>
+<span class="normal">958</span>
+<span class="normal">959</span>
+<span class="normal">960</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">collect_into</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">collection</span><span class="p">:</span> <span class="n">MutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">MutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Collects all the items from the `Iterator` into a `MutableSequence`.</span>
 
 <span class="sd">    This method consumes the `Iterator` and adds all its items to the passed `MutableSequence`.</span>
@@ -9452,10 +9466,7 @@ The returned mutable sequence can be used to continue the call chain:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2893</span>
-<span class="normal">2894</span>
-<span class="normal">2895</span>
-<span class="normal">2896</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2896</span>
 <span class="normal">2897</span>
 <span class="normal">2898</span>
 <span class="normal">2899</span>
@@ -9469,7 +9480,10 @@ The returned mutable sequence can be used to continue the call chain:
 <span class="normal">2907</span>
 <span class="normal">2908</span>
 <span class="normal">2909</span>
-<span class="normal">2910</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
+<span class="normal">2910</span>
+<span class="normal">2911</span>
+<span class="normal">2912</span>
+<span class="normal">2913</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return all combinations of length r.</span>
 
 <span class="sd">    Args:</span>
@@ -9582,10 +9596,7 @@ The returned mutable sequence can be used to continue the call chain:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2953</span>
-<span class="normal">2954</span>
-<span class="normal">2955</span>
-<span class="normal">2956</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2956</span>
 <span class="normal">2957</span>
 <span class="normal">2958</span>
 <span class="normal">2959</span>
@@ -9599,7 +9610,10 @@ The returned mutable sequence can be used to continue the call chain:
 <span class="normal">2967</span>
 <span class="normal">2968</span>
 <span class="normal">2969</span>
-<span class="normal">2970</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">combinations_with_replacement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
+<span class="normal">2970</span>
+<span class="normal">2971</span>
+<span class="normal">2972</span>
+<span class="normal">2973</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">combinations_with_replacement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return all combinations with replacement of length r.</span>
 
 <span class="sd">    Args:</span>
@@ -9726,10 +9740,7 @@ The returned mutable sequence can be used to continue the call chain:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2435</span>
-<span class="normal">2436</span>
-<span class="normal">2437</span>
-<span class="normal">2438</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2438</span>
 <span class="normal">2439</span>
 <span class="normal">2440</span>
 <span class="normal">2441</span>
@@ -9779,7 +9790,10 @@ The returned mutable sequence can be used to continue the call chain:
 <span class="normal">2485</span>
 <span class="normal">2486</span>
 <span class="normal">2487</span>
-<span class="normal">2488</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">diff_at</span><span class="p">[</span><span class="n">R</span><span class="p">](</span>
+<span class="normal">2488</span>
+<span class="normal">2489</span>
+<span class="normal">2490</span>
+<span class="normal">2491</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">diff_at</span><span class="p">[</span><span class="n">R</span><span class="p">](</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">R</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Option</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">Option</span><span class="p">[</span><span class="n">T</span><span class="p">]]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Yields pairs of differing elements from two iterables.</span>
@@ -9923,10 +9937,7 @@ This keep the code clean and readable, without index access like <code>[0]</code
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2858</span>
-<span class="normal">2859</span>
-<span class="normal">2860</span>
-<span class="normal">2861</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2861</span>
 <span class="normal">2862</span>
 <span class="normal">2863</span>
 <span class="normal">2864</span>
@@ -9948,7 +9959,10 @@ This keep the code clean and readable, without index access like <code>[0]</code
 <span class="normal">2880</span>
 <span class="normal">2881</span>
 <span class="normal">2882</span>
-<span class="normal">2883</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">T</span><span class="p">]]:</span>
+<span class="normal">2883</span>
+<span class="normal">2884</span>
+<span class="normal">2885</span>
+<span class="normal">2886</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">T</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a `Iter` of (index, value) pairs.</span>
 
 <span class="sd">    Each value in the `Iter` is paired with its index, starting from 0.</span>
@@ -10081,10 +10095,7 @@ This keep the code clean and readable, without index access like <code>[0]</code
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1850</span>
-<span class="normal">1851</span>
-<span class="normal">1852</span>
-<span class="normal">1853</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1853</span>
 <span class="normal">1854</span>
 <span class="normal">1855</span>
 <span class="normal">1856</span>
@@ -10122,7 +10133,10 @@ This keep the code clean and readable, without index access like <code>[0]</code
 <span class="normal">1888</span>
 <span class="normal">1889</span>
 <span class="normal">1890</span>
-<span class="normal">1891</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">filter</span><span class="p">[</span><span class="n">U</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">TypeIs</span><span class="p">[</span><span class="n">U</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">Iter</span><span class="p">[</span><span class="n">U</span><span class="p">]:</span>
+<span class="normal">1891</span>
+<span class="normal">1892</span>
+<span class="normal">1893</span>
+<span class="normal">1894</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">filter</span><span class="p">[</span><span class="n">U</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">TypeIs</span><span class="p">[</span><span class="n">U</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">Iter</span><span class="p">[</span><span class="n">U</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates an `Iter` which uses a closure to determine if an element should be yielded.</span>
 
 <span class="sd">    Given an element the closure must return true or false.</span>
@@ -10251,10 +10265,7 @@ This keep the code clean and readable, without index access like <code>[0]</code
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1977</span>
-<span class="normal">1978</span>
-<span class="normal">1979</span>
-<span class="normal">1980</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1980</span>
 <span class="normal">1981</span>
 <span class="normal">1982</span>
 <span class="normal">1983</span>
@@ -10274,7 +10285,10 @@ This keep the code clean and readable, without index access like <code>[0]</code
 <span class="normal">1997</span>
 <span class="normal">1998</span>
 <span class="normal">1999</span>
-<span class="normal">2000</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">filter_false</span><span class="p">[</span><span class="n">U</span><span class="p">](</span>
+<span class="normal">2000</span>
+<span class="normal">2001</span>
+<span class="normal">2002</span>
+<span class="normal">2003</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">filter_false</span><span class="p">[</span><span class="n">U</span><span class="p">](</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">TypeIs</span><span class="p">[</span><span class="n">U</span><span class="p">]]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">Iter</span><span class="p">[</span><span class="n">U</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return elements for which **func** is `False`.</span>
@@ -10398,10 +10412,7 @@ This keep the code clean and readable, without index access like <code>[0]</code
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2002</span>
-<span class="normal">2003</span>
-<span class="normal">2004</span>
-<span class="normal">2005</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2005</span>
 <span class="normal">2006</span>
 <span class="normal">2007</span>
 <span class="normal">2008</span>
@@ -10444,7 +10455,10 @@ This keep the code clean and readable, without index access like <code>[0]</code
 <span class="normal">2045</span>
 <span class="normal">2046</span>
 <span class="normal">2047</span>
-<span class="normal">2048</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">filter_map</span><span class="p">[</span><span class="n">R</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">Option</span><span class="p">[</span><span class="n">R</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">R</span><span class="p">]:</span>
+<span class="normal">2048</span>
+<span class="normal">2049</span>
+<span class="normal">2050</span>
+<span class="normal">2051</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">filter_map</span><span class="p">[</span><span class="n">R</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">Option</span><span class="p">[</span><span class="n">R</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">R</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates an iterator that both filters and maps.</span>
 
 <span class="sd">    The returned iterator yields only the values for which the supplied closure returns Some(value).</span>
@@ -10620,10 +10634,7 @@ This keep the code clean and readable, without index access like <code>[0]</code
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2100</span>
-<span class="normal">2101</span>
-<span class="normal">2102</span>
-<span class="normal">2103</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2103</span>
 <span class="normal">2104</span>
 <span class="normal">2105</span>
 <span class="normal">2106</span>
@@ -10660,7 +10671,10 @@ This keep the code clean and readable, without index access like <code>[0]</code
 <span class="normal">2137</span>
 <span class="normal">2138</span>
 <span class="normal">2139</span>
-<span class="normal">2140</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">filter_map_star</span><span class="p">[</span><span class="n">U</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">R</span><span class="p">](</span>
+<span class="normal">2140</span>
+<span class="normal">2141</span>
+<span class="normal">2142</span>
+<span class="normal">2143</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">filter_map_star</span><span class="p">[</span><span class="n">U</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">R</span><span class="p">](</span>
     <span class="bp">self</span><span class="p">:</span> <span class="n">Iter</span><span class="p">[</span><span class="n">U</span><span class="p">],</span>
     <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Option</span><span class="p">[</span><span class="n">R</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">R</span><span class="p">]:</span>
@@ -10822,10 +10836,7 @@ This keep the code clean and readable, without index access like <code>[0]</code
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1944</span>
-<span class="normal">1945</span>
-<span class="normal">1946</span>
-<span class="normal">1947</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1947</span>
 <span class="normal">1948</span>
 <span class="normal">1949</span>
 <span class="normal">1950</span>
@@ -10849,7 +10860,10 @@ This keep the code clean and readable, without index access like <code>[0]</code
 <span class="normal">1968</span>
 <span class="normal">1969</span>
 <span class="normal">1970</span>
-<span class="normal">1971</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">filter_star</span><span class="p">[</span><span class="n">U</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">]](</span>
+<span class="normal">1971</span>
+<span class="normal">1972</span>
+<span class="normal">1973</span>
+<span class="normal">1974</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">filter_star</span><span class="p">[</span><span class="n">U</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">]](</span>
     <span class="bp">self</span><span class="p">:</span> <span class="n">Iter</span><span class="p">[</span><span class="n">U</span><span class="p">],</span>
     <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">bool</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">U</span><span class="p">]:</span>
@@ -10965,10 +10979,7 @@ This keep the code clean and readable, without index access like <code>[0]</code
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1564</span>
-<span class="normal">1565</span>
-<span class="normal">1566</span>
-<span class="normal">1567</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1567</span>
 <span class="normal">1568</span>
 <span class="normal">1569</span>
 <span class="normal">1570</span>
@@ -10990,7 +11001,10 @@ This keep the code clean and readable, without index access like <code>[0]</code
 <span class="normal">1586</span>
 <span class="normal">1587</span>
 <span class="normal">1588</span>
-<span class="normal">1589</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">find_map</span><span class="p">[</span><span class="n">R</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">Option</span><span class="p">[</span><span class="n">R</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">R</span><span class="p">]:</span>
+<span class="normal">1589</span>
+<span class="normal">1590</span>
+<span class="normal">1591</span>
+<span class="normal">1592</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">find_map</span><span class="p">[</span><span class="n">R</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">Option</span><span class="p">[</span><span class="n">R</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">R</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Applies function to the elements of the `Iterator` and returns the first Some(R) result.</span>
 
 <span class="sd">    `Iter.find_map(f)` is equivalent to `Iter.filter_map(f).next()`.</span>
@@ -11099,10 +11113,7 @@ This keep the code clean and readable, without index access like <code>[0]</code
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1172</span>
-<span class="normal">1173</span>
-<span class="normal">1174</span>
-<span class="normal">1175</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1175</span>
 <span class="normal">1176</span>
 <span class="normal">1177</span>
 <span class="normal">1178</span>
@@ -11120,7 +11131,10 @@ This keep the code clean and readable, without index access like <code>[0]</code
 <span class="normal">1190</span>
 <span class="normal">1191</span>
 <span class="normal">1192</span>
-<span class="normal">1193</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">flat_map</span><span class="p">[</span><span class="n">R</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">R</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">R</span><span class="p">]:</span>
+<span class="normal">1193</span>
+<span class="normal">1194</span>
+<span class="normal">1195</span>
+<span class="normal">1196</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">flat_map</span><span class="p">[</span><span class="n">R</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">R</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">R</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates an iterator that applies a function to each element of the original iterator and flattens the result.</span>
 
 <span class="sd">    This is useful when the **func** you want to pass to `.map()` itself returns an iterable, and you want to avoid having nested iterables in the output.</span>
@@ -11234,10 +11248,7 @@ Here we see that <code>flatten()</code> does not perform a “deep” flatten.</
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1122</span>
-<span class="normal">1123</span>
-<span class="normal">1124</span>
-<span class="normal">1125</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1125</span>
 <span class="normal">1126</span>
 <span class="normal">1127</span>
 <span class="normal">1128</span>
@@ -11282,7 +11293,10 @@ Here we see that <code>flatten()</code> does not perform a “deep” flatten.</
 <span class="normal">1167</span>
 <span class="normal">1168</span>
 <span class="normal">1169</span>
-<span class="normal">1170</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">flatten</span><span class="p">[</span><span class="n">U</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">]](</span><span class="bp">self</span><span class="p">:</span> <span class="n">Iter</span><span class="p">[</span><span class="n">U</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
+<span class="normal">1170</span>
+<span class="normal">1171</span>
+<span class="normal">1172</span>
+<span class="normal">1173</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">flatten</span><span class="p">[</span><span class="n">U</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">]](</span><span class="bp">self</span><span class="p">:</span> <span class="n">Iter</span><span class="p">[</span><span class="n">U</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates an `Iter` that flattens nested structure.</span>
 
 <span class="sd">    Returns:</span>
@@ -11977,10 +11991,7 @@ Here we see that <code>flatten()</code> does not perform a “deep” flatten.</
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3084</span>
-<span class="normal">3085</span>
-<span class="normal">3086</span>
-<span class="normal">3087</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3087</span>
 <span class="normal">3088</span>
 <span class="normal">3089</span>
 <span class="normal">3090</span>
@@ -12057,7 +12068,10 @@ Here we see that <code>flatten()</code> does not perform a “deep” flatten.</
 <span class="normal">3161</span>
 <span class="normal">3162</span>
 <span class="normal">3163</span>
-<span class="normal">3164</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">group_by</span><span class="p">(</span>
+<span class="normal">3164</span>
+<span class="normal">3165</span>
+<span class="normal">3166</span>
+<span class="normal">3167</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">group_by</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">key</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span> <span class="o">|</span> <span class="n">T</span><span class="p">,</span> <span class="n">Self</span><span class="p">]]:</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
@@ -12242,10 +12256,7 @@ Or use <code>.filter_map(...)</code> to only keep the <code>Ok</code> values.
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2794</span>
-<span class="normal">2795</span>
-<span class="normal">2796</span>
-<span class="normal">2797</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2797</span>
 <span class="normal">2798</span>
 <span class="normal">2799</span>
 <span class="normal">2800</span>
@@ -12304,7 +12315,10 @@ Or use <code>.filter_map(...)</code> to only keep the <code>Ok</code> values.
 <span class="normal">2853</span>
 <span class="normal">2854</span>
 <span class="normal">2855</span>
-<span class="normal">2856</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_strictly_n</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">Result</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">]]:</span>
+<span class="normal">2856</span>
+<span class="normal">2857</span>
+<span class="normal">2858</span>
+<span class="normal">2859</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_strictly_n</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">Result</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Yield`Ok[T]` as long as the iterable has exactly *n* items.</span>
 
 <span class="sd">    If it has fewer than *n* items, yield `Err[ValueError]` with the actual number of items.</span>
@@ -12462,10 +12476,7 @@ Or use <code>.filter_map(...)</code> to only keep the <code>Ok</code> values.
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1593</span>
-<span class="normal">1594</span>
-<span class="normal">1595</span>
-<span class="normal">1596</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1596</span>
 <span class="normal">1597</span>
 <span class="normal">1598</span>
 <span class="normal">1599</span>
@@ -12496,7 +12507,10 @@ Or use <code>.filter_map(...)</code> to only keep the <code>Ok</code> values.
 <span class="normal">1624</span>
 <span class="normal">1625</span>
 <span class="normal">1626</span>
-<span class="normal">1627</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">map</span><span class="p">[</span><span class="n">R</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">R</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">R</span><span class="p">]:</span>
+<span class="normal">1627</span>
+<span class="normal">1628</span>
+<span class="normal">1629</span>
+<span class="normal">1630</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">map</span><span class="p">[</span><span class="n">R</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">R</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">R</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply a function **func** to each element of the `Iter`.</span>
 
 <span class="sd">    If you are good at thinking in types, you can think of `Iter.map()` like this:</span>
@@ -12633,10 +12647,7 @@ Or use <code>.filter_map(...)</code> to only keep the <code>Ok</code> values.
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3012</span>
-<span class="normal">3013</span>
-<span class="normal">3014</span>
-<span class="normal">3015</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3015</span>
 <span class="normal">3016</span>
 <span class="normal">3017</span>
 <span class="normal">3018</span>
@@ -12655,7 +12666,10 @@ Or use <code>.filter_map(...)</code> to only keep the <code>Ok</code> values.
 <span class="normal">3031</span>
 <span class="normal">3032</span>
 <span class="normal">3033</span>
-<span class="normal">3034</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">map_juxt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">funcs</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">object</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
+<span class="normal">3034</span>
+<span class="normal">3035</span>
+<span class="normal">3036</span>
+<span class="normal">3037</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">map_juxt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">funcs</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">object</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply several functions to each item.</span>
 
 <span class="sd">    Returns a new Iter where each item is a tuple of the results of applying each function to the original item.</span>
@@ -12799,10 +12813,7 @@ Not only it is more readable, but it's also much more performant (up to 30% fast
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1679</span>
-<span class="normal">1680</span>
-<span class="normal">1681</span>
-<span class="normal">1682</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1682</span>
 <span class="normal">1683</span>
 <span class="normal">1684</span>
 <span class="normal">1685</span>
@@ -12833,7 +12844,10 @@ Not only it is more readable, but it's also much more performant (up to 30% fast
 <span class="normal">1710</span>
 <span class="normal">1711</span>
 <span class="normal">1712</span>
-<span class="normal">1713</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">map_star</span><span class="p">[</span><span class="n">U</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">R</span><span class="p">](</span>
+<span class="normal">1713</span>
+<span class="normal">1714</span>
+<span class="normal">1715</span>
+<span class="normal">1716</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">map_star</span><span class="p">[</span><span class="n">U</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">R</span><span class="p">](</span>
     <span class="bp">self</span><span class="p">:</span> <span class="n">Iter</span><span class="p">[</span><span class="n">U</span><span class="p">],</span>
     <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">R</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">R</span><span class="p">]:</span>
@@ -12960,10 +12974,7 @@ the iterator, and yield elements while it returns <code>Some(_)</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1715</span>
-<span class="normal">1716</span>
-<span class="normal">1717</span>
-<span class="normal">1718</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1718</span>
 <span class="normal">1719</span>
 <span class="normal">1720</span>
 <span class="normal">1721</span>
@@ -12997,7 +13008,10 @@ the iterator, and yield elements while it returns <code>Some(_)</code>.</p>
 <span class="normal">1749</span>
 <span class="normal">1750</span>
 <span class="normal">1751</span>
-<span class="normal">1752</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">map_while</span><span class="p">[</span><span class="n">R</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">Option</span><span class="p">[</span><span class="n">R</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">R</span><span class="p">]:</span>
+<span class="normal">1752</span>
+<span class="normal">1753</span>
+<span class="normal">1754</span>
+<span class="normal">1755</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">map_while</span><span class="p">[</span><span class="n">R</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">Option</span><span class="p">[</span><span class="n">R</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">R</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates an iterator that both yields elements based on a predicate and maps.</span>
 
 <span class="sd">    `map_while()` takes a closure as an argument. It will call this closure on each element of</span>
@@ -13191,10 +13205,7 @@ the iterator, and yield elements while it returns <code>Some(_)</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2536</span>
-<span class="normal">2537</span>
-<span class="normal">2538</span>
-<span class="normal">2539</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2539</span>
 <span class="normal">2540</span>
 <span class="normal">2541</span>
 <span class="normal">2542</span>
@@ -13229,7 +13240,10 @@ the iterator, and yield elements while it returns <code>Some(_)</code>.</p>
 <span class="normal">2571</span>
 <span class="normal">2572</span>
 <span class="normal">2573</span>
-<span class="normal">2574</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">map_windows</span><span class="p">[</span><span class="n">R</span><span class="p">](</span>
+<span class="normal">2574</span>
+<span class="normal">2575</span>
+<span class="normal">2576</span>
+<span class="normal">2577</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">map_windows</span><span class="p">[</span><span class="n">R</span><span class="p">](</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]],</span> <span class="n">R</span><span class="p">],</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
@@ -13411,10 +13425,7 @@ the iterator, and yield elements while it returns <code>Some(_)</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2616</span>
-<span class="normal">2617</span>
-<span class="normal">2618</span>
-<span class="normal">2619</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2619</span>
 <span class="normal">2620</span>
 <span class="normal">2621</span>
 <span class="normal">2622</span>
@@ -13440,7 +13451,10 @@ the iterator, and yield elements while it returns <code>Some(_)</code>.</p>
 <span class="normal">2642</span>
 <span class="normal">2643</span>
 <span class="normal">2644</span>
-<span class="normal">2645</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">map_windows_star</span><span class="p">[</span><span class="n">R</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">R</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">R</span><span class="p">]:</span>
+<span class="normal">2645</span>
+<span class="normal">2646</span>
+<span class="normal">2647</span>
+<span class="normal">2648</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">map_windows_star</span><span class="p">[</span><span class="n">R</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">R</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">R</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Calls the given *func* for each contiguous window of size *length* over **self**.</span>
 
 <span class="sd">    The windows during mapping overlaps.</span>
@@ -13552,10 +13566,7 @@ the iterator, and yield elements while it returns <code>Some(_)</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3257</span>
-<span class="normal">3258</span>
-<span class="normal">3259</span>
-<span class="normal">3260</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3260</span>
 <span class="normal">3261</span>
 <span class="normal">3262</span>
 <span class="normal">3263</span>
@@ -13573,7 +13584,10 @@ the iterator, and yield elements while it returns <code>Some(_)</code>.</p>
 <span class="normal">3275</span>
 <span class="normal">3276</span>
 <span class="normal">3277</span>
-<span class="normal">3278</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">most_common</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Vec</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="normal">3278</span>
+<span class="normal">3279</span>
+<span class="normal">3280</span>
+<span class="normal">3281</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">most_common</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Vec</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the **n** most common elements and their counts from the `Iterator`.</span>
 
 <span class="sd">    If **n** is `None`, then all elements are returned.</span>
@@ -13962,10 +13976,7 @@ the iterator, and yield elements while it returns <code>Some(_)</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2972</span>
-<span class="normal">2973</span>
-<span class="normal">2974</span>
-<span class="normal">2975</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2975</span>
 <span class="normal">2976</span>
 <span class="normal">2977</span>
 <span class="normal">2978</span>
@@ -13976,7 +13987,10 @@ the iterator, and yield elements while it returns <code>Some(_)</code>.</p>
 <span class="normal">2983</span>
 <span class="normal">2984</span>
 <span class="normal">2985</span>
-<span class="normal">2986</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">pairwise</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">T</span><span class="p">]]:</span>
+<span class="normal">2986</span>
+<span class="normal">2987</span>
+<span class="normal">2988</span>
+<span class="normal">2989</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">pairwise</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">T</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an iterator over pairs of consecutive elements.</span>
 
 <span class="sd">    Returns:</span>
@@ -14110,10 +14124,7 @@ If the length of seq is not evenly divisible by n, the final tuple is dropped if
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2663</span>
-<span class="normal">2664</span>
-<span class="normal">2665</span>
-<span class="normal">2666</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2666</span>
 <span class="normal">2667</span>
 <span class="normal">2668</span>
 <span class="normal">2669</span>
@@ -14134,7 +14145,10 @@ If the length of seq is not evenly divisible by n, the final tuple is dropped if
 <span class="normal">2684</span>
 <span class="normal">2685</span>
 <span class="normal">2686</span>
-<span class="normal">2687</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">partition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pad</span><span class="p">:</span> <span class="n">T</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
+<span class="normal">2687</span>
+<span class="normal">2688</span>
+<span class="normal">2689</span>
+<span class="normal">2690</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">partition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pad</span><span class="p">:</span> <span class="n">T</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Partition **self** into `tuples` of length **n**.</span>
 
 <span class="sd">    Args:</span>
@@ -14243,10 +14257,7 @@ If the length of seq is not evenly divisible by n, the final tuple is dropped if
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2689</span>
-<span class="normal">2690</span>
-<span class="normal">2691</span>
-<span class="normal">2692</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2692</span>
 <span class="normal">2693</span>
 <span class="normal">2694</span>
 <span class="normal">2695</span>
@@ -14264,7 +14275,10 @@ If the length of seq is not evenly divisible by n, the final tuple is dropped if
 <span class="normal">2707</span>
 <span class="normal">2708</span>
 <span class="normal">2709</span>
-<span class="normal">2710</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">partition_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
+<span class="normal">2710</span>
+<span class="normal">2711</span>
+<span class="normal">2712</span>
+<span class="normal">2713</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">partition_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Partition all elements of sequence into tuples of length at most n.</span>
 
 <span class="sd">    The final tuple may be shorter to accommodate extra elements.</span>
@@ -14373,10 +14387,7 @@ and subsequent items are collected into that <code>tuple</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2712</span>
-<span class="normal">2713</span>
-<span class="normal">2714</span>
-<span class="normal">2715</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2715</span>
 <span class="normal">2716</span>
 <span class="normal">2717</span>
 <span class="normal">2718</span>
@@ -14397,7 +14408,10 @@ and subsequent items are collected into that <code>tuple</code>.</p>
 <span class="normal">2733</span>
 <span class="normal">2734</span>
 <span class="normal">2735</span>
-<span class="normal">2736</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">partition_by</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">predicate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">bool</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
+<span class="normal">2736</span>
+<span class="normal">2737</span>
+<span class="normal">2738</span>
+<span class="normal">2739</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">partition_by</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">predicate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">bool</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Partition the `Iterator` into a sequence of `tuples` according to a predicate function.</span>
 
 <span class="sd">    Every time the output of `predicate` changes, a new `tuple` is started,</span>
@@ -14515,10 +14529,7 @@ and subsequent items are collected into that <code>tuple</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2762</span>
-<span class="normal">2763</span>
-<span class="normal">2764</span>
-<span class="normal">2765</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2765</span>
 <span class="normal">2766</span>
 <span class="normal">2767</span>
 <span class="normal">2768</span>
@@ -14545,7 +14556,10 @@ and subsequent items are collected into that <code>tuple</code>.</p>
 <span class="normal">2789</span>
 <span class="normal">2790</span>
 <span class="normal">2791</span>
-<span class="normal">2792</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">peekable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Peekable</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+<span class="normal">2792</span>
+<span class="normal">2793</span>
+<span class="normal">2794</span>
+<span class="normal">2795</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">peekable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Peekable</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieve the next **n** elements from the `Iterator`, and return a `Seq` of the retrieved elements along with the original `Iterator`, unconsumed.</span>
 
 <span class="sd">    The returned `Peekable` object contains two attributes:</span>
@@ -14663,10 +14677,7 @@ and subsequent items are collected into that <code>tuple</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2920</span>
-<span class="normal">2921</span>
-<span class="normal">2922</span>
-<span class="normal">2923</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2923</span>
 <span class="normal">2924</span>
 <span class="normal">2925</span>
 <span class="normal">2926</span>
@@ -14680,7 +14691,10 @@ and subsequent items are collected into that <code>tuple</code>.</p>
 <span class="normal">2934</span>
 <span class="normal">2935</span>
 <span class="normal">2936</span>
-<span class="normal">2937</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">permutations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
+<span class="normal">2937</span>
+<span class="normal">2938</span>
+<span class="normal">2939</span>
+<span class="normal">2940</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">permutations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return all permutations of length r.</span>
 
 <span class="sd">    Args:</span>
@@ -14826,10 +14840,7 @@ other iterable.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2385</span>
-<span class="normal">2386</span>
-<span class="normal">2387</span>
-<span class="normal">2388</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2388</span>
 <span class="normal">2389</span>
 <span class="normal">2390</span>
 <span class="normal">2391</span>
@@ -14874,7 +14885,10 @@ other iterable.</p>
 <span class="normal">2430</span>
 <span class="normal">2431</span>
 <span class="normal">2432</span>
-<span class="normal">2433</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">product</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">others</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
+<span class="normal">2433</span>
+<span class="normal">2434</span>
+<span class="normal">2435</span>
+<span class="normal">2436</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">product</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">others</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes the Cartesian product with another iterable.</span>
 
 <span class="sd">    This is the declarative equivalent of nested for-loops.</span>
@@ -15017,10 +15031,7 @@ other iterable.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1754</span>
-<span class="normal">1755</span>
-<span class="normal">1756</span>
-<span class="normal">1757</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1757</span>
 <span class="normal">1758</span>
 <span class="normal">1759</span>
 <span class="normal">1760</span>
@@ -15057,7 +15068,10 @@ other iterable.</p>
 <span class="normal">1791</span>
 <span class="normal">1792</span>
 <span class="normal">1793</span>
-<span class="normal">1794</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">repeat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">Self</span><span class="p">]:</span>
+<span class="normal">1794</span>
+<span class="normal">1795</span>
+<span class="normal">1796</span>
+<span class="normal">1797</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">repeat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">Self</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Repeat the entire `Iter` **n** times (as elements).</span>
 
 <span class="sd">    If **n** is `None`, repeat indefinitely.</span>
@@ -15209,10 +15223,7 @@ other iterable.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1796</span>
-<span class="normal">1797</span>
-<span class="normal">1798</span>
-<span class="normal">1799</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1799</span>
 <span class="normal">1800</span>
 <span class="normal">1801</span>
 <span class="normal">1802</span>
@@ -15256,7 +15267,10 @@ other iterable.</p>
 <span class="normal">1840</span>
 <span class="normal">1841</span>
 <span class="normal">1842</span>
-<span class="normal">1843</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">scan</span><span class="p">[</span><span class="n">U</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial</span><span class="p">:</span> <span class="n">U</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">U</span><span class="p">,</span> <span class="n">T</span><span class="p">],</span> <span class="n">Option</span><span class="p">[</span><span class="n">U</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">U</span><span class="p">]:</span>
+<span class="normal">1843</span>
+<span class="normal">1844</span>
+<span class="normal">1845</span>
+<span class="normal">1846</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">scan</span><span class="p">[</span><span class="n">U</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial</span><span class="p">:</span> <span class="n">U</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">U</span><span class="p">,</span> <span class="n">T</span><span class="p">],</span> <span class="n">Option</span><span class="p">[</span><span class="n">U</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">U</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Transform elements by sharing state between iterations.</span>
 
 <span class="sd">    `scan` takes two arguments:</span>
@@ -15417,10 +15431,7 @@ The result is a new <code>Vec</code> over the sorted sequence.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3187</span>
-<span class="normal">3188</span>
-<span class="normal">3189</span>
-<span class="normal">3190</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3190</span>
 <span class="normal">3191</span>
 <span class="normal">3192</span>
 <span class="normal">3193</span>
@@ -15446,7 +15457,10 @@ The result is a new <code>Vec</code> over the sorted sequence.</p>
 <span class="normal">3213</span>
 <span class="normal">3214</span>
 <span class="normal">3215</span>
-<span class="normal">3216</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">sort</span><span class="p">(</span>
+<span class="normal">3216</span>
+<span class="normal">3217</span>
+<span class="normal">3218</span>
+<span class="normal">3219</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">sort</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">key</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">SupportsRichComparison</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
@@ -15587,10 +15601,7 @@ The result is a new <code>Vec</code> over the sorted sequence.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1440</span>
-<span class="normal">1441</span>
-<span class="normal">1442</span>
-<span class="normal">1443</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1443</span>
 <span class="normal">1444</span>
 <span class="normal">1445</span>
 <span class="normal">1446</span>
@@ -15644,7 +15655,10 @@ The result is a new <code>Vec</code> over the sorted sequence.</p>
 <span class="normal">1494</span>
 <span class="normal">1495</span>
 <span class="normal">1496</span>
-<span class="normal">1497</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">split_after</span><span class="p">(</span>
+<span class="normal">1497</span>
+<span class="normal">1498</span>
+<span class="normal">1499</span>
+<span class="normal">1500</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">split_after</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">predicate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">bool</span><span class="p">],</span>
     <span class="n">max_split</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
@@ -15838,10 +15852,7 @@ At most <em>max_split</em> splits are done.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1366</span>
-<span class="normal">1367</span>
-<span class="normal">1368</span>
-<span class="normal">1369</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1369</span>
 <span class="normal">1370</span>
 <span class="normal">1371</span>
 <span class="normal">1372</span>
@@ -15910,7 +15921,10 @@ At most <em>max_split</em> splits are done.</p>
 <span class="normal">1435</span>
 <span class="normal">1436</span>
 <span class="normal">1437</span>
-<span class="normal">1438</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">split_at</span><span class="p">(</span>
+<span class="normal">1438</span>
+<span class="normal">1439</span>
+<span class="normal">1440</span>
+<span class="normal">1441</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">split_at</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">predicate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">bool</span><span class="p">],</span>
     <span class="n">max_split</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
@@ -16096,10 +16110,7 @@ At most <em>max_split</em> splits are done.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1499</span>
-<span class="normal">1500</span>
-<span class="normal">1501</span>
-<span class="normal">1502</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1502</span>
 <span class="normal">1503</span>
 <span class="normal">1504</span>
 <span class="normal">1505</span>
@@ -16159,7 +16170,10 @@ At most <em>max_split</em> splits are done.</p>
 <span class="normal">1559</span>
 <span class="normal">1560</span>
 <span class="normal">1561</span>
-<span class="normal">1562</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">split_before</span><span class="p">(</span>
+<span class="normal">1562</span>
+<span class="normal">1563</span>
+<span class="normal">1564</span>
+<span class="normal">1565</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">split_before</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">predicate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">bool</span><span class="p">],</span>
     <span class="n">max_split</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
@@ -16333,10 +16347,7 @@ At most <em>max_split</em> splits are done.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1243</span>
-<span class="normal">1244</span>
-<span class="normal">1245</span>
-<span class="normal">1246</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1246</span>
 <span class="normal">1247</span>
 <span class="normal">1248</span>
 <span class="normal">1249</span>
@@ -16390,7 +16401,10 @@ At most <em>max_split</em> splits are done.</p>
 <span class="normal">1297</span>
 <span class="normal">1298</span>
 <span class="normal">1299</span>
-<span class="normal">1300</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">split_into</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">sizes</span><span class="p">:</span> <span class="n">Option</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">Self</span><span class="p">]:</span>
+<span class="normal">1300</span>
+<span class="normal">1301</span>
+<span class="normal">1302</span>
+<span class="normal">1303</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">split_into</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">sizes</span><span class="p">:</span> <span class="n">Option</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">Self</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Yield a list of sequential items from iterable of length &#39;n&#39; for each integer &#39;n&#39; in sizes.</span>
 
 <span class="sd">    Args:</span>
@@ -16557,10 +16571,7 @@ At most <em>max_split</em> splits are done.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1302</span>
-<span class="normal">1303</span>
-<span class="normal">1304</span>
-<span class="normal">1305</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1305</span>
 <span class="normal">1306</span>
 <span class="normal">1307</span>
 <span class="normal">1308</span>
@@ -16619,7 +16630,10 @@ At most <em>max_split</em> splits are done.</p>
 <span class="normal">1361</span>
 <span class="normal">1362</span>
 <span class="normal">1363</span>
-<span class="normal">1364</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">split_when</span><span class="p">(</span>
+<span class="normal">1364</span>
+<span class="normal">1365</span>
+<span class="normal">1366</span>
+<span class="normal">1367</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">split_when</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">predicate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">,</span> <span class="n">T</span><span class="p">],</span> <span class="nb">bool</span><span class="p">],</span>
     <span class="n">max_split</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
@@ -16933,10 +16947,7 @@ previous yielded value until it returns <code>NONE</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3218</span>
-<span class="normal">3219</span>
-<span class="normal">3220</span>
-<span class="normal">3221</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3221</span>
 <span class="normal">3222</span>
 <span class="normal">3223</span>
 <span class="normal">3224</span>
@@ -16950,7 +16961,10 @@ previous yielded value until it returns <code>NONE</code>.</p>
 <span class="normal">3232</span>
 <span class="normal">3233</span>
 <span class="normal">3234</span>
-<span class="normal">3235</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">tail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Seq</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+<span class="normal">3235</span>
+<span class="normal">3236</span>
+<span class="normal">3237</span>
+<span class="normal">3238</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">tail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Seq</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a `Seq` of the last **n** elements of the `Iterator`.</span>
 
 <span class="sd">    Args:</span>
@@ -17065,10 +17079,7 @@ previous yielded value until it returns <code>NONE</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3237</span>
-<span class="normal">3238</span>
-<span class="normal">3239</span>
-<span class="normal">3240</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3240</span>
 <span class="normal">3241</span>
 <span class="normal">3242</span>
 <span class="normal">3243</span>
@@ -17083,7 +17094,10 @@ previous yielded value until it returns <code>NONE</code>.</p>
 <span class="normal">3252</span>
 <span class="normal">3253</span>
 <span class="normal">3254</span>
-<span class="normal">3255</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">top_n</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Seq</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
+<span class="normal">3255</span>
+<span class="normal">3256</span>
+<span class="normal">3257</span>
+<span class="normal">3258</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">top_n</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Seq</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a tuple of the top-n items according to key.</span>
 
 <span class="sd">    Args:</span>
@@ -17182,10 +17196,7 @@ previous yielded value until it returns <code>NONE</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 959</span>
-<span class="normal"> 960</span>
-<span class="normal"> 961</span>
-<span class="normal"> 962</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 962</span>
 <span class="normal"> 963</span>
 <span class="normal"> 964</span>
 <span class="normal"> 965</span>
@@ -17236,7 +17247,10 @@ previous yielded value until it returns <code>NONE</code>.</p>
 <span class="normal">1010</span>
 <span class="normal">1011</span>
 <span class="normal">1012</span>
-<span class="normal">1013</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">try_collect</span><span class="p">[</span><span class="n">U</span><span class="p">](</span><span class="bp">self</span><span class="p">:</span> <span class="n">Iter</span><span class="p">[</span><span class="n">Option</span><span class="p">[</span><span class="n">U</span><span class="p">]]</span> <span class="o">|</span> <span class="n">Iter</span><span class="p">[</span><span class="n">Result</span><span class="p">[</span><span class="n">U</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">Vec</span><span class="p">[</span><span class="n">U</span><span class="p">]]:</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
+<span class="normal">1013</span>
+<span class="normal">1014</span>
+<span class="normal">1015</span>
+<span class="normal">1016</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">try_collect</span><span class="p">[</span><span class="n">U</span><span class="p">](</span><span class="bp">self</span><span class="p">:</span> <span class="n">Iter</span><span class="p">[</span><span class="n">Option</span><span class="p">[</span><span class="n">U</span><span class="p">]]</span> <span class="o">|</span> <span class="n">Iter</span><span class="p">[</span><span class="n">Result</span><span class="p">[</span><span class="n">U</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">Vec</span><span class="p">[</span><span class="n">U</span><span class="p">]]:</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Fallibly transforms **self** into a `Vec`, short circuiting if a failure is encountered.</span>
 
 <span class="sd">    `try_collect()` is a variation of `collect()` that allows fallible conversions during collection.</span>
@@ -17356,10 +17370,7 @@ previous yielded value until it returns <code>NONE</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1195</span>
-<span class="normal">1196</span>
-<span class="normal">1197</span>
-<span class="normal">1198</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1198</span>
 <span class="normal">1199</span>
 <span class="normal">1200</span>
 <span class="normal">1201</span>
@@ -17402,7 +17413,10 @@ previous yielded value until it returns <code>NONE</code>.</p>
 <span class="normal">1238</span>
 <span class="normal">1239</span>
 <span class="normal">1240</span>
-<span class="normal">1241</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">unique_to_each</span><span class="p">[</span><span class="n">U</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">]](</span><span class="bp">self</span><span class="p">:</span> <span class="n">Iter</span><span class="p">[</span><span class="n">U</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">Iter</span><span class="p">[</span><span class="n">U</span><span class="p">]]:</span>
+<span class="normal">1241</span>
+<span class="normal">1242</span>
+<span class="normal">1243</span>
+<span class="normal">1244</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">unique_to_each</span><span class="p">[</span><span class="n">U</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">]](</span><span class="bp">self</span><span class="p">:</span> <span class="n">Iter</span><span class="p">[</span><span class="n">U</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">Iter</span><span class="p">[</span><span class="n">U</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the elements from each of the iterators that aren&#39;t in the other iterators.</span>
 
 <span class="sd">    It is assumed that the elements of each iterable are hashable.</span>
@@ -17515,10 +17529,7 @@ previous yielded value until it returns <code>NONE</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2290</span>
-<span class="normal">2291</span>
-<span class="normal">2292</span>
-<span class="normal">2293</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2293</span>
 <span class="normal">2294</span>
 <span class="normal">2295</span>
 <span class="normal">2296</span>
@@ -17548,7 +17559,10 @@ previous yielded value until it returns <code>NONE</code>.</p>
 <span class="normal">2320</span>
 <span class="normal">2321</span>
 <span class="normal">2322</span>
-<span class="normal">2323</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">unzip</span><span class="p">[</span><span class="n">U</span><span class="p">,</span> <span class="n">V</span><span class="p">](</span><span class="bp">self</span><span class="p">:</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">U</span><span class="p">,</span> <span class="n">V</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Unzipped</span><span class="p">[</span><span class="n">U</span><span class="p">,</span> <span class="n">V</span><span class="p">]:</span>
+<span class="normal">2323</span>
+<span class="normal">2324</span>
+<span class="normal">2325</span>
+<span class="normal">2326</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">unzip</span><span class="p">[</span><span class="n">U</span><span class="p">,</span> <span class="n">V</span><span class="p">](</span><span class="bp">self</span><span class="p">:</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">U</span><span class="p">,</span> <span class="n">V</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Unzipped</span><span class="p">[</span><span class="n">U</span><span class="p">,</span> <span class="n">V</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts an iterator of pairs into a pair of iterators.</span>
 
 <span class="sd">    Returns:</span>
@@ -17635,10 +17649,7 @@ previous yielded value until it returns <code>NONE</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3036</span>
-<span class="normal">3037</span>
-<span class="normal">3038</span>
-<span class="normal">3039</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3039</span>
 <span class="normal">3040</span>
 <span class="normal">3041</span>
 <span class="normal">3042</span>
@@ -17673,7 +17684,10 @@ previous yielded value until it returns <code>NONE</code>.</p>
 <span class="normal">3071</span>
 <span class="normal">3072</span>
 <span class="normal">3073</span>
-<span class="normal">3074</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_position</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Position</span><span class="p">,</span> <span class="n">T</span><span class="p">]]:</span>
+<span class="normal">3074</span>
+<span class="normal">3075</span>
+<span class="normal">3076</span>
+<span class="normal">3077</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_position</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Position</span><span class="p">,</span> <span class="n">T</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an iterable over (`Position`, `T`) tuples.</span>
 
 <span class="sd">    The `Position` indicates whether the item `T` is the first, middle, last, or only element in the iterable.</span>
@@ -17848,10 +17862,7 @@ This keep the code clean and readable, without index access like <code>[0]</code
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2181</span>
-<span class="normal">2182</span>
-<span class="normal">2183</span>
-<span class="normal">2184</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2184</span>
 <span class="normal">2185</span>
 <span class="normal">2186</span>
 <span class="normal">2187</span>
@@ -17880,7 +17891,10 @@ This keep the code clean and readable, without index access like <code>[0]</code
 <span class="normal">2210</span>
 <span class="normal">2211</span>
 <span class="normal">2212</span>
-<span class="normal">2213</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">zip</span><span class="p">(</span>
+<span class="normal">2213</span>
+<span class="normal">2214</span>
+<span class="normal">2215</span>
+<span class="normal">2216</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">zip</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="o">*</span><span class="n">others</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
     <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -18038,10 +18052,7 @@ This keep the code clean and readable, without index access like <code>[0]</code
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2259</span>
-<span class="normal">2260</span>
-<span class="normal">2261</span>
-<span class="normal">2262</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2262</span>
 <span class="normal">2263</span>
 <span class="normal">2264</span>
 <span class="normal">2265</span>
@@ -18067,7 +18078,10 @@ This keep the code clean and readable, without index access like <code>[0]</code
 <span class="normal">2285</span>
 <span class="normal">2286</span>
 <span class="normal">2287</span>
-<span class="normal">2288</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">zip_longest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">others</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Option</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="o">...</span><span class="p">]]:</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
+<span class="normal">2288</span>
+<span class="normal">2289</span>
+<span class="normal">2290</span>
+<span class="normal">2291</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">zip_longest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">others</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Option</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="o">...</span><span class="p">]]:</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a zip Iterator who yield a tuple where the i-th element comes from the i-th iterable argument.</span>
 
 <span class="sd">    Yield values until the longest iterable in the argument sequence is exhausted, and then it raises StopIteration.</span>
