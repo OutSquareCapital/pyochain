@@ -1,6 +1,15 @@
-from abc import ABC
 from collections.abc import Callable, Iterable
-from typing import Any, Concatenate, Final, Protocol, Self, final, overload, override
+from typing import (
+    Any,
+    Concatenate,
+    Final,
+    Protocol,
+    Self,
+    final,
+    overload,
+    override,
+    type_check_only,
+)
 
 from ._iter import Iter
 
@@ -1370,16 +1379,57 @@ This allows you to use `is pc.NONE` checks for identity, and improves performanc
 
 class ResultUnwrapError(RuntimeError): ...
 
-class Result[T, E](Pipeable, ABC):
-    """`Result[T, E]` is the type used for returning and propagating errors.
+type Result[T, E] = Ok[T, E] | Err[T, E]
+"""Type union representing the two variants of `Result`, `Ok` and `Err`.
 
-    It is a class that can represent two variants, `Ok[T]`, representing success and containing a value, and `Err[E]`, representing error and containing an error value.
+See the `ResultValue` Protocol for documentation on the methods available on `Result`, and the behavior of each variant.
+"""
+
+@type_check_only
+class ResultValue[T, E](Pipeable, Protocol):
+    """`ResultValue[T, E]` is the base Protocol defined for returning and propagating errors.
+
+    `Result[T, E]` is a the type union of the two possibles variants of the Protocol, `Ok[T, E]`, representing success and containing a value,  and `Err[T, E]`, representing error and containing an error value.
 
     Functions return `Result` whenever errors are expected and recoverable.
 
     For example, I/O or web requests can fail for many reasons, and using `Result` forces the caller to handle the possibility of failure.
 
     This is directly inspired by Rust's `Result` type, and provides similar functionality for error handling in Python.
+
+    Note:
+        Due to Python typing nature, we need to separate both the Protocol definition (`ResultValue`), and the type union (`Result`), which is the public facing type that users will interact with.
+
+        This separation allows type checkers to flag exhaustive handling of both variants, in `match` statements notably, while avoiding duplicated docstrings and method definitions.
+
+    Warning:
+        Do not try to instanciate this class, as it don't exist at runtime.
+
+        `Result` does in fact exist in the namespace, but it's an empty `Rust` struct,
+
+        and your type checker will warn you in any case because a `type Result = ...` is not supposed to be instanciable.
+
+    Example:
+    ```python
+    >>> from pyochain import Err, Ok, Result
+    >>>
+    >>> def is_positive(x: int) -> Result[str, ValueError]:
+    ...    if x > 0:
+    ...        return Ok(f"Value is {x}")
+    ...    msg = f"{x} is not positive"
+    ...    return Err(ValueError(msg))
+    >>>
+    >>> def handle_variant(x: Result[str, ValueError]) -> str:
+    ...    match x:
+    ...        case Ok(value):
+    ...            return f"Success: {value}"
+    ...        case Err(error):
+    ...            return f"Failure: {error}"
+    >>>
+    >>> is_positive(5).map(lambda s: s.upper()).into(handle_variant)
+    'Success: VALUE IS 5'
+    >>> is_positive(-3).map(lambda s: s.upper()).into(handle_variant)
+    'Failure: -3 is not positive'
 
     """
 
@@ -1401,7 +1451,7 @@ class Result[T, E](Pipeable, ABC):
 
         ```
         """
-    def flatten[T1, E1, E2](self: Result[Result[T1, E1], E2]) -> Result[T1, E1]:
+    def flatten[T1, E1, E2](self: ResultValue[Result[T1, E1], E2]) -> Result[T1, E1]:
         """Flattens a nested `Result`.
 
         Converts from `Result[Result[T, E], E]` to `Result[T, E]`.
@@ -1413,11 +1463,11 @@ class Result[T, E](Pipeable, ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> nested_ok: pc.Result[pc.Result[int, str], str] = pc.Ok(pc.Ok(2))
+        >>> from pyochain import Result, Ok, Err
+        >>> nested_ok: Result[Result[int, str], str] = Ok(Ok(2))
         >>> nested_ok.flatten()
         Ok(2)
-        >>> nested_err: pc.Result[pc.Result[int, str], str] = pc.Ok(pc.Err("inner error"))
+        >>> nested_err: Result[Result[int, str], str] = Ok(Err("inner error"))
         >>> nested_err.flatten()
         Err('inner error')
 
@@ -1494,7 +1544,7 @@ class Result[T, E](Pipeable, ABC):
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
     ) -> Result[R, E]: ...
     def map_star[U: Iterable[Any], R](
-        self: Result[U, E],
+        self: ResultValue[U, E],
         func: Callable[..., R],
     ) -> Result[R, E]:
         """Maps a `Result[tuple, E]` to `Result[R, E]` by unpacking the tuple.
@@ -1509,10 +1559,10 @@ class Result[T, E](Pipeable, ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Ok((2, 3)).map_star(lambda x, y: x + y)
+        >>> from pyochain import Ok, Err
+        >>> Ok((2, 3)).map_star(lambda x, y: x + y)
         Ok(5)
-        >>> pc.Err("error").map_star(lambda x, y: x + y)
+        >>> Err("error").map_star(lambda x, y: x + y)
         Err('error')
 
         ```
@@ -1569,7 +1619,7 @@ class Result[T, E](Pipeable, ABC):
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], Result[R, E]],
     ) -> Result[R, E]: ...
     def and_then_star[U: Iterable[Any], R](
-        self: Result[U, E],
+        self: ResultValue[U, E],
         func: Callable[..., Result[R, E]],
     ) -> Result[R, E]:
         """Calls a function if the result is `Ok`, unpacking the tuple.
@@ -1584,12 +1634,12 @@ class Result[T, E](Pipeable, ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> def to_str(x: int, y: int) -> pc.Result[str, str]:
-        ...     return pc.Ok(f"{x},{y}")
-        >>> pc.Ok((2, 3)).and_then_star(to_str)
+        >>> from pyochain import Ok, Err, Result
+        >>> def to_str(x: int, y: int) -> Result[str, str]:
+        ...     return Ok(f"{x},{y}")
+        >>> Ok((2, 3)).and_then_star(to_str)
         Ok('2,3')
-        >>> pc.Err("error").and_then_star(to_str)
+        >>> Err("error").and_then_star(to_str)
         Err('error')
 
 
@@ -2137,7 +2187,7 @@ class Result[T, E](Pipeable, ABC):
         ```
         """
 
-    def transpose(self: Result[Option[T], E]) -> Option[Result[T, E]]:
+    def transpose(self: ResultValue[Option[T], E]) -> Option[Result[T, E]]:
         """Transposes a Result containing an Option into an Option containing a Result.
 
         Can only be called if the inner type is `Option[T, E]`.
@@ -2149,12 +2199,12 @@ class Result[T, E](Pipeable, ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Ok(pc.Some(2)).transpose()
+        >>> from pyochain import Ok, Err, Some, NONE
+        >>> Ok(Some(2)).transpose()
         Some(Ok(2))
-        >>> pc.Ok(pc.NONE).transpose()
+        >>> Ok(NONE).transpose()
         NONE
-        >>> pc.Err("err").transpose()
+        >>> Err("err").transpose()
         Some(Err('err'))
 
         ```
@@ -2185,10 +2235,12 @@ class Result[T, E](Pipeable, ABC):
         """
 
 @final
-class Ok[T, E](Result[T, E]):
+class Ok[T, E](ResultValue[T, E]):
     """Represents a successful value.
 
-    For more documentation, see the `Result[T, E]` class.
+    One of the two variants of `Result[T, E]`, where `T` is the type of the value in `Ok`.
+
+    For more documentation, see the `ResultValue[T, E]` Protocol.
 
     Attributes:
         value (T): The contained successful value.
@@ -2197,13 +2249,16 @@ class Ok[T, E](Result[T, E]):
     __match_args__ = ("value",)
 
     value: T
+    # NOTE: this is an hack to avoid errors by immediatly casting `E` as `Any`, thus avoiding any type errors with incompatible types.
     def __new__(cls, value: T) -> Ok[T, Any]: ...  # pyright: ignore[reportExplicitAny]
 
 @final
-class Err[T, E](Result[T, E]):
+class Err[T, E](ResultValue[T, E]):
     """Represents an error value.
 
-    For more documentation, see the `Result[T, E]` class.
+    One of the two variants of `Result[T, E]`, where `E` is the type of the value in `Err`.
+
+    For more documentation, see the `ResultValue[T, E]` Protocol.
 
     Attributes:
         error (E): The contained error value.
@@ -2212,4 +2267,5 @@ class Err[T, E](Result[T, E]):
     __match_args__ = ("error",)
 
     error: E
+    # NOTE: same hack as in `Ok` for type errors
     def __new__(cls, error: E) -> Err[Any, E]: ...  # pyright: ignore[reportExplicitAny]

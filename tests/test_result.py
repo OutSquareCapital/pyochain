@@ -52,7 +52,7 @@ def test_ok_into() -> None:
 
 def test_err_unwrap_formats_python_exception_readably() -> None:
     """Test unwrap formatting for Python exception payloads."""
-    result: Result[int, Exception] = Err(ValueError("line 1\nline 2"))
+    result = Err(ValueError("line 1\nline 2"))
 
     with pytest.raises(ResultUnwrapError) as exc_info:
         result.unwrap()
@@ -64,7 +64,7 @@ def test_err_unwrap_formats_python_exception_readably() -> None:
 
 def test_err_expect_formats_python_exception_readably() -> None:
     """Test expect formatting for Python exception payloads."""
-    result: Result[int, Exception] = Err(ValueError("line 1\nline 2"))
+    result = Err(ValueError("line 1\nline 2"))
 
     with pytest.raises(ResultUnwrapError) as exc_info:
         result.expect("custom context")
@@ -74,7 +74,7 @@ def test_err_expect_formats_python_exception_readably() -> None:
 
 def test_err_unwrap_keeps_repr_for_non_exception_values() -> None:
     """Test unwrap formatting for non-exception error payloads."""
-    result: Result[int, object] = Err({"code": 12})
+    result = Err({"code": 12})
 
     with pytest.raises(ResultUnwrapError) as exc_info:
         result.unwrap()
