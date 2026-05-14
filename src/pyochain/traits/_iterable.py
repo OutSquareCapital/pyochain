@@ -170,6 +170,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
         >>> data.unpack_into(lambda a, b, c: a + b + c)
         6
 
+        ```
         """
         return func(*self, *args, **kwargs)
 
