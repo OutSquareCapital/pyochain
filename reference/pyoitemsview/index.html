@@ -1712,8 +1712,7 @@ additional methods from the <code>PyoMappingView</code>, <code>PyoSet</code>, an
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2260</span>
-<span class="normal">2261</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2261</span>
 <span class="normal">2262</span>
 <span class="normal">2263</span>
 <span class="normal">2264</span>
@@ -1726,7 +1725,8 @@ additional methods from the <code>PyoMappingView</code>, <code>PyoSet</code>, an
 <span class="normal">2271</span>
 <span class="normal">2272</span>
 <span class="normal">2273</span>
-<span class="normal">2274</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoItemsView</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">](</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
+<span class="normal">2274</span>
+<span class="normal">2275</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoItemsView</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">](</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
     <span class="n">ItemsView</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">],</span> <span class="n">PyoMappingView</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]],</span> <span class="n">PyoSet</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]]</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A view of the items (key-value pairs) in a pyochain mapping.</span>
