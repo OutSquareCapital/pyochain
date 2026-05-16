@@ -79,29 +79,33 @@ For comparison, the above can be written in pure Python as the following (note t
 ...     return NONE if b == 0 else Some(a / b)
 >>> divide(10, 2)
 Some(5.0)
->>> divide(10, 0).unwrap_or(-1.0) # Provide a default value
+>>> # Provide a default value
+>>> divide(10, 0).unwrap_or(-1.0)
 -1.0
 >>> # Convert between Collections -> Option -> Result
 >>> data = Seq((1, 2, 3))
->>> data.then_some() # Convert Seq to Option
+>>> # Convert Seq to Option
+>>> data.then_some()
 Some(Seq(1, 2, 3))
->>>
->>> def _process(data: PyoIterable[int]) -> str: # Accept any Pyochain Iterable
+>>> # Accept any Pyochain Iterable
+>>> def _process(data: PyoIterable[int]) -> str:
 ...     return data.iter().map(str).join(", ")
->>>
->>> data.then(_process).ok_or("No values") # Process only if non-empty, convert Option to Result
+>>> # Process only if non-empty, convert Option to Result
+>>> data.then(_process).ok_or("No values") 
 Ok('1, 2, 3')
->>> Vec[int].new().then(_process).ok_or("No values") # Use new() to create an annotated empty Vec without brace and parentheses mixup
+>>> # Use new() to create an annotated empty Vec without brace and parentheses mixup
+>>> Vec[int].new().then(_process).ok_or("No values")
 Err('No values')
->>> Set[int](()).then(_process).ok_or("No values").ok() # Create empty Set, convert to Result, then back to Option
+>>> # Create empty Set, convert to Result, then back to Option
+>>> Set[int](()).then(_process).ok_or("No values").ok()
 NONE
 >>> def try_parse_int(s: str) -> Result[int, ValueError]:
 ...     try:
 ...         return Ok(int(s))
 ...     except ValueError as e:
 ...         return Err(e)
->>>
->>> def handle_result(res: Result[int, ValueError]) -> str: # Type safe exhaustive handling with pattern matching
+>>> # Type safe exhaustive handling with pattern matching
+>>> def handle_result(res: Result[int, ValueError]) -> str:
 ...     match res:
 ...         case Ok(value):
 ...             return f"Parsed value: {value}"
