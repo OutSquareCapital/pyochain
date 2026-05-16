@@ -176,10 +176,10 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
         Returns:
             int: The count of elements.
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2]).length()
+        >>> from pyochain import Seq, Range
+        >>> Seq((1, 2)).length()
         2
-        >>> pc.Iter(range(5)).length()
+        >>> Range(0, 5).length()
         5
 
         ```
@@ -197,8 +197,8 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq(["a", "b", "c"]).join("-")
+        >>> from pyochain import Seq
+        >>> Seq(("a", "b", "c")).join("-")
         'a-b-c'
 
         ```
@@ -214,8 +214,8 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             T: The first element of the `Iterable`.
 
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([9]).first()
+        >>> from pyochain import Seq
+        >>> Seq([9]).first()
         9
 
         ```
@@ -231,8 +231,8 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             T: The second element of the `Iterable`.
 
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([9, 8]).second()
+        >>> from pyochain import Seq
+        >>> Seq((9, 8)).second()
         8
 
         ```
@@ -248,8 +248,8 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             T: The last element of the `Iterable`.
 
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([7, 8, 9]).last()
+        >>> from pyochain import Seq
+        >>> Seq((7, 8, 9)).last()
         9
 
         ```
@@ -265,8 +265,8 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             int: The sum of all elements.
 
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).sum()
+        >>> from pyochain import Seq
+        >>> Seq((1, 2, 3)).sum()
         6
 
         ```
@@ -287,8 +287,8 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([3, 1, 2]).min()
+        >>> from pyochain import Seq
+        >>> Seq((3, 1, 2)).min()
         1
 
         ```
@@ -308,16 +308,16 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Seq
         >>> from dataclasses import dataclass
         >>> @dataclass
         ... class Foo:
         ...     x: int
         ...     y: str
         >>>
-        >>> pc.Seq([Foo(2, "a"), Foo(1, "b"), Foo(4, "c")]).min_by(key=lambda f: f.x)
+        >>> Seq((Foo(2, "a"), Foo(1, "b"), Foo(4, "c"))).min_by(key=lambda f: f.x)
         Foo(x=1, y='b')
-        >>> pc.Seq([Foo(2, "a"), Foo(1, "b"), Foo(1, "c")]).min_by(key=lambda f: f.x)
+        >>> Seq((Foo(2, "a"), Foo(1, "b"), Foo(1, "c"))).min_by(key=lambda f: f.x)
         Foo(x=1, y='b')
 
         ```
@@ -338,8 +338,8 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([3, 1, 2]).max()
+        >>> from pyochain import Seq
+        >>> Seq((3, 1, 2)).max()
         3
 
         ```
@@ -359,16 +359,16 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Seq
         >>> from dataclasses import dataclass
         >>> @dataclass
         ... class Foo:
         ...     x: int
         ...     y: str
         >>>
-        >>> pc.Seq([Foo(2, "a"), Foo(3, "b"), Foo(4, "c")]).max_by(key=lambda f: f.x)
+        >>> Seq((Foo(2, "a"), Foo(3, "b"), Foo(4, "c"))).max_by(key=lambda f: f.x)
         Foo(x=4, y='c')
-        >>> pc.Seq([Foo(2, "a"), Foo(3, "b"), Foo(3, "c")]).max_by(key=lambda f: f.x)
+        >>> Seq((Foo(2, "a"), Foo(3, "b"), Foo(3, "c"))).max_by(key=lambda f: f.x)
         Foo(x=3, y='b')
 
         ```
@@ -394,16 +394,16 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, True]).all()
+        >>> from pyochain import Seq
+        >>> Seq((1, True)).all()
         True
-        >>> pc.Seq([]).all()
+        >>> Seq(()).all()
         True
-        >>> pc.Seq([1, 0]).all()
+        >>> Seq((1, 0)).all()
         False
         >>> def is_even(x: int) -> bool:
         ...     return x % 2 == 0
-        >>> pc.Seq([2, 4, 6]).all(is_even)
+        >>> Seq((2, 4, 6)).all(is_even)
         True
 
         ```
@@ -430,14 +430,14 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([0, 1]).any()
+        >>> from pyochain import Seq, Range
+        >>> Seq((0, 1)).any()
         True
-        >>> pc.Seq(range(0)).any()
+        >>> Range(0, 0).any()
         False
         >>> def is_even(x: int) -> bool:
         ...     return x % 2 == 0
-        >>> pc.Seq([1, 3, 4]).any(is_even)
+        >>> Seq((1, 3, 4)).any(is_even)
         True
 
         ```
@@ -483,8 +483,8 @@ class PyoCollection[T](PyoIterable[T], Collection[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> data = pc.Dict({1: "a", 2: "b"})
+        >>> from pyochain import Dict
+        >>> data = Dict.from_ref({1: "a", 2: "b"})
         >>> data.contains(1)
         True
         >>> data.contains(3)
@@ -515,12 +515,12 @@ class PyoCollection[T](PyoIterable[T], Collection[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2]).repeat(3).collect()
+        >>> from pyochain import Seq
+        >>> Seq((1, 2)).repeat(3).collect()
         Seq(Seq(1, 2), Seq(1, 2), Seq(1, 2))
-        >>> pc.Seq(("a", "b")).repeat(2).collect()
+        >>> Seq(("a", "b")).repeat(2).collect()
         Seq(Seq('a', 'b'), Seq('a', 'b'))
-        >>> pc.Seq([0]).repeat().flatten().take(5).collect()
+        >>> Seq([0]).repeat().flatten().take(5).collect()
         Seq(0, 0, 0, 0, 0)
 
         ```
@@ -539,8 +539,8 @@ class PyoCollection[T](PyoIterable[T], Collection[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> d = pc.Dict.new()
+        >>> from pyochain import Dict
+        >>> d = Dict(())
         >>> d.is_empty()
         True
         >>> d.insert(1, "a")
@@ -554,10 +554,9 @@ class PyoCollection[T](PyoIterable[T], Collection[T], ABC):
 
 
 class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
-    """Base ABC for lazy `Iterator` classes.
+    """Extends `PyoIterable[T]` and `collections.abc.Iterator[T]`.
 
-    Pyochain's `Iter[T]` implements this ABC.
-    This ABC extends `PyoIterable[T]` and `collections.abc.Iterator[T]`, providing many methods for iterating over iterables.
+    Is the base class for `Iter[T]`.
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
@@ -934,16 +933,16 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Iter, Range
         >>> def gt_five(x: int) -> bool:
         ...     return x > 5
         >>>
         >>> def gt_nine(x: int) -> bool:
         ...     return x > 9
-        >>>
-        >>> pc.Iter(range(10)).find(predicate=gt_five)
+        >>> data = Range(0, 10)
+        >>> data.iter().find(predicate=gt_five)
         Some(6)
-        >>> pc.Iter(range(10)).find(predicate=gt_nine).unwrap_or("missing")
+        >>> data.iter().find(predicate=gt_nine).unwrap_or("missing")
         'missing'
 
         ```
@@ -965,11 +964,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> def is_even(x: int) -> pc.Result[bool, str]:
-        ...     return pc.Ok(x % 2 == 0) if x >= 0 else pc.Err("negative number")
+        >>> from pyochain import Ok, Result, Err, Range
+        >>> def is_even(x: int) -> Result[bool, str]:
+        ...     return Ok(x % 2 == 0) if x >= 0 else Err("negative number")
         >>>
-        >>> pc.Iter(range(1, 6)).try_find(is_even)
+        >>> Range(1, 6).iter().try_find(is_even)
         Ok(Some(2))
 
         ```
@@ -1533,8 +1532,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Returns:
             Self: A new `Iterator` with randomly sampled elements.
         ```python
-        >>> import pyochain as pc
-        >>> data = pc.Iter(range(100)).collect()
+        >>> from pyochain import Range
+        >>> data = Range(0, 100)
         >>> data.iter().random_sample(0.1).collect()  # doctest: +SKIP
         Seq(6, 9, 19, 35, 45, 50, 58, 62, 68, 72, 78, 86, 95)
         >>> data.iter().random_sample(0.1).collect()  # doctest: +SKIP
@@ -1797,8 +1796,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter([(1, 2), (3, 4)]).for_each_star(lambda x, y: print(x + y))
+        >>> from pyochain import Iter
+        >>> Iter(((1, 2), (3, 4))).for_each_star(lambda x, y: print(x + y))
         3
         7
 
@@ -1820,15 +1819,15 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> def validate_positive(n: int) -> pc.Result[None, str]:
+        >>> from pyochain import Iter, Result, Ok, Err
+        >>> def validate_positive(n: int) -> Result[None, str]:
         ...     if n > 0:
-        ...         return pc.Ok(None)
-        ...     return pc.Err(f"Value {n} is not positive")
-        >>> pc.Iter([1, 2, 3, 4, 5]).try_for_each(validate_positive)
+        ...         return Ok(None)
+        ...     return Err(f"Value {n} is not positive")
+        >>> Iter((1, 2, 3, 4, 5)).try_for_each(validate_positive)
         Ok(None)
         >>> # Short-circuit on first error:
-        >>> pc.Iter([1, 2, -1, 4]).try_for_each(validate_positive)
+        >>> Iter((1, 2, -1, 4)).try_for_each(validate_positive)
         Err('Value -1 is not positive')
 
         ```
@@ -1841,11 +1840,9 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
 
 class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
-    """Base ABC for pyochain sequences.
+    """Extends `PyoCollection[T]` and `collections.abc.Sequence[T]`.
 
-    `PyoSequence[T]` is the shared ABC for concrete collections: `Seq` and `Vec`.
-
-    It extends `PyoCollection[T]` and `collections.abc.Sequence[T]`.
+    Is the shared ABC for concrete collections: `Seq` and `Vec`.
 
     Any concrete subclass must implement the required `Sequence` dunder methods:
 
@@ -1872,10 +1869,11 @@ class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([10, 20, 30]).get(1)
+        >>> from pyochain import Seq
+        >>> data = Seq((10, 20, 30))
+        >>> data.get(1)
         Some(20)
-        >>> pc.Seq([10, 20, 30]).get(5)
+        >>> data.get(5)
         NONE
 
         ```
@@ -1893,8 +1891,8 @@ class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).rev().collect()
+        >>> from pyochain import Seq
+        >>> Seq((1, 2, 3)).rev().collect()
         Seq(3, 2, 1)
 
         ```
@@ -1910,8 +1908,8 @@ class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
             bool: True if all items are distinct, False otherwise.
 
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2]).is_distinct()
+        >>> from pyochain import Seq
+        >>> Seq((1, 2)).is_distinct()
         True
 
         ```
@@ -1920,11 +1918,9 @@ class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
 
 
 class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
-    """Base ABC for pyochain set-like collections.
+    """Extends `PyoCollection[T]` and `collections.abc.Set[T]`.
 
-    `PyoSet[T]` is the shared ABC for concrete set-like collections: `Set` and `FrozenSet`.
-
-    It extends `PyoCollection[T]` and `collections.abc.Set[T]`.
+    Is the shared ABC for concrete set-like collections: `Set` and `FrozenSet`.
 
     Any concrete subclass must implement the required `Set` dunder methods:
 
@@ -1947,10 +1943,10 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Set({1, 2}).is_subset({1, 2, 3})
+        >>> from pyochain import Set
+        >>> Set((1, 2)).is_subset({1, 2, 3})
         True
-        >>> pc.Set({1, 4}).is_subset({1, 2, 3})
+        >>> Set((1, 4)).is_subset({1, 2, 3})
         False
 
         ```
@@ -1968,10 +1964,10 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Set({1, 2}).is_subset_strict({1, 2, 3})
+        >>> from pyochain import Set
+        >>> Set((1, 2)).is_subset_strict({1, 2, 3})
         True
-        >>> pc.Set({1, 2}).is_subset_strict({1, 2})
+        >>> Set((1, 2)).is_subset_strict({1, 2})
         False
 
         ```
@@ -1989,10 +1985,10 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Set({1, 2}).eq({2, 1})
+        >>> from pyochain import Set
+        >>> Set((1, 2)).eq({2, 1})
         True
-        >>> pc.Set({1, 2}).eq({1, 2, 3})
+        >>> Set((1, 2)).eq({1, 2, 3})
         False
 
         ```
@@ -2010,10 +2006,10 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Set({1, 2, 3}).is_superset({1, 2})
+        >>> from pyochain import Set
+        >>> Set((1, 2, 3)).is_superset({1, 2})
         True
-        >>> pc.Set({1, 2}).is_superset({1, 2, 3})
+        >>> Set((1, 2)).is_superset({1, 2, 3})
         False
 
         ```
@@ -2031,8 +2027,8 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Set({1, 2, 2}).intersection({2, 3})
+        >>> from pyochain import Set
+        >>> Set((1, 2, 2)).intersection((2, 3))
         Set(2,)
 
         ```
@@ -2050,8 +2046,8 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Set({2, 3}).r_intersection({1, 2})
+        >>> from pyochain import Set
+        >>> Set((2, 3)).r_intersection((1, 2))
         Set(2,)
 
         ```
@@ -2069,8 +2065,8 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Set({1, 2, 2}).union([2, 3]).union([4]).iter().sort()
+        >>> from pyochain import Set
+        >>> Set((1, 2, 2)).union((2, 3)).union([4]).iter().sort()
         Vec(1, 2, 3, 4)
 
         ```
@@ -2088,8 +2084,8 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Set({2, 3}).r_union({1, 2}).iter().sort()
+        >>> from pyochain import Set
+        >>> Set((2, 3)).r_union((1, 2)).iter().sort()
         Vec(1, 2, 3)
 
         ```
@@ -2107,8 +2103,8 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Set({1, 2, 2}).difference([2, 3])
+        >>> from pyochain import Set
+        >>> Set((1, 2, 2)).difference((2, 3))
         Set(1,)
 
         ```
@@ -2126,8 +2122,8 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Set({2, 3}).r_difference({1, 2})
+        >>> from pyochain import Set
+        >>> Set((2, 3)).r_difference((1, 2))
         Set(1,)
 
         ```
@@ -2143,10 +2139,10 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         Returns:
             Self: A new `Set` containing the symmetric difference of the two sets.
         ```python
-        >>> import pyochain as pc
-        >>> pc.Set({1, 2, 2}).symmetric_difference([2, 3]).iter().sort()
+        >>> from pyochain import Set
+        >>> Set((1, 2, 2)).symmetric_difference((2, 3)).iter().sort()
         Vec(1, 3)
-        >>> pc.Set({1, 2, 3}).symmetric_difference([3, 4, 5]).iter().sort()
+        >>> Set((1, 2, 3)).symmetric_difference((3, 4, 5)).iter().sort()
         Vec(1, 2, 4, 5)
 
         ```
@@ -2164,8 +2160,8 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Set({2, 3}).r_symmetric_difference({1, 2}).iter().sort()
+        >>> from pyochain import Set
+        >>> Set((2, 3)).r_symmetric_difference((1, 2)).iter().sort()
         Vec(1, 3)
 
         ```
@@ -2183,10 +2179,10 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Set({1, 2}).is_disjoint({3, 4})
+        >>> from pyochain import Set
+        >>> Set((1, 2)).is_disjoint((3, 4))
         True
-        >>> pc.Set({1, 2}).is_disjoint({2, 3})
+        >>> Set((1, 2)).is_disjoint((2, 3))
         False
 
         ```
@@ -2195,11 +2191,9 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
 
 class PyoMappingView[T](MappingView, PyoCollection[T], ABC):  # pyright: ignore[reportUnsafeMultipleInheritance]
-    """Base ABC for pyochain mapping view collections.
+    """Extends both `MappingView` from `collections.abc` and `PyoCollection[T]`.
 
-    `PyoMappingView[T]` is the base class shared by the views returned by `PyoMapping` methods.
-
-    This class extends both `MappingView` from `collections.abc` and `PyoCollection[T]`.
+    Is the base class shared by the views returned by `PyoMapping` methods.
 
     Any concrete subclass must implement the required `MappingView` dunder methods:
     - `__contains__`
@@ -2215,7 +2209,7 @@ class PyoValuesView[V](ValuesView[V], PyoMappingView[V]):  # pyright: ignore[rep
     This concrete class is returned by the `PyoMapping.values()` method, and inherits from `collections.abc.ValuesView` and `PyoCollection`.
 
     See Also:
-        `PyoMapping.values()`: Method that returns this view.
+        `PyoMapping::values`: Method that returns this view.
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
@@ -2229,7 +2223,7 @@ class PyoKeysView[K](KeysView[K], PyoMappingView[K], PyoSet[K]):  # pyright: ign
     Keys views support set-like operations since dictionary keys are unique.
 
     See Also:
-        `PyoMapping.keys()`: Method that returns this view.
+        `PyoMapping::keys`: Method that returns this view.
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
@@ -2252,9 +2246,9 @@ class PyoItemsView[K, V](  # pyright: ignore[reportUnsafeMultipleInheritance]
 
 
 class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
-    """Base ABC for pyochain immutable mappings, such as `Dict`.
+    """Extends `PyoCollection[K]` and `collections.abc.Mapping[K, V]`.
 
-    It extends `PyoCollection[K]` and `collections.abc.Mapping[K, V]`.
+    Serves as a base class for pyochain mappings, such as `Dict`.
 
     Any concrete subclass must implement the required `Mapping` dunder methods:
 
@@ -2275,8 +2269,8 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> data = pc.Dict({1: "a", 2: "b"})
+        >>> from pyochain import Dict
+        >>> data = Dict({1: "a", 2: "b"})
         >>> data.keys()
         PyoKeysView(Dict(1: 'a', 2: 'b'))
 
@@ -2293,8 +2287,8 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> data = pc.Dict({1: "a", 2: "b"})
+        >>> from pyochain import Dict
+        >>> data = Dict({1: "a", 2: "b"})
         >>> data.values()
         PyoValuesView(Dict(1: 'a', 2: 'b'))
 
@@ -2311,8 +2305,8 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> data = pc.Dict({1: "a", 2: "b"})
+        >>> from pyochain import Dict
+        >>> data = Dict({1: "a", 2: "b"})
         >>> data.items()
         PyoItemsView(Dict(1: 'a', 2: 'b'))
 
@@ -2322,9 +2316,9 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
 
 
 class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
-    """Base ABC for pyochain mutable mappings, such as `Dict`.
+    """Extends `PyoMapping[K, V]` and `collections.abc.MutableMapping[K, V]`.
 
-    It extends `PyoMapping[K, V]` and `collections.abc.MutableMapping[K, V]`.
+    Serves as a base class for pyochain mutable mappings, such as `Dict`.
 
     Any concrete subclass must implement the required `MutableMapping` dunder methods:
 
@@ -2356,8 +2350,8 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> data = pc.Dict.new()
+        >>> from pyochain import Dict
+        >>> data = Dict(())
         >>> data.insert(37, "a")
         NONE
         >>> data.is_empty()
@@ -2390,8 +2384,8 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> d = pc.Dict.new()
+        >>> from pyochain import Dict
+        >>> d = Dict(())
         >>> d.try_insert(37, "a").unwrap()
         'a'
         >>> d.try_insert(37, "b")
@@ -2415,8 +2409,8 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
         Returns:
             Option[V]: The value associated with the removed **key**, or `None` if the **key** was not present.
         ```python
-        >>> import pyochain as pc
-        >>> data = pc.Dict({1: "a", 2: "b"})
+        >>> from pyochain import Dict
+        >>> data = Dict({1: "a", 2: "b"})
         >>> data.remove(1)
         Some('a')
         >>> data.remove(3)
@@ -2437,8 +2431,8 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
         Returns:
             Option[tuple[K, V]]: `Some((key, value))` pair associated with the removed key, or `None` if the **key** was not present.
         ```python
-        >>> import pyochain as pc
-        >>> data = pc.Dict({1: "a", 2: "b"})
+        >>> from pyochain import Dict
+        >>> data = Dict({1: "a", 2: "b"})
         >>> data.remove_entry(1)
         Some((1, 'a'))
         >>> data.remove_entry(3)
@@ -2461,11 +2455,11 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> data = {"a": 1}
-        >>> pc.Dict(data).get_item("a")
+        >>> from pyochain import Dict
+        >>> data = Dict.from_ref({"a": 1})
+        >>> data.get_item("a")
         Some(1)
-        >>> pc.Dict(data).get_item("x").unwrap_or('Not Found')
+        >>> data.get_item("x").unwrap_or('Not Found')
         'Not Found'
 
         ```
@@ -2474,9 +2468,9 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
 
 
 class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
-    """Base ABC for pyochain mutable sequence collections, such as `Vec`.
+    """Extends `PyoSequence[T]` and `collections.abc.MutableSequence[T]`.
 
-    It extends `PyoSequence[T]` and `collections.abc.MutableSequence[T]`.
+    This ABC is the base class for mutable sequence types in pyochain, such as `Vec`.
 
     Any concrete subclass must implement the required `MutableSequence` dunder methods:
 
@@ -2510,8 +2504,8 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
 
         Examples:
         ```python
-        >>> import pyochain as pc
-        >>> vec = pc.Vec([1, 2, 3, 4])
+        >>> from pyochain import Vec, Seq
+        >>> vec = Vec((1, 2, 3, 4))
         >>> vec.retain(lambda x: x % 2 == 0)
         >>> vec
         Vec(2, 4)
@@ -2520,8 +2514,8 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
         External state may be used to decide which elements to keep.
 
         ```python
-        >>> vec = pc.Vec([1, 2, 3, 4, 5])
-        >>> keep = pc.Seq([False, True, True, False, True]).iter()
+        >>> vec = Vec((1, 2, 3, 4, 5))
+        >>> keep = Seq((False, True, True, False, True)).iter()
         >>> vec.retain(lambda _: next(keep))
         >>> vec
         Vec(2, 3, 5)
@@ -2543,7 +2537,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
 
         If *length* is greater or equal to the `MutableSequence` current `__len__()`, this has no effect.
 
-        The `.drain()` method can emulate `.truncate()`, but causes the excess elements to be returned instead of dropped.
+        The `Vec::drain` method can emulate `Vec::truncate`, but causes the excess elements to be returned instead of dropped.
 
         Note:
             This is equivalent to `del seq[length:]`, except that it won't create an intermediate slice object.
@@ -2553,9 +2547,9 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
 
         Examples:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Vec
         >>> # Truncating a five element vector to two elements:
-        >>> vec = pc.Vec([1, 2, 3, 4, 5])
+        >>> vec = Vec((1, 2, 3, 4, 5))
         >>> vec.truncate(2)
         >>> vec
         Vec(1, 2)
@@ -2563,8 +2557,8 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
         ```
         No truncation occurs when len is greater than the `MutableSequence` current length:
         ```python
-        >>> import pyochain as pc
-        >>> vec = pc.Vec([1, 2, 3])
+        >>> from pyochain import Vec
+        >>> vec = Vec((1, 2, 3))
         >>> vec.truncate(8)
         >>> vec
         Vec(1, 2, 3)
@@ -2572,8 +2566,8 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
         ```
         Truncating when len == 0 is equivalent to calling the clear method.
         ```python
-        >>> import pyochain as pc
-        >>> vec = pc.Vec([1, 2, 3])
+        >>> from pyochain import Vec
+        >>> vec = Vec((1, 2, 3))
         >>> vec.truncate(0)
         >>> vec
         Vec()
@@ -2595,9 +2589,9 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
 
         Examples:
         ```python
-        >>> import pyochain as pc
-        >>> v1 = pc.Vec([1, 2, 3])
-        >>> v2 = pc.Vec([4, 5, 6])
+        >>> from pyochain import Vec
+        >>> v1 = Vec((1, 2, 3))
+        >>> v2 = Vec((4, 5, 6))
         >>> v1.extend_move(v2)
         >>> v1
         Vec(1, 2, 3, 4, 5, 6)

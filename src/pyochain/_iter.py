@@ -977,7 +977,7 @@ class Iter[T](PyoIterator[T]):
         Seq()
         >>> Range(0, 5).iter().collect(list)
         [0, 1, 2, 3, 4]
-        >>> Iter(range(5)).collect(Vec)
+        >>> Range(0, 5).iter().collect(Vec)
         Vec(0, 1, 2, 3, 4)
 
         ```
@@ -1474,21 +1474,22 @@ class Iter[T](PyoIterator[T]):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> def _to_res(x: pc.Iter[pc.Iter[str]]) -> pc.Seq[pc.Seq[str]]:
+        >>> from pyochain import Iter, Seq, Range
+        >>> def _to_res(x: Iter[Iter[str]]) -> Seq[Seq[str]]:
         ...     return x.map(lambda x: x.into(list)).collect()
         >>>
-        >>> pc.Iter("abcdcba").split_at(lambda x: x == "b").into(_to_res)
+        >>> Iter("abcdcba").split_at(lambda x: x == "b").into(_to_res)
         Seq(['a'], ['c', 'd', 'c'], ['a'])
-        >>> pc.Iter(range(10)).split_at(lambda n: n % 2 == 1).into(_to_res)
+        >>> data = Range(0, 10)
+        >>> data.iter().split_at(lambda n: n % 2 == 1).into(_to_res)
         Seq([0], [2], [4], [6], [8], [])
-        >>> pc.Iter(range(10)).split_at(lambda n: n % 2 == 1, max_split=2).into(_to_res)
+        >>> data.iter().split_at(lambda n: n % 2 == 1, max_split=2).into(_to_res)
         Seq([0], [2], [4, 5, 6, 7, 8, 9])
         >>>
         >>> def cond(x: str) -> bool:
         ...     return x == "b"
         >>>
-        >>> pc.Iter("abcdcba").split_at(cond, keep_separator=True).into(_to_res)
+        >>> Iter("abcdcba").split_at(cond, keep_separator=True).into(_to_res)
         Seq(['a'], ['b'], ['c', 'd', 'c'], ['b'], ['a'])
 
         ```
@@ -1538,16 +1539,16 @@ class Iter[T](PyoIterator[T]):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter("one1two2").split_after(str.isdigit).map(list).collect()
+        >>> from pyochain import Iter, Range
+        >>> Iter("one1two2").split_after(str.isdigit).map(list).collect()
         Seq(['o', 'n', 'e', '1'], ['t', 'w', 'o', '2'])
 
         >>> def cond(n: int) -> bool:
         ...     return n % 3 == 0
-        >>>
-        >>> pc.Iter(range(10)).split_after(cond).map(list).collect()
+        >>> data = Range(0, 10)
+        >>> data.iter().split_after(cond).map(list).collect()
         Seq([0], [1, 2, 3], [4, 5, 6], [7, 8, 9])
-        >>> pc.Iter(range(10)).split_after(cond, max_split=2).map(list).collect()
+        >>> data.iter().split_after(cond, max_split=2).map(list).collect()
         Seq([0], [1, 2, 3], [4, 5, 6, 7, 8, 9])
 
         ```
@@ -1604,16 +1605,17 @@ class Iter[T](PyoIterator[T]):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter("abcdcba").split_before(lambda x: x == "b").map(list).collect()
+        >>> from pyochain import Iter, Range
+        >>> Iter("abcdcba").split_before(lambda x: x == "b").map(list).collect()
         Seq(['a'], ['b', 'c', 'd', 'c'], ['b', 'a'])
         >>>
         >>> def cond(n: int) -> bool:
         ...     return n % 2 == 1
         >>>
-        >>> pc.Iter(range(10)).split_before(cond).map(list).collect()
+        >>> data = Range(0, 10)
+        >>> data.iter().split_before(cond).map(list).collect()
         Seq([0], [1, 2], [3, 4], [5, 6], [7, 8], [9])
-        >>> pc.Iter(range(10)).split_before(cond, max_split=2).map(list).collect()
+        >>> data.iter().split_before(cond, max_split=2).map(list).collect()
         Seq([0], [1, 2], [3, 4, 5, 6, 7, 8, 9])
 
         ```
@@ -3191,10 +3193,10 @@ class Iter[T](PyoIterator[T]):
 
         Example:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Iter
         >>> # Example 1: Group even and odd numbers
         >>> (
-        ... pc.Iter.from_count() # create an infinite iterator of integers
+        ... Iter.from_count() # create an infinite iterator of integers
         ... .take(8) # take the first 8
         ... .map(lambda x: (x % 2 == 0, x)) # map to (is_even, value)
         ... .sort(key=lambda x: x[0]) # sort by is_even
@@ -3213,14 +3215,14 @@ class Iter[T](PyoIterator[T]):
         ...     {"name": "Dan", "gender": "M"},
         ... ]
         >>> (
-        ... pc.Iter(data)
+        ... Iter(data)
         ... .group_by(lambda x: x["gender"]) # group by the gender key
         ... .map_star(lambda g, vals: (g, vals.length())) # get the length of each group
         ... .collect()
         ... )
         Seq(('F', 1), ('M', 3))
         >>> # Example 3: Incorrect usage with LATE materialization:
-        >>> groups = pc.Iter(["a1", "a2", "b1"]).group_by(lambda x: x[0]).collect()
+        >>> groups = Iter(("a1", "a2", "b1")).group_by(lambda x: x[0]).collect()
         >>> # Now iterate - TOO LATE! The group iterators are consumed
         >>> for g in groups:
         ...     print(g[1].collect())  # ❌ Empty!
@@ -3228,7 +3230,7 @@ class Iter[T](PyoIterator[T]):
         Seq()
         >>> # Example 4: Correct usage with intermediate materialization:
         >>> groups = (
-        ...     pc.Iter(["a1", "a2", "b1"])
+        ...     Iter(["a1", "a2", "b1"])
         ...     .group_by(lambda x: x[0])
         ...     .map_star(lambda g, vals: (g, vals.collect()))  # ✅ Materialize NOW
         ...     .collect()
@@ -3287,8 +3289,8 @@ class Iter[T](PyoIterator[T]):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter([3, 1, 2]).sort()
+        >>> from pyochain import Iter
+        >>> Iter((3, 1, 2)).sort()
         Vec(1, 2, 3)
 
         ```
@@ -3306,8 +3308,8 @@ class Iter[T](PyoIterator[T]):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter([1, 2, 3]).tail(2)
+        >>> from pyochain import Iter
+        >>> Iter((1, 2, 3)).tail(2)
         Seq(2, 3)
 
         ```
@@ -3326,8 +3328,8 @@ class Iter[T](PyoIterator[T]):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter([1, 3, 2]).top_n(2)
+        >>> from pyochain import Iter
+        >>> Iter((1, 3, 2)).top_n(2)
         Seq(3, 2)
 
         ```
@@ -3347,8 +3349,8 @@ class Iter[T](PyoIterator[T]):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter([1, 1, 2, 3, 3, 3]).most_common(2)
+        >>> from pyochain import Iter
+        >>> Iter((1, 1, 2, 3, 3, 3)).most_common(2)
         Vec((3, 3), (1, 2))
 
         ```
