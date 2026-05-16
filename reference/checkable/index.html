@@ -1829,6 +1829,10 @@
 <p>This class provides methods inspired by Rust's <code>bool</code> type for conditional
 execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
 <p>All methods evaluate the instance's truthiness to determine their behavior.</p>
+<p>Truthiness is determined by:
+- <code>__bool__()</code> if defined
+- otherwise by <code>__len__()</code> if defined (returning <code>False</code> if length is 0)
+- otherwise all instances are truthy (Python's default behavior).</p>
 
 
 
@@ -1863,7 +1867,6 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
     <div class="doc doc-contents ">
 
         <p>Wrap <code>Self</code> in a <code>Result[T, Self]</code> based on its truthiness.</p>
-<p>Truthiness is determined by <code>__bool__()</code> if defined, otherwise by <code>__len__()</code> if defined (returning <code>False</code> if length is 0), otherwise all instances are truthy (Python's default behavior).</p>
 <p>This method is the inverse of <code>ok_or</code>.</p>
 
 
@@ -1920,10 +1923,10 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">err_or</span><span class="p">(</span><span class="s2">&quot;should be empty&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">err_or</span><span class="p">(</span><span class="s2">&quot;should be empty&quot;</span><span class="p">)</span>
 <span class="n">Err</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">err_or</span><span class="p">(</span><span class="s2">&quot;should be empty&quot;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">err_or</span><span class="p">(</span><span class="s2">&quot;should be empty&quot;</span><span class="p">)</span>
 <span class="n">Ok</span><span class="p">(</span><span class="s1">&#39;should be empty&#39;</span><span class="p">)</span>
 </code></pre></div></p>
 
@@ -1946,7 +1949,6 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
         <p>Wrap <code>Self</code> in a <code>Result[Self, E]</code> based on its truthiness.</p>
 <p><code>E</code> being the return type of <strong>func</strong>.</p>
 <p>The function is only called if self evaluates to False.</p>
-<p>Truthiness is determined by <code>__bool__()</code> if defined, otherwise by <code>__len__()</code> if defined (returning <code>False</code> if length is 0), otherwise all instances are truthy (Python's default behavior).</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2034,10 +2036,10 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">err_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="s2">&quot;should be empty&quot;</span> <span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">err_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="s2">&quot;should be empty&quot;</span> <span class="p">)</span>
 <span class="n">Err</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">err_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="s2">&quot;should be empty&quot;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">err_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="s2">&quot;should be empty&quot;</span><span class="p">)</span>
 <span class="n">Ok</span><span class="p">(</span><span class="s1">&#39;should be empty&#39;</span><span class="p">)</span>
 </code></pre></div></p>
 
@@ -2058,7 +2060,6 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
     <div class="doc doc-contents ">
 
         <p>Wrap <code>Self</code> in a <code>Result[Self, E]</code> based on its truthiness.</p>
-<p>Truthiness is determined by <code>__bool__()</code> if defined, otherwise by <code>__len__()</code> if defined (returning <code>False</code> if length is 0), otherwise all instances are truthy (Python's default behavior).</p>
 <p>This method is the inverse of <code>err_or</code>.</p>
 
 
@@ -2115,10 +2116,10 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">&quot;empty&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">&quot;empty&quot;</span><span class="p">)</span>
 <span class="n">Ok</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([])</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">&quot;empty&quot;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">&quot;empty&quot;</span><span class="p">)</span>
 <span class="n">Err</span><span class="p">(</span><span class="s1">&#39;empty&#39;</span><span class="p">)</span>
 </code></pre></div></p>
 
@@ -2141,7 +2142,6 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
         <p>Wrap <code>Self</code> in a <code>Result[Self, E]</code> based on its truthiness.</p>
 <p><code>E</code> being the return type of <strong>func</strong>.</p>
 <p>The function is only called if self evaluates to False.</p>
-<p>Truthiness is determined by <code>__bool__()</code> if defined, otherwise by <code>__len__()</code> if defined (returning <code>False</code> if length is 0), otherwise all instances are truthy (Python's default behavior).</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2229,10 +2229,10 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;empty seq&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;empty seq&quot;</span><span class="p">)</span>
 <span class="n">Ok</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([])</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;empty seq&quot;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;empty seq&quot;</span><span class="p">)</span>
 <span class="n">Err</span><span class="p">(</span><span class="s1">&#39;empty seq&#39;</span><span class="p">)</span>
 </code></pre></div></p>
 
@@ -2255,7 +2255,6 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
         <p>Wrap <code>Self</code> in an <code>Option[R]</code> based on its truthiness.</p>
 <p><code>R</code> being the return type of <strong>func</strong>.</p>
 <p>The function is only called if <code>Self</code> evaluates to <code>True</code> (lazy evaluation).</p>
-<p>Truthiness is determined by <code>__bool__()</code> if defined, otherwise by <code>__len__()</code> if defined (returning <code>False</code> if length is 0), otherwise all instances are truthy (Python's default behavior).</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2343,10 +2342,10 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([])</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
 <span class="n">NONE</span>
 </code></pre></div></p>
 
@@ -2367,7 +2366,6 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
     <div class="doc doc-contents ">
 
         <p>Wraps <code>Self</code> in an <code>Option[Self]</code> based on its truthiness.</p>
-<p>Truthiness is determined by <code>__bool__()</code> if defined, otherwise by <code>__len__()</code> if defined (returning <code>False</code> if length is 0), otherwise all instances are truthy (Python's default behavior).</p>
 
 
     <p><span class="doc-section-title">Returns:</span></p>
@@ -2392,10 +2390,10 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">then_some</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">then_some</span><span class="p">()</span>
 <span class="n">Some</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([])</span><span class="o">.</span><span class="n">then_some</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">then_some</span><span class="p">()</span>
 <span class="n">NONE</span>
 </code></pre></div></p>
 

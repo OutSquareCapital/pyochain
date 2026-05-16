@@ -1808,7 +1808,7 @@
 
 <details class="tip" open>
   <summary>Tip</summary>
-  <p>Prefer using <code>Dict.from_ref</code> when wrapping existing dictionaries to avoid unnecessary copying.</p>
+  <p>Prefer using <code>Dict::from_ref</code> when wrapping existing dictionaries to avoid unnecessary copying.</p>
 </details>
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1841,9 +1841,11 @@
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">dict_obj</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Dict</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;b&quot;</span><span class="p">})</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">dict_obj</span> <span class="o">=</span> <span class="n">Dict</span><span class="o">.</span><span class="n">from_ref</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;b&quot;</span><span class="p">})</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">dict_obj</span>
+<span class="n">Dict</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s1">&#39;b&#39;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Dict</span><span class="p">([(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">)])</span>
 <span class="n">Dict</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s1">&#39;b&#39;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">dict_obj</span><span class="o">.</span><span class="n">get_item</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
@@ -2040,7 +2042,9 @@
 <span class="normal">189</span>
 <span class="normal">190</span>
 <span class="normal">191</span>
-<span class="normal">192</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Dict</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">](</span><span class="n">PyoMutableMapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]):</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Dict</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">](</span><span class="n">PyoMutableMapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A `Dict` is a key-value store similar to Python&#39;s built-in `dict`, but with additional methods inspired by Rust&#39;s `HashMap`.</span>
 
 <span class="sd">    Accept the same input types as the built-in `dict`, including `Mapping`, `Iterable` of key-value pairs, and objects implementing `__getitem__()` and `keys()`.</span>
@@ -2048,16 +2052,18 @@
 <span class="sd">    Implement the `MutableMapping` interface, so all standard dictionary operations are supported.</span>
 
 <span class="sd">    Tip:</span>
-<span class="sd">        Prefer using `Dict.from_ref` when wrapping existing dictionaries to avoid unnecessary copying.</span>
+<span class="sd">        Prefer using `Dict::from_ref` when wrapping existing dictionaries to avoid unnecessary copying.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        data (DictConvertible[K, V]): Initial data for the Dict that can converted to a dictionary.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; dict_obj = pc.Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Dict</span>
+<span class="sd">    &gt;&gt;&gt; dict_obj = Dict.from_ref({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
 <span class="sd">    &gt;&gt;&gt; dict_obj</span>
+<span class="sd">    Dict(1: &#39;a&#39;, 2: &#39;b&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; Dict([(1, &quot;a&quot;), (2, &quot;b&quot;)])</span>
 <span class="sd">    Dict(1: &#39;a&#39;, 2: &#39;b&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; dict_obj.get_item(1)</span>
 <span class="sd">    Some(&#39;a&#39;)</span>
@@ -2114,12 +2120,12 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_ref</span><span class="p">[</span><span class="n">K1</span><span class="p">,</span> <span class="n">V1</span><span class="p">](</span><span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">K1</span><span class="p">,</span> <span class="n">V1</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">K1</span><span class="p">,</span> <span class="n">V1</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Wrap an existing `dict` without copying.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Wrap an existing Python builtin `dict` without copying.</span>
 
 <span class="sd">        This is the recommended way to create a `Dict` from foreign functions that return a standard Python `dict`.</span>
 
 <span class="sd">        Warning:</span>
-<span class="sd">            Any modifications made to this `Dict` will also affect the original, and vice versa.</span>
+<span class="sd">            Any modifications made to this `Dict` will also affect the original data structure, and vice versa.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            data (dict[K1, V1]): The dictionary to wrap.</span>
@@ -2129,9 +2135,9 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Dict</span>
 <span class="sd">        &gt;&gt;&gt; original_dict = {1: &quot;a&quot;, 2: &quot;b&quot;, 3: &quot;c&quot;}</span>
-<span class="sd">        &gt;&gt;&gt; dict_obj = pc.Dict.from_ref(original_dict)</span>
+<span class="sd">        &gt;&gt;&gt; dict_obj = Dict.from_ref(original_dict)</span>
 <span class="sd">        &gt;&gt;&gt; dict_obj</span>
 <span class="sd">        Dict(1: &#39;a&#39;, 2: &#39;b&#39;, 3: &#39;c&#39;)</span>
 <span class="sd">        &gt;&gt;&gt; dict_obj.insert(1, &quot;z&quot;)</span>
@@ -2157,8 +2163,8 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; pc.Dict.from_kwargs(a=1, b=2)</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Dict</span>
+<span class="sd">        &gt;&gt;&gt; Dict.from_kwargs(a=1, b=2)</span>
 <span class="sd">        Dict(&#39;a&#39;: 1, &#39;b&#39;: 2)</span>
 
 <span class="sd">        ```</span>
@@ -2179,13 +2185,13 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Dict</span>
 <span class="sd">        &gt;&gt;&gt; class Person:</span>
 <span class="sd">        ...     def __init__(self, name: str, age: int):</span>
 <span class="sd">        ...         self.name = name</span>
 <span class="sd">        ...         self.age = age</span>
 <span class="sd">        &gt;&gt;&gt; person = Person(&quot;Alice&quot;, 30)</span>
-<span class="sd">        &gt;&gt;&gt; pc.Dict.from_object(person)</span>
+<span class="sd">        &gt;&gt;&gt; Dict.from_object(person)</span>
 <span class="sd">        Dict(&#39;name&#39;: &#39;Alice&#39;, &#39;age&#39;: 30)</span>
 
 <span class="sd">        ```</span>
@@ -2354,17 +2360,15 @@
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Dict</span><span class="o">.</span><span class="n">from_kwargs</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Dict</span><span class="o">.</span><span class="n">from_kwargs</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">Dict</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">)</span>
 </code></pre></div></p>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_dict.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">117</span>
-<span class="normal">118</span>
-<span class="normal">119</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">119</span>
 <span class="normal">120</span>
 <span class="normal">121</span>
 <span class="normal">122</span>
@@ -2380,7 +2384,9 @@
 <span class="normal">132</span>
 <span class="normal">133</span>
 <span class="normal">134</span>
-<span class="normal">135</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">from_kwargs</span><span class="p">[</span><span class="n">U</span><span class="p">](</span><span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">U</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">U</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a `Dict` from keyword arguments.</span>
 
@@ -2392,8 +2398,8 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; pc.Dict.from_kwargs(a=1, b=2)</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Dict</span>
+<span class="sd">    &gt;&gt;&gt; Dict.from_kwargs(a=1, b=2)</span>
 <span class="sd">    Dict(&#39;a&#39;: 1, &#39;b&#39;: 2)</span>
 
 <span class="sd">    ```</span>
@@ -2477,22 +2483,20 @@
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">class</span><span class="w"> </span><span class="nc">Person</span><span class="p">:</span>
 <span class="o">...</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">age</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
 <span class="o">...</span>         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
 <span class="o">...</span>         <span class="bp">self</span><span class="o">.</span><span class="n">age</span> <span class="o">=</span> <span class="n">age</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">person</span> <span class="o">=</span> <span class="n">Person</span><span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Dict</span><span class="o">.</span><span class="n">from_object</span><span class="p">(</span><span class="n">person</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Dict</span><span class="o">.</span><span class="n">from_object</span><span class="p">(</span><span class="n">person</span><span class="p">)</span>
 <span class="n">Dict</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;Alice&#39;</span><span class="p">,</span> <span class="s1">&#39;age&#39;</span><span class="p">:</span> <span class="mi">30</span><span class="p">)</span>
 </code></pre></div></p>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_dict.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">137</span>
-<span class="normal">138</span>
-<span class="normal">139</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">139</span>
 <span class="normal">140</span>
 <span class="normal">141</span>
 <span class="normal">142</span>
@@ -2515,7 +2519,9 @@
 <span class="normal">159</span>
 <span class="normal">160</span>
 <span class="normal">161</span>
-<span class="normal">162</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">from_object</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a `Dict` from an object `__dict__` attribute.</span>
 
@@ -2529,13 +2535,13 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Dict</span>
 <span class="sd">    &gt;&gt;&gt; class Person:</span>
 <span class="sd">    ...     def __init__(self, name: str, age: int):</span>
 <span class="sd">    ...         self.name = name</span>
 <span class="sd">    ...         self.age = age</span>
 <span class="sd">    &gt;&gt;&gt; person = Person(&quot;Alice&quot;, 30)</span>
-<span class="sd">    &gt;&gt;&gt; pc.Dict.from_object(person)</span>
+<span class="sd">    &gt;&gt;&gt; Dict.from_object(person)</span>
 <span class="sd">    Dict(&#39;name&#39;: &#39;Alice&#39;, &#39;age&#39;: 30)</span>
 
 <span class="sd">    ```</span>
@@ -2562,13 +2568,13 @@
 
     <div class="doc doc-contents ">
 
-        <p>Wrap an existing <code>dict</code> without copying.</p>
+        <p>Wrap an existing Python builtin <code>dict</code> without copying.</p>
 <p>This is the recommended way to create a <code>Dict</code> from foreign functions that return a standard Python <code>dict</code>.</p>
 
 
 <details class="warning" open>
   <summary>Warning</summary>
-  <p>Any modifications made to this <code>Dict</code> will also affect the original, and vice versa.</p>
+  <p>Any modifications made to this <code>Dict</code> will also affect the original data structure, and vice versa.</p>
 </details>
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2624,9 +2630,9 @@
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">original_dict</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s2">&quot;c&quot;</span><span class="p">}</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">dict_obj</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Dict</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="n">original_dict</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">dict_obj</span> <span class="o">=</span> <span class="n">Dict</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="n">original_dict</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">dict_obj</span>
 <span class="n">Dict</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s1">&#39;c&#39;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">dict_obj</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">)</span>
@@ -2638,9 +2644,7 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_dict.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 84</span>
-<span class="normal"> 85</span>
-<span class="normal"> 86</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 86</span>
 <span class="normal"> 87</span>
 <span class="normal"> 88</span>
 <span class="normal"> 89</span>
@@ -2669,14 +2673,16 @@
 <span class="normal">112</span>
 <span class="normal">113</span>
 <span class="normal">114</span>
-<span class="normal">115</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">from_ref</span><span class="p">[</span><span class="n">K1</span><span class="p">,</span> <span class="n">V1</span><span class="p">](</span><span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">K1</span><span class="p">,</span> <span class="n">V1</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">K1</span><span class="p">,</span> <span class="n">V1</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap an existing `dict` without copying.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap an existing Python builtin `dict` without copying.</span>
 
 <span class="sd">    This is the recommended way to create a `Dict` from foreign functions that return a standard Python `dict`.</span>
 
 <span class="sd">    Warning:</span>
-<span class="sd">        Any modifications made to this `Dict` will also affect the original, and vice versa.</span>
+<span class="sd">        Any modifications made to this `Dict` will also affect the original data structure, and vice versa.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        data (dict[K1, V1]): The dictionary to wrap.</span>
@@ -2686,9 +2692,9 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Dict</span>
 <span class="sd">    &gt;&gt;&gt; original_dict = {1: &quot;a&quot;, 2: &quot;b&quot;, 3: &quot;c&quot;}</span>
-<span class="sd">    &gt;&gt;&gt; dict_obj = pc.Dict.from_ref(original_dict)</span>
+<span class="sd">    &gt;&gt;&gt; dict_obj = Dict.from_ref(original_dict)</span>
 <span class="sd">    &gt;&gt;&gt; dict_obj</span>
 <span class="sd">    Dict(1: &#39;a&#39;, 2: &#39;b&#39;, 3: &#39;c&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; dict_obj.insert(1, &quot;z&quot;)</span>
@@ -2786,9 +2792,7 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_dict.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">164</span>
-<span class="normal">165</span>
-<span class="normal">166</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">166</span>
 <span class="normal">167</span>
 <span class="normal">168</span>
 <span class="normal">169</span>
@@ -2814,7 +2818,9 @@
 <span class="normal">189</span>
 <span class="normal">190</span>
 <span class="normal">191</span>
-<span class="normal">192</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]</span> <span class="o">|</span> <span class="n">Self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]:</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]</span> <span class="o">|</span> <span class="n">Self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge another `dict` or `Dict` with this `Dict`, returning a new one with the combined key-value pairs.</span>
 
 <span class="sd">    If there are duplicate keys, the values from *other* will overwrite those in `Self`.</span>

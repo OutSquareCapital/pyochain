@@ -2309,8 +2309,10 @@
 
 
 
-        <p><code>ResultValue[T, E]</code> is the base Protocol defined for returning and propagating errors.</p>
-<p><code>Result[T, E]</code> is a the type union of the two possibles variants of the Protocol, <code>Ok[T, E]</code>, representing success and containing a value,  and <code>Err[T, E]</code>, representing error and containing an error value.</p>
+        <p>This is the base Protocol defined for returning and propagating errors.</p>
+<p><code>Result[T, E]</code> is a the type union of the two possibles variants of the Protocol:
+- <code>Ok[T, E]</code>, representing success and containing a value
+- <code>Err[T, E]</code>, representing error and containing an error value</p>
 <p>Functions return <code>Result</code> whenever errors are expected and recoverable.</p>
 <p>For example, I/O or web requests can fail for many reasons, and using <code>Result</code> forces the caller to handle the possibility of failure.</p>
 <p>This is directly inspired by Rust's <code>Result</code> type, and provides similar functionality for error handling in Python.</p>
@@ -2328,29 +2330,26 @@
 <p><code>Result</code> does in fact exist in the namespace, but it's an empty <code>Rust</code> struct,</p>
 <p>and your type checker will warn you in any case because a <code>type Result = ...</code> is not supposed to be instanciable.</p>
 </details>        <p>Example:
-```python</p>
-<blockquote>
-<blockquote>
-<blockquote>
-<p>from pyochain import Err, Ok, Result</p>
-<p>def is_positive(x: int) -&gt; Result[str, ValueError]:
-...    if x &gt; 0:
-...        return Ok(f"Value is {x}")
-...    msg = f"{x} is not positive"
-...    return Err(ValueError(msg))</p>
-<p>def handle_variant(x: Result[str, ValueError]) -&gt; str:
-...    match x:
-...        case Ok(value):
-...            return f"Success: {value}"
-...        case Err(error):
-...            return f"Failure: {error}"</p>
-<p>is_positive(5).map(lambda s: s.upper()).into(handle_variant)
-'Success: VALUE IS 5'
-is_positive(-3).map(lambda s: s.upper()).into(handle_variant)
-'Failure: -3 is not positive'</p>
-</blockquote>
-</blockquote>
-</blockquote>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Err</span><span class="p">,</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Result</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">is_positive</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">]:</span>
+<span class="o">...</span>    <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+<span class="o">...</span>        <span class="k">return</span> <span class="n">Ok</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Value is </span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="o">...</span>    <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2"> is not positive&quot;</span>
+<span class="o">...</span>    <span class="k">return</span> <span class="n">Err</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">handle_variant</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Result</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="o">...</span>    <span class="n">match</span> <span class="n">x</span><span class="p">:</span>
+<span class="o">...</span>        <span class="n">case</span> <span class="n">Ok</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+<span class="o">...</span>            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Success: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="o">...</span>        <span class="n">case</span> <span class="n">Err</span><span class="p">(</span><span class="n">error</span><span class="p">):</span>
+<span class="o">...</span>            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Failure: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">is_positive</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span><span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="n">handle_variant</span><span class="p">)</span>
+<span class="s1">&#39;Success: VALUE IS 5&#39;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">is_positive</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span><span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="n">handle_variant</span><span class="p">)</span>
+<span class="s1">&#39;Failure: -3 is not positive&#39;</span>
+</code></pre></div></p>
 
 
 
