@@ -57,14 +57,14 @@ pub fn try_find(data: &Bound<'_, PyAny>, predicate: &Bound<'_, PyFunction>) -> P
 }
 #[pyfunction]
 pub fn try_fold(
-    self_iter: &Bound<'_, PyAny>,
+    data: &Bound<'_, PyAny>,
     init: &Bound<'_, PyAny>,
     func: &Bound<'_, PyFunction>,
 ) -> PyResult<Py<PyAny>> {
-    let py = self_iter.py();
+    let py = data.py();
     let mut accumulator = init.to_owned().unbind();
 
-    for item in self_iter.try_iter()? {
+    for item in data.try_iter()? {
         let item = item?;
         match func
             .call1((accumulator, item))?
@@ -82,12 +82,9 @@ pub fn try_fold(
 }
 
 #[pyfunction]
-pub fn try_reduce(
-    self_iter: &Bound<'_, PyAny>,
-    func: &Bound<'_, PyFunction>,
-) -> PyResult<Py<PyAny>> {
-    let py = self_iter.py();
-    let mut iterator = self_iter.try_iter()?;
+pub fn try_reduce(data: &Bound<'_, PyAny>, func: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
+    let py = data.py();
+    let mut iterator = data.try_iter()?;
     let first = iterator.next();
     if first.is_none() {
         return Ok(PyOk::new(get_none_singleton(py)?).into_py_any(py)?);
@@ -114,11 +111,11 @@ pub fn try_reduce(
 }
 #[pyfunction]
 pub fn is_sorted(
-    self_iter: &Bound<'_, PyAny>,
+    data: &Bound<'_, PyAny>,
     reverse: &Bound<'_, PyBool>,
     strict: &Bound<'_, PyBool>,
 ) -> PyResult<bool> {
-    let mut iter = self_iter.try_iter()?;
+    let mut iter = data.try_iter()?;
     let Some(first) = iter.next() else {
         return Ok(true);
     };
@@ -166,12 +163,12 @@ pub fn is_sorted(
 }
 #[pyfunction]
 pub fn is_sorted_by(
-    self_iter: &Bound<'_, PyAny>,
+    data: &Bound<'_, PyAny>,
     key: &Bound<'_, PyAny>,
     reverse: &Bound<'_, PyBool>,
     strict: &Bound<'_, PyBool>,
 ) -> PyResult<bool> {
-    let mut iter = self_iter.try_iter()?;
+    let mut iter = data.try_iter()?;
     let Some(first) = iter.next() else {
         return Ok(true);
     };
@@ -218,11 +215,11 @@ pub fn is_sorted_by(
 }
 
 #[pyfunction]
-pub fn eq(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-    let py = self_iter.py();
+pub fn eq(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+    let py = data.py();
     let sentinel = sentinel(py)?;
 
-    let mut left_iter = self_iter.try_iter()?;
+    let mut left_iter = data.try_iter()?;
     let mut right_iter = other.try_iter()?;
 
     loop {
@@ -240,8 +237,8 @@ pub fn eq(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bo
     }
 }
 #[pyfunction]
-pub fn ne(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-    let mut left_iter = self_iter.try_iter()?;
+pub fn ne(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+    let mut left_iter = data.try_iter()?;
     let mut right_iter = other.try_iter()?;
 
     loop {
@@ -259,8 +256,8 @@ pub fn ne(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bo
     }
 }
 #[pyfunction]
-pub fn le(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-    let mut left_iter = self_iter.try_iter()?;
+pub fn le(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+    let mut left_iter = data.try_iter()?;
     let mut right_iter = other.try_iter()?;
 
     loop {
@@ -279,8 +276,8 @@ pub fn le(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bo
     }
 }
 #[pyfunction]
-pub fn lt(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-    let mut left_iter = self_iter.try_iter()?;
+pub fn lt(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+    let mut left_iter = data.try_iter()?;
     let mut right_iter = other.try_iter()?;
 
     loop {
@@ -299,8 +296,8 @@ pub fn lt(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bo
     }
 }
 #[pyfunction]
-pub fn gt(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-    let mut left_iter = self_iter.try_iter()?;
+pub fn gt(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+    let mut left_iter = data.try_iter()?;
     let mut right_iter = other.try_iter()?;
 
     loop {
@@ -319,8 +316,8 @@ pub fn gt(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bo
     }
 }
 #[pyfunction]
-pub fn ge(self_iter: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-    let mut left_iter = self_iter.try_iter()?;
+pub fn ge(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+    let mut left_iter = data.try_iter()?;
     let mut right_iter = other.try_iter()?;
 
     loop {

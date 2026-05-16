@@ -92,3 +92,5 @@
     typeCheckingMode       = "all"
 [tool.pyrefly]
     preset = "strict"
+[tool.pytest.ini_options]
+    addopts = "--doctest-modules --doctest-glob=*.md --stubs --doctest-mdcodeblocks src/pyochain tests/ README.md docs/"

@@ -72,7 +72,7 @@ For comparison, the above can be written in pure Python as the following (note t
 
 ```python
 
->>> from pyochain import Option, NONE, Some, Seq, Vec
+>>> from pyochain import Option, NONE, Some, Seq, Vec, Set, Ok, Err, Result
 >>> from pyochain.traits import PyoIterable
 >>>
 >>> def divide(a: int, b: int) -> Option[float]:
@@ -109,9 +109,9 @@ NONE
 ...             return f"Error parsing int!"
 >>>
 >>> try_parse_int("123").into(handle_result)
-Parsed value: 123
+'Parsed value: 123'
 >>> try_parse_int("abc").into(handle_result)
-Error parsing int!
+'Error parsing int!'
 
 ```
 
