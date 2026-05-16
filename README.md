@@ -2,7 +2,7 @@
 
 **_Fluent method chaining for Python._**
 
-Inspired by Rust's `Iterator`, `Result`, `Option`, and DataFrame libraries like `Polars`, `pyochain` provide a set of classes with a fluent and declarative API, to work with collections, handle optional values, or manage errors.
+Inspired by Rust's `Iterator`, `Result`, `Option`, and DataFrame libraries like `Polars`, `pyochain` provide a set of classes with a fluent API, to work with iterations, collections, handle optional values, or manage errors.
 
 For a quick overview of the core types and their relationships, see the [core types overview](https://outsquarecapital.github.io/pyochain/core-types-overview/) page.
 
@@ -32,10 +32,10 @@ uv add pyochain # or pip install pyochain
 ### Iterations
 
 ```python
->>> import pyochain as pc
+>>> from pyochain import Iter, Seq
 >>> # Lazy processing with Iter
->>> res: pc.Seq[tuple[int, str]] = (
-...     pc.Iter.from_count(1)
+>>> res: Seq[tuple[int, str]] = (
+...     Iter.from_count(1)
 ...     .filter(lambda x: x % 2 != 0)
 ...     .map(lambda x: x**2)
 ...     .take(5)
@@ -72,23 +72,46 @@ For comparison, the above can be written in pure Python as the following (note t
 
 ```python
 
->>> import pyochain as pc
->>> def divide(a: int, b: int) -> pc.Option[float]:
-...     return pc.NONE if b == 0 else pc.Some(a / b)
+>>> from pyochain import Option, NONE, Some, Seq, Vec
+>>> from pyochain.traits import PyoIterable
+>>>
+>>> def divide(a: int, b: int) -> Option[float]:
+...     return NONE if b == 0 else Some(a / b)
 >>> divide(10, 2)
 Some(5.0)
->>> divide (10, 0).unwrap_or(-1.0) # Provide a default value
+>>> divide(10, 0).unwrap_or(-1.0) # Provide a default value
 -1.0
 >>> # Convert between Collections -> Option -> Result
->>> data = pc.Seq([1, 2, 3])
+>>> data = Seq((1, 2, 3))
 >>> data.then_some() # Convert Seq to Option
 Some(Seq(1, 2, 3))
->>> data.then_some().map(lambda x: x.sum()).ok_or("No values") # Convert Option to Result
-Ok(6)
->>> pc.Seq[int](()).then_some().map(lambda x: x.sum()).ok_or("No values")
+>>>
+>>> def _process(data: PyoIterable[int]) -> str: # Accept any Pyochain Iterable
+...     return data.iter().map(str).join(", ")
+>>>
+>>> data.then(_process).ok_or("No values") # Process only if non-empty, convert Option to Result
+Ok('1, 2, 3')
+>>> Vec[int].new().then(_process).ok_or("No values") # Use new() to create an annotated empty Vec without brace and parentheses mixup
 Err('No values')
->>> pc.Seq[int](()).then_some().map(lambda x: x.sum()).ok_or("No values").ok() # Get the Option back
+>>> Set[int](()).then(_process).ok_or("No values").ok() # Create empty Set, convert to Result, then back to Option
 NONE
+>>> def try_parse_int(s: str) -> Result[int, ValueError]:
+...     try:
+...         return Ok(int(s))
+...     except ValueError as e:
+...         return Err(e)
+>>>
+>>> def handle_result(res: Result[int, ValueError]) -> str: # Type safe exhaustive handling with pattern matching
+...     match res:
+...         case Ok(value):
+...             return f"Parsed value: {value}"
+...         case Err(error):
+...             return f"Error parsing int!"
+>>>
+>>> try_parse_int("123").into(handle_result)
+Parsed value: 123
+>>> try_parse_int("abc").into(handle_result)
+Error parsing int!
 
 ```
 
@@ -99,8 +122,6 @@ For comprehensive guides and examples:
 [🔍 Types Overview](https://outsquarecapital.github.io/pyochain/core-types-overview/) — Roles, comparisons and visual relationships
 
 [🔄 Interoperability](https://outsquarecapital.github.io/pyochain/interoperability/) - Converting between types
-
-[📖 Examples & Cookbook](https://outsquarecapital.github.io/pyochain/examples/) — Practical patterns and recipes
 
 [📚 Full API Reference](https://outsquarecapital.github.io/pyochain/api-reference/) — Complete API documentation
 
