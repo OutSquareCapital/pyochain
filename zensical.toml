@@ -26,6 +26,7 @@
             { "Iterators" = [
                 { "Iter" = "reference/iter.md" },
                 { "Peekable" = "reference/peekable.md" },
+                { "Range" = "reference/range.md" },
                 { "Unzipped" = "reference/unzipped.md" },
             ] },
             { "Optional Values" = [

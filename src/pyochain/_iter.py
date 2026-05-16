@@ -312,18 +312,21 @@ class SetMut[T](Set[T], MutableSet[T]):
 class Seq[T](PyoSequence[T]):
     """Represent an in memory `Sequence`.
 
-    Implements the `Sequence` Protocol from `collections.abc`.
+    Implements the `Sequence` Protocol from `collections.abc`, and implements `PyoSequence`.
 
-    Provides a subset of `Iter` methods with eager evaluation, and is the return type of `Iter.collect()`.
+    This class is notably the default return type of `Iter::collect`.
 
     The underlying data structure is an immutable `tuple`, hence the memory efficiency is better than a `Vec`.
 
     Tip:
         `Seq(tuple)` is preferred over `Seq(list)` as this is a no-copy operation (Python optimizes `tuple` creation from another `tuple`).
+
         If you have an existing `list`, consider using `Vec.from_ref()` instead to avoid unnecessary copying.
 
+        If you need immediate iteration anyway, you can directly use `Iter` instead.
+
     Args:
-            data (Iterable[T]): The data to initialize the Seq with.
+        data (Iterable[T]): The data to initialize the Seq with.
     """
 
     __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]

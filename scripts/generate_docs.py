@@ -1,5 +1,6 @@
 """Generate reference markdown files and update zensical.toml navigation."""
 
+import tomllib
 from collections.abc import Iterator
 from pathlib import Path
 from types import ModuleType
@@ -7,9 +8,8 @@ from typing import Any
 
 import rich
 import rich.text
-import toml
 
-import pyochain as pc
+from pyochain import Dict, Iter, Seq, SetMut
 
 type JsonData = dict[str, Any] | list[str] | str  # pyright: ignore[reportExplicitAny]
 # Setup paths
@@ -29,7 +29,7 @@ def _ensure_docs_dir() -> None:
     DOCS_REF.mkdir(parents=True, exist_ok=True)
 
 
-def _discover_modules(module: ModuleType) -> pc.Seq[ModuleType]:
+def _discover_modules(module: ModuleType) -> Seq[ModuleType]:
 
     def _recurse(mod: ModuleType) -> Iterator[ModuleType]:
         yield mod
@@ -37,21 +37,22 @@ def _discover_modules(module: ModuleType) -> pc.Seq[ModuleType]:
             if isinstance(obj, ModuleType) and obj.__name__.startswith(mod.__name__):
                 yield from _recurse(obj)
 
-    return pc.Iter(_recurse(module)).collect()
+    return Iter(_recurse(module)).collect()
 
 
-def _generate_markdown_for_module(module: object) -> None:
+def _generate_markdown_for_module(module: object, generated_paths: SetMut[str]) -> None:
     """Generate markdown files for all public classes in a module."""
     _ensure_docs_dir()
 
     public_api = set(getattr(module, "__all__", []))
 
     def _write(path: Path, cls_name: str, cls_path: str) -> None:
+        generated_paths.add(path.as_posix())
         _ = path.write_text(_generate_markdown(cls_path, cls_name), encoding="utf-8")
         rich.print(rich.text.Text(f"✓ Generated {path!s}", style="green"))
 
     return (
-        pc.Dict.from_object(module)
+        Dict.from_object(module)
         .items()
         .iter()
         .filter_star(lambda name, cls: name in public_api and isinstance(cls, type))  # pyright: ignore[reportAny]
@@ -62,6 +63,7 @@ def _generate_markdown_for_module(module: object) -> None:
                 f"{cls.__module__}.{cls.__name__}".replace("builtins", "pyochain.rs"),  # pyright: ignore[reportAny]
             )
         )
+        .filter_star(lambda k, _, _v: k.as_posix() not in generated_paths)
         .for_each_star(_write)
     )
 
@@ -69,24 +71,27 @@ def _generate_markdown_for_module(module: object) -> None:
 def _check_nav_completeness(config_path: Path = ZENSICAL_PATH) -> None:
     """Check that all generated markdown files are in the navigation."""
 
-    def _collect_paths(acc: pc.SetMut[str], item: JsonData) -> pc.SetMut[str]:
+    def _collect_paths(acc: SetMut[str], item: JsonData) -> SetMut[str]:
         match item:
             case dict():
-                return pc.Iter(item.values()).fold(acc, _collect_paths)
+                return Iter(item.values()).fold(acc, _collect_paths)
             case list():
-                return pc.Iter(item).fold(acc, _collect_paths)
+                return Iter(item).fold(acc, _collect_paths)
             case str():
                 acc.add(item)
                 return acc
 
     nav_paths = (
-        pc.SetMut[str]
+        SetMut[str]
         .new()
-        .into(_collect_paths, toml.load(config_path)["project"]["nav"])  # pyright: ignore[reportAny]
+        .into(
+            _collect_paths,
+            tomllib.loads(config_path.read_text(encoding="utf-8"))["project"]["nav"],  # pyright: ignore[reportAny]
+        )
     )
 
     return (
-        pc.Iter(DOCS_REF.glob("*.md"))
+        Iter(DOCS_REF.glob("*.md"))
         .map(lambda p: f"reference/{p.name}")
         .filter(lambda p: p not in nav_paths)
         .collect()
@@ -106,11 +111,15 @@ def main() -> None:
     """Generate all reference documentation."""
     import pyochain
 
+    generated_paths = SetMut[str].new()
+
     rich.print(
         rich.text.Text("Generating pyochain documentation...", style="cyan bold")
     )
 
-    _discover_modules(pyochain).iter().for_each(_generate_markdown_for_module)
+    _discover_modules(pyochain).iter().for_each(
+        lambda module: _generate_markdown_for_module(module, generated_paths)
+    )
 
     rich.print("\nChecking navigation completeness...")
     _check_nav_completeness()

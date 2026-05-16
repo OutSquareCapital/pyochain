@@ -110,7 +110,7 @@ Fluent mixins are standalone classes that can be subclassed to enable functional
 
 They depend only on `Self` for their implementation, making them universally applicable.
 
-| Trait | Purpose | Main Capabilities | Inherited by |
+| Mixin | Purpose | Main Capabilities | Inherited by |
 | --- | --- | --- | --- |
 | `Pipeable` | Functional chaining | `into()`, `inspect()` for fluent method composition | All pyochain objects |
 | `Checkable` | Conditional operations | `then()`, `ok_or()`, `err_or()` for wrapping in `Option`/`Result` | All pyochain iterables + `Option` + `Result` |
@@ -123,7 +123,7 @@ Each protocol extends the corresponding one from `collections.abc`, inheriting i
 
 Concrete types must implement the required methods (dunders) to satisfy the protocol contract.
 
-| Trait | Extends | Inherits from `collections.abc` | Required Methods (for concrete types) | Concrete Types |
+| ABC | Extends | Inherits from `collections.abc` | Required Methods (for concrete types) | Concrete Types |
 | --- | --- | --- | --- | --- |
 | `PyoIterable[T]` | `Pipeable`, `Checkable` | `Iterable[T]` | `__iter__` | All pyochain collections |
 | `PyoIterator[T]` | `PyoIterable[T]` | `Iterator[T]` | `__iter__`, `__next__` | `Iter[T]` |
@@ -161,11 +161,11 @@ Since these types fully implement their corresponding `collections.abc` protocol
 
 Pyochain provides two fundamental types for explicit handling of nullable values and errors: `Option[T]` and `Result[T, E]`.
 
-### Option[T]
+### Option
 
 `Option[T]` represents values that may or may not be present, serving as a type-safe alternative to using `None`.
 
-### Result[T, E]
+### Result
 
 `Result[T, E]` represents the outcome of operations that can succeed or fail, promoting explicit error handling without exceptions.
 

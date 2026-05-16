@@ -41,10 +41,10 @@ The `src/pyochain` Python package is organized into internal modules (leading un
 - `_option.py` — `Option`, `Some`, `NONE`, and `OptionUnwrapError`.
 - `_result.py` — `Result`, `Ok`, `Err`, and `ResultUnwrapError`.
 - `_types.py` — Protocols for element types (e.g., `SupportsLen`).
-- `traits/` — public mixin traits (`Pipeable`, `Checkable`) for fluent chaining.
+- `traits/` — public mixin and abc's (`Pipeable`, `Checkable`) for fluent chaining.
 - `rs.pyi` — Type stubs for Rust-compiled bindings.
 - `py.typed` — PEP 561 marker for type checking support.
-- `__init__.py` — public API (imports and re-exports main classes/traits).
+- `__init__.py` — public API (imports and re-exports main classes).
 
 ## Coding and documentation guidelines
 

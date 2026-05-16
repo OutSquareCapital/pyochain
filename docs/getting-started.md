@@ -9,9 +9,9 @@ uv add pyochain
 ## Quick start
 
 ```python
->>> import pyochain as pc
->>> res: pc.Seq[int] = (
-...     pc.Iter.from_count(1)
+>>> from pyochain import Iter, Seq
+>>> res: Seq[int] = (
+...     Iter.from_count(1)
 ...     .filter(lambda x: x % 2 != 0)
 ...     .map(lambda x: x**2)
 ...     .take(5)
@@ -25,4 +25,3 @@ Seq(1, 9, 25, 49, 81)
 
 - [Core Types Overview](core-types-overview.md): choose between the various provided types
 - [Interoperability](interoperability.md): convert between types with various methods
-- [Examples & Cookbook](examples.md): practical patterns and concrete examples

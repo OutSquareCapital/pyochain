@@ -17,7 +17,7 @@ For a quick overview of the core types and their relationships, see the [core ty
 - 📚 **Accurate Documentation** — Every method is documented and tested with runnable examples.
 Every code example in the website (or this README) is also tested, ensuring accuracy and reliability.
 - 🔄 **Interoperable** — Seamlessly convert to/from types with various methods like `.into()` and `.collect()`, convert `Iterables` to `Option` or `Result` based on their truthiness, and more.
-- 🐍 **Mixins traits** — Extend your own classes with the methods in the mixins provided by the `traits` module.
+- 🐍 **Mixins and ABC's** — Extend your own classes with the mixins, Protocol and ABC's provided by the `traits` module.
 
 ## Installation
 

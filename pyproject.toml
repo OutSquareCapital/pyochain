@@ -25,7 +25,7 @@
         "ruff>=0.14.9",
         "toml>=0.10.2",
         "typer>=0.21.1",
-        "zensical>=0.0.15",
+        "zensical>=0.0.42",
     ]
 [tool.ruff]
     lint.external = ["DOC"]

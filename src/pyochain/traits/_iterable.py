@@ -37,24 +37,20 @@ type Comparator[T] = Callable[[Comparable[T], Comparable[T]], bool]
 
 
 class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
-    """Base trait for all pyochain `Iterables`.
+    """Base ABC for all pyochain `Iterables`.
 
     `PyoIterable[T]` is the common API surface shared by:
 
     - eager `Collections`: `Seq`, `Vec`, `Set`, `SetMut`, `Dict`
     - lazy `Iterator`: `Iter`
 
-    You typically don't instantiate this trait directly; it exists to provide a
-    consistent, fluent interface across all pyochain `Iterables`.
+    This class inherit from `collections.abc.Iterable[T]`,
 
-    This is equivalent to inheriting from `collections.abc.Iterable[T]` (this
-    trait already does), meaning any concrete subclass is an `Iterable[T]` as
-    soon as it implements the required dunder `__iter__()`.
+    meaning any concrete subclass is an `Iterable[T]` as soon as it implements the required dunder `__iter__()`.
 
-    On top of the standard `Iterable` protocol, it provides additional pyochain
-    methods for fluent chaining and convenience (`Pipeable`, `Checkable`,
-    `length()`, comparison helpers, aggregations, etc.).
+    On top of the standard `Iterable` protocol,
 
+    it provides additional pyochain methods for fluent chaining and convenience (`Pipeable`, `Checkable`, `length()`, comparison helpers, aggregations, etc.).
 
     Args:
         data (Iterable[T]): The data to initialize the concrete iterable with.
@@ -452,26 +448,20 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
 
 
 class PyoCollection[T](PyoIterable[T], Collection[T], ABC):
-    """Base trait for eager pyochain collections.
+    """Base ABC for pyochain collections.
 
-    `PyoCollection[T]` is the shared trait for concrete, eager collections:
-    `Seq`, `Vec`, `Set`, `SetMut`, `Dict`.
+    `PyoCollection[T]` is the shared ABC for concrete collections:
 
-    It extends `PyoIterable[T]` and `collections.abc.Collection[T]` and provides
-    a few convenience methods like `contains()` and `repeat()`.
+    `Seq`, `Vec`, `Set`, `SetMut`, `Dict`, etc...
 
-    This is equivalent to subclassing `collections.abc.Collection[T]` (this
-    trait already does), meaning any concrete subclass must implement the
-    required `Collection` dunder methods:
+    It extends `PyoIterable[T]` and `collections.abc.Collection[T]`,
+    and provides a few convenience methods like `contains()` and `repeat()`.
+
+    Any concrete subclass must implement the required `Collection` dunder methods:
 
     - `__iter__`
     - `__len__`
     - `__contains__`
-
-    On top of the standard `Collection` protocol, it provides the additional
-    pyochain API (from `PyoIterable`, `Pipeable`, `Checkable`, plus the helpers
-    defined here).
-
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
@@ -564,11 +554,10 @@ class PyoCollection[T](PyoIterable[T], Collection[T], ABC):
 
 
 class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
-    """Base trait for lazy `Iterator` classes.
+    """Base ABC for lazy `Iterator` classes.
 
-    Pyochain's `Iter[T]` implements this trait.
-    This trait extends `PyoIterable[T]` and `collections.abc.Iterator[T]`, providing
-    additional methods for working with lazy sequences.
+    Pyochain's `Iter[T]` implements this ABC.
+    This ABC extends `PyoIterable[T]` and `collections.abc.Iterator[T]`, providing many methods for iterating over iterables.
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
@@ -1852,25 +1841,18 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
 
 class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
-    """Base trait for eager pyochain sequences.
+    """Base ABC for pyochain sequences.
 
-    `PyoSequence[T]` is the shared trait for concrete, eager sequence-like
-    collections: `Seq` and `Vec`.
+    `PyoSequence[T]` is the shared ABC for concrete collections: `Seq` and `Vec`.
 
     It extends `PyoCollection[T]` and `collections.abc.Sequence[T]`.
 
-    This is equivalent to subclassing `collections.abc.Sequence[T]` (this trait
-    already does), meaning any concrete subclass must implement the required
-    `Sequence` dunder methods:
+    Any concrete subclass must implement the required `Sequence` dunder methods:
 
     - `__getitem__`
     - `__len__`
     - `__contains__`
     - `__iter__`
-
-    On top of the standard `Sequence` protocol, it provides the additional
-    pyochain API (from `PyoCollection`, `Pipeable`, `Checkable`, plus any helpers defined here).
-
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
@@ -1938,23 +1920,17 @@ class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
 
 
 class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
-    """Base trait for eager pyochain set-like collections.
+    """Base ABC for pyochain set-like collections.
 
-    `PyoSet[T]` is the shared trait for concrete, eager set-like
-    collections: `Set` and `FrozenSet`.
+    `PyoSet[T]` is the shared ABC for concrete set-like collections: `Set` and `FrozenSet`.
 
     It extends `PyoCollection[T]` and `collections.abc.Set[T]`.
 
-    This is equivalent to subclassing `collections.abc.Set[T]` (this trait
-    already does), meaning any concrete subclass must implement the required
-    `Set` dunder methods:
+    Any concrete subclass must implement the required `Set` dunder methods:
 
     - `__contains__`
     - `__iter__`
     - `__len__`
-
-    On top of the standard `Set` protocol, it provides the additional
-    pyochain API (from `PyoCollection`, `Pipeable`, `Checkable`, plus any helpers defined here).
 
     """
 
@@ -2219,12 +2195,15 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
 
 class PyoMappingView[T](MappingView, PyoCollection[T], ABC):  # pyright: ignore[reportUnsafeMultipleInheritance]
-    """Base trait for eager pyochain mapping view collections.
+    """Base ABC for pyochain mapping view collections.
 
-    `PyoMappingView[T]` is the shared trait for concrete mapping views
-    returned by mapping operations.
+    `PyoMappingView[T]` is the base class shared by the views returned by `PyoMapping` methods.
 
-    This trait extends both `MappingView` from `collections.abc` and `PyoCollection[T]`.
+    This class extends both `MappingView` from `collections.abc` and `PyoCollection[T]`.
+
+    Any concrete subclass must implement the required `MappingView` dunder methods:
+    - `__contains__`
+    - `__iter__`
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
@@ -2233,8 +2212,7 @@ class PyoMappingView[T](MappingView, PyoCollection[T], ABC):  # pyright: ignore[
 class PyoValuesView[V](ValuesView[V], PyoMappingView[V]):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """A view of the values in a pyochain mapping.
 
-    This class provides a view over the values contained in a pyochain mapping, with
-    additional methods from the `PyoMappingView` and `PyoCollection` traits.
+    This concrete class is returned by the `PyoMapping.values()` method, and inherits from `collections.abc.ValuesView` and `PyoCollection`.
 
     See Also:
         `PyoMapping.values()`: Method that returns this view.
@@ -2246,8 +2224,7 @@ class PyoValuesView[V](ValuesView[V], PyoMappingView[V]):  # pyright: ignore[rep
 class PyoKeysView[K](KeysView[K], PyoMappingView[K], PyoSet[K]):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """A view of the keys in a pyochain mapping.
 
-    This class provides a view over the keys contained in a pyochain mapping, with
-    additional methods from the `PyoMappingView`, `PyoSet`, and `PyoCollection` traits.
+    This concrete class is returned by the `PyoMapping.keys()` method, and inherits from `collections.abc.KeysView`, `PyoMappingView`, and `PyoSet`.
 
     Keys views support set-like operations since dictionary keys are unique.
 
@@ -2263,8 +2240,7 @@ class PyoItemsView[K, V](  # pyright: ignore[reportUnsafeMultipleInheritance]
 ):
     """A view of the items (key-value pairs) in a pyochain mapping.
 
-    This class provides a view over the items contained in a pyochain mapping, with
-    additional methods from the `PyoMappingView`, `PyoSet`, and `PyoCollection` traits.
+    This concrete class is returned by the `PyoMapping.items()` method, and inherits from `collections.abc.ItemsView`, `PyoMappingView`, and `PyoSet`.
 
     Items are represented as tuples of `(key, value)` pairs, and the view supports set-like operations.
 
@@ -2276,23 +2252,16 @@ class PyoItemsView[K, V](  # pyright: ignore[reportUnsafeMultipleInheritance]
 
 
 class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
-    """Base trait for eager pyochain immutable mapping collections.
-
-    `PyoMapping[K, V]` is the shared trait for concrete, eager mapping-like
-    collections such as `Dict`.
+    """Base ABC for pyochain immutable mappings, such as `Dict`.
 
     It extends `PyoCollection[K]` and `collections.abc.Mapping[K, V]`.
 
-    This is equivalent to subclassing `collections.abc.Mapping[K, V]` (this trait
-    already does), meaning any concrete subclass must implement the required
-    `Mapping` dunder methods:
+    Any concrete subclass must implement the required `Mapping` dunder methods:
 
     - `__getitem__`
     - `__iter__`
     - `__len__`
 
-    On top of the standard `Mapping` protocol, it provides the additional
-    pyochain API (from `PyoCollection`, `Pipeable`, `Checkable`, plus any helpers defined here).
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
@@ -2353,16 +2322,11 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
 
 
 class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
-    """Base trait for eager pyochain mutable mapping collections.
-
-    `PyoMutableMapping[K, V]` is the shared trait for concrete, eager mutable mapping-like
-    collections such as `Dict`.
+    """Base ABC for pyochain mutable mappings, such as `Dict`.
 
     It extends `PyoMapping[K, V]` and `collections.abc.MutableMapping[K, V]`.
 
-    This is equivalent to subclassing `collections.abc.MutableMapping[K, V]` (this trait
-    already does), meaning any concrete subclass must implement the required
-    `MutableMapping` dunder methods:
+    Any concrete subclass must implement the required `MutableMapping` dunder methods:
 
     - `__getitem__`
     - `__setitem__`
@@ -2370,8 +2334,6 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
     - `__iter__`
     - `__len__`
 
-    On top of the standard `MutableMapping` protocol, it provides the additional
-    pyochain API (from `PyoMapping`, `PyoCollection`, `Pipeable`, `Checkable`, plus any helpers defined here).
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
@@ -2512,16 +2474,11 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
 
 
 class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
-    """Base trait for eager pyochain mutable sequence collections.
-
-    `PyoMutableSequence[T]` is the shared trait for concrete, eager mutable sequence-like
-    collections: `Vec`.
+    """Base ABC for pyochain mutable sequence collections, such as `Vec`.
 
     It extends `PyoSequence[T]` and `collections.abc.MutableSequence[T]`.
 
-    This is equivalent to subclassing `collections.abc.MutableSequence[T]` (this trait
-    already does), meaning any concrete subclass must implement the required
-    `MutableSequence` dunder methods:
+    Any concrete subclass must implement the required `MutableSequence` dunder methods:
 
     - `__getitem__`
     - `__setitem__`
@@ -2529,10 +2486,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
     - `__len__`
     - `insert`
 
-    On top of the standard `MutableSequence` protocol, it provides the additional
-    pyochain API (from `PyoSequence`, `PyoCollection`, `Pipeable`, `Checkable`), and various methods inspired from Rust's `Vec` type.
-
-    Those methods provides memory-efficient in-place operations.
+    This class notably provides various methods inspired from Rust's `Vec` type, which provides memory-efficient in-place operations.
 
     They are slower than simple `.extend()`, slices and `clear()` calls, but avoids all intermediate allocations, making them suitable for large collections where memory usage is a concern.
     """

@@ -4,9 +4,9 @@ Pyochain is designed for fluent API usage. Most types can be converted into othe
 
 ## Shared Features
 
-To enable this flexibility, Pyochain provides two core traits (mixins) that extend all types with powerful chaining and conditional logic capabilities.
+To enable this flexibility, Pyochain provides two core mixins that extend all types with powerful chaining and conditional logic capabilities.
 
-### Pipeable trait
+### Pipeable mixin
 
 All pyochain types implement `Pipeable`, providing universal methods to continue a chain:
 
@@ -20,12 +20,12 @@ This is particularly useful when you need to pass the result to a function you d
 
 ```python
 >>> import json
->>> import pyochain as pc
+>>> from pyochain import Dict
 >>> 
 >>> # Flow is broken, nested function calls, read from middle -> right -> left -> right
 >>> nested = json.dumps(
 ...     dict(
-...         pc.Dict({"id": 1, "name": "Alice"})
+...         Dict({"id": 1, "name": "Alice"})
 ...         .items()
 ...         .iter()
 ...         .map_star(lambda k, v: (k.upper(), v))
@@ -35,7 +35,7 @@ This is particularly useful when you need to pass the result to a function you d
 '{"ID": 1, "NAME": "Alice"}'
 >>> # Fluent chaining with .into(), read left -> right
 >>> fluent = (
-...     pc.Dict({"id": 1, "name": "Alice"})
+...     Dict({"id": 1, "name": "Alice"})
 ...     .items()
 ...     .iter()
 ...     .map_star(lambda k, v: (k.upper(), v))
@@ -51,25 +51,25 @@ This is particularly useful when you need to pass the result to a function you d
 Pass `Self` to a function for side effects (logging, debugging, metrics) without breaking the chain. The instance is returned unchanged.
 
 ```python
->>> import pyochain as pc
->>> pc.Seq([1, 2, 3]).inspect(print).iter().map(lambda x: x * 2).collect()
+>>> from pyochain import Seq
+>>> Seq((1, 2, 3)).inspect(print).iter().map(lambda x: x * 2).collect()
 Seq(1, 2, 3)
 Seq(2, 4, 6)
 ```
 
-### Checkable trait
+### Checkable mixins
 
-Collections (`Seq`, `Vec`, `Set`, `SetMut`, `Dict`) and iterators (`Iter`) implement `Checkable`, providing conditional chaining based on truthiness (usually emptiness):
+Collections (`Seq`, `Vec`, `Set`, `SetMut`, `Dict`) and iterators (`Iter`) inherit from `Checkable`, providing conditional chaining based on truthiness (usually emptiness):
 
 #### `.then(func, *args, **kwargs) -> Option[R]`
 
 Call **func** and wrap result in `Some` only if the instance is truthy.
 
 ```python
->>> import pyochain as pc
->>> pc.Seq([1, 2, 3]).then(lambda s: s.sum())
+>>> from pyochain import Seq
+>>> Seq((1, 2, 3)).then(lambda s: s.sum())
 Some(6)
->>> pc.Seq([]).then(lambda s: s.sum())
+>>> Seq(()).then(lambda s: s.sum())
 NONE
 ```
 
@@ -78,10 +78,10 @@ NONE
 Wrap the instance in `Some` if truthy, otherwise `NONE`.
 
 ```python
->>> import pyochain as pc
->>> pc.Seq([1, 2, 3]).then_some()
+>>> from pyochain import Seq
+>>> Seq((1, 2, 3)).then_some()
 Some(Seq(1, 2, 3))
->>> pc.Seq([]).then_some()
+>>> Seq(()).then_some()
 NONE
 ```
 
@@ -90,10 +90,10 @@ NONE
 Wrap in `Ok` if truthy, otherwise wrap the error in `Err`.
 
 ```python
->>> import pyochain as pc
->>> pc.Seq([1, 2, 3]).ok_or("empty list")
+>>> from pyochain import Seq
+>>> Seq((1, 2, 3)).ok_or("empty list")
 Ok(Seq(1, 2, 3))
->>> pc.Seq([]).ok_or("empty list")
+>>> Seq(()).ok_or("empty list")
 Err('empty list')
 ```
 
@@ -102,28 +102,28 @@ Err('empty list')
 Wrap in `Ok` if truthy, otherwise call **func** and wrap result in `Err` (lazy evaluation).
 
 ```python
->>> import pyochain as pc
->>> pc.Seq([1, 2, 3]).ok_or_else(lambda _: "empty")
+>>> from pyochain import Seq
+>>> Seq((1, 2, 3)).ok_or_else(lambda _: "empty")
 Ok(Seq(1, 2, 3))
->>> pc.Seq([]).ok_or_else(lambda _: "empty")
+>>> Seq(()).ok_or_else(lambda _: "empty")
 Err('empty')
 ```
 
-### PyoIterable & PyoCollection traits
+### PyoIterable & PyoCollection ABCs
 
-`PyoIterable[T]` and `PyoCollection[T]` are the foundational traits for all collection and iterator types in Pyochain.
+`PyoIterable[T]` and `PyoCollection[T]` are the foundational ABCs for all collection and iterator types in Pyochain.
 
-**PyoIterable[T]** extends `Pipeable`, `Checkable`, and Python's `Iterable[T]` protocol:
+`PyoIterable[T]` extends `Pipeable`, `Checkable`, and Python's `Iterable[T]` protocol:
 
 - Provides the base interface shared by **all** pyochain types (both lazy iterators and eager collections)
 - Concrete types only need to implement `__iter__()` to satisfy the `Iterable[T]` protocol
 - Adds common methods like `.length()`, `.sum()`, `.min()`, `.max()`, `.all()`, `.any()`, etc.
 
-**PyoCollection[T]** extends `PyoIterable[T]` and Python's `Collection[T]` protocol:
+`PyoCollection[T]` extends `PyoIterable[T]` and Python's `Collection[T]` protocol:
 
-- Represents **eager** (in-memory) collections: `Seq`, `Vec`, `Set`, `SetMut`, `Dict`, and mapping views
+- Represents in-memory collections: `Seq`, `Vec`, `Set`, `SetMut`, `Dict`, and mapping views
 - Concrete types must implement `__contains__()`, `__iter__()`, and `__len__()` to satisfy the protocol
-- `Iter[T]` (lazy iterator) does **not** extend this trait, only `PyoIterator[T]`
+- `Iter[T]` (lazy iterator) does **not** extend this ABC, only `PyoIterator[T]`
 
 #### from_ref() for mutable collections
 
@@ -132,10 +132,10 @@ All mutable collection types (`Vec`, `SetMut`, `Dict`) provide a `from_ref()` cl
 ### Examples
 
 ```python
->>> import pyochain as pc
+>>> from pyochain import Vec, SetMut, Dict
 >>> # Vec from list
 >>> py_list = [1, 2, 3]
->>> vec = pc.Vec.from_ref(py_list)
+>>> vec = Vec.from_ref(py_list)
 >>> vec.append(4)
 >>> vec
 Vec(1, 2, 3, 4)
@@ -144,7 +144,7 @@ Vec(1, 2, 3, 4)
 >>> 
 >>> # SetMut from set
 >>> py_set = {1, 2, 3}
->>> set_mut = pc.SetMut.from_ref(py_set)
+>>> set_mut = SetMut.from_ref(py_set)
 >>> set_mut.add(4)
 >>> set_mut
 SetMut(1, 2, 3, 4)
@@ -153,7 +153,7 @@ SetMut(1, 2, 3, 4)
 >>> 
 >>> # Dict from dict
 >>> py_dict = {"a": 1, "b": 2}
->>> pyo_dict = pc.Dict.from_ref(py_dict)
+>>> pyo_dict = Dict.from_ref(py_dict)
 >>> pyo_dict.insert("c", 3)
 NONE
 >>> pyo_dict
@@ -181,7 +181,7 @@ config:
   layout: elk
 ---
 flowchart TB
- subgraph Collections["📦 Collections (Eager)"]
+ subgraph Collections["📦 Collections"]
     direction LR
         Seq["<b>Seq[T]</b><br>immutable<br>tuple"]
         Vec["<b>Vec[T]</b><br>mutable<br>list"]
