@@ -296,10 +296,10 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Option(42)
+        >>> from pyochain import Option
+        >>> Option(42)
         Some(42)
-        >>> pc.Option(None)
+        >>> Option(None)
         NONE
 
         ```
@@ -313,8 +313,8 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> x = pc.Some(42)
+        >>> from pyochain import Some
+        >>> x = Some(42)
         >>> bool(x)
         Traceback (most recent call last):
         ...
@@ -336,15 +336,15 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Option.if_true(42, predicate=lambda x: x == 42)
+        >>> from pyochain import Option
+        >>> Option.if_true(42, predicate=lambda x: x == 42)
         Some(42)
-        >>> pc.Option.if_true(21, predicate=lambda x: x == 42)
+        >>> Option.if_true(21, predicate=lambda x: x == 42)
         NONE
         >>> from pathlib import Path
-        >>> pc.Option.if_true(Path("README.md"), predicate=Path.exists).map(str)
+        >>> Option.if_true(Path("README.md"), predicate=Path.exists).map(str)
         Some('README.md')
-        >>> pc.Option.if_true(Path("README.md"), predicate=lambda p: p.exists()).map(str) # Same as above
+        >>> Option.if_true(Path("README.md"), predicate=lambda p: p.exists()).map(str) # Same as above
         Some('README.md')
 
         ```
@@ -362,14 +362,14 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Option.if_some(42)
+        >>> from pyochain import Option
+        >>> Option.if_some(42)
         Some(42)
-        >>> pc.Option.if_some(0)
+        >>> Option.if_some(0)
         NONE
-        >>> pc.Option.if_some("hello")
+        >>> Option.if_some("hello")
         Some('hello')
-        >>> pc.Option.if_some("")
+        >>> Option.if_some("")
         NONE
 
         ```
@@ -386,12 +386,12 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some(pc.Some(42)).flatten()
+        >>> from pyochain import Some, NONE
+        >>> Some(Some(42)).flatten()
         Some(42)
-        >>> pc.Some(pc.NONE).flatten()
+        >>> Some(NONE).flatten()
         NONE
-        >>> pc.NONE.flatten()
+        >>> NONE.flatten()
         NONE
 
         ```
@@ -464,10 +464,10 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some((2, 3)).map_star(lambda x, y: x + y)
+        >>> from pyochain import Some, NONE
+        >>> Some((2, 3)).map_star(lambda x, y: x + y)
         Some(5)
-        >>> pc.NONE.map_star(lambda x, y: x + y)
+        >>> NONE.map_star(lambda x, y: x + y)
         NONE
 
         ```
@@ -537,10 +537,10 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some((2, 3)).and_then_star(lambda x, y: pc.Some(x + y))
+        >>> from pyochain import Some, NONE
+        >>> Some((2, 3)).and_then_star(lambda x, y: Some(x + y))
         Some(5)
-        >>> pc.NONE.and_then_star(lambda x, y: pc.Some(x + y))
+        >>> NONE.and_then_star(lambda x, y: Some(x + y))
         NONE
 
         ```
@@ -557,14 +557,14 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some(42).ne(pc.Some(21))
+        >>> from pyochain import Some, NONE
+        >>> Some(42).ne(Some(21))
         True
-        >>> pc.Some(42).ne(pc.Some(42))
+        >>> Some(42).ne(Some(42))
         False
-        >>> pc.Some(42).ne(pc.NONE)
+        >>> Some(42).ne(NONE)
         True
-        >>> pc.NONE.ne(pc.NONE)
+        >>> NONE.ne(NONE)
         False
 
         ```
@@ -588,18 +588,18 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some(42) == pc.Some(42)
+        >>> from pyochain import Some, NONE
+        >>> Some(42) == Some(42)
         True
-        >>> pc.Some(42) == pc.Some(21)
+        >>> Some(42) == Some(21)
         False
-        >>> pc.Some(42) == pc.NONE
+        >>> Some(42) == NONE
         False
-        >>> pc.NONE == pc.NONE
+        >>> NONE == NONE
         True
-        >>> pc.NONE == None
+        >>> NONE == None
         True
-        >>> pc.Some(42) == 42
+        >>> Some(42) == 42
         False
 
         ```
@@ -621,14 +621,14 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some(42).eq(pc.Some(42))
+        >>> from pyochain import Some, NONE
+        >>> Some(42).eq(Some(42))
         True
-        >>> pc.Some(42).eq(pc.Some(21))
+        >>> Some(42).eq(Some(21))
         False
-        >>> pc.Some(42).eq(pc.NONE)
+        >>> Some(42).eq(NONE)
         False
-        >>> pc.NONE.eq(pc.NONE)
+        >>> NONE.eq(NONE)
         True
 
         ```
@@ -642,11 +642,11 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> x: Option[int] = pc.Some(2)
+        >>> from pyochain import Some, NONE
+        >>> x: Option[int] = Some(2)
         >>> x.is_some()
         True
-        >>> y: Option[int] = pc.NONE
+        >>> y: Option[int] = NONE
         >>> y.is_some()
         False
 
@@ -671,18 +671,18 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> x = pc.Some(2)
+        >>> from pyochain import Some, NONE
+        >>> x = Some(2)
         >>> x.is_some_and(lambda x: x > 1)
         True
 
-        >>> x = pc.Some(0)
+        >>> x = Some(0)
         >>> x.is_some_and(lambda x: x > 1)
         False
-        >>> x = pc.NONE
+        >>> x = NONE
         >>> x.is_some_and(lambda x: x > 1)
         False
-        >>> x = pc.Some("hello")
+        >>> x = Some("hello")
         >>> x.is_some_and(lambda x: len(x) > 1)
         True
 
@@ -697,11 +697,11 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> x: Option[int] = pc.Some(2)
+        >>> from pyochain import Some, NONE
+        >>> x: Option[int] = Some(2)
         >>> x.is_none()
         False
-        >>> y: Option[int] = pc.NONE
+        >>> y: Option[int] = NONE
         >>> y.is_none()
         True
 
@@ -723,14 +723,14 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some(2).is_none_or(lambda x: x > 1)
+        >>> from pyochain import Some, NONE
+        >>> Some(2).is_none_or(lambda x: x > 1)
         True
-        >>> pc.Some(0).is_none_or(lambda x: x > 1)
+        >>> Some(0).is_none_or(lambda x: x > 1)
         False
-        >>> pc.NONE.is_none_or(lambda x: x > 1)
+        >>> NONE.is_none_or(lambda x: x > 1)
         True
-        >>> pc.Some("hello").is_none_or(lambda x: len(x) > 1)
+        >>> Some("hello").is_none_or(lambda x: len(x) > 1)
         True
 
         ```
@@ -747,14 +747,14 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some("car").unwrap()
+        >>> from pyochain import Some
+        >>> Some("car").unwrap()
         'car'
 
         ```
         ```python
-        >>> import pyochain as pc
-        >>> pc.NONE.unwrap()
+        >>> from pyochain import NONE
+        >>> NONE.unwrap()
         Traceback (most recent call last):
         ...
         OptionUnwrapError: called `unwrap` on a `None`
@@ -778,10 +778,10 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some("value").expect("fruits are healthy")
+        >>> from pyochain import Some, NONE
+        >>> Some("value").expect("fruits are healthy")
         'value'
-        >>> pc.NONE.expect("fruits are healthy")
+        >>> NONE.expect("fruits are healthy")
         Traceback (most recent call last):
         ...
         OptionUnwrapError: fruits are healthy (called `expect` on a `None`)
@@ -800,10 +800,10 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some("car").unwrap_or("bike")
+        >>> from pyochain import Some, NONE
+        >>> Some("car").unwrap_or("bike")
         'car'
-        >>> pc.NONE.unwrap_or("bike")
+        >>> NONE.unwrap_or("bike")
         'bike'
 
         ```
@@ -820,11 +820,11 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Some, NONE
         >>> k = 10
-        >>> pc.Some(4).unwrap_or_else(lambda: 2 * k)
+        >>> Some(4).unwrap_or_else(lambda: 2 * k)
         4
-        >>> pc.NONE.unwrap_or_else(lambda: 2 * k)
+        >>> NONE.unwrap_or_else(lambda: 2 * k)
         20
 
         ```
@@ -848,10 +848,10 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some("Hello, World!").map(len)
+        >>> from pyochain import Some, NONE
+        >>> Some("Hello, World!").map(len)
         Some(13)
-        >>> pc.NONE.map(len)
+        >>> NONE.map(len)
         NONE
 
         ```
@@ -869,14 +869,14 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some(2).and_(pc.NONE)
+        >>> from pyochain import Some, NONE
+        >>> Some(2).and_(NONE)
         NONE
-        >>> pc.NONE.and_(pc.Some("foo"))
+        >>> NONE.and_(Some("foo"))
         NONE
-        >>> pc.Some(2).and_(pc.Some("foo"))
+        >>> Some(2).and_(Some("foo"))
         Some('foo')
-        >>> pc.NONE.and_(pc.NONE)
+        >>> NONE.and_(NONE)
         NONE
 
         ```
@@ -893,14 +893,14 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some(2).or_(pc.NONE)
+        >>> from pyochain import Some, NONE
+        >>> Some(2).or_(NONE)
         Some(2)
-        >>> pc.NONE.or_(pc.Some(100))
+        >>> NONE.or_(Some(100))
         Some(100)
-        >>> pc.Some(2).or_(pc.Some(100))
+        >>> Some(2).or_(Some(100))
         Some(2)
-        >>> pc.NONE.or_(pc.NONE)
+        >>> NONE.or_(NONE)
         NONE
 
         ```
@@ -924,18 +924,18 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Some, NONE
         >>> def sq(x: int) -> Option[int]:
-        ...     return pc.Some(x * x)
+        ...     return Some(x * x)
         >>> def nope(x: int) -> Option[int]:
-        ...     return pc.NONE
-        >>> pc.Some(2).and_then(sq).and_then(sq)
+        ...     return NONE
+        >>> Some(2).and_then(sq).and_then(sq)
         Some(16)
-        >>> pc.Some(2).and_then(sq).and_then(nope)
+        >>> Some(2).and_then(sq).and_then(nope)
         NONE
-        >>> pc.Some(2).and_then(nope).and_then(sq)
+        >>> Some(2).and_then(nope).and_then(sq)
         NONE
-        >>> pc.NONE.and_then(sq).and_then(sq)
+        >>> NONE.and_then(sq).and_then(sq)
         NONE
 
         ```
@@ -952,16 +952,16 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Some, NONE
         >>> def nobody() -> Option[str]:
-        ...     return pc.NONE
+        ...     return NONE
         >>> def vikings() -> Option[str]:
-        ...     return pc.Some("vikings")
-        >>> pc.Some("barbarians").or_else(vikings)
+        ...     return Some("vikings")
+        >>> Some("barbarians").or_else(vikings)
         Some('barbarians')
-        >>> pc.NONE.or_else(vikings)
+        >>> NONE.or_else(vikings)
         Some('vikings')
-        >>> pc.NONE.or_else(nobody)
+        >>> NONE.or_else(nobody)
         NONE
 
         ```
@@ -978,10 +978,10 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some(1).ok_or('fail')
+        >>> from pyochain import Some, NONE
+        >>> Some(1).ok_or('fail')
         Ok(1)
-        >>> pc.NONE.ok_or('fail')
+        >>> NONE.ok_or('fail')
         Err('fail')
 
         ```
@@ -998,10 +998,10 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some(1).ok_or_else(lambda: 'fail')
+        >>> from pyochain import Some, NONE
+        >>> Some(1).ok_or_else(lambda: 'fail')
         Ok(1)
-        >>> pc.NONE.ok_or_else(lambda: 'fail')
+        >>> NONE.ok_or_else(lambda: 'fail')
         Err('fail')
 
         ```
@@ -1027,10 +1027,10 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some(2).map_or(0, lambda x: x * 10)
+        >>> from pyochain import Some, NONE
+        >>> Some(2).map_or(0, lambda x: x * 10)
         20
-        >>> pc.NONE.map_or(0, lambda x: x * 10)
+        >>> NONE.map_or(0, lambda x: x * 10)
         0
 
         ```
@@ -1048,10 +1048,10 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some(2).map_or_else(lambda: 0, lambda x: x * 10)
+        >>> from pyochain import Some, NONE
+        >>> Some(2).map_or_else(lambda: 0, lambda x: x * 10)
         20
-        >>> pc.NONE.map_or_else(lambda: 0, lambda x: x * 10)
+        >>> NONE.map_or_else(lambda: 0, lambda x: x * 10)
         0
 
         ```
@@ -1080,16 +1080,16 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Some, NONE
         >>>
         >>> def is_even(n: int) -> bool:
         ...     return n % 2 == 0
         >>>
-        >>> pc.NONE.filter(is_even)
+        >>> NONE.filter(is_even)
         NONE
-        >>> pc.Some(3).filter(is_even)
+        >>> Some(3).filter(is_even)
         NONE
-        >>> pc.Some(4).filter(is_even)
+        >>> Some(4).filter(is_even)
         Some(4)
 
         ```
@@ -1108,10 +1108,10 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some(42).iter().next()
+        >>> from pyochain import Some, NONE
+        >>> Some(42).iter().next()
         Some(42)
-        >>> pc.NONE.iter().next()
+        >>> NONE.iter().next()
         NONE
 
         ```
@@ -1134,13 +1134,13 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Some, NONE
         >>> seen: list[int] = []
-        >>> pc.Some(2).inspect(lambda x: seen.append(x))
+        >>> Some(2).inspect(lambda x: seen.append(x))
         Some(2)
         >>> seen
         [2]
-        >>> pc.NONE.inspect(lambda x: seen.append(x))
+        >>> NONE.inspect(lambda x: seen.append(x))
         NONE
         >>> seen
         [2]
@@ -1159,10 +1159,10 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some((1, 'a')).unzip()
+        >>> from pyochain import Some, NONE
+        >>> Some((1, 'a')).unzip()
         (Some(1), Some('a'))
-        >>> pc.NONE.unzip()
+        >>> NONE.unzip()
         (NONE, NONE)
 
         ```
@@ -1179,12 +1179,12 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some(1).zip(pc.Some('a'))
+        >>> from pyochain import Some, NONE
+        >>> Some(1).zip(Some('a'))
         Some((1, 'a'))
-        >>> pc.Some(1).zip(pc.NONE)
+        >>> Some(1).zip(NONE)
         NONE
-        >>> pc.NONE.zip(pc.Some('a'))
+        >>> NONE.zip(Some('a'))
         NONE
 
         ```
@@ -1207,20 +1207,20 @@ class Option[T](Pipeable):
         Example:
         ```python
         >>> from dataclasses import dataclass
-        >>> import pyochain as pc
+        >>> from pyochain import Some, NONE
         >>>
         >>> @dataclass
         ... class Point:
         ...     x: float
         ...     y: float
         >>>
-        >>> x = pc.Some(17.5)
-        >>> y = pc.Some(42.7)
+        >>> x = Some(17.5)
+        >>> y = Some(42.7)
         >>> x.zip_with(y, Point)
         Some(Point(x=17.5, y=42.7))
-        >>> x.zip_with(pc.NONE, Point)
+        >>> x.zip_with(NONE, Point)
         NONE
-        >>> pc.NONE.zip_with(y, Point)
+        >>> NONE.zip_with(y, Point)
         NONE
 
         ```
@@ -1244,20 +1244,20 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> s12 = pc.Some(12)
-        >>> s17 = pc.Some(17)
+        >>> from pyochain import Some, NONE
+        >>> s12 = Some(12)
+        >>> s17 = Some(17)
         >>>
         >>> def add(a: int, b: int) -> int:
         ...     return a + b
         >>>
         >>> s12.reduce(s17, add)
         Some(29)
-        >>> s12.reduce(pc.NONE, add)
+        >>> s12.reduce(NONE, add)
         Some(12)
-        >>> pc.NONE.reduce(s17, add)
+        >>> NONE.reduce(s17, add)
         Some(17)
-        >>> pc.NONE.reduce(pc.NONE, add)
+        >>> NONE.reduce(NONE, add)
         NONE
 
         ```
@@ -1273,12 +1273,12 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some(pc.Ok(5)).transpose()
+        >>> from pyochain import Some, Ok, Err, NONE
+        >>> Some(Ok(5)).transpose()
         Ok(Some(5))
-        >>> pc.NONE.transpose()
+        >>> NONE.transpose()
         Ok(NONE)
-        >>> pc.Some(pc.Err("error")).transpose()
+        >>> Some(Err("error")).transpose()
         Err('error')
 
         ```
@@ -1295,14 +1295,14 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Some(2).xor(pc.NONE)
+        >>> from pyochain import Some, NONE
+        >>> Some(2).xor(NONE)
         Some(2)
-        >>> pc.NONE.xor(pc.Some(2))
+        >>> NONE.xor(Some(2))
         Some(2)
-        >>> pc.Some(2).xor(pc.Some(2))
+        >>> Some(2).xor(Some(2))
         NONE
-        >>> pc.NONE.xor(pc.NONE)
+        >>> NONE.xor(NONE)
         NONE
 
         ```
@@ -1341,8 +1341,8 @@ class Some[T](Option[T]):
 
     Example:
     ```python
-    >>> import pyochain as pc
-    >>> pc.Some(42)
+    >>> from pyochain import Some
+    >>> Some(42)
     Some(42)
 
     ```
@@ -1440,10 +1440,10 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Ok(2).swap()
+        >>> from pyochain import Ok, Err
+        >>> Ok(2).swap()
         Err(2)
-        >>> pc.Err("error").swap()
+        >>> Err("error").swap()
         Ok('error')
 
         ```
@@ -1481,10 +1481,10 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Ok(7).iter().next()
+        >>> from pyochain import Ok, Err
+        >>> Ok(7).iter().next()
         Some(7)
-        >>> pc.Err("nothing!").iter().next()
+        >>> Err("nothing!").iter().next()
         NONE
 
         ```
@@ -1651,11 +1651,11 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> x: pc.Result[int, str] = pc.Ok(2)
+        >>> from pyochain import Ok, Err, Result
+        >>> x: Result[int, str] = Ok(2)
         >>> x.is_ok()
         True
-        >>> y: pc.Result[int, str] = pc.Err("Some error message")
+        >>> y: Result[int, str] = Err("Some error message")
         >>> y.is_ok()
         False
 
@@ -1670,11 +1670,11 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> x: pc.Result[int, str] = pc.Ok(2)
+        >>> from pyochain import Ok, Err, Result
+        >>> x: Result[int, str] = Ok(2)
         >>> x.is_err()
         False
-        >>> y: pc.Result[int, str] = pc.Err("Some error message")
+        >>> y: Result[int, str] = Err("Some error message")
         >>> y.is_err()
         True
 
@@ -1692,14 +1692,14 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Ok(2).unwrap()
+        >>> from pyochain import Ok
+        >>> Ok(2).unwrap()
         2
 
         ```
         ```python
-        >>> import pyochain as pc
-        >>> pc.Err("emergency failure").unwrap()
+        >>> from pyochain import Err
+        >>> Err("emergency failure").unwrap()
         Traceback (most recent call last):
         ...
         ResultUnwrapError: called `unwrap` on an `Err`: 'emergency failure'
@@ -1718,14 +1718,14 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Err("emergency failure").unwrap_err()
+        >>> from pyochain import Err
+        >>> Err("emergency failure").unwrap_err()
         'emergency failure'
 
         ```
         ```python
-        >>> import pyochain as pc
-        >>> pc.Ok(2).unwrap_err()
+        >>> from pyochain import Ok
+        >>> Ok(2).unwrap_err()
         Traceback (most recent call last):
         ...
         ResultUnwrapError: called `unwrap_err` on Ok
@@ -1748,11 +1748,11 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Ok, Err
         >>> k = 21
-        >>> pc.Ok("foo").map_or_else(len, lambda e: k * 2)
+        >>> Ok("foo").map_or_else(len, lambda e: k * 2)
         3
-        >>> pc.Err("bar").map_or_else(len, lambda e: k * 2)
+        >>> Err("bar").map_or_else(len, lambda e: k * 2)
         42
 
         ```
@@ -1774,10 +1774,10 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Ok(2).expect("No error")
+        >>> from pyochain import Ok, Err
+        >>> Ok(2).expect("No error")
         2
-        >>> pc.Err("emergency failure").expect("Testing expect")
+        >>> Err("emergency failure").expect("Testing expect")
         Traceback (most recent call last):
         ...
         ResultUnwrapError: Testing expect: 'emergency failure'
@@ -1801,10 +1801,10 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Err("emergency failure").expect_err("Testing expect_err")
+        >>> from pyochain import Err, Ok
+        >>> Err("emergency failure").expect_err("Testing expect_err")
         'emergency failure'
-        >>> pc.Ok(10).expect_err("Testing expect_err")
+        >>> Ok(10).expect_err("Testing expect_err")
         Traceback (most recent call last):
         ...
         ResultUnwrapError: Testing expect_err: expected Err, got Ok(10)
@@ -1823,10 +1823,10 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Ok(2).unwrap_or(10)
+        >>> from pyochain import Ok, Err
+        >>> Ok(2).unwrap_or(10)
         2
-        >>> pc.Err("error").unwrap_or(10)
+        >>> Err("error").unwrap_or(10)
         10
 
         ```
@@ -1847,10 +1847,10 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Ok(2).unwrap_or_else(len)
+        >>> from pyochain import Ok, Err
+        >>> Ok(2).unwrap_or_else(len)
         2
-        >>> pc.Err("foo").unwrap_or_else(len)
+        >>> Err("foo").unwrap_or_else(len)
         3
 
         ```
@@ -1874,10 +1874,10 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Ok(2).map(lambda x: x * 2)
+        >>> from pyochain import Ok, Err
+        >>> Ok(2).map(lambda x: x * 2)
         Ok(4)
-        >>> pc.Err("error").map(lambda x: x * 2)
+        >>> Err("error").map(lambda x: x * 2)
         Err('error')
 
         ```
@@ -1902,10 +1902,10 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Ok(2).map_err(len)
+        >>> from pyochain import Ok, Err
+        >>> Ok(2).map_err(len)
         Ok(2)
-        >>> pc.Err("foo").map_err(len)
+        >>> Err("foo").map_err(len)
         Err(3)
 
         ```
@@ -1929,9 +1929,9 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Ok
         >>> seen: list[int] = []
-        >>> pc.Ok(2).inspect(lambda x: seen.append(x))
+        >>> Ok(2).inspect(lambda x: seen.append(x))
         Ok(2)
         >>> seen
         [2]
@@ -1957,9 +1957,9 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Err
         >>> seen: list[str] = []
-        >>> pc.Err("oops").inspect_err(lambda e: seen.append(e))
+        >>> Err("oops").inspect_err(lambda e: seen.append(e))
         Err('oops')
         >>> seen
         ['oops']
@@ -1980,23 +1980,23 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> x = pc.Ok(2)
-        >>> y = pc.Err("late error")
+        >>> from pyochain import Ok, Err
+        >>> x = Ok(2)
+        >>> y = Err("late error")
         >>> x.and_(y)
         Err('late error')
-        >>> x = pc.Err("early error")
-        >>> y = pc.Ok("foo")
+        >>> x = Err("early error")
+        >>> y = Ok("foo")
         >>> x.and_(y)
         Err('early error')
 
-        >>> x = pc.Err("not a 2")
-        >>> y = pc.Err("late error")
+        >>> x = Err("not a 2")
+        >>> y = Err("late error")
         >>> x.and_(y)
         Err('not a 2')
 
-        >>> x = pc.Ok(2)
-        >>> y = pc.Ok("different result type")
+        >>> x = Ok(2)
+        >>> y = Ok("different result type")
         >>> x.and_(y)
         Ok('different result type')
 
@@ -2023,12 +2023,12 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Ok, Err, Result
         >>> def to_str(x: int) -> Result[str, str]:
-        ...     return pc.Ok(str(x))
-        >>> pc.Ok(2).and_then(to_str)
+        ...     return Ok(str(x))
+        >>> Ok(2).and_then(to_str)
         Ok('2')
-        >>> pc.Err("error").and_then(to_str)
+        >>> Err("error").and_then(to_str)
         Err('error')
 
         ```
@@ -2054,12 +2054,12 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Ok, Err, Result
         >>> def fallback(e: str) -> Result[int, str]:
-        ...     return pc.Ok(len(e))
-        >>> pc.Ok(2).or_else(fallback)
+        ...     return Ok(len(e))
+        >>> Ok(2).or_else(fallback)
         Ok(2)
-        >>> pc.Err("foo").or_else(fallback)
+        >>> Err("foo").or_else(fallback)
         Ok(3)
 
         ```
@@ -2075,10 +2075,10 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Ok(2).ok()
+        >>> from pyochain import Ok, Err
+        >>> Ok(2).ok()
         Some(2)
-        >>> pc.Err("error").ok()
+        >>> Err("error").ok()
         NONE
 
         ```
@@ -2094,10 +2094,10 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Ok(2).err()
+        >>> from pyochain import Ok, Err
+        >>> Ok(2).err()
         NONE
-        >>> pc.Err("error").err()
+        >>> Err("error").err()
         Some('error')
 
         ```
@@ -2118,12 +2118,12 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Ok(2).is_ok_and(lambda x: x > 1)
+        >>> from pyochain import Ok, Err
+        >>> Ok(2).is_ok_and(lambda x: x > 1)
         True
-        >>> pc.Ok(0).is_ok_and(lambda x: x > 1)
+        >>> Ok(0).is_ok_and(lambda x: x > 1)
         False
-        >>> pc.Err("err").is_ok_and(lambda x: x > 1)
+        >>> Err("err").is_ok_and(lambda x: x > 1)
         False
 
         ```
@@ -2144,12 +2144,12 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Err("foo").is_err_and(lambda e: len(e) == 3)
+        >>> from pyochain import Err, Ok
+        >>> Err("foo").is_err_and(lambda e: len(e) == 3)
         True
-        >>> pc.Err("bar").is_err_and(lambda e: e == "baz")
+        >>> Err("bar").is_err_and(lambda e: e == "baz")
         False
-        >>> pc.Ok(2).is_err_and(lambda e: True)
+        >>> Ok(2).is_err_and(lambda e: True)
         False
 
         ```
@@ -2175,10 +2175,10 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Ok(2).map_or(10, lambda x: x * 2)
+        >>> from pyochain import Ok, Err
+        >>> Ok(2).map_or(10, lambda x: x * 2)
         4
-        >>> pc.Err("err").map_or(10, lambda x: x * 2)
+        >>> Err("err").map_or(10, lambda x: x * 2)
         10
 
         ```
@@ -2218,14 +2218,14 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Ok(2).or_(pc.Err("late error"))
+        >>> from pyochain import Ok, Err
+        >>> Ok(2).or_(Err("late error"))
         Ok(2)
-        >>> pc.Err("early error").or_(pc.Ok(2))
+        >>> Err("early error").or_(Ok(2))
         Ok(2)
-        >>> pc.Err("not a 2").or_(pc.Err("late error"))
+        >>> Err("not a 2").or_(Err("late error"))
         Err('late error')
-        >>> pc.Ok(2).or_(pc.Ok(100))
+        >>> Ok(2).or_(Ok(100))
         Ok(2)
 
         ```

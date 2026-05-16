@@ -28,7 +28,7 @@ class Dict[K, V](PyoMutableMapping[K, V]):
     >>> dict_obj = Dict.from_ref({1: "a", 2: "b"})
     >>> dict_obj
     Dict(1: 'a', 2: 'b')
-    >>> Dict([(1, "a"), (2, "b")])
+    >>> Dict(((1, "a"), (2, "b")))
     Dict(1: 'a', 2: 'b')
     >>> dict_obj.get_item(1)
     Some('a')

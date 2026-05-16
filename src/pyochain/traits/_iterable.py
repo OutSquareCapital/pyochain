@@ -71,7 +71,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
 
         Make sure to specify the type when calling this method, e.g., `Vec[int].new()`.
 
-        Otherwise, `T` will be inferred as `Any`.
+        Otherwise, `T` may be inferred as `Any`.
 
         This can be very useful for mutable collections like `Vec` and `Dict`.
 
@@ -82,15 +82,15 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> data = pc.Vec[int].new()
+        >>> from pyochain import Vec, Dict
+        >>> data = Vec[int].new()
         >>> data
         Vec()
         >>> # Equivalent to
         >>> data: list[str] = []
         >>> data
         []
-        >>> my_dict = pc.Dict[str, int].new()
+        >>> my_dict = Dict[str, int].new()
         >>> my_dict.insert("a", 1)
         NONE
         >>> my_dict
@@ -113,8 +113,8 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> seq = pc.Seq([1, 2, 3])
+        >>> from pyochain import Seq
+        >>> seq = Seq((1, 2, 3))
         >>> iterator = seq.iter()
         >>> iterator.collect()
         Seq(1, 2, 3)
@@ -575,10 +575,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             Option[T]: `Some(item)` at the specified *n*.
 
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter([10, 20]).nth(1)
+        >>> from pyochain import Iter
+        >>> Iter([10, 20]).nth(1)
         Some(20)
-        >>> pc.Iter([10, 20]).nth(3)
+        >>> Iter([10, 20]).nth(3)
         NONE
 
         ```
@@ -602,14 +602,14 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1,2,3)).eq(pc.Iter((1,2,3)))
+        >>> from pyochain import Iter, Seq, Vec
+        >>> Iter((1,2,3)).eq(Iter((1,2,3)))
         True
-        >>> pc.Iter((1,2,3)).eq(pc.Seq([1,2]))
+        >>> Iter((1,2,3)).eq(Seq([1,2]))
         False
-        >>> pc.Iter((1,2,3)).eq(pc.Iter((1,2)))
+        >>> Iter((1,2,3)).eq(Iter((1,2)))
         False
-        >>> pc.Iter((1,2,3)).eq(pc.Vec([1,2,3]))
+        >>> Iter((1,2,3)).eq(Vec([1,2,3]))
         True
 
         ```
@@ -627,14 +627,14 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1,2,3)).ne(pc.Iter((1,2,3)))
+        >>> from pyochain import Iter, Seq, Vec
+        >>> Iter((1,2,3)).ne(Iter((1,2,3)))
         False
-        >>> pc.Iter((1,2,3)).ne(pc.Seq([1,2]))
+        >>> Iter((1,2,3)).ne(Seq([1,2]))
         True
-        >>> pc.Iter((1,2,3)).ne(pc.Iter((1,2)))
+        >>> Iter((1,2,3)).ne(Iter((1,2)))
         True
-        >>> pc.Iter((1,2,3)).ne(pc.Vec([1,2,3]))
+        >>> Iter((1,2,3)).ne(Vec([1,2,3]))
         False
 
         ```
@@ -652,10 +652,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1,2)).le(pc.Seq((1,2,3)))
+        >>> from pyochain import Iter, Seq
+        >>> Iter((1,2)).le(Seq((1,2,3)))
         True
-        >>> pc.Iter((1,2,3)).le(pc.Seq((1,2)))
+        >>> Iter((1,2,3)).le(Seq((1,2)))
         False
 
         ```
@@ -673,10 +673,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1,2)).lt(pc.Seq((1,2,3)))
+        >>> from pyochain import Iter, Seq
+        >>> Iter((1,2)).lt(Seq((1,2,3)))
         True
-        >>> pc.Iter((1,2,3)).lt(pc.Seq((1,2)))
+        >>> Iter((1,2,3)).lt(Seq((1,2)))
         False
 
         ```
@@ -694,10 +694,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1,2,3)).gt((1,2))
+        >>> from pyochain import Iter
+        >>> Iter((1,2,3)).gt((1,2))
         True
-        >>> pc.Iter((1,2)).gt((1,2,3))
+        >>> Iter((1,2)).gt((1,2,3))
         False
 
         ```
@@ -715,10 +715,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1,2,3)).ge((1,2))
+        >>> from pyochain import Iter
+        >>> Iter((1,2,3)).ge((1,2))
         True
-        >>> pc.Iter((1,2)).ge((1,2,3))
+        >>> Iter((1,2)).ge((1,2,3))
         False
 
         ```
@@ -738,8 +738,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> it = pc.Seq([1, 2, 3]).iter()
+        >>> from pyochain import Seq
+        >>> it = Seq((1, 2, 3)).iter()
         >>> it.next().unwrap()
         1
         >>> it.next().unwrap()
@@ -764,8 +764,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         It then serves as a default when the `Iterator` is empty.
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter([1, 2, 3]).reduce(lambda a, b: a + b)
+        >>> from pyochain import Iter
+        >>> Iter((1, 2, 3)).reduce(lambda a, b: a + b)
         6
 
         ```
@@ -788,12 +788,13 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             Python `functools.reduce()` with an initializer.
 
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter([1, 2, 3]).fold(0, lambda acc, x: acc + x)
+        >>> from pyochain import Iter
+        >>> data = (1, 2, 3)
+        >>> Iter(data).fold(0, lambda acc, x: acc + x)
         6
-        >>> pc.Iter([1, 2, 3]).fold(10, lambda acc, x: acc + x)
+        >>> Iter(data).fold(10, lambda acc, x: acc + x)
         16
-        >>> pc.Iter(['a', 'b', 'c']).fold('', lambda acc, x: acc + x)
+        >>> Iter(('a', 'b', 'c')).fold('', lambda acc, x: acc + x)
         'abc'
 
         ```
@@ -993,18 +994,18 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> def checked_add(acc: int, x: int) -> pc.Result[int, str]:
+        >>> from pyochain import Iter, Ok, Err, Result
+        >>> def checked_add(acc: int, x: int) -> Result[int, str]:
         ...     new_val = acc + x
         ...     if new_val > 100:
-        ...         return pc.Err("overflow")
-        ...     return pc.Ok(new_val)
+        ...         return Err("overflow")
+        ...     return Ok(new_val)
         >>>
-        >>> pc.Iter([1, 2, 3]).try_fold(0, checked_add)
+        >>> Iter((1, 2, 3)).try_fold(0, checked_add)
         Ok(6)
-        >>> pc.Iter([50, 40, 20]).try_fold(0, checked_add)
+        >>> Iter([50, 40, 20]).try_fold(0, checked_add)
         Err('overflow')
-        >>> pc.Iter([]).try_fold(0, checked_add)
+        >>> Iter([]).try_fold(0, checked_add)
         Ok(0)
 
         ```
@@ -1026,17 +1027,17 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> def checked_add(x: int, y: int) -> pc.Result[int, str]:
+        >>> from pyochain import Iter, Ok, Err, Result
+        >>> def checked_add(x: int, y: int) -> Result[int, str]:
         ...     if x + y > 100:
-        ...         return pc.Err("overflow")
-        ...     return pc.Ok(x + y)
+        ...         return Err("overflow")
+        ...     return Ok(x + y)
         >>>
-        >>> pc.Iter([1, 2, 3]).try_reduce(checked_add)
+        >>> Iter((1, 2, 3)).try_reduce(checked_add)
         Ok(Some(6))
-        >>> pc.Iter([50, 60]).try_reduce(checked_add)
+        >>> Iter([50, 60]).try_reduce(checked_add)
         Err('overflow')
-        >>> pc.Iter([]).try_reduce(checked_add)
+        >>> Iter([]).try_reduce(checked_add)
         Ok(NONE)
 
         ```
@@ -1068,16 +1069,16 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter([1, 2, 3, 4, 5]).is_sorted()
+        >>> from pyochain import Iter
+        >>> Iter((1, 2, 3, 4, 5)).is_sorted()
         True
 
         ```
         If strict, tests for strict sorting, that is, returns False if equal elements are found:
         ```python
-        >>> pc.Iter([1, 2, 2]).is_sorted()
+        >>> Iter([1, 2, 2]).is_sorted()
         True
-        >>> pc.Iter([1, 2, 2]).is_sorted(strict=True)
+        >>> Iter([1, 2, 2]).is_sorted(strict=True)
         False
 
         ```
@@ -1110,18 +1111,18 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter(["1", "2", "3", "4", "5"]).is_sorted_by(int)
+        >>> from pyochain import Iter
+        >>> Iter(["1", "2", "3", "4", "5"]).is_sorted_by(int)
         True
-        >>> pc.Iter(["5", "4", "3", "1", "2"]).is_sorted_by(int, reverse=True)
+        >>> Iter(["5", "4", "3", "1", "2"]).is_sorted_by(int, reverse=True)
         False
 
         ```
         If strict, tests for strict sorting, that is, returns False if equal elements are found:
         ```python
-        >>> pc.Iter(["1", "2", "2"]).is_sorted_by(int)
+        >>> Iter(["1", "2", "2"]).is_sorted_by(int)
         True
-        >>> pc.Iter(["1", "2", "2"]).is_sorted_by(key=int, strict=True)
+        >>> Iter(["1", "2", "2"]).is_sorted_by(key=int, strict=True)
         False
 
         ```
@@ -1143,10 +1144,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter("AaaA").all_equal(key=str.casefold)
+        >>> from pyochain import Iter
+        >>> Iter("AaaA").all_equal(key=str.casefold)
         True
-        >>> pc.Iter([1, 2, 3]).all_equal(key=lambda x: x < 10)
+        >>> Iter((1, 2, 3)).all_equal(key=lambda x: x < 10)
         True
 
         ```
@@ -1177,12 +1178,12 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter("ABCB").all_unique()
+        >>> from pyochain import Iter
+        >>> Iter("ABCB").all_unique()
         False
-        >>> pc.Iter("ABCb").all_unique()
+        >>> Iter("ABCb").all_unique()
         True
-        >>> pc.Iter("ABCb").all_unique(str.lower)
+        >>> Iter("ABCb").all_unique(str.lower)
         False
 
         ```
@@ -1216,17 +1217,17 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             int: The index of the maximum value.
 
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter("abcdefghabcd").argmax()
+        >>> from pyochain import Iter, Seq
+        >>> Iter("abcdefghabcd").argmax()
         7
-        >>> pc.Iter([0, 1, 2, 3, 3, 2, 1, 0]).argmax()
+        >>> Iter([0, 1, 2, 3, 3, 2, 1, 0]).argmax()
         3
 
         ```
         For example, identify the best machine learning model:
         ```python
-        >>> models = pc.Seq(["svm", "random forest", "knn", "naïve bayes"])
-        >>> accuracy = pc.Seq([68, 61, 84, 72])
+        >>> models = Seq(["svm", "random forest", "knn", "naïve bayes"])
+        >>> accuracy = Seq([68, 61, 84, 72])
         >>> # Most accurate model
         >>> models.get(accuracy.iter().argmax()).unwrap()
         'knn'
@@ -1256,19 +1257,19 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             int: The index of the minimum value.
 
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Iter, Seq
         >>> # Example 1: Basic usage
-        >>> pc.Iter("efghabcdijkl").argmin()
+        >>> Iter("efghabcdijkl").argmin()
         4
-        >>> pc.Iter([3, 2, 1, 0, 4, 2, 1, 0]).argmin()
+        >>> Iter([3, 2, 1, 0, 4, 2, 1, 0]).argmin()
         3
         >>> # Example 2: look up a label corresponding to the position of a value that minimizes a cost function
         >>> def cost(x: int) -> float:
         ...     "Days for a wound to heal given a subject's age."
         ...     return x**2 - 20 * x + 150
         >>>
-        >>> labels = pc.Seq(["homer", "marge", "bart", "lisa", "maggie"])
-        >>> ages = pc.Seq([35, 30, 10, 9, 1])
+        >>> labels = Seq(["homer", "marge", "bart", "lisa", "maggie"])
+        >>> ages = Seq([35, 30, 10, 9, 1])
         >>> # Fastest healing family member
         >>> labels.get(ages.iter().argmin(key=cost)).unwrap()
         'bart'
@@ -1294,8 +1295,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1, 2, 0)).take_while(lambda x: x > 0).collect()
+        >>> from pyochain import Iter
+        >>> Iter((1, 2, 0)).take_while(lambda x: x > 0).collect()
         Seq(1, 2)
 
         ```
@@ -1313,8 +1314,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1, 2, 0)).skip_while(lambda x: x > 0).collect()
+        >>> from pyochain import Iter
+        >>> Iter((1, 2, 0)).skip_while(lambda x: x > 0).collect()
         Seq(0,)
 
         ```
@@ -1332,8 +1333,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter("ABCDEF").compress(1, 0, 1, 0, 1, 1).collect()
+        >>> from pyochain import Iter
+        >>> Iter("ABCDEF").compress(1, 0, 1, 0, 1, 1).collect()
         Seq('A', 'C', 'E', 'F')
 
         ```
@@ -1351,16 +1352,16 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter([1, 2, 3]).unique().collect()
+        >>> from pyochain import Iter
+        >>> Iter((1, 2, 3)).unique().collect()
         Seq(1, 2, 3)
-        >>> pc.Iter([1, 2, 1, 3]).unique().collect()
+        >>> Iter([1, 2, 1, 3]).unique().collect()
         Seq(1, 2, 3)
 
         ```
         Uniqueness can be defined by key keyword
         ```python
-        >>> pc.Iter(["cat", "mouse", "dog", "hen"]).unique(key=len).collect()
+        >>> Iter(["cat", "mouse", "dog", "hen"]).unique(key=len).collect()
         Seq('cat', 'mouse')
 
         ```
@@ -1385,11 +1386,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Iter
         >>> data = [1, 2, 3]
-        >>> pc.Iter(data).take(2).collect()
+        >>> Iter(data).take(2).collect()
         Seq(1, 2)
-        >>> pc.Iter(data).take(5).collect()
+        >>> Iter(data).take(5).collect()
         Seq(1, 2, 3)
 
         ```
@@ -1407,8 +1408,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1, 2, 3)).skip(1).collect()
+        >>> from pyochain import Iter
+        >>> Iter((1, 2, 3)).skip(1).collect()
         Seq(2, 3)
 
         ```
@@ -1429,8 +1430,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter([0, 1, 2, 3, 4, 5]).step_by(2).collect()
+        >>> from pyochain import Iter
+        >>> Iter([0, 1, 2, 3, 4, 5]).step_by(2).collect()
         Seq(0, 2, 4)
 
         ```
@@ -1455,11 +1456,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Iter
         >>> data = (1, 2, 3, 4, 5)
-        >>> pc.Iter(data).slice(1, 4).collect()
+        >>> Iter(data).slice(1, 4).collect()
         Seq(2, 3, 4)
-        >>> pc.Iter(data).slice(step=2).collect()
+        >>> Iter(data).slice(step=2).collect()
         Seq(1, 3, 5)
 
         ```
@@ -1482,8 +1483,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1, 2)).cycle().take(5).collect()
+        >>> from pyochain import Iter
+        >>> Iter((1, 2)).cycle().take(5).collect()
         Seq(1, 2, 1, 2, 1)
 
         ```
@@ -1501,15 +1502,15 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Iter
         >>> # Simple example with numbers
-        >>> pc.Iter([1, 2, 3]).intersperse(0).collect()
+        >>> Iter((1, 2, 3)).intersperse(0).collect()
         Seq(1, 0, 2, 0, 3)
         >>> # Useful when chaining with other operations
-        >>> pc.Iter([10, 20, 30]).intersperse(5).sum()
+        >>> Iter([10, 20, 30]).intersperse(5).sum()
         70
         >>> # Inserting separators between groups, then flattening
-        >>> pc.Iter([[1, 2], [3, 4], [5, 6]]).intersperse([-1]).flatten().collect()
+        >>> Iter([[1, 2], [3, 4], [5, 6]]).intersperse([-1]).flatten().collect()
         Seq(1, 2, -1, 3, 4, -1, 5, 6)
 
         ```
@@ -1580,8 +1581,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((2, 3)).insert(1).collect()
+        >>> from pyochain import Iter
+        >>> Iter((2, 3)).insert(1).collect()
         Seq(1, 2, 3)
 
         ```
@@ -1599,8 +1600,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1, 2)).interleave((3, 4)).collect()
+        >>> from pyochain import Iter
+        >>> Iter((1, 2)).interleave((3, 4)).collect()
         Seq(1, 3, 2, 4)
 
         ```
@@ -1627,10 +1628,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1, 2)).chain((3, 4), [5]).collect()
+        >>> from pyochain import Iter
+        >>> Iter((1, 2)).chain((3, 4), [5]).collect()
         Seq(1, 2, 3, 4, 5)
-        >>> pc.Iter((1, 2)).chain(pc.Iter.from_count(3)).take(5).collect()
+        >>> Iter((1, 2)).chain(Iter.from_count(3)).take(5).collect()
         Seq(1, 2, 3, 4, 5)
 
         ```
@@ -1649,8 +1650,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter("ABCABC").elements().sort()
+        >>> from pyochain import Iter
+        >>> Iter("ABCABC").elements().sort()
         Vec('A', 'A', 'B', 'B', 'C', 'C')
 
         ```
@@ -1658,7 +1659,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         ```python
         >>> import math
         >>> data = [2, 2, 3, 3, 3, 17]
-        >>> pc.Iter(data).elements().into(math.prod)
+        >>> Iter(data).elements().into(math.prod)
         1836
 
         ```
@@ -1685,13 +1686,13 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Iter((1, 2, 3)).accumulate(lambda a, b: a + b, 0).collect()
+        >>> from pyochain import Iter
+        >>> Iter((1, 2, 3)).accumulate(lambda a, b: a + b, 0).collect()
         Seq(0, 1, 3, 6)
         >>> # The final accumulated result is the same as fold:
-        >>> pc.Iter((1,2,3)).fold(0, lambda a, b: a + b)
+        >>> Iter((1,2,3)).fold(0, lambda a, b: a + b)
         6
-        >>> pc.Iter((1, 2, 3)).accumulate(lambda a, b: a * b).collect()
+        >>> Iter((1, 2, 3)).accumulate(lambda a, b: a * b).collect()
         Seq(1, 2, 6)
 
         ```
@@ -1716,8 +1717,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).iter().for_each(lambda x: print(x + 1))
+        >>> from pyochain import Iter
+        >>> Iter((1, 2, 3)).for_each(lambda x: print(x + 1))
         2
         3
         4
