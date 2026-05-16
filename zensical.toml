@@ -12,6 +12,10 @@
         { "API Reference" = [
             { "Collections" = [
                 { "Dict" = "reference/dict.md" },
+                { "PyoItemsView" = "reference/pyoitemsview.md" },
+                { "PyoKeysView" = "reference/pyokeysview.md" },
+                { "PyoValuesView" = "reference/pyovaluesview.md" },
+                { "Range" = "reference/range.md" },
                 { "Seq" = "reference/seq.md" },
                 { "Set" = "reference/set.md" },
                 { "SetMut" = "reference/setmut.md" },
@@ -21,12 +25,12 @@
                 { "Err" = "reference/err.md" },
                 { "Ok" = "reference/ok.md" },
                 { "Result" = "reference/result.md" },
+                { "ResultType" = "reference/resulttype.md" },
                 { "ResultUnwrapError" = "reference/resultunwraperror.md" },
             ] },
             { "Iterators" = [
                 { "Iter" = "reference/iter.md" },
                 { "Peekable" = "reference/peekable.md" },
-                { "Range" = "reference/range.md" },
                 { "Unzipped" = "reference/unzipped.md" },
             ] },
             { "Optional Values" = [
@@ -40,17 +44,14 @@
                 { "Checkable" = "reference/checkable.md" },
                 { "Pipeable" = "reference/pipeable.md" },
                 { "PyoCollection" = "reference/pyocollection.md" },
-                { "PyoItemsView" = "reference/pyoitemsview.md" },
                 { "PyoIterable" = "reference/pyoiterable.md" },
                 { "PyoIterator" = "reference/pyoiterator.md" },
-                { "PyoKeysView" = "reference/pyokeysview.md" },
                 { "PyoMapping" = "reference/pyomapping.md" },
                 { "PyoMappingView" = "reference/pyomappingview.md" },
                 { "PyoMutableMapping" = "reference/pyomutablemapping.md" },
                 { "PyoMutableSequence" = "reference/pyomutablesequence.md" },
                 { "PyoSequence" = "reference/pyosequence.md" },
                 { "PyoSet" = "reference/pyoset.md" },
-                { "PyoValuesView" = "reference/pyovaluesview.md" },
             ] },
         ] },
         { "Getting Started" = [

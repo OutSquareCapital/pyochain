@@ -1376,11 +1376,11 @@ class ResultUnwrapError(RuntimeError): ...
 type Result[T, E] = Ok[T, E] | Err[T, E]
 """Type union representing the two variants of `Result`, `Ok` and `Err`.
 
-See the `ResultValue` Protocol for documentation on the methods available on `Result`, and the behavior of each variant.
+See the `ResultType` Protocol for documentation on the methods available on `Result`, and the behavior of each variant.
 """
 
 @type_check_only
-class ResultValue[T, E](Pipeable, Protocol):
+class ResultType[T, E](Pipeable, Protocol):
     """This is the base Protocol defined for returning and propagating errors.
 
     `Result[T, E]` is a the type union of the two possibles variants of the Protocol:
@@ -1394,7 +1394,7 @@ class ResultValue[T, E](Pipeable, Protocol):
     This is directly inspired by Rust's `Result` type, and provides similar functionality for error handling in Python.
 
     Note:
-        Due to Python typing nature, we need to separate both the Protocol definition (`ResultValue`), and the type union (`Result`), which is the public facing type that users will interact with.
+        Due to Python typing nature, we need to separate both the Protocol definition (`ResultType`), and the type union (`Result`), which is the public facing type that users will interact with.
 
         This separation allows type checkers to flag exhaustive handling of both variants, in `match` statements notably, while avoiding duplicated docstrings and method definitions.
 
@@ -1448,7 +1448,7 @@ class ResultValue[T, E](Pipeable, Protocol):
 
         ```
         """
-    def flatten[T1, E1, E2](self: ResultValue[Result[T1, E1], E2]) -> Result[T1, E1]:
+    def flatten[T1, E1, E2](self: ResultType[Result[T1, E1], E2]) -> Result[T1, E1]:
         """Flattens a nested `Result`.
 
         Converts from `Result[Result[T, E], E]` to `Result[T, E]`.
@@ -1541,7 +1541,7 @@ class ResultValue[T, E](Pipeable, Protocol):
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
     ) -> Result[R, E]: ...
     def map_star[U: Iterable[Any], R](
-        self: ResultValue[U, E],
+        self: ResultType[U, E],
         func: Callable[..., R],
     ) -> Result[R, E]:
         """Maps a `Result[tuple, E]` to `Result[R, E]` by unpacking the tuple.
@@ -1616,7 +1616,7 @@ class ResultValue[T, E](Pipeable, Protocol):
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], Result[R, E]],
     ) -> Result[R, E]: ...
     def and_then_star[U: Iterable[Any], R](
-        self: ResultValue[U, E],
+        self: ResultType[U, E],
         func: Callable[..., Result[R, E]],
     ) -> Result[R, E]:
         """Calls a function if the result is `Ok`, unpacking the tuple.
@@ -2184,7 +2184,7 @@ class ResultValue[T, E](Pipeable, Protocol):
         ```
         """
 
-    def transpose(self: ResultValue[Option[T], E]) -> Option[Result[T, E]]:
+    def transpose(self: ResultType[Option[T], E]) -> Option[Result[T, E]]:
         """Transposes a Result containing an Option into an Option containing a Result.
 
         Can only be called if the inner type is `Option[T, E]`.
@@ -2232,12 +2232,12 @@ class ResultValue[T, E](Pipeable, Protocol):
         """
 
 @final
-class Ok[T, E](ResultValue[T, E]):
+class Ok[T, E](ResultType[T, E]):
     """Represents a successful value.
 
     One of the two variants of `Result[T, E]`, where `T` is the type of the value in `Ok`.
 
-    For more documentation, see the `ResultValue[T, E]` Protocol.
+    For more documentation, see the `ResultType[T, E]` Protocol.
 
     Attributes:
         value (T): The contained successful value.
@@ -2250,12 +2250,12 @@ class Ok[T, E](ResultValue[T, E]):
     def __new__(cls, value: T) -> Ok[T, Any]: ...  # pyright: ignore[reportExplicitAny]
 
 @final
-class Err[T, E](ResultValue[T, E]):
+class Err[T, E](ResultType[T, E]):
     """Represents an error value.
 
     One of the two variants of `Result[T, E]`, where `E` is the type of the value in `Err`.
 
-    For more documentation, see the `ResultValue[T, E]` Protocol.
+    For more documentation, see the `ResultType[T, E]` Protocol.
 
     Attributes:
         error (E): The contained error value.
