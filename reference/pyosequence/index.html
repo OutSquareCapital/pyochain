@@ -337,6 +337,114 @@
   
   
     <li class="md-nav__item">
+      <a href="../pyoitemsview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoItemsView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyokeysview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoKeysView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyovaluesview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoValuesView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../range/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Range
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../seq/" class="md-nav__link">
         
   
@@ -579,6 +687,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../resulttype/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  ResultType
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../resultunwraperror/" class="md-nav__link">
         
   
@@ -694,33 +829,6 @@
     
   
   Peekable
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../range/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Range
 
     
   </span>
@@ -1091,33 +1199,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../pyoitemsview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoItemsView
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../pyoiterable/" class="md-nav__link">
         
   
@@ -1153,33 +1234,6 @@
     
   
   PyoIterator
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pyokeysview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoKeysView
 
     
   </span>
@@ -1433,33 +1487,6 @@
     
   
   PyoSet
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pyovaluesview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoValuesView
 
     
   </span>
@@ -1786,9 +1813,8 @@
 
 
 
-        <p>Base ABC for pyochain sequences.</p>
-<p><code>PyoSequence[T]</code> is the shared ABC for concrete collections: <code>Seq</code> and <code>Vec</code>.</p>
-<p>It extends <code>PyoCollection[T]</code> and <code>collections.abc.Sequence[T]</code>.</p>
+        <p>Extends <code>PyoCollection[T]</code> and <code>collections.abc.Sequence[T]</code>.</p>
+<p>Is the shared ABC for concrete collections: <code>Seq</code> and <code>Vec</code>.</p>
 <p>Any concrete subclass must implement the required <code>Sequence</code> dunder methods:</p>
 <ul>
 <li><code>__getitem__</code></li>
@@ -1881,13 +1907,10 @@
 <span class="normal">1915</span>
 <span class="normal">1916</span>
 <span class="normal">1917</span>
-<span class="normal">1918</span>
-<span class="normal">1919</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoSequence</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoCollection</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base ABC for pyochain sequences.</span>
+<span class="normal">1918</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoSequence</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoCollection</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extends `PyoCollection[T]` and `collections.abc.Sequence[T]`.</span>
 
-<span class="sd">    `PyoSequence[T]` is the shared ABC for concrete collections: `Seq` and `Vec`.</span>
-
-<span class="sd">    It extends `PyoCollection[T]` and `collections.abc.Sequence[T]`.</span>
+<span class="sd">    Is the shared ABC for concrete collections: `Seq` and `Vec`.</span>
 
 <span class="sd">    Any concrete subclass must implement the required `Sequence` dunder methods:</span>
 
@@ -1914,10 +1937,11 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; pc.Seq([10, 20, 30]).get(1)</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">        &gt;&gt;&gt; data = Seq((10, 20, 30))</span>
+<span class="sd">        &gt;&gt;&gt; data.get(1)</span>
 <span class="sd">        Some(20)</span>
-<span class="sd">        &gt;&gt;&gt; pc.Seq([10, 20, 30]).get(5)</span>
+<span class="sd">        &gt;&gt;&gt; data.get(5)</span>
 <span class="sd">        NONE</span>
 
 <span class="sd">        ```</span>
@@ -1935,8 +1959,8 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; pc.Seq([1, 2, 3]).rev().collect()</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">        &gt;&gt;&gt; Seq((1, 2, 3)).rev().collect()</span>
 <span class="sd">        Seq(3, 2, 1)</span>
 
 <span class="sd">        ```</span>
@@ -1952,8 +1976,8 @@
 <span class="sd">            bool: True if all items are distinct, False otherwise.</span>
 
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; pc.Seq([1, 2]).is_distinct()</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">        &gt;&gt;&gt; Seq((1, 2)).is_distinct()</span>
 <span class="sd">        True</span>
 
 <span class="sd">        ```</span>
@@ -2046,17 +2070,20 @@
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">])</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">])</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
 <span class="n">NONE</span>
 </code></pre></div></p>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1864</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1862</span>
+<span class="normal">1863</span>
+<span class="normal">1864</span>
 <span class="normal">1865</span>
 <span class="normal">1866</span>
 <span class="normal">1867</span>
@@ -2077,8 +2104,7 @@
 <span class="normal">1882</span>
 <span class="normal">1883</span>
 <span class="normal">1884</span>
-<span class="normal">1885</span>
-<span class="normal">1886</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">slice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">Option</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">]]:</span>
+<span class="normal">1885</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">slice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">Option</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the element at the specified index as `Some(value)`, or `None` if the index is out of bounds.</span>
 
 <span class="sd">    Args:</span>
@@ -2089,10 +2115,11 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; pc.Seq([10, 20, 30]).get(1)</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">    &gt;&gt;&gt; data = Seq((10, 20, 30))</span>
+<span class="sd">    &gt;&gt;&gt; data.get(1)</span>
 <span class="sd">    Some(20)</span>
-<span class="sd">    &gt;&gt;&gt; pc.Seq([10, 20, 30]).get(5)</span>
+<span class="sd">    &gt;&gt;&gt; data.get(5)</span>
 <span class="sd">    NONE</span>
 
 <span class="sd">    ```</span>
@@ -2142,15 +2169,16 @@
           </tr>
       </tbody>
     </table>
-        <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span><span class="o">.</span><span class="n">is_distinct</span><span class="p">()</span>
+        <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">is_distinct</span><span class="p">()</span>
 <span class="kc">True</span>
 </code></pre></div>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1906</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1905</span>
+<span class="normal">1906</span>
 <span class="normal">1907</span>
 <span class="normal">1908</span>
 <span class="normal">1909</span>
@@ -2162,16 +2190,15 @@
 <span class="normal">1915</span>
 <span class="normal">1916</span>
 <span class="normal">1917</span>
-<span class="normal">1918</span>
-<span class="normal">1919</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_distinct</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">1918</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_distinct</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True if all items of the `Sequence` are distinct.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        bool: True if all items are distinct, False otherwise.</span>
 
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; pc.Seq([1, 2]).is_distinct()</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">    &gt;&gt;&gt; Seq((1, 2)).is_distinct()</span>
 <span class="sd">    True</span>
 
 <span class="sd">    ```</span>
@@ -2219,15 +2246,16 @@
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">rev</span><span class="p">()</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">rev</span><span class="p">()</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
 <span class="n">Seq</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 </code></pre></div></p>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1888</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1887</span>
+<span class="normal">1888</span>
 <span class="normal">1889</span>
 <span class="normal">1890</span>
 <span class="normal">1891</span>
@@ -2242,8 +2270,7 @@
 <span class="normal">1900</span>
 <span class="normal">1901</span>
 <span class="normal">1902</span>
-<span class="normal">1903</span>
-<span class="normal">1904</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">rev</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+<span class="normal">1903</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">rev</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an `Iterator` with the elements of the `Sequence` in reverse order.</span>
 
 <span class="sd">    Returns:</span>
@@ -2251,8 +2278,8 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; pc.Seq([1, 2, 3]).rev().collect()</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">    &gt;&gt;&gt; Seq((1, 2, 3)).rev().collect()</span>
 <span class="sd">    Seq(3, 2, 1)</span>
 
 <span class="sd">    ```</span>

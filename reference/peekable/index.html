@@ -18,7 +18,7 @@
         <link rel="prev" href="../iter/">
       
       
-        <link rel="next" href="../range/">
+        <link rel="next" href="../unzipped/">
       
       
         
@@ -337,6 +337,114 @@
   
   
     <li class="md-nav__item">
+      <a href="../pyoitemsview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoItemsView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyokeysview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoKeysView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyovaluesview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoValuesView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../range/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Range
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../seq/" class="md-nav__link">
         
   
@@ -579,6 +687,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../resulttype/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  ResultType
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../resultunwraperror/" class="md-nav__link">
         
   
@@ -783,33 +918,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../range/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Range
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -1171,33 +1279,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../pyoitemsview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoItemsView
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../pyoiterable/" class="md-nav__link">
         
   
@@ -1233,33 +1314,6 @@
     
   
   PyoIterator
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pyokeysview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoKeysView
 
     
   </span>
@@ -1422,33 +1476,6 @@
     
   
   PyoSet
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pyovaluesview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoValuesView
 
     
   </span>
@@ -1817,8 +1844,8 @@
   <p><code>Iter.peekable()</code>
 <code>Iter.cloned()</code></p>
 </details>        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">it</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Iter</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iter</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">it</span> <span class="o">=</span> <span class="n">Iter</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">peekable</span> <span class="o">=</span> <span class="n">it</span><span class="o">.</span><span class="n">peekable</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">peekable</span><span class="o">.</span><span class="n">peek</span>
 <span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
@@ -1884,8 +1911,8 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; it = pc.Iter([1, 2, 3, 4, 5])</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Iter</span>
+<span class="sd">    &gt;&gt;&gt; it = Iter((1, 2, 3, 4, 5))</span>
 <span class="sd">    &gt;&gt;&gt; peekable = it.peekable(3)</span>
 <span class="sd">    &gt;&gt;&gt; peekable.peek</span>
 <span class="sd">    Seq(1, 2, 3)</span>

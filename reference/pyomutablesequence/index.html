@@ -337,6 +337,114 @@
   
   
     <li class="md-nav__item">
+      <a href="../pyoitemsview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoItemsView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyokeysview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoKeysView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyovaluesview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoValuesView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../range/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Range
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../seq/" class="md-nav__link">
         
   
@@ -579,6 +687,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../resulttype/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  ResultType
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../resultunwraperror/" class="md-nav__link">
         
   
@@ -694,33 +829,6 @@
     
   
   Peekable
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../range/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Range
 
     
   </span>
@@ -1091,33 +1199,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../pyoitemsview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoItemsView
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../pyoiterable/" class="md-nav__link">
         
   
@@ -1153,33 +1234,6 @@
     
   
   PyoIterator
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pyokeysview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoKeysView
 
     
   </span>
@@ -1433,33 +1487,6 @@
     
   
   PyoSet
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pyovaluesview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoValuesView
 
     
   </span>
@@ -1786,8 +1813,8 @@
 
 
 
-        <p>Base ABC for pyochain mutable sequence collections, such as <code>Vec</code>.</p>
-<p>It extends <code>PyoSequence[T]</code> and <code>collections.abc.MutableSequence[T]</code>.</p>
+        <p>Extends <code>PyoSequence[T]</code> and <code>collections.abc.MutableSequence[T]</code>.</p>
+<p>This ABC is the base class for mutable sequence types in pyochain, such as <code>Vec</code>.</p>
 <p>Any concrete subclass must implement the required <code>MutableSequence</code> dunder methods:</p>
 <ul>
 <li><code>__getitem__</code></li>
@@ -1808,7 +1835,12 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2476</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2471</span>
+<span class="normal">2472</span>
+<span class="normal">2473</span>
+<span class="normal">2474</span>
+<span class="normal">2475</span>
+<span class="normal">2476</span>
 <span class="normal">2477</span>
 <span class="normal">2478</span>
 <span class="normal">2479</span>
@@ -1937,15 +1969,10 @@
 <span class="normal">2602</span>
 <span class="normal">2603</span>
 <span class="normal">2604</span>
-<span class="normal">2605</span>
-<span class="normal">2606</span>
-<span class="normal">2607</span>
-<span class="normal">2608</span>
-<span class="normal">2609</span>
-<span class="normal">2610</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoMutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoSequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">MutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base ABC for pyochain mutable sequence collections, such as `Vec`.</span>
+<span class="normal">2605</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoMutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoSequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">MutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extends `PyoSequence[T]` and `collections.abc.MutableSequence[T]`.</span>
 
-<span class="sd">    It extends `PyoSequence[T]` and `collections.abc.MutableSequence[T]`.</span>
+<span class="sd">    This ABC is the base class for mutable sequence types in pyochain, such as `Vec`.</span>
 
 <span class="sd">    Any concrete subclass must implement the required `MutableSequence` dunder methods:</span>
 
@@ -1979,8 +2006,8 @@
 
 <span class="sd">        Examples:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; vec = pc.Vec([1, 2, 3, 4])</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Vec, Seq</span>
+<span class="sd">        &gt;&gt;&gt; vec = Vec((1, 2, 3, 4))</span>
 <span class="sd">        &gt;&gt;&gt; vec.retain(lambda x: x % 2 == 0)</span>
 <span class="sd">        &gt;&gt;&gt; vec</span>
 <span class="sd">        Vec(2, 4)</span>
@@ -1989,8 +2016,8 @@
 <span class="sd">        External state may be used to decide which elements to keep.</span>
 
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; vec = pc.Vec([1, 2, 3, 4, 5])</span>
-<span class="sd">        &gt;&gt;&gt; keep = pc.Seq([False, True, True, False, True]).iter()</span>
+<span class="sd">        &gt;&gt;&gt; vec = Vec((1, 2, 3, 4, 5))</span>
+<span class="sd">        &gt;&gt;&gt; keep = Seq((False, True, True, False, True)).iter()</span>
 <span class="sd">        &gt;&gt;&gt; vec.retain(lambda _: next(keep))</span>
 <span class="sd">        &gt;&gt;&gt; vec</span>
 <span class="sd">        Vec(2, 3, 5)</span>
@@ -2012,7 +2039,7 @@
 
 <span class="sd">        If *length* is greater or equal to the `MutableSequence` current `__len__()`, this has no effect.</span>
 
-<span class="sd">        The `.drain()` method can emulate `.truncate()`, but causes the excess elements to be returned instead of dropped.</span>
+<span class="sd">        The `Vec::drain` method can emulate `Vec::truncate`, but causes the excess elements to be returned instead of dropped.</span>
 
 <span class="sd">        Note:</span>
 <span class="sd">            This is equivalent to `del seq[length:]`, except that it won&#39;t create an intermediate slice object.</span>
@@ -2022,9 +2049,9 @@
 
 <span class="sd">        Examples:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Vec</span>
 <span class="sd">        &gt;&gt;&gt; # Truncating a five element vector to two elements:</span>
-<span class="sd">        &gt;&gt;&gt; vec = pc.Vec([1, 2, 3, 4, 5])</span>
+<span class="sd">        &gt;&gt;&gt; vec = Vec((1, 2, 3, 4, 5))</span>
 <span class="sd">        &gt;&gt;&gt; vec.truncate(2)</span>
 <span class="sd">        &gt;&gt;&gt; vec</span>
 <span class="sd">        Vec(1, 2)</span>
@@ -2032,8 +2059,8 @@
 <span class="sd">        ```</span>
 <span class="sd">        No truncation occurs when len is greater than the `MutableSequence` current length:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; vec = pc.Vec([1, 2, 3])</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">        &gt;&gt;&gt; vec = Vec((1, 2, 3))</span>
 <span class="sd">        &gt;&gt;&gt; vec.truncate(8)</span>
 <span class="sd">        &gt;&gt;&gt; vec</span>
 <span class="sd">        Vec(1, 2, 3)</span>
@@ -2041,8 +2068,8 @@
 <span class="sd">        ```</span>
 <span class="sd">        Truncating when len == 0 is equivalent to calling the clear method.</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; vec = pc.Vec([1, 2, 3])</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">        &gt;&gt;&gt; vec = Vec((1, 2, 3))</span>
 <span class="sd">        &gt;&gt;&gt; vec.truncate(0)</span>
 <span class="sd">        &gt;&gt;&gt; vec</span>
 <span class="sd">        Vec()</span>
@@ -2064,9 +2091,9 @@
 
 <span class="sd">        Examples:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; v1 = pc.Vec([1, 2, 3])</span>
-<span class="sd">        &gt;&gt;&gt; v2 = pc.Vec([4, 5, 6])</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">        &gt;&gt;&gt; v1 = Vec((1, 2, 3))</span>
+<span class="sd">        &gt;&gt;&gt; v2 = Vec((4, 5, 6))</span>
 <span class="sd">        &gt;&gt;&gt; v1.extend_move(v2)</span>
 <span class="sd">        &gt;&gt;&gt; v1</span>
 <span class="sd">        Vec(1, 2, 3, 4, 5, 6)</span>
@@ -2142,9 +2169,9 @@
       </tbody>
     </table>
         <p>Examples:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">v1</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Vec</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">v2</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Vec</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">])</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">v1</span> <span class="o">=</span> <span class="n">Vec</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">v2</span> <span class="o">=</span> <span class="n">Vec</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">v1</span><span class="o">.</span><span class="n">extend_move</span><span class="p">(</span><span class="n">v2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">v1</span>
 <span class="n">Vec</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
@@ -2155,7 +2182,12 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2587</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2582</span>
+<span class="normal">2583</span>
+<span class="normal">2584</span>
+<span class="normal">2585</span>
+<span class="normal">2586</span>
+<span class="normal">2587</span>
 <span class="normal">2588</span>
 <span class="normal">2589</span>
 <span class="normal">2590</span>
@@ -2173,12 +2205,7 @@
 <span class="normal">2602</span>
 <span class="normal">2603</span>
 <span class="normal">2604</span>
-<span class="normal">2605</span>
-<span class="normal">2606</span>
-<span class="normal">2607</span>
-<span class="normal">2608</span>
-<span class="normal">2609</span>
-<span class="normal">2610</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extend_move</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Self</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">2605</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extend_move</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Self</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Moves all the elements of *other* into *self*, leaving *other* empty.</span>
 
 <span class="sd">    Note:</span>
@@ -2189,9 +2216,9 @@
 
 <span class="sd">    Examples:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; v1 = pc.Vec([1, 2, 3])</span>
-<span class="sd">    &gt;&gt;&gt; v2 = pc.Vec([4, 5, 6])</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">    &gt;&gt;&gt; v1 = Vec((1, 2, 3))</span>
+<span class="sd">    &gt;&gt;&gt; v2 = Vec((4, 5, 6))</span>
 <span class="sd">    &gt;&gt;&gt; v1.extend_move(v2)</span>
 <span class="sd">    &gt;&gt;&gt; v1</span>
 <span class="sd">    Vec(1, 2, 3, 4, 5, 6)</span>
@@ -2260,15 +2287,15 @@
       </tbody>
     </table>
         <p>Examples:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Vec</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span><span class="p">,</span> <span class="n">Seq</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="n">Vec</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span><span class="o">.</span><span class="n">retain</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span>
 <span class="n">Vec</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
 </code></pre></div>
 External state may be used to decide which elements to keep.</p>
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Vec</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">keep</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">])</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="n">Vec</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">keep</span> <span class="o">=</span> <span class="n">Seq</span><span class="p">((</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span><span class="o">.</span><span class="n">retain</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="nb">next</span><span class="p">(</span><span class="n">keep</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span>
 <span class="n">Vec</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
@@ -2277,7 +2304,12 @@ External state may be used to decide which elements to keep.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2496</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2491</span>
+<span class="normal">2492</span>
+<span class="normal">2493</span>
+<span class="normal">2494</span>
+<span class="normal">2495</span>
+<span class="normal">2496</span>
 <span class="normal">2497</span>
 <span class="normal">2498</span>
 <span class="normal">2499</span>
@@ -2315,12 +2347,7 @@ External state may be used to decide which elements to keep.</p>
 <span class="normal">2531</span>
 <span class="normal">2532</span>
 <span class="normal">2533</span>
-<span class="normal">2534</span>
-<span class="normal">2535</span>
-<span class="normal">2536</span>
-<span class="normal">2537</span>
-<span class="normal">2538</span>
-<span class="normal">2539</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">retain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">predicate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">bool</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">2534</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">retain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">predicate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">bool</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Retains only the elements specified by the *predicate*.</span>
 
 <span class="sd">    In other words, remove all elements e for which the *predicate* function returns `False`.</span>
@@ -2337,8 +2364,8 @@ External state may be used to decide which elements to keep.</p>
 
 <span class="sd">    Examples:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; vec = pc.Vec([1, 2, 3, 4])</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Vec, Seq</span>
+<span class="sd">    &gt;&gt;&gt; vec = Vec((1, 2, 3, 4))</span>
 <span class="sd">    &gt;&gt;&gt; vec.retain(lambda x: x % 2 == 0)</span>
 <span class="sd">    &gt;&gt;&gt; vec</span>
 <span class="sd">    Vec(2, 4)</span>
@@ -2347,8 +2374,8 @@ External state may be used to decide which elements to keep.</p>
 <span class="sd">    External state may be used to decide which elements to keep.</span>
 
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; vec = pc.Vec([1, 2, 3, 4, 5])</span>
-<span class="sd">    &gt;&gt;&gt; keep = pc.Seq([False, True, True, False, True]).iter()</span>
+<span class="sd">    &gt;&gt;&gt; vec = Vec((1, 2, 3, 4, 5))</span>
+<span class="sd">    &gt;&gt;&gt; keep = Seq((False, True, True, False, True)).iter()</span>
 <span class="sd">    &gt;&gt;&gt; vec.retain(lambda _: next(keep))</span>
 <span class="sd">    &gt;&gt;&gt; vec</span>
 <span class="sd">    Vec(2, 3, 5)</span>
@@ -2383,7 +2410,7 @@ External state may be used to decide which elements to keep.</p>
 
         <p>Shortens the <code>MutableSequence</code>, keeping the first <em>length</em> elements and dropping the rest.</p>
 <p>If <em>length</em> is greater or equal to the <code>MutableSequence</code> current <code>__len__()</code>, this has no effect.</p>
-<p>The <code>.drain()</code> method can emulate <code>.truncate()</code>, but causes the excess elements to be returned instead of dropped.</p>
+<p>The <code>Vec::drain</code> method can emulate <code>Vec::truncate</code>, but causes the excess elements to be returned instead of dropped.</p>
 
 
 <details class="note" open>
@@ -2421,23 +2448,23 @@ External state may be used to decide which elements to keep.</p>
       </tbody>
     </table>
         <p>Examples:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="c1"># Truncating a five element vector to two elements:</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Vec</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="n">Vec</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span><span class="o">.</span><span class="n">truncate</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span>
 <span class="n">Vec</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 </code></pre></div>
 No truncation occurs when len is greater than the <code>MutableSequence</code> current length:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Vec</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="n">Vec</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span><span class="o">.</span><span class="n">truncate</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span>
 <span class="n">Vec</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 </code></pre></div>
 Truncating when len == 0 is equivalent to calling the clear method.
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Vec</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="n">Vec</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span><span class="o">.</span><span class="n">truncate</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span>
 <span class="n">Vec</span><span class="p">()</span>
@@ -2446,7 +2473,12 @@ Truncating when len == 0 is equivalent to calling the clear method.
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2541</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2536</span>
+<span class="normal">2537</span>
+<span class="normal">2538</span>
+<span class="normal">2539</span>
+<span class="normal">2540</span>
+<span class="normal">2541</span>
 <span class="normal">2542</span>
 <span class="normal">2543</span>
 <span class="normal">2544</span>
@@ -2485,17 +2517,12 @@ Truncating when len == 0 is equivalent to calling the clear method.
 <span class="normal">2577</span>
 <span class="normal">2578</span>
 <span class="normal">2579</span>
-<span class="normal">2580</span>
-<span class="normal">2581</span>
-<span class="normal">2582</span>
-<span class="normal">2583</span>
-<span class="normal">2584</span>
-<span class="normal">2585</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">truncate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">2580</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">truncate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Shortens the `MutableSequence`, keeping the first *length* elements and dropping the rest.</span>
 
 <span class="sd">    If *length* is greater or equal to the `MutableSequence` current `__len__()`, this has no effect.</span>
 
-<span class="sd">    The `.drain()` method can emulate `.truncate()`, but causes the excess elements to be returned instead of dropped.</span>
+<span class="sd">    The `Vec::drain` method can emulate `Vec::truncate`, but causes the excess elements to be returned instead of dropped.</span>
 
 <span class="sd">    Note:</span>
 <span class="sd">        This is equivalent to `del seq[length:]`, except that it won&#39;t create an intermediate slice object.</span>
@@ -2505,9 +2532,9 @@ Truncating when len == 0 is equivalent to calling the clear method.
 
 <span class="sd">    Examples:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Vec</span>
 <span class="sd">    &gt;&gt;&gt; # Truncating a five element vector to two elements:</span>
-<span class="sd">    &gt;&gt;&gt; vec = pc.Vec([1, 2, 3, 4, 5])</span>
+<span class="sd">    &gt;&gt;&gt; vec = Vec((1, 2, 3, 4, 5))</span>
 <span class="sd">    &gt;&gt;&gt; vec.truncate(2)</span>
 <span class="sd">    &gt;&gt;&gt; vec</span>
 <span class="sd">    Vec(1, 2)</span>
@@ -2515,8 +2542,8 @@ Truncating when len == 0 is equivalent to calling the clear method.
 <span class="sd">    ```</span>
 <span class="sd">    No truncation occurs when len is greater than the `MutableSequence` current length:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; vec = pc.Vec([1, 2, 3])</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">    &gt;&gt;&gt; vec = Vec((1, 2, 3))</span>
 <span class="sd">    &gt;&gt;&gt; vec.truncate(8)</span>
 <span class="sd">    &gt;&gt;&gt; vec</span>
 <span class="sd">    Vec(1, 2, 3)</span>
@@ -2524,8 +2551,8 @@ Truncating when len == 0 is equivalent to calling the clear method.
 <span class="sd">    ```</span>
 <span class="sd">    Truncating when len == 0 is equivalent to calling the clear method.</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; vec = pc.Vec([1, 2, 3])</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">    &gt;&gt;&gt; vec = Vec((1, 2, 3))</span>
 <span class="sd">    &gt;&gt;&gt; vec.truncate(0)</span>
 <span class="sd">    &gt;&gt;&gt; vec</span>
 <span class="sd">    Vec()</span>

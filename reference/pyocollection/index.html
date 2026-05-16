@@ -18,7 +18,7 @@
         <link rel="prev" href="../pipeable/">
       
       
-        <link rel="next" href="../pyoitemsview/">
+        <link rel="next" href="../pyoiterable/">
       
       
         
@@ -337,6 +337,114 @@
   
   
     <li class="md-nav__item">
+      <a href="../pyoitemsview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoItemsView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyokeysview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoKeysView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyovaluesview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoValuesView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../range/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Range
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../seq/" class="md-nav__link">
         
   
@@ -579,6 +687,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../resulttype/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  ResultType
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../resultunwraperror/" class="md-nav__link">
         
   
@@ -694,33 +829,6 @@
     
   
   Peekable
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../range/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Range
 
     
   </span>
@@ -1182,33 +1290,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../pyoitemsview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoItemsView
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../pyoiterable/" class="md-nav__link">
         
   
@@ -1244,33 +1325,6 @@
     
   
   PyoIterator
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pyokeysview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoKeysView
 
     
   </span>
@@ -1433,33 +1487,6 @@
     
   
   PyoSet
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pyovaluesview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoValuesView
 
     
   </span>
@@ -1946,8 +1973,8 @@ and provides a few convenience methods like <code>contains()</code> and <code>re
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; data = pc.Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Dict</span>
+<span class="sd">        &gt;&gt;&gt; data = Dict.from_ref({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
 <span class="sd">        &gt;&gt;&gt; data.contains(1)</span>
 <span class="sd">        True</span>
 <span class="sd">        &gt;&gt;&gt; data.contains(3)</span>
@@ -1978,12 +2005,12 @@ and provides a few convenience methods like <code>contains()</code> and <code>re
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; pc.Seq([1, 2]).repeat(3).collect()</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">        &gt;&gt;&gt; Seq((1, 2)).repeat(3).collect()</span>
 <span class="sd">        Seq(Seq(1, 2), Seq(1, 2), Seq(1, 2))</span>
-<span class="sd">        &gt;&gt;&gt; pc.Seq((&quot;a&quot;, &quot;b&quot;)).repeat(2).collect()</span>
+<span class="sd">        &gt;&gt;&gt; Seq((&quot;a&quot;, &quot;b&quot;)).repeat(2).collect()</span>
 <span class="sd">        Seq(Seq(&#39;a&#39;, &#39;b&#39;), Seq(&#39;a&#39;, &#39;b&#39;))</span>
-<span class="sd">        &gt;&gt;&gt; pc.Seq([0]).repeat().flatten().take(5).collect()</span>
+<span class="sd">        &gt;&gt;&gt; Seq([0]).repeat().flatten().take(5).collect()</span>
 <span class="sd">        Seq(0, 0, 0, 0, 0)</span>
 
 <span class="sd">        ```</span>
@@ -2002,8 +2029,8 @@ and provides a few convenience methods like <code>contains()</code> and <code>re
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; d = pc.Dict.new()</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Dict</span>
+<span class="sd">        &gt;&gt;&gt; d = Dict(())</span>
 <span class="sd">        &gt;&gt;&gt; d.is_empty()</span>
 <span class="sd">        True</span>
 <span class="sd">        &gt;&gt;&gt; d.insert(1, &quot;a&quot;)</span>
@@ -2098,8 +2125,8 @@ and provides a few convenience methods like <code>contains()</code> and <code>re
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Dict</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;b&quot;</span><span class="p">})</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">Dict</span><span class="o">.</span><span class="n">from_ref</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;b&quot;</span><span class="p">})</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="kc">True</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
@@ -2144,8 +2171,8 @@ and provides a few convenience methods like <code>contains()</code> and <code>re
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; data = pc.Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Dict</span>
+<span class="sd">    &gt;&gt;&gt; data = Dict.from_ref({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
 <span class="sd">    &gt;&gt;&gt; data.contains(1)</span>
 <span class="sd">    True</span>
 <span class="sd">    &gt;&gt;&gt; data.contains(3)</span>
@@ -2196,8 +2223,8 @@ and provides a few convenience methods like <code>contains()</code> and <code>re
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">d</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Dict</span><span class="o">.</span><span class="n">new</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">d</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">(())</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">d</span><span class="o">.</span><span class="n">is_empty</span><span class="p">()</span>
 <span class="kc">True</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">d</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span>
@@ -2236,8 +2263,8 @@ and provides a few convenience methods like <code>contains()</code> and <code>re
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; d = pc.Dict.new()</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Dict</span>
+<span class="sd">    &gt;&gt;&gt; d = Dict(())</span>
 <span class="sd">    &gt;&gt;&gt; d.is_empty()</span>
 <span class="sd">    True</span>
 <span class="sd">    &gt;&gt;&gt; d.insert(1, &quot;a&quot;)</span>
@@ -2333,12 +2360,12 @@ and provides a few convenience methods like <code>contains()</code> and <code>re
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
 <span class="n">Seq</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">((</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
 <span class="n">Seq</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">),</span> <span class="n">Seq</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">repeat</span><span class="p">()</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">([</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">repeat</span><span class="p">()</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
 <span class="n">Seq</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 </code></pre></div></p>
 
@@ -2401,12 +2428,12 @@ and provides a few convenience methods like <code>contains()</code> and <code>re
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; pc.Seq([1, 2]).repeat(3).collect()</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">    &gt;&gt;&gt; Seq((1, 2)).repeat(3).collect()</span>
 <span class="sd">    Seq(Seq(1, 2), Seq(1, 2), Seq(1, 2))</span>
-<span class="sd">    &gt;&gt;&gt; pc.Seq((&quot;a&quot;, &quot;b&quot;)).repeat(2).collect()</span>
+<span class="sd">    &gt;&gt;&gt; Seq((&quot;a&quot;, &quot;b&quot;)).repeat(2).collect()</span>
 <span class="sd">    Seq(Seq(&#39;a&#39;, &#39;b&#39;), Seq(&#39;a&#39;, &#39;b&#39;))</span>
-<span class="sd">    &gt;&gt;&gt; pc.Seq([0]).repeat().flatten().take(5).collect()</span>
+<span class="sd">    &gt;&gt;&gt; Seq([0]).repeat().flatten().take(5).collect()</span>
 <span class="sd">    Seq(0, 0, 0, 0, 0)</span>
 
 <span class="sd">    ```</span>

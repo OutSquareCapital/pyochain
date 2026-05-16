@@ -337,6 +337,114 @@
   
   
     <li class="md-nav__item">
+      <a href="../pyoitemsview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoItemsView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyokeysview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoKeysView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyovaluesview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoValuesView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../range/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Range
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../seq/" class="md-nav__link">
         
   
@@ -579,6 +687,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../resulttype/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  ResultType
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../resultunwraperror/" class="md-nav__link">
         
   
@@ -694,33 +829,6 @@
     
   
   Peekable
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../range/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Range
 
     
   </span>
@@ -1556,33 +1664,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../pyoitemsview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoItemsView
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../pyoiterable/" class="md-nav__link">
         
   
@@ -1618,33 +1699,6 @@
     
   
   PyoIterator
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pyokeysview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoKeysView
 
     
   </span>
@@ -1807,33 +1861,6 @@
     
   
   PyoSet
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pyovaluesview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoValuesView
 
     
   </span>
@@ -2618,8 +2645,8 @@ This allow to query the presence of a value and take action, always accounting f
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="nb">bool</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 <span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
 <span class="o">...</span>
@@ -2706,18 +2733,18 @@ This allow to query the presence of a value and take action, always accounting f
 <li><code>Option.eq</code> for a type-safe, performant version that only accepts <code>Option[T]</code> instances.</li>
 </ul>
 </details>        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span> <span class="o">==</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span> <span class="o">==</span> <span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="kc">True</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span> <span class="o">==</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">21</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span> <span class="o">==</span> <span class="n">Some</span><span class="p">(</span><span class="mi">21</span><span class="p">)</span>
 <span class="kc">False</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span> <span class="o">==</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span> <span class="o">==</span> <span class="n">NONE</span>
 <span class="kc">False</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span> <span class="o">==</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span> <span class="o">==</span> <span class="n">NONE</span>
 <span class="kc">True</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span> <span class="o">==</span> <span class="kc">None</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span> <span class="o">==</span> <span class="kc">None</span>
 <span class="kc">True</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span> <span class="o">==</span> <span class="mi">42</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span> <span class="o">==</span> <span class="mi">42</span>
 <span class="kc">False</span>
 </code></pre></div></p>
 
@@ -2796,10 +2823,10 @@ This allow to query the presence of a value and take action, always accounting f
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Option</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Option</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Option</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
 <span class="n">NONE</span>
 </code></pre></div></p>
 
@@ -2855,14 +2882,14 @@ This allow to query the presence of a value and take action, always accounting f
         <p>Returns:
     Option[U]: <code>NONE</code> if the original option is <code>NONE</code>, otherwise <code>optb</code>.</p>
 <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">and_</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">and_</span><span class="p">(</span><span class="n">NONE</span><span class="p">)</span>
 <span class="n">NONE</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">and_</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">and_</span><span class="p">(</span><span class="n">Some</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">))</span>
 <span class="n">NONE</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">and_</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">and_</span><span class="p">(</span><span class="n">Some</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">))</span>
 <span class="n">Some</span><span class="p">(</span><span class="s1">&#39;foo&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">and_</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">and_</span><span class="p">(</span><span class="n">NONE</span><span class="p">)</span>
 <span class="n">NONE</span>
 </code></pre></div></p>
 
@@ -2970,18 +2997,18 @@ This allow to query the presence of a value and take action, always accounting f
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">sq</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-<span class="o">...</span>     <span class="k">return</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
+<span class="o">...</span>     <span class="k">return</span> <span class="n">Some</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">nope</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-<span class="o">...</span>     <span class="k">return</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">and_then</span><span class="p">(</span><span class="n">sq</span><span class="p">)</span><span class="o">.</span><span class="n">and_then</span><span class="p">(</span><span class="n">sq</span><span class="p">)</span>
+<span class="o">...</span>     <span class="k">return</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">and_then</span><span class="p">(</span><span class="n">sq</span><span class="p">)</span><span class="o">.</span><span class="n">and_then</span><span class="p">(</span><span class="n">sq</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">and_then</span><span class="p">(</span><span class="n">sq</span><span class="p">)</span><span class="o">.</span><span class="n">and_then</span><span class="p">(</span><span class="n">nope</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">and_then</span><span class="p">(</span><span class="n">sq</span><span class="p">)</span><span class="o">.</span><span class="n">and_then</span><span class="p">(</span><span class="n">nope</span><span class="p">)</span>
 <span class="n">NONE</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">and_then</span><span class="p">(</span><span class="n">nope</span><span class="p">)</span><span class="o">.</span><span class="n">and_then</span><span class="p">(</span><span class="n">sq</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">and_then</span><span class="p">(</span><span class="n">nope</span><span class="p">)</span><span class="o">.</span><span class="n">and_then</span><span class="p">(</span><span class="n">sq</span><span class="p">)</span>
 <span class="n">NONE</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">and_then</span><span class="p">(</span><span class="n">sq</span><span class="p">)</span><span class="o">.</span><span class="n">and_then</span><span class="p">(</span><span class="n">sq</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">and_then</span><span class="p">(</span><span class="n">sq</span><span class="p">)</span><span class="o">.</span><span class="n">and_then</span><span class="p">(</span><span class="n">sq</span><span class="p">)</span>
 <span class="n">NONE</span>
 </code></pre></div></p>
 
@@ -3095,10 +3122,10 @@ This allow to query the presence of a value and take action, always accounting f
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">and_then_star</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">))</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">and_then_star</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">Some</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">))</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">and_then_star</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">and_then_star</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">Some</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">))</span>
 <span class="n">NONE</span>
 </code></pre></div></p>
 
@@ -3180,14 +3207,14 @@ This allow to query the presence of a value and take action, always accounting f
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">))</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">))</span>
 <span class="kc">True</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">21</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">Some</span><span class="p">(</span><span class="mi">21</span><span class="p">))</span>
 <span class="kc">False</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">NONE</span><span class="p">)</span>
 <span class="kc">False</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">NONE</span><span class="p">)</span>
 <span class="kc">True</span>
 </code></pre></div></p>
 
@@ -3287,10 +3314,10 @@ This allow to query the presence of a value and take action, always accounting f
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="s2">&quot;fruits are healthy&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="s2">&quot;fruits are healthy&quot;</span><span class="p">)</span>
 <span class="s1">&#39;value&#39;</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="s2">&quot;fruits are healthy&quot;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="s2">&quot;fruits are healthy&quot;</span><span class="p">)</span>
 <span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
 <span class="o">...</span>
 <span class="n">OptionUnwrapError</span><span class="p">:</span> <span class="n">fruits</span> <span class="n">are</span> <span class="n">healthy</span> <span class="p">(</span><span class="n">called</span> <span class="err">`</span><span class="n">expect</span><span class="err">`</span> <span class="n">on</span> <span class="n">a</span> <span class="err">`</span><span class="kc">None</span><span class="err">`</span><span class="p">)</span>
@@ -3402,16 +3429,16 @@ This allow to query the presence of a value and take action, always accounting f
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
 <span class="o">&gt;&gt;&gt;</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">is_even</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="o">...</span>     <span class="k">return</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span>
 <span class="o">&gt;&gt;&gt;</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_even</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_even</span><span class="p">)</span>
 <span class="n">NONE</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_even</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_even</span><span class="p">)</span>
 <span class="n">NONE</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_even</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_even</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
 </code></pre></div></p>
 
@@ -3458,12 +3485,12 @@ This allow to query the presence of a value and take action, always accounting f
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="n">NONE</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
 <span class="n">NONE</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
 <span class="n">NONE</span>
 </code></pre></div></p>
 
@@ -3543,14 +3570,14 @@ This allow to query the presence of a value and take action, always accounting f
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Option</span><span class="o">.</span><span class="n">if_some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Option</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Option</span><span class="o">.</span><span class="n">if_some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Option</span><span class="o">.</span><span class="n">if_some</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Option</span><span class="o">.</span><span class="n">if_some</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">NONE</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Option</span><span class="o">.</span><span class="n">if_some</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Option</span><span class="o">.</span><span class="n">if_some</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="s1">&#39;hello&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Option</span><span class="o">.</span><span class="n">if_some</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Option</span><span class="o">.</span><span class="n">if_some</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
 <span class="n">NONE</span>
 </code></pre></div></p>
 
@@ -3646,15 +3673,15 @@ This allow to query the presence of a value and take action, always accounting f
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Option</span><span class="o">.</span><span class="n">if_true</span><span class="p">(</span><span class="mi">42</span><span class="p">,</span> <span class="n">predicate</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">42</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Option</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Option</span><span class="o">.</span><span class="n">if_true</span><span class="p">(</span><span class="mi">42</span><span class="p">,</span> <span class="n">predicate</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">42</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Option</span><span class="o">.</span><span class="n">if_true</span><span class="p">(</span><span class="mi">21</span><span class="p">,</span> <span class="n">predicate</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">42</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Option</span><span class="o">.</span><span class="n">if_true</span><span class="p">(</span><span class="mi">21</span><span class="p">,</span> <span class="n">predicate</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">42</span><span class="p">)</span>
 <span class="n">NONE</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Option</span><span class="o">.</span><span class="n">if_true</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;README.md&quot;</span><span class="p">),</span> <span class="n">predicate</span><span class="o">=</span><span class="n">Path</span><span class="o">.</span><span class="n">exists</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Option</span><span class="o">.</span><span class="n">if_true</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;README.md&quot;</span><span class="p">),</span> <span class="n">predicate</span><span class="o">=</span><span class="n">Path</span><span class="o">.</span><span class="n">exists</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="s1">&#39;README.md&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Option</span><span class="o">.</span><span class="n">if_true</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;README.md&quot;</span><span class="p">),</span> <span class="n">predicate</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">())</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span> <span class="c1"># Same as above</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Option</span><span class="o">.</span><span class="n">if_true</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;README.md&quot;</span><span class="p">),</span> <span class="n">predicate</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">())</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span> <span class="c1"># Same as above</span>
 <span class="n">Some</span><span class="p">(</span><span class="s1">&#39;README.md&#39;</span><span class="p">)</span>
 </code></pre></div></p>
 
@@ -3763,13 +3790,13 @@ This allow to query the presence of a value and take action, always accounting f
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">seen</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">inspect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">seen</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">inspect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">seen</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">seen</span>
 <span class="p">[</span><span class="mi">2</span><span class="p">]</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">inspect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">seen</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">inspect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">seen</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
 <span class="n">NONE</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">seen</span>
 <span class="p">[</span><span class="mi">2</span><span class="p">]</span>
@@ -3816,11 +3843,11 @@ This allow to query the presence of a value and take action, always accounting f
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="p">:</span> <span class="n">Option</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="p">:</span> <span class="n">Option</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">is_none</span><span class="p">()</span>
 <span class="kc">False</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span><span class="p">:</span> <span class="n">Option</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span><span class="p">:</span> <span class="n">Option</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">NONE</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">y</span><span class="o">.</span><span class="n">is_none</span><span class="p">()</span>
 <span class="kc">True</span>
 </code></pre></div></p>
@@ -3929,14 +3956,14 @@ This allow to query the presence of a value and take action, always accounting f
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">is_none_or</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">is_none_or</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
 <span class="kc">True</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">is_none_or</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">is_none_or</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
 <span class="kc">False</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">is_none_or</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">is_none_or</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
 <span class="kc">True</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">is_none_or</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">is_none_or</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
 <span class="kc">True</span>
 </code></pre></div></p>
 
@@ -3981,11 +4008,11 @@ This allow to query the presence of a value and take action, always accounting f
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="p">:</span> <span class="n">Option</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="p">:</span> <span class="n">Option</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">is_some</span><span class="p">()</span>
 <span class="kc">True</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span><span class="p">:</span> <span class="n">Option</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span><span class="p">:</span> <span class="n">Option</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">NONE</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">y</span><span class="o">.</span><span class="n">is_some</span><span class="p">()</span>
 <span class="kc">False</span>
 </code></pre></div></p>
@@ -4094,18 +4121,18 @@ This allow to query the presence of a value and take action, always accounting f
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">is_some_and</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
 <span class="kc">True</span>
 
-<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">Some</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">is_some_and</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
 <span class="kc">False</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">NONE</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">is_some_and</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
 <span class="kc">False</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">Some</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">is_some_and</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
 <span class="kc">True</span>
 </code></pre></div></p>
@@ -4156,10 +4183,10 @@ This allow to query the presence of a value and take action, always accounting f
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
 <span class="n">NONE</span>
 </code></pre></div></p>
 
@@ -4269,10 +4296,10 @@ leaving a <code>None</code> value untouched.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="s2">&quot;Hello, World!&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="s2">&quot;Hello, World!&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">13</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span>
 <span class="n">NONE</span>
 </code></pre></div></p>
 
@@ -4396,10 +4423,10 @@ leaving a <code>None</code> value untouched.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">map_or</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">10</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">map_or</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">10</span><span class="p">)</span>
 <span class="mi">20</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">map_or</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">10</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">map_or</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">10</span><span class="p">)</span>
 <span class="mi">0</span>
 </code></pre></div></p>
 
@@ -4491,10 +4518,10 @@ leaving a <code>None</code> value untouched.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">map_or_else</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">10</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">map_or_else</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">10</span><span class="p">)</span>
 <span class="mi">20</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">map_or_else</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">10</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">map_or_else</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">10</span><span class="p">)</span>
 <span class="mi">0</span>
 </code></pre></div></p>
 
@@ -4598,10 +4625,10 @@ leaving a <code>None</code> value untouched.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">map_star</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">map_star</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">map_star</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">map_star</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">)</span>
 <span class="n">NONE</span>
 </code></pre></div></p>
 
@@ -4677,14 +4704,14 @@ leaving a <code>None</code> value untouched.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">ne</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">21</span><span class="p">))</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">ne</span><span class="p">(</span><span class="n">Some</span><span class="p">(</span><span class="mi">21</span><span class="p">))</span>
 <span class="kc">True</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">ne</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">ne</span><span class="p">(</span><span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">))</span>
 <span class="kc">False</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">ne</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">ne</span><span class="p">(</span><span class="n">NONE</span><span class="p">)</span>
 <span class="kc">True</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">ne</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">ne</span><span class="p">(</span><span class="n">NONE</span><span class="p">)</span>
 <span class="kc">False</span>
 </code></pre></div></p>
 
@@ -4760,10 +4787,10 @@ leaving a <code>None</code> value untouched.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s1">&#39;fail&#39;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s1">&#39;fail&#39;</span><span class="p">)</span>
 <span class="n">Ok</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s1">&#39;fail&#39;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s1">&#39;fail&#39;</span><span class="p">)</span>
 <span class="n">Err</span><span class="p">(</span><span class="s1">&#39;fail&#39;</span><span class="p">)</span>
 </code></pre></div></p>
 
@@ -4839,10 +4866,10 @@ leaving a <code>None</code> value untouched.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="s1">&#39;fail&#39;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="s1">&#39;fail&#39;</span><span class="p">)</span>
 <span class="n">Ok</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="s1">&#39;fail&#39;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="s1">&#39;fail&#39;</span><span class="p">)</span>
 <span class="n">Err</span><span class="p">(</span><span class="s1">&#39;fail&#39;</span><span class="p">)</span>
 </code></pre></div></p>
 
@@ -4918,14 +4945,14 @@ leaving a <code>None</code> value untouched.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">or_</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">or_</span><span class="p">(</span><span class="n">NONE</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">or_</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">or_</span><span class="p">(</span><span class="n">Some</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">or_</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">or_</span><span class="p">(</span><span class="n">Some</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">or_</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">or_</span><span class="p">(</span><span class="n">NONE</span><span class="p">)</span>
 <span class="n">NONE</span>
 </code></pre></div></p>
 
@@ -5001,16 +5028,16 @@ leaving a <code>None</code> value untouched.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">nobody</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="o">...</span>     <span class="k">return</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span>
+<span class="o">...</span>     <span class="k">return</span> <span class="n">NONE</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">vikings</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="o">...</span>     <span class="k">return</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="s2">&quot;vikings&quot;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="s2">&quot;barbarians&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">or_else</span><span class="p">(</span><span class="n">vikings</span><span class="p">)</span>
+<span class="o">...</span>     <span class="k">return</span> <span class="n">Some</span><span class="p">(</span><span class="s2">&quot;vikings&quot;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="s2">&quot;barbarians&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">or_else</span><span class="p">(</span><span class="n">vikings</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="s1">&#39;barbarians&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">or_else</span><span class="p">(</span><span class="n">vikings</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">or_else</span><span class="p">(</span><span class="n">vikings</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="s1">&#39;vikings&#39;</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">or_else</span><span class="p">(</span><span class="n">nobody</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">or_else</span><span class="p">(</span><span class="n">nobody</span><span class="p">)</span>
 <span class="n">NONE</span>
 </code></pre></div></p>
 
@@ -5105,20 +5132,20 @@ leaving a <code>None</code> value untouched.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">s12</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">s17</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">17</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">s12</span> <span class="o">=</span> <span class="n">Some</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">s17</span> <span class="o">=</span> <span class="n">Some</span><span class="p">(</span><span class="mi">17</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="o">...</span>     <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
 <span class="o">&gt;&gt;&gt;</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">s12</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">s17</span><span class="p">,</span> <span class="n">add</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">29</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">s12</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="p">,</span> <span class="n">add</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">s12</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">NONE</span><span class="p">,</span> <span class="n">add</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">s17</span><span class="p">,</span> <span class="n">add</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">s17</span><span class="p">,</span> <span class="n">add</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">17</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="p">,</span> <span class="n">add</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">NONE</span><span class="p">,</span> <span class="n">add</span><span class="p">)</span>
 <span class="n">NONE</span>
 </code></pre></div></p>
 
@@ -5164,12 +5191,12 @@ leaving a <code>None</code> value untouched.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">Ok</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="n">Ok</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
 <span class="n">Ok</span><span class="p">(</span><span class="n">Some</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
 <span class="n">Ok</span><span class="p">(</span><span class="n">NONE</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">Err</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="n">Err</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
 <span class="n">Err</span><span class="p">(</span><span class="s1">&#39;error&#39;</span><span class="p">)</span>
 </code></pre></div></p>
 
@@ -5237,12 +5264,12 @@ leaving a <code>None</code> value untouched.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="s2">&quot;car&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="s2">&quot;car&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap</span><span class="p">()</span>
 <span class="s1">&#39;car&#39;</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">unwrap</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">unwrap</span><span class="p">()</span>
 <span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
 <span class="o">...</span>
 <span class="n">OptionUnwrapError</span><span class="p">:</span> <span class="n">called</span> <span class="err">`</span><span class="n">unwrap</span><span class="err">`</span> <span class="n">on</span> <span class="n">a</span> <span class="err">`</span><span class="kc">None</span><span class="err">`</span>
@@ -5320,10 +5347,10 @@ leaving a <code>None</code> value untouched.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="s2">&quot;car&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap_or</span><span class="p">(</span><span class="s2">&quot;bike&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="s2">&quot;car&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap_or</span><span class="p">(</span><span class="s2">&quot;bike&quot;</span><span class="p">)</span>
 <span class="s1">&#39;car&#39;</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">unwrap_or</span><span class="p">(</span><span class="s2">&quot;bike&quot;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">unwrap_or</span><span class="p">(</span><span class="s2">&quot;bike&quot;</span><span class="p">)</span>
 <span class="s1">&#39;bike&#39;</span>
 </code></pre></div></p>
 
@@ -5399,11 +5426,11 @@ leaving a <code>None</code> value untouched.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">10</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap_or_else</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">k</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap_or_else</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">k</span><span class="p">)</span>
 <span class="mi">4</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">unwrap_or_else</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">k</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">unwrap_or_else</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">k</span><span class="p">)</span>
 <span class="mi">20</span>
 </code></pre></div></p>
 
@@ -5501,10 +5528,10 @@ If the option is <code>NONE</code>, it returns <code>(NONE, NONE)</code>.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">unzip</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">unzip</span><span class="p">()</span>
 <span class="p">(</span><span class="n">Some</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">Some</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">unzip</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">unzip</span><span class="p">()</span>
 <span class="p">(</span><span class="n">NONE</span><span class="p">,</span> <span class="n">NONE</span><span class="p">)</span>
 </code></pre></div></p>
 
@@ -5580,14 +5607,14 @@ If the option is <code>NONE</code>, it returns <code>(NONE, NONE)</code>.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">xor</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">xor</span><span class="p">(</span><span class="n">NONE</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">xor</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">xor</span><span class="p">(</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">xor</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">xor</span><span class="p">(</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
 <span class="n">NONE</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">xor</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">xor</span><span class="p">(</span><span class="n">NONE</span><span class="p">)</span>
 <span class="n">NONE</span>
 </code></pre></div></p>
 
@@ -5663,12 +5690,12 @@ If the option is <code>NONE</code>, it returns <code>(NONE, NONE)</code>.</p>
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">zip</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">))</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">zip</span><span class="p">(</span><span class="n">Some</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">))</span>
 <span class="n">Some</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">zip</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Some</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">zip</span><span class="p">(</span><span class="n">NONE</span><span class="p">)</span>
 <span class="n">NONE</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">zip</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">zip</span><span class="p">(</span><span class="n">Some</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">))</span>
 <span class="n">NONE</span>
 </code></pre></div></p>
 
@@ -5763,20 +5790,20 @@ If the option is <code>NONE</code>, it returns <code>(NONE, NONE)</code>.</p>
     </table>
         <p>Example:
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
 <span class="o">&gt;&gt;&gt;</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="nd">@dataclass</span>
 <span class="o">...</span> <span class="k">class</span><span class="w"> </span><span class="nc">Point</span><span class="p">:</span>
 <span class="o">...</span>     <span class="n">x</span><span class="p">:</span> <span class="nb">float</span>
 <span class="o">...</span>     <span class="n">y</span><span class="p">:</span> <span class="nb">float</span>
 <span class="o">&gt;&gt;&gt;</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mf">17.5</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Some</span><span class="p">(</span><span class="mf">42.7</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">Some</span><span class="p">(</span><span class="mf">17.5</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">Some</span><span class="p">(</span><span class="mf">42.7</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">zip_with</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">Point</span><span class="p">)</span>
 <span class="n">Some</span><span class="p">(</span><span class="n">Point</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mf">17.5</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">42.7</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">zip_with</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="p">,</span> <span class="n">Point</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">zip_with</span><span class="p">(</span><span class="n">NONE</span><span class="p">,</span> <span class="n">Point</span><span class="p">)</span>
 <span class="n">NONE</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">NONE</span><span class="o">.</span><span class="n">zip_with</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">Point</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">NONE</span><span class="o">.</span><span class="n">zip_with</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">Point</span><span class="p">)</span>
 <span class="n">NONE</span>
 </code></pre></div></p>
 

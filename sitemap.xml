@@ -4,6 +4,18 @@
         <loc>https://outsquarecapital.github.io/pyochain/reference/dict/</loc>
       </url>
       <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/pyoitemsview/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/pyokeysview/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/pyovaluesview/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/range/</loc>
+      </url>
+      <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/seq/</loc>
       </url>
       <url>
@@ -25,6 +37,9 @@
         <loc>https://outsquarecapital.github.io/pyochain/reference/result/</loc>
       </url>
       <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/resulttype/</loc>
+      </url>
+      <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/resultunwraperror/</loc>
       </url>
       <url>
@@ -32,9 +47,6 @@
       </url>
       <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/peekable/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/range/</loc>
       </url>
       <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/unzipped/</loc>
@@ -64,16 +76,10 @@
         <loc>https://outsquarecapital.github.io/pyochain/reference/pyocollection/</loc>
       </url>
       <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyoitemsview/</loc>
-      </url>
-      <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/pyoiterable/</loc>
       </url>
       <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/pyoiterator/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyokeysview/</loc>
       </url>
       <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/pyomapping/</loc>
@@ -92,9 +98,6 @@
       </url>
       <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/pyoset/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyovaluesview/</loc>
       </url>
       <url>
         <loc>https://outsquarecapital.github.io/pyochain/core-types-overview/</loc>

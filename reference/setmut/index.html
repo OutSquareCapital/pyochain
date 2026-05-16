@@ -339,6 +339,114 @@
   
   
     <li class="md-nav__item">
+      <a href="../pyoitemsview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoItemsView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyokeysview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoKeysView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyovaluesview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoValuesView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../range/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Range
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../seq/" class="md-nav__link">
         
   
@@ -683,6 +791,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../resulttype/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  ResultType
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../resultunwraperror/" class="md-nav__link">
         
   
@@ -798,33 +933,6 @@
     
   
   Peekable
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../range/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Range
 
     
   </span>
@@ -1193,33 +1301,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../pyoitemsview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoItemsView
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../pyoiterable/" class="md-nav__link">
         
   
@@ -1255,33 +1336,6 @@
     
   
   PyoIterator
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pyokeysview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoKeysView
 
     
   </span>
@@ -1444,33 +1498,6 @@
     
   
   PyoSet
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pyovaluesview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoValuesView
 
     
   </span>
@@ -2018,9 +2045,9 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import SetMut</span>
 <span class="sd">        &gt;&gt;&gt; original_set = {1, 2, 3}</span>
-<span class="sd">        &gt;&gt;&gt; set_obj = pc.SetMut.from_ref(original_set)</span>
+<span class="sd">        &gt;&gt;&gt; set_obj = SetMut.from_ref(original_set)</span>
 <span class="sd">        &gt;&gt;&gt; set_obj</span>
 <span class="sd">        SetMut(1, 2, 3)</span>
 <span class="sd">        &gt;&gt;&gt; original_set.add(4)</span>
@@ -2043,8 +2070,8 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; s = pc.SetMut({&#39;a&#39;, &#39;b&#39;})</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import SetMut</span>
+<span class="sd">        &gt;&gt;&gt; s = SetMut((&#39;a&#39;, &#39;b&#39;))</span>
 <span class="sd">        &gt;&gt;&gt; s.add(&#39;c&#39;)</span>
 <span class="sd">        &gt;&gt;&gt; s.iter().sort()</span>
 <span class="sd">        Vec(&#39;a&#39;, &#39;b&#39;, &#39;c&#39;)</span>
@@ -2064,8 +2091,8 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; s = pc.SetMut({&#39;a&#39;, &#39;b&#39;, &#39;c&#39;})</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import SetMut</span>
+<span class="sd">        &gt;&gt;&gt; s = SetMut((&#39;a&#39;, &#39;b&#39;, &#39;c&#39;))</span>
 <span class="sd">        &gt;&gt;&gt; s.discard(&#39;b&#39;)</span>
 <span class="sd">        &gt;&gt;&gt; s.iter().sort()</span>
 <span class="sd">        Vec(&#39;a&#39;, &#39;c&#39;)</span>
@@ -2179,8 +2206,8 @@
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">s</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">SetMut</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">})</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">SetMut</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">s</span> <span class="o">=</span> <span class="n">SetMut</span><span class="p">((</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">s</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;c&#39;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">s</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
 <span class="n">Vec</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">)</span>
@@ -2215,8 +2242,8 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; s = pc.SetMut({&#39;a&#39;, &#39;b&#39;})</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import SetMut</span>
+<span class="sd">    &gt;&gt;&gt; s = SetMut((&#39;a&#39;, &#39;b&#39;))</span>
 <span class="sd">    &gt;&gt;&gt; s.add(&#39;c&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; s.iter().sort()</span>
 <span class="sd">    Vec(&#39;a&#39;, &#39;b&#39;, &#39;c&#39;)</span>
@@ -2275,8 +2302,8 @@
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">s</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">SetMut</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">})</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">SetMut</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">s</span> <span class="o">=</span> <span class="n">SetMut</span><span class="p">((</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">s</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">s</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
 <span class="n">Vec</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">)</span>
@@ -2315,8 +2342,8 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; s = pc.SetMut({&#39;a&#39;, &#39;b&#39;, &#39;c&#39;})</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import SetMut</span>
+<span class="sd">    &gt;&gt;&gt; s = SetMut((&#39;a&#39;, &#39;b&#39;, &#39;c&#39;))</span>
 <span class="sd">    &gt;&gt;&gt; s.discard(&#39;b&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; s.iter().sort()</span>
 <span class="sd">    Vec(&#39;a&#39;, &#39;c&#39;)</span>
@@ -2408,9 +2435,9 @@
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">SetMut</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">original_set</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">}</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">set_obj</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">SetMut</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="n">original_set</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">set_obj</span> <span class="o">=</span> <span class="n">SetMut</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="n">original_set</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">set_obj</span>
 <span class="n">SetMut</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">original_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
@@ -2473,9 +2500,9 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import SetMut</span>
 <span class="sd">    &gt;&gt;&gt; original_set = {1, 2, 3}</span>
-<span class="sd">    &gt;&gt;&gt; set_obj = pc.SetMut.from_ref(original_set)</span>
+<span class="sd">    &gt;&gt;&gt; set_obj = SetMut.from_ref(original_set)</span>
 <span class="sd">    &gt;&gt;&gt; set_obj</span>
 <span class="sd">    SetMut(1, 2, 3)</span>
 <span class="sd">    &gt;&gt;&gt; original_set.add(4)</span>

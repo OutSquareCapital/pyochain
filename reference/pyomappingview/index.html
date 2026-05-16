@@ -337,6 +337,114 @@
   
   
     <li class="md-nav__item">
+      <a href="../pyoitemsview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoItemsView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyokeysview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoKeysView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyovaluesview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoValuesView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../range/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Range
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../seq/" class="md-nav__link">
         
   
@@ -579,6 +687,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../resulttype/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  ResultType
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../resultunwraperror/" class="md-nav__link">
         
   
@@ -694,33 +829,6 @@
     
   
   Peekable
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../range/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Range
 
     
   </span>
@@ -1091,33 +1199,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../pyoitemsview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoItemsView
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../pyoiterable/" class="md-nav__link">
         
   
@@ -1153,33 +1234,6 @@
     
   
   PyoIterator
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pyokeysview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoKeysView
 
     
   </span>
@@ -1400,33 +1454,6 @@
     
   
   PyoSet
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pyovaluesview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoValuesView
 
     
   </span>
@@ -1720,9 +1747,8 @@
 
 
 
-        <p>Base ABC for pyochain mapping view collections.</p>
-<p><code>PyoMappingView[T]</code> is the base class shared by the views returned by <code>PyoMapping</code> methods.</p>
-<p>This class extends both <code>MappingView</code> from <code>collections.abc</code> and <code>PyoCollection[T]</code>.</p>
+        <p>Extends both <code>MappingView</code> from <code>collections.abc</code> and <code>PyoCollection[T]</code>.</p>
+<p>Is the base class shared by the views returned by <code>PyoMapping</code> methods.</p>
 <p>Any concrete subclass must implement the required <code>MappingView</code> dunder methods:
 - <code>__contains__</code>
 - <code>__iter__</code></p>
@@ -1736,24 +1762,20 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2197</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2194</span>
+<span class="normal">2195</span>
+<span class="normal">2196</span>
+<span class="normal">2197</span>
 <span class="normal">2198</span>
 <span class="normal">2199</span>
 <span class="normal">2200</span>
 <span class="normal">2201</span>
 <span class="normal">2202</span>
 <span class="normal">2203</span>
-<span class="normal">2204</span>
-<span class="normal">2205</span>
-<span class="normal">2206</span>
-<span class="normal">2207</span>
-<span class="normal">2208</span>
-<span class="normal">2209</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoMappingView</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">MappingView</span><span class="p">,</span> <span class="n">PyoCollection</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base ABC for pyochain mapping view collections.</span>
+<span class="normal">2204</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoMappingView</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">MappingView</span><span class="p">,</span> <span class="n">PyoCollection</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extends both `MappingView` from `collections.abc` and `PyoCollection[T]`.</span>
 
-<span class="sd">    `PyoMappingView[T]` is the base class shared by the views returned by `PyoMapping` methods.</span>
-
-<span class="sd">    This class extends both `MappingView` from `collections.abc` and `PyoCollection[T]`.</span>
+<span class="sd">    Is the base class shared by the views returned by `PyoMapping` methods.</span>
 
 <span class="sd">    Any concrete subclass must implement the required `MappingView` dunder methods:</span>
 <span class="sd">    - `__contains__`</span>

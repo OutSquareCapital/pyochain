@@ -15,7 +15,7 @@
         <link rel="canonical" href="https://outsquarecapital.github.io/pyochain/reference/pyomapping/">
       
       
-        <link rel="prev" href="../pyokeysview/">
+        <link rel="prev" href="../pyoiterator/">
       
       
         <link rel="next" href="../pyomappingview/">
@@ -337,6 +337,114 @@
   
   
     <li class="md-nav__item">
+      <a href="../pyoitemsview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoItemsView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyokeysview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoKeysView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyovaluesview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoValuesView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../range/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Range
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../seq/" class="md-nav__link">
         
   
@@ -579,6 +687,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../resulttype/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  ResultType
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../resultunwraperror/" class="md-nav__link">
         
   
@@ -694,33 +829,6 @@
     
   
   Peekable
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../range/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Range
 
     
   </span>
@@ -1091,33 +1199,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../pyoitemsview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoItemsView
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../pyoiterable/" class="md-nav__link">
         
   
@@ -1153,33 +1234,6 @@
     
   
   PyoIterator
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pyokeysview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoKeysView
 
     
   </span>
@@ -1433,33 +1487,6 @@
     
   
   PyoSet
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pyovaluesview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoValuesView
 
     
   </span>
@@ -1786,8 +1813,8 @@
 
 
 
-        <p>Base ABC for pyochain immutable mappings, such as <code>Dict</code>.</p>
-<p>It extends <code>PyoCollection[K]</code> and <code>collections.abc.Mapping[K, V]</code>.</p>
+        <p>Extends <code>PyoCollection[K]</code> and <code>collections.abc.Mapping[K, V]</code>.</p>
+<p>Serves as a base class for pyochain mappings, such as <code>Dict</code>.</p>
 <p>Any concrete subclass must implement the required <code>Mapping</code> dunder methods:</p>
 <ul>
 <li><code>__getitem__</code></li>
@@ -1804,7 +1831,12 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2254</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2249</span>
+<span class="normal">2250</span>
+<span class="normal">2251</span>
+<span class="normal">2252</span>
+<span class="normal">2253</span>
+<span class="normal">2254</span>
 <span class="normal">2255</span>
 <span class="normal">2256</span>
 <span class="normal">2257</span>
@@ -1866,15 +1898,10 @@
 <span class="normal">2313</span>
 <span class="normal">2314</span>
 <span class="normal">2315</span>
-<span class="normal">2316</span>
-<span class="normal">2317</span>
-<span class="normal">2318</span>
-<span class="normal">2319</span>
-<span class="normal">2320</span>
-<span class="normal">2321</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoMapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">](</span><span class="n">PyoCollection</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base ABC for pyochain immutable mappings, such as `Dict`.</span>
+<span class="normal">2316</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoMapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">](</span><span class="n">PyoCollection</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extends `PyoCollection[K]` and `collections.abc.Mapping[K, V]`.</span>
 
-<span class="sd">    It extends `PyoCollection[K]` and `collections.abc.Mapping[K, V]`.</span>
+<span class="sd">    Serves as a base class for pyochain mappings, such as `Dict`.</span>
 
 <span class="sd">    Any concrete subclass must implement the required `Mapping` dunder methods:</span>
 
@@ -1895,8 +1922,8 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; data = pc.Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Dict</span>
+<span class="sd">        &gt;&gt;&gt; data = Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
 <span class="sd">        &gt;&gt;&gt; data.keys()</span>
 <span class="sd">        PyoKeysView(Dict(1: &#39;a&#39;, 2: &#39;b&#39;))</span>
 
@@ -1913,8 +1940,8 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; data = pc.Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Dict</span>
+<span class="sd">        &gt;&gt;&gt; data = Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
 <span class="sd">        &gt;&gt;&gt; data.values()</span>
 <span class="sd">        PyoValuesView(Dict(1: &#39;a&#39;, 2: &#39;b&#39;))</span>
 
@@ -1931,8 +1958,8 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; data = pc.Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Dict</span>
+<span class="sd">        &gt;&gt;&gt; data = Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
 <span class="sd">        &gt;&gt;&gt; data.items()</span>
 <span class="sd">        PyoItemsView(Dict(1: &#39;a&#39;, 2: &#39;b&#39;))</span>
 
@@ -1991,8 +2018,8 @@
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Dict</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;b&quot;</span><span class="p">})</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;b&quot;</span><span class="p">})</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
 <span class="n">PyoItemsView</span><span class="p">(</span><span class="n">Dict</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s1">&#39;b&#39;</span><span class="p">))</span>
 </code></pre></div></p>
@@ -2000,7 +2027,12 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2305</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2300</span>
+<span class="normal">2301</span>
+<span class="normal">2302</span>
+<span class="normal">2303</span>
+<span class="normal">2304</span>
+<span class="normal">2305</span>
 <span class="normal">2306</span>
 <span class="normal">2307</span>
 <span class="normal">2308</span>
@@ -2011,12 +2043,7 @@
 <span class="normal">2313</span>
 <span class="normal">2314</span>
 <span class="normal">2315</span>
-<span class="normal">2316</span>
-<span class="normal">2317</span>
-<span class="normal">2318</span>
-<span class="normal">2319</span>
-<span class="normal">2320</span>
-<span class="normal">2321</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@override</span>
+<span class="normal">2316</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@override</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyoItemsView</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a view of the `Mapping` items.</span>
 
@@ -2025,8 +2052,8 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; data = pc.Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Dict</span>
+<span class="sd">    &gt;&gt;&gt; data = Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
 <span class="sd">    &gt;&gt;&gt; data.items()</span>
 <span class="sd">    PyoItemsView(Dict(1: &#39;a&#39;, 2: &#39;b&#39;))</span>
 
@@ -2075,8 +2102,8 @@
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Dict</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;b&quot;</span><span class="p">})</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;b&quot;</span><span class="p">})</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
 <span class="n">PyoKeysView</span><span class="p">(</span><span class="n">Dict</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s1">&#39;b&#39;</span><span class="p">))</span>
 </code></pre></div></p>
@@ -2084,7 +2111,12 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2269</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2264</span>
+<span class="normal">2265</span>
+<span class="normal">2266</span>
+<span class="normal">2267</span>
+<span class="normal">2268</span>
+<span class="normal">2269</span>
 <span class="normal">2270</span>
 <span class="normal">2271</span>
 <span class="normal">2272</span>
@@ -2095,12 +2127,7 @@
 <span class="normal">2277</span>
 <span class="normal">2278</span>
 <span class="normal">2279</span>
-<span class="normal">2280</span>
-<span class="normal">2281</span>
-<span class="normal">2282</span>
-<span class="normal">2283</span>
-<span class="normal">2284</span>
-<span class="normal">2285</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@override</span>
+<span class="normal">2280</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@override</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyoKeysView</span><span class="p">[</span><span class="n">K</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a view of the `Mapping` keys.</span>
 
@@ -2109,8 +2136,8 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; data = pc.Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Dict</span>
+<span class="sd">    &gt;&gt;&gt; data = Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
 <span class="sd">    &gt;&gt;&gt; data.keys()</span>
 <span class="sd">    PyoKeysView(Dict(1: &#39;a&#39;, 2: &#39;b&#39;))</span>
 
@@ -2159,8 +2186,8 @@
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Dict</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;b&quot;</span><span class="p">})</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;b&quot;</span><span class="p">})</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
 <span class="n">PyoValuesView</span><span class="p">(</span><span class="n">Dict</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s1">&#39;b&#39;</span><span class="p">))</span>
 </code></pre></div></p>
@@ -2168,7 +2195,12 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2287</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2282</span>
+<span class="normal">2283</span>
+<span class="normal">2284</span>
+<span class="normal">2285</span>
+<span class="normal">2286</span>
+<span class="normal">2287</span>
 <span class="normal">2288</span>
 <span class="normal">2289</span>
 <span class="normal">2290</span>
@@ -2179,12 +2211,7 @@
 <span class="normal">2295</span>
 <span class="normal">2296</span>
 <span class="normal">2297</span>
-<span class="normal">2298</span>
-<span class="normal">2299</span>
-<span class="normal">2300</span>
-<span class="normal">2301</span>
-<span class="normal">2302</span>
-<span class="normal">2303</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@override</span>
+<span class="normal">2298</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@override</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyoValuesView</span><span class="p">[</span><span class="n">V</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a view of the `Mapping` values.</span>
 
@@ -2193,8 +2220,8 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; data = pc.Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Dict</span>
+<span class="sd">    &gt;&gt;&gt; data = Dict({1: &quot;a&quot;, 2: &quot;b&quot;})</span>
 <span class="sd">    &gt;&gt;&gt; data.values()</span>
 <span class="sd">    PyoValuesView(Dict(1: &#39;a&#39;, 2: &#39;b&#39;))</span>
 

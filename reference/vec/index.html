@@ -339,6 +339,114 @@
   
   
     <li class="md-nav__item">
+      <a href="../pyoitemsview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoItemsView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyokeysview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoKeysView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pyovaluesview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  PyoValuesView
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../range/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Range
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../seq/" class="md-nav__link">
         
   
@@ -716,6 +824,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../resulttype/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  ResultType
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../resultunwraperror/" class="md-nav__link">
         
   
@@ -831,33 +966,6 @@
     
   
   Peekable
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../range/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Range
 
     
   </span>
@@ -1226,33 +1334,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../pyoitemsview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoItemsView
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../pyoiterable/" class="md-nav__link">
         
   
@@ -1288,33 +1369,6 @@
     
   
   PyoIterator
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pyokeysview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoKeysView
 
     
   </span>
@@ -1477,33 +1531,6 @@
     
   
   PyoSet
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../pyovaluesview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  PyoValuesView
 
     
   </span>
@@ -2264,9 +2291,9 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Vec</span>
 <span class="sd">        &gt;&gt;&gt; original_list = [1, 2, 3]</span>
-<span class="sd">        &gt;&gt;&gt; vec = pc.Vec.from_ref(original_list)</span>
+<span class="sd">        &gt;&gt;&gt; vec = Vec.from_ref(original_list)</span>
 <span class="sd">        &gt;&gt;&gt; vec</span>
 <span class="sd">        Vec(1, 2, 3)</span>
 <span class="sd">        &gt;&gt;&gt; vec[0] = 10</span>
@@ -2301,8 +2328,8 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; vec = pc.Vec([&#39;a&#39;, &#39;b&#39;, &#39;c&#39;])</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">        &gt;&gt;&gt; vec = Vec.from_ref([&#39;a&#39;, &#39;b&#39;, &#39;c&#39;])</span>
 <span class="sd">        &gt;&gt;&gt; vec.insert(1, &#39;d&#39;)</span>
 <span class="sd">        &gt;&gt;&gt; vec</span>
 <span class="sd">        Vec(&#39;a&#39;, &#39;d&#39;, &#39;b&#39;, &#39;c&#39;)</span>
@@ -2352,10 +2379,10 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; pc.Vec((3, 1, 2)).sort()</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Vec, Iter</span>
+<span class="sd">        &gt;&gt;&gt; Vec.from_ref([3, 1, 2]).sort()</span>
 <span class="sd">        Vec(1, 2, 3)</span>
-<span class="sd">        &gt;&gt;&gt; pc.Iter((3, 1, 2)).map(str).collect(pc.Vec).sort(key=int)</span>
+<span class="sd">        &gt;&gt;&gt; Iter((3, 1, 2)).map(str).collect(Vec).sort(key=int)</span>
 <span class="sd">        Vec(&#39;1&#39;, &#39;2&#39;, &#39;3&#39;)</span>
 
 <span class="sd">        ```</span>
@@ -2447,8 +2474,8 @@
 
 <span class="sd">        Examples:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; v = pc.Vec([1, 2, 3])</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">        &gt;&gt;&gt; v = Vec.from_ref([1, 2, 3])</span>
 <span class="sd">        &gt;&gt;&gt; u = v.drain(1).collect();</span>
 <span class="sd">        &gt;&gt;&gt; v</span>
 <span class="sd">        Vec(1)</span>
@@ -2462,8 +2489,8 @@
 <span class="sd">        ```</span>
 <span class="sd">        Fully consuming the `Iterator` removes all drained elements</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; v = pc.Vec([1, 2, 3])</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">        &gt;&gt;&gt; v = Vec.from_ref([1, 2, 3])</span>
 <span class="sd">        &gt;&gt;&gt; _ = v.drain(0, 3).collect()</span>
 <span class="sd">        &gt;&gt;&gt; v</span>
 <span class="sd">        Vec()</span>
@@ -2489,8 +2516,8 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">        &gt;&gt;&gt; v1 = pc.Vec([1, 2, 3])</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">        &gt;&gt;&gt; v1 = Vec.from_ref([1, 2, 3])</span>
 <span class="sd">        &gt;&gt;&gt; v2 = [4, 5, 6] # Can also concatenate a standard list</span>
 <span class="sd">        &gt;&gt;&gt; v3 = v1.concat(v2)</span>
 <span class="sd">        &gt;&gt;&gt; v3</span>
@@ -2649,8 +2676,8 @@
   <summary>See Also</summary>
   <p><code>Vec.extend()</code> which modifies <strong>self</strong> in place.</p>
 </details>        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">v1</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Vec</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">v1</span> <span class="o">=</span> <span class="n">Vec</span><span class="o">.</span><span class="n">from_ref</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">v2</span> <span class="o">=</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]</span> <span class="c1"># Can also concatenate a standard list</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">v3</span> <span class="o">=</span> <span class="n">v1</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">v2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">v3</span>
@@ -2720,8 +2747,8 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; v1 = pc.Vec([1, 2, 3])</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">    &gt;&gt;&gt; v1 = Vec.from_ref([1, 2, 3])</span>
 <span class="sd">    &gt;&gt;&gt; v2 = [4, 5, 6] # Can also concatenate a standard list</span>
 <span class="sd">    &gt;&gt;&gt; v3 = v1.concat(v2)</span>
 <span class="sd">    &gt;&gt;&gt; v3</span>
@@ -2838,8 +2865,8 @@ To guarantee cleanup, fully consume the <code>Iterator</code> or explicitly call
       </tbody>
     </table>
         <p>Examples:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">v</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Vec</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">v</span> <span class="o">=</span> <span class="n">Vec</span><span class="o">.</span><span class="n">from_ref</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">u</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">drain</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">();</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">v</span>
 <span class="n">Vec</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
@@ -2851,8 +2878,8 @@ To guarantee cleanup, fully consume the <code>Iterator</code> or explicitly call
 <span class="n">Vec</span><span class="p">()</span>
 </code></pre></div>
 Fully consuming the <code>Iterator</code> removes all drained elements
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">v</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Vec</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">v</span> <span class="o">=</span> <span class="n">Vec</span><span class="o">.</span><span class="n">from_ref</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">_</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">drain</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">v</span>
 <span class="n">Vec</span><span class="p">()</span>
@@ -2922,8 +2949,8 @@ Fully consuming the <code>Iterator</code> removes all drained elements
 
 <span class="sd">    Examples:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; v = pc.Vec([1, 2, 3])</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">    &gt;&gt;&gt; v = Vec.from_ref([1, 2, 3])</span>
 <span class="sd">    &gt;&gt;&gt; u = v.drain(1).collect();</span>
 <span class="sd">    &gt;&gt;&gt; v</span>
 <span class="sd">    Vec(1)</span>
@@ -2937,8 +2964,8 @@ Fully consuming the <code>Iterator</code> removes all drained elements
 <span class="sd">    ```</span>
 <span class="sd">    Fully consuming the `Iterator` removes all drained elements</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; v = pc.Vec([1, 2, 3])</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">    &gt;&gt;&gt; v = Vec.from_ref([1, 2, 3])</span>
 <span class="sd">    &gt;&gt;&gt; _ = v.drain(0, 3).collect()</span>
 <span class="sd">    &gt;&gt;&gt; v</span>
 <span class="sd">    Vec()</span>
@@ -3294,9 +3321,9 @@ If the returned <code>Iterator</code> is not exhausted, e.g. because it is dropp
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">original_list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Vec</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="n">original_list</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="n">Vec</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="n">original_list</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span>
 <span class="n">Vec</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
@@ -3358,9 +3385,9 @@ If the returned <code>Iterator</code> is not exhausted, e.g. because it is dropp
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Vec</span>
 <span class="sd">    &gt;&gt;&gt; original_list = [1, 2, 3]</span>
-<span class="sd">    &gt;&gt;&gt; vec = pc.Vec.from_ref(original_list)</span>
+<span class="sd">    &gt;&gt;&gt; vec = Vec.from_ref(original_list)</span>
 <span class="sd">    &gt;&gt;&gt; vec</span>
 <span class="sd">    Vec(1, 2, 3)</span>
 <span class="sd">    &gt;&gt;&gt; vec[0] = 10</span>
@@ -3438,8 +3465,8 @@ If the returned <code>Iterator</code> is not exhausted, e.g. because it is dropp
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Vec</span><span class="p">([</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">])</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="n">Vec</span><span class="o">.</span><span class="n">from_ref</span><span class="p">([</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">])</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span>
 <span class="n">Vec</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">)</span>
@@ -3482,8 +3509,8 @@ If the returned <code>Iterator</code> is not exhausted, e.g. because it is dropp
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; vec = pc.Vec([&#39;a&#39;, &#39;b&#39;, &#39;c&#39;])</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">    &gt;&gt;&gt; vec = Vec.from_ref([&#39;a&#39;, &#39;b&#39;, &#39;c&#39;])</span>
 <span class="sd">    &gt;&gt;&gt; vec.insert(1, &#39;d&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; vec</span>
 <span class="sd">    Vec(&#39;a&#39;, &#39;d&#39;, &#39;b&#39;, &#39;c&#39;)</span>
@@ -3597,10 +3624,10 @@ If the returned <code>Iterator</code> is not exhausted, e.g. because it is dropp
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Vec</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span><span class="p">,</span> <span class="n">Iter</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Vec</span><span class="o">.</span><span class="n">from_ref</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
 <span class="n">Vec</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Iter</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">Vec</span><span class="p">)</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Iter</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">Vec</span><span class="p">)</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
 <span class="n">Vec</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">,</span> <span class="s1">&#39;3&#39;</span><span class="p">)</span>
 </code></pre></div></p>
 
@@ -3656,10 +3683,10 @@ If the returned <code>Iterator</code> is not exhausted, e.g. because it is dropp
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; import pyochain as pc</span>
-<span class="sd">    &gt;&gt;&gt; pc.Vec((3, 1, 2)).sort()</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain import Vec, Iter</span>
+<span class="sd">    &gt;&gt;&gt; Vec.from_ref([3, 1, 2]).sort()</span>
 <span class="sd">    Vec(1, 2, 3)</span>
-<span class="sd">    &gt;&gt;&gt; pc.Iter((3, 1, 2)).map(str).collect(pc.Vec).sort(key=int)</span>
+<span class="sd">    &gt;&gt;&gt; Iter((3, 1, 2)).map(str).collect(Vec).sort(key=int)</span>
 <span class="sd">    Vec(&#39;1&#39;, &#39;2&#39;, &#39;3&#39;)</span>
 
 <span class="sd">    ```</span>
