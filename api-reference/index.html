@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.41">
+      <meta name="generator" content="zensical-0.0.42">
     
     
       
@@ -713,6 +713,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../reference/range/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Range
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../reference/unzipped/" class="md-nav__link">
         
   
@@ -1012,22 +1039,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#traits-mixins" class="md-nav__link">
+  <a href="#mixins-abcs" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Traits &amp; mixins
+        Mixins &amp; ABC's
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Traits &amp; mixins">
+    <nav class="md-nav" aria-label="Mixins &amp; ABC&#x27;s">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#fluent-traits" class="md-nav__link">
+  <a href="#fluent-mixins" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Fluent Traits
+        Fluent Mixins
       </span>
     </span>
   </a>
@@ -1035,10 +1062,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#abstract-collection-traits" class="md-nav__link">
+  <a href="#abstract-base-classes" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Abstract Collection Traits
+        Abstract Base Classes
       </span>
     </span>
   </a>
@@ -1779,22 +1806,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#traits-mixins" class="md-nav__link">
+  <a href="#mixins-abcs" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Traits &amp; mixins
+        Mixins &amp; ABC's
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Traits &amp; mixins">
+    <nav class="md-nav" aria-label="Mixins &amp; ABC&#x27;s">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#fluent-traits" class="md-nav__link">
+  <a href="#fluent-mixins" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Fluent Traits
+        Fluent Mixins
       </span>
     </span>
   </a>
@@ -1802,10 +1829,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#abstract-collection-traits" class="md-nav__link">
+  <a href="#abstract-base-classes" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Abstract Collection Traits
+        Abstract Base Classes
       </span>
     </span>
   </a>
@@ -1847,55 +1874,56 @@
 <p>This page is the entry point to the <strong>complete</strong> public API documentation.</p>
 <h2 id="collections">Collections</h2>
 <ul>
-<li><a class="autorefs autorefs-internal" href="../reference/seq/#pyochain._iter.Seq"><code>Seq[T]</code></a> — Immutable collections (tuple-backed)</li>
-<li><a class="autorefs autorefs-internal" href="../reference/vec/#pyochain._iter.Vec"><code>Vec[T]</code></a> — Mutable collections (list-backed)</li>
-<li><a class="autorefs autorefs-internal" href="../reference/set/#pyochain._iter.Set"><code>Set[T]</code></a> — Immutable collections (frozenset-backed)</li>
-<li><a class="autorefs autorefs-internal" href="../reference/setmut/#pyochain._iter.SetMut"><code>SetMut[T]</code></a> — Mutable sets (set-backed)</li>
-<li><a class="autorefs autorefs-internal" href="../reference/dict/#pyochain._dict.Dict"><code>Dict[K, V]</code></a> — Chainable dictionaries</li>
+<li><a href="../reference/seq/"><code>Seq[T]</code></a> — Immutable collections (tuple-backed)</li>
+<li><a href="../reference/vec/"><code>Vec[T]</code></a> — Mutable collections (list-backed)</li>
+<li><a href="../reference/set/"><code>Set[T]</code></a> — Immutable collections (frozenset-backed)</li>
+<li><a href="../reference/setmut/"><code>SetMut[T]</code></a> — Mutable sets (set-backed)</li>
+<li><a href="../reference/dict/"><code>Dict[K, V]</code></a> — Chainable dictionaries</li>
 </ul>
 <h2 id="iterators">Iterators</h2>
 <ul>
-<li><a class="autorefs autorefs-internal" href="../reference/iter/#pyochain._iter.Iter"><code>Iter[T]</code></a> — Lazy processing of iterators</li>
-<li><a class="autorefs autorefs-internal" href="../reference/peekable/#pyochain._iter.Peekable"><code>Peekable</code></a> — Peeking iterator</li>
-<li><a class="autorefs autorefs-internal" href="../reference/unzipped/#pyochain._iter.Unzipped"><code>Unzipped</code></a> — Unzipped iterator results</li>
+<li><a href="../reference/iter/"><code>Iter[T]</code></a> — Lazy processing of iterators</li>
+<li><a href="../reference/peekable/"><code>Peekable[T]</code></a> — Peeking iterator</li>
+<li><a href="../reference/unzipped/"><code>Unzipped[T]</code></a> — Unzipped iterator results</li>
+<li><a href="../reference/range/"><code>Range</code></a> — Lazy integer ranges</li>
 </ul>
 <h2 id="error-handling">Error handling</h2>
 <ul>
-<li>[<code>Result[T, E]</code>][pyochain.rs.Result] — Explicit error handling (<code>Ok</code> / <code>Err</code>)</li>
-<li><a class="autorefs autorefs-internal" href="../reference/ok/#pyochain.rs.Ok"><code>Ok</code></a></li>
-<li><a class="autorefs autorefs-internal" href="../reference/err/#pyochain.rs.Err"><code>Err</code></a></li>
-<li><a class="autorefs autorefs-internal" href="../reference/resultunwraperror/#pyochain.rs.ResultUnwrapError"><code>ResultUnwrapError</code></a></li>
+<li><a href="../reference/result/"><code>Result[T, E]</code></a> — Explicit error handling (<code>Ok</code> / <code>Err</code>)</li>
+<li><a href="../reference/ok/"><code>Ok[T]</code></a></li>
+<li><a href="../reference/err/"><code>Err[E]</code></a></li>
+<li><a href="../reference/resultunwraperror/"><code>ResultUnwrapError</code></a></li>
 </ul>
 <h2 id="optional-values">Optional values</h2>
 <ul>
-<li><a class="autorefs autorefs-internal" href="../reference/option/#pyochain.rs.Option"><code>Option[T]</code></a> — Optional values (<code>Some</code> / <code>NONE</code>)</li>
-<li><a class="autorefs autorefs-internal" href="../reference/some/#pyochain.rs.Some"><code>Some</code></a></li>
-<li><a class="autorefs autorefs-internal" href="../reference/null/#pyochain.rs.Null"><code>None</code></a></li>
-<li><a class="autorefs autorefs-internal" href="../reference/optionunwraperror/#pyochain.rs.OptionUnwrapError"><code>OptionUnwrapError</code></a></li>
+<li><a href="../reference/option/"><code>Option[T]</code></a> — Optional values (<code>Some</code> / <code>NONE</code>)</li>
+<li><a href="../reference/some/"><code>Some[T]</code></a></li>
+<li><a href="../reference/null/"><code>NONE</code></a></li>
+<li><a href="../reference/optionunwraperror/"><code>OptionUnwrapError</code></a></li>
 </ul>
-<h2 id="traits-mixins">Traits &amp; mixins</h2>
-<h3 id="fluent-traits">Fluent Traits</h3>
+<h2 id="mixins-abcs">Mixins &amp; ABC's</h2>
+<h3 id="fluent-mixins">Fluent Mixins</h3>
 <ul>
-<li><a class="autorefs autorefs-internal" href="../reference/pipeable/#pyochain.rs.Pipeable"><code>Pipeable</code></a> — <code>.into()</code>, <code>.inspect()</code></li>
-<li><a class="autorefs autorefs-internal" href="../reference/checkable/#pyochain.rs.Checkable"><code>Checkable</code></a> — <code>.then()</code>, <code>.ok_or()</code>, ...</li>
+<li><a href="../reference/pipeable/"><code>Pipeable</code></a> — <code>.into()</code>, <code>.inspect()</code></li>
+<li><a href="../reference/checkable/"><code>Checkable</code></a> — <code>.then()</code>, <code>.ok_or()</code>, ...</li>
 </ul>
-<h3 id="abstract-collection-traits">Abstract Collection Traits</h3>
+<h3 id="abstract-base-classes">Abstract Base Classes</h3>
 <ul>
-<li><a class="autorefs autorefs-internal" href="../reference/pyoiterable/#pyochain.traits._iterable.PyoIterable"><code>PyoIterable[T]</code></a> — Base trait for all iterables</li>
-<li><a class="autorefs autorefs-internal" href="../reference/pyoiterator/#pyochain.traits._iterable.PyoIterator"><code>PyoIterator[T]</code></a> — Iterator trait</li>
-<li><a class="autorefs autorefs-internal" href="../reference/pyocollection/#pyochain.traits._iterable.PyoCollection"><code>PyoCollection[T]</code></a> — Base trait for eager collections</li>
-<li><a class="autorefs autorefs-internal" href="../reference/pyosequence/#pyochain.traits._iterable.PyoSequence"><code>PyoSequence[T]</code></a> — Sequence trait</li>
-<li><a class="autorefs autorefs-internal" href="../reference/pyomutablesequence/#pyochain.traits._iterable.PyoMutableSequence"><code>PyoMutableSequence[T]</code></a> — Mutable sequence trait</li>
-<li><a class="autorefs autorefs-internal" href="../reference/pyoset/#pyochain.traits._iterable.PyoSet"><code>PyoSet[T]</code></a> — Set trait</li>
-<li><a class="autorefs autorefs-internal" href="../reference/pyomappingview/#pyochain.traits._iterable.PyoMappingView"><code>PyoMappingView[T]</code></a> — Mapping view trait</li>
-<li><a class="autorefs autorefs-internal" href="../reference/pyomapping/#pyochain.traits._iterable.PyoMapping"><code>PyoMapping[K, V]</code></a> — Mapping trait</li>
-<li><a class="autorefs autorefs-internal" href="../reference/pyomutablemapping/#pyochain.traits._iterable.PyoMutableMapping"><code>PyoMutableMapping[K, V]</code></a> — Mutable mapping trait</li>
+<li><a href="../reference/pyoiterable/"><code>PyoIterable[T]</code></a> — Base ABC for all iterables</li>
+<li><a href="../reference/pyoiterator/"><code>PyoIterator[T]</code></a> — Iterator ABC</li>
+<li><a href="../reference/pyocollection/"><code>PyoCollection[T]</code></a> — Base ABC for eager collections</li>
+<li><a href="../reference/pyosequence/"><code>PyoSequence[T]</code></a> — Sequence ABC</li>
+<li><a href="../reference/pyomutablesequence/"><code>PyoMutableSequence[T]</code></a> — Mutable sequence ABC</li>
+<li><a href="../reference/pyoset/"><code>PyoSet[T]</code></a> — Set ABC</li>
+<li><a href="../reference/pyomappingview/"><code>PyoMappingView[T]</code></a> — Mapping view ABC</li>
+<li><a href="../reference/pyomapping/"><code>PyoMapping[K, V]</code></a> — Mapping ABC</li>
+<li><a href="../reference/pyomutablemapping/"><code>PyoMutableMapping[K, V]</code></a> — Mutable mapping ABC</li>
 </ul>
 <h3 id="mapping-views">Mapping Views</h3>
 <ul>
-<li><a class="autorefs autorefs-internal" href="../reference/pyokeysview/#pyochain.traits._iterable.PyoKeysView"><code>PyoKeysView[K]</code></a> — Keys view</li>
-<li><a class="autorefs autorefs-internal" href="../reference/pyovaluesview/#pyochain.traits._iterable.PyoValuesView"><code>PyoValuesView[V]</code></a> — Values view</li>
-<li><a class="autorefs autorefs-internal" href="../reference/pyoitemsview/#pyochain.traits._iterable.PyoItemsView"><code>PyoItemsView[K, V]</code></a> — Items view</li>
+<li><a href="../reference/pyokeysview/"><code>PyoKeysView[K]</code></a> — Keys view</li>
+<li><a href="../reference/pyovaluesview/"><code>PyoValuesView[V]</code></a> — Values view</li>
+<li><a href="../reference/pyoitemsview/"><code>PyoItemsView[K, V]</code></a> — Items view</li>
 </ul>
 
 
@@ -1951,7 +1979,7 @@
       <script id="__config" type="application/json">{"annotate":null,"base":"..","features":[],"search":"../assets/javascripts/workers/search.e2d2d235.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
     
     
-      <script src="../assets/javascripts/bundle.dbc0afdc.min.js"></script>
+      <script src="../assets/javascripts/bundle.6e5f0216.min.js"></script>
       
         <script src="../javascripts/mermaid.mjs" type="module"></script>
       

@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.41">
+      <meta name="generator" content="zensical-0.0.42">
     
     
       
@@ -692,6 +692,33 @@
     
   
   Peekable
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/range/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Range
 
     
   </span>
@@ -1544,15 +1571,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#pipeable-trait" class="md-nav__link">
+  <a href="#pipeable-mixin" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Pipeable trait
+        Pipeable mixin
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Pipeable trait">
+    <nav class="md-nav" aria-label="Pipeable mixin">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1583,15 +1610,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#checkable-trait" class="md-nav__link">
+  <a href="#checkable-mixins" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Checkable trait
+        Checkable mixins
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Checkable trait">
+    <nav class="md-nav" aria-label="Checkable mixins">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1644,15 +1671,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#pyoiterable-pyocollection-traits" class="md-nav__link">
+  <a href="#pyoiterable-pyocollection-abcs" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        PyoIterable &amp; PyoCollection traits
+        PyoIterable &amp; PyoCollection ABCs
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="PyoIterable &amp; PyoCollection traits">
+    <nav class="md-nav" aria-label="PyoIterable &amp; PyoCollection ABCs">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1820,15 +1847,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#pipeable-trait" class="md-nav__link">
+  <a href="#pipeable-mixin" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Pipeable trait
+        Pipeable mixin
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Pipeable trait">
+    <nav class="md-nav" aria-label="Pipeable mixin">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1859,15 +1886,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#checkable-trait" class="md-nav__link">
+  <a href="#checkable-mixins" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Checkable trait
+        Checkable mixins
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Checkable trait">
+    <nav class="md-nav" aria-label="Checkable mixins">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1920,15 +1947,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#pyoiterable-pyocollection-traits" class="md-nav__link">
+  <a href="#pyoiterable-pyocollection-abcs" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        PyoIterable &amp; PyoCollection traits
+        PyoIterable &amp; PyoCollection ABCs
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="PyoIterable &amp; PyoCollection traits">
+    <nav class="md-nav" aria-label="PyoIterable &amp; PyoCollection ABCs">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1992,20 +2019,20 @@
 <h1 id="interoperability-chaining-guide">Interoperability &amp; Chaining Guide</h1>
 <p>Pyochain is designed for fluent API usage. Most types can be converted into others seamlessly, allowing you to chain operations without breaking the flow.</p>
 <h2 id="shared-features">Shared Features</h2>
-<p>To enable this flexibility, Pyochain provides two core traits (mixins) that extend all types with powerful chaining and conditional logic capabilities.</p>
-<h3 id="pipeable-trait">Pipeable trait</h3>
+<p>To enable this flexibility, Pyochain provides two core mixins that extend all types with powerful chaining and conditional logic capabilities.</p>
+<h3 id="pipeable-mixin">Pipeable mixin</h3>
 <p>All pyochain types implement <code>Pipeable</code>, providing universal methods to continue a chain:</p>
 <h4 id="intofunc-args-kwargs-r"><code>.into(func, *args, **kwargs) -&gt; R</code></h4>
 <p>Convert <code>Self</code> to any type <code>R</code> via a function, maintaining fluent chaining.</p>
 <p>Conceptually, this replaces <code>f(x, args, kwargs)</code> with <code>x.into(f, args, kwargs)</code>.</p>
 <p>This is particularly useful when you need to pass the result to a function you don't control (like a library function), or to convert to a type not native to Pyochain.</p>
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
 <span class="o">&gt;&gt;&gt;</span> 
 <span class="o">&gt;&gt;&gt;</span> <span class="c1"># Flow is broken, nested function calls, read from middle -&gt; right -&gt; left -&gt; right</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">nested</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
 <span class="o">...</span>     <span class="nb">dict</span><span class="p">(</span>
-<span class="o">...</span>         <span class="n">pc</span><span class="o">.</span><span class="n">Dict</span><span class="p">({</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Alice&quot;</span><span class="p">})</span>
+<span class="o">...</span>         <span class="n">Dict</span><span class="p">({</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Alice&quot;</span><span class="p">})</span>
 <span class="o">...</span>         <span class="o">.</span><span class="n">items</span><span class="p">()</span>
 <span class="o">...</span>         <span class="o">.</span><span class="n">iter</span><span class="p">()</span>
 <span class="o">...</span>         <span class="o">.</span><span class="n">map_star</span><span class="p">(</span><span class="k">lambda</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="n">v</span><span class="p">))</span>
@@ -2015,7 +2042,7 @@
 <span class="s1">&#39;{&quot;ID&quot;: 1, &quot;NAME&quot;: &quot;Alice&quot;}&#39;</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="c1"># Fluent chaining with .into(), read left -&gt; right</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">fluent</span> <span class="o">=</span> <span class="p">(</span>
-<span class="o">...</span>     <span class="n">pc</span><span class="o">.</span><span class="n">Dict</span><span class="p">({</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Alice&quot;</span><span class="p">})</span>
+<span class="o">...</span>     <span class="n">Dict</span><span class="p">({</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Alice&quot;</span><span class="p">})</span>
 <span class="o">...</span>     <span class="o">.</span><span class="n">items</span><span class="p">()</span>
 <span class="o">...</span>     <span class="o">.</span><span class="n">iter</span><span class="p">()</span>
 <span class="o">...</span>     <span class="o">.</span><span class="n">map_star</span><span class="p">(</span><span class="k">lambda</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="n">v</span><span class="p">))</span>
@@ -2026,66 +2053,66 @@
 </code></pre></div>
 <h4 id="inspectfunc-args-kwargs-self"><code>.inspect(func, *args, **kwargs) -&gt; Self</code></h4>
 <p>Pass <code>Self</code> to a function for side effects (logging, debugging, metrics) without breaking the chain. The instance is returned unchanged.</p>
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">inspect</span><span class="p">(</span><span class="nb">print</span><span class="p">)</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">inspect</span><span class="p">(</span><span class="nb">print</span><span class="p">)</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
 <span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 <span class="n">Seq</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
 </code></pre></div>
-<h3 id="checkable-trait">Checkable trait</h3>
-<p>Collections (<code>Seq</code>, <code>Vec</code>, <code>Set</code>, <code>SetMut</code>, <code>Dict</code>) and iterators (<code>Iter</code>) implement <code>Checkable</code>, providing conditional chaining based on truthiness (usually emptiness):</p>
+<h3 id="checkable-mixins">Checkable mixins</h3>
+<p>Collections (<code>Seq</code>, <code>Vec</code>, <code>Set</code>, <code>SetMut</code>, <code>Dict</code>) and iterators (<code>Iter</code>) inherit from <code>Checkable</code>, providing conditional chaining based on truthiness (usually emptiness):</p>
 <h4 id="thenfunc-args-kwargs-optionr"><code>.then(func, *args, **kwargs) -&gt; Option[R]</code></h4>
 <p>Call <strong>func</strong> and wrap result in <code>Some</code> only if the instance is truthy.</p>
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([])</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
 <span class="n">NONE</span>
 </code></pre></div>
 <h4 id="then_some-optionself"><code>.then_some() -&gt; Option[Self]</code></h4>
 <p>Wrap the instance in <code>Some</code> if truthy, otherwise <code>NONE</code>.</p>
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">then_some</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">then_some</span><span class="p">()</span>
 <span class="n">Some</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([])</span><span class="o">.</span><span class="n">then_some</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">then_some</span><span class="p">()</span>
 <span class="n">NONE</span>
 </code></pre></div>
 <h4 id="ok_orerr-resultself-e"><code>.ok_or(err) -&gt; Result[Self, E]</code></h4>
 <p>Wrap in <code>Ok</code> if truthy, otherwise wrap the error in <code>Err</code>.</p>
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">&quot;empty list&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">&quot;empty list&quot;</span><span class="p">)</span>
 <span class="n">Ok</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([])</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">&quot;empty list&quot;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">&quot;empty list&quot;</span><span class="p">)</span>
 <span class="n">Err</span><span class="p">(</span><span class="s1">&#39;empty list&#39;</span><span class="p">)</span>
 </code></pre></div>
 <h4 id="ok_or_elsefunc-args-kwargs-resultself-e"><code>.ok_or_else(func, *args, **kwargs) -&gt; Result[Self, E]</code></h4>
 <p>Wrap in <code>Ok</code> if truthy, otherwise call <strong>func</strong> and wrap result in <code>Err</code> (lazy evaluation).</p>
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="s2">&quot;empty&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="s2">&quot;empty&quot;</span><span class="p">)</span>
 <span class="n">Ok</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pc</span><span class="o">.</span><span class="n">Seq</span><span class="p">([])</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="s2">&quot;empty&quot;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="s2">&quot;empty&quot;</span><span class="p">)</span>
 <span class="n">Err</span><span class="p">(</span><span class="s1">&#39;empty&#39;</span><span class="p">)</span>
 </code></pre></div>
-<h3 id="pyoiterable-pyocollection-traits">PyoIterable &amp; PyoCollection traits</h3>
-<p><code>PyoIterable[T]</code> and <code>PyoCollection[T]</code> are the foundational traits for all collection and iterator types in Pyochain.</p>
-<p><strong>PyoIterable[T]</strong> extends <code>Pipeable</code>, <code>Checkable</code>, and Python's <code>Iterable[T]</code> protocol:</p>
+<h3 id="pyoiterable-pyocollection-abcs">PyoIterable &amp; PyoCollection ABCs</h3>
+<p><code>PyoIterable[T]</code> and <code>PyoCollection[T]</code> are the foundational ABCs for all collection and iterator types in Pyochain.</p>
+<p><code>PyoIterable[T]</code> extends <code>Pipeable</code>, <code>Checkable</code>, and Python's <code>Iterable[T]</code> protocol:</p>
 <ul>
 <li>Provides the base interface shared by <strong>all</strong> pyochain types (both lazy iterators and eager collections)</li>
 <li>Concrete types only need to implement <code>__iter__()</code> to satisfy the <code>Iterable[T]</code> protocol</li>
 <li>Adds common methods like <code>.length()</code>, <code>.sum()</code>, <code>.min()</code>, <code>.max()</code>, <code>.all()</code>, <code>.any()</code>, etc.</li>
 </ul>
-<p><strong>PyoCollection[T]</strong> extends <code>PyoIterable[T]</code> and Python's <code>Collection[T]</code> protocol:</p>
+<p><code>PyoCollection[T]</code> extends <code>PyoIterable[T]</code> and Python's <code>Collection[T]</code> protocol:</p>
 <ul>
-<li>Represents <strong>eager</strong> (in-memory) collections: <code>Seq</code>, <code>Vec</code>, <code>Set</code>, <code>SetMut</code>, <code>Dict</code>, and mapping views</li>
+<li>Represents in-memory collections: <code>Seq</code>, <code>Vec</code>, <code>Set</code>, <code>SetMut</code>, <code>Dict</code>, and mapping views</li>
 <li>Concrete types must implement <code>__contains__()</code>, <code>__iter__()</code>, and <code>__len__()</code> to satisfy the protocol</li>
-<li><code>Iter[T]</code> (lazy iterator) does <strong>not</strong> extend this trait, only <code>PyoIterator[T]</code></li>
+<li><code>Iter[T]</code> (lazy iterator) does <strong>not</strong> extend this ABC, only <code>PyoIterator[T]</code></li>
 </ul>
 <h4 id="from_ref-for-mutable-collections">from_ref() for mutable collections</h4>
 <p>All mutable collection types (<code>Vec</code>, <code>SetMut</code>, <code>Dict</code>) provide a <code>from_ref()</code> class method that creates a pyochain instance from a reference to an existing Python collection <strong>without copying</strong>.</p>
 <h3 id="examples">Examples</h3>
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span><span class="p">,</span> <span class="n">SetMut</span><span class="p">,</span> <span class="n">Dict</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="c1"># Vec from list</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">py_list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Vec</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="n">py_list</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="n">Vec</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="n">py_list</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span>
 <span class="n">Vec</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
@@ -2094,7 +2121,7 @@
 <span class="o">&gt;&gt;&gt;</span> 
 <span class="o">&gt;&gt;&gt;</span> <span class="c1"># SetMut from set</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">py_set</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">}</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">set_mut</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">SetMut</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="n">py_set</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">set_mut</span> <span class="o">=</span> <span class="n">SetMut</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="n">py_set</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">set_mut</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">set_mut</span>
 <span class="n">SetMut</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
@@ -2103,7 +2130,7 @@
 <span class="o">&gt;&gt;&gt;</span> 
 <span class="o">&gt;&gt;&gt;</span> <span class="c1"># Dict from dict</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">py_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">pyo_dict</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">Dict</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="n">py_dict</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pyo_dict</span> <span class="o">=</span> <span class="n">Dict</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="n">py_dict</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">pyo_dict</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 <span class="n">NONE</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">pyo_dict</span>
@@ -2125,7 +2152,7 @@ config:
   layout: elk
 ---
 flowchart TB
- subgraph Collections["📦 Collections (Eager)"]
+ subgraph Collections["📦 Collections"]
     direction LR
         Seq["&lt;b&gt;Seq[T]&lt;/b&gt;&lt;br&gt;immutable&lt;br&gt;tuple"]
         Vec["&lt;b&gt;Vec[T]&lt;/b&gt;&lt;br&gt;mutable&lt;br&gt;list"]
@@ -2302,7 +2329,7 @@ flowchart TB
       <script id="__config" type="application/json">{"annotate":null,"base":"..","features":[],"search":"../assets/javascripts/workers/search.e2d2d235.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
     
     
-      <script src="../assets/javascripts/bundle.dbc0afdc.min.js"></script>
+      <script src="../assets/javascripts/bundle.6e5f0216.min.js"></script>
       
         <script src="../javascripts/mermaid.mjs" type="module"></script>
       
