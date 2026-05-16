@@ -15,7 +15,7 @@ from collections.abc import (
     ValuesView,
 )
 from dataclasses import dataclass
-from typing import Any, Literal, Never, Self, TypeIs, overload, override
+from typing import TYPE_CHECKING, Any, Literal, Never, Self, TypeIs, overload, override
 
 import cytoolz as cz
 
@@ -29,6 +29,10 @@ from .traits import (
     PyoSequence,
     PyoSet,
 )
+
+if TYPE_CHECKING:
+    from ._dict import Dict
+    from ._range import Range
 
 Position = Literal["first", "middle", "last", "only"]
 """Literal type representing the position of an item in an iterable."""
@@ -1188,8 +1192,12 @@ class Iter[T](PyoIterator[T]):
     def flatten[U](self: Iter[Vec[U]]) -> Iter[U]: ...
     @overload
     def flatten(self: Iter[range]) -> Iter[int]: ...
+    @overload
+    def flatten(self: Iter[Range]) -> Iter[int]: ...
+    @overload
+    def flatten[U](self: Iter[Dict[U, Any]]) -> Iter[U]: ...  # pyright: ignore[reportExplicitAny]
     def flatten[U: Iterable[Any]](self: Iter[U]) -> Iter[Any]:  # pyright: ignore[reportExplicitAny]
-        """Creates an `Iter` that flattens nested structure.
+        """Creates an `Iter` that flattens nested structures.
 
         Returns:
             Iter[Any]: An `Iter` of flattened elements.
@@ -1199,17 +1207,17 @@ class Iter[T](PyoIterator[T]):
         Examples:
         Basic usage:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Iter
         >>> data = [[1, 2, 3, 4], [5, 6]]
-        >>> flattened = pc.Iter(data).flatten().collect()
+        >>> flattened = Iter(data).flatten().collect()
         >>> flattened
         Seq(1, 2, 3, 4, 5, 6)
 
         ```
         Mapping and then flattening:
         ```python
-        >>> import pyochain as pc
-        >>> words = pc.Iter(["alpha", "beta", "gamma"])
+        >>> from pyochain import Iter
+        >>> words = Iter(["alpha", "beta", "gamma"])
         >>> merged = words.flatten().collect()
         >>> merged
         Seq('a', 'l', 'p', 'h', 'a', 'b', 'e', 't', 'a', 'g', 'a', 'm', 'm', 'a')
@@ -1217,12 +1225,12 @@ class Iter[T](PyoIterator[T]):
         ```
         Flattening only removes one level of nesting at a time:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Iter
         >>> d3 = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
-        >>> d2 = pc.Iter(d3).flatten().collect()
+        >>> d2 = Iter(d3).flatten().collect()
         >>> d2
         Seq([1, 2], [3, 4], [5, 6], [7, 8])
-        >>> d1 = pc.Iter(d3).flatten().flatten().collect()
+        >>> d1 = Iter(d3).flatten().flatten().collect()
         >>> d1
         Seq(1, 2, 3, 4, 5, 6, 7, 8)
 

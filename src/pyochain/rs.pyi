@@ -40,13 +40,13 @@ class Pipeable(Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Seq
         >>> from collections.abc import Sequence
         >>> import hashlib
         >>> def sha256_hex(data: Sequence[int]) -> str:
         ...     return hashlib.sha256(bytes(data)).hexdigest()
         >>>
-        >>> pc.Seq([1, 2, 3]).into(sha256_hex)
+        >>> Seq((1, 2, 3)).into(sha256_hex)
         '039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81'
 
         ```
@@ -72,8 +72,8 @@ class Pipeable(Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3, 4]).inspect(print).last()
+        >>> from pyochain import Seq
+        >>> Seq((1, 2, 3, 4)).inspect(print).last()
         Seq(1, 2, 3, 4)
         4
 
@@ -87,6 +87,11 @@ class Checkable(Protocol):
     execution and wrapping in `Option` or `Result` types.
 
     All methods evaluate the instance's truthiness to determine their behavior.
+
+    Truthiness is determined by:
+    - `__bool__()` if defined
+    - otherwise by `__len__()` if defined (returning `False` if length is 0)
+    - otherwise all instances are truthy (Python's default behavior).
     """
 
     def then[**P, R](
@@ -101,8 +106,6 @@ class Checkable(Protocol):
 
         The function is only called if `Self` evaluates to `True` (lazy evaluation).
 
-        Truthiness is determined by `__bool__()` if defined, otherwise by `__len__()` if defined (returning `False` if length is 0), otherwise all instances are truthy (Python's default behavior).
-
         Args:
             func (Callable[Concatenate[Self, P], R]): A callable that returns the value to wrap in Some.
             *args (P.args): Positional arguments to pass to **func**.
@@ -113,10 +116,10 @@ class Checkable(Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).then(lambda s: s.sum())
+        >>> from pyochain import Seq
+        >>> Seq((1, 2, 3)).then(lambda s: s.sum())
         Some(6)
-        >>> pc.Seq([]).then(lambda s: s.sum())
+        >>> Seq(()).then(lambda s: s.sum())
         NONE
 
         ```
@@ -125,25 +128,21 @@ class Checkable(Protocol):
     def then_some(self) -> Option[Self]:
         """Wraps `Self` in an `Option[Self]` based on its truthiness.
 
-        Truthiness is determined by `__bool__()` if defined, otherwise by `__len__()` if defined (returning `False` if length is 0), otherwise all instances are truthy (Python's default behavior).
-
         Returns:
             Option[Self]: `Some(self)` if self is truthy, `NONE` otherwise.
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).then_some()
+        >>> from pyochain import Seq
+        >>> Seq((1, 2, 3)).then_some()
         Some(Seq(1, 2, 3))
-        >>> pc.Seq([]).then_some()
+        >>> Seq(()).then_some()
         NONE
 
         ```
         """
     def ok_or[E](self, err: E) -> Result[Self, E]:
         """Wrap `Self` in a `Result[Self, E]` based on its truthiness.
-
-        Truthiness is determined by `__bool__()` if defined, otherwise by `__len__()` if defined (returning `False` if length is 0), otherwise all instances are truthy (Python's default behavior).
 
         This method is the inverse of `err_or`.
 
@@ -155,18 +154,16 @@ class Checkable(Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq((1, 2, 3)).ok_or("empty")
+        >>> from pyochain import Seq
+        >>> Seq((1, 2, 3)).ok_or("empty")
         Ok(Seq(1, 2, 3))
-        >>> pc.Seq([]).ok_or("empty")
+        >>> Seq(()).ok_or("empty")
         Err('empty')
 
         ```
         """
     def err_or[T](self, ok: T) -> Result[T, Self]:
         """Wrap `Self` in a `Result[T, Self]` based on its truthiness.
-
-        Truthiness is determined by `__bool__()` if defined, otherwise by `__len__()` if defined (returning `False` if length is 0), otherwise all instances are truthy (Python's default behavior).
 
         This method is the inverse of `ok_or`.
 
@@ -178,10 +175,10 @@ class Checkable(Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq((1, 2, 3)).err_or("should be empty")
+        >>> from pyochain import Seq
+        >>> Seq((1, 2, 3)).err_or("should be empty")
         Err(Seq(1, 2, 3))
-        >>> pc.Seq(()).err_or("should be empty")
+        >>> Seq(()).err_or("should be empty")
         Ok('should be empty')
 
         ```
@@ -199,8 +196,6 @@ class Checkable(Protocol):
 
         The function is only called if self evaluates to False.
 
-        Truthiness is determined by `__bool__()` if defined, otherwise by `__len__()` if defined (returning `False` if length is 0), otherwise all instances are truthy (Python's default behavior).
-
         Args:
             func (Callable[Concatenate[Self, P], E]): A callable that returns the error value to wrap in Err.
             *args (P.args): Positional arguments to pass to the function.
@@ -211,10 +206,10 @@ class Checkable(Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq([1, 2, 3]).ok_or_else(lambda s: f"empty seq")
+        >>> from pyochain import Seq
+        >>> Seq((1, 2, 3)).ok_or_else(lambda s: f"empty seq")
         Ok(Seq(1, 2, 3))
-        >>> pc.Seq([]).ok_or_else(lambda s: f"empty seq")
+        >>> Seq(()).ok_or_else(lambda s: f"empty seq")
         Err('empty seq')
 
         ```
@@ -231,7 +226,6 @@ class Checkable(Protocol):
 
         The function is only called if self evaluates to False.
 
-        Truthiness is determined by `__bool__()` if defined, otherwise by `__len__()` if defined (returning `False` if length is 0), otherwise all instances are truthy (Python's default behavior).
 
         Args:
             func (Callable[Concatenate[Self, P], E]): A callable that returns the error value to wrap in Err.
@@ -243,10 +237,10 @@ class Checkable(Protocol):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Seq((1, 2, 3)).err_or_else(lambda s: "should be empty" )
+        >>> from pyochain import Seq
+        >>> Seq((1, 2, 3)).err_or_else(lambda s: "should be empty" )
         Err(Seq(1, 2, 3))
-        >>> pc.Seq(()).err_or_else(lambda s: "should be empty")
+        >>> Seq(()).err_or_else(lambda s: "should be empty")
         Ok('should be empty')
 
         ```
@@ -1387,9 +1381,11 @@ See the `ResultValue` Protocol for documentation on the methods available on `Re
 
 @type_check_only
 class ResultValue[T, E](Pipeable, Protocol):
-    """`ResultValue[T, E]` is the base Protocol defined for returning and propagating errors.
+    """This is the base Protocol defined for returning and propagating errors.
 
-    `Result[T, E]` is a the type union of the two possibles variants of the Protocol, `Ok[T, E]`, representing success and containing a value,  and `Err[T, E]`, representing error and containing an error value.
+    `Result[T, E]` is a the type union of the two possibles variants of the Protocol:
+    - `Ok[T, E]`, representing success and containing a value
+    - `Err[T, E]`, representing error and containing an error value
 
     Functions return `Result` whenever errors are expected and recoverable.
 
@@ -1431,6 +1427,7 @@ class ResultValue[T, E](Pipeable, Protocol):
     >>> is_positive(-3).map(lambda s: s.upper()).into(handle_variant)
     'Failure: -3 is not positive'
 
+    ```
     """
 
     def swap(self) -> Result[E, T]:

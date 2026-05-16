@@ -17,16 +17,18 @@ class Dict[K, V](PyoMutableMapping[K, V]):
     Implement the `MutableMapping` interface, so all standard dictionary operations are supported.
 
     Tip:
-        Prefer using `Dict.from_ref` when wrapping existing dictionaries to avoid unnecessary copying.
+        Prefer using `Dict::from_ref` when wrapping existing dictionaries to avoid unnecessary copying.
 
     Args:
         data (DictConvertible[K, V]): Initial data for the Dict that can converted to a dictionary.
 
     Example:
     ```python
-    >>> import pyochain as pc
-    >>> dict_obj = pc.Dict({1: "a", 2: "b"})
+    >>> from pyochain import Dict
+    >>> dict_obj = Dict.from_ref({1: "a", 2: "b"})
     >>> dict_obj
+    Dict(1: 'a', 2: 'b')
+    >>> Dict([(1, "a"), (2, "b")])
     Dict(1: 'a', 2: 'b')
     >>> dict_obj.get_item(1)
     Some('a')
@@ -83,12 +85,12 @@ class Dict[K, V](PyoMutableMapping[K, V]):
 
     @staticmethod
     def from_ref[K1, V1](data: dict[K1, V1]) -> Dict[K1, V1]:
-        """Wrap an existing `dict` without copying.
+        """Wrap an existing Python builtin `dict` without copying.
 
         This is the recommended way to create a `Dict` from foreign functions that return a standard Python `dict`.
 
         Warning:
-            Any modifications made to this `Dict` will also affect the original, and vice versa.
+            Any modifications made to this `Dict` will also affect the original data structure, and vice versa.
 
         Args:
             data (dict[K1, V1]): The dictionary to wrap.
@@ -98,9 +100,9 @@ class Dict[K, V](PyoMutableMapping[K, V]):
 
         Example:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Dict
         >>> original_dict = {1: "a", 2: "b", 3: "c"}
-        >>> dict_obj = pc.Dict.from_ref(original_dict)
+        >>> dict_obj = Dict.from_ref(original_dict)
         >>> dict_obj
         Dict(1: 'a', 2: 'b', 3: 'c')
         >>> dict_obj.insert(1, "z")
@@ -126,8 +128,8 @@ class Dict[K, V](PyoMutableMapping[K, V]):
 
         Example:
         ```python
-        >>> import pyochain as pc
-        >>> pc.Dict.from_kwargs(a=1, b=2)
+        >>> from pyochain import Dict
+        >>> Dict.from_kwargs(a=1, b=2)
         Dict('a': 1, 'b': 2)
 
         ```
@@ -148,13 +150,13 @@ class Dict[K, V](PyoMutableMapping[K, V]):
 
         Example:
         ```python
-        >>> import pyochain as pc
+        >>> from pyochain import Dict
         >>> class Person:
         ...     def __init__(self, name: str, age: int):
         ...         self.name = name
         ...         self.age = age
         >>> person = Person("Alice", 30)
-        >>> pc.Dict.from_object(person)
+        >>> Dict.from_object(person)
         Dict('name': 'Alice', 'age': 30)
 
         ```
