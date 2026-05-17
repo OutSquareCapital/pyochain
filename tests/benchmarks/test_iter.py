@@ -44,7 +44,7 @@ def test_filter_map(benchmark: BenchFixture, fn: BenchFn, size: int) -> None:
     assert result
 
 
-def _identity(x: int) -> int:
+def _identity[T](x: T) -> T:
     return x
 
 
@@ -78,9 +78,14 @@ def _for_each_args_and_kwargs(data: Range) -> None:
     data.iter().for_each(_with_args_and_kwargs, 1, 2, 3, a=4, b=5, c=6)
 
 
+def _for_each_star(data: Seq[tuple[int, int, int]]) -> None:
+    data.iter().for_each_star(_with_args)
+
+
 type ForEachFn = Callable[[Range], None]
 
 
+@pytest.mark.benchmark(group="for_each")
 @pytest.mark.parametrize("size", [10, 100, 500])
 @pytest.mark.parametrize(
     "fn",
@@ -94,4 +99,12 @@ type ForEachFn = Callable[[Range], None]
 def test_for_each(benchmark: BenchFixture, fn: ForEachFn, size: int) -> None:
     data = Range(0, size)
     total = benchmark(fn, data)
+    assert total is None
+
+
+@pytest.mark.benchmark(group="for_each")
+@pytest.mark.parametrize("size", [10, 100, 500])
+def test_for_each_star(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).iter().map(lambda i: (i, i * 2, i * 3)).collect()
+    total = benchmark(_for_each_star, data)
     assert total is None
