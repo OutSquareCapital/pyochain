@@ -17,6 +17,7 @@
         "mkdocstrings-python>=1.18.2",
         "polars>=1.33.1",
         "pydoclint>=0.8.1",
+        "pytest-benchmark>=5.2.3",
         "pytest-cov>=7.0.0",
         "pytest-doctest-mkdocstrings>=0.1.1",
         "pytest-stubtester",
@@ -93,4 +94,4 @@
 [tool.pyrefly]
     preset = "strict"
 [tool.pytest.ini_options]
-    addopts = "--doctest-modules --doctest-glob=*.md --stubs --doctest-mdcodeblocks src/pyochain tests/ README.md docs/"
+    addopts = "--doctest-modules --doctest-glob=*.md --stubs --doctest-mdcodeblocks src/pyochain tests/ README.md docs/ --benchmark-skip"
