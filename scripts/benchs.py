@@ -21,7 +21,7 @@ from rich.progress import (
 from rich.table import Table
 from rich.text import Text
 
-import pyochain as pc
+from pyochain import Dict, Iter, Vec
 
 type Row = tuple[str, str, str, int, float]
 app = typer.Typer(help="Benchmarks for pyochain developments.")
@@ -55,7 +55,7 @@ class BenchmarkMetadata(NamedTuple):
 
 
 type BenchFn = Callable[[], object]
-BENCHMARK_REGISTRY = pc.Dict[BenchFn, BenchmarkMetadata].new()
+BENCHMARK_REGISTRY = Dict[BenchFn, BenchmarkMetadata].new()
 
 
 def bench[T, N, R](
@@ -108,7 +108,7 @@ def _collect_raw_timings() -> pl.LazyFrame:
         pl.LazyFrame: LazyFrame containing raw timing data for all benchmark runs.
     """
     benchmark_pairs = _get_pairs()
-    raw_rows = pc.Vec[Row].new()
+    raw_rows = Vec[Row].new()
 
     benchmarks = (
         benchmark_pairs.values()
@@ -147,10 +147,10 @@ def _collect_raw_timings() -> pl.LazyFrame:
 
 
 def _timeit(
-    raw_rows: pc.Vec[Row], meta: BenchmarkMetadata, fn: BenchFn, impl_name: str
+    raw_rows: Vec[Row], meta: BenchmarkMetadata, fn: BenchFn, impl_name: str
 ) -> None:
     _ = (
-        pc.Iter(range(meta.cost))
+        Iter(range(meta.cost))
         .map(
             lambda run_idx: (
                 meta.category,
@@ -164,14 +164,14 @@ def _timeit(
     )
 
 
-def _get_pairs() -> pc.Dict[tuple[str, str], pc.Dict[Implementation, BenchFn]]:
+def _get_pairs() -> Dict[tuple[str, str], Dict[Implementation, BenchFn]]:
     def _maybe_get_or_create(
-        pairs: pc.Dict[tuple[str, str], pc.Dict[Implementation, BenchFn]],
+        pairs: Dict[tuple[str, str], Dict[Implementation, BenchFn]],
         key: tuple[str, str],
-    ) -> pc.Dict[Implementation, BenchFn]:
-        return pairs.get_item(key).unwrap_or(pc.Dict[Implementation, BenchFn].new())
+    ) -> Dict[Implementation, BenchFn]:
+        return pairs.get_item(key).unwrap_or(Dict[Implementation, BenchFn].new())
 
-    benchmark_pairs = pc.Dict[tuple[str, str], pc.Dict[Implementation, BenchFn]].new()
+    benchmark_pairs = Dict[tuple[str, str], Dict[Implementation, BenchFn]].new()
     (
         BENCHMARK_REGISTRY.items()
         .ok_or("Error, no benchmarks registered")
@@ -201,10 +201,7 @@ def _compute_all_stats(raw_df: pl.LazyFrame) -> pl.DataFrame:
     group = ["category", "name"]
     return (
         raw_df.group_by("category", "name", "impl")
-        .agg(
-            time.median().alias("median"),
-            pl.len().alias("runs"),
-        )
+        .agg(time.median().alias("median"), pl.len().alias("runs"))
         .pipe(
             lambda stats: stats.filter(pl.col("impl").eq("new")).join(
                 stats.filter(pl.col("impl").eq("old")).select(
@@ -225,9 +222,10 @@ def _compute_all_stats(raw_df: pl.LazyFrame) -> pl.DataFrame:
 
 def _print_summary(pivoted: pl.DataFrame) -> None:
     """Print summary stats from pivoted DataFrame."""
+    ratio = pl.col("ratio")
     summary = pivoted.select(
-        pl.col("ratio").median().alias("median_speedup"),
-        pl.col("ratio").gt(1).sum().alias("wins"),
+        ratio.median().alias("median_speedup"),
+        ratio.gt(1).sum().alias("wins"),
         pl.len().alias("total"),
     )
     median_speedup = summary.get_column("median_speedup").item(0)  # pyright: ignore[reportAny]
@@ -271,7 +269,7 @@ def _build_results_table(pivoted: pl.DataFrame) -> Table:
     table.add_column("New (μs, median)", justify="right", style="green")
     table.add_column("Old (μs, median)", justify="right", style="yellow")
     table.add_column("Speedup", justify="right")
-    pc.Iter(
+    Iter(
         pivoted.select(
             "category",
             "name",

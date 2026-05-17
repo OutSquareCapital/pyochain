@@ -6,13 +6,13 @@ from typing import Literal
 
 import polars as pl
 
-import pyochain as pc
+from pyochain import Iter, Set
 
 DATA = Path("scripts", "data")
 
 
-def _iterators_fn() -> pc.Set[str]:
-    return pc.Set(
+def _iterators_fn() -> Set[str]:
+    return Set(
         (
             "advance_by",
             "all",
@@ -103,8 +103,8 @@ def _iterators_fn() -> pc.Set[str]:
     )
 
 
-def _iter_filter() -> pc.Set[str]:
-    return pc.Set(
+def _iter_filter() -> Set[str]:
+    return Set(
         (
             "ok_or",
             "ok_or_else",
@@ -146,12 +146,12 @@ def _with_source(fn_name: str, src: Literal["python", "rust"]) -> tuple[str, str
     return (src, fn_name)
 
 
-def main(dtype: type, rust_fns: pc.Set[str], filters: pc.Set[str]) -> None:
+def main(dtype: type, rust_fns: Set[str], filters: Set[str]) -> None:
     """Run the check and output the results to a ndjson file."""
     fn: pl.Expr = pl.col("fn")
 
     return (
-        pc.Iter(dtype.mro())
+        Iter(dtype.mro())
         .flat_map(lambda x: x.__dict__.values())
         .filter(lambda x: callable(x) or isinstance(x, (staticmethod, classmethod)))  # pyright: ignore[reportAny]
         .map(_decorated)
@@ -171,4 +171,4 @@ def main(dtype: type, rust_fns: pc.Set[str], filters: pc.Set[str]) -> None:
 
 
 if __name__ == "__main__":
-    main(pc.Iter, _iterators_fn(), _iter_filter())
+    main(Iter, _iterators_fn(), _iter_filter())
