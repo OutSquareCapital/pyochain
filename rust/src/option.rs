@@ -29,6 +29,15 @@ pub fn get_none_singleton(py: Python<'_>) -> PyResult<Py<PyAny>> {
 /// Option[T] - Generic Option type with Some and None variants for Python typing
 #[pyclass(frozen, name = "Option", generic)]
 pub struct PyochainOption;
+#[pyfunction]
+pub fn option(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+    let py = value.py();
+    if value.is_none() {
+        get_none_singleton(py)
+    } else {
+        PySome::new(value.to_owned().unbind()).into_py_any(py)
+    }
+}
 
 #[pyfunction]
 pub fn then_if_some(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
