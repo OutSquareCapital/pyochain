@@ -131,7 +131,7 @@ uv run pytest --cov=src --cov-report=term-missing
 Benchmarks are located in `tests/benchmarks/` and use `pytest-benchmark`. See `tests/benchmarks/README.md` for details on running and interpreting benchmarks.
 
 ```shell
-uv run pytest tests/benchmarks --benchmark-only --benchmark-group-by=param:size
+uv run pytest tests/benchmarks --benchmark-only --benchmark-warmup=True --benchmark-group-by=<name, param:<size>, group>
 ```
 
 ## Building docs

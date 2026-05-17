@@ -1,7 +1,7 @@
 use crate::errors::OptionUnwrapError;
 use crate::hasher::hash_fn;
 use crate::result::{self, PyResultEnum};
-use crate::types::{PyClassInit, call_func};
+use crate::types::{ConcatArgs, PyClassInit};
 use pyo3::IntoPyObjectExt;
 use pyo3::{
     ffi,
@@ -127,8 +127,9 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
-        let py = predicate.py();
-        call_func(predicate, &self.value.bind(py), args, kwargs)?.is_truthy()
+        predicate
+            .concat(&self.value.bind(predicate.py()), args, kwargs)?
+            .is_truthy()
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]
@@ -138,8 +139,8 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<bool> {
-        let py = func.py();
-        call_func(func, &self.value.bind(py), args, kwargs)?.is_truthy()
+        func.concat(&self.value.bind(func.py()), args, kwargs)?
+            .is_truthy()
     }
 
     fn unwrap(&self, py: Python<'_>) -> Py<PyAny> {
@@ -165,7 +166,7 @@ impl PySome {
     ) -> PyResult<Py<PyAny>> {
         let py = func.py();
         Ok(
-            PySome::new(call_func(func, &self.value.bind(py), args, kwargs)?.unbind())
+            PySome::new(func.concat(&self.value.bind(py), args, kwargs)?.unbind())
                 .init(py)?
                 .into_any(),
         )
@@ -186,8 +187,9 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let py = func.py();
-        Ok(call_func(func, &self.value.bind(py), args, kwargs)?.unbind())
+        Ok(func
+            .concat(&self.value.bind(func.py()), args, kwargs)?
+            .unbind())
     }
 
     fn or_else(&self, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
@@ -211,8 +213,8 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        let py = default.py();
-        Ok(call_func(f, &self.value.bind(py), args, kwargs)?.unbind())
+        Ok(f.concat(&self.value.bind(default.py()), args, kwargs)?
+            .unbind())
     }
 
     #[allow(unused_variables)]
@@ -228,7 +230,10 @@ impl PySome {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         let py = predicate.py();
-        if call_func(predicate, &self.value.bind(py), args, kwargs)?.is_truthy()? {
+        if predicate
+            .concat(&self.value.bind(py), args, kwargs)?
+            .is_truthy()?
+        {
             Ok(PySome::new(self.value.clone_ref(py)).init(py)?.into_any())
         } else {
             get_none_singleton(py)
@@ -247,7 +252,7 @@ impl PySome {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         let py = f.py();
-        call_func(f, &self.value.bind(py), args, kwargs)?;
+        f.concat(&self.value.bind(py), args, kwargs)?;
         Ok(PySome::new(self.value.clone_ref(py)).init(py)?.into_any())
     }
 
@@ -372,7 +377,7 @@ impl PySome {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        Ok(call_func(func, &slf, args, kwargs)?.unbind())
+        Ok(func.concat(&slf, args, kwargs)?.unbind())
     }
 }
 
@@ -598,6 +603,6 @@ impl PyNone {
         args: &Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
-        Ok(call_func(func, &slf, args, kwargs)?.unbind())
+        Ok(func.concat(&slf, args, kwargs)?.unbind())
     }
 }
