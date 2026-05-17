@@ -1730,13 +1730,15 @@
 <span class="normal">31</span>
 <span class="normal">32</span>
 <span class="normal">33</span>
-<span class="normal">34</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Range</span><span class="p">(</span><span class="n">PyoSequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
+<span class="normal">34</span>
+<span class="normal">35</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Range</span><span class="p">(</span><span class="n">PyoSequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A wrapper around the built-in `range` type that implements the `PyoSequence` protocol.</span>
 
 <span class="sd">    `start` must be specified, unlike the built-in type, but everything else is the same.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_inner</span><span class="p">:</span> <span class="nb">range</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;_inner&quot;</span><span class="p">,)</span>  <span class="c1"># pyright: ignore[reportIncompatibleUnannotatedOverride, reportUnannotatedClassAttribute]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">stop</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
