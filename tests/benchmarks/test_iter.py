@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import pytest
@@ -41,3 +42,56 @@ def _python_filter_map(size: int) -> tuple[int, ...]:
 def test_filter_map(benchmark: BenchFixture, fn: BenchFn, size: int) -> None:
     result = benchmark(fn, size)
     assert result
+
+
+def _identity(x: int) -> int:
+    return x
+
+
+def _with_args(*args: int) -> tuple[int, ...]:
+    return args
+
+
+def _with_kwargs(**kwargs: int) -> dict[str, int]:
+    return kwargs
+
+
+def _with_args_and_kwargs(
+    *args: int, **kwargs: int
+) -> tuple[tuple[int, ...], dict[str, int]]:
+    return args, kwargs
+
+
+def _for_each(data: Range) -> None:
+    data.iter().for_each(_identity)
+
+
+def _for_each_args(data: Range) -> None:
+    data.iter().for_each(_with_args, 1, 2, 3)
+
+
+def _for_each_kwargs(data: Range) -> None:
+    data.iter().for_each(lambda x: _with_kwargs(a=x, b=2, c=3))
+
+
+def _for_each_args_and_kwargs(data: Range) -> None:
+    data.iter().for_each(_with_args_and_kwargs, 1, 2, 3, a=4, b=5, c=6)
+
+
+type ForEachFn = Callable[[Range], None]
+
+
+@pytest.mark.parametrize("size", [10, 100, 500])
+@pytest.mark.parametrize(
+    "fn",
+    [
+        pytest.param(_for_each, id="for_each"),
+        pytest.param(_for_each_args, id="for_each_args"),
+        pytest.param(_for_each_kwargs, id="for_each_kwargs"),
+        pytest.param(_for_each_args_and_kwargs, id="for_each_args_and_kwargs"),
+    ],
+)
+def test_for_each(benchmark: BenchFixture, fn: ForEachFn, size: int) -> None:
+    data = Range(0, size)
+    total = benchmark(fn, data)
+    assert total is None
