@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from pyochain import Err, Ok, Range, Result, Seq, Some
+from pyochain import Err, Ok, Range, Seq
 
 if TYPE_CHECKING:
     from ._utils import BenchFixture, BenchFn
@@ -82,24 +82,28 @@ def _for_each_star(data: Seq[tuple[int, int, int]]) -> None:
     data.iter().for_each_star(_with_args)
 
 
-def _is_last(value: int) -> Result[bool, int]:
-    return Ok(value == 9)
+def _try_find_some(data: Range) -> None:
+    _ = data.iter().try_find(lambda value: Ok(value == 9))
 
 
-def _err_on_last(value: int) -> Result[bool, int]:
-    return Err(value) if value == 9 else Ok(False)
+def _try_find_err(data: Range) -> None:
+    _ = data.iter().try_find(
+        lambda value: Err(value) if value == 9 else Ok(value == -1)
+    )
 
 
-def _sum_fold(accumulator: int, value: int) -> Result[int, int]:
-    return Ok(accumulator + value)
+def _try_fold_ok(data: Range) -> None:
+    _ = data.iter().try_fold(0, lambda accumulator, value: Ok(accumulator + value))
 
 
-def _sum_reduce(left: int, right: int) -> Result[int, int]:
-    return Ok(left + right)
+def _try_reduce_ok(data: Range) -> None:
+    _ = data.iter().try_reduce(lambda left, right: Ok(left + right))
 
 
-def _err_reduce(left: int, right: int) -> Result[int, int]:
-    return Err(right) if right == 9 else Ok(left + right)
+def _try_reduce_err(data: Range) -> None:
+    _ = data.iter().try_reduce(
+        lambda left, right: Err(right) if right == 9 else Ok(left + right)
+    )
 
 
 type ForEachFn = Callable[[Range], None]
@@ -118,38 +122,46 @@ type ForEachFn = Callable[[Range], None]
 )
 def test_for_each(benchmark: BenchFixture, fn: ForEachFn, size: int) -> None:
     data = Range(0, size)
-    total = benchmark(fn, data)
-    assert total is None
+    assert benchmark(fn, data) is None
 
 
 @pytest.mark.benchmark(group="for_each")
 @pytest.mark.parametrize("size", [10, 100, 500])
 def test_for_each_star(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size).iter().map(lambda i: (i, i * 2, i * 3)).collect()
-    total = benchmark(_for_each_star, data)
-    assert total is None
+    assert benchmark(_for_each_star, data) is None
 
 
 @pytest.mark.benchmark(group="try_find")
-def test_try_find_some(benchmark: BenchFixture) -> None:
-    assert benchmark(Range(0, 10).iter().try_find, _is_last) == Ok(Some(9))
-
-
-@pytest.mark.benchmark(group="try_find")
-def test_try_find_err(benchmark: BenchFixture) -> None:
-    assert benchmark(Range(0, 10).iter().try_find, _err_on_last) == Err(9)
+@pytest.mark.parametrize(
+    "fn",
+    [
+        pytest.param(_try_find_some, id="some"),
+        pytest.param(_try_find_err, id="err"),
+    ],
+)
+@pytest.mark.parametrize("size", [10, 100, 500])
+def test_try_find(benchmark: BenchFixture, fn: ForEachFn, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(fn, data) is None
 
 
 @pytest.mark.benchmark(group="try_fold")
-def test_try_fold_ok(benchmark: BenchFixture) -> None:
-    assert benchmark(Range(0, 10).iter().try_fold, 0, _sum_fold) == Ok(45)
+@pytest.mark.parametrize("size", [10, 100, 500])
+def test_try_fold_ok(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_try_fold_ok, data) is None
 
 
 @pytest.mark.benchmark(group="try_reduce")
-def test_try_reduce_ok(benchmark: BenchFixture) -> None:
-    assert benchmark(Range(0, 10).iter().try_reduce, _sum_reduce) == Ok(Some(45))
-
-
-@pytest.mark.benchmark(group="try_reduce")
-def test_try_reduce_err(benchmark: BenchFixture) -> None:
-    assert benchmark(Range(0, 10).iter().try_reduce, _err_reduce) == Err(9)
+@pytest.mark.parametrize(
+    "fn",
+    [
+        pytest.param(_try_reduce_ok, id="ok"),
+        pytest.param(_try_reduce_err, id="err"),
+    ],
+)
+@pytest.mark.parametrize("size", [10, 100, 500])
+def test_try_reduce(benchmark: BenchFixture, fn: ForEachFn, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(fn, data) is None
