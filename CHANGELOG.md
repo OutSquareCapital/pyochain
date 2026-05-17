@@ -1,5 +1,16 @@
 # Changelog
 
+## [unreleased]
+
+### Breaking Changes
+
+- `Option` and `Option::{if_true, if_some}` haave been respectively changed to pure functions `option`, `then_if_true`, `then_if_some`.
+- `Option` is now, just like `Result`, a type union, and a "false" Protocol serves as the base class for `Some` and `NONE`.
+
+### Internal
+
+- Various new benchmarks covering some impacted methods
+
 ## [0.16] - 2026-05-17
 
 ### Features

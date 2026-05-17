@@ -4,20 +4,6 @@ use pyo3::ffi;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyTuple};
 
-// Convenience helper to avoid nested calls
-pub trait PyClassInit {
-    type Class: PyClass;
-    /// Creates a new instance Py<T> of a #[pyclass] on the Python heap.
-    fn init(self, py: Python<'_>) -> PyResult<Py<Self::Class>>;
-}
-
-impl<T: PyClass> PyClassInit for PyClassInitializer<T> {
-    type Class = T;
-    #[inline]
-    fn init(self, py: Python<'_>) -> PyResult<Py<T>> {
-        Py::new(py, self)
-    }
-}
 /// Convenience helper to call a function with concatenated arguments
 pub trait ConcatArgs<'py> {
     fn concat(

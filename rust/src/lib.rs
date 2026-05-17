@@ -13,6 +13,8 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<option::PyochainOption>()?;
     m.add_class::<option::PySome>()?;
     m.add_class::<option::PyNone>()?;
+    m.add_function(wrap_pyfunction!(option::then_if_some, m)?)?;
+    m.add_function(wrap_pyfunction!(option::then_if_true, m)?)?;
     m.add("NONE", option::get_none_singleton(py)?)?;
     m.add_class::<result::PyOk>()?;
     m.add_class::<result::PyErr>()?;

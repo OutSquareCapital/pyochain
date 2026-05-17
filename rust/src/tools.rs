@@ -1,14 +1,14 @@
 /// Pure functions tools for pyochain
 use crate::option::{PySome, get_none_singleton};
 use crate::result::{PyOk, PyResultEnum};
-use crate::types::{ConcatArgs, PyClassInit};
+use crate::types::ConcatArgs;
 use pyo3::intern;
 use pyo3::types::{PyAny, PyBool, PyDict, PyFunction, PyModule, PyTuple};
 use pyo3::{IntoPyObjectExt, prelude::*};
 /// Create a unique sentinel object
 #[inline]
 fn sentinel(py: Python<'_>) -> PyResult<Bound<PyAny>> {
-    let sentinel = PyModule::import(py, "builtins")?
+    let sentinel = PyModule::import(py, intern!(py, "builtins"))?
         .getattr(intern!(py, "object"))?
         .call0()?;
     Ok(sentinel)
@@ -98,7 +98,7 @@ pub fn try_find(data: &Bound<'_, PyAny>, predicate: &Bound<'_, PyFunction>) -> P
                         .cast_bound_unchecked::<PyBool>(py)
                         .is_true()
                 } {
-                    let some_val = PySome::new(val.unbind()).init(py)?.into_any();
+                    let some_val = PySome::new(val.unbind()).into_py_any(py)?;
                     return Ok(PyOk::new(some_val).into_py_any(py)?);
                 }
             }
@@ -162,7 +162,7 @@ pub fn try_reduce(data: &Bound<'_, PyAny>, func: &Bound<'_, PyFunction>) -> PyRe
         }
     }
 
-    Ok(PyOk::new(PySome::new(accumulator).init(py)?.into_any()).into_py_any(py)?)
+    Ok(PyOk::new(PySome::new(accumulator).into_py_any(py)?).into_py_any(py)?)
 }
 #[pyfunction]
 pub fn is_sorted(

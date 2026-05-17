@@ -1,6 +1,6 @@
 use crate::option::{PySome, get_none_singleton};
 use crate::result::{PyErr, PyOk};
-use crate::types::{ConcatArgs, PyClassInit};
+use crate::types::ConcatArgs;
 use pyo3::types::{PyDict, PyTuple};
 use pyo3::{IntoPyObjectExt, prelude::*};
 #[pyclass(frozen, subclass)]
@@ -52,9 +52,7 @@ impl Checkable {
         let py = slf.py();
 
         if slf.is_truthy()? {
-            Ok(PySome::new(func.concat(&slf, args, kwargs)?.unbind())
-                .init(py)?
-                .into_any())
+            PySome::new(func.concat(&slf, args, kwargs)?.unbind()).into_py_any(py)
         } else {
             get_none_singleton(py)
         }
@@ -63,9 +61,7 @@ impl Checkable {
     fn then_some(slf: &Bound<'_, Self>) -> PyResult<Py<PyAny>> {
         let py = slf.py();
         if slf.is_truthy()? {
-            Ok(PySome::new(slf.to_owned().unbind().into_any())
-                .init(py)?
-                .into_any())
+            PySome::new(slf.to_owned().unbind().into_any()).into_py_any(py)
         } else {
             get_none_singleton(py)
         }

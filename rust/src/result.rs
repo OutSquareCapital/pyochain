@@ -1,7 +1,7 @@
 use crate::errors::ResultUnwrapError;
 use crate::hasher::hash_fn;
 use crate::option::{PySome, get_none_singleton};
-use crate::types::{ConcatArgs, PyClassInit};
+use crate::types::ConcatArgs;
 use pyderive::*;
 use pyo3::IntoPyObjectExt;
 use pyo3::exceptions::PyBaseException;
@@ -70,8 +70,8 @@ impl PyOk {
         Ok(hash_fn(0_u8, self.value.bind(py).hash()?))
     }
 
-    fn ok(&self, py: Python<'_>) -> PyResult<Py<PySome>> {
-        Ok(PySome::new(self.value.clone_ref(py)).init(py)?)
+    fn ok(&self, py: Python<'_>) -> PySome {
+        PySome::new(self.value.clone_ref(py))
     }
 
     fn err(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
@@ -151,7 +151,7 @@ impl PyOk {
     }
 
     fn iter(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        Ok(self.ok(py)?.bind(py).call_method0("iter")?.unbind())
+        Ok(self.ok(py).into_py_any(py)?.call_method0(py, "iter")?)
     }
 
     fn map_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Self> {
@@ -221,7 +221,7 @@ impl PyOk {
         match self.value.bind(py).extract::<PyRef<PySome>>() {
             Ok(some_ref) => {
                 let ok_value = PyOk::new(some_ref.value.clone_ref(py)).into_py_any(py)?;
-                Ok(PySome::new(ok_value).init(py)?.into_any())
+                PySome::new(ok_value).into_py_any(py)
             }
             Err(_) => get_none_singleton(py),
         }
@@ -296,7 +296,7 @@ impl PyErr {
     }
 
     fn err(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        Ok(PySome::new(self.error.clone_ref(py)).init(py)?.into_any())
+        PySome::new(self.error.clone_ref(py)).into_py_any(py)
     }
 
     fn unwrap(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
@@ -440,7 +440,7 @@ impl PyErr {
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let err_value = PyErr::new(self.error.clone_ref(py)).into_py_any(py)?;
-        Ok(PySome::new(err_value).init(py)?.into_any())
+        PySome::new(err_value).into_py_any(py)
     }
 
     #[pyo3(signature = (default, _func, *_args, **_kwargs))]
