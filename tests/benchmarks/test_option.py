@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import pytest
@@ -10,6 +11,10 @@ from ._utils import VariantGroups
 
 if TYPE_CHECKING:
     from ._utils import BenchFixture
+
+
+type BenchCall = Callable[[], object]
+type BenchCallWithInt = Callable[[int], object]
 
 
 @pytest.mark.benchmark(group=VariantGroups.CREATE.value)
@@ -59,13 +64,18 @@ def test_option_match_case_some(benchmark: BenchFixture) -> None:
 
 
 @pytest.mark.benchmark(group="option_convert")
-def test_option_ok_or_some(benchmark: BenchFixture) -> None:
-    assert benchmark(Some(10).ok_or, 0) == Ok(10)
+@pytest.mark.parametrize(
+    "fn",
+    [
+        pytest.param(Some(10).ok_or, id="some"),
+        pytest.param(NONE.ok_or, id="none"),
+    ],
+)
+def test_option_ok_or(benchmark: BenchFixture, fn: BenchCallWithInt) -> None:
+    def run() -> None:
+        _ = fn(0)
 
-
-@pytest.mark.benchmark(group="option_convert")
-def test_option_ok_or_none(benchmark: BenchFixture) -> None:
-    assert benchmark(NONE.ok_or, 0) == Err(0)
+    assert benchmark(run) is None
 
 
 @pytest.mark.benchmark(group="option_flatten")
@@ -79,15 +89,16 @@ def test_option_flatten_nested_none(benchmark: BenchFixture) -> None:
 
 
 @pytest.mark.benchmark(group="option_transpose")
-def test_option_transpose_ok(benchmark: BenchFixture) -> None:
-    assert benchmark(Some(Ok(10)).transpose) == Ok(Some(10))  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
+@pytest.mark.parametrize(
+    "fn",
+    [
+        pytest.param(Some(Ok(10)).transpose, id="ok"),  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownArgumentType]
+        pytest.param(Some(Err(10)).transpose, id="err"),  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownArgumentType]
+        pytest.param(NONE.transpose, id="none"),
+    ],
+)
+def test_option_transpose(benchmark: BenchFixture, fn: BenchCall) -> None:
+    def run() -> None:
+        _ = fn()
 
-
-@pytest.mark.benchmark(group="option_transpose")
-def test_option_transpose_err(benchmark: BenchFixture) -> None:
-    assert benchmark(Some(Err(10)).transpose) == Err(10)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
-
-
-@pytest.mark.benchmark(group="option_transpose")
-def test_option_transpose_none(benchmark: BenchFixture) -> None:
-    assert benchmark(NONE.transpose) == Ok(NONE)
+    assert benchmark(run) is None
