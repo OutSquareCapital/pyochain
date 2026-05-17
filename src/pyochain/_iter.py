@@ -149,6 +149,9 @@ class DrainIterator[T](Iterator[T]):
             self._end_idx -= 1
 
 
+# TODO: structures that use python builtins should inerhit all their dunder, e.g __eq__.
+
+
 class Set[T](PyoSet[T]):
     """`Set` represent an in- memory **unordered**  collection of **unique** elements.
 
