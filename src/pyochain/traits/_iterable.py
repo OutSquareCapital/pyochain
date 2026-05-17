@@ -448,14 +448,9 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
 
 
 class PyoCollection[T](PyoIterable[T], Collection[T], ABC):
-    """Base ABC for pyochain collections.
+    """`Extends `PyoIterable[T]` and `collections.abc.Collection[T]`.
 
-    `PyoCollection[T]` is the shared ABC for concrete collections:
-
-    `Seq`, `Vec`, `Set`, `SetMut`, `Dict`, etc...
-
-    It extends `PyoIterable[T]` and `collections.abc.Collection[T]`,
-    and provides a few convenience methods like `contains()` and `repeat()`.
+    This includes `Seq`, `Vec`, `Set`, `SetMut`, `Dict`, etc...
 
     Any concrete subclass must implement the required `Collection` dunder methods:
 
@@ -1843,7 +1838,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
     """Extends `PyoCollection[T]` and `collections.abc.Sequence[T]`.
 
-    Is the shared ABC for concrete collections: `Seq` and `Vec`.
+    Is the shared ABC for concrete sequences: `Seq`, `Range` and `Vec`.
 
     Any concrete subclass must implement the required `Sequence` dunder methods:
 
@@ -1934,20 +1929,28 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     def is_subset(self, other: AbstractSet[T]) -> bool:
-        """Check if the `Set` is a subset of another set.
+        """Test whether all elements of this set are in `other` (including equality).
+
+        Returns `True` if every element in this set is also present in `other`.
+
+        This includes the case where both sets are identical.
+
+        Use `is_subset_strict()` to exclude the equality case.
 
         Args:
-            other (AbstractSet[T]): The other set to compare with.
+            other (AbstractSet[T]): The set to check containment against.
 
         Returns:
-            bool: True if the `Set` is a subset of the other set, False otherwise.
+            bool: `True` if all elements are contained, `False` otherwise.
 
         Example:
         ```python
         >>> from pyochain import Set
-        >>> Set((1, 2)).is_subset({1, 2, 3})
+        >>> Set((1, 2)).is_subset({1, 2, 3})  # All elements present
         True
-        >>> Set((1, 4)).is_subset({1, 2, 3})
+        >>> Set((1, 2)).is_subset({1, 2})  # Also True: they're equal
+        True
+        >>> Set((1, 4)).is_subset({1, 2, 3})  # 4 is not in the other set
         False
 
         ```
@@ -1955,20 +1958,28 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         return self <= other
 
     def is_subset_strict(self, other: AbstractSet[T]) -> bool:
-        """Check if the `Set` is a proper subset of another set.
+        """Test whether all elements of this set are in `other`, excluding equality.
+
+        Returns `True` if every element in this set is also present in `other`, AND `other` contains at least one element not in this set.
+
+        This is a proper (or strict) subset relation.
+
+        Use `is_subset()` if you want to accept equal sets as well.
 
         Args:
-            other (AbstractSet[T]): The other set to compare with.
+            other (AbstractSet[T]): The set to check strict containment against.
 
         Returns:
-            bool: `True` if the `Set` is a proper subset of the other set, `False` otherwise.
+            bool: `True` if this is a strict subset, `False` otherwise.
 
         Example:
         ```python
         >>> from pyochain import Set
-        >>> Set((1, 2)).is_subset_strict({1, 2, 3})
+        >>> Set((1, 2)).is_subset_strict({1, 2, 3})  # Proper subset
         True
-        >>> Set((1, 2)).is_subset_strict({1, 2})
+        >>> Set((1, 2)).is_subset_strict({1, 2})  # Equal, not proper
+        False
+        >>> Set((1, 4)).is_subset_strict({1, 2, 3})  # 4 not contained
         False
 
         ```
@@ -1976,41 +1987,57 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         return self < other
 
     def eq(self, other: AbstractSet[T]) -> bool:
-        """Check if the `Set` is equal to another set.
+        """Test whether this set contains exactly the same elements as `other`.
+
+        Sets are equal if they have the same number of elements and every element in one is present in the other.
+
+        Order is irrelevant for sets.
+
+        This is an explicit method; you can also use the `==` operator directly.
 
         Args:
-            other (AbstractSet[T]): The other set to compare with.
+            other (AbstractSet[T]): The set to compare with.
 
         Returns:
-            bool: True if the `Set` is equal to the other set, False otherwise.
+            bool: `True` if both sets contain identical elements, `False` otherwise.
 
         Example:
         ```python
         >>> from pyochain import Set
-        >>> Set((1, 2)).eq({2, 1})
+        >>> Set((1, 2)).eq({2, 1})  # Same elements, different order
         True
-        >>> Set((1, 2)).eq({1, 2, 3})
+        >>> Set((1, 2)).eq({1, 2, 3})  # Different number of elements
         False
+        >>> Set((1, 2)).eq({1, 2})  # Identical
+        True
 
         ```
         """
         return self == other
 
     def is_superset(self, other: AbstractSet[T]) -> bool:
-        """Check if the `Set` is a superset of another set.
+        """Test whether all elements of `other` are in this set (including equality).
+
+        Returns `True` if this set contains every element from `other`.
+
+        This is the inverse of `is_subset()` -> if A is a subset of B, then B is a superset of A.
+
+        Use `is_superset_strict()` (if available) to exclude equality.
 
         Args:
-            other (AbstractSet[T]): The other set to compare with.
+            other (AbstractSet[T]): The set to check containment for.
 
         Returns:
-            bool: True if the `Set` is a superset of the other set, False otherwise.
+            bool: `True` if all elements from `other` are present, `False` otherwise.
 
         Example:
         ```python
         >>> from pyochain import Set
-        >>> Set((1, 2, 3)).is_superset({1, 2})
+        >>> Set((1, 2, 3)).is_superset({1, 2})  # Contains all
         True
-        >>> Set((1, 2)).is_superset({1, 2, 3})
+        >>> Set((1, 2)).is_superset({1, 2})  # Also True: they're equal
+        True
+        >>> Set((1, 2)).is_superset({1, 2, 3})  # Missing element 3
         False
 
         ```
@@ -2018,51 +2045,73 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         return self >= other
 
     def intersection(self, other: AbstractSet[T]) -> Self:
-        """Return the intersection of the `Set` with another set.
+        """Create a new set containing only elements present in both sets.
+
+        The result contains every element that exists in both this set and `other`.
+
+        If the sets have no common elements, the result is empty.
+
+        This operation is commutative: `A.intersection(B) == B.intersection(A)`.
 
         Args:
-            other (AbstractSet[T]): The other set to intersect with.
+            other (AbstractSet[T]): The set to intersect with.
 
         Returns:
-            Self: A new `Set` containing the intersection of the two sets.
+            Self: A new `Set` containing shared elements only.
 
         Example:
         ```python
         >>> from pyochain import Set
         >>> Set((1, 2, 2)).intersection((2, 3))
         Set(2,)
+        >>> Set((1, 2)).intersection((3, 4))
+        Set()
 
         ```
         """
         return self.__class__(self & other)
 
     def r_intersection(self, other: AbstractSet[T]) -> Self:
-        """Return the intersection of another set with the `Set`.
+        """Create a new set containing only elements present in both sets (reversed arguments).
+
+        This is equivalent to `other.intersection(self)`.
+
+        Useful for method chaining where `other` is computed first and you want to feed it through a pipeline.
+
+        Since intersection is commutative, this produces the same result as `intersection()`.
 
         Args:
-            other (AbstractSet[T]): The other set to intersect with.
+            other (AbstractSet[T]): The set to intersect with (used as the first argument).
 
         Returns:
-            Self: A new `Set` containing the intersection of the two sets.
+            Self: A new `Set` containing shared elements only.
 
         Example:
         ```python
         >>> from pyochain import Set
         >>> Set((2, 3)).r_intersection((1, 2))
         Set(2,)
+        >>> Set((2, 3)).r_intersection((1, 2)).eq(Set((2, 3)).intersection((1, 2)))
+        True
 
         ```
         """
         return self.__class__(other & self)
 
     def union(self, other: AbstractSet[T]) -> Self:
-        """Return the union of the `Set` with another set.
+        """Create a new set containing all unique elements from both sets.
+
+        The result includes every element from this set and every element from `other`.
+
+        Duplicates are automatically removed.
+
+        This operation is commutative: `A.union(B) == B.union(A)`.
 
         Args:
-            other (AbstractSet[T]): The other set to unite with.
+            other (AbstractSet[T]): The set to combine with.
 
         Returns:
-            Self: A new `Set` containing the union of the two sets.
+            Self: A new set containing all elements from both sets.
 
         Example:
         ```python
@@ -2075,13 +2124,19 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         return self.__class__(self | other)
 
     def r_union(self, other: AbstractSet[T]) -> Self:
-        """Return the union of another set with the `Set`.
+        """Create a new set containing all unique elements from both sets (reversed arguments).
+
+        This is equivalent to `other.union(self)`.
+
+        Useful for method chaining where `other` is computed first and you want to feed it through a pipeline.
+
+        Since union is commutative, this produces the same result as `union()`.
 
         Args:
-            other (AbstractSet[T]): The other set to unite with.
+            other (AbstractSet[T]): The set to combine with (used as the first argument).
 
         Returns:
-            Self: A new `Set` containing the union of the two sets.
+            Self: A new set containing all elements from both sets.
 
         Example:
         ```python
@@ -2094,51 +2149,75 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         return self.__class__(other | self)
 
     def difference(self, other: AbstractSet[T]) -> Self:
-        """Return the difference of the `Set` with another set.
+        """Create a new set with elements in this set but not in `other`.
+
+        The result contains every element that is in this set EXCEPT those that are also present in `other`.
+
+        This operation is NOT commutative.
+
+        Use `r_difference()` if you need the reversed argument order for pipelines.
 
         Args:
-            other (AbstractSet[T]): The other set to subtract.
+            other (AbstractSet[T]): The set whose elements should be excluded.
 
         Returns:
-            Self: A new `Set` containing the difference of the two sets.
+            Self: A new set containing elements unique to this set.
 
         Example:
         ```python
         >>> from pyochain import Set
         >>> Set((1, 2, 2)).difference((2, 3))
         Set(1,)
+        >>> Set((1, 2)).difference((3, 4)).iter().sort()
+        Vec(1, 2)
 
         ```
         """
         return self.__class__(self - other)
 
     def r_difference(self, other: AbstractSet[T]) -> Self:
-        """Return the reverse difference of the `Set` with another set.
+        """Create a new set with elements in `other` but not in this set (reversed arguments).
+
+        This is equivalent to `other.difference(self)`.
+
+        Returns elements present in `other` that are NOT in this set.
+
+        Useful for method chaining where `other` is computed first.
 
         Args:
-            other (AbstractSet[T]): The other set to subtract from.
+            other (AbstractSet[T]): The set to subtract from (used as the first argument).
 
         Returns:
-            Self: A new `Set` containing the reverse difference of the two sets.
+            Self: A new set containing elements unique to `other`.
 
         Example:
         ```python
         >>> from pyochain import Set
         >>> Set((2, 3)).r_difference((1, 2))
         Set(1,)
+        >>> Set((2, 3)).r_difference((1, 2)).eq(Set((1, 2)).difference((2, 3)))
+        True
 
         ```
         """
         return self.__class__(other - self)
 
     def symmetric_difference(self, other: AbstractSet[T]) -> Self:
-        """Return the symmetric difference of the `Set` with another set.
+        """Create a new set with elements in either set but not in both.
+
+        The result contains elements that are in this set XOR `other`—i.e., elements present in one set but not in both.
+
+        This is the opposite of intersection.
+
+        This operation is commutative: `A.symmetric_difference(B) == B.symmetric_difference(A)`.
 
         Args:
-            other (AbstractSet[T]): The other set to symmetric difference with.
+            other (AbstractSet[T]): The set to compute symmetric difference with.
 
         Returns:
-            Self: A new `Set` containing the symmetric difference of the two sets.
+            Self: A new set containing elements unique to each set.
+
+        Example:
         ```python
         >>> from pyochain import Set
         >>> Set((1, 2, 2)).symmetric_difference((2, 3)).iter().sort()
@@ -2151,39 +2230,53 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         return self.__class__(self ^ other)
 
     def r_symmetric_difference(self, other: AbstractSet[T]) -> Self:
-        """Return the symmetric difference of the `Set` with another set.
+        """Create a new set with elements in either set but not in both (reversed arguments).
+
+        This is equivalent to `other.symmetric_difference(self)`.
+
+        Useful for method chaining where `other` is computed first and you want to feed it through a pipeline.
+
+        Since symmetric difference is commutative, this produces the same result as `symmetric_difference()`.
 
         Args:
-            other (AbstractSet[T]): The other set to symmetric difference with.
+            other (AbstractSet[T]): The set to compute symmetric difference with (first argument).
 
         Returns:
-            Self: A new `Set` containing the symmetric difference of the two sets.
+            Self: A new set containing elements unique to each set.
 
         Example:
         ```python
         >>> from pyochain import Set
         >>> Set((2, 3)).r_symmetric_difference((1, 2)).iter().sort()
         Vec(1, 3)
+        >>> Set((2, 3)).r_symmetric_difference((1, 2)).eq(Set((2, 3)).symmetric_difference((1, 2)))
+        True
 
         ```
         """
         return self.__class__(other ^ self)
 
     def is_disjoint(self, other: AbstractSet[T]) -> bool:
-        """Check if the `Set` has no elements in common with another set.
+        """Test whether this set and `other` have no elements in common.
+
+        Returns `True` if the intersection of the two sets is empty.
+
+        This is the opposite of having any overlap.
 
         Args:
-            other (AbstractSet[T]): The other set to compare with.
+            other (AbstractSet[T]): The set to compare with.
 
         Returns:
-            bool: True if the `Set` and the other set have no elements in common, False otherwise.
+            bool: `True` if no common elements exist, `False` otherwise.
 
         Example:
         ```python
         >>> from pyochain import Set
-        >>> Set((1, 2)).is_disjoint((3, 4))
+        >>> Set((1, 2)).is_disjoint((3, 4))  # No overlap
         True
-        >>> Set((1, 2)).is_disjoint((2, 3))
+        >>> Set((1, 2)).is_disjoint((2, 3))  # Share element 2
+        False
+        >>> Set((1, 2)).is_disjoint((1, 2))  # Identical sets
         False
 
         ```

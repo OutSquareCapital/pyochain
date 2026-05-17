@@ -532,11 +532,11 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMult
 
         Using this method is equivalent to the following code:
         ```python
-            data = pc.Vec([ ... ])
-            for i in range(data.length()):
-                if predicate(data[i]):
-                    val = data.pop(i)
-                    # your code here
+        data = Vec((...))
+        for i in range(data.length()):
+            if predicate(data[i]):
+                val = data.pop(i)
+                # your code here
         ```
 
         Args:

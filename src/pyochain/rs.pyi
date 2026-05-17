@@ -1367,8 +1367,10 @@ class Null[T](Option[T]):
 
 NONE: Final[Null[Any]] = ...  # pyright: ignore[reportExplicitAny, reportAny]
 """Singleton instance representing the absence of a value.
+
 This is the only instance of `Null` that should be used, and is similar to the logic used by `None` in standard Python.
-This allows you to use `is pc.NONE` checks for identity, and improves performance by avoiding unnecessary allocations and instanciations.
+
+This allows you to use `is NONE` checks for identity, and improves performance by avoiding unnecessary allocations and instanciations.
 """
 
 class ResultUnwrapError(RuntimeError): ...
@@ -1384,6 +1386,7 @@ class ResultType[T, E](Pipeable, Protocol):
     """This is the base Protocol defined for returning and propagating errors.
 
     `Result[T, E]` is a the type union of the two possibles variants of the Protocol:
+
     - `Ok[T, E]`, representing success and containing a value
     - `Err[T, E]`, representing error and containing an error value
 
