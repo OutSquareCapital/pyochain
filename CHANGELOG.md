@@ -2,6 +2,10 @@
 
 ## [0.16] - 2026-05-17
 
+### Features
+
+- `Iter::for_each_star` now handle `args` and `kwargs` in the same way as `Iter::for_each`, allowing to pass arguments to the function being called for each item.
+
 ### Performance
 
 - Migrated `Iter::for_each, for_each_star` to Rust. 1.5x-2x faster in average.
