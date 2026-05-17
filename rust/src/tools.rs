@@ -1,6 +1,6 @@
 /// Pure functions tools for pyochain
 use crate::option::{PySome, get_none_singleton};
-use crate::result::{PyOk, PyResultEnum};
+use crate::result::{PyErr, PyOk};
 use crate::types::ConcatArgs;
 use pyo3::intern;
 use pyo3::types::{PyAny, PyBool, PyDict, PyFunction, PyModule, PyTuple};
@@ -89,8 +89,9 @@ pub fn try_find(data: &Bound<'_, PyAny>, predicate: &Bound<'_, PyFunction>) -> P
     let py = data.py();
     for item in data.try_iter()? {
         let val = item?;
-        match predicate.call1((&val,))?.extract::<PyResultEnum<'_>>()? {
-            PyResultEnum::Ok(ok_ref) => {
+        let result = predicate.call1((&val,))?;
+        match result.cast_exact::<PyOk>() {
+            Ok(ok_ref) => {
                 if unsafe {
                     ok_ref
                         .get()
@@ -102,8 +103,8 @@ pub fn try_find(data: &Bound<'_, PyAny>, predicate: &Bound<'_, PyFunction>) -> P
                     return Ok(PyOk::new(some_val).into_py_any(py)?);
                 }
             }
-            PyResultEnum::Err(err_ref) => {
-                return Ok(err_ref.into_py_any(py)?);
+            Err(_) => {
+                return Ok(result.cast_exact::<PyErr>()?.to_owned().unbind().into_any());
             }
         }
     }
@@ -121,19 +122,17 @@ pub fn try_fold(
 
     for item in data.try_iter()? {
         let item = item?;
-        match func
-            .call1((accumulator, item))?
-            .extract::<PyResultEnum<'_>>()?
-        {
-            PyResultEnum::Ok(ok_ref) => {
+        let result = func.call1((accumulator, item))?;
+        match result.cast_exact::<PyOk>() {
+            Ok(ok_ref) => {
                 accumulator = ok_ref.get().value.clone_ref(py);
             }
-            PyResultEnum::Err(err_ref) => {
-                return Ok(err_ref.into_py_any(py)?);
+            Err(_) => {
+                return result.cast_exact::<PyErr>()?.into_py_any(py);
             }
         }
     }
-    return Ok(PyOk::new(accumulator).into_py_any(py)?);
+    return PyOk::new(accumulator).into_py_any(py);
 }
 
 #[pyfunction]
@@ -149,20 +148,18 @@ pub fn try_reduce(data: &Bound<'_, PyAny>, func: &Bound<'_, PyFunction>) -> PyRe
 
     for item in iterator {
         let val = item?;
-        match func
-            .call1((&accumulator, val))?
-            .extract::<PyResultEnum<'_>>()?
-        {
-            PyResultEnum::Ok(ok_ref) => {
+        let result = func.call1((&accumulator, val))?;
+        match result.cast_exact::<PyOk>() {
+            Ok(ok_ref) => {
                 accumulator = ok_ref.get().value.clone_ref(py);
             }
-            PyResultEnum::Err(err_ref) => {
-                return Ok(err_ref.into_py_any(py)?);
+            Err(_) => {
+                return result.cast_exact::<PyErr>()?.into_py_any(py);
             }
         }
     }
 
-    Ok(PyOk::new(PySome::new(accumulator).into_py_any(py)?).into_py_any(py)?)
+    PyOk::new(PySome::new(accumulator).into_py_any(py)?).into_py_any(py)
 }
 #[pyfunction]
 pub fn is_sorted(

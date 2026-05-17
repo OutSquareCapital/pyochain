@@ -9,14 +9,6 @@ use pyo3::{
     prelude::*,
     types::{PyDict, PyString, PyTuple},
 };
-#[derive(FromPyObject)]
-pub enum PyResultEnum<'py> {
-    #[pyo3(transparent)]
-    Ok(Bound<'py, PyOk>),
-    #[pyo3(transparent)]
-    Err(Bound<'py, PyErr>),
-}
-
 fn format_err_value(error: &Bound<'_, PyAny>) -> PyResult<String> {
     match error.is_instance_of::<PyBaseException>() {
         true => {
@@ -218,9 +210,9 @@ impl PyOk {
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        match self.value.bind(py).extract::<PyRef<PySome>>() {
+        match self.value.bind(py).cast_exact::<PySome>() {
             Ok(some_ref) => {
-                let ok_value = PyOk::new(some_ref.value.clone_ref(py)).into_py_any(py)?;
+                let ok_value = PyOk::new(some_ref.get().value.clone_ref(py)).into_py_any(py)?;
                 PySome::new(ok_value).into_py_any(py)
             }
             Err(_) => get_none_singleton(py),

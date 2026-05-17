@@ -18,17 +18,17 @@ type BenchCallWithInt = Callable[[int], object]
 
 
 @pytest.mark.benchmark(group=VariantGroups.CREATE.value)
-def test_option_create_some(benchmark: BenchFixture) -> None:
+def test_create_some(benchmark: BenchFixture) -> None:
     assert benchmark(option, 10) == Some(10)
 
 
 @pytest.mark.benchmark(group=VariantGroups.CREATE.value)
-def test_option_create_none(benchmark: BenchFixture) -> None:
+def test_create_none(benchmark: BenchFixture) -> None:
     assert benchmark(option, None) == NONE
 
 
 @pytest.mark.benchmark(group=VariantGroups.MAP.value)
-def test_option_map_without_kwargs(benchmark: BenchFixture) -> None:
+def test_map_without_kwargs(benchmark: BenchFixture) -> None:
     def double(value: int) -> int:
         return value * 2
 
@@ -36,7 +36,7 @@ def test_option_map_without_kwargs(benchmark: BenchFixture) -> None:
 
 
 @pytest.mark.benchmark(group=VariantGroups.MAP.value)
-def test_option_map_with_kwargs(benchmark: BenchFixture) -> None:
+def test_map_with_kwargs(benchmark: BenchFixture) -> None:
     def scale(value: int, *, factor: int, offset: int) -> int:
         return value * factor + offset
 
@@ -44,7 +44,7 @@ def test_option_map_with_kwargs(benchmark: BenchFixture) -> None:
 
 
 @pytest.mark.benchmark(group=VariantGroups.AND_THEN.value)
-def test_option_and_then_with_kwargs(benchmark: BenchFixture) -> None:
+def test_and_then_with_kwargs(benchmark: BenchFixture) -> None:
     def keep_if_at_least(value: int, *, minimum: int) -> Option[int]:
         return Some(value) if value >= minimum else NONE
 
@@ -52,7 +52,7 @@ def test_option_and_then_with_kwargs(benchmark: BenchFixture) -> None:
 
 
 @pytest.mark.benchmark(group=VariantGroups.MATCH.value)
-def test_option_match_case_some(benchmark: BenchFixture) -> None:
+def test_match_case_some(benchmark: BenchFixture) -> None:
     def describe(opt: Option[int]) -> int:
         match opt:
             case Some(_):
@@ -71,7 +71,7 @@ def test_option_match_case_some(benchmark: BenchFixture) -> None:
         pytest.param(NONE.ok_or, id="none"),
     ],
 )
-def test_option_ok_or(benchmark: BenchFixture, fn: BenchCallWithInt) -> None:
+def test_ok_or(benchmark: BenchFixture, fn: BenchCallWithInt) -> None:
     def run() -> None:
         _ = fn(0)
 
@@ -79,12 +79,12 @@ def test_option_ok_or(benchmark: BenchFixture, fn: BenchCallWithInt) -> None:
 
 
 @pytest.mark.benchmark(group="option_flatten")
-def test_option_flatten_nested_some(benchmark: BenchFixture) -> None:
+def test_flatten_nested_some(benchmark: BenchFixture) -> None:
     assert benchmark(Some(Some(10)).flatten) == Some(10)
 
 
 @pytest.mark.benchmark(group="option_flatten")
-def test_option_flatten_nested_none(benchmark: BenchFixture) -> None:
+def test_flatten_nested_none(benchmark: BenchFixture) -> None:
     assert benchmark(Some(NONE).flatten) == NONE  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
 
 
@@ -97,7 +97,7 @@ def test_option_flatten_nested_none(benchmark: BenchFixture) -> None:
         pytest.param(NONE.transpose, id="none"),
     ],
 )
-def test_option_transpose(benchmark: BenchFixture, fn: BenchCall) -> None:
+def test_transpose(benchmark: BenchFixture, fn: BenchCall) -> None:
     def run() -> None:
         _ = fn()
 

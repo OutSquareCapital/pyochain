@@ -1,6 +1,6 @@
 use crate::errors::OptionUnwrapError;
 use crate::hasher::hash_fn;
-use crate::result::{self, PyResultEnum};
+use crate::result;
 use crate::types::ConcatArgs;
 use pyo3::IntoPyObjectExt;
 use pyo3::{
@@ -78,8 +78,8 @@ impl PySome {
     }
 
     fn __eq__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-        match other.extract::<PyRef<PySome>>() {
-            Ok(other_some) => self.value.bind(other.py()).eq(&other_some.value),
+        match other.cast_exact::<PySome>() {
+            Ok(other_some) => self.value.bind(other.py()).eq(&other_some.get().value),
             Err(_) => Ok(false),
         }
     }
@@ -254,7 +254,7 @@ impl PySome {
 
     fn zip(&self, other: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = other.py();
-        if other.is_instance_of::<PyNone>() {
+        if other.is_exact_instance_of::<PyNone>() {
             return get_none_singleton(py);
         }
         let init = PySome::new(
@@ -262,7 +262,7 @@ impl PySome {
                 py,
                 [
                     self.value.bind(py).clone(),
-                    other.extract::<PyRef<PySome>>()?.value.bind(py).clone(),
+                    other.cast_exact::<PySome>()?.get().value.bind(py).clone(),
                 ],
             )?
             .unbind()
@@ -273,21 +273,21 @@ impl PySome {
 
     fn zip_with(&self, other: &Bound<'_, PyAny>, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = other.py();
-        if other.is_instance_of::<PyNone>() {
+        if other.is_exact_instance_of::<PyNone>() {
             return get_none_singleton(py);
         }
         let value = f
-            .call1((&self.value, &other.extract::<PyRef<PySome>>()?.value))?
+            .call1((&self.value, &other.cast_exact::<PySome>()?.get().value))?
             .unbind();
         PySome::new(value).into_py_any(py)
     }
 
     fn reduce(&self, other: &Bound<'_, PyAny>, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = other.py();
-        let value = if other.is_instance_of::<PyNone>() {
+        let value = if other.is_exact_instance_of::<PyNone>() {
             self.value.clone_ref(py)
         } else {
-            let other_some = other.extract::<PyRef<PySome>>()?;
+            let other_some = other.cast_exact::<PySome>()?.get();
             func.call1((&self.value, &other_some.value))?.unbind()
         };
         PySome::new(value).into_py_any(py)
@@ -295,7 +295,7 @@ impl PySome {
 
     fn xor(&self, optb: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = optb.py();
-        if optb.is_instance_of::<PyNone>() {
+        if optb.is_exact_instance_of::<PyNone>() {
             PySome::new(self.value.clone_ref(py)).into_py_any(py)
         } else {
             get_none_singleton(py)
@@ -312,19 +312,20 @@ impl PySome {
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let inner = self.value.bind(py);
-        match inner.extract::<PyResultEnum>()? {
-            PyResultEnum::Ok(ok_ref) => {
+        match inner.cast_exact::<result::PyOk>() {
+            Ok(ok_ref) => {
                 let some_value = PySome::new(ok_ref.get().value.clone_ref(py)).into_py_any(py)?;
                 Ok(result::PyOk::new(some_value).into_py_any(py)?)
             }
-            PyResultEnum::Err(err_ref) => {
+            Err(_) => {
+                let err_ref = inner.cast_exact::<result::PyErr>()?;
                 Ok(result::PyErr::new(err_ref.get().error.clone_ref(py)).into_py_any(py)?)
             }
         }
     }
     fn eq(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-        match other.extract::<PyRef<PySome>>() {
-            Ok(other_some) => self.value.bind(other.py()).eq(&other_some.value),
+        match other.cast_exact::<PySome>() {
+            Ok(other_some) => self.value.bind(other.py()).eq(&other_some.get().value),
             Err(_) => Ok(false),
         }
     }
@@ -530,7 +531,7 @@ impl PyNone {
     }
 
     fn xor(&self, optb: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        if optb.is_instance_of::<PyNone>() {
+        if optb.is_exact_instance_of::<PyNone>() {
             get_none_singleton(optb.py())
         } else {
             Ok(optb.clone().unbind())
@@ -564,7 +565,7 @@ impl PyNone {
     }
 
     fn __eq__(&self, other: &Bound<'_, PyAny>) -> bool {
-        other.is_none() || other.is_instance_of::<PyNone>()
+        other.is_none() || other.is_exact_instance_of::<PyNone>()
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]

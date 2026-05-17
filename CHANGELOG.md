@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### 🚀 Performance improvements
+
+- Using `cast_exact/is_exact_instance_of` instead of `cast/is_instance_of` when interacting with pyochain types (Result/Option) in Rust methods bring an overall **+2% to +5%** performance gain across benchmarks. Various `Option/Result` methods, as well a `Iter::{try_reduce, try_find, try_fold}`, benefit from this change.
+
+### 🛠️ Other improvements
+
+- Benchmarks -> deletions, renaming and new ones
+
+### 📖 Documentation
+
+- Small improvements in `Iter` docstrings
+
 ## [0.17.0] - 2026-05-17
 
 ### 🏆 Highlights

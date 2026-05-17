@@ -17,7 +17,7 @@ type BenchCall = Callable[[], object]
 
 
 @pytest.mark.benchmark(group=VariantGroups.MAP.value)
-def test_option_map_without_kwargs(benchmark: BenchFixture) -> None:
+def test_map_without_kwargs(benchmark: BenchFixture) -> None:
     def double(value: int) -> int:
         return value * 2
 
@@ -28,7 +28,7 @@ def test_option_map_without_kwargs(benchmark: BenchFixture) -> None:
 
 
 @pytest.mark.benchmark(group=VariantGroups.MAP.value)
-def test_option_map_with_kwargs(benchmark: BenchFixture) -> None:
+def test_map_with_kwargs(benchmark: BenchFixture) -> None:
     def scale(value: int, *, factor: int, offset: int) -> int:
         return value * factor + offset
 
@@ -38,8 +38,18 @@ def test_option_map_with_kwargs(benchmark: BenchFixture) -> None:
     assert benchmark(fn) is None
 
 
+def test_map_star(benchmark: BenchFixture) -> None:
+    def combine(_a: int, _b: int, _c: int) -> int:
+        return 1
+
+    def fn() -> Result[int, int]:
+        return Ok((1, 2, 3)).map_star(combine)
+
+    assert benchmark(fn).unwrap() == 1
+
+
 @pytest.mark.benchmark(group=VariantGroups.AND_THEN.value)
-def test_option_and_then_with_kwargs(benchmark: BenchFixture) -> None:
+def test_and_then_with_kwargs(benchmark: BenchFixture) -> None:
     def keep_if_at_least(value: int, *, minimum: int) -> Result[int, int]:
         return Ok(value) if value >= minimum else Err(value)
 
@@ -50,7 +60,7 @@ def test_option_and_then_with_kwargs(benchmark: BenchFixture) -> None:
 
 
 @pytest.mark.benchmark(group=VariantGroups.MATCH.value)
-def test_option_match_case_some(benchmark: BenchFixture) -> None:
+def test_match_case(benchmark: BenchFixture) -> None:
     def describe(opt: Result[int, int]) -> int:
         match opt:
             case Ok(_):
@@ -69,7 +79,7 @@ def test_option_match_case_some(benchmark: BenchFixture) -> None:
         pytest.param(Err(10).err, id="err_to_option"),
     ],
 )
-def test_result_convert(benchmark: BenchFixture, fn: BenchCall) -> None:
+def test_convert(benchmark: BenchFixture, fn: BenchCall) -> None:
     def run() -> None:
         _ = fn()
 
@@ -84,7 +94,7 @@ def test_result_convert(benchmark: BenchFixture, fn: BenchCall) -> None:
         pytest.param(Ok(Err(10)).flatten, id="err"),
     ],
 )
-def test_result_flatten(benchmark: BenchFixture, fn: BenchCall) -> None:
+def test_flatten(benchmark: BenchFixture, fn: BenchCall) -> None:
     def run() -> None:
         _ = fn()
 
@@ -100,7 +110,7 @@ def test_result_flatten(benchmark: BenchFixture, fn: BenchCall) -> None:
         pytest.param(Err(10).transpose, id="err"),
     ],
 )
-def test_result_transpose(benchmark: BenchFixture, fn: BenchCall) -> None:
+def test_transpose(benchmark: BenchFixture, fn: BenchCall) -> None:
     def run() -> None:
         _ = fn()
 
@@ -115,7 +125,7 @@ def test_result_transpose(benchmark: BenchFixture, fn: BenchCall) -> None:
         pytest.param(Err(10).swap, id="err"),
     ],
 )
-def test_result_swap(benchmark: BenchFixture, fn: BenchCall) -> None:
+def test_swap(benchmark: BenchFixture, fn: BenchCall) -> None:
     def run() -> None:
         _ = fn()
 
