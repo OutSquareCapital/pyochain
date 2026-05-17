@@ -1,9 +1,4 @@
-"""Public mixins ABCs for internal pyochain types, and custom user implementations.
-
-Since `Pipeable` and `Checkable` depend only on Self for arguments, returns types and internal logic, they can be safely added to any already existing class to provide additional functionality.
-
-`PyoIterable` is a more specific ABC, equivalent to subclassing `abc.Iterable`, but with additional methods and requirements specific to pyochain.
-"""
+"""Public mixins and ABCs for internal pyochain types, and custom user implementations."""
 
 from ..rs import Checkable, Pipeable
 from ._iterable import (

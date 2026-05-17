@@ -4,39 +4,40 @@ This page is the entry point to the **complete** public API documentation.
 
 ## Collections
 
-- [`Seq[T]`](reference/seq.md) — Immutable collections (tuple-backed)
-- [`Vec[T]`](reference/vec.md) — Mutable collections (list-backed)
-- [`Set[T]`](reference/set.md) — Immutable collections (frozenset-backed)
-- [`SetMut[T]`](reference/setmut.md) — Mutable sets (set-backed)
-- [`Dict[K, V]`](reference/dict.md) — Chainable dictionaries
+- [`Seq[T]`](reference/seq.md) — Immutable Sequence (`tuple`-backed)
+- [`Vec[T]`](reference/vec.md) — Mutable Sequence (`list`-backed)
+- [`Set[T]`](reference/set.md) — Immutable Set (`frozenset`-backed)
+- [`SetMut[T]`](reference/setmut.md) — Mutable Set (`set`-backed)
+- [`Dict[K, V]`](reference/dict.md) — Mutable Mapping (`dict`-backed)
+- [`Range`](reference/range.md) —  Integer ranges (`range`-backed)
 
 ## Iterators
 
 - [`Iter[T]`](reference/iter.md) — Lazy processing of iterators
 - [`Peekable[T]`](reference/peekable.md) — Peeking iterator
 - [`Unzipped[T]`](reference/unzipped.md) — Unzipped iterator results
-- [`Range`](reference/range.md) — Lazy integer ranges
 
 ## Error handling
 
-- [`Result[T, E]`](reference/result.md) — Explicit error handling (`Ok` / `Err`)
-- [`Ok[T]`](reference/ok.md)
-- [`Err[E]`](reference/err.md)
-- [`ResultUnwrapError`](reference/resultunwraperror.md)
+- [`Result[T, E]`](reference/result.md) — Actual type to use for explicit error handling (`Ok` / `Err`). Used for type hints.
+- [`ResultType[T, E]`](reference/resulttype.md) — Common interface for `Ok` and `Err`. Reference their methods.
+- [`Ok[T]`](reference/ok.md) - `Ok` variant of `Result`
+- [`Err[E]`](reference/err.md) - `Err` variant of `Result`
+- [`ResultUnwrapError`](reference/resultunwraperror.md) - Exception raised when unwrapping a `Result` that is an `Err`
 
 ## Optional values
 
 - [`Option[T]`](reference/option.md) — Optional values (`Some` / `NONE`)
-- [`Some[T]`](reference/some.md)
-- [`NONE`](reference/null.md)
-- [`OptionUnwrapError`](reference/optionunwraperror.md)
+- [`Some[T]`](reference/some.md) - `Some` variant of `Option`
+- [`NONE`](reference/null.md) - `NONE` variant of `Option`. Constant singleton.
+- [`OptionUnwrapError`](reference/optionunwraperror.md) - Exception raised when unwrapping an `Option` that is `NONE`
 
 ## Mixins & ABC's
 
 ### Fluent Mixins
 
-- [`Pipeable`](reference/pipeable.md) — `.into()`, `.inspect()`
-- [`Checkable`](reference/checkable.md) — `.then()`, `.ok_or()`, ...
+- [`Pipeable`](reference/pipeable.md) — Fluent methods for chaining operations
+- [`Checkable`](reference/checkable.md) — Conversion to `Option`/`Result` based on instance truthiness
 
 ### Abstract Base Classes
 

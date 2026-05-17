@@ -56,9 +56,7 @@
         ] },
         { "Getting Started" = [
             { "Core Types Overview" = "core-types-overview.md" },
-            { "Examples" = "examples.md" },
             { "Interoperability" = "interoperability.md" },
-            { "Overview" = "getting-started.md" },
         ] },
         { "Home" = "index.md" },
     ]

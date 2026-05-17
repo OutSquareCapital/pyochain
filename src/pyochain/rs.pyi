@@ -40,14 +40,15 @@ class Pipeable(Protocol):
 
         Example:
         ```python
-        >>> from pyochain import Seq
+        >>> from pyochain import Seq, Result, Ok, Err
         >>> from collections.abc import Sequence
-        >>> import hashlib
-        >>> def sha256_hex(data: Sequence[int]) -> str:
-        ...     return hashlib.sha256(bytes(data)).hexdigest()
+        >>> def check_data(data: Sequence[int]) -> Result[Sequence[int], str]:
+        ...     if len(data) == 0:
+        ...         return Err("Empty data")
+        ...     return Ok(data)
         >>>
-        >>> Seq((1, 2, 3)).into(sha256_hex)
-        '039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81'
+        >>> Seq((1, 2, 3)).into(check_data).into(lambda r: r.map(sum))
+        Ok(6)
 
         ```
         """
