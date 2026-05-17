@@ -2365,7 +2365,7 @@ class Iter[T](PyoIterator[T]):
             *others (Iterable[Any]): Other iterables to zip with.
 
         Returns:
-            ZippedLongest: An iterable of tuples containing optional elements from the zipped iterables.
+            ZippedLongest[T]: An iterable of tuples containing optional elements from the zipped iterables.
 
         Example:
         ```python

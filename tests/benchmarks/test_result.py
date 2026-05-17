@@ -80,8 +80,8 @@ def test_result_convert(benchmark: BenchFixture, fn: BenchCall) -> None:
 @pytest.mark.parametrize(
     "fn",
     [
-        pytest.param(Ok(Ok(10)).flatten, id="ok"),  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownArgumentType]
-        pytest.param(Ok(Err(10)).flatten, id="err"),  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownArgumentType]
+        pytest.param(Ok(Ok(10)).flatten, id="ok"),
+        pytest.param(Ok(Err(10)).flatten, id="err"),
     ],
 )
 def test_result_flatten(benchmark: BenchFixture, fn: BenchCall) -> None:
@@ -96,7 +96,7 @@ def test_result_flatten(benchmark: BenchFixture, fn: BenchCall) -> None:
     "fn",
     [
         pytest.param(Ok(Some(10)).transpose, id="some"),  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownArgumentType]
-        pytest.param(Ok(NONE).transpose, id="none"),  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownArgumentType]
+        pytest.param(Ok(NONE).transpose, id="none"),
         pytest.param(Err(10).transpose, id="err"),
     ],
 )

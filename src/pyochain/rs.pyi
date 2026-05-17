@@ -1282,6 +1282,9 @@ class Some[T](OptionType[T]):
     value: T
     __match_args__ = ("value",)
     # Hack to immediately handle it as an "enum".
+    @overload
+    def __new__[E](cls, value: Result[T, E]) -> Option[Result[T, E]]: ...
+    @overload
     def __new__(cls, value: T) -> Option[T]: ...
 
 @final
@@ -2255,7 +2258,12 @@ class Ok[T, E](ResultType[T, E]):
 
     value: T
     # NOTE: this is an hack to avoid errors by immediatly casting `E` as `Any`, thus avoiding any type errors with incompatible types.
-    def __new__(cls, value: T) -> Ok[T, Any]: ...  # pyright: ignore[reportExplicitAny]
+    @overload
+    def __new__(cls, value: Result[T, E]) -> Result[Result[T, E], Any]: ...  # pyright: ignore[reportExplicitAny]
+    @overload
+    def __new__(cls, value: Option[T]) -> Result[Option[T], Any]: ...  # pyright: ignore[reportExplicitAny]
+    @overload
+    def __new__(cls, value: T) -> Result[T, Any]: ...  # pyright: ignore[reportExplicitAny]
 
 @final
 class Err[T, E](ResultType[T, E]):
@@ -2273,4 +2281,9 @@ class Err[T, E](ResultType[T, E]):
 
     error: E
     # NOTE: same hack as in `Ok` for type errors
-    def __new__(cls, error: E) -> Err[Any, E]: ...  # pyright: ignore[reportExplicitAny]
+    @overload
+    def __new__(cls, error: Result[T, E]) -> Result[Any, Result[T, E]]: ...  # pyright: ignore[reportExplicitAny]
+    @overload
+    def __new__(cls, error: Option[E]) -> Result[Any, Option[E]]: ...  # pyright: ignore[reportExplicitAny]
+    @overload
+    def __new__(cls, error: E) -> Result[Any, E]: ...  # pyright: ignore[reportExplicitAny]
