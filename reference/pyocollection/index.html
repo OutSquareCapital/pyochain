@@ -1813,11 +1813,8 @@
 
 
 
-        <p>Base ABC for pyochain collections.</p>
-<p><code>PyoCollection[T]</code> is the shared ABC for concrete collections:</p>
-<p><code>Seq</code>, <code>Vec</code>, <code>Set</code>, <code>SetMut</code>, <code>Dict</code>, etc...</p>
-<p>It extends <code>PyoIterable[T]</code> and <code>collections.abc.Collection[T]</code>,
-and provides a few convenience methods like <code>contains()</code> and <code>repeat()</code>.</p>
+        <p><code>Extends</code>PyoIterable[T]<code>and</code>collections.abc.Collection[T]`.</p>
+<p>This includes <code>Seq</code>, <code>Vec</code>, <code>Set</code>, <code>SetMut</code>, <code>Dict</code>, etc...</p>
 <p>Any concrete subclass must implement the required <code>Collection</code> dunder methods:</p>
 <ul>
 <li><code>__iter__</code></li>
@@ -1932,20 +1929,10 @@ and provides a few convenience methods like <code>contains()</code> and <code>re
 <span class="normal">545</span>
 <span class="normal">546</span>
 <span class="normal">547</span>
-<span class="normal">548</span>
-<span class="normal">549</span>
-<span class="normal">550</span>
-<span class="normal">551</span>
-<span class="normal">552</span>
-<span class="normal">553</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoCollection</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoIterable</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">Collection</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base ABC for pyochain collections.</span>
+<span class="normal">548</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoCollection</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoIterable</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">Collection</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;`Extends `PyoIterable[T]` and `collections.abc.Collection[T]`.</span>
 
-<span class="sd">    `PyoCollection[T]` is the shared ABC for concrete collections:</span>
-
-<span class="sd">    `Seq`, `Vec`, `Set`, `SetMut`, `Dict`, etc...</span>
-
-<span class="sd">    It extends `PyoIterable[T]` and `collections.abc.Collection[T]`,</span>
-<span class="sd">    and provides a few convenience methods like `contains()` and `repeat()`.</span>
+<span class="sd">    This includes `Seq`, `Vec`, `Set`, `SetMut`, `Dict`, etc...</span>
 
 <span class="sd">    Any concrete subclass must implement the required `Collection` dunder methods:</span>
 
@@ -2136,7 +2123,12 @@ and provides a few convenience methods like <code>contains()</code> and <code>re
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">473</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">468</span>
+<span class="normal">469</span>
+<span class="normal">470</span>
+<span class="normal">471</span>
+<span class="normal">472</span>
+<span class="normal">473</span>
 <span class="normal">474</span>
 <span class="normal">475</span>
 <span class="normal">476</span>
@@ -2153,12 +2145,7 @@ and provides a few convenience methods like <code>contains()</code> and <code>re
 <span class="normal">487</span>
 <span class="normal">488</span>
 <span class="normal">489</span>
-<span class="normal">490</span>
-<span class="normal">491</span>
-<span class="normal">492</span>
-<span class="normal">493</span>
-<span class="normal">494</span>
-<span class="normal">495</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">contains</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">490</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">contains</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if the `Collection` contains the specified **value**.</span>
 
 <span class="sd">    This is equivalent to using the `in` keyword directly on the `Collection`.</span>
@@ -2236,7 +2223,12 @@ and provides a few convenience methods like <code>contains()</code> and <code>re
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">534</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">529</span>
+<span class="normal">530</span>
+<span class="normal">531</span>
+<span class="normal">532</span>
+<span class="normal">533</span>
+<span class="normal">534</span>
 <span class="normal">535</span>
 <span class="normal">536</span>
 <span class="normal">537</span>
@@ -2250,12 +2242,7 @@ and provides a few convenience methods like <code>contains()</code> and <code>re
 <span class="normal">545</span>
 <span class="normal">546</span>
 <span class="normal">547</span>
-<span class="normal">548</span>
-<span class="normal">549</span>
-<span class="normal">550</span>
-<span class="normal">551</span>
-<span class="normal">552</span>
-<span class="normal">553</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_empty</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">548</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_empty</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns `True` if the `Collection` contains no elements.</span>
 
 <span class="sd">    Returns:</span>
@@ -2372,7 +2359,12 @@ and provides a few convenience methods like <code>contains()</code> and <code>re
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">497</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">492</span>
+<span class="normal">493</span>
+<span class="normal">494</span>
+<span class="normal">495</span>
+<span class="normal">496</span>
+<span class="normal">497</span>
 <span class="normal">498</span>
 <span class="normal">499</span>
 <span class="normal">500</span>
@@ -2402,12 +2394,7 @@ and provides a few convenience methods like <code>contains()</code> and <code>re
 <span class="normal">524</span>
 <span class="normal">525</span>
 <span class="normal">526</span>
-<span class="normal">527</span>
-<span class="normal">528</span>
-<span class="normal">529</span>
-<span class="normal">530</span>
-<span class="normal">531</span>
-<span class="normal">532</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">repeat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">Self</span><span class="p">]:</span>
+<span class="normal">527</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">repeat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">Self</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Repeat the entire `Collection` **n** times (as elements) in an `Iter`.</span>
 
 <span class="sd">    If **n** is `None`, repeat indefinitely.</span>

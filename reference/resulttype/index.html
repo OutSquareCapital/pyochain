@@ -2364,9 +2364,11 @@
 
 
         <p>This is the base Protocol defined for returning and propagating errors.</p>
-<p><code>Result[T, E]</code> is a the type union of the two possibles variants of the Protocol:
-- <code>Ok[T, E]</code>, representing success and containing a value
-- <code>Err[T, E]</code>, representing error and containing an error value</p>
+<p><code>Result[T, E]</code> is a the type union of the two possibles variants of the Protocol:</p>
+<ul>
+<li><code>Ok[T, E]</code>, representing success and containing a value</li>
+<li><code>Err[T, E]</code>, representing error and containing an error value</li>
+</ul>
 <p>Functions return <code>Result</code> whenever errors are expected and recoverable.</p>
 <p>For example, I/O or web requests can fail for many reasons, and using <code>Result</code> forces the caller to handle the possibility of failure.</p>
 <p>This is directly inspired by Rust's <code>Result</code> type, and provides similar functionality for error handling in Python.</p>
