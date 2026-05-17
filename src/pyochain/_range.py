@@ -13,6 +13,7 @@ class Range(PyoSequence[int]):
     """
 
     _inner: range
+    __slots__ = ("_inner",)  # pyright: ignore[reportIncompatibleUnannotatedOverride, reportUnannotatedClassAttribute]
 
     def __init__(self, start: int, stop: int, step: int = 1) -> None:
         self._inner = range(start, stop, step)
