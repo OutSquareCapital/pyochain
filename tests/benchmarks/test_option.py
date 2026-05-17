@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from pyochain import NONE, Err, Ok, Option, Some
+from pyochain import NONE, Err, Null, Ok, Option, Some, option
 
 from ._utils import VariantGroups
 
@@ -19,12 +19,12 @@ type BenchCallWithInt = Callable[[int], object]
 
 @pytest.mark.benchmark(group=VariantGroups.CREATE.value)
 def test_option_create_some(benchmark: BenchFixture) -> None:
-    assert benchmark(Option, 10) == Some(10)
+    assert benchmark(option, 10) == Some(10)
 
 
 @pytest.mark.benchmark(group=VariantGroups.CREATE.value)
 def test_option_create_none(benchmark: BenchFixture) -> None:
-    assert benchmark(Option, None) == NONE
+    assert benchmark(option, None) == NONE
 
 
 @pytest.mark.benchmark(group=VariantGroups.MAP.value)
@@ -57,7 +57,7 @@ def test_option_match_case_some(benchmark: BenchFixture) -> None:
         match opt:
             case Some(_):
                 return 1
-            case _:
+            case Null():
                 return 0
 
     assert benchmark(describe, Some(10)) == 1
@@ -80,7 +80,7 @@ def test_option_ok_or(benchmark: BenchFixture, fn: BenchCallWithInt) -> None:
 
 @pytest.mark.benchmark(group="option_flatten")
 def test_option_flatten_nested_some(benchmark: BenchFixture) -> None:
-    assert benchmark(Some(Some(10)).flatten) == Some(10)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
+    assert benchmark(Some(Some(10)).flatten) == Some(10)
 
 
 @pytest.mark.benchmark(group="option_flatten")

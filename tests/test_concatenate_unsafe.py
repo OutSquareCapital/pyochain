@@ -393,7 +393,7 @@ def test_into_with_builtin() -> None:
     """Test into with identity function."""
     result = pc.Some(5).into(lambda x: x)
     # into() receives the full Some object
-    assert isinstance(result, pc.Option)
+    assert isinstance(result, pc.Some)
 
 
 def test_into_with_external_function() -> None:
@@ -475,7 +475,7 @@ def test_and_then_with_exception() -> None:
 def test_into_with_exception() -> None:
     """Test into when function raises."""
 
-    def failing_func(_x: pc.Some[int]) -> int:
+    def failing_func(_x: pc.Option[int]) -> int:
         msg = "Into error"
         raise ValueError(msg)
 
@@ -588,5 +588,4 @@ def test_large_argument_list() -> None:
         return sum(args)
 
     args = list(range(50))
-    result = pc.Some(args[0]).map(sum_all, *args[1:])
-    assert result.unwrap() == sum(range(50))
+    assert pc.Some(args[0]).map(sum_all, *args[1:]).unwrap() == sum(range(50))

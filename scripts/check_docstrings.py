@@ -9,7 +9,7 @@ import rich
 import rich.table
 import rich.text
 
-from pyochain import NONE, Err, Iter, Ok, Option, Result, Seq, Set, Some, Vec
+from pyochain import NONE, Err, Iter, Ok, Option, Result, Seq, Set, Some, Vec, option
 
 SRC_DIR = Path().joinpath("src", "pyochain")
 CODE_BLOCK_PATTERN = re.compile(r"^```(\w*)", re.MULTILINE)
@@ -117,7 +117,7 @@ def _process_node(
     def _is_public(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
         return not node.name.startswith("_") and not node.name.istitle()
 
-    docstring = Option(ast.get_docstring(node))
+    docstring = option(ast.get_docstring(node))
     if docstring.is_none():
         if (
             _is_public(node)
@@ -236,11 +236,7 @@ def _check_code_blocks(
 
 
 def _check_errs(
-    lines: Vec[str],
-    func_name: str,
-    start_line: int,
-    *,
-    has_no_doctest_flag: bool,
+    lines: Vec[str], func_name: str, start_line: int, *, has_no_doctest_flag: bool
 ) -> Result[None, Seq[ErrorDetail]]:
     should_skip = (
         func_name.startswith("_")

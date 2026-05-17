@@ -25,7 +25,7 @@ import cytoolz as cz
 
 from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
 from .._types import SupportsComparison, SupportsRichComparison
-from ..rs import NONE, Checkable, Err, Ok, Option, Pipeable, Result, Some
+from ..rs import NONE, Checkable, Err, Ok, Option, Pipeable, Result, Some, option
 
 if TYPE_CHECKING:
     from random import Random
@@ -742,7 +742,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         ```
         """
-        return Option(next(self, None))
+        return option(next(self, None))
 
     def reduce(self, func: Callable[[T, T], T]) -> T:
         """Apply a function of two arguments cumulatively to the items of an iterable, from left to right.
@@ -901,10 +901,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         ```python
         >>> from pyochain import Iter
-        >>> data = [(1, 2), (3, 4)]
+        >>> data = ((1, 2), (3, 4))
         >>> Iter(data).fold_star(0, lambda acc, x, y: acc + x + y)
         10
-        >>> data = [("a", "b"), ("c", "d")]
+        >>> data = (("a", "b"), ("c", "d"))
         >>> Iter(data).fold_star('', lambda acc, x, y: acc + x + y)
         'abcd'
 
@@ -943,7 +943,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         ```
         """
-        return Option(next(filter(predicate, self), None))
+        return option(next(filter(predicate, self), None))
 
     def try_find[E](
         self, predicate: Callable[[T], Result[bool, E]]
@@ -1382,7 +1382,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Example:
         ```python
         >>> from pyochain import Iter
-        >>> data = [1, 2, 3]
+        >>> data = (1, 2, 3)
         >>> Iter(data).take(2).collect()
         Seq(1, 2)
         >>> Iter(data).take(5).collect()
@@ -1653,7 +1653,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Knuth's example for prime factors of 1836:  2**2 * 3**3 * 17**1
         ```python
         >>> import math
-        >>> data = [2, 2, 3, 3, 3, 17]
+        >>> data = (2, 2, 3, 3, 3, 17)
         >>> Iter(data).elements().into(math.prod)
         1836
 
@@ -2484,7 +2484,7 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
         """
         previous = self.get(key, None)
         self[key] = value
-        return Option(previous)
+        return option(previous)
 
     def try_insert(self, key: K, value: V) -> Result[V, KeyError]:
         """Tries to insert a key-value pair into the `MutableMapping`, and returns a `Result[V, KeyError]` containing the value in the entry (if successful).
@@ -2534,7 +2534,7 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
 
         ```
         """
-        return Option(self.pop(key, None))
+        return option(self.pop(key, None))
 
     def remove_entry(self, key: K) -> Option[tuple[K, V]]:
         """Remove a key from the `MutableMapping` and return the item if it existed.
@@ -2580,7 +2580,7 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
 
         ```
         """
-        return Option(self.get(key, None))
+        return option(self.get(key, None))
 
 
 class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
