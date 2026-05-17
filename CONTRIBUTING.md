@@ -161,3 +161,36 @@ git push origin --delete <tag_name>
 ```
 
 This will convert the last tag into a draft release, allowing you to fix the issue and publish the release again without creating a new one.
+
+## Changelogs and release template
+
+Below is a template used for sections in CHANGELOG.md and release notes on GitHub.
+
+When preparing a release, update the "unreleased" section with the relevant changes and then move it to a new section with the version number and release date.
+
+```txt
+# Pyochain v<VERSION>
+
+## Changes
+
+### 💥 Breaking changes
+
+### 🏆 Highlights
+
+### ⚠️ Deprecations
+
+### 🚀 Performance improvements
+
+### ✨ Enhancements
+
+### 🐞 Bug fixes
+
+### 📖 Documentation
+
+### 🛠️ Other improvements
+
+### 🔄 Refactors
+
+### 📦 Build system
+
+```

@@ -1,39 +1,62 @@
 # Changelog
 
-## [unreleased]
+## [Unreleased]
 
-### Breaking Changes
+## [0.17.0] - 2026-05-17
 
-- `Option` and `Option::{if_true, if_some}` haave been respectively changed to pure functions `option`, `then_if_true`, `then_if_some`.
-- `Option` is now, just like `Result`, a type union, and a "false" Protocol serves as the base class for `Some` and `NONE`.
+### 🏆 Highlights
 
-### Internal
+#### Option redesign for 100% type safety
 
-- Various new benchmarks covering some impacted methods
+The `Option` type has been redesigned to be more consistent with `Result`, with a new "dummy" Protocol `OptionType` as the base class for `Some` and `NONE`.
 
-## [0.16] - 2026-05-17
+This change allows pattern matching exhaustiveness checks and much simpler internal Rust implementation, since now `Option` is, just like `Result`, a type union from the POV of type checkers. In Rust, it's an empty struct. No performance impact has been observed.
 
-### Features
+### 💥 Breaking changes
+
+#### Option redesign
+
+The following methods have been removed or renamed:
+
+- `Option::__init__` => `option` (pure function)
+- `Option::if_true` => `then_if_true` (pure function)
+- `Option::if_some` => `then_if_some` (pure function)
+
+### 📖 Documentation
+
+- New template sections in [CONTRIBUTING.md](CONTRIBUTING.md) for standardizing the CHANGELOG and releases
+
+### 🔄 Refactors
+
+- Caller sites of `Option::__init__` have been updated
+
+### 🛠️ Other improvements
+
+- Various new benchmarks to cover impacted methods from the breaking changes
+
+## [0.16.0] - 2026-05-17
+
+### ✨ Enhancements
 
 - `Iter::for_each_star` now handle `args` and `kwargs` in the same way as `Iter::for_each`, allowing to pass arguments to the function being called for each item.
 
-### Performance
+### 🚀 Performance improvements
 
 - Migrated `Iter::for_each, for_each_star` to Rust. 1.5x-2x faster in average.
 - `Range` did not have `__slots__` properly set. Fixed.
 
-### Refactor
+### 🔄 Refactors
 
 - New traits in `rust::types` to improve the readability when handling Callable arguments with args and kwargs. instead of call(func, self, args, kwargs), we can now do func.call(self, args, kwargs).
 - Internal scripts cosmetic changes to standardize them with recommended pattern -> `from pyochain import x` instead of `import pyochain as pc`
 
-### API Documentation
+### 📖 Documentation
 
 - Improvements to `traits::PyoSet` methods documentation, with better examples and explanations.
 - Updated documentation to reflect the new pattern -> `from pyochain import x` instead of `import pyochain as pc`
 - Various other minor improvements and fixes.
 
-### Internal
+### 🛠️ Other improvements
 
 - `pytest-benchmark` setup, used and now part of the developpement process to catch performance regressions.
 - Various other minor improvements and fixes.
