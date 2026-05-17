@@ -704,6 +704,28 @@ class Iter[T](PyoIterator[T]):
 
     Args:
         data (Iterable[T]): Any object that can be iterated over.
+
+    Example:
+    ```python
+    >>> data = (0, 1, 2, 3, 4)
+    >>> Iter(data).collect()
+    Seq(0, 1, 2, 3, 4)
+    >>> iterator = Iter(data)
+    >>> # First we have a tuple iterator
+    >>> iterator._inner.__class__.__name__
+    'tuple_iterator'
+    >>> # Now we have a map object
+    >>> mapped = iterator.map(lambda x: x * 2)
+    >>> mapped._inner.__class__.__name__
+    'map'
+    >>> # We collect it, by default into a Seq
+    >>> mapped.collect()
+    Seq(0, 2, 4, 6, 8)
+    >>> # iterator is now exhausted
+    >>> iterator.collect()
+    Seq()
+
+    ```
     """
 
     _inner: Iterator[T]
@@ -973,27 +995,36 @@ class Iter[T](PyoIterator[T]):
 
         Example:
         ```python
-        >>> from pyochain import Iter, Range
-        >>> data = (0, 1, 2, 3, 4)
-        >>> Iter(data).collect()
-        Seq(0, 1, 2, 3, 4)
-        >>> iterator = Iter(data)
-        >>> iterator._inner.__class__.__name__
-        'tuple_iterator'
-        >>> mapped = iterator.map(lambda x: x * 2)
-        >>> mapped._inner.__class__.__name__
-        'map'
-        >>> mapped.collect()
-        Seq(0, 2, 4, 6, 8)
-        >>> # iterator is now exhausted
-        >>> iterator.collect()
-        Seq()
-        >>> Range(0, 5).iter().collect(list)
+        >>> from pyochain import Iter, Range, Vec, Dict
+        >>> data = Range(0, 5)
+        >>> data.iter().collect(list)
         [0, 1, 2, 3, 4]
-        >>> Range(0, 5).iter().collect(Vec)
+        >>> data.iter().collect(Vec)
         Vec(0, 1, 2, 3, 4)
+        >>> data.iter().map(str).enumerate().collect(Dict)
+        Dict(0: '0', 1: '1', 2: '2', 3: '3', 4: '4')
 
         ```
+        Sometimes type checkers can't infer the type of the collector, in which case you can use an explicit type annotation to help them out.
+
+        In the example below, without the annotation in `collect()`,
+
+        BasedPyright infer `data` as `Seq[Result[int, Any] | Result[Any, int]]` because of the conditional expression in the `map()`, which is not very useful.
+        ```python
+        >>> from pyochain import Range, Seq, Ok, Err, Result
+        >>> data = (
+        ...    Range(0, 5)
+        ...    .iter()
+        ...    .map(lambda x: Ok(x) if x % 2 == 0 else Err(x))
+        ...    .collect(Seq[Result[int, int]])
+        ... )
+        >>> data
+        Seq(Ok(0), Err(1), Ok(2), Err(3), Ok(4))
+
+        ```
+        Strictly speaking, this is equivalent to annotating the variable at the beginning, but some may prefer this style to keep the type information close to the actual collection operation.
+
+        This notably avoid repetition if you collect anything else than the default `Seq` type.
         """
         return collector(self._inner)
 
