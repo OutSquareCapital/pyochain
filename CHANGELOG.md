@@ -1,0 +1,24 @@
+# Changelog
+
+## [0.16] - 2026-05-17
+
+### Performance
+
+- Migrated `Iter::for_each, for_each_star` to Rust. 1.5x-2x faster in average.
+- `Range` did not have `__slots__` properly set. Fixed.
+
+### Refactor
+
+- New traits in `rust::types` to improve the readability when handling Callable arguments with args and kwargs. instead of call(func, self, args, kwargs), we can now do func.call(self, args, kwargs).
+- Internal scripts cosmetic changes to standardize them with recommended pattern -> `from pyochain import x` instead of `import pyochain as pc`
+
+### API Documentation
+
+- Improvements to `traits::PyoSet` methods documentation, with better examples and explanations.
+- Updated documentation to reflect the new pattern -> `from pyochain import x` instead of `import pyochain as pc`
+- Various other minor improvements and fixes.
+
+### Internal
+
+- `pytest-benchmark` setup, used and now part of the developpement process to catch performance regressions.
+- Various other minor improvements and fixes.
