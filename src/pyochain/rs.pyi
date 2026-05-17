@@ -250,13 +250,19 @@ class Checkable(Protocol):
 # Option types
 class OptionUnwrapError(RuntimeError): ...
 
-class Option[T](Pipeable):
-    """Type `Option[T]` represents an optional value.
+type Option[T] = Some[T] | Null[T]
+"""Type `Option[T]` represents an optional value.
 
-    Every Option is either:
+See `OptionType` for more details.
+"""
 
-    - `Some` and contains a value
-    - `None`, and does not.
+class OptionType[T](Pipeable):
+    """OptionType is the common interface for an optional value.
+
+    `Option[T]` is the union of `Some[T]` and `Null[T]`, and represents a value that can only have two states:
+
+    - `Some(value)`
+    - `Null()`.
 
     This is a common type in Rust, and is used to represent values that may be absent.
 
@@ -282,30 +288,6 @@ class Option[T](Pipeable):
     This allow to query the presence of a value and take action, always accounting for the None case.
     """
 
-    def __new__[V](cls, value: V | None) -> Option[V]:
-        """Creates an `Option[V]` from a value that may be `None`.
-
-        When calling `Option(value)`, this method automatically redirects to:
-        - `Some(value)` if the value is not `None`
-        - `NONE` if the value is `None`
-
-        Args:
-            value (V | None): The value to convert into an `Option[V]`.
-
-        Returns:
-            Option[V]: `Some(value)` if the value is not `None`, otherwise `NONE`.
-
-        Example:
-        ```python
-        >>> from pyochain import Option
-        >>> Option(42)
-        Some(42)
-        >>> Option(None)
-        NONE
-
-        ```
-        """
-
     def __bool__(self) -> None:
         """Prevent implicit `Some|None` value checking in boolean contexts.
 
@@ -324,58 +306,7 @@ class Option[T](Pipeable):
         ```
         """
 
-    @staticmethod
-    def if_true[V](value: V, *, predicate: Callable[[V], bool]) -> Option[V]:
-        """Creates an `Option[V]` based on a **predicate** condition on the provided **value**.
-
-        Args:
-            value (V): The value to wrap in `Some` if the condition is `True`.
-            predicate (Callable[[V], bool]): The condition to evaluate.
-
-        Returns:
-            Option[V]: `Some(value)` if the condition is `True`, otherwise `NONE`.
-
-        Example:
-        ```python
-        >>> from pyochain import Option
-        >>> Option.if_true(42, predicate=lambda x: x == 42)
-        Some(42)
-        >>> Option.if_true(21, predicate=lambda x: x == 42)
-        NONE
-        >>> from pathlib import Path
-        >>> Option.if_true(Path("README.md"), predicate=Path.exists).map(str)
-        Some('README.md')
-        >>> Option.if_true(Path("README.md"), predicate=lambda p: p.exists()).map(str) # Same as above
-        Some('README.md')
-
-        ```
-        """
-
-    @staticmethod
-    def if_some[V](value: V) -> Option[V]:
-        """Creates an `Option[V]` based on the truthiness of a value.
-
-        Args:
-            value (V): The value to evaluate.
-
-        Returns:
-            Option[V]: `Some(value)` if the value is truthy, otherwise `NONE`.
-
-        Example:
-        ```python
-        >>> from pyochain import Option
-        >>> Option.if_some(42)
-        Some(42)
-        >>> Option.if_some(0)
-        NONE
-        >>> Option.if_some("hello")
-        Some('hello')
-        >>> Option.if_some("")
-        NONE
-
-        ```
-        """
-    def flatten[U](self: Option[Option[U]]) -> Option[U]:
+    def flatten[U](self: OptionType[Option[U]]) -> Option[U]:
         """Flattens a nested `Option`.
 
         Converts an `Option[Option[U]]` into an `Option[U]` by removing one level of nesting.
@@ -449,8 +380,7 @@ class Option[T](Pipeable):
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
     ) -> Option[R]: ...
     def map_star[U: Iterable[Any], R](
-        self: Option[U],
-        func: Callable[..., R],
+        self: OptionType[U], func: Callable[..., R]
     ) -> Option[R]:
         """Maps an `Option[Iterable]` to `Option[U]` by unpacking the iterable into the function.
 
@@ -525,8 +455,7 @@ class Option[T](Pipeable):
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], Option[R]],
     ) -> Option[R]: ...
     def and_then_star[U: Iterable[Any], R](
-        self: Option[U],
-        func: Callable[..., Option[R]],
+        self: OptionType[U], func: Callable[..., Option[R]]
     ) -> Option[R]:
         """Calls a function if the option is `Some`, unpacking the iterable into the function.
 
@@ -1135,21 +1064,21 @@ class Option[T](Pipeable):
 
         Example:
         ```python
-        >>> from pyochain import Some, NONE
-        >>> seen: list[int] = []
+        >>> from pyochain import Some, NONE, Vec
+        >>> seen = Vec[int].new()
         >>> Some(2).inspect(lambda x: seen.append(x))
         Some(2)
         >>> seen
-        [2]
+        Vec(2)
         >>> NONE.inspect(lambda x: seen.append(x))
         NONE
         >>> seen
-        [2]
+        Vec(2)
 
         ```
         """
 
-    def unzip[U](self: Option[tuple[T, U]]) -> tuple[Option[T], Option[U]]:
+    def unzip[U](self: OptionType[tuple[T, U]]) -> tuple[Option[T], Option[U]]:
         """Unzips an `Option` of a tuple into a tuple of `Option`s.
 
         If the option is `Some((a, b))`, this method returns `(Some(a), Some(b))`.
@@ -1264,7 +1193,7 @@ class Option[T](Pipeable):
         ```
         """
 
-    def transpose[E](self: Option[Result[T, E]]) -> Result[Option[T], E]:
+    def transpose[E](self: OptionType[Result[T, E]]) -> Result[Option[T], E]:
         """Transposes an `Option` of a `Result` into a `Result` of an `Option`.
 
         `Some(Ok[T])` is mapped to `Ok(Some[T])`, `Some(Err[E])` is mapped to `Err[E]`, and `NONE` will be mapped to `Ok(NONE)`.
@@ -1332,7 +1261,7 @@ class Option[T](Pipeable):
         """
 
 @final
-class Some[T](Option[T]):
+class Some[T](OptionType[T]):
     """Option variant representing the presence of a value.
 
     For more documentation, see the `Option[T]` class.
@@ -1352,12 +1281,11 @@ class Some[T](Option[T]):
 
     value: T
     __match_args__ = ("value",)
-
-    def __new__[V](cls, value: V) -> Some[V]:
-        """Bypass Option's redirect by directly creating a Some instance."""
+    # Hack to immediately handle it as an "enum".
+    def __new__(cls, value: T) -> Option[T]: ...
 
 @final
-class Null[T](Option[T]):
+class Null[T](OptionType[T]):
     """Option variant representing the absence of a value.
 
     This class is not supposed to be instanciated by the user.
@@ -1366,13 +1294,89 @@ class Null[T](Option[T]):
     For more documentation, see the `Option[T]` class.
     """
 
-NONE: Final[Null[Any]] = ...  # pyright: ignore[reportExplicitAny, reportAny]
+NONE: Final[Null[Any]] = ...  # pyright: ignore[reportAny, reportExplicitAny]
 """Singleton instance representing the absence of a value.
 
 This is the only instance of `Null` that should be used, and is similar to the logic used by `None` in standard Python.
 
 This allows you to use `is NONE` checks for identity, and improves performance by avoiding unnecessary allocations and instanciations.
 """
+
+def option[T](value: T | None) -> Option[T]:
+    """Creates an `Option[V]` from a value that may be `None`.
+
+    When calling `Option(value)`, this method automatically redirects to:
+    - `Some(value)` if the value is not `None`
+    - `NONE` if the value is `None`
+
+    Args:
+        value (T | None): The value to convert into an `Option[T]`.
+
+    Returns:
+        Option[T]: `Some(value)` if the value is not `None`, otherwise `NONE`.
+
+    Example:
+    ```python
+    >>> from pyochain import option
+    >>> option(42)
+    Some(42)
+    >>> option(None)
+    NONE
+
+    ```
+    """
+
+def then_if_true[V](value: V, *, predicate: Callable[[V], bool]) -> Option[V]:
+    """Creates an `Option[V]` based on a **predicate** condition on the provided **value**.
+
+    Args:
+        value (V): The value to wrap in `Some` if the condition is `True`.
+        predicate (Callable[[V], bool]): The condition to evaluate.
+
+    Returns:
+        Option[V]: `Some(value)` if the condition is `True`, otherwise `NONE`.
+
+    Example:
+    ```python
+    >>> from pyochain import then_if_true
+    >>> then_if_true(42, predicate=lambda x: x == 42)
+    Some(42)
+    >>> then_if_true(21, predicate=lambda x: x == 42)
+    NONE
+    >>> from pathlib import Path
+    >>> then_if_true(Path("README.md"), predicate=Path.exists).map(str)
+    Some('README.md')
+    >>> then_if_true(Path("README.md"), predicate=lambda p: p.exists()).map(str) # Same as above
+    Some('README.md')
+
+    ```
+    """
+
+def then_if_some[T](value: T) -> Option[T]:
+    """Creates an `Option[T]` based on the truthiness of a value.
+
+    Args:
+        value (T): The value to evaluate.
+
+    Returns:
+        Option[T]: `Some(value)` if the value is truthy, otherwise `NONE`.
+
+    Example:
+    ```python
+    >>> from pyochain import then_if_some
+    >>> then_if_some(42)
+    Some(42)
+    >>> then_if_some(0)
+    NONE
+    >>> then_if_some("hello")
+    Some('hello')
+    >>> then_if_some("")
+    NONE
+    >>> then_if_some(())  # Empty sequence is falsy
+    NONE
+
+    ```
+    """
 
 class ResultUnwrapError(RuntimeError): ...
 
@@ -1933,12 +1937,12 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> from pyochain import Ok
-        >>> seen: list[int] = []
+        >>> from pyochain import Ok, Vec
+        >>> seen = Vec[int].new()
         >>> Ok(2).inspect(lambda x: seen.append(x))
         Ok(2)
         >>> seen
-        [2]
+        Vec(2)
 
         ```
         """
@@ -1961,12 +1965,12 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Example:
         ```python
-        >>> from pyochain import Err
-        >>> seen: list[str] = []
+        >>> from pyochain import Err, Vec
+        >>> seen = Vec[str].new()
         >>> Err("oops").inspect_err(lambda e: seen.append(e))
         Err('oops')
         >>> seen
-        ['oops']
+        Vec('oops')
 
         ```
         """

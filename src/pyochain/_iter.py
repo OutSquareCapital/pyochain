@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Any, Literal, Never, Self, TypeIs, overload, o
 import cytoolz as cz
 
 from ._types import SupportsRichComparison
-from .rs import NONE, Err, Ok, Option, Result, Some
+from .rs import NONE, Err, Ok, Option, Result, Some, option
 from .traits import (
     Checkable,
     Pipeable,
@@ -34,8 +34,17 @@ if TYPE_CHECKING:
     from ._dict import Dict
     from ._range import Range
 
+type AnyOpt = Option[Any]  # pyright: ignore[reportExplicitAny]
 Position = Literal["first", "middle", "last", "only"]
 """Literal type representing the position of an item in an iterable."""
+type ZippedLongest[T] = (
+    Iter[tuple[Option[T], AnyOpt]]
+    | Iter[tuple[Option[T], AnyOpt, AnyOpt]]
+    | Iter[tuple[Option[T], AnyOpt, AnyOpt, AnyOpt]]
+    | Iter[tuple[Option[T], AnyOpt, AnyOpt, AnyOpt, AnyOpt]]
+    | Iter[tuple[AnyOpt, ...]]
+)
+"""Type representing the result of a `zip_longest` operation, which can yield tuples of varying lengths depending on the number of iterables zipped together."""
 
 
 def _get_repr(data: Collection[object]) -> str:
@@ -1215,7 +1224,7 @@ class Iter[T](PyoIterator[T]):
         Basic usage:
         ```python
         >>> from pyochain import Iter
-        >>> data = [[1, 2, 3, 4], [5, 6]]
+        >>> data = ((1, 2, 3, 4), (5, 6))
         >>> flattened = Iter(data).flatten().collect()
         >>> flattened
         Seq(1, 2, 3, 4, 5, 6)
@@ -1233,10 +1242,10 @@ class Iter[T](PyoIterator[T]):
         Flattening only removes one level of nesting at a time:
         ```python
         >>> from pyochain import Iter
-        >>> d3 = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
+        >>> d3 = (((1, 2), (3, 4)), ((5, 6), (7, 8)))
         >>> d2 = Iter(d3).flatten().collect()
         >>> d2
-        Seq([1, 2], [3, 4], [5, 6], [7, 8])
+        Seq((1, 2), (3, 4), (5, 6), (7, 8))
         >>> d1 = Iter(d3).flatten().flatten().collect()
         >>> d1
         Seq(1, 2, 3, 4, 5, 6, 7, 8)
@@ -1819,7 +1828,7 @@ class Iter[T](PyoIterator[T]):
         >>> def checked_div(x: int) -> Option[int]:
         ...     return Some(16 // x) if x != 0 else NONE
         >>>
-        >>> data = Iter([-1, 4, 0, 1])
+        >>> data = Iter((-1, 4, 0, 1))
         >>> data.map_while(checked_div).collect()
         Seq(-16, 4)
         >>> data = Iter((0, 1, 2, -3, 4, 5, -6))
@@ -1969,7 +1978,7 @@ class Iter[T](PyoIterator[T]):
         >>> from typing import TypeIs
         >>> def _is_str(x: object) -> TypeIs[str]:
         ...     return isinstance(x, str)
-        >>> mixed_data = [1, "two", 3.0, "four"]
+        >>> mixed_data = (1, "two", 3.0, "four")
         >>> Iter(mixed_data).filter(_is_str).collect()
         Seq('two', 'four')
 
@@ -2343,7 +2352,7 @@ class Iter[T](PyoIterator[T]):
         /,
         *iterables: Iterable[T],
     ) -> Iter[tuple[Option[T], ...]]: ...
-    def zip_longest(self, *others: Iterable[Any]) -> Iter[tuple[Option[Any], ...]]:  # pyright: ignore[reportExplicitAny]
+    def zip_longest(self, *others: Iterable[Any]) -> ZippedLongest[T]:  # pyright: ignore[reportExplicitAny]
         """Return a zip Iterator who yield a tuple where the i-th element comes from the i-th iterable argument.
 
         Yield values until the longest iterable in the argument sequence is exhausted, and then it raises StopIteration.
@@ -2356,7 +2365,7 @@ class Iter[T](PyoIterator[T]):
             *others (Iterable[Any]): Other iterables to zip with.
 
         Returns:
-            Iter[tuple[Option[Any], ...]]: An iterable of tuples containing optional elements from the zipped iterables.
+            ZippedLongest: An iterable of tuples containing optional elements from the zipped iterables.
 
         Example:
         ```python
@@ -2370,7 +2379,7 @@ class Iter[T](PyoIterator[T]):
         ```
         """
         return Iter(
-            tuple(Option(t) for t in tup)
+            tuple(option(t) for t in tup)
             for tup in itertools.zip_longest(self._inner, *others, fillvalue=None)
         )
 
@@ -2397,7 +2406,7 @@ class Iter[T](PyoIterator[T]):
 
         ```python
         >>> from pyochain import Iter
-        >>> data = [(1, "a"), (2, "b"), (3, "c")]
+        >>> data = ((1, "a"), (2, "b"), (3, "c"))
         >>> unzipped = Iter(data).unzip()
         >>> unzipped.left.collect()
         Seq(1, 2, 3)
@@ -2814,7 +2823,7 @@ class Iter[T](PyoIterator[T]):
         >>> Iter("I have space").partition_by(lambda c: c == " ").collect()
         Seq(('I',), (' ',), ('h', 'a', 'v', 'e'), (' ',), ('s', 'p', 'a', 'c', 'e'))
         >>>
-        >>> data = [1, 2, 1, 99, 88, 33, 99, -1, 5]
+        >>> data = (1, 2, 1, 99, 88, 33, 99, -1, 5)
         >>> Iter(data).partition_by(lambda x: x > 10).collect()
         Seq((1, 2, 1), (99, 88, 33, 99), (-1, 5))
 
@@ -2897,7 +2906,7 @@ class Iter[T](PyoIterator[T]):
         Example:
         ```python
         >>> from pyochain import Iter, Ok, Err
-        >>> data = ["a", "b", "c", "d"]
+        >>> data = ("a", "b", "c", "d")
         >>> n = 4
         >>> Iter(data).is_strictly_n(n).collect()
         Seq(Ok('a'), Ok('b'), Ok('c'), Ok('d'))
@@ -3215,12 +3224,12 @@ class Iter[T](PyoIterator[T]):
         ... )
         {False: [1, 3, 5, 7], True: [0, 2, 4, 6]}
         >>> # Example 2: Group by a common key, already sorted
-        >>> data = [
+        >>> data = (
         ...     {"name": "Alice", "gender": "F"},
         ...     {"name": "Bob", "gender": "M"},
         ...     {"name": "Charlie", "gender": "M"},
         ...     {"name": "Dan", "gender": "M"},
-        ... ]
+        ... )
         >>> (
         ... Iter(data)
         ... .group_by(lambda x: x["gender"]) # group by the gender key

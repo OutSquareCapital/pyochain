@@ -14,6 +14,9 @@ from .rs import (
     Result,
     ResultUnwrapError,
     Some,
+    option,
+    then_if_some,
+    then_if_true,
 )
 
 __all__ = [
@@ -35,5 +38,8 @@ __all__ = [
     "Some",
     "Unzipped",
     "Vec",
+    "option",
+    "then_if_some",
+    "then_if_true",
     "traits",
 ]
