@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from enum import StrEnum, auto
 from typing import Protocol
 
 type BenchFn = Callable[[int], object]
@@ -12,3 +13,10 @@ class BenchFixture(Protocol):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> T: ...
+
+
+class VariantGroups(StrEnum):
+    CREATE = auto()
+    MAP = auto()
+    AND_THEN = auto()
+    MATCH = auto()

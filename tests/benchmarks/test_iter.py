@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from pyochain import Range, Seq
+from pyochain import Err, Ok, Range, Result, Seq, Some
 
 if TYPE_CHECKING:
     from ._utils import BenchFixture, BenchFn
@@ -82,6 +82,26 @@ def _for_each_star(data: Seq[tuple[int, int, int]]) -> None:
     data.iter().for_each_star(_with_args)
 
 
+def _is_last(value: int) -> Result[bool, int]:
+    return Ok(value == 9)
+
+
+def _err_on_last(value: int) -> Result[bool, int]:
+    return Err(value) if value == 9 else Ok(False)
+
+
+def _sum_fold(accumulator: int, value: int) -> Result[int, int]:
+    return Ok(accumulator + value)
+
+
+def _sum_reduce(left: int, right: int) -> Result[int, int]:
+    return Ok(left + right)
+
+
+def _err_reduce(left: int, right: int) -> Result[int, int]:
+    return Err(right) if right == 9 else Ok(left + right)
+
+
 type ForEachFn = Callable[[Range], None]
 
 
@@ -108,3 +128,28 @@ def test_for_each_star(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size).iter().map(lambda i: (i, i * 2, i * 3)).collect()
     total = benchmark(_for_each_star, data)
     assert total is None
+
+
+@pytest.mark.benchmark(group="try_find")
+def test_try_find_some(benchmark: BenchFixture) -> None:
+    assert benchmark(Range(0, 10).iter().try_find, _is_last) == Ok(Some(9))
+
+
+@pytest.mark.benchmark(group="try_find")
+def test_try_find_err(benchmark: BenchFixture) -> None:
+    assert benchmark(Range(0, 10).iter().try_find, _err_on_last) == Err(9)
+
+
+@pytest.mark.benchmark(group="try_fold")
+def test_try_fold_ok(benchmark: BenchFixture) -> None:
+    assert benchmark(Range(0, 10).iter().try_fold, 0, _sum_fold) == Ok(45)
+
+
+@pytest.mark.benchmark(group="try_reduce")
+def test_try_reduce_ok(benchmark: BenchFixture) -> None:
+    assert benchmark(Range(0, 10).iter().try_reduce, _sum_reduce) == Ok(Some(45))
+
+
+@pytest.mark.benchmark(group="try_reduce")
+def test_try_reduce_err(benchmark: BenchFixture) -> None:
+    assert benchmark(Range(0, 10).iter().try_reduce, _err_reduce) == Err(9)
