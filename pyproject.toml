@@ -94,4 +94,5 @@
 [tool.pyrefly]
     preset = "strict"
 [tool.pytest.ini_options]
-    addopts = "--doctest-modules --doctest-glob=*.md --stubs --doctest-mdcodeblocks src/pyochain tests/ README.md docs/ --benchmark-skip"
+    addopts   = "--doctest-modules --doctest-glob=*.md --stubs --doctest-mdcodeblocks --benchmark-skip"
+    testpaths = ["README.md", "docs", "src/pyochain", "tests"]

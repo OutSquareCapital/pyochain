@@ -1,11 +1,13 @@
-from collections.abc import Callable
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import pytest
 
 from pyochain import Range, Seq
 
-type BenchFn = Callable[[int], object]
-type BenchFixture = Callable[[BenchFn, int], object]
+if TYPE_CHECKING:
+    from ._utils import BenchFixture, BenchFn
 
 
 def _pyochain_filter_map(size: int) -> Seq[int]:
