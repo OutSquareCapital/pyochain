@@ -21,3 +21,5 @@ target/
 .coverage
 # temp file for tests
 t.py
+# Ignore pytest-benchmark's generated files
+.benchmarks/
