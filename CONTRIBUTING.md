@@ -36,13 +36,13 @@ pyochain is a **mixed Python/Rust project**:
 
 The `src/pyochain` Python package is organized into internal modules (leading underscore indicates internal implementation):
 
-- `_iter.py` — `Iter` (lazy iterator), `Seq`, `Vec`, `Set`, `SetMut` and iteration/collection methods.
+- `_iter.py` — `Iter`, `Seq`, `Vec`, `Set`, `SetMut` and iteration/collection methods.
 - `_dict.py` — `Dict` class and mapping-related logic.
-- `_option.py` — `Option`, `Some`, `NONE`, and `OptionUnwrapError`.
-- `_result.py` — `Result`, `Ok`, `Err`, and `ResultUnwrapError`.
+- `_range.py` — `Range` class impléàmentation.
+- `rs.pyi` - Type stubs for public Rust-compiled bindings -> `Option`, `Result`, `Pipeable`, `Checkable`.
+- `_tools.pyi` — Type stubs for iteration methods compiled to Rust. Internal, are called by public object methods, but not directly by users.
 - `_types.py` — Protocols for element types (e.g., `SupportsLen`).
-- `traits/` — public mixin and abc's (`Pipeable`, `Checkable`) for fluent chaining.
-- `rs.pyi` — Type stubs for Rust-compiled bindings.
+- `traits/` — abc's, e.g `PyoIterator`, `PyoMutableMapping`.
 - `py.typed` — PEP 561 marker for type checking support.
 - `__init__.py` — public API (imports and re-exports main classes).
 
@@ -124,6 +124,14 @@ uv run basedpyright src/pyochain;
 uv run scripts/check_docstrings.py;
 uv run pydoclint src/pyochain;
 uv run pytest --cov=src --cov-report=term-missing
+```
+
+## Benchmarks
+
+Benchmarks are located in `tests/benchmarks/` and use `pytest-benchmark`. See `tests/benchmarks/README.md` for details on running and interpreting benchmarks.
+
+```shell
+uv run pytest tests/benchmarks --benchmark-only --benchmark-group-by=param:size
 ```
 
 ## Building docs

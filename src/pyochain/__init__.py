@@ -16,7 +16,6 @@ from .rs import (
     Some,
 )
 
-abc = traits  # noqa: RUF067
 __all__ = [
     "NONE",
     "Dict",
@@ -36,6 +35,5 @@ __all__ = [
     "Some",
     "Unzipped",
     "Vec",
-    "abc",
     "traits",
 ]
