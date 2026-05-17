@@ -15,7 +15,7 @@
         <link rel="canonical" href="https://outsquarecapital.github.io/pyochain/">
       
       
-        <link rel="prev" href="./getting-started/">
+        <link rel="prev" href="./interoperability/">
       
       
       
@@ -1496,33 +1496,6 @@
   
   
     <li class="md-nav__item">
-      <a href="./examples.md" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Examples
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="./interoperability/" class="md-nav__link">
         
   
@@ -1531,33 +1504,6 @@
     
   
   Interoperability
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="./getting-started/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Overview
 
     
   </span>
@@ -1593,6 +1539,23 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="" class="md-nav__link md-nav__link--active">
         
   
@@ -1608,6 +1571,59 @@
   
 
       </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Installation
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Quick start
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Next steps
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1630,6 +1646,11 @@
                       
                     
                     
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
                   
                   <div class="md-sidebar__inner">
                     
@@ -1641,6 +1662,47 @@
   
     
   
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Installation
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Quick start
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Next steps
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -1658,8 +1720,25 @@
 <h1 id="pyochain">pyochain ⛓️</h1>
 <p><strong><em>Functional-style method chaining for Python data structures.</em></strong></p>
 <p>Welcome to the <code>pyochain</code> documentation! This library brings a fluent, declarative API inspired by Rust and DataFrame libraries to your Python iterables and dictionaries.</p>
+<h2 id="installation">Installation</h2>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>add<span class="w"> </span>pyochain
+</code></pre></div>
+<h2 id="quick-start">Quick start</h2>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iter</span><span class="p">,</span> <span class="n">Seq</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">res</span><span class="p">:</span> <span class="n">Seq</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+<span class="o">...</span>     <span class="n">Iter</span><span class="o">.</span><span class="n">from_count</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="o">...</span>     <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+<span class="o">...</span>     <span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+<span class="o">...</span>     <span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="o">...</span>     <span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+<span class="o">...</span> <span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">res</span>
+<span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">49</span><span class="p">,</span> <span class="mi">81</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="next-steps">Next steps</h2>
 <ul>
-<li><a href="getting-started/"><strong>Getting Started</strong></a> — installation + quick start + next steps</li>
+<li><a href="core-types-overview/"><strong>Core Types Overview</strong></a>: choose between the various provided types</li>
+<li><a href="interoperability/"><strong>Interoperability</strong></a>: convert between types with various methods</li>
 <li><a href="api-reference/"><strong>API Reference</strong></a> — complete public API docs</li>
 <li><a href="https://github.com/OutSquareCapital/pyochain"><strong>GitHub Repository</strong></a></li>
 <li><a href="https://github.com/OutSquareCapital/pyochain/blob/master/CONTRIBUTING.md"><strong>Contributing Guide</strong></a></li>

@@ -1582,33 +1582,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples.md" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Examples
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../interoperability/" class="md-nav__link">
         
   
@@ -1617,33 +1590,6 @@
     
   
   Interoperability
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../getting-started/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Overview
 
     
   </span>
@@ -2026,14 +1972,15 @@
       </tbody>
     </table>
         <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span><span class="p">,</span> <span class="n">Result</span><span class="p">,</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">sha256_hex</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="o">...</span>     <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="n">data</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">check_data</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="o">...</span>     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="o">...</span>         <span class="k">return</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;Empty data&quot;</span><span class="p">)</span>
+<span class="o">...</span>     <span class="k">return</span> <span class="n">Ok</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="n">sha256_hex</span><span class="p">)</span>
-<span class="s1">&#39;039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81&#39;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="n">check_data</span><span class="p">)</span><span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">sum</span><span class="p">))</span>
+<span class="n">Ok</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
 </code></pre></div></p>
 
 

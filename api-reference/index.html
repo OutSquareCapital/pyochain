@@ -1641,33 +1641,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples.md" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Examples
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../interoperability/" class="md-nav__link">
         
   
@@ -1676,33 +1649,6 @@
     
   
   Interoperability
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../getting-started/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Overview
 
     
   </span>
@@ -1901,38 +1847,39 @@
 <p>This page is the entry point to the <strong>complete</strong> public API documentation.</p>
 <h2 id="collections">Collections</h2>
 <ul>
-<li><a href="../reference/seq/"><code>Seq[T]</code></a> — Immutable collections (tuple-backed)</li>
-<li><a href="../reference/vec/"><code>Vec[T]</code></a> — Mutable collections (list-backed)</li>
-<li><a href="../reference/set/"><code>Set[T]</code></a> — Immutable collections (frozenset-backed)</li>
-<li><a href="../reference/setmut/"><code>SetMut[T]</code></a> — Mutable sets (set-backed)</li>
-<li><a href="../reference/dict/"><code>Dict[K, V]</code></a> — Chainable dictionaries</li>
+<li><a href="../reference/seq/"><code>Seq[T]</code></a> — Immutable Sequence (<code>tuple</code>-backed)</li>
+<li><a href="../reference/vec/"><code>Vec[T]</code></a> — Mutable Sequence (<code>list</code>-backed)</li>
+<li><a href="../reference/set/"><code>Set[T]</code></a> — Immutable Set (<code>frozenset</code>-backed)</li>
+<li><a href="../reference/setmut/"><code>SetMut[T]</code></a> — Mutable Set (<code>set</code>-backed)</li>
+<li><a href="../reference/dict/"><code>Dict[K, V]</code></a> — Mutable Mapping (<code>dict</code>-backed)</li>
+<li><a href="../reference/range/"><code>Range</code></a> —  Integer ranges (<code>range</code>-backed)</li>
 </ul>
 <h2 id="iterators">Iterators</h2>
 <ul>
 <li><a href="../reference/iter/"><code>Iter[T]</code></a> — Lazy processing of iterators</li>
 <li><a href="../reference/peekable/"><code>Peekable[T]</code></a> — Peeking iterator</li>
 <li><a href="../reference/unzipped/"><code>Unzipped[T]</code></a> — Unzipped iterator results</li>
-<li><a href="../reference/range/"><code>Range</code></a> — Lazy integer ranges</li>
 </ul>
 <h2 id="error-handling">Error handling</h2>
 <ul>
-<li><a href="../reference/result/"><code>Result[T, E]</code></a> — Explicit error handling (<code>Ok</code> / <code>Err</code>)</li>
-<li><a href="../reference/ok/"><code>Ok[T]</code></a></li>
-<li><a href="../reference/err/"><code>Err[E]</code></a></li>
-<li><a href="../reference/resultunwraperror/"><code>ResultUnwrapError</code></a></li>
+<li><a href="../reference/result/"><code>Result[T, E]</code></a> — Actual type to use for explicit error handling (<code>Ok</code> / <code>Err</code>). Used for type hints.</li>
+<li><a href="../reference/resulttype/"><code>ResultType[T, E]</code></a> — Common interface for <code>Ok</code> and <code>Err</code>. Reference their methods.</li>
+<li><a href="../reference/ok/"><code>Ok[T]</code></a> - <code>Ok</code> variant of <code>Result</code></li>
+<li><a href="../reference/err/"><code>Err[E]</code></a> - <code>Err</code> variant of <code>Result</code></li>
+<li><a href="../reference/resultunwraperror/"><code>ResultUnwrapError</code></a> - Exception raised when unwrapping a <code>Result</code> that is an <code>Err</code></li>
 </ul>
 <h2 id="optional-values">Optional values</h2>
 <ul>
 <li><a href="../reference/option/"><code>Option[T]</code></a> — Optional values (<code>Some</code> / <code>NONE</code>)</li>
-<li><a href="../reference/some/"><code>Some[T]</code></a></li>
-<li><a href="../reference/null/"><code>NONE</code></a></li>
-<li><a href="../reference/optionunwraperror/"><code>OptionUnwrapError</code></a></li>
+<li><a href="../reference/some/"><code>Some[T]</code></a> - <code>Some</code> variant of <code>Option</code></li>
+<li><a href="../reference/null/"><code>NONE</code></a> - <code>NONE</code> variant of <code>Option</code>. Constant singleton.</li>
+<li><a href="../reference/optionunwraperror/"><code>OptionUnwrapError</code></a> - Exception raised when unwrapping an <code>Option</code> that is <code>NONE</code></li>
 </ul>
 <h2 id="mixins-abcs">Mixins &amp; ABC's</h2>
 <h3 id="fluent-mixins">Fluent Mixins</h3>
 <ul>
-<li><a href="../reference/pipeable/"><code>Pipeable</code></a> — <code>.into()</code>, <code>.inspect()</code></li>
-<li><a href="../reference/checkable/"><code>Checkable</code></a> — <code>.then()</code>, <code>.ok_or()</code>, ...</li>
+<li><a href="../reference/pipeable/"><code>Pipeable</code></a> — Fluent methods for chaining operations</li>
+<li><a href="../reference/checkable/"><code>Checkable</code></a> — Conversion to <code>Option</code>/<code>Result</code> based on instance truthiness</li>
 </ul>
 <h3 id="abstract-base-classes">Abstract Base Classes</h3>
 <ul>
