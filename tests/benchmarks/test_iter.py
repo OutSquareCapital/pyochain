@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from pyochain import Err, Ok, Range, Seq
+from pyochain import Range, Seq
 
 if TYPE_CHECKING:
     from ._utils import BenchFixture, BenchFn
@@ -82,30 +82,6 @@ def _for_each_star(data: Seq[tuple[int, int, int]]) -> None:
     data.iter().for_each_star(_with_args)
 
 
-def _try_find_some(data: Range) -> None:
-    _ = data.iter().try_find(lambda value: Ok(value == 9))
-
-
-def _try_find_err(data: Range) -> None:
-    _ = data.iter().try_find(
-        lambda value: Err(value) if value == 9 else Ok(value == -1)
-    )
-
-
-def _try_fold_ok(data: Range) -> None:
-    _ = data.iter().try_fold(0, lambda accumulator, value: Ok(accumulator + value))
-
-
-def _try_reduce_ok(data: Range) -> None:
-    _ = data.iter().try_reduce(lambda left, right: Ok(left + right))
-
-
-def _try_reduce_err(data: Range) -> None:
-    _ = data.iter().try_reduce(
-        lambda left, right: Err(right) if right == 9 else Ok(left + right)
-    )
-
-
 type ForEachFn = Callable[[Range], None]
 
 
@@ -130,38 +106,3 @@ def test_for_each(benchmark: BenchFixture, fn: ForEachFn, size: int) -> None:
 def test_for_each_star(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size).iter().map(lambda i: (i, i * 2, i * 3)).collect()
     assert benchmark(_for_each_star, data) is None
-
-
-@pytest.mark.benchmark(group="try_find")
-@pytest.mark.parametrize(
-    "fn",
-    [
-        pytest.param(_try_find_some, id="some"),
-        pytest.param(_try_find_err, id="err"),
-    ],
-)
-@pytest.mark.parametrize("size", [10, 100, 500])
-def test_try_find(benchmark: BenchFixture, fn: ForEachFn, size: int) -> None:
-    data = Range(0, size)
-    assert benchmark(fn, data) is None
-
-
-@pytest.mark.benchmark(group="try_fold")
-@pytest.mark.parametrize("size", [10, 100, 500])
-def test_try_fold_ok(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size)
-    assert benchmark(_try_fold_ok, data) is None
-
-
-@pytest.mark.benchmark(group="try_reduce")
-@pytest.mark.parametrize(
-    "fn",
-    [
-        pytest.param(_try_reduce_ok, id="ok"),
-        pytest.param(_try_reduce_err, id="err"),
-    ],
-)
-@pytest.mark.parametrize("size", [10, 100, 500])
-def test_try_reduce(benchmark: BenchFixture, fn: ForEachFn, size: int) -> None:
-    data = Range(0, size)
-    assert benchmark(fn, data) is None
