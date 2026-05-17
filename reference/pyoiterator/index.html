@@ -4085,7 +4085,7 @@
 
 <span class="sd">        ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Option</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">option</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">reduce</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">,</span> <span class="n">T</span><span class="p">],</span> <span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply a function of two arguments cumulatively to the items of an iterable, from left to right.</span>
@@ -4244,10 +4244,10 @@
 
 <span class="sd">        ```python</span>
 <span class="sd">        &gt;&gt;&gt; from pyochain import Iter</span>
-<span class="sd">        &gt;&gt;&gt; data = [(1, 2), (3, 4)]</span>
+<span class="sd">        &gt;&gt;&gt; data = ((1, 2), (3, 4))</span>
 <span class="sd">        &gt;&gt;&gt; Iter(data).fold_star(0, lambda acc, x, y: acc + x + y)</span>
 <span class="sd">        10</span>
-<span class="sd">        &gt;&gt;&gt; data = [(&quot;a&quot;, &quot;b&quot;), (&quot;c&quot;, &quot;d&quot;)]</span>
+<span class="sd">        &gt;&gt;&gt; data = ((&quot;a&quot;, &quot;b&quot;), (&quot;c&quot;, &quot;d&quot;))</span>
 <span class="sd">        &gt;&gt;&gt; Iter(data).fold_star(&#39;&#39;, lambda acc, x, y: acc + x + y)</span>
 <span class="sd">        &#39;abcd&#39;</span>
 
@@ -4286,7 +4286,7 @@
 
 <span class="sd">        ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Option</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="n">predicate</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">option</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="n">predicate</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="kc">None</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">try_find</span><span class="p">[</span><span class="n">E</span><span class="p">](</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">predicate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">Result</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">E</span><span class="p">]]</span>
@@ -4725,7 +4725,7 @@
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
 <span class="sd">        &gt;&gt;&gt; from pyochain import Iter</span>
-<span class="sd">        &gt;&gt;&gt; data = [1, 2, 3]</span>
+<span class="sd">        &gt;&gt;&gt; data = (1, 2, 3)</span>
 <span class="sd">        &gt;&gt;&gt; Iter(data).take(2).collect()</span>
 <span class="sd">        Seq(1, 2)</span>
 <span class="sd">        &gt;&gt;&gt; Iter(data).take(5).collect()</span>
@@ -4996,7 +4996,7 @@
 <span class="sd">        Knuth&#39;s example for prime factors of 1836:  2**2 * 3**3 * 17**1</span>
 <span class="sd">        ```python</span>
 <span class="sd">        &gt;&gt;&gt; import math</span>
-<span class="sd">        &gt;&gt;&gt; data = [2, 2, 3, 3, 3, 17]</span>
+<span class="sd">        &gt;&gt;&gt; data = (2, 2, 3, 3, 3, 17)</span>
 <span class="sd">        &gt;&gt;&gt; Iter(data).elements().into(math.prod)</span>
 <span class="sd">        1836</span>
 
@@ -6461,7 +6461,7 @@ number, elements() will ignore it.</p>
 </code></pre></div>
 Knuth's example for prime factors of 1836:  2<strong>2 * 3</strong>3 * 17**1
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">17</span><span class="p">]</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">17</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Iter</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">elements</span><span class="p">()</span><span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">prod</span><span class="p">)</span>
 <span class="mi">1836</span>
 </code></pre></div></p>
@@ -6517,7 +6517,7 @@ Knuth's example for prime factors of 1836:  2<strong>2 * 3</strong>3 * 17**1
 <span class="sd">    Knuth&#39;s example for prime factors of 1836:  2**2 * 3**3 * 17**1</span>
 <span class="sd">    ```python</span>
 <span class="sd">    &gt;&gt;&gt; import math</span>
-<span class="sd">    &gt;&gt;&gt; data = [2, 2, 3, 3, 3, 17]</span>
+<span class="sd">    &gt;&gt;&gt; data = (2, 2, 3, 3, 3, 17)</span>
 <span class="sd">    &gt;&gt;&gt; Iter(data).elements().into(math.prod)</span>
 <span class="sd">    1836</span>
 
@@ -6815,7 +6815,7 @@ Knuth's example for prime factors of 1836:  2<strong>2 * 3</strong>3 * 17**1
 
 <span class="sd">    ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">Option</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="n">predicate</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="kc">None</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">option</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="n">predicate</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="kc">None</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -7186,10 +7186,10 @@ Python <code>functools.reduce()</code> with an initializer.</p>
   <summary>Note</summary>
   <p>This is similar to <code>Iter::reduce</code> but with an initial value.</p>
 </details>        <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iter</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)]</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Iter</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">fold_star</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">acc</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">acc</span> <span class="o">+</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">)</span>
 <span class="mi">10</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">)]</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Iter</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">fold_star</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">acc</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">acc</span> <span class="o">+</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">)</span>
 <span class="s1">&#39;abcd&#39;</span>
 </code></pre></div>
@@ -7260,10 +7260,10 @@ Python <code>functools.reduce()</code> with an initializer.</p>
 
 <span class="sd">    ```python</span>
 <span class="sd">    &gt;&gt;&gt; from pyochain import Iter</span>
-<span class="sd">    &gt;&gt;&gt; data = [(1, 2), (3, 4)]</span>
+<span class="sd">    &gt;&gt;&gt; data = ((1, 2), (3, 4))</span>
 <span class="sd">    &gt;&gt;&gt; Iter(data).fold_star(0, lambda acc, x, y: acc + x + y)</span>
 <span class="sd">    10</span>
-<span class="sd">    &gt;&gt;&gt; data = [(&quot;a&quot;, &quot;b&quot;), (&quot;c&quot;, &quot;d&quot;)]</span>
+<span class="sd">    &gt;&gt;&gt; data = ((&quot;a&quot;, &quot;b&quot;), (&quot;c&quot;, &quot;d&quot;))</span>
 <span class="sd">    &gt;&gt;&gt; Iter(data).fold_star(&#39;&#39;, lambda acc, x, y: acc + x + y)</span>
 <span class="sd">    &#39;abcd&#39;</span>
 
@@ -9165,7 +9165,7 @@ If strict, tests for strict sorting, that is, returns False if equal elements ar
 
 <span class="sd">    ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">Option</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">option</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -10240,7 +10240,7 @@ random_state can also be any object with a method random that returns floats bet
     </table>
         <p>Example:
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iter</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Iter</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
 <span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Iter</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
@@ -10296,7 +10296,7 @@ random_state can also be any object with a method random that returns floats bet
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
 <span class="sd">    &gt;&gt;&gt; from pyochain import Iter</span>
-<span class="sd">    &gt;&gt;&gt; data = [1, 2, 3]</span>
+<span class="sd">    &gt;&gt;&gt; data = (1, 2, 3)</span>
 <span class="sd">    &gt;&gt;&gt; Iter(data).take(2).collect()</span>
 <span class="sd">    Seq(1, 2)</span>
 <span class="sd">    &gt;&gt;&gt; Iter(data).take(5).collect()</span>
