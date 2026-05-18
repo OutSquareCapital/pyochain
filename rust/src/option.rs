@@ -1,7 +1,7 @@
 use crate::args::{Args, Concatenate, Kwargs};
 use crate::errors::OptionUnwrapError;
 use crate::hasher::hash_fn;
-use crate::result;
+use crate::result::{PyoErr, PyoOk};
 use pyo3::IntoPyObjectExt;
 use pyo3::{
     prelude::*,
@@ -191,12 +191,12 @@ impl PySome {
         PySome::new(self.value.clone_ref(py))
     }
 
-    fn ok_or(&self, err: &Bound<'_, PyAny>) -> result::PyOk {
-        result::PyOk::new(self.value.clone_ref(err.py()))
+    fn ok_or(&self, err: &Bound<'_, PyAny>) -> PyoOk {
+        PyoOk::new(self.value.clone_ref(err.py()))
     }
 
-    fn ok_or_else(&self, err: &Bound<'_, PyAny>) -> result::PyOk {
-        result::PyOk::new(self.value.clone_ref(err.py()))
+    fn ok_or_else(&self, err: &Bound<'_, PyAny>) -> PyoOk {
+        PyoOk::new(self.value.clone_ref(err.py()))
     }
 
     #[pyo3(signature = (default, f, *args, **kwargs))]
@@ -329,14 +329,14 @@ impl PySome {
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let inner = self.value.bind(py);
-        match inner.cast_exact::<result::PyOk>() {
+        match inner.cast_exact::<PyoOk>() {
             Ok(ok_ref) => {
                 let some_value = PySome::new(ok_ref.get().value.clone_ref(py)).into_py_any(py)?;
-                Ok(result::PyOk::new(some_value).into_py_any(py)?)
+                Ok(PyoOk::new(some_value).into_py_any(py)?)
             }
             Err(_) => {
-                let err_ref = inner.cast_exact::<result::PyErr>()?;
-                Ok(result::PyErr::new(err_ref.get().error.clone_ref(py)).into_py_any(py)?)
+                let err_ref = inner.cast_exact::<PyoErr>()?;
+                Ok(PyoErr::new(err_ref.get().error.clone_ref(py)).into_py_any(py)?)
             }
         }
     }
@@ -469,14 +469,12 @@ impl PyNull {
         Ok(f.call0()?.unbind())
     }
 
-    fn ok_or(&self, err: &Bound<'_, PyAny>) -> result::PyErr {
-        result::PyErr {
-            error: err.to_owned().unbind(),
-        }
+    fn ok_or(&self, err: &Bound<'_, PyAny>) -> PyoErr {
+        PyoErr::new(err.to_owned().unbind())
     }
 
-    fn ok_or_else(&self, err: &Bound<'_, PyAny>) -> PyResult<result::PyErr> {
-        Ok(result::PyErr {
+    fn ok_or_else(&self, err: &Bound<'_, PyAny>) -> PyResult<PyoErr> {
+        Ok(PyoErr {
             error: err.call0()?.unbind(),
         })
     }
@@ -562,7 +560,7 @@ impl PyNull {
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        result::PyOk::new(get_null(py).into_any()).into_py_any(py)
+        PyoOk::new(get_null(py).into_any()).into_py_any(py)
     }
 
     fn eq(slf: &Bound<'_, Self>, other: &Bound<'_, PyAny>) -> bool {

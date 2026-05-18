@@ -1,6 +1,6 @@
 use crate::args::{Args, Concatenate, Kwargs};
 use crate::option::{PySome, get_null};
-use crate::result::{PyErr, PyOk};
+use crate::result::{PyoErr, PyoOk};
 use pyo3::{IntoPyObjectExt, prelude::*};
 #[pyclass(frozen, subclass)]
 pub struct Pipeable;
@@ -69,17 +69,17 @@ impl Checkable {
     fn ok_or(slf: &Bound<'_, Self>, err: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = slf.py();
         if slf.is_truthy()? {
-            Ok(PyOk::new(slf.to_owned().unbind().into_any()).into_py_any(py)?)
+            Ok(PyoOk::new(slf.to_owned().unbind().into_any()).into_py_any(py)?)
         } else {
-            Ok(PyErr::new(err.to_owned().unbind()).into_py_any(py)?)
+            Ok(PyoErr::new(err.to_owned().unbind()).into_py_any(py)?)
         }
     }
     fn err_or(slf: &Bound<'_, Self>, err: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = slf.py();
         if slf.is_truthy()? {
-            Ok(PyErr::new(slf.to_owned().unbind().into_any()).into_py_any(py)?)
+            Ok(PyoErr::new(slf.to_owned().unbind().into_any()).into_py_any(py)?)
         } else {
-            Ok(PyOk::new(err.to_owned().unbind()).into_py_any(py)?)
+            Ok(PyoOk::new(err.to_owned().unbind()).into_py_any(py)?)
         }
     }
     #[pyo3(signature = (func, *args, **kwargs))]
@@ -91,9 +91,9 @@ impl Checkable {
     ) -> PyResult<Py<PyAny>> {
         let py = slf.py();
         if slf.is_truthy()? {
-            Ok(PyOk::new(slf.to_owned().unbind().into_any()).into_py_any(py)?)
+            Ok(PyoOk::new(slf.to_owned().unbind().into_any()).into_py_any(py)?)
         } else {
-            Ok(PyErr::new(func.concat(&slf, args, kwargs)?.unbind()).into_py_any(py)?)
+            Ok(PyoErr::new(func.concat(&slf, args, kwargs)?.unbind()).into_py_any(py)?)
         }
     }
     #[pyo3(signature = (func, *args, **kwargs))]
@@ -105,9 +105,9 @@ impl Checkable {
     ) -> PyResult<Py<PyAny>> {
         let py = slf.py();
         if slf.is_truthy()? {
-            Ok(PyErr::new(slf.to_owned().unbind().into_any()).into_py_any(py)?)
+            Ok(PyoErr::new(slf.to_owned().unbind().into_any()).into_py_any(py)?)
         } else {
-            Ok(PyOk::new(func.concat(&slf, args, kwargs)?.unbind()).into_py_any(py)?)
+            Ok(PyoOk::new(func.concat(&slf, args, kwargs)?.unbind()).into_py_any(py)?)
         }
     }
 }
