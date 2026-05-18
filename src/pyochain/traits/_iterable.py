@@ -170,22 +170,6 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
         """
         return func(*self, *args, **kwargs)
 
-    def length(self) -> int:
-        """Return the length of the `Iterable`.
-
-        Returns:
-            int: The count of elements.
-        ```python
-        >>> from pyochain import Seq, Range
-        >>> Seq((1, 2)).length()
-        2
-        >>> Range(0, 5).length()
-        5
-
-        ```
-        """
-        return cz.itertoolz.count(iter(self))
-
     def join(self: PyoIterable[str], sep: str) -> str:
         """Join all elements of the `Iterable` into a single `str`, with a specified separator.
 
@@ -208,24 +192,37 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
     def first(self) -> T:
         """Return the first element of the `Iterable`.
 
-        This is similar to `__getitem__` but works on lazy `Iterators`.
+        By default, this method convert the `Iterable` to an `Iterator` and returns the first element by calling `next()` on it.
+
+        On `PyoSequence` and its subclasses (`Seq`, `Range`, etc.), this is overriden to directly use an efficient `__getitem__` access.
+
+        If you already are using an `Iter`, prefer `Iter.next()` instead, which returns an `Option[T]` to handle exhaustion gracefully.
 
         Returns:
             T: The first element of the `Iterable`.
 
         ```python
         >>> from pyochain import Seq
-        >>> Seq([9]).first()
-        9
+        >>> data = Seq((1, 2))
+        >>> data.first()
+        1
+        >>> iterator = data.iter()
+        >>> iterator.first()
+        1
+        >>> iterator.first()
+        2
+        >>> # iterator is now empty, using first again would raise an error
+        >>> iterator.next()
+        NONE
 
         ```
         """
-        return cz.itertoolz.first(iter(self))
+        return next(iter(self))
 
     def second(self) -> T:
         """Return the second element of the `Iterable`.
 
-        This is similar to `__getitem__` but works on lazy `Iterators`.
+        Similar to `first()`, see its documentation for details.
 
         Returns:
             T: The second element of the `Iterable`.
@@ -237,7 +234,9 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
 
         ```
         """
-        return cz.itertoolz.second(iter(self))
+        seq = iter(self)
+        _ = next(seq)
+        return next(seq)
 
     def last(self) -> T:
         """Return the last element of the `Iterable`.
@@ -255,6 +254,32 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
         ```
         """
         return cz.itertoolz.last(iter(self))
+
+    def length(self) -> int:
+        """Return the length of the `Iterable`.
+
+        By default, this method converts the `Iterable` to an `Iterator` and counts the elements by consuming it.
+
+        This is overriden on `PyoCollection` and its subclasses to directly use an efficient `__len__` access.
+
+        Returns:
+            int: The count of elements.
+        ```python
+        >>> from pyochain import Seq, Range
+        >>> Seq((1, 2)).length()
+        2
+        >>> Range(0, 5).length()
+        5
+        >>> data = Iter((1, 2, 3))
+        >>> data.length()
+        3
+        >>> # data is now empty
+        >>> data.length()
+        0
+
+        ```
+        """
+        return cz.itertoolz.count(iter(self))
 
     def sum[U: int | bool](self: PyoIterable[U]) -> int:
         """Return the sum of the `Iterable`.
@@ -1582,7 +1607,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         ```
         """
-        return self.__class__(cz.itertoolz.cons(value, iter(self)))
+        return self.__class__(itertools.chain((value,), iter(self)))
 
     def interleave(self, *others: Iterable[T]) -> Self:
         """Interleave multiple sequences element-wise.
@@ -1631,7 +1656,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         ```
         """
-        return self.__class__(cz.itertoolz.concat((iter(self), *others)))
+        return self.__class__(itertools.chain.from_iterable((iter(self), *others)))
 
     def elements(self) -> Self:
         """Iterator over elements repeating each as many times as its count.
@@ -1871,6 +1896,18 @@ class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
+
+    @override
+    def first(self) -> T:
+        return self[0]
+
+    @override
+    def second(self) -> T:
+        return self[1]
+
+    @override
+    def last(self) -> T:
+        return self[-1]
 
     @overload
     def get(self, index: int) -> Option[T]: ...
