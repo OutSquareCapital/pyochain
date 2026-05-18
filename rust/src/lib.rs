@@ -1,7 +1,7 @@
 mod args;
-mod converters;
 mod errors;
 mod hasher;
+mod mixins;
 mod option;
 mod result;
 mod tools;
@@ -23,8 +23,8 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<errors::OptionUnwrapError>()?;
     m.add_class::<errors::ResultUnwrapError>()?;
     m.add_class::<result::PyochainResult>()?;
-    m.add_class::<converters::Checkable>()?;
-    m.add_class::<converters::Pipeable>()?;
+    m.add_class::<mixins::Checkable>()?;
+    m.add_class::<mixins::Pipeable>()?;
     m.add_wrapped(pyo3::wrap_pymodule!(tools::tools))?;
     py.import("sys")?
         .getattr("modules")?
