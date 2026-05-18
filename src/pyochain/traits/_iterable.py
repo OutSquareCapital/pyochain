@@ -1688,36 +1688,6 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         """
         return self.__class__(itertools.chain.from_iterable((iter(self), *others)))
 
-    def elements(self) -> Self:
-        """Iterator over elements repeating each as many times as its count.
-
-        Note:
-            if an element's count has been set to zero or is a negative
-            number, elements() will ignore it.
-
-        Returns:
-            Self: A new `Iterator` with elements repeated according to their counts.
-
-        Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter("ABCABC").elements().sort()
-        Vec('A', 'A', 'B', 'B', 'C', 'C')
-
-        ```
-        Knuth's example for prime factors of 1836:  2**2 * 3**3 * 17**1
-        ```python
-        >>> import math
-        >>> data = (2, 2, 3, 3, 3, 17)
-        >>> Iter(data).elements().into(math.prod)
-        1836
-
-        ```
-        """
-        from collections import Counter
-
-        return self.__class__(Counter(iter(self)).elements())
-
     def accumulate(self, func: Callable[[T, T], T], initial: T | None = None) -> Self:
         """Return an `Iterator` of accumulated binary function results.
 
