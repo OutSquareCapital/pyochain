@@ -9,15 +9,13 @@
 ### 🔄 Refactors
 
 - Renamed `converters.rs` file in Rust to `mixins.rs` to better reflect its content and purpose.
-
-### 🔄 Refactors
-
-- **Internal**: Renamed `PyOk` and `PyErr` to `PyoOk` and `PyoErr` to avoid any confusion with `Pyo3` types.
+- **Internal**: Renamed `PyOk` and `PyErr` to `PyoOk` and `PyoErr` to avoid any confusion with `PyO3` types.
 
 ### 📖 Documentation
 
 - Various reorganisation changes to reduce redundancy
 - Updated CONTRIBUTING.md with latest architecture status
+- Improved docstrings for `PyoIterator` comparison methods with better examples and explanations
 
 ### 🛠️ Other improvements
 
