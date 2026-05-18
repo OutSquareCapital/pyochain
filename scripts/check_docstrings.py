@@ -5,9 +5,9 @@ import re
 from pathlib import Path
 from typing import NamedTuple, TypeIs
 
-import rich
-import rich.table
-import rich.text
+from rich.console import Console
+from rich.table import Table
+from rich.text import Text
 
 from pyochain import (
     NONE,
@@ -24,9 +24,11 @@ from pyochain import (
     option,
 )
 
-SRC_DIR = Path().joinpath("src", "pyochain")
+ROOT = Path()
+SRC_DIR = ROOT.joinpath("src", "pyochain")
 CODE_BLOCK_PATTERN = re.compile(r"^```(\w*)", re.MULTILINE)
 SKIP_DECORATORS = Set({"overload", "override", "no_doctest", "wraps"})
+CONSOLE = Console()
 type DocumentableNode = ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef
 type MethodNode = ast.FunctionDef | ast.AsyncFunctionDef
 
@@ -120,14 +122,6 @@ def _get_protocol_methods(tree: ast.Module) -> Set[int]:
     )
 
 
-def _is_method(node: ast.AST) -> TypeIs[MethodNode]:
-    return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-
-
-def _is_documentable(node: ast.AST) -> TypeIs[DocumentableNode]:
-    return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
-
-
 def _process_node(
     file_path: Path, node: DocumentableNode, protocol_methods: Set[int]
 ) -> Option[DocstringError]:
@@ -145,11 +139,11 @@ def _process_node(
         case Null() if _should_report_missing_docstring(node):
             return Some(
                 DocstringError(
-                    file_path=file_path,
-                    func_name=node.name,
-                    line_no=node.lineno,
-                    error_line_no=node.lineno,
-                    errors=Seq(["Missing docstring"]),
+                    file_path,
+                    node.name,
+                    node.lineno,
+                    node.lineno,
+                    Seq(["Missing docstring"]),
                 )
             )
         case Some(docstring):
@@ -173,18 +167,9 @@ def _process_node(
             return NONE
 
 
-def _has_skip_decorator(node: DocumentableNode) -> bool:
-    return Iter(node.decorator_list).any(
-        lambda d: (
-            (isinstance(d, ast.Name) and d.id in SKIP_DECORATORS)
-            or (isinstance(d, ast.Attribute) and d.attr in SKIP_DECORATORS)
-        )
-    )
-
-
 def _check_code_blocks(
     docstring: str, start_line: int, func_name: str, *, skip_doctest: bool = False
-) -> Result[None, Vec[ErrorDetail]]:
+) -> Result[tuple[()], Vec[ErrorDetail]]:
     def _process_line(state: State, line_num: int, line: str) -> State:
         marker = "```"
         match = CODE_BLOCK_PATTERN.search(line)
@@ -195,12 +180,8 @@ def _check_code_blocks(
             if not state.stack.is_empty():
                 _ = state.stack.pop()
                 return state
-            state.errors.append(
-                ErrorDetail(
-                    line_no=start_line + line_num,
-                    message="Closing block ``` without matching opening",
-                )
-            )
+            msg = "Closing block ``` without matching opening"
+            state.errors.append(ErrorDetail(start_line + line_num, msg))
             return state
         state.stack.append((line_num + 1, language))
         return state
@@ -222,7 +203,7 @@ def _check_code_blocks(
 
     match doctest_errors:
         case Ok(_) if block_errors.is_empty():
-            return Ok(None)
+            return Ok(())
         case Ok(_):
             return Err(block_errors)
         case Err(errors):
@@ -230,9 +211,26 @@ def _check_code_blocks(
             return Err(errors)
 
 
+def _has_skip_decorator(node: DocumentableNode) -> bool:
+    return Iter(node.decorator_list).any(
+        lambda d: (
+            (isinstance(d, ast.Name) and d.id in SKIP_DECORATORS)
+            or (isinstance(d, ast.Attribute) and d.attr in SKIP_DECORATORS)
+        )
+    )
+
+
+def _is_method(node: ast.AST) -> TypeIs[MethodNode]:
+    return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+
+
+def _is_documentable(node: ast.AST) -> TypeIs[DocumentableNode]:
+    return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+
+
 def _check_errs(
     lines: Vec[str], func_name: str, start_line: int, *, has_no_doctest_flag: bool
-) -> Result[None, Vec[ErrorDetail]]:
+) -> Result[tuple[()], Vec[ErrorDetail]]:
     should_skip = (
         func_name.startswith("_")
         or func_name.istitle()
@@ -242,15 +240,15 @@ def _check_errs(
         )
     )
     if should_skip:
-        return Ok(None)
+        return Ok(())
     msg = "Missing doctest: No ```python block found in docstring"
     return Err(Vec.from_ref([ErrorDetail(start_line, msg)]))
 
 
 def main() -> None:
     """Check all docstrings in the project."""
-    rich.print(
-        rich.text.Text(
+    CONSOLE.print(
+        Text(
             "Checking docstrings for properly closed code blocks...", style="cyan bold"
         )
     )
@@ -259,7 +257,9 @@ def main() -> None:
         return (
             Iter(SRC_DIR.rglob(f"*.{pattern}"))
             .collect()
-            .inspect(lambda p: rich.print(f"Checking {p.length()} {pattern} files..."))
+            .inspect(
+                lambda p: CONSOLE.print(f"Checking {p.length()} {pattern} files...")
+            )
         )
 
     all_errors = (
@@ -267,24 +267,22 @@ def main() -> None:
     )
 
     if all_errors.is_empty():
-        rich.print(rich.text.Text("[OK] No issues found!", style="green"))
+        CONSOLE.print(Text("[OK] No issues found!", style="green"))
         return
 
-    table = rich.table.Table(title="Issues Found", show_header=True)
+    table = Table(title="Issues Found", show_header=True)
     table.add_column("File", style="cyan")
     table.add_column("Function", style="magenta")
     table.add_column("Error", style="red")
     all_errors.iter().for_each(
         lambda error: table.add_row(
-            f"{error.file_path.relative_to(Path())}:{error.error_line_no}",
+            f"{error.file_path.relative_to(ROOT)}:{error.error_line_no}",
             error.func_name,
             error.errors.join("\n"),
         )
     )
-    rich.print(table)
-    rich.print(
-        rich.text.Text(f"\n[FAILED] Found {all_errors.length()} issue(s)", style="red")
-    )
+    CONSOLE.print(table)
+    CONSOLE.print(Text(f"\n[FAILED] Found {all_errors.length()} issue(s)", style="red"))
 
 
 if __name__ == "__main__":

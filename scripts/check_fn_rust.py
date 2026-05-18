@@ -142,10 +142,6 @@ def _decorated(fn: Callable[..., object]) -> Callable[..., object]:
     return fn
 
 
-def _with_source(fn_name: str, src: Literal["python", "rust"]) -> tuple[str, str]:
-    return (src, fn_name)
-
-
 def main(dtype: type, rust_fns: Set[str], filters: Set[str]) -> None:
     """Run the check and output the results to a ndjson file."""
     fn: pl.Expr = pl.col("fn")
@@ -168,6 +164,10 @@ def main(dtype: type, rust_fns: Set[str], filters: Set[str]) -> None:
         .sort(["source", "fn"])
         .sink_ndjson(DATA.joinpath(f"{dtype.__name__}_fns.ndjson"))
     )
+
+
+def _with_source(fn_name: str, src: Literal["python", "rust"]) -> tuple[str, str]:
+    return (src, fn_name)
 
 
 if __name__ == "__main__":
