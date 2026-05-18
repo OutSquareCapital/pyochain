@@ -671,73 +671,102 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             return NONE
 
     def eq(self, other: Iterable[T]) -> bool:
-        """Check if two `Iterable`s are equal based on their data.
+        """Return `True` if **self** and *other* contain the same items in the same order.
+
+        Comparison is performed element by element.
+
+        Two `Iterable`s are equal only if:
+
+        - every compared pair of elements is equal
+        - and both iterables are exhausted at the same time
 
         Note:
-            This will consume any `Iterator` instances involved in the comparison (**self** and/or **other**).
+            This consumes any `Iterator` instances involved in the comparison,
+            including **self** and *other* when *other* is itself an iterator.
 
         Args:
-            other (Iterable[T]): Another instance of `Iterable[T]` to compare against.
+            other (Iterable[T]): Another `Iterable[T]` to compare against.
 
         Returns:
-            bool: `True` if the underlying data are equal, `False` otherwise.
+            bool: `True` when both iterables yield the same sequence of values.
 
         Example:
         ```python
-        >>> from pyochain import Iter, Seq, Vec
-        >>> Iter((1,2,3)).eq(Iter((1,2,3)))
+        >>> from pyochain import Iter, Seq
+        >>> Iter((1, 2, 3)).eq(Seq((1, 2, 3)))
         True
-        >>> Iter((1,2,3)).eq(Seq([1,2]))
+        >>> Iter((1, 2, 3)).eq((1, 2, 4))
         False
-        >>> Iter((1,2,3)).eq(Iter((1,2)))
+        >>> Iter((1, 2, 3)).eq((1, 2))
         False
-        >>> Iter((1,2,3)).eq(Vec([1,2,3]))
-        True
+        >>> Iter((1, 2)).eq((1, 2, 3))
+        False
 
         ```
         """
         return tls.eq(iter(self), other)
 
     def ne(self, other: Iterable[T]) -> bool:
-        """Check if this `Iterator` and *other* are not equal based on their data.
+        """Return `True` if **self** and *other* differ in value or length.
+
+        This is the logical opposite of `eq()`.
+
+        The result becomes `True` as soon as:
+
+        - a pair of compared elements is not equal
+        - or one iterable ends before the other
+
+        Note:
+            This consumes any `Iterator` instances involved in the comparison,
+            including **self** and *other* when *other* is itself an iterator.
 
         Args:
-            other (Iterable[T]): Another instance of `Iterable[T]` to compare against.
+            other (Iterable[T]): Another `Iterable[T]` to compare against.
 
         Returns:
-            bool: `True` if the underlying data are not equal, `False` otherwise.
+            bool: `True` when the two iterables are not equal.
 
         Example:
         ```python
-        >>> from pyochain import Iter, Seq, Vec
-        >>> Iter((1,2,3)).ne(Iter((1,2,3)))
+        >>> from pyochain import Iter, Seq
+        >>> Iter((1, 2, 3)).ne(Seq((1, 2, 3)))
         False
-        >>> Iter((1,2,3)).ne(Seq([1,2]))
+        >>> Iter((1, 2, 3)).ne((1, 2, 4))
         True
-        >>> Iter((1,2,3)).ne(Iter((1,2)))
+        >>> Iter((1, 2, 3)).ne((1, 2))
         True
-        >>> Iter((1,2,3)).ne(Vec([1,2,3]))
-        False
 
         ```
         """
         return tls.ne(iter(self), other)
 
     def le(self, other: Iterable[T]) -> bool:
-        """Check if this `Iterator` is less than or equal to *other* based on their data.
+        """Return `True` if **self** is lexicographically less than or equal to *other*.
+
+        Comparison is performed element by element, like Python sequence ordering.
+
+        The first differing pair decides the result.
+
+        If all compared elements are equal and one iterable ends first, the shorter iterable is considered smaller.
+
+        Note:
+            This consumes any `Iterator` instances involved in the comparison,
+            including **self** and *other* when *other* is itself an iterator.
 
         Args:
-            other (Iterable[T]): Another instance of `Iterable[T]` to compare against.
+            other (Iterable[T]): Another `Iterable[T]` to compare against.
 
         Returns:
-            bool: `True` if the underlying data of self is less than or equal to that of other, `False` otherwise.
+            bool: `True` if **self** is smaller than *other*, or equal to it.
 
         Example:
         ```python
-        >>> from pyochain import Iter, Seq
-        >>> Iter((1,2)).le(Seq((1,2,3)))
+        >>> from pyochain import Iter
+        >>> Iter((1, 2)).le((1, 2, 3))
         True
-        >>> Iter((1,2,3)).le(Seq((1,2)))
+        >>> Iter((1, 2, 3)).le((1, 2, 3))
+        True
+        >>> Iter((1, 3)).le((1, 2, 9))
         False
 
         ```
@@ -745,41 +774,61 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         return tls.le(iter(self), other)
 
     def lt(self, other: Iterable[T]) -> bool:
-        """Check if this `Iterator` is less than *other* based on their data.
+        """Return `True` if **self** is lexicographically strictly less than *other*.
+
+        The first differing pair of elements decides the result.
+
+        If all compared elements are equal, a shorter iterable is strictly smaller than a longer one.
+
+        Note:
+            This consumes any `Iterator` instances involved in the comparison,
+            including **self** and *other* when *other* is itself an iterator.
 
         Args:
             other (Iterable[T]): Another `Iterable[T]` to compare against.
 
         Returns:
-            bool: `True` if the underlying data of self is less than that of other, `False` otherwise.
+            bool: `True` if **self** compares strictly before *other*.
 
         Example:
         ```python
-        >>> from pyochain import Iter, Seq
-        >>> Iter((1,2)).lt(Seq((1,2,3)))
+        >>> from pyochain import Iter
+        >>> Iter((1, 2)).lt((1, 2, 3))
         True
-        >>> Iter((1,2,3)).lt(Seq((1,2)))
+        >>> Iter((1, 2, 3)).lt((1, 2, 3))
         False
+        >>> Iter((1, 2, 3)).lt((1, 3))
+        True
 
         ```
         """
         return tls.lt(iter(self), other)
 
     def gt(self, other: Iterable[T]) -> bool:
-        """Check if this `Iterator` is greater than *other* based on their data.
+        """Return `True` if **self** is lexicographically strictly greater than *other*.
+
+        The first differing pair of elements decides the result.
+
+        If all compared elements are equal, the longer iterable is strictly greater than the shorter one.
+
+        Note:
+            This consumes any `Iterator` instances involved in the comparison,
+            including **self** and *other* when *other* is itself an iterator.
 
         Args:
             other (Iterable[T]): Another `Iterable[T]` to compare against.
 
         Returns:
-            bool: `True` if the underlying data of **self** is greater than that of **other**, `False` otherwise.
+            bool: `True` if **self** compares strictly after *other*.
 
         Example:
         ```python
         >>> from pyochain import Iter
-        >>> Iter((1,2,3)).gt((1,2))
+        >>> Iter((1, 2, 3)).gt((1, 2))
         True
-        >>> Iter((1,2)).gt((1,2,3))
+        >>> Iter((1, 3)).gt((1, 2, 9))
+        True
+        >>> Iter((1, 2)).gt((1, 2, 3))
         False
 
         ```
@@ -787,20 +836,33 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         return tls.gt(iter(self), other)
 
     def ge(self, other: Iterable[T]) -> bool:
-        """Check if this `Iterator` is greater than or equal to *other* based on their data.
+        """Return `True` if **self** is lexicographically greater than or equal to *other*.
+
+        Comparison is performed element by element, like Python sequence ordering.
+
+        The first differing pair decides the result.
+
+        If all compared elements are equal and one iterable ends first, the longer iterable is considered
+        greater.
+
+        Note:
+            This consumes any `Iterator` instances involved in the comparison,
+            including **self** and *other* when *other* is itself an iterator.
 
         Args:
             other (Iterable[T]): Another `Iterable[T]` to compare against.
 
         Returns:
-            bool: `True` if the underlying data of **self** is greater than or equal to that of **other**, `False` otherwise.
+            bool: `True` if **self** is greater than *other*, or equal to it.
 
         Example:
         ```python
         >>> from pyochain import Iter
-        >>> Iter((1,2,3)).ge((1,2))
+        >>> Iter((1, 2, 3)).ge((1, 2))
         True
-        >>> Iter((1,2)).ge((1,2,3))
+        >>> Iter((1, 2, 3)).ge((1, 2, 3))
+        True
+        >>> Iter((1, 2)).ge((1, 2, 3))
         False
 
         ```
