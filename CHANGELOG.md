@@ -18,6 +18,7 @@
 ### 🛠️ Other improvements
 
 - Benchmarks -> deletions, renaming and new ones
+- Cleaned up unneded/redundants tests for args concatenation and Result
 
 ### 📖 Documentation
 
