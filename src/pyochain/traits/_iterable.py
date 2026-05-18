@@ -1474,7 +1474,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         ```
         """
-        return self.__class__(cz.itertoolz.take_nth(step, iter(self)))
+        return self.__class__(itertools.islice(iter(self), 0, None, step))
 
     def slice(
         self,
