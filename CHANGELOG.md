@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+-
+
+## [0.18.0] - 2026-05-18
+
 ### 💥 Breaking changes
 
 - **Removed**: `PyoIterator::is_distinct` was doing the exact same thing as `PyoIterator::all_unique` without a key function.
