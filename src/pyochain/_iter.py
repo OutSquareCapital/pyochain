@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any, Literal, Never, Self, TypeIs, overload, o
 
 import cytoolz as cz
 
+from . import _tools as tls  # pyright: ignore[reportMissingModuleSource]
 from ._types import SupportsRichComparison
 from .rs import NONE, Err, Ok, Option, Result, Some, option
 from .traits import (
@@ -2771,96 +2772,29 @@ class Iter[T](PyoIterator[T]):
             itertools.starmap(func, cz.itertoolz.sliding_window(length, self._inner))
         )
 
-    @overload
-    def partition(self, n: Literal[1], pad: None = None) -> Iter[tuple[T]]: ...
-    @overload
-    def partition(self, n: Literal[2], pad: None = None) -> Iter[tuple[T, T]]: ...
-    @overload
-    def partition(self, n: Literal[3], pad: None = None) -> Iter[tuple[T, T, T]]: ...
-    @overload
-    def partition(self, n: Literal[4], pad: None = None) -> Iter[tuple[T, T, T, T]]: ...
-    @overload
-    def partition(
-        self,
-        n: Literal[5],
-        pad: None = None,
-    ) -> Iter[tuple[T, T, T, T, T]]: ...
-    @overload
-    def partition(self, n: int, pad: T) -> Iter[tuple[T, ...]]: ...
-    def partition(self, n: int, pad: T | None = None) -> Iter[tuple[T, ...]]:
-        """Partition **self** into `tuples` of length **n**.
+    def partition(self, predicate: Callable[[T], bool]) -> tuple[Vec[T], Vec[T]]:
+        """Consumes the `Iterator`, creating two `Vec` from it.
 
-        Args:
-            n (int): Length of each partition.
-            pad (T | None): Value to pad the last partition if needed.
+        The predicate passed to `partition()` can return true, or false.
 
-        Returns:
-            Iter[tuple[T, ...]]: An iterable of partitioned tuples.
-
-        Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter([1, 2, 3, 4]).partition(2).collect()
-        Seq((1, 2), (3, 4))
-
-        ```
-        If the length of seq is not evenly divisible by n, the final tuple is dropped if pad is not specified, or filled to length n by pad:
-        ```python
-        >>> Iter((1, 2, 3, 4, 5)).partition(2).collect()
-        Seq((1, 2), (3, 4), (5, None))
-
-        ```
-        """
-        return Iter(cz.itertoolz.partition(n, self._inner, pad=pad))
-
-    def partition_all(self, n: int) -> Iter[tuple[T, ...]]:
-        """Partition all elements of sequence into tuples of length at most n.
-
-        The final tuple may be shorter to accommodate extra elements.
-
-        Args:
-            n (int): Maximum length of each partition.
-
-        Returns:
-            Iter[tuple[T, ...]]: An iterable of partitioned tuples.
-
-        Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter([1, 2, 3, 4]).partition_all(2).collect()
-        Seq((1, 2), (3, 4))
-        >>> Iter((1, 2, 3, 4, 5)).partition_all(2).collect()
-        Seq((1, 2), (3, 4), (5,))
-
-        ```
-        """
-        return Iter(cz.itertoolz.partition_all(n, self._inner))
-
-    def partition_by(self, predicate: Callable[[T], bool]) -> Iter[tuple[T, ...]]:
-        """Partition the `Iterator` into a sequence of `tuples` according to a predicate function.
-
-        Every time the output of `predicate` changes, a new `tuple` is started,
-        and subsequent items are collected into that `tuple`.
+        `partition` returns a pair, all of the elements for which it returned `True`, and all of the elements for which it returned `False`.
 
         Args:
             predicate (Callable[[T], bool]): Function to determine partition boundaries.
 
         Returns:
-            Iter[tuple[T, ...]]: An iterable of partitioned tuples.
+            tuple[Vec[T], Vec[T]]: The resulting pair of collections
 
         Example:
         ```python
         >>> from pyochain import Iter
-        >>> Iter("I have space").partition_by(lambda c: c == " ").collect()
-        Seq(('I',), (' ',), ('h', 'a', 'v', 'e'), (' ',), ('s', 'p', 'a', 'c', 'e'))
-        >>>
-        >>> data = (1, 2, 1, 99, 88, 33, 99, -1, 5)
-        >>> Iter(data).partition_by(lambda x: x > 10).collect()
-        Seq((1, 2, 1), (99, 88, 33, 99), (-1, 5))
+        >>> Iter((1, 2, 3, 4, 5)).partition(lambda x: x % 2 == 0)
+        (Vec(2, 4), Vec(1, 3, 5))
 
         ```
         """
-        return Iter(cz.recipes.partitionby(predicate, self._inner))
+        first, second = tls.partition(self._inner, predicate)
+        return Vec.from_ref(first), Vec.from_ref(second)
 
     def batch(self, n: int, *, strict: bool = False) -> Iter[tuple[T, ...]]:
         """Batch elements into tuples of length n and return a new Iter.

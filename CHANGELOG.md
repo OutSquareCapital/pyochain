@@ -4,14 +4,16 @@
 
 ### 💥 Breaking changes
 
-- Removed: `PyoIterator::is_distinct` was doing the exact same thing as `PyoIterator::all_unique` without a key function.
-- API change: `PyoIterator::all_unique` does not accept a key function anymore. If you need one, call `all_unique_by` instead.
+- **Removed**: `PyoIterator::is_distinct` was doing the exact same thing as `PyoIterator::all_unique` without a key function.
+- **Removed**: `Iter::{partition_all, partition_by}`. Call the corresponding functions in `cytoolz.itertoolz` instead.
+- **Behavior change**: `PyoIterator::partition` now return a tuple of `Vec` from a predicate function, instead of an `Iter` of `tuples` of length n. It aligns with the Rust implementation, and is often more useful in practice. Call the corresponding function in `cytoolz.itertoolz` instead if you need the old behavior.
+- **API change**: `PyoIterator::all_unique` does not accept a key function anymore. If you need one, call `all_unique_by` instead.
 
 ### ✨ Enhancements
 
-- Check safety: Guarantee singleton behavior for `Null`. Calling `Null()` will always return the same instance, which is `NONE`. This allows for identity checks (`is`) to work as expected with `Null`, and ensures that there are no multiple instances of `Null` floating around in the system. This also means that you can use `Null()` instead of `NONE` if you prefer, without worrying about breaking the singleton property.
-- Feat: `PyoIterator::all_unique` is migrated to `PyoIterable`, meaning ALL collections now can call it without converting to an iterator first. `PyoSequence` and `PyoSet` (and by extension `Seq`, `Set`, etc...) have their own optimized implementations
-- Feat: Added `PyoIterable::all_unique_by` for checking uniqueness based on a custom key function. This is the same as former `all_unique(key=...)`, but with a clearer name and intent.
+- **Check safety**: Guarantee singleton behavior for `Null`. Calling `Null()` will always return the same instance, which is `NONE`. This allows for identity checks (`is`) to work as expected with `Null`, and ensures that there are no multiple instances of `Null` floating around in the system. This also means that you can use `Null()` instead of `NONE` if you prefer, without worrying about breaking the singleton property.
+- **Feat**: `PyoIterator::all_unique` is migrated to `PyoIterable`, meaning ALL collections now can call it without converting to an iterator first. `PyoSequence` and `PyoSet` (and by extension `Seq`, `Set`, etc...) have their own optimized implementations
+- **Feat**: Added `PyoIterable::all_unique_by` for checking uniqueness based on a custom key function. This is the same as former `all_unique(key=...)`, but with a clearer name and intent.
 
 ### 🚀 Performance improvements
 
