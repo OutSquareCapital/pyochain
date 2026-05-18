@@ -966,7 +966,7 @@ class Iter[T](PyoIterator[T]):
         return Iter(_successors())
 
     def collect[R: Collection[Any]](
-        self, collector: Callable[[Iterator[T] | Iterable[T]], R] = Seq[T]
+        self, collector: Callable[[Iterator[T]], R] = Seq[T]
     ) -> R:
         """Transforms an `Iter` into a collection.
 
@@ -988,7 +988,7 @@ class Iter[T](PyoIterator[T]):
             If you need to pass additional arguments, you can use `Iter::into()` instead.
 
         Args:
-            collector (Callable[[Iterator[T] | Iterable[T]], R]): Function|type that defines the target collection. `R` is constrained to a `Collection`.
+            collector (Callable[[Iterator[T]], R]): Function|type that defines the target collection. `R` is constrained to a `Collection`.
 
         Returns:
             R: A materialized collection containing the collected elements.
