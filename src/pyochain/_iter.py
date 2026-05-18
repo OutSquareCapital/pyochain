@@ -3295,7 +3295,12 @@ class Iter[T](PyoIterator[T]):
 
         ```
         """
-        return Seq(cz.itertoolz.tail(n, self._inner))
+        from collections import deque
+
+        # TODO: we should move this to Rust and make it fully lazy.
+        # Here we recollect it in a Seq to clearly indicate that we need to consume the entire iterator to get the tail.
+        # Alternatively, add `deque` wrapper to public API, and `from_ref` it here.
+        return Seq(deque(self._inner, n))
 
     def top_n(self, n: int, key: Callable[[T], Any] | None = None) -> Seq[T]:  # pyright: ignore[reportExplicitAny]
         """Return a tuple of the top-n items according to key.
