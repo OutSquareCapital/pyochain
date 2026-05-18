@@ -919,28 +919,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#pyochain._iter.Unzipped.left" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        left
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain._iter.Unzipped.right" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        right
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -1686,28 +1664,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#pyochain._iter.Unzipped.left" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        left
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain._iter.Unzipped.right" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        right
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -1740,6 +1696,42 @@
         <p>Represents the result of unzipping an <code>Iter</code> of pairs into two separate <code>Iter</code>.</p>
 
 
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="pyochain._iter.Unzipped.left">left</span></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="pyochain._iter.Iter" href="../iter/#pyochain._iter.Iter">Iter</a>[<span title="pyochain._iter.Unzipped[T]">T</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An <code>Iter</code> over the first elements of the pairs.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="pyochain._iter.Unzipped.right">right</span></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="pyochain._iter.Iter" href="../iter/#pyochain._iter.Iter">Iter</a>[<span title="pyochain._iter.Unzipped[V]">V</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An <code>Iter</code> over the second elements of the pairs.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
 <details class="see-also" open>
   <summary>See Also</summary>
   <p><code>Iter.unzip()</code></p>
@@ -1760,8 +1752,7 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">67</span>
-<span class="normal">68</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">68</span>
 <span class="normal">69</span>
 <span class="normal">70</span>
 <span class="normal">71</span>
@@ -1783,9 +1774,16 @@
 <span class="normal">87</span>
 <span class="normal">88</span>
 <span class="normal">89</span>
-<span class="normal">90</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="normal">90</span>
+<span class="normal">91</span>
+<span class="normal">92</span>
+<span class="normal">93</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Unzipped</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">V</span><span class="p">](</span><span class="n">Pipeable</span><span class="p">,</span> <span class="n">Checkable</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents the result of unzipping an `Iter` of pairs into two separate `Iter`.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        left (Iter[T]): An `Iter` over the first elements of the pairs.</span>
+<span class="sd">        right (Iter[V]): An `Iter` over the second elements of the pairs.</span>
 
 <span class="sd">    See Also:</span>
 <span class="sd">        `Iter.unzip()`</span>
@@ -1798,12 +1796,10 @@
 <span class="sd">    Seq(1, 2, 3)</span>
 
 <span class="sd">    ```</span>
-<span class="sd">    &quot;&quot;&quot;</span>  <span class="c1"># noqa: DOC601, DOC603</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">left</span><span class="p">:</span> <span class="n">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;An `Iter` over the first elements of the pairs.&quot;&quot;&quot;</span>
     <span class="n">right</span><span class="p">:</span> <span class="n">Iter</span><span class="p">[</span><span class="n">V</span><span class="p">]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;An `Iter` over the second elements of the pairs.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">)</span>
@@ -1819,50 +1815,6 @@
 
 
 
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h2 id="pyochain._iter.Unzipped.left" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">left</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-</h2>
-
-
-    <div class="doc doc-contents ">
-
-        <p>An <code>Iter</code> over the first elements of the pairs.</p>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h2 id="pyochain._iter.Unzipped.right" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">right</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-</h2>
-
-
-    <div class="doc doc-contents ">
-
-        <p>An <code>Iter</code> over the second elements of the pairs.</p>
-
-    </div>
-
-</div>
 
 
 

@@ -892,28 +892,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#pyochain._iter.Peekable.peek" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        peek
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain._iter.Peekable.values" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        values
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -1686,28 +1664,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#pyochain._iter.Peekable.peek" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        peek
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pyochain._iter.Peekable.values" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        values
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -1752,11 +1708,7 @@
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;n&quot;&gt;peek&lt;/span&gt;&lt;/code&gt;
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-instance-attribute&quot;&gt;&lt;code&gt;instance-attribute&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt;" href="./#pyochain._iter.Peekable.peek">peek</a></code></td>
+            <td><code><span title="pyochain._iter.Peekable.peek">peek</span></code></td>
             <td>
                   <code><a class="autorefs autorefs-internal" title="pyochain._iter.Seq" href="../seq/#pyochain._iter.Seq">Seq</a>[<span title="pyochain._iter.Peekable[T]">T</span>]</code>
             </td>
@@ -1767,11 +1719,7 @@
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;n&quot;&gt;values&lt;/span&gt;&lt;/code&gt;
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-instance-attribute&quot;&gt;&lt;code&gt;instance-attribute&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt;" href="./#pyochain._iter.Peekable.values">values</a></code></td>
+            <td><code><span title="pyochain._iter.Peekable.values">values</span></code></td>
             <td>
                   <code><a class="autorefs autorefs-internal" title="pyochain._iter.Iter" href="../iter/#pyochain._iter.Iter">Iter</a>[<span title="pyochain._iter.Peekable[T]">T</span>]</code>
             </td>
@@ -1808,10 +1756,7 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 93</span>
-<span class="normal"> 94</span>
-<span class="normal"> 95</span>
-<span class="normal"> 96</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 96</span>
 <span class="normal"> 97</span>
 <span class="normal"> 98</span>
 <span class="normal"> 99</span>
@@ -1841,7 +1786,8 @@
 <span class="normal">123</span>
 <span class="normal">124</span>
 <span class="normal">125</span>
-<span class="normal">126</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="normal">126</span>
+<span class="normal">127</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Peekable</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">Pipeable</span><span class="p">,</span> <span class="n">Checkable</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents the result of peeking into an `Iter`.</span>
 
@@ -1869,9 +1815,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">peek</span><span class="p">:</span> <span class="n">Seq</span><span class="p">[</span><span class="n">T</span><span class="p">]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A `Seq` of the peeked elements.&quot;&quot;&quot;</span>
     <span class="n">values</span><span class="p">:</span> <span class="n">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;An `Iter` of values, still including the peeked elements.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">peek</span><span class="p">)</span>
@@ -1887,50 +1831,6 @@
 
 
 
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h2 id="pyochain._iter.Peekable.peek" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">peek</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-</h2>
-
-
-    <div class="doc doc-contents ">
-
-        <p>A <code>Seq</code> of the peeked elements.</p>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h2 id="pyochain._iter.Peekable.values" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">values</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-</h2>
-
-
-    <div class="doc doc-contents ">
-
-        <p>An <code>Iter</code> of values, still including the peeked elements.</p>
-
-    </div>
-
-</div>
 
 
 
