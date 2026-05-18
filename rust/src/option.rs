@@ -4,27 +4,44 @@ use crate::hasher::hash_fn;
 use crate::result;
 use pyo3::IntoPyObjectExt;
 use pyo3::{
-    ffi,
     prelude::*,
     sync::PyOnceLock,
     types::{PyString, PyTuple},
 };
-use std::sync::atomic::{AtomicPtr, Ordering};
 
 /// Singleton for NONE - initialized once per Python interpreter
-pub static NONE_SINGLETON: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+static NONE: PyOnceLock<Py<PyNull>> = PyOnceLock::new();
+/// Trait to check if a PyAny is the NONE singleton
+pub trait IsNull<'py> {
+    fn is_null(self) -> bool;
+}
+impl IsNull<'_> for &Bound<'_, PyAny> {
+    #[inline]
+    fn is_null(self) -> bool {
+        self.as_ptr()
+            == NONE
+                .get(self.py())
+                .expect("NONE singleton not initialized")
+                .as_ptr()
+    }
+}
+/// Called once on import to initialize the NONE singleton for the interpreter
+pub fn init_null(py: Python<'_>) -> PyResult<()> {
+    match NONE.get(py) {
+        Some(_) => Ok(()),
+        None => {
+            NONE.set(py, Py::new(py, PyNull)?)
+                .expect("NONE singleton should only be initialized once per interpreter");
+            Ok(())
+        }
+    }
+}
 
-/// Raw pointer for fast identity comparison (avoids clone_ref + bind overhead)
-static NONE_PTR: AtomicPtr<ffi::PyObject> = AtomicPtr::new(std::ptr::null_mut());
 #[inline]
-pub fn get_none_singleton(py: Python<'_>) -> PyResult<Py<PyAny>> {
-    NONE_SINGLETON
-        .get_or_try_init(py, || {
-            let singleton = PyNone::new().into_py_any(py)?;
-            NONE_PTR.store(singleton.as_ptr(), Ordering::Release);
-            Ok(singleton)
-        })
-        .map(|singleton| singleton.clone_ref(py))
+pub fn get_null(py: Python<'_>) -> Py<PyNull> {
+    NONE.get(py)
+        .expect("NONE singleton not initialized")
+        .clone_ref(py)
 }
 /// Option[T] - Generic Option type with Some and None variants for Python typing
 #[pyclass(frozen, name = "Option", generic)]
@@ -33,7 +50,7 @@ pub struct PyochainOption;
 pub fn option(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
     let py = value.py();
     if value.is_none() {
-        get_none_singleton(py)
+        Ok(get_null(py).into_any())
     } else {
         PySome::new(value.to_owned().unbind()).into_py_any(py)
     }
@@ -45,7 +62,7 @@ pub fn then_if_some(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
     if value.is_truthy()? {
         PySome::new(value.to_owned().unbind()).into_py_any(py)
     } else {
-        get_none_singleton(py)
+        Ok(get_null(py).into_any())
     }
 }
 
@@ -55,7 +72,7 @@ pub fn then_if_true(value: &Bound<'_, PyAny>, predicate: &Bound<'_, PyAny>) -> P
     if predicate.call1((value,))?.is_truthy()? {
         PySome::new(value.to_owned().unbind()).into_py_any(py)
     } else {
-        get_none_singleton(py)
+        Ok(get_null(py).into_any())
     }
 }
 
@@ -213,7 +230,7 @@ impl PySome {
         {
             PySome::new(self.value.clone_ref(py)).into_py_any(py)
         } else {
-            get_none_singleton(py)
+            Ok(get_null(py).into_any())
         }
     }
 
@@ -254,8 +271,8 @@ impl PySome {
 
     fn zip(&self, other: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = other.py();
-        if other.is_exact_instance_of::<PyNone>() {
-            return get_none_singleton(py);
+        if other.is_null() {
+            return Ok(get_null(py).into_any());
         }
         let init = PySome::new(
             PyTuple::new(
@@ -273,8 +290,8 @@ impl PySome {
 
     fn zip_with(&self, other: &Bound<'_, PyAny>, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = other.py();
-        if other.is_exact_instance_of::<PyNone>() {
-            return get_none_singleton(py);
+        if other.is_null() {
+            return Ok(get_null(py).into_any());
         }
         let value = f
             .call1((&self.value, &other.cast_exact::<PySome>()?.get().value))?
@@ -284,7 +301,7 @@ impl PySome {
 
     fn reduce(&self, other: &Bound<'_, PyAny>, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = other.py();
-        let value = if other.is_exact_instance_of::<PyNone>() {
+        let value = if other.is_null() {
             self.value.clone_ref(py)
         } else {
             let other_some = other.cast_exact::<PySome>()?.get();
@@ -295,10 +312,10 @@ impl PySome {
 
     fn xor(&self, optb: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = optb.py();
-        if optb.is_exact_instance_of::<PyNone>() {
+        if optb.is_null() {
             PySome::new(self.value.clone_ref(py)).into_py_any(py)
         } else {
-            get_none_singleton(py)
+            Ok(get_null(py).into_any())
         }
     }
 
@@ -354,15 +371,14 @@ impl PySome {
 }
 
 #[pyclass(frozen, name = "Null")]
-pub struct PyNone;
+pub struct PyNull;
 
 #[pymethods]
-impl PyNone {
+impl PyNull {
     #[new]
-    fn new() -> Self {
-        PyNone
+    fn new(py: Python<'_>) -> Py<PyNull> {
+        get_null(py)
     }
-
     fn __bool__(&self) -> PyResult<bool> {
         Err(pyo3::exceptions::PyTypeError::new_err(
             "Option instances cannot be used in boolean contexts for implicit `Some|None` value checking. Use is_some() or is_none() instead.",
@@ -428,11 +444,11 @@ impl PyNone {
         func: &Bound<'_, PyAny>,
         _args: &Args<'_>,
         _kwargs: Option<&Kwargs<'_>>,
-    ) -> PyResult<Py<PyAny>> {
-        get_none_singleton(func.py())
+    ) -> Py<PyNull> {
+        get_null(func.py())
     }
-    fn and_(&self, optb: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        get_none_singleton(optb.py())
+    fn and_(&self, optb: &Bound<'_, PyAny>) -> Py<Self> {
+        get_null(optb.py())
     }
 
     fn or_(&self, optb: Py<PyAny>) -> Py<PyAny> {
@@ -445,8 +461,8 @@ impl PyNone {
         func: &Bound<'_, PyAny>,
         _args: &Args<'_>,
         _kwargs: Option<&Kwargs<'_>>,
-    ) -> PyResult<Py<PyAny>> {
-        get_none_singleton(func.py())
+    ) -> Py<Self> {
+        get_null(func.py())
     }
 
     fn or_else(&self, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
@@ -486,12 +502,12 @@ impl PyNone {
         predicate: &Bound<'_, PyAny>,
         _args: &Args<'_>,
         _kwargs: Option<&Kwargs<'_>>,
-    ) -> PyResult<Py<PyAny>> {
-        get_none_singleton(predicate.py())
+    ) -> Py<Self> {
+        get_null(predicate.py())
     }
 
-    fn flatten(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        get_none_singleton(py)
+    fn flatten(&self, py: Python<'_>) -> Py<Self> {
+        get_null(py)
     }
 
     #[pyo3(signature = (f, *_args, **_kwargs))]
@@ -500,29 +516,29 @@ impl PyNone {
         f: &Bound<'_, PyAny>,
         _args: &Args<'_>,
         _kwargs: Option<&Kwargs<'_>>,
-    ) -> PyResult<Py<PyAny>> {
-        get_none_singleton(f.py())
+    ) -> Py<Self> {
+        get_null(f.py())
     }
 
-    fn unzip(&self, py: Python<'_>) -> PyResult<(Py<PyAny>, Py<PyAny>)> {
-        let none = get_none_singleton(py)?;
+    fn unzip(&self, py: Python<'_>) -> PyResult<(Py<Self>, Py<Self>)> {
+        let none = get_null(py);
         Ok((none.clone_ref(py), none))
     }
 
-    fn map_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        get_none_singleton(func.py())
+    fn map_star(&self, func: &Bound<'_, PyAny>) -> Py<Self> {
+        get_null(func.py())
     }
 
-    fn and_then_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        get_none_singleton(func.py())
+    fn and_then_star(&self, func: &Bound<'_, PyAny>) -> Py<Self> {
+        get_null(func.py())
     }
 
-    fn zip(&self, other: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        get_none_singleton(other.py())
+    fn zip(&self, other: &Bound<'_, PyAny>) -> Py<Self> {
+        get_null(other.py())
     }
 
-    fn zip_with(&self, other: &Bound<'_, PyAny>, _f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        get_none_singleton(other.py())
+    fn zip_with(&self, other: &Bound<'_, PyAny>, _f: &Bound<'_, PyAny>) -> Py<Self> {
+        get_null(other.py())
     }
 
     fn reduce(&self, other: Py<PyAny>, _func: &Bound<'_, PyAny>) -> Py<PyAny> {
@@ -530,8 +546,8 @@ impl PyNone {
     }
 
     fn xor(&self, optb: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        if optb.is_exact_instance_of::<PyNone>() {
-            get_none_singleton(optb.py())
+        if optb.is_null() {
+            get_null(optb.py()).into_py_any(optb.py())
         } else {
             Ok(optb.clone().unbind())
         }
@@ -546,7 +562,7 @@ impl PyNone {
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        Ok(result::PyOk::new(get_none_singleton(py)?).into_py_any(py)?)
+        result::PyOk::new(get_null(py).into_any()).into_py_any(py)
     }
 
     fn eq(slf: &Bound<'_, Self>, other: &Bound<'_, PyAny>) -> bool {
@@ -564,7 +580,7 @@ impl PyNone {
     }
 
     fn __eq__(&self, other: &Bound<'_, PyAny>) -> bool {
-        other.is_none() || other.is_exact_instance_of::<PyNone>()
+        other.is_none() || other.is_null()
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]

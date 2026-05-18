@@ -2,9 +2,18 @@
 
 ## [Unreleased]
 
+### ✨ Enhancements
+
+- Guarantee singleton behavior for `Null`. Calling `Null()` will always return the same instance, which is `NONE`. This allows for identity checks (`is`) to work as expected with `Null`, and ensures that there are no multiple instances of `Null` floating around in the system. This also means that you can use `Null()` instead of `NONE` if you prefer, without worrying about breaking the singleton property.
+
 ### 🚀 Performance improvements
 
 - Using `cast_exact/is_exact_instance_of` instead of `cast/is_instance_of` when interacting with pyochain types (Result/Option) in Rust methods bring an overall **+2% to +5%** performance gain across benchmarks. Various `Option/Result` methods, as well a `Iter::{try_reduce, try_find, try_fold}`, benefit from this change.
+
+### 🔄 Refactors
+
+- Renamed `PyNone` to `PyNull` in Rust to avoid confusion with Pyo3 types.
+- Various cosmetic changes in Rust to improve readability and documentation
 
 ### 🛠️ Other improvements
 

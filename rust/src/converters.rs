@@ -1,5 +1,5 @@
 use crate::args::{Args, Concatenate, Kwargs};
-use crate::option::{PySome, get_none_singleton};
+use crate::option::{PySome, get_null};
 use crate::result::{PyErr, PyOk};
 use pyo3::{IntoPyObjectExt, prelude::*};
 #[pyclass(frozen, subclass)]
@@ -53,7 +53,7 @@ impl Checkable {
         if slf.is_truthy()? {
             PySome::new(func.concat(&slf, args, kwargs)?.unbind()).into_py_any(py)
         } else {
-            get_none_singleton(py)
+            get_null(py).into_py_any(py)
         }
     }
 
@@ -62,7 +62,7 @@ impl Checkable {
         if slf.is_truthy()? {
             PySome::new(slf.to_owned().unbind().into_any()).into_py_any(py)
         } else {
-            get_none_singleton(py)
+            get_null(py).into_py_any(py)
         }
     }
 

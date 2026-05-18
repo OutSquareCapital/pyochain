@@ -1,22 +1,23 @@
+mod args;
 mod converters;
 mod errors;
 mod hasher;
 mod option;
 mod result;
 mod tools;
-mod args;
 use pyo3::prelude::*;
 
 #[pymodule]
 fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     let py = m.py();
+    option::init_null(py)?;
     m.add_class::<option::PyochainOption>()?;
     m.add_class::<option::PySome>()?;
-    m.add_class::<option::PyNone>()?;
+    m.add_class::<option::PyNull>()?;
     m.add_function(wrap_pyfunction!(option::then_if_some, m)?)?;
     m.add_function(wrap_pyfunction!(option::then_if_true, m)?)?;
     m.add_function(wrap_pyfunction!(option::option, m)?)?;
-    m.add("NONE", option::get_none_singleton(py)?)?;
+    m.add("NONE", option::get_null(py))?;
     m.add_class::<result::PyOk>()?;
     m.add_class::<result::PyErr>()?;
     m.add_class::<errors::OptionUnwrapError>()?;

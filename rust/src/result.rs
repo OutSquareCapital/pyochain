@@ -1,7 +1,7 @@
 use crate::args::{Args, Concatenate, Kwargs};
 use crate::errors::ResultUnwrapError;
 use crate::hasher::hash_fn;
-use crate::option::{PySome, get_none_singleton};
+use crate::option::{PyNull, PySome, get_null};
 use pyderive::*;
 use pyo3::IntoPyObjectExt;
 use pyo3::exceptions::PyBaseException;
@@ -66,8 +66,8 @@ impl PyOk {
         PySome::new(self.value.clone_ref(py))
     }
 
-    fn err(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        get_none_singleton(py)
+    fn err(&self, py: Python<'_>) -> Py<PyNull> {
+        get_null(py)
     }
 
     fn unwrap(&self, py: Python<'_>) -> Py<PyAny> {
@@ -215,7 +215,7 @@ impl PyOk {
                 let ok_value = PyOk::new(some_ref.get().value.clone_ref(py)).into_py_any(py)?;
                 PySome::new(ok_value).into_py_any(py)
             }
-            Err(_) => get_none_singleton(py),
+            Err(_) => get_null(py).into_py_any(py),
         }
     }
 
@@ -283,8 +283,8 @@ impl PyErr {
         Ok(hash_fn(1, self.error.bind(py).hash()?))
     }
 
-    fn ok(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        get_none_singleton(py)
+    fn ok(&self, py: Python<'_>) -> Py<PyNull> {
+        get_null(py)
     }
 
     fn err(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {

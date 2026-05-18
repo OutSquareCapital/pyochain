@@ -1,5 +1,5 @@
 use crate::args::{Args, Concatenate, Kwargs};
-use crate::option::{PySome, get_none_singleton};
+use crate::option::{PySome, get_null};
 use crate::result::{PyErr, PyOk};
 use pyo3::intern;
 use pyo3::types::{PyAny, PyBool, PyFunction, PyModule, PyTuple};
@@ -107,8 +107,8 @@ pub fn try_find(data: &Bound<'_, PyAny>, predicate: &Bound<'_, PyFunction>) -> P
             }
         }
     }
-    let none = get_none_singleton(py)?;
-    Ok(PyOk::new(none).into_py_any(py)?)
+    let none = get_null(py);
+    Ok(PyOk::new(none.into_py_any(py)?).into_py_any(py)?)
 }
 #[pyfunction]
 pub fn try_fold(
@@ -140,7 +140,7 @@ pub fn try_reduce(data: &Bound<'_, PyAny>, func: &Bound<'_, PyFunction>) -> PyRe
     let mut iterator = data.try_iter()?;
     let first = iterator.next();
     if first.is_none() {
-        return Ok(PyOk::new(get_none_singleton(py)?).into_py_any(py)?);
+        return Ok(PyOk::new(get_null(py).into_py_any(py)?).into_py_any(py)?);
     }
 
     let mut accumulator = first.unwrap()?.to_owned().unbind();
