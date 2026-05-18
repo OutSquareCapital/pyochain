@@ -27,7 +27,7 @@ Seq(1, 9, 25, 49, 81)
 
 ## Next steps
 
-- [**Core Types Overview**](core-types-overview.md): choose between the various provided types
+- [**Overview**](overview.md): high-level view of the library's design and features
 - [**API Reference**](api-reference.md) — complete public API docs
 - [**GitHub Repository**](https://github.com/OutSquareCapital/pyochain)
 - [**Contributing Guide**](https://github.com/OutSquareCapital/pyochain/blob/master/CONTRIBUTING.md)
