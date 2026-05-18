@@ -14,6 +14,7 @@
 ### 🛠️ Other improvements
 
 - Various internal improvements to scripts for code readability
+- Added checks in `scripts/check_doscstrings` to flag invalid existing links in zensical navigation.
 
 ### 🔗 Dependencies
 

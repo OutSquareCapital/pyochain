@@ -54,9 +54,7 @@
                 { "PyoSet" = "reference/pyoset.md" },
             ] },
         ] },
-        { "Getting Started" = [
-            { "Core Types Overview" = "core-types-overview.md" },
-        ] },
+        { "Core Types Overview" = "overview.md" },
         { "Home" = "index.md" },
     ]
 
