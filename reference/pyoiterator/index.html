@@ -5043,7 +5043,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">tls</span><span class="o">.</span><span class="n">for_each_star</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">try_for_each</span><span class="p">[</span><span class="n">E</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">Result</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">E</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">E</span><span class="p">]:</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">try_for_each</span><span class="p">[</span><span class="n">E</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">Result</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">E</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[()],</span> <span class="n">E</span><span class="p">]:</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Applies a fallible function to each item in the `Iterator`, stopping at the first error and returning that error.</span>
 
 <span class="sd">        This can also be thought of as the fallible form of `.for_each()`.</span>
@@ -5052,17 +5052,17 @@
 <span class="sd">            f (Callable[[T], Result[Any, E]]): A function that takes an item of type `T` and returns a `Result`.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Result[None, E]: Returns `Ok(None)` if all applications of **f** were successful (i.e., returned `Ok`), or the first error `E` encountered.</span>
+<span class="sd">            Result[tuple[()], E]: Returns `Ok(())` if all applications of **f** were successful (i.e., returned `Ok`), or the first error `E` encountered.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">        ```python</span>
 <span class="sd">        &gt;&gt;&gt; from pyochain import Iter, Result, Ok, Err</span>
-<span class="sd">        &gt;&gt;&gt; def validate_positive(n: int) -&gt; Result[None, str]:</span>
+<span class="sd">        &gt;&gt;&gt; def validate_positive(n: int) -&gt; Result[tuple[()], str]:</span>
 <span class="sd">        ...     if n &gt; 0:</span>
-<span class="sd">        ...         return Ok(None)</span>
+<span class="sd">        ...         return Ok(&quot;success&quot;)</span>
 <span class="sd">        ...     return Err(f&quot;Value {n} is not positive&quot;)</span>
 <span class="sd">        &gt;&gt;&gt; Iter((1, 2, 3, 4, 5)).try_for_each(validate_positive)</span>
-<span class="sd">        Ok(None)</span>
+<span class="sd">        Ok(())</span>
 <span class="sd">        &gt;&gt;&gt; # Short-circuit on first error:</span>
 <span class="sd">        &gt;&gt;&gt; Iter((1, 2, -1, 4)).try_for_each(validate_positive)</span>
 <span class="sd">        Err(&#39;Value -1 is not positive&#39;)</span>
@@ -5073,7 +5073,7 @@
             <span class="n">res</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">is_err</span><span class="p">():</span>
                 <span class="k">return</span> <span class="n">res</span>
-        <span class="k">return</span> <span class="n">Ok</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Ok</span><span class="p">(())</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -10595,11 +10595,11 @@ random_state can also be any object with a method random that returns floats bet
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Result" href="../result/#pyochain.rs.Result">Result</a>[None, <span title="pyochain.traits._iterable.PyoIterator.try_for_each[E]">E</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Result" href="../result/#pyochain.rs.Result">Result</a>[<span title="tuple">tuple</span>[], <span title="pyochain.traits._iterable.PyoIterator.try_for_each[E]">E</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Result[None, E]: Returns <code>Ok(None)</code> if all applications of <strong>f</strong> were successful (i.e., returned <code>Ok</code>), or the first error <code>E</code> encountered.</p>
+                <p>Result[tuple[()], E]: Returns <code>Ok(())</code> if all applications of <strong>f</strong> were successful (i.e., returned <code>Ok</code>), or the first error <code>E</code> encountered.</p>
               </div>
             </td>
           </tr>
@@ -10607,12 +10607,12 @@ random_state can also be any object with a method random that returns floats bet
     </table>
         <p>Example:
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iter</span><span class="p">,</span> <span class="n">Result</span><span class="p">,</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">validate_positive</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">validate_positive</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[()],</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="o">...</span>     <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-<span class="o">...</span>         <span class="k">return</span> <span class="n">Ok</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+<span class="o">...</span>         <span class="k">return</span> <span class="n">Ok</span><span class="p">(</span><span class="s2">&quot;success&quot;</span><span class="p">)</span>
 <span class="o">...</span>     <span class="k">return</span> <span class="n">Err</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Value </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> is not positive&quot;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Iter</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">try_for_each</span><span class="p">(</span><span class="n">validate_positive</span><span class="p">)</span>
-<span class="n">Ok</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+<span class="n">Ok</span><span class="p">(())</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="c1"># Short-circuit on first error:</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Iter</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span><span class="o">.</span><span class="n">try_for_each</span><span class="p">(</span><span class="n">validate_positive</span><span class="p">)</span>
 <span class="n">Err</span><span class="p">(</span><span class="s1">&#39;Value -1 is not positive&#39;</span><span class="p">)</span>
@@ -10651,7 +10651,7 @@ random_state can also be any object with a method random that returns floats bet
 <span class="normal">1941</span>
 <span class="normal">1942</span>
 <span class="normal">1943</span>
-<span class="normal">1944</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">try_for_each</span><span class="p">[</span><span class="n">E</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">Result</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">E</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">E</span><span class="p">]:</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
+<span class="normal">1944</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">try_for_each</span><span class="p">[</span><span class="n">E</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">Result</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">E</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[()],</span> <span class="n">E</span><span class="p">]:</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Applies a fallible function to each item in the `Iterator`, stopping at the first error and returning that error.</span>
 
 <span class="sd">    This can also be thought of as the fallible form of `.for_each()`.</span>
@@ -10660,17 +10660,17 @@ random_state can also be any object with a method random that returns floats bet
 <span class="sd">        f (Callable[[T], Result[Any, E]]): A function that takes an item of type `T` and returns a `Result`.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Result[None, E]: Returns `Ok(None)` if all applications of **f** were successful (i.e., returned `Ok`), or the first error `E` encountered.</span>
+<span class="sd">        Result[tuple[()], E]: Returns `Ok(())` if all applications of **f** were successful (i.e., returned `Ok`), or the first error `E` encountered.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">    ```python</span>
 <span class="sd">    &gt;&gt;&gt; from pyochain import Iter, Result, Ok, Err</span>
-<span class="sd">    &gt;&gt;&gt; def validate_positive(n: int) -&gt; Result[None, str]:</span>
+<span class="sd">    &gt;&gt;&gt; def validate_positive(n: int) -&gt; Result[tuple[()], str]:</span>
 <span class="sd">    ...     if n &gt; 0:</span>
-<span class="sd">    ...         return Ok(None)</span>
+<span class="sd">    ...         return Ok(&quot;success&quot;)</span>
 <span class="sd">    ...     return Err(f&quot;Value {n} is not positive&quot;)</span>
 <span class="sd">    &gt;&gt;&gt; Iter((1, 2, 3, 4, 5)).try_for_each(validate_positive)</span>
-<span class="sd">    Ok(None)</span>
+<span class="sd">    Ok(())</span>
 <span class="sd">    &gt;&gt;&gt; # Short-circuit on first error:</span>
 <span class="sd">    &gt;&gt;&gt; Iter((1, 2, -1, 4)).try_for_each(validate_positive)</span>
 <span class="sd">    Err(&#39;Value -1 is not positive&#39;)</span>
@@ -10681,7 +10681,7 @@ random_state can also be any object with a method random that returns floats bet
         <span class="n">res</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">is_err</span><span class="p">():</span>
             <span class="k">return</span> <span class="n">res</span>
-    <span class="k">return</span> <span class="n">Ok</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Ok</span><span class="p">(())</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
