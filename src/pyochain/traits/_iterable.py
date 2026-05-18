@@ -1849,7 +1849,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         """
         tls.for_each_star(iter(self), func, *args, **kwargs)
 
-    def try_for_each[E](self, f: Callable[[T], Result[Any, E]]) -> Result[None, E]:  # pyright: ignore[reportExplicitAny]
+    def try_for_each[E](self, f: Callable[[T], Result[Any, E]]) -> Result[tuple[()], E]:  # pyright: ignore[reportExplicitAny]
         """Applies a fallible function to each item in the `Iterator`, stopping at the first error and returning that error.
 
         This can also be thought of as the fallible form of `.for_each()`.
@@ -1858,17 +1858,17 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             f (Callable[[T], Result[Any, E]]): A function that takes an item of type `T` and returns a `Result`.
 
         Returns:
-            Result[None, E]: Returns `Ok(None)` if all applications of **f** were successful (i.e., returned `Ok`), or the first error `E` encountered.
+            Result[tuple[()], E]: Returns `Ok(())` if all applications of **f** were successful (i.e., returned `Ok`), or the first error `E` encountered.
 
         Example:
         ```python
         >>> from pyochain import Iter, Result, Ok, Err
-        >>> def validate_positive(n: int) -> Result[None, str]:
+        >>> def validate_positive(n: int) -> Result[tuple[()], str]:
         ...     if n > 0:
-        ...         return Ok(None)
+        ...         return Ok("success")
         ...     return Err(f"Value {n} is not positive")
         >>> Iter((1, 2, 3, 4, 5)).try_for_each(validate_positive)
-        Ok(None)
+        Ok(())
         >>> # Short-circuit on first error:
         >>> Iter((1, 2, -1, 4)).try_for_each(validate_positive)
         Err('Value -1 is not positive')
@@ -1879,7 +1879,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             res = f(item)
             if res.is_err():
                 return res
-        return Ok(None)
+        return Ok(())
 
 
 class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
