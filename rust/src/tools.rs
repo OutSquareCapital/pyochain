@@ -2,7 +2,7 @@ use crate::args::{Args, Concatenate, Kwargs};
 use crate::option::{PySome, get_null};
 use crate::result::{PyErr, PyOk};
 use pyo3::intern;
-use pyo3::types::{PyAny, PyBool, PyFunction, PyModule, PyTuple};
+use pyo3::types::{PyAny, PyBool, PyFunction, PyIterator, PyModule, PySet, PyTuple};
 use pyo3::{IntoPyObjectExt, prelude::*};
 /// Create a unique sentinel object
 #[inline]
@@ -27,6 +27,8 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(lt, m)?)?;
     m.add_function(wrap_pyfunction!(gt, m)?)?;
     m.add_function(wrap_pyfunction!(ge, m)?)?;
+    m.add_function(wrap_pyfunction!(all_unique, m)?)?;
+    m.add_function(wrap_pyfunction!(all_unique_by, m)?)?;
     Ok(())
 }
 #[pyfunction]
@@ -385,4 +387,37 @@ pub fn ge(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
             (Some(_), None) => return Ok(true),
         }
     }
+}
+#[pyfunction]
+pub fn all_unique(mut data: Bound<'_, PyIterator>) -> PyResult<bool> {
+    let first = data.next();
+    if first.is_none() {
+        return Ok(true);
+    }
+    let seen = PySet::new(data.py(), first.unwrap())?;
+    while let Some(item) = data.next() {
+        let key_value = item?;
+        if seen.contains(&key_value)? {
+            return Ok(false);
+        }
+        seen.add(key_value)?;
+    }
+    Ok(true)
+}
+#[pyfunction]
+pub fn all_unique_by(data: Bound<'_, PyIterator>, key: &Bound<'_, PyAny>) -> PyResult<bool> {
+    let mut iter = data.map(|item| key.call1((item?,)));
+    let first = iter.next();
+    if first.is_none() {
+        return Ok(true);
+    }
+    let seen = PySet::new(key.py(), first.unwrap())?;
+    while let Some(item) = iter.next() {
+        let item = item?;
+        if seen.contains(&item)? {
+            return Ok(false);
+        }
+        seen.add(item)?;
+    }
+    Ok(true)
 }

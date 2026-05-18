@@ -17,6 +17,8 @@
 
 - Using `cast_exact/is_exact_instance_of` instead of `cast/is_instance_of` when interacting with pyochain types (Result/Option) in Rust methods bring an overall **+2% to +5%** performance gain across benchmarks. Various `Option/Result` methods, as well a `Iter::{try_reduce, try_find, try_fold}`, benefit from this change.
 - `all_unique` now call cython level code and is has fast as the deprecated `is_distinct` method.
+- `PyoIterable::all_unique_by` (old `PyoIterator::all_unique(key=...)` path) is now in Rust, and is 30 (100 elements) to 70% (500 elements) faster than the old implementation. Larger collections should see even better improvements.
+- `PyoIterable::all_unique` is in Rust as well, with a slight performance **regression** of around 1 to 5% compared to the old `is_distinct` method. Note that if you were using `all_equal` instead, you should expect performance **improvement** instead, in the same ballpark as `all_unique_by`.
 
 ### 🔄 Refactors
 

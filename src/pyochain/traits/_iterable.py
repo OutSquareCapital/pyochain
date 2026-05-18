@@ -502,7 +502,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
 
         ```
         """
-        return cz.itertoolz.isdistinct(iter(self))  # pyright: ignore[reportArgumentType]
+        return tls.all_unique(iter(self))
 
     def all_unique_by[U](self, key: Callable[[T], U]) -> bool:
         """Returns True if all the elements of **self** transformed by **key** are unique.
@@ -527,13 +527,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
 
         ```
         """
-        seenset: set[T | U] = set()
-        seenset_add = seenset.add
-        for element in map(key, iter(self)):
-            if element in seenset:
-                return False
-            seenset_add(element)
-        return True
+        return tls.all_unique_by(iter(self), key)
 
 
 class PyoCollection[T](PyoIterable[T], Collection[T], ABC):
