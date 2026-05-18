@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### 🔄 Refactors
+
+- Renamed `converters.rs` file in Rust to `mixins.rs` to better reflect its content and purpose.
+
 ### 📖 Documentation
 
 - Various reorganisation changes to reduce redundancy
