@@ -1,10 +1,9 @@
 use crate::args::{Args, Concatenate, Kwargs};
 use crate::option::{PySome, get_null};
-use crate::result::{PyErr, PyOk};
-use pyo3::exceptions::PyStopIteration;
-use pyo3::intern;
+use crate::result::{PyErr as PyoErr, PyOk};
 use pyo3::types::{PyAny, PyBool, PyFunction, PyIterator, PyList, PyModule, PySet, PyTuple};
 use pyo3::{IntoPyObjectExt, prelude::*};
+use pyo3::{ffi, intern};
 /// Create a unique sentinel object
 #[inline]
 fn sentinel(py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
@@ -31,6 +30,8 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(all_unique, m)?)?;
     m.add_function(wrap_pyfunction!(all_unique_by, m)?)?;
     m.add_function(wrap_pyfunction!(partition, m)?)?;
+    m.add_function(wrap_pyfunction!(last, m)?)?;
+    m.add_function(wrap_pyfunction!(length, m)?)?;
     Ok(())
 }
 #[pyfunction]
@@ -107,7 +108,11 @@ pub fn try_find(data: &Bound<'_, PyAny>, predicate: &Bound<'_, PyFunction>) -> P
                 }
             }
             Err(_) => {
-                return Ok(result.cast_exact::<PyErr>()?.to_owned().unbind().into_any());
+                return Ok(result
+                    .cast_exact::<PyoErr>()?
+                    .to_owned()
+                    .unbind()
+                    .into_any());
             }
         }
     }
@@ -131,7 +136,7 @@ pub fn try_fold(
                 accumulator = ok_ref.get().value.clone_ref(py);
             }
             Err(_) => {
-                return result.cast_exact::<PyErr>()?.into_py_any(py);
+                return result.cast_exact::<PyoErr>()?.into_py_any(py);
             }
         }
     }
@@ -157,7 +162,7 @@ pub fn try_reduce(data: &Bound<'_, PyAny>, func: &Bound<'_, PyFunction>) -> PyRe
                 accumulator = ok_ref.get().value.clone_ref(py);
             }
             Err(_) => {
-                return result.cast_exact::<PyErr>()?.into_py_any(py);
+                return result.cast_exact::<PyoErr>()?.into_py_any(py);
             }
         }
     }
@@ -433,23 +438,74 @@ pub fn partition(
     }
     Ok((true_list.unbind(), false_list.unbind()))
 }
-
+/// We use unsafe code here to match the performance of a Cython implementation
 #[pyfunction]
-pub fn last(mut data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
-    let mut base = data.next().ok_or_else(|| PyStopIteration::new_err(""))?;
-    loop {
-        match data.next() {
-            Some(next_item) => base = next_item,
-            None => break,
+pub fn last(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
+    let py = data.py();
+
+    // SAFETY:
+    // - `data` is a valid `PyIterator`, so `iterator` is a valid `PyObject*` for the whole scope.
+    // - The active `Python<'_>` token guarantees the GIL is held while calling CPython APIs.
+    // - `tp_iternext` is the iterator next slot for this exact Python object type.
+    // - Each successful `next(iterator)` returns a new owned reference which we either `Py_DECREF`
+    //   or transfer to Python with `Py::from_owned_ptr`.
+    // - On the error path after replacing `last`, we release the currently owned reference before
+    //   fetching and returning the Python exception.
+    unsafe {
+        let iterator = data.as_ptr();
+        let next = (*(*iterator).ob_type).tp_iternext.unwrap();
+
+        let mut last = next(iterator);
+        if last.is_null() {
+            if ffi::PyErr_Occurred().is_null() {
+                return Err(pyo3::exceptions::PyStopIteration::new_err(""));
+            }
+            return Err(PyErr::fetch(py));
+        }
+
+        loop {
+            let item = next(iterator);
+            if item.is_null() {
+                if ffi::PyErr_Occurred().is_null() {
+                    break;
+                }
+                ffi::Py_DECREF(last);
+                return Err(PyErr::fetch(py));
+            }
+            ffi::Py_DECREF(last);
+            last = item;
+        }
+
+        Ok(Py::from_owned_ptr(py, last))
+    }
+}
+/// We use unsafe code here to match the performance of a Cython implementation
+#[pyfunction]
+pub fn length(data: Bound<'_, PyIterator>) -> PyResult<usize> {
+    let py = data.py();
+    let mut count = 0usize;
+    let iterator = data.as_ptr();
+
+    // SAFETY:
+    // - `data` is a valid `PyIterator`, so `iterator` stays valid for the duration of the loop.
+    // - The active `Python<'_>` token guarantees the GIL is held while calling CPython APIs.
+    // - `tp_iternext` is the iterator next slot for this exact Python object type.
+    // - Each non-null `item` is a new owned reference returned by CPython and is released exactly
+    //   once with `Py_DECREF` after it has been counted.
+    unsafe {
+        let next = (*(*iterator).ob_type).tp_iternext.unwrap();
+        loop {
+            let item = next(iterator);
+            if item.is_null() {
+                if ffi::PyErr_Occurred().is_null() {
+                    break;
+                }
+                return Err(PyErr::fetch(py));
+            }
+            count += 1;
+            ffi::Py_DECREF(item);
         }
     }
-    base?.into_py_any(data.py())
-}
-#[pyfunction]
-pub fn length(data: Bound<'_, PyIterator>) -> usize {
-    let mut count = 0;
-    data.for_each(|_| {
-        count += 1;
-    });
-    count
+
+    Ok(count)
 }

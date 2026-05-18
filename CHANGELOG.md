@@ -27,6 +27,7 @@
 - Renamed `PyNone` to `PyNull` in Rust to avoid confusion with Pyo3 types.
 - Various cosmetic changes in Rust to improve readability and documentation
 - Extracted `PyoIterable::{first, second}`, `PyoIterator::{chain, insert, step_by}`, `Iter::tail` from cytoolz to python, as they were trivial function calls who didn't needed any external dependency work.
+- Extracted `PyoIterable::{last, length}` from cytoolz to Rust. No performance regression.
 
 ### 🐞 Bug fixes
 

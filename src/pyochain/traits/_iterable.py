@@ -253,7 +253,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
 
         ```
         """
-        return cz.itertoolz.last(iter(self))
+        return tls.last(iter(self))
 
     def length(self) -> int:
         """Return the length of the `Iterable`.
@@ -279,7 +279,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
 
         ```
         """
-        return cz.itertoolz.count(iter(self))
+        return tls.length(iter(self))
 
     def sum[U: int | bool](self: PyoIterable[U]) -> int:
         """Return the sum of the `Iterable`.
