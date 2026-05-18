@@ -7,6 +7,14 @@
 - Various reorganisation changes to reduce redundancy
 - Updated CONTRIBUTING.md with latest architecture status
 
+### 🛠️ Other improvements
+
+- Various internal improvements to scripts for code readability
+
+### 🔗 Dependencies
+
+- Added [`sdsort`](https://github.com/eirikurt/sdsort) as a dev dependency for code formatting and sorting.
+
 ## [0.18.0] - 2026-05-18
 
 ### 💥 Breaking changes

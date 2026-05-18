@@ -209,4 +209,7 @@ When preparing a release, update the "unreleased" section with the relevant chan
 
 ### 📦 Build system
 
+### 🔗 Dependencies
+
+### 🧪 Tests
 ```
