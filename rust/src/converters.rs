@@ -1,7 +1,6 @@
-use crate::args::Concatenate;
+use crate::args::{Args, Concatenate, Kwargs};
 use crate::option::{PySome, get_none_singleton};
 use crate::result::{PyErr, PyOk};
-use pyo3::types::{PyDict, PyTuple};
 use pyo3::{IntoPyObjectExt, prelude::*};
 #[pyclass(frozen, subclass)]
 pub struct Pipeable;
@@ -10,15 +9,15 @@ pub struct Pipeable;
 impl Pipeable {
     #[new]
     #[pyo3(signature = (*_args, **_kwargs))]
-    fn new(_args: &Bound<'_, PyTuple>, _kwargs: Option<&Bound<'_, PyDict>>) -> Self {
+    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> Self {
         Pipeable {}
     }
     #[pyo3(signature = (func, *args, **kwargs))]
     fn into(
         slf: &Bound<'_, Self>,
         func: &Bound<'_, PyAny>,
-        args: &Bound<'_, PyTuple>,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
         Ok(func.concat(&slf, args, kwargs)?.unbind())
     }
@@ -26,8 +25,8 @@ impl Pipeable {
     fn inspect(
         slf: &Bound<'_, Self>,
         f: &Bound<'_, PyAny>,
-        args: &Bound<'_, PyTuple>,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
         f.concat(&slf, args, kwargs)?;
         Ok(slf.to_owned().into_any().unbind())
@@ -39,15 +38,15 @@ pub struct Checkable;
 impl Checkable {
     #[new]
     #[pyo3(signature = (*_args, **_kwargs))]
-    fn new(_args: &Bound<'_, PyTuple>, _kwargs: Option<&Bound<'_, PyDict>>) -> Self {
+    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> Self {
         Checkable {}
     }
     #[pyo3(signature = (func, *args, **kwargs))]
     fn then(
         slf: &Bound<'_, Self>,
         func: &Bound<'_, PyAny>,
-        args: &Bound<'_, PyTuple>,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
         let py = slf.py();
 
@@ -87,8 +86,8 @@ impl Checkable {
     fn ok_or_else(
         slf: &Bound<'_, Self>,
         func: &Bound<'_, PyAny>,
-        args: &Bound<'_, PyTuple>,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
         let py = slf.py();
         if slf.is_truthy()? {
@@ -101,8 +100,8 @@ impl Checkable {
     fn err_or_else(
         slf: &Bound<'_, Self>,
         func: &Bound<'_, PyAny>,
-        args: &Bound<'_, PyTuple>,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
         let py = slf.py();
         if slf.is_truthy()? {
