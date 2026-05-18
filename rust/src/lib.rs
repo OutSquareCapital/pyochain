@@ -4,7 +4,7 @@ mod hasher;
 mod option;
 mod result;
 mod tools;
-mod types;
+mod args;
 use pyo3::prelude::*;
 
 #[pymodule]

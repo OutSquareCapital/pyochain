@@ -1,13 +1,12 @@
-/// Pure functions tools for pyochain
+use crate::args::{Args, Concatenate, Kwargs};
 use crate::option::{PySome, get_none_singleton};
 use crate::result::{PyErr, PyOk};
-use crate::types::ConcatArgs;
 use pyo3::intern;
-use pyo3::types::{PyAny, PyBool, PyDict, PyFunction, PyModule, PyTuple};
+use pyo3::types::{PyAny, PyBool, PyFunction, PyModule, PyTuple};
 use pyo3::{IntoPyObjectExt, prelude::*};
 /// Create a unique sentinel object
 #[inline]
-fn sentinel(py: Python<'_>) -> PyResult<Bound<PyAny>> {
+fn sentinel(py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
     let sentinel = PyModule::import(py, intern!(py, "builtins"))?
         .getattr(intern!(py, "object"))?
         .call0()?;
@@ -35,8 +34,8 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
 pub fn for_each(
     data: &Bound<'_, PyAny>,
     func: &Bound<'_, PyAny>,
-    args: &Bound<'_, PyTuple>,
-    kwargs: Option<&Bound<'_, PyDict>>,
+    args: &Args<'_>,
+    kwargs: Option<&Kwargs<'_>>,
 ) -> PyResult<()> {
     match (args.is_empty(), kwargs) {
         (true, None) => data.try_iter()?.try_for_each(|item| {
@@ -62,8 +61,8 @@ pub fn for_each(
 pub fn for_each_star(
     data: &Bound<'_, PyAny>,
     func: &Bound<'_, PyAny>,
-    args: &Bound<'_, PyTuple>,
-    kwargs: Option<&Bound<'_, PyDict>>,
+    args: &Args<'_>,
+    kwargs: Option<&Kwargs<'_>>,
 ) -> PyResult<()> {
     match (args.is_empty(), kwargs) {
         (true, Some(_)) => data.try_iter()?.try_for_each(|item| {

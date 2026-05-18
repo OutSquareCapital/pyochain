@@ -1,13 +1,13 @@
+use crate::args::{Args, Concatenate, Kwargs};
 use crate::errors::OptionUnwrapError;
 use crate::hasher::hash_fn;
 use crate::result;
-use crate::types::ConcatArgs;
 use pyo3::IntoPyObjectExt;
 use pyo3::{
     ffi,
     prelude::*,
     sync::PyOnceLock,
-    types::{PyDict, PyString, PyTuple},
+    types::{PyString, PyTuple},
 };
 use std::sync::atomic::{AtomicPtr, Ordering};
 
@@ -105,8 +105,8 @@ impl PySome {
     fn is_some_and(
         &self,
         predicate: &Bound<'_, PyAny>,
-        args: &Bound<'_, PyTuple>,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<bool> {
         predicate
             .concat(&self.value.bind(predicate.py()), args, kwargs)?
@@ -117,8 +117,8 @@ impl PySome {
     fn is_none_or(
         &self,
         func: &Bound<'_, PyAny>,
-        args: &Bound<'_, PyTuple>,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<bool> {
         func.concat(&self.value.bind(func.py()), args, kwargs)?
             .is_truthy()
@@ -142,8 +142,8 @@ impl PySome {
     fn map(
         &self,
         func: &Bound<'_, PyAny>,
-        args: &Bound<'_, PyTuple>,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
         let py = func.py();
         PySome::new(func.concat(&self.value.bind(py), args, kwargs)?.unbind()).into_py_any(py)
@@ -161,8 +161,8 @@ impl PySome {
     fn and_then(
         &self,
         func: &Bound<'_, PyAny>,
-        args: &Bound<'_, PyTuple>,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
         Ok(func
             .concat(&self.value.bind(func.py()), args, kwargs)?
@@ -187,8 +187,8 @@ impl PySome {
         &self,
         default: &Bound<'_, PyAny>,
         f: &Bound<'_, PyAny>,
-        args: &Bound<'_, PyTuple>,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
         Ok(f.concat(&self.value.bind(default.py()), args, kwargs)?
             .unbind())
@@ -203,8 +203,8 @@ impl PySome {
     fn filter(
         &self,
         predicate: &Bound<'_, PyAny>,
-        args: &Bound<'_, PyTuple>,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
         let py = predicate.py();
         if predicate
@@ -225,8 +225,8 @@ impl PySome {
     fn inspect(
         &self,
         f: &Bound<'_, PyAny>,
-        args: &Bound<'_, PyTuple>,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
         let py = f.py();
         f.concat(&self.value.bind(py), args, kwargs)?;
@@ -346,15 +346,14 @@ impl PySome {
     fn into(
         slf: &Bound<'_, Self>,
         func: &Bound<'_, PyAny>,
-        args: &Bound<'_, PyTuple>,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
         Ok(func.concat(&slf, args, kwargs)?.unbind())
     }
 }
 
 #[pyclass(frozen, name = "Null")]
-#[derive(Clone, Copy)]
 pub struct PyNone;
 
 #[pymethods]
@@ -386,8 +385,8 @@ impl PyNone {
     fn is_some_and(
         &self,
         predicate: &Bound<'_, PyAny>,
-        _args: &Bound<'_, PyTuple>,
-        _kwargs: Option<&Bound<'_, PyDict>>,
+        _args: &Args<'_>,
+        _kwargs: Option<&Kwargs<'_>>,
     ) -> bool {
         false
     }
@@ -396,8 +395,8 @@ impl PyNone {
     fn is_none_or(
         &self,
         _func: &Bound<'_, PyAny>,
-        _args: &Bound<'_, PyTuple>,
-        _kwargs: Option<&Bound<'_, PyDict>>,
+        _args: &Args<'_>,
+        _kwargs: Option<&Kwargs<'_>>,
     ) -> bool {
         true
     }
@@ -427,8 +426,8 @@ impl PyNone {
     fn map(
         &self,
         func: &Bound<'_, PyAny>,
-        _args: &Bound<'_, PyTuple>,
-        _kwargs: Option<&Bound<'_, PyDict>>,
+        _args: &Args<'_>,
+        _kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
         get_none_singleton(func.py())
     }
@@ -444,8 +443,8 @@ impl PyNone {
     fn and_then(
         &self,
         func: &Bound<'_, PyAny>,
-        _args: &Bound<'_, PyTuple>,
-        _kwargs: Option<&Bound<'_, PyDict>>,
+        _args: &Args<'_>,
+        _kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
         get_none_singleton(func.py())
     }
@@ -471,8 +470,8 @@ impl PyNone {
         &self,
         default: Py<PyAny>,
         _f: &Bound<'_, PyAny>,
-        _args: &Bound<'_, PyTuple>,
-        _kwargs: Option<&Bound<'_, PyDict>>,
+        _args: &Args<'_>,
+        _kwargs: Option<&Kwargs<'_>>,
     ) -> Py<PyAny> {
         default
     }
@@ -485,8 +484,8 @@ impl PyNone {
     fn filter(
         &self,
         predicate: &Bound<'_, PyAny>,
-        _args: &Bound<'_, PyTuple>,
-        _kwargs: Option<&Bound<'_, PyDict>>,
+        _args: &Args<'_>,
+        _kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
         get_none_singleton(predicate.py())
     }
@@ -499,8 +498,8 @@ impl PyNone {
     fn inspect(
         &self,
         f: &Bound<'_, PyAny>,
-        _args: &Bound<'_, PyTuple>,
-        _kwargs: Option<&Bound<'_, PyDict>>,
+        _args: &Args<'_>,
+        _kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
         get_none_singleton(f.py())
     }
@@ -572,8 +571,8 @@ impl PyNone {
     fn into(
         slf: &Bound<'_, Self>,
         func: &Bound<'_, PyAny>,
-        args: &Bound<'_, PyTuple>,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        args: &Args<'_>,
+        kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
         Ok(func.concat(&slf, args, kwargs)?.unbind())
     }

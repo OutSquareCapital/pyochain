@@ -1,6 +1,6 @@
+use crate::args::Concatenate;
 use crate::option::{PySome, get_none_singleton};
 use crate::result::{PyErr, PyOk};
-use crate::types::ConcatArgs;
 use pyo3::types::{PyDict, PyTuple};
 use pyo3::{IntoPyObjectExt, prelude::*};
 #[pyclass(frozen, subclass)]

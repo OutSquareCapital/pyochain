@@ -1,42 +1,55 @@
-use pyo3::PyClass;
-
 use pyo3::ffi;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyTuple};
+/// Type alias representing the `*args` parameter in Python functions (or any argument that is expected to be a tuple)
+pub type Args<'py> = Bound<'py, PyTuple>;
+/// Type alias representing the `**kwargs` parameter in Python functions
+pub type Kwargs<'py> = Bound<'py, PyDict>;
 
-/// Convenience helper to call a function with concatenated arguments
-pub trait ConcatArgs<'py> {
+/// In python, you can make a very generic function signature like this:
+/// ```python
+/// from collections.abc import Callable
+/// from typing import Concatenate
+/// def foo[**P, T, R](
+///     function: Callable[Concatenate[T, P], R],
+///     value: T,
+///     *args: P.args,
+///     **kwargs: P.kwargs,
+/// ) -> R:
+///     return function(value, *args, **kwargs)
+/// ```
+/// This trait provides the `concat` method which allows you to implement this kind of behavior in Rust.\
+/// It is implemented for `&Bound<'py, PyAny>`, so it can be used on any Python object.\
+/// `self` is the function to call, `value` is the value to concatenate with `*args`, and `kwargs` are the keyword arguments to pass to the function.\
+/// The provided methods handle various cases with presence or absence of args/kwargs, as well as the special case where `value` is itself a tuple that needs to be unpacked (similar to `itertools.starmap`).
+pub trait Concatenate<'py> {
+    /// Concatenate the provided value with the given `*args` and call the function with the resulting arguments and `**kwargs`
     fn concat(
         self,
         value: &Bound<'py, PyAny>,
-        args: &Bound<'py, PyTuple>,
-        kwargs: Option<&Bound<'py, PyDict>>,
+        args: &Args<'py>,
+        kwargs: Option<&Kwargs<'py>>,
     ) -> PyResult<Bound<'py, PyAny>>;
-
-    fn concat1(
-        self,
-        value: &Bound<'py, PyAny>,
-        args: &Bound<'py, PyTuple>,
-    ) -> PyResult<Bound<'py, PyAny>>;
+    /// Same as concat star, but does not handle `**kwargs`. Use this whenever possible as it is faster.
+    fn concat1(self, value: &Bound<'py, PyAny>, args: &Args<'py>) -> PyResult<Bound<'py, PyAny>>;
+    /// Akin to `itertools::map_starmap`, where *value* is expected to be a tuple of arguments.\
+    /// Unpack each item in *value* and concatenate it with the given `*args`, then call the function with the resulting arguments and `**kwargs`
     fn concat_star(
         self,
-        value: &Bound<'py, PyTuple>,
-        args: &Bound<'py, PyTuple>,
-        kwargs: Option<&Bound<'py, PyDict>>,
+        value: &Args<'py>,
+        args: &Args<'py>,
+        kwargs: Option<&Kwargs<'py>>,
     ) -> PyResult<Bound<'py, PyAny>>;
-    fn concat_star1(
-        self,
-        value: &Bound<'py, PyTuple>,
-        args: &Bound<'py, PyTuple>,
-    ) -> PyResult<Bound<'py, PyAny>>;
+    /// same as `concat_star`, but does not handle `**kwargs`. Use this whenever possible as it is faster.
+    fn concat_star1(self, value: &Args<'py>, args: &Args<'py>) -> PyResult<Bound<'py, PyAny>>;
 }
-impl<'py> ConcatArgs<'py> for &Bound<'py, PyAny> {
+impl<'py> Concatenate<'py> for &Bound<'py, PyAny> {
     #[inline]
     fn concat(
         self,
         value: &Bound<'py, PyAny>,
-        args: &Bound<'py, PyTuple>,
-        kwargs: Option<&Bound<'py, PyDict>>,
+        args: &Args<'py>,
+        kwargs: Option<&Kwargs<'py>>,
     ) -> PyResult<Bound<'py, PyAny>> {
         let args_len = args.len();
         match args_len {
@@ -48,19 +61,15 @@ impl<'py> ConcatArgs<'py> for &Bound<'py, PyAny> {
         }
     }
     #[inline]
-    fn concat1(
-        self,
-        value: &Bound<'py, PyAny>,
-        args: &Bound<'py, PyTuple>,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    fn concat1(self, value: &Bound<'py, PyAny>, args: &Args<'py>) -> PyResult<Bound<'py, PyAny>> {
         self.call1(unsafe { concat_val_with_args(&value, args, args.len()) })
     }
     #[inline]
     fn concat_star(
         self,
-        value: &Bound<'py, PyTuple>,
-        args: &Bound<'py, PyTuple>,
-        kwargs: Option<&Bound<'py, PyDict>>,
+        value: &Args<'py>,
+        args: &Args<'py>,
+        kwargs: Option<&Kwargs<'py>>,
     ) -> PyResult<Bound<'py, PyAny>> {
         let args_len = args.len();
         match args_len {
@@ -72,18 +81,14 @@ impl<'py> ConcatArgs<'py> for &Bound<'py, PyAny> {
         }
     }
     #[inline]
-    fn concat_star1(
-        self,
-        value: &Bound<'py, PyTuple>,
-        args: &Bound<'py, PyTuple>,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    fn concat_star1(self, value: &Args<'py>, args: &Args<'py>) -> PyResult<Bound<'py, PyAny>> {
         self.call1(unsafe { concat_tup_with_args(value, args, args.len()) })
     }
 }
 #[inline]
 unsafe fn concat_val_with_args<'py>(
     value: &Bound<'py, PyAny>,
-    args: &Bound<'py, PyTuple>,
+    args: &Args<'py>,
     args_len: usize,
 ) -> Py<PyTuple> {
     unsafe {
@@ -103,8 +108,8 @@ unsafe fn concat_val_with_args<'py>(
 }
 #[inline]
 unsafe fn concat_tup_with_args<'py>(
-    value: &Bound<'py, PyTuple>,
-    args: &Bound<'py, PyTuple>,
+    value: &Args<'py>,
+    args: &Args<'py>,
     args_len: usize,
 ) -> Py<PyTuple> {
     unsafe {
