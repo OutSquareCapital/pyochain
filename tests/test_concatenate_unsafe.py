@@ -18,7 +18,7 @@ def test_into_basic_callable() -> None:
 
 
 def test_args_no_kwargs() -> None:
-    def add(a: int, b: int) -> int:
+    def add(a: int, b: int) -> int:  # noqa: FURB118
         return a + b
 
     assert Some(3).map(add, 5).unwrap() == 8
