@@ -115,15 +115,24 @@ uv run maturin develop --release --uv
 
 ## Tests and quality checks
 
-Before committing, ensure all checks pass:
+Before committing, ensure all checks pass.
+
+### type checking/linting/formatting
 
 ```bash
 uv run ruff check --fix src/pyochain;
 uv run ruff format src/pyochain;
 uv run basedpyright src/pyochain;
+```
+
+### tests
+
+Add `--cov=src --cov-report=term-missing` to the pytest command below to include coverage reports.
+
+```bash
 uv run scripts/check_docstrings.py;
 uv run pydoclint src/pyochain;
-uv run pytest --cov=src --cov-report=term-missing
+uv run pytest
 ```
 
 ## Benchmarks

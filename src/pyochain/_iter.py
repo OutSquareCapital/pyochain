@@ -68,6 +68,10 @@ def _get_repr(data: Collection[object]) -> str:
 class Unzipped[T, V](Pipeable, Checkable):
     """Represents the result of unzipping an `Iter` of pairs into two separate `Iter`.
 
+    Attributes:
+        left (Iter[T]): An `Iter` over the first elements of the pairs.
+        right (Iter[V]): An `Iter` over the second elements of the pairs.
+
     See Also:
         `Iter.unzip()`
     Example:
@@ -79,12 +83,10 @@ class Unzipped[T, V](Pipeable, Checkable):
     Seq(1, 2, 3)
 
     ```
-    """  # noqa: DOC601, DOC603
+    """
 
     left: Iter[T]
-    """An `Iter` over the first elements of the pairs."""
     right: Iter[V]
-    """An `Iter` over the second elements of the pairs."""
 
     def __bool__(self) -> bool:
         return bool(self.left) and bool(self.right)
@@ -118,9 +120,7 @@ class Peekable[T](Pipeable, Checkable):
     """
 
     peek: Seq[T]
-    """A `Seq` of the peeked elements."""
     values: Iter[T]
-    """An `Iter` of values, still including the peeked elements."""
 
     def __bool__(self) -> bool:
         return bool(self.peek)

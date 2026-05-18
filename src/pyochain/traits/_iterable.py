@@ -69,13 +69,12 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
     def new(cls) -> Self:
         """Create an empty `Iterable`.
 
-        Make sure to specify the type when calling this method, e.g., `Vec[int].new()`.
+        This is a convenience method to create an empty `Iterable` with type specification in a single expression.
 
-        Otherwise, `T` may be inferred as `Any`.
+        This can be very useful for mutable collections like `Vec` and `Dict`, where type checkers can't necessarily infer the element type at initialization.
 
-        This can be very useful for mutable collections like `Vec` and `Dict`.
+        This avoid `x: Vec[int] = Vec()` repetitive pattern.
 
-        However, this can be handy for immutable collections too, for example for representing failure steps in a pipeline.
 
         Returns:
             Self: A new empty `Iterable` instance.
@@ -87,14 +86,15 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
         >>> data
         Vec()
         >>> # Equivalent to
-        >>> data: list[str] = []
+        >>> data: Vec[str] = Vec(())
         >>> data
-        []
-        >>> my_dict = Dict[str, int].new()
-        >>> my_dict.insert("a", 1)
-        NONE
-        >>> my_dict
-        Dict('a': 1)
+        Vec()
+        >>> # When the type can be inferred, prefer the standard constructor for better readability
+        >>> def foo(x: Vec[int]) -> Vec[int]:
+        ...     return x
+        >>> foo(Vec((1, 2, 3)))
+        Vec(1, 2, 3)
+
 
         ```
         """
@@ -265,7 +265,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
         Returns:
             int: The count of elements.
         ```python
-        >>> from pyochain import Seq, Range
+        >>> from pyochain import Seq, Range, Iter
         >>> Seq((1, 2)).length()
         2
         >>> Range(0, 5).length()

@@ -81,14 +81,9 @@ def _check_nav_completeness(config_path: Path = ZENSICAL_PATH) -> None:
                 acc.add(item)
                 return acc
 
-    nav_paths = (
-        SetMut[str]
-        .new()
-        .into(
-            _collect_paths,
-            tomllib.loads(config_path.read_text(encoding="utf-8"))["project"]["nav"],  # pyright: ignore[reportAny]
-        )
-    )
+    txt = config_path.read_text(encoding="utf-8")
+    item: JsonData = tomllib.loads(txt)["project"]["nav"]  # pyright: ignore[reportAny]
+    nav_paths = _collect_paths(SetMut(()), item)
 
     return (
         Iter(DOCS_REF.glob("*.md"))

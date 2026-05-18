@@ -56,7 +56,7 @@ def _with_args_and_kwargs(
     return 1
 
 
-tested = pytest.mark.parametrize(
+compared = pytest.mark.parametrize(
     "foo",
     [
         pytest.param(FooRust(10), id="native"),
@@ -66,31 +66,31 @@ tested = pytest.mark.parametrize(
 
 
 @pytest.mark.benchmark(group="mixin_into")
-@tested
+@compared
 def test_into_without_args_or_kwargs(benchmark: BenchFixture, foo: Foo) -> None:
     assert benchmark(foo.into, _without_args_or_kwargs) == 1  # pyright: ignore[reportArgumentType]
 
 
 @pytest.mark.benchmark(group="mixin_into")
-@tested
+@compared
 def test_into_with_one_arg(benchmark: BenchFixture, foo: Foo) -> None:
     assert benchmark(foo.into, _with_one_arg, 3) == 1  # pyright: ignore[reportArgumentType]
 
 
 @pytest.mark.benchmark(group="mixin_into")
-@tested
+@compared
 def test_into_with_two_args(benchmark: BenchFixture, foo: Foo) -> None:
     assert benchmark(foo.into, _with_two_args, 3, 5) == 1  # pyright: ignore[reportArgumentType]
 
 
 @pytest.mark.benchmark(group="mixin_into")
-@tested
+@compared
 def test_into_with_one_kwarg(benchmark: BenchFixture, foo: Foo) -> None:
     assert benchmark(foo.into, _with_one_kwarg, _kwarg1=3) == 1  # pyright: ignore[reportArgumentType]
 
 
 @pytest.mark.benchmark(group="mixin_into")
-@tested
+@compared
 def test_into_with_three_kwargs(benchmark: BenchFixture, foo: Foo) -> None:
     assert (
         benchmark(
@@ -105,7 +105,7 @@ def test_into_with_three_kwargs(benchmark: BenchFixture, foo: Foo) -> None:
 
 
 @pytest.mark.benchmark(group="mixin_into")
-@tested
+@compared
 def test_into_with_args_and_kwargs(benchmark: BenchFixture, foo: Foo) -> None:
     assert (
         benchmark(
