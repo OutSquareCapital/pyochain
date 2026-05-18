@@ -1,6 +1,7 @@
 use crate::args::{Args, Concatenate, Kwargs};
 use crate::option::{PySome, get_null};
 use crate::result::{PyErr, PyOk};
+use pyo3::exceptions::PyStopIteration;
 use pyo3::intern;
 use pyo3::types::{PyAny, PyBool, PyFunction, PyIterator, PyList, PyModule, PySet, PyTuple};
 use pyo3::{IntoPyObjectExt, prelude::*};
@@ -431,4 +432,24 @@ pub fn partition(
         }
     }
     Ok((true_list.unbind(), false_list.unbind()))
+}
+
+#[pyfunction]
+pub fn last(mut data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
+    let mut base = data.next().ok_or_else(|| PyStopIteration::new_err(""))?;
+    loop {
+        match data.next() {
+            Some(next_item) => base = next_item,
+            None => break,
+        }
+    }
+    base?.into_py_any(data.py())
+}
+#[pyfunction]
+pub fn length(data: Bound<'_, PyIterator>) -> usize {
+    let mut count = 0;
+    data.for_each(|_| {
+        count += 1;
+    });
+    count
 }
