@@ -471,6 +471,70 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             return any(iter(self))
         return any(predicate(x) for x in iter(self))
 
+    def all_unique[U](self) -> bool:
+        """Returns True if all the elements of **self** are unique.
+
+        The function returns as soon as the first non-unique element is encountered.
+
+        Elements are assumed to be hashable.
+
+        If you need to check uniqueness based on a custom key function, use `PyoIterable::all_unique_by` instead.
+
+        Note:
+        - On `PyoSequence` and subclasses, this is overriden to directly use an efficient `set` access and length comparison.
+        - On `PyoSet`, `PyoMapping` and their subclasses, this directly returns `True`.
+
+        Returns:
+            bool: `True` if all elements are unique, `False` otherwise.
+
+        Example:
+        ```python
+        >>> from pyochain import Iter, Dict
+        >>> Iter("ABCB").all_unique()
+        False
+        >>> Iter("ABCb").all_unique()
+        True
+        >>> data = Dict.from_ref({1: "a", 2: "a"})
+        >>> data.all_unique()
+        True
+        >>> data.values().all_unique()
+        False
+
+        ```
+        """
+        return cz.itertoolz.isdistinct(iter(self))  # pyright: ignore[reportArgumentType]
+
+    def all_unique_by[U](self, key: Callable[[T], U]) -> bool:
+        """Returns True if all the elements of **self** transformed by **key** are unique.
+
+        The function returns as soon as the first non-unique element is encountered.
+
+        Credits to **more-itertools** for the implementation.
+
+        Args:
+            key (Callable[[T], U]): Function to transform items before comparison.
+
+        Returns:
+            bool: `True` if all elements are unique, `False` otherwise.
+
+        Example:
+        ```python
+        >>> from pyochain import Iter
+        >>> Iter("ABCb").all_unique()
+        True
+        >>> Iter("ABCb").all_unique_by(str.lower)
+        False
+
+        ```
+        """
+        seenset: set[T | U] = set()
+        seenset_add = seenset.add
+        for element in map(key, iter(self)):
+            if element in seenset:
+                return False
+            seenset_add(element)
+        return True
+
 
 class PyoCollection[T](PyoIterable[T], Collection[T], ABC):
     """`Extends `PyoIterable[T]` and `collections.abc.Collection[T]`.
@@ -489,6 +553,10 @@ class PyoCollection[T](PyoIterable[T], Collection[T], ABC):
     @override
     def length(self) -> int:
         return len(self)
+
+    @override
+    def all_unique(self) -> bool:
+        return len(self) == len(frozenset(self))
 
     def contains(self, value: T) -> bool:
         """Check if the `Collection` contains the specified **value**.
@@ -1177,50 +1245,6 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             for _second in iterator:
                 return False
             return True
-        return True
-
-    def all_unique[U](self, key: Callable[[T], U] | None = None) -> bool:
-        """Returns True if all the elements of iterable are unique.
-
-        The function returns as soon as the first non-unique element is encountered.
-
-        `Iters` with a mix of hashable and unhashable items can be used, but the function will be slower for unhashable items.
-
-        A function that accepts a single argument and returns a transformed version of each input item can be specified with **key**.
-
-        Credits to **more-itertools** for the implementation.
-
-        Args:
-            key (Callable[[T], U] | None): Function to transform items before comparison.
-
-        Returns:
-            bool: `True` if all elements are unique, `False` otherwise.
-
-        Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter("ABCB").all_unique()
-        False
-        >>> Iter("ABCb").all_unique()
-        True
-        >>> Iter("ABCb").all_unique(str.lower)
-        False
-
-        ```
-        """
-        seenset: set[T | U] = set()
-        seenset_add = seenset.add
-        seenlist: list[T | U] = []
-        seenlist_add = seenlist.append
-        for element in map(key, iter(self)) if key else iter(self):
-            try:
-                if element in seenset:
-                    return False
-                seenset_add(element)
-            except TypeError:
-                if element in seenlist:
-                    return False
-                seenlist_add(element)
         return True
 
     def argmax[U](self, key: Callable[[T], U] | None = None) -> int:
@@ -1956,21 +1980,6 @@ class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
 
         return Iter(reversed(self))
 
-    def is_distinct(self) -> bool:
-        """Return True if all items of the `Sequence` are distinct.
-
-        Returns:
-            bool: True if all items are distinct, False otherwise.
-
-        ```python
-        >>> from pyochain import Seq
-        >>> Seq((1, 2)).is_distinct()
-        True
-
-        ```
-        """
-        return cz.itertoolz.isdistinct(self)
-
 
 class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
     """Extends `PyoCollection[T]` and `collections.abc.Set[T]`.
@@ -1986,6 +1995,10 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
+
+    @override
+    def all_unique(self) -> bool:
+        return True
 
     def is_subset(self, other: AbstractSet[T]) -> bool:
         """Test whether all elements of this set are in `other` (including equality).
@@ -2412,6 +2425,10 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
+
+    @override
+    def all_unique(self) -> bool:
+        return True
 
     @override
     def keys(self) -> PyoKeysView[K]:
