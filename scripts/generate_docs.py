@@ -13,21 +13,26 @@ from pyochain import Dict, Iter, Seq, Set, SetMut
 
 type JsonData = dict[str, Any] | list[str] | str  # pyright: ignore[reportExplicitAny]
 # Setup paths
-DOCS_REF = Path().joinpath("docs", "reference")
+DOCS_DIR = Path("docs")
+DOCS_REF = DOCS_DIR.joinpath("reference")
 ZENSICAL_PATH = Path("zensical.toml")
 CONSOLE = Console()
 
 
-def _generate_markdown(full_path: str, class_name: str) -> str:
-    return f"""# {class_name}
+def main() -> None:
+    """Generate all reference documentation."""
+    import pyochain
 
-::: {full_path}
-"""
+    generated_paths = SetMut[str].new()
 
+    CONSOLE.print(Text("Generating pyochain documentation...", style="cyan bold"))
+    _discover_modules(pyochain).iter().for_each(
+        lambda module: _generate_markdown_for_module(module, generated_paths)
+    )
 
-def _ensure_docs_dir() -> None:
-    """Create docs/reference if it doesn't exist."""
-    DOCS_REF.mkdir(parents=True, exist_ok=True)
+    CONSOLE.print("\nChecking navigation completeness...")
+    _check_nav_completeness()
+    CONSOLE.print(Text("✓ All files generated!", style="cyan bold"))
 
 
 def _discover_modules(module: ModuleType) -> Seq[ModuleType]:
@@ -46,7 +51,7 @@ def _discover_modules(module: ModuleType) -> Seq[ModuleType]:
 
 def _generate_markdown_for_module(module: object, generated_paths: SetMut[str]) -> None:
     """Generate markdown files for all public classes in a module."""
-    _ensure_docs_dir()
+    DOCS_REF.mkdir(parents=True, exist_ok=True)
 
     public_api = Set(getattr(module, "__all__", []))
 
@@ -76,53 +81,60 @@ def _generate_markdown_for_module(module: object, generated_paths: SetMut[str]) 
     )
 
 
+def _generate_markdown(full_path: str, class_name: str) -> str:
+    return f"""# {class_name}
+
+::: {full_path}
+"""
+
+
 def _check_nav_completeness(config_path: Path = ZENSICAL_PATH) -> None:
     """Check that all generated markdown files are in the navigation."""
-
-    def _collect_paths(acc: SetMut[str], item: JsonData) -> SetMut[str]:
-        match item:
-            case dict():
-                return Iter(item.values()).fold(acc, _collect_paths)
-            case list():
-                return Iter(item).fold(acc, _collect_paths)
-            case str():
-                acc.add(item)
-                return acc
-
     txt = config_path.read_text(encoding="utf-8")
-    item: JsonData = tomllib.loads(txt)["project"]["nav"]  # pyright: ignore[reportAny]
-    nav_paths = _collect_paths(SetMut(()), item)
+    config = tomllib.loads(txt)
+    docs_dir = config_path.parent.joinpath(config["project"]["docs_dir"])  # pyright: ignore[reportAny]
+    docs_ref = docs_dir.joinpath("reference").glob("*.md")
+    nav_item: JsonData = config["project"]["nav"]  # pyright: ignore[reportAny]
+    nav_paths = _collect_nav_paths(nav_item)
+    docs_paths = (
+        Iter(docs_dir.rglob("*.md"))
+        .map(lambda path: path.relative_to(docs_dir).as_posix())
+        .collect(Set)
+    )
 
-    return (
-        Iter(DOCS_REF.glob("*.md"))
-        .map(lambda p: f"reference/{p.name}")
-        .filter(lambda p: p not in nav_paths)
-        .collect()
+    _ = (
+        Iter(docs_ref)
+        .map(lambda path: path.relative_to(docs_dir).as_posix())
+        .collect(Set)
+        .difference(nav_paths)
         .then(
             lambda missing: CONSOLE.print(
-                Text(f"⚠️  Missing files in nav:\n {missing}", style="yellow")
+                Text(f"⚠️  Missing generated files in nav:\n {missing}", style="yellow")
             )
         )
-        .unwrap_or_else(
-            lambda: CONSOLE.print(Text("✓ Navigation is complete!", style="green"))
+    )
+    _ = nav_paths.difference(docs_paths).then(
+        lambda invalid: CONSOLE.print(
+            Text(f"⚠️  Invalid nav links:\n {invalid}", style="yellow")
         )
     )
 
+    CONSOLE.print(Text("✓ Navigation is complete!", style="green"))
 
-def main() -> None:
-    """Generate all reference documentation."""
-    import pyochain
 
-    generated_paths = SetMut[str].new()
+def _collect_nav_paths(item: JsonData) -> SetMut[str]:
 
-    CONSOLE.print(Text("Generating pyochain documentation...", style="cyan bold"))
-    _discover_modules(pyochain).iter().for_each(
-        lambda module: _generate_markdown_for_module(module, generated_paths)
-    )
+    def _collect_paths(acc: SetMut[str], current: JsonData) -> SetMut[str]:
+        match current:
+            case dict():
+                return Iter(current.values()).fold(acc, _collect_paths)
+            case list():
+                return Iter(current).fold(acc, _collect_paths)
+            case str():
+                acc.add(current)
+                return acc
 
-    CONSOLE.print("\nChecking navigation completeness...")
-    _check_nav_completeness()
-    CONSOLE.print(Text("✓ All files generated!", style="cyan bold"))
+    return _collect_paths(SetMut(()), item)
 
 
 if __name__ == "__main__":
