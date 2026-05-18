@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### 🔄 Refactors
+
+- **Internal**: Renamed `PyOk` and `PyErr` to `PyoOk` and `PyoErr` to avoid any confusion with `Pyo3` types.
+
 ### 📖 Documentation
 
 - Various reorganisation changes to reduce redundancy

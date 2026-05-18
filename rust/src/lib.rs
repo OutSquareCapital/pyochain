@@ -18,8 +18,8 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(option::then_if_true, m)?)?;
     m.add_function(wrap_pyfunction!(option::option, m)?)?;
     m.add("NONE", option::get_null(py))?;
-    m.add_class::<result::PyOk>()?;
-    m.add_class::<result::PyErr>()?;
+    m.add_class::<result::PyoOk>()?;
+    m.add_class::<result::PyoErr>()?;
     m.add_class::<errors::OptionUnwrapError>()?;
     m.add_class::<errors::ResultUnwrapError>()?;
     m.add_class::<result::PyochainResult>()?;

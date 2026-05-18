@@ -35,16 +35,16 @@ pub struct PyochainResult;
 
 #[derive(PyMatchArgs)]
 #[pyclass(frozen, name = "Ok", generic)]
-pub struct PyOk {
+pub struct PyoOk {
     #[pyo3(get)]
     pub value: Py<PyAny>,
 }
 
 #[pymethods]
-impl PyOk {
+impl PyoOk {
     #[new]
     pub fn new(value: Py<PyAny>) -> Self {
-        PyOk { value }
+        PyoOk { value }
     }
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let value_repr = self.value.bind(py).repr()?;
@@ -93,7 +93,7 @@ impl PyOk {
         args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Self> {
-        Ok(PyOk::new(
+        Ok(PyoOk::new(
             func.concat(&self.value.bind(func.py()), args, kwargs)?
                 .unbind(),
         ))
@@ -104,7 +104,7 @@ impl PyOk {
     }
 
     fn or_(&self, rese: &Bound<'_, PyAny>) -> PyResult<Self> {
-        Ok(PyOk::new(self.value.clone_ref(rese.py())))
+        Ok(PyoOk::new(self.value.clone_ref(rese.py())))
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]
@@ -120,7 +120,7 @@ impl PyOk {
     }
 
     fn or_else(&self, f: &Bound<'_, PyAny>) -> Self {
-        PyOk::new(self.value.clone_ref(f.py()))
+        PyoOk::new(self.value.clone_ref(f.py()))
     }
 
     fn unwrap_err(&self) -> PyResult<Py<PyAny>> {
@@ -147,7 +147,7 @@ impl PyOk {
     }
 
     fn map_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Self> {
-        Ok(PyOk::new(
+        Ok(PyoOk::new(
             func.call(self.value.bind(func.py()).cast::<PyTuple>()?, None)?
                 .unbind(),
         ))
@@ -196,7 +196,7 @@ impl PyOk {
         _args: &Args<'_>,
         _kwargs: Option<&Kwargs<'_>>,
     ) -> Self {
-        PyOk::new(self.value.clone_ref(func.py()))
+        PyoOk::new(self.value.clone_ref(func.py()))
     }
 
     #[pyo3(signature = (func, *_args, **_kwargs))]
@@ -206,13 +206,13 @@ impl PyOk {
         _args: &Args<'_>,
         _kwargs: Option<&Kwargs<'_>>,
     ) -> Self {
-        PyOk::new(self.value.clone_ref(func.py()))
+        PyoOk::new(self.value.clone_ref(func.py()))
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         match self.value.bind(py).cast_exact::<PySome>() {
             Ok(some_ref) => {
-                let ok_value = PyOk::new(some_ref.get().value.clone_ref(py)).into_py_any(py)?;
+                let ok_value = PyoOk::new(some_ref.get().value.clone_ref(py)).into_py_any(py)?;
                 PySome::new(ok_value).into_py_any(py)
             }
             Err(_) => get_null(py).into_py_any(py),
@@ -236,7 +236,7 @@ impl PyOk {
         Ok(ok.call1((&self.value,))?.unbind())
     }
     fn swap(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        Ok(PyErr::new(self.value.clone_ref(py)).into_py_any(py)?)
+        Ok(PyoErr::new(self.value.clone_ref(py)).into_py_any(py)?)
     }
 
     #[pyo3(signature = (f, *args, **kwargs))]
@@ -248,23 +248,23 @@ impl PyOk {
     ) -> PyResult<Self> {
         let py = f.py();
         f.concat(&self.value.bind(py), args, kwargs)?;
-        Ok(PyOk::new(self.value.clone_ref(py)))
+        Ok(PyoOk::new(self.value.clone_ref(py)))
     }
 }
 
 /// Err(error) - Result variant containing an error value
 #[derive(PyMatchArgs)]
 #[pyclass(frozen, name = "Err", generic)]
-pub struct PyErr {
+pub struct PyoErr {
     #[pyo3(get)]
     pub error: Py<PyAny>,
 }
 
 #[pymethods]
-impl PyErr {
+impl PyoErr {
     #[new]
     pub fn new(error: Py<PyAny>) -> Self {
-        PyErr { error }
+        PyoErr { error }
     }
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let error_repr = self.error.bind(py).repr()?;
@@ -329,15 +329,11 @@ impl PyErr {
 
     #[pyo3(signature = (func, *_args, **_kwargs))]
     fn map(&self, func: &Bound<'_, PyAny>, _args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> Self {
-        PyErr {
-            error: self.error.clone_ref(func.py()),
-        }
+        PyoErr::new(self.error.clone_ref(func.py()))
     }
 
     fn and_(&self, resb: &Bound<'_, PyAny>) -> Self {
-        PyErr {
-            error: self.error.clone_ref(resb.py()),
-        }
+        PyoErr::new(self.error.clone_ref(resb.py()))
     }
 
     fn or_(&self, rese: &Bound<'_, PyAny>) -> Py<PyAny> {
@@ -351,9 +347,7 @@ impl PyErr {
         _args: &Args<'_>,
         _kwargs: Option<&Kwargs<'_>>,
     ) -> Self {
-        PyErr {
-            error: self.error.clone_ref(func.py()),
-        }
+        PyoErr::new(self.error.clone_ref(func.py()))
     }
 
     fn or_else(&self, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
@@ -361,15 +355,11 @@ impl PyErr {
     }
 
     fn map_star(&self, func: &Bound<'_, PyAny>) -> Self {
-        PyErr {
-            error: self.error.clone_ref(func.py()),
-        }
+        PyoErr::new(self.error.clone_ref(func.py()))
     }
 
     fn and_then_star(&self, func: &Bound<'_, PyAny>) -> Self {
-        PyErr {
-            error: self.error.clone_ref(func.py()),
-        }
+        PyoErr::new(self.error.clone_ref(func.py()))
     }
 
     fn unwrap_err(&self, py: Python<'_>) -> Py<PyAny> {
@@ -404,11 +394,10 @@ impl PyErr {
         args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Self> {
-        Ok(PyErr {
-            error: func
-                .concat(&self.error.bind(func.py()), args, kwargs)?
+        Ok(PyoErr::new(
+            func.concat(&self.error.bind(func.py()), args, kwargs)?
                 .unbind(),
-        })
+        ))
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]
@@ -420,13 +409,11 @@ impl PyErr {
     ) -> PyResult<Self> {
         let py = func.py();
         func.concat(&self.error.bind(py), args, kwargs)?;
-        Ok(PyErr {
-            error: self.error.clone_ref(py),
-        })
+        Ok(PyoErr::new(self.error.clone_ref(py)))
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let err_value = PyErr::new(self.error.clone_ref(py)).into_py_any(py)?;
+        let err_value = PyoErr::new(self.error.clone_ref(py)).into_py_any(py)?;
         PySome::new(err_value).into_py_any(py)
     }
 
@@ -452,7 +439,7 @@ impl PyErr {
         _args: &Args<'_>,
         _kwargs: Option<&Kwargs<'_>>,
     ) -> Self {
-        PyErr::new(self.error.clone_ref(func.py()))
+        PyoErr::new(self.error.clone_ref(func.py()))
     }
 
     #[pyo3(signature = (f, *_args, **_kwargs))]
@@ -462,7 +449,7 @@ impl PyErr {
         _args: &Args<'_>,
         _kwargs: Option<&Kwargs<'_>>,
     ) -> Self {
-        PyErr::new(self.error.clone_ref(f.py()))
+        PyoErr::new(self.error.clone_ref(f.py()))
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]
@@ -475,6 +462,6 @@ impl PyErr {
         Ok(func.concat(&slf, args, kwargs)?.unbind())
     }
     fn swap(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        Ok(PyOk::new(self.error.clone_ref(py)).into_py_any(py)?)
+        Ok(PyoOk::new(self.error.clone_ref(py)).into_py_any(py)?)
     }
 }
