@@ -123,9 +123,7 @@ NONE
 
 For comprehensive guides and examples:
 
-[🔍 Types Overview](https://outsquarecapital.github.io/pyochain/core-types-overview/) — Roles, comparisons and visual relationships
-
-[🔄 Interoperability](https://outsquarecapital.github.io/pyochain/interoperability/) - Converting between types
+[🔍 Types Overview](https://outsquarecapital.github.io/pyochain/overview/) — Roles, comparisons and visual relationships
 
 [📚 Full API Reference](https://outsquarecapital.github.io/pyochain/api-reference/) — Complete API documentation
 

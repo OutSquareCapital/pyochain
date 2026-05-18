@@ -6,45 +6,52 @@ Thank you for your interest in contributing to pyochain! This document outlines 
 
 Top-level files and folders of interest:
 
-- `pyproject.toml` — Python project metadata and build configuration.
-- `Cargo.toml` — Rust workspace and dependencies (root).
-- `zensical.toml` — documentation site configuration.
-- `README.md`, `CONTRIBUTING.md`, `LICENSE.md` — user-facing docs.
-- `docs/` — project documentation sources (Markdown files).
-- `site/` — generated documentation (static site).
-- `scripts/` — development helpers (benchmarks, doc generation).
-- `src/pyochain/` — Python package source code.
-- `rust/` — Rust extension module (PyO3 bindings).
-- `tests/` — Python test suite.
+- [pyproject.toml](pyproject.toml) — Python project metadata and build configuration.
+- [rust/Cargo.toml](rust/Cargo.toml) — Rust crate metadata and dependencies.
+- [zensical.toml](zensical.toml) — documentation site configuration.
+- [README.md](README.md), [CONTRIBUTING.md](CONTRIBUTING.md), [LICENSE.md](LICENSE.md) — user-facing docs.
+- [docs/](docs) — project documentation sources.
+- [site/](site) — generated documentation output.
+- [scripts/](scripts) — development helpers for docs and checks.
+- [src/pyochain/](src/pyochain) — Python package source code.
+- [rust/](rust) — Rust extension module built with PyO3.
+- [tests/](tests) — Python test suite and benchmarks.
 
 ## Architecture: Hybrid Python/Rust
 
 pyochain is a **mixed Python/Rust project**:
 
-- **Python layer** (`src/pyochain/`) — Public API, pure Python implementations, type stubs.
-- **Rust layer** (`rust/`) — Performance-critical code compiled to native bindings via PyO3.
-- **PyO3 bridge** — Seamless integration between Python and Rust types.
+- **Public Python package**: [src/pyochain/](src/pyochain) contains the import surface, collection types, ABCs, and type stubs.
+- **Native Rust extension**: [rust/src/](rust/src) contains the PyO3 module compiled as `pyochain.rs` via [pyproject.toml](pyproject.toml) and [rust/Cargo.toml](rust/Cargo.toml).
 
-### Rust structure (`rust/src/`)
+### Python structure ([src/pyochain/](src/pyochain))
 
-- `lib.rs` — Crate root, module organization.
-- `option.rs` — `Option[T]`, `Some`, `NONE` implementations (PyO3 classes).
-- `result.rs` — `Result[T, E]`, `Ok`, `Err` implementations.
-- `types.rs` — Utility functions and type conversions.
+- [src/pyochain/**init**.py](src/pyochain/__init__.py) — public API entrypoint and re-exports.
+- [src/pyochain/_iter.py](src/pyochain/_iter.py) — `Iter`, `Seq`, `Vec`, `Set`, `SetMut`, `Peekable`, and related collection logic.
+- [src/pyochain/_dict.py](src/pyochain/_dict.py) — `Dict` implementation and mapping-specific methods.
+- [src/pyochain/_range.py](src/pyochain/_range.py) — `Range` implementation.
+- [src/pyochain/traits/](src/pyochain/traits) — abstract collection and iterator ABCs shared across the Python layer.
+- [src/pyochain/rs.pyi](src/pyochain/rs.pyi) — stubs for the Rust-compiled public bindings.
+- [src/pyochain/_tools.pyi](src/pyochain/_tools.pyi) — stubs for the internal Rust helper module exposed as `pyochain._tools`.
+- [src/pyochain/_types.py](src/pyochain/_types.py) — shared typing protocols and support types.
+
+### Rust structure ([rust/src/](rust/src))
+
+- [rust/src/lib.rs](rust/src/lib.rs) — PyO3 module root; registers the exported classes, functions, and the `_tools` submodule.
+- [rust/src/option.rs](rust/src/option.rs) — `Option[T]`, `Some`, `Null`, `NONE`, and helper constructors.
+- [rust/src/result.rs](rust/src/result.rs) — `Result[T, E]`, `Ok`, and `Err` implementations.
+- [rust/src/errors.rs](rust/src/errors.rs) — unwrap error types exposed to Python.
+- [rust/src/converters.rs](rust/src/converters.rs) — mixins types `Checkable` and `Pipeable`.
+- [rust/src/tools.rs](rust/src/tools.rs) — performance-oriented iterator helpers exposed through `pyochain._tools`.
+- [rust/src/args.rs](rust/src/args.rs) and [rust/src/hasher.rs](rust/src/hasher.rs) — argument parsing and hashing utilities used by the extension.
+
+### Build and integration
+
+- [pyproject.toml](pyproject.toml) configures `maturin` as the build backend and maps the compiled module name to `pyochain.rs`.
+- [rust/Cargo.toml](rust/Cargo.toml) defines the Rust crate compiled as a `cdylib`.
+- [rust/src/lib.rs](rust/src/lib.rs) injects the Rust `_tools` module into Python's import system so the Python layer can use it as `pyochain._tools`.
 
 ## Package layout
-
-The `src/pyochain` Python package is organized into internal modules (leading underscore indicates internal implementation):
-
-- `_iter.py` — `Iter`, `Seq`, `Vec`, `Set`, `SetMut` and iteration/collection methods.
-- `_dict.py` — `Dict` class and mapping-related logic.
-- `_range.py` — `Range` class impléàmentation.
-- `rs.pyi` - Type stubs for public Rust-compiled bindings -> `Option`, `Result`, `Pipeable`, `Checkable`.
-- `_tools.pyi` — Type stubs for iteration methods compiled to Rust. Internal, are called by public object methods, but not directly by users.
-- `_types.py` — Protocols for element types (e.g., `SupportsLen`).
-- `traits/` — abc's, e.g `PyoIterator`, `PyoMutableMapping`.
-- `py.typed` — PEP 561 marker for type checking support.
-- `__init__.py` — public API (imports and re-exports main classes).
 
 ## Coding and documentation guidelines
 
@@ -57,7 +64,7 @@ The `src/pyochain` Python package is organized into internal modules (leading un
 ### Rust code
 
 - Use PyO3's modern Bound API (v0.27+).
-- Add docstrings in `.pyi` stub files (auto-discovered by pytest doctests).
+- Add docstrings in [src/pyochain/rs.pyi](src/pyochain/rs.pyi) for all public Rust types and methods. The `_tools` module is already tested by the caller site (e.g public classes methods)
 
 Docstring example:
 
@@ -137,7 +144,7 @@ uv run pytest
 
 ## Benchmarks
 
-Benchmarks are located in `tests/benchmarks/` and use `pytest-benchmark`. See `tests/benchmarks/README.md` for details on running and interpreting benchmarks.
+Benchmarks are located in [tests/benchmarks/](tests/benchmarks) and use `pytest-benchmark`. See [tests/benchmarks/README.md](tests/benchmarks/README.md) for details on running and interpreting benchmarks.
 
 ```shell
 uv run pytest tests/benchmarks --benchmark-only --benchmark-warmup=True --benchmark-group-by=<name, param:<size>, group>

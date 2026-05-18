@@ -1,8 +1,6 @@
-# Types Overview
+# Pyochain Library: Overview of the API
 
-Pyochain provides a comprehensive set of abstract base classes and concrete collection types, inspired by Python's `collections.abc` module and Rust's iterator patterns.
-
-## Graphical Overview
+Pyochain provides collections, iterators, ABCs, and error/nullability handling types, all designed to work together in a cohesive and intuitive way.
 
 Below is a diagram showing the pyochain API, and the relationships between its core types.
 
@@ -93,16 +91,16 @@ flowchart TB
     linkStyle 27 stroke:#2962FF,fill:none,stroke-width:2px
 ```
 
-## Core classes
+## Type Categories
 
-Pyochain's API is built around 4 categories of types:
+Pyochain types can be broadly categorized into 4 groups:
 
-1. **Fluent mixins** — providing methods for fluent method chaining and conversion to `Option` and `Result` types
-2. **Abstract collection protocols** — mirroring Python's `collections.abc` hierarchy to ensure protocol compatibility
-3. **Concrete collection types** — implementing the abstract protocols and mirroring Python's standard library collections
-4. **Option and Result types** — for explicit handling of nullable values and errors.
-
-For concrete examples of these classes in action, see the [interoperability section](interoperability.md).
+- **Fluent mixins**
+- **Abstract collection protocols**
+- **Concrete collections & iterators**
+- **Option & Result types**
+  
+See the sections below for an overview of each category, and the types they contain.
 
 ### Fluent mixins
 
@@ -172,3 +170,142 @@ Pyochain provides two fundamental types for explicit handling of nullable values
 A `Result[T, E]` is either `Ok(value)` for successful operations, or `Err(error)` for failures.
 
 Using `Result` as a return type clearly signals to callers that error handling is required.
+
+## Conversion & Interoperability Map
+
+The following graph illustrates all the built-in ways to convert between types in Pyochain.
+
+- Types are grouped by category.
+- Arrows color and direction represent conversion paths.
+- Arrow labels represent methods.
+
+```mermaid
+---
+config:
+  layout: elk
+---
+flowchart TB
+ subgraph Collections["📦 Collections"]
+    direction LR
+        Seq["<b>Seq[T]</b><br>immutable<br>tuple"]
+        Vec["<b>Vec[T]</b><br>mutable<br>list"]
+        Set["<b>Set[T]</b><br>immutable<br>frozenset"]
+        SetMut["<b>SetMut[T]</b><br>mutable<br>set"]
+  end
+ subgraph Lazy["⛓️ Lazy"]
+    direction LR
+        Iter["<b>Iter[T]</b><br>lazy iterator<br>Iterator"]
+  end
+ subgraph DictGroup["🔑 Dictionary"]
+    direction LR
+        Dict["<b>Dict[K,V]</b><br>mutable<br>dict"]
+  end
+ subgraph OptionGroup["🎁 Option Types"]
+    direction LR
+        Option["<b>Option[T]</b>"]
+        Some["<b>Some[T]</b>"]
+        NONE["<b>NONE</b>"]
+  end
+ subgraph ResultGroup["✅ Result Types"]
+    direction LR
+        Result["<b>Result[T,E]</b>"]
+        Ok["<b>Ok[T]</b>"]
+        Err["<b>Err[E]</b>"]
+  end
+ subgraph External["🌐 External Types"]
+    direction LR
+        AnyType["<b>Any Type</b><br>via .into(func)"]
+  end
+    Option -.-> Some & NONE
+    Result -.-> Ok & Err
+    Collections -- ".iter()" --> Lazy
+    Lazy -- ".collect()" --> Collections
+    Lazy -- ".collect(Dict)" --> DictGroup
+    DictGroup -- ".iter() → Item[K,V]<br>.keys_iter() → K<br>.values_iter() → V" --> Lazy
+    OptionGroup -- ".iter()" --> Lazy
+    ResultGroup -- ".iter()" --> Lazy
+    DictGroup -- ".get_item(key)<br>.insert(key, val)<br>.remove(key)" --> OptionGroup
+    DictGroup -- ".try_insert(key, val)" --> ResultGroup
+    Collections -- ".then(func)<br>.then_some()" --> OptionGroup
+    Lazy -- ".then(func)<br>.then_some()" --> OptionGroup
+    DictGroup -- ".then(func)<br>.then_some()" --> OptionGroup
+    Collections -- ".ok_or(err)<br>.ok_or_else(func)" --> ResultGroup
+    Lazy -- ".ok_or(err)<br>.ok_or_else(func)" --> ResultGroup
+    DictGroup -- ".ok_or(err)<br>.ok_or_else(func)" --> ResultGroup
+    OptionGroup -- ".ok_or(err)<br>.ok_or_else(func)" --> ResultGroup
+    ResultGroup -- ".ok()<br>.err()" --> OptionGroup
+    OptionGroup L_OptionGroup_ResultGroup_2@<-- ".transpose()" --> ResultGroup
+    Collections -- ".into(func)" --> External
+    Lazy -- ".into(func)" --> External
+    DictGroup -- ".into(func)" --> External
+    OptionGroup -- ".into(func)" --> External
+    ResultGroup -- ".into(func)" --> External
+
+     Seq:::collectionsStyle
+     Vec:::collectionsStyle
+     Set:::collectionsStyle
+     SetMut:::collectionsStyle
+     Iter:::iterStyle
+     Dict:::dictStyle
+     Option:::optionStyle
+     Some:::optionStyle
+     NONE:::optionStyle
+     Result:::resultStyle
+     Ok:::resultStyle
+     Err:::resultStyle
+     AnyType:::externalStyle
+     Collections:::collectionsStyle
+     OptionGroup:::optionStyle
+     ResultGroup:::resultStyle
+    classDef collectionsStyle fill:#1e88e5,stroke:#0d47a1,stroke-width:2px,color:#fff
+    classDef iterStyle fill:#43a047,stroke:#1b5e20,stroke-width:2px,color:#fff
+    classDef dictStyle fill:#fb8c00,stroke:#e65100,stroke-width:2px,color:#fff
+    classDef optionStyle fill:#fdd835,stroke:#f57f17,stroke-width:2px,color:#000
+    classDef resultStyle fill:#e53935,stroke:#b71c1c,stroke-width:2px,color:#fff
+    classDef externalStyle fill:#9e9e9e,stroke:#424242,stroke-width:2px,color:#fff
+    style Seq color:none
+    style Vec color:none
+    style Set color:none
+    style SetMut color:none
+    style Dict fill:#FF6D00,color:none,stroke:#FF6D00
+    style Option color:#FFFFFF,fill:transparent,stroke:#FFD600
+    style Some color:#FFFFFF,fill:transparent,stroke:#FFD600
+    style NONE color:#FFFFFF,fill:transparent,stroke:#FFD600
+    style Result fill:#D50000
+    style Ok fill:#D50000
+    style Err fill:#D50000
+    style Collections fill:#000000,color:none,stroke:#2962FF
+    style Lazy fill:#000000,stroke:#00C853
+    style DictGroup fill:#000000,color:none,stroke:#FF6D00
+    style OptionGroup fill:#000000,color:#FFFFFF,stroke:#FFD600
+    style ResultGroup fill:#000000,stroke:#D50000
+    style External fill:#000000
+    linkStyle 0 stroke:#666,stroke-width:1px,stroke-dasharray:3,fill:none
+    linkStyle 1 stroke:#666,stroke-width:1px,stroke-dasharray:3,fill:none
+    linkStyle 2 stroke:#666,stroke-width:1px,stroke-dasharray:3,fill:none
+    linkStyle 3 stroke:#666,stroke-width:1px,stroke-dasharray:3,fill:none
+    linkStyle 4 stroke:#1e88e5,stroke-width:2.5px,fill:none
+    linkStyle 5 stroke:#43a047,stroke-width:2.5px,fill:none
+    linkStyle 6 stroke:#43a047,stroke-width:2.5px,fill:none
+    linkStyle 7 stroke:#fb8c00,stroke-width:2.5px,fill:none
+    linkStyle 8 stroke:#fdd835,stroke-width:2.5px,fill:none
+    linkStyle 9 stroke:#e53935,stroke-width:2.5px,fill:none
+    linkStyle 10 stroke:#fb8c00,stroke-width:2.5px,fill:none
+    linkStyle 11 stroke:#fb8c00,stroke-width:2.5px,fill:none
+    linkStyle 12 stroke:#1e88e5,stroke-width:2.5px,fill:none
+    linkStyle 13 stroke:#43a047,stroke-width:2.5px,fill:none
+    linkStyle 14 stroke:#fb8c00,stroke-width:2.5px,fill:none
+    linkStyle 15 stroke:#1e88e5,stroke-width:2.5px,fill:none
+    linkStyle 16 stroke:#43a047,stroke-width:2.5px,fill:none
+    linkStyle 17 stroke:#fb8c00,stroke-width:2.5px,fill:none
+    linkStyle 18 stroke:#fdd835,stroke-width:2.5px,fill:none
+    linkStyle 19 stroke:#e53935,stroke-width:2.5px,fill:none
+    linkStyle 20 stroke:#9c27b0,stroke-width:2.5px,fill:none
+    linkStyle 21 stroke:#1e88e5,stroke-width:2.5px,fill:none
+    linkStyle 22 stroke:#43a047,stroke-width:2.5px,fill:none
+    linkStyle 23 stroke:#fb8c00,stroke-width:2.5px,fill:none
+    linkStyle 24 stroke:#fdd835,stroke-width:2.5px,fill:none
+    linkStyle 25 stroke:#e53935,stroke-width:2.5px,fill:none
+
+    L_OptionGroup_ResultGroup_2@{ animation: none }
+```

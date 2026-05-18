@@ -2,7 +2,10 @@
 
 ## [Unreleased]
 
--
+### 📖 Documentation
+
+- Various reorganisation changes to reduce redundancy
+- Updated CONTRIBUTING.md with latest architecture status
 
 ## [0.18.0] - 2026-05-18
 
