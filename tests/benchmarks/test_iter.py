@@ -10,6 +10,8 @@ from pyochain import Range, Seq
 if TYPE_CHECKING:
     from ._utils import BenchFixture, BenchFn
 
+SIZES = [100, 500, 2500]
+
 
 def _pyochain_filter_map(size: int) -> Seq[int]:
     return (
@@ -38,7 +40,7 @@ def _python_filter_map(size: int) -> tuple[int, ...]:
         pytest.param(_pyochain_filter_map, id="pyochain"),
     ],
 )
-@pytest.mark.parametrize("size", [10, 100, 500])
+@pytest.mark.parametrize("size", [100, 500, 2500])
 def test_filter_map(benchmark: BenchFixture, fn: BenchFn, size: int) -> None:
     result = benchmark(fn, size)
     assert result
@@ -86,7 +88,7 @@ type ForEachFn = Callable[[Range], None]
 
 
 @pytest.mark.benchmark(group="for_each")
-@pytest.mark.parametrize("size", [10, 100, 500])
+@pytest.mark.parametrize("size", SIZES)
 @pytest.mark.parametrize(
     "fn",
     [
@@ -102,7 +104,7 @@ def test_for_each(benchmark: BenchFixture, fn: ForEachFn, size: int) -> None:
 
 
 @pytest.mark.benchmark(group="for_each")
-@pytest.mark.parametrize("size", [10, 100, 500])
+@pytest.mark.parametrize("size", SIZES)
 def test_for_each_star(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size).iter().map(lambda i: (i, i * 2, i * 3)).collect()
     assert benchmark(_for_each_star, data) is None
