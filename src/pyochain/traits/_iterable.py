@@ -1436,23 +1436,35 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         return self.__class__(itertools.islice(iter(self), n))
 
     def skip(self, n: int) -> Self:
-        """Drop first n elements.
+        """Create an `Iterator` that skips the first n elements.
+
+        skip(**n**) skips elements until n elements are skipped or the end of the `Iterator` is reached (whichever happens first).
+
+        After that, all the remaining elements are yielded.
+
+        In particular, if the original `Iterator` is too short, then the returned `Iterator` is empty.
+
+        If **n** is negative or zero, the original `Iterator` is returned unchanged.
 
         Args:
             n (int): Number of elements to skip.
 
         Returns:
-            Self: An `Iterator` of the items after skipping the first n items.
+            Self: An `Iterator` of the remaining elements.
 
         Example:
         ```python
         >>> from pyochain import Iter
         >>> Iter((1, 2, 3)).skip(1).collect()
         Seq(2, 3)
+        >>> Iter((1, 2, 3)).skip(5).collect()
+        Seq()
+        >>> Iter((1, 2, 3)).skip(0).collect()
+        Seq(1, 2, 3)
 
         ```
         """
-        return self.__class__(cz.itertoolz.drop(n, iter(self)))
+        return self.__class__(itertools.islice(iter(self), n, None))
 
     def step_by(self, step: int) -> Self:
         """Creates an `Iterator` starting at the same point, but stepping by the given **step** at each iteration.

@@ -28,6 +28,10 @@
 - Various cosmetic changes in Rust to improve readability and documentation
 - Extracted `PyoIterable::{first, second}` and `PyoIterator::{chain, insert}` from cytoolz to python, as they were trivial function calls who didn't needed any external dependency work.
 
+### 🐞 Bug fixes
+
+- Replaced `cytoolz` calls in `Iter::skip`. Slight performance regression, but `cytoolz` wasn't creating a new Iterator, but was eagerly consuming the original one until n elements were skipped, which could be a problem with large n/collections, and could cause issues if lazyness was expected. The new implementation uses `itertools.islice`, which creates a new iterator that skips the first n elements without consuming the original one.
+
 ### 🛠️ Other improvements
 
 - Benchmarks -> deletions, renaming and new ones
