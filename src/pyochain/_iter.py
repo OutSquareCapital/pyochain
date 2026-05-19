@@ -416,7 +416,11 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMult
 
     Unlike `Seq` which is immutable, `Vec` allows in-place modification of elements.
 
-    Implement the `MutableSequence` interface, so elements can be modified in place, and passed to any function/object expecting a standard mutable sequence.
+    As such, `Vec` is more suitable when you need to build up a collection incrementally, or when you need to perform many modifications on the collection,
+
+    while `Seq` is more memory efficient when you have a fixed collection that doesn't require modification.
+
+    It uses a `list` as the underlying data structure, so it has the same performance characteristics as a standard Python `list` regarding indexing, slicing, and iteration.
 
     Args:
         data (Iterable[T]): The `Iterable` to wrap.
@@ -2718,11 +2722,15 @@ class Iter[T](PyoIterator[T]):
 
         Returns a new Iter where each item is a tuple of the results of applying each function to the original item.
 
+        This can be very handy to compute multiple transformations or properties of the same item in a single pass, without needing to iterate multiple times.
+
+        As such, this can be considered as an alternative to various patterns, such as `Iter::{for_each, fold}` with mutable collections, or `Iter::map` followed by `Iter::zip` to combine the results.
+
         Args:
-            *funcs (Callable[[T], object]): Functions to apply to each item.
+            *funcs (Callable[[T], Any]): Functions to apply to each item.
 
         Returns:
-            Iter[tuple[object, ...]]: An iterable of tuples containing the results of each function.
+            Iter[tuple[Any, ...]]: An iterable of tuples containing the results of each function.
         ```python
         >>> from pyochain import Iter
         >>> def is_even(n: int) -> bool:
@@ -2732,6 +2740,18 @@ class Iter[T](PyoIterator[T]):
         >>>
         >>> Iter([1, -2, 3]).map_juxt(is_even, is_positive).collect()
         Seq((False, True), (True, False), (False, True))
+
+        ```
+        If you need to pass additional args and kwargs to the functions, you can use `functools::partial` or create curried functions like this:
+        ```python
+        >>> def curried_add(a: int) -> Callable[[int], int]:
+        ...     def fn(b: int) -> int:
+        ...         return a + b
+        ...
+        ...     return fn
+        >>>
+        >>> Iter((1, 2, 3)).map_juxt(curried_add(10), curried_add(20)).collect()
+        Seq((11, 21), (12, 22), (13, 23))
 
         ```
         """
@@ -2748,7 +2768,7 @@ class Iter[T](PyoIterator[T]):
         Example:
         ```python
         >>> from pyochain import Iter
-        >>> Iter(["a", "b", "c"]).with_position().collect()
+        >>> Iter(("a", "b", "c")).with_position().collect()
         Seq(('first', 'a'), ('middle', 'b'), ('last', 'c'))
         >>> Iter(["a"]).with_position().collect()
         Seq(('only', 'a'),)

@@ -47,8 +47,15 @@ class Pipeable(Protocol):
         ...         return Err("Empty data")
         ...     return Ok(data)
         >>>
-        >>> Seq((1, 2, 3)).into(check_data).into(lambda r: r.map(sum))
-        Ok(6)
+        >>> def handle_result(res: Result[Sequence[int], str]) -> str:
+        ...     match res:
+        ...         case Ok(data):
+        ...             return f"Data is valid: {data}"
+        ...         case Err(err):
+        ...             return f"Data is invalid: {err}"
+        >>>
+        >>> Seq((1, 2, 3)).into(check_data).into(handle_result)
+        'Data is valid: Seq(1, 2, 3)'
 
         ```
         """
@@ -89,10 +96,13 @@ class Checkable(Protocol):
 
     All methods evaluate the instance's truthiness to determine their behavior.
 
-    Truthiness is determined by:
+    Truthiness being determined by:
+
     - `__bool__()` if defined
     - otherwise by `__len__()` if defined (returning `False` if length is 0)
     - otherwise all instances are truthy (Python's default behavior).
+
+    This can be very handy to cover the common pattern of checking if a collection is empty or not, and then explicitly handling each situation with `Option` or `Result` types, without breaking the fluent method chaining.
     """
 
     def then[**P, R](
@@ -286,6 +296,19 @@ class OptionType[T](Pipeable):
 
     `Option[T]` instances are commonly paired with pattern matching.
     This allow to query the presence of a value and take action, always accounting for the None case.
+
+    Example:
+    ```python
+    >>> from pyochain import Option, Some, Null
+    >>> def divide(a: int, b: int) -> Option[int]:
+    ...     if b == 0:
+    ...         return Null()
+    ...     return Some(a // b)
+    >>>
+    >>> divide(10, 2)
+    Some(5)
+    >>> divide(10, 0)
+    NONE
     """
 
     def __bool__(self) -> None:

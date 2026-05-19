@@ -2332,6 +2332,7 @@ class PyoMappingView[T](MappingView, PyoCollection[T], ABC):  # pyright: ignore[
     Is the base class shared by the views returned by `PyoMapping` methods.
 
     Any concrete subclass must implement the required `MappingView` dunder methods:
+
     - `__contains__`
     - `__iter__`
     """

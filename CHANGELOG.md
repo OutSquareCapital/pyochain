@@ -26,6 +26,7 @@ note: highlight should be a table with the perf improvements
 
 - **typing**: `Some(NONE)` is directly inferred as `Option[T]`, lowering the number of potential errors.
 - **typing**: `Iter::try_collect` has received new overloads and should be inferred more accurately now.
+- **typing**: `Iter::map_juxt` has received new overloads to precisely infer the return type up to 10 functions.
 - **Feat**: Added `Vec::concat_mut` for in-place concatenation of another `Vec` or `list`, and `Seq::concat` for concatenation of another `Seq` or `tuple`.
 
 ### 🐞 Bug fixes
@@ -41,7 +42,7 @@ note: highlight should be a table with the perf improvements
 
 - Various reorganisation changes to reduce redundancy
 - Updated CONTRIBUTING.md with latest architecture status
-- Improved docstrings for `PyoIterator` and `PyoMutableSequence` with better examples and explanations
+- Improved docstrings of various classes and methods with better examples and explanations
 - **Fix**: `PyoIterator::for_each_star` was wrongly typed as working with an `Iterator` containing any `Iterable` elements, instead of only `tuple`s.
 
 ### 🧪 Tests
