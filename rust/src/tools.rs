@@ -69,26 +69,26 @@ pub fn for_each(
 #[pyfunction]
 #[pyo3(signature = (data, func, *args, **kwargs))]
 pub fn for_each_star(
-    data: &Bound<'_, PyAny>,
-    func: &Bound<'_, PyAny>,
-    args: &Args<'_>,
+    data: Bound<'_, PyIterator>,
+    func: Bound<'_, PyAny>,
+    args: Args<'_>,
     kwargs: Option<&Kwargs<'_>>,
 ) -> PyResult<()> {
     match (args.is_empty(), kwargs) {
         (true, Some(_)) => data.try_iter()?.try_for_each(|item| {
-            func.call(&item?.cast_into::<PyTuple>()?, kwargs)?;
+            func.call(item?.cast_exact::<PyTuple>()?, kwargs)?;
             Ok(())
         }),
         (true, None) => data.try_iter()?.try_for_each(|item| {
-            func.call1(item?.cast_into::<PyTuple>()?)?;
+            func.call1(item?.cast_exact::<PyTuple>()?)?;
             Ok(())
         }),
         (false, Some(_)) => data.try_iter()?.try_for_each(|item| {
-            func.concat_star(&item?.cast_into::<PyTuple>()?, args, kwargs)?;
+            func.concat_star(item?.cast_exact::<PyTuple>()?, &args, kwargs)?;
             Ok(())
         }),
         (false, None) => data.try_iter()?.try_for_each(|item| {
-            func.concat_star1(&item?.cast_into::<PyTuple>()?, args)?;
+            func.concat_star1(item?.cast_exact::<PyTuple>()?, &args)?;
             Ok(())
         }),
     }

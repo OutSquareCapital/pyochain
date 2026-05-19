@@ -1810,13 +1810,6 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         tls.for_each(iter(self), func, *args, **kwargs)
 
     @overload
-    def for_each_star[**P, R](
-        self: PyoIterator[tuple[Any]],  # pyright: ignore[reportExplicitAny]
-        func: Callable[[Any], R],  # pyright: ignore[reportExplicitAny]
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
     def for_each_star[T1, T2, **P, R](
         self: PyoIterator[tuple[T1, T2]],
         func: Callable[Concatenate[T1, T2, P], R],
@@ -1879,7 +1872,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> None: ...
-    def for_each_star[U: Iterable[Any], **P, R](
+    def for_each_star[U: tuple[Any, ...], **P, R](
         self: PyoIterator[U],
         func: Callable[..., R],
         *args: P.args,

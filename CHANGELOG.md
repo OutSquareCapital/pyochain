@@ -31,6 +31,7 @@ note: highlight should be a table with the perf improvements
 - Various reorganisation changes to reduce redundancy
 - Updated CONTRIBUTING.md with latest architecture status
 - Improved docstrings for `PyoIterator` and `PyoMutableSequence` with better examples and explanations
+- **Fix**: `PyoIterator::for_each_star` was wrongly typed as working with an `Iterator` containing any `Iterable` elements, instead of only `tuple`s.
 
 ### 🧪 Tests
 
