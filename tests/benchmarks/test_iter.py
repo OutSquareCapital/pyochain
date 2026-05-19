@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from pyochain import Null, Option, Range, Seq, Some, Vec
+from pyochain.traits import PyoSequence
 
 from ._utils import SIZES
 
@@ -69,11 +70,7 @@ def _for_each_args_and_kwargs(data: Range) -> None:
     data.iter().for_each(_with_args_and_kwargs, 1, 2, 3, a=4, b=5, c=6)
 
 
-def _for_each_star(data: Seq[tuple[int, int, int]]) -> None:
-    data.iter().for_each_star(_with_args)
-
-
-type ForEachFn = Callable[[Range], None]
+type ForEachFn[T] = Callable[[PyoSequence[T]], None]
 
 
 @pytest.mark.benchmark(group="for_each")
@@ -87,13 +84,42 @@ type ForEachFn = Callable[[Range], None]
         pytest.param(_for_each_args_and_kwargs, id="for_each_args_and_kwargs"),
     ],
 )
-def test_for_each(benchmark: BenchFixture, fn: ForEachFn, size: int) -> None:
+def test_for_each(benchmark: BenchFixture, fn: ForEachFn[int], size: int) -> None:
     data = Range(0, size)
     assert benchmark(fn, data) is None
 
 
-@pytest.mark.benchmark(group="for_each")
+@pytest.mark.benchmark(group="for_each_star")
 @pytest.mark.parametrize("size", SIZES)
 def test_for_each_star(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size).iter().map(lambda i: (i, i * 2, i * 3)).collect()
     assert benchmark(_for_each_star, data) is None
+
+
+def _for_each_star(data: Seq[tuple[int, int, int]]) -> None:
+    data.iter().for_each_star(_with_args)
+
+
+@pytest.mark.benchmark(group="for_each_star_args")
+@pytest.mark.parametrize("size", SIZES)
+def test_for_each_star_args(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).iter().map(lambda i: (i, i * 2, i * 3)).collect()
+    assert benchmark(_for_each_star_args, data) is None
+
+
+def _for_each_star_args(data: Seq[tuple[int, int, int]]) -> None:
+    data.iter().for_each_star(_with_args, 1, 2, 3)
+
+
+@pytest.mark.benchmark(group="for_each_star_kwargs")
+@pytest.mark.parametrize("size", SIZES)
+def test_for_each_star_kwargs(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).iter().map(lambda i: (i, i * 2, i * 3)).collect()
+    assert benchmark(_for_each_star_kwargs, data) is None
+
+
+def _for_each_star_kwargs(data: Seq[tuple[int, int, int]]) -> None:
+    def fn(_a: int, _b: int, _c: int, _d: int, _e: int, **_kwargs: int) -> None:
+        pass
+
+    data.iter().for_each_star(fn, 1, 2, d=4, e=5)
