@@ -28,8 +28,6 @@ from .._types import SupportsComparison, SupportsRichComparison
 from ..rs import NONE, Checkable, Err, Ok, Option, Pipeable, Result, Some, option
 
 if TYPE_CHECKING:
-    from random import Random
-
     from .._iter import Iter
 
 type Comparable[T] = list[T] | tuple[T, ...] | set[T] | frozenset[T]
@@ -1603,78 +1601,6 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         """
         return self.__class__(itertools.cycle(iter(self)))
 
-    def intersperse(self, element: T) -> Self:
-        """Creates a new `Iterator` which places a copy of separator between adjacent items of the original iterator.
-
-        Args:
-            element (T): The element to interpose between items.
-
-        Returns:
-            Self: A new `Iterator` with the element interposed.
-
-        Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> # Simple example with numbers
-        >>> Iter((1, 2, 3)).intersperse(0).collect()
-        Seq(1, 0, 2, 0, 3)
-        >>> # Useful when chaining with other operations
-        >>> Iter([10, 20, 30]).intersperse(5).sum()
-        70
-        >>> # Inserting separators between groups, then flattening
-        >>> Iter([[1, 2], [3, 4], [5, 6]]).intersperse([-1]).flatten().collect()
-        Seq(1, 2, -1, 3, 4, -1, 5, 6)
-
-        ```
-        """
-        return self.__class__(cz.itertoolz.interpose(element, iter(self)))
-
-    def random_sample(
-        self, probability: float, state: Random | int | None = None
-    ) -> Self:
-        """Return elements from the `Iterator` with a given *probability*.
-
-        `.random_sample()` considers each item independently and without replacement.
-
-        See below how the first time it returned 13 items and the next time it returned 6 items.
-
-        Args:
-            probability (float): The probability of including each element.
-            state (Random | int | None): Random state or seed for deterministic sampling.
-
-        Returns:
-            Self: A new `Iterator` with randomly sampled elements.
-        ```python
-        >>> from pyochain import Range
-        >>> data = Range(0, 100)
-        >>> data.iter().random_sample(0.1).collect()  # doctest: +SKIP
-        Seq(6, 9, 19, 35, 45, 50, 58, 62, 68, 72, 78, 86, 95)
-        >>> data.iter().random_sample(0.1).collect()  # doctest: +SKIP
-        Seq(6, 44, 54, 61, 69, 94)
-        ```
-        Providing an integer seed for random_state will result in deterministic sampling.
-
-        Given the same seed it will return the same sample every time.
-        ```python
-        >>> data.iter().random_sample(0.1, state=2016).collect()
-        Seq(7, 9, 19, 25, 30, 32, 34, 48, 59, 60, 81, 98)
-        >>> data.iter().random_sample(0.1, state=2016).collect()
-        Seq(7, 9, 19, 25, 30, 32, 34, 48, 59, 60, 81, 98)
-
-        ```
-        random_state can also be any object with a method random that returns floats between 0.0 and 1.0 (exclusive).
-        ```python
-        >>> from random import Random
-        >>> randobj = Random(2016)
-        >>> data.iter().random_sample(0.1, state=randobj).collect()
-        Seq(7, 9, 19, 25, 30, 32, 34, 48, 59, 60, 81, 98)
-
-        ```
-        """
-        return self.__class__(
-            cz.itertoolz.random_sample(probability, iter(self), random_state=state)
-        )
-
     def insert(self, value: T) -> Self:
         """Prepend the *value* to the `Iterator`.
 
@@ -1701,24 +1627,31 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         """
         return self.__class__(itertools.chain((value,), iter(self)))
 
-    def interleave(self, *others: Iterable[T]) -> Self:
-        """Interleave multiple sequences element-wise.
+    def intersperse(self, element: T) -> Self:
+        """Creates a new `Iterator` which places a copy of separator between adjacent items of the original iterator.
 
         Args:
-            *others (Iterable[T]): Other iterables to interleave.
+            element (T): The element to interpose between items.
 
         Returns:
-            Self: A new Iterable wrapper with interleaved elements.
+            Self: A new `Iterator` with the element interposed.
 
         Example:
         ```python
         >>> from pyochain import Iter
-        >>> Iter((1, 2)).interleave((3, 4)).collect()
-        Seq(1, 3, 2, 4)
+        >>> # Simple example with numbers
+        >>> Iter((1, 2, 3)).intersperse(0).collect()
+        Seq(1, 0, 2, 0, 3)
+        >>> # Useful when chaining with other operations
+        >>> Iter([10, 20, 30]).intersperse(5).sum()
+        70
+        >>> # Inserting separators between groups, then flattening
+        >>> Iter([[1, 2], [3, 4], [5, 6]]).intersperse([-1]).flatten().collect()
+        Seq(1, 2, -1, 3, 4, -1, 5, 6)
 
         ```
         """
-        return self.__class__(cz.itertoolz.interleave((iter(self), *others)))
+        return self.__class__(cz.itertoolz.interpose(element, iter(self)))
 
     def chain(self, *others: Iterable[T]) -> Self:
         """Concatenate **self** with one or more `Iterables`, any of which may be infinite.

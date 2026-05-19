@@ -7,6 +7,11 @@ note: highlight should be a table with the perf improvements
 ### 💥 Breaking changes
 
 - **API change**: `Iter::try_for_each` now returns `Result[tuple[()], E]` instead of `Result[None, E]`. We want to avoid mixing `None` with our `Null` type, and since the return value is not meaningful (it only indicates success), we can use `tuple[()]` as a more explicit "unit" type to signify that the success case does not carry any value. This change is purely semantic and does not affect the functionality of the method. It's also more consistent with the Rust convention of using `()` for equivalent cases.
+- **Removed**: `Iter::diff_at`. Call the corresponding `cytoolz::itertoolz` function if you need this behavior.
+- **Removed**: `Iter::is_strictly_n`. Call the corresponding `more_itertools` function if you need this behavior.
+- **Removed**: `Iter::top_n`. Call the corresponding `cytoolz::itertoolz::topk` function if you need this behavior.
+- **Removed**: `PyoIterator::random_sample`. Call `cytoolz::itertoolz::random_sample` instead if you need this behavior.
+- **Removed**: `PyoIterator::interleave`. If you need this behavior, unpack `self` and the other iterables in a single iterable, then call `cytoolz::itertoolz::interleave` instead.
 
 ### 🚀 Performance improvements
 

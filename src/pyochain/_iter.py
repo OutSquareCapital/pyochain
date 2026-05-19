@@ -21,7 +21,7 @@ import cytoolz as cz
 
 from . import _tools as tls  # pyright: ignore[reportMissingModuleSource]
 from ._types import SupportsRichComparison
-from .rs import NONE, Err, Ok, Option, Result, Some, option
+from .rs import Option, Result, option
 from .traits import (
     Checkable,
     Pipeable,
@@ -2251,61 +2251,6 @@ class Iter[T](PyoIterator[T]):
         """
         return Iter(itertools.product(self._inner, *others))
 
-    def diff_at[R](
-        self, other: Iterable[T], key: Callable[[T], R] | None = None
-    ) -> Iter[tuple[Option[T], Option[T]]]:
-        """Yields pairs of differing elements from two iterables.
-
-        Compares elements from the source iterable and another iterable at corresponding positions.
-
-        If elements differ (based on equality or a provided key function), yields a tuple containing the differing elements wrapped in `Option`.
-
-        If one iterable is shorter, yields `NONE` for missing elements.
-
-        Args:
-            other (Iterable[T]): Other `Iterable` to compare with.
-            key (Callable[[T], R] | None): Function to apply to each item for comparison.
-
-        Returns:
-            Iter[tuple[Option[T], Option[T]]]: An `Iter` of item pairs containing differing elements.
-
-        Example:
-        ```python
-        >>> from pyochain import Seq, Iter, Some, NONE
-        >>> data = Seq((1, 2, 3))
-        >>> data.iter().diff_at([1, 2, 10, 100]).collect()
-        Seq((Some(3), Some(10)), (NONE, Some(100)))
-        >>> data.iter().diff_at([1, 2, 10, 100, 2, 6, 7]).collect() # doctest: +NORMALIZE_WHITESPACE
-        Seq((Some(3), Some(10)),
-        (NONE, Some(100)),
-        (NONE, Some(2)),
-        (NONE, Some(6)),
-        (NONE, Some(7)))
-        >>> Iter(["apples", "bananas"]).diff_at(["Apples", "Oranges"], key=str.lower).collect(list)
-        [(Some('bananas'), Some('Oranges'))]
-
-        ```
-        """
-        if key is None:
-
-            def _gen_no_key() -> Iterator[tuple[Option[T], Option[T]]]:
-                for first, second in itertools.zip_longest(
-                    map(Some, self), map(Some, other), fillvalue=NONE
-                ):
-                    if first.ne(second):
-                        yield first, second
-
-            return Iter(_gen_no_key())
-
-        def _gen_with_key() -> Iterator[tuple[Option[T], Option[T]]]:
-            for first, second in itertools.zip_longest(
-                map(Some, self), map(Some, other), fillvalue=NONE
-            ):
-                if first.map(key).ne(second.map(key)):
-                    yield first, second
-
-        return Iter(_gen_with_key())
-
     @overload
     def map_windows[R](
         self, length: Literal[1], func: Callable[[tuple[T]], R]
@@ -2536,72 +2481,6 @@ class Iter[T](PyoIterator[T]):
         """
         peeked = Seq(itertools.islice(self._inner, n))
         return Peekable(peeked, Iter(itertools.chain(peeked, self._inner)))
-
-    def is_strictly_n(self, n: int) -> Iter[Result[T, ValueError]]:
-        """Yield`Ok[T]` as long as the iterable has exactly *n* items.
-
-        If it has fewer than *n* items, yield `Err[ValueError]` with the actual number of items.
-
-        If it has more than *n* items, yield `Err[ValueError]` with the number `n + 1`.
-
-        Note that the returned iterable must be consumed in order for the check to
-        be made.
-
-        Args:
-            n (int): The exact number of items expected.
-
-        Returns:
-            Iter[Result[T, ValueError]]: A new Iterable wrapper yielding results based on the item count.
-
-        Example:
-        ```python
-        >>> from pyochain import Iter, Ok, Err
-        >>> data = ("a", "b", "c", "d")
-        >>> n = 4
-        >>> Iter(data).is_strictly_n(n).collect()
-        Seq(Ok('a'), Ok('b'), Ok('c'), Ok('d'))
-        >>> Iter("ab").is_strictly_n(3).collect()  # doctest: +NORMALIZE_WHITESPACE
-        Seq(Ok('a'), Ok('b'),
-        Err(ValueError('Too few items in iterable (got 2)')))
-        >>> Iter("abc").is_strictly_n(2).collect()  # doctest: +NORMALIZE_WHITESPACE
-        Seq(Ok('a'), Ok('b'),
-        Err(ValueError('Too many items in iterable (got at least 3)')))
-
-        ```
-        You can easily combine this with `.map(lambda r: r.map_err(...))` to handle the errors as you wish.
-        ```python
-        >>> from pyochain import Iter
-        >>> def _my_err(e: ValueError) -> str:
-        ...     return f"custom error: {e}"
-        >>>
-        >>> Iter([1]).is_strictly_n(0).map(lambda r: r.map_err(_my_err)).collect()
-        Seq(Err('custom error: Too many items in iterable (got at least 1)'),)
-
-        ```
-        Or use `.filter_map(...)` to only keep the `Ok` values.
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2, 3)).is_strictly_n(2).filter_map(lambda r: r.ok()).collect()
-        Seq(1, 2)
-
-        ```
-        """
-
-        def _strictly_n_(data: Iterator[T]) -> Iterator[Result[T, ValueError]]:
-            sent = 0
-            for item in itertools.islice(data, n):
-                yield Ok(item)
-                sent += 1
-
-            if sent < n:
-                e = ValueError(f"Too few items in iterable (got {sent})")
-                yield Err(e)
-
-            for _ in data:
-                e = ValueError(f"Too many items in iterable (got at least {n + 1})")
-                yield Err(e)
-
-        return Iter(_strictly_n_(self._inner))
 
     def enumerate(self, start: int = 0) -> Iter[tuple[int, T]]:
         """Return a `Iter` of (index, value) pairs.
@@ -2986,23 +2865,3 @@ class Iter[T](PyoIterator[T]):
         # Here we recollect it in a Seq to clearly indicate that we need to consume the entire iterator to get the tail.
         # Alternatively, add `deque` wrapper to public API, and `from_ref` it here.
         return Seq(deque(self._inner, n))
-
-    def top_n(self, n: int, key: Callable[[T], Any] | None = None) -> Seq[T]:  # pyright: ignore[reportExplicitAny]
-        """Return a tuple of the top-n items according to key.
-
-        Args:
-            n (int): Number of top elements to return.
-            key (Callable[[T], Any] | None): Function to extract a comparison key from each element.
-
-        Returns:
-            Seq[T]: A new Seq containing the top-n elements.
-
-        Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 3, 2)).top_n(2)
-        Seq(3, 2)
-
-        ```
-        """
-        return Seq(cz.itertoolz.topk(n, self._inner, key=key))
