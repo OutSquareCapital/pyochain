@@ -10,14 +10,14 @@ use pyo3::prelude::*;
 #[pymodule]
 fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     let py = m.py();
-    option::init_null(py)?;
+    option::PyNull::init(py)?;
     m.add_class::<option::PyochainOption>()?;
     m.add_class::<option::PySome>()?;
     m.add_class::<option::PyNull>()?;
     m.add_function(wrap_pyfunction!(option::then_if_some, m)?)?;
     m.add_function(wrap_pyfunction!(option::then_if_true, m)?)?;
     m.add_function(wrap_pyfunction!(option::option, m)?)?;
-    m.add("NONE", option::get_null(py))?;
+    m.add("NONE", option::PyNull::get(py))?;
     m.add_class::<result::PyoOk>()?;
     m.add_class::<result::PyoErr>()?;
     m.add_class::<errors::OptionUnwrapError>()?;

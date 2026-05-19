@@ -37,6 +37,7 @@ note: highlight should be a table with the perf improvements
 
 - Renamed `converters.rs` file in Rust to `mixins.rs` to better reflect its content and purpose.
 - **Internal**: Renamed `PyOk` and `PyErr` to `PyoOk` and `PyoErr` to avoid any confusion with `PyO3` types.
+- **Internal**: Various renaming and cosmetic changes in Rust for better readability and consistency.
 
 ### 📖 Documentation
 

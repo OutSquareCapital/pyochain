@@ -25,24 +25,6 @@ impl IsNull<'_> for &Bound<'_, PyAny> {
                 .as_ptr()
     }
 }
-/// Called once on import to initialize the NONE singleton for the interpreter
-pub fn init_null(py: Python<'_>) -> PyResult<()> {
-    match NONE.get(py) {
-        Some(_) => Ok(()),
-        None => {
-            NONE.set(py, Py::new(py, PyNull)?)
-                .expect("NONE singleton should only be initialized once per interpreter");
-            Ok(())
-        }
-    }
-}
-
-#[inline]
-pub fn get_null(py: Python<'_>) -> Py<PyNull> {
-    NONE.get(py)
-        .expect("NONE singleton not initialized")
-        .clone_ref(py)
-}
 /// Option[T] - Generic Option type with Some and None variants for Python typing
 #[pyclass(frozen, name = "Option", generic)]
 pub struct PyochainOption;
@@ -50,7 +32,7 @@ pub struct PyochainOption;
 pub fn option(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
     let py = value.py();
     if value.is_none() {
-        Ok(get_null(py).into_any())
+        Ok(PyNull::get(py).into_any())
     } else {
         PySome::new(value.to_owned().unbind()).into_py_any(py)
     }
@@ -62,7 +44,7 @@ pub fn then_if_some(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
     if value.is_truthy()? {
         PySome::new(value.to_owned().unbind()).into_py_any(py)
     } else {
-        Ok(get_null(py).into_any())
+        Ok(PyNull::get(py).into_any())
     }
 }
 
@@ -72,7 +54,7 @@ pub fn then_if_true(value: &Bound<'_, PyAny>, predicate: &Bound<'_, PyAny>) -> P
     if predicate.call1((value,))?.is_truthy()? {
         PySome::new(value.to_owned().unbind()).into_py_any(py)
     } else {
-        Ok(get_null(py).into_any())
+        Ok(PyNull::get(py).into_any())
     }
 }
 
@@ -163,7 +145,7 @@ impl PySome {
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
         let py = func.py();
-        PySome::new(func.concat(&self.value.bind(py), args, kwargs)?.unbind()).into_py_any(py)
+        Self::new(func.concat(&self.value.bind(py), args, kwargs)?.unbind()).into_py_any(py)
     }
 
     fn and_(&self, optb: &Bound<'_, PyAny>) -> Py<PyAny> {
@@ -171,7 +153,7 @@ impl PySome {
     }
     fn or_(&self, optb: &Bound<'_, PyAny>) -> Self {
         let py = optb.py();
-        PySome::new(self.value.clone_ref(py))
+        Self::new(self.value.clone_ref(py))
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]
@@ -188,7 +170,7 @@ impl PySome {
 
     fn or_else(&self, f: &Bound<'_, PyAny>) -> Self {
         let py = f.py();
-        PySome::new(self.value.clone_ref(py))
+        Self::new(self.value.clone_ref(py))
     }
 
     fn ok_or(&self, err: &Bound<'_, PyAny>) -> PyoOk {
@@ -228,9 +210,9 @@ impl PySome {
             .concat(&self.value.bind(py), args, kwargs)?
             .is_truthy()?
         {
-            PySome::new(self.value.clone_ref(py)).into_py_any(py)
+            Self::new(self.value.clone_ref(py)).into_py_any(py)
         } else {
-            Ok(get_null(py).into_any())
+            Ok(PyNull::get(py).into_any())
         }
     }
 
@@ -247,15 +229,12 @@ impl PySome {
     ) -> PyResult<Py<PyAny>> {
         let py = f.py();
         f.concat(&self.value.bind(py), args, kwargs)?;
-        PySome::new(self.value.clone_ref(py)).into_py_any(py)
+        Self::new(self.value.clone_ref(py)).into_py_any(py)
     }
 
     fn unzip(&self, py: Python<'_>) -> PyResult<(Py<PyAny>, Py<PyAny>)> {
         let (a, b) = self.value.bind(py).extract::<(Py<PyAny>, Py<PyAny>)>()?;
-        Ok((
-            PySome::new(a).into_py_any(py)?,
-            PySome::new(b).into_py_any(py)?,
-        ))
+        Ok((Self::new(a).into_py_any(py)?, Self::new(b).into_py_any(py)?))
     }
 
     fn map_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
@@ -272,14 +251,14 @@ impl PySome {
     fn zip(&self, other: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = other.py();
         if other.is_null() {
-            return Ok(get_null(py).into_any());
+            return Ok(PyNull::get(py).into_any());
         }
-        let init = PySome::new(
+        let init = Self::new(
             PyTuple::new(
                 py,
                 [
                     self.value.bind(py).clone(),
-                    other.cast_exact::<PySome>()?.get().value.bind(py).clone(),
+                    other.cast_exact::<Self>()?.get().value.bind(py).clone(),
                 ],
             )?
             .unbind()
@@ -291,12 +270,12 @@ impl PySome {
     fn zip_with(&self, other: &Bound<'_, PyAny>, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = other.py();
         if other.is_null() {
-            return Ok(get_null(py).into_any());
+            return Ok(PyNull::get(py).into_any());
         }
         let value = f
-            .call1((&self.value, &other.cast_exact::<PySome>()?.get().value))?
+            .call1((&self.value, &other.cast_exact::<Self>()?.get().value))?
             .unbind();
-        PySome::new(value).into_py_any(py)
+        Self::new(value).into_py_any(py)
     }
 
     fn reduce(&self, other: &Bound<'_, PyAny>, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
@@ -304,18 +283,18 @@ impl PySome {
         let value = if other.is_null() {
             self.value.clone_ref(py)
         } else {
-            let other_some = other.cast_exact::<PySome>()?.get();
+            let other_some = other.cast_exact::<Self>()?.get();
             func.call1((&self.value, &other_some.value))?.unbind()
         };
-        PySome::new(value).into_py_any(py)
+        Self::new(value).into_py_any(py)
     }
 
     fn xor(&self, optb: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = optb.py();
         if optb.is_null() {
-            PySome::new(self.value.clone_ref(py)).into_py_any(py)
+            Self::new(self.value.clone_ref(py)).into_py_any(py)
         } else {
-            Ok(get_null(py).into_any())
+            Ok(PyNull::get(py).into_any())
         }
     }
 
@@ -331,7 +310,7 @@ impl PySome {
         let inner = self.value.bind(py);
         match inner.cast_exact::<PyoOk>() {
             Ok(ok_ref) => {
-                let some_value = PySome::new(ok_ref.get().value.clone_ref(py)).into_py_any(py)?;
+                let some_value = Self::new(ok_ref.get().value.clone_ref(py)).into_py_any(py)?;
                 Ok(PyoOk::new(some_value).into_py_any(py)?)
             }
             Err(_) => {
@@ -341,7 +320,7 @@ impl PySome {
         }
     }
     fn eq(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-        match other.cast_exact::<PySome>() {
+        match other.cast_exact::<Self>() {
             Ok(other_some) => self.value.bind(other.py()).eq(&other_some.get().value),
             Err(_) => Ok(false),
         }
@@ -373,11 +352,32 @@ impl PySome {
 #[pyclass(frozen, name = "Null")]
 pub struct PyNull;
 
+impl PyNull {
+    /// Called once on import to initialize the NONE singleton for the interpreter
+    pub fn init(py: Python<'_>) -> PyResult<()> {
+        match NONE.get(py) {
+            Some(_) => Ok(()),
+            None => {
+                NONE.set(py, Py::new(py, Self)?)
+                    .expect("NONE singleton should only be initialized once per interpreter");
+                Ok(())
+            }
+        }
+    }
+
+    #[inline]
+    pub fn get(py: Python<'_>) -> Py<Self> {
+        NONE.get(py)
+            .expect("NONE singleton not initialized")
+            .clone_ref(py)
+    }
+}
+
 #[pymethods]
 impl PyNull {
     #[new]
-    fn new(py: Python<'_>) -> Py<PyNull> {
-        get_null(py)
+    fn new(py: Python<'_>) -> Py<Self> {
+        Self::get(py)
     }
     fn __bool__(&self) -> PyResult<bool> {
         Err(pyo3::exceptions::PyTypeError::new_err(
@@ -444,11 +444,11 @@ impl PyNull {
         func: &Bound<'_, PyAny>,
         _args: &Args<'_>,
         _kwargs: Option<&Kwargs<'_>>,
-    ) -> Py<PyNull> {
-        get_null(func.py())
+    ) -> Py<Self> {
+        Self::get(func.py())
     }
     fn and_(&self, optb: &Bound<'_, PyAny>) -> Py<Self> {
-        get_null(optb.py())
+        Self::get(optb.py())
     }
 
     fn or_(&self, optb: Py<PyAny>) -> Py<PyAny> {
@@ -462,7 +462,7 @@ impl PyNull {
         _args: &Args<'_>,
         _kwargs: Option<&Kwargs<'_>>,
     ) -> Py<Self> {
-        get_null(func.py())
+        Self::get(func.py())
     }
 
     fn or_else(&self, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
@@ -474,9 +474,7 @@ impl PyNull {
     }
 
     fn ok_or_else(&self, err: &Bound<'_, PyAny>) -> PyResult<PyoErr> {
-        Ok(PyoErr {
-            error: err.call0()?.unbind(),
-        })
+        Ok(PyoErr::new(err.call0()?.unbind()))
     }
 
     #[pyo3(signature = (default, _f, *_args, **_kwargs))]
@@ -501,11 +499,11 @@ impl PyNull {
         _args: &Args<'_>,
         _kwargs: Option<&Kwargs<'_>>,
     ) -> Py<Self> {
-        get_null(predicate.py())
+        Self::get(predicate.py())
     }
 
     fn flatten(&self, py: Python<'_>) -> Py<Self> {
-        get_null(py)
+        Self::get(py)
     }
 
     #[pyo3(signature = (f, *_args, **_kwargs))]
@@ -515,28 +513,28 @@ impl PyNull {
         _args: &Args<'_>,
         _kwargs: Option<&Kwargs<'_>>,
     ) -> Py<Self> {
-        get_null(f.py())
+        Self::get(f.py())
     }
 
     fn unzip(&self, py: Python<'_>) -> PyResult<(Py<Self>, Py<Self>)> {
-        let none = get_null(py);
+        let none = Self::get(py);
         Ok((none.clone_ref(py), none))
     }
 
     fn map_star(&self, func: &Bound<'_, PyAny>) -> Py<Self> {
-        get_null(func.py())
+        Self::get(func.py())
     }
 
     fn and_then_star(&self, func: &Bound<'_, PyAny>) -> Py<Self> {
-        get_null(func.py())
+        Self::get(func.py())
     }
 
     fn zip(&self, other: &Bound<'_, PyAny>) -> Py<Self> {
-        get_null(other.py())
+        Self::get(other.py())
     }
 
     fn zip_with(&self, other: &Bound<'_, PyAny>, _f: &Bound<'_, PyAny>) -> Py<Self> {
-        get_null(other.py())
+        Self::get(other.py())
     }
 
     fn reduce(&self, other: Py<PyAny>, _func: &Bound<'_, PyAny>) -> Py<PyAny> {
@@ -545,7 +543,7 @@ impl PyNull {
 
     fn xor(&self, optb: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         if optb.is_null() {
-            get_null(optb.py()).into_py_any(optb.py())
+            Self::get(optb.py()).into_py_any(optb.py())
         } else {
             Ok(optb.clone().unbind())
         }
@@ -560,7 +558,7 @@ impl PyNull {
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        PyoOk::new(get_null(py).into_any()).into_py_any(py)
+        PyoOk::new(PyNull::get(py).into_any()).into_py_any(py)
     }
 
     fn eq(slf: &Bound<'_, Self>, other: &Bound<'_, PyAny>) -> bool {
