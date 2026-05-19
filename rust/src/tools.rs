@@ -21,6 +21,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(is_sorted_by, m)?)?;
     m.add_function(wrap_pyfunction!(for_each, m)?)?;
     m.add_function(wrap_pyfunction!(for_each_star, m)?)?;
+    m.add_function(wrap_pyfunction!(try_for_each, m)?)?;
     m.add_function(wrap_pyfunction!(eq, m)?)?;
     m.add_function(wrap_pyfunction!(ne, m)?)?;
     m.add_function(wrap_pyfunction!(le, m)?)?;
@@ -87,6 +88,18 @@ pub fn for_each_star(
             Ok(())
         }),
     }
+}
+#[pyfunction]
+pub fn try_for_each(data: Bound<'_, PyIterator>, f: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
+    let py = data.py();
+    for item in data {
+        let result = f.call1((&item?,))?;
+        match result.cast_exact::<PyoOk>() {
+            Ok(_) => (),
+            Err(_) => return result.cast_exact::<PyoErr>()?.into_py_any(py),
+        }
+    }
+    PyoOk::new(PyTuple::empty(py).into()).into_py_any(py)
 }
 #[pyfunction]
 pub fn try_find(data: &Bound<'_, PyAny>, predicate: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {

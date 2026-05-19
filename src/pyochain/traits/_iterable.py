@@ -1937,11 +1937,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         ```
         """
-        for item in iter(self):
-            res = f(item)
-            if res.is_err():
-                return res
-        return Ok(())
+        return tls.try_for_each(iter(self), f)
 
 
 class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):

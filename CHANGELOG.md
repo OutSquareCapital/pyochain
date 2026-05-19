@@ -6,6 +6,10 @@
 
 - **API change**: `Iter::try_for_each` now returns `Result[tuple[()], E]` instead of `Result[None, E]`. We want to avoid mixing `None` with our `Null` type, and since the return value is not meaningful (it only indicates success), we can use `tuple[()]` as a more explicit "unit" type to signify that the success case does not carry any value. This change is purely semantic and does not affect the functionality of the method. It's also more consistent with the Rust convention of using `()` for equivalent cases.
 
+### 🚀 Performance improvements
+
+- **Migrated**: `Iter::try_for_each` is now implemented in Rust. At all tested sizes (100, 500, 2500), it is consistently **4.6 to 4.7** time **faster** than before.
+
 ### 🔄 Refactors
 
 - Renamed `converters.rs` file in Rust to `mixins.rs` to better reflect its content and purpose.
