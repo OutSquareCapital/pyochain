@@ -1392,7 +1392,7 @@ class Iter[T](PyoIterator[T]):
 
         Example:
         ```python
-        >>> from pyochain import Iter
+        >>> from pyochain import Iter, Some, NONE
         >>> def _parse(s: str) -> Option[int]:
         ...     try:
         ...         return Some(int(s))
