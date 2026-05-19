@@ -1,5 +1,5 @@
 from collections.abc import Callable, Iterable, Iterator
-from typing import Any, Concatenate
+from typing import Any, Concatenate, overload
 
 from pyochain import Option, Result
 
@@ -72,3 +72,11 @@ def try_for_each[T, E](
     data: Iterator[T],
     f: Callable[[T], Result[Any, E]],  # pyright: ignore[reportExplicitAny]
 ) -> Result[tuple[()], E]: ...
+@no_doctest
+@overload
+def try_collect[T](data: Iterator[Option[T]]) -> Option[list[T]]: ...
+@overload
+def try_collect[T, E](data: Iterator[Result[T, E]]) -> Option[list[T]]: ...
+def try_collect[T](
+    data: Iterator[Option[T]] | Iterator[Result[T, Any]],  # pyright: ignore[reportExplicitAny]
+) -> Option[list[T]]: ...

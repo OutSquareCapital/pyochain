@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from pyochain import Null, Range, Seq, Some
+from pyochain import Null, Option, Range, Seq, Some, Vec
 
 if TYPE_CHECKING:
     from ._utils import BenchFixture
@@ -22,6 +22,17 @@ def test_filter_map(benchmark: BenchFixture, size: int) -> None:
 
 def _filter_map(data: Range) -> int:
     return data.iter().filter_map(lambda i: Some(i) if i % 2 == 0 else Null()).last()
+
+
+@pytest.mark.benchmark(group="try_collect")
+@pytest.mark.parametrize("size", SIZES)
+def test_try_collect(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_try_collect, data, size).is_none()
+
+
+def _try_collect(data: Range, size: int) -> Option[Vec[int]]:
+    return data.iter().map(lambda x: Some(x) if x < size - 1 else Null()).try_collect()
 
 
 def _identity[T](x: T) -> T:

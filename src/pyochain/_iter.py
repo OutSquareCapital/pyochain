@@ -1077,6 +1077,10 @@ class Iter[T](PyoIterator[T]):
         collection.extend(self._inner)
         return collection
 
+    @overload
+    def try_collect[U](self: Iter[Option[U]]) -> Option[Vec[U]]: ...
+    @overload
+    def try_collect[U, E](self: Iter[Result[U, E]]) -> Option[Vec[U]]: ...
     def try_collect[U](self: Iter[Option[U]] | Iter[Result[U, Any]]) -> Option[Vec[U]]:  # pyright: ignore[reportExplicitAny]
         """Fallibly transforms **self** into a `Vec`, short circuiting if a failure is encountered.
 
@@ -1123,15 +1127,7 @@ class Iter[T](PyoIterator[T]):
 
         ```
         """
-        collected: list[U] = []
-        collected_add = collected.append
-        for item in self._inner:
-            match item:
-                case Ok(val) | Some(val):
-                    collected_add(val)
-                case _:
-                    return NONE
-        return Some(Vec.from_ref(collected))
+        return tls.try_collect(self._inner).map(Vec.from_ref)
 
     def array_chunks(self, size: int) -> Iter[Self]:
         """Yield subiterators (chunks) that each yield a fixed number elements, determined by size.

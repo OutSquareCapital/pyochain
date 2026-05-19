@@ -22,6 +22,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(for_each, m)?)?;
     m.add_function(wrap_pyfunction!(for_each_star, m)?)?;
     m.add_function(wrap_pyfunction!(try_for_each, m)?)?;
+    m.add_function(wrap_pyfunction!(try_collect, m)?)?;
     m.add_function(wrap_pyfunction!(eq, m)?)?;
     m.add_function(wrap_pyfunction!(ne, m)?)?;
     m.add_function(wrap_pyfunction!(le, m)?)?;
@@ -181,6 +182,23 @@ pub fn try_reduce(data: &Bound<'_, PyAny>, func: &Bound<'_, PyFunction>) -> PyRe
     }
 
     PyoOk::new(PySome::new(accumulator).into_py_any(py)?).into_py_any(py)
+}
+#[pyfunction]
+pub fn try_collect(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
+    let py = data.py();
+    let collected = PyList::empty(py);
+
+    for item in data {
+        let val = item?;
+        match val.cast_exact::<PyoOk>() {
+            Ok(ok) => collected.append(&ok.get().value)?,
+            Err(_) => match val.cast_into_exact::<PySome>() {
+                Ok(some) => collected.append(&some.get().value)?,
+                Err(_) => return get_null(py).into_py_any(py),
+            },
+        }
+    }
+    PySome::new(collected.into()).into_py_any(py)
 }
 #[pyfunction]
 pub fn is_sorted(

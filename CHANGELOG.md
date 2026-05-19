@@ -9,10 +9,12 @@
 ### 🚀 Performance improvements
 
 - **Migrated**: `Iter::try_for_each` is now implemented in Rust. At all tested sizes (100, 500, 2500), it is consistently **4.6 to 4.7** time **faster** than before.
+- **Migrated**: `Iter::try_collect` is now implemented in Rust. At all tested sizes (100, 500, 2500), it is consistently **2.5 to 3** time **faster** than before.
 
 ### ✨ Enhancements
 
 - **typing**: `Some(NONE)` is directly inferred as `Option[T]`, lowering the number of potential errors.
+- **typing**: `Iter::try_collect` has received new overloads and should be inferred more accurately now.
 
 ### 🔄 Refactors
 
