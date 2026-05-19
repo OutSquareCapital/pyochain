@@ -10,6 +10,10 @@
 
 - **Migrated**: `Iter::try_for_each` is now implemented in Rust. At all tested sizes (100, 500, 2500), it is consistently **4.6 to 4.7** time **faster** than before.
 
+### ✨ Enhancements
+
+- **typing**: `Some(NONE)` is directly inferred as `Option[T]`, lowering the number of potential errors.
+
 ### 🔄 Refactors
 
 - Renamed `converters.rs` file in Rust to `mixins.rs` to better reflect its content and purpose.

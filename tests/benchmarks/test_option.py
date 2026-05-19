@@ -85,7 +85,7 @@ def test_flatten_nested_some(benchmark: BenchFixture) -> None:
 
 @pytest.mark.benchmark(group="option_flatten")
 def test_flatten_nested_none(benchmark: BenchFixture) -> None:
-    assert benchmark(Some(NONE).flatten) == NONE  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
+    assert benchmark(Some(NONE).flatten) == NONE
 
 
 @pytest.mark.benchmark(group="option_transpose")
