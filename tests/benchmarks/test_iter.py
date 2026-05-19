@@ -123,3 +123,14 @@ def _for_each_star_kwargs(data: Seq[tuple[int, int, int]]) -> None:
         pass
 
     data.iter().for_each_star(fn, 1, 2, d=4, e=5)
+
+
+@pytest.mark.benchmark(group="intersperse")
+@pytest.mark.parametrize("size", SIZES)
+def test_intersperse(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_intersperse, data).last() is not None
+
+
+def _intersperse(data: Range) -> Seq[int]:
+    return data.iter().intersperse(1).collect()

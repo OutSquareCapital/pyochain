@@ -560,6 +560,12 @@ pub fn retain(data: Bound<'_, PySequence>, predicate: &Bound<'_, PyAny>) -> PyRe
     }
     Ok(())
 }
+///TODO: It's actually slower than cytoolz implementation when `n` is small, we should optimize for that case.\
+/// Observed speeds:\
+/// **0.81x** -> `n=2`\
+/// **0.93x** -> `n=8`\
+/// **1.17x** -> `n=32`\
+/// **1.40x** -> `n=128`\
 #[pyclass]
 pub struct SlidingWindow {
     iter: Py<PyIterator>,
