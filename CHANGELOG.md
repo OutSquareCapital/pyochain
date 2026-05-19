@@ -12,6 +12,7 @@ note: highlight should be a table with the perf improvements
 - **Removed**: `Iter::top_n`. Call the corresponding `cytoolz::itertoolz::topk` function if you need this behavior.
 - **Removed**: `PyoIterator::random_sample`. Call `cytoolz::itertoolz::random_sample` instead if you need this behavior.
 - **Removed**: `PyoIterator::interleave`. If you need this behavior, unpack `self` and the other iterables in a single iterable, then call `cytoolz::itertoolz::interleave` instead.
+- **API change**: `PyoIterator::unique` is split into `Iter::unique` and `Iter::unique_by`. The former only check for uniqueness of the elements, while the latter allows to specify a key function to check for uniqueness based on the return value of the key function.  If you were using `Iter::unique(key=...)`, you should now use `Iter::unique_by(key=...)` instead.
 
 ### 🚀 Performance improvements
 

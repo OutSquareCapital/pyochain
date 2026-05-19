@@ -1439,11 +1439,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         """
         return self.__class__(itertools.compress(iter(self), selectors))
 
-    def unique(self, key: Callable[[T], Any] | None = None) -> Self:  # pyright: ignore[reportExplicitAny]
+    def unique(self) -> Self:
         """Return only unique elements of the iterable.
-
-        Args:
-            key (Callable[[T], Any] | None): Function to transform items before comparison.
 
         Returns:
             Self: An `Iterator` of the unique items.
@@ -1457,9 +1454,22 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Seq(1, 2, 3)
 
         ```
-        Uniqueness can be defined by key keyword
+        """
+        return self.__class__(cz.itertoolz.unique(iter(self)))
+
+    def unique_by(self, key: Callable[[T], Any]) -> Self:  # pyright: ignore[reportExplicitAny]
+        """Return only unique elements of the iterable.
+
+        Args:
+            key (Callable[[T], Any]): Function to transform items before comparison.
+
+        Returns:
+            Self: An `Iterator` of the unique items.
+
+        Example:
         ```python
-        >>> Iter(["cat", "mouse", "dog", "hen"]).unique(key=len).collect()
+        >>> from pyochain import Iter
+        >>> Iter(["cat", "mouse", "dog", "hen"]).unique_by(key=len).collect()
         Seq('cat', 'mouse')
 
         ```
