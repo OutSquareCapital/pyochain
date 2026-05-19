@@ -4,7 +4,7 @@
 
 Inspired by Rust's `Iterator`, `Result`, `Option`, and DataFrame libraries like `Polars`, `pyochain` provide a set of classes with a fluent API, to work with iterations, collections, handle optional values, or manage errors.
 
-For a quick overview of the core types and their relationships, see the [core types overview](https://outsquarecapital.github.io/pyochain/core-types-overview/) page.
+For a quick overview of the core types and their relationships, see the [core types overview](https://outsquarecapital.github.io/pyochain/overview/) page.
 
 ## Key Features
 

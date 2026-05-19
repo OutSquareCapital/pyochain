@@ -20,7 +20,7 @@
 ### 🛠️ Other improvements
 
 - Various internal improvements to scripts for code readability
-- Added checks in `scripts/check_doscstrings` to flag invalid existing links in zensical navigation.
+- Added checks in `scripts/check_doscstrings` to flag invalid existing links in zensical navigation, README and CONTRIBUTING.md, to prevent future broken links from being merged.
 
 ### 🔗 Dependencies
 
