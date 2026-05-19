@@ -495,6 +495,10 @@ pub fn last(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
             if ffi::PyErr_Occurred().is_null() {
                 return Err(pyo3::exceptions::PyStopIteration::new_err(""));
             }
+            if ffi::PyErr_ExceptionMatches(ffi::PyExc_StopIteration) != 0 {
+                ffi::PyErr_Clear();
+                return Err(pyo3::exceptions::PyStopIteration::new_err(""));
+            }
             return Err(PyErr::fetch(py));
         }
 
@@ -502,6 +506,10 @@ pub fn last(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
             let item = next(iterator);
             if item.is_null() {
                 if ffi::PyErr_Occurred().is_null() {
+                    break;
+                }
+                if ffi::PyErr_ExceptionMatches(ffi::PyExc_StopIteration) != 0 {
+                    ffi::PyErr_Clear();
                     break;
                 }
                 ffi::Py_DECREF(last);
@@ -533,6 +541,10 @@ pub fn length(data: Bound<'_, PyIterator>) -> PyResult<usize> {
             let item = next(iterator);
             if item.is_null() {
                 if ffi::PyErr_Occurred().is_null() {
+                    break;
+                }
+                if ffi::PyErr_ExceptionMatches(ffi::PyExc_StopIteration) != 0 {
+                    ffi::PyErr_Clear();
                     break;
                 }
                 return Err(PyErr::fetch(py));

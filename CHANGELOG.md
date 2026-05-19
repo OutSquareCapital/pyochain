@@ -28,6 +28,10 @@ note: highlight should be a table with the perf improvements
 - **typing**: `Iter::try_collect` has received new overloads and should be inferred more accurately now.
 - **Feat**: Added `Vec::concat_mut` for in-place concatenation of another `Vec` or `list`, and `Seq::concat` for concatenation of another `Seq` or `tuple`.
 
+### 🐞 Bug fixes
+
+- `PyoIterator::{last, length}` were not properly handling custom Iterators and StopIteration errors. Fixed.
+
 ### 🔄 Refactors
 
 - Renamed `converters.rs` file in Rust to `mixins.rs` to better reflect its content and purpose.
