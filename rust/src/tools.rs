@@ -1,5 +1,5 @@
 use crate::args::{Args, Concatenate, Kwargs};
-use crate::option::{PySome, get_null};
+use crate::option::{PyNull, PySome};
 use crate::result::{PyoErr, PyoOk};
 use pyo3::types::{
     PyAny, PyBool, PyFunction, PyIterator, PyList, PyModule, PySequence, PySet, PyTuple,
@@ -38,6 +38,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(length, m)?)?;
     m.add_function(wrap_pyfunction!(retain, m)?)?;
     m.add_class::<SlidingWindow>()?;
+    m.add_class::<Juxt>()?;
     Ok(())
 }
 #[pyfunction]
@@ -134,7 +135,7 @@ pub fn try_find(data: &Bound<'_, PyAny>, predicate: &Bound<'_, PyFunction>) -> P
             }
         }
     }
-    let none = get_null(py);
+    let none = PyNull::get(py);
     Ok(PyoOk::new(none.into_py_any(py)?).into_py_any(py)?)
 }
 #[pyfunction]
@@ -167,7 +168,7 @@ pub fn try_reduce(data: &Bound<'_, PyAny>, func: &Bound<'_, PyFunction>) -> PyRe
     let mut iterator = data.try_iter()?;
     let first = iterator.next();
     if first.is_none() {
-        return Ok(PyoOk::new(get_null(py).into_py_any(py)?).into_py_any(py)?);
+        return Ok(PyoOk::new(PyNull::get(py).into_py_any(py)?).into_py_any(py)?);
     }
 
     let mut accumulator = first.unwrap()?.to_owned().unbind();
@@ -198,7 +199,7 @@ pub fn try_collect(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
             Ok(ok) => collected.append(&ok.get().value)?,
             Err(_) => match val.cast_into_exact::<PySome>() {
                 Ok(some) => collected.append(&some.get().value)?,
-                Err(_) => return get_null(py).into_py_any(py),
+                Err(_) => return PyNull::get(py).into_py_any(py),
             },
         }
     }
@@ -571,6 +572,36 @@ pub fn retain(data: Bound<'_, PySequence>, predicate: &Bound<'_, PyAny>) -> PyRe
         data.del_item(write_idx)?;
     }
     Ok(())
+}
+
+#[pyclass]
+pub struct Juxt {
+    funcs: Vec<Py<PyAny>>,
+}
+
+#[pymethods]
+impl Juxt {
+    #[new]
+    #[pyo3(signature = (*funcs))]
+    fn new(funcs: &Bound<'_, PyTuple>) -> PyResult<Self> {
+        let collected = funcs
+            .try_iter()?
+            .map(|item| item.map(Bound::unbind))
+            .collect::<PyResult<Vec<_>>>()?;
+
+        Ok(Self { funcs: collected })
+    }
+
+    #[pyo3(signature = (*args))]
+    fn __call__(&self, args: &Bound<'_, PyTuple>) -> PyResult<Py<PyTuple>> {
+        let py = args.py();
+        let results = self
+            .funcs
+            .iter()
+            .map(|func| func.call1(py, args))
+            .collect::<PyResult<Vec<_>>>()?;
+        Ok(PyTuple::new(py, results)?.unbind())
+    }
 }
 ///TODO: It's actually slower than cytoolz implementation when `n` is small, we should optimize for that case.\
 /// Observed speeds:\

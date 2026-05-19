@@ -17,8 +17,6 @@ from collections.abc import (
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal, Never, Self, TypeIs, overload, override
 
-import cytoolz as cz
-
 from . import _tools as tls  # pyright: ignore[reportMissingModuleSource]
 from ._types import SupportsRichComparison
 from .rs import Option, Result, option
@@ -2773,7 +2771,7 @@ class Iter[T](PyoIterator[T]):
 
         ```
         """
-        return Iter(map(cz.functoolz.juxt(*funcs), self._inner))
+        return Iter(map(tls.Juxt(*funcs), self._inner))
 
     def with_position(self) -> Iter[tuple[Position, T]]:
         """Return an iterable over (`Position`, `T`) tuples.

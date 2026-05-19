@@ -21,6 +21,7 @@ note: highlight should be a table with the perf improvements
 - `PyoMutableSequence::extend_move` doesn't use `functools::partial` internally anymore. Expect some very light performance improvements.
 - **Migrated**: `PyoMutableSequence::retain` is now implemented in Rust. **1.35 to 1.4x** faster than before.
 - **Migrated**: `Iter::{map_windows, map_windows_star}` internal sliding window `Iterator` has been moved to Rust and replace the previous `Cython` implementation from cytoolz. It's now faster for larger window sizes (e.g .**1.17x.** for n=32, .**1.40.** for n=128), but slower for smaller window sizes (e.g 0.**81x** for n=2, .**0.93x.** for n=8).
+- **Migrated**: `Iter::map_juxt` internal function wrapper has been moved from `Cython` to Rust, and is now between **1.2x** to **1.5x** faster. Except for 1 argument, which is slightly slower, around **0.95x** (this is not very useful in practice anyway, since you can just use `Iter::map` instead if you only have 1 function).
 
 ### ✨ Enhancements
 

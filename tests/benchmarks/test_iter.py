@@ -137,7 +137,7 @@ def _intersperse(data: Range) -> Seq[int]:
 
 
 @pytest.mark.benchmark(group="map_juxt")
-@pytest.mark.parametrize("size", [1, 2, 4, 8, 16])
+@pytest.mark.parametrize("size", [1, 2, 4, 8, 16, 32, 64])
 def test_map_juxt(benchmark: BenchFixture, size: int) -> None:
 
     data = Range(0, 4096)
