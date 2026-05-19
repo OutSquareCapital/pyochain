@@ -2782,11 +2782,13 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
         for _ in range(len(self) - length):
             _ = pop()
 
+    # NOTE: Rust does not support MutableSequence ATM. We either need to find a new implementation, or wait until MutableSequence is supported to implement this method.
     def extend_move(self, other: Self | list[T]) -> None:
         """Moves all the elements of *other* into *self*, leaving *other* empty.
 
-        Note:
-            This is equivalent to `extend(other)` followed by `other.clear()`, but avoids intermediate allocations by moving elements one at a time.
+        This is equivalent to `extend(other)` followed by `other.clear()`, but avoids intermediate allocations by moving elements one at a time.
+
+        Each element is extracted from **other**, appended to **self**, and removed from **other** in a single step.
 
         Args:
             other (Self | list[T]): The other `MutableSequence` to move elements from.
@@ -2803,6 +2805,24 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
         Vec()
 
         ```
+        If we compare to extend
+
+        ```python
+        >>> v1 = Vec((1, 2, 3))
+        >>> v2 = Vec((4, 5, 6))
+        >>> v1.extend(v2)
+        >>> v1
+        Vec(1, 2, 3, 4, 5, 6)
+        >>> # At this point v2 is still intact,
+        >>> # meaning that we have a full intermediate copy of v2 in memory,
+        >>> # which is not the case with extend_move
+        >>> v2
+        Vec(4, 5, 6)
+        >>> v2.clear()
+        >>> v2
+        Vec()
+
+        ```
         """
-        pop = functools.partial(other.pop, 0)
-        self.extend(pop() for _ in range(len(other)))
+        pop = other.pop
+        self.extend(pop(0) for _ in range(len(other)))

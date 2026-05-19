@@ -10,6 +10,7 @@
 
 - **Migrated**: `Iter::try_for_each` is now implemented in Rust. At all tested sizes (100, 500, 2500), it is consistently **4.6 to 4.7** time **faster** than before.
 - **Migrated**: `Iter::try_collect` is now implemented in Rust. At all tested sizes (100, 500, 2500), it is consistently **2.5 to 3** time **faster** than before.
+- `PyoMutableSequence::extend_move` doesn't use `functools::partial` internally anymore. Expect some very light performance improvements.
 
 ### ✨ Enhancements
 
@@ -26,7 +27,7 @@
 
 - Various reorganisation changes to reduce redundancy
 - Updated CONTRIBUTING.md with latest architecture status
-- Improved docstrings for `PyoIterator` comparison methods with better examples and explanations
+- Improved docstrings for `PyoIterator` and `PyoMutableSequence` with better examples and explanations
 
 ### 🛠️ Other improvements
 
