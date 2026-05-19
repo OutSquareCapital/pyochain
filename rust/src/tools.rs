@@ -1,7 +1,9 @@
 use crate::args::{Args, Concatenate, Kwargs};
 use crate::option::{PySome, get_null};
 use crate::result::{PyoErr, PyoOk};
-use pyo3::types::{PyAny, PyBool, PyFunction, PyIterator, PyList, PyModule, PySet, PyTuple};
+use pyo3::types::{
+    PyAny, PyBool, PyFunction, PyIterator, PyList, PyModule, PySequence, PySet, PyTuple,
+};
 use pyo3::{IntoPyObjectExt, prelude::*};
 use pyo3::{ffi, intern};
 /// Create a unique sentinel object
@@ -34,6 +36,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(partition, m)?)?;
     m.add_function(wrap_pyfunction!(last, m)?)?;
     m.add_function(wrap_pyfunction!(length, m)?)?;
+    m.add_function(wrap_pyfunction!(retain, m)?)?;
     Ok(())
 }
 #[pyfunction]
@@ -539,4 +542,20 @@ pub fn length(data: Bound<'_, PyIterator>) -> PyResult<usize> {
     }
 
     Ok(count)
+}
+#[pyfunction]
+pub fn retain(data: Bound<'_, PySequence>, predicate: &Bound<'_, PyAny>) -> PyResult<()> {
+    let mut write_idx = 0;
+    let length = data.len()?;
+    for read_idx in 0..length {
+        let curr = data.get_item(read_idx)?;
+        if predicate.call1((&curr,))?.is_truthy()? {
+            data.set_item(write_idx, curr)?;
+            write_idx += 1;
+        }
+    }
+    while data.len()? > write_idx {
+        data.del_item(write_idx)?;
+    }
+    Ok(())
 }

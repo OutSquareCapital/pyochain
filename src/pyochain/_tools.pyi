@@ -1,4 +1,4 @@
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator, MutableSequence
 from typing import Any, Concatenate, overload
 
 from pyochain import Option, Result
@@ -80,3 +80,5 @@ def try_collect[T, E](data: Iterator[Result[T, E]]) -> Option[list[T]]: ...
 def try_collect[T](
     data: Iterator[Option[T]] | Iterator[Result[T, Any]],  # pyright: ignore[reportExplicitAny]
 ) -> Option[list[T]]: ...
+@no_doctest
+def retain[T](data: MutableSequence[T], predicate: Callable[[T], bool]) -> None: ...

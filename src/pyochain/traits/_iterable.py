@@ -2726,16 +2726,9 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
 
         ```
         """
-        write_idx = 0
-        length = len(self)
-        for read_idx in range(length):
-            if predicate(self[read_idx]):
-                self[write_idx] = self[read_idx]
-                write_idx += 1
-        pop = self.pop
-        while len(self) > write_idx:
-            _ = pop(write_idx)
+        return tls.retain(self, predicate)
 
+    # NOTE: need to check what does `pop` do really here regarding index
     def truncate(self, length: int) -> None:
         """Shortens the `MutableSequence`, keeping the first *length* elements and dropping the rest.
 

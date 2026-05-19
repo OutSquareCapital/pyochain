@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+note: highlight should be a table with the perf improvements
+
 ### 💥 Breaking changes
 
 - **API change**: `Iter::try_for_each` now returns `Result[tuple[()], E]` instead of `Result[None, E]`. We want to avoid mixing `None` with our `Null` type, and since the return value is not meaningful (it only indicates success), we can use `tuple[()]` as a more explicit "unit" type to signify that the success case does not carry any value. This change is purely semantic and does not affect the functionality of the method. It's also more consistent with the Rust convention of using `()` for equivalent cases.
@@ -11,6 +13,7 @@
 - **Migrated**: `Iter::try_for_each` is now implemented in Rust. At all tested sizes (100, 500, 2500), it is consistently **4.6 to 4.7** time **faster** than before.
 - **Migrated**: `Iter::try_collect` is now implemented in Rust. At all tested sizes (100, 500, 2500), it is consistently **2.5 to 3** time **faster** than before.
 - `PyoMutableSequence::extend_move` doesn't use `functools::partial` internally anymore. Expect some very light performance improvements.
+- **Migrated**: `PyoMutableSequence::retain` is now implemented in Rust. At all tested sizes (50, 500, 5000), it is consistently **35 to 40%** faster than before.
 
 ### ✨ Enhancements
 
