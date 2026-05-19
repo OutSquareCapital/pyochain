@@ -2636,7 +2636,84 @@ class Iter[T](PyoIterator[T]):
         func4: Callable[[T], R4],
         /,
     ) -> Iter[tuple[R1, R2, R3, R4]]: ...
-    def map_juxt(self, *funcs: Callable[[T], object]) -> Iter[tuple[object, ...]]:
+    @overload
+    def map_juxt[R1, R2, R3, R4, R5](
+        self,
+        func1: Callable[[T], R1],
+        func2: Callable[[T], R2],
+        func3: Callable[[T], R3],
+        func4: Callable[[T], R4],
+        func5: Callable[[T], R5],
+        /,
+    ) -> Iter[tuple[R1, R2, R3, R4, R5]]: ...
+    @overload
+    def map_juxt[R1, R2, R3, R4, R5, R6](
+        self,
+        func1: Callable[[T], R1],
+        func2: Callable[[T], R2],
+        func3: Callable[[T], R3],
+        func4: Callable[[T], R4],
+        func5: Callable[[T], R5],
+        func6: Callable[[T], R6],
+        /,
+    ) -> Iter[tuple[R1, R2, R3, R4, R5, R6]]: ...
+    @overload
+    def map_juxt[R1, R2, R3, R4, R5, R6, R7](
+        self,
+        func1: Callable[[T], R1],
+        func2: Callable[[T], R2],
+        func3: Callable[[T], R3],
+        func4: Callable[[T], R4],
+        func5: Callable[[T], R5],
+        func6: Callable[[T], R6],
+        func7: Callable[[T], R7],
+        /,
+    ) -> Iter[tuple[R1, R2, R3, R4, R5, R6, R7]]: ...
+    @overload
+    def map_juxt[R1, R2, R3, R4, R5, R6, R7, R8](
+        self,
+        func1: Callable[[T], R1],
+        func2: Callable[[T], R2],
+        func3: Callable[[T], R3],
+        func4: Callable[[T], R4],
+        func5: Callable[[T], R5],
+        func6: Callable[[T], R6],
+        func7: Callable[[T], R7],
+        func8: Callable[[T], R8],
+        /,
+    ) -> Iter[tuple[R1, R2, R3, R4, R5, R6, R7, R8]]: ...
+    @overload
+    def map_juxt[R1, R2, R3, R4, R5, R6, R7, R8, R9](
+        self,
+        func1: Callable[[T], R1],
+        func2: Callable[[T], R2],
+        func3: Callable[[T], R3],
+        func4: Callable[[T], R4],
+        func5: Callable[[T], R5],
+        func6: Callable[[T], R6],
+        func7: Callable[[T], R7],
+        func8: Callable[[T], R8],
+        func9: Callable[[T], R9],
+        /,
+    ) -> Iter[tuple[R1, R2, R3, R4, R5, R6, R7, R8, R9]]: ...
+    @overload
+    def map_juxt[R1, R2, R3, R4, R5, R6, R7, R8, R9, R10](
+        self,
+        func1: Callable[[T], R1],
+        func2: Callable[[T], R2],
+        func3: Callable[[T], R3],
+        func4: Callable[[T], R4],
+        func5: Callable[[T], R5],
+        func6: Callable[[T], R6],
+        func7: Callable[[T], R7],
+        func8: Callable[[T], R8],
+        func9: Callable[[T], R9],
+        func10: Callable[[T], R10],
+        /,
+    ) -> Iter[tuple[R1, R2, R3, R4, R5, R6, R7, R8, R9, R10]]: ...
+    @overload
+    def map_juxt[R](self, *funcs: Callable[[T], R]) -> Iter[tuple[R, ...]]: ...
+    def map_juxt(self, *funcs: Callable[[T], Any]) -> Iter[tuple[Any, ...]]:  # pyright: ignore[reportExplicitAny]
         """Apply several functions to each item.
 
         Returns a new Iter where each item is a tuple of the results of applying each function to the original item.
