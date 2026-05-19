@@ -379,6 +379,35 @@ class Seq[T](PyoSequence[T]):
     def __getitem__(self, index: int | slice[Any, Any, Any]) -> T | Sequence[T]:  # pyright: ignore[reportExplicitAny]
         return self._inner.__getitem__(index)
 
+    def concat(self, other: tuple[T, ...] | Self) -> Self:
+        """Concatenate another `Seq` or `tuple` to **self** and return a new `Seq`.
+
+        This is equivalent to `tuple_1 + tuple_2` for standard tuples.
+
+        Args:
+            other (tuple[T, ...] | Self): The other `Seq` to concatenate.
+
+        Returns:
+            Self: The new `Seq` after concatenation.
+
+        Example:
+        ```python
+        >>> from pyochain import Seq
+        >>> s1 = Seq((1, 2, 3))
+        >>> s2 = (4, 5, 6) # Can also concatenate a standard tuple
+        >>> s3 = s1.concat(s2)
+        >>> s3
+        Seq(1, 2, 3, 4, 5, 6)
+
+        ```
+        """
+        match other:
+            case Seq():
+                data = self._inner + other._inner
+            case tuple():
+                data = self._inner + other
+        return self.__class__(data)
+
 
 class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """A `MutableSequence` wrapper with functional API.
@@ -397,7 +426,7 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMult
     _inner: list[T]
 
     def __init__(self, data: Iterable[T]) -> None:
-        self._inner = list(data)  # pyright: ignore[reportIncompatibleVariableOverride]
+        self._inner = list(data)
 
     @property
     @override
@@ -638,7 +667,8 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMult
         """
         return Iter(DrainIterator(self, start or 0, end or len(self)))
 
-    def concat(self, other: list[T] | Self) -> Vec[T]:
+    @override
+    def concat(self, other: list[T] | Self) -> Vec[T]:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Concatenate another `Vec` or `list` to **self** and return a new `Vec`.
 
         Note:
@@ -676,6 +706,42 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMult
             case list():
                 data = self._inner + other
         return Vec.from_ref(data)
+
+    def concat_mut(self, other: list[T] | Self) -> Self:
+        """Concatenate another `Vec` or `list` to **self** in place.
+
+        This is equivalent to `list_1 += list_2` for standard lists.
+
+        Warning:
+            This method modifies the `Vec` in place and returns the same instance for chaining.
+
+        Args:
+            other (list[T] | Self): The other `Vec` to concatenate.
+
+        Returns:
+            Vec[T]: The modified `Vec` after concatenation (self).
+
+        See Also:
+            `Vec.concat()` which returns a new `Vec` without modifying **self**.
+
+        Example:
+        ```python
+        >>> from pyochain import Vec
+        >>> v1 = Vec.from_ref([1, 2, 3])
+        >>> v2 = [4, 5, 6] # Can also concatenate a standard list
+        >>> v1.concat_mut(v2)
+        Vec(1, 2, 3, 4, 5, 6)
+        >>> v1
+        Vec(1, 2, 3, 4, 5, 6)
+
+        ```
+        """
+        match other:
+            case Vec():
+                self._inner += other._inner
+            case list():
+                self._inner += other  # pyright: ignore[reportIncompatibleVariableOverride]
+        return self
 
 
 class Iter[T](PyoIterator[T]):

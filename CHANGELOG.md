@@ -15,6 +15,7 @@
 
 - **typing**: `Some(NONE)` is directly inferred as `Option[T]`, lowering the number of potential errors.
 - **typing**: `Iter::try_collect` has received new overloads and should be inferred more accurately now.
+- **Feat**: Added `Vec::concat_mut` for in-place concatenation of another `Vec` or `list`, and `Seq::concat` for concatenation of another `Seq` or `tuple`.
 
 ### 🔄 Refactors
 
