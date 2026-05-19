@@ -1620,6 +1620,7 @@ class Iter[T](PyoIterator[T]):
         """Transform elements by sharing state between iterations.
 
         `scan` takes two arguments:
+
             - an **initial** value which seeds the internal state
             - a **func** with two arguments
 
@@ -2458,6 +2459,7 @@ class Iter[T](PyoIterator[T]):
         """Retrieve the next **n** elements from the `Iterator`, and return a `Seq` of the retrieved elements along with the original `Iterator`, unconsumed.
 
         The returned `Peekable` object contains two attributes:
+
         - *peek*: A `Seq` of the next **n** elements.
         - *values*: An `Iter` that includes the peeked elements followed by the remaining elements of the original `Iterator`.
 
@@ -2718,9 +2720,9 @@ class Iter[T](PyoIterator[T]):
     @overload
     def map_juxt[R](self, *funcs: Callable[[T], R]) -> Iter[tuple[R, ...]]: ...
     def map_juxt(self, *funcs: Callable[[T], Any]) -> Iter[tuple[Any, ...]]:  # pyright: ignore[reportExplicitAny]
-        """Apply several functions to each item.
+        """Apply several functions to each item of the `Iterator`.
 
-        Returns a new Iter where each item is a tuple of the results of applying each function to the original item.
+        Returns a new `Iter` where each item is a tuple of the results of applying each function to the original item.
 
         This can be very handy to compute multiple transformations or properties of the same item in a single pass, without needing to iterate multiple times.
 
@@ -2752,6 +2754,22 @@ class Iter[T](PyoIterator[T]):
         >>>
         >>> Iter((1, 2, 3)).map_juxt(curried_add(10), curried_add(20)).collect()
         Seq((11, 21), (12, 22), (13, 23))
+
+        ```
+        You can then combine this with various other methods to perform complex transformations in a clean and efficient way, without needing to iterate multiple times or create intermediate collections.
+
+        Example with `filter_star`:
+        ```python
+        >>> from pyochain import Range
+        >>> res = (
+        ... Range(0, 5)
+        ... .iter()
+        ... .map_juxt(lambda x: x * 2, lambda x: x ** 2)
+        ... .filter_star(lambda double, square: double + square <= 5)
+        ... .collect()
+        ... )
+        >>> res
+        Seq((0, 0), (2, 1))
 
         ```
         """
