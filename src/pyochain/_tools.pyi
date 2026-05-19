@@ -1,5 +1,5 @@
 from collections.abc import Callable, Iterable, Iterator, MutableSequence
-from typing import Any, Concatenate, overload
+from typing import Any, Concatenate, Self, overload, override
 
 from pyochain import Option, Result
 
@@ -82,3 +82,12 @@ def try_collect[T](
 ) -> Option[list[T]]: ...
 @no_doctest
 def retain[T](data: MutableSequence[T], predicate: Callable[[T], bool]) -> None: ...
+
+class SlidingWindow[T](Iterator[tuple[T, ...]]):
+    def __init__(self, data: Iterator[T], n: int) -> None: ...
+    @no_doctest
+    @override
+    def __iter__(self) -> Self: ...
+    @no_doctest
+    @override
+    def __next__(self) -> tuple[T, ...]: ...

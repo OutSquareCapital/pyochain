@@ -13,7 +13,8 @@ note: highlight should be a table with the perf improvements
 - **Migrated**: `Iter::try_for_each` is now implemented in Rust. At all tested sizes (100, 500, 2500), it is consistently **4.6 to 4.7** time **faster** than before.
 - **Migrated**: `Iter::try_collect` is now implemented in Rust. At all tested sizes (100, 500, 2500), it is consistently **2.5 to 3** time **faster** than before.
 - `PyoMutableSequence::extend_move` doesn't use `functools::partial` internally anymore. Expect some very light performance improvements.
-- **Migrated**: `PyoMutableSequence::retain` is now implemented in Rust. At all tested sizes (50, 500, 5000), it is consistently **35 to 40%** faster than before.
+- **Migrated**: `PyoMutableSequence::retain` is now implemented in Rust. At all tested sizes (50, 500, 5000), it is consistently **1.35 to 1.4x** faster than before.
+- **Migrated**: `Iter::{map_windows, map_windows_star}` internal sliding window `Iterator` has been moved to Rust and replace the previous `Cython` implementation from cytoolz. It's now **1.08 to 1.10x** faster as well.
 
 ### ✨ Enhancements
 

@@ -37,6 +37,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(last, m)?)?;
     m.add_function(wrap_pyfunction!(length, m)?)?;
     m.add_function(wrap_pyfunction!(retain, m)?)?;
+    m.add_class::<SlidingWindow>()?;
     Ok(())
 }
 #[pyfunction]
@@ -558,4 +559,45 @@ pub fn retain(data: Bound<'_, PySequence>, predicate: &Bound<'_, PyAny>) -> PyRe
         data.del_item(write_idx)?;
     }
     Ok(())
+}
+#[pyclass]
+pub struct SlidingWindow {
+    iter: Py<PyIterator>,
+    prev: Vec<Py<PyAny>>,
+}
+
+#[pymethods]
+impl SlidingWindow {
+    #[new]
+    fn new(mut data: Bound<'_, PyIterator>, n: usize) -> PyResult<Self> {
+        let py = data.py();
+        let mut prev: Vec<Py<PyAny>> = (0..n).map(|_| py.None().into_any()).collect();
+        for i in 1..n {
+            match data.next() {
+                None => break,
+                Some(item) => prev[i] = item?.unbind(),
+            }
+        }
+        Ok(Self {
+            iter: data.unbind(),
+            prev,
+        })
+    }
+
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyTuple>>> {
+        let py = slf.py();
+        let item = match slf.iter.clone_ref(py).into_bound(py).next() {
+            None => return Ok(None),
+            Some(result) => result?.unbind(),
+        };
+        slf.prev.rotate_left(1);
+        let last = slf.prev.len() - 1;
+        slf.prev[last] = item;
+        let tuple = PyTuple::new(py, slf.prev.iter())?;
+        Ok(Some(tuple.into()))
+    }
 }

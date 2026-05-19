@@ -15,7 +15,7 @@ class BenchFixture(Protocol):
     ) -> T: ...
 
 
-SIZES = [50, 500, 5000]
+SIZES = [256, 1024, 4096]
 
 
 class VariantGroups(StrEnum):

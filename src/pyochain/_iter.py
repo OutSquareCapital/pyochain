@@ -2386,7 +2386,7 @@ class Iter[T](PyoIterator[T]):
 
         ```
         """
-        return Iter(map(func, cz.itertoolz.sliding_window(length, self._inner)))
+        return Iter(map(func, tls.SlidingWindow(self._inner, length)))
 
     @overload
     def map_windows_star[R](
@@ -2455,9 +2455,7 @@ class Iter[T](PyoIterator[T]):
 
         ```
         """
-        return Iter(
-            itertools.starmap(func, cz.itertoolz.sliding_window(length, self._inner))
-        )
+        return Iter(itertools.starmap(func, tls.SlidingWindow(self._inner, length)))
 
     def partition(self, predicate: Callable[[T], bool]) -> tuple[Vec[T], Vec[T]]:
         """Consumes the `Iterator`, creating two `Vec` from it.
