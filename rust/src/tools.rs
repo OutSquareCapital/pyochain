@@ -75,20 +75,20 @@ pub fn for_each_star(
     kwargs: Option<&Kwargs<'_>>,
 ) -> PyResult<()> {
     match (args.is_empty(), kwargs) {
-        (true, Some(_)) => data.try_iter()?.try_for_each(|item| {
-            func.call(item?.cast_exact::<PyTuple>()?, kwargs)?;
-            Ok(())
-        }),
         (true, None) => data.try_iter()?.try_for_each(|item| {
             func.call1(item?.cast_exact::<PyTuple>()?)?;
             Ok(())
         }),
-        (false, Some(_)) => data.try_iter()?.try_for_each(|item| {
-            func.concat_star(item?.cast_exact::<PyTuple>()?, &args, kwargs)?;
+        (true, Some(_)) => data.try_iter()?.try_for_each(|item| {
+            func.call(item?.cast_exact::<PyTuple>()?, kwargs)?;
             Ok(())
         }),
         (false, None) => data.try_iter()?.try_for_each(|item| {
             func.concat_star1(item?.cast_exact::<PyTuple>()?, &args)?;
+            Ok(())
+        }),
+        (false, Some(_)) => data.try_iter()?.try_for_each(|item| {
+            func.concat_star(item?.cast_exact::<PyTuple>()?, &args, kwargs)?;
             Ok(())
         }),
     }
