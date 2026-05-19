@@ -134,3 +134,23 @@ def test_intersperse(benchmark: BenchFixture, size: int) -> None:
 
 def _intersperse(data: Range) -> Seq[int]:
     return data.iter().intersperse(1).collect()
+
+
+@pytest.mark.benchmark(group="map_juxt")
+@pytest.mark.parametrize("size", [1, 2, 4, 8, 16])
+def test_map_juxt(benchmark: BenchFixture, size: int) -> None:
+
+    data = Range(0, 4096)
+    funcs = Range(0, size).iter().map(_create_fn).collect()
+    assert benchmark(_map_juxt, data, funcs).last() is not None
+
+
+def _map_juxt(data: Range, funcs: Seq[Callable[[int], int]]) -> Seq[tuple[int, ...]]:
+    return data.iter().map_juxt(*funcs).collect()
+
+
+def _create_fn(i: int) -> Callable[[int], int]:
+    def fn(x: int) -> int:
+        return x * i
+
+    return fn
