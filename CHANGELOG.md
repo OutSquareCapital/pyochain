@@ -29,6 +29,10 @@
 - Updated CONTRIBUTING.md with latest architecture status
 - Improved docstrings for `PyoIterator` and `PyoMutableSequence` with better examples and explanations
 
+### 🧪 Tests
+
+- standardized iteration sizes across benchmarks over iterators/collections
+
 ### 🛠️ Other improvements
 
 - Various internal improvements to scripts for code readability

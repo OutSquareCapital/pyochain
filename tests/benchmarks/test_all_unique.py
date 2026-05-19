@@ -7,9 +7,10 @@ import pytest
 
 from pyochain import Range, Seq
 
+from ._utils import SIZES
+
 if TYPE_CHECKING:
     from ._utils import BenchFixture
-SIZES = [100, 500, 2500]
 
 
 def _run[T](data: Seq[T]) -> bool:

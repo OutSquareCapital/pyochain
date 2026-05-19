@@ -6,9 +6,10 @@ import pytest
 
 from pyochain import Ok, Range
 
+from ._utils import SIZES
+
 if TYPE_CHECKING:
     from ._utils import BenchFixture
-SIZES = [100, 500, 2500]
 
 
 @pytest.mark.benchmark(group="try_find")

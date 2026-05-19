@@ -15,6 +15,9 @@ class BenchFixture(Protocol):
     ) -> T: ...
 
 
+SIZES = [50, 500, 5000]
+
+
 class VariantGroups(StrEnum):
     CREATE = auto()
     MAP = auto()

@@ -7,10 +7,10 @@ import pytest
 
 from pyochain import Null, Option, Range, Seq, Some, Vec
 
+from ._utils import SIZES
+
 if TYPE_CHECKING:
     from ._utils import BenchFixture
-
-SIZES = [100, 500, 2500]
 
 
 @pytest.mark.benchmark(group="filter_map")
