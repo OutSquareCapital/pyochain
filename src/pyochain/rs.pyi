@@ -1329,15 +1329,15 @@ def option[T](value: T | None) -> Option[T]:
     ```
     """
 
-def then_if_true[V](value: V, *, predicate: Callable[[V], bool]) -> Option[V]:
-    """Creates an `Option[V]` based on a **predicate** condition on the provided **value**.
+def then_if_true[T](value: T, *, predicate: Callable[[T], bool]) -> Option[T]:
+    """Creates an `Option[T]` based on a **predicate** condition on the provided **value**.
 
     Args:
-        value (V): The value to wrap in `Some` if the condition is `True`.
-        predicate (Callable[[V], bool]): The condition to evaluate.
+        value (T): The value to wrap in `Some` if the condition is `True`.
+        predicate (Callable[[T], bool]): The condition to evaluate.
 
     Returns:
-        Option[V]: `Some(value)` if the condition is `True`, otherwise `NONE`.
+        Option[T]: `Some(value)` if the condition is `True`, otherwise `NONE`.
 
     Example:
     ```python
