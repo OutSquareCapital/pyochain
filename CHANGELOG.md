@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+-
+
+## [0.19.0] - 2026-05-20
+
 ### 🏆 Highlights
 
 - **dependency-free**: pyochain is now dependency free and do not need `cytoolz` anymore. All the methods that were using it have been reimplemented in Rust or removed. See the breaking changes and performance improvements/regressions sections for more details.
