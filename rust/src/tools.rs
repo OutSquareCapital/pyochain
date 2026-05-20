@@ -606,9 +606,9 @@ impl Juxt {
         Ok(PyTuple::new(py, results)?.unbind())
     }
 }
-/// TODO: speed is 0.60x-0.70x compared to the Cython implementation.
+/// TODO: speed is 0.70-0.75x compared to the Cython implementation.
 /// Saved in `.benchmarks/unique_cy`
-#[pyclass]
+#[pyclass(frozen)]
 pub struct UniqueIdentity {
     iter: Py<PyIterator>,
     seen: Py<PySet>,
@@ -629,27 +629,29 @@ impl UniqueIdentity {
         slf
     }
 
-    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
+    fn __next__(slf: PyRef<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
         let py = slf.py();
         let mut iter = slf.iter.clone_ref(py).into_bound(py);
         let seen = slf.seen.bind(py);
 
         loop {
-            let Some(result) = iter.next() else {
-                return Ok(None);
-            };
-            let item = result?;
-            if seen.contains(&item)? {
-                continue;
+            match iter.next() {
+                None => return Ok(None),
+                Some(result) => {
+                    let item = result?;
+                    if seen.contains(&item)? {
+                        continue;
+                    }
+                    seen.add(&item)?;
+                    return Ok(Some(item));
+                }
             }
-            seen.add(&item)?;
-            return Ok(Some(item.unbind()));
         }
     }
 }
-/// TODO: speed is 0.90-0.95x compared to the Cython implementation.
+/// TODO: speed is 0.95x compared to the Cython implementation.
 /// Saved in `.benchmarks/unique_cy`
-#[pyclass]
+#[pyclass(frozen)]
 pub struct UniqueKey {
     iter: Py<PyIterator>,
     key: Py<PyAny>,
@@ -672,23 +674,25 @@ impl UniqueKey {
         slf
     }
 
-    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
+    fn __next__(slf: PyRef<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
         let py = slf.py();
         let mut iter = slf.iter.clone_ref(py).into_bound(py);
         let key = slf.key.bind(py);
         let seen = slf.seen.bind(py);
 
         loop {
-            let Some(result) = iter.next() else {
-                return Ok(None);
-            };
-            let item = result?;
-            let tag = key.call1((&item,))?;
-            if seen.contains(&tag)? {
-                continue;
+            match iter.next() {
+                None => return Ok(None),
+                Some(result) => {
+                    let item = result?;
+                    let tag = key.call1((&item,))?;
+                    if seen.contains(&tag)? {
+                        continue;
+                    }
+                    seen.add(&tag)?;
+                    return Ok(Some(item));
+                }
             }
-            seen.add(&tag)?;
-            return Ok(Some(item.unbind()));
         }
     }
 }
