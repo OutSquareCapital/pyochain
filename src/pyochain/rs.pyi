@@ -112,53 +112,53 @@ class Checkable(Protocol):
         This means that even pure Python classes inheriting from `Checkable` can call these methods with builtin-like performance.
 
     Example:
-    Pyochain collections can efficiently check for emptiness and execute code conditionally natively.
-    ```python
-    >>> from pyochain import Seq
-    >>> Seq((1, 2, 3)).then(sum)
-    Some(6)
-    >>> Seq(()).then(sum)
-    NONE
+        Pyochain collections can efficiently check for emptiness and execute code conditionally natively.
+        ```python
+        >>> from pyochain import Seq
+        >>> Seq((1, 2, 3)).then(sum)
+        Some(6)
+        >>> Seq(()).then(sum)
+        NONE
 
-    ```
-    This can also be extended to any type, not just collections.
-    ```python
-    >>> from pyochain.traits import Checkable
-    >>> class MyString(str, Checkable):
-    ...     pass
-    >>> MyString("hello").then(lambda s: s.upper())
-    Some('HELLO')
-    >>> MyString("").then(lambda s: s.upper())
-    NONE
+        ```
+        This can also be extended to any type, not just collections.
+        ```python
+        >>> from pyochain.traits import Checkable
+        >>> class MyString(str, Checkable):
+        ...     pass
+        >>> MyString("hello").then(lambda s: s.upper())
+        Some('HELLO')
+        >>> MyString("").then(lambda s: s.upper())
+        NONE
 
-    ```
-    This means that you can handle complex business logic in the same way.
-    ```python
-    >>> from dataclasses import dataclass
-    >>> @dataclass(slots=True)
-    ... class User(Checkable):
-    ...     name: str
-    ...     is_active: bool
-    ...     age: int
-    ...     def __bool__(self) -> bool:
-    ...         return self.is_active and self.age >= 18
-    ...
-    ...     def describe(self) -> str:
-    ...         return f"{self.name} is an active adult"
-    >>>
-    >>> alice = User("Alice", is_active=True, age=30).then(User.describe)
-    >>> bob = (
-    ...     User("Bob", is_active=False, age=24)
-    ...     .then(User.describe)
-    ...     .ok_or("Expected an active adult user")
-    ...     .map_err(ValueError)
-    ... )
-    >>> alice
-    Some('Alice is an active adult')
-    >>> bob
-    Err(ValueError('Expected an active adult user'))
+        ```
+        This means that you can handle complex business logic in the same way.
+        ```python
+        >>> from dataclasses import dataclass
+        >>> @dataclass(slots=True)
+        ... class User(Checkable):
+        ...     name: str
+        ...     is_active: bool
+        ...     age: int
+        ...     def __bool__(self) -> bool:
+        ...         return self.is_active and self.age >= 18
+        ...
+        ...     def describe(self) -> str:
+        ...         return f"{self.name} is an active adult"
+        >>>
+        >>> alice = User("Alice", is_active=True, age=30).then(User.describe)
+        >>> bob = (
+        ...     User("Bob", is_active=False, age=24)
+        ...     .then(User.describe)
+        ...     .ok_or("Expected an active adult user")
+        ...     .map_err(ValueError)
+        ... )
+        >>> alice
+        Some('Alice is an active adult')
+        >>> bob
+        Err(ValueError('Expected an active adult user'))
 
-    ```
+        ```
     """
 
     def then[**P, R](

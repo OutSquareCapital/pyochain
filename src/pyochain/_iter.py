@@ -775,16 +775,15 @@ class Iter[T](PyoIterator[T]):
 
         You can specify the target collection type by providing a **collector** function or type.
 
-        This can be any `Callable` that takes an `Iterable[T] | Iterator[T]` and returns a `Collection[T]` of those types.
+        This can be any `Callable` that takes an `Iterator[T]` and returns a `Collection[T]` of those types.
 
-        Note:
-            This is equivalent to `Pipeable::into()` at runtime, but with a few differences:
+        This is equivalent to `Pipeable::into()` at runtime, but with a few differences:
 
-                - A default value (`Seq[T]`)
-                - Different constraint (`Collection[Any]`) to specify the intent
-                - Better performance (no args/kwargs unpacking).
+            - A default value (`Seq[T]`)
+            - Different constraint (`Collection[Any]`) to specify the intent
+            - Better performance (no args/kwargs unpacking).
 
-            If you need to pass additional arguments, you can use `Iter::into()` instead.
+        If you need to pass additional arguments, you can use `Iter::into()` instead.
 
         Args:
             collector (Callable[[Iterator[T]], R]): Function|type that defines the target collection. `R` is constrained to a `Collection`.

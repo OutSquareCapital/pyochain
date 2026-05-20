@@ -444,8 +444,8 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
         If you need to check uniqueness based on a custom key function, use `PyoIterable::all_unique_by` instead.
 
         Note:
-        - On `PyoSequence` and subclasses, this is overriden to directly use an efficient `set` access and length comparison.
-        - On `PyoSet`, `PyoMapping` and their subclasses, this directly returns `True`.
+            - On `PyoSequence` and subclasses, this is overriden to directly use an efficient `set` access and length comparison.
+            - On `PyoSet`, `PyoMapping` and their subclasses, this directly returns `True`.
 
         Returns:
             bool: `True` if all elements are unique, `False` otherwise.
