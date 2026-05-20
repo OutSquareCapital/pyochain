@@ -25,6 +25,30 @@ class Set[T](PyoSet[T]):
 
     Args:
             data (Iterable[T]): The data to initialize the Set with.
+
+    Example:
+    ```python
+    >>> from pyochain import Set
+    >>> Set(())
+    Set()
+    >>> s = Set((1, 2, 2, 3))
+    >>> s
+    Set(1, 2, 3)
+    >>> s_2 = Set(s.inner)
+    >>> # No copy is made when creating s_2 from s.inner, they reference the same underlying frozenset.
+    >>> is_no_copy = (
+    ...     s.inner is s_2.inner
+    ...     and s.inner is s.inner
+    ...     and s_2.inner is s.inner
+    ...     and frozenset(s.inner) is s.inner
+    ... )
+    >>> is_no_copy
+    True
+    >>> # However, creating a new Set from s (not using .inner) will be a copy operation.
+    >>> Set(s).inner is s.inner
+    False
+
+    ```
     """
 
     __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
