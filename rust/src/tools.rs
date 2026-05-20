@@ -606,7 +606,8 @@ impl Juxt {
         Ok(PyTuple::new(py, results)?.unbind())
     }
 }
-/// TODO: speed is 0.70x compared to the Cython implementation.
+/// TODO: speed is 0.60x-0.70x compared to the Cython implementation.
+/// Saved in `.benchmarks/unique_cy`
 #[pyclass]
 pub struct UniqueIdentity {
     iter: Py<PyIterator>,
@@ -647,6 +648,7 @@ impl UniqueIdentity {
     }
 }
 /// TODO: speed is 0.90-0.95x compared to the Cython implementation.
+/// Saved in `.benchmarks/unique_cy`
 #[pyclass]
 pub struct UniqueKey {
     iter: Py<PyIterator>,
@@ -691,6 +693,11 @@ impl UniqueKey {
     }
 }
 /// TODO: speed is 0.44x compared to the Cython implementation.
+/// Saved in `.benchmarks/intersperse_cy`
+/// Cytoolz median time in us:
+/// 256 elements: 10.6
+/// 1024 elements: 37.3
+/// 4096 elements: 127.7
 #[pyclass]
 pub struct Intersperse {
     data: Py<PyIterator>,
