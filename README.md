@@ -2,7 +2,7 @@
 
 **_Fluent method chaining for Python._**
 
-Inspired by Rust's `Iterator`, `Result`, `Option`, and DataFrame libraries like `Polars`, `pyochain` provide a set of classes with a fluent API, to work with iterations, collections, handle optional values, or manage errors.
+Inspired by Rust's `Iterator`, `Result`, `Option`, and DataFrame libraries like `Polars`, `pyochain` is a no-dependency library providing a set of classes with a fluent API, to work with iterations, collections, handle optional values, or manage errors.
 
 For a quick overview of the core types and their relationships, see the [core types overview](https://outsquarecapital.github.io/pyochain/overview/) page.
 
@@ -12,7 +12,7 @@ For a quick overview of the core types and their relationships, see the [core ty
 - 🦥 **Lazy-first,  🔒 explicit mutability** — `Iter[T]` for lazy, efficient iterations; `Seq` and `Set` for immutable data; `Vec` and `SetMut` when you need to mutate.
 - **Memory efficient** - Almost all methods from `Iter[T]` operate in streaming fashion, and `Vec[T]` provides in-place methods with more memory efficiency than standard list methods (e.g. `x.extend_move(y)` won't create intermediate allocations like `x.extend(y)` followed by `y.clear()`).
 - 🎯 **Result and Option types** - Handle `None` and exceptions in a fluent, explicit way.
-- 🔥 **Blazingly fast** — Core `Option` and `Result` types are written in Rust for minimal overhead, and iterators use functions from `cytoolz` (Cython) and the stdlib `itertools` for maximum efficiency.
+- 🔥 **Blazingly fast** — Core `Option` and `Result` types are written in Rust for minimal overhead, and iterators use almost always compiled `C` or `Rust` level code, from the `builtins`, `itertools` or custom Pyo3 implementations.
 - 🛡️ **100% type-safe** — Full generic support and autocompletion in your IDE.
 - 📚 **Accurate Documentation** — Every method is documented and tested with runnable examples.
 Every code example in the website (or this README) is also tested, ensuring accuracy and reliability.
@@ -135,10 +135,6 @@ For comprehensive guides and examples:
 
 Want to contribute? Read our [contributing guide](CONTRIBUTING.md)
 
-## Key Dependencies and credits
+## Credits
 
-Most of the computations are done with implementations from itertools, [`cytoolz`](https://github.com/pytoolz/cytoolz) and [`more-itertools`](https://github.com/more-itertools/more-itertools).
-
-<https://github.com/more-itertools/more-itertools>
-
-The stubs used for the development, made by the maintainer of pyochain, can be found here:
+Most of the custom computation algorithms have been inspired by implementations from itertools, [`cytoolz`](https://github.com/pytoolz/cytoolz) and [`more-itertools`](https://github.com/more-itertools/more-itertools).

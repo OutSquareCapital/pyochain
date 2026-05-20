@@ -5,7 +5,7 @@
     requires-python = ">=3.13"
     version         = "0.18.0"
 
-    dependencies = ["cytoolz>=1.0.1"]
+    dependencies = []
 
     classifiers = ["License :: OSI Approved :: MIT License"]
 
@@ -13,7 +13,6 @@
 [dependency-groups]
     dev = [
         "basedpyright>=1.38.2",
-        "cytoolz-stubs",
         "mkdocstrings-python>=1.18.2",
         "polars>=1.33.1",
         "pydoclint>=0.8.1",
@@ -78,7 +77,6 @@
     style                                         = "google"
 
 [tool.uv.sources]
-    cytoolz-stubs     = { git = "https://github.com/OutSquareCapital/cytoolz-stubs.git" }
     pytest-stubtester = { git = "https://github.com/OutSquareCapital/pytest-stubtester.git" }
 
 [build-system]
