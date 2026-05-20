@@ -142,15 +142,20 @@ class Checkable(Protocol):
     ...     age: int
     ...     def __bool__(self) -> bool:
     ...         return self.is_active and self.age >= 18
+    ...
+    ...     def describe(self) -> str:
+    ...         return f"{self.name} is an active adult"
     >>>
-    >>> def describe_user(user: User) -> str:
-    ...     return f"{user.name} is an active adult"
-    >>>
-    >>> alice = User("Alice", is_active=True, age=30)
-    >>> bob = User("Bob", is_active=False, age=24)
-    >>> alice.then(describe_user)
+    >>> alice = User("Alice", is_active=True, age=30).then(User.describe)
+    >>> bob = (
+    ...     User("Bob", is_active=False, age=24)
+    ...     .then(User.describe)
+    ...     .ok_or("Expected an active adult user")
+    ...     .map_err(ValueError)
+    ... )
+    >>> alice
     Some('Alice is an active adult')
-    >>> bob.then(describe_user).ok_or("Expected an active adult user").map_err(ValueError)
+    >>> bob
     Err(ValueError('Expected an active adult user'))
 
     ```
@@ -300,7 +305,7 @@ class Checkable(Protocol):
         Example:
         ```python
         >>> from pyochain import Seq
-        >>> Seq((1, 2, 3)).err_or_else(lambda s: "should be empty" )
+        >>> Seq((1, 2, 3)).err_or_else(lambda s: "should be empty")
         Err(Seq(1, 2, 3))
         >>> Seq(()).err_or_else(lambda s: "should be empty")
         Ok('should be empty')
@@ -985,9 +990,9 @@ class OptionType[T](Pipeable):
         Example:
         ```python
         >>> from pyochain import Some, NONE
-        >>> Some(1).ok_or('fail')
+        >>> Some(1).ok_or("fail")
         Ok(1)
-        >>> NONE.ok_or('fail')
+        >>> NONE.ok_or("fail")
         Err('fail')
 
         ```
@@ -1005,9 +1010,9 @@ class OptionType[T](Pipeable):
         Example:
         ```python
         >>> from pyochain import Some, NONE
-        >>> Some(1).ok_or_else(lambda: 'fail')
+        >>> Some(1).ok_or_else(lambda: "fail")
         Ok(1)
-        >>> NONE.ok_or_else(lambda: 'fail')
+        >>> NONE.ok_or_else(lambda: "fail")
         Err('fail')
 
         ```
@@ -1166,7 +1171,7 @@ class OptionType[T](Pipeable):
         Example:
         ```python
         >>> from pyochain import Some, NONE
-        >>> Some((1, 'a')).unzip()
+        >>> Some((1, "a")).unzip()
         (Some(1), Some('a'))
         >>> NONE.unzip()
         (NONE, NONE)
@@ -1186,11 +1191,11 @@ class OptionType[T](Pipeable):
         Example:
         ```python
         >>> from pyochain import Some, NONE
-        >>> Some(1).zip(Some('a'))
+        >>> Some(1).zip(Some("a"))
         Some((1, 'a'))
         >>> Some(1).zip(NONE)
         NONE
-        >>> NONE.zip(Some('a'))
+        >>> NONE.zip(Some("a"))
         NONE
 
         ```
@@ -1356,7 +1361,6 @@ class Some[T](OptionType[T]):
     Some(42)
 
     ```
-
     """
 
     value: T
@@ -1452,9 +1456,8 @@ def then_if_true[T](value: T, *, predicate: Callable[[T], bool]) -> Option[T]:
     >>> then_if_true(21, predicate=lambda x: x == 42)
     NONE
     >>> from pathlib import Path
-    >>> then_if_true(Path("README.md"), predicate=Path.exists).map(str)
-    Some('README.md')
-    >>> then_if_true(Path("README.md"), predicate=lambda p: p.exists()).map(str) # Same as above
+    >>> readme_path = then_if_true(Path("README.md"), predicate=Path.exists).map(str)
+    >>> readme_path
     Some('README.md')
 
     ```
@@ -1526,17 +1529,17 @@ class ResultType[T, E](Pipeable, Protocol):
     >>> from pyochain import Err, Ok, Result
     >>>
     >>> def is_positive(x: int) -> Result[str, ValueError]:
-    ...    if x > 0:
-    ...        return Ok(f"Value is {x}")
-    ...    msg = f"{x} is not positive"
-    ...    return Err(ValueError(msg))
+    ...     if x > 0:
+    ...         return Ok(f"Value is {x}")
+    ...     msg = f"{x} is not positive"
+    ...     return Err(ValueError(msg))
     >>>
     >>> def handle_variant(x: Result[str, ValueError]) -> str:
-    ...    match x:
-    ...        case Ok(value):
-    ...            return f"Success: {value}"
-    ...        case Err(error):
-    ...            return f"Failure: {error}"
+    ...     match x:
+    ...         case Ok(value):
+    ...             return f"Success: {value}"
+    ...         case Err(error):
+    ...             return f"Failure: {error}"
     >>>
     >>> is_positive(5).map(lambda s: s.upper()).into(handle_variant)
     'Success: VALUE IS 5'

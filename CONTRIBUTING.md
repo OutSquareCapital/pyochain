@@ -132,6 +132,12 @@ uv run ruff format src/pyochain;
 uv run basedpyright src/pyochain;
 ```
 
+Unfortunately, `Ruff` doesn't work well when doctests are mixed with backticks sections in docstrings to format code examples.
+
+The workaround is to temporarily remove them, run `Ruff` and then put them back.
+
+For multiple sections, you can use your IDE to replace both of them by dummy text, run `Ruff` and then replace the dummy text by the original backticks.
+
 ### tests
 
 Add `--cov=src --cov-report=term-missing` to the pytest command below to include coverage reports.

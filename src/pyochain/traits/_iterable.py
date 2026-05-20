@@ -197,6 +197,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
         Returns:
             T: The first element of the `Iterable`.
 
+        Example:
         ```python
         >>> from pyochain import Seq
         >>> data = Seq((1, 2))
@@ -223,6 +224,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
         Returns:
             T: The second element of the `Iterable`.
 
+        Example:
         ```python
         >>> from pyochain import Seq
         >>> Seq((9, 8)).second()
@@ -242,6 +244,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
         Returns:
             T: The last element of the `Iterable`.
 
+        Example:
         ```python
         >>> from pyochain import Seq
         >>> Seq((7, 8, 9)).last()
@@ -260,6 +263,8 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
 
         Returns:
             int: The count of elements.
+
+        Example:
         ```python
         >>> from pyochain import Seq, Range, Iter
         >>> Seq((1, 2)).length()
@@ -285,6 +290,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
         Returns:
             int: The sum of all elements.
 
+        Example:
         ```python
         >>> from pyochain import Seq
         >>> Seq((1, 2, 3)).sum()
@@ -652,6 +658,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Returns:
             Option[T]: `Some(item)` at the specified *n*.
 
+        Example:
         ```python
         >>> from pyochain import Iter
         >>> Iter([10, 20]).nth(1)
@@ -892,17 +899,19 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
     def reduce(self, func: Callable[[T, T], T]) -> T:
         """Apply a function of two arguments cumulatively to the items of an iterable, from left to right.
 
+        This effectively reduces the `Iterator` to a single value.
+
+        If initial is present, it is placed before the items of the `Iterator` in the calculation.
+
+        It then serves as a default when the `Iterator` is empty.
+
         Args:
             func (Callable[[T, T], T]): Function to apply cumulatively to the items of the iterable.
 
         Returns:
             T: Single value resulting from cumulative reduction.
 
-        This effectively reduces the `Iterator` to a single value.
-
-        If initial is present, it is placed before the items of the `Iterator` in the calculation.
-
-        It then serves as a default when the `Iterator` is empty.
+        Example:
         ```python
         >>> from pyochain import Iter
         >>> Iter((1, 2, 3)).reduce(lambda a, b: a + b)
@@ -927,6 +936,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             This is similar to `reduce()` but with an initial value, making it equivalent to
             Python `functools.reduce()` with an initializer.
 
+        Example:
         ```python
         >>> from pyochain import Iter
         >>> data = (1, 2, 3)
@@ -934,7 +944,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         6
         >>> Iter(data).fold(10, lambda acc, x: acc + x)
         16
-        >>> Iter(('a', 'b', 'c')).fold('', lambda acc, x: acc + x)
+        >>> Iter(("a", "b", "c")).fold("", lambda acc, x: acc + x)
         'abc'
 
         ```
@@ -1044,13 +1054,14 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Note:
             This is similar to `Iter::reduce` but with an initial value.
 
+        Example:
         ```python
         >>> from pyochain import Iter
         >>> data = ((1, 2), (3, 4))
         >>> Iter(data).fold_star(0, lambda acc, x, y: acc + x + y)
         10
         >>> data = (("a", "b"), ("c", "d"))
-        >>> Iter(data).fold_star('', lambda acc, x, y: acc + x + y)
+        >>> Iter(data).fold_star("", lambda acc, x, y: acc + x + y)
         'abcd'
 
         ```
@@ -1312,6 +1323,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Returns:
             int: The index of the maximum value.
 
+        Example:
         ```python
         >>> from pyochain import Iter, Seq
         >>> Iter("abcdefghabcd").argmax()
@@ -1352,6 +1364,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Returns:
             int: The index of the minimum value.
 
+        Example:
         ```python
         >>> from pyochain import Iter, Seq
         >>> # Example 1: Basic usage
@@ -1713,7 +1726,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         >>> Iter((1, 2, 3)).accumulate(lambda a, b: a + b, 0).collect()
         Seq(0, 1, 3, 6)
         >>> # The final accumulated result is the same as fold:
-        >>> Iter((1,2,3)).fold(0, lambda a, b: a + b)
+        >>> Iter((1, 2, 3)).fold(0, lambda a, b: a + b)
         6
         >>> Iter((1, 2, 3)).accumulate(lambda a, b: a * b).collect()
         Seq(1, 2, 6)
@@ -2287,9 +2300,15 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         Example:
         ```python
         >>> from pyochain import Set
-        >>> Set((2, 3)).r_symmetric_difference((1, 2)).iter().sort()
+        >>> base = Set((2, 3))
+        >>> other = (1, 2)
+        >>> output = base.r_symmetric_difference(other).iter().sort()
+        >>> output
         Vec(1, 3)
-        >>> Set((2, 3)).r_symmetric_difference((1, 2)).eq(Set((2, 3)).symmetric_difference((1, 2)))
+        >>> is_symmetric = base.r_symmetric_difference(other).eq(
+        ...     base.symmetric_difference(other)
+        ... )
+        >>> is_symmetric
         True
 
         ```
@@ -2547,6 +2566,8 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
 
         Returns:
             Option[V]: The value associated with the removed **key**, or `None` if the **key** was not present.
+
+        Example:
         ```python
         >>> from pyochain import Dict
         >>> data = Dict({1: "a", 2: "b"})
@@ -2569,6 +2590,8 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
 
         Returns:
             Option[tuple[K, V]]: `Some((key, value))` pair associated with the removed key, or `None` if the **key** was not present.
+
+        Example:
         ```python
         >>> from pyochain import Dict
         >>> data = Dict({1: "a", 2: "b"})
@@ -2598,7 +2621,7 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
         >>> data = Dict.from_ref({"a": 1})
         >>> data.get_item("a")
         Some(1)
-        >>> data.get_item("x").unwrap_or('Not Found')
+        >>> data.get_item("x").unwrap_or("Not Found")
         'Not Found'
 
         ```
@@ -2641,7 +2664,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
         Args:
             predicate (Callable[[T], bool]): A function that returns `True` for elements to keep and `False` for elements to remove.
 
-        Examples:
+        Example:
         ```python
         >>> from pyochain import Vec, Seq
         >>> vec = Vec((1, 2, 3, 4))
@@ -2677,7 +2700,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
         Args:
             length (int): The length to truncate the `MutableSequence` to.
 
-        Examples:
+        Example:
         ```python
         >>> from pyochain import Vec
         >>> # Truncating a five element vector to two elements:
@@ -2721,7 +2744,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
         Args:
             other (Self | list[T]): The other `MutableSequence` to move elements from.
 
-        Examples:
+        Example:
         ```python
         >>> from pyochain import Vec
         >>> v1 = Vec((1, 2, 3))

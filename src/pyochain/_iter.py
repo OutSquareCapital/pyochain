@@ -72,11 +72,11 @@ class Unzipped[T, V](Pipeable, Checkable):
         right (Iter[V]): An `Iter` over the second elements of the pairs.
 
     See Also:
-        `Iter.unzip()`
+        `Iter::unzip`
     Example:
     ```python
     >>> from pyochain import Iter
-    >>> pairs = Iter(((1, 'a'), (2, 'b'), (3, 'c')))
+    >>> pairs = Iter(((1, "a"), (2, "b"), (3, "c")))
     >>> unzipped = pairs.unzip()
     >>> unzipped.left.collect()
     Seq(1, 2, 3)
@@ -289,8 +289,8 @@ class SetMut[T](Set[T], MutableSet[T]):
         Example:
         ```python
         >>> from pyochain import SetMut
-        >>> s = SetMut(('a', 'b'))
-        >>> s.add('c')
+        >>> s = SetMut(("a", "b"))
+        >>> s.add("c")
         >>> s.iter().sort()
         Vec('a', 'b', 'c')
 
@@ -310,8 +310,8 @@ class SetMut[T](Set[T], MutableSet[T]):
         Example:
         ```python
         >>> from pyochain import SetMut
-        >>> s = SetMut(('a', 'b', 'c'))
-        >>> s.discard('b')
+        >>> s = SetMut(("a", "b", "c"))
+        >>> s.discard("b")
         >>> s.iter().sort()
         Vec('a', 'c')
 
@@ -392,7 +392,7 @@ class Seq[T](PyoSequence[T]):
         ```python
         >>> from pyochain import Seq
         >>> s1 = Seq((1, 2, 3))
-        >>> s2 = (4, 5, 6) # Can also concatenate a standard tuple
+        >>> s2 = (4, 5, 6)  # Can also concatenate a standard tuple
         >>> s3 = s1.concat(s2)
         >>> s3
         Seq(1, 2, 3, 4, 5, 6)
@@ -499,11 +499,11 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMult
         Example:
         ```python
         >>> from pyochain import Vec
-        >>> vec = Vec.from_ref(['a', 'b', 'c'])
-        >>> vec.insert(1, 'd')
+        >>> vec = Vec.from_ref(["a", "b", "c"])
+        >>> vec.insert(1, "d")
         >>> vec
         Vec('a', 'd', 'b', 'c')
-        >>> vec.insert(4, 'e')
+        >>> vec.insert(4, "e")
         >>> vec
         Vec('a', 'd', 'b', 'c', 'e')
 
@@ -642,17 +642,17 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMult
         Returns:
             Iter[T]: An `Iterator` over the drained elements.
 
-        Examples:
+        Example:
         ```python
         >>> from pyochain import Vec
         >>> v = Vec.from_ref([1, 2, 3])
-        >>> u = v.drain(1).collect();
+        >>> u = v.drain(1).collect()
         >>> v
         Vec(1)
         >>> u
         Seq(2, 3)
         >>> # A full range clears the vector, like `clear()` does
-        >>> _ = v.drain().collect();
+        >>> _ = v.drain().collect()
         >>> v
         Vec()
 
@@ -689,11 +689,11 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMult
         ```python
         >>> from pyochain import Vec
         >>> v1 = Vec.from_ref([1, 2, 3])
-        >>> v2 = [4, 5, 6] # Can also concatenate a standard list
+        >>> v2 = [4, 5, 6]  # Can also concatenate a standard list
         >>> v3 = v1.concat(v2)
         >>> v3
         Vec(1, 2, 3, 4, 5, 6)
-        >>> v1.clear() # Clean up the original vec
+        >>> v1.clear()  # Clean up the original vec
         >>> v1
         Vec()
         >>> # New vec remains unaffected
@@ -730,7 +730,7 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMult
         ```python
         >>> from pyochain import Vec
         >>> v1 = Vec.from_ref([1, 2, 3])
-        >>> v2 = [4, 5, 6] # Can also concatenate a standard list
+        >>> v2 = [4, 5, 6]  # Can also concatenate a standard list
         >>> v1.concat_mut(v2)
         Vec(1, 2, 3, 4, 5, 6)
         >>> v1
@@ -819,7 +819,7 @@ class Iter[T](PyoIterator[T]):
         Returns:
             bool: True if the `Iterator` has at least one element, False otherwise.
 
-        Examples:
+        Example:
         ```python
         >>> from pyochain import Iter
         >>> it = Iter((1, 2, 3))
@@ -1082,10 +1082,10 @@ class Iter[T](PyoIterator[T]):
         ```python
         >>> from pyochain import Range, Seq, Ok, Err, Result
         >>> data = (
-        ...    Range(0, 5)
-        ...    .iter()
-        ...    .map(lambda x: Ok(x) if x % 2 == 0 else Err(x))
-        ...    .collect(Seq[Result[int, int]])
+        ...     Range(0, 5)
+        ...     .iter()
+        ...     .map(lambda x: Ok(x) if x % 2 == 0 else Err(x))
+        ...     .collect(Seq[Result[int, int]])
         ... )
         >>> data
         Seq(Ok(0), Err(1), Ok(2), Err(3), Ok(4))
@@ -1213,6 +1213,8 @@ class Iter[T](PyoIterator[T]):
 
         If they are read out of order, :func:`itertools.tee` is used to cache
         elements as necessary.
+
+        Example:
         ```python
         >>> from pyochain import Iter
         >>> all_chunks = Iter.from_count().array_chunks(4)
@@ -1223,9 +1225,19 @@ class Iter[T](PyoIterator[T]):
         Seq(0, 1, 2, 3)
         >>> c_3.unwrap().collect()
         Seq(8, 9, 10, 11)
-        >>> Seq((1, 2, 3, 4, 5, 6)).iter().array_chunks(3).map(lambda c: c.collect()).collect()
+
+        ```
+        You can collect the chunks into a collection of collections, for example:
+        ```python
+        >>> from pyochain import Seq
+        >>> from pyochain.traits import PyoIterable
+        >>> def collect_all_chunks(data: PyoIterable[int]) -> Seq[Seq[int]]:
+        ...     return (
+        ...         data.iter().array_chunks(3).map(lambda c: c.collect()).collect()
+        ...     )
+        >>> Seq((1, 2, 3, 4, 5, 6)).into(collect_all_chunks)
         Seq(Seq(1, 2, 3), Seq(4, 5, 6))
-        >>> Seq((1, 2, 3, 4, 5, 6, 7, 8)).iter().array_chunks(3).map(lambda c: c.collect()).collect()
+        >>> Seq((1, 2, 3, 4, 5, 6, 7, 8)).into(collect_all_chunks)
         Seq(Seq(1, 2, 3), Seq(4, 5, 6), Seq(7, 8))
 
         ```
@@ -1316,7 +1328,7 @@ class Iter[T](PyoIterator[T]):
 
         This is useful when you have an `Iter` of `Iterable` and you want to remove one level of indirection.
 
-        Examples:
+        Example:
         Basic usage:
         ```python
         >>> from pyochain import Iter
@@ -1785,7 +1797,14 @@ class Iter[T](PyoIterator[T]):
         ```python
         >>> from pyochain import Seq
         >>> data = Seq(("apple", "banana", "cherry", "date"))
-        >>> data.iter().enumerate().filter_star(lambda index, fruit: index % 2 == 0).map_star(lambda index, fruit: fruit.title()).collect()
+        >>> output = (
+        ...     data.iter()
+        ...     .enumerate()
+        ...     .filter_star(lambda index, _: index % 2 == 0)
+        ...     .map_star(lambda _, fruit: fruit.title())
+        ...     .collect()
+        ... )
+        >>> output
         Seq('Apple', 'Cherry')
 
         ```
@@ -1846,16 +1865,18 @@ class Iter[T](PyoIterator[T]):
         ...         return Err(f"Invalid integer, got {s!r}")
         >>>
         >>> data = Seq(("1", "two", "NaN", "four", "5"))
-        >>> data.iter().filter_map(lambda s: _parse(s).ok()).collect()
+        >>> parsed = data.iter().filter_map(lambda s: _parse(s).ok()).collect()
+        >>> parsed
         Seq(1, 5)
         >>> # Equivalent to:
-        >>> (
+        >>> parsed = (
         ...     data.iter()
-        ...    .map(lambda s: _parse(s).ok())
-        ...    .filter(lambda s: s.is_some())
-        ...    .map(lambda s: s.unwrap())
-        ...    .collect()
+        ...     .map(lambda s: _parse(s).ok())
+        ...     .filter(lambda s: s.is_some())
+        ...     .map(lambda s: s.unwrap())
+        ...     .collect()
         ... )
+        >>> parsed
         Seq(1, 5)
 
         ```
@@ -1947,7 +1968,12 @@ class Iter[T](PyoIterator[T]):
         ...     except ValueError:
         ...         return Err(f"Invalid integer pair: {s1!r}, {s2!r}")
         >>>
-        >>> Iter(data).filter_map_star(lambda s1, s2: _parse_pair(s1, s2).ok()).collect()
+        >>> parsed = (
+        ...     Iter(data)
+        ...     .filter_map_star(lambda s1, s2: _parse_pair(s1, s2).ok())
+        ...     .collect()
+        ... )
+        >>> parsed
         Seq((1, 10),)
 
         ```
@@ -2099,7 +2125,13 @@ class Iter[T](PyoIterator[T]):
         >>> Iter((1, 2)).zip_longest([10]).collect()
         Seq((Some(1), Some(10)), (Some(2), NONE))
         >>> # Can be combined with try collect to filter out the NONE:
-        >>> Iter((1, 2)).zip_longest([10]).map(lambda x: Iter(x).try_collect()).collect()
+        >>> zipped = (
+        ...     Iter((1, 2))
+        ...     .zip_longest([10])
+        ...     .map(lambda x: Iter(x).try_collect())
+        ...     .collect()
+        ... )
+        >>> zipped
         Seq(Some(Vec(1, 10)), NONE)
 
         ```
@@ -2130,6 +2162,7 @@ class Iter[T](PyoIterator[T]):
 
             This is the unavoidable cost of having two independent iterators over the same source.
 
+        Example:
         ```python
         >>> from pyochain import Iter
         >>> data = ((1, "a"), (2, "b"), (3, "c"))
@@ -2327,9 +2360,15 @@ class Iter[T](PyoIterator[T]):
         >>> import statistics
         >>> Iter((1, 2, 3, 4)).map_windows(2, statistics.mean).collect()
         Seq(1.5, 2.5, 3.5)
-        >>> Iter("abcd").map_windows(3, lambda window: "".join(window).upper()).collect()
+        >>> joined = (
+        ...     Iter("abcd")
+        ...     .map_windows(3, lambda window: "".join(window).upper())
+        ...     .collect()
+        ... )
+        >>> joined
         Seq('ABC', 'BCD')
-        >>> Iter((10, 20, 30, 40, 50)).map_windows(4, sum).collect()
+        >>> sum_windows = Iter((10, 20, 30, 40, 50)).map_windows(4, sum).collect()
+        >>> sum_windows
         Seq(100, 140)
 
         ```
@@ -2504,10 +2543,18 @@ class Iter[T](PyoIterator[T]):
         Example:
         ```python
         >>> from pyochain import Iter
-        >>> Iter(["a", "b"]).enumerate().collect()
-        Seq((0, 'a'), (1, 'b'))
-        >>> Iter(["a", "b"]).enumerate().map_star(lambda idx, val: (idx, val.upper())).collect()
-        Seq((0, 'A'), (1, 'B'))
+        >>> data = ("apple", "banana", "cherry")
+        >>> output = Iter(data).enumerate().collect()
+        >>> output
+        Seq((0, 'apple'), (1, 'banana'), (2, 'cherry'))
+        >>> output = (
+        ...     Iter(data)
+        ...     .enumerate()
+        ...     .map_star(lambda idx, val: (idx, val.upper()))
+        ...     .collect()
+        ... )
+        >>> output
+        Seq((0, 'APPLE'), (1, 'BANANA'), (2, 'CHERRY'))
 
         ```
         """
@@ -2731,6 +2778,8 @@ class Iter[T](PyoIterator[T]):
 
         Returns:
             Iter[tuple[Any, ...]]: An iterable of tuples containing the results of each function.
+
+        Example:
         ```python
         >>> from pyochain import Iter
         >>> def is_even(n: int) -> bool:
@@ -2760,11 +2809,11 @@ class Iter[T](PyoIterator[T]):
         ```python
         >>> from pyochain import Range
         >>> res = (
-        ... Range(0, 5)
-        ... .iter()
-        ... .map_juxt(lambda x: x * 2, lambda x: x ** 2)
-        ... .filter_star(lambda double, square: double + square <= 5)
-        ... .collect()
+        ...     Range(0, 5)
+        ...     .iter()
+        ...     .map_juxt(lambda x: x * 2, lambda x: x**2)
+        ...     .filter_star(lambda double, square: double + square <= 5)
+        ...     .collect()
         ... )
         >>> res
         Seq((0, 0), (2, 1))
@@ -2854,15 +2903,16 @@ class Iter[T](PyoIterator[T]):
         >>> from pyochain import Iter
         >>> # Example 1: Group even and odd numbers
         >>> (
-        ... Iter.from_count() # create an infinite iterator of integers
-        ... .take(8) # take the first 8
-        ... .map(lambda x: (x % 2 == 0, x)) # map to (is_even, value)
-        ... .sort(key=lambda x: x[0]) # sort by is_even
-        ... .iter() # Since sort collect to a Vec, we need to convert back to Iter
-        ... .group_by(lambda x: x[0]) # group by is_even
-        ... .map_star(lambda g, vals: (g, vals.map_star(lambda _, y: y).into(list))) # extract values from groups, discarding keys, and materializing them to lists
-        ... .collect() # collect the result
-        ... .into(dict) # convert to dict
+        ...     Iter.from_count()  # create an infinite iterator of integers
+        ...     .take(8)  # take the first 8
+        ...     .map(lambda x: (x % 2 == 0, x))  # map to (is_even, value)
+        ...     .sort(key=lambda x: x[0])  # sort by is_even
+        ...     .iter()  # Since sort collect to a Vec, we need to convert back to Iter
+        ...     .group_by(lambda x: x[0])  # group by is_even
+        ...     # extract values from groups, discarding keys, and materializing them to lists
+        ...     .map_star(lambda g, vals: (g, vals.map_star(lambda _, y: y).into(list)))
+        ...     .collect()  # collect the result
+        ...     .into(dict)  # convert to dict
         ... )
         {False: [1, 3, 5, 7], True: [0, 2, 4, 6]}
         >>> # Example 2: Group by a common key, already sorted
@@ -2872,12 +2922,14 @@ class Iter[T](PyoIterator[T]):
         ...     {"name": "Charlie", "gender": "M"},
         ...     {"name": "Dan", "gender": "M"},
         ... )
-        >>> (
-        ... Iter(data)
-        ... .group_by(lambda x: x["gender"]) # group by the gender key
-        ... .map_star(lambda g, vals: (g, vals.length())) # get the length of each group
-        ... .collect()
+        >>> # group by the gender key, and count the number of people in each group
+        >>> output = (
+        ...     Iter(data)
+        ...     .group_by(lambda x: x["gender"])
+        ...     .map_star(lambda g, vals: (g, vals.length()))
+        ...     .collect()
         ... )
+        >>> output
         Seq(('F', 1), ('M', 3))
         >>> # Example 3: Incorrect usage with LATE materialization:
         >>> groups = Iter(("a1", "a2", "b1")).group_by(lambda x: x[0]).collect()
@@ -2888,7 +2940,7 @@ class Iter[T](PyoIterator[T]):
         Seq()
         >>> # Example 4: Correct usage with intermediate materialization:
         >>> groups = (
-        ...     Iter(["a1", "a2", "b1"])
+        ...     Iter(("a1", "a2", "b1"))
         ...     .group_by(lambda x: x[0])
         ...     .map_star(lambda g, vals: (g, vals.collect()))  # ✅ Materialize NOW
         ...     .collect()

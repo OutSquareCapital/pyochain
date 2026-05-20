@@ -4,7 +4,8 @@
 
 ### 📖 Documentation
 
-- Improved `Checkable`, `NONE`, `Null`,  and `transpose` documentation.
+- Improved variouus classes and methods documentation.
+- Reformatted all code examples with Ruff.
 
 ## [0.19.0] - 2026-05-20
 
