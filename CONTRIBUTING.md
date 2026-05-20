@@ -64,6 +64,18 @@ pyochain is a **mixed Python/Rust project**:
 - Follow the existing docstring style: one-line summary, optional extended description, `Args:`, `Returns:`, `Examples:` sections. Keep a blank line between sections.
 - Prefer simple, readable implementations. Hot paths use vanilla iteration to reduce call overhead.
 
+#### Where should a method live?
+
+pyochain provides ABCs and concrete types. We always want to add methods to ABCs whenever possible, but this can be do only in some cases:
+
+- In any case, it must not depend on anything else than what is already available in the dunders.
+- If it's an aggregate, or it returns `None` because of mutation. e.g `Pyoiterable::sum` or `PyoMutableSequence::retain`.
+- If it goes from collection -> iterator or the other way around. e.g `PyoIterable::iter` or `PyoIterator::{sort, tail, try_collect}`.
+
+The general idea being that if a method return an object from the same family (e.g a `PyoMutableSequence` that need to do operations to ultimately return a `Vec`), then it should be in the concrete class, because this would entail confusion: We have two similar data structures, why are we swapping from one to the other here? Especially an abstract one to a concrete one.
+
+On the other hand, if we go from a `PyoSequence` to an `Iter`, then it makes more sense to have it in the ABC, because it's a common operation that doesn't depend on the internal implementation of the collection, and goes from one structure to another.
+
 ### Rust code
 
 - Use PyO3's modern Bound API (v0.27+).
