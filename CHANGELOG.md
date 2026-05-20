@@ -2,7 +2,9 @@
 
 ## [Unreleased]
 
-note: highlight should be a table with the perf improvements
+### 🏆 Highlights
+
+- **dependency-free**: pyochain is now dependency free and do not need `cytoolz` anymore. All the methods that were using it have been reimplemented in Rust or removed. See the breaking changes and performance improvements/regressions sections for more details.
 
 ### 💥 Breaking changes
 
@@ -48,8 +50,17 @@ Method name                             | From     | Improvement                
 
 ### ⚠️ Performance regressions
 
-- **Migrated**: `PyoIterator::unique_by` (old `PyoIterator::unique(key=...)`) has been moved to Rust from Cython, with a sligth performance regression of around **-5%**. Still **2.31x** faster than a pure Python implementation.
-- **Migrated**: `PyoIterator::unique` is also in Rust from Cython. It entails a **-25%** performance regression. Still **7.3X** faster than a pure Python implementation.
+The 3 following methods have been migrated from Cython to Rust, and have unfortunately seen a performance regression compared to their old Cython counterparts.
+
+However, they are still much faster than a pure Python implementation.
+
+See the table below for the details.
+
+Method name               | Vs Cython | VS Python | Notes
+------------------------- | --------- | --------- | ----------
+`PyoIterator::unique_by`  | **0.95**  | **2.31x** | Equivalent to old `PyoIterator::unique(key=...)`
+`PyoIterator::unique`     | **0.75**  | **7.3X**  | -
+`PyoIterator::intersperse`| **0.60**  | **4.95x** | -
 
 ### ✨ Enhancements
 

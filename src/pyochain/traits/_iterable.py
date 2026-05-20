@@ -21,8 +21,6 @@ from collections.abc import Set as AbstractSet
 from operator import itemgetter
 from typing import TYPE_CHECKING, Any, Concatenate, Self, overload, override
 
-import cytoolz as cz
-
 from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
 from .._types import SupportsComparison, SupportsRichComparison
 from ..rs import NONE, Checkable, Err, Ok, Option, Pipeable, Result, Some, option
@@ -1661,7 +1659,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         ```
         """
-        return self.__class__(cz.itertoolz.interpose(element, iter(self)))
+        return self.__class__(tls.Intersperse(iter(self), element))
 
     def chain(self, *others: Iterable[T]) -> Self:
         """Concatenate **self** with one or more `Iterables`, any of which may be infinite.
