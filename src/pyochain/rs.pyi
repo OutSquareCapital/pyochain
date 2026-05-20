@@ -102,7 +102,58 @@ class Checkable(Protocol):
     - otherwise by `__len__()` if defined (returning `False` if length is 0)
     - otherwise all instances are truthy (Python's default behavior).
 
-    This can be very handy to cover the common pattern of checking if a collection is empty or not, and then explicitly handling each situation with `Option` or `Result` types, without breaking the fluent method chaining.
+    This can be very handy to cover the common pattern of checking if a collection is empty or not.
+
+    You can then explicitly handle each situation with `Option` or `Result` types, without breaking the fluent method chaining.
+
+    Tip:
+        This class is compiled in Rust with Pyo3 bindings.
+
+        This means that even pure Python classes inheriting from `Checkable` can call these methods with builtin-like performance.
+
+    Example:
+    Pyochain collections can efficiently check for emptiness and execute code conditionally natively.
+    ```python
+    >>> from pyochain import Seq
+    >>> Seq((1, 2, 3)).then(sum)
+    Some(6)
+    >>> Seq(()).then(sum)
+    NONE
+
+    ```
+    This can also be extended to any type, not just collections.
+    ```python
+    >>> from pyochain.traits import Checkable
+    >>> class MyString(str, Checkable):
+    ...     pass
+    >>> MyString("hello").then(lambda s: s.upper())
+    Some('HELLO')
+    >>> MyString("").then(lambda s: s.upper())
+    NONE
+
+    ```
+    This means that you can handle complex business logic in the same way.
+    ```python
+    >>> from dataclasses import dataclass
+    >>> @dataclass(slots=True)
+    ... class User(Checkable):
+    ...     name: str
+    ...     is_active: bool
+    ...     age: int
+    ...     def __bool__(self) -> bool:
+    ...         return self.is_active and self.age >= 18
+    >>>
+    >>> def describe_user(user: User) -> str:
+    ...     return f"{user.name} is an active adult"
+    >>>
+    >>> alice = User("Alice", is_active=True, age=30)
+    >>> bob = User("Bob", is_active=False, age=24)
+    >>> alice.then(describe_user)
+    Some('Alice is an active adult')
+    >>> bob.then(describe_user).ok_or("Expected an active adult user").map_err(ValueError)
+    Err(ValueError('Expected an active adult user'))
+
+    ```
     """
 
     def then[**P, R](
@@ -1221,7 +1272,11 @@ class OptionType[T](Pipeable):
     def transpose[E](self: OptionType[Result[T, E]]) -> Result[Option[T], E]:
         """Transposes an `Option` of a `Result` into a `Result` of an `Option`.
 
-        `Some(Ok[T])` is mapped to `Ok(Some[T])`, `Some(Err[E])` is mapped to `Err[E]`, and `NONE` will be mapped to `Ok(NONE)`.
+        The mapping is as follows:
+
+        - `Some(Ok[T])` is mapped to `Ok(Some[T])`
+        - `Some(Err[E])` is mapped to `Err[E]`
+        - `NONE` is mapped to `Ok(NONE)`
 
         Returns:
             Result[Option[T], E]: The transposed result.
@@ -1318,18 +1373,41 @@ class Some[T](OptionType[T]):
 class Null[T](OptionType[T]):
     """Option variant representing the absence of a value.
 
-    This class is not supposed to be instanciated by the user.
-    Instead, pyochain provide the `NONE` singleton (for performance reasons).
+    This class or `NONE` can be used interchangeably, as calling `Null()` will always return the singleton instance `NONE`.
 
+    For pattern matching, you must use `Null`, as `NONE` isn't special cased by type checkers the same way python `None` is, and thus can't be narrowed to `Null`.
+
+    Example:
+    ```python
+    >>> from pyochain import Null, NONE, Some
+    >>> Null() is NONE
+    True
+    >>> def is_none(x: Option[int]) -> bool:
+    ...     match x:
+    ...         case Null():
+    ...             return True
+    ...         case Some(_):
+    ...             return False
+    >>> is_none(NONE)
+    True
+    >>> is_none(Some(42))
+    False
+    >>> is_none(Null())
+    True
+
+    ```
     For more documentation, see the `Option[T]` class.
     """
 
 NONE: Final[Null[Any]] = ...  # pyright: ignore[reportAny, reportExplicitAny]
 """Singleton instance representing the absence of a value.
 
-This is the only instance of `Null` that should be used, and is similar to the logic used by `None` in standard Python.
+This is the only instance of `Null` who exists, and is similar to the logic used by `None` in standard Python.
 
-This allows you to use `is NONE` checks for identity, and improves performance by avoiding unnecessary allocations and instanciations.
+This allows you to improve performance by avoiding unnecessary calls to `Null::__new__`.
+
+Warning:
+    Reassigning this variable is not recommended.
 """
 
 def option[T](value: T | None) -> Option[T]:
@@ -2227,7 +2305,11 @@ class ResultType[T, E](Pipeable, Protocol):
 
         Can only be called if the inner type is `Option[T, E]`.
 
-        `Ok(Some(v)) -> Some(Ok(v)), Ok(NONE) -> NONE, Err(e) -> Some(Err(e))`
+        The mapping is as follows:
+
+        - `Ok(Some(v))` becomes `Some(Ok(v))`
+        - `Ok(NONE)` becomes `NONE`
+        - `Err(e)` becomes `Some(Err(e))`
 
         Returns:
             Option[Result[T, E]]: Option containing a Result or NONE.

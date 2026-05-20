@@ -2,7 +2,9 @@
 
 ## [Unreleased]
 
--
+### 📖 Documentation
+
+- Improved `Checkable`, `NONE`, `Null`,  and `transpose` documentation.
 
 ## [0.19.0] - 2026-05-20
 
