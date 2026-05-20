@@ -1899,8 +1899,15 @@
 <span class="o">...</span>         <span class="k">return</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;Empty data&quot;</span><span class="p">)</span>
 <span class="o">...</span>     <span class="k">return</span> <span class="n">Ok</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="n">check_data</span><span class="p">)</span><span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">sum</span><span class="p">))</span>
-<span class="n">Ok</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">handle_result</span><span class="p">(</span><span class="n">res</span><span class="p">:</span> <span class="n">Result</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="o">...</span>     <span class="n">match</span> <span class="n">res</span><span class="p">:</span>
+<span class="o">...</span>         <span class="n">case</span> <span class="n">Ok</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<span class="o">...</span>             <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Data is valid: </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="o">...</span>         <span class="n">case</span> <span class="n">Err</span><span class="p">(</span><span class="n">err</span><span class="p">):</span>
+<span class="o">...</span>             <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Data is invalid: </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="n">check_data</span><span class="p">)</span><span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="n">handle_result</span><span class="p">)</span>
+<span class="s1">&#39;Data is valid: Seq(1, 2, 3)&#39;</span>
 </code></pre></div></p>
 
 

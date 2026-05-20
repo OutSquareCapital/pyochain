@@ -1749,10 +1749,13 @@
 <p>This class provides methods inspired by Rust's <code>bool</code> type for conditional
 execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
 <p>All methods evaluate the instance's truthiness to determine their behavior.</p>
-<p>Truthiness is determined by:
-- <code>__bool__()</code> if defined
-- otherwise by <code>__len__()</code> if defined (returning <code>False</code> if length is 0)
-- otherwise all instances are truthy (Python's default behavior).</p>
+<p>Truthiness being determined by:</p>
+<ul>
+<li><code>__bool__()</code> if defined</li>
+<li>otherwise by <code>__len__()</code> if defined (returning <code>False</code> if length is 0)</li>
+<li>otherwise all instances are truthy (Python's default behavior).</li>
+</ul>
+<p>This can be very handy to cover the common pattern of checking if a collection is empty or not, and then explicitly handling each situation with <code>Option</code> or <code>Result</code> types, without breaking the fluent method chaining.</p>
 
 
 

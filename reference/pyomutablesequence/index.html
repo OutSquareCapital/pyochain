@@ -1701,7 +1701,76 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2678</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2609</span>
+<span class="normal">2610</span>
+<span class="normal">2611</span>
+<span class="normal">2612</span>
+<span class="normal">2613</span>
+<span class="normal">2614</span>
+<span class="normal">2615</span>
+<span class="normal">2616</span>
+<span class="normal">2617</span>
+<span class="normal">2618</span>
+<span class="normal">2619</span>
+<span class="normal">2620</span>
+<span class="normal">2621</span>
+<span class="normal">2622</span>
+<span class="normal">2623</span>
+<span class="normal">2624</span>
+<span class="normal">2625</span>
+<span class="normal">2626</span>
+<span class="normal">2627</span>
+<span class="normal">2628</span>
+<span class="normal">2629</span>
+<span class="normal">2630</span>
+<span class="normal">2631</span>
+<span class="normal">2632</span>
+<span class="normal">2633</span>
+<span class="normal">2634</span>
+<span class="normal">2635</span>
+<span class="normal">2636</span>
+<span class="normal">2637</span>
+<span class="normal">2638</span>
+<span class="normal">2639</span>
+<span class="normal">2640</span>
+<span class="normal">2641</span>
+<span class="normal">2642</span>
+<span class="normal">2643</span>
+<span class="normal">2644</span>
+<span class="normal">2645</span>
+<span class="normal">2646</span>
+<span class="normal">2647</span>
+<span class="normal">2648</span>
+<span class="normal">2649</span>
+<span class="normal">2650</span>
+<span class="normal">2651</span>
+<span class="normal">2652</span>
+<span class="normal">2653</span>
+<span class="normal">2654</span>
+<span class="normal">2655</span>
+<span class="normal">2656</span>
+<span class="normal">2657</span>
+<span class="normal">2658</span>
+<span class="normal">2659</span>
+<span class="normal">2660</span>
+<span class="normal">2661</span>
+<span class="normal">2662</span>
+<span class="normal">2663</span>
+<span class="normal">2664</span>
+<span class="normal">2665</span>
+<span class="normal">2666</span>
+<span class="normal">2667</span>
+<span class="normal">2668</span>
+<span class="normal">2669</span>
+<span class="normal">2670</span>
+<span class="normal">2671</span>
+<span class="normal">2672</span>
+<span class="normal">2673</span>
+<span class="normal">2674</span>
+<span class="normal">2675</span>
+<span class="normal">2676</span>
+<span class="normal">2677</span>
+<span class="normal">2678</span>
 <span class="normal">2679</span>
 <span class="normal">2680</span>
 <span class="normal">2681</span>
@@ -1779,63 +1848,7 @@
 <span class="normal">2753</span>
 <span class="normal">2754</span>
 <span class="normal">2755</span>
-<span class="normal">2756</span>
-<span class="normal">2757</span>
-<span class="normal">2758</span>
-<span class="normal">2759</span>
-<span class="normal">2760</span>
-<span class="normal">2761</span>
-<span class="normal">2762</span>
-<span class="normal">2763</span>
-<span class="normal">2764</span>
-<span class="normal">2765</span>
-<span class="normal">2766</span>
-<span class="normal">2767</span>
-<span class="normal">2768</span>
-<span class="normal">2769</span>
-<span class="normal">2770</span>
-<span class="normal">2771</span>
-<span class="normal">2772</span>
-<span class="normal">2773</span>
-<span class="normal">2774</span>
-<span class="normal">2775</span>
-<span class="normal">2776</span>
-<span class="normal">2777</span>
-<span class="normal">2778</span>
-<span class="normal">2779</span>
-<span class="normal">2780</span>
-<span class="normal">2781</span>
-<span class="normal">2782</span>
-<span class="normal">2783</span>
-<span class="normal">2784</span>
-<span class="normal">2785</span>
-<span class="normal">2786</span>
-<span class="normal">2787</span>
-<span class="normal">2788</span>
-<span class="normal">2789</span>
-<span class="normal">2790</span>
-<span class="normal">2791</span>
-<span class="normal">2792</span>
-<span class="normal">2793</span>
-<span class="normal">2794</span>
-<span class="normal">2795</span>
-<span class="normal">2796</span>
-<span class="normal">2797</span>
-<span class="normal">2798</span>
-<span class="normal">2799</span>
-<span class="normal">2800</span>
-<span class="normal">2801</span>
-<span class="normal">2802</span>
-<span class="normal">2803</span>
-<span class="normal">2804</span>
-<span class="normal">2805</span>
-<span class="normal">2806</span>
-<span class="normal">2807</span>
-<span class="normal">2808</span>
-<span class="normal">2809</span>
-<span class="normal">2810</span>
-<span class="normal">2811</span>
-<span class="normal">2812</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoMutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoSequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">MutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="normal">2756</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoMutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoSequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">MutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Extends `PyoSequence[T]` and `collections.abc.MutableSequence[T]`.</span>
 
 <span class="sd">    This ABC is the base class for mutable sequence types in pyochain, such as `Vec`.</span>
@@ -1890,16 +1903,9 @@
 
 <span class="sd">        ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">write_idx</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">read_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">length</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">predicate</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">read_idx</span><span class="p">]):</span>
-                <span class="bp">self</span><span class="p">[</span><span class="n">write_idx</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">read_idx</span><span class="p">]</span>
-                <span class="n">write_idx</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="n">pop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pop</span>
-        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">write_idx</span><span class="p">:</span>
-            <span class="n">_</span> <span class="o">=</span> <span class="n">pop</span><span class="p">(</span><span class="n">write_idx</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tls</span><span class="o">.</span><span class="n">retain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">predicate</span><span class="p">)</span>
 
+    <span class="c1"># NOTE: need to check what does `pop` do really here regarding index</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">truncate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Shortens the `MutableSequence`, keeping the first *length* elements and dropping the rest.</span>
 
@@ -1946,11 +1952,13 @@
         <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="n">length</span><span class="p">):</span>
             <span class="n">_</span> <span class="o">=</span> <span class="n">pop</span><span class="p">()</span>
 
+    <span class="c1"># NOTE: Rust does not support MutableSequence ATM. We either need to find a new implementation, or wait until MutableSequence is supported to implement this method.</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">extend_move</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Self</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Moves all the elements of *other* into *self*, leaving *other* empty.</span>
 
-<span class="sd">        Note:</span>
-<span class="sd">            This is equivalent to `extend(other)` followed by `other.clear()`, but avoids intermediate allocations by moving elements one at a time.</span>
+<span class="sd">        This is equivalent to `extend(other)` followed by `other.clear()`, but avoids intermediate allocations by moving elements one at a time.</span>
+
+<span class="sd">        Each element is extracted from **other**, appended to **self**, and removed from **other** in a single step.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            other (Self | list[T]): The other `MutableSequence` to move elements from.</span>
@@ -1967,9 +1975,27 @@
 <span class="sd">        Vec()</span>
 
 <span class="sd">        ```</span>
+<span class="sd">        If we compare to extend</span>
+
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; v1 = Vec((1, 2, 3))</span>
+<span class="sd">        &gt;&gt;&gt; v2 = Vec((4, 5, 6))</span>
+<span class="sd">        &gt;&gt;&gt; v1.extend(v2)</span>
+<span class="sd">        &gt;&gt;&gt; v1</span>
+<span class="sd">        Vec(1, 2, 3, 4, 5, 6)</span>
+<span class="sd">        &gt;&gt;&gt; # At this point v2 is still intact,</span>
+<span class="sd">        &gt;&gt;&gt; # meaning that we have a full intermediate copy of v2 in memory,</span>
+<span class="sd">        &gt;&gt;&gt; # which is not the case with extend_move</span>
+<span class="sd">        &gt;&gt;&gt; v2</span>
+<span class="sd">        Vec(4, 5, 6)</span>
+<span class="sd">        &gt;&gt;&gt; v2.clear()</span>
+<span class="sd">        &gt;&gt;&gt; v2</span>
+<span class="sd">        Vec()</span>
+
+<span class="sd">        ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">pop</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">pop</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">pop</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">other</span><span class="p">)))</span>
+        <span class="n">pop</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">pop</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">other</span><span class="p">)))</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -1998,12 +2024,9 @@
     <div class="doc doc-contents ">
 
         <p>Moves all the elements of <em>other</em> into <em>self</em>, leaving <em>other</em> empty.</p>
+<p>This is equivalent to <code>extend(other)</code> followed by <code>other.clear()</code>, but avoids intermediate allocations by moving elements one at a time.</p>
+<p>Each element is extracted from <strong>other</strong>, appended to <strong>self</strong>, and removed from <strong>other</strong> in a single step.</p>
 
-
-<details class="note" open>
-  <summary>Note</summary>
-  <p>This is equivalent to <code>extend(other)</code> followed by <code>other.clear()</code>, but avoids intermediate allocations by moving elements one at a time.</p>
-</details>
 
 <p><span class="doc-section-title">Parameters:</span></p>
     <table>
@@ -2043,39 +2066,74 @@
 <span class="n">Vec</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">v2</span>
 <span class="n">Vec</span><span class="p">()</span>
-</code></pre></div></p>
+</code></pre></div>
+If we compare to extend</p>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="n">v1</span> <span class="o">=</span> <span class="n">Vec</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">v2</span> <span class="o">=</span> <span class="n">Vec</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">v1</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">v2</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">v1</span>
+<span class="n">Vec</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="c1"># At this point v2 is still intact,</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="c1"># meaning that we have a full intermediate copy of v2 in memory,</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="c1"># which is not the case with extend_move</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">v2</span>
+<span class="n">Vec</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">v2</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">v2</span>
+<span class="n">Vec</span><span class="p">()</span>
+</code></pre></div>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2789</span>
-<span class="normal">2790</span>
-<span class="normal">2791</span>
-<span class="normal">2792</span>
-<span class="normal">2793</span>
-<span class="normal">2794</span>
-<span class="normal">2795</span>
-<span class="normal">2796</span>
-<span class="normal">2797</span>
-<span class="normal">2798</span>
-<span class="normal">2799</span>
-<span class="normal">2800</span>
-<span class="normal">2801</span>
-<span class="normal">2802</span>
-<span class="normal">2803</span>
-<span class="normal">2804</span>
-<span class="normal">2805</span>
-<span class="normal">2806</span>
-<span class="normal">2807</span>
-<span class="normal">2808</span>
-<span class="normal">2809</span>
-<span class="normal">2810</span>
-<span class="normal">2811</span>
-<span class="normal">2812</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extend_move</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Self</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2714</span>
+<span class="normal">2715</span>
+<span class="normal">2716</span>
+<span class="normal">2717</span>
+<span class="normal">2718</span>
+<span class="normal">2719</span>
+<span class="normal">2720</span>
+<span class="normal">2721</span>
+<span class="normal">2722</span>
+<span class="normal">2723</span>
+<span class="normal">2724</span>
+<span class="normal">2725</span>
+<span class="normal">2726</span>
+<span class="normal">2727</span>
+<span class="normal">2728</span>
+<span class="normal">2729</span>
+<span class="normal">2730</span>
+<span class="normal">2731</span>
+<span class="normal">2732</span>
+<span class="normal">2733</span>
+<span class="normal">2734</span>
+<span class="normal">2735</span>
+<span class="normal">2736</span>
+<span class="normal">2737</span>
+<span class="normal">2738</span>
+<span class="normal">2739</span>
+<span class="normal">2740</span>
+<span class="normal">2741</span>
+<span class="normal">2742</span>
+<span class="normal">2743</span>
+<span class="normal">2744</span>
+<span class="normal">2745</span>
+<span class="normal">2746</span>
+<span class="normal">2747</span>
+<span class="normal">2748</span>
+<span class="normal">2749</span>
+<span class="normal">2750</span>
+<span class="normal">2751</span>
+<span class="normal">2752</span>
+<span class="normal">2753</span>
+<span class="normal">2754</span>
+<span class="normal">2755</span>
+<span class="normal">2756</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extend_move</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Self</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Moves all the elements of *other* into *self*, leaving *other* empty.</span>
 
-<span class="sd">    Note:</span>
-<span class="sd">        This is equivalent to `extend(other)` followed by `other.clear()`, but avoids intermediate allocations by moving elements one at a time.</span>
+<span class="sd">    This is equivalent to `extend(other)` followed by `other.clear()`, but avoids intermediate allocations by moving elements one at a time.</span>
+
+<span class="sd">    Each element is extracted from **other**, appended to **self**, and removed from **other** in a single step.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        other (Self | list[T]): The other `MutableSequence` to move elements from.</span>
@@ -2092,9 +2150,27 @@
 <span class="sd">    Vec()</span>
 
 <span class="sd">    ```</span>
+<span class="sd">    If we compare to extend</span>
+
+<span class="sd">    ```python</span>
+<span class="sd">    &gt;&gt;&gt; v1 = Vec((1, 2, 3))</span>
+<span class="sd">    &gt;&gt;&gt; v2 = Vec((4, 5, 6))</span>
+<span class="sd">    &gt;&gt;&gt; v1.extend(v2)</span>
+<span class="sd">    &gt;&gt;&gt; v1</span>
+<span class="sd">    Vec(1, 2, 3, 4, 5, 6)</span>
+<span class="sd">    &gt;&gt;&gt; # At this point v2 is still intact,</span>
+<span class="sd">    &gt;&gt;&gt; # meaning that we have a full intermediate copy of v2 in memory,</span>
+<span class="sd">    &gt;&gt;&gt; # which is not the case with extend_move</span>
+<span class="sd">    &gt;&gt;&gt; v2</span>
+<span class="sd">    Vec(4, 5, 6)</span>
+<span class="sd">    &gt;&gt;&gt; v2.clear()</span>
+<span class="sd">    &gt;&gt;&gt; v2</span>
+<span class="sd">    Vec()</span>
+
+<span class="sd">    ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">pop</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">pop</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">pop</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">other</span><span class="p">)))</span>
+    <span class="n">pop</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">pop</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">other</span><span class="p">)))</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2170,50 +2246,42 @@ External state may be used to decide which elements to keep.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2698</span>
-<span class="normal">2699</span>
-<span class="normal">2700</span>
-<span class="normal">2701</span>
-<span class="normal">2702</span>
-<span class="normal">2703</span>
-<span class="normal">2704</span>
-<span class="normal">2705</span>
-<span class="normal">2706</span>
-<span class="normal">2707</span>
-<span class="normal">2708</span>
-<span class="normal">2709</span>
-<span class="normal">2710</span>
-<span class="normal">2711</span>
-<span class="normal">2712</span>
-<span class="normal">2713</span>
-<span class="normal">2714</span>
-<span class="normal">2715</span>
-<span class="normal">2716</span>
-<span class="normal">2717</span>
-<span class="normal">2718</span>
-<span class="normal">2719</span>
-<span class="normal">2720</span>
-<span class="normal">2721</span>
-<span class="normal">2722</span>
-<span class="normal">2723</span>
-<span class="normal">2724</span>
-<span class="normal">2725</span>
-<span class="normal">2726</span>
-<span class="normal">2727</span>
-<span class="normal">2728</span>
-<span class="normal">2729</span>
-<span class="normal">2730</span>
-<span class="normal">2731</span>
-<span class="normal">2732</span>
-<span class="normal">2733</span>
-<span class="normal">2734</span>
-<span class="normal">2735</span>
-<span class="normal">2736</span>
-<span class="normal">2737</span>
-<span class="normal">2738</span>
-<span class="normal">2739</span>
-<span class="normal">2740</span>
-<span class="normal">2741</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">retain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">predicate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">bool</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2629</span>
+<span class="normal">2630</span>
+<span class="normal">2631</span>
+<span class="normal">2632</span>
+<span class="normal">2633</span>
+<span class="normal">2634</span>
+<span class="normal">2635</span>
+<span class="normal">2636</span>
+<span class="normal">2637</span>
+<span class="normal">2638</span>
+<span class="normal">2639</span>
+<span class="normal">2640</span>
+<span class="normal">2641</span>
+<span class="normal">2642</span>
+<span class="normal">2643</span>
+<span class="normal">2644</span>
+<span class="normal">2645</span>
+<span class="normal">2646</span>
+<span class="normal">2647</span>
+<span class="normal">2648</span>
+<span class="normal">2649</span>
+<span class="normal">2650</span>
+<span class="normal">2651</span>
+<span class="normal">2652</span>
+<span class="normal">2653</span>
+<span class="normal">2654</span>
+<span class="normal">2655</span>
+<span class="normal">2656</span>
+<span class="normal">2657</span>
+<span class="normal">2658</span>
+<span class="normal">2659</span>
+<span class="normal">2660</span>
+<span class="normal">2661</span>
+<span class="normal">2662</span>
+<span class="normal">2663</span>
+<span class="normal">2664</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">retain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">predicate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">bool</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Retains only the elements specified by the *predicate*.</span>
 
 <span class="sd">    In other words, remove all elements e for which the *predicate* function returns `False`.</span>
@@ -2248,15 +2316,7 @@ External state may be used to decide which elements to keep.</p>
 
 <span class="sd">    ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">write_idx</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">read_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">length</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">predicate</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">read_idx</span><span class="p">]):</span>
-            <span class="bp">self</span><span class="p">[</span><span class="n">write_idx</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">read_idx</span><span class="p">]</span>
-            <span class="n">write_idx</span> <span class="o">+=</span> <span class="mi">1</span>
-    <span class="n">pop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pop</span>
-    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">write_idx</span><span class="p">:</span>
-        <span class="n">_</span> <span class="o">=</span> <span class="n">pop</span><span class="p">(</span><span class="n">write_idx</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tls</span><span class="o">.</span><span class="n">retain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">predicate</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2339,51 +2399,51 @@ Truncating when len == 0 is equivalent to calling the clear method.
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2743</span>
-<span class="normal">2744</span>
-<span class="normal">2745</span>
-<span class="normal">2746</span>
-<span class="normal">2747</span>
-<span class="normal">2748</span>
-<span class="normal">2749</span>
-<span class="normal">2750</span>
-<span class="normal">2751</span>
-<span class="normal">2752</span>
-<span class="normal">2753</span>
-<span class="normal">2754</span>
-<span class="normal">2755</span>
-<span class="normal">2756</span>
-<span class="normal">2757</span>
-<span class="normal">2758</span>
-<span class="normal">2759</span>
-<span class="normal">2760</span>
-<span class="normal">2761</span>
-<span class="normal">2762</span>
-<span class="normal">2763</span>
-<span class="normal">2764</span>
-<span class="normal">2765</span>
-<span class="normal">2766</span>
-<span class="normal">2767</span>
-<span class="normal">2768</span>
-<span class="normal">2769</span>
-<span class="normal">2770</span>
-<span class="normal">2771</span>
-<span class="normal">2772</span>
-<span class="normal">2773</span>
-<span class="normal">2774</span>
-<span class="normal">2775</span>
-<span class="normal">2776</span>
-<span class="normal">2777</span>
-<span class="normal">2778</span>
-<span class="normal">2779</span>
-<span class="normal">2780</span>
-<span class="normal">2781</span>
-<span class="normal">2782</span>
-<span class="normal">2783</span>
-<span class="normal">2784</span>
-<span class="normal">2785</span>
-<span class="normal">2786</span>
-<span class="normal">2787</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">truncate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2667</span>
+<span class="normal">2668</span>
+<span class="normal">2669</span>
+<span class="normal">2670</span>
+<span class="normal">2671</span>
+<span class="normal">2672</span>
+<span class="normal">2673</span>
+<span class="normal">2674</span>
+<span class="normal">2675</span>
+<span class="normal">2676</span>
+<span class="normal">2677</span>
+<span class="normal">2678</span>
+<span class="normal">2679</span>
+<span class="normal">2680</span>
+<span class="normal">2681</span>
+<span class="normal">2682</span>
+<span class="normal">2683</span>
+<span class="normal">2684</span>
+<span class="normal">2685</span>
+<span class="normal">2686</span>
+<span class="normal">2687</span>
+<span class="normal">2688</span>
+<span class="normal">2689</span>
+<span class="normal">2690</span>
+<span class="normal">2691</span>
+<span class="normal">2692</span>
+<span class="normal">2693</span>
+<span class="normal">2694</span>
+<span class="normal">2695</span>
+<span class="normal">2696</span>
+<span class="normal">2697</span>
+<span class="normal">2698</span>
+<span class="normal">2699</span>
+<span class="normal">2700</span>
+<span class="normal">2701</span>
+<span class="normal">2702</span>
+<span class="normal">2703</span>
+<span class="normal">2704</span>
+<span class="normal">2705</span>
+<span class="normal">2706</span>
+<span class="normal">2707</span>
+<span class="normal">2708</span>
+<span class="normal">2709</span>
+<span class="normal">2710</span>
+<span class="normal">2711</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">truncate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Shortens the `MutableSequence`, keeping the first *length* elements and dropping the rest.</span>
 
 <span class="sd">    If *length* is greater or equal to the `MutableSequence` current `__len__()`, this has no effect.</span>

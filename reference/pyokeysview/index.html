@@ -1631,18 +1631,18 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2422</span>
-<span class="normal">2423</span>
-<span class="normal">2424</span>
-<span class="normal">2425</span>
-<span class="normal">2426</span>
-<span class="normal">2427</span>
-<span class="normal">2428</span>
-<span class="normal">2429</span>
-<span class="normal">2430</span>
-<span class="normal">2431</span>
-<span class="normal">2432</span>
-<span class="normal">2433</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoKeysView</span><span class="p">[</span><span class="n">K</span><span class="p">](</span><span class="n">KeysView</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">PyoMappingView</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">PyoSet</span><span class="p">[</span><span class="n">K</span><span class="p">]):</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2353</span>
+<span class="normal">2354</span>
+<span class="normal">2355</span>
+<span class="normal">2356</span>
+<span class="normal">2357</span>
+<span class="normal">2358</span>
+<span class="normal">2359</span>
+<span class="normal">2360</span>
+<span class="normal">2361</span>
+<span class="normal">2362</span>
+<span class="normal">2363</span>
+<span class="normal">2364</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoKeysView</span><span class="p">[</span><span class="n">K</span><span class="p">](</span><span class="n">KeysView</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">PyoMappingView</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">PyoSet</span><span class="p">[</span><span class="n">K</span><span class="p">]):</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A view of the keys in a pyochain mapping.</span>
 
 <span class="sd">    This concrete class is returned by the `PyoMapping.keys()` method, and inherits from `collections.abc.KeysView`, `PyoMappingView`, and `PyoSet`.</span>
