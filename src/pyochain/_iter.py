@@ -9,18 +9,16 @@ from collections.abc import (
     Iterable,
     Iterator,
     KeysView,
-    MutableSequence,
     Sequence,
     ValuesView,
 )
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal, Never, Self, TypeIs, overload, override
 
 from . import _tools as tls  # pyright: ignore[reportMissingModuleSource]
 from ._seq import Seq
 from ._types import SupportsRichComparison
-from .rs import Option, Result, option
-from .traits import Checkable, Pipeable, PyoIterator, PyoMutableSequence
+from .rs import Option, option
+from .traits import PyoIterator, PyoMutableSequence
 
 if TYPE_CHECKING:
     from ._dict import Dict
@@ -38,100 +36,6 @@ type ZippedLongest[T] = (
     | Iter[tuple[AnyOpt, ...]]
 )
 """Type representing the result of a `zip_longest` operation, which can yield tuples of varying lengths depending on the number of iterables zipped together."""
-
-
-@dataclass(slots=True)
-class Unzipped[T, V](Pipeable, Checkable):
-    """Represents the result of unzipping an `Iter` of pairs into two separate `Iter`.
-
-    Attributes:
-        left (Iter[T]): An `Iter` over the first elements of the pairs.
-        right (Iter[V]): An `Iter` over the second elements of the pairs.
-
-    See Also:
-        `Iter::unzip`
-    Example:
-    ```python
-    >>> from pyochain import Iter
-    >>> pairs = Iter(((1, "a"), (2, "b"), (3, "c")))
-    >>> unzipped = pairs.unzip()
-    >>> unzipped.left.collect()
-    Seq(1, 2, 3)
-
-    ```
-    """
-
-    left: Iter[T]
-    right: Iter[V]
-
-    def __bool__(self) -> bool:
-        return bool(self.left) and bool(self.right)
-
-
-@dataclass(slots=True)
-class Peekable[T](Pipeable, Checkable):
-    """Represents the result of peeking into an `Iter`.
-
-    Inerhit from `Checkable` to provide truthiness based on whether any elements were peeked.
-
-    Attributes:
-        peek (Seq[T]): A `Seq` of the peeked elements.
-        values (Iter[T]): An `Iter` of values, still including the peeked elements.
-
-    See Also:
-        `Iter.peekable()`
-        `Iter.cloned()`
-
-    Example:
-    ```python
-    >>> from pyochain import Iter
-    >>> it = Iter((1, 2, 3, 4, 5))
-    >>> peekable = it.peekable(3)
-    >>> peekable.peek
-    Seq(1, 2, 3)
-    >>> peekable.values.collect()
-    Seq(1, 2, 3, 4, 5)
-
-    ```
-    """
-
-    peek: Seq[T]
-    values: Iter[T]
-
-    def __bool__(self) -> bool:
-        return bool(self.peek)
-
-
-@dataclass(slots=True)
-class DrainIterator[T](Iterator[T]):
-    """An `Iterator` that drains elements from a `Vec` within a specified range.
-
-    This class is not supposed to be used directly. Use `Vec.drain()` instead to obtain an `Iter` wrapper around it.
-
-    See `Vec.drain()` for details.
-    """
-
-    _vec: MutableSequence[T]
-    _idx: int
-    _end_idx: int
-
-    @override
-    def __iter__(self) -> Self:
-        return self
-
-    @override
-    def __next__(self) -> T:
-        if self._idx >= self._end_idx:
-            raise StopIteration
-        val = self._vec.pop(self._idx)
-        self._end_idx -= 1
-        return val
-
-    def __del__(self) -> None:
-        pop = self._vec.pop
-        while self._idx < self._end_idx:
-            _ = pop(self._idx)
-            self._end_idx -= 1
 
 
 # TODO: structures that use python builtins should inerhit all their dunder, e.g __eq__.
@@ -289,115 +193,6 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
         """
         self._inner.sort(key=key, reverse=reverse)  # pyright: ignore[reportArgumentType]
         return self
-
-    def extract_if(
-        self, predicate: Callable[[T], bool], start: int = 0, end: int | None = None
-    ) -> Iter[T]:
-        """Creates an `Iter` which uses a *predicate* to determine if an element in the `Vec` should be removed.
-
-        If the *predicate* returns `True`, the element is removed from the `Vec` and yielded.
-
-        If the *predicate* returns `False`, the element remains in the `Vec` and will not be yielded.
-
-        You can specify a range for the extraction.
-        If the returned `Iterator` is not exhausted, e.g. because it is dropped without iterating or the iteration short-circuits,
-
-        then the remaining elements will be retained.
-
-        Using this method is equivalent to the following code:
-        ```python
-        data = Vec((...))
-        for i in range(data.length()):
-            if predicate(data[i]):
-                val = data.pop(i)
-                # your code here
-        ```
-
-        Args:
-            predicate (Callable[[T], bool]): A function that takes an element and returns `True` if it should be extracted, or `False` if it should be retained.
-            start (int): The starting index of the range to consider for extraction. Defaults to `0`.
-            end (int | None): The ending index of the range to consider for extraction. Defaults to `None`, which means the end of the `Vec`.
-
-        Returns:
-            Iter[T]: An `Iter` that yields the extracted elements.
-
-        Example:
-        ```python
-        >>> from pyochain import Vec
-        >>> data = (1, 2, 3, 4, 5)
-        >>> vec = Vec(data)
-        >>> extracted = vec.extract_if(lambda x: x % 2 == 0).collect()
-        >>> extracted
-        Seq(2, 4)
-        >>> vec
-        Vec(1, 3, 5)
-        >>> # Extracting with a range
-        >>> vec = Vec(data)
-        >>> extracted = vec.extract_if(lambda x: x % 2 == 0, start=1, end=4).collect()
-        >>> extracted
-        Seq(2, 4)
-        >>> vec
-        Vec(1, 3, 5)
-
-        ```
-        """
-
-        def _extract_if_gen() -> Iterator[T]:
-            effective_end = end if end is not None else len(self)
-            i = start
-            pop = self.pop
-            while i < effective_end and i < len(self):
-                if predicate(self[i]):
-                    yield pop(i)
-                    effective_end -= 1
-                else:
-                    i += 1
-
-        return Iter(_extract_if_gen())
-
-    def drain(self, start: int | None = None, end: int | None = None) -> Iter[T]:
-        """Removes the subslice indicated by the given *start* and *end* from the `Vec`, returning an `Iterator` over the removed subslice.
-
-        If the `Iterator` is dropped before being fully consumed, it drops the remaining removed elements.
-
-        Note:
-            In CPython, remaining elements are cleaned up when the `Iterator` is garbage collected via `__del__`.
-            However, in interactive environments like doctests, garbage collection may not happen immediately.
-            To guarantee cleanup, fully consume the `Iterator` or explicitly call `.collect()` on it.
-
-        Args:
-            start (int | None): Starting index of the subslice to drain. Defaults to `0` if `None`.
-            end (int | None): Ending index of the subslice to drain. Defaults to `len(self)` if `None`.
-
-        Returns:
-            Iter[T]: An `Iterator` over the drained elements.
-
-        Example:
-        ```python
-        >>> from pyochain import Vec
-        >>> v = Vec.from_ref([1, 2, 3])
-        >>> u = v.drain(1).collect()
-        >>> v
-        Vec(1)
-        >>> u
-        Seq(2, 3)
-        >>> # A full range clears the vector, like `clear()` does
-        >>> _ = v.drain().collect()
-        >>> v
-        Vec()
-
-        ```
-        Fully consuming the `Iterator` removes all drained elements
-        ```python
-        >>> from pyochain import Vec
-        >>> v = Vec.from_ref([1, 2, 3])
-        >>> _ = v.drain(0, 3).collect()
-        >>> v
-        Vec()
-
-        ```
-        """
-        return Iter(DrainIterator(self, start or 0, end or len(self)))
 
     @override
     def concat(self, other: list[T] | Self) -> Vec[T]:  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -825,58 +620,6 @@ class Iter[T](PyoIterator[T]):
         This notably avoid repetition if you collect anything else than the default `Seq` type.
         """
         return collector(self._inner)
-
-    @overload
-    def try_collect[U](self: Iter[Option[U]]) -> Option[Vec[U]]: ...
-    @overload
-    def try_collect[U, E](self: Iter[Result[U, E]]) -> Option[Vec[U]]: ...
-    def try_collect[U](self: Iter[Option[U]] | Iter[Result[U, Any]]) -> Option[Vec[U]]:  # pyright: ignore[reportExplicitAny]
-        """Fallibly transforms **self** into a `Vec`, short circuiting if a failure is encountered.
-
-        `try_collect()` is a variation of `collect()` that allows fallible conversions during collection.
-
-        Its main use case is simplifying conversions from iterators yielding `Option[T]` or `Result[T, E]` into `Option[Vec[T]]`.
-
-        Also, if a failure is encountered during `try_collect()`, the `Iter` is still valid and may continue to be used, in which case it will continue iterating starting after the element that triggered the failure.
-
-        See the last example below for an example of how this works.
-
-        Note:
-            This method return `Vec[U]` instead of being customizable, because the underlying data structure must be mutable in order to build up the collection.
-
-        Returns:
-            Option[Vec[U]]: `Some[Vec[U]]` if all elements were successfully collected, or `NONE` if a failure was encountered.
-
-        Example:
-        ```python
-        >>> from pyochain import Iter, Some, Ok, Err, NONE, Vec
-        >>> # Successfully collecting an iterator of Option[int] into Option[Vec[int]]:
-        >>> Iter([Some(1), Some(2), Some(3)]).try_collect()
-        Some(Vec(1, 2, 3))
-        >>> # Failing to collect in the same way:
-        >>> Iter([Some(1), Some(2), NONE, Some(3)]).try_collect()
-        NONE
-        >>> # A similar example, but with Result:
-        >>> Iter([Ok(1), Ok(2), Ok(3)]).try_collect()
-        Some(Vec(1, 2, 3))
-        >>> Iter([Ok(1), Err("error"), Ok(3)]).try_collect()
-        NONE
-        >>> def external_fn(x: int) -> Option[int]:
-        ...     if x % 2 == 0:
-        ...         return Some(x)
-        ...     return NONE
-        >>> Iter([1, 2, 3, 4]).map(external_fn).try_collect()
-        NONE
-        >>> # Demonstrating that the iterator remains usable after a failure:
-        >>> it = Iter([Some(1), NONE, Some(3), Some(4)])
-        >>> it.try_collect()
-        NONE
-        >>> it.try_collect()
-        Some(Vec(3, 4))
-
-        ```
-        """
-        return tls.try_collect(self._inner).map(Vec.from_ref)
 
     def array_chunks(self, size: int) -> Iter[Self]:
         """Yield subiterators (chunks) that each yield a fixed number elements, determined by size.
@@ -1822,17 +1565,11 @@ class Iter[T](PyoIterator[T]):
             for tup in itertools.zip_longest(self._inner, *others, fillvalue=None)
         )
 
-    def unzip[U, V](self: Iter[tuple[U, V]]) -> Unzipped[U, V]:
+    def unzip[U, V](self: Iter[tuple[U, V]]) -> tuple[Iter[U], Iter[V]]:
         """Converts an iterator of pairs into a pair of iterators.
 
         Returns:
-            Unzipped[U, V]: dataclass with first and second iterators.
-
-
-        Returns an `Unzipped` dataclass, containing two iterators:
-
-        - one from the left elements of the pairs
-        - one from the right elements.
+            tuple[Iter[U], Iter[V]]: A tuple containing two iterators, one for each element of the pairs.
 
         This function is, in some sense, the opposite of `.zip()`.
 
@@ -1847,16 +1584,16 @@ class Iter[T](PyoIterator[T]):
         ```python
         >>> from pyochain import Iter
         >>> data = ((1, "a"), (2, "b"), (3, "c"))
-        >>> unzipped = Iter(data).unzip()
-        >>> unzipped.left.collect()
+        >>> left, right = Iter(data).unzip()
+        >>> left.collect()
         Seq(1, 2, 3)
-        >>> unzipped.right.collect()
+        >>> right.collect()
         Seq('a', 'b', 'c')
 
         ```
         """
         left, right = itertools.tee(self._inner, 2)
-        return Unzipped(Iter(x[0] for x in left), Iter(x[1] for x in right))
+        return Iter(x[0] for x in left), Iter(x[1] for x in right)
 
     def cloned(self) -> Self:
         """Clone the `Iter` into a new independent `Iter` using `itertools.tee`.
@@ -2173,21 +1910,19 @@ class Iter[T](PyoIterator[T]):
         """
         return Iter(itertools.batched(self._inner, n, strict=strict))
 
-    def peekable(self, n: int) -> Peekable[T]:
-        """Retrieve the next **n** elements from the `Iterator`, and return a `Seq` of the retrieved elements along with the original `Iterator`, unconsumed.
+    def peekable(self, n: int) -> tuple[Seq[T], Self]:
+        """Retrieve the next **n** elements from the `Iterator`, whilst leaving the original iterator unconsumed.
 
-        The returned `Peekable` object contains two attributes:
+        The returned tuple contains two elements:
 
-        - *peek*: A `Seq` of the next **n** elements.
-        - *values*: An `Iter` that includes the peeked elements followed by the remaining elements of the original `Iterator`.
-
-        `Peekable` implement `Checkable` on the *peek* attribute.
+        - A `Seq` of the next **n** elements.
+        - An `Iter` that includes the peeked elements followed by the remaining elements of the original `Iterator`.
 
         Args:
             n (int): Number of items to peek.
 
         Returns:
-            Peekable[T]: A `Peekable` object containing the peeked elements and the remaining iterator.
+            tuple[Seq[T], Self]: A tuple containing the peeked elements and the remaining iterator.
 
         See Also:
             `Iter.cloned()` to create an independent copy of the iterator.
@@ -2195,16 +1930,18 @@ class Iter[T](PyoIterator[T]):
         Example:
         ```python
         >>> from pyochain import Iter
-        >>> data = Iter((1, 2, 3)).peekable(2)
-        >>> data.peek
+        >>> peeked, remaining = Iter((1, 2, 3)).peekable(2)
+        >>> peeked
         Seq(1, 2)
-        >>> data.values.collect()
+        >>> remaining.collect()
         Seq(1, 2, 3)
 
         ```
         """
-        peeked = Seq(itertools.islice(self._inner, n))
-        return Peekable(peeked, Iter(itertools.chain(peeked, self._inner)))
+        iterator = iter(self)
+        peeked = Seq(itertools.islice(iterator, n))
+        remaining = self.__class__(itertools.chain(peeked, iterator))
+        return peeked, remaining
 
     def enumerate(self, start: int = 0) -> Iter[tuple[int, T]]:
         """Return a `Iter` of (index, value) pairs.
@@ -2634,82 +2371,6 @@ class Iter[T](PyoIterator[T]):
         """
         new = self.__class__
         return Iter((x, new(y)) for x, y in itertools.groupby(self._inner, key))
-
-    @overload
-    def sort[U: SupportsRichComparison[Any]](
-        self: Iter[U],
-        *,
-        key: None = None,
-        reverse: bool = False,
-    ) -> Vec[U]: ...
-    @overload
-    def sort(
-        self,
-        *,
-        key: Callable[[T], SupportsRichComparison[Any]],  # pyright: ignore[reportExplicitAny]
-        reverse: bool = False,
-    ) -> Vec[T]: ...
-    @overload
-    def sort(
-        self,
-        *,
-        key: None = None,
-        reverse: bool = False,
-    ) -> Never: ...
-    def sort(
-        self,
-        *,
-        key: Callable[[T], SupportsRichComparison[Any]] | None = None,  # pyright: ignore[reportExplicitAny]
-        reverse: bool = False,
-    ) -> Vec[Any]:  # pyright: ignore[reportExplicitAny]
-        """Sort the elements of the sequence.
-
-        If a key function is provided, it is used to extract a comparison key from each element.
-
-        Note:
-            This method must consume the entire `Iter` to perform the sort.
-            The result is a new `Vec` over the sorted sequence.
-
-        Args:
-            key (Callable[[T], SupportsRichComparison[Any]] | None): Function to extract a comparison key from each element.
-            reverse (bool): Whether to sort in descending order.
-
-        Returns:
-            Vec[Any]: A `Vec` with elements sorted.
-
-        Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((3, 1, 2)).sort()
-        Vec(1, 2, 3)
-
-        ```
-        """
-        return Vec.from_ref(sorted(self._inner, reverse=reverse, key=key))
-
-    def tail(self, n: int) -> Seq[T]:
-        """Return a `Seq` of the last **n** elements of the `Iterator`.
-
-        Args:
-            n (int): Number of elements to return.
-
-        Returns:
-            Seq[T]: A `Seq` containing the last **n** elements.
-
-        Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2, 3)).tail(2)
-        Seq(2, 3)
-
-        ```
-        """
-        from collections import deque
-
-        # TODO: we should move this to Rust and make it fully lazy.
-        # Here we recollect it in a Seq to clearly indicate that we need to consume the entire iterator to get the tail.
-        # Alternatively, add `deque` wrapper to public API, and `from_ref` it here.
-        return Seq(deque(self._inner, n))
 
     def take_while(self, predicate: Callable[[T], bool]) -> Self:
         """Take items while predicate holds.

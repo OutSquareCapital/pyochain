@@ -6,6 +6,7 @@
 
 - **Removed**: `PyoIterable::new`. Call `__init__(())` for the same behavior, i.e `Seq(())`, `Iter(())`, etc...
 - **API change**: `PyoIterable::__init__` is deleted. This means that subclasses are free to implement their own constructors, without typing constraints nor default behavior.
+- **Removed**: `Unzipped` and `Peekable` dataclasses. The `Iter` methods who constructed them now simply return tuples instead, simplifying the API and improving speed.
 
 #### Methods migration to concrete parents
 
@@ -31,7 +32,8 @@ from `PyoIterator` to `Iter` ->
 
 ### ✨ Enhancements
 
-- **Migrated**: `Iter::collect_into` has been moved to `PyoIterator`, meaning all user-defined subclasses can now call it.
+- **Migrated**: `Iter::{collect_into, try_collect, sort, tail}` have been moved to `PyoIterator`, meaning all user-defined subclasses can now call them.
+- **Migrated**: `Vec::{drain, extract_if}` have been moved to `PyoMutableSequence`, meaning all user-defined mutable sequence subclasses can now call them.
 
 ### 📖 Documentation
 

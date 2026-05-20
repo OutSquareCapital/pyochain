@@ -18,8 +18,9 @@ from collections.abc import (
     ValuesView,
 )
 from collections.abc import Set as AbstractSet
+from dataclasses import dataclass
 from operator import itemgetter
-from typing import TYPE_CHECKING, Any, Concatenate, Self, overload, override
+from typing import TYPE_CHECKING, Any, Concatenate, Never, Self, overload, override
 
 from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
 from .._types import SupportsComparison, SupportsRichComparison
@@ -27,9 +28,43 @@ from ..rs import NONE, Checkable, Err, Ok, Option, Pipeable, Result, Some, optio
 
 if TYPE_CHECKING:
     from .._iter import Iter, Vec
+    from .._seq import Seq
+    from ..rs import Option, Result
 
 type Comparable[T] = list[T] | tuple[T, ...] | set[T] | frozenset[T]
 type Comparator[T] = Callable[[Comparable[T], Comparable[T]], bool]
+
+
+@dataclass(slots=True)
+class DrainIterator[T](Iterator[T]):
+    """An `Iterator` that drains elements from a `Vec` within a specified range.
+
+    This class is not supposed to be used directly. Use `Vec.drain()` instead to obtain an `Iter` wrapper around it.
+
+    See `Vec.drain()` for details.
+    """
+
+    _vec: MutableSequence[T]
+    _idx: int
+    _end_idx: int
+
+    @override
+    def __iter__(self) -> Self:
+        return self
+
+    @override
+    def __next__(self) -> T:
+        if self._idx >= self._end_idx:
+            raise StopIteration
+        val = self._vec.pop(self._idx)
+        self._end_idx -= 1
+        return val
+
+    def __del__(self) -> None:
+        pop = self._vec.pop
+        while self._idx < self._end_idx:
+            _ = pop(self._idx)
+            self._end_idx -= 1
 
 
 class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
@@ -1555,6 +1590,142 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         collection.extend(iter(self))
         return collection
 
+    @overload
+    def try_collect[U](self: PyoIterator[Option[U]]) -> Option[Vec[U]]: ...
+    @overload
+    def try_collect[U, E](self: PyoIterator[Result[U, E]]) -> Option[Vec[U]]: ...
+    def try_collect[U](
+        self: PyoIterator[Option[U]] | PyoIterator[Result[U, Any]],  # pyright: ignore[reportExplicitAny]
+    ) -> Option[Vec[U]]:
+        """Fallibly transforms **self** into a `Vec`, short circuiting if a failure is encountered.
+
+        `try_collect()` is a variation of `collect()` that allows fallible conversions during collection.
+
+        Its main use case is simplifying conversions from iterators yielding `Option[T]` or `Result[T, E]` into `Option[Vec[T]]`.
+
+        Also, if a failure is encountered during `try_collect()`, the `Iter` is still valid and may continue to be used, in which case it will continue iterating starting after the element that triggered the failure.
+
+        See the last example below for an example of how this works.
+
+        Note:
+            This method return `Vec[U]` instead of being customizable, because the underlying data structure must be mutable in order to build up the collection.
+
+        Returns:
+            Option[Vec[U]]: `Some[Vec[U]]` if all elements were successfully collected, or `NONE` if a failure was encountered.
+
+        Example:
+        ```python
+        >>> from pyochain import Iter, Some, Ok, Err, NONE, Vec
+        >>> # Successfully collecting an iterator of Option[int] into Option[Vec[int]]:
+        >>> Iter([Some(1), Some(2), Some(3)]).try_collect()
+        Some(Vec(1, 2, 3))
+        >>> # Failing to collect in the same way:
+        >>> Iter([Some(1), Some(2), NONE, Some(3)]).try_collect()
+        NONE
+        >>> # A similar example, but with Result:
+        >>> Iter([Ok(1), Ok(2), Ok(3)]).try_collect()
+        Some(Vec(1, 2, 3))
+        >>> Iter([Ok(1), Err("error"), Ok(3)]).try_collect()
+        NONE
+        >>> def external_fn(x: int) -> Option[int]:
+        ...     if x % 2 == 0:
+        ...         return Some(x)
+        ...     return NONE
+        >>> Iter([1, 2, 3, 4]).map(external_fn).try_collect()
+        NONE
+        >>> # Demonstrating that the iterator remains usable after a failure:
+        >>> it = Iter([Some(1), NONE, Some(3), Some(4)])
+        >>> it.try_collect()
+        NONE
+        >>> it.try_collect()
+        Some(Vec(3, 4))
+
+        ```
+        """
+        from .._iter import Vec
+
+        return tls.try_collect(iter(self)).map(Vec.from_ref)
+
+    @overload
+    def sort[U: SupportsRichComparison[Any]](
+        self: Iter[U],
+        *,
+        key: None = None,
+        reverse: bool = False,
+    ) -> Vec[U]: ...
+    @overload
+    def sort(
+        self,
+        *,
+        key: Callable[[T], SupportsRichComparison[Any]],  # pyright: ignore[reportExplicitAny]
+        reverse: bool = False,
+    ) -> Vec[T]: ...
+    @overload
+    def sort(
+        self,
+        *,
+        key: None = None,
+        reverse: bool = False,
+    ) -> Never: ...
+    def sort(
+        self,
+        *,
+        key: Callable[[T], SupportsRichComparison[Any]] | None = None,  # pyright: ignore[reportExplicitAny]
+        reverse: bool = False,
+    ) -> Vec[Any]:  # pyright: ignore[reportExplicitAny]
+        """Sort the elements of the sequence.
+
+        If a key function is provided, it is used to extract a comparison key from each element.
+
+        Note:
+            This method must consume the entire `Iter` to perform the sort.
+            The result is a new `Vec` over the sorted sequence.
+
+        Args:
+            key (Callable[[T], SupportsRichComparison[Any]] | None): Function to extract a comparison key from each element.
+            reverse (bool): Whether to sort in descending order.
+
+        Returns:
+            Vec[Any]: A `Vec` with elements sorted.
+
+        Example:
+        ```python
+        >>> from pyochain import Iter
+        >>> Iter((3, 1, 2)).sort()
+        Vec(1, 2, 3)
+
+        ```
+        """
+        from .._iter import Vec
+
+        return Vec.from_ref(sorted(iter(self), reverse=reverse, key=key))
+
+    def tail(self, n: int) -> Seq[T]:
+        """Return a `Seq` of the last **n** elements of the `Iterator`.
+
+        Args:
+            n (int): Number of elements to return.
+
+        Returns:
+            Seq[T]: A `Seq` containing the last **n** elements.
+
+        Example:
+        ```python
+        >>> from pyochain import Iter
+        >>> Iter((1, 2, 3)).tail(2)
+        Seq(2, 3)
+
+        ```
+        """
+        from collections import deque
+
+        from .._seq import Seq
+
+        # TODO: we should move this to Rust and make it fully lazy.
+        # Here we recollect it in a Seq to clearly indicate that we need to consume the entire iterator to get the tail.
+        # Alternatively, add `deque` wrapper to public API, and `from_ref` it here.
+        return Seq(deque(iter(self), n))
+
 
 class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
     """Extends `PyoCollection[T]` and `collections.abc.Sequence[T]`.
@@ -2228,3 +2399,109 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
         """
         pop = other.pop
         self.extend(pop(0) for _ in range(len(other)))
+
+    def extract_if(
+        self, predicate: Callable[[T], bool], start: int = 0, end: int | None = None
+    ) -> Iter[T]:
+        """Creates an `Iter` which uses a *predicate* to determine if an element in `Self` should be removed.
+
+        If the *predicate* returns `True`, the element is removed from `Self` and yielded.
+
+        If the *predicate* returns `False`, the element remains in `Self` and will not be yielded.
+
+        You can specify a range for the extraction.
+
+        If the returned `Iterator` is not exhausted, e.g. because it is dropped without iterating or the iteration short-circuits, then the remaining elements will be retained.
+
+        Using this method is equivalent to the following code:
+        ```python
+        data = Vec((...))
+        for i in range(data.length()):
+            if predicate(data[i]):
+                val = data.pop(i)
+                # your code here
+        ```
+
+        Args:
+            predicate (Callable[[T], bool]): A function that takes an element and returns `True` if it should be extracted, or `False` if it should be retained.
+            start (int): The starting index of the range to consider for extraction. Defaults to `0`.
+            end (int | None): The ending index of the range to consider for extraction. Defaults to `None`, which means the end of `Self`.
+
+        Returns:
+            Iter[T]: An `Iter` that yields the extracted elements.
+
+        Example:
+        ```python
+        >>> from pyochain import Vec
+        >>> data = (1, 2, 3, 4, 5)
+        >>> vec = Vec(data)
+        >>> extracted = vec.extract_if(lambda x: x % 2 == 0).collect()
+        >>> extracted
+        Seq(2, 4)
+        >>> vec
+        Vec(1, 3, 5)
+        >>> # Extracting with a range
+        >>> vec = Vec(data)
+        >>> extracted = vec.extract_if(lambda x: x % 2 == 0, start=1, end=4).collect()
+        >>> extracted
+        Seq(2, 4)
+        >>> vec
+        Vec(1, 3, 5)
+
+        ```
+        """
+        from .._iter import Iter
+
+        def _extract_if_gen() -> Iterator[T]:
+            effective_end = end if end is not None else len(self)
+            i = start
+            pop = self.pop
+            while i < effective_end and i < len(self):
+                if predicate(self[i]):
+                    yield pop(i)
+                    effective_end -= 1
+                else:
+                    i += 1
+
+        return Iter(_extract_if_gen())
+
+    def drain(self, start: int | None = None, end: int | None = None) -> Iter[T]:
+        """Removes the subslice indicated by the given *start* and *end* from the `Vec`, returning an `Iterator` over the removed subslice.
+
+        If the `Iterator` is dropped before being fully consumed, it drops the remaining removed elements.
+
+        Args:
+            start (int | None): Starting index of the subslice to drain. Defaults to `0` if `None`.
+            end (int | None): Ending index of the subslice to drain. Defaults to `len(self)` if `None`.
+
+        Returns:
+            Iter[T]: An `Iterator` over the drained elements.
+
+        Example:
+        ```python
+        >>> from pyochain import Vec
+        >>> v = Vec.from_ref([1, 2, 3])
+        >>> u = v.drain(1).collect()
+        >>> v
+        Vec(1)
+        >>> u
+        Seq(2, 3)
+        >>> # A full range clears the vector, like `clear()` does
+        >>> _ = v.drain().collect()
+        >>> v
+        Vec()
+
+        ```
+        Fully consuming the `Iterator` removes all drained elements
+        ```python
+        >>> from pyochain import Vec
+        >>> v = Vec.from_ref([1, 2, 3])
+        >>> _ = v.drain(0, 3).collect()
+        >>> v
+        Vec()
+
+        ```
+        """
+        from .._iter import Iter
+
+        return Iter(DrainIterator(self, start or 0, end or len(self)))
