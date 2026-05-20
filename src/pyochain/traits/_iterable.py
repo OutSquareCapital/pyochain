@@ -1474,7 +1474,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         ```
         """
-        return self.__class__(cz.itertoolz.unique(iter(self), key=key))
+        return self.__class__(tls.UniqueKey(iter(self), key=key))
 
     def take(self, n: int) -> Self:
         """Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner.
@@ -1656,7 +1656,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         >>> Iter([10, 20, 30]).intersperse(5).sum()
         70
         >>> # Inserting separators between groups, then flattening
-        >>> Iter([[1, 2], [3, 4], [5, 6]]).intersperse([-1]).flatten().collect()
+        >>> Iter(((1, 2), (3, 4), (5, 6))).intersperse([-1]).flatten().collect()
         Seq(1, 2, -1, 3, 4, -1, 5, 6)
 
         ```

@@ -195,7 +195,11 @@ When preparing a release, update the "unreleased" section with the relevant chan
 
 ### ⚠️ Deprecations
 
+### 🆕 New features
+
 ### 🚀 Performance improvements
+
+### ⚠️ Performance regressions
 
 ### ✨ Enhancements
 

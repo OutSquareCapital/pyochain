@@ -7,28 +7,52 @@ note: highlight should be a table with the perf improvements
 ### 💥 Breaking changes
 
 - **API change**: `Iter::try_for_each` now returns `Result[tuple[()], E]` instead of `Result[None, E]`.
-- **Removed**: `Iter::diff_at`. Call the corresponding `cytoolz::itertoolz` function if you need this behavior.
-- **Removed**: `Iter::is_strictly_n`. Call the corresponding `more_itertools` function if you need this behavior.
-- **Removed**: `Iter::top_n`. Call the corresponding `cytoolz::itertoolz::topk` function if you need this behavior.
-- **Removed**: `PyoIterator::random_sample`. Call `cytoolz::itertoolz::random_sample` instead if you need this behavior.
-- **Removed**: `PyoIterator::interleave`. If you need this behavior, unpack `self` and the other iterables in a single iterable, then call `cytoolz::itertoolz::interleave` instead.
-- **API change**: `PyoIterator::unique` is split into `Iter::unique` and `Iter::unique_by`. The former only check for uniqueness of the elements, while the latter allows to specify a key function to check for uniqueness based on the return value of the key function.  If you were using `Iter::unique(key=...)`, you should now use `Iter::unique_by(key=...)` instead.
+- **API change**: `PyoIterator::unique` is split into `Iter::unique` and `Iter::unique_by`. If you were using `Iter::unique(key=...)`, you should now use `Iter::unique_by(key=...)` instead.
+
+Just like last release, some methods have beeen removed for a leaner, simpler API and a quicker no-dependency migration path.
+
+See the table below for the removed methods and their recommended alternatives if you need the same behavior:
+
+Method name | Equivalent | Notes
+--- | --- | ---
+`Iter::diff_at` | `cytoolz::itertoolz::diff` | -
+`Iter::is_strictly_n` | `more_itertools::strictly_n` | -
+`Iter::top_n` | `cytoolz::itertoolz::topk` | -
+`PyoIterator::random_sample` | `cytoolz::itertoolz::random_sample` | -
+`PyoIterator::interleave` | `cytoolz::itertoolz::interleave` | Unpack `self` and the other iterables in a single one before calling the function.
+
+### 🆕 New features
+
+- `Vec::concat_mut` for in-place concatenation of another `Vec` or `list`
+- `Seq::concat` for concatenation of another `Seq` or `tuple`.
 
 ### 🚀 Performance improvements
 
-- **Migrated**: `Iter::try_for_each` is now implemented in Rust. **4.6 to 4.7** time **faster** than before.
-- **Migrated**: `Iter::try_collect` is now implemented in Rust.  **2.5 to 3** time **faster** than before.
 - `PyoMutableSequence::extend_move` doesn't use `functools::partial` internally anymore. Expect some very light performance improvements.
-- **Migrated**: `PyoMutableSequence::retain` is now implemented in Rust. **1.35 to 1.4x** faster than before.
-- **Migrated**: `Iter::{map_windows, map_windows_star}` internal sliding window `Iterator` has been moved to Rust and replace the previous `Cython` implementation from cytoolz. It's now faster for larger window sizes (e.g .**1.17x.** for n=32, .**1.40.** for n=128), but slower for smaller window sizes (e.g 0.**81x** for n=2, .**0.93x.** for n=8).
-- **Migrated**: `Iter::map_juxt` internal function wrapper has been moved from `Cython` to Rust, and is now between **1.2x** to **1.5x** faster. Except for 1 argument, which is slightly slower, around **0.95x** (this is not very useful in practice anyway, since you can just use `Iter::map` instead if you only have 1 function).
+
+#### Rust migrations🦀
+
+Various methods have been migrated to Rust, from Python or Cython.
+
+See the table below for the performance (2x means 2 times faster, 0.5x means 2 times slower).
+
+Method name                             | From     | Improvement                       | Notes
+  ------------------------------------- | -------- | --------------------------------- | ---
+`Iter::try_for_each`                    | *Python* | **4.6 - 4.7x**                    | -
+`Iter::try_collect`                     | *Python* | **2.3 - 3x**                      | -
+`PyoMutableSequence::retain`            | *Python* | **1.35 - 1.4x**                   | -
+`Iter::{map_windows, map_windows_star}` | *Cython* | n=32: **1.17x**, n=128: **1.40x** | Slower for smaller window sizes (0.81x for n=2, 0.93x for n=8).
+`Iter::map_juxt`                        | *Cython* | **1.2x to 1.5x**                  | Slower for a single func (0.95x), but not useful in practice, use `Iter::map` instead
+
+### ⚠️ Performance regressions
+
+- **Migrated**: `PyoIterator::unique_by` (old `PyoIterator::unique(key=...)`) has been moved to Rust from Cython, with a sligth performance regression of around **-5%**. It's still **7x.3** faster than a pure Python implementation.
 
 ### ✨ Enhancements
 
 - **typing**: `Some(NONE)` is directly inferred as `Option[T]`, lowering the number of potential errors.
 - **typing**: `Iter::try_collect` has received new overloads and should be inferred more accurately now.
 - **typing**: `Iter::map_juxt` has received new overloads to precisely infer the return type up to 10 functions.
-- **Feat**: Added `Vec::concat_mut` for in-place concatenation of another `Vec` or `list`, and `Seq::concat` for concatenation of another `Seq` or `tuple`.
 
 ### 🐞 Bug fixes
 
