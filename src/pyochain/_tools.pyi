@@ -3,7 +3,7 @@ from typing import Any, Concatenate, Self, overload, override
 
 from pyochain import Option, Result
 
-from ._types import no_doctest
+from ._utils import no_doctest
 
 @no_doctest
 def try_find[T, E](

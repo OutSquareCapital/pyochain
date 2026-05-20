@@ -2,8 +2,10 @@
 
 from . import traits
 from ._dict import Dict
-from ._iter import Iter, Peekable, Seq, Set, SetMut, Unzipped, Vec
+from ._iter import Iter, Peekable, Unzipped, Vec
 from ._range import Range
+from ._seq import Seq
+from ._set import Set, SetMut
 from .rs import (
     NONE,
     Err,

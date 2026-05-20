@@ -11,6 +11,10 @@
 - Improved various classes and methods documentation.
 - Reformatted all code examples with Ruff.
 
+### 🔄 Refactors
+
+- Separated some classes in dedicated files to reduce the size of `_iter.py` and improve readability. `Seq` is now in `_seq.py`, `Set` and `SetMut` are now in `_set.py` notably.
+
 ## [0.19.0] - 2026-05-20
 
 ### 🏆 Highlights

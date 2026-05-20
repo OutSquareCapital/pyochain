@@ -27,23 +27,26 @@ pyochain is a **mixed Python/Rust project**:
 ### Python structure ([src/pyochain/](src/pyochain))
 
 - [src/pyochain/**init**.py](src/pyochain/__init__.py) — public API entrypoint and re-exports.
-- [src/pyochain/_iter.py](src/pyochain/_iter.py) — `Iter`, `Seq`, `Vec`, `Set`, `SetMut`, `Peekable`, and related collection logic.
+- [src/pyochain/_iter.py](src/pyochain/_iter.py) — `Iter`, `Vec`, `Peekable`, and `Unzipped` implementations.
+- [src/pyochain/_seq.py](src/pyochain/_seq.py) — `Seq` implementation.
 - [src/pyochain/_dict.py](src/pyochain/_dict.py) — `Dict` implementation and mapping-specific methods.
 - [src/pyochain/_range.py](src/pyochain/_range.py) — `Range` implementation.
+- [src/pyochain/_set.py](src/pyochain/_set.py) — `Set` and `SetMut` implementations.
 - [src/pyochain/traits/](src/pyochain/traits) — abstract collection and iterator ABCs shared across the Python layer.
+- [src/pyochain/_utils.py](src/pyochain/_utils.py) — internal utilities used across the Python package.
 - [src/pyochain/rs.pyi](src/pyochain/rs.pyi) — stubs for the Rust-compiled public bindings.
 - [src/pyochain/_tools.pyi](src/pyochain/_tools.pyi) — stubs for the internal Rust helper module exposed as `pyochain._tools`.
 - [src/pyochain/_types.py](src/pyochain/_types.py) — shared typing protocols and support types.
 
 ### Rust structure ([rust/src/](rust/src))
 
-- [rust/src/lib.rs](rust/src/lib.rs) — PyO3 module root; registers the exported classes, functions, and the `_tools` submodule.
+- [rust/src/lib.rs](rust/src/lib.rs) — PyO3 module root; exposes the `Option`/`Result` family, mixins, helper functions, the `NONE` constant, and the `_tools` submodule.
 - [rust/src/option.rs](rust/src/option.rs) — `Option[T]`, `Some`, `Null`, `NONE`, and helper constructors.
 - [rust/src/result.rs](rust/src/result.rs) — `Result[T, E]`, `Ok`, and `Err` implementations.
 - [rust/src/errors.rs](rust/src/errors.rs) — unwrap error types exposed to Python.
-- [rust/src/mixins.rs](rust/src/mixins.rs) — mixins types `Checkable` and `Pipeable`.
+- [rust/src/mixins.rs](rust/src/mixins.rs) — mixin types `Checkable` and `Pipeable`.
 - [rust/src/tools.rs](rust/src/tools.rs) — performance-oriented iterator helpers exposed through `pyochain._tools`.
-- [rust/src/args.rs](rust/src/args.rs) and [rust/src/hasher.rs](rust/src/hasher.rs) — argument parsing and hashing utilities used by the extension.
+- [rust/src/args.rs](rust/src/args.rs) and [rust/src/hasher.rs](rust/src/hasher.rs) — internal argument parsing and hashing utilities used by the extension.
 
 ### Build and integration
 

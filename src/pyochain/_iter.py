@@ -10,7 +10,6 @@ from collections.abc import (
     Iterator,
     KeysView,
     MutableSequence,
-    MutableSet,
     Sequence,
     ValuesView,
 )
@@ -18,20 +17,15 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal, Never, Self, TypeIs, overload, override
 
 from . import _tools as tls  # pyright: ignore[reportMissingModuleSource]
+from ._seq import Seq
 from ._types import SupportsRichComparison
 from .rs import Option, Result, option
-from .traits import (
-    Checkable,
-    Pipeable,
-    PyoIterator,
-    PyoMutableSequence,
-    PyoSequence,
-    PyoSet,
-)
+from .traits import Checkable, Pipeable, PyoIterator, PyoMutableSequence
 
 if TYPE_CHECKING:
     from ._dict import Dict
     from ._range import Range
+    from ._set import Set, SetMut
 
 type AnyOpt = Option[Any]  # pyright: ignore[reportExplicitAny]
 Position = Literal["first", "middle", "last", "only"]
@@ -44,23 +38,6 @@ type ZippedLongest[T] = (
     | Iter[tuple[AnyOpt, ...]]
 )
 """Type representing the result of a `zip_longest` operation, which can yield tuples of varying lengths depending on the number of iterables zipped together."""
-
-
-def _get_repr(data: Collection[object]) -> str:
-    from pprint import pformat
-
-    def _repr_inner(data: Collection[object]) -> str:
-        return pformat(data, sort_dicts=False)[1:-1]
-
-    match data:
-        case set() | frozenset():
-            return _repr_inner(tuple(data))
-        case _:
-            match len(data):
-                case 0:
-                    return ""
-                case _:
-                    return _repr_inner(data)
 
 
 @dataclass(slots=True)
@@ -158,253 +135,6 @@ class DrainIterator[T](Iterator[T]):
 
 
 # TODO: structures that use python builtins should inerhit all their dunder, e.g __eq__.
-
-
-class Set[T](PyoSet[T]):
-    """`Set` represent an in- memory **unordered**  collection of **unique** elements.
-
-    Implements the `Collection` Protocol from `collections.abc`, so it can be used as a standard immutable collection.
-
-    The underlying data structure is a `frozenset`.
-
-    Tip:
-        - `Set(frozenset)` is a no-copy operation since Python optimizes this under the hood.
-        - If you have an existing `set`, prefer using `SetMut.from_ref()` to avoid unnecessary copying.
-
-    Args:
-            data (Iterable[T]): The data to initialize the Set with.
-    """
-
-    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
-    __match_args__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
-    _inner: frozenset[T]
-
-    def __init__(self, data: Iterable[T]) -> None:
-        self._inner = frozenset(data)
-
-    @property
-    def inner(self) -> frozenset[T]:
-        """Get the underlying `frozenset` data structure.
-
-        Useful when interoperating with functions that require a standard Python `frozenset`.
-
-        Returns:
-            frozenset[T]: The underlying frozenset.
-        """
-        return self._inner
-
-    @override
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({_get_repr(self._inner)})"
-
-    @override
-    def __contains__(self, item: object) -> bool:
-        return item in self._inner
-
-    @override
-    def __iter__(self) -> Iterator[T]:
-        return iter(self._inner)
-
-    @override
-    def __len__(self) -> int:
-        return len(self._inner)
-
-
-class SetMut[T](Set[T], MutableSet[T]):
-    """A mutable `set` wrapper with functional API.
-
-    Unlike `Set` which is immutable, `SetMut` allows in-place modification of elements.
-
-    Implement the `MutableSet` interface, so elements can be modified in place, and passed to any function/object expecting a standard mutable `set`.
-
-    Underlying data structure is a `set`.
-
-    Tip:
-        If you have an existing `set`, prefer using `SetMut.from_ref()` to avoid unnecessary copying.
-
-    Args:
-        data (Iterable[T]): The mutable set to wrap.
-    """
-
-    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
-    _inner: set[T]
-
-    def __init__(self, data: Iterable[T]) -> None:
-        self._inner = set(data)  # pyright: ignore[reportIncompatibleVariableOverride]
-
-    @property
-    @override
-    def inner(self) -> set[T]:  # pyright: ignore[reportIncompatibleMethodOverride]
-        """Get the underlying `set` data structure.
-
-        Useful when interoperating with functions that require a standard Python `set`.
-
-        Returns:
-            set[T]: The underlying set.
-        """
-        return self._inner
-
-    @staticmethod
-    def from_ref[V](data: set[V]) -> SetMut[V]:
-        """Create a `SetMut` from a reference to an existing `set`.
-
-        This method wraps the provided `set` without copying it, allowing for efficient object instanciation.
-
-        This is the recommended way to create a `SetMut` from foreign functions that return `set` objects.
-
-        Warning:
-            Since the `SetMut` directly references the original `set`, any modifications made to the `SetMut` will also affect the original `set`, and vice versa.
-
-        Args:
-            data (set[V]): The `set` to wrap.
-
-        Returns:
-            SetMut[V]: A new `SetMut` instance wrapping the provided `set`.
-
-        Example:
-        ```python
-        >>> from pyochain import SetMut
-        >>> original_set = {1, 2, 3}
-        >>> set_obj = SetMut.from_ref(original_set)
-        >>> set_obj
-        SetMut(1, 2, 3)
-        >>> original_set.add(4)
-        >>> set_obj
-        SetMut(1, 2, 3, 4)
-
-
-        ```
-        """
-        instance: SetMut[V] = SetMut.__new__(SetMut)  # pyright: ignore[reportUnknownVariableType]
-        instance._inner = data
-        return instance
-
-    @override
-    def add(self, value: T) -> None:
-        """Add an element to **self**.
-
-        Args:
-            value (T): The element to add.
-
-        Example:
-        ```python
-        >>> from pyochain import SetMut
-        >>> s = SetMut(("a", "b"))
-        >>> s.add("c")
-        >>> s.iter().sort()
-        Vec('a', 'b', 'c')
-
-        ```
-        """
-        self._inner.add(value)
-
-    @override
-    def discard(self, value: T) -> None:
-        """Remove an element from **self** if it is a member.
-
-        Unlike `.remove()`, the `discard()` method does not raise an exception when an element is missing from the set.
-
-        Args:
-            value (T): The element to remove.
-
-        Example:
-        ```python
-        >>> from pyochain import SetMut
-        >>> s = SetMut(("a", "b", "c"))
-        >>> s.discard("b")
-        >>> s.iter().sort()
-        Vec('a', 'c')
-
-        ```
-        """
-        self._inner.discard(value)
-
-
-class Seq[T](PyoSequence[T]):
-    """Represent an in memory `Sequence`.
-
-    Implements the `Sequence` Protocol from `collections.abc`, and implements `PyoSequence`.
-
-    This class is notably the default return type of `Iter::collect`.
-
-    The underlying data structure is an immutable `tuple`, hence the memory efficiency is better than a `Vec`.
-
-    Tip:
-        `Seq(tuple)` is preferred over `Seq(list)` as this is a no-copy operation (Python optimizes `tuple` creation from another `tuple`).
-
-        If you have an existing `list`, consider using `Vec.from_ref()` instead to avoid unnecessary copying.
-
-        If you need immediate iteration anyway, you can directly use `Iter` instead.
-
-    Args:
-        data (Iterable[T]): The data to initialize the Seq with.
-    """
-
-    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
-    _inner: tuple[T, ...]
-
-    def __init__(self, data: Iterable[T]) -> None:
-        self._inner = tuple(data)
-
-    @property
-    def inner(self) -> tuple[T, ...]:
-        """Get the underlying `tuple` data structure.
-
-        Useful when interoperating with functions that require a standard Python `tuple`.
-
-        Returns:
-            tuple[T, ...]: The underlying tuple.
-        """
-        return self._inner
-
-    @override
-    def __iter__(self) -> Iterator[T]:
-        return iter(self._inner)
-
-    @override
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({_get_repr(self._inner)})"
-
-    @override
-    def __len__(self) -> int:
-        return len(self._inner)
-
-    @overload
-    def __getitem__(self, index: int) -> T: ...
-    @overload
-    def __getitem__(self, index: slice) -> Sequence[T]: ...
-    @override
-    def __getitem__(self, index: int | slice[Any, Any, Any]) -> T | Sequence[T]:  # pyright: ignore[reportExplicitAny]
-        return self._inner.__getitem__(index)
-
-    def concat(self, other: tuple[T, ...] | Self) -> Self:
-        """Concatenate another `Seq` or `tuple` to **self** and return a new `Seq`.
-
-        This is equivalent to `tuple_1 + tuple_2` for standard tuples.
-
-        Args:
-            other (tuple[T, ...] | Self): The other `Seq` to concatenate.
-
-        Returns:
-            Self: The new `Seq` after concatenation.
-
-        Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> s1 = Seq((1, 2, 3))
-        >>> s2 = (4, 5, 6)  # Can also concatenate a standard tuple
-        >>> s3 = s1.concat(s2)
-        >>> s3
-        Seq(1, 2, 3, 4, 5, 6)
-
-        ```
-        """
-        match other:
-            case Seq():
-                data = self._inner + other._inner
-            case tuple():
-                data = self._inner + other
-        return self.__class__(data)
 
 
 class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMultipleInheritance]
