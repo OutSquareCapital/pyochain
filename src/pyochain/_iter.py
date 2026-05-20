@@ -721,7 +721,7 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # pyright: ignore[reportUnsafeMult
             other (list[T] | Self): The other `Vec` to concatenate.
 
         Returns:
-            Vec[T]: The modified `Vec` after concatenation (self).
+            Self: The modified `Vec` after concatenation (self).
 
         See Also:
             `Vec.concat()` which returns a new `Vec` without modifying **self**.

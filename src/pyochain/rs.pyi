@@ -309,6 +309,8 @@ class OptionType[T](Pipeable):
     Some(5)
     >>> divide(10, 0)
     NONE
+
+    ```
     """
 
     def __bool__(self) -> None:
