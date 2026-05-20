@@ -46,7 +46,7 @@ Method name                             | From     | Improvement                
 
 ### ⚠️ Performance regressions
 
-- **Migrated**: `PyoIterator::unique_by` (old `PyoIterator::unique(key=...)`) has been moved to Rust from Cython, with a sligth performance regression of around **-5%**. It's still **7x.3** faster than a pure Python implementation.
+- **Migrated**: `PyoIterator::unique_by` (old `PyoIterator::unique(key=...)`) has been moved to Rust from Cython, with a sligth performance regression of around **-5%**. It's still **2.31x** faster than a pure Python implementation.
 
 ### ✨ Enhancements
 
