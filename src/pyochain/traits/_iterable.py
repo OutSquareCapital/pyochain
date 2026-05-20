@@ -26,7 +26,7 @@ from .._types import SupportsComparison, SupportsRichComparison
 from ..rs import NONE, Checkable, Err, Ok, Option, Pipeable, Result, Some, option
 
 if TYPE_CHECKING:
-    from .._iter import Iter
+    from .._iter import Iter, Vec
 
 type Comparable[T] = list[T] | tuple[T, ...] | set[T] | frozenset[T]
 type Comparator[T] = Callable[[Comparable[T], Comparable[T]], bool]
@@ -1885,6 +1885,56 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         ```
         """
         return tls.try_for_each(iter(self), f)
+
+    @overload
+    def collect_into(self, collection: Vec[T]) -> Vec[T]: ...
+    @overload
+    def collect_into(
+        self, collection: PyoMutableSequence[T]
+    ) -> PyoMutableSequence[T]: ...
+    @overload
+    def collect_into(self, collection: list[T]) -> list[T]: ...
+    def collect_into(self, collection: MutableSequence[T]) -> MutableSequence[T]:
+        """Collects all the items from the `Iterator` into a `MutableSequence`.
+
+        The `MutableSequence` is then returned, so the call chain can be continued.
+
+        This is useful when you already have a `MutableSequence` and want to add the `Iterator` items to it.
+
+        This method is a convenience method to call `MutableSequence.extend()`, but instead of being called on a `MutableSequence`, it's called on an `Iterator`.
+
+        Args:
+            collection (MutableSequence[T]): A mutable collection to collect items into.
+
+        Returns:
+            MutableSequence[T]: The same mutable collection passed as argument, now containing the collected items.
+
+        Example:
+        Basic usage:
+        ```python
+        >>> from pyochain import Seq, Iter, Vec
+        >>> a = Seq((1, 2, 3))
+        >>> vec = Vec.from_ref([0, 1])
+        >>> a.iter().map(lambda x: x * 2).collect_into(vec)
+        Vec(0, 1, 2, 4, 6)
+        >>> a.iter().map(lambda x: x * 10).collect_into(vec)
+        Vec(0, 1, 2, 4, 6, 10, 20, 30)
+
+        ```
+        The returned mutable sequence can be used to continue the call chain:
+        ```python
+        >>> from pyochain import Seq, Vec
+        >>> a = Seq((1, 2, 3))
+        >>> vec = Vec(())
+        >>> a.iter().collect_into(vec).length() == vec.length()
+        True
+        >>> a.iter().collect_into(vec).length() == vec.length()
+        True
+
+        ```
+        """
+        collection.extend(iter(self))
+        return collection
 
 
 class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):

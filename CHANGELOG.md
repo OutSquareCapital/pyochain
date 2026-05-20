@@ -2,9 +2,13 @@
 
 ## [Unreleased]
 
+### ✨ Enhancements
+
+- **Migrated**: `Iter::collect_into` has been moved to `PyoIterator`, meaning all user-defined subclasses can now call it.
+
 ### 📖 Documentation
 
-- Improved variouus classes and methods documentation.
+- Improved various classes and methods documentation.
 - Reformatted all code examples with Ruff.
 
 ## [0.19.0] - 2026-05-20
