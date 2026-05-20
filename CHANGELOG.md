@@ -36,6 +36,8 @@ Various methods have been migrated to Rust, from Python or Cython.
 
 See the table below for the performance (2x means 2 times faster, 0.5x means 2 times slower).
 
+Unfortunately, 3 methods have seen a performance regression vs the old Cython implementation, see the next section for details.
+
 Method name                             | From     | Improvement                       | Notes
   ------------------------------------- | -------- | --------------------------------- | ---
 `Iter::try_for_each`                    | *Python* | **4.6 - 4.7x**                    | -
@@ -46,7 +48,8 @@ Method name                             | From     | Improvement                
 
 ### ⚠️ Performance regressions
 
-- **Migrated**: `PyoIterator::unique_by` (old `PyoIterator::unique(key=...)`) has been moved to Rust from Cython, with a sligth performance regression of around **-5%**. It's still **2.31x** faster than a pure Python implementation.
+- **Migrated**: `PyoIterator::unique_by` (old `PyoIterator::unique(key=...)`) has been moved to Rust from Cython, with a sligth performance regression of around **-5%**. Still **2.31x** faster than a pure Python implementation.
+- **Migrated**: `PyoIterator::unique` is also in Rust from Cython. It entails a **-25%** performance regression. Still **7.3X** faster than a pure Python implementation.
 
 ### ✨ Enhancements
 

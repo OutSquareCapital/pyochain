@@ -606,7 +606,7 @@ impl Juxt {
         Ok(PyTuple::new(py, results)?.unbind())
     }
 }
-/// TODO: speed is 0.70-0.75x compared to the Cython implementation.
+/// TODO: speed is 0.76x compared to the Cython implementation.
 /// Saved in `.benchmarks/unique_cy`
 #[pyclass(frozen)]
 pub struct UniqueIdentity {

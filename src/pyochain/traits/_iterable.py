@@ -1455,7 +1455,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         ```
         """
-        return self.__class__(cz.itertoolz.unique(iter(self)))
+        return self.__class__(tls.UniqueIdentity(iter(self)))
 
     def unique_by(self, key: Callable[[T], Any]) -> Self:  # pyright: ignore[reportExplicitAny]
         """Return only unique elements of the iterable.
