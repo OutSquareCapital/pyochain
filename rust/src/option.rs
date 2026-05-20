@@ -553,7 +553,7 @@ impl PyNull {
         Ok(py
             .import("pyochain")?
             .getattr("Iter")?
-            .call_method0("new")?
+            .call1(((),))?
             .unbind())
     }
 

@@ -93,11 +93,10 @@ Some(Seq(1, 2, 3))
 >>> # Process only if non-empty, convert Option to Result
 >>> data.then(_process).ok_or("No values") 
 Ok('1, 2, 3')
->>> # Use new() to create an annotated empty Vec without brace and parentheses mixup
->>> Vec[int].new().then(_process).ok_or("No values")
+>>> Vec(()).then(_process).ok_or("No values")
 Err('No values')
 >>> # Create empty Set, convert to Result, then back to Option
->>> Set[int](()).then(_process).ok_or("No values").ok()
+>>> Set(()).then(_process).ok_or("No values").ok()
 NONE
 >>> def try_parse_int(s: str) -> Result[int, ValueError]:
 ...     try:

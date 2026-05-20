@@ -40,7 +40,7 @@ def main() -> None:
     """Generate all reference documentation."""
     import pyochain
 
-    generated_paths = SetMut[str].new()
+    generated_paths = SetMut[str](())
 
     _show("Generating pyochain documentation...", style=Color.INFO)
     _discover_modules(pyochain).iter().for_each(

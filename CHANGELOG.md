@@ -2,6 +2,33 @@
 
 ## [Unreleased]
 
+### 💥 Breaking changes
+
+- **Removed**: `PyoIterable::new`. Call `__init__(())` for the same behavior, i.e `Seq(())`, `Iter(())`, etc...
+- **API change**: `PyoIterable::__init__` is deleted. This means that subclasses are free to implement their own constructors, without typing constraints nor default behavior.
+
+#### Methods migration to concrete parents
+
+If you did not define custom classes from `PyoSet` or `PyoIterator`, skip to the next section.
+
+---
+
+The `__init__` deletion from `PyoIterable` also means that all ABCs methods that relied on `self::__class__` needed to move to their concrete pyochain parents, as they couldn't stay (nor should have ever been) purely abstract.
+
+This concerns:
+
+from `PyoSet` to `Set` ->
+
+`intersection`, `r_intersection`, `union`, `r_union`, `difference`, `r_difference`, `symmetric_difference`, `r_symmetric_difference`
+
+---
+
+from `PyoIterator` to `Iter` ->
+
+`take_while`, `skip_while`, `compress`, `unique`, `unique_by`, `take`, `skip`, `step_by`, `slice`, `cycle`, `insert`, `intersperse`, `chain`, `accumulate`
+
+---
+
 ### ✨ Enhancements
 
 - **Migrated**: `Iter::collect_into` has been moved to `PyoIterator`, meaning all user-defined subclasses can now call it.

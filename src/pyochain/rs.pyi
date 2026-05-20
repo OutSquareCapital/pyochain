@@ -1146,7 +1146,7 @@ class OptionType[T](Pipeable):
         Example:
         ```python
         >>> from pyochain import Some, NONE, Vec
-        >>> seen = Vec[int].new()
+        >>> seen = Vec[int](())
         >>> Some(2).inspect(lambda x: seen.append(x))
         Some(2)
         >>> seen
@@ -2049,7 +2049,7 @@ class ResultType[T, E](Pipeable, Protocol):
         Example:
         ```python
         >>> from pyochain import Ok, Vec
-        >>> seen = Vec[int].new()
+        >>> seen = Vec[int](())
         >>> Ok(2).inspect(lambda x: seen.append(x))
         Ok(2)
         >>> seen
@@ -2077,7 +2077,7 @@ class ResultType[T, E](Pipeable, Protocol):
         Example:
         ```python
         >>> from pyochain import Err, Vec
-        >>> seen = Vec[str].new()
+        >>> seen = Vec[str](())
         >>> Err("oops").inspect_err(lambda e: seen.append(e))
         Err('oops')
         >>> seen
