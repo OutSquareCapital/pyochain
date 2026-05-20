@@ -37,6 +37,9 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(last, m)?)?;
     m.add_function(wrap_pyfunction!(length, m)?)?;
     m.add_function(wrap_pyfunction!(retain, m)?)?;
+    m.add_class::<UniqueIdentity>()?;
+    m.add_class::<UniqueKey>()?;
+    m.add_class::<Intersperse>()?;
     m.add_class::<SlidingWindow>()?;
     m.add_class::<Juxt>()?;
     Ok(())
@@ -520,7 +523,7 @@ pub fn last(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
             last = item;
         }
 
-        Ok(Py::from_owned_ptr(py, last))
+        Ok(Bound::from_owned_ptr(py, last).unbind())
     }
 }
 /// We use unsafe code here to match the performance of a Cython implementation
@@ -601,6 +604,136 @@ impl Juxt {
             .map(|func| func.call1(py, args))
             .collect::<PyResult<Vec<_>>>()?;
         Ok(PyTuple::new(py, results)?.unbind())
+    }
+}
+/// TODO: speed is 0.70x compared to the Cython implementation.
+#[pyclass]
+pub struct UniqueIdentity {
+    iter: Py<PyIterator>,
+    seen: Py<PySet>,
+}
+
+#[pymethods]
+impl UniqueIdentity {
+    #[new]
+    fn new(data: Bound<'_, PyIterator>) -> PyResult<Self> {
+        let py = data.py();
+        Ok(Self {
+            iter: data.unbind(),
+            seen: PySet::empty(py)?.unbind(),
+        })
+    }
+
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
+        let py = slf.py();
+        let mut iter = slf.iter.clone_ref(py).into_bound(py);
+        let seen = slf.seen.bind(py);
+
+        loop {
+            let Some(result) = iter.next() else {
+                return Ok(None);
+            };
+            let item = result?;
+            if seen.contains(&item)? {
+                continue;
+            }
+            seen.add(&item)?;
+            return Ok(Some(item.unbind()));
+        }
+    }
+}
+/// TODO: speed is 0.90-0.95x compared to the Cython implementation.
+#[pyclass]
+pub struct UniqueKey {
+    iter: Py<PyIterator>,
+    key: Py<PyAny>,
+    seen: Py<PySet>,
+}
+
+#[pymethods]
+impl UniqueKey {
+    #[new]
+    fn new(data: Bound<'_, PyIterator>, key: Bound<'_, PyAny>) -> PyResult<Self> {
+        let py = data.py();
+        Ok(Self {
+            iter: data.unbind(),
+            key: key.unbind(),
+            seen: PySet::empty(py)?.unbind(),
+        })
+    }
+
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
+        let py = slf.py();
+        let mut iter = slf.iter.clone_ref(py).into_bound(py);
+        let key = slf.key.bind(py);
+        let seen = slf.seen.bind(py);
+
+        loop {
+            let Some(result) = iter.next() else {
+                return Ok(None);
+            };
+            let item = result?;
+            let tag = key.call1((&item,))?;
+            if seen.contains(&tag)? {
+                continue;
+            }
+            seen.add(&tag)?;
+            return Ok(Some(item.unbind()));
+        }
+    }
+}
+/// TODO: speed is 0.44x compared to the Cython implementation.
+#[pyclass]
+pub struct Intersperse {
+    data: Py<PyIterator>,
+    element: Py<PyAny>,
+    val: Option<Py<PyAny>>,
+    must_process: bool,
+}
+
+#[pymethods]
+impl Intersperse {
+    #[new]
+    fn new(mut data: Bound<'_, PyIterator>, element: Py<PyAny>) -> PyResult<Self> {
+        let (val, must_process) = match data.next() {
+            None => (None, true),
+            Some(item) => (Some(item?.unbind()), false),
+        };
+        Ok(Self {
+            data: data.unbind(),
+            element,
+            val,
+            must_process,
+        })
+    }
+
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
+        let py = slf.py();
+        if slf.must_process {
+            match slf.data.clone_ref(py).into_bound(py).next() {
+                None => Ok(None),
+                Some(item) => {
+                    slf.val = Some(item?.unbind());
+                    slf.must_process = false;
+                    Ok(Some(slf.element.clone_ref(py)))
+                }
+            }
+        } else {
+            slf.must_process = true;
+            Ok(slf.val.as_ref().map(|v| v.clone_ref(py)))
+        }
     }
 }
 ///TODO: It's actually slower than cytoolz implementation when `n` is small, we should optimize for that case.\
