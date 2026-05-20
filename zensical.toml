@@ -36,6 +36,7 @@
             { "Optional Values" = [
                 { "None" = "reference/null.md" },
                 { "Option" = "reference/option.md" },
+                { "OptionType" = "reference/optiontype.md" },
                 { "OptionUnwrapError" = "reference/optionunwraperror.md" },
                 { "Some" = "reference/some.md" },
             ] },
