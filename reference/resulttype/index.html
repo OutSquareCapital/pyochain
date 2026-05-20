@@ -1350,6 +1350,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../optiontype/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  OptionType
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../optionunwraperror/" class="md-nav__link">
         
   
@@ -4406,7 +4433,12 @@ or a default function to a contained <code>Ok</code> value.</p>
 
         <p>Transposes a Result containing an Option into an Option containing a Result.</p>
 <p>Can only be called if the inner type is <code>Option[T, E]</code>.</p>
-<p><code>Ok(Some(v)) -&gt; Some(Ok(v)), Ok(NONE) -&gt; NONE, Err(e) -&gt; Some(Err(e))</code></p>
+<p>The mapping is as follows:</p>
+<ul>
+<li><code>Ok(Some(v))</code> becomes <code>Some(Ok(v))</code></li>
+<li><code>Ok(NONE)</code> becomes <code>NONE</code></li>
+<li><code>Err(e)</code> becomes <code>Some(Err(e))</code></li>
+</ul>
 
 
     <p><span class="doc-section-title">Returns:</span></p>

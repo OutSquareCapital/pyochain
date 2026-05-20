@@ -982,6 +982,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../optiontype/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  OptionType
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../optionunwraperror/" class="md-nav__link">
         
   
@@ -1755,7 +1782,51 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
 <li>otherwise by <code>__len__()</code> if defined (returning <code>False</code> if length is 0)</li>
 <li>otherwise all instances are truthy (Python's default behavior).</li>
 </ul>
-<p>This can be very handy to cover the common pattern of checking if a collection is empty or not, and then explicitly handling each situation with <code>Option</code> or <code>Result</code> types, without breaking the fluent method chaining.</p>
+<p>This can be very handy to cover the common pattern of checking if a collection is empty or not.</p>
+<p>You can then explicitly handle each situation with <code>Option</code> or <code>Result</code> types, without breaking the fluent method chaining.</p>
+
+
+<details class="tip" open>
+  <summary>Tip</summary>
+  <p>This class is compiled in Rust with Pyo3 bindings.</p>
+<p>This means that even pure Python classes inheriting from <code>Checkable</code> can call these methods with builtin-like performance.</p>
+</details>        <p>Example:
+Pyochain collections can efficiently check for emptiness and execute code conditionally natively.
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="nb">sum</span><span class="p">)</span>
+<span class="n">Some</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="nb">sum</span><span class="p">)</span>
+<span class="n">NONE</span>
+</code></pre></div>
+This can also be extended to any type, not just collections.
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain.traits</span><span class="w"> </span><span class="kn">import</span> <span class="n">Checkable</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">class</span><span class="w"> </span><span class="nc">MyString</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Checkable</span><span class="p">):</span>
+<span class="o">...</span>     <span class="k">pass</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">MyString</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+<span class="n">Some</span><span class="p">(</span><span class="s1">&#39;HELLO&#39;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">MyString</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+<span class="n">NONE</span>
+</code></pre></div>
+This means that you can handle complex business logic in the same way.
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="o">...</span> <span class="k">class</span><span class="w"> </span><span class="nc">User</span><span class="p">(</span><span class="n">Checkable</span><span class="p">):</span>
+<span class="o">...</span>     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="o">...</span>     <span class="n">is_active</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="o">...</span>     <span class="n">age</span><span class="p">:</span> <span class="nb">int</span>
+<span class="o">...</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="o">...</span>         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_active</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">age</span> <span class="o">&gt;=</span> <span class="mi">18</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">describe_user</span><span class="p">(</span><span class="n">user</span><span class="p">:</span> <span class="n">User</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="o">...</span>     <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">user</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> is an active adult&quot;</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">alice</span> <span class="o">=</span> <span class="n">User</span><span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">,</span> <span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">age</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">bob</span> <span class="o">=</span> <span class="n">User</span><span class="p">(</span><span class="s2">&quot;Bob&quot;</span><span class="p">,</span> <span class="n">is_active</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">age</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">alice</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="n">describe_user</span><span class="p">)</span>
+<span class="n">Some</span><span class="p">(</span><span class="s1">&#39;Alice is an active adult&#39;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">bob</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="n">describe_user</span><span class="p">)</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">&quot;Expected an active adult user&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">map_err</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">)</span>
+<span class="n">Err</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected an active adult user&#39;</span><span class="p">))</span>
+</code></pre></div></p>
 
 
 
