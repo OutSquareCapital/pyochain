@@ -9,6 +9,7 @@
 ### 🛠️ Other improvements
 
 - Added `--preview` option to `Ruff` format workflow to garantuee markdown formatting
+- Reorganized the [`abc`](src/pyochain/abc) submodule by splitting the monolithic `_iterable.py` file into multiple ones with more specific content.
 
 ## [0.22.0] - 2026-05-21
 
