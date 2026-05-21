@@ -2,9 +2,13 @@
 
 ## [Unreleased]
 
+-
+
+## [0.22.0] - 2026-05-21
+
 ### 💥 Breaking changes
 
-- **API change**: `Vec::sort` is split into `Vec::sort` and `Vec::sort_by`. If you were using `Vec::sort(key=...)`, you should now use `Vec::sort_by(key=...)` instead. This aligns it with `PyoIterator::{sort, sort_by}` change from last release.
+- **API**: `Vec::sort` is split into `Vec::sort` and `Vec::sort_by`. If you were using `Vec::sort(key=...)`, you should now use `Vec::sort_by(key=...)` instead. This aligns it with `PyoIterator::{sort, sort_by}` change from last release.
 
 ### ✨ Enhancements
 
