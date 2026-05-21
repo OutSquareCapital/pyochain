@@ -160,7 +160,7 @@ Add `--cov=src --cov-report=term-missing` to the pytest command below to include
 ```bash
 uv run -m scripts.check_docstrings;
 uv run pydoclint src/pyochain;
-uv run pytest
+uv run pytest;
 ```
 
 ## Benchmarks

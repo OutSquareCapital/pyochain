@@ -650,6 +650,36 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
     """Extends `PyoIterable[T]` and `collections.abc.Iterator[T]`.
 
     Is the base class for `Iter[T]`.
+
+    All concrete subclasses must implement the required `Iterator` dunder methods:
+
+    - `__iter__`
+    - `__next__`
+
+    Example:
+        ```python
+        >>> from pyochain.abc import PyoIterator
+        >>> class Count(PyoIterator[int]):
+        ...     def __init__(self, start: int = 0):
+        ...         self.current = start
+        ...
+        ...     def __iter__(self):
+        ...         return self
+        ...
+        ...     def __next__(self):
+        ...         val = self.current
+        ...         self.current += 1
+        ...         return val
+        >>>
+        >>> counter = Count(5)
+        >>> counter.next()
+        Some(5)
+        >>> counter.next()
+        Some(6)
+        >>> counter.iter().take(3).collect()
+        Seq(7, 8, 9)
+
+        ```
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
@@ -1781,6 +1811,33 @@ class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
     - `__len__`
     - `__contains__`
     - `__iter__`
+
+    Example:
+        ```python
+        >>> from pyochain.abc import PyoSequence
+        >>> class MySeq(PyoSequence[int]):
+        ...     def __init__(self, data: list[int]):
+        ...         self._data = data
+        ...
+        ...     def __getitem__(self, index: int) -> int:
+        ...         return self._data[index]
+        ...
+        ...     def __len__(self) -> int:
+        ...         return len(self._data)
+        ...
+        ...     def __contains__(self, item: int) -> bool:
+        ...         return item in self._data
+        ...
+        ...     def __iter__(self) -> Iterator[int]:
+        ...         return iter(self._data)
+        >>>
+        >>> my_seq = MySeq([10, 20, 30])
+        >>> my_seq.first()
+        10
+        >>> my_seq.rev().collect()
+        Seq(30, 20, 10)
+
+        ```
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
@@ -1856,6 +1913,31 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
     - `__iter__`
     - `__len__`
 
+    Example:
+        ```python
+        >>> from pyochain.abc import PyoSet
+        >>> class MySet(PyoSet[int]):
+        ...     def __init__(self, data: set[int]):
+        ...         self._data = data
+        ...
+        ...     def __contains__(self, item: int) -> bool:
+        ...         return item in self._data
+        ...
+        ...     def __iter__(self) -> Iterator[int]:
+        ...         return iter(self._data)
+        ...
+        ...     def __len__(self) -> int:
+        ...         return len(self._data)
+        >>>
+        >>> my_set = MySet({10, 20, 30})
+        >>> my_set.is_subset({10, 20, 30, 40})
+        True
+        >>> my_set.is_superset({10})
+        True
+        >>> my_set.iter().sort()
+        Vec(10, 20, 30)
+
+        ```
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
@@ -2032,7 +2114,6 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
     - `__getitem__`
     - `__iter__`
     - `__len__`
-
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
