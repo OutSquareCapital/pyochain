@@ -172,11 +172,12 @@ def _check_code_blocks(
 ) -> Result[tuple[()], Vec[ErrorDetail]]:
     def _process_line(state: State, line_num: int, line: str) -> State:
         marker = "```"
-        match = CODE_BLOCK_PATTERN.search(line)
-        if not (match and line.strip().startswith(marker)):
+        stripped_line = line.lstrip()
+        match = CODE_BLOCK_PATTERN.search(stripped_line)
+        if not (match and stripped_line.startswith(marker)):
             return state
         language = match.group(1) or "plaintext"
-        if line.strip() == marker:
+        if stripped_line == marker:
             if not state.stack.is_empty():
                 _ = state.stack.pop()
                 return state
@@ -236,7 +237,9 @@ def _check_errs(
         or func_name.istitle()
         or has_no_doctest_flag
         or lines.any(
-            lambda line: bool(CODE_BLOCK_PATTERN.search(line) and "python" in line)
+            lambda line: bool(
+                CODE_BLOCK_PATTERN.search(line.lstrip()) and "python" in line
+            )
         )
     )
     if should_skip:
