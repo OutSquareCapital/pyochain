@@ -721,7 +721,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._iterable.PyoKeysView" class="md-nav__link">
+  <a href="#pyochain._set.PyoKeysView" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         PyoKeysView
@@ -1479,6 +1479,86 @@
   
   
   
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_7" id="__nav_1_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Other Types
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Other Types
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../baseconcreteset/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  BaseConcreteSet
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../../api-reference/" class="md-nav__link">
         
@@ -1600,7 +1680,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._iterable.PyoKeysView" class="md-nav__link">
+  <a href="#pyochain._set.PyoKeysView" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         PyoKeysView
@@ -1632,15 +1712,15 @@
 
 
 
-<a id="pyochain.abc._iterable.PyoKeysView"></a>
+<a id="pyochain._set.PyoKeysView"></a>
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="collections.abc.KeysView">KeysView</span>[<span title="pyochain.abc._iterable.PyoKeysView[K]">K</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.abc._iterable.PyoMappingView" href="../pyomappingview/#pyochain.abc._iterable.PyoMappingView">PyoMappingView</a>[<span title="pyochain.abc._iterable.PyoKeysView[K]">K</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.abc._iterable.PyoSet" href="../pyoset/#pyochain.abc._iterable.PyoSet">PyoSet</a>[<span title="pyochain.abc._iterable.PyoKeysView[K]">K</span>]</code></p>
+              Bases: <code><span title="collections.abc.KeysView">KeysView</span>[<span title="pyochain._set.PyoKeysView[K]">K</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.abc.PyoMappingView" href="../pyomappingview/#pyochain.abc._iterable.PyoMappingView">PyoMappingView</a>[<span title="pyochain._set.PyoKeysView[K]">K</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.abc.PyoSet" href="../pyoset/#pyochain.abc._iterable.PyoSet">PyoSet</a>[<span title="pyochain._set.PyoKeysView[K]">K</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain._set.BaseConcreteSet" href="../baseconcreteset/#pyochain._set.BaseConcreteSet">BaseConcreteSet</a>[<span title="pyochain._set.PyoKeysView[K]">K</span>]</code></p>
 
 
 
         <p>A view of the keys in a pyochain mapping.</p>
-<p>This concrete class is returned by the <code>PyoMapping.keys()</code> method, and inherits from <code>collections.abc.KeysView</code>, <code>PyoMappingView</code>, and <code>PyoSet</code>.</p>
+<p>This concrete class is returned by the <code>PyoMapping.keys()</code> method, and inherits from <code>collections.abc.KeysView</code>, <code>PyoMappingView</code>, <code>PyoSet</code>, and <code>BaseConcreteSet</code>.</p>
 <p>Keys views support set-like operations since dictionary keys are unique.</p>
 
 
@@ -1656,22 +1736,38 @@
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2036</span>
-<span class="normal">2037</span>
-<span class="normal">2038</span>
-<span class="normal">2039</span>
-<span class="normal">2040</span>
-<span class="normal">2041</span>
-<span class="normal">2042</span>
-<span class="normal">2043</span>
-<span class="normal">2044</span>
-<span class="normal">2045</span>
-<span class="normal">2046</span>
-<span class="normal">2047</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoKeysView</span><span class="p">[</span><span class="n">K</span><span class="p">](</span><span class="n">KeysView</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">PyoMappingView</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">PyoSet</span><span class="p">[</span><span class="n">K</span><span class="p">]):</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
+                <summary>Source code in <code>src/pyochain/_set.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoKeysView</span><span class="p">[</span><span class="n">K</span><span class="p">](</span><span class="n">KeysView</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">PyoMappingView</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">PyoSet</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">BaseConcreteSet</span><span class="p">[</span><span class="n">K</span><span class="p">]):</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A view of the keys in a pyochain mapping.</span>
 
-<span class="sd">    This concrete class is returned by the `PyoMapping.keys()` method, and inherits from `collections.abc.KeysView`, `PyoMappingView`, and `PyoSet`.</span>
+<span class="sd">    This concrete class is returned by the `PyoMapping.keys()` method, and inherits from `collections.abc.KeysView`, `PyoMappingView`, `PyoSet`, and `BaseConcreteSet`.</span>
 
 <span class="sd">    Keys views support set-like operations since dictionary keys are unique.</span>
 
@@ -1680,6 +1776,22 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>  <span class="c1"># pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]</span>
+
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">intersection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">AbstractSet</span><span class="p">[</span><span class="n">K</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">SetMut</span><span class="p">[</span><span class="n">K</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">SetMut</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="bp">self</span> <span class="o">&amp;</span> <span class="n">other</span><span class="p">)</span>
+
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">union</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">AbstractSet</span><span class="p">[</span><span class="n">K</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">SetMut</span><span class="p">[</span><span class="n">K</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">SetMut</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="bp">self</span> <span class="o">|</span> <span class="n">other</span><span class="p">)</span>
+
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">AbstractSet</span><span class="p">[</span><span class="n">K</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">SetMut</span><span class="p">[</span><span class="n">K</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">SetMut</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="bp">self</span> <span class="o">-</span> <span class="n">other</span><span class="p">)</span>
+
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">symmetric_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">AbstractSet</span><span class="p">[</span><span class="n">K</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">SetMut</span><span class="p">[</span><span class="n">K</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">SetMut</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="bp">self</span> <span class="o">^</span> <span class="n">other</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
