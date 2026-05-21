@@ -1456,7 +1456,9 @@ def then_if_true[T](value: T, *, predicate: Callable[[T], bool]) -> Option[T]:
         >>> then_if_true(21, predicate=lambda x: x == 42)
         NONE
         >>> from pathlib import Path
-        >>> readme_path = then_if_true(Path("README.md"), predicate=Path.exists).map(str)
+        >>> readme_path = then_if_true(Path("README.md"), predicate=Path.exists).map(
+        ...     str
+        ... )
         >>> readme_path
         Some('README.md')
 

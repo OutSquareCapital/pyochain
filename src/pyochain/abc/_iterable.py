@@ -1722,7 +1722,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ...     name: str
             ...     age: int
             >>>
-            >>> peoples = (Person("Alice", 30), Person("Bob", 25), Person("Charlie", 35))
+            >>> peoples = (
+            ...     Person("Alice", 30),
+            ...     Person("Bob", 25),
+            ...     Person("Charlie", 35),
+            ... )
             >>> sorted_names = (
             ...     Iter(peoples)
             ...     .sort_by(lambda x: x.age)
@@ -2445,7 +2449,9 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
             Vec(1, 3, 5)
             >>> # Extracting with a range
             >>> vec = Vec(data)
-            >>> extracted = vec.extract_if(lambda x: x % 2 == 0, start=1, end=4).collect()
+            >>> extracted = vec.extract_if(
+            ...     lambda x: x % 2 == 0, start=1, end=4
+            ... ).collect()
             >>> extracted
             Seq(2, 4)
             >>> vec

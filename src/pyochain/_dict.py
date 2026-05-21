@@ -74,8 +74,10 @@ class Dict[K, V](PyoMutableMapping[K, V]):
         >>> class MinimalDictLike:
         ...     def __init__(self, data: dict[int, str]) -> None:
         ...         self._data = data
+        ...
         ...     def keys(self) -> Iterable[int]:
         ...         return iter(self._data)
+        ...
         ...     def __getitem__(self, key: int) -> str:
         ...         return self._data[key]
         >>>

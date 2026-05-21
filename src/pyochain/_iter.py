@@ -2333,7 +2333,9 @@ class Iter[T](PyoIterator[T]):
             ...     .iter()  # Since sort collect to a Vec, we need to convert back to Iter
             ...     .group_by(itemgetter(0))  # group by is_even
             ...     # extract values from groups, discarding keys, and materializing them
-            ...     .map_star(lambda g, vals: (g, vals.map_star(lambda _, y: y).collect()))
+            ...     .map_star(
+            ...         lambda g, vals: (g, vals.map_star(lambda _, y: y).collect())
+            ...     )
             ...     .collect(Dict)
             ... )
             Dict(False: Seq(1, 3, 5, 7), True: Seq(0, 2, 4, 6))
@@ -2362,7 +2364,14 @@ class Iter[T](PyoIterator[T]):
             However, you must be careful to materialize the group values immediately when iterating over groups, see below how the values of the groups are empty::
             ```python
             >>> from pyochain import Iter
-            >>> groups = Iter(("a1", "a2", "b1")).group_by(lambda x: x[0]).collect().iter().map_star(lambda g, vals: (g, vals.collect())).collect()
+            >>> groups = (
+            ...     Iter(("a1", "a2", "b1"))
+            ...     .group_by(lambda x: x[0])
+            ...     .collect()
+            ...     .iter()
+            ...     .map_star(lambda g, vals: (g, vals.collect()))
+            ...     .collect()
+            ... )
             >>> groups
             Seq(('a', Seq()), ('b', Seq()))
 
