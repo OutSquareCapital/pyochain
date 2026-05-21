@@ -2125,7 +2125,17 @@
 <span class="normal">268</span>
 <span class="normal">269</span>
 <span class="normal">270</span>
-<span class="normal">271</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Vec</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">Seq</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">PyoMutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Vec</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">Seq</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">PyoMutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>  <span class="c1"># noqa: PLW1641</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A `MutableSequence` wrapper with functional API.</span>
 
 <span class="sd">    Implement `MutableSequence` Protocol from `collections.abc`.</span>
@@ -2178,17 +2188,17 @@
 <span class="sd">            Vec[V]: A new Vec instance wrapping the provided `list`.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Vec</span>
-<span class="sd">        &gt;&gt;&gt; original_list = [1, 2, 3]</span>
-<span class="sd">        &gt;&gt;&gt; vec = Vec.from_ref(original_list)</span>
-<span class="sd">        &gt;&gt;&gt; vec</span>
-<span class="sd">        Vec(1, 2, 3)</span>
-<span class="sd">        &gt;&gt;&gt; vec[0] = 10</span>
-<span class="sd">        &gt;&gt;&gt; original_list</span>
-<span class="sd">        [10, 2, 3]</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">            &gt;&gt;&gt; original_list = [1, 2, 3]</span>
+<span class="sd">            &gt;&gt;&gt; vec = Vec.from_ref(original_list)</span>
+<span class="sd">            &gt;&gt;&gt; vec</span>
+<span class="sd">            Vec(1, 2, 3)</span>
+<span class="sd">            &gt;&gt;&gt; vec[0] = 10</span>
+<span class="sd">            &gt;&gt;&gt; original_list</span>
+<span class="sd">            [10, 2, 3]</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">instance</span><span class="p">:</span> <span class="n">Vec</span><span class="p">[</span><span class="n">V</span><span class="p">]</span> <span class="o">=</span> <span class="n">Vec</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="n">Vec</span><span class="p">)</span>  <span class="c1"># pyright: ignore[reportUnknownVariableType]</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">_inner</span> <span class="o">=</span> <span class="n">data</span>
@@ -2207,6 +2217,16 @@
         <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
 
     <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">match</span> <span class="n">other</span><span class="p">:</span>
+            <span class="k">case</span> <span class="n">Vec</span><span class="p">():</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_inner</span>  <span class="c1"># pyright: ignore[reportUnknownMemberType]</span>
+            <span class="k">case</span> <span class="nb">list</span><span class="p">():</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span> <span class="o">==</span> <span class="n">other</span>
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Inserts an element at position index within the vector, shifting all elements after it to the right.</span>
 
@@ -2215,17 +2235,17 @@
 <span class="sd">            value (T): The element to insert.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Vec</span>
-<span class="sd">        &gt;&gt;&gt; vec = Vec.from_ref([&quot;a&quot;, &quot;b&quot;, &quot;c&quot;])</span>
-<span class="sd">        &gt;&gt;&gt; vec.insert(1, &quot;d&quot;)</span>
-<span class="sd">        &gt;&gt;&gt; vec</span>
-<span class="sd">        Vec(&#39;a&#39;, &#39;d&#39;, &#39;b&#39;, &#39;c&#39;)</span>
-<span class="sd">        &gt;&gt;&gt; vec.insert(4, &quot;e&quot;)</span>
-<span class="sd">        &gt;&gt;&gt; vec</span>
-<span class="sd">        Vec(&#39;a&#39;, &#39;d&#39;, &#39;b&#39;, &#39;c&#39;, &#39;e&#39;)</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">            &gt;&gt;&gt; vec = Vec.from_ref([&quot;a&quot;, &quot;b&quot;, &quot;c&quot;])</span>
+<span class="sd">            &gt;&gt;&gt; vec.insert(1, &quot;d&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; vec</span>
+<span class="sd">            Vec(&#39;a&#39;, &#39;d&#39;, &#39;b&#39;, &#39;c&#39;)</span>
+<span class="sd">            &gt;&gt;&gt; vec.insert(4, &quot;e&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; vec</span>
+<span class="sd">            Vec(&#39;a&#39;, &#39;d&#39;, &#39;b&#39;, &#39;c&#39;, &#39;e&#39;)</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 
@@ -2266,14 +2286,14 @@
 <span class="sd">            Vec[Any]: The sorted `Vec` instance (self).</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Vec, Iter</span>
-<span class="sd">        &gt;&gt;&gt; Vec.from_ref([3, 1, 2]).sort()</span>
-<span class="sd">        Vec(1, 2, 3)</span>
-<span class="sd">        &gt;&gt;&gt; Iter((3, 1, 2)).map(str).collect(Vec).sort(key=int)</span>
-<span class="sd">        Vec(&#39;1&#39;, &#39;2&#39;, &#39;3&#39;)</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Vec, Iter</span>
+<span class="sd">            &gt;&gt;&gt; Vec.from_ref([3, 1, 2]).sort()</span>
+<span class="sd">            Vec(1, 2, 3)</span>
+<span class="sd">            &gt;&gt;&gt; Iter((3, 1, 2)).map(str).collect(Vec).sort(key=int)</span>
+<span class="sd">            Vec(&#39;1&#39;, &#39;2&#39;, &#39;3&#39;)</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="n">reverse</span><span class="p">)</span>  <span class="c1"># pyright: ignore[reportArgumentType]</span>
         <span class="k">return</span> <span class="bp">self</span>
@@ -2295,21 +2315,21 @@
 <span class="sd">            `Vec.extend()` which modifies **self** in place.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Vec</span>
-<span class="sd">        &gt;&gt;&gt; v1 = Vec.from_ref([1, 2, 3])</span>
-<span class="sd">        &gt;&gt;&gt; v2 = [4, 5, 6]  # Can also concatenate a standard list</span>
-<span class="sd">        &gt;&gt;&gt; v3 = v1.concat(v2)</span>
-<span class="sd">        &gt;&gt;&gt; v3</span>
-<span class="sd">        Vec(1, 2, 3, 4, 5, 6)</span>
-<span class="sd">        &gt;&gt;&gt; v1.clear()  # Clean up the original vec</span>
-<span class="sd">        &gt;&gt;&gt; v1</span>
-<span class="sd">        Vec()</span>
-<span class="sd">        &gt;&gt;&gt; # New vec remains unaffected</span>
-<span class="sd">        &gt;&gt;&gt; v3</span>
-<span class="sd">        Vec(1, 2, 3, 4, 5, 6)</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">            &gt;&gt;&gt; v1 = Vec.from_ref([1, 2, 3])</span>
+<span class="sd">            &gt;&gt;&gt; v2 = [4, 5, 6]  # Can also concatenate a standard list</span>
+<span class="sd">            &gt;&gt;&gt; v3 = v1.concat(v2)</span>
+<span class="sd">            &gt;&gt;&gt; v3</span>
+<span class="sd">            Vec(1, 2, 3, 4, 5, 6)</span>
+<span class="sd">            &gt;&gt;&gt; v1.clear()  # Clean up the original vec</span>
+<span class="sd">            &gt;&gt;&gt; v1</span>
+<span class="sd">            Vec()</span>
+<span class="sd">            &gt;&gt;&gt; # New vec remains unaffected</span>
+<span class="sd">            &gt;&gt;&gt; v3</span>
+<span class="sd">            Vec(1, 2, 3, 4, 5, 6)</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">match</span> <span class="n">other</span><span class="p">:</span>
             <span class="k">case</span> <span class="n">Vec</span><span class="p">():</span>
@@ -2336,16 +2356,16 @@
 <span class="sd">            `Vec.concat()` which returns a new `Vec` without modifying **self**.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Vec</span>
-<span class="sd">        &gt;&gt;&gt; v1 = Vec.from_ref([1, 2, 3])</span>
-<span class="sd">        &gt;&gt;&gt; v2 = [4, 5, 6]  # Can also concatenate a standard list</span>
-<span class="sd">        &gt;&gt;&gt; v1.concat_mut(v2)</span>
-<span class="sd">        Vec(1, 2, 3, 4, 5, 6)</span>
-<span class="sd">        &gt;&gt;&gt; v1</span>
-<span class="sd">        Vec(1, 2, 3, 4, 5, 6)</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">            &gt;&gt;&gt; v1 = Vec.from_ref([1, 2, 3])</span>
+<span class="sd">            &gt;&gt;&gt; v2 = [4, 5, 6]  # Can also concatenate a standard list</span>
+<span class="sd">            &gt;&gt;&gt; v1.concat_mut(v2)</span>
+<span class="sd">            Vec(1, 2, 3, 4, 5, 6)</span>
+<span class="sd">            &gt;&gt;&gt; v1</span>
+<span class="sd">            Vec(1, 2, 3, 4, 5, 6)</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">match</span> <span class="n">other</span><span class="p">:</span>
             <span class="k">case</span> <span class="n">Vec</span><span class="p">():</span>
@@ -2491,8 +2511,11 @@
 <details class="see-also" open>
   <summary>See Also</summary>
   <p><code>Vec.extend()</code> which modifies <strong>self</strong> in place.</p>
-</details>        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span>
+</details>
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">v1</span> <span class="o">=</span> <span class="n">Vec</span><span class="o">.</span><span class="n">from_ref</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">v2</span> <span class="o">=</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]</span>  <span class="c1"># Can also concatenate a standard list</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">v3</span> <span class="o">=</span> <span class="n">v1</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">v2</span><span class="p">)</span>
@@ -2504,22 +2527,12 @@
 <span class="o">&gt;&gt;&gt;</span> <span class="c1"># New vec remains unaffected</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">v3</span>
 <span class="n">Vec</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">197</span>
-<span class="normal">198</span>
-<span class="normal">199</span>
-<span class="normal">200</span>
-<span class="normal">201</span>
-<span class="normal">202</span>
-<span class="normal">203</span>
-<span class="normal">204</span>
-<span class="normal">205</span>
-<span class="normal">206</span>
-<span class="normal">207</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">207</span>
 <span class="normal">208</span>
 <span class="normal">209</span>
 <span class="normal">210</span>
@@ -2547,7 +2560,17 @@
 <span class="normal">232</span>
 <span class="normal">233</span>
 <span class="normal">234</span>
-<span class="normal">235</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@override</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@override</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">concat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">Self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Vec</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>  <span class="c1"># pyright: ignore[reportIncompatibleMethodOverride]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Concatenate another `Vec` or `list` to **self** and return a new `Vec`.</span>
 
@@ -2564,21 +2587,21 @@
 <span class="sd">        `Vec.extend()` which modifies **self** in place.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Vec</span>
-<span class="sd">    &gt;&gt;&gt; v1 = Vec.from_ref([1, 2, 3])</span>
-<span class="sd">    &gt;&gt;&gt; v2 = [4, 5, 6]  # Can also concatenate a standard list</span>
-<span class="sd">    &gt;&gt;&gt; v3 = v1.concat(v2)</span>
-<span class="sd">    &gt;&gt;&gt; v3</span>
-<span class="sd">    Vec(1, 2, 3, 4, 5, 6)</span>
-<span class="sd">    &gt;&gt;&gt; v1.clear()  # Clean up the original vec</span>
-<span class="sd">    &gt;&gt;&gt; v1</span>
-<span class="sd">    Vec()</span>
-<span class="sd">    &gt;&gt;&gt; # New vec remains unaffected</span>
-<span class="sd">    &gt;&gt;&gt; v3</span>
-<span class="sd">    Vec(1, 2, 3, 4, 5, 6)</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">        &gt;&gt;&gt; v1 = Vec.from_ref([1, 2, 3])</span>
+<span class="sd">        &gt;&gt;&gt; v2 = [4, 5, 6]  # Can also concatenate a standard list</span>
+<span class="sd">        &gt;&gt;&gt; v3 = v1.concat(v2)</span>
+<span class="sd">        &gt;&gt;&gt; v3</span>
+<span class="sd">        Vec(1, 2, 3, 4, 5, 6)</span>
+<span class="sd">        &gt;&gt;&gt; v1.clear()  # Clean up the original vec</span>
+<span class="sd">        &gt;&gt;&gt; v1</span>
+<span class="sd">        Vec()</span>
+<span class="sd">        &gt;&gt;&gt; # New vec remains unaffected</span>
+<span class="sd">        &gt;&gt;&gt; v3</span>
+<span class="sd">        Vec(1, 2, 3, 4, 5, 6)</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">match</span> <span class="n">other</span><span class="p">:</span>
         <span class="k">case</span> <span class="n">Vec</span><span class="p">():</span>
@@ -2669,30 +2692,23 @@
 <details class="see-also" open>
   <summary>See Also</summary>
   <p><code>Vec.concat()</code> which returns a new <code>Vec</code> without modifying <strong>self</strong>.</p>
-</details>        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span>
+</details>
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">v1</span> <span class="o">=</span> <span class="n">Vec</span><span class="o">.</span><span class="n">from_ref</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">v2</span> <span class="o">=</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]</span>  <span class="c1"># Can also concatenate a standard list</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">v1</span><span class="o">.</span><span class="n">concat_mut</span><span class="p">(</span><span class="n">v2</span><span class="p">)</span>
 <span class="n">Vec</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">v1</span>
 <span class="n">Vec</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">237</span>
-<span class="normal">238</span>
-<span class="normal">239</span>
-<span class="normal">240</span>
-<span class="normal">241</span>
-<span class="normal">242</span>
-<span class="normal">243</span>
-<span class="normal">244</span>
-<span class="normal">245</span>
-<span class="normal">246</span>
-<span class="normal">247</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">247</span>
 <span class="normal">248</span>
 <span class="normal">249</span>
 <span class="normal">250</span>
@@ -2716,7 +2732,17 @@
 <span class="normal">268</span>
 <span class="normal">269</span>
 <span class="normal">270</span>
-<span class="normal">271</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">concat_mut</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">Self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">concat_mut</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">Self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Concatenate another `Vec` or `list` to **self** in place.</span>
 
 <span class="sd">    This is equivalent to `list_1 += list_2` for standard lists.</span>
@@ -2734,16 +2760,16 @@
 <span class="sd">        `Vec.concat()` which returns a new `Vec` without modifying **self**.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Vec</span>
-<span class="sd">    &gt;&gt;&gt; v1 = Vec.from_ref([1, 2, 3])</span>
-<span class="sd">    &gt;&gt;&gt; v2 = [4, 5, 6]  # Can also concatenate a standard list</span>
-<span class="sd">    &gt;&gt;&gt; v1.concat_mut(v2)</span>
-<span class="sd">    Vec(1, 2, 3, 4, 5, 6)</span>
-<span class="sd">    &gt;&gt;&gt; v1</span>
-<span class="sd">    Vec(1, 2, 3, 4, 5, 6)</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">        &gt;&gt;&gt; v1 = Vec.from_ref([1, 2, 3])</span>
+<span class="sd">        &gt;&gt;&gt; v2 = [4, 5, 6]  # Can also concatenate a standard list</span>
+<span class="sd">        &gt;&gt;&gt; v1.concat_mut(v2)</span>
+<span class="sd">        Vec(1, 2, 3, 4, 5, 6)</span>
+<span class="sd">        &gt;&gt;&gt; v1</span>
+<span class="sd">        Vec(1, 2, 3, 4, 5, 6)</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">match</span> <span class="n">other</span><span class="p">:</span>
         <span class="k">case</span> <span class="n">Vec</span><span class="p">():</span>
@@ -2834,8 +2860,11 @@
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">original_list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="n">Vec</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="n">original_list</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span>
@@ -2843,8 +2872,8 @@
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">original_list</span>
 <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
@@ -2898,17 +2927,17 @@
 <span class="sd">        Vec[V]: A new Vec instance wrapping the provided `list`.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Vec</span>
-<span class="sd">    &gt;&gt;&gt; original_list = [1, 2, 3]</span>
-<span class="sd">    &gt;&gt;&gt; vec = Vec.from_ref(original_list)</span>
-<span class="sd">    &gt;&gt;&gt; vec</span>
-<span class="sd">    Vec(1, 2, 3)</span>
-<span class="sd">    &gt;&gt;&gt; vec[0] = 10</span>
-<span class="sd">    &gt;&gt;&gt; original_list</span>
-<span class="sd">    [10, 2, 3]</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">        &gt;&gt;&gt; original_list = [1, 2, 3]</span>
+<span class="sd">        &gt;&gt;&gt; vec = Vec.from_ref(original_list)</span>
+<span class="sd">        &gt;&gt;&gt; vec</span>
+<span class="sd">        Vec(1, 2, 3)</span>
+<span class="sd">        &gt;&gt;&gt; vec[0] = 10</span>
+<span class="sd">        &gt;&gt;&gt; original_list</span>
+<span class="sd">        [10, 2, 3]</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">instance</span><span class="p">:</span> <span class="n">Vec</span><span class="p">[</span><span class="n">V</span><span class="p">]</span> <span class="o">=</span> <span class="n">Vec</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="n">Vec</span><span class="p">)</span>  <span class="c1"># pyright: ignore[reportUnknownVariableType]</span>
     <span class="n">instance</span><span class="o">.</span><span class="n">_inner</span> <span class="o">=</span> <span class="n">data</span>
@@ -2978,8 +3007,11 @@
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="n">Vec</span><span class="o">.</span><span class="n">from_ref</span><span class="p">([</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">])</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span>
@@ -2987,22 +3019,12 @@
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;e&quot;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">vec</span>
 <span class="n">Vec</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;e&#39;</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">125</span>
-<span class="normal">126</span>
-<span class="normal">127</span>
-<span class="normal">128</span>
-<span class="normal">129</span>
-<span class="normal">130</span>
-<span class="normal">131</span>
-<span class="normal">132</span>
-<span class="normal">133</span>
-<span class="normal">134</span>
-<span class="normal">135</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">135</span>
 <span class="normal">136</span>
 <span class="normal">137</span>
 <span class="normal">138</span>
@@ -3013,7 +3035,17 @@
 <span class="normal">143</span>
 <span class="normal">144</span>
 <span class="normal">145</span>
-<span class="normal">146</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@override</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@override</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Inserts an element at position index within the vector, shifting all elements after it to the right.</span>
 
@@ -3022,17 +3054,17 @@
 <span class="sd">        value (T): The element to insert.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Vec</span>
-<span class="sd">    &gt;&gt;&gt; vec = Vec.from_ref([&quot;a&quot;, &quot;b&quot;, &quot;c&quot;])</span>
-<span class="sd">    &gt;&gt;&gt; vec.insert(1, &quot;d&quot;)</span>
-<span class="sd">    &gt;&gt;&gt; vec</span>
-<span class="sd">    Vec(&#39;a&#39;, &#39;d&#39;, &#39;b&#39;, &#39;c&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; vec.insert(4, &quot;e&quot;)</span>
-<span class="sd">    &gt;&gt;&gt; vec</span>
-<span class="sd">    Vec(&#39;a&#39;, &#39;d&#39;, &#39;b&#39;, &#39;c&#39;, &#39;e&#39;)</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Vec</span>
+<span class="sd">        &gt;&gt;&gt; vec = Vec.from_ref([&quot;a&quot;, &quot;b&quot;, &quot;c&quot;])</span>
+<span class="sd">        &gt;&gt;&gt; vec.insert(1, &quot;d&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; vec</span>
+<span class="sd">        Vec(&#39;a&#39;, &#39;d&#39;, &#39;b&#39;, &#39;c&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; vec.insert(4, &quot;e&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; vec</span>
+<span class="sd">        Vec(&#39;a&#39;, &#39;d&#39;, &#39;b&#39;, &#39;c&#39;, &#39;e&#39;)</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -3137,28 +3169,21 @@
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span><span class="p">,</span> <span class="n">Iter</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vec</span><span class="p">,</span> <span class="n">Iter</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Vec</span><span class="o">.</span><span class="n">from_ref</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
 <span class="n">Vec</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Iter</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">Vec</span><span class="p">)</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
 <span class="n">Vec</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">,</span> <span class="s1">&#39;3&#39;</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">166</span>
-<span class="normal">167</span>
-<span class="normal">168</span>
-<span class="normal">169</span>
-<span class="normal">170</span>
-<span class="normal">171</span>
-<span class="normal">172</span>
-<span class="normal">173</span>
-<span class="normal">174</span>
-<span class="normal">175</span>
-<span class="normal">176</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">176</span>
 <span class="normal">177</span>
 <span class="normal">178</span>
 <span class="normal">179</span>
@@ -3177,7 +3202,17 @@
 <span class="normal">192</span>
 <span class="normal">193</span>
 <span class="normal">194</span>
-<span class="normal">195</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">sort</span><span class="p">(</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">sort</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">key</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">SupportsRichComparison</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
@@ -3196,14 +3231,14 @@
 <span class="sd">        Vec[Any]: The sorted `Vec` instance (self).</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Vec, Iter</span>
-<span class="sd">    &gt;&gt;&gt; Vec.from_ref([3, 1, 2]).sort()</span>
-<span class="sd">    Vec(1, 2, 3)</span>
-<span class="sd">    &gt;&gt;&gt; Iter((3, 1, 2)).map(str).collect(Vec).sort(key=int)</span>
-<span class="sd">    Vec(&#39;1&#39;, &#39;2&#39;, &#39;3&#39;)</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Vec, Iter</span>
+<span class="sd">        &gt;&gt;&gt; Vec.from_ref([3, 1, 2]).sort()</span>
+<span class="sd">        Vec(1, 2, 3)</span>
+<span class="sd">        &gt;&gt;&gt; Iter((3, 1, 2)).map(str).collect(Vec).sort(key=int)</span>
+<span class="sd">        Vec(&#39;1&#39;, &#39;2&#39;, &#39;3&#39;)</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="n">reverse</span><span class="p">)</span>  <span class="c1"># pyright: ignore[reportArgumentType]</span>
     <span class="k">return</span> <span class="bp">self</span>

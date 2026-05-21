@@ -2080,8 +2080,11 @@
 <p>It extends the standard <code>Iterable[T]</code> protocol, as well as <code>Pipeable</code> and <code>Checkable</code>.</p>
 <p>All concrete subclasses must implement <code>__iter__()</code>.</p>
 <p>Since it's very straightforward to implement, it can very easily be integrated into business logic classes to provide them with a rich set of methods for free.</p>
-<p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">PyoIterable</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">PyoIterable</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="o">...</span> <span class="k">class</span><span class="w"> </span><span class="nc">ClientRegistry</span><span class="p">(</span><span class="n">PyoIterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
@@ -2099,8 +2102,8 @@
 <span class="s1">&#39;alice, bob, charlie&#39;</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">registry</span><span class="o">.</span><span class="n">ok_or</span><span class="p">(</span><span class="s2">&quot;Registry is empty&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">))</span>
 <span class="n">Ok</span><span class="p">(</span><span class="s1">&#39;Alice, Bob, Charlie&#39;</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
 
 
@@ -2598,27 +2601,27 @@
 <span class="sd">    Since it&#39;s very straightforward to implement, it can very easily be integrated into business logic classes to provide them with a rich set of methods for free.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain.abc import PyoIterable</span>
-<span class="sd">    &gt;&gt;&gt; from dataclasses import dataclass</span>
-<span class="sd">    &gt;&gt;&gt; @dataclass(slots=True)</span>
-<span class="sd">    ... class ClientRegistry(PyoIterable[str]):</span>
-<span class="sd">    ...     clients: list[str]</span>
-<span class="sd">    ...</span>
-<span class="sd">    ...     def __iter__(self):</span>
-<span class="sd">    ...         return iter(self.clients)</span>
-<span class="sd">    &gt;&gt;&gt;</span>
-<span class="sd">    &gt;&gt;&gt; registry = ClientRegistry([&quot;Alice&quot;, &quot;Bob&quot;, &quot;Charlie&quot;])</span>
-<span class="sd">    &gt;&gt;&gt; registry.all(lambda name: name.startswith(&quot;A&quot;))</span>
-<span class="sd">    False</span>
-<span class="sd">    &gt;&gt;&gt; registry.join(&quot;, &quot;)</span>
-<span class="sd">    &#39;Alice, Bob, Charlie&#39;</span>
-<span class="sd">    &gt;&gt;&gt; registry.iter().map(str.lower).join(&quot;, &quot;)</span>
-<span class="sd">    &#39;alice, bob, charlie&#39;</span>
-<span class="sd">    &gt;&gt;&gt; registry.ok_or(&quot;Registry is empty&quot;).map(lambda s: s.join(&quot;, &quot;))</span>
-<span class="sd">    Ok(&#39;Alice, Bob, Charlie&#39;)</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain.abc import PyoIterable</span>
+<span class="sd">        &gt;&gt;&gt; from dataclasses import dataclass</span>
+<span class="sd">        &gt;&gt;&gt; @dataclass(slots=True)</span>
+<span class="sd">        ... class ClientRegistry(PyoIterable[str]):</span>
+<span class="sd">        ...     clients: list[str]</span>
+<span class="sd">        ...</span>
+<span class="sd">        ...     def __iter__(self):</span>
+<span class="sd">        ...         return iter(self.clients)</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; registry = ClientRegistry([&quot;Alice&quot;, &quot;Bob&quot;, &quot;Charlie&quot;])</span>
+<span class="sd">        &gt;&gt;&gt; registry.all(lambda name: name.startswith(&quot;A&quot;))</span>
+<span class="sd">        False</span>
+<span class="sd">        &gt;&gt;&gt; registry.join(&quot;, &quot;)</span>
+<span class="sd">        &#39;Alice, Bob, Charlie&#39;</span>
+<span class="sd">        &gt;&gt;&gt; registry.iter().map(str.lower).join(&quot;, &quot;)</span>
+<span class="sd">        &#39;alice, bob, charlie&#39;</span>
+<span class="sd">        &gt;&gt;&gt; registry.ok_or(&quot;Registry is empty&quot;).map(lambda s: s.join(&quot;, &quot;))</span>
+<span class="sd">        Ok(&#39;Alice, Bob, Charlie&#39;)</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>  <span class="c1"># pyright: ignore[reportUnannotatedClassAttribute]</span>
@@ -2635,17 +2638,17 @@
 <span class="sd">            Iter[T]: An `Iterator` over the `Iterable`. The element type is inferred from the actual subclass.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">        &gt;&gt;&gt; seq = Seq((1, 2, 3))</span>
-<span class="sd">        &gt;&gt;&gt; iterator = seq.iter()</span>
-<span class="sd">        &gt;&gt;&gt; iterator.collect()</span>
-<span class="sd">        Seq(1, 2, 3)</span>
-<span class="sd">        &gt;&gt;&gt; # iterator is now empty</span>
-<span class="sd">        &gt;&gt;&gt; iterator.collect()</span>
-<span class="sd">        Seq()</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">            &gt;&gt;&gt; seq = Seq((1, 2, 3))</span>
+<span class="sd">            &gt;&gt;&gt; iterator = seq.iter()</span>
+<span class="sd">            &gt;&gt;&gt; iterator.collect()</span>
+<span class="sd">            Seq(1, 2, 3)</span>
+<span class="sd">            &gt;&gt;&gt; # iterator is now empty</span>
+<span class="sd">            &gt;&gt;&gt; iterator.collect()</span>
+<span class="sd">            Seq()</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">.._iter</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iter</span>
 
@@ -2677,19 +2680,19 @@
 <span class="sd">            R: The result of calling *func* with the unpacked elements of the `Iterable` and any additional arguments.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Seq</span>
 
-<span class="sd">        &gt;&gt;&gt; data = Seq((1, 2, 3))</span>
-<span class="sd">        &gt;&gt;&gt; def foo(*a: int, x: str) -&gt; str:</span>
-<span class="sd">        ...     return x + str(sum(a))</span>
-<span class="sd">        &gt;&gt;&gt; data.unpack_into(foo, x=&quot;Result: &quot;)</span>
-<span class="sd">        &#39;Result: 6&#39;</span>
-<span class="sd">        &gt;&gt;&gt; # The example below will work, but is not type safe, as the unpacked elements are passed as explicit positional arguments.</span>
-<span class="sd">        &gt;&gt;&gt; data.unpack_into(lambda a, b, c: a + b + c)</span>
-<span class="sd">        6</span>
+<span class="sd">            &gt;&gt;&gt; data = Seq((1, 2, 3))</span>
+<span class="sd">            &gt;&gt;&gt; def foo(*a: int, x: str) -&gt; str:</span>
+<span class="sd">            ...     return x + str(sum(a))</span>
+<span class="sd">            &gt;&gt;&gt; data.unpack_into(foo, x=&quot;Result: &quot;)</span>
+<span class="sd">            &#39;Result: 6&#39;</span>
+<span class="sd">            &gt;&gt;&gt; # The example below will work, but is not type safe, as the unpacked elements are passed as explicit positional arguments.</span>
+<span class="sd">            &gt;&gt;&gt; data.unpack_into(lambda a, b, c: a + b + c)</span>
+<span class="sd">            6</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -2703,12 +2706,12 @@
 <span class="sd">            str: The joined string.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">        &gt;&gt;&gt; Seq((&quot;a&quot;, &quot;b&quot;, &quot;c&quot;)).join(&quot;-&quot;)</span>
-<span class="sd">        &#39;a-b-c&#39;</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">            &gt;&gt;&gt; Seq((&quot;a&quot;, &quot;b&quot;, &quot;c&quot;)).join(&quot;-&quot;)</span>
+<span class="sd">            &#39;a-b-c&#39;</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 
@@ -2725,21 +2728,21 @@
 <span class="sd">            T: The first element of the `Iterable`.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">        &gt;&gt;&gt; data = Seq((1, 2))</span>
-<span class="sd">        &gt;&gt;&gt; data.first()</span>
-<span class="sd">        1</span>
-<span class="sd">        &gt;&gt;&gt; iterator = data.iter()</span>
-<span class="sd">        &gt;&gt;&gt; iterator.first()</span>
-<span class="sd">        1</span>
-<span class="sd">        &gt;&gt;&gt; iterator.first()</span>
-<span class="sd">        2</span>
-<span class="sd">        &gt;&gt;&gt; # iterator is now empty, using first again would raise an error</span>
-<span class="sd">        &gt;&gt;&gt; iterator.next()</span>
-<span class="sd">        NONE</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">            &gt;&gt;&gt; data = Seq((1, 2))</span>
+<span class="sd">            &gt;&gt;&gt; data.first()</span>
+<span class="sd">            1</span>
+<span class="sd">            &gt;&gt;&gt; iterator = data.iter()</span>
+<span class="sd">            &gt;&gt;&gt; iterator.first()</span>
+<span class="sd">            1</span>
+<span class="sd">            &gt;&gt;&gt; iterator.first()</span>
+<span class="sd">            2</span>
+<span class="sd">            &gt;&gt;&gt; # iterator is now empty, using first again would raise an error</span>
+<span class="sd">            &gt;&gt;&gt; iterator.next()</span>
+<span class="sd">            NONE</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 
@@ -2752,12 +2755,12 @@
 <span class="sd">            T: The second element of the `Iterable`.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">        &gt;&gt;&gt; Seq((9, 8)).second()</span>
-<span class="sd">        8</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">            &gt;&gt;&gt; Seq((9, 8)).second()</span>
+<span class="sd">            8</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">seq</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">_</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span>
@@ -2772,12 +2775,12 @@
 <span class="sd">            T: The last element of the `Iterable`.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">        &gt;&gt;&gt; Seq((7, 8, 9)).last()</span>
-<span class="sd">        9</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">            &gt;&gt;&gt; Seq((7, 8, 9)).last()</span>
+<span class="sd">            9</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">tls</span><span class="o">.</span><span class="n">last</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 
@@ -2792,20 +2795,20 @@
 <span class="sd">            int: The count of elements.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Seq, Range, Iter</span>
-<span class="sd">        &gt;&gt;&gt; Seq((1, 2)).length()</span>
-<span class="sd">        2</span>
-<span class="sd">        &gt;&gt;&gt; Range(0, 5).length()</span>
-<span class="sd">        5</span>
-<span class="sd">        &gt;&gt;&gt; data = Iter((1, 2, 3))</span>
-<span class="sd">        &gt;&gt;&gt; data.length()</span>
-<span class="sd">        3</span>
-<span class="sd">        &gt;&gt;&gt; # data is now empty</span>
-<span class="sd">        &gt;&gt;&gt; data.length()</span>
-<span class="sd">        0</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Seq, Range, Iter</span>
+<span class="sd">            &gt;&gt;&gt; Seq((1, 2)).length()</span>
+<span class="sd">            2</span>
+<span class="sd">            &gt;&gt;&gt; Range(0, 5).length()</span>
+<span class="sd">            5</span>
+<span class="sd">            &gt;&gt;&gt; data = Iter((1, 2, 3))</span>
+<span class="sd">            &gt;&gt;&gt; data.length()</span>
+<span class="sd">            3</span>
+<span class="sd">            &gt;&gt;&gt; # data is now empty</span>
+<span class="sd">            &gt;&gt;&gt; data.length()</span>
+<span class="sd">            0</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">tls</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 
@@ -2818,12 +2821,12 @@
 <span class="sd">            int: The sum of all elements.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">        &gt;&gt;&gt; Seq((1, 2, 3)).sum()</span>
-<span class="sd">        6</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">            &gt;&gt;&gt; Seq((1, 2, 3)).sum()</span>
+<span class="sd">            6</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 
@@ -2840,12 +2843,12 @@
 <span class="sd">            U: The minimum value.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">        &gt;&gt;&gt; Seq((3, 1, 2)).min()</span>
-<span class="sd">        1</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">            &gt;&gt;&gt; Seq((3, 1, 2)).min()</span>
+<span class="sd">            1</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 
@@ -2861,20 +2864,20 @@
 <span class="sd">            T: The element with the minimum key value.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">        &gt;&gt;&gt; from dataclasses import dataclass</span>
-<span class="sd">        &gt;&gt;&gt; @dataclass</span>
-<span class="sd">        ... class Foo:</span>
-<span class="sd">        ...     x: int</span>
-<span class="sd">        ...     y: str</span>
-<span class="sd">        &gt;&gt;&gt;</span>
-<span class="sd">        &gt;&gt;&gt; Seq((Foo(2, &quot;a&quot;), Foo(1, &quot;b&quot;), Foo(4, &quot;c&quot;))).min_by(key=lambda f: f.x)</span>
-<span class="sd">        Foo(x=1, y=&#39;b&#39;)</span>
-<span class="sd">        &gt;&gt;&gt; Seq((Foo(2, &quot;a&quot;), Foo(1, &quot;b&quot;), Foo(1, &quot;c&quot;))).min_by(key=lambda f: f.x)</span>
-<span class="sd">        Foo(x=1, y=&#39;b&#39;)</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">            &gt;&gt;&gt; from dataclasses import dataclass</span>
+<span class="sd">            &gt;&gt;&gt; @dataclass</span>
+<span class="sd">            ... class Foo:</span>
+<span class="sd">            ...     x: int</span>
+<span class="sd">            ...     y: str</span>
+<span class="sd">            &gt;&gt;&gt;</span>
+<span class="sd">            &gt;&gt;&gt; Seq((Foo(2, &quot;a&quot;), Foo(1, &quot;b&quot;), Foo(4, &quot;c&quot;))).min_by(key=lambda f: f.x)</span>
+<span class="sd">            Foo(x=1, y=&#39;b&#39;)</span>
+<span class="sd">            &gt;&gt;&gt; Seq((Foo(2, &quot;a&quot;), Foo(1, &quot;b&quot;), Foo(1, &quot;c&quot;))).min_by(key=lambda f: f.x)</span>
+<span class="sd">            Foo(x=1, y=&#39;b&#39;)</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
 
@@ -2891,12 +2894,12 @@
 <span class="sd">            U: The maximum value.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">        &gt;&gt;&gt; Seq((3, 1, 2)).max()</span>
-<span class="sd">        3</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">            &gt;&gt;&gt; Seq((3, 1, 2)).max()</span>
+<span class="sd">            3</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 
@@ -2912,20 +2915,20 @@
 <span class="sd">            T: The element with the maximum key value.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">        &gt;&gt;&gt; from dataclasses import dataclass</span>
-<span class="sd">        &gt;&gt;&gt; @dataclass</span>
-<span class="sd">        ... class Foo:</span>
-<span class="sd">        ...     x: int</span>
-<span class="sd">        ...     y: str</span>
-<span class="sd">        &gt;&gt;&gt;</span>
-<span class="sd">        &gt;&gt;&gt; Seq((Foo(2, &quot;a&quot;), Foo(3, &quot;b&quot;), Foo(4, &quot;c&quot;))).max_by(key=lambda f: f.x)</span>
-<span class="sd">        Foo(x=4, y=&#39;c&#39;)</span>
-<span class="sd">        &gt;&gt;&gt; Seq((Foo(2, &quot;a&quot;), Foo(3, &quot;b&quot;), Foo(3, &quot;c&quot;))).max_by(key=lambda f: f.x)</span>
-<span class="sd">        Foo(x=3, y=&#39;b&#39;)</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">            &gt;&gt;&gt; from dataclasses import dataclass</span>
+<span class="sd">            &gt;&gt;&gt; @dataclass</span>
+<span class="sd">            ... class Foo:</span>
+<span class="sd">            ...     x: int</span>
+<span class="sd">            ...     y: str</span>
+<span class="sd">            &gt;&gt;&gt;</span>
+<span class="sd">            &gt;&gt;&gt; Seq((Foo(2, &quot;a&quot;), Foo(3, &quot;b&quot;), Foo(4, &quot;c&quot;))).max_by(key=lambda f: f.x)</span>
+<span class="sd">            Foo(x=4, y=&#39;c&#39;)</span>
+<span class="sd">            &gt;&gt;&gt; Seq((Foo(2, &quot;a&quot;), Foo(3, &quot;b&quot;), Foo(3, &quot;c&quot;))).max_by(key=lambda f: f.x)</span>
+<span class="sd">            Foo(x=3, y=&#39;b&#39;)</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
 
@@ -2947,20 +2950,20 @@
 <span class="sd">            bool: True if all elements match the predicate, False otherwise.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">        &gt;&gt;&gt; Seq((1, True)).all()</span>
-<span class="sd">        True</span>
-<span class="sd">        &gt;&gt;&gt; Seq(()).all()</span>
-<span class="sd">        True</span>
-<span class="sd">        &gt;&gt;&gt; Seq((1, 0)).all()</span>
-<span class="sd">        False</span>
-<span class="sd">        &gt;&gt;&gt; def is_even(x: int) -&gt; bool:</span>
-<span class="sd">        ...     return x % 2 == 0</span>
-<span class="sd">        &gt;&gt;&gt; Seq((2, 4, 6)).all(is_even)</span>
-<span class="sd">        True</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">            &gt;&gt;&gt; Seq((1, True)).all()</span>
+<span class="sd">            True</span>
+<span class="sd">            &gt;&gt;&gt; Seq(()).all()</span>
+<span class="sd">            True</span>
+<span class="sd">            &gt;&gt;&gt; Seq((1, 0)).all()</span>
+<span class="sd">            False</span>
+<span class="sd">            &gt;&gt;&gt; def is_even(x: int) -&gt; bool:</span>
+<span class="sd">            ...     return x % 2 == 0</span>
+<span class="sd">            &gt;&gt;&gt; Seq((2, 4, 6)).all(is_even)</span>
+<span class="sd">            True</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">predicate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
@@ -2983,18 +2986,18 @@
 <span class="sd">            bool: True if any element matches the predicate, False otherwise.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Seq, Range</span>
-<span class="sd">        &gt;&gt;&gt; Seq((0, 1)).any()</span>
-<span class="sd">        True</span>
-<span class="sd">        &gt;&gt;&gt; Range(0, 0).any()</span>
-<span class="sd">        False</span>
-<span class="sd">        &gt;&gt;&gt; def is_even(x: int) -&gt; bool:</span>
-<span class="sd">        ...     return x % 2 == 0</span>
-<span class="sd">        &gt;&gt;&gt; Seq((1, 3, 4)).any(is_even)</span>
-<span class="sd">        True</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Seq, Range</span>
+<span class="sd">            &gt;&gt;&gt; Seq((0, 1)).any()</span>
+<span class="sd">            True</span>
+<span class="sd">            &gt;&gt;&gt; Range(0, 0).any()</span>
+<span class="sd">            False</span>
+<span class="sd">            &gt;&gt;&gt; def is_even(x: int) -&gt; bool:</span>
+<span class="sd">            ...     return x % 2 == 0</span>
+<span class="sd">            &gt;&gt;&gt; Seq((1, 3, 4)).any(is_even)</span>
+<span class="sd">            True</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">predicate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
@@ -3017,19 +3020,19 @@
 <span class="sd">            bool: `True` if all elements are unique, `False` otherwise.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Iter, Dict</span>
-<span class="sd">        &gt;&gt;&gt; Iter(&quot;ABCB&quot;).all_unique()</span>
-<span class="sd">        False</span>
-<span class="sd">        &gt;&gt;&gt; Iter(&quot;ABCb&quot;).all_unique()</span>
-<span class="sd">        True</span>
-<span class="sd">        &gt;&gt;&gt; data = Dict.from_ref({1: &quot;a&quot;, 2: &quot;a&quot;})</span>
-<span class="sd">        &gt;&gt;&gt; data.all_unique()</span>
-<span class="sd">        True</span>
-<span class="sd">        &gt;&gt;&gt; data.values().all_unique()</span>
-<span class="sd">        False</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Iter, Dict</span>
+<span class="sd">            &gt;&gt;&gt; Iter(&quot;ABCB&quot;).all_unique()</span>
+<span class="sd">            False</span>
+<span class="sd">            &gt;&gt;&gt; Iter(&quot;ABCb&quot;).all_unique()</span>
+<span class="sd">            True</span>
+<span class="sd">            &gt;&gt;&gt; data = Dict.from_ref({1: &quot;a&quot;, 2: &quot;a&quot;})</span>
+<span class="sd">            &gt;&gt;&gt; data.all_unique()</span>
+<span class="sd">            True</span>
+<span class="sd">            &gt;&gt;&gt; data.values().all_unique()</span>
+<span class="sd">            False</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">tls</span><span class="o">.</span><span class="n">all_unique</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 
@@ -3047,14 +3050,14 @@
 <span class="sd">            bool: `True` if all elements are unique, `False` otherwise.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Iter</span>
-<span class="sd">        &gt;&gt;&gt; Iter(&quot;ABCb&quot;).all_unique()</span>
-<span class="sd">        True</span>
-<span class="sd">        &gt;&gt;&gt; Iter(&quot;ABCb&quot;).all_unique_by(str.lower)</span>
-<span class="sd">        False</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Iter</span>
+<span class="sd">            &gt;&gt;&gt; Iter(&quot;ABCb&quot;).all_unique()</span>
+<span class="sd">            True</span>
+<span class="sd">            &gt;&gt;&gt; Iter(&quot;ABCb&quot;).all_unique_by(str.lower)</span>
+<span class="sd">            False</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">tls</span><span class="o">.</span><span class="n">all_unique_by</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">key</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -3143,8 +3146,11 @@
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
 <span class="kc">True</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(())</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
@@ -3155,8 +3161,8 @@
 <span class="o">...</span>     <span class="k">return</span> <span class="n">x</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">is_even</span><span class="p">)</span>
 <span class="kc">True</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
@@ -3213,20 +3219,20 @@
 <span class="sd">        bool: True if all elements match the predicate, False otherwise.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">    &gt;&gt;&gt; Seq((1, True)).all()</span>
-<span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; Seq(()).all()</span>
-<span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; Seq((1, 0)).all()</span>
-<span class="sd">    False</span>
-<span class="sd">    &gt;&gt;&gt; def is_even(x: int) -&gt; bool:</span>
-<span class="sd">    ...     return x % 2 == 0</span>
-<span class="sd">    &gt;&gt;&gt; Seq((2, 4, 6)).all(is_even)</span>
-<span class="sd">    True</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">        &gt;&gt;&gt; Seq((1, True)).all()</span>
+<span class="sd">        True</span>
+<span class="sd">        &gt;&gt;&gt; Seq(()).all()</span>
+<span class="sd">        True</span>
+<span class="sd">        &gt;&gt;&gt; Seq((1, 0)).all()</span>
+<span class="sd">        False</span>
+<span class="sd">        &gt;&gt;&gt; def is_even(x: int) -&gt; bool:</span>
+<span class="sd">        ...     return x % 2 == 0</span>
+<span class="sd">        &gt;&gt;&gt; Seq((2, 4, 6)).all(is_even)</span>
+<span class="sd">        True</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">predicate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
@@ -3283,8 +3289,11 @@
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iter</span><span class="p">,</span> <span class="n">Dict</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iter</span><span class="p">,</span> <span class="n">Dict</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Iter</span><span class="p">(</span><span class="s2">&quot;ABCB&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">all_unique</span><span class="p">()</span>
 <span class="kc">False</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Iter</span><span class="p">(</span><span class="s2">&quot;ABCb&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">all_unique</span><span class="p">()</span>
@@ -3294,8 +3303,8 @@
 <span class="kc">True</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">()</span><span class="o">.</span><span class="n">all_unique</span><span class="p">()</span>
 <span class="kc">False</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
@@ -3347,19 +3356,19 @@
 <span class="sd">        bool: `True` if all elements are unique, `False` otherwise.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Iter, Dict</span>
-<span class="sd">    &gt;&gt;&gt; Iter(&quot;ABCB&quot;).all_unique()</span>
-<span class="sd">    False</span>
-<span class="sd">    &gt;&gt;&gt; Iter(&quot;ABCb&quot;).all_unique()</span>
-<span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; data = Dict.from_ref({1: &quot;a&quot;, 2: &quot;a&quot;})</span>
-<span class="sd">    &gt;&gt;&gt; data.all_unique()</span>
-<span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; data.values().all_unique()</span>
-<span class="sd">    False</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Iter, Dict</span>
+<span class="sd">        &gt;&gt;&gt; Iter(&quot;ABCB&quot;).all_unique()</span>
+<span class="sd">        False</span>
+<span class="sd">        &gt;&gt;&gt; Iter(&quot;ABCb&quot;).all_unique()</span>
+<span class="sd">        True</span>
+<span class="sd">        &gt;&gt;&gt; data = Dict.from_ref({1: &quot;a&quot;, 2: &quot;a&quot;})</span>
+<span class="sd">        &gt;&gt;&gt; data.all_unique()</span>
+<span class="sd">        True</span>
+<span class="sd">        &gt;&gt;&gt; data.values().all_unique()</span>
+<span class="sd">        False</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">tls</span><span class="o">.</span><span class="n">all_unique</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
@@ -3436,14 +3445,17 @@
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iter</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iter</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Iter</span><span class="p">(</span><span class="s2">&quot;ABCb&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">all_unique</span><span class="p">()</span>
 <span class="kc">True</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Iter</span><span class="p">(</span><span class="s2">&quot;ABCb&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">all_unique_by</span><span class="p">(</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">)</span>
 <span class="kc">False</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
@@ -3484,14 +3496,14 @@
 <span class="sd">        bool: `True` if all elements are unique, `False` otherwise.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Iter</span>
-<span class="sd">    &gt;&gt;&gt; Iter(&quot;ABCb&quot;).all_unique()</span>
-<span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; Iter(&quot;ABCb&quot;).all_unique_by(str.lower)</span>
-<span class="sd">    False</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Iter</span>
+<span class="sd">        &gt;&gt;&gt; Iter(&quot;ABCb&quot;).all_unique()</span>
+<span class="sd">        True</span>
+<span class="sd">        &gt;&gt;&gt; Iter(&quot;ABCb&quot;).all_unique_by(str.lower)</span>
+<span class="sd">        False</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">tls</span><span class="o">.</span><span class="n">all_unique_by</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">key</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -3570,8 +3582,11 @@ If they all return false, it returns false.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span><span class="p">,</span> <span class="n">Range</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span><span class="p">,</span> <span class="n">Range</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
 <span class="kc">True</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
@@ -3580,8 +3595,8 @@ If they all return false, it returns false.</p>
 <span class="o">...</span>     <span class="k">return</span> <span class="n">x</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">is_even</span><span class="p">)</span>
 <span class="kc">True</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
@@ -3634,18 +3649,18 @@ If they all return false, it returns false.</p>
 <span class="sd">        bool: True if any element matches the predicate, False otherwise.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Seq, Range</span>
-<span class="sd">    &gt;&gt;&gt; Seq((0, 1)).any()</span>
-<span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; Range(0, 0).any()</span>
-<span class="sd">    False</span>
-<span class="sd">    &gt;&gt;&gt; def is_even(x: int) -&gt; bool:</span>
-<span class="sd">    ...     return x % 2 == 0</span>
-<span class="sd">    &gt;&gt;&gt; Seq((1, 3, 4)).any(is_even)</span>
-<span class="sd">    True</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq, Range</span>
+<span class="sd">        &gt;&gt;&gt; Seq((0, 1)).any()</span>
+<span class="sd">        True</span>
+<span class="sd">        &gt;&gt;&gt; Range(0, 0).any()</span>
+<span class="sd">        False</span>
+<span class="sd">        &gt;&gt;&gt; def is_even(x: int) -&gt; bool:</span>
+<span class="sd">        ...     return x % 2 == 0</span>
+<span class="sd">        &gt;&gt;&gt; Seq((1, 3, 4)).any(is_even)</span>
+<span class="sd">        True</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">predicate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
@@ -3694,8 +3709,11 @@ If they all return false, it returns false.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 <span class="mi">1</span>
@@ -3707,8 +3725,8 @@ If they all return false, it returns false.</p>
 <span class="o">&gt;&gt;&gt;</span> <span class="c1"># iterator is now empty, using first again would raise an error</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">iterator</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
 <span class="n">NONE</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
@@ -3754,21 +3772,21 @@ If they all return false, it returns false.</p>
 <span class="sd">        T: The first element of the `Iterable`.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">    &gt;&gt;&gt; data = Seq((1, 2))</span>
-<span class="sd">    &gt;&gt;&gt; data.first()</span>
-<span class="sd">    1</span>
-<span class="sd">    &gt;&gt;&gt; iterator = data.iter()</span>
-<span class="sd">    &gt;&gt;&gt; iterator.first()</span>
-<span class="sd">    1</span>
-<span class="sd">    &gt;&gt;&gt; iterator.first()</span>
-<span class="sd">    2</span>
-<span class="sd">    &gt;&gt;&gt; # iterator is now empty, using first again would raise an error</span>
-<span class="sd">    &gt;&gt;&gt; iterator.next()</span>
-<span class="sd">    NONE</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">        &gt;&gt;&gt; data = Seq((1, 2))</span>
+<span class="sd">        &gt;&gt;&gt; data.first()</span>
+<span class="sd">        1</span>
+<span class="sd">        &gt;&gt;&gt; iterator = data.iter()</span>
+<span class="sd">        &gt;&gt;&gt; iterator.first()</span>
+<span class="sd">        1</span>
+<span class="sd">        &gt;&gt;&gt; iterator.first()</span>
+<span class="sd">        2</span>
+<span class="sd">        &gt;&gt;&gt; # iterator is now empty, using first again would raise an error</span>
+<span class="sd">        &gt;&gt;&gt; iterator.next()</span>
+<span class="sd">        NONE</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
@@ -3818,8 +3836,11 @@ If they all return false, it returns false.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">seq</span> <span class="o">=</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">iterator</span> <span class="o">=</span> <span class="n">seq</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">iterator</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
@@ -3827,8 +3848,8 @@ If they all return false, it returns false.</p>
 <span class="o">&gt;&gt;&gt;</span> <span class="c1"># iterator is now empty</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">iterator</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
 <span class="n">Seq</span><span class="p">()</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
@@ -3870,17 +3891,17 @@ If they all return false, it returns false.</p>
 <span class="sd">        Iter[T]: An `Iterator` over the `Iterable`. The element type is inferred from the actual subclass.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">    &gt;&gt;&gt; seq = Seq((1, 2, 3))</span>
-<span class="sd">    &gt;&gt;&gt; iterator = seq.iter()</span>
-<span class="sd">    &gt;&gt;&gt; iterator.collect()</span>
-<span class="sd">    Seq(1, 2, 3)</span>
-<span class="sd">    &gt;&gt;&gt; # iterator is now empty</span>
-<span class="sd">    &gt;&gt;&gt; iterator.collect()</span>
-<span class="sd">    Seq()</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">        &gt;&gt;&gt; seq = Seq((1, 2, 3))</span>
+<span class="sd">        &gt;&gt;&gt; iterator = seq.iter()</span>
+<span class="sd">        &gt;&gt;&gt; iterator.collect()</span>
+<span class="sd">        Seq(1, 2, 3)</span>
+<span class="sd">        &gt;&gt;&gt; # iterator is now empty</span>
+<span class="sd">        &gt;&gt;&gt; iterator.collect()</span>
+<span class="sd">        Seq()</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">.._iter</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iter</span>
 
@@ -3957,12 +3978,15 @@ If they all return false, it returns false.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span>
 <span class="s1">&#39;a-b-c&#39;</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
@@ -3993,12 +4017,12 @@ If they all return false, it returns false.</p>
 <span class="sd">        str: The joined string.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">    &gt;&gt;&gt; Seq((&quot;a&quot;, &quot;b&quot;, &quot;c&quot;)).join(&quot;-&quot;)</span>
-<span class="sd">    &#39;a-b-c&#39;</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">        &gt;&gt;&gt; Seq((&quot;a&quot;, &quot;b&quot;, &quot;c&quot;)).join(&quot;-&quot;)</span>
+<span class="sd">        &#39;a-b-c&#39;</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
@@ -4043,12 +4067,15 @@ If they all return false, it returns false.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">))</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
 <span class="mi">9</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
@@ -4077,12 +4104,12 @@ If they all return false, it returns false.</p>
 <span class="sd">        T: The last element of the `Iterable`.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">    &gt;&gt;&gt; Seq((7, 8, 9)).last()</span>
-<span class="sd">    9</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">        &gt;&gt;&gt; Seq((7, 8, 9)).last()</span>
+<span class="sd">        9</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">tls</span><span class="o">.</span><span class="n">last</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
@@ -4128,8 +4155,11 @@ If they all return false, it returns false.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span><span class="p">,</span> <span class="n">Range</span><span class="p">,</span> <span class="n">Iter</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span><span class="p">,</span> <span class="n">Range</span><span class="p">,</span> <span class="n">Iter</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">length</span><span class="p">()</span>
 <span class="mi">2</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">length</span><span class="p">()</span>
@@ -4140,8 +4170,8 @@ If they all return false, it returns false.</p>
 <span class="o">&gt;&gt;&gt;</span> <span class="c1"># data is now empty</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">length</span><span class="p">()</span>
 <span class="mi">0</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
@@ -4182,20 +4212,20 @@ If they all return false, it returns false.</p>
 <span class="sd">        int: The count of elements.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Seq, Range, Iter</span>
-<span class="sd">    &gt;&gt;&gt; Seq((1, 2)).length()</span>
-<span class="sd">    2</span>
-<span class="sd">    &gt;&gt;&gt; Range(0, 5).length()</span>
-<span class="sd">    5</span>
-<span class="sd">    &gt;&gt;&gt; data = Iter((1, 2, 3))</span>
-<span class="sd">    &gt;&gt;&gt; data.length()</span>
-<span class="sd">    3</span>
-<span class="sd">    &gt;&gt;&gt; # data is now empty</span>
-<span class="sd">    &gt;&gt;&gt; data.length()</span>
-<span class="sd">    0</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq, Range, Iter</span>
+<span class="sd">        &gt;&gt;&gt; Seq((1, 2)).length()</span>
+<span class="sd">        2</span>
+<span class="sd">        &gt;&gt;&gt; Range(0, 5).length()</span>
+<span class="sd">        5</span>
+<span class="sd">        &gt;&gt;&gt; data = Iter((1, 2, 3))</span>
+<span class="sd">        &gt;&gt;&gt; data.length()</span>
+<span class="sd">        3</span>
+<span class="sd">        &gt;&gt;&gt; # data is now empty</span>
+<span class="sd">        &gt;&gt;&gt; data.length()</span>
+<span class="sd">        0</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">tls</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
@@ -4242,12 +4272,15 @@ If they all return false, it returns false.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
 <span class="mi">3</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
@@ -4284,12 +4317,12 @@ If they all return false, it returns false.</p>
 <span class="sd">        U: The maximum value.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">    &gt;&gt;&gt; Seq((3, 1, 2)).max()</span>
-<span class="sd">    3</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">        &gt;&gt;&gt; Seq((3, 1, 2)).max()</span>
+<span class="sd">        3</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
@@ -4365,8 +4398,11 @@ If they all return false, it returns false.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="nd">@dataclass</span>
 <span class="o">...</span> <span class="k">class</span><span class="w"> </span><span class="nc">Foo</span><span class="p">:</span>
@@ -4377,8 +4413,8 @@ If they all return false, it returns false.</p>
 <span class="n">Foo</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;c&#39;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="n">Foo</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">),</span> <span class="n">Foo</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">),</span> <span class="n">Foo</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">)))</span><span class="o">.</span><span class="n">max_by</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
 <span class="n">Foo</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
@@ -4421,20 +4457,20 @@ If they all return false, it returns false.</p>
 <span class="sd">        T: The element with the maximum key value.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">    &gt;&gt;&gt; from dataclasses import dataclass</span>
-<span class="sd">    &gt;&gt;&gt; @dataclass</span>
-<span class="sd">    ... class Foo:</span>
-<span class="sd">    ...     x: int</span>
-<span class="sd">    ...     y: str</span>
-<span class="sd">    &gt;&gt;&gt;</span>
-<span class="sd">    &gt;&gt;&gt; Seq((Foo(2, &quot;a&quot;), Foo(3, &quot;b&quot;), Foo(4, &quot;c&quot;))).max_by(key=lambda f: f.x)</span>
-<span class="sd">    Foo(x=4, y=&#39;c&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; Seq((Foo(2, &quot;a&quot;), Foo(3, &quot;b&quot;), Foo(3, &quot;c&quot;))).max_by(key=lambda f: f.x)</span>
-<span class="sd">    Foo(x=3, y=&#39;b&#39;)</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">        &gt;&gt;&gt; from dataclasses import dataclass</span>
+<span class="sd">        &gt;&gt;&gt; @dataclass</span>
+<span class="sd">        ... class Foo:</span>
+<span class="sd">        ...     x: int</span>
+<span class="sd">        ...     y: str</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; Seq((Foo(2, &quot;a&quot;), Foo(3, &quot;b&quot;), Foo(4, &quot;c&quot;))).max_by(key=lambda f: f.x)</span>
+<span class="sd">        Foo(x=4, y=&#39;c&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; Seq((Foo(2, &quot;a&quot;), Foo(3, &quot;b&quot;), Foo(3, &quot;c&quot;))).max_by(key=lambda f: f.x)</span>
+<span class="sd">        Foo(x=3, y=&#39;b&#39;)</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -4481,12 +4517,15 @@ If they all return false, it returns false.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
 <span class="mi">1</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
@@ -4523,12 +4562,12 @@ If they all return false, it returns false.</p>
 <span class="sd">        U: The minimum value.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">    &gt;&gt;&gt; Seq((3, 1, 2)).min()</span>
-<span class="sd">    1</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">        &gt;&gt;&gt; Seq((3, 1, 2)).min()</span>
+<span class="sd">        1</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
@@ -4604,8 +4643,11 @@ If they all return false, it returns false.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="nd">@dataclass</span>
 <span class="o">...</span> <span class="k">class</span><span class="w"> </span><span class="nc">Foo</span><span class="p">:</span>
@@ -4616,8 +4658,8 @@ If they all return false, it returns false.</p>
 <span class="n">Foo</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="n">Foo</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">),</span> <span class="n">Foo</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">),</span> <span class="n">Foo</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">)))</span><span class="o">.</span><span class="n">min_by</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
 <span class="n">Foo</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
@@ -4660,20 +4702,20 @@ If they all return false, it returns false.</p>
 <span class="sd">        T: The element with the minimum key value.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">    &gt;&gt;&gt; from dataclasses import dataclass</span>
-<span class="sd">    &gt;&gt;&gt; @dataclass</span>
-<span class="sd">    ... class Foo:</span>
-<span class="sd">    ...     x: int</span>
-<span class="sd">    ...     y: str</span>
-<span class="sd">    &gt;&gt;&gt;</span>
-<span class="sd">    &gt;&gt;&gt; Seq((Foo(2, &quot;a&quot;), Foo(1, &quot;b&quot;), Foo(4, &quot;c&quot;))).min_by(key=lambda f: f.x)</span>
-<span class="sd">    Foo(x=1, y=&#39;b&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; Seq((Foo(2, &quot;a&quot;), Foo(1, &quot;b&quot;), Foo(1, &quot;c&quot;))).min_by(key=lambda f: f.x)</span>
-<span class="sd">    Foo(x=1, y=&#39;b&#39;)</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">        &gt;&gt;&gt; from dataclasses import dataclass</span>
+<span class="sd">        &gt;&gt;&gt; @dataclass</span>
+<span class="sd">        ... class Foo:</span>
+<span class="sd">        ...     x: int</span>
+<span class="sd">        ...     y: str</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; Seq((Foo(2, &quot;a&quot;), Foo(1, &quot;b&quot;), Foo(4, &quot;c&quot;))).min_by(key=lambda f: f.x)</span>
+<span class="sd">        Foo(x=1, y=&#39;b&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; Seq((Foo(2, &quot;a&quot;), Foo(1, &quot;b&quot;), Foo(1, &quot;c&quot;))).min_by(key=lambda f: f.x)</span>
+<span class="sd">        Foo(x=1, y=&#39;b&#39;)</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -4718,12 +4760,15 @@ If they all return false, it returns false.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">9</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span><span class="o">.</span><span class="n">second</span><span class="p">()</span>
 <span class="mi">8</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
@@ -4754,12 +4799,12 @@ If they all return false, it returns false.</p>
 <span class="sd">        T: The second element of the `Iterable`.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">    &gt;&gt;&gt; Seq((9, 8)).second()</span>
-<span class="sd">    8</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">        &gt;&gt;&gt; Seq((9, 8)).second()</span>
+<span class="sd">        8</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">seq</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
     <span class="n">_</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span>
@@ -4806,12 +4851,15 @@ If they all return false, it returns false.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 <span class="mi">6</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
@@ -4840,12 +4888,12 @@ If they all return false, it returns false.</p>
 <span class="sd">        int: The sum of all elements.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">    &gt;&gt;&gt; Seq((1, 2, 3)).sum()</span>
-<span class="sd">    6</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">        &gt;&gt;&gt; Seq((1, 2, 3)).sum()</span>
+<span class="sd">        6</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
@@ -4960,8 +5008,11 @@ If they all return false, it returns false.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
 
 <span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">foo</span><span class="p">(</span><span class="o">*</span><span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -4971,8 +5022,8 @@ If they all return false, it returns false.</p>
 <span class="o">&gt;&gt;&gt;</span> <span class="c1"># The example below will work, but is not type safe, as the unpacked elements are passed as explicit positional arguments.</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">data</span><span class="o">.</span><span class="n">unpack_into</span><span class="p">(</span><span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="o">+</span> <span class="n">c</span><span class="p">)</span>
 <span class="mi">6</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
@@ -5042,19 +5093,19 @@ If they all return false, it returns false.</p>
 <span class="sd">        R: The result of calling *func* with the unpacked elements of the `Iterable` and any additional arguments.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
 
-<span class="sd">    &gt;&gt;&gt; data = Seq((1, 2, 3))</span>
-<span class="sd">    &gt;&gt;&gt; def foo(*a: int, x: str) -&gt; str:</span>
-<span class="sd">    ...     return x + str(sum(a))</span>
-<span class="sd">    &gt;&gt;&gt; data.unpack_into(foo, x=&quot;Result: &quot;)</span>
-<span class="sd">    &#39;Result: 6&#39;</span>
-<span class="sd">    &gt;&gt;&gt; # The example below will work, but is not type safe, as the unpacked elements are passed as explicit positional arguments.</span>
-<span class="sd">    &gt;&gt;&gt; data.unpack_into(lambda a, b, c: a + b + c)</span>
-<span class="sd">    6</span>
+<span class="sd">        &gt;&gt;&gt; data = Seq((1, 2, 3))</span>
+<span class="sd">        &gt;&gt;&gt; def foo(*a: int, x: str) -&gt; str:</span>
+<span class="sd">        ...     return x + str(sum(a))</span>
+<span class="sd">        &gt;&gt;&gt; data.unpack_into(foo, x=&quot;Result: &quot;)</span>
+<span class="sd">        &#39;Result: 6&#39;</span>
+<span class="sd">        &gt;&gt;&gt; # The example below will work, but is not type safe, as the unpacked elements are passed as explicit positional arguments.</span>
+<span class="sd">        &gt;&gt;&gt; data.unpack_into(lambda a, b, c: a + b + c)</span>
+<span class="sd">        6</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>

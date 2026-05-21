@@ -2470,8 +2470,11 @@
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;late error&quot;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">and_</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
@@ -2490,8 +2493,8 @@
 <span class="o">&gt;&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">Ok</span><span class="p">(</span><span class="s2">&quot;different result type&quot;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">and_</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
 <span class="n">Ok</span><span class="p">(</span><span class="s1">&#39;different result type&#39;</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -2596,16 +2599,19 @@
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span><span class="p">,</span> <span class="n">Result</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span><span class="p">,</span> <span class="n">Result</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">to_str</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="o">...</span>     <span class="k">return</span> <span class="n">Ok</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">and_then</span><span class="p">(</span><span class="n">to_str</span><span class="p">)</span>
 <span class="n">Ok</span><span class="p">(</span><span class="s1">&#39;2&#39;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">and_then</span><span class="p">(</span><span class="n">to_str</span><span class="p">)</span>
 <span class="n">Err</span><span class="p">(</span><span class="s1">&#39;error&#39;</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -2719,16 +2725,19 @@
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span><span class="p">,</span> <span class="n">Result</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span><span class="p">,</span> <span class="n">Result</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">to_str</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="o">...</span>     <span class="k">return</span> <span class="n">Ok</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">y</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">and_then_star</span><span class="p">(</span><span class="n">to_str</span><span class="p">)</span>
 <span class="n">Ok</span><span class="p">(</span><span class="s1">&#39;2,3&#39;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">and_then_star</span><span class="p">(</span><span class="n">to_str</span><span class="p">)</span>
 <span class="n">Err</span><span class="p">(</span><span class="s1">&#39;error&#39;</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -2770,14 +2779,17 @@
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">err</span><span class="p">()</span>
 <span class="n">NONE</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">err</span><span class="p">()</span>
 <span class="n">Some</span><span class="p">(</span><span class="s1">&#39;error&#39;</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -2873,16 +2885,19 @@
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="s2">&quot;No error&quot;</span><span class="p">)</span>
 <span class="mi">2</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;emergency failure&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="s2">&quot;Testing expect&quot;</span><span class="p">)</span>
 <span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
 <span class="o">...</span>
 <span class="n">ResultUnwrapError</span><span class="p">:</span> <span class="n">Testing</span> <span class="n">expect</span><span class="p">:</span> <span class="s1">&#39;emergency failure&#39;</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -2978,16 +2993,19 @@
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Err</span><span class="p">,</span> <span class="n">Ok</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Err</span><span class="p">,</span> <span class="n">Ok</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;emergency failure&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">expect_err</span><span class="p">(</span><span class="s2">&quot;Testing expect_err&quot;</span><span class="p">)</span>
 <span class="s1">&#39;emergency failure&#39;</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">expect_err</span><span class="p">(</span><span class="s2">&quot;Testing expect_err&quot;</span><span class="p">)</span>
 <span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
 <span class="o">...</span>
 <span class="n">ResultUnwrapError</span><span class="p">:</span> <span class="n">Testing</span> <span class="n">expect_err</span><span class="p">:</span> <span class="n">expected</span> <span class="n">Err</span><span class="p">,</span> <span class="n">got</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -3030,16 +3048,19 @@
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Result</span><span class="p">,</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Result</span><span class="p">,</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">nested_ok</span><span class="p">:</span> <span class="n">Result</span><span class="p">[</span><span class="n">Result</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Ok</span><span class="p">(</span><span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">nested_ok</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
 <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">nested_err</span><span class="p">:</span> <span class="n">Result</span><span class="p">[</span><span class="n">Result</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Ok</span><span class="p">(</span><span class="n">Err</span><span class="p">(</span><span class="s2">&quot;inner error&quot;</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">nested_err</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
 <span class="n">Err</span><span class="p">(</span><span class="s1">&#39;inner error&#39;</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -3145,15 +3166,18 @@ performed on the <code>Ok</code> value without changing the result.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Vec</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Vec</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">seen</span> <span class="o">=</span> <span class="n">Vec</span><span class="p">[</span><span class="nb">int</span><span class="p">](())</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">inspect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">seen</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
 <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">seen</span>
 <span class="n">Vec</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -3259,15 +3283,18 @@ logging or debugging error paths while keeping the <code>Result</code> unchanged
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Err</span><span class="p">,</span> <span class="n">Vec</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Err</span><span class="p">,</span> <span class="n">Vec</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">seen</span> <span class="o">=</span> <span class="n">Vec</span><span class="p">[</span><span class="nb">str</span><span class="p">](())</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;oops&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">inspect_err</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">seen</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
 <span class="n">Err</span><span class="p">(</span><span class="s1">&#39;oops&#39;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">seen</span>
 <span class="n">Vec</span><span class="p">(</span><span class="s1">&#39;oops&#39;</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -3308,16 +3335,19 @@ logging or debugging error paths while keeping the <code>Result</code> unchanged
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span><span class="p">,</span> <span class="n">Result</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span><span class="p">,</span> <span class="n">Result</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="p">:</span> <span class="n">Result</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">is_err</span><span class="p">()</span>
 <span class="kc">False</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">y</span><span class="p">:</span> <span class="n">Result</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;Some error message&quot;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">y</span><span class="o">.</span><span class="n">is_err</span><span class="p">()</span>
 <span class="kc">True</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -3421,16 +3451,19 @@ logging or debugging error paths while keeping the <code>Result</code> unchanged
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Err</span><span class="p">,</span> <span class="n">Ok</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Err</span><span class="p">,</span> <span class="n">Ok</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">is_err_and</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span>
 <span class="kc">True</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;bar&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">is_err_and</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span> <span class="o">==</span> <span class="s2">&quot;baz&quot;</span><span class="p">)</span>
 <span class="kc">False</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">is_err_and</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="kc">True</span><span class="p">)</span>
 <span class="kc">False</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -3471,16 +3504,19 @@ logging or debugging error paths while keeping the <code>Result</code> unchanged
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span><span class="p">,</span> <span class="n">Result</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span><span class="p">,</span> <span class="n">Result</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="p">:</span> <span class="n">Result</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">is_ok</span><span class="p">()</span>
 <span class="kc">True</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">y</span><span class="p">:</span> <span class="n">Result</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;Some error message&quot;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">y</span><span class="o">.</span><span class="n">is_ok</span><span class="p">()</span>
 <span class="kc">False</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -3584,16 +3620,19 @@ logging or debugging error paths while keeping the <code>Result</code> unchanged
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">is_ok_and</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
 <span class="kc">True</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">is_ok_and</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
 <span class="kc">False</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;err&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">is_ok_and</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
 <span class="kc">False</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -3635,14 +3674,17 @@ logging or debugging error paths while keeping the <code>Result</code> unchanged
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;nothing!&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
 <span class="n">NONE</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -3748,14 +3790,17 @@ leaving an <code>Err</code> value untouched.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">Ok</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">Err</span><span class="p">(</span><span class="s1">&#39;error&#39;</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -3861,14 +3906,17 @@ leaving an <code>Ok</code> value untouched.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">map_err</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span>
 <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">map_err</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span>
 <span class="n">Err</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -3988,14 +4036,17 @@ leaving an <code>Ok</code> value untouched.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">map_or</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
 <span class="mi">4</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;err&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">map_or</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
 <span class="mi">10</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -4085,15 +4136,18 @@ or a default function to a contained <code>Ok</code> value.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">21</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">map_or_else</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">k</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
 <span class="mi">3</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;bar&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">map_or_else</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">k</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
 <span class="mi">42</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -4194,14 +4248,17 @@ or a default function to a contained <code>Ok</code> value.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">map_star</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">)</span>
 <span class="n">Ok</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">map_star</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">)</span>
 <span class="n">Err</span><span class="p">(</span><span class="s1">&#39;error&#39;</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -4243,14 +4300,17 @@ or a default function to a contained <code>Ok</code> value.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">ok</span><span class="p">()</span>
 <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">ok</span><span class="p">()</span>
 <span class="n">NONE</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -4322,8 +4382,11 @@ or a default function to a contained <code>Ok</code> value.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">or_</span><span class="p">(</span><span class="n">Err</span><span class="p">(</span><span class="s2">&quot;late error&quot;</span><span class="p">))</span>
 <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;early error&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">or_</span><span class="p">(</span><span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
@@ -4332,8 +4395,8 @@ or a default function to a contained <code>Ok</code> value.</p>
 <span class="n">Err</span><span class="p">(</span><span class="s1">&#39;late error&#39;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">or_</span><span class="p">(</span><span class="n">Ok</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>
 <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -4438,16 +4501,19 @@ or a default function to a contained <code>Ok</code> value.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span><span class="p">,</span> <span class="n">Result</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span><span class="p">,</span> <span class="n">Result</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">fallback</span><span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="o">...</span>     <span class="k">return</span> <span class="n">Ok</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">or_else</span><span class="p">(</span><span class="n">fallback</span><span class="p">)</span>
 <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">or_else</span><span class="p">(</span><span class="n">fallback</span><span class="p">)</span>
 <span class="n">Ok</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -4489,14 +4555,17 @@ or a default function to a contained <code>Ok</code> value.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">swap</span><span class="p">()</span>
 <span class="n">Err</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">swap</span><span class="p">()</span>
 <span class="n">Ok</span><span class="p">(</span><span class="s1">&#39;error&#39;</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -4544,16 +4613,19 @@ or a default function to a contained <code>Ok</code> value.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span><span class="p">,</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span><span class="p">,</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
 <span class="n">Some</span><span class="p">(</span><span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="n">NONE</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
 <span class="n">NONE</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;err&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
 <span class="n">Some</span><span class="p">(</span><span class="n">Err</span><span class="p">(</span><span class="s1">&#39;err&#39;</span><span class="p">))</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -4617,8 +4689,11 @@ or a default function to a contained <code>Ok</code> value.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <p><div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap</span><span class="p">()</span>
 <span class="mi">2</span>
 </code></pre></div>
@@ -4628,7 +4703,7 @@ or a default function to a contained <code>Ok</code> value.</p>
 <span class="o">...</span>
 <span class="n">ResultUnwrapError</span><span class="p">:</span> <span class="n">called</span> <span class="err">`</span><span class="n">unwrap</span><span class="err">`</span> <span class="n">on</span> <span class="n">an</span> <span class="err">`</span><span class="n">Err</span><span class="err">`</span><span class="p">:</span> <span class="s1">&#39;emergency failure&#39;</span>
 </code></pre></div></p>
-
+</details>
 
     </div>
 
@@ -4692,8 +4767,11 @@ or a default function to a contained <code>Ok</code> value.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Err</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <p><div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Err</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;emergency failure&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap_err</span><span class="p">()</span>
 <span class="s1">&#39;emergency failure&#39;</span>
 </code></pre></div>
@@ -4703,7 +4781,7 @@ or a default function to a contained <code>Ok</code> value.</p>
 <span class="o">...</span>
 <span class="n">ResultUnwrapError</span><span class="p">:</span> <span class="n">called</span> <span class="err">`</span><span class="n">unwrap_err</span><span class="err">`</span> <span class="n">on</span> <span class="n">Ok</span>
 </code></pre></div></p>
-
+</details>
 
     </div>
 
@@ -4775,14 +4853,17 @@ or a default function to a contained <code>Ok</code> value.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap_or</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
 <span class="mi">2</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap_or</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
 <span class="mi">10</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 
@@ -4886,14 +4967,17 @@ or a default function to a contained <code>Ok</code> value.</p>
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Err</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap_or_else</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span>
 <span class="mi">2</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Err</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">unwrap_or_else</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span>
 <span class="mi">3</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
     </div>
 

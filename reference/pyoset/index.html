@@ -1847,10 +1847,7 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1845</span>
-<span class="normal">1846</span>
-<span class="normal">1847</span>
-<span class="normal">1848</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1848</span>
 <span class="normal">1849</span>
 <span class="normal">1850</span>
 <span class="normal">1851</span>
@@ -2007,7 +2004,10 @@
 <span class="normal">2002</span>
 <span class="normal">2003</span>
 <span class="normal">2004</span>
-<span class="normal">2005</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoSet</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoCollection</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">AbstractSet</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="normal">2005</span>
+<span class="normal">2006</span>
+<span class="normal">2007</span>
+<span class="normal">2008</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoSet</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoCollection</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">AbstractSet</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Extends `PyoCollection[T]` and `collections.abc.Set[T]`.</span>
 
 <span class="sd">    Is the shared ABC for concrete set-like collections: `Set` and `FrozenSet`.</span>
@@ -2042,16 +2042,16 @@
 <span class="sd">            bool: `True` if all elements are contained, `False` otherwise.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Set</span>
-<span class="sd">        &gt;&gt;&gt; Set((1, 2)).is_subset({1, 2, 3})  # All elements present</span>
-<span class="sd">        True</span>
-<span class="sd">        &gt;&gt;&gt; Set((1, 2)).is_subset({1, 2})  # Also True: they&#39;re equal</span>
-<span class="sd">        True</span>
-<span class="sd">        &gt;&gt;&gt; Set((1, 4)).is_subset({1, 2, 3})  # 4 is not in the other set</span>
-<span class="sd">        False</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Set</span>
+<span class="sd">            &gt;&gt;&gt; Set((1, 2)).is_subset({1, 2, 3})  # All elements present</span>
+<span class="sd">            True</span>
+<span class="sd">            &gt;&gt;&gt; Set((1, 2)).is_subset({1, 2})  # Also True: they&#39;re equal</span>
+<span class="sd">            True</span>
+<span class="sd">            &gt;&gt;&gt; Set((1, 4)).is_subset({1, 2, 3})  # 4 is not in the other set</span>
+<span class="sd">            False</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span> <span class="o">&lt;=</span> <span class="n">other</span>
 
@@ -2071,16 +2071,16 @@
 <span class="sd">            bool: `True` if this is a strict subset, `False` otherwise.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Set</span>
-<span class="sd">        &gt;&gt;&gt; Set((1, 2)).is_subset_strict({1, 2, 3})  # Proper subset</span>
-<span class="sd">        True</span>
-<span class="sd">        &gt;&gt;&gt; Set((1, 2)).is_subset_strict({1, 2})  # Equal, not proper</span>
-<span class="sd">        False</span>
-<span class="sd">        &gt;&gt;&gt; Set((1, 4)).is_subset_strict({1, 2, 3})  # 4 not contained</span>
-<span class="sd">        False</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Set</span>
+<span class="sd">            &gt;&gt;&gt; Set((1, 2)).is_subset_strict({1, 2, 3})  # Proper subset</span>
+<span class="sd">            True</span>
+<span class="sd">            &gt;&gt;&gt; Set((1, 2)).is_subset_strict({1, 2})  # Equal, not proper</span>
+<span class="sd">            False</span>
+<span class="sd">            &gt;&gt;&gt; Set((1, 4)).is_subset_strict({1, 2, 3})  # 4 not contained</span>
+<span class="sd">            False</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span> <span class="o">&lt;</span> <span class="n">other</span>
 
@@ -2100,16 +2100,16 @@
 <span class="sd">            bool: `True` if both sets contain identical elements, `False` otherwise.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Set</span>
-<span class="sd">        &gt;&gt;&gt; Set((1, 2)).eq({2, 1})  # Same elements, different order</span>
-<span class="sd">        True</span>
-<span class="sd">        &gt;&gt;&gt; Set((1, 2)).eq({1, 2, 3})  # Different number of elements</span>
-<span class="sd">        False</span>
-<span class="sd">        &gt;&gt;&gt; Set((1, 2)).eq({1, 2})  # Identical</span>
-<span class="sd">        True</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Set</span>
+<span class="sd">            &gt;&gt;&gt; Set((1, 2)).eq({2, 1})  # Same elements, different order</span>
+<span class="sd">            True</span>
+<span class="sd">            &gt;&gt;&gt; Set((1, 2)).eq({1, 2, 3})  # Different number of elements</span>
+<span class="sd">            False</span>
+<span class="sd">            &gt;&gt;&gt; Set((1, 2)).eq({1, 2})  # Identical</span>
+<span class="sd">            True</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span> <span class="o">==</span> <span class="n">other</span>
 
@@ -2129,16 +2129,16 @@
 <span class="sd">            bool: `True` if all elements from `other` are present, `False` otherwise.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Set</span>
-<span class="sd">        &gt;&gt;&gt; Set((1, 2, 3)).is_superset({1, 2})  # Contains all</span>
-<span class="sd">        True</span>
-<span class="sd">        &gt;&gt;&gt; Set((1, 2)).is_superset({1, 2})  # Also True: they&#39;re equal</span>
-<span class="sd">        True</span>
-<span class="sd">        &gt;&gt;&gt; Set((1, 2)).is_superset({1, 2, 3})  # Missing element 3</span>
-<span class="sd">        False</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Set</span>
+<span class="sd">            &gt;&gt;&gt; Set((1, 2, 3)).is_superset({1, 2})  # Contains all</span>
+<span class="sd">            True</span>
+<span class="sd">            &gt;&gt;&gt; Set((1, 2)).is_superset({1, 2})  # Also True: they&#39;re equal</span>
+<span class="sd">            True</span>
+<span class="sd">            &gt;&gt;&gt; Set((1, 2)).is_superset({1, 2, 3})  # Missing element 3</span>
+<span class="sd">            False</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span> <span class="o">&gt;=</span> <span class="n">other</span>
 
@@ -2156,16 +2156,16 @@
 <span class="sd">            bool: `True` if no common elements exist, `False` otherwise.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Set</span>
-<span class="sd">        &gt;&gt;&gt; Set((1, 2)).is_disjoint((3, 4))  # No overlap</span>
-<span class="sd">        True</span>
-<span class="sd">        &gt;&gt;&gt; Set((1, 2)).is_disjoint((2, 3))  # Share element 2</span>
-<span class="sd">        False</span>
-<span class="sd">        &gt;&gt;&gt; Set((1, 2)).is_disjoint((1, 2))  # Identical sets</span>
-<span class="sd">        False</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Set</span>
+<span class="sd">            &gt;&gt;&gt; Set((1, 2)).is_disjoint((3, 4))  # No overlap</span>
+<span class="sd">            True</span>
+<span class="sd">            &gt;&gt;&gt; Set((1, 2)).is_disjoint((2, 3))  # Share element 2</span>
+<span class="sd">            False</span>
+<span class="sd">            &gt;&gt;&gt; Set((1, 2)).is_disjoint((1, 2))  # Identical sets</span>
+<span class="sd">            False</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -2253,23 +2253,23 @@
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Set</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Set</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Set</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">eq</span><span class="p">({</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">})</span>  <span class="c1"># Same elements, different order</span>
 <span class="kc">True</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Set</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">eq</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">})</span>  <span class="c1"># Different number of elements</span>
 <span class="kc">False</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Set</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">eq</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">})</span>  <span class="c1"># Identical</span>
 <span class="kc">True</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1922</span>
-<span class="normal">1923</span>
-<span class="normal">1924</span>
-<span class="normal">1925</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1925</span>
 <span class="normal">1926</span>
 <span class="normal">1927</span>
 <span class="normal">1928</span>
@@ -2293,7 +2293,10 @@
 <span class="normal">1946</span>
 <span class="normal">1947</span>
 <span class="normal">1948</span>
-<span class="normal">1949</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">eq</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">AbstractSet</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">1949</span>
+<span class="normal">1950</span>
+<span class="normal">1951</span>
+<span class="normal">1952</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">eq</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">AbstractSet</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test whether this set contains exactly the same elements as `other`.</span>
 
 <span class="sd">    Sets are equal if they have the same number of elements and every element in one is present in the other.</span>
@@ -2309,16 +2312,16 @@
 <span class="sd">        bool: `True` if both sets contain identical elements, `False` otherwise.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Set</span>
-<span class="sd">    &gt;&gt;&gt; Set((1, 2)).eq({2, 1})  # Same elements, different order</span>
-<span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; Set((1, 2)).eq({1, 2, 3})  # Different number of elements</span>
-<span class="sd">    False</span>
-<span class="sd">    &gt;&gt;&gt; Set((1, 2)).eq({1, 2})  # Identical</span>
-<span class="sd">    True</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Set</span>
+<span class="sd">        &gt;&gt;&gt; Set((1, 2)).eq({2, 1})  # Same elements, different order</span>
+<span class="sd">        True</span>
+<span class="sd">        &gt;&gt;&gt; Set((1, 2)).eq({1, 2, 3})  # Different number of elements</span>
+<span class="sd">        False</span>
+<span class="sd">        &gt;&gt;&gt; Set((1, 2)).eq({1, 2})  # Identical</span>
+<span class="sd">        True</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span> <span class="o">==</span> <span class="n">other</span>
 </code></pre></div></td></tr></table></div>
@@ -2395,23 +2398,23 @@
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Set</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Set</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Set</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">is_disjoint</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>  <span class="c1"># No overlap</span>
 <span class="kc">True</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Set</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">is_disjoint</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>  <span class="c1"># Share element 2</span>
 <span class="kc">False</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Set</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">is_disjoint</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>  <span class="c1"># Identical sets</span>
 <span class="kc">False</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1980</span>
-<span class="normal">1981</span>
-<span class="normal">1982</span>
-<span class="normal">1983</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1983</span>
 <span class="normal">1984</span>
 <span class="normal">1985</span>
 <span class="normal">1986</span>
@@ -2433,7 +2436,10 @@
 <span class="normal">2002</span>
 <span class="normal">2003</span>
 <span class="normal">2004</span>
-<span class="normal">2005</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_disjoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">AbstractSet</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">2005</span>
+<span class="normal">2006</span>
+<span class="normal">2007</span>
+<span class="normal">2008</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_disjoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">AbstractSet</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test whether this set and `other` have no elements in common.</span>
 
 <span class="sd">    Returns `True` if the intersection of the two sets is empty.</span>
@@ -2447,16 +2453,16 @@
 <span class="sd">        bool: `True` if no common elements exist, `False` otherwise.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Set</span>
-<span class="sd">    &gt;&gt;&gt; Set((1, 2)).is_disjoint((3, 4))  # No overlap</span>
-<span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; Set((1, 2)).is_disjoint((2, 3))  # Share element 2</span>
-<span class="sd">    False</span>
-<span class="sd">    &gt;&gt;&gt; Set((1, 2)).is_disjoint((1, 2))  # Identical sets</span>
-<span class="sd">    False</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Set</span>
+<span class="sd">        &gt;&gt;&gt; Set((1, 2)).is_disjoint((3, 4))  # No overlap</span>
+<span class="sd">        True</span>
+<span class="sd">        &gt;&gt;&gt; Set((1, 2)).is_disjoint((2, 3))  # Share element 2</span>
+<span class="sd">        False</span>
+<span class="sd">        &gt;&gt;&gt; Set((1, 2)).is_disjoint((1, 2))  # Identical sets</span>
+<span class="sd">        False</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -2534,23 +2540,23 @@
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Set</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Set</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Set</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">is_subset</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">})</span>  <span class="c1"># All elements present</span>
 <span class="kc">True</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Set</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">is_subset</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">})</span>  <span class="c1"># Also True: they&#39;re equal</span>
 <span class="kc">True</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Set</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span><span class="o">.</span><span class="n">is_subset</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">})</span>  <span class="c1"># 4 is not in the other set</span>
 <span class="kc">False</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1864</span>
-<span class="normal">1865</span>
-<span class="normal">1866</span>
-<span class="normal">1867</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1867</span>
 <span class="normal">1868</span>
 <span class="normal">1869</span>
 <span class="normal">1870</span>
@@ -2574,7 +2580,10 @@
 <span class="normal">1888</span>
 <span class="normal">1889</span>
 <span class="normal">1890</span>
-<span class="normal">1891</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_subset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">AbstractSet</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">1891</span>
+<span class="normal">1892</span>
+<span class="normal">1893</span>
+<span class="normal">1894</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_subset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">AbstractSet</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test whether all elements of this set are in `other` (including equality).</span>
 
 <span class="sd">    Returns `True` if every element in this set is also present in `other`.</span>
@@ -2590,16 +2599,16 @@
 <span class="sd">        bool: `True` if all elements are contained, `False` otherwise.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Set</span>
-<span class="sd">    &gt;&gt;&gt; Set((1, 2)).is_subset({1, 2, 3})  # All elements present</span>
-<span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; Set((1, 2)).is_subset({1, 2})  # Also True: they&#39;re equal</span>
-<span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; Set((1, 4)).is_subset({1, 2, 3})  # 4 is not in the other set</span>
-<span class="sd">    False</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Set</span>
+<span class="sd">        &gt;&gt;&gt; Set((1, 2)).is_subset({1, 2, 3})  # All elements present</span>
+<span class="sd">        True</span>
+<span class="sd">        &gt;&gt;&gt; Set((1, 2)).is_subset({1, 2})  # Also True: they&#39;re equal</span>
+<span class="sd">        True</span>
+<span class="sd">        &gt;&gt;&gt; Set((1, 4)).is_subset({1, 2, 3})  # 4 is not in the other set</span>
+<span class="sd">        False</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span> <span class="o">&lt;=</span> <span class="n">other</span>
 </code></pre></div></td></tr></table></div>
@@ -2677,23 +2686,23 @@
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Set</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Set</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Set</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">is_subset_strict</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">})</span>  <span class="c1"># Proper subset</span>
 <span class="kc">True</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Set</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">is_subset_strict</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">})</span>  <span class="c1"># Equal, not proper</span>
 <span class="kc">False</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Set</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span><span class="o">.</span><span class="n">is_subset_strict</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">})</span>  <span class="c1"># 4 not contained</span>
 <span class="kc">False</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1893</span>
-<span class="normal">1894</span>
-<span class="normal">1895</span>
-<span class="normal">1896</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1896</span>
 <span class="normal">1897</span>
 <span class="normal">1898</span>
 <span class="normal">1899</span>
@@ -2717,7 +2726,10 @@
 <span class="normal">1917</span>
 <span class="normal">1918</span>
 <span class="normal">1919</span>
-<span class="normal">1920</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_subset_strict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">AbstractSet</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">1920</span>
+<span class="normal">1921</span>
+<span class="normal">1922</span>
+<span class="normal">1923</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_subset_strict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">AbstractSet</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test whether all elements of this set are in `other`, excluding equality.</span>
 
 <span class="sd">    Returns `True` if every element in this set is also present in `other`, AND `other` contains at least one element not in this set.</span>
@@ -2733,16 +2745,16 @@
 <span class="sd">        bool: `True` if this is a strict subset, `False` otherwise.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Set</span>
-<span class="sd">    &gt;&gt;&gt; Set((1, 2)).is_subset_strict({1, 2, 3})  # Proper subset</span>
-<span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; Set((1, 2)).is_subset_strict({1, 2})  # Equal, not proper</span>
-<span class="sd">    False</span>
-<span class="sd">    &gt;&gt;&gt; Set((1, 4)).is_subset_strict({1, 2, 3})  # 4 not contained</span>
-<span class="sd">    False</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Set</span>
+<span class="sd">        &gt;&gt;&gt; Set((1, 2)).is_subset_strict({1, 2, 3})  # Proper subset</span>
+<span class="sd">        True</span>
+<span class="sd">        &gt;&gt;&gt; Set((1, 2)).is_subset_strict({1, 2})  # Equal, not proper</span>
+<span class="sd">        False</span>
+<span class="sd">        &gt;&gt;&gt; Set((1, 4)).is_subset_strict({1, 2, 3})  # 4 not contained</span>
+<span class="sd">        False</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span> <span class="o">&lt;</span> <span class="n">other</span>
 </code></pre></div></td></tr></table></div>
@@ -2820,23 +2832,23 @@
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Set</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Set</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Set</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">is_superset</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">})</span>  <span class="c1"># Contains all</span>
 <span class="kc">True</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Set</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">is_superset</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">})</span>  <span class="c1"># Also True: they&#39;re equal</span>
 <span class="kc">True</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Set</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">is_superset</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">})</span>  <span class="c1"># Missing element 3</span>
 <span class="kc">False</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1951</span>
-<span class="normal">1952</span>
-<span class="normal">1953</span>
-<span class="normal">1954</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1954</span>
 <span class="normal">1955</span>
 <span class="normal">1956</span>
 <span class="normal">1957</span>
@@ -2860,7 +2872,10 @@
 <span class="normal">1975</span>
 <span class="normal">1976</span>
 <span class="normal">1977</span>
-<span class="normal">1978</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_superset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">AbstractSet</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">1978</span>
+<span class="normal">1979</span>
+<span class="normal">1980</span>
+<span class="normal">1981</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_superset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">AbstractSet</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test whether all elements of `other` are in this set (including equality).</span>
 
 <span class="sd">    Returns `True` if this set contains every element from `other`.</span>
@@ -2876,16 +2891,16 @@
 <span class="sd">        bool: `True` if all elements from `other` are present, `False` otherwise.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Set</span>
-<span class="sd">    &gt;&gt;&gt; Set((1, 2, 3)).is_superset({1, 2})  # Contains all</span>
-<span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; Set((1, 2)).is_superset({1, 2})  # Also True: they&#39;re equal</span>
-<span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; Set((1, 2)).is_superset({1, 2, 3})  # Missing element 3</span>
-<span class="sd">    False</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Set</span>
+<span class="sd">        &gt;&gt;&gt; Set((1, 2, 3)).is_superset({1, 2})  # Contains all</span>
+<span class="sd">        True</span>
+<span class="sd">        &gt;&gt;&gt; Set((1, 2)).is_superset({1, 2})  # Also True: they&#39;re equal</span>
+<span class="sd">        True</span>
+<span class="sd">        &gt;&gt;&gt; Set((1, 2)).is_superset({1, 2, 3})  # Missing element 3</span>
+<span class="sd">        False</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span> <span class="o">&gt;=</span> <span class="n">other</span>
 </code></pre></div></td></tr></table></div>

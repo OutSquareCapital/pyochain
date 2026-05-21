@@ -1834,11 +1834,6 @@
 <p>Implement the <code>MutableMapping</code> interface, so all standard dictionary operations are supported.</p>
 
 
-<details class="tip" open>
-  <summary>Tip</summary>
-  <p>Prefer using <code>Dict::from_ref</code> when wrapping existing dictionaries to avoid unnecessary copying.</p>
-</details>
-
 <p><span class="doc-section-title">Parameters:</span></p>
     <table>
       <thead>
@@ -1923,8 +1918,10 @@ But it can also be as minimal as an object that implements <code>__getitem__</co
 <span class="o">&gt;&gt;&gt;</span> <span class="k">class</span><span class="w"> </span><span class="nc">MinimalDictLike</span><span class="p">:</span>
 <span class="o">...</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="o">...</span>         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">data</span>
+<span class="o">...</span>
 <span class="o">...</span>     <span class="k">def</span><span class="w"> </span><span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
 <span class="o">...</span>         <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span>
+<span class="o">...</span>
 <span class="o">...</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="o">...</span>         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
 <span class="o">&gt;&gt;&gt;</span>
@@ -2191,16 +2188,12 @@ But it can also be as minimal as an object that implements <code>__getitem__</co
 <span class="normal">258</span>
 <span class="normal">259</span>
 <span class="normal">260</span>
-<span class="normal">261</span>
-<span class="normal">262</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Dict</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">](</span><span class="n">PyoMutableMapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]):</span>
+<span class="normal">261</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Dict</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">](</span><span class="n">PyoMutableMapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A `Dict` is a key-value store similar to Python&#39;s built-in `dict`, but with additional methods inspired by Rust&#39;s `HashMap`.</span>
 
 <span class="sd">    Accept the same input types as the built-in `dict`, including `Mapping`, `Iterable` of key-value pairs, and objects implementing `__getitem__()` and `keys()`.</span>
 
 <span class="sd">    Implement the `MutableMapping` interface, so all standard dictionary operations are supported.</span>
-
-<span class="sd">    Tip:</span>
-<span class="sd">        Prefer using `Dict::from_ref` when wrapping existing dictionaries to avoid unnecessary copying.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        data (DictConvertible[K, V]): Initial data for the Dict that can converted to a dictionary.</span>
@@ -2260,8 +2253,10 @@ But it can also be as minimal as an object that implements <code>__getitem__</co
 <span class="sd">        &gt;&gt;&gt; class MinimalDictLike:</span>
 <span class="sd">        ...     def __init__(self, data: dict[int, str]) -&gt; None:</span>
 <span class="sd">        ...         self._data = data</span>
+<span class="sd">        ...</span>
 <span class="sd">        ...     def keys(self) -&gt; Iterable[int]:</span>
 <span class="sd">        ...         return iter(self._data)</span>
+<span class="sd">        ...</span>
 <span class="sd">        ...     def __getitem__(self, key: int) -&gt; str:</span>
 <span class="sd">        ...         return self._data[key]</span>
 <span class="sd">        &gt;&gt;&gt;</span>
@@ -2587,7 +2582,8 @@ But it can also be as minimal as an object that implements <code>__getitem__</co
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_dict.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">172</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">171</span>
+<span class="normal">172</span>
 <span class="normal">173</span>
 <span class="normal">174</span>
 <span class="normal">175</span>
@@ -2604,8 +2600,7 @@ But it can also be as minimal as an object that implements <code>__getitem__</co
 <span class="normal">186</span>
 <span class="normal">187</span>
 <span class="normal">188</span>
-<span class="normal">189</span>
-<span class="normal">190</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
+<span class="normal">189</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">from_kwargs</span><span class="p">[</span><span class="n">U</span><span class="p">](</span><span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">U</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">U</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a `Dict` from keyword arguments.</span>
 
@@ -2732,7 +2727,8 @@ But it can also be as minimal as an object that implements <code>__getitem__</co
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_dict.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">192</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">191</span>
+<span class="normal">192</span>
 <span class="normal">193</span>
 <span class="normal">194</span>
 <span class="normal">195</span>
@@ -2768,8 +2764,7 @@ But it can also be as minimal as an object that implements <code>__getitem__</co
 <span class="normal">225</span>
 <span class="normal">226</span>
 <span class="normal">227</span>
-<span class="normal">228</span>
-<span class="normal">229</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
+<span class="normal">228</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">from_object</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>  <span class="c1"># pyright: ignore[reportExplicitAny]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a `Dict` from an object `__dict__` attribute.</span>
 
@@ -2909,7 +2904,8 @@ But it can also be as minimal as an object that implements <code>__getitem__</co
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_dict.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">137</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">136</span>
+<span class="normal">137</span>
 <span class="normal">138</span>
 <span class="normal">139</span>
 <span class="normal">140</span>
@@ -2941,8 +2937,7 @@ But it can also be as minimal as an object that implements <code>__getitem__</co
 <span class="normal">166</span>
 <span class="normal">167</span>
 <span class="normal">168</span>
-<span class="normal">169</span>
-<span class="normal">170</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
+<span class="normal">169</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">from_ref</span><span class="p">[</span><span class="n">K1</span><span class="p">,</span> <span class="n">V1</span><span class="p">](</span><span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">K1</span><span class="p">,</span> <span class="n">V1</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">K1</span><span class="p">,</span> <span class="n">V1</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap an existing Python builtin `dict` without copying.</span>
 
@@ -3067,7 +3062,8 @@ But it can also be as minimal as an object that implements <code>__getitem__</co
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_dict.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">231</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">230</span>
+<span class="normal">231</span>
 <span class="normal">232</span>
 <span class="normal">233</span>
 <span class="normal">234</span>
@@ -3097,8 +3093,7 @@ But it can also be as minimal as an object that implements <code>__getitem__</co
 <span class="normal">258</span>
 <span class="normal">259</span>
 <span class="normal">260</span>
-<span class="normal">261</span>
-<span class="normal">262</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]</span> <span class="o">|</span> <span class="n">Self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]:</span>
+<span class="normal">261</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]</span> <span class="o">|</span> <span class="n">Self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge another `dict` or `Dict` with this `Dict`, returning a new one with the combined key-value pairs.</span>
 
 <span class="sd">    If there are duplicate keys, the values from *other* will overwrite those in `Self`.</span>
