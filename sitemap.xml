@@ -1,6 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
       <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/pyocollection/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/pyoiterable/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/pyoiterator/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/pyomapping/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/pyomappingview/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/pyomutablemapping/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/pyomutablesequence/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/pyosequence/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/pyoset/</loc>
+      </url>
+      <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/dict/</loc>
       </url>
       <url>
@@ -46,10 +73,10 @@
         <loc>https://outsquarecapital.github.io/pyochain/reference/iter/</loc>
       </url>
       <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/peekable/</loc>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/checkable/</loc>
       </url>
       <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/unzipped/</loc>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/pipeable/</loc>
       </url>
       <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/null/</loc>
@@ -68,39 +95,6 @@
       </url>
       <url>
         <loc>https://outsquarecapital.github.io/pyochain/api-reference/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/checkable/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pipeable/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyocollection/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyoiterable/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyoiterator/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyomapping/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyomappingview/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyomutablemapping/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyomutablesequence/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyosequence/</loc>
-      </url>
-      <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/pyoset/</loc>
       </url>
       <url>
         <loc>https://outsquarecapital.github.io/pyochain/overview/</loc>
