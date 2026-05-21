@@ -28,41 +28,6 @@
         "typer>=0.21.1",
         "zensical>=0.0.42",
     ]
-[tool.ruff]
-    lint.external = ["DOC"]
-    lint.ignore = [
-        "C417",
-        "COM812",
-        "COM812",
-        "CPY001",
-        "D401",
-        "E501",
-        "FIX002",
-        "FIX004",
-        "PLC0415",
-        "PLR0904",
-        "PLR2004",
-        "PYI021",
-        "S101",
-        "S608",
-        "SLF001",
-        "T201",
-        "TC003",
-        "TC006",
-        "TD002",
-        "TD003",
-        "TID252",
-    ]
-
-    lint.preview = true
-    lint.select  = ["ALL"]
-    [tool.ruff.format]
-        docstring-code-format = true
-    [tool.ruff.lint.pydocstyle]
-        convention = "google"
-    [tool.ruff.lint.per-file-ignores]
-        "t.py"    = ["ANN201", "D100", "D101", "D102", "D103"]
-        "tests/*" = ["D100", "D101", "D102", "D103", "D104", "DTZ001", "FBT001"]
 [tool.pydoclint]
     arg-type-hints-in-docstring                   = true
     arg-type-hints-in-signature                   = true

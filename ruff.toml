@@ -1,0 +1,36 @@
+[lint]
+    external = ["DOC"]
+    ignore = [
+        "C417",
+        "COM812",
+        "COM812",
+        "CPY001",
+        "D401",
+        "E501",
+        "FIX002",
+        "FIX004",
+        "PLC0415",
+        "PLR0904",
+        "PLR2004",
+        "PYI021",
+        "S101",
+        "S608",
+        "SLF001",
+        "T201",
+        "TC003",
+        "TC006",
+        "TD002",
+        "TD003",
+        "TID252",
+    ]
+
+    preview = true
+    select  = ["ALL"]
+[format]
+    docstring-code-format = true
+    preview               = true
+    [lint.pydocstyle]
+        convention = "google"
+    [lint.per-file-ignores]
+        "t.py"    = ["ANN201", "D100", "D101", "D102", "D103"]
+        "tests/*" = ["D100", "D101", "D102", "D103", "D104", "DTZ001", "FBT001"]

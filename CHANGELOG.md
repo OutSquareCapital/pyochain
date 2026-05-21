@@ -13,6 +13,7 @@
 ### 🛠️ Other improvements
 
 - `scripts/check_docstrings` now flag incorrect indentation in example blocks
+- Separated `Ruff` config in a dedicated toml file
 
 ### 📖 Documentation
 
