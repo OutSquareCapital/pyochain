@@ -1,67 +1,48 @@
 """Generate reference markdown files and update zensical.toml navigation."""
 
 import re
-import tomllib
 from collections.abc import Iterator
-from enum import StrEnum
 from pathlib import Path
 from types import ModuleType
 from typing import Any, TypeIs
 from urllib.parse import urlparse
 
-from rich.console import Console
-from rich.text import Text
-
 from pyochain import Dict, Iter, Seq, Set, SetMut
 
+from ._utils import Color, Paths, show
+
 type JsonData = dict[str, Any] | list[str] | str  # pyright: ignore[reportExplicitAny]
-# Setup paths
-DOCS_DIR = Path("docs")
-DOCS_REF = DOCS_DIR.joinpath("reference")
-ZENSICAL_PATH = Path("zensical.toml")
 MARKDOWN_LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 FENCED_CODE_BLOCK_RE = re.compile(r"```.*?```", re.DOTALL)
 DOCS_SITE_URL = "https://outsquarecapital.github.io/pyochain/"
-DOCS_LINK_FILES = Seq((Path("README.md"), Path("CONTRIBUTING.md")))
-CONSOLE = Console()
-
-
-class Color(StrEnum):
-    """Enum for consistent console message styling."""
-
-    SUCCESS = "green"
-    INFO = "cyan bold"
-    WARNING = "yellow"
-    ERROR = "red bold"
-    BLANK = "white"
 
 
 def main() -> None:
-    """Generate all reference documentation."""
+    """Main function to generate documentation and check navigation completeness."""
     import pyochain
 
     generated_paths = SetMut[str](())
 
-    _show("Generating pyochain documentation...", style=Color.INFO)
+    show("Generating pyochain documentation...", style=Color.INFO)
     _discover_modules(pyochain).iter().for_each(
         lambda module: _generate_markdown_for(module, generated_paths)
     )
-    _show("✅ All files generated!", style=Color.SUCCESS)
-    _show("----------------------------------", style=Color.BLANK)
-    _show("Checking navigation completeness...", style=Color.INFO)
-    _check_nav_completeness()
+    show("✅ All files generated!", style=Color.SUCCESS)
+    show("----------------------------------", style=Color.BLANK)
+    show("Checking navigation completeness...", style=Color.INFO)
+    return _check_nav_completeness()
 
 
 def _generate_markdown_for(module: object, generated_paths: SetMut[str]) -> None:
     """Generate markdown files for all public classes in a module."""
-    DOCS_REF.mkdir(parents=True, exist_ok=True)
+    Paths.DOCS_REF.value.mkdir(parents=True, exist_ok=True)
 
     public_api = Set(getattr(module, "__all__", ()))
 
     def _write(path: Path, cls_name: str, cls_path: str) -> None:
         generated_paths.add(path.as_posix())
         _ = path.write_text(_generate_markdown(cls_path, cls_name), encoding="utf-8")
-        _show(f"✓ Generated {path!s}", style=Color.SUCCESS)
+        show(f"✓ Generated {path!s}", style=Color.SUCCESS)
 
     def _is_public_class(obj: tuple[str, Any]) -> TypeIs[tuple[str, type]]:  # pyright: ignore[reportExplicitAny]
         name, cls = obj  # pyright: ignore[reportAny]
@@ -74,7 +55,7 @@ def _generate_markdown_for(module: object, generated_paths: SetMut[str]) -> None
         .filter(_is_public_class)
         .map_star(
             lambda name, cls: (
-                DOCS_REF.joinpath(f"{name.lower()}.md"),
+                Paths.DOCS_REF.value.joinpath(f"{name.lower()}.md"),
                 name,
                 f"{cls.__module__}.{cls.__name__}".replace("builtins", "pyochain.rs"),
             )
@@ -105,11 +86,12 @@ def _discover_modules(module: ModuleType) -> Seq[ModuleType]:
     return Seq(_recurse(module))
 
 
-def _check_nav_completeness(config_path: Path = ZENSICAL_PATH) -> None:
-    """Check that all generated markdown files are in the navigation."""
-    txt = config_path.read_text(encoding="utf-8")
+def _check_nav_completeness(config_path: Paths = Paths.ZENSICAL) -> None:
+    import tomllib
+
+    txt = config_path.value.read_text(encoding="utf-8")
     config = tomllib.loads(txt)
-    docs_dir = config_path.parent.joinpath(config["project"]["docs_dir"])  # pyright: ignore[reportAny]
+    docs_dir = config_path.value.parent.joinpath(config["project"]["docs_dir"])  # pyright: ignore[reportAny]
     docs_dir_mds = docs_dir.rglob("*.md")
     docs_ref = docs_dir.joinpath("reference").glob("*.md")
     nav_item: JsonData = config["project"]["nav"]  # pyright: ignore[reportAny]
@@ -123,7 +105,7 @@ def _check_nav_completeness(config_path: Path = ZENSICAL_PATH) -> None:
         .join("\n")
     )
     if missing:
-        _show(f"⚠️  Missing generated files in nav:\n {missing}", style=Color.WARNING)
+        show(f"⚠️  Missing generated files in nav:\n {missing}", style=Color.WARNING)
 
     docs_paths = (
         Iter(docs_dir_mds)
@@ -132,17 +114,16 @@ def _check_nav_completeness(config_path: Path = ZENSICAL_PATH) -> None:
     )
     invalid_nav_paths = nav_paths.difference(docs_paths).join("\n")
     if invalid_nav_paths:
-        _show(f"⚠️  Invalid nav links:\n {invalid_nav_paths}", style=Color.WARNING)
+        show(f"⚠️  Invalid nav links:\n {invalid_nav_paths}", style=Color.WARNING)
 
     invalid_markdown_links = _check_markdown_links(docs_dir)
     if invalid_markdown_links:
         msg = f"⚠️  Invalid markdown links:\n {invalid_markdown_links}"
-        _show(msg, style=Color.WARNING)
+        show(msg, style=Color.WARNING)
     if missing or invalid_nav_paths or invalid_markdown_links:
         msg = "❌ Please fix the above issues before deploying the documentation."
-        return _show(msg, style=Color.ERROR)
-
-    return _show("✓ Navigation is complete!", style=Color.SUCCESS)
+        return show(msg, style=Color.ERROR)
+    return show("✓ Navigation is complete!", style=Color.SUCCESS)
 
 
 def _collect_nav_paths(item: JsonData) -> SetMut[str]:
@@ -160,13 +141,10 @@ def _collect_nav_paths(item: JsonData) -> SetMut[str]:
     return _collect_paths(SetMut(()), item)
 
 
-def _show(msg: str, style: Color) -> None:
-    CONSOLE.print(Text(msg, style=style.value))
-
-
 def _check_markdown_links(docs_dir: Path) -> str:
+
     return (
-        DOCS_LINK_FILES.iter()
+        Iter((Paths.README.value, Paths.CONTRIBUTING.value))
         .flat_map(
             lambda doc_path: Iter(
                 MARKDOWN_LINK_RE.finditer(

@@ -5,9 +5,7 @@ import re
 from pathlib import Path
 from typing import NamedTuple, TypeIs
 
-from rich.console import Console
 from rich.table import Table
-from rich.text import Text
 
 from pyochain import (
     NONE,
@@ -19,16 +17,16 @@ from pyochain import (
     Result,
     Seq,
     Set,
+    SetMut,
     Some,
     Vec,
     option,
 )
 
-ROOT = Path()
-SRC_DIR = ROOT.joinpath("src", "pyochain")
+from ._utils import CONSOLE, Color, Paths, show
+
 CODE_BLOCK_PATTERN = re.compile(r"^```(\w*)", re.MULTILINE)
-SKIP_DECORATORS = Set({"overload", "override", "no_doctest", "wraps"})
-CONSOLE = Console()
+SKIP_DECORATORS = SetMut.from_ref({"overload", "override", "no_doctest", "wraps"})
 type DocumentableNode = ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef
 type MethodNode = ast.FunctionDef | ast.AsyncFunctionDef
 
@@ -232,6 +230,7 @@ def _is_documentable(node: ast.AST) -> TypeIs[DocumentableNode]:
 def _check_errs(
     lines: Vec[str], func_name: str, start_line: int, *, has_no_doctest_flag: bool
 ) -> Result[tuple[()], Vec[ErrorDetail]]:
+    errors = _check_example_indentation(lines, start_line)
     should_skip = (
         func_name.startswith("_")
         or func_name.istitle()
@@ -242,50 +241,92 @@ def _check_errs(
             )
         )
     )
-    if should_skip:
+    if should_skip and errors.is_empty():
         return Ok(())
-    msg = "Missing doctest: No ```python block found in docstring"
-    return Err(Vec.from_ref([ErrorDetail(start_line, msg)]))
+    if not should_skip:
+        msg = "Missing doctest: No ```python block found in docstring"
+        errors.append(ErrorDetail(start_line, msg))
+    return Err(errors)
+
+
+def _check_example_indentation(lines: Vec[str], start_line: int) -> Vec[ErrorDetail]:
+    def _get_error(example_idx: int) -> Option[ErrorDetail]:
+        example_line = lines[example_idx]
+        example_indent = len(example_line) - len(example_line.lstrip())
+        next_content = (
+            lines.iter()
+            .enumerate()
+            .skip(example_idx + 1)
+            .find(lambda line: bool(line[1].strip()))
+        )
+
+        match next_content:
+            case Some((next_idx, next_line)) if (
+                len(next_line) - len(next_line.lstrip())
+            ) <= example_indent:
+                msg = "Example content must be indented under `Example:`"
+                return Some(ErrorDetail(start_line + next_idx, msg))
+            case _:
+                return NONE
+
+    return (
+        lines.iter()
+        .enumerate()
+        .filter_star(lambda _, line: line.strip() == "Example:")
+        .filter_map_star(lambda idx, _: _get_error(idx))
+        .collect(Vec)
+    )
 
 
 def main() -> None:
     """Check all docstrings in the project."""
-    CONSOLE.print(
-        Text(
-            "Checking docstrings for properly closed code blocks...", style="cyan bold"
-        )
+    msg = "Checking docstrings for properly closed code blocks..."
+    show(msg, style=Color.INFO)
+
+    return (
+        _get_files("py")
+        .iter()
+        .chain(_get_files("pyi"))
+        .flat_map(_check_file)
+        .collect()
+        .then_some()
+        .into(_handle_errors)
     )
 
-    def _get_files(pattern: str) -> Seq[Path]:
-        return (
-            Iter(SRC_DIR.rglob(f"*.{pattern}"))
-            .collect()
-            .inspect(
-                lambda p: CONSOLE.print(f"Checking {p.length()} {pattern} files...")
+
+def _get_files(pattern: str) -> Seq[Path]:
+    return (
+        Paths.SRC_DIR.iter_rglob(f"*.{pattern}")
+        .collect()
+        .inspect(
+            lambda p: show(
+                f"Checking {p.length()} {pattern} files...", style=Color.INFO
             )
         )
-
-    all_errors = (
-        _get_files("py").iter().chain(_get_files("pyi")).flat_map(_check_file).collect()
     )
 
-    if all_errors.is_empty():
-        CONSOLE.print(Text("[OK] No issues found!", style="green"))
-        return
 
-    table = Table(title="Issues Found", show_header=True)
+def _handle_errors(all_errors: Option[Seq[DocstringError]]) -> None:
+    match all_errors:
+        case Some(all_errs):
+            _show_table(all_errs)
+            msg = f"[FAILED] Found {all_errs.length()} issue(s)"
+            show(msg, style=Color.ERROR)
+        case Null():
+            show("[OK] No issues found!", style=Color.SUCCESS)
+
+
+def _show_table(all_errors: Seq[DocstringError]) -> None:
+    def _add_row(error: DocstringError) -> None:
+        file = f"{error.file_path.relative_to(Paths.ROOT.value)}:{error.error_line_no}"
+        table.add_row(file, error.func_name, error.errors.join("\n"))
+
+    table: Table = Table(title="Issues Found", show_header=True)
     table.add_column("File", style="cyan")
     table.add_column("Function", style="magenta")
     table.add_column("Error", style="red")
-    all_errors.iter().for_each(
-        lambda error: table.add_row(
-            f"{error.file_path.relative_to(ROOT)}:{error.error_line_no}",
-            error.func_name,
-            error.errors.join("\n"),
-        )
-    )
+    all_errors.iter().for_each(_add_row)
     CONSOLE.print(table)
-    CONSOLE.print(Text(f"\n[FAILED] Found {all_errors.length()} issue(s)", style="red"))
 
 
 if __name__ == "__main__":

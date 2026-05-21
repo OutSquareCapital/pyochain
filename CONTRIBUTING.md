@@ -158,7 +158,7 @@ For multiple sections, you can use your IDE to replace both of them by dummy tex
 Add `--cov=src --cov-report=term-missing` to the pytest command below to include coverage reports.
 
 ```bash
-uv run scripts/check_docstrings.py;
+uv run -m scripts.check_docstrings;
 uv run pydoclint src/pyochain;
 uv run pytest
 ```

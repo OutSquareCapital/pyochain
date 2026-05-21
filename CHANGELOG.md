@@ -6,6 +6,14 @@
 
 - **Feat**: Added a clearer repr for `Range` that shows the start, stop and step values.
 
+### 🔄 Refactors
+
+- Less code duplication in scripts with a common module
+
+### 🛠️ Other improvements
+
+- `scripts/check_docstrings` now flag incorrect indentation in example blocks
+
 ### 📖 Documentation
 
 - Various improvements in docstrings, regarding formatting for the website, additional examples, etc..
