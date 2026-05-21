@@ -1,13 +1,12 @@
 """Generate reference markdown files and update zensical.toml navigation."""
 
 import re
-from collections.abc import Iterator
 from pathlib import Path
 from types import ModuleType
 from typing import Any, TypeIs
 from urllib.parse import urlparse
 
-from pyochain import Dict, Iter, Seq, Set, SetMut
+from pyochain import Dict, Iter, Set, SetMut
 
 from ._utils import Color, Paths, show
 
@@ -21,12 +20,8 @@ def main() -> None:
     """Main function to generate documentation and check navigation completeness."""
     import pyochain
 
-    generated_paths = SetMut[str](())
-
     show("Generating pyochain documentation...", style=Color.INFO)
-    _discover_modules(pyochain).iter().for_each(
-        lambda module: _generate_markdown_for(module, generated_paths)
-    )
+    _discover_modules(pyochain)
     show("✅ All files generated!", style=Color.SUCCESS)
     show("----------------------------------", style=Color.BLANK)
     show("Checking navigation completeness...", style=Color.INFO)
@@ -73,18 +68,23 @@ def _generate_markdown(full_path: str, class_name: str) -> str:
 """
 
 
-def _discover_modules(module: ModuleType) -> Seq[ModuleType]:
+def _discover_modules(module: ModuleType) -> None:
+    generated_paths = SetMut[str](())
 
-    def _recurse(mod: ModuleType) -> Iterator[ModuleType]:
-        yield mod
-        for obj in vars(mod).values():  # pyright: ignore[reportAny]
-            match obj:
-                case ModuleType() if obj.__name__.startswith(mod.__name__):
-                    yield from _recurse(obj)
-                case _:  # pyright: ignore[reportAny]
-                    return
+    return (
+        Dict
+        .from_ref(vars(module))
+        .values()
+        .iter()
+        .filter(_is_module)
+        .filter(lambda m: m.__name__.startswith(module.__name__))
+        .insert(module)
+        .for_each(lambda module: _generate_markdown_for(module, generated_paths))
+    )
 
-    return Seq(_recurse(module))
+
+def _is_module(obj: object) -> TypeIs[ModuleType]:
+    return isinstance(obj, ModuleType)
 
 
 def _check_nav_completeness(config_path: Paths = Paths.ZENSICAL) -> None:
