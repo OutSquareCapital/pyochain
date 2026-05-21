@@ -2823,7 +2823,7 @@
 <a id="pyochain._iter.Iter"></a>
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="pyochain.traits.PyoIterator" href="../pyoiterator/#pyochain.traits._iterable.PyoIterator">PyoIterator</a>[<span title="pyochain._iter.Iter[T]">T</span>]</code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="pyochain.abc.PyoIterator" href="../pyoiterator/#pyochain.abc._iterable.PyoIterator">PyoIterator</a>[<span title="pyochain._iter.Iter[T]">T</span>]</code></p>
 
 
 
@@ -5727,7 +5727,7 @@
 <span class="sd">        You can collect the chunks into a collection of collections, for example:</span>
 <span class="sd">        ```python</span>
 <span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain.traits import PyoIterable</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain.abc import PyoIterable</span>
 <span class="sd">        &gt;&gt;&gt; def collect_all_chunks(data: PyoIterable[int]) -&gt; Seq[Seq[int]]:</span>
 <span class="sd">        ...     return (</span>
 <span class="sd">        ...         data.iter().array_chunks(3).map(lambda c: c.collect()).collect()</span>
@@ -8148,7 +8148,7 @@ elements as necessary.</p>
 </code></pre></div>
 You can collect the chunks into a collection of collections, for example:
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain.traits</span><span class="w"> </span><span class="kn">import</span> <span class="n">PyoIterable</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">PyoIterable</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">collect_all_chunks</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">PyoIterable</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Seq</span><span class="p">[</span><span class="n">Seq</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
 <span class="o">...</span>     <span class="k">return</span> <span class="p">(</span>
 <span class="o">...</span>         <span class="n">data</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">array_chunks</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">collect</span><span class="p">())</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
@@ -8282,7 +8282,7 @@ You can collect the chunks into a collection of collections, for example:
 <span class="sd">    You can collect the chunks into a collection of collections, for example:</span>
 <span class="sd">    ```python</span>
 <span class="sd">    &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain.traits import PyoIterable</span>
+<span class="sd">    &gt;&gt;&gt; from pyochain.abc import PyoIterable</span>
 <span class="sd">    &gt;&gt;&gt; def collect_all_chunks(data: PyoIterable[int]) -&gt; Seq[Seq[int]]:</span>
 <span class="sd">    ...     return (</span>
 <span class="sd">    ...         data.iter().array_chunks(3).map(lambda c: c.collect()).collect()</span>

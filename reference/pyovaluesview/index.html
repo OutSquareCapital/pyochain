@@ -748,7 +748,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.traits._iterable.PyoValuesView" class="md-nav__link">
+  <a href="#pyochain.abc._iterable.PyoValuesView" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         PyoValuesView
@@ -1600,7 +1600,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.traits._iterable.PyoValuesView" class="md-nav__link">
+  <a href="#pyochain.abc._iterable.PyoValuesView" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         PyoValuesView
@@ -1632,10 +1632,10 @@
 
 
 
-<a id="pyochain.traits._iterable.PyoValuesView"></a>
+<a id="pyochain.abc._iterable.PyoValuesView"></a>
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="collections.abc.ValuesView">ValuesView</span>[<span title="pyochain.traits._iterable.PyoValuesView[V]">V</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.traits._iterable.PyoMappingView" href="../pyomappingview/#pyochain.traits._iterable.PyoMappingView">PyoMappingView</a>[<span title="pyochain.traits._iterable.PyoValuesView[V]">V</span>]</code></p>
+              Bases: <code><span title="collections.abc.ValuesView">ValuesView</span>[<span title="pyochain.abc._iterable.PyoValuesView[V]">V</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.abc._iterable.PyoMappingView" href="../pyomappingview/#pyochain.abc._iterable.PyoMappingView">PyoMappingView</a>[<span title="pyochain.abc._iterable.PyoValuesView[V]">V</span>]</code></p>
 
 
 
@@ -1655,17 +1655,17 @@
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2009</span>
-<span class="normal">2010</span>
-<span class="normal">2011</span>
-<span class="normal">2012</span>
-<span class="normal">2013</span>
-<span class="normal">2014</span>
-<span class="normal">2015</span>
-<span class="normal">2016</span>
-<span class="normal">2017</span>
-<span class="normal">2018</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoValuesView</span><span class="p">[</span><span class="n">V</span><span class="p">](</span><span class="n">ValuesView</span><span class="p">[</span><span class="n">V</span><span class="p">],</span> <span class="n">PyoMappingView</span><span class="p">[</span><span class="n">V</span><span class="p">]):</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
+                <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2024</span>
+<span class="normal">2025</span>
+<span class="normal">2026</span>
+<span class="normal">2027</span>
+<span class="normal">2028</span>
+<span class="normal">2029</span>
+<span class="normal">2030</span>
+<span class="normal">2031</span>
+<span class="normal">2032</span>
+<span class="normal">2033</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoValuesView</span><span class="p">[</span><span class="n">V</span><span class="p">](</span><span class="n">ValuesView</span><span class="p">[</span><span class="n">V</span><span class="p">],</span> <span class="n">PyoMappingView</span><span class="p">[</span><span class="n">V</span><span class="p">]):</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A view of the values in a pyochain mapping.</span>
 
 <span class="sd">    This concrete class is returned by the `PyoMapping.values()` method, and inherits from `collections.abc.ValuesView` and `PyoCollection`.</span>

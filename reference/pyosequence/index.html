@@ -560,7 +560,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.traits._iterable.PyoSequence" class="md-nav__link">
+  <a href="#pyochain.abc._iterable.PyoSequence" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         PyoSequence
@@ -571,7 +571,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.traits._iterable.PyoSequence.get" class="md-nav__link">
+  <a href="#pyochain.abc._iterable.PyoSequence.get" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         get
@@ -582,7 +582,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.traits._iterable.PyoSequence.rev" class="md-nav__link">
+  <a href="#pyochain.abc._iterable.PyoSequence.rev" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         rev
@@ -1622,7 +1622,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.traits._iterable.PyoSequence" class="md-nav__link">
+  <a href="#pyochain.abc._iterable.PyoSequence" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         PyoSequence
@@ -1633,7 +1633,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.traits._iterable.PyoSequence.get" class="md-nav__link">
+  <a href="#pyochain.abc._iterable.PyoSequence.get" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         get
@@ -1644,7 +1644,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.traits._iterable.PyoSequence.rev" class="md-nav__link">
+  <a href="#pyochain.abc._iterable.PyoSequence.rev" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         rev
@@ -1676,10 +1676,10 @@
 
 
 
-<a id="pyochain.traits._iterable.PyoSequence"></a>
+<a id="pyochain.abc._iterable.PyoSequence"></a>
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="pyochain.traits._iterable.PyoCollection" href="../pyocollection/#pyochain.traits._iterable.PyoCollection">PyoCollection</a>[<span title="pyochain.traits._iterable.PyoSequence[T]">T</span>]</code>, <code><span title="collections.abc.Sequence">Sequence</span>[<span title="pyochain.traits._iterable.PyoSequence[T]">T</span>]</code>, <code><span title="abc.ABC">ABC</span></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="pyochain.abc._iterable.PyoCollection" href="../pyocollection/#pyochain.abc._iterable.PyoCollection">PyoCollection</a>[<span title="pyochain.abc._iterable.PyoSequence[T]">T</span>]</code>, <code><span title="collections.abc.Sequence">Sequence</span>[<span title="pyochain.abc._iterable.PyoSequence[T]">T</span>]</code>, <code><span title="abc.ABC">ABC</span></code></p>
 
 
 
@@ -1701,23 +1701,8 @@
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1757</span>
-<span class="normal">1758</span>
-<span class="normal">1759</span>
-<span class="normal">1760</span>
-<span class="normal">1761</span>
-<span class="normal">1762</span>
-<span class="normal">1763</span>
-<span class="normal">1764</span>
-<span class="normal">1765</span>
-<span class="normal">1766</span>
-<span class="normal">1767</span>
-<span class="normal">1768</span>
-<span class="normal">1769</span>
-<span class="normal">1770</span>
-<span class="normal">1771</span>
-<span class="normal">1772</span>
+                <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1772</span>
 <span class="normal">1773</span>
 <span class="normal">1774</span>
 <span class="normal">1775</span>
@@ -1774,7 +1759,22 @@
 <span class="normal">1826</span>
 <span class="normal">1827</span>
 <span class="normal">1828</span>
-<span class="normal">1829</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoSequence</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoCollection</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="normal">1829</span>
+<span class="normal">1830</span>
+<span class="normal">1831</span>
+<span class="normal">1832</span>
+<span class="normal">1833</span>
+<span class="normal">1834</span>
+<span class="normal">1835</span>
+<span class="normal">1836</span>
+<span class="normal">1837</span>
+<span class="normal">1838</span>
+<span class="normal">1839</span>
+<span class="normal">1840</span>
+<span class="normal">1841</span>
+<span class="normal">1842</span>
+<span class="normal">1843</span>
+<span class="normal">1844</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoSequence</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoCollection</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Extends `PyoCollection[T]` and `collections.abc.Sequence[T]`.</span>
 
 <span class="sd">    Is the shared ABC for concrete sequences: `Seq`, `Range` and `Vec`.</span>
@@ -1866,7 +1866,7 @@
 <div class="doc doc-object doc-function">
 
 
-<h2 id="pyochain.traits._iterable.PyoSequence.get" class="doc doc-heading">
+<h2 id="pyochain.abc._iterable.PyoSequence.get" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">get</span><span class="p">(</span><span class="n">index</span><span class="p">)</span></code>
 
 </h2>
@@ -1923,7 +1923,7 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Option" href="../option/#pyochain.rs.Option">Option</a>[<span title="pyochain.traits._iterable.PyoSequence[T]">T</span>] | <a class="autorefs autorefs-internal" title="pyochain.rs.Option" href="../option/#pyochain.rs.Option">Option</a>[<span title="collections.abc.Sequence">Sequence</span>[<span title="pyochain.traits._iterable.PyoSequence[T]">T</span>]]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.rs.Option" href="../option/#pyochain.rs.Option">Option</a>[<span title="pyochain.abc._iterable.PyoSequence[T]">T</span>] | <a class="autorefs autorefs-internal" title="pyochain.rs.Option" href="../option/#pyochain.rs.Option">Option</a>[<span title="collections.abc.Sequence">Sequence</span>[<span title="pyochain.abc._iterable.PyoSequence[T]">T</span>]]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1944,23 +1944,8 @@
 
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1788</span>
-<span class="normal">1789</span>
-<span class="normal">1790</span>
-<span class="normal">1791</span>
-<span class="normal">1792</span>
-<span class="normal">1793</span>
-<span class="normal">1794</span>
-<span class="normal">1795</span>
-<span class="normal">1796</span>
-<span class="normal">1797</span>
-<span class="normal">1798</span>
-<span class="normal">1799</span>
-<span class="normal">1800</span>
-<span class="normal">1801</span>
-<span class="normal">1802</span>
-<span class="normal">1803</span>
+              <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1803</span>
 <span class="normal">1804</span>
 <span class="normal">1805</span>
 <span class="normal">1806</span>
@@ -1968,7 +1953,22 @@
 <span class="normal">1808</span>
 <span class="normal">1809</span>
 <span class="normal">1810</span>
-<span class="normal">1811</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">slice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">Option</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">]]:</span>
+<span class="normal">1811</span>
+<span class="normal">1812</span>
+<span class="normal">1813</span>
+<span class="normal">1814</span>
+<span class="normal">1815</span>
+<span class="normal">1816</span>
+<span class="normal">1817</span>
+<span class="normal">1818</span>
+<span class="normal">1819</span>
+<span class="normal">1820</span>
+<span class="normal">1821</span>
+<span class="normal">1822</span>
+<span class="normal">1823</span>
+<span class="normal">1824</span>
+<span class="normal">1825</span>
+<span class="normal">1826</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">slice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">Option</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the element at the specified index as `Some(value)`, or `None` if the index is out of bounds.</span>
 
 <span class="sd">    Args:</span>
@@ -2001,7 +2001,7 @@
 <div class="doc doc-object doc-function">
 
 
-<h2 id="pyochain.traits._iterable.PyoSequence.rev" class="doc doc-heading">
+<h2 id="pyochain.abc._iterable.PyoSequence.rev" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">rev</span><span class="p">()</span></code>
 
 </h2>
@@ -2023,7 +2023,7 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain._iter.Iter" href="../iter/#pyochain._iter.Iter">Iter</a>[<span title="pyochain.traits._iterable.PyoSequence[T]">T</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain._iter.Iter" href="../iter/#pyochain._iter.Iter">Iter</a>[<span title="pyochain.abc._iterable.PyoSequence[T]">T</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2041,24 +2041,24 @@
 
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1813</span>
-<span class="normal">1814</span>
-<span class="normal">1815</span>
-<span class="normal">1816</span>
-<span class="normal">1817</span>
-<span class="normal">1818</span>
-<span class="normal">1819</span>
-<span class="normal">1820</span>
-<span class="normal">1821</span>
-<span class="normal">1822</span>
-<span class="normal">1823</span>
-<span class="normal">1824</span>
-<span class="normal">1825</span>
-<span class="normal">1826</span>
-<span class="normal">1827</span>
-<span class="normal">1828</span>
-<span class="normal">1829</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">rev</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+              <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1828</span>
+<span class="normal">1829</span>
+<span class="normal">1830</span>
+<span class="normal">1831</span>
+<span class="normal">1832</span>
+<span class="normal">1833</span>
+<span class="normal">1834</span>
+<span class="normal">1835</span>
+<span class="normal">1836</span>
+<span class="normal">1837</span>
+<span class="normal">1838</span>
+<span class="normal">1839</span>
+<span class="normal">1840</span>
+<span class="normal">1841</span>
+<span class="normal">1842</span>
+<span class="normal">1843</span>
+<span class="normal">1844</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">rev</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an `Iterator` with the elements of the `Sequence` in reverse order.</span>
 
 <span class="sd">    Returns:</span>

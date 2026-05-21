@@ -694,7 +694,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.traits._iterable.PyoItemsView" class="md-nav__link">
+  <a href="#pyochain.abc._iterable.PyoItemsView" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         PyoItemsView
@@ -1600,7 +1600,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.traits._iterable.PyoItemsView" class="md-nav__link">
+  <a href="#pyochain.abc._iterable.PyoItemsView" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         PyoItemsView
@@ -1632,10 +1632,10 @@
 
 
 
-<a id="pyochain.traits._iterable.PyoItemsView"></a>
+<a id="pyochain.abc._iterable.PyoItemsView"></a>
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="collections.abc.ItemsView">ItemsView</span>[<span title="pyochain.traits._iterable.PyoItemsView[K]">K</span>, <span title="pyochain.traits._iterable.PyoItemsView[V]">V</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.traits._iterable.PyoMappingView" href="../pyomappingview/#pyochain.traits._iterable.PyoMappingView">PyoMappingView</a>[<span title="tuple">tuple</span>[<span title="pyochain.traits._iterable.PyoItemsView[K]">K</span>, <span title="pyochain.traits._iterable.PyoItemsView[V]">V</span>]]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.traits._iterable.PyoSet" href="../pyoset/#pyochain.traits._iterable.PyoSet">PyoSet</a>[<span title="tuple">tuple</span>[<span title="pyochain.traits._iterable.PyoItemsView[K]">K</span>, <span title="pyochain.traits._iterable.PyoItemsView[V]">V</span>]]</code></p>
+              Bases: <code><span title="collections.abc.ItemsView">ItemsView</span>[<span title="pyochain.abc._iterable.PyoItemsView[K]">K</span>, <span title="pyochain.abc._iterable.PyoItemsView[V]">V</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.abc._iterable.PyoMappingView" href="../pyomappingview/#pyochain.abc._iterable.PyoMappingView">PyoMappingView</a>[<span title="tuple">tuple</span>[<span title="pyochain.abc._iterable.PyoItemsView[K]">K</span>, <span title="pyochain.abc._iterable.PyoItemsView[V]">V</span>]]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.abc._iterable.PyoSet" href="../pyoset/#pyochain.abc._iterable.PyoSet">PyoSet</a>[<span title="tuple">tuple</span>[<span title="pyochain.abc._iterable.PyoItemsView[K]">K</span>, <span title="pyochain.abc._iterable.PyoItemsView[V]">V</span>]]</code></p>
 
 
 
@@ -1656,21 +1656,21 @@
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2035</span>
-<span class="normal">2036</span>
-<span class="normal">2037</span>
-<span class="normal">2038</span>
-<span class="normal">2039</span>
-<span class="normal">2040</span>
-<span class="normal">2041</span>
-<span class="normal">2042</span>
-<span class="normal">2043</span>
-<span class="normal">2044</span>
-<span class="normal">2045</span>
-<span class="normal">2046</span>
-<span class="normal">2047</span>
-<span class="normal">2048</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoItemsView</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">](</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
+                <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2050</span>
+<span class="normal">2051</span>
+<span class="normal">2052</span>
+<span class="normal">2053</span>
+<span class="normal">2054</span>
+<span class="normal">2055</span>
+<span class="normal">2056</span>
+<span class="normal">2057</span>
+<span class="normal">2058</span>
+<span class="normal">2059</span>
+<span class="normal">2060</span>
+<span class="normal">2061</span>
+<span class="normal">2062</span>
+<span class="normal">2063</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoItemsView</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">](</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
     <span class="n">ItemsView</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">],</span> <span class="n">PyoMappingView</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]],</span> <span class="n">PyoSet</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]]</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A view of the items (key-value pairs) in a pyochain mapping.</span>

@@ -721,7 +721,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.traits._iterable.PyoKeysView" class="md-nav__link">
+  <a href="#pyochain.abc._iterable.PyoKeysView" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         PyoKeysView
@@ -1600,7 +1600,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.traits._iterable.PyoKeysView" class="md-nav__link">
+  <a href="#pyochain.abc._iterable.PyoKeysView" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         PyoKeysView
@@ -1632,10 +1632,10 @@
 
 
 
-<a id="pyochain.traits._iterable.PyoKeysView"></a>
+<a id="pyochain.abc._iterable.PyoKeysView"></a>
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="collections.abc.KeysView">KeysView</span>[<span title="pyochain.traits._iterable.PyoKeysView[K]">K</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.traits._iterable.PyoMappingView" href="../pyomappingview/#pyochain.traits._iterable.PyoMappingView">PyoMappingView</a>[<span title="pyochain.traits._iterable.PyoKeysView[K]">K</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.traits._iterable.PyoSet" href="../pyoset/#pyochain.traits._iterable.PyoSet">PyoSet</a>[<span title="pyochain.traits._iterable.PyoKeysView[K]">K</span>]</code></p>
+              Bases: <code><span title="collections.abc.KeysView">KeysView</span>[<span title="pyochain.abc._iterable.PyoKeysView[K]">K</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.abc._iterable.PyoMappingView" href="../pyomappingview/#pyochain.abc._iterable.PyoMappingView">PyoMappingView</a>[<span title="pyochain.abc._iterable.PyoKeysView[K]">K</span>]</code>, <code><a class="autorefs autorefs-internal" title="pyochain.abc._iterable.PyoSet" href="../pyoset/#pyochain.abc._iterable.PyoSet">PyoSet</a>[<span title="pyochain.abc._iterable.PyoKeysView[K]">K</span>]</code></p>
 
 
 
@@ -1656,19 +1656,19 @@
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>src/pyochain/traits/_iterable.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2021</span>
-<span class="normal">2022</span>
-<span class="normal">2023</span>
-<span class="normal">2024</span>
-<span class="normal">2025</span>
-<span class="normal">2026</span>
-<span class="normal">2027</span>
-<span class="normal">2028</span>
-<span class="normal">2029</span>
-<span class="normal">2030</span>
-<span class="normal">2031</span>
-<span class="normal">2032</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoKeysView</span><span class="p">[</span><span class="n">K</span><span class="p">](</span><span class="n">KeysView</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">PyoMappingView</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">PyoSet</span><span class="p">[</span><span class="n">K</span><span class="p">]):</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
+                <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2036</span>
+<span class="normal">2037</span>
+<span class="normal">2038</span>
+<span class="normal">2039</span>
+<span class="normal">2040</span>
+<span class="normal">2041</span>
+<span class="normal">2042</span>
+<span class="normal">2043</span>
+<span class="normal">2044</span>
+<span class="normal">2045</span>
+<span class="normal">2046</span>
+<span class="normal">2047</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoKeysView</span><span class="p">[</span><span class="n">K</span><span class="p">](</span><span class="n">KeysView</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">PyoMappingView</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">PyoSet</span><span class="p">[</span><span class="n">K</span><span class="p">]):</span>  <span class="c1"># pyright: ignore[reportUnsafeMultipleInheritance]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A view of the keys in a pyochain mapping.</span>
 
 <span class="sd">    This concrete class is returned by the `PyoMapping.keys()` method, and inherits from `collections.abc.KeysView`, `PyoMappingView`, and `PyoSet`.</span>

@@ -1801,7 +1801,7 @@ execution and wrapping in <code>Option</code> or <code>Result</code> types.</p>
 <span class="n">NONE</span>
 </code></pre></div>
 This can also be extended to any type, not just collections.
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain.traits</span><span class="w"> </span><span class="kn">import</span> <span class="n">Checkable</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Checkable</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">class</span><span class="w"> </span><span class="nc">MyString</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Checkable</span><span class="p">):</span>
 <span class="o">...</span>     <span class="k">pass</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">MyString</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
