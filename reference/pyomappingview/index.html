@@ -479,7 +479,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._iterable.PyoMappingView" class="md-nav__link">
+  <a href="#pyochain.abc._mappings.PyoMappingView" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         PyoMappingView
@@ -1680,7 +1680,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._iterable.PyoMappingView" class="md-nav__link">
+  <a href="#pyochain.abc._mappings.PyoMappingView" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         PyoMappingView
@@ -1712,10 +1712,10 @@
 
 
 
-<a id="pyochain.abc._iterable.PyoMappingView"></a>
+<a id="pyochain.abc._mappings.PyoMappingView"></a>
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="collections.abc.MappingView">MappingView</span></code>, <code><a class="autorefs autorefs-internal" title="pyochain.abc._iterable.PyoCollection" href="../pyocollection/#pyochain.abc._iterable.PyoCollection">PyoCollection</a>[<span title="pyochain.abc._iterable.PyoMappingView[T]">T</span>]</code>, <code><span title="abc.ABC">ABC</span></code></p>
+              Bases: <code><span title="collections.abc.MappingView">MappingView</span></code>, <code><a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoCollection" href="../pyocollection/#pyochain.abc._collection.PyoCollection">PyoCollection</a>[<span title="pyochain.abc._mappings.PyoMappingView[T]">T</span>]</code>, <code><span title="abc.ABC">ABC</span></code></p>
 
 
 
@@ -1735,19 +1735,19 @@
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2093</span>
-<span class="normal">2094</span>
-<span class="normal">2095</span>
-<span class="normal">2096</span>
-<span class="normal">2097</span>
-<span class="normal">2098</span>
-<span class="normal">2099</span>
-<span class="normal">2100</span>
-<span class="normal">2101</span>
-<span class="normal">2102</span>
-<span class="normal">2103</span>
-<span class="normal">2104</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoMappingView</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">MappingView</span><span class="p">,</span> <span class="n">PyoCollection</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
+                <summary>Source code in <code>src/pyochain/abc/_mappings.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoMappingView</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">MappingView</span><span class="p">,</span> <span class="n">PyoCollection</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Extends both `MappingView` from `collections.abc` and `PyoCollection[T]`.</span>
 
 <span class="sd">    Is the base class shared by the views returned by `PyoMapping` methods.</span>

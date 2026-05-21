@@ -452,7 +452,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._iterable.PyoMapping" class="md-nav__link">
+  <a href="#pyochain.abc._mappings.PyoMapping" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         PyoMapping
@@ -463,7 +463,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._iterable.PyoMapping.items" class="md-nav__link">
+  <a href="#pyochain.abc._mappings.PyoMapping.items" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         items
@@ -474,7 +474,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._iterable.PyoMapping.keys" class="md-nav__link">
+  <a href="#pyochain.abc._mappings.PyoMapping.keys" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         keys
@@ -485,7 +485,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._iterable.PyoMapping.values" class="md-nav__link">
+  <a href="#pyochain.abc._mappings.PyoMapping.values" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         values
@@ -1713,7 +1713,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._iterable.PyoMapping" class="md-nav__link">
+  <a href="#pyochain.abc._mappings.PyoMapping" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         PyoMapping
@@ -1724,7 +1724,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._iterable.PyoMapping.items" class="md-nav__link">
+  <a href="#pyochain.abc._mappings.PyoMapping.items" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         items
@@ -1735,7 +1735,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._iterable.PyoMapping.keys" class="md-nav__link">
+  <a href="#pyochain.abc._mappings.PyoMapping.keys" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         keys
@@ -1746,7 +1746,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain.abc._iterable.PyoMapping.values" class="md-nav__link">
+  <a href="#pyochain.abc._mappings.PyoMapping.values" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         values
@@ -1778,10 +1778,10 @@
 
 
 
-<a id="pyochain.abc._iterable.PyoMapping"></a>
+<a id="pyochain.abc._mappings.PyoMapping"></a>
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="pyochain.abc._iterable.PyoCollection" href="../pyocollection/#pyochain.abc._iterable.PyoCollection">PyoCollection</a>[<span title="pyochain.abc._iterable.PyoMapping[K]">K</span>]</code>, <code><span title="collections.abc.Mapping">Mapping</span>[<span title="pyochain.abc._iterable.PyoMapping[K]">K</span>, <span title="pyochain.abc._iterable.PyoMapping[V]">V</span>]</code>, <code><span title="abc.ABC">ABC</span></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="pyochain.abc._collection.PyoCollection" href="../pyocollection/#pyochain.abc._collection.PyoCollection">PyoCollection</a>[<span title="pyochain.abc._mappings.PyoMapping[K]">K</span>]</code>, <code><span title="collections.abc.Mapping">Mapping</span>[<span title="pyochain.abc._mappings.PyoMapping[K]">K</span>, <span title="pyochain.abc._mappings.PyoMapping[V]">V</span>]</code>, <code><span title="abc.ABC">ABC</span></code></p>
 
 
 
@@ -1802,84 +1802,84 @@
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2107</span>
-<span class="normal">2108</span>
-<span class="normal">2109</span>
-<span class="normal">2110</span>
-<span class="normal">2111</span>
-<span class="normal">2112</span>
-<span class="normal">2113</span>
-<span class="normal">2114</span>
-<span class="normal">2115</span>
-<span class="normal">2116</span>
-<span class="normal">2117</span>
-<span class="normal">2118</span>
-<span class="normal">2119</span>
-<span class="normal">2120</span>
-<span class="normal">2121</span>
-<span class="normal">2122</span>
-<span class="normal">2123</span>
-<span class="normal">2124</span>
-<span class="normal">2125</span>
-<span class="normal">2126</span>
-<span class="normal">2127</span>
-<span class="normal">2128</span>
-<span class="normal">2129</span>
-<span class="normal">2130</span>
-<span class="normal">2131</span>
-<span class="normal">2132</span>
-<span class="normal">2133</span>
-<span class="normal">2134</span>
-<span class="normal">2135</span>
-<span class="normal">2136</span>
-<span class="normal">2137</span>
-<span class="normal">2138</span>
-<span class="normal">2139</span>
-<span class="normal">2140</span>
-<span class="normal">2141</span>
-<span class="normal">2142</span>
-<span class="normal">2143</span>
-<span class="normal">2144</span>
-<span class="normal">2145</span>
-<span class="normal">2146</span>
-<span class="normal">2147</span>
-<span class="normal">2148</span>
-<span class="normal">2149</span>
-<span class="normal">2150</span>
-<span class="normal">2151</span>
-<span class="normal">2152</span>
-<span class="normal">2153</span>
-<span class="normal">2154</span>
-<span class="normal">2155</span>
-<span class="normal">2156</span>
-<span class="normal">2157</span>
-<span class="normal">2158</span>
-<span class="normal">2159</span>
-<span class="normal">2160</span>
-<span class="normal">2161</span>
-<span class="normal">2162</span>
-<span class="normal">2163</span>
-<span class="normal">2164</span>
-<span class="normal">2165</span>
-<span class="normal">2166</span>
-<span class="normal">2167</span>
-<span class="normal">2168</span>
-<span class="normal">2169</span>
-<span class="normal">2170</span>
-<span class="normal">2171</span>
-<span class="normal">2172</span>
-<span class="normal">2173</span>
-<span class="normal">2174</span>
-<span class="normal">2175</span>
-<span class="normal">2176</span>
-<span class="normal">2177</span>
-<span class="normal">2178</span>
-<span class="normal">2179</span>
-<span class="normal">2180</span>
-<span class="normal">2181</span>
-<span class="normal">2182</span>
-<span class="normal">2183</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoMapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">](</span><span class="n">PyoCollection</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
+                <summary>Source code in <code>src/pyochain/abc/_mappings.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 29</span>
+<span class="normal"> 30</span>
+<span class="normal"> 31</span>
+<span class="normal"> 32</span>
+<span class="normal"> 33</span>
+<span class="normal"> 34</span>
+<span class="normal"> 35</span>
+<span class="normal"> 36</span>
+<span class="normal"> 37</span>
+<span class="normal"> 38</span>
+<span class="normal"> 39</span>
+<span class="normal"> 40</span>
+<span class="normal"> 41</span>
+<span class="normal"> 42</span>
+<span class="normal"> 43</span>
+<span class="normal"> 44</span>
+<span class="normal"> 45</span>
+<span class="normal"> 46</span>
+<span class="normal"> 47</span>
+<span class="normal"> 48</span>
+<span class="normal"> 49</span>
+<span class="normal"> 50</span>
+<span class="normal"> 51</span>
+<span class="normal"> 52</span>
+<span class="normal"> 53</span>
+<span class="normal"> 54</span>
+<span class="normal"> 55</span>
+<span class="normal"> 56</span>
+<span class="normal"> 57</span>
+<span class="normal"> 58</span>
+<span class="normal"> 59</span>
+<span class="normal"> 60</span>
+<span class="normal"> 61</span>
+<span class="normal"> 62</span>
+<span class="normal"> 63</span>
+<span class="normal"> 64</span>
+<span class="normal"> 65</span>
+<span class="normal"> 66</span>
+<span class="normal"> 67</span>
+<span class="normal"> 68</span>
+<span class="normal"> 69</span>
+<span class="normal"> 70</span>
+<span class="normal"> 71</span>
+<span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoMapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">](</span><span class="n">PyoCollection</span><span class="p">[</span><span class="n">K</span><span class="p">],</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Extends `PyoCollection[K]` and `collections.abc.Mapping[K, V]`.</span>
 
 <span class="sd">    Serves as a base class for pyochain mappings, such as `Dict`.</span>
@@ -1975,7 +1975,7 @@
 <div class="doc doc-object doc-function">
 
 
-<h2 id="pyochain.abc._iterable.PyoMapping.items" class="doc doc-heading">
+<h2 id="pyochain.abc._mappings.PyoMapping.items" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">items</span><span class="p">()</span></code>
 
 </h2>
@@ -1997,7 +1997,7 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain._set.PyoItemsView" href="../pyoitemsview/#pyochain._set.PyoItemsView">PyoItemsView</a>[<span title="pyochain.abc._iterable.PyoMapping[K]">K</span>, <span title="pyochain.abc._iterable.PyoMapping[V]">V</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain._set.PyoItemsView" href="../pyoitemsview/#pyochain._set.PyoItemsView">PyoItemsView</a>[<span title="pyochain.abc._mappings.PyoMapping[K]">K</span>, <span title="pyochain.abc._mappings.PyoMapping[V]">V</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2019,26 +2019,26 @@
 </details>
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2165</span>
-<span class="normal">2166</span>
-<span class="normal">2167</span>
-<span class="normal">2168</span>
-<span class="normal">2169</span>
-<span class="normal">2170</span>
-<span class="normal">2171</span>
-<span class="normal">2172</span>
-<span class="normal">2173</span>
-<span class="normal">2174</span>
-<span class="normal">2175</span>
-<span class="normal">2176</span>
-<span class="normal">2177</span>
-<span class="normal">2178</span>
-<span class="normal">2179</span>
-<span class="normal">2180</span>
-<span class="normal">2181</span>
-<span class="normal">2182</span>
-<span class="normal">2183</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@override</span>
+              <summary>Source code in <code>src/pyochain/abc/_mappings.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@override</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyoItemsView</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a view of the `Mapping` items.</span>
 
@@ -2066,7 +2066,7 @@
 <div class="doc doc-object doc-function">
 
 
-<h2 id="pyochain.abc._iterable.PyoMapping.keys" class="doc doc-heading">
+<h2 id="pyochain.abc._mappings.PyoMapping.keys" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">keys</span><span class="p">()</span></code>
 
 </h2>
@@ -2088,7 +2088,7 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain._set.PyoKeysView" href="../pyokeysview/#pyochain._set.PyoKeysView">PyoKeysView</a>[<span title="pyochain.abc._iterable.PyoMapping[K]">K</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain._set.PyoKeysView" href="../pyokeysview/#pyochain._set.PyoKeysView">PyoKeysView</a>[<span title="pyochain.abc._mappings.PyoMapping[K]">K</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2110,26 +2110,26 @@
 </details>
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2125</span>
-<span class="normal">2126</span>
-<span class="normal">2127</span>
-<span class="normal">2128</span>
-<span class="normal">2129</span>
-<span class="normal">2130</span>
-<span class="normal">2131</span>
-<span class="normal">2132</span>
-<span class="normal">2133</span>
-<span class="normal">2134</span>
-<span class="normal">2135</span>
-<span class="normal">2136</span>
-<span class="normal">2137</span>
-<span class="normal">2138</span>
-<span class="normal">2139</span>
-<span class="normal">2140</span>
-<span class="normal">2141</span>
-<span class="normal">2142</span>
-<span class="normal">2143</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@override</span>
+              <summary>Source code in <code>src/pyochain/abc/_mappings.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@override</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyoKeysView</span><span class="p">[</span><span class="n">K</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a view of the `Mapping` keys.</span>
 
@@ -2157,7 +2157,7 @@
 <div class="doc doc-object doc-function">
 
 
-<h2 id="pyochain.abc._iterable.PyoMapping.values" class="doc doc-heading">
+<h2 id="pyochain.abc._mappings.PyoMapping.values" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">values</span><span class="p">()</span></code>
 
 </h2>
@@ -2179,7 +2179,7 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain._set.PyoValuesView" href="../pyovaluesview/#pyochain._set.PyoValuesView">PyoValuesView</a>[<span title="pyochain.abc._iterable.PyoMapping[V]">V</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain._set.PyoValuesView" href="../pyovaluesview/#pyochain._set.PyoValuesView">PyoValuesView</a>[<span title="pyochain.abc._mappings.PyoMapping[V]">V</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2201,26 +2201,26 @@
 </details>
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/pyochain/abc/_iterable.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2145</span>
-<span class="normal">2146</span>
-<span class="normal">2147</span>
-<span class="normal">2148</span>
-<span class="normal">2149</span>
-<span class="normal">2150</span>
-<span class="normal">2151</span>
-<span class="normal">2152</span>
-<span class="normal">2153</span>
-<span class="normal">2154</span>
-<span class="normal">2155</span>
-<span class="normal">2156</span>
-<span class="normal">2157</span>
-<span class="normal">2158</span>
-<span class="normal">2159</span>
-<span class="normal">2160</span>
-<span class="normal">2161</span>
-<span class="normal">2162</span>
-<span class="normal">2163</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@override</span>
+              <summary>Source code in <code>src/pyochain/abc/_mappings.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@override</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyoValuesView</span><span class="p">[</span><span class="n">V</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a view of the `Mapping` values.</span>
 
