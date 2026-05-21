@@ -2,6 +2,7 @@
 
 import ast
 import re
+from enum import StrEnum
 from pathlib import Path
 from typing import NamedTuple, TypeIs
 
@@ -39,6 +40,16 @@ class DocstringInfo(NamedTuple):
     content: str
 
 
+class ErrorKind(StrEnum):
+    """Kind of error found in a docstring."""
+
+    MISSING = "Missing docstring"
+    NO_DOCTEST = "Missing doctest: No ```python block found in docstring"
+    UNCLOSED = "Unclosed ``` block"
+    INDENT = "Example content must be indented under `Example:`"
+    CLOSED_NOT_OPENED = "Closing ``` block without opening"
+
+
 class DocstringError(NamedTuple):
     """Error found in a docstring."""
 
@@ -46,21 +57,21 @@ class DocstringError(NamedTuple):
     func_name: str
     line_no: int
     error_line_no: int
-    errors: Seq[str]
+    errors: Seq[ErrorKind]
 
 
 class ErrorDetail(NamedTuple):
     """Detail of an error with its line number."""
 
     line_no: int
-    message: str
+    message: ErrorKind
 
 
 class State(NamedTuple):
     """State during code block traversal."""
 
     errors: Vec[ErrorDetail]
-    stack: Vec[tuple[int, str]]
+    stack: Vec[int]
 
     def to_blocks(self, start_line: int) -> Iter[ErrorDetail]:
         """Convert unclosed blocks in the stack to error details.
@@ -69,11 +80,8 @@ class State(NamedTuple):
             Iter[ErrorDetail]: An iterable of error details for unclosed blocks.
         """
         return self.errors.iter().chain(
-            self.stack.iter().map_star(
-                lambda idx, lang: ErrorDetail(
-                    line_no=start_line + idx - 1,
-                    message=f"Unclosed ```{lang} block",
-                )
+            self.stack.iter().map(
+                lambda idx: ErrorDetail(start_line + idx - 1, ErrorKind.UNCLOSED)
             )
         )
 
@@ -123,6 +131,14 @@ def _get_protocol_methods(tree: ast.Module) -> Set[int]:
 def _process_node(
     file_path: Path, node: DocumentableNode, protocol_methods: Set[int]
 ) -> Option[DocstringError]:
+    def _get_docstring_start_line(node: DocumentableNode) -> int:
+        match node.body:
+            case [ast.Expr(value=ast.Constant(value=str())), *_] as body:
+                _ = body
+                return node.body[0].lineno
+            case _:
+                return node.lineno
+
     def _is_public(node: DocumentableNode) -> bool:
         return not node.name.startswith("_") and not node.name.istitle()
 
@@ -141,13 +157,14 @@ def _process_node(
                     node.name,
                     node.lineno,
                     node.lineno,
-                    Seq(["Missing docstring"]),
+                    Seq([ErrorKind.MISSING]),
                 )
             )
         case Some(docstring):
             has_decorator = _has_skip_decorator(node)
+            docstring_start_line = _get_docstring_start_line(node)
             result = _check_code_blocks(
-                docstring, node.lineno, node.name, skip_doctest=has_decorator
+                docstring, docstring_start_line, node.name, skip_doctest=has_decorator
             )
             match result:
                 case Err(errors):
@@ -174,15 +191,15 @@ def _check_code_blocks(
         match = CODE_BLOCK_PATTERN.search(stripped_line)
         if not (match and stripped_line.startswith(marker)):
             return state
-        language = match.group(1) or "plaintext"
         if stripped_line == marker:
             if not state.stack.is_empty():
                 _ = state.stack.pop()
                 return state
-            msg = "Closing block ``` without matching opening"
-            state.errors.append(ErrorDetail(start_line + line_num, msg))
+            state.errors.append(
+                ErrorDetail(start_line + line_num, ErrorKind.CLOSED_NOT_OPENED)
+            )
             return state
-        state.stack.append((line_num + 1, language))
+        state.stack.append(line_num + 1)
         return state
 
     lines = Vec.from_ref(docstring.split("\n"))
@@ -244,8 +261,7 @@ def _check_errs(
     if should_skip and errors.is_empty():
         return Ok(())
     if not should_skip:
-        msg = "Missing doctest: No ```python block found in docstring"
-        errors.append(ErrorDetail(start_line, msg))
+        errors.append(ErrorDetail(start_line, ErrorKind.NO_DOCTEST))
     return Err(errors)
 
 
@@ -264,8 +280,7 @@ def _check_example_indentation(lines: Vec[str], start_line: int) -> Vec[ErrorDet
             case Some((next_idx, next_line)) if (
                 len(next_line) - len(next_line.lstrip())
             ) <= example_indent:
-                msg = "Example content must be indented under `Example:`"
-                return Some(ErrorDetail(start_line + next_idx, msg))
+                return Some(ErrorDetail(start_line + next_idx, ErrorKind.INDENT))
             case _:
                 return NONE
 
@@ -319,7 +334,9 @@ def _handle_errors(all_errors: Option[Seq[DocstringError]]) -> None:
 def _show_table(all_errors: Seq[DocstringError]) -> None:
     def _add_row(error: DocstringError) -> None:
         file = f"{error.file_path.relative_to(Paths.ROOT.value)}:{error.error_line_no}"
-        table.add_row(file, error.func_name, error.errors.join("\n"))
+        table.add_row(
+            file, error.func_name, error.errors.iter().map(lambda e: e.value).join("\n")
+        )
 
     table: Table = Table(title="Issues Found", show_header=True)
     table.add_column("File", style="cyan")
