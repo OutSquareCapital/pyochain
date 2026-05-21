@@ -1,3 +1,3 @@
 # PyoSet
 
-::: pyochain.abc._iterable.PyoSet
+::: pyochain.abc._set.PyoSet

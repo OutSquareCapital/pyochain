@@ -1,3 +1,3 @@
 # PyoMappingView
 
-::: pyochain.abc._iterable.PyoMappingView
+::: pyochain.abc._mappings.PyoMappingView

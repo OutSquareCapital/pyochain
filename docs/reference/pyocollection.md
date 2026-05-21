@@ -1,3 +1,3 @@
 # PyoCollection
 
-::: pyochain.abc._iterable.PyoCollection
+::: pyochain.abc._collection.PyoCollection

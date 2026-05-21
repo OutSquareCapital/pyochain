@@ -1,3 +1,3 @@
 # PyoMutableMapping
 
-::: pyochain.abc._iterable.PyoMutableMapping
+::: pyochain.abc._mappings.PyoMutableMapping
