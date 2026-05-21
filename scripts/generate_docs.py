@@ -52,20 +52,6 @@ def main() -> None:
     _check_nav_completeness()
 
 
-def _discover_modules(module: ModuleType) -> Seq[ModuleType]:
-
-    def _recurse(mod: ModuleType) -> Iterator[ModuleType]:
-        yield mod
-        for obj in vars(mod).values():  # pyright: ignore[reportAny]
-            match obj:
-                case ModuleType() if obj.__name__.startswith(mod.__name__):
-                    yield from _recurse(obj)
-                case _:  # pyright: ignore[reportAny]
-                    return
-
-    return Seq(_recurse(module))
-
-
 def _generate_markdown_for(module: object, generated_paths: SetMut[str]) -> None:
     """Generate markdown files for all public classes in a module."""
     DOCS_REF.mkdir(parents=True, exist_ok=True)
@@ -103,6 +89,20 @@ def _generate_markdown(full_path: str, class_name: str) -> str:
 
 ::: {full_path}
 """
+
+
+def _discover_modules(module: ModuleType) -> Seq[ModuleType]:
+
+    def _recurse(mod: ModuleType) -> Iterator[ModuleType]:
+        yield mod
+        for obj in vars(mod).values():  # pyright: ignore[reportAny]
+            match obj:
+                case ModuleType() if obj.__name__.startswith(mod.__name__):
+                    yield from _recurse(obj)
+                case _:  # pyright: ignore[reportAny]
+                    return
+
+    return Seq(_recurse(module))
 
 
 def _check_nav_completeness(config_path: Path = ZENSICAL_PATH) -> None:
@@ -160,6 +160,10 @@ def _collect_nav_paths(item: JsonData) -> SetMut[str]:
     return _collect_paths(SetMut(()), item)
 
 
+def _show(msg: str, style: Color) -> None:
+    CONSOLE.print(Text(msg, style=style.value))
+
+
 def _check_markdown_links(docs_dir: Path) -> str:
     return (
         DOCS_LINK_FILES.iter()
@@ -214,10 +218,6 @@ def _is_valid_docs_site_link(target: str, docs_dir: Path) -> bool:
 
 def _normalize_link_target(target: str) -> str:
     return target.strip().removeprefix("<").removesuffix(">")
-
-
-def _show(msg: str, style: Color) -> None:
-    CONSOLE.print(Text(msg, style=style.value))
 
 
 if __name__ == "__main__":

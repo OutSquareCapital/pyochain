@@ -473,7 +473,7 @@ wheels = [
 
 [[package]]
 name = "pyochain"
-version = "0.19.0"
+version = "0.20.0"
 source = { editable = "." }
 
 [package.dev-dependencies]
@@ -680,14 +680,14 @@ wheels = [
 
 [[package]]
 name = "sdsort"
-version = "0.5.0"
+version = "0.5.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/18/19/c2952d4d0b9871611d84a81a1f9d47770bf710ae0cd19640c361a31d74df/sdsort-0.5.0.tar.gz", hash = "sha256:8069af968d52d676e31b2f77201142be13423ba5fe994c846d653b4a30597a4c", size = 7908, upload-time = "2026-04-23T22:35:17.703Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5d/c0/5ec0053d5b1f2f83be7561e5efbcd863c3ba8897488e5309442081e97e9e/sdsort-0.5.2.tar.gz", hash = "sha256:9ad433b272abee32bcbb49c24c1da1eabc3110263129ed3edbbd6f01a9c5a91a", size = 7916, upload-time = "2026-05-20T16:00:09.495Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ab/6c/99e630656ca8a3907331a6c5524004998f69f58746aa35b4ea06859d8d82/sdsort-0.5.0-py3-none-any.whl", hash = "sha256:5144c04a087140f39609b47a9148472a891fc2bf746876de411514562673384f", size = 10411, upload-time = "2026-04-23T22:35:16.371Z" },
+    { url = "https://files.pythonhosted.org/packages/39/08/cd2d7b9858bf2e4414dabbe354783261472138ad93a8be5a3aaf36f22ce4/sdsort-0.5.2-py3-none-any.whl", hash = "sha256:498e76a5efd100f5ddd14b990b87812cdcdd6febc0f3eed15dd7c62a567d0c92", size = 10410, upload-time = "2026-05-20T16:00:08.256Z" },
 ]
 
 [[package]]
