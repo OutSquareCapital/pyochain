@@ -143,7 +143,7 @@ Before committing, ensure all checks pass.
 
 ```bash
 uv run ruff check . --fix --unsafe-fixes;
-uv run ruff format .;
+uv run ruff format . --preview;
 uv run basedpyright src/pyochain;
 ```
 

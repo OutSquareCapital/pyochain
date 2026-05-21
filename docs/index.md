@@ -14,13 +14,15 @@ uv add pyochain
 
 ```python
 from pyochain import Iter, Seq
+
 res = (
-     Iter.from_count(1)
-     .filter(lambda x: x % 2 != 0)
-     .map(lambda x: x**2)
-     .take(5)
-     .collect()
- )
+    Iter
+    .from_count(1)
+    .filter(lambda x: x % 2 != 0)
+    .map(lambda x: x**2)
+    .take(5)
+    .collect()
+)
 assert res == (1, 9, 25, 49, 81)
 ```
 

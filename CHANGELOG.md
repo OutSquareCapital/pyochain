@@ -2,7 +2,9 @@
 
 ## [Unreleased]
 
--
+### 🛠️ Other improvements
+
+- Added `--preview` option to `Ruff` format workflow to garantuee markdown formatting
 
 ## [0.22.0] - 2026-05-21
 

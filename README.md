@@ -89,7 +89,10 @@ def _process(data: PyoIterable[int]) -> str:
 
 # Process only if non-empty, convert Option to Result
 assert seq.then(_process).ok_or("No values").unwrap() == "1, 2, 3"
-assert Vec(()).then(_process).ok_or("No values").expect_err("expected error") == "No values"
+assert (
+    Vec(()).then(_process).ok_or("No values").expect_err("expected error")
+    == "No values"
+)
 # Create empty Set, convert to Result, then back to Option
 assert Set(()).then(_process).ok_or("No values").ok() is NONE
 ```
