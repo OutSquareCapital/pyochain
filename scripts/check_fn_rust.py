@@ -12,128 +12,124 @@ DATA = Path("scripts", "data")
 
 
 def _iterators_fn() -> Set[str]:
-    return Set(
-        (
-            "advance_by",
-            "all",
-            "any",
-            "array_chunks",
-            "by_ref",
-            "chain",
-            "cloned",
-            "cmp",
-            "cmp_by",
-            "collect",
-            "collect_into",
-            "copied",
-            "count",
-            "cycle",
-            "enumerate",
-            "eq",
-            "eq_by",
-            "filter",
-            "filter_map",
-            "find",
-            "find_map",
-            "flat_map",
-            "flatten",
-            "fold",
-            "for_each",
-            "fuse",
-            "ge",
-            "gt",
-            "inspect",
-            "intersperse",
-            "intersperse_with",
-            "is_partitioned",
-            "is_sorted",
-            "is_sorted_by",
-            "is_sorted_by_key",
-            "last",
-            "le",
-            "lt",
-            "map",
-            "map_while",
-            "map_windows",
-            "max",
-            "max_by",
-            "max_by_key",
-            "min",
-            "min_by",
-            "min_by_key",
-            "ne",
-            "next_chunk",
-            "nth",
-            "partial_cmp",
-            "partial_cmp_by",
-            "partition",
-            "partition_in_place",
-            "peekable",
-            "position",
-            "product",
-            "reduce",
-            "rev",
-            "rposition",
-            "scan",
-            "size_hint",
-            "skip",
-            "skip_while",
-            "step_by",
-            "sum",
-            "take",
-            "take_while",
-            "try_collect",
-            "try_find",
-            "try_fold",
-            "try_for_each",
-            "try_reduce",
-            "unzip",
-            "zip",
-            "empty",
-            "from_coroutine",
-            "from_fn",
-            "once",
-            "once_with",
-            "repeat",
-            "repeat_n",
-            "repeat_with",
-            "successors",
-            "next",
-        )
-    )
+    return Set((
+        "advance_by",
+        "all",
+        "any",
+        "array_chunks",
+        "by_ref",
+        "chain",
+        "cloned",
+        "cmp",
+        "cmp_by",
+        "collect",
+        "collect_into",
+        "copied",
+        "count",
+        "cycle",
+        "enumerate",
+        "eq",
+        "eq_by",
+        "filter",
+        "filter_map",
+        "find",
+        "find_map",
+        "flat_map",
+        "flatten",
+        "fold",
+        "for_each",
+        "fuse",
+        "ge",
+        "gt",
+        "inspect",
+        "intersperse",
+        "intersperse_with",
+        "is_partitioned",
+        "is_sorted",
+        "is_sorted_by",
+        "is_sorted_by_key",
+        "last",
+        "le",
+        "lt",
+        "map",
+        "map_while",
+        "map_windows",
+        "max",
+        "max_by",
+        "max_by_key",
+        "min",
+        "min_by",
+        "min_by_key",
+        "ne",
+        "next_chunk",
+        "nth",
+        "partial_cmp",
+        "partial_cmp_by",
+        "partition",
+        "partition_in_place",
+        "peekable",
+        "position",
+        "product",
+        "reduce",
+        "rev",
+        "rposition",
+        "scan",
+        "size_hint",
+        "skip",
+        "skip_while",
+        "step_by",
+        "sum",
+        "take",
+        "take_while",
+        "try_collect",
+        "try_find",
+        "try_fold",
+        "try_for_each",
+        "try_reduce",
+        "unzip",
+        "zip",
+        "empty",
+        "from_coroutine",
+        "from_fn",
+        "once",
+        "once_with",
+        "repeat",
+        "repeat_n",
+        "repeat_with",
+        "successors",
+        "next",
+    ))
 
 
 def _iter_filter() -> Set[str]:
-    return Set(
-        (
-            "ok_or",
-            "ok_or_else",
-            "then_some",
-            "then",
-            # Implemented via boolean in Rust
-            "copied",  # implemented via cloned
-            "by_ref",
-            "from_coroutine",
-            # not pertinent in Python
-            "count",  # count is reserved for MutableSequence in Python
-            "length",  # replace count
-            # all covered by is_sorted in Python
-            "into",  # into is implicitely implemented with From trait in Rust
-            "filter_false",  # filter_false is in itertools in Python
-            "iter",  # inerhited from base class in Python
-            "is_sorted_by_key",  # already covered by sort_by
-            "max_by_key",  # already covered by max_by
-            "min_by_key",  # already covered by min_by
-            "new",  # Not present in the trait in Rust
-            "empty",  # replaced by new across classes from PyoIterable
-            "size_hint",  # not pertinent in Python
-            "map_juxt",  # itertools in Python
-            "GenericAlias",  # internal Python type
-            "sort",  # sorted is built-in in Python for any Iterable
-            "zip_longest",  # itertools in Python
-            "compress",  # itertools in Python
-        )
-    )
+    return Set((
+        "ok_or",
+        "ok_or_else",
+        "then_some",
+        "then",
+        # Implemented via boolean in Rust
+        "copied",  # implemented via cloned
+        "by_ref",
+        "from_coroutine",
+        # not pertinent in Python
+        "count",  # count is reserved for MutableSequence in Python
+        "length",  # replace count
+        # all covered by is_sorted in Python
+        "into",  # into is implicitely implemented with From trait in Rust
+        "filter_false",  # filter_false is in itertools in Python
+        "iter",  # inerhited from base class in Python
+        "is_sorted_by_key",  # already covered by sort_by
+        "max_by_key",  # already covered by max_by
+        "min_by_key",  # already covered by min_by
+        "new",  # Not present in the trait in Rust
+        "empty",  # replaced by new across classes from PyoIterable
+        "size_hint",  # not pertinent in Python
+        "map_juxt",  # itertools in Python
+        "GenericAlias",  # internal Python type
+        "sort",  # sorted is built-in in Python for any Iterable
+        "zip_longest",  # itertools in Python
+        "compress",  # itertools in Python
+    ))
 
 
 def _decorated(fn: Callable[..., object]) -> Callable[..., object]:
@@ -156,7 +152,8 @@ def main(dtype: type, rust_fns: Set[str], filters: Set[str]) -> None:
         .into(lambda x: pl.LazyFrame(x, schema=["source", "fn"]))
         .filter(
             fn.is_unique().and_(
-                fn.str.starts_with("_")
+                fn.str
+                .starts_with("_")
                 .not_()
                 .and_(fn.is_in(filters).not_().and_(fn.str.ends_with("_star").not_()))
             )

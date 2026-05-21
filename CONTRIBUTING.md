@@ -142,8 +142,8 @@ Before committing, ensure all checks pass.
 ### type checking/linting/formatting
 
 ```bash
-uv run ruff check --fix src/pyochain;
-uv run ruff format src/pyochain;
+uv run ruff check --fix .;
+uv run ruff format .;
 uv run basedpyright src/pyochain;
 ```
 

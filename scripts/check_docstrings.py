@@ -204,7 +204,8 @@ def _check_code_blocks(
 
     lines = Vec.from_ref(docstring.split("\n"))
     block_errors = (
-        lines.iter()
+        lines
+        .iter()
         .enumerate()
         .fold_star(State(Vec(()), Vec(())), _process_line)
         .to_blocks(start_line)
@@ -270,7 +271,8 @@ def _check_example_indentation(lines: Vec[str], start_line: int) -> Vec[ErrorDet
         example_line = lines[example_idx]
         example_indent = len(example_line) - len(example_line.lstrip())
         next_content = (
-            lines.iter()
+            lines
+            .iter()
             .enumerate()
             .skip(example_idx + 1)
             .find(lambda line: bool(line[1].strip()))
@@ -285,7 +287,8 @@ def _check_example_indentation(lines: Vec[str], start_line: int) -> Vec[ErrorDet
                 return NONE
 
     return (
-        lines.iter()
+        lines
+        .iter()
         .enumerate()
         .filter_star(lambda _, line: line.strip() == "Example:")
         .filter_map_star(lambda idx, _: _get_error(idx))
@@ -311,7 +314,8 @@ def main() -> None:
 
 def _get_files(pattern: str) -> Seq[Path]:
     return (
-        Paths.SRC_DIR.iter_rglob(f"*.{pattern}")
+        Paths.SRC_DIR
+        .iter_rglob(f"*.{pattern}")
         .collect()
         .inspect(
             lambda p: show(

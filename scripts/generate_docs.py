@@ -49,7 +49,8 @@ def _generate_markdown_for(module: object, generated_paths: SetMut[str]) -> None
         return name in public_api and isinstance(cls, type)
 
     return (
-        Dict.from_object(module)
+        Dict
+        .from_object(module)
         .items()
         .iter()
         .filter(_is_public_class)
