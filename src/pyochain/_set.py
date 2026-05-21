@@ -19,9 +19,7 @@ from .abc import PyoCollection, PyoMappingView, PyoSet
 class BaseConcreteSet[T](ABC):
     """Internal mixin for concrete set-like classes.
 
-    It provides a common interface for documentation, DRY code, and type consistency across all concrete set-like classes in pyochain.
-
-    This allows to enforce a *you must implement concrete methods for operator dunders* policy for set operations.
+    It provides a common interface for documentation, DRY code, and type consistency, as well as enforcing a *you must implement concrete methods for operator dunders* policy for set operations.
 
     pyochain philosophy is to prefer explicit method calls that read like natural language instead of obscure operators.
 
@@ -52,14 +50,27 @@ class BaseConcreteSet[T](ABC):
             AbstractSet[T]: A new `Set` containing shared elements only.
 
         Example:
-        ```python
-        >>> from pyochain import Set
-        >>> Set((1, 2, 2)).intersection({2, 3})
-        Set(2,)
-        >>> Set((1, 2)).intersection({3, 4})
-        Set()
+            ```python
+            >>> from pyochain import Set, Dict
+            >>> from_set = Set((1, 2))
+            >>> from_set.intersection({2, 3})
+            Set(2,)
+            >>> from_set.intersection({3, 4})
+            Set()
+            >>> dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
+            >>> from_keys = dct.keys().intersection({"b", "c", "d"}).iter().sort()
+            >>> from_keys
+            Vec('b', 'c')
+            >>> from_items = (
+            ...     dct.items()
+            ...     .intersection({("b", 2), ("c", 3), ("d", 4)})
+            ...     .iter()
+            ...     .sort()
+            ... )
+            >>> from_items
+            Vec(('b', 2), ('c', 3))
 
-        ```
+            ```
         """
 
     @abstractmethod
@@ -79,12 +90,21 @@ class BaseConcreteSet[T](ABC):
             AbstractSet[T]: A new set containing all elements from both sets.
 
         Example:
-        ```python
-        >>> from pyochain import Set
-        >>> Set((1, 2, 2)).union({2, 3}).union({4}).iter().sort()
-        Vec(1, 2, 3, 4)
+            ```python
+            >>> from pyochain import Set, Dict
+            >>> Set((1, 2)).union({2, 3}).union({4}).iter().sort()
+            Vec(1, 2, 3, 4)
+            >>> dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
+            >>> from_keys = dct.keys().union({"b", "c", "d"}).iter().sort()
+            >>> from_keys
+            Vec('a', 'b', 'c', 'd')
+            >>> from_items = (
+            ...     dct.items().union({("b", 2), ("c", 3), ("d", 4)}).iter().sort()
+            ... )
+            >>> from_items
+            Vec(('a', 1), ('b', 2), ('c', 3), ('d', 4))
 
-        ```
+            ```
         """
 
     @abstractmethod
@@ -104,14 +124,23 @@ class BaseConcreteSet[T](ABC):
             AbstractSet[T]: A new set containing elements unique to this set.
 
         Example:
-        ```python
-        >>> from pyochain import Set
-        >>> Set((1, 2, 2)).difference({2, 3})
-        Set(1,)
-        >>> Set((1, 2)).difference({3, 4}).iter().sort()
-        Vec(1, 2)
+            ```python
+            >>> from pyochain import Set, Dict
+            >>> Set((1, 2)).difference({2, 3})
+            Set(1,)
+            >>> Set((1, 2)).difference({3, 4}).iter().sort()
+            Vec(1, 2)
+            >>> dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
+            >>> from_keys = dct.keys().difference({"b", "c", "d"}).iter().sort()
+            >>> from_keys
+            Vec('a')
+            >>> from_items = (
+            ...     dct.items().difference({("b", 2), ("c", 3), ("d", 4)}).iter().sort()
+            ... )
+            >>> from_items
+            Vec(('a', 1))
 
-        ```
+            ```
         """
 
     @abstractmethod
@@ -131,14 +160,28 @@ class BaseConcreteSet[T](ABC):
             AbstractSet[T]: A new set containing elements unique to each set.
 
         Example:
-        ```python
-        >>> from pyochain import Set
-        >>> Set((1, 2, 2)).symmetric_difference({2, 3}).iter().sort()
-        Vec(1, 3)
-        >>> Set((1, 2, 3)).symmetric_difference({3, 4, 5}).iter().sort()
-        Vec(1, 2, 4, 5)
+            ```python
+            >>> from pyochain import Set, Dict
+            >>> Set((1, 2)).symmetric_difference({2, 3}).iter().sort()
+            Vec(1, 3)
+            >>> Set((1, 2, 3)).symmetric_difference({3, 4, 5}).iter().sort()
+            Vec(1, 2, 4, 5)
+            >>> dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
+            >>> from_keys = (
+            ...     dct.keys().symmetric_difference({"b", "c", "d"}).iter().sort()
+            ... )
+            >>> from_keys
+            Vec('a', 'd')
+            >>> from_items = (
+            ...     dct.items()
+            ...     .symmetric_difference({("b", 2), ("c", 3), ("d", 4)})
+            ...     .iter()
+            ...     .sort()
+            ... )
+            >>> from_items
+            Vec(('a', 1), ('d', 4))
 
-        ```
+            ```
         """
 
 
@@ -378,18 +421,17 @@ class SetMut[T](BaseConcreteSet[T], MutableSet[T], PyoCollection[T]):
             SetMut[V]: A new `SetMut` instance wrapping the provided `set`.
 
         Example:
-        ```python
-        >>> from pyochain import SetMut
-        >>> original_set = {1, 2, 3}
-        >>> set_obj = SetMut.from_ref(original_set)
-        >>> set_obj
-        SetMut(1, 2, 3)
-        >>> original_set.add(4)
-        >>> set_obj
-        SetMut(1, 2, 3, 4)
+            ```python
+            >>> from pyochain import SetMut
+            >>> original_set = {1, 2, 3}
+            >>> set_obj = SetMut.from_ref(original_set)
+            >>> set_obj
+            SetMut(1, 2, 3)
+            >>> original_set.add(4)
+            >>> set_obj
+            SetMut(1, 2, 3, 4)
 
-
-        ```
+            ```
         """
         instance: SetMut[V] = object.__new__(SetMut)  # pyright: ignore[reportUnknownVariableType]
         instance._inner = data
@@ -403,14 +445,14 @@ class SetMut[T](BaseConcreteSet[T], MutableSet[T], PyoCollection[T]):
             value (T): The element to add.
 
         Example:
-        ```python
-        >>> from pyochain import SetMut
-        >>> s = SetMut(("a", "b"))
-        >>> s.add("c")
-        >>> s.iter().sort()
-        Vec('a', 'b', 'c')
+            ```python
+            >>> from pyochain import SetMut
+            >>> s = SetMut(("a", "b"))
+            >>> s.add("c")
+            >>> s.iter().sort()
+            Vec('a', 'b', 'c')
 
-        ```
+            ```
         """
         self._inner.add(value)
 
@@ -424,14 +466,14 @@ class SetMut[T](BaseConcreteSet[T], MutableSet[T], PyoCollection[T]):
             value (T): The element to remove.
 
         Example:
-        ```python
-        >>> from pyochain import SetMut
-        >>> s = SetMut(("a", "b", "c"))
-        >>> s.discard("b")
-        >>> s.iter().sort()
-        Vec('a', 'c')
+            ```python
+            >>> from pyochain import SetMut
+            >>> s = SetMut(("a", "b", "c"))
+            >>> s.discard("b")
+            >>> s.iter().sort()
+            Vec('a', 'c')
 
-        ```
+            ```
         """
         self._inner.discard(value)
 

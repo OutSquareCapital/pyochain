@@ -2,7 +2,13 @@
 
 ## [Unreleased]
 
--
+### ✨ Enhancements
+
+- **Feat**: Added a clearer repr for `Range` that shows the start, stop and step values.
+
+### 📖 Documentation
+
+- Various improvements in docstrings, regarding formatting for the website, additional examples, etc..
 
 ## [0.21.0] - 2026-05-21
 

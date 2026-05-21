@@ -33,29 +33,29 @@ class Seq[T](PyoSequence[T]):
         data (Iterable[T]): The data to initialize the Seq with.
 
     Example:
-    ```python
-    >>> from pyochain import Seq
-    >>> Seq(())
-    Seq()
-    >>> t = (1, 2, 3)
-    >>> seq = Seq(t)
-    >>> seq
-    Seq(1, 2, 3)
-    >>> seq_2 = Seq(seq.inner)
-    >>> # No copy is made when creating seq_2 from seq.inner, they reference the same underlying tuple.
-    >>> is_no_copy = (
-    ...     seq.inner is seq_2.inner
-    ...     and seq.inner is t
-    ...     and seq_2.inner is t
-    ...     and tuple(seq.inner) is t
-    ... )
-    >>> is_no_copy
-    True
-    >>> # However, creating a new Seq from seq (not using .inner) will be a copy operation.
-    >>> Seq(seq).inner is seq.inner
-    False
+        ```python
+        >>> from pyochain import Seq
+        >>> Seq(())
+        Seq()
+        >>> t = (1, 2, 3)
+        >>> seq = Seq(t)
+        >>> seq
+        Seq(1, 2, 3)
+        >>> seq_2 = Seq(seq.inner)
+        >>> # No copy is made when creating seq_2 from seq.inner, they reference the same underlying tuple.
+        >>> is_no_copy = (
+        ...     seq.inner is seq_2.inner
+        ...     and seq.inner is t
+        ...     and seq_2.inner is t
+        ...     and tuple(seq.inner) is t
+        ... )
+        >>> is_no_copy
+        True
+        >>> # However, creating a new Seq from seq (not using .inner) will be a copy operation.
+        >>> Seq(seq).inner is seq.inner
+        False
 
-    ```
+        ```
     """
 
     __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
@@ -107,15 +107,15 @@ class Seq[T](PyoSequence[T]):
             Self: The new `Seq` after concatenation.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> s1 = Seq((1, 2, 3))
-        >>> s2 = (4, 5, 6)  # Can also concatenate a standard tuple
-        >>> s3 = s1.concat(s2)
-        >>> s3
-        Seq(1, 2, 3, 4, 5, 6)
+            ```python
+            >>> from pyochain import Seq
+            >>> s1 = Seq((1, 2, 3))
+            >>> s2 = (4, 5, 6)  # Can also concatenate a standard tuple
+            >>> s3 = s1.concat(s2)
+            >>> s3
+            Seq(1, 2, 3, 4, 5, 6)
 
-        ```
+            ```
         """
         match other:
             case Seq():

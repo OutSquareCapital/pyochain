@@ -39,25 +39,25 @@ class Pipeable(Protocol):
             R: The converted value.
 
         Example:
-        ```python
-        >>> from pyochain import Seq, Result, Ok, Err
-        >>> from collections.abc import Sequence
-        >>> def check_data(data: Sequence[int]) -> Result[Sequence[int], str]:
-        ...     if len(data) == 0:
-        ...         return Err("Empty data")
-        ...     return Ok(data)
-        >>>
-        >>> def handle_result(res: Result[Sequence[int], str]) -> str:
-        ...     match res:
-        ...         case Ok(data):
-        ...             return f"Data is valid: {data}"
-        ...         case Err(err):
-        ...             return f"Data is invalid: {err}"
-        >>>
-        >>> Seq((1, 2, 3)).into(check_data).into(handle_result)
-        'Data is valid: Seq(1, 2, 3)'
+            ```python
+            >>> from pyochain import Seq, Result, Ok, Err
+            >>> from collections.abc import Sequence
+            >>> def check_data(data: Sequence[int]) -> Result[Sequence[int], str]:
+            ...     if len(data) == 0:
+            ...         return Err("Empty data")
+            ...     return Ok(data)
+            >>>
+            >>> def handle_result(res: Result[Sequence[int], str]) -> str:
+            ...     match res:
+            ...         case Ok(data):
+            ...             return f"Data is valid: {data}"
+            ...         case Err(err):
+            ...             return f"Data is invalid: {err}"
+            >>>
+            >>> Seq((1, 2, 3)).into(check_data).into(handle_result)
+            'Data is valid: Seq(1, 2, 3)'
 
-        ```
+            ```
         """
 
     def inspect[**P](
@@ -79,13 +79,13 @@ class Pipeable(Protocol):
             Self: The instance itself, unchanged.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> Seq((1, 2, 3, 4)).inspect(print).last()
-        Seq(1, 2, 3, 4)
-        4
+            ```python
+            >>> from pyochain import Seq
+            >>> Seq((1, 2, 3, 4)).inspect(print).last()
+            Seq(1, 2, 3, 4)
+            4
 
-        ```
+            ```
         """
 
 class Checkable(Protocol):
@@ -182,14 +182,14 @@ class Checkable(Protocol):
             Option[R]: `Some(R)` if self is truthy, `NONE` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> Seq((1, 2, 3)).then(lambda s: s.sum())
-        Some(6)
-        >>> Seq(()).then(lambda s: s.sum())
-        NONE
+            ```python
+            >>> from pyochain import Seq
+            >>> Seq((1, 2, 3)).then(lambda s: s.sum())
+            Some(6)
+            >>> Seq(()).then(lambda s: s.sum())
+            NONE
 
-        ```
+            ```
         """
 
     def then_some(self) -> Option[Self]:
@@ -199,14 +199,14 @@ class Checkable(Protocol):
             Option[Self]: `Some(self)` if self is truthy, `NONE` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> Seq((1, 2, 3)).then_some()
-        Some(Seq(1, 2, 3))
-        >>> Seq(()).then_some()
-        NONE
+            ```python
+            >>> from pyochain import Seq
+            >>> Seq((1, 2, 3)).then_some()
+            Some(Seq(1, 2, 3))
+            >>> Seq(()).then_some()
+            NONE
 
-        ```
+            ```
         """
     def ok_or[E](self, err: E) -> Result[Self, E]:
         """Wrap `Self` in a `Result[Self, E]` based on its truthiness.
@@ -220,14 +220,14 @@ class Checkable(Protocol):
             Result[Self, E]: `Ok(self)` if self is truthy, `Err(err)` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> Seq((1, 2, 3)).ok_or("empty")
-        Ok(Seq(1, 2, 3))
-        >>> Seq(()).ok_or("empty")
-        Err('empty')
+            ```python
+            >>> from pyochain import Seq
+            >>> Seq((1, 2, 3)).ok_or("empty")
+            Ok(Seq(1, 2, 3))
+            >>> Seq(()).ok_or("empty")
+            Err('empty')
 
-        ```
+            ```
         """
     def err_or[T](self, ok: T) -> Result[T, Self]:
         """Wrap `Self` in a `Result[T, Self]` based on its truthiness.
@@ -241,14 +241,14 @@ class Checkable(Protocol):
             Result[T, Self]: `Ok(ok)` if self is truthy, `Err(self)` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> Seq((1, 2, 3)).err_or("should be empty")
-        Err(Seq(1, 2, 3))
-        >>> Seq(()).err_or("should be empty")
-        Ok('should be empty')
+            ```python
+            >>> from pyochain import Seq
+            >>> Seq((1, 2, 3)).err_or("should be empty")
+            Err(Seq(1, 2, 3))
+            >>> Seq(()).err_or("should be empty")
+            Ok('should be empty')
 
-        ```
+            ```
         """
 
     def ok_or_else[**P, E](
@@ -272,14 +272,14 @@ class Checkable(Protocol):
             Result[Self, E]: Ok(self) if self is truthy, Err(f(...)) otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> Seq((1, 2, 3)).ok_or_else(lambda s: f"empty seq")
-        Ok(Seq(1, 2, 3))
-        >>> Seq(()).ok_or_else(lambda s: f"empty seq")
-        Err('empty seq')
+            ```python
+            >>> from pyochain import Seq
+            >>> Seq((1, 2, 3)).ok_or_else(lambda s: f"empty seq")
+            Ok(Seq(1, 2, 3))
+            >>> Seq(()).ok_or_else(lambda s: f"empty seq")
+            Err('empty seq')
 
-        ```
+            ```
         """
     def err_or_else[**P, T](
         self,
@@ -303,14 +303,14 @@ class Checkable(Protocol):
             Result[Self, E]: Ok(self) if self is truthy, Err(f(...)) otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> Seq((1, 2, 3)).err_or_else(lambda s: "should be empty")
-        Err(Seq(1, 2, 3))
-        >>> Seq(()).err_or_else(lambda s: "should be empty")
-        Ok('should be empty')
+            ```python
+            >>> from pyochain import Seq
+            >>> Seq((1, 2, 3)).err_or_else(lambda s: "should be empty")
+            Err(Seq(1, 2, 3))
+            >>> Seq(()).err_or_else(lambda s: "should be empty")
+            Ok('should be empty')
 
-        ```
+            ```
         """
 
 # Option types
@@ -354,19 +354,19 @@ class OptionType[T](Pipeable):
     This allow to query the presence of a value and take action, always accounting for the None case.
 
     Example:
-    ```python
-    >>> from pyochain import Option, Some, Null
-    >>> def divide(a: int, b: int) -> Option[int]:
-    ...     if b == 0:
-    ...         return Null()
-    ...     return Some(a // b)
-    >>>
-    >>> divide(10, 2)
-    Some(5)
-    >>> divide(10, 0)
-    NONE
+        ```python
+        >>> from pyochain import Option, Some, Null
+        >>> def divide(a: int, b: int) -> Option[int]:
+        ...     if b == 0:
+        ...         return Null()
+        ...     return Some(a // b)
+        >>>
+        >>> divide(10, 2)
+        Some(5)
+        >>> divide(10, 0)
+        NONE
 
-    ```
+        ```
     """
 
     def __bool__(self) -> None:
@@ -376,15 +376,15 @@ class OptionType[T](Pipeable):
             TypeError: Always, to prevent implicit `Some|None` value checking.
 
         Example:
-        ```python
-        >>> from pyochain import Some
-        >>> x = Some(42)
-        >>> bool(x)
-        Traceback (most recent call last):
-        ...
-        TypeError: Option instances cannot be used in boolean contexts for implicit `Some|None` value checking. Use is_some() or is_none() instead.
+            ```python
+            >>> from pyochain import Some
+            >>> x = Some(42)
+            >>> bool(x)
+            Traceback (most recent call last):
+            ...
+            TypeError: Option instances cannot be used in boolean contexts for implicit `Some|None` value checking. Use is_some() or is_none() instead.
 
-        ```
+            ```
         """
 
     def flatten[U](self: OptionType[Option[U]]) -> Option[U]:
@@ -398,16 +398,16 @@ class OptionType[T](Pipeable):
             Option[U]: The flattened option.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> Some(Some(42)).flatten()
-        Some(42)
-        >>> Some(NONE).flatten()
-        NONE
-        >>> NONE.flatten()
-        NONE
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> Some(Some(42)).flatten()
+            Some(42)
+            >>> Some(NONE).flatten()
+            NONE
+            >>> NONE.flatten()
+            NONE
 
-        ```
+            ```
         """
 
     @overload
@@ -475,14 +475,14 @@ class OptionType[T](Pipeable):
             Option[R]: A new `Option` with the mapped value if `Some`, otherwise `None`.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> Some((2, 3)).map_star(lambda x, y: x + y)
-        Some(5)
-        >>> NONE.map_star(lambda x, y: x + y)
-        NONE
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> Some((2, 3)).map_star(lambda x, y: x + y)
+            Some(5)
+            >>> NONE.map_star(lambda x, y: x + y)
+            NONE
 
-        ```
+            ```
         """
 
     @overload
@@ -547,14 +547,14 @@ class OptionType[T](Pipeable):
             Option[R]: The result of the function if `Some`, otherwise `None`.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> Some((2, 3)).and_then_star(lambda x, y: Some(x + y))
-        Some(5)
-        >>> NONE.and_then_star(lambda x, y: Some(x + y))
-        NONE
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> Some((2, 3)).and_then_star(lambda x, y: Some(x + y))
+            Some(5)
+            >>> NONE.and_then_star(lambda x, y: Some(x + y))
+            NONE
 
-        ```
+            ```
         """
 
     def ne(self, other: Option[T]) -> bool:
@@ -567,21 +567,20 @@ class OptionType[T](Pipeable):
             bool: `True` if both instances are not equal, `False` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> Some(42).ne(Some(21))
-        True
-        >>> Some(42).ne(Some(42))
-        False
-        >>> Some(42).ne(NONE)
-        True
-        >>> NONE.ne(NONE)
-        False
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> Some(42).ne(Some(21))
+            True
+            >>> Some(42).ne(Some(42))
+            False
+            >>> Some(42).ne(NONE)
+            True
+            >>> NONE.ne(NONE)
+            False
 
-        ```
+            ```
         """
 
-    # Abstract methods ----------------------------------------------------------------
     @override
     def __eq__(self, other: object) -> bool:
         """Checks if this `Option` and *other* are equal.
@@ -598,22 +597,22 @@ class OptionType[T](Pipeable):
             - `Option.eq` for a type-safe, performant version that only accepts `Option[T]` instances.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> Some(42) == Some(42)
-        True
-        >>> Some(42) == Some(21)
-        False
-        >>> Some(42) == NONE
-        False
-        >>> NONE == NONE
-        True
-        >>> NONE == None
-        True
-        >>> Some(42) == 42
-        False
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> Some(42) == Some(42)
+            True
+            >>> Some(42) == Some(21)
+            False
+            >>> Some(42) == NONE
+            False
+            >>> NONE == NONE
+            True
+            >>> NONE == None
+            True
+            >>> Some(42) == 42
+            False
 
-        ```
+            ```
         """
 
     def eq(self, other: Option[T]) -> bool:
@@ -631,18 +630,18 @@ class OptionType[T](Pipeable):
             bool: `True` if both instances are equal, `False` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> Some(42).eq(Some(42))
-        True
-        >>> Some(42).eq(Some(21))
-        False
-        >>> Some(42).eq(NONE)
-        False
-        >>> NONE.eq(NONE)
-        True
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> Some(42).eq(Some(42))
+            True
+            >>> Some(42).eq(Some(21))
+            False
+            >>> Some(42).eq(NONE)
+            False
+            >>> NONE.eq(NONE)
+            True
 
-        ```
+            ```
         """
 
     def is_some(self) -> bool:
@@ -652,16 +651,16 @@ class OptionType[T](Pipeable):
             bool: `True` if the option is a `Some` variant, `False` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> x: Option[int] = Some(2)
-        >>> x.is_some()
-        True
-        >>> y: Option[int] = NONE
-        >>> y.is_some()
-        False
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> x: Option[int] = Some(2)
+            >>> x.is_some()
+            True
+            >>> y: Option[int] = NONE
+            >>> y.is_some()
+            False
 
-        ```
+            ```
         """
 
     def is_some_and[**P](
@@ -681,23 +680,23 @@ class OptionType[T](Pipeable):
             bool: `True` if the option is `Some` and the predicate returns `True` for the contained value, `False` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> x = Some(2)
-        >>> x.is_some_and(lambda x: x > 1)
-        True
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> x = Some(2)
+            >>> x.is_some_and(lambda x: x > 1)
+            True
 
-        >>> x = Some(0)
-        >>> x.is_some_and(lambda x: x > 1)
-        False
-        >>> x = NONE
-        >>> x.is_some_and(lambda x: x > 1)
-        False
-        >>> x = Some("hello")
-        >>> x.is_some_and(lambda x: len(x) > 1)
-        True
+            >>> x = Some(0)
+            >>> x.is_some_and(lambda x: x > 1)
+            False
+            >>> x = NONE
+            >>> x.is_some_and(lambda x: x > 1)
+            False
+            >>> x = Some("hello")
+            >>> x.is_some_and(lambda x: len(x) > 1)
+            True
 
-        ```
+            ```
         """
 
     def is_none(self) -> bool:
@@ -707,16 +706,16 @@ class OptionType[T](Pipeable):
             bool: `True` if the option is a `_None` variant, `False` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> x: Option[int] = Some(2)
-        >>> x.is_none()
-        False
-        >>> y: Option[int] = NONE
-        >>> y.is_none()
-        True
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> x: Option[int] = Some(2)
+            >>> x.is_none()
+            False
+            >>> y: Option[int] = NONE
+            >>> y.is_none()
+            True
 
-        ```
+            ```
         """
 
     def is_none_or[**P](
@@ -733,18 +732,18 @@ class OptionType[T](Pipeable):
             bool: `True` if the option is `None` or the predicate returns `True` for the contained value, `False` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> Some(2).is_none_or(lambda x: x > 1)
-        True
-        >>> Some(0).is_none_or(lambda x: x > 1)
-        False
-        >>> NONE.is_none_or(lambda x: x > 1)
-        True
-        >>> Some("hello").is_none_or(lambda x: len(x) > 1)
-        True
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> Some(2).is_none_or(lambda x: x > 1)
+            True
+            >>> Some(0).is_none_or(lambda x: x > 1)
+            False
+            >>> NONE.is_none_or(lambda x: x > 1)
+            True
+            >>> Some("hello").is_none_or(lambda x: len(x) > 1)
+            True
 
-        ```
+            ```
         """
 
     def unwrap(self) -> T:
@@ -757,20 +756,20 @@ class OptionType[T](Pipeable):
             OptionUnwrapError: If the option is `None`.
 
         Example:
-        ```python
-        >>> from pyochain import Some
-        >>> Some("car").unwrap()
-        'car'
+            ```python
+            >>> from pyochain import Some
+            >>> Some("car").unwrap()
+            'car'
 
-        ```
-        ```python
-        >>> from pyochain import NONE
-        >>> NONE.unwrap()
-        Traceback (most recent call last):
-        ...
-        OptionUnwrapError: called `unwrap` on a `None`
+            ```
+            ```python
+            >>> from pyochain import NONE
+            >>> NONE.unwrap()
+            Traceback (most recent call last):
+            ...
+            OptionUnwrapError: called `unwrap` on a `None`
 
-        ```
+            ```
         """
 
     def expect(self, msg: str) -> T:
@@ -788,16 +787,16 @@ class OptionType[T](Pipeable):
             OptionUnwrapError: If the result is `None`.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> Some("value").expect("fruits are healthy")
-        'value'
-        >>> NONE.expect("fruits are healthy")
-        Traceback (most recent call last):
-        ...
-        OptionUnwrapError: fruits are healthy (called `expect` on a `None`)
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> Some("value").expect("fruits are healthy")
+            'value'
+            >>> NONE.expect("fruits are healthy")
+            Traceback (most recent call last):
+            ...
+            OptionUnwrapError: fruits are healthy (called `expect` on a `None`)
 
-        ```
+            ```
         """
 
     def unwrap_or(self, default: T) -> T:
@@ -810,14 +809,14 @@ class OptionType[T](Pipeable):
             T: The contained `Some` value or the provided default.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> Some("car").unwrap_or("bike")
-        'car'
-        >>> NONE.unwrap_or("bike")
-        'bike'
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> Some("car").unwrap_or("bike")
+            'car'
+            >>> NONE.unwrap_or("bike")
+            'bike'
 
-        ```
+            ```
         """
 
     def unwrap_or_else(self, f: Callable[[], T]) -> T:
@@ -830,15 +829,15 @@ class OptionType[T](Pipeable):
             T: The contained `Some` value or the result of the function.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> k = 10
-        >>> Some(4).unwrap_or_else(lambda: 2 * k)
-        4
-        >>> NONE.unwrap_or_else(lambda: 2 * k)
-        20
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> k = 10
+            >>> Some(4).unwrap_or_else(lambda: 2 * k)
+            4
+            >>> NONE.unwrap_or_else(lambda: 2 * k)
+            20
 
-        ```
+            ```
         """
 
     def map[**P, R](
@@ -858,14 +857,14 @@ class OptionType[T](Pipeable):
             Option[R]: A new `Option` with the mapped value if `Some`, otherwise `None`.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> Some("Hello, World!").map(len)
-        Some(13)
-        >>> NONE.map(len)
-        NONE
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> Some("Hello, World!").map(len)
+            Some(13)
+            >>> NONE.map(len)
+            NONE
 
-        ```
+            ```
         """
 
     def and_[U](self, optb: Option[U]) -> Option[U]:
@@ -879,18 +878,18 @@ class OptionType[T](Pipeable):
             Option[U]: `NONE` if the original option is `NONE`, otherwise `optb`.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> Some(2).and_(NONE)
-        NONE
-        >>> NONE.and_(Some("foo"))
-        NONE
-        >>> Some(2).and_(Some("foo"))
-        Some('foo')
-        >>> NONE.and_(NONE)
-        NONE
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> Some(2).and_(NONE)
+            NONE
+            >>> NONE.and_(Some("foo"))
+            NONE
+            >>> Some(2).and_(Some("foo"))
+            Some('foo')
+            >>> NONE.and_(NONE)
+            NONE
 
-        ```
+            ```
         """
 
     def or_(self, optb: Option[T]) -> Option[T]:
@@ -903,18 +902,18 @@ class OptionType[T](Pipeable):
             Option[T]: The original option if it is `Some`, otherwise `optb`.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> Some(2).or_(NONE)
-        Some(2)
-        >>> NONE.or_(Some(100))
-        Some(100)
-        >>> Some(2).or_(Some(100))
-        Some(2)
-        >>> NONE.or_(NONE)
-        NONE
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> Some(2).or_(NONE)
+            Some(2)
+            >>> NONE.or_(Some(100))
+            Some(100)
+            >>> Some(2).or_(Some(100))
+            Some(2)
+            >>> NONE.or_(NONE)
+            NONE
 
-        ```
+            ```
         """
 
     def and_then[**P, R](
@@ -934,22 +933,22 @@ class OptionType[T](Pipeable):
             Option[R]: The result of the function if `Some`, otherwise `None`.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> def sq(x: int) -> Option[int]:
-        ...     return Some(x * x)
-        >>> def nope(x: int) -> Option[int]:
-        ...     return NONE
-        >>> Some(2).and_then(sq).and_then(sq)
-        Some(16)
-        >>> Some(2).and_then(sq).and_then(nope)
-        NONE
-        >>> Some(2).and_then(nope).and_then(sq)
-        NONE
-        >>> NONE.and_then(sq).and_then(sq)
-        NONE
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> def sq(x: int) -> Option[int]:
+            ...     return Some(x * x)
+            >>> def nope(x: int) -> Option[int]:
+            ...     return NONE
+            >>> Some(2).and_then(sq).and_then(sq)
+            Some(16)
+            >>> Some(2).and_then(sq).and_then(nope)
+            NONE
+            >>> Some(2).and_then(nope).and_then(sq)
+            NONE
+            >>> NONE.and_then(sq).and_then(sq)
+            NONE
 
-        ```
+            ```
         """
 
     def or_else(self, f: Callable[[], Option[T]]) -> Option[T]:
@@ -962,20 +961,20 @@ class OptionType[T](Pipeable):
             Option[T]: The original `Option` if it is `Some`, otherwise the result of the function.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> def nobody() -> Option[str]:
-        ...     return NONE
-        >>> def vikings() -> Option[str]:
-        ...     return Some("vikings")
-        >>> Some("barbarians").or_else(vikings)
-        Some('barbarians')
-        >>> NONE.or_else(vikings)
-        Some('vikings')
-        >>> NONE.or_else(nobody)
-        NONE
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> def nobody() -> Option[str]:
+            ...     return NONE
+            >>> def vikings() -> Option[str]:
+            ...     return Some("vikings")
+            >>> Some("barbarians").or_else(vikings)
+            Some('barbarians')
+            >>> NONE.or_else(vikings)
+            Some('vikings')
+            >>> NONE.or_else(nobody)
+            NONE
 
-        ```
+            ```
         """
 
     def ok_or[E](self, err: E) -> Result[T, E]:
@@ -988,14 +987,14 @@ class OptionType[T](Pipeable):
             Result[T, E]: `Ok(v)` if `Some(v)`, otherwise `Err(err)`.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> Some(1).ok_or("fail")
-        Ok(1)
-        >>> NONE.ok_or("fail")
-        Err('fail')
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> Some(1).ok_or("fail")
+            Ok(1)
+            >>> NONE.ok_or("fail")
+            Err('fail')
 
-        ```
+            ```
         """
 
     def ok_or_else[E](self, err: Callable[[], E]) -> Result[T, E]:
@@ -1008,14 +1007,14 @@ class OptionType[T](Pipeable):
             Result[T, E]: Ok(v) if Some(v), otherwise Err(err()).
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> Some(1).ok_or_else(lambda: "fail")
-        Ok(1)
-        >>> NONE.ok_or_else(lambda: "fail")
-        Err('fail')
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> Some(1).ok_or_else(lambda: "fail")
+            Ok(1)
+            >>> NONE.ok_or_else(lambda: "fail")
+            Err('fail')
 
-        ```
+            ```
         """
 
     def map_or[**P, R](
@@ -1037,14 +1036,14 @@ class OptionType[T](Pipeable):
             R: The result of f(self.unwrap()) if Some, otherwise default.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> Some(2).map_or(0, lambda x: x * 10)
-        20
-        >>> NONE.map_or(0, lambda x: x * 10)
-        0
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> Some(2).map_or(0, lambda x: x * 10)
+            20
+            >>> NONE.map_or(0, lambda x: x * 10)
+            0
 
-        ```
+            ```
         """
 
     def map_or_else[**P, R](self, default: Callable[[], R], f: Callable[[T], R]) -> R:
@@ -1058,14 +1057,14 @@ class OptionType[T](Pipeable):
             R: The result of f(self.unwrap()) if Some, otherwise default().
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> Some(2).map_or_else(lambda: 0, lambda x: x * 10)
-        20
-        >>> NONE.map_or_else(lambda: 0, lambda x: x * 10)
-        0
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> Some(2).map_or_else(lambda: 0, lambda x: x * 10)
+            20
+            >>> NONE.map_or_else(lambda: 0, lambda x: x * 10)
+            0
 
-        ```
+            ```
         """
 
     def filter[**P, R](
@@ -1090,20 +1089,20 @@ class OptionType[T](Pipeable):
 
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>>
-        >>> def is_even(n: int) -> bool:
-        ...     return n % 2 == 0
-        >>>
-        >>> NONE.filter(is_even)
-        NONE
-        >>> Some(3).filter(is_even)
-        NONE
-        >>> Some(4).filter(is_even)
-        Some(4)
+            ```python
+            >>> from pyochain import Some, NONE
+            >>>
+            >>> def is_even(n: int) -> bool:
+            ...     return n % 2 == 0
+            >>>
+            >>> NONE.filter(is_even)
+            NONE
+            >>> Some(3).filter(is_even)
+            NONE
+            >>> Some(4).filter(is_even)
+            Some(4)
 
-        ```
+            ```
         """
 
     def iter(self) -> Iter[T]:
@@ -1118,14 +1117,14 @@ class OptionType[T](Pipeable):
             Iter[T]: An iterator over the optional value.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> Some(42).iter().next()
-        Some(42)
-        >>> NONE.iter().next()
-        NONE
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> Some(42).iter().next()
+            Some(42)
+            >>> NONE.iter().next()
+            NONE
 
-        ```
+            ```
         """
     @override
     def inspect[**P](
@@ -1144,19 +1143,19 @@ class OptionType[T](Pipeable):
             Option[T]: The original option, unchanged.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE, Vec
-        >>> seen = Vec[int](())
-        >>> Some(2).inspect(lambda x: seen.append(x))
-        Some(2)
-        >>> seen
-        Vec(2)
-        >>> NONE.inspect(lambda x: seen.append(x))
-        NONE
-        >>> seen
-        Vec(2)
+            ```python
+            >>> from pyochain import Some, NONE, Vec
+            >>> seen = Vec[int](())
+            >>> Some(2).inspect(lambda x: seen.append(x))
+            Some(2)
+            >>> seen
+            Vec(2)
+            >>> NONE.inspect(lambda x: seen.append(x))
+            NONE
+            >>> seen
+            Vec(2)
 
-        ```
+            ```
         """
 
     def unzip[U](self: OptionType[tuple[T, U]]) -> tuple[Option[T], Option[U]]:
@@ -1169,14 +1168,14 @@ class OptionType[T](Pipeable):
             tuple[Option[T], Option[U]]: A tuple containing two options.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> Some((1, "a")).unzip()
-        (Some(1), Some('a'))
-        >>> NONE.unzip()
-        (NONE, NONE)
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> Some((1, "a")).unzip()
+            (Some(1), Some('a'))
+            >>> NONE.unzip()
+            (NONE, NONE)
 
-        ```
+            ```
         """
 
     def zip[U](self, other: Option[U]) -> Option[tuple[T, U]]:
@@ -1189,16 +1188,16 @@ class OptionType[T](Pipeable):
             Option[tuple[T, U]]: Some((self, other)) if both are Some, otherwise NONE.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> Some(1).zip(Some("a"))
-        Some((1, 'a'))
-        >>> Some(1).zip(NONE)
-        NONE
-        >>> NONE.zip(Some("a"))
-        NONE
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> Some(1).zip(Some("a"))
+            Some((1, 'a'))
+            >>> Some(1).zip(NONE)
+            NONE
+            >>> NONE.zip(Some("a"))
+            NONE
 
-        ```
+            ```
         """
 
     def zip_with[U, R](self, other: Option[U], f: Callable[[T, U], R]) -> Option[R]:
@@ -1216,25 +1215,25 @@ class OptionType[T](Pipeable):
             Option[R]: The resulting option after applying the function.
 
         Example:
-        ```python
-        >>> from dataclasses import dataclass
-        >>> from pyochain import Some, NONE
-        >>>
-        >>> @dataclass
-        ... class Point:
-        ...     x: float
-        ...     y: float
-        >>>
-        >>> x = Some(17.5)
-        >>> y = Some(42.7)
-        >>> x.zip_with(y, Point)
-        Some(Point(x=17.5, y=42.7))
-        >>> x.zip_with(NONE, Point)
-        NONE
-        >>> NONE.zip_with(y, Point)
-        NONE
+            ```python
+            >>> from dataclasses import dataclass
+            >>> from pyochain import Some, NONE
+            >>>
+            >>> @dataclass
+            ... class Point:
+            ...     x: float
+            ...     y: float
+            >>>
+            >>> x = Some(17.5)
+            >>> y = Some(42.7)
+            >>> x.zip_with(y, Point)
+            Some(Point(x=17.5, y=42.7))
+            >>> x.zip_with(NONE, Point)
+            NONE
+            >>> NONE.zip_with(y, Point)
+            NONE
 
-        ```
+            ```
         """
 
     def reduce(self, other: Option[T], func: Callable[[T, T], T]) -> Option[T]:
@@ -1254,24 +1253,24 @@ class OptionType[T](Pipeable):
             Option[T]: The resulting option after reduction.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> s12 = Some(12)
-        >>> s17 = Some(17)
-        >>>
-        >>> def add(a: int, b: int) -> int:
-        ...     return a + b
-        >>>
-        >>> s12.reduce(s17, add)
-        Some(29)
-        >>> s12.reduce(NONE, add)
-        Some(12)
-        >>> NONE.reduce(s17, add)
-        Some(17)
-        >>> NONE.reduce(NONE, add)
-        NONE
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> s12 = Some(12)
+            >>> s17 = Some(17)
+            >>>
+            >>> def add(a: int, b: int) -> int:
+            ...     return a + b
+            >>>
+            >>> s12.reduce(s17, add)
+            Some(29)
+            >>> s12.reduce(NONE, add)
+            Some(12)
+            >>> NONE.reduce(s17, add)
+            Some(17)
+            >>> NONE.reduce(NONE, add)
+            NONE
 
-        ```
+            ```
         """
 
     def transpose[E](self: OptionType[Result[T, E]]) -> Result[Option[T], E]:
@@ -1287,16 +1286,16 @@ class OptionType[T](Pipeable):
             Result[Option[T], E]: The transposed result.
 
         Example:
-        ```python
-        >>> from pyochain import Some, Ok, Err, NONE
-        >>> Some(Ok(5)).transpose()
-        Ok(Some(5))
-        >>> NONE.transpose()
-        Ok(NONE)
-        >>> Some(Err("error")).transpose()
-        Err('error')
+            ```python
+            >>> from pyochain import Some, Ok, Err, NONE
+            >>> Some(Ok(5)).transpose()
+            Ok(Some(5))
+            >>> NONE.transpose()
+            Ok(NONE)
+            >>> Some(Err("error")).transpose()
+            Err('error')
 
-        ```
+            ```
         """
 
     def xor(self, optb: Option[T]) -> Option[T]:
@@ -1309,18 +1308,18 @@ class OptionType[T](Pipeable):
             Option[T]: `Some` value if exactly one option is `Some`, otherwise `NONE`.
 
         Example:
-        ```python
-        >>> from pyochain import Some, NONE
-        >>> Some(2).xor(NONE)
-        Some(2)
-        >>> NONE.xor(Some(2))
-        Some(2)
-        >>> Some(2).xor(Some(2))
-        NONE
-        >>> NONE.xor(NONE)
-        NONE
+            ```python
+            >>> from pyochain import Some, NONE
+            >>> Some(2).xor(NONE)
+            Some(2)
+            >>> NONE.xor(Some(2))
+            Some(2)
+            >>> Some(2).xor(Some(2))
+            NONE
+            >>> NONE.xor(NONE)
+            NONE
 
-        ```
+            ```
         """
     def unwrap_or_none(self) -> T | None:
         """Returns the contained `Some` value or `None`.
@@ -1335,14 +1334,14 @@ class OptionType[T](Pipeable):
             T | None: The contained `Some` value or `None`.
 
         Example:
-        ```python
-        >>> from pyochain import Option, Some, NONE
-        >>> NONE.unwrap_or_none() is None
-        True
-        >>> Some(42).unwrap_or_none()
-        42
+            ```python
+            >>> from pyochain import Option, Some, NONE
+            >>> NONE.unwrap_or_none() is None
+            True
+            >>> Some(42).unwrap_or_none()
+            42
 
-        ```
+            ```
         """
 
 @final
@@ -1355,12 +1354,12 @@ class Some[T](OptionType[T]):
         value (T): The contained value.
 
     Example:
-    ```python
-    >>> from pyochain import Some
-    >>> Some(42)
-    Some(42)
+        ```python
+        >>> from pyochain import Some
+        >>> Some(42)
+        Some(42)
 
-    ```
+        ```
     """
 
     value: T
@@ -1381,26 +1380,27 @@ class Null[T](OptionType[T]):
 
     For pattern matching, you must use `Null`, as `NONE` isn't special cased by type checkers the same way python `None` is, and thus can't be narrowed to `Null`.
 
-    Example:
-    ```python
-    >>> from pyochain import Null, NONE, Some
-    >>> Null() is NONE
-    True
-    >>> def is_none(x: Option[int]) -> bool:
-    ...     match x:
-    ...         case Null():
-    ...             return True
-    ...         case Some(_):
-    ...             return False
-    >>> is_none(NONE)
-    True
-    >>> is_none(Some(42))
-    False
-    >>> is_none(Null())
-    True
-
-    ```
     For more documentation, see the `Option[T]` class.
+
+    Example:
+        ```python
+        >>> from pyochain import Null, NONE, Some
+        >>> Null() is NONE
+        True
+        >>> def is_none(x: Option[int]) -> bool:
+        ...     match x:
+        ...         case Null():
+        ...             return True
+        ...         case Some(_):
+        ...             return False
+        >>> is_none(NONE)
+        True
+        >>> is_none(Some(42))
+        False
+        >>> is_none(Null())
+        True
+
+        ```
     """
 
 NONE: Final[Null[Any]] = ...  # pyright: ignore[reportAny, reportExplicitAny]
@@ -1428,14 +1428,14 @@ def option[T](value: T | None) -> Option[T]:
         Option[T]: `Some(value)` if the value is not `None`, otherwise `NONE`.
 
     Example:
-    ```python
-    >>> from pyochain import option
-    >>> option(42)
-    Some(42)
-    >>> option(None)
-    NONE
+        ```python
+        >>> from pyochain import option
+        >>> option(42)
+        Some(42)
+        >>> option(None)
+        NONE
 
-    ```
+        ```
     """
 
 def then_if_true[T](value: T, *, predicate: Callable[[T], bool]) -> Option[T]:
@@ -1449,18 +1449,18 @@ def then_if_true[T](value: T, *, predicate: Callable[[T], bool]) -> Option[T]:
         Option[T]: `Some(value)` if the condition is `True`, otherwise `NONE`.
 
     Example:
-    ```python
-    >>> from pyochain import then_if_true
-    >>> then_if_true(42, predicate=lambda x: x == 42)
-    Some(42)
-    >>> then_if_true(21, predicate=lambda x: x == 42)
-    NONE
-    >>> from pathlib import Path
-    >>> readme_path = then_if_true(Path("README.md"), predicate=Path.exists).map(str)
-    >>> readme_path
-    Some('README.md')
+        ```python
+        >>> from pyochain import then_if_true
+        >>> then_if_true(42, predicate=lambda x: x == 42)
+        Some(42)
+        >>> then_if_true(21, predicate=lambda x: x == 42)
+        NONE
+        >>> from pathlib import Path
+        >>> readme_path = then_if_true(Path("README.md"), predicate=Path.exists).map(str)
+        >>> readme_path
+        Some('README.md')
 
-    ```
+        ```
     """
 
 def then_if_some[T](value: T) -> Option[T]:
@@ -1473,20 +1473,20 @@ def then_if_some[T](value: T) -> Option[T]:
         Option[T]: `Some(value)` if the value is truthy, otherwise `NONE`.
 
     Example:
-    ```python
-    >>> from pyochain import then_if_some
-    >>> then_if_some(42)
-    Some(42)
-    >>> then_if_some(0)
-    NONE
-    >>> then_if_some("hello")
-    Some('hello')
-    >>> then_if_some("")
-    NONE
-    >>> then_if_some(())  # Empty sequence is falsy
-    NONE
+        ```python
+        >>> from pyochain import then_if_some
+        >>> then_if_some(42)
+        Some(42)
+        >>> then_if_some(0)
+        NONE
+        >>> then_if_some("hello")
+        Some('hello')
+        >>> then_if_some("")
+        NONE
+        >>> then_if_some(())  # Empty sequence is falsy
+        NONE
 
-    ```
+        ```
     """
 
 class ResultUnwrapError(RuntimeError): ...
@@ -1525,28 +1525,28 @@ class ResultType[T, E](Pipeable, Protocol):
         and your type checker will warn you in any case because a `type Result = ...` is not supposed to be instanciable.
 
     Example:
-    ```python
-    >>> from pyochain import Err, Ok, Result
-    >>>
-    >>> def is_positive(x: int) -> Result[str, ValueError]:
-    ...     if x > 0:
-    ...         return Ok(f"Value is {x}")
-    ...     msg = f"{x} is not positive"
-    ...     return Err(ValueError(msg))
-    >>>
-    >>> def handle_variant(x: Result[str, ValueError]) -> str:
-    ...     match x:
-    ...         case Ok(value):
-    ...             return f"Success: {value}"
-    ...         case Err(error):
-    ...             return f"Failure: {error}"
-    >>>
-    >>> is_positive(5).map(lambda s: s.upper()).into(handle_variant)
-    'Success: VALUE IS 5'
-    >>> is_positive(-3).map(lambda s: s.upper()).into(handle_variant)
-    'Failure: -3 is not positive'
+        ```python
+        >>> from pyochain import Err, Ok, Result
+        >>>
+        >>> def is_positive(x: int) -> Result[str, ValueError]:
+        ...     if x > 0:
+        ...         return Ok(f"Value is {x}")
+        ...     msg = f"{x} is not positive"
+        ...     return Err(ValueError(msg))
+        >>>
+        >>> def handle_variant(x: Result[str, ValueError]) -> str:
+        ...     match x:
+        ...         case Ok(value):
+        ...             return f"Success: {value}"
+        ...         case Err(error):
+        ...             return f"Failure: {error}"
+        >>>
+        >>> is_positive(5).map(lambda s: s.upper()).into(handle_variant)
+        'Success: VALUE IS 5'
+        >>> is_positive(-3).map(lambda s: s.upper()).into(handle_variant)
+        'Failure: -3 is not positive'
 
-    ```
+        ```
     """
 
     def swap(self) -> Result[E, T]:
