@@ -27,12 +27,13 @@ pyochain is a **mixed Python/Rust project**:
 ### Python structure ([src/pyochain/](src/pyochain))
 
 - [src/pyochain/**init**.py](src/pyochain/__init__.py) — public API entrypoint and re-exports.
-- [src/pyochain/_iter.py](src/pyochain/_iter.py) — `Iter`, `Vec`, `Peekable`, and `Unzipped` implementations.
+- [src/pyochain/_iter.py](src/pyochain/_iter.py) — `Iter` implementation.
 - [src/pyochain/_seq.py](src/pyochain/_seq.py) — `Seq` implementation.
 - [src/pyochain/_dict.py](src/pyochain/_dict.py) — `Dict` implementation and mapping-specific methods.
 - [src/pyochain/_range.py](src/pyochain/_range.py) — `Range` implementation.
-- [src/pyochain/_set.py](src/pyochain/_set.py) — `Set` and `SetMut` implementations.
-- [src/pyochain/abc/](src/pyochain/abc) — abstract collection and iterator ABCs shared across the Python layer.
+- [src/pyochain/_set.py](src/pyochain/_set.py) — `Set`, `SetMut`, `PyoKeysView`, `PyoValuesView`, and `PyoItemsView` implementations.
+- [src/pyochain/_vec.py](src/pyochain/_vec.py) — `Vec` implementation.
+- [src/pyochain/abc/](src/pyochain/abc) — abstract collections and iterator ABCs shared across the Python layer.
 - [src/pyochain/_utils.py](src/pyochain/_utils.py) — internal utilities used across the Python package.
 - [src/pyochain/rs.pyi](src/pyochain/rs.pyi) — stubs for the Rust-compiled public bindings.
 - [src/pyochain/_tools.pyi](src/pyochain/_tools.pyi) — stubs for the internal Rust helper module exposed as `pyochain._tools`.
