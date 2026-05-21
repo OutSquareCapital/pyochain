@@ -12,7 +12,7 @@ from collections.abc import (
     Sequence,
     ValuesView,
 )
-from typing import TYPE_CHECKING, Any, Literal, Never, Self, TypeIs, overload, override
+from typing import TYPE_CHECKING, Any, Literal, Self, TypeIs, overload, override
 
 from . import _tools as tls  # pyright: ignore[reportMissingModuleSource]
 from ._seq import Seq
@@ -155,53 +155,60 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # noqa: PLW1641
         """
         self._inner.insert(index, value)
 
-    @overload
     def sort[U: SupportsRichComparison[Any]](
-        self: Vec[U], *, key: None = None, reverse: bool = False
-    ) -> Vec[U]: ...
-    @overload
-    def sort(
-        self,
-        *,
-        key: Callable[[T], SupportsRichComparison[Any]],  # pyright: ignore[reportExplicitAny]
-        reverse: bool = False,
-    ) -> Vec[T]: ...
-    @overload
-    def sort(
-        self,
-        *,
-        key: None = None,
-        reverse: bool = False,
-    ) -> Never: ...
-    def sort(
-        self,
-        *,
-        key: Callable[[T], SupportsRichComparison[Any]] | None = None,  # pyright: ignore[reportExplicitAny]
-        reverse: bool = False,
-    ) -> Vec[Any]:  # pyright: ignore[reportExplicitAny]
+        self: Vec[U], *, reverse: bool = False
+    ) -> Vec[U]:
         """Sort the elements of the `Vec` in place.
 
         Warning:
             This method modifies the `Vec` in place and returns the same instance for chaining.
 
         Args:
-            key (Callable[[T], SupportsRichComparison[Any]] | None): Optional function to extract a comparison key from each element.
-            reverse (bool): If True, sort in descending order.
+            reverse (bool): If `True`, sort in descending order.
 
         Returns:
-            Vec[Any]: The sorted `Vec` instance (self).
+            Vec[U]: The sorted `Vec` instance (self).
 
         Example:
             ```python
             >>> from pyochain import Vec, Iter
             >>> Vec.from_ref([3, 1, 2]).sort()
             Vec(1, 2, 3)
-            >>> Iter((3, 1, 2)).map(str).collect(Vec).sort(key=int)
+
+            ```
+        """
+        self._inner.sort(reverse=reverse)
+        return self
+
+    def sort_by(
+        self,
+        key: Callable[[T], SupportsRichComparison[Any]],  # pyright: ignore[reportExplicitAny]
+        *,
+        reverse: bool = False,
+    ) -> Self:
+        """Sort the elements of the `Vec`  in place with a key function.
+
+        The `key` function is applied to each element before sorting, and the results are used for comparison.
+
+        Warning:
+            This method modifies the `Vec` in place and returns the same instance for chaining.
+
+        Args:
+            key (Callable[[T], SupportsRichComparison[Any]]): function to extract a comparison key from each element.
+            reverse (bool): If True, sort in descending order.
+
+        Returns:
+            Self: The sorted `Vec` instance (self).
+
+        Example:
+            ```python
+            >>> from pyochain import Vec, Iter
+            >>> Vec.from_ref(["3", "1", "2"]).sort_by(int)
             Vec('1', '2', '3')
 
             ```
         """
-        self._inner.sort(key=key, reverse=reverse)  # pyright: ignore[reportArgumentType]
+        self._inner.sort(key=key, reverse=reverse)
         return self
 
     @override
@@ -218,7 +225,7 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # noqa: PLW1641
             Vec[T]: The new `Vec` after concatenation.
 
         See Also:
-            `Vec.extend()` which modifies **self** in place.
+            `Vec::concat_mut` which modifies **self** in place.
 
         Example:
             ```python
@@ -259,7 +266,8 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):  # noqa: PLW1641
             Self: The modified `Vec` after concatenation (self).
 
         See Also:
-            `Vec.concat()` which returns a new `Vec` without modifying **self**.
+            `Vec::concat` which returns a new `Vec` (copy).
+            `Vec::extend` who can take any `Iterable`.
 
         Example:
             ```python

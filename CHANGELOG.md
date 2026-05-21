@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### 💥 Breaking changes
+
+- **API change**: `Vec::sort` is split into `Vec::sort` and `Vec::sort_by`. If you were using `Vec::sort(key=...)`, you should now use `Vec::sort_by(key=...)` instead. This aligns it with `PyoIterator::{sort, sort_by}` change from last release.
+
 ### ✨ Enhancements
 
 - **Feat**: Added a clearer repr for `Range` that shows the start, stop and step values.
