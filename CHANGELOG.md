@@ -14,7 +14,7 @@
 
 ### 🛠️ Other improvements
 
-- `scripts/check_docstrings` now flag incorrect indentation in example blocks
+- New pytest plugin improving docstring/markdown testing
 - Separated `Ruff` config in a dedicated toml file
 
 ### 📖 Documentation

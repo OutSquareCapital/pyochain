@@ -142,7 +142,7 @@ Before committing, ensure all checks pass.
 ### type checking/linting/formatting
 
 ```bash
-uv run ruff check --fix .;
+uv run ruff check . --fix --unsafe-fixes;
 uv run ruff format .;
 uv run basedpyright src/pyochain;
 ```

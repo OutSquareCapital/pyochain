@@ -46,7 +46,6 @@ class ErrorKind(StrEnum):
     MISSING = "Missing docstring"
     NO_DOCTEST = "Missing doctest: No ```python block found in docstring"
     UNCLOSED = "Unclosed ``` block"
-    INDENT = "Example content must be indented under `Example:`"
     CLOSED_NOT_OPENED = "Closing ``` block without opening"
 
 
@@ -248,7 +247,6 @@ def _is_documentable(node: ast.AST) -> TypeIs[DocumentableNode]:
 def _check_errs(
     lines: Vec[str], func_name: str, start_line: int, *, has_no_doctest_flag: bool
 ) -> Result[tuple[()], Vec[ErrorDetail]]:
-    errors = _check_example_indentation(lines, start_line)
     should_skip = (
         func_name.startswith("_")
         or func_name.istitle()
@@ -259,41 +257,9 @@ def _check_errs(
             )
         )
     )
-    if should_skip and errors.is_empty():
+    if should_skip:
         return Ok(())
-    if not should_skip:
-        errors.append(ErrorDetail(start_line, ErrorKind.NO_DOCTEST))
-    return Err(errors)
-
-
-def _check_example_indentation(lines: Vec[str], start_line: int) -> Vec[ErrorDetail]:
-    def _get_error(example_idx: int) -> Option[ErrorDetail]:
-        example_line = lines[example_idx]
-        example_indent = len(example_line) - len(example_line.lstrip())
-        next_content = (
-            lines
-            .iter()
-            .enumerate()
-            .skip(example_idx + 1)
-            .find(lambda line: bool(line[1].strip()))
-        )
-
-        match next_content:
-            case Some((next_idx, next_line)) if (
-                len(next_line) - len(next_line.lstrip())
-            ) <= example_indent:
-                return Some(ErrorDetail(start_line + next_idx, ErrorKind.INDENT))
-            case _:
-                return NONE
-
-    return (
-        lines
-        .iter()
-        .enumerate()
-        .filter_star(lambda _, line: line.strip() == "Example:")
-        .filter_map_star(lambda idx, _: _get_error(idx))
-        .collect(Vec)
-    )
+    return Err(Vec([ErrorDetail(start_line, ErrorKind.NO_DOCTEST)]))
 
 
 def main() -> None:

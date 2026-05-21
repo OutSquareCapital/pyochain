@@ -2420,15 +2420,6 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
 
         If the returned `Iterator` is not exhausted, e.g. because it is dropped without iterating or the iteration short-circuits, then the remaining elements will be retained.
 
-        Using this method is equivalent to the following code:
-        ```python
-        data = Vec((...))
-        for i in range(data.length()):
-            if predicate(data[i]):
-                val = data.pop(i)
-                # your code here
-        ```
-
         Args:
             predicate (Callable[[T], bool]): A function that takes an element and returns `True` if it should be extracted, or `False` if it should be retained.
             start (int): The starting index of the range to consider for extraction. Defaults to `0`.
