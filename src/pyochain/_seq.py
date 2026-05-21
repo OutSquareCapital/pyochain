@@ -95,6 +95,20 @@ class Seq[T](PyoSequence[T]):
     def __getitem__(self, index: int | slice[Any, Any, Any]) -> T | Sequence[T]:  # pyright: ignore[reportExplicitAny]
         return self._inner.__getitem__(index)
 
+    @override
+    def __eq__(self, other: object) -> bool:
+        match other:
+            case Seq():
+                return self._inner == other._inner  # pyright: ignore[reportUnknownMemberType]
+            case tuple():
+                return self._inner == other
+            case _:
+                return False
+
+    @override
+    def __hash__(self) -> int:
+        return hash(self._inner)
+
     def concat(self, other: tuple[T, ...] | Self) -> Self:
         """Concatenate another `Seq` or `tuple` to **self** and return a new `Seq`.
 

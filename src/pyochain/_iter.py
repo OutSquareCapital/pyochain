@@ -41,7 +41,7 @@ type ZippedLongest[T] = (
 # TODO: structures that use python builtins should inerhit all their dunder, e.g __eq__.
 
 
-class Vec[T](Seq[T], PyoMutableSequence[T]):
+class Vec[T](Seq[T], PyoMutableSequence[T]):  # noqa: PLW1641
     """A `MutableSequence` wrapper with functional API.
 
     Implement `MutableSequence` Protocol from `collections.abc`.
@@ -123,6 +123,16 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
         del self._inner[index]
 
     @override
+    def __eq__(self, other: object) -> bool:
+        match other:
+            case Vec():
+                return self._inner == other._inner  # pyright: ignore[reportUnknownMemberType]
+            case list():
+                return self._inner == other
+            case _:
+                return False
+
+    @override
     def insert(self, index: int, value: T) -> None:
         """Inserts an element at position index within the vector, shifting all elements after it to the right.
 
@@ -131,17 +141,17 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
             value (T): The element to insert.
 
         Example:
-        ```python
-        >>> from pyochain import Vec
-        >>> vec = Vec.from_ref(["a", "b", "c"])
-        >>> vec.insert(1, "d")
-        >>> vec
-        Vec('a', 'd', 'b', 'c')
-        >>> vec.insert(4, "e")
-        >>> vec
-        Vec('a', 'd', 'b', 'c', 'e')
+            ```python
+            >>> from pyochain import Vec
+            >>> vec = Vec.from_ref(["a", "b", "c"])
+            >>> vec.insert(1, "d")
+            >>> vec
+            Vec('a', 'd', 'b', 'c')
+            >>> vec.insert(4, "e")
+            >>> vec
+            Vec('a', 'd', 'b', 'c', 'e')
 
-        ```
+            ```
         """
         self._inner.insert(index, value)
 
@@ -211,21 +221,21 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
             `Vec.extend()` which modifies **self** in place.
 
         Example:
-        ```python
-        >>> from pyochain import Vec
-        >>> v1 = Vec.from_ref([1, 2, 3])
-        >>> v2 = [4, 5, 6]  # Can also concatenate a standard list
-        >>> v3 = v1.concat(v2)
-        >>> v3
-        Vec(1, 2, 3, 4, 5, 6)
-        >>> v1.clear()  # Clean up the original vec
-        >>> v1
-        Vec()
-        >>> # New vec remains unaffected
-        >>> v3
-        Vec(1, 2, 3, 4, 5, 6)
+            ```python
+            >>> from pyochain import Vec
+            >>> v1 = Vec.from_ref([1, 2, 3])
+            >>> v2 = [4, 5, 6]  # Can also concatenate a standard list
+            >>> v3 = v1.concat(v2)
+            >>> v3
+            Vec(1, 2, 3, 4, 5, 6)
+            >>> v1.clear()  # Clean up the original vec
+            >>> v1
+            Vec()
+            >>> # New vec remains unaffected
+            >>> v3
+            Vec(1, 2, 3, 4, 5, 6)
 
-        ```
+            ```
         """
         match other:
             case Vec():

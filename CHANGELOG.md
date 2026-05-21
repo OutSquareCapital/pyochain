@@ -5,6 +5,8 @@
 ### ✨ Enhancements
 
 - **Feat**: Added a clearer repr for `Range` that shows the start, stop and step values.
+- **Feat**: `Vec` have an `__eq__` method. expect same results than `list::__eq__`, except that it also works with other `Vec` instances.
+- **Feat**: `Seq` also now have an `__eq__` method. Same story as `Vec`. It also has an `__hash__` method, which is the same as `tuple::__hash__`, and is compatible with it, meaning that a `Seq` and a `tuple` with the same content will have the same hash.
 
 ### 🔄 Refactors
 
