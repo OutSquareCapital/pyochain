@@ -53,6 +53,9 @@
                 { "OptionUnwrapError" = "reference/optionunwraperror.md" },
                 { "Some" = "reference/some.md" },
             ] },
+            { "Other Types" = [
+                { "BaseConcreteSet" = "reference/baseconcreteset.md" },
+            ] },
             { "Overview" = "api-reference.md" },
         ] },
         { "Core Types Overview" = "overview.md" },

@@ -1,3 +1,3 @@
 # PyoValuesView
 
-::: pyochain.abc._iterable.PyoValuesView
+::: pyochain._set.PyoValuesView

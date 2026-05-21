@@ -23,3 +23,10 @@ def test_retain(benchmark: BenchFixture, size: int) -> None:
 
 def _retain(data: Vec[int]) -> None:
     return data.retain(lambda i: i % 2 == 0)
+
+
+def test_from_ref(benchmark: BenchFixture) -> None:
+    data = [1, 2, 3]
+    assert benchmark(Vec.from_ref, data) is not None
+    canary = Vec.from_ref(data)
+    assert canary.inner == [1, 2, 3]
