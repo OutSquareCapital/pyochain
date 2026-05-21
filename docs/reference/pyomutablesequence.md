@@ -1,3 +1,3 @@
 # PyoMutableSequence
 
-::: pyochain.traits._iterable.PyoMutableSequence
+::: pyochain.abc._iterable.PyoMutableSequence

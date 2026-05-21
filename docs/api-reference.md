@@ -14,8 +14,6 @@ This page is the entry point to the **complete** public API documentation.
 ## Iterators
 
 - [`Iter[T]`](reference/iter.md) — Lazy processing of iterators
-- [`Peekable[T]`](reference/peekable.md) — Peeking iterator
-- [`Unzipped[T]`](reference/unzipped.md) — Unzipped iterator results
 
 ## Error handling
 

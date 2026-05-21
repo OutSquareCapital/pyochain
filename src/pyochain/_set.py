@@ -9,7 +9,7 @@ from collections.abc import Set as AbstractSet
 from typing import Self, override
 
 from ._utils import get_repr
-from .traits import PyoSet
+from .abc import PyoSet
 
 
 class Set[T](PyoSet[T]):

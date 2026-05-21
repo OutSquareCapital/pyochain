@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Concatenate, Self
 
 import pytest
 
-from pyochain.traits import Pipeable
+from pyochain.abc import Pipeable
 
 if TYPE_CHECKING:
     from ._utils import BenchFixture

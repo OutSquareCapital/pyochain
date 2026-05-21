@@ -32,7 +32,7 @@ pyochain is a **mixed Python/Rust project**:
 - [src/pyochain/_dict.py](src/pyochain/_dict.py) — `Dict` implementation and mapping-specific methods.
 - [src/pyochain/_range.py](src/pyochain/_range.py) — `Range` implementation.
 - [src/pyochain/_set.py](src/pyochain/_set.py) — `Set` and `SetMut` implementations.
-- [src/pyochain/traits/](src/pyochain/traits) — abstract collection and iterator ABCs shared across the Python layer.
+- [src/pyochain/abc/](src/pyochain/abc) — abstract collection and iterator ABCs shared across the Python layer.
 - [src/pyochain/_utils.py](src/pyochain/_utils.py) — internal utilities used across the Python package.
 - [src/pyochain/rs.pyi](src/pyochain/rs.pyi) — stubs for the Rust-compiled public bindings.
 - [src/pyochain/_tools.pyi](src/pyochain/_tools.pyi) — stubs for the internal Rust helper module exposed as `pyochain._tools`.

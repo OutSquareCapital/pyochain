@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterator, Sequence
 from typing import Any, overload, override
 
-from .traits import PyoSequence
+from .abc import PyoSequence
 
 
 class Range(PyoSequence[int]):

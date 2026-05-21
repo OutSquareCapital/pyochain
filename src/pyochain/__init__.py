@@ -1,6 +1,6 @@
 """pyochain - A functional programming library for Python."""
 
-from . import traits
+from . import abc
 from ._dict import Dict
 from ._iter import Iter, Vec
 from ._range import Range
@@ -38,8 +38,8 @@ __all__ = [
     "SetMut",
     "Some",
     "Vec",
+    "abc",
     "option",
     "then_if_some",
     "then_if_true",
-    "traits",
 ]

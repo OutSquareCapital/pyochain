@@ -123,7 +123,7 @@ class Checkable(Protocol):
         ```
         This can also be extended to any type, not just collections.
         ```python
-        >>> from pyochain.traits import Checkable
+        >>> from pyochain.abc import Checkable
         >>> class MyString(str, Checkable):
         ...     pass
         >>> MyString("hello").then(lambda s: s.upper())

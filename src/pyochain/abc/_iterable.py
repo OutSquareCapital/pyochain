@@ -70,24 +70,39 @@ class DrainIterator[T](Iterator[T]):
 class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
     """Base ABC for all pyochain `Iterables`.
 
-    `PyoIterable[T]` is the common API surface shared by:
+    It's the common API surface shared by:
 
     - eager `Collections`: `Seq`, `Vec`, `Set`, `SetMut`, `Dict`
     - lazy `Iterator`: `Iter`
 
-    This class inherit from `collections.abc.Iterable[T]`,
+    It extends the standard `Iterable[T]` protocol, as well as `Pipeable` and `Checkable`.
 
-    meaning any concrete subclass is an `Iterable[T]` as soon as it implements the required dunder `__iter__()`.
+    All concrete subclasses must implement `__iter__()`.
 
-    On top of the standard `Iterable` protocol,
+    Since it's very straightforward to implement, it can very easily be integrated into business logic classes to provide them with a rich set of methods for free.
 
-    it provides additional pyochain methods for fluent chaining and convenience (`Pipeable`, `Checkable`, `length()`, comparison helpers, aggregations, etc.).
+    Example:
+    ```python
+    >>> from pyochain.abc import PyoIterable
+    >>> from dataclasses import dataclass
+    >>> @dataclass(slots=True)
+    ... class ClientRegistry(PyoIterable[str]):
+    ...     clients: list[str]
+    ...
+    ...     def __iter__(self):
+    ...         return iter(self.clients)
+    >>>
+    >>> registry = ClientRegistry(["Alice", "Bob", "Charlie"])
+    >>> registry.all(lambda name: name.startswith("A"))
+    False
+    >>> registry.join(", ")
+    'Alice, Bob, Charlie'
+    >>> registry.iter().map(str.lower).join(", ")
+    'alice, bob, charlie'
+    >>> registry.ok_or("Registry is empty").map(lambda s: s.join(", "))
+    Ok('Alice, Bob, Charlie')
 
-    Args:
-        data (Iterable[T]): The data to initialize the concrete iterable with.
-
-    Raises:
-        TypeError: Always raised when instantiating `PyoIterable` directly.
+    ```
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]

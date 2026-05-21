@@ -17,8 +17,8 @@ from typing import TYPE_CHECKING, Any, Literal, Never, Self, TypeIs, overload, o
 from . import _tools as tls  # pyright: ignore[reportMissingModuleSource]
 from ._seq import Seq
 from ._types import SupportsRichComparison
+from .abc import PyoIterator, PyoMutableSequence
 from .rs import Option, option
-from .traits import PyoIterator, PyoMutableSequence
 
 if TYPE_CHECKING:
     from ._dict import Dict
@@ -654,7 +654,7 @@ class Iter[T](PyoIterator[T]):
         You can collect the chunks into a collection of collections, for example:
         ```python
         >>> from pyochain import Seq
-        >>> from pyochain.traits import PyoIterable
+        >>> from pyochain.abc import PyoIterable
         >>> def collect_all_chunks(data: PyoIterable[int]) -> Seq[Seq[int]]:
         ...     return (
         ...         data.iter().array_chunks(3).map(lambda c: c.collect()).collect()

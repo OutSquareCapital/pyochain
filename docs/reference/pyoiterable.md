@@ -1,3 +1,3 @@
 # PyoIterable
 
-::: pyochain.traits._iterable.PyoIterable
+::: pyochain.abc._iterable.PyoIterable

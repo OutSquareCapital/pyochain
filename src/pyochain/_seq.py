@@ -8,7 +8,7 @@ from collections.abc import (
 from typing import Any, Self, overload, override
 
 from ._utils import get_repr
-from .traits import (
+from .abc import (
     PyoSequence,
 )
 

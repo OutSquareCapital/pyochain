@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, Self, override
 
-from .traits import PyoMutableMapping
+from .abc import PyoMutableMapping
 
 if TYPE_CHECKING:
     from ._types import DictConvertible

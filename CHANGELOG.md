@@ -2,8 +2,13 @@
 
 ## [Unreleased]
 
+-
+
+## [0.20.0] - 2026-05-21
+
 ### 💥 Breaking changes
 
+- **API change**: `pyochain::traits` module is now `pyochain::abc`. If you were importing from `pyochain.traits`, update your imports to `pyochain.abc` instead.
 - **Removed**: `PyoIterable::new`. Call `__init__(())` for the same behavior, e.g `Seq(())`, `Iter(())`, etc...
 - **Removed**: `Unzipped` and `Peekable` dataclasses. The `Iter` methods who constructed them now simply return tuples instead, simplifying the API and improving speed.
 - **API change**: `Iter::sort` (now in base class `PyoIterator`) has been split into `Iter::sort` and `Iter::sort_by`. If you were using `Iter::sort(key=...)`, you should now use `Iter::sort_by(key=...)` instead. This should bring typing improvements as well as a clearer API.

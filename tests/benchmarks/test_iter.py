@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from pyochain import Null, Option, Range, Seq, Some, Vec
-from pyochain.traits import PyoSequence
+from pyochain.abc import PyoSequence
 
 from ._utils import SIZES
 
