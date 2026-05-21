@@ -21,14 +21,29 @@ def main() -> None:
     import pyochain
 
     show("Generating pyochain documentation...", style=Color.INFO)
-    _discover_modules(pyochain)
+    _generate_all_for_module(pyochain)
     show("✅ All files generated!", style=Color.SUCCESS)
     show("----------------------------------", style=Color.BLANK)
     show("Checking navigation completeness...", style=Color.INFO)
     return _check_nav_completeness()
 
 
-def _generate_markdown_for(module: object, generated_paths: SetMut[str]) -> None:
+def _generate_all_for_module(module: ModuleType) -> None:
+    generated_paths = SetMut[str](())
+
+    return (
+        Dict
+        .from_ref(vars(module))
+        .values()
+        .iter()
+        .filter(_is_module)
+        .filter(lambda m: m.__name__.startswith(module.__name__))
+        .insert(module)
+        .for_each(_generate_markdown_for, generated_paths)
+    )
+
+
+def _generate_markdown_for(module: ModuleType, generated_paths: SetMut[str]) -> None:
     """Generate markdown files for all public classes in a module."""
     Paths.DOCS_REF.value.mkdir(parents=True, exist_ok=True)
 
@@ -66,25 +81,6 @@ def _generate_markdown(full_path: str, class_name: str) -> str:
 
 ::: {full_path}
 """
-
-
-def _discover_modules(module: ModuleType) -> None:
-    generated_paths = SetMut[str](())
-
-    return (
-        Dict
-        .from_ref(vars(module))
-        .values()
-        .iter()
-        .filter(_is_module)
-        .filter(lambda m: m.__name__.startswith(module.__name__))
-        .insert(module)
-        .for_each(lambda module: _generate_markdown_for(module, generated_paths))
-    )
-
-
-def _is_module(obj: object) -> TypeIs[ModuleType]:
-    return isinstance(obj, ModuleType)
 
 
 def _check_nav_completeness(config_path: Paths = Paths.ZENSICAL) -> None:
@@ -197,6 +193,10 @@ def _is_valid_docs_site_link(target: str, docs_dir: Path) -> bool:
 
 def _normalize_link_target(target: str) -> str:
     return target.strip().removeprefix("<").removesuffix(">")
+
+
+def _is_module(obj: object) -> TypeIs[ModuleType]:
+    return isinstance(obj, ModuleType)
 
 
 if __name__ == "__main__":
