@@ -54,6 +54,8 @@ class Seq[T](PyoSequence[T]):
     >>> # However, creating a new Seq from seq (not using .inner) will be a copy operation.
     >>> Seq(seq).inner is seq.inner
     False
+
+    ```
     """
 
     __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]

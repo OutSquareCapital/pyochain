@@ -1,3 +1,3 @@
 # Set
 
-::: pyochain._iter.Set
+::: pyochain._set.Set
