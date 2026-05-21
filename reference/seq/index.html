@@ -1805,8 +1805,11 @@
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(())</span>
 <span class="n">Seq</span><span class="p">()</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">t</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
@@ -1826,8 +1829,8 @@
 <span class="o">&gt;&gt;&gt;</span> <span class="c1"># However, creating a new Seq from seq (not using .inner) will be a copy operation.</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Seq</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span><span class="o">.</span><span class="n">inner</span> <span class="ow">is</span> <span class="n">seq</span><span class="o">.</span><span class="n">inner</span>
 <span class="kc">False</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
 
 
@@ -1966,29 +1969,29 @@
 <span class="sd">        data (Iterable[T]): The data to initialize the Seq with.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">    &gt;&gt;&gt; Seq(())</span>
-<span class="sd">    Seq()</span>
-<span class="sd">    &gt;&gt;&gt; t = (1, 2, 3)</span>
-<span class="sd">    &gt;&gt;&gt; seq = Seq(t)</span>
-<span class="sd">    &gt;&gt;&gt; seq</span>
-<span class="sd">    Seq(1, 2, 3)</span>
-<span class="sd">    &gt;&gt;&gt; seq_2 = Seq(seq.inner)</span>
-<span class="sd">    &gt;&gt;&gt; # No copy is made when creating seq_2 from seq.inner, they reference the same underlying tuple.</span>
-<span class="sd">    &gt;&gt;&gt; is_no_copy = (</span>
-<span class="sd">    ...     seq.inner is seq_2.inner</span>
-<span class="sd">    ...     and seq.inner is t</span>
-<span class="sd">    ...     and seq_2.inner is t</span>
-<span class="sd">    ...     and tuple(seq.inner) is t</span>
-<span class="sd">    ... )</span>
-<span class="sd">    &gt;&gt;&gt; is_no_copy</span>
-<span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; # However, creating a new Seq from seq (not using .inner) will be a copy operation.</span>
-<span class="sd">    &gt;&gt;&gt; Seq(seq).inner is seq.inner</span>
-<span class="sd">    False</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">        &gt;&gt;&gt; Seq(())</span>
+<span class="sd">        Seq()</span>
+<span class="sd">        &gt;&gt;&gt; t = (1, 2, 3)</span>
+<span class="sd">        &gt;&gt;&gt; seq = Seq(t)</span>
+<span class="sd">        &gt;&gt;&gt; seq</span>
+<span class="sd">        Seq(1, 2, 3)</span>
+<span class="sd">        &gt;&gt;&gt; seq_2 = Seq(seq.inner)</span>
+<span class="sd">        &gt;&gt;&gt; # No copy is made when creating seq_2 from seq.inner, they reference the same underlying tuple.</span>
+<span class="sd">        &gt;&gt;&gt; is_no_copy = (</span>
+<span class="sd">        ...     seq.inner is seq_2.inner</span>
+<span class="sd">        ...     and seq.inner is t</span>
+<span class="sd">        ...     and seq_2.inner is t</span>
+<span class="sd">        ...     and tuple(seq.inner) is t</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt; is_no_copy</span>
+<span class="sd">        True</span>
+<span class="sd">        &gt;&gt;&gt; # However, creating a new Seq from seq (not using .inner) will be a copy operation.</span>
+<span class="sd">        &gt;&gt;&gt; Seq(seq).inner is seq.inner</span>
+<span class="sd">        False</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;_inner&quot;</span><span class="p">,)</span>  <span class="c1"># pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]</span>
@@ -2040,15 +2043,15 @@
 <span class="sd">            Self: The new `Seq` after concatenation.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">        &gt;&gt;&gt; s1 = Seq((1, 2, 3))</span>
-<span class="sd">        &gt;&gt;&gt; s2 = (4, 5, 6)  # Can also concatenate a standard tuple</span>
-<span class="sd">        &gt;&gt;&gt; s3 = s1.concat(s2)</span>
-<span class="sd">        &gt;&gt;&gt; s3</span>
-<span class="sd">        Seq(1, 2, 3, 4, 5, 6)</span>
+<span class="sd">            ```python</span>
+<span class="sd">            &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">            &gt;&gt;&gt; s1 = Seq((1, 2, 3))</span>
+<span class="sd">            &gt;&gt;&gt; s2 = (4, 5, 6)  # Can also concatenate a standard tuple</span>
+<span class="sd">            &gt;&gt;&gt; s3 = s1.concat(s2)</span>
+<span class="sd">            &gt;&gt;&gt; s3</span>
+<span class="sd">            Seq(1, 2, 3, 4, 5, 6)</span>
 
-<span class="sd">        ```</span>
+<span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">match</span> <span class="n">other</span><span class="p">:</span>
             <span class="k">case</span> <span class="n">Seq</span><span class="p">():</span>
@@ -2185,15 +2188,18 @@
           </tr>
       </tbody>
     </table>
-        <p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">s1</span> <span class="o">=</span> <span class="n">Seq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">s2</span> <span class="o">=</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>  <span class="c1"># Can also concatenate a standard tuple</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">s3</span> <span class="o">=</span> <span class="n">s1</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">s3</span>
 <span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
-</code></pre></div></p>
-
+</code></pre></div>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/_seq.py</code></summary>
@@ -2236,15 +2242,15 @@
 <span class="sd">        Self: The new `Seq` after concatenation.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    ```python</span>
-<span class="sd">    &gt;&gt;&gt; from pyochain import Seq</span>
-<span class="sd">    &gt;&gt;&gt; s1 = Seq((1, 2, 3))</span>
-<span class="sd">    &gt;&gt;&gt; s2 = (4, 5, 6)  # Can also concatenate a standard tuple</span>
-<span class="sd">    &gt;&gt;&gt; s3 = s1.concat(s2)</span>
-<span class="sd">    &gt;&gt;&gt; s3</span>
-<span class="sd">    Seq(1, 2, 3, 4, 5, 6)</span>
+<span class="sd">        ```python</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">        &gt;&gt;&gt; s1 = Seq((1, 2, 3))</span>
+<span class="sd">        &gt;&gt;&gt; s2 = (4, 5, 6)  # Can also concatenate a standard tuple</span>
+<span class="sd">        &gt;&gt;&gt; s3 = s1.concat(s2)</span>
+<span class="sd">        &gt;&gt;&gt; s3</span>
+<span class="sd">        Seq(1, 2, 3, 4, 5, 6)</span>
 
-<span class="sd">    ```</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">match</span> <span class="n">other</span><span class="p">:</span>
         <span class="k">case</span> <span class="n">Seq</span><span class="p">():</span>

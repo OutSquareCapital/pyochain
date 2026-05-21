@@ -1722,8 +1722,12 @@
         <p>Option variant representing the absence of a value.</p>
 <p>This class or <code>NONE</code> can be used interchangeably, as calling <code>Null()</code> will always return the singleton instance <code>NONE</code>.</p>
 <p>For pattern matching, you must use <code>Null</code>, as <code>NONE</code> isn't special cased by type checkers the same way python <code>None</code> is, and thus can't be narrowed to <code>Null</code>.</p>
-<p>Example:
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Null</span><span class="p">,</span> <span class="n">NONE</span><span class="p">,</span> <span class="n">Some</span>
+<p>For more documentation, see the <code>Option[T]</code> class.</p>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Null</span><span class="p">,</span> <span class="n">NONE</span><span class="p">,</span> <span class="n">Some</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Null</span><span class="p">()</span> <span class="ow">is</span> <span class="n">NONE</span>
 <span class="kc">True</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">is_none</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Option</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -1739,8 +1743,7 @@
 <span class="o">&gt;&gt;&gt;</span> <span class="n">is_none</span><span class="p">(</span><span class="n">Null</span><span class="p">())</span>
 <span class="kc">True</span>
 </code></pre></div>
-For more documentation, see the <code>Option[T]</code> class.</p>
-
+</details>
 
 
 
