@@ -20,7 +20,7 @@ from collections.abc import (
 from collections.abc import Set as AbstractSet
 from dataclasses import dataclass
 from operator import itemgetter
-from typing import TYPE_CHECKING, Any, Concatenate, Never, Self, overload, override
+from typing import TYPE_CHECKING, Any, Concatenate, Self, overload, override
 
 from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
 from .._types import SupportsComparison, SupportsRichComparison
@@ -1646,53 +1646,80 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         return tls.try_collect(iter(self)).map(Vec.from_ref)
 
-    @overload
     def sort[U: SupportsRichComparison[Any]](
-        self: Iter[U],
-        *,
-        key: None = None,
-        reverse: bool = False,
-    ) -> Vec[U]: ...
-    @overload
-    def sort(
-        self,
-        *,
-        key: Callable[[T], SupportsRichComparison[Any]],  # pyright: ignore[reportExplicitAny]
-        reverse: bool = False,
-    ) -> Vec[T]: ...
-    @overload
-    def sort(
-        self,
-        *,
-        key: None = None,
-        reverse: bool = False,
-    ) -> Never: ...
-    def sort(
-        self,
-        *,
-        key: Callable[[T], SupportsRichComparison[Any]] | None = None,  # pyright: ignore[reportExplicitAny]
-        reverse: bool = False,
-    ) -> Vec[Any]:  # pyright: ignore[reportExplicitAny]
-        """Sort the elements of the sequence.
+        self: PyoIterator[U], *, reverse: bool = False
+    ) -> Vec[U]:
+        """Sort the elements of the `Iterator`.
 
-        If a key function is provided, it is used to extract a comparison key from each element.
+        The elements must support rich comparison operations (i.e., they must implement the necessary comparison dunder methods).
 
         Note:
-            This method must consume the entire `Iter` to perform the sort.
+            This method must consume the entire `Iterator` to perform the sort.
+
             The result is a new `Vec` over the sorted sequence.
 
         Args:
-            key (Callable[[T], SupportsRichComparison[Any]] | None): Function to extract a comparison key from each element.
             reverse (bool): Whether to sort in descending order.
 
         Returns:
-            Vec[Any]: A `Vec` with elements sorted.
+            Vec[U]: A `Vec` with elements sorted.
 
         Example:
         ```python
         >>> from pyochain import Iter
         >>> Iter((3, 1, 2)).sort()
         Vec(1, 2, 3)
+
+        ```
+        """
+        from .._iter import Vec
+
+        return Vec.from_ref(sorted(iter(self), reverse=reverse))
+
+    def sort_by(
+        self,
+        key: Callable[[T], SupportsRichComparison[Any]],  # pyright: ignore[reportExplicitAny]
+        *,
+        reverse: bool = False,
+    ) -> Vec[T]:
+        """Sort the elements of the sequence transformed by the key function.
+
+        Note:
+            This method must consume the entire `Iterator` to perform the sort.
+
+            The result is a new `Vec` over the sorted sequence.
+
+        Args:
+            key (Callable[[T], SupportsRichComparison[Any]]): Function to extract a comparison key from each element.
+            reverse (bool): Whether to sort in descending order.
+
+        Returns:
+            Vec[T]: A `Vec` with elements sorted.
+
+        Example:
+        ```python
+        >>> from pyochain import Iter
+        >>> str_numbers = ("3", "1", "2")
+        >>> Iter(str_numbers).sort_by(int)
+        Vec('1', '2', '3')
+        >>> Iter(str_numbers).sort_by(int, reverse=True)
+        Vec('3', '2', '1')
+        >>> from dataclasses import dataclass
+        >>> @dataclass
+        ... class Person:
+        ...     name: str
+        ...     age: int
+        >>>
+        >>> peoples = (Person("Alice", 30), Person("Bob", 25), Person("Charlie", 35))
+        >>> sorted_names = (
+        ...     Iter(peoples)
+        ...     .sort_by(lambda x: x.age)
+        ...     .iter()
+        ...     .map(lambda x: x.name)
+        ...     .collect()
+        ... )
+        >>> sorted_names
+        Seq('Bob', 'Alice', 'Charlie')
 
         ```
         """

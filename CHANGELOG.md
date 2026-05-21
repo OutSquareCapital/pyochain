@@ -4,13 +4,14 @@
 
 ### 💥 Breaking changes
 
-- **Removed**: `PyoIterable::new`. Call `__init__(())` for the same behavior, i.e `Seq(())`, `Iter(())`, etc...
-- **API change**: `PyoIterable::__init__` is deleted. This means that subclasses are free to implement their own constructors, without typing constraints nor default behavior.
+- **Removed**: `PyoIterable::new`. Call `__init__(())` for the same behavior, e.g `Seq(())`, `Iter(())`, etc...
 - **Removed**: `Unzipped` and `Peekable` dataclasses. The `Iter` methods who constructed them now simply return tuples instead, simplifying the API and improving speed.
+- **API change**: `Iter::sort` (now in base class `PyoIterator`) has been split into `Iter::sort` and `Iter::sort_by`. If you were using `Iter::sort(key=...)`, you should now use `Iter::sort_by(key=...)` instead. This should bring typing improvements as well as a clearer API.
+- **API change**: `PyoIterable::__init__` is deleted. This means that subclasses are free to implement their own constructors, without typing constraints nor default behavior.
 
 #### Methods migration to concrete parents
 
-If you did not define custom classes from `PyoSet` or `PyoIterator`, skip to the next section.
+If you did not define custom classes from `PyoSet` or `PyoIterator`, skip to the *Enhancements* section.
 
 ---
 
@@ -39,6 +40,7 @@ from `PyoIterator` to `Iter` ->
 
 - Improved various classes and methods documentation.
 - Reformatted all code examples with Ruff.
+- Added dev documentation regarding design choices on where to implement a method (abstract vs concrete class).
 
 ### 🔄 Refactors
 

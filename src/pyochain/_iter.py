@@ -2319,14 +2319,15 @@ class Iter[T](PyoIterator[T]):
         Example:
         ```python
         >>> from pyochain import Iter
+        >>> from operator import itemgetter
         >>> # Example 1: Group even and odd numbers
         >>> (
         ...     Iter.from_count()  # create an infinite iterator of integers
         ...     .take(8)  # take the first 8
         ...     .map(lambda x: (x % 2 == 0, x))  # map to (is_even, value)
-        ...     .sort(key=lambda x: x[0])  # sort by is_even
+        ...     .sort_by(itemgetter(0))  # sort by is_even
         ...     .iter()  # Since sort collect to a Vec, we need to convert back to Iter
-        ...     .group_by(lambda x: x[0])  # group by is_even
+        ...     .group_by(itemgetter(0))  # group by is_even
         ...     # extract values from groups, discarding keys, and materializing them to lists
         ...     .map_star(lambda g, vals: (g, vals.map_star(lambda _, y: y).into(list)))
         ...     .collect(dict)  # collect the result
