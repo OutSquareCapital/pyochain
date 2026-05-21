@@ -2,10 +2,11 @@
 
 from . import abc
 from ._dict import Dict
-from ._iter import Iter, Vec
+from ._iter import Iter
 from ._range import Range
 from ._seq import Seq
 from ._set import PyoItemsView, PyoKeysView, PyoValuesView, Set, SetMut
+from ._vec import Vec
 from .rs import (
     NONE,
     Err,

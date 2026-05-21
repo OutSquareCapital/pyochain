@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### 💥 Breaking changes
+
+- **Vec MRO**: `Vec` does not inherit from `Seq` anymore, only from `PyoMutableSequence`. This means that if you were relying on `Vec` being a subclass of `Seq` for type checking or isinstance checks, you should now check against `PyoMutableSequence` instead. The fact that `Seq` worked has a type hint for `Vec` was a problem in itself, but more broadly it didn't made much sense, whilst at the same time not bringing any real benefit besides 10 LOC for dunders methods like repr and getitem. Not methods nor attributes have been impacted by this change.
+
 ### 🛠️ Other improvements
 
 - Added `--preview` option to `Ruff` format workflow to garantuee markdown formatting

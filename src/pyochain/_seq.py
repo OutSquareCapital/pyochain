@@ -64,17 +64,6 @@ class Seq[T](PyoSequence[T]):
     def __init__(self, data: Iterable[T]) -> None:
         self._inner = tuple(data)
 
-    @property
-    def inner(self) -> tuple[T, ...]:
-        """Get the underlying `tuple` data structure.
-
-        Useful when interoperating with functions that require a standard Python `tuple`.
-
-        Returns:
-            tuple[T, ...]: The underlying tuple.
-        """
-        return self._inner
-
     @override
     def __iter__(self) -> Iterator[T]:
         return iter(self._inner)
@@ -108,6 +97,17 @@ class Seq[T](PyoSequence[T]):
     @override
     def __hash__(self) -> int:
         return hash(self._inner)
+
+    @property
+    def inner(self) -> tuple[T, ...]:
+        """Get the underlying `tuple` data structure.
+
+        Useful when interoperating with functions that require a standard Python `tuple`.
+
+        Returns:
+            tuple[T, ...]: The underlying tuple.
+        """
+        return self._inner
 
     def concat(self, other: tuple[T, ...] | Self) -> Self:
         """Concatenate another `Seq` or `tuple` to **self** and return a new `Seq`.

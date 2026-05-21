@@ -24,13 +24,11 @@ from .._types import SupportsComparison, SupportsRichComparison
 from ..rs import NONE, Checkable, Err, Ok, Option, Pipeable, Result, Some, option
 
 if TYPE_CHECKING:
-    from .._iter import Iter, Vec
+    from .._iter import Iter
     from .._seq import Seq
     from .._set import PyoItemsView, PyoKeysView, PyoValuesView
+    from .._vec import Vec
     from ..rs import Option, Result
-
-type Comparable[T] = list[T] | tuple[T, ...] | set[T] | frozenset[T]
-type Comparator[T] = Callable[[Comparable[T], Comparable[T]], bool]
 
 
 @dataclass(slots=True)
@@ -1684,7 +1682,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        from .._iter import Vec
+        from .._vec import Vec
 
         return tls.try_collect(iter(self)).map(Vec.from_ref)
 
@@ -1714,7 +1712,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        from .._iter import Vec
+        from .._vec import Vec
 
         return Vec.from_ref(sorted(iter(self), reverse=reverse))
 
@@ -1769,7 +1767,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        from .._iter import Vec
+        from .._vec import Vec
 
         return Vec.from_ref(sorted(iter(self), reverse=reverse, key=key))
 
