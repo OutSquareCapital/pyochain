@@ -94,17 +94,17 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
             Vec[V]: A new Vec instance wrapping the provided `list`.
 
         Example:
-        ```python
-        >>> from pyochain import Vec
-        >>> original_list = [1, 2, 3]
-        >>> vec = Vec.from_ref(original_list)
-        >>> vec
-        Vec(1, 2, 3)
-        >>> vec[0] = 10
-        >>> original_list
-        [10, 2, 3]
+            ```python
+            >>> from pyochain import Vec
+            >>> original_list = [1, 2, 3]
+            >>> vec = Vec.from_ref(original_list)
+            >>> vec
+            Vec(1, 2, 3)
+            >>> vec[0] = 10
+            >>> original_list
+            [10, 2, 3]
 
-        ```
+            ```
         """
         instance: Vec[V] = Vec.__new__(Vec)  # pyright: ignore[reportUnknownVariableType]
         instance._inner = data
@@ -182,14 +182,14 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
             Vec[Any]: The sorted `Vec` instance (self).
 
         Example:
-        ```python
-        >>> from pyochain import Vec, Iter
-        >>> Vec.from_ref([3, 1, 2]).sort()
-        Vec(1, 2, 3)
-        >>> Iter((3, 1, 2)).map(str).collect(Vec).sort(key=int)
-        Vec('1', '2', '3')
+            ```python
+            >>> from pyochain import Vec, Iter
+            >>> Vec.from_ref([3, 1, 2]).sort()
+            Vec(1, 2, 3)
+            >>> Iter((3, 1, 2)).map(str).collect(Vec).sort(key=int)
+            Vec('1', '2', '3')
 
-        ```
+            ```
         """
         self._inner.sort(key=key, reverse=reverse)  # pyright: ignore[reportArgumentType]
         return self
@@ -252,16 +252,16 @@ class Vec[T](Seq[T], PyoMutableSequence[T]):
             `Vec.concat()` which returns a new `Vec` without modifying **self**.
 
         Example:
-        ```python
-        >>> from pyochain import Vec
-        >>> v1 = Vec.from_ref([1, 2, 3])
-        >>> v2 = [4, 5, 6]  # Can also concatenate a standard list
-        >>> v1.concat_mut(v2)
-        Vec(1, 2, 3, 4, 5, 6)
-        >>> v1
-        Vec(1, 2, 3, 4, 5, 6)
+            ```python
+            >>> from pyochain import Vec
+            >>> v1 = Vec.from_ref([1, 2, 3])
+            >>> v2 = [4, 5, 6]  # Can also concatenate a standard list
+            >>> v1.concat_mut(v2)
+            Vec(1, 2, 3, 4, 5, 6)
+            >>> v1
+            Vec(1, 2, 3, 4, 5, 6)
 
-        ```
+            ```
         """
         match other:
             case Vec():
@@ -300,26 +300,26 @@ class Iter[T](PyoIterator[T]):
         data (Iterable[T]): Any object that can be iterated over.
 
     Example:
-    ```python
-    >>> data = (0, 1, 2, 3, 4)
-    >>> Iter(data).collect()
-    Seq(0, 1, 2, 3, 4)
-    >>> iterator = Iter(data)
-    >>> # First we have a tuple iterator
-    >>> iterator._inner.__class__.__name__
-    'tuple_iterator'
-    >>> # Now we have a map object
-    >>> mapped = iterator.map(lambda x: x * 2)
-    >>> mapped._inner.__class__.__name__
-    'map'
-    >>> # We collect it, by default into a Seq
-    >>> mapped.collect()
-    Seq(0, 2, 4, 6, 8)
-    >>> # iterator is now exhausted
-    >>> iterator.collect()
-    Seq()
+        ```python
+        >>> data = (0, 1, 2, 3, 4)
+        >>> Iter(data).collect()
+        Seq(0, 1, 2, 3, 4)
+        >>> iterator = Iter(data)
+        >>> # First we have a tuple iterator
+        >>> iterator._inner.__class__.__name__
+        'tuple_iterator'
+        >>> # Now we have a map object
+        >>> mapped = iterator.map(lambda x: x * 2)
+        >>> mapped._inner.__class__.__name__
+        'map'
+        >>> # We collect it, by default into a Seq
+        >>> mapped.collect()
+        Seq(0, 2, 4, 6, 8)
+        >>> # iterator is now exhausted
+        >>> iterator.collect()
+        Seq()
 
-    ```
+        ```
     """
 
     _inner: Iterator[T]
@@ -345,15 +345,15 @@ class Iter[T](PyoIterator[T]):
             bool: True if the `Iterator` has at least one element, False otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> it = Iter((1, 2, 3))
-        >>> bool(it)
-        True
-        >>> it.collect()  # All elements still available
-        Seq(1, 2, 3)
+            ```python
+            >>> from pyochain import Iter
+            >>> it = Iter((1, 2, 3))
+            >>> bool(it)
+            True
+            >>> it.collect()  # All elements still available
+            Seq(1, 2, 3)
 
-        ```
+            ```
         """
         first = tuple(itertools.islice(self._inner, 1))
         self._inner = itertools.chain(first, self._inner)
@@ -386,16 +386,16 @@ class Iter[T](PyoIterator[T]):
             Self: A new `Iter` instance that is independent from the original.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> original = Iter((1, 2, 3))
-        >>> copy = Iter.from_ref(original)
-        >>> copy.map(lambda x: x * 2).collect()
-        Seq(2, 4, 6)
-        >>> original.next()
-        Some(1)
+            ```python
+            >>> from pyochain import Iter
+            >>> original = Iter((1, 2, 3))
+            >>> copy = Iter.from_ref(original)
+            >>> copy.map(lambda x: x * 2).collect()
+            Seq(2, 4, 6)
+            >>> original.next()
+            Some(1)
 
-        ```
+            ```
         """
         it1, it2 = itertools.tee(other._inner)
         other._inner = it1
@@ -416,12 +416,12 @@ class Iter[T](PyoIterator[T]):
             Iter[V]: An iterator yielding the specified value.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter.once(42).collect()
-        Seq(42,)
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter.once(42).collect()
+            Seq(42,)
 
-        ```
+            ```
         """
         return Iter((value,))
 
@@ -446,12 +446,12 @@ class Iter[T](PyoIterator[T]):
             Iter[R]: An iterator yielding the specified value.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter.once_with(lambda: 42).collect()
-        Seq(42,)
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter.once_with(lambda: 42).collect()
+            Seq(42,)
 
-        ```
+            ```
         """
 
         def _once_with() -> Generator[R]:
@@ -476,12 +476,12 @@ class Iter[T](PyoIterator[T]):
             Iter[int]: An iterator generating the sequence.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter.from_count(10, 2).take(3).collect()
-        Seq(10, 12, 14)
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter.from_count(10, 2).take(3).collect()
+            Seq(10, 12, 14)
 
-        ```
+            ```
         """
         return Iter(itertools.count(start, step))
 
@@ -502,17 +502,17 @@ class Iter[T](PyoIterator[T]):
             Iter[R]: An iterator yielding values produced by **f**.
 
         Example:
-        ```python
-        >>> from pyochain import Iter, Some, NONE
-        >>> counter = 0
-        >>> def gen() -> Option[int]:
-        ...     global counter
-        ...     counter += 1
-        ...     return Some(counter) if counter < 6 else NONE
-        >>> Iter.from_fn(gen).collect()
-        Seq(1, 2, 3, 4, 5)
+            ```python
+            >>> from pyochain import Iter, Some, NONE
+            >>> counter = 0
+            >>> def gen() -> Option[int]:
+            ...     global counter
+            ...     counter += 1
+            ...     return Some(counter) if counter < 6 else NONE
+            >>> Iter.from_fn(gen).collect()
+            Seq(1, 2, 3, 4, 5)
 
-        ```
+            ```
         """
 
         def _from_fn() -> Iterator[R]:
@@ -539,15 +539,15 @@ class Iter[T](PyoIterator[T]):
             Iter[U]: Iterator yielding `first` and its successors.
 
         Example:
-        ```python
-        >>> from pyochain import Iter, Some, NONE, Option
-        >>>
-        >>> def next_pow10(x: int) -> Option[int]:
-        ...     return Some(x * 10) if x < 10_000 else NONE
-        >>> Iter.successors(Some(1), next_pow10).collect()
-        Seq(1, 10, 100, 1000, 10000)
+            ```python
+            >>> from pyochain import Iter, Some, NONE, Option
+            >>>
+            >>> def next_pow10(x: int) -> Option[int]:
+            ...     return Some(x * 10) if x < 10_000 else NONE
+            >>> Iter.successors(Some(1), next_pow10).collect()
+            Seq(1, 10, 100, 1000, 10000)
 
-        ```
+            ```
         """
 
         def _successors() -> Iterator[U]:
@@ -587,37 +587,37 @@ class Iter[T](PyoIterator[T]):
             R: A materialized collection containing the collected elements.
 
         Example:
-        ```python
-        >>> from pyochain import Iter, Range, Vec, Dict
-        >>> data = Range(0, 5)
-        >>> data.iter().collect(list)
-        [0, 1, 2, 3, 4]
-        >>> data.iter().collect(Vec)
-        Vec(0, 1, 2, 3, 4)
-        >>> data.iter().map(str).enumerate().collect(Dict)
-        Dict(0: '0', 1: '1', 2: '2', 3: '3', 4: '4')
+            ```python
+            >>> from pyochain import Iter, Range, Vec, Dict
+            >>> data = Range(0, 5)
+            >>> data.iter().collect(list)
+            [0, 1, 2, 3, 4]
+            >>> data.iter().collect(Vec)
+            Vec(0, 1, 2, 3, 4)
+            >>> data.iter().map(str).enumerate().collect(Dict)
+            Dict(0: '0', 1: '1', 2: '2', 3: '3', 4: '4')
 
-        ```
-        Sometimes type checkers can't infer the type of the collector, in which case you can use an explicit type annotation to help them out.
+            ```
+            Sometimes type checkers can't infer the type of the collector, in which case you can use an explicit type annotation to help them out.
 
-        In the example below, without the annotation in `collect()`,
+            In the example below, without the annotation in `collect()`,
 
-        BasedPyright infer `data` as `Seq[Result[int, Any] | Result[Any, int]]` because of the conditional expression in the `map()`, which is not very useful.
-        ```python
-        >>> from pyochain import Range, Seq, Ok, Err, Result
-        >>> data = (
-        ...     Range(0, 5)
-        ...     .iter()
-        ...     .map(lambda x: Ok(x) if x % 2 == 0 else Err(x))
-        ...     .collect(Seq[Result[int, int]])
-        ... )
-        >>> data
-        Seq(Ok(0), Err(1), Ok(2), Err(3), Ok(4))
+            BasedPyright infer `data` as `Seq[Result[int, Any] | Result[Any, int]]` because of the conditional expression in the `map()`, which is not very useful.
+            ```python
+            >>> from pyochain import Range, Seq, Ok, Err, Result
+            >>> data = (
+            ...     Range(0, 5)
+            ...     .iter()
+            ...     .map(lambda x: Ok(x) if x % 2 == 0 else Err(x))
+            ...     .collect(Seq[Result[int, int]])
+            ... )
+            >>> data
+            Seq(Ok(0), Err(1), Ok(2), Err(3), Ok(4))
 
-        ```
-        Strictly speaking, this is equivalent to annotating the variable at the beginning, but some may prefer this style to keep the type information close to the actual collection operation.
+            ```
+            Strictly speaking, this is equivalent to annotating the variable at the beginning, but some may prefer this style to keep the type information close to the actual collection operation.
 
-        This notably avoid repetition if you collect anything else than the default `Seq` type.
+            This notably avoid repetition if you collect anything else than the default `Seq` type.
         """
         return collector(self._inner)
 
@@ -639,32 +639,32 @@ class Iter[T](PyoIterator[T]):
         elements as necessary.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> all_chunks = Iter.from_count().array_chunks(4)
-        >>> c_1, c_2, c_3 = all_chunks.next(), all_chunks.next(), all_chunks.next()
-        >>> c_2.unwrap().collect()  # c_1's elements have been cached; c_3's haven't been
-        Seq(4, 5, 6, 7)
-        >>> c_1.unwrap().collect()
-        Seq(0, 1, 2, 3)
-        >>> c_3.unwrap().collect()
-        Seq(8, 9, 10, 11)
+            ```python
+            >>> from pyochain import Iter
+            >>> all_chunks = Iter.from_count().array_chunks(4)
+            >>> c_1, c_2, c_3 = all_chunks.next(), all_chunks.next(), all_chunks.next()
+            >>> c_2.unwrap().collect()  # c_1's elements have been cached; c_3's haven't been
+            Seq(4, 5, 6, 7)
+            >>> c_1.unwrap().collect()
+            Seq(0, 1, 2, 3)
+            >>> c_3.unwrap().collect()
+            Seq(8, 9, 10, 11)
 
-        ```
-        You can collect the chunks into a collection of collections, for example:
-        ```python
-        >>> from pyochain import Seq
-        >>> from pyochain.abc import PyoIterable
-        >>> def collect_all_chunks(data: PyoIterable[int]) -> Seq[Seq[int]]:
-        ...     return (
-        ...         data.iter().array_chunks(3).map(lambda c: c.collect()).collect()
-        ...     )
-        >>> Seq((1, 2, 3, 4, 5, 6)).into(collect_all_chunks)
-        Seq(Seq(1, 2, 3), Seq(4, 5, 6))
-        >>> Seq((1, 2, 3, 4, 5, 6, 7, 8)).into(collect_all_chunks)
-        Seq(Seq(1, 2, 3), Seq(4, 5, 6), Seq(7, 8))
+            ```
+            You can collect the chunks into a collection of collections, for example:
+            ```python
+            >>> from pyochain import Seq
+            >>> from pyochain.abc import PyoIterable
+            >>> def collect_all_chunks(data: PyoIterable[int]) -> Seq[Seq[int]]:
+            ...     return (
+            ...         data.iter().array_chunks(3).map(lambda c: c.collect()).collect()
+            ...     )
+            >>> Seq((1, 2, 3, 4, 5, 6)).into(collect_all_chunks)
+            Seq(Seq(1, 2, 3), Seq(4, 5, 6))
+            >>> Seq((1, 2, 3, 4, 5, 6, 7, 8)).into(collect_all_chunks)
+            Seq(Seq(1, 2, 3), Seq(4, 5, 6), Seq(7, 8))
 
-        ```
+            ```
         """
         from collections import deque
         from contextlib import suppress
@@ -747,49 +747,50 @@ class Iter[T](PyoIterator[T]):
     def flatten[U: Iterable[Any]](self: Iter[U]) -> Iter[Any]:  # pyright: ignore[reportExplicitAny]
         """Creates an `Iter` that flattens nested structures.
 
+        This is useful when you have an `Iter` of `Iterable` and you want to remove one level of indirection.
+
         Returns:
             Iter[Any]: An `Iter` of flattened elements.
 
-        This is useful when you have an `Iter` of `Iterable` and you want to remove one level of indirection.
 
         Example:
-        Basic usage:
-        ```python
-        >>> from pyochain import Iter
-        >>> data = ((1, 2, 3, 4), (5, 6))
-        >>> flattened = Iter(data).flatten().collect()
-        >>> flattened
-        Seq(1, 2, 3, 4, 5, 6)
+            Basic usage:
+            ```python
+            >>> from pyochain import Iter
+            >>> data = ((1, 2, 3, 4), (5, 6))
+            >>> flattened = Iter(data).flatten().collect()
+            >>> flattened
+            Seq(1, 2, 3, 4, 5, 6)
 
-        ```
-        Mapping and then flattening:
-        ```python
-        >>> from pyochain import Iter
-        >>> words = Iter(("alpha", "beta", "gamma"))
-        >>> merged = words.flatten().collect()
-        >>> merged
-        Seq('a', 'l', 'p', 'h', 'a', 'b', 'e', 't', 'a', 'g', 'a', 'm', 'm', 'a')
+            ```
+            Mapping and then flattening:
+            ```python
+            >>> from pyochain import Iter
+            >>> words = Iter(("alpha", "beta", "gamma"))
+            >>> merged = words.flatten().collect()
+            >>> merged
+            Seq('a', 'l', 'p', 'h', 'a', 'b', 'e', 't', 'a', 'g', 'a', 'm', 'm', 'a')
 
-        ```
-        Flattening only removes one level of nesting at a time:
-        ```python
-        >>> from pyochain import Iter
-        >>> d3 = (((1, 2), (3, 4)), ((5, 6), (7, 8)))
-        >>> d2 = Iter(d3).flatten().collect()
-        >>> d2
-        Seq((1, 2), (3, 4), (5, 6), (7, 8))
-        >>> d1 = Iter(d3).flatten().flatten().collect()
-        >>> d1
-        Seq(1, 2, 3, 4, 5, 6, 7, 8)
+            ```
+            Flattening only removes one level of nesting at a time:
+            ```python
+            >>> from pyochain import Iter
+            >>> d3 = (((1, 2), (3, 4)), ((5, 6), (7, 8)))
+            >>> d2 = Iter(d3).flatten().collect()
+            >>> d2
+            Seq((1, 2), (3, 4), (5, 6), (7, 8))
+            >>> d1 = Iter(d3).flatten().flatten().collect()
+            >>> d1
+            Seq(1, 2, 3, 4, 5, 6, 7, 8)
 
-        ```
-        Here we see that `flatten()` does not perform a “deep” flatten.
+            ```
+            Here we see that `flatten()` does not perform a “deep” flatten.
 
-        Instead, only **one** level of nesting is removed.
+            Instead, only **one** level of nesting is removed.
 
-        That is, if you `flatten()` a three-dimensional array, the result will be two-dimensional and not one-dimensional.
+            That is, if you `flatten()` a three-dimensional array, the result will be two-dimensional and not one-dimensional.
 
-        To get a one-dimensional structure, you have to `flatten()` again.
+            To get a one-dimensional structure, you have to `flatten()` again.
 
         """
         return Iter(itertools.chain.from_iterable(self._inner))
@@ -808,12 +809,12 @@ class Iter[T](PyoIterator[T]):
             Iter[R]: An iterable of flattened transformed elements.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2, 3)).flat_map(lambda x: range(x)).collect()
-        Seq(0, 0, 1, 0, 1, 2)
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3)).flat_map(lambda x: range(x)).collect()
+            Seq(0, 0, 1, 0, 1, 2)
 
-        ```
+            ```
         """
         return Iter(itertools.chain.from_iterable(map(func, self._inner)))
 
@@ -829,18 +830,18 @@ class Iter[T](PyoIterator[T]):
             Option[R]: The first `Some(R)` result from applying `func`, or `NONE` if no such result is found.
 
         Example:
-        ```python
-        >>> from pyochain import Iter, Some, NONE
-        >>> def _parse(s: str) -> Option[int]:
-        ...     try:
-        ...         return Some(int(s))
-        ...     except ValueError:
-        ...         return NONE
-        >>>
-        >>> Iter(["lol", "NaN", "2", "5"]).find_map(_parse)
-        Some(2)
+            ```python
+            >>> from pyochain import Iter, Some, NONE
+            >>> def _parse(s: str) -> Option[int]:
+            ...     try:
+            ...         return Some(int(s))
+            ...     except ValueError:
+            ...         return NONE
+            >>>
+            >>> Iter(["lol", "NaN", "2", "5"]).find_map(_parse)
+            Some(2)
 
-        ```
+            ```
         """
         return self.filter_map(func).next()
 
@@ -868,18 +869,18 @@ class Iter[T](PyoIterator[T]):
             Iter[R]: An iterator of transformed elements.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2)).map(lambda x: x + 1).collect()
-        Seq(2, 3)
-        >>> # You can use methods on the class rather than on instance for convenience:
-        >>> data = Seq(("a", "b", "c"))
-        >>> data.iter().map(str.upper).collect()
-        Seq('A', 'B', 'C')
-        >>> data.iter().map(lambda s: s.upper()).collect()
-        Seq('A', 'B', 'C')
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2)).map(lambda x: x + 1).collect()
+            Seq(2, 3)
+            >>> # You can use methods on the class rather than on instance for convenience:
+            >>> data = Seq(("a", "b", "c"))
+            >>> data.iter().map(str.upper).collect()
+            Seq('A', 'B', 'C')
+            >>> data.iter().map(lambda s: s.upper()).collect()
+            Seq('A', 'B', 'C')
 
-        ```
+            ```
         """
         return Iter(map(func, self._inner))
 
@@ -954,18 +955,18 @@ class Iter[T](PyoIterator[T]):
             Iter[R]: An iterable of results from applying the function to unpacked elements.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> def make_sku(color: str, size: str) -> str:
-        ...     return f"{color}-{size}"
-        >>> data = Seq(("blue", "red"))
-        >>> data.iter().product(["S", "M"]).map_star(make_sku).collect()
-        Seq('blue-S', 'blue-M', 'red-S', 'red-M')
-        >>> # This is equivalent to:
-        >>> data.iter().product(["S", "M"]).map(lambda x: make_sku(*x)).collect()
-        Seq('blue-S', 'blue-M', 'red-S', 'red-M')
+            ```python
+            >>> from pyochain import Seq
+            >>> def make_sku(color: str, size: str) -> str:
+            ...     return f"{color}-{size}"
+            >>> data = Seq(("blue", "red"))
+            >>> data.iter().product(["S", "M"]).map_star(make_sku).collect()
+            Seq('blue-S', 'blue-M', 'red-S', 'red-M')
+            >>> # This is equivalent to:
+            >>> data.iter().product(["S", "M"]).map(lambda x: make_sku(*x)).collect()
+            Seq('blue-S', 'blue-M', 'red-S', 'red-M')
 
-        ```
+            ```
         """
         return Iter(itertools.starmap(func, self._inner))
 
@@ -984,20 +985,20 @@ class Iter[T](PyoIterator[T]):
             Iter[R]: An iterator of transformed elements until `NONE` is encountered.
 
         Example:
-        ```python
-        >>> from pyochain import Iter, Some, NONE
-        >>> def checked_div(x: int) -> Option[int]:
-        ...     return Some(16 // x) if x != 0 else NONE
-        >>>
-        >>> data = Iter((-1, 4, 0, 1))
-        >>> data.map_while(checked_div).collect()
-        Seq(-16, 4)
-        >>> data = Iter((0, 1, 2, -3, 4, 5, -6))
-        >>> # Convert to positive ints, stop at first negative
-        >>> data.map_while(lambda x: Some(x) if x >= 0 else NONE).collect()
-        Seq(0, 1, 2)
+            ```python
+            >>> from pyochain import Iter, Some, NONE
+            >>> def checked_div(x: int) -> Option[int]:
+            ...     return Some(16 // x) if x != 0 else NONE
+            >>>
+            >>> data = Iter((-1, 4, 0, 1))
+            >>> data.map_while(checked_div).collect()
+            Seq(-16, 4)
+            >>> data = Iter((0, 1, 2, -3, 4, 5, -6))
+            >>> # Convert to positive ints, stop at first negative
+            >>> data.map_while(lambda x: Some(x) if x >= 0 else NONE).collect()
+            Seq(0, 1, 2)
 
-        ```
+            ```
         """
 
         def _gen() -> Generator[R]:
@@ -1030,12 +1031,12 @@ class Iter[T](PyoIterator[T]):
             Iter[Self]: An `Iter` of repeated `Iter`.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2)).repeat(3).map(list).collect()
-        Seq([1, 2], [1, 2], [1, 2])
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2)).repeat(3).map(list).collect()
+            Seq([1, 2], [1, 2], [1, 2])
 
-        ```
+            ```
         """
         new = self.__class__
 
@@ -1074,19 +1075,19 @@ class Iter[T](PyoIterator[T]):
             Iter[U]: An iterable of the yielded values.
 
         Example:
-        ```python
-        >>> from pyochain import Iter, Some, NONE
-        >>> def accumulate_until_limit(state: int, item: int) -> Option[int]:
-        ...     new_state = state + item
-        ...     match new_state:
-        ...         case _ if new_state <= 10:
-        ...             return Some(new_state)
-        ...         case _:
-        ...             return NONE
-        >>> Iter((1, 2, 3, 4, 5)).scan(0, accumulate_until_limit).collect()
-        Seq(1, 3, 6, 10)
+            ```python
+            >>> from pyochain import Iter, Some, NONE
+            >>> def accumulate_until_limit(state: int, item: int) -> Option[int]:
+            ...     new_state = state + item
+            ...     match new_state:
+            ...         case _ if new_state <= 10:
+            ...             return Some(new_state)
+            ...         case _:
+            ...             return NONE
+            >>> Iter((1, 2, 3, 4, 5)).scan(0, accumulate_until_limit).collect()
+            Seq(1, 3, 6, 10)
 
-        ```
+            ```
         """
 
         def _gen(data: Iterable[T]) -> Iterator[U]:
@@ -1126,25 +1127,25 @@ class Iter[T](PyoIterator[T]):
             Iter[T] | Iter[U]: An iterable of the items that satisfy the predicate.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> data = (1, 2, 3)
-        >>> Iter(data).filter(lambda x: x > 1).collect()
-        Seq(2, 3)
-        >>> # See the equivalence of next and find:
-        >>> Iter(data).filter(lambda x: x > 1).next()
-        Some(2)
-        >>> Iter(data).find(lambda x: x > 1)
-        Some(2)
-        >>> # Using TypeIs to narrow type:
-        >>> from typing import TypeIs
-        >>> def _is_str(x: object) -> TypeIs[str]:
-        ...     return isinstance(x, str)
-        >>> mixed_data = (1, "two", 3.0, "four")
-        >>> Iter(mixed_data).filter(_is_str).collect()
-        Seq('two', 'four')
+            ```python
+            >>> from pyochain import Iter
+            >>> data = (1, 2, 3)
+            >>> Iter(data).filter(lambda x: x > 1).collect()
+            Seq(2, 3)
+            >>> # See the equivalence of next and find:
+            >>> Iter(data).filter(lambda x: x > 1).next()
+            Some(2)
+            >>> Iter(data).find(lambda x: x > 1)
+            Some(2)
+            >>> # Using TypeIs to narrow type:
+            >>> from typing import TypeIs
+            >>> def _is_str(x: object) -> TypeIs[str]:
+            ...     return isinstance(x, str)
+            >>> mixed_data = (1, "two", 3.0, "four")
+            >>> Iter(mixed_data).filter(_is_str).collect()
+            Seq('two', 'four')
 
-        ```
+            ```
         """
         return Iter(filter(func, self._inner))
 
@@ -1218,20 +1219,20 @@ class Iter[T](PyoIterator[T]):
             Iter[U]: An `Iter` of the items that satisfy the predicate.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> data = Seq(("apple", "banana", "cherry", "date"))
-        >>> output = (
-        ...     data.iter()
-        ...     .enumerate()
-        ...     .filter_star(lambda index, _: index % 2 == 0)
-        ...     .map_star(lambda _, fruit: fruit.title())
-        ...     .collect()
-        ... )
-        >>> output
-        Seq('Apple', 'Cherry')
+            ```python
+            >>> from pyochain import Seq
+            >>> data = Seq(("apple", "banana", "cherry", "date"))
+            >>> output = (
+            ...     data.iter()
+            ...     .enumerate()
+            ...     .filter_star(lambda index, _: index % 2 == 0)
+            ...     .map_star(lambda _, fruit: fruit.title())
+            ...     .collect()
+            ... )
+            >>> output
+            Seq('Apple', 'Cherry')
 
-        ```
+            ```
         """
         return Iter(filter(lambda x: func(*x), self._inner))
 
@@ -1255,12 +1256,12 @@ class Iter[T](PyoIterator[T]):
             Iter[T] | Iter[U]: An `Iter` of the items that do not satisfy the predicate.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2, 3)).filter_false(lambda x: x > 1).collect()
-        Seq(1,)
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3)).filter_false(lambda x: x > 1).collect()
+            Seq(1,)
 
-        ```
+            ```
         """
         return Iter(itertools.filterfalse(func, self._inner))
 
@@ -1280,30 +1281,30 @@ class Iter[T](PyoIterator[T]):
             Iter[R]: An iterable of the results where func returned `Some`.
 
         Example:
-        ```python
-        >>> from pyochain import Result, Ok, Err, Seq
-        >>> def _parse(s: str) -> Result[int, str]:
-        ...     try:
-        ...         return Ok(int(s))
-        ...     except ValueError:
-        ...         return Err(f"Invalid integer, got {s!r}")
-        >>>
-        >>> data = Seq(("1", "two", "NaN", "four", "5"))
-        >>> parsed = data.iter().filter_map(lambda s: _parse(s).ok()).collect()
-        >>> parsed
-        Seq(1, 5)
-        >>> # Equivalent to:
-        >>> parsed = (
-        ...     data.iter()
-        ...     .map(lambda s: _parse(s).ok())
-        ...     .filter(lambda s: s.is_some())
-        ...     .map(lambda s: s.unwrap())
-        ...     .collect()
-        ... )
-        >>> parsed
-        Seq(1, 5)
+            ```python
+            >>> from pyochain import Result, Ok, Err, Seq
+            >>> def _parse(s: str) -> Result[int, str]:
+            ...     try:
+            ...         return Ok(int(s))
+            ...     except ValueError:
+            ...         return Err(f"Invalid integer, got {s!r}")
+            >>>
+            >>> data = Seq(("1", "two", "NaN", "four", "5"))
+            >>> parsed = data.iter().filter_map(lambda s: _parse(s).ok()).collect()
+            >>> parsed
+            Seq(1, 5)
+            >>> # Equivalent to:
+            >>> parsed = (
+            ...     data.iter()
+            ...     .map(lambda s: _parse(s).ok())
+            ...     .filter(lambda s: s.is_some())
+            ...     .map(lambda s: s.unwrap())
+            ...     .collect()
+            ... )
+            >>> parsed
+            Seq(1, 5)
 
-        ```
+            ```
         """
 
         def _filter_map(data: Iterable[T]) -> Iterator[R]:
@@ -1383,24 +1384,24 @@ class Iter[T](PyoIterator[T]):
             Iter[R]: An iterable of the results where func returned `Some`.
 
         Example:
-        ```python
-        >>> from pyochain import Iter, Result, Ok, Err
-        >>> data = (("1", "10"), ("two", "20"), ("3", "thirty"))
-        >>> def _parse_pair(s1: str, s2: str) -> Result[tuple[int, int], str]:
-        ...     try:
-        ...         return Ok((int(s1), int(s2)))
-        ...     except ValueError:
-        ...         return Err(f"Invalid integer pair: {s1!r}, {s2!r}")
-        >>>
-        >>> parsed = (
-        ...     Iter(data)
-        ...     .filter_map_star(lambda s1, s2: _parse_pair(s1, s2).ok())
-        ...     .collect()
-        ... )
-        >>> parsed
-        Seq((1, 10),)
+            ```python
+            >>> from pyochain import Iter, Result, Ok, Err
+            >>> data = (("1", "10"), ("two", "20"), ("3", "thirty"))
+            >>> def _parse_pair(s1: str, s2: str) -> Result[tuple[int, int], str]:
+            ...     try:
+            ...         return Ok((int(s1), int(s2)))
+            ...     except ValueError:
+            ...         return Err(f"Invalid integer pair: {s1!r}, {s2!r}")
+            >>>
+            >>> parsed = (
+            ...     Iter(data)
+            ...     .filter_map_star(lambda s1, s2: _parse_pair(s1, s2).ok())
+            ...     .collect()
+            ... )
+            >>> parsed
+            Seq((1, 10),)
 
-        ```
+            ```
         """
 
         def _filter_map_star(data: Iterable[U]) -> Iterator[R]:
@@ -1473,14 +1474,14 @@ class Iter[T](PyoIterator[T]):
             Iter[tuple[Any, ...]]: An `Iter` of tuples containing elements from the zipped Iter and other iterables.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2)).zip((10, 20)).collect()
-        Seq((1, 10), (2, 20))
-        >>> Iter(("a", "b")).zip((1, 2, 3)).collect()
-        Seq(('a', 1), ('b', 2))
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2)).zip((10, 20)).collect()
+            Seq((1, 10), (2, 20))
+            >>> Iter(("a", "b")).zip((1, 2, 3)).collect()
+            Seq(('a', 1), ('b', 2))
 
-        ```
+            ```
         """
         return Iter(zip(self._inner, *others, strict=strict))
 
@@ -1544,21 +1545,21 @@ class Iter[T](PyoIterator[T]):
             ZippedLongest[T]: An iterable of tuples containing optional elements from the zipped iterables.
 
         Example:
-        ```python
-        >>> from pyochain import Iter, Some, NONE, Vec
-        >>> Iter((1, 2)).zip_longest([10]).collect()
-        Seq((Some(1), Some(10)), (Some(2), NONE))
-        >>> # Can be combined with try collect to filter out the NONE:
-        >>> zipped = (
-        ...     Iter((1, 2))
-        ...     .zip_longest([10])
-        ...     .map(lambda x: Iter(x).try_collect())
-        ...     .collect()
-        ... )
-        >>> zipped
-        Seq(Some(Vec(1, 10)), NONE)
+            ```python
+            >>> from pyochain import Iter, Some, NONE, Vec
+            >>> Iter((1, 2)).zip_longest([10]).collect()
+            Seq((Some(1), Some(10)), (Some(2), NONE))
+            >>> # Can be combined with try collect to filter out the NONE:
+            >>> zipped = (
+            ...     Iter((1, 2))
+            ...     .zip_longest([10])
+            ...     .map(lambda x: Iter(x).try_collect())
+            ...     .collect()
+            ... )
+            >>> zipped
+            Seq(Some(Vec(1, 10)), NONE)
 
-        ```
+            ```
         """
         return Iter(
             tuple(option(t) for t in tup)
@@ -1581,16 +1582,16 @@ class Iter[T](PyoIterator[T]):
             This is the unavoidable cost of having two independent iterators over the same source.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> data = ((1, "a"), (2, "b"), (3, "c"))
-        >>> left, right = Iter(data).unzip()
-        >>> left.collect()
-        Seq(1, 2, 3)
-        >>> right.collect()
-        Seq('a', 'b', 'c')
+            ```python
+            >>> from pyochain import Iter
+            >>> data = ((1, "a"), (2, "b"), (3, "c"))
+            >>> left, right = Iter(data).unzip()
+            >>> left.collect()
+            Seq(1, 2, 3)
+            >>> right.collect()
+            Seq('a', 'b', 'c')
 
-        ```
+            ```
         """
         left, right = itertools.tee(self._inner, 2)
         return Iter(x[0] for x in left), Iter(x[1] for x in right)
@@ -1611,16 +1612,16 @@ class Iter[T](PyoIterator[T]):
             Self: A new independent cloned iterator.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> it = Iter((1, 2, 3))
-        >>> cloned = it.cloned()
-        >>> cloned.collect()
-        Seq(1, 2, 3)
-        >>> it.collect()
-        Seq(1, 2, 3)
+            ```python
+            >>> from pyochain import Iter
+            >>> it = Iter((1, 2, 3))
+            >>> cloned = it.cloned()
+            >>> cloned.collect()
+            Seq(1, 2, 3)
+            >>> it.collect()
+            Seq(1, 2, 3)
 
-        ```
+            ```
         """
         it1, it2 = itertools.tee(self._inner)
         self._inner = it1
@@ -1670,38 +1671,38 @@ class Iter[T](PyoIterator[T]):
             Iter[tuple[Any, ...]]: An iterable of tuples containing elements from the Cartesian product.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter(["blue", "red"]).product(["S", "M"]).collect()
-        Seq(('blue', 'S'), ('blue', 'M'), ('red', 'S'), ('red', 'M'))
-        >>> res = (
-        ...     Iter(["blue", "red"])
-        ...     .product(["S", "M"])
-        ...     .map_star(lambda color, size: f"{color}-{size}")
-        ...     .collect()
-        ... )
-        >>> res
-        Seq('blue-S', 'blue-M', 'red-S', 'red-M')
-        >>> res = (
-        ...     Iter((1, 2, 3))
-        ...     .product([10, 20])
-        ...     .filter_star(lambda a, b: a * b >= 40)
-        ...     .map_star(lambda a, b: a * b)
-        ...     .collect()
-        ... )
-        >>> res
-        Seq(40, 60)
-        >>> res = (
-        ...     Iter([1])
-        ...     .product(["a", "b"], [True])
-        ...     .filter_star(lambda _a, b, _c: b != "a")
-        ...     .map_star(lambda a, b, c: f"{a}{b} is {c}")
-        ...     .collect()
-        ... )
-        >>> res
-        Seq('1b is True',)
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter(["blue", "red"]).product(["S", "M"]).collect()
+            Seq(('blue', 'S'), ('blue', 'M'), ('red', 'S'), ('red', 'M'))
+            >>> res = (
+            ...     Iter(["blue", "red"])
+            ...     .product(["S", "M"])
+            ...     .map_star(lambda color, size: f"{color}-{size}")
+            ...     .collect()
+            ... )
+            >>> res
+            Seq('blue-S', 'blue-M', 'red-S', 'red-M')
+            >>> res = (
+            ...     Iter((1, 2, 3))
+            ...     .product([10, 20])
+            ...     .filter_star(lambda a, b: a * b >= 40)
+            ...     .map_star(lambda a, b: a * b)
+            ...     .collect()
+            ... )
+            >>> res
+            Seq(40, 60)
+            >>> res = (
+            ...     Iter([1])
+            ...     .product(["a", "b"], [True])
+            ...     .filter_star(lambda _a, b, _c: b != "a")
+            ...     .map_star(lambda a, b, c: f"{a}{b} is {c}")
+            ...     .collect()
+            ... )
+            >>> res
+            Seq('1b is True',)
 
-        ```
+            ```
         """
         return Iter(itertools.product(self._inner, *others))
 
@@ -1773,23 +1774,23 @@ class Iter[T](PyoIterator[T]):
             `.map_windows_star()` for a version that unpacks the window into separate arguments.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> import statistics
-        >>> Iter((1, 2, 3, 4)).map_windows(2, statistics.mean).collect()
-        Seq(1.5, 2.5, 3.5)
-        >>> joined = (
-        ...     Iter("abcd")
-        ...     .map_windows(3, lambda window: "".join(window).upper())
-        ...     .collect()
-        ... )
-        >>> joined
-        Seq('ABC', 'BCD')
-        >>> sum_windows = Iter((10, 20, 30, 40, 50)).map_windows(4, sum).collect()
-        >>> sum_windows
-        Seq(100, 140)
+            ```python
+            >>> from pyochain import Iter
+            >>> import statistics
+            >>> Iter((1, 2, 3, 4)).map_windows(2, statistics.mean).collect()
+            Seq(1.5, 2.5, 3.5)
+            >>> joined = (
+            ...     Iter("abcd")
+            ...     .map_windows(3, lambda window: "".join(window).upper())
+            ...     .collect()
+            ... )
+            >>> joined
+            Seq('ABC', 'BCD')
+            >>> sum_windows = Iter((10, 20, 30, 40, 50)).map_windows(4, sum).collect()
+            >>> sum_windows
+            Seq(100, 140)
 
-        ```
+            ```
         """
         return Iter(map(func, tls.SlidingWindow(self._inner, length)))
 
@@ -1851,14 +1852,14 @@ class Iter[T](PyoIterator[T]):
             `.map_windows()` for a version that passes the entire window as a single tuple argument.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter("abcd").map_windows_star(2, lambda x, y: f"{x}+{y}").collect()
-        Seq('a+b', 'b+c', 'c+d')
-        >>> Iter([1, 2, 3, 4]).map_windows_star(2, lambda x, y: x + y).collect()
-        Seq(3, 5, 7)
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter("abcd").map_windows_star(2, lambda x, y: f"{x}+{y}").collect()
+            Seq('a+b', 'b+c', 'c+d')
+            >>> Iter([1, 2, 3, 4]).map_windows_star(2, lambda x, y: x + y).collect()
+            Seq(3, 5, 7)
 
-        ```
+            ```
         """
         return Iter(itertools.starmap(func, tls.SlidingWindow(self._inner, length)))
 
@@ -1876,12 +1877,12 @@ class Iter[T](PyoIterator[T]):
             tuple[Vec[T], Vec[T]]: The resulting pair of collections
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2, 3, 4, 5)).partition(lambda x: x % 2 == 0)
-        (Vec(2, 4), Vec(1, 3, 5))
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3, 4, 5)).partition(lambda x: x % 2 == 0)
+            (Vec(2, 4), Vec(1, 3, 5))
 
-        ```
+            ```
         """
         first, second = tls.partition(self._inner, predicate)
         return Vec.from_ref(first), Vec.from_ref(second)
@@ -1901,12 +1902,12 @@ class Iter[T](PyoIterator[T]):
             Iter[tuple[T, ...]]: An iterable of batched tuples.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter("ABCDEFG").batch(3).collect()
-        Seq(('A', 'B', 'C'), ('D', 'E', 'F'), ('G',))
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter("ABCDEFG").batch(3).collect()
+            Seq(('A', 'B', 'C'), ('D', 'E', 'F'), ('G',))
 
-        ```
+            ```
         """
         return Iter(itertools.batched(self._inner, n, strict=strict))
 
@@ -1928,15 +1929,15 @@ class Iter[T](PyoIterator[T]):
             `Iter.cloned()` to create an independent copy of the iterator.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> peeked, remaining = Iter((1, 2, 3)).peekable(2)
-        >>> peeked
-        Seq(1, 2)
-        >>> remaining.collect()
-        Seq(1, 2, 3)
+            ```python
+            >>> from pyochain import Iter
+            >>> peeked, remaining = Iter((1, 2, 3)).peekable(2)
+            >>> peeked
+            Seq(1, 2)
+            >>> remaining.collect()
+            Seq(1, 2, 3)
 
-        ```
+            ```
         """
         iterator = iter(self)
         peeked = Seq(itertools.islice(iterator, n))
@@ -1959,22 +1960,22 @@ class Iter[T](PyoIterator[T]):
             Iter[tuple[int, T]]: An `Iter` of (index, value) pairs.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> data = ("apple", "banana", "cherry")
-        >>> output = Iter(data).enumerate().collect()
-        >>> output
-        Seq((0, 'apple'), (1, 'banana'), (2, 'cherry'))
-        >>> output = (
-        ...     Iter(data)
-        ...     .enumerate()
-        ...     .map_star(lambda idx, val: (idx, val.upper()))
-        ...     .collect()
-        ... )
-        >>> output
-        Seq((0, 'APPLE'), (1, 'BANANA'), (2, 'CHERRY'))
+            ```python
+            >>> from pyochain import Iter
+            >>> data = ("apple", "banana", "cherry")
+            >>> output = Iter(data).enumerate().collect()
+            >>> output
+            Seq((0, 'apple'), (1, 'banana'), (2, 'cherry'))
+            >>> output = (
+            ...     Iter(data)
+            ...     .enumerate()
+            ...     .map_star(lambda idx, val: (idx, val.upper()))
+            ...     .collect()
+            ... )
+            >>> output
+            Seq((0, 'APPLE'), (1, 'BANANA'), (2, 'CHERRY'))
 
-        ```
+            ```
         """
         return Iter(enumerate(self._inner, start))
 
@@ -1996,12 +1997,12 @@ class Iter[T](PyoIterator[T]):
             Iter[tuple[T, ...]]: An iterable of combinations.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2, 3)).combinations(2).collect()
-        Seq((1, 2), (1, 3), (2, 3))
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3)).combinations(2).collect()
+            Seq((1, 2), (1, 3), (2, 3))
 
-        ```
+            ```
         """
         return Iter(itertools.combinations(self._inner, r))
 
@@ -2023,12 +2024,12 @@ class Iter[T](PyoIterator[T]):
             Iter[tuple[T, ...]]: An iterable of permutations.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2, 3)).permutations(2).collect()
-        Seq((1, 2), (1, 3), (2, 1), (2, 3), (3, 1), (3, 2))
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3)).permutations(2).collect()
+            Seq((1, 2), (1, 3), (2, 1), (2, 3), (3, 1), (3, 2))
 
-        ```
+            ```
         """
         return Iter(itertools.permutations(self._inner, r))
 
@@ -2056,12 +2057,12 @@ class Iter[T](PyoIterator[T]):
             Iter[tuple[T, ...]]: An iterable of combinations with replacement.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2, 3)).combinations_with_replacement(2).collect()
-        Seq((1, 1), (1, 2), (1, 3), (2, 2), (2, 3), (3, 3))
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3)).combinations_with_replacement(2).collect()
+            Seq((1, 1), (1, 2), (1, 3), (2, 2), (2, 3), (3, 3))
 
-        ```
+            ```
         """
         return Iter(itertools.combinations_with_replacement(self._inner, r))
 
@@ -2072,12 +2073,12 @@ class Iter[T](PyoIterator[T]):
             Iter[tuple[T, T]]: An iterable of pairs of consecutive elements.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2, 3)).pairwise().collect()
-        Seq((1, 2), (2, 3))
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3)).pairwise().collect()
+            Seq((1, 2), (2, 3))
 
-        ```
+            ```
         """
         return Iter(itertools.pairwise(self._inner))
 
@@ -2198,45 +2199,45 @@ class Iter[T](PyoIterator[T]):
             Iter[tuple[Any, ...]]: An iterable of tuples containing the results of each function.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> def is_even(n: int) -> bool:
-        ...     return n % 2 == 0
-        >>> def is_positive(n: int) -> bool:
-        ...     return n > 0
-        >>>
-        >>> Iter([1, -2, 3]).map_juxt(is_even, is_positive).collect()
-        Seq((False, True), (True, False), (False, True))
+            ```python
+            >>> from pyochain import Iter
+            >>> def is_even(n: int) -> bool:
+            ...     return n % 2 == 0
+            >>> def is_positive(n: int) -> bool:
+            ...     return n > 0
+            >>>
+            >>> Iter([1, -2, 3]).map_juxt(is_even, is_positive).collect()
+            Seq((False, True), (True, False), (False, True))
 
-        ```
-        If you need to pass additional args and kwargs to the functions, you can use `functools::partial` or create curried functions like this:
-        ```python
-        >>> def curried_add(a: int) -> Callable[[int], int]:
-        ...     def fn(b: int) -> int:
-        ...         return a + b
-        ...
-        ...     return fn
-        >>>
-        >>> Iter((1, 2, 3)).map_juxt(curried_add(10), curried_add(20)).collect()
-        Seq((11, 21), (12, 22), (13, 23))
+            ```
+            If you need to pass additional args and kwargs to the functions, you can use `functools::partial` or create curried functions like this:
+            ```python
+            >>> def curried_add(a: int) -> Callable[[int], int]:
+            ...     def fn(b: int) -> int:
+            ...         return a + b
+            ...
+            ...     return fn
+            >>>
+            >>> Iter((1, 2, 3)).map_juxt(curried_add(10), curried_add(20)).collect()
+            Seq((11, 21), (12, 22), (13, 23))
 
-        ```
-        You can then combine this with various other methods to perform complex transformations in a clean and efficient way, without needing to iterate multiple times or create intermediate collections.
+            ```
+            You can then combine this with various other methods to perform complex transformations in a clean and efficient way, without needing to iterate multiple times or create intermediate collections.
 
-        Example with `filter_star`:
-        ```python
-        >>> from pyochain import Range
-        >>> res = (
-        ...     Range(0, 5)
-        ...     .iter()
-        ...     .map_juxt(lambda x: x * 2, lambda x: x**2)
-        ...     .filter_star(lambda double, square: double + square <= 5)
-        ...     .collect()
-        ... )
-        >>> res
-        Seq((0, 0), (2, 1))
+            Example with `filter_star`:
+            ```python
+            >>> from pyochain import Range
+            >>> res = (
+            ...     Range(0, 5)
+            ...     .iter()
+            ...     .map_juxt(lambda x: x * 2, lambda x: x**2)
+            ...     .filter_star(lambda double, square: double + square <= 5)
+            ...     .collect()
+            ... )
+            >>> res
+            Seq((0, 0), (2, 1))
 
-        ```
+            ```
         """
         return Iter(map(tls.Juxt(*funcs), self._inner))
 
@@ -2249,14 +2250,14 @@ class Iter[T](PyoIterator[T]):
             Iter[tuple[Position, T]]: An iterable of (`Position`, item) tuples.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter(("a", "b", "c")).with_position().collect()
-        Seq(('first', 'a'), ('middle', 'b'), ('last', 'c'))
-        >>> Iter(["a"]).with_position().collect()
-        Seq(('only', 'a'),)
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter(("a", "b", "c")).with_position().collect()
+            Seq(('first', 'a'), ('middle', 'b'), ('last', 'c'))
+            >>> Iter(["a"]).with_position().collect()
+            Seq(('only', 'a'),)
 
-        ```
+            ```
         """
 
         def _gen(data: Iterator[T]) -> Iterator[tuple[Position, T]]:
@@ -2317,58 +2318,70 @@ class Iter[T](PyoIterator[T]):
             When you advance to the next group, the previous group's iterator becomes invalid and will yield empty results.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> from operator import itemgetter
-        >>> # Example 1: Group even and odd numbers
-        >>> (
-        ...     Iter.from_count()  # create an infinite iterator of integers
-        ...     .take(8)  # take the first 8
-        ...     .map(lambda x: (x % 2 == 0, x))  # map to (is_even, value)
-        ...     .sort_by(itemgetter(0))  # sort by is_even
-        ...     .iter()  # Since sort collect to a Vec, we need to convert back to Iter
-        ...     .group_by(itemgetter(0))  # group by is_even
-        ...     # extract values from groups, discarding keys, and materializing them to lists
-        ...     .map_star(lambda g, vals: (g, vals.map_star(lambda _, y: y).into(list)))
-        ...     .collect(dict)  # collect the result
-        ... )
-        {False: [1, 3, 5, 7], True: [0, 2, 4, 6]}
-        >>> # Example 2: Group by a common key, already sorted
-        >>> data = (
-        ...     {"name": "Alice", "gender": "F"},
-        ...     {"name": "Bob", "gender": "M"},
-        ...     {"name": "Charlie", "gender": "M"},
-        ...     {"name": "Dan", "gender": "M"},
-        ... )
-        >>> # group by the gender key, and count the number of people in each group
-        >>> output = (
-        ...     Iter(data)
-        ...     .group_by(lambda x: x["gender"])
-        ...     .map_star(lambda g, vals: (g, vals.length()))
-        ...     .collect()
-        ... )
-        >>> output
-        Seq(('F', 1), ('M', 3))
-        >>> # Example 3: Incorrect usage with LATE materialization:
-        >>> groups = Iter(("a1", "a2", "b1")).group_by(lambda x: x[0]).collect()
-        >>> # Now iterate - TOO LATE! The group iterators are consumed
-        >>> for g in groups:
-        ...     print(g[1].collect())  # ❌ Empty!
-        Seq()
-        Seq()
-        >>> # Example 4: Correct usage with intermediate materialization:
-        >>> groups = (
-        ...     Iter(("a1", "a2", "b1"))
-        ...     .group_by(lambda x: x[0])
-        ...     .map_star(lambda g, vals: (g, vals.collect()))  # ✅ Materialize NOW
-        ...     .collect()
-        ...     .iter()
-        ...     .for_each(lambda x: print(f"{x[0]}: {x[1]}"))
-        ... )
-        a: Seq('a1', 'a2')
-        b: Seq('b1',)
+            `group_by` can let you compute complex operations very easily and efficiently.
 
-        ```
+            For example, if we want to group even and odd numbers, we can do it like this:
+            ```python
+            >>> from pyochain import Iter, Dict
+            >>> from operator import itemgetter
+            >>> # Example 1: Group even and odd numbers
+            >>> (
+            ...     Iter.from_count()  # create an infinite iterator of integers
+            ...     .take(8)  # take the first 8
+            ...     .map(lambda x: (x % 2 == 0, x))  # map to (is_even, value)
+            ...     .sort_by(itemgetter(0))  # sort by is_even
+            ...     .iter()  # Since sort collect to a Vec, we need to convert back to Iter
+            ...     .group_by(itemgetter(0))  # group by is_even
+            ...     # extract values from groups, discarding keys, and materializing them
+            ...     .map_star(lambda g, vals: (g, vals.map_star(lambda _, y: y).collect()))
+            ...     .collect(Dict)
+            ... )
+            Dict(False: Seq(1, 3, 5, 7), True: Seq(0, 2, 4, 6))
+
+            ```
+            If we have a dataset who's items have a common key and who's already sorted by that key, we can easily perform grouped operations on it, like this:
+            ```python
+            >>> from pyochain import Iter
+            >>> data = (
+            ...     {"name": "Alice", "gender": "F"},
+            ...     {"name": "Bob", "gender": "M"},
+            ...     {"name": "Charlie", "gender": "M"},
+            ...     {"name": "Dan", "gender": "M"},
+            ... )
+            >>> # group by the gender key, and count the number of people in each group
+            >>> output = (
+            ...     Iter(data)
+            ...     .group_by(lambda x: x["gender"])
+            ...     .map_star(lambda g, vals: (g, vals.length()))
+            ...     .collect()
+            ... )
+            >>> output
+            Seq(('F', 1), ('M', 3))
+
+            ```
+            However, you must be careful to materialize the group values immediately when iterating over groups, see below how the values of the groups are empty::
+            ```python
+            >>> from pyochain import Iter
+            >>> groups = Iter(("a1", "a2", "b1")).group_by(lambda x: x[0]).collect().iter().map_star(lambda g, vals: (g, vals.collect())).collect()
+            >>> groups
+            Seq(('a', Seq()), ('b', Seq()))
+
+            ```
+            As such, the correct pattern is the following:
+            ```python
+            >>> from pyochain import Iter
+            >>> groups = (
+            ...     Iter(("a1", "a2", "b1", "b2"))
+            ...     .group_by(lambda x: x[0])
+            ...     .map_star(lambda g, vals: (g, vals.collect()))  # ✅ Materialize NOW
+            ...     .collect()
+            ...     .iter()
+            ...     .collect()
+            ... )
+            >>> groups
+            Seq(('a', Seq('a1', 'a2')), ('b', Seq('b1', 'b2')))
+
+            ```
         """
         new = self.__class__
         return Iter((x, new(y)) for x, y in itertools.groupby(self._inner, key))
@@ -2383,12 +2396,12 @@ class Iter[T](PyoIterator[T]):
             Self: An `Iterator` of the items taken while the predicate is true.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2, 0)).take_while(lambda x: x > 0).collect()
-        Seq(1, 2)
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 0)).take_while(lambda x: x > 0).collect()
+            Seq(1, 2)
 
-        ```
+            ```
         """
         return self.__class__(itertools.takewhile(predicate, self._inner))
 
@@ -2402,12 +2415,12 @@ class Iter[T](PyoIterator[T]):
             Self: An `Iterator` of the items after skipping those for which the predicate is true.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2, 0)).skip_while(lambda x: x > 0).collect()
-        Seq(0,)
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 0)).skip_while(lambda x: x > 0).collect()
+            Seq(0,)
 
-        ```
+            ```
         """
         return self.__class__(itertools.dropwhile(predicate, self._inner))
 
@@ -2421,12 +2434,12 @@ class Iter[T](PyoIterator[T]):
             Self: An `Iterator` of the items selected by the boolean selectors.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter("ABCDEF").compress(1, 0, 1, 0, 1, 1).collect()
-        Seq('A', 'C', 'E', 'F')
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter("ABCDEF").compress(1, 0, 1, 0, 1, 1).collect()
+            Seq('A', 'C', 'E', 'F')
 
-        ```
+            ```
         """
         return self.__class__(itertools.compress(self._inner, selectors))
 
@@ -2437,14 +2450,14 @@ class Iter[T](PyoIterator[T]):
             Self: An `Iterator` of the unique items.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2, 3)).unique().collect()
-        Seq(1, 2, 3)
-        >>> Iter([1, 2, 1, 3]).unique().collect()
-        Seq(1, 2, 3)
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3)).unique().collect()
+            Seq(1, 2, 3)
+            >>> Iter([1, 2, 1, 3]).unique().collect()
+            Seq(1, 2, 3)
 
-        ```
+            ```
         """
         return self.__class__(tls.UniqueIdentity(self._inner))
 
@@ -2458,12 +2471,12 @@ class Iter[T](PyoIterator[T]):
             Self: An `Iterator` of the unique items.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter(["cat", "mouse", "dog", "hen"]).unique_by(key=len).collect()
-        Seq('cat', 'mouse')
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter(["cat", "mouse", "dog", "hen"]).unique_by(key=len).collect()
+            Seq('cat', 'mouse')
 
-        ```
+            ```
         """
         return self.__class__(tls.UniqueKey(self._inner, key=key))
 
@@ -2484,15 +2497,15 @@ class Iter[T](PyoIterator[T]):
             Self: An `Iterator` of the first n items.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> data = (1, 2, 3)
-        >>> Iter(data).take(2).collect()
-        Seq(1, 2)
-        >>> Iter(data).take(5).collect()
-        Seq(1, 2, 3)
+            ```python
+            >>> from pyochain import Iter
+            >>> data = (1, 2, 3)
+            >>> Iter(data).take(2).collect()
+            Seq(1, 2)
+            >>> Iter(data).take(5).collect()
+            Seq(1, 2, 3)
 
-        ```
+            ```
         """
         return self.__class__(itertools.islice(self._inner, n))
 
@@ -2514,16 +2527,16 @@ class Iter[T](PyoIterator[T]):
             Self: An `Iterator` of the remaining elements.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2, 3)).skip(1).collect()
-        Seq(2, 3)
-        >>> Iter((1, 2, 3)).skip(5).collect()
-        Seq()
-        >>> Iter((1, 2, 3)).skip(0).collect()
-        Seq(1, 2, 3)
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3)).skip(1).collect()
+            Seq(2, 3)
+            >>> Iter((1, 2, 3)).skip(5).collect()
+            Seq()
+            >>> Iter((1, 2, 3)).skip(0).collect()
+            Seq(1, 2, 3)
 
-        ```
+            ```
         """
         return self.__class__(itertools.islice(self._inner, n, None))
 
@@ -2540,12 +2553,12 @@ class Iter[T](PyoIterator[T]):
             Self: An `Iterator` of every nth item.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter([0, 1, 2, 3, 4, 5]).step_by(2).collect()
-        Seq(0, 2, 4)
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter([0, 1, 2, 3, 4, 5]).step_by(2).collect()
+            Seq(0, 2, 4)
 
-        ```
+            ```
         """
         return self.__class__(itertools.islice(self._inner, 0, None, step))
 
@@ -2566,15 +2579,15 @@ class Iter[T](PyoIterator[T]):
             Self: An `Iterator` of the sliced items.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> data = (1, 2, 3, 4, 5)
-        >>> Iter(data).slice(1, 4).collect()
-        Seq(2, 3, 4)
-        >>> Iter(data).slice(step=2).collect()
-        Seq(1, 3, 5)
+            ```python
+            >>> from pyochain import Iter
+            >>> data = (1, 2, 3, 4, 5)
+            >>> Iter(data).slice(1, 4).collect()
+            Seq(2, 3, 4)
+            >>> Iter(data).slice(step=2).collect()
+            Seq(1, 3, 5)
 
-        ```
+            ```
         """
         return self.__class__(itertools.islice(self._inner, start, stop, step))
 
@@ -2593,12 +2606,12 @@ class Iter[T](PyoIterator[T]):
             Self: A new `Iterator` that cycles through the elements indefinitely.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2)).cycle().take(5).collect()
-        Seq(1, 2, 1, 2, 1)
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2)).cycle().take(5).collect()
+            Seq(1, 2, 1, 2, 1)
 
-        ```
+            ```
         """
         return self.__class__(itertools.cycle(self._inner))
 
@@ -2619,12 +2632,12 @@ class Iter[T](PyoIterator[T]):
             Self: A new Iterable wrapper with the value prepended.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((2, 3)).insert(1).collect()
-        Seq(1, 2, 3)
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((2, 3)).insert(1).collect()
+            Seq(1, 2, 3)
 
-        ```
+            ```
         """
         return self.__class__(itertools.chain((value,), self._inner))
 
@@ -2638,19 +2651,19 @@ class Iter[T](PyoIterator[T]):
             Self: A new `Iterator` with the element interposed.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> # Simple example with numbers
-        >>> Iter((1, 2, 3)).intersperse(0).collect()
-        Seq(1, 0, 2, 0, 3)
-        >>> # Useful when chaining with other operations
-        >>> Iter([10, 20, 30]).intersperse(5).sum()
-        70
-        >>> # Inserting separators between groups, then flattening
-        >>> Iter(((1, 2), (3, 4), (5, 6))).intersperse([-1]).flatten().collect()
-        Seq(1, 2, -1, 3, 4, -1, 5, 6)
+            ```python
+            >>> from pyochain import Iter
+            >>> # Simple example with numbers
+            >>> Iter((1, 2, 3)).intersperse(0).collect()
+            Seq(1, 0, 2, 0, 3)
+            >>> # Useful when chaining with other operations
+            >>> Iter([10, 20, 30]).intersperse(5).sum()
+            70
+            >>> # Inserting separators between groups, then flattening
+            >>> Iter(((1, 2), (3, 4), (5, 6))).intersperse([-1]).flatten().collect()
+            Seq(1, 2, -1, 3, 4, -1, 5, 6)
 
-        ```
+            ```
         """
         return self.__class__(tls.Intersperse(self._inner, element))
 
@@ -2673,14 +2686,14 @@ class Iter[T](PyoIterator[T]):
             Self: A new `Iterator` which will first iterate over values from the original `Iterator` and then over values from the **others** `Iterable`s.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2)).chain((3, 4), [5]).collect()
-        Seq(1, 2, 3, 4, 5)
-        >>> Iter((1, 2)).chain(Iter.from_count(3)).take(5).collect()
-        Seq(1, 2, 3, 4, 5)
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2)).chain((3, 4), [5]).collect()
+            Seq(1, 2, 3, 4, 5)
+            >>> Iter((1, 2)).chain(Iter.from_count(3)).take(5).collect()
+            Seq(1, 2, 3, 4, 5)
 
-        ```
+            ```
         """
         return self.__class__(itertools.chain.from_iterable((self._inner, *others)))
 
@@ -2701,16 +2714,16 @@ class Iter[T](PyoIterator[T]):
             Self: A new `Iterator` with accumulated results.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2, 3)).accumulate(lambda a, b: a + b, 0).collect()
-        Seq(0, 1, 3, 6)
-        >>> # The final accumulated result is the same as fold:
-        >>> Iter((1, 2, 3)).fold(0, lambda a, b: a + b)
-        6
-        >>> Iter((1, 2, 3)).accumulate(lambda a, b: a * b).collect()
-        Seq(1, 2, 6)
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3)).accumulate(lambda a, b: a + b, 0).collect()
+            Seq(0, 1, 3, 6)
+            >>> # The final accumulated result is the same as fold:
+            >>> Iter((1, 2, 3)).fold(0, lambda a, b: a + b)
+            6
+            >>> Iter((1, 2, 3)).accumulate(lambda a, b: a * b).collect()
+            Seq(1, 2, 6)
 
-        ```
+            ```
         """
         return self.__class__(itertools.accumulate(self._inner, func, initial=initial))

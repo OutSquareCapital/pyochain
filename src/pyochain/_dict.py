@@ -16,9 +16,6 @@ class Dict[K, V](PyoMutableMapping[K, V]):
 
     Implement the `MutableMapping` interface, so all standard dictionary operations are supported.
 
-    Tip:
-        Prefer using `Dict::from_ref` when wrapping existing dictionaries to avoid unnecessary copying.
-
     Args:
         data (DictConvertible[K, V]): Initial data for the Dict that can converted to a dictionary.
 

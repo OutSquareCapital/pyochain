@@ -80,27 +80,27 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
     Since it's very straightforward to implement, it can very easily be integrated into business logic classes to provide them with a rich set of methods for free.
 
     Example:
-    ```python
-    >>> from pyochain.abc import PyoIterable
-    >>> from dataclasses import dataclass
-    >>> @dataclass(slots=True)
-    ... class ClientRegistry(PyoIterable[str]):
-    ...     clients: list[str]
-    ...
-    ...     def __iter__(self):
-    ...         return iter(self.clients)
-    >>>
-    >>> registry = ClientRegistry(["Alice", "Bob", "Charlie"])
-    >>> registry.all(lambda name: name.startswith("A"))
-    False
-    >>> registry.join(", ")
-    'Alice, Bob, Charlie'
-    >>> registry.iter().map(str.lower).join(", ")
-    'alice, bob, charlie'
-    >>> registry.ok_or("Registry is empty").map(lambda s: s.join(", "))
-    Ok('Alice, Bob, Charlie')
+        ```python
+        >>> from pyochain.abc import PyoIterable
+        >>> from dataclasses import dataclass
+        >>> @dataclass(slots=True)
+        ... class ClientRegistry(PyoIterable[str]):
+        ...     clients: list[str]
+        ...
+        ...     def __iter__(self):
+        ...         return iter(self.clients)
+        >>>
+        >>> registry = ClientRegistry(["Alice", "Bob", "Charlie"])
+        >>> registry.all(lambda name: name.startswith("A"))
+        False
+        >>> registry.join(", ")
+        'Alice, Bob, Charlie'
+        >>> registry.iter().map(str.lower).join(", ")
+        'alice, bob, charlie'
+        >>> registry.ok_or("Registry is empty").map(lambda s: s.join(", "))
+        Ok('Alice, Bob, Charlie')
 
-    ```
+        ```
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
@@ -117,17 +117,17 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             Iter[T]: An `Iterator` over the `Iterable`. The element type is inferred from the actual subclass.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> seq = Seq((1, 2, 3))
-        >>> iterator = seq.iter()
-        >>> iterator.collect()
-        Seq(1, 2, 3)
-        >>> # iterator is now empty
-        >>> iterator.collect()
-        Seq()
+            ```python
+            >>> from pyochain import Seq
+            >>> seq = Seq((1, 2, 3))
+            >>> iterator = seq.iter()
+            >>> iterator.collect()
+            Seq(1, 2, 3)
+            >>> # iterator is now empty
+            >>> iterator.collect()
+            Seq()
 
-        ```
+            ```
         """
         from .._iter import Iter
 
@@ -159,19 +159,19 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             R: The result of calling *func* with the unpacked elements of the `Iterable` and any additional arguments.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
+            ```python
+            >>> from pyochain import Seq
 
-        >>> data = Seq((1, 2, 3))
-        >>> def foo(*a: int, x: str) -> str:
-        ...     return x + str(sum(a))
-        >>> data.unpack_into(foo, x="Result: ")
-        'Result: 6'
-        >>> # The example below will work, but is not type safe, as the unpacked elements are passed as explicit positional arguments.
-        >>> data.unpack_into(lambda a, b, c: a + b + c)
-        6
+            >>> data = Seq((1, 2, 3))
+            >>> def foo(*a: int, x: str) -> str:
+            ...     return x + str(sum(a))
+            >>> data.unpack_into(foo, x="Result: ")
+            'Result: 6'
+            >>> # The example below will work, but is not type safe, as the unpacked elements are passed as explicit positional arguments.
+            >>> data.unpack_into(lambda a, b, c: a + b + c)
+            6
 
-        ```
+            ```
         """
         return func(*self, *args, **kwargs)
 
@@ -185,12 +185,12 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             str: The joined string.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> Seq(("a", "b", "c")).join("-")
-        'a-b-c'
+            ```python
+            >>> from pyochain import Seq
+            >>> Seq(("a", "b", "c")).join("-")
+            'a-b-c'
 
-        ```
+            ```
         """
         return sep.join(iter(self))
 
@@ -207,21 +207,21 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             T: The first element of the `Iterable`.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> data = Seq((1, 2))
-        >>> data.first()
-        1
-        >>> iterator = data.iter()
-        >>> iterator.first()
-        1
-        >>> iterator.first()
-        2
-        >>> # iterator is now empty, using first again would raise an error
-        >>> iterator.next()
-        NONE
+            ```python
+            >>> from pyochain import Seq
+            >>> data = Seq((1, 2))
+            >>> data.first()
+            1
+            >>> iterator = data.iter()
+            >>> iterator.first()
+            1
+            >>> iterator.first()
+            2
+            >>> # iterator is now empty, using first again would raise an error
+            >>> iterator.next()
+            NONE
 
-        ```
+            ```
         """
         return next(iter(self))
 
@@ -234,12 +234,12 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             T: The second element of the `Iterable`.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> Seq((9, 8)).second()
-        8
+            ```python
+            >>> from pyochain import Seq
+            >>> Seq((9, 8)).second()
+            8
 
-        ```
+            ```
         """
         seq = iter(self)
         _ = next(seq)
@@ -254,12 +254,12 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             T: The last element of the `Iterable`.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> Seq((7, 8, 9)).last()
-        9
+            ```python
+            >>> from pyochain import Seq
+            >>> Seq((7, 8, 9)).last()
+            9
 
-        ```
+            ```
         """
         return tls.last(iter(self))
 
@@ -274,20 +274,20 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             int: The count of elements.
 
         Example:
-        ```python
-        >>> from pyochain import Seq, Range, Iter
-        >>> Seq((1, 2)).length()
-        2
-        >>> Range(0, 5).length()
-        5
-        >>> data = Iter((1, 2, 3))
-        >>> data.length()
-        3
-        >>> # data is now empty
-        >>> data.length()
-        0
+            ```python
+            >>> from pyochain import Seq, Range, Iter
+            >>> Seq((1, 2)).length()
+            2
+            >>> Range(0, 5).length()
+            5
+            >>> data = Iter((1, 2, 3))
+            >>> data.length()
+            3
+            >>> # data is now empty
+            >>> data.length()
+            0
 
-        ```
+            ```
         """
         return tls.length(iter(self))
 
@@ -300,12 +300,12 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             int: The sum of all elements.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> Seq((1, 2, 3)).sum()
-        6
+            ```python
+            >>> from pyochain import Seq
+            >>> Seq((1, 2, 3)).sum()
+            6
 
-        ```
+            ```
         """
         return sum(iter(self))
 
@@ -322,12 +322,12 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             U: The minimum value.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> Seq((3, 1, 2)).min()
-        1
+            ```python
+            >>> from pyochain import Seq
+            >>> Seq((3, 1, 2)).min()
+            1
 
-        ```
+            ```
         """
         return min(iter(self))
 
@@ -343,20 +343,20 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             T: The element with the minimum key value.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> from dataclasses import dataclass
-        >>> @dataclass
-        ... class Foo:
-        ...     x: int
-        ...     y: str
-        >>>
-        >>> Seq((Foo(2, "a"), Foo(1, "b"), Foo(4, "c"))).min_by(key=lambda f: f.x)
-        Foo(x=1, y='b')
-        >>> Seq((Foo(2, "a"), Foo(1, "b"), Foo(1, "c"))).min_by(key=lambda f: f.x)
-        Foo(x=1, y='b')
+            ```python
+            >>> from pyochain import Seq
+            >>> from dataclasses import dataclass
+            >>> @dataclass
+            ... class Foo:
+            ...     x: int
+            ...     y: str
+            >>>
+            >>> Seq((Foo(2, "a"), Foo(1, "b"), Foo(4, "c"))).min_by(key=lambda f: f.x)
+            Foo(x=1, y='b')
+            >>> Seq((Foo(2, "a"), Foo(1, "b"), Foo(1, "c"))).min_by(key=lambda f: f.x)
+            Foo(x=1, y='b')
 
-        ```
+            ```
         """
         return min(iter(self), key=key)
 
@@ -373,12 +373,12 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             U: The maximum value.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> Seq((3, 1, 2)).max()
-        3
+            ```python
+            >>> from pyochain import Seq
+            >>> Seq((3, 1, 2)).max()
+            3
 
-        ```
+            ```
         """
         return max(iter(self))
 
@@ -394,20 +394,20 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             T: The element with the maximum key value.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> from dataclasses import dataclass
-        >>> @dataclass
-        ... class Foo:
-        ...     x: int
-        ...     y: str
-        >>>
-        >>> Seq((Foo(2, "a"), Foo(3, "b"), Foo(4, "c"))).max_by(key=lambda f: f.x)
-        Foo(x=4, y='c')
-        >>> Seq((Foo(2, "a"), Foo(3, "b"), Foo(3, "c"))).max_by(key=lambda f: f.x)
-        Foo(x=3, y='b')
+            ```python
+            >>> from pyochain import Seq
+            >>> from dataclasses import dataclass
+            >>> @dataclass
+            ... class Foo:
+            ...     x: int
+            ...     y: str
+            >>>
+            >>> Seq((Foo(2, "a"), Foo(3, "b"), Foo(4, "c"))).max_by(key=lambda f: f.x)
+            Foo(x=4, y='c')
+            >>> Seq((Foo(2, "a"), Foo(3, "b"), Foo(3, "c"))).max_by(key=lambda f: f.x)
+            Foo(x=3, y='b')
 
-        ```
+            ```
         """
         return max(iter(self), key=key)
 
@@ -429,20 +429,20 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             bool: True if all elements match the predicate, False otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> Seq((1, True)).all()
-        True
-        >>> Seq(()).all()
-        True
-        >>> Seq((1, 0)).all()
-        False
-        >>> def is_even(x: int) -> bool:
-        ...     return x % 2 == 0
-        >>> Seq((2, 4, 6)).all(is_even)
-        True
+            ```python
+            >>> from pyochain import Seq
+            >>> Seq((1, True)).all()
+            True
+            >>> Seq(()).all()
+            True
+            >>> Seq((1, 0)).all()
+            False
+            >>> def is_even(x: int) -> bool:
+            ...     return x % 2 == 0
+            >>> Seq((2, 4, 6)).all(is_even)
+            True
 
-        ```
+            ```
         """
         if predicate is None:
             return all(iter(self))
@@ -465,18 +465,18 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             bool: True if any element matches the predicate, False otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Seq, Range
-        >>> Seq((0, 1)).any()
-        True
-        >>> Range(0, 0).any()
-        False
-        >>> def is_even(x: int) -> bool:
-        ...     return x % 2 == 0
-        >>> Seq((1, 3, 4)).any(is_even)
-        True
+            ```python
+            >>> from pyochain import Seq, Range
+            >>> Seq((0, 1)).any()
+            True
+            >>> Range(0, 0).any()
+            False
+            >>> def is_even(x: int) -> bool:
+            ...     return x % 2 == 0
+            >>> Seq((1, 3, 4)).any(is_even)
+            True
 
-        ```
+            ```
         """
         if predicate is None:
             return any(iter(self))
@@ -499,19 +499,19 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             bool: `True` if all elements are unique, `False` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Iter, Dict
-        >>> Iter("ABCB").all_unique()
-        False
-        >>> Iter("ABCb").all_unique()
-        True
-        >>> data = Dict.from_ref({1: "a", 2: "a"})
-        >>> data.all_unique()
-        True
-        >>> data.values().all_unique()
-        False
+            ```python
+            >>> from pyochain import Iter, Dict
+            >>> Iter("ABCB").all_unique()
+            False
+            >>> Iter("ABCb").all_unique()
+            True
+            >>> data = Dict.from_ref({1: "a", 2: "a"})
+            >>> data.all_unique()
+            True
+            >>> data.values().all_unique()
+            False
 
-        ```
+            ```
         """
         return tls.all_unique(iter(self))
 
@@ -529,14 +529,14 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             bool: `True` if all elements are unique, `False` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter("ABCb").all_unique()
-        True
-        >>> Iter("ABCb").all_unique_by(str.lower)
-        False
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter("ABCb").all_unique()
+            True
+            >>> Iter("ABCb").all_unique_by(str.lower)
+            False
 
-        ```
+            ```
         """
         return tls.all_unique_by(iter(self), key)
 
@@ -575,15 +575,15 @@ class PyoCollection[T](PyoIterable[T], Collection[T], ABC):
             bool: True if the value exists in the Collection, False otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Dict
-        >>> data = Dict.from_ref({1: "a", 2: "b"})
-        >>> data.contains(1)
-        True
-        >>> data.contains(3)
-        False
+            ```python
+            >>> from pyochain import Dict
+            >>> data = Dict.from_ref({1: "a", 2: "b"})
+            >>> data.contains(1)
+            True
+            >>> data.contains(3)
+            False
 
-        ```
+            ```
         """
         return value in self
 
@@ -607,16 +607,16 @@ class PyoCollection[T](PyoIterable[T], Collection[T], ABC):
             Iter[Self]: An `Iter` of repeated `Iter`.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> Seq((1, 2)).repeat(3).collect()
-        Seq(Seq(1, 2), Seq(1, 2), Seq(1, 2))
-        >>> Seq(("a", "b")).repeat(2).collect()
-        Seq(Seq('a', 'b'), Seq('a', 'b'))
-        >>> Seq([0]).repeat().flatten().take(5).collect()
-        Seq(0, 0, 0, 0, 0)
+            ```python
+            >>> from pyochain import Seq
+            >>> Seq((1, 2)).repeat(3).collect()
+            Seq(Seq(1, 2), Seq(1, 2), Seq(1, 2))
+            >>> Seq(("a", "b")).repeat(2).collect()
+            Seq(Seq('a', 'b'), Seq('a', 'b'))
+            >>> Seq([0]).repeat().flatten().take(5).collect()
+            Seq(0, 0, 0, 0, 0)
 
-        ```
+            ```
         """
         from .._iter import Iter
 
@@ -631,17 +631,17 @@ class PyoCollection[T](PyoIterable[T], Collection[T], ABC):
             bool: `True` if the `Collection` is empty, `False` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Dict
-        >>> d = Dict(())
-        >>> d.is_empty()
-        True
-        >>> d.insert(1, "a")
-        NONE
-        >>> d.is_empty()
-        False
+            ```python
+            >>> from pyochain import Dict
+            >>> d = Dict(())
+            >>> d.is_empty()
+            True
+            >>> d.insert(1, "a")
+            NONE
+            >>> d.is_empty()
+            False
 
-        ```
+            ```
         """
         return len(self) == 0
 
@@ -668,14 +668,14 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             Option[T]: `Some(item)` at the specified *n*.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter([10, 20]).nth(1)
-        Some(20)
-        >>> Iter([10, 20]).nth(3)
-        NONE
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter([10, 20]).nth(1)
+            Some(20)
+            >>> Iter([10, 20]).nth(3)
+            NONE
 
-        ```
+            ```
         """
         try:
             return Some(next(itertools.islice(iter(self), n, n + 1)))
@@ -703,18 +703,18 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             bool: `True` when both iterables yield the same sequence of values.
 
         Example:
-        ```python
-        >>> from pyochain import Iter, Seq
-        >>> Iter((1, 2, 3)).eq(Seq((1, 2, 3)))
-        True
-        >>> Iter((1, 2, 3)).eq((1, 2, 4))
-        False
-        >>> Iter((1, 2, 3)).eq((1, 2))
-        False
-        >>> Iter((1, 2)).eq((1, 2, 3))
-        False
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> Iter((1, 2, 3)).eq(Seq((1, 2, 3)))
+            True
+            >>> Iter((1, 2, 3)).eq((1, 2, 4))
+            False
+            >>> Iter((1, 2, 3)).eq((1, 2))
+            False
+            >>> Iter((1, 2)).eq((1, 2, 3))
+            False
 
-        ```
+            ```
         """
         return tls.eq(iter(self), other)
 
@@ -739,16 +739,16 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             bool: `True` when the two iterables are not equal.
 
         Example:
-        ```python
-        >>> from pyochain import Iter, Seq
-        >>> Iter((1, 2, 3)).ne(Seq((1, 2, 3)))
-        False
-        >>> Iter((1, 2, 3)).ne((1, 2, 4))
-        True
-        >>> Iter((1, 2, 3)).ne((1, 2))
-        True
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> Iter((1, 2, 3)).ne(Seq((1, 2, 3)))
+            False
+            >>> Iter((1, 2, 3)).ne((1, 2, 4))
+            True
+            >>> Iter((1, 2, 3)).ne((1, 2))
+            True
 
-        ```
+            ```
         """
         return tls.ne(iter(self), other)
 
@@ -772,16 +772,16 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             bool: `True` if **self** is smaller than *other*, or equal to it.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2)).le((1, 2, 3))
-        True
-        >>> Iter((1, 2, 3)).le((1, 2, 3))
-        True
-        >>> Iter((1, 3)).le((1, 2, 9))
-        False
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2)).le((1, 2, 3))
+            True
+            >>> Iter((1, 2, 3)).le((1, 2, 3))
+            True
+            >>> Iter((1, 3)).le((1, 2, 9))
+            False
 
-        ```
+            ```
         """
         return tls.le(iter(self), other)
 
@@ -803,16 +803,16 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             bool: `True` if **self** compares strictly before *other*.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2)).lt((1, 2, 3))
-        True
-        >>> Iter((1, 2, 3)).lt((1, 2, 3))
-        False
-        >>> Iter((1, 2, 3)).lt((1, 3))
-        True
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2)).lt((1, 2, 3))
+            True
+            >>> Iter((1, 2, 3)).lt((1, 2, 3))
+            False
+            >>> Iter((1, 2, 3)).lt((1, 3))
+            True
 
-        ```
+            ```
         """
         return tls.lt(iter(self), other)
 
@@ -834,16 +834,16 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             bool: `True` if **self** compares strictly after *other*.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2, 3)).gt((1, 2))
-        True
-        >>> Iter((1, 3)).gt((1, 2, 9))
-        True
-        >>> Iter((1, 2)).gt((1, 2, 3))
-        False
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3)).gt((1, 2))
+            True
+            >>> Iter((1, 3)).gt((1, 2, 9))
+            True
+            >>> Iter((1, 2)).gt((1, 2, 3))
+            False
 
-        ```
+            ```
         """
         return tls.gt(iter(self), other)
 
@@ -868,40 +868,39 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             bool: `True` if **self** is greater than *other*, or equal to it.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2, 3)).ge((1, 2))
-        True
-        >>> Iter((1, 2, 3)).ge((1, 2, 3))
-        True
-        >>> Iter((1, 2)).ge((1, 2, 3))
-        False
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3)).ge((1, 2))
+            True
+            >>> Iter((1, 2, 3)).ge((1, 2, 3))
+            True
+            >>> Iter((1, 2)).ge((1, 2, 3))
+            False
 
-        ```
+            ```
         """
         return tls.ge(iter(self), other)
 
     def next(self) -> Option[T]:
         """Return the next element in the `Iterator`.
 
-        Note:
-            The actual `.__next__()` method must be conform to the Python `Iterator` Protocol, and is what will be actually called if you iterate over the `PyoIterator` instance.
+        The actual `__next__()` method must be conform to the Python `Iterator` Protocol, and is what will be actually called if you iterate over the `PyoIterator` instance.
 
-            `PyoIterator.next()` is a convenience method that wraps the result in an `Option` to handle exhaustion gracefully, for custom use cases.
+        `PyoIterator::next` is a convenience method that wraps the result in an `Option` to handle exhaustion gracefully, for custom use cases.
 
         Returns:
             Option[T]: The next element in the iterator. `Some[T]`, or `NONE` if the iterator is exhausted.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> it = Seq((1, 2, 3)).iter()
-        >>> it.next().unwrap()
-        1
-        >>> it.next().unwrap()
-        2
+            ```python
+            >>> from pyochain import Seq
+            >>> it = Seq((1, 2, 3)).iter()
+            >>> it.next().unwrap()
+            1
+            >>> it.next().unwrap()
+            2
 
-        ```
+            ```
         """
         return option(next(self, None))
 
@@ -921,12 +920,12 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             T: Single value resulting from cumulative reduction.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2, 3)).reduce(lambda a, b: a + b)
-        6
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3)).reduce(lambda a, b: a + b)
+            6
 
-        ```
+            ```
         """
         return functools.reduce(func, self)
 
@@ -942,21 +941,20 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             B: The final accumulated value.
 
         Note:
-            This is similar to `reduce()` but with an initial value, making it equivalent to
-            Python `functools.reduce()` with an initializer.
+            This is similar to `reduce()` but with an initial value.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> data = (1, 2, 3)
-        >>> Iter(data).fold(0, lambda acc, x: acc + x)
-        6
-        >>> Iter(data).fold(10, lambda acc, x: acc + x)
-        16
-        >>> Iter(("a", "b", "c")).fold("", lambda acc, x: acc + x)
-        'abc'
+            ```python
+            >>> from pyochain import Iter
+            >>> data = (1, 2, 3)
+            >>> Iter(data).fold(0, lambda acc, x: acc + x)
+            6
+            >>> Iter(data).fold(10, lambda acc, x: acc + x)
+            16
+            >>> Iter(("a", "b", "c")).fold("", lambda acc, x: acc + x)
+            'abc'
 
-        ```
+            ```
         """
         return functools.reduce(func, self, init)
 
@@ -1064,16 +1062,16 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             This is similar to `Iter::reduce` but with an initial value.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> data = ((1, 2), (3, 4))
-        >>> Iter(data).fold_star(0, lambda acc, x, y: acc + x + y)
-        10
-        >>> data = (("a", "b"), ("c", "d"))
-        >>> Iter(data).fold_star("", lambda acc, x, y: acc + x + y)
-        'abcd'
+            ```python
+            >>> from pyochain import Iter
+            >>> data = ((1, 2), (3, 4))
+            >>> Iter(data).fold_star(0, lambda acc, x, y: acc + x + y)
+            10
+            >>> data = (("a", "b"), ("c", "d"))
+            >>> Iter(data).fold_star("", lambda acc, x, y: acc + x + y)
+            'abcd'
 
-        ```
+            ```
         """
 
         def _reducer(acc: B, item: U) -> B:
@@ -1093,20 +1091,20 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             Option[T]: The first element satisfying the predicate. `Some(value)` if found, `NONE` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Iter, Range
-        >>> def gt_five(x: int) -> bool:
-        ...     return x > 5
-        >>>
-        >>> def gt_nine(x: int) -> bool:
-        ...     return x > 9
-        >>> data = Range(0, 10)
-        >>> data.iter().find(predicate=gt_five)
-        Some(6)
-        >>> data.iter().find(predicate=gt_nine).unwrap_or("missing")
-        'missing'
+            ```python
+            >>> from pyochain import Iter, Range
+            >>> def gt_five(x: int) -> bool:
+            ...     return x > 5
+            >>>
+            >>> def gt_nine(x: int) -> bool:
+            ...     return x > 9
+            >>> data = Range(0, 10)
+            >>> data.iter().find(predicate=gt_five)
+            Some(6)
+            >>> data.iter().find(predicate=gt_nine).unwrap_or("missing")
+            'missing'
 
-        ```
+            ```
         """
         return option(next(filter(predicate, self), None))
 
@@ -1124,15 +1122,15 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             Result[Option[T], E]: The first matching element, or the first error.
 
         Example:
-        ```python
-        >>> from pyochain import Ok, Result, Err, Range
-        >>> def is_even(x: int) -> Result[bool, str]:
-        ...     return Ok(x % 2 == 0) if x >= 0 else Err("negative number")
-        >>>
-        >>> Range(1, 6).iter().try_find(is_even)
-        Ok(Some(2))
+            ```python
+            >>> from pyochain import Ok, Result, Err, Range
+            >>> def is_even(x: int) -> Result[bool, str]:
+            ...     return Ok(x % 2 == 0) if x >= 0 else Err("negative number")
+            >>>
+            >>> Range(1, 6).iter().try_find(is_even)
+            Ok(Some(2))
 
-        ```
+            ```
         """
         return tls.try_find(iter(self), predicate)
 
@@ -1153,22 +1151,22 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             Result[B, E]: Final accumulator or the first error.
 
         Example:
-        ```python
-        >>> from pyochain import Iter, Ok, Err, Result
-        >>> def checked_add(acc: int, x: int) -> Result[int, str]:
-        ...     new_val = acc + x
-        ...     if new_val > 100:
-        ...         return Err("overflow")
-        ...     return Ok(new_val)
-        >>>
-        >>> Iter((1, 2, 3)).try_fold(0, checked_add)
-        Ok(6)
-        >>> Iter([50, 40, 20]).try_fold(0, checked_add)
-        Err('overflow')
-        >>> Iter([]).try_fold(0, checked_add)
-        Ok(0)
+            ```python
+            >>> from pyochain import Iter, Ok, Err, Result
+            >>> def checked_add(acc: int, x: int) -> Result[int, str]:
+            ...     new_val = acc + x
+            ...     if new_val > 100:
+            ...         return Err("overflow")
+            ...     return Ok(new_val)
+            >>>
+            >>> Iter((1, 2, 3)).try_fold(0, checked_add)
+            Ok(6)
+            >>> Iter([50, 40, 20]).try_fold(0, checked_add)
+            Err('overflow')
+            >>> Iter(()).try_fold(0, checked_add)
+            Ok(0)
 
-        ```
+            ```
         """
         return tls.try_fold(iter(self), init, func)
 
@@ -1186,21 +1184,21 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             Result[Option[T], E]: Final accumulated value or the first error. Returns `Ok(NONE)` for empty iterable.
 
         Example:
-        ```python
-        >>> from pyochain import Iter, Ok, Err, Result
-        >>> def checked_add(x: int, y: int) -> Result[int, str]:
-        ...     if x + y > 100:
-        ...         return Err("overflow")
-        ...     return Ok(x + y)
-        >>>
-        >>> Iter((1, 2, 3)).try_reduce(checked_add)
-        Ok(Some(6))
-        >>> Iter([50, 60]).try_reduce(checked_add)
-        Err('overflow')
-        >>> Iter([]).try_reduce(checked_add)
-        Ok(NONE)
+            ```python
+            >>> from pyochain import Iter, Ok, Err, Result
+            >>> def checked_add(x: int, y: int) -> Result[int, str]:
+            ...     if x + y > 100:
+            ...         return Err("overflow")
+            ...     return Ok(x + y)
+            >>>
+            >>> Iter((1, 2, 3)).try_reduce(checked_add)
+            Ok(Some(6))
+            >>> Iter([50, 60]).try_reduce(checked_add)
+            Err('overflow')
+            >>> Iter(()).try_reduce(checked_add)
+            Ok(NONE)
 
-        ```
+            ```
         """
         return tls.try_reduce(iter(self), func)
 
@@ -1228,21 +1226,20 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             bool: `True` if items are sorted according to the criteria, `False` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2, 3, 4, 5)).is_sorted()
-        True
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3, 4, 5)).is_sorted()
+            True
 
-        ```
-        If strict, tests for strict sorting, that is, returns False if equal elements are found:
-        ```python
-        >>> Iter([1, 2, 2]).is_sorted()
-        True
-        >>> Iter([1, 2, 2]).is_sorted(strict=True)
-        False
+            ```
+            If strict, tests for strict sorting, that is, returns False if equal elements are found:
+            ```python
+            >>> Iter([1, 2, 2]).is_sorted()
+            True
+            >>> Iter([1, 2, 2]).is_sorted(strict=True)
+            False
 
-        ```
-
+            ```
         """
         return tls.is_sorted(iter(self), reverse=reverse, strict=strict)
 
@@ -1270,22 +1267,22 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             bool: `True` if items are sorted according to the criteria, `False` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter(["1", "2", "3", "4", "5"]).is_sorted_by(int)
-        True
-        >>> Iter(["5", "4", "3", "1", "2"]).is_sorted_by(int, reverse=True)
-        False
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter(["1", "2", "3", "4", "5"]).is_sorted_by(int)
+            True
+            >>> Iter(["5", "4", "3", "1", "2"]).is_sorted_by(int, reverse=True)
+            False
 
-        ```
-        If strict, tests for strict sorting, that is, returns False if equal elements are found:
-        ```python
-        >>> Iter(["1", "2", "2"]).is_sorted_by(int)
-        True
-        >>> Iter(["1", "2", "2"]).is_sorted_by(key=int, strict=True)
-        False
+            ```
+            If strict, tests for strict sorting, that is, returns False if equal elements are found:
+            ```python
+            >>> Iter(["1", "2", "2"]).is_sorted_by(int)
+            True
+            >>> Iter(["1", "2", "2"]).is_sorted_by(key=int, strict=True)
+            False
 
-        ```
+            ```
         """
         return tls.is_sorted_by(iter(self), key, reverse=reverse, strict=strict)
 
@@ -1303,14 +1300,14 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             bool: `True` if all items are equal, `False` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter("AaaA").all_equal(key=str.casefold)
-        True
-        >>> Iter((1, 2, 3)).all_equal(key=lambda x: x < 10)
-        True
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter("AaaA").all_equal(key=str.casefold)
+            True
+            >>> Iter((1, 2, 3)).all_equal(key=lambda x: x < 10)
+            True
 
-        ```
+            ```
         """
         iterator = itertools.groupby(iter(self), key)
         for _first in iterator:
@@ -1333,27 +1330,27 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             int: The index of the maximum value.
 
         Example:
-        ```python
-        >>> from pyochain import Iter, Seq
-        >>> Iter("abcdefghabcd").argmax()
-        7
-        >>> Iter([0, 1, 2, 3, 3, 2, 1, 0]).argmax()
-        3
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> Iter("abcdefghabcd").argmax()
+            7
+            >>> Iter([0, 1, 2, 3, 3, 2, 1, 0]).argmax()
+            3
 
-        ```
-        For example, identify the best machine learning model:
-        ```python
-        >>> models = Seq(["svm", "random forest", "knn", "naïve bayes"])
-        >>> accuracy = Seq([68, 61, 84, 72])
-        >>> # Most accurate model
-        >>> models.get(accuracy.iter().argmax()).unwrap()
-        'knn'
-        >>>
-        >>> # Best accuracy
-        >>> accuracy.max()
-        84
+            ```
+            For example, identify the best machine learning model:
+            ```python
+            >>> models = Seq(["svm", "random forest", "knn", "naïve bayes"])
+            >>> accuracy = Seq([68, 61, 84, 72])
+            >>> # Most accurate model
+            >>> models.get(accuracy.iter().argmax()).unwrap()
+            'knn'
+            >>>
+            >>> # Best accuracy
+            >>> accuracy.max()
+            84
 
-        ```
+            ```
         """
         it = iter(self)
         if key is not None:
@@ -1374,28 +1371,28 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             int: The index of the minimum value.
 
         Example:
-        ```python
-        >>> from pyochain import Iter, Seq
-        >>> # Example 1: Basic usage
-        >>> Iter("efghabcdijkl").argmin()
-        4
-        >>> Iter([3, 2, 1, 0, 4, 2, 1, 0]).argmin()
-        3
-        >>> # Example 2: look up a label corresponding to the position of a value that minimizes a cost function
-        >>> def cost(x: int) -> float:
-        ...     "Days for a wound to heal given a subject's age."
-        ...     return x**2 - 20 * x + 150
-        >>>
-        >>> labels = Seq(["homer", "marge", "bart", "lisa", "maggie"])
-        >>> ages = Seq([35, 30, 10, 9, 1])
-        >>> # Fastest healing family member
-        >>> labels.get(ages.iter().argmin(key=cost)).unwrap()
-        'bart'
-        >>> # Age with fastest healing
-        >>> ages.min_by(key=cost)
-        10
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> # Example 1: Basic usage
+            >>> Iter("efghabcdijkl").argmin()
+            4
+            >>> Iter((3, 2, 1, 0, 4, 2, 1, 0)).argmin()
+            3
+            >>> # Example 2: look up a label corresponding to the position of a value that minimizes a cost function
+            >>> def cost(x: int) -> float:
+            ...     "Days for a wound to heal given a subject's age."
+            ...     return x**2 - 20 * x + 150
+            >>>
+            >>> labels = Seq(("homer", "marge", "bart", "lisa", "maggie"))
+            >>> ages = Seq((35, 30, 10, 9, 1))
+            >>> # Fastest healing family member
+            >>> labels.get(ages.iter().argmin(key=cost)).unwrap()
+            'bart'
+            >>> # Age with fastest healing
+            >>> ages.min_by(key=cost)
+            10
 
-        ```
+            ```
         """
         it = iter(self)
         if key is not None:
@@ -1419,14 +1416,14 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             **kwargs (P.kwargs): Keyword arguments for the function.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2, 3)).for_each(lambda x: print(x + 1))
-        2
-        3
-        4
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3)).for_each(lambda x: print(x + 1))
+            2
+            3
+            4
 
-        ```
+            ```
         """
         tls.for_each(iter(self), func, *args, **kwargs)
 
@@ -1515,13 +1512,13 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             **kwargs (P.kwargs): Keyword arguments for the function.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter(((1, 2), (3, 4))).for_each_star(lambda x, y: print(x + y))
-        3
-        7
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter(((1, 2), (3, 4))).for_each_star(lambda x, y: print(x + y))
+            3
+            7
 
-        ```
+            ```
         """
         tls.for_each_star(iter(self), func, *args, **kwargs)
 
@@ -1537,19 +1534,20 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             Result[tuple[()], E]: Returns `Ok(())` if all applications of **f** were successful (i.e., returned `Ok`), or the first error `E` encountered.
 
         Example:
-        ```python
-        >>> from pyochain import Iter, Result, Ok, Err
-        >>> def validate_positive(n: int) -> Result[tuple[()], str]:
-        ...     if n > 0:
-        ...         return Ok("success")
-        ...     return Err(f"Value {n} is not positive")
-        >>> Iter((1, 2, 3, 4, 5)).try_for_each(validate_positive)
-        Ok(())
-        >>> # Short-circuit on first error:
-        >>> Iter((1, 2, -1, 4)).try_for_each(validate_positive)
-        Err('Value -1 is not positive')
+            ```python
+            >>> from pyochain import Iter, Result, Ok, Err
+            >>> def validate_positive(n: int) -> Result[tuple[()], str]:
+            ...     if n > 0:
+            ...         return Ok("success")
+            ...     return Err(f"Value {n} is not positive")
+            >>>
+            >>> Iter((1, 2, 3, 4, 5)).try_for_each(validate_positive)
+            Ok(())
+            >>> # Short-circuit on first error:
+            >>> Iter((1, 2, -1, 4)).try_for_each(validate_positive)
+            Err('Value -1 is not positive')
 
-        ```
+            ```
         """
         return tls.try_for_each(iter(self), f)
 
@@ -1577,28 +1575,28 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             MutableSequence[T]: The same mutable collection passed as argument, now containing the collected items.
 
         Example:
-        Basic usage:
-        ```python
-        >>> from pyochain import Seq, Iter, Vec
-        >>> a = Seq((1, 2, 3))
-        >>> vec = Vec.from_ref([0, 1])
-        >>> a.iter().map(lambda x: x * 2).collect_into(vec)
-        Vec(0, 1, 2, 4, 6)
-        >>> a.iter().map(lambda x: x * 10).collect_into(vec)
-        Vec(0, 1, 2, 4, 6, 10, 20, 30)
+            Basic usage:
+            ```python
+            >>> from pyochain import Seq, Iter, Vec
+            >>> a = Seq((1, 2, 3))
+            >>> vec = Vec.from_ref([0, 1])
+            >>> a.iter().map(lambda x: x * 2).collect_into(vec)
+            Vec(0, 1, 2, 4, 6)
+            >>> a.iter().map(lambda x: x * 10).collect_into(vec)
+            Vec(0, 1, 2, 4, 6, 10, 20, 30)
 
-        ```
-        The returned mutable sequence can be used to continue the call chain:
-        ```python
-        >>> from pyochain import Seq, Vec
-        >>> a = Seq((1, 2, 3))
-        >>> vec = Vec(())
-        >>> a.iter().collect_into(vec).length() == vec.length()
-        True
-        >>> a.iter().collect_into(vec).length() == vec.length()
-        True
+            ```
+            The returned mutable sequence can be used to continue the call chain:
+            ```python
+            >>> from pyochain import Seq, Vec
+            >>> a = Seq((1, 2, 3))
+            >>> vec = Vec(())
+            >>> a.iter().collect_into(vec).length() == vec.length()
+            True
+            >>> a.iter().collect_into(vec).length() == vec.length()
+            True
 
-        ```
+            ```
         """
         collection.extend(iter(self))
         return collection
@@ -1627,33 +1625,34 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             Option[Vec[U]]: `Some[Vec[U]]` if all elements were successfully collected, or `NONE` if a failure was encountered.
 
         Example:
-        ```python
-        >>> from pyochain import Iter, Some, Ok, Err, NONE, Vec
-        >>> # Successfully collecting an iterator of Option[int] into Option[Vec[int]]:
-        >>> Iter([Some(1), Some(2), Some(3)]).try_collect()
-        Some(Vec(1, 2, 3))
-        >>> # Failing to collect in the same way:
-        >>> Iter([Some(1), Some(2), NONE, Some(3)]).try_collect()
-        NONE
-        >>> # A similar example, but with Result:
-        >>> Iter([Ok(1), Ok(2), Ok(3)]).try_collect()
-        Some(Vec(1, 2, 3))
-        >>> Iter([Ok(1), Err("error"), Ok(3)]).try_collect()
-        NONE
-        >>> def external_fn(x: int) -> Option[int]:
-        ...     if x % 2 == 0:
-        ...         return Some(x)
-        ...     return NONE
-        >>> Iter([1, 2, 3, 4]).map(external_fn).try_collect()
-        NONE
-        >>> # Demonstrating that the iterator remains usable after a failure:
-        >>> it = Iter([Some(1), NONE, Some(3), Some(4)])
-        >>> it.try_collect()
-        NONE
-        >>> it.try_collect()
-        Some(Vec(3, 4))
+            ```python
+            >>> from pyochain import Iter, Some, Ok, Err, NONE, Vec
+            >>> # Successfully collecting an iterator of Option[int] into Option[Vec[int]]:
+            >>> Iter((Some(1), Some(2), Some(3))).try_collect()
+            Some(Vec(1, 2, 3))
+            >>> # Failing to collect in the same way:
+            >>> Iter((Some(1), Some(2), NONE, Some(3))).try_collect()
+            NONE
+            >>> # A similar example, but with Result:
+            >>> Iter((Ok(1), Ok(2), Ok(3))).try_collect()
+            Some(Vec(1, 2, 3))
+            >>> Iter((Ok(1), Err("error"), Ok(3))).try_collect()
+            NONE
+            >>> def external_fn(x: int) -> Option[int]:
+            ...     if x % 2 == 0:
+            ...         return Some(x)
+            ...     return NONE
+            >>>
+            >>> Iter((1, 2, 3, 4)).map(external_fn).try_collect()
+            NONE
+            >>> # Demonstrating that the iterator remains usable after a failure:
+            >>> it = Iter((Some(1), NONE, Some(3), Some(4)))
+            >>> it.try_collect()
+            NONE
+            >>> it.try_collect()
+            Some(Vec(3, 4))
 
-        ```
+            ```
         """
         from .._iter import Vec
 
@@ -1678,12 +1677,12 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             Vec[U]: A `Vec` with elements sorted.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((3, 1, 2)).sort()
-        Vec(1, 2, 3)
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((3, 1, 2)).sort()
+            Vec(1, 2, 3)
 
-        ```
+            ```
         """
         from .._iter import Vec
 
@@ -1710,31 +1709,31 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             Vec[T]: A `Vec` with elements sorted.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> str_numbers = ("3", "1", "2")
-        >>> Iter(str_numbers).sort_by(int)
-        Vec('1', '2', '3')
-        >>> Iter(str_numbers).sort_by(int, reverse=True)
-        Vec('3', '2', '1')
-        >>> from dataclasses import dataclass
-        >>> @dataclass
-        ... class Person:
-        ...     name: str
-        ...     age: int
-        >>>
-        >>> peoples = (Person("Alice", 30), Person("Bob", 25), Person("Charlie", 35))
-        >>> sorted_names = (
-        ...     Iter(peoples)
-        ...     .sort_by(lambda x: x.age)
-        ...     .iter()
-        ...     .map(lambda x: x.name)
-        ...     .collect()
-        ... )
-        >>> sorted_names
-        Seq('Bob', 'Alice', 'Charlie')
+            ```python
+            >>> from pyochain import Iter
+            >>> str_numbers = ("3", "1", "2")
+            >>> Iter(str_numbers).sort_by(int)
+            Vec('1', '2', '3')
+            >>> Iter(str_numbers).sort_by(int, reverse=True)
+            Vec('3', '2', '1')
+            >>> from dataclasses import dataclass
+            >>> @dataclass
+            ... class Person:
+            ...     name: str
+            ...     age: int
+            >>>
+            >>> peoples = (Person("Alice", 30), Person("Bob", 25), Person("Charlie", 35))
+            >>> sorted_names = (
+            ...     Iter(peoples)
+            ...     .sort_by(lambda x: x.age)
+            ...     .iter()
+            ...     .map(lambda x: x.name)
+            ...     .collect()
+            ... )
+            >>> sorted_names
+            Seq('Bob', 'Alice', 'Charlie')
 
-        ```
+            ```
         """
         from .._iter import Vec
 
@@ -1750,12 +1749,12 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             Seq[T]: A `Seq` containing the last **n** elements.
 
         Example:
-        ```python
-        >>> from pyochain import Iter
-        >>> Iter((1, 2, 3)).tail(2)
-        Seq(2, 3)
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3)).tail(2)
+            Seq(2, 3)
 
-        ```
+            ```
         """
         from collections import deque
 
@@ -1808,15 +1807,15 @@ class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
             Option[T] | Option[Sequence[T]]: `Some(value)` if the index is valid, otherwise `None`.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> data = Seq((10, 20, 30))
-        >>> data.get(1)
-        Some(20)
-        >>> data.get(5)
-        NONE
+            ```python
+            >>> from pyochain import Seq
+            >>> data = Seq((10, 20, 30))
+            >>> data.get(1)
+            Some(20)
+            >>> data.get(5)
+            NONE
 
-        ```
+            ```
         """
         try:
             return Some(self[index])  # pyright: ignore[reportReturnType]
@@ -1830,12 +1829,12 @@ class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
             Iter[T]: An `Iterator` with the elements in reverse order.
 
         Example:
-        ```python
-        >>> from pyochain import Seq
-        >>> Seq((1, 2, 3)).rev().collect()
-        Seq(3, 2, 1)
+            ```python
+            >>> from pyochain import Seq
+            >>> Seq((1, 2, 3)).rev().collect()
+            Seq(3, 2, 1)
 
-        ```
+            ```
         """
         from .._iter import Iter
 
@@ -1877,16 +1876,16 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
             bool: `True` if all elements are contained, `False` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Set
-        >>> Set((1, 2)).is_subset({1, 2, 3})  # All elements present
-        True
-        >>> Set((1, 2)).is_subset({1, 2})  # Also True: they're equal
-        True
-        >>> Set((1, 4)).is_subset({1, 2, 3})  # 4 is not in the other set
-        False
+            ```python
+            >>> from pyochain import Set
+            >>> Set((1, 2)).is_subset({1, 2, 3})  # All elements present
+            True
+            >>> Set((1, 2)).is_subset({1, 2})  # Also True: they're equal
+            True
+            >>> Set((1, 4)).is_subset({1, 2, 3})  # 4 is not in the other set
+            False
 
-        ```
+            ```
         """
         return self <= other
 
@@ -1906,16 +1905,16 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
             bool: `True` if this is a strict subset, `False` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Set
-        >>> Set((1, 2)).is_subset_strict({1, 2, 3})  # Proper subset
-        True
-        >>> Set((1, 2)).is_subset_strict({1, 2})  # Equal, not proper
-        False
-        >>> Set((1, 4)).is_subset_strict({1, 2, 3})  # 4 not contained
-        False
+            ```python
+            >>> from pyochain import Set
+            >>> Set((1, 2)).is_subset_strict({1, 2, 3})  # Proper subset
+            True
+            >>> Set((1, 2)).is_subset_strict({1, 2})  # Equal, not proper
+            False
+            >>> Set((1, 4)).is_subset_strict({1, 2, 3})  # 4 not contained
+            False
 
-        ```
+            ```
         """
         return self < other
 
@@ -1935,16 +1934,16 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
             bool: `True` if both sets contain identical elements, `False` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Set
-        >>> Set((1, 2)).eq({2, 1})  # Same elements, different order
-        True
-        >>> Set((1, 2)).eq({1, 2, 3})  # Different number of elements
-        False
-        >>> Set((1, 2)).eq({1, 2})  # Identical
-        True
+            ```python
+            >>> from pyochain import Set
+            >>> Set((1, 2)).eq({2, 1})  # Same elements, different order
+            True
+            >>> Set((1, 2)).eq({1, 2, 3})  # Different number of elements
+            False
+            >>> Set((1, 2)).eq({1, 2})  # Identical
+            True
 
-        ```
+            ```
         """
         return self == other
 
@@ -1964,16 +1963,16 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
             bool: `True` if all elements from `other` are present, `False` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Set
-        >>> Set((1, 2, 3)).is_superset({1, 2})  # Contains all
-        True
-        >>> Set((1, 2)).is_superset({1, 2})  # Also True: they're equal
-        True
-        >>> Set((1, 2)).is_superset({1, 2, 3})  # Missing element 3
-        False
+            ```python
+            >>> from pyochain import Set
+            >>> Set((1, 2, 3)).is_superset({1, 2})  # Contains all
+            True
+            >>> Set((1, 2)).is_superset({1, 2})  # Also True: they're equal
+            True
+            >>> Set((1, 2)).is_superset({1, 2, 3})  # Missing element 3
+            False
 
-        ```
+            ```
         """
         return self >= other
 
@@ -1991,16 +1990,16 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
             bool: `True` if no common elements exist, `False` otherwise.
 
         Example:
-        ```python
-        >>> from pyochain import Set
-        >>> Set((1, 2)).is_disjoint((3, 4))  # No overlap
-        True
-        >>> Set((1, 2)).is_disjoint((2, 3))  # Share element 2
-        False
-        >>> Set((1, 2)).is_disjoint((1, 2))  # Identical sets
-        False
+            ```python
+            >>> from pyochain import Set
+            >>> Set((1, 2)).is_disjoint((3, 4))  # No overlap
+            True
+            >>> Set((1, 2)).is_disjoint((2, 3))  # Share element 2
+            False
+            >>> Set((1, 2)).is_disjoint((1, 2))  # Identical sets
+            False
 
-        ```
+            ```
         """
         return self.isdisjoint(other)
 
@@ -2046,13 +2045,13 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
             PyoKeysView[K]: A view of the dictionary's keys.
 
         Example:
-        ```python
-        >>> from pyochain import Dict
-        >>> data = Dict({1: "a", 2: "b"})
-        >>> data.keys()
-        PyoKeysView(Dict(1: 'a', 2: 'b'))
+            ```python
+            >>> from pyochain import Dict
+            >>> data = Dict({1: "a", 2: "b"})
+            >>> data.keys()
+            PyoKeysView(Dict(1: 'a', 2: 'b'))
 
-        ```
+            ```
         """
         from .._set import PyoKeysView
 
@@ -2066,13 +2065,13 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
             PyoValuesView[V]: A view of the dictionary's values.
 
         Example:
-        ```python
-        >>> from pyochain import Dict
-        >>> data = Dict({1: "a", 2: "b"})
-        >>> data.values()
-        PyoValuesView(Dict(1: 'a', 2: 'b'))
+            ```python
+            >>> from pyochain import Dict
+            >>> data = Dict({1: "a", 2: "b"})
+            >>> data.values()
+            PyoValuesView(Dict(1: 'a', 2: 'b'))
 
-        ```
+            ```
         """
         from .._set import PyoValuesView
 
@@ -2086,13 +2085,13 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
             PyoItemsView[K, V]: A view of the dictionary's (key, value) pairs.
 
         Example:
-        ```python
-        >>> from pyochain import Dict
-        >>> data = Dict({1: "a", 2: "b"})
-        >>> data.items()
-        PyoItemsView(Dict(1: 'a', 2: 'b'))
+            ```python
+            >>> from pyochain import Dict
+            >>> data = Dict({1: "a", 2: "b"})
+            >>> data.items()
+            PyoItemsView(Dict(1: 'a', 2: 'b'))
 
-        ```
+            ```
         """
         from .._set import PyoItemsView
 
@@ -2133,22 +2132,22 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
             Option[V]: The previous value associated with the key, or None if the key was not present.
 
         Example:
-        ```python
-        >>> from pyochain import Dict
-        >>> data = Dict(())
-        >>> data.insert(37, "a")
-        NONE
-        >>> data.is_empty()
-        False
+            ```python
+            >>> from pyochain import Dict
+            >>> data = Dict(())
+            >>> data.insert(37, "a")
+            NONE
+            >>> data.is_empty()
+            False
 
-        >>> data.insert(37, "b")
-        Some('a')
-        >>> data.insert(37, "c")
-        Some('b')
-        >>> data[37]
-        'c'
+            >>> data.insert(37, "b")
+            Some('a')
+            >>> data.insert(37, "c")
+            Some('b')
+            >>> data[37]
+            'c'
 
-        ```
+            ```
         """
         previous = self.get(key, None)
         self[key] = value
@@ -2167,15 +2166,15 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
             Result[V, KeyError]: `Ok` containing the value if the **key** was not present, or `Err` containing a `KeyError` if the **key** already existed.
 
         Example:
-        ```python
-        >>> from pyochain import Dict
-        >>> d = Dict(())
-        >>> d.try_insert(37, "a").unwrap()
-        'a'
-        >>> d.try_insert(37, "b")
-        Err(KeyError('Key 37 already exists with value a.'))
+            ```python
+            >>> from pyochain import Dict
+            >>> d = Dict(())
+            >>> d.try_insert(37, "a").unwrap()
+            'a'
+            >>> d.try_insert(37, "b")
+            Err(KeyError('Key 37 already exists with value a.'))
 
-        ```
+            ```
         """
         if key in self:
             return Err(KeyError(f"Key {key} already exists with value {self[key]}."))
@@ -2194,15 +2193,15 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
             Option[V]: The value associated with the removed **key**, or `None` if the **key** was not present.
 
         Example:
-        ```python
-        >>> from pyochain import Dict
-        >>> data = Dict({1: "a", 2: "b"})
-        >>> data.remove(1)
-        Some('a')
-        >>> data.remove(3)
-        NONE
+            ```python
+            >>> from pyochain import Dict
+            >>> data = Dict({1: "a", 2: "b"})
+            >>> data.remove(1)
+            Some('a')
+            >>> data.remove(3)
+            NONE
 
-        ```
+            ```
         """
         return option(self.pop(key, None))
 
@@ -2218,15 +2217,15 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
             Option[tuple[K, V]]: `Some((key, value))` pair associated with the removed key, or `None` if the **key** was not present.
 
         Example:
-        ```python
-        >>> from pyochain import Dict
-        >>> data = Dict({1: "a", 2: "b"})
-        >>> data.remove_entry(1)
-        Some((1, 'a'))
-        >>> data.remove_entry(3)
-        NONE
+            ```python
+            >>> from pyochain import Dict
+            >>> data = Dict({1: "a", 2: "b"})
+            >>> data.remove_entry(1)
+            Some((1, 'a'))
+            >>> data.remove_entry(3)
+            NONE
 
-        ```
+            ```
         """
         return Some((key, self.pop(key))) if key in self else NONE
 
@@ -2242,15 +2241,15 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
             Option[V]: `Some(value)` that is associated with the **key**, or `None` if not found.
 
         Example:
-        ```python
-        >>> from pyochain import Dict
-        >>> data = Dict.from_ref({"a": 1})
-        >>> data.get_item("a")
-        Some(1)
-        >>> data.get_item("x").unwrap_or("Not Found")
-        'Not Found'
+            ```python
+            >>> from pyochain import Dict
+            >>> data = Dict.from_ref({"a": 1})
+            >>> data.get_item("a")
+            Some(1)
+            >>> data.get_item("x").unwrap_or("Not Found")
+            'Not Found'
 
-        ```
+            ```
         """
         return option(self.get(key, None))
 
@@ -2291,24 +2290,24 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
             predicate (Callable[[T], bool]): A function that returns `True` for elements to keep and `False` for elements to remove.
 
         Example:
-        ```python
-        >>> from pyochain import Vec, Seq
-        >>> vec = Vec((1, 2, 3, 4))
-        >>> vec.retain(lambda x: x % 2 == 0)
-        >>> vec
-        Vec(2, 4)
+            ```python
+            >>> from pyochain import Vec, Seq
+            >>> vec = Vec((1, 2, 3, 4))
+            >>> vec.retain(lambda x: x % 2 == 0)
+            >>> vec
+            Vec(2, 4)
 
-        ```
-        External state may be used to decide which elements to keep.
+            ```
+            External state may be used to decide which elements to keep.
 
-        ```python
-        >>> vec = Vec((1, 2, 3, 4, 5))
-        >>> keep = Seq((False, True, True, False, True)).iter()
-        >>> vec.retain(lambda _: next(keep))
-        >>> vec
-        Vec(2, 3, 5)
+            ```python
+            >>> vec = Vec((1, 2, 3, 4, 5))
+            >>> keep = Seq((False, True, True, False, True)).iter()
+            >>> vec.retain(lambda _: next(keep))
+            >>> vec
+            Vec(2, 3, 5)
 
-        ```
+            ```
         """
         return tls.retain(self, predicate)
 
@@ -2327,33 +2326,33 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
             length (int): The length to truncate the `MutableSequence` to.
 
         Example:
-        ```python
-        >>> from pyochain import Vec
-        >>> # Truncating a five element vector to two elements:
-        >>> vec = Vec((1, 2, 3, 4, 5))
-        >>> vec.truncate(2)
-        >>> vec
-        Vec(1, 2)
+            ```python
+            >>> from pyochain import Vec
+            >>> # Truncating a five element vector to two elements:
+            >>> vec = Vec((1, 2, 3, 4, 5))
+            >>> vec.truncate(2)
+            >>> vec
+            Vec(1, 2)
 
-        ```
-        No truncation occurs when len is greater than the `MutableSequence` current length:
-        ```python
-        >>> from pyochain import Vec
-        >>> vec = Vec((1, 2, 3))
-        >>> vec.truncate(8)
-        >>> vec
-        Vec(1, 2, 3)
+            ```
+            No truncation occurs when len is greater than the `MutableSequence` current length:
+            ```python
+            >>> from pyochain import Vec
+            >>> vec = Vec((1, 2, 3))
+            >>> vec.truncate(8)
+            >>> vec
+            Vec(1, 2, 3)
 
-        ```
-        Truncating when len == 0 is equivalent to calling the clear method.
-        ```python
-        >>> from pyochain import Vec
-        >>> vec = Vec((1, 2, 3))
-        >>> vec.truncate(0)
-        >>> vec
-        Vec()
+            ```
+            Truncating when len == 0 is equivalent to calling the clear method.
+            ```python
+            >>> from pyochain import Vec
+            >>> vec = Vec((1, 2, 3))
+            >>> vec.truncate(0)
+            >>> vec
+            Vec()
 
-        ```
+            ```
         """
         pop = self.pop
         for _ in range(len(self) - length):
@@ -2371,35 +2370,35 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
             other (Self | list[T]): The other `MutableSequence` to move elements from.
 
         Example:
-        ```python
-        >>> from pyochain import Vec
-        >>> v1 = Vec((1, 2, 3))
-        >>> v2 = Vec((4, 5, 6))
-        >>> v1.extend_move(v2)
-        >>> v1
-        Vec(1, 2, 3, 4, 5, 6)
-        >>> v2
-        Vec()
+            ```python
+            >>> from pyochain import Vec
+            >>> v1 = Vec((1, 2, 3))
+            >>> v2 = Vec((4, 5, 6))
+            >>> v1.extend_move(v2)
+            >>> v1
+            Vec(1, 2, 3, 4, 5, 6)
+            >>> v2
+            Vec()
 
-        ```
-        If we compare to extend
+            ```
+            If we compare to extend
 
-        ```python
-        >>> v1 = Vec((1, 2, 3))
-        >>> v2 = Vec((4, 5, 6))
-        >>> v1.extend(v2)
-        >>> v1
-        Vec(1, 2, 3, 4, 5, 6)
-        >>> # At this point v2 is still intact,
-        >>> # meaning that we have a full intermediate copy of v2 in memory,
-        >>> # which is not the case with extend_move
-        >>> v2
-        Vec(4, 5, 6)
-        >>> v2.clear()
-        >>> v2
-        Vec()
+            ```python
+            >>> v1 = Vec((1, 2, 3))
+            >>> v2 = Vec((4, 5, 6))
+            >>> v1.extend(v2)
+            >>> v1
+            Vec(1, 2, 3, 4, 5, 6)
+            >>> # At this point v2 is still intact,
+            >>> # meaning that we have a full intermediate copy of v2 in memory,
+            >>> # which is not the case with extend_move
+            >>> v2
+            Vec(4, 5, 6)
+            >>> v2.clear()
+            >>> v2
+            Vec()
 
-        ```
+            ```
         """
         pop = other.pop
         self.extend(pop(0) for _ in range(len(other)))
@@ -2435,24 +2434,24 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
             Iter[T]: An `Iter` that yields the extracted elements.
 
         Example:
-        ```python
-        >>> from pyochain import Vec
-        >>> data = (1, 2, 3, 4, 5)
-        >>> vec = Vec(data)
-        >>> extracted = vec.extract_if(lambda x: x % 2 == 0).collect()
-        >>> extracted
-        Seq(2, 4)
-        >>> vec
-        Vec(1, 3, 5)
-        >>> # Extracting with a range
-        >>> vec = Vec(data)
-        >>> extracted = vec.extract_if(lambda x: x % 2 == 0, start=1, end=4).collect()
-        >>> extracted
-        Seq(2, 4)
-        >>> vec
-        Vec(1, 3, 5)
+            ```python
+            >>> from pyochain import Vec
+            >>> data = (1, 2, 3, 4, 5)
+            >>> vec = Vec(data)
+            >>> extracted = vec.extract_if(lambda x: x % 2 == 0).collect()
+            >>> extracted
+            Seq(2, 4)
+            >>> vec
+            Vec(1, 3, 5)
+            >>> # Extracting with a range
+            >>> vec = Vec(data)
+            >>> extracted = vec.extract_if(lambda x: x % 2 == 0, start=1, end=4).collect()
+            >>> extracted
+            Seq(2, 4)
+            >>> vec
+            Vec(1, 3, 5)
 
-        ```
+            ```
         """
         from .._iter import Iter
 
@@ -2482,29 +2481,29 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
             Iter[T]: An `Iterator` over the drained elements.
 
         Example:
-        ```python
-        >>> from pyochain import Vec
-        >>> v = Vec.from_ref([1, 2, 3])
-        >>> u = v.drain(1).collect()
-        >>> v
-        Vec(1)
-        >>> u
-        Seq(2, 3)
-        >>> # A full range clears the vector, like `clear()` does
-        >>> _ = v.drain().collect()
-        >>> v
-        Vec()
+            ```python
+            >>> from pyochain import Vec
+            >>> v = Vec.from_ref([1, 2, 3])
+            >>> u = v.drain(1).collect()
+            >>> v
+            Vec(1)
+            >>> u
+            Seq(2, 3)
+            >>> # A full range clears the vector, like `clear()` does
+            >>> _ = v.drain().collect()
+            >>> v
+            Vec()
 
-        ```
-        Fully consuming the `Iterator` removes all drained elements
-        ```python
-        >>> from pyochain import Vec
-        >>> v = Vec.from_ref([1, 2, 3])
-        >>> _ = v.drain(0, 3).collect()
-        >>> v
-        Vec()
+            ```
+            Fully consuming the `Iterator` removes all drained elements
+            ```python
+            >>> from pyochain import Vec
+            >>> v = Vec.from_ref([1, 2, 3])
+            >>> _ = v.drain(0, 3).collect()
+            >>> v
+            Vec()
 
-        ```
+            ```
         """
         from .._iter import Iter
 
