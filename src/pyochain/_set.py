@@ -1,18 +1,148 @@
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from collections.abc import (
+    ItemsView,
     Iterable,
     Iterator,
+    KeysView,
     MutableSet,
+    ValuesView,
 )
 from collections.abc import Set as AbstractSet
 from typing import Self, override
 
 from ._utils import get_repr
-from .abc import PyoSet
+from .abc import PyoCollection, PyoMappingView, PyoSet
 
 
-class Set[T](PyoSet[T]):
+class BaseConcreteSet[T](ABC):
+    """Internal mixin for concrete set-like classes.
+
+    It provides a common interface for documentation, DRY code, and type consistency across all concrete set-like classes in pyochain.
+
+    This allows to enforce a *you must implement concrete methods for operator dunders* policy for set operations.
+
+    pyochain philosophy is to prefer explicit method calls that read like natural language instead of obscure operators.
+
+    Concrete set classes should inherit from this base class and implement the following abstract methods:
+
+        - `intersection()`
+        - `union()`
+        - `difference()`
+        - `symmetric_difference()`
+    """
+
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
+
+    @abstractmethod
+    def intersection(self, other: AbstractSet[T]) -> AbstractSet[T]:
+        """Create a new set containing only elements present in both sets.
+
+        The result contains every element that exists in both this set and `other`.
+
+        If the sets have no common elements, the result is empty.
+
+        This operation is commutative: `A.intersection(B) == B.intersection(A)`.
+
+        Args:
+            other (AbstractSet[T]): The set to intersect with.
+
+        Returns:
+            AbstractSet[T]: A new `Set` containing shared elements only.
+
+        Example:
+        ```python
+        >>> from pyochain import Set
+        >>> Set((1, 2, 2)).intersection({2, 3})
+        Set(2,)
+        >>> Set((1, 2)).intersection({3, 4})
+        Set()
+
+        ```
+        """
+
+    @abstractmethod
+    def union(self, other: AbstractSet[T]) -> AbstractSet[T]:
+        """Create a new set containing all unique elements from both sets.
+
+        The result includes every element from this set and every element from `other`.
+
+        Duplicates are automatically removed.
+
+        This operation is commutative: `A.union(B) == B.union(A)`.
+
+        Args:
+            other (AbstractSet[T]): The set to combine with.
+
+        Returns:
+            AbstractSet[T]: A new set containing all elements from both sets.
+
+        Example:
+        ```python
+        >>> from pyochain import Set
+        >>> Set((1, 2, 2)).union({2, 3}).union({4}).iter().sort()
+        Vec(1, 2, 3, 4)
+
+        ```
+        """
+
+    @abstractmethod
+    def difference(self, other: AbstractSet[T]) -> AbstractSet[T]:
+        """Create a new set with elements in this set but not in `other`.
+
+        The result contains every element that is in this set EXCEPT those that are also present in `other`.
+
+        This operation is NOT commutative.
+
+        Use `r_difference()` if you need the reversed argument order for pipelines.
+
+        Args:
+            other (AbstractSet[T]): The set whose elements should be excluded.
+
+        Returns:
+            AbstractSet[T]: A new set containing elements unique to this set.
+
+        Example:
+        ```python
+        >>> from pyochain import Set
+        >>> Set((1, 2, 2)).difference({2, 3})
+        Set(1,)
+        >>> Set((1, 2)).difference({3, 4}).iter().sort()
+        Vec(1, 2)
+
+        ```
+        """
+
+    @abstractmethod
+    def symmetric_difference(self, other: AbstractSet[T]) -> AbstractSet[T]:
+        """Create a new set with elements in either set but not in both.
+
+        The result contains elements that are in this set XOR `other`—i.e., elements present in one set but not in both.
+
+        This is the opposite of intersection.
+
+        This operation is commutative: `A.symmetric_difference(B) == B.symmetric_difference(A)`.
+
+        Args:
+            other (AbstractSet[T]): The set to compute symmetric difference with.
+
+        Returns:
+            AbstractSet[T]: A new set containing elements unique to each set.
+
+        Example:
+        ```python
+        >>> from pyochain import Set
+        >>> Set((1, 2, 2)).symmetric_difference({2, 3}).iter().sort()
+        Vec(1, 3)
+        >>> Set((1, 2, 3)).symmetric_difference({3, 4, 5}).iter().sort()
+        Vec(1, 2, 4, 5)
+
+        ```
+        """
+
+
+class Set[T](PyoSet[T], BaseConcreteSet[T]):
     """`Set` represent an in- memory **unordered**  collection of **unique** elements.
 
     Implements the `Collection` Protocol from `collections.abc`, so it can be used as a standard immutable collection.
@@ -85,226 +215,103 @@ class Set[T](PyoSet[T]):
     def __len__(self) -> int:
         return len(self._inner)
 
+    @override
     def intersection(self, other: AbstractSet[T]) -> Self:
-        """Create a new set containing only elements present in both sets.
+        return self.__class__(self._inner & other)
 
-        The result contains every element that exists in both this set and `other`.
-
-        If the sets have no common elements, the result is empty.
-
-        This operation is commutative: `A.intersection(B) == B.intersection(A)`.
-
-        Args:
-            other (AbstractSet[T]): The set to intersect with.
-
-        Returns:
-            Self: A new `Set` containing shared elements only.
-
-        Example:
-        ```python
-        >>> from pyochain import Set
-        >>> Set((1, 2, 2)).intersection((2, 3))
-        Set(2,)
-        >>> Set((1, 2)).intersection((3, 4))
-        Set()
-
-        ```
-        """
-        return self.__class__(self & other)
-
-    def r_intersection(self, other: AbstractSet[T]) -> Self:
-        """Create a new set containing only elements present in both sets (reversed arguments).
-
-        This is equivalent to `other.intersection(self)`.
-
-        Useful for method chaining where `other` is computed first and you want to feed it through a pipeline.
-
-        Since intersection is commutative, this produces the same result as `intersection()`.
-
-        Args:
-            other (AbstractSet[T]): The set to intersect with (used as the first argument).
-
-        Returns:
-            Self: A new `Set` containing shared elements only.
-
-        Example:
-        ```python
-        >>> from pyochain import Set
-        >>> Set((2, 3)).r_intersection((1, 2))
-        Set(2,)
-        >>> Set((2, 3)).r_intersection((1, 2)).eq(Set((2, 3)).intersection((1, 2)))
-        True
-
-        ```
-        """
-        return self.__class__(other & self)
-
+    @override
     def union(self, other: AbstractSet[T]) -> Self:
-        """Create a new set containing all unique elements from both sets.
+        return self.__class__(self._inner | other)
 
-        The result includes every element from this set and every element from `other`.
-
-        Duplicates are automatically removed.
-
-        This operation is commutative: `A.union(B) == B.union(A)`.
-
-        Args:
-            other (AbstractSet[T]): The set to combine with.
-
-        Returns:
-            Self: A new set containing all elements from both sets.
-
-        Example:
-        ```python
-        >>> from pyochain import Set
-        >>> Set((1, 2, 2)).union((2, 3)).union([4]).iter().sort()
-        Vec(1, 2, 3, 4)
-
-        ```
-        """
-        return self.__class__(self | other)
-
-    def r_union(self, other: AbstractSet[T]) -> Self:
-        """Create a new set containing all unique elements from both sets (reversed arguments).
-
-        This is equivalent to `other.union(self)`.
-
-        Useful for method chaining where `other` is computed first and you want to feed it through a pipeline.
-
-        Since union is commutative, this produces the same result as `union()`.
-
-        Args:
-            other (AbstractSet[T]): The set to combine with (used as the first argument).
-
-        Returns:
-            Self: A new set containing all elements from both sets.
-
-        Example:
-        ```python
-        >>> from pyochain import Set
-        >>> Set((2, 3)).r_union((1, 2)).iter().sort()
-        Vec(1, 2, 3)
-
-        ```
-        """
-        return self.__class__(other | self)
-
+    @override
     def difference(self, other: AbstractSet[T]) -> Self:
-        """Create a new set with elements in this set but not in `other`.
+        return self.__class__(self._inner - other)
 
-        The result contains every element that is in this set EXCEPT those that are also present in `other`.
-
-        This operation is NOT commutative.
-
-        Use `r_difference()` if you need the reversed argument order for pipelines.
-
-        Args:
-            other (AbstractSet[T]): The set whose elements should be excluded.
-
-        Returns:
-            Self: A new set containing elements unique to this set.
-
-        Example:
-        ```python
-        >>> from pyochain import Set
-        >>> Set((1, 2, 2)).difference((2, 3))
-        Set(1,)
-        >>> Set((1, 2)).difference((3, 4)).iter().sort()
-        Vec(1, 2)
-
-        ```
-        """
-        return self.__class__(self - other)
-
-    def r_difference(self, other: AbstractSet[T]) -> Self:
-        """Create a new set with elements in `other` but not in this set (reversed arguments).
-
-        This is equivalent to `other.difference(self)`.
-
-        Returns elements present in `other` that are NOT in this set.
-
-        Useful for method chaining where `other` is computed first.
-
-        Args:
-            other (AbstractSet[T]): The set to subtract from (used as the first argument).
-
-        Returns:
-            Self: A new set containing elements unique to `other`.
-
-        Example:
-        ```python
-        >>> from pyochain import Set
-        >>> Set((2, 3)).r_difference((1, 2))
-        Set(1,)
-        >>> Set((2, 3)).r_difference((1, 2)).eq(Set((1, 2)).difference((2, 3)))
-        True
-
-        ```
-        """
-        return self.__class__(other - self)
-
+    @override
     def symmetric_difference(self, other: AbstractSet[T]) -> Self:
-        """Create a new set with elements in either set but not in both.
-
-        The result contains elements that are in this set XOR `other`—i.e., elements present in one set but not in both.
-
-        This is the opposite of intersection.
-
-        This operation is commutative: `A.symmetric_difference(B) == B.symmetric_difference(A)`.
-
-        Args:
-            other (AbstractSet[T]): The set to compute symmetric difference with.
-
-        Returns:
-            Self: A new set containing elements unique to each set.
-
-        Example:
-        ```python
-        >>> from pyochain import Set
-        >>> Set((1, 2, 2)).symmetric_difference((2, 3)).iter().sort()
-        Vec(1, 3)
-        >>> Set((1, 2, 3)).symmetric_difference((3, 4, 5)).iter().sort()
-        Vec(1, 2, 4, 5)
-
-        ```
-        """
-        return self.__class__(self ^ other)
-
-    def r_symmetric_difference(self, other: AbstractSet[T]) -> Self:
-        """Create a new set with elements in either set but not in both (reversed arguments).
-
-        This is equivalent to `other.symmetric_difference(self)`.
-
-        Useful for method chaining where `other` is computed first and you want to feed it through a pipeline.
-
-        Since symmetric difference is commutative, this produces the same result as `symmetric_difference()`.
-
-        Args:
-            other (AbstractSet[T]): The set to compute symmetric difference with (first argument).
-
-        Returns:
-            Self: A new set containing elements unique to each set.
-
-        Example:
-        ```python
-        >>> from pyochain import Set
-        >>> base = Set((2, 3))
-        >>> other = (1, 2)
-        >>> output = base.r_symmetric_difference(other).iter().sort()
-        >>> output
-        Vec(1, 3)
-        >>> is_symmetric = base.r_symmetric_difference(other).eq(
-        ...     base.symmetric_difference(other)
-        ... )
-        >>> is_symmetric
-        True
-
-        ```
-        """
-        return self.__class__(other ^ self)
+        return self.__class__(self._inner ^ other)
 
 
-class SetMut[T](Set[T], MutableSet[T]):
+class PyoValuesView[V](ValuesView[V], PyoMappingView[V]):  # pyright: ignore[reportUnsafeMultipleInheritance]
+    """A view of the values in a pyochain mapping.
+
+    This concrete class is returned by the `PyoMapping.values()` method, and inherits from `collections.abc.ValuesView` and `PyoCollection`.
+
+    See Also:
+        `PyoMapping::values`: Method that returns this view.
+    """
+
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
+
+
+class PyoKeysView[K](KeysView[K], PyoMappingView[K], PyoSet[K], BaseConcreteSet[K]):  # pyright: ignore[reportUnsafeMultipleInheritance]
+    """A view of the keys in a pyochain mapping.
+
+    This concrete class is returned by the `PyoMapping.keys()` method, and inherits from `collections.abc.KeysView`, `PyoMappingView`, `PyoSet`, and `BaseConcreteSet`.
+
+    Keys views support set-like operations since dictionary keys are unique.
+
+    See Also:
+        `PyoMapping::keys`: Method that returns this view.
+    """
+
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
+
+    @override
+    def intersection(self, other: AbstractSet[K]) -> SetMut[K]:
+        return SetMut.from_ref(self & other)
+
+    @override
+    def union(self, other: AbstractSet[K]) -> SetMut[K]:
+        return SetMut.from_ref(self | other)
+
+    @override
+    def difference(self, other: AbstractSet[K]) -> SetMut[K]:
+        return SetMut.from_ref(self - other)
+
+    @override
+    def symmetric_difference(self, other: AbstractSet[K]) -> SetMut[K]:
+        return SetMut.from_ref(self ^ other)
+
+
+class PyoItemsView[K, V](  # pyright: ignore[reportUnsafeMultipleInheritance]
+    ItemsView[K, V],
+    PyoMappingView[tuple[K, V]],
+    PyoSet[tuple[K, V]],
+    BaseConcreteSet[tuple[K, V]],
+):
+    """A view of the items (key-value pairs) in a pyochain mapping.
+
+    This concrete class is returned by the `PyoMapping.items()` method, and inherits from `collections.abc.ItemsView`, `PyoMappingView`, `PyoSet`, and `BaseConcreteSet`.
+
+    Items are represented as tuples of `(key, value)` pairs, and the view supports set-like operations.
+
+    See Also:
+        `PyoMapping.items()`: Method that returns this view.
+    """
+
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
+
+    @override
+    def intersection(self, other: AbstractSet[tuple[K, V]]) -> SetMut[tuple[K, V]]:
+        return SetMut.from_ref(self & other)
+
+    @override
+    def union(self, other: AbstractSet[tuple[K, V]]) -> SetMut[tuple[K, V]]:
+        return SetMut.from_ref(self | other)
+
+    @override
+    def difference(self, other: AbstractSet[tuple[K, V]]) -> SetMut[tuple[K, V]]:
+        return SetMut.from_ref(self - other)
+
+    @override
+    def symmetric_difference(
+        self, other: AbstractSet[tuple[K, V]]
+    ) -> SetMut[tuple[K, V]]:
+        return SetMut.from_ref(self ^ other)
+
+
+class SetMut[T](BaseConcreteSet[T], MutableSet[T], PyoCollection[T]):
     """A mutable `set` wrapper with functional API.
 
     Unlike `Set` which is immutable, `SetMut` allows in-place modification of elements.
@@ -320,15 +327,30 @@ class SetMut[T](Set[T], MutableSet[T]):
         data (Iterable[T]): The mutable set to wrap.
     """
 
-    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
+    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
     _inner: set[T]
 
     def __init__(self, data: Iterable[T]) -> None:
-        self._inner = set(data)  # pyright: ignore[reportIncompatibleVariableOverride]
+        self._inner = set(data)
+
+    @override
+    def __iter__(self) -> Iterator[T]:
+        return iter(self._inner)
+
+    @override
+    def __len__(self) -> int:
+        return len(self._inner)
+
+    @override
+    def __contains__(self, item: object) -> bool:
+        return item in self._inner
+
+    @override
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({get_repr(self._inner)})"
 
     @property
-    @override
-    def inner(self) -> set[T]:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def inner(self) -> set[T]:
         """Get the underlying `set` data structure.
 
         Useful when interoperating with functions that require a standard Python `set`.
@@ -369,7 +391,7 @@ class SetMut[T](Set[T], MutableSet[T]):
 
         ```
         """
-        instance: SetMut[V] = SetMut.__new__(SetMut)  # pyright: ignore[reportUnknownVariableType]
+        instance: SetMut[V] = object.__new__(SetMut)  # pyright: ignore[reportUnknownVariableType]
         instance._inner = data
         return instance
 
@@ -412,3 +434,19 @@ class SetMut[T](Set[T], MutableSet[T]):
         ```
         """
         self._inner.discard(value)
+
+    @override
+    def intersection(self, other: AbstractSet[T]) -> SetMut[T]:
+        return self.from_ref(self._inner & other)
+
+    @override
+    def union(self, other: AbstractSet[T]) -> SetMut[T]:
+        return self.from_ref(self._inner | other)
+
+    @override
+    def difference(self, other: AbstractSet[T]) -> SetMut[T]:
+        return self.from_ref(self._inner - other)
+
+    @override
+    def symmetric_difference(self, other: AbstractSet[T]) -> SetMut[T]:
+        return self.from_ref(self._inner ^ other)

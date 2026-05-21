@@ -4,6 +4,21 @@
 
 -
 
+## [0.21.0] - 2026-05-21
+
+### 💥 Breaking changes
+
+- **Removed**: `Set::r_intersection, r_union, r_difference, r_symmetric_difference` -> these methods were redundant and not really useful in practice, as the same behavior can be achieved by swapping the order of the sets in the non-reverse methods. For example, `a.r_intersection(b)` is equivalent to `b.intersection(a)`, and so on for the other methods.
+- **Migrated**: `PyoKeysView`, `PyoValuesView` and `PyoItemsView` are moved from `abc` submodule to surface-level API. If you previously imported them as `from pyochain.abc`, update your imports to `from pyochain` instead.
+
+### 🐞 Bug fixes
+
+- `PyoKeysView` and `PyoItemsView` lost their set-like methods `union`, `intersection`, etc... in the last release. It was an overlook of the removal of these methods from the `PyoSet` ABC. This is now fixed.
+
+### ✨ Enhancements
+
+- **Better returns**: Due to the aforementioned bugfix, I took the opportunity to double check what was really returned from those operations before being wrapped in a `self::__class__` call. Turns out that by default, keys and item views were returning `set` objects, which were immediately re-wrapped in their callers, which may have entailed unecessary copies, but most importantly the API loss of an already constructed object with more methods (`SetMut`). Now, each class (`PyoKeysView`, `PyoItemsView`, `Set`, `SetMut`) has a dedicated implementation of these methods, which garantee **no-copy** behavior with a better API.
+
 ## [0.20.0] - 2026-05-21
 
 ### 💥 Breaking changes

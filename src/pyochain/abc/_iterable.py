@@ -6,16 +6,13 @@ from abc import ABC
 from collections.abc import (
     Callable,
     Collection,
-    ItemsView,
     Iterable,
     Iterator,
-    KeysView,
     Mapping,
     MappingView,
     MutableMapping,
     MutableSequence,
     Sequence,
-    ValuesView,
 )
 from collections.abc import Set as AbstractSet
 from dataclasses import dataclass
@@ -29,6 +26,7 @@ from ..rs import NONE, Checkable, Err, Ok, Option, Pipeable, Result, Some, optio
 if TYPE_CHECKING:
     from .._iter import Iter, Vec
     from .._seq import Seq
+    from .._set import PyoItemsView, PyoKeysView, PyoValuesView
     from ..rs import Option, Result
 
 type Comparable[T] = list[T] | tuple[T, ...] | set[T] | frozenset[T]
@@ -2021,48 +2019,6 @@ class PyoMappingView[T](MappingView, PyoCollection[T], ABC):
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
 
-class PyoValuesView[V](ValuesView[V], PyoMappingView[V]):  # pyright: ignore[reportUnsafeMultipleInheritance]
-    """A view of the values in a pyochain mapping.
-
-    This concrete class is returned by the `PyoMapping.values()` method, and inherits from `collections.abc.ValuesView` and `PyoCollection`.
-
-    See Also:
-        `PyoMapping::values`: Method that returns this view.
-    """
-
-    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
-
-
-class PyoKeysView[K](KeysView[K], PyoMappingView[K], PyoSet[K]):  # pyright: ignore[reportUnsafeMultipleInheritance]
-    """A view of the keys in a pyochain mapping.
-
-    This concrete class is returned by the `PyoMapping.keys()` method, and inherits from `collections.abc.KeysView`, `PyoMappingView`, and `PyoSet`.
-
-    Keys views support set-like operations since dictionary keys are unique.
-
-    See Also:
-        `PyoMapping::keys`: Method that returns this view.
-    """
-
-    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
-
-
-class PyoItemsView[K, V](  # pyright: ignore[reportUnsafeMultipleInheritance]
-    ItemsView[K, V], PyoMappingView[tuple[K, V]], PyoSet[tuple[K, V]]
-):
-    """A view of the items (key-value pairs) in a pyochain mapping.
-
-    This concrete class is returned by the `PyoMapping.items()` method, and inherits from `collections.abc.ItemsView`, `PyoMappingView`, and `PyoSet`.
-
-    Items are represented as tuples of `(key, value)` pairs, and the view supports set-like operations.
-
-    See Also:
-        `PyoMapping.items()`: Method that returns this view.
-    """
-
-    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
-
-
 class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
     """Extends `PyoCollection[K]` and `collections.abc.Mapping[K, V]`.
 
@@ -2098,6 +2054,8 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
 
         ```
         """
+        from .._set import PyoKeysView
+
         return PyoKeysView(self)
 
     @override
@@ -2116,6 +2074,8 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
 
         ```
         """
+        from .._set import PyoValuesView
+
         return PyoValuesView(self)
 
     @override
@@ -2134,6 +2094,8 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
 
         ```
         """
+        from .._set import PyoItemsView
+
         return PyoItemsView(self)
 
 

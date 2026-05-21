@@ -5,7 +5,7 @@ from ._dict import Dict
 from ._iter import Iter, Vec
 from ._range import Range
 from ._seq import Seq
-from ._set import Set, SetMut
+from ._set import PyoItemsView, PyoKeysView, PyoValuesView, Set, SetMut
 from .rs import (
     NONE,
     Err,
@@ -30,6 +30,9 @@ __all__ = [
     "Ok",
     "Option",
     "OptionUnwrapError",
+    "PyoItemsView",
+    "PyoKeysView",
+    "PyoValuesView",
     "Range",
     "Result",
     "ResultUnwrapError",
