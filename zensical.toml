@@ -10,6 +10,17 @@
 
     nav = [
         { "API Reference" = [
+            { "ABCs" = [
+                { "PyoCollection" = "reference/pyocollection.md" },
+                { "PyoIterable" = "reference/pyoiterable.md" },
+                { "PyoIterator" = "reference/pyoiterator.md" },
+                { "PyoMapping" = "reference/pyomapping.md" },
+                { "PyoMappingView" = "reference/pyomappingview.md" },
+                { "PyoMutableMapping" = "reference/pyomutablemapping.md" },
+                { "PyoMutableSequence" = "reference/pyomutablesequence.md" },
+                { "PyoSequence" = "reference/pyosequence.md" },
+                { "PyoSet" = "reference/pyoset.md" },
+            ] },
             { "Collections" = [
                 { "Dict" = "reference/dict.md" },
                 { "PyoItemsView" = "reference/pyoitemsview.md" },
@@ -30,8 +41,10 @@
             ] },
             { "Iterators" = [
                 { "Iter" = "reference/iter.md" },
-                { "Peekable" = "reference/peekable.md" },
-                { "Unzipped" = "reference/unzipped.md" },
+            ] },
+            { "Mixins" = [
+                { "Checkable" = "reference/checkable.md" },
+                { "Pipeable" = "reference/pipeable.md" },
             ] },
             { "Optional Values" = [
                 { "None" = "reference/null.md" },
@@ -41,19 +54,6 @@
                 { "Some" = "reference/some.md" },
             ] },
             { "Overview" = "api-reference.md" },
-            { "abc's & Mixins" = [
-                { "Checkable" = "reference/checkable.md" },
-                { "Pipeable" = "reference/pipeable.md" },
-                { "PyoCollection" = "reference/pyocollection.md" },
-                { "PyoIterable" = "reference/pyoiterable.md" },
-                { "PyoIterator" = "reference/pyoiterator.md" },
-                { "PyoMapping" = "reference/pyomapping.md" },
-                { "PyoMappingView" = "reference/pyomappingview.md" },
-                { "PyoMutableMapping" = "reference/pyomutablemapping.md" },
-                { "PyoMutableSequence" = "reference/pyomutablesequence.md" },
-                { "PyoSequence" = "reference/pyosequence.md" },
-                { "PyoSet" = "reference/pyoset.md" },
-            ] },
         ] },
         { "Core Types Overview" = "overview.md" },
         { "Home" = "index.md" },
