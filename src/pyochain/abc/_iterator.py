@@ -734,22 +734,22 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             int: The index of the maximum value.
 
         Example:
+            Basic usage:
             ```python
             >>> from pyochain import Iter, Seq
             >>> Iter("abcdefghabcd").argmax()
             7
-            >>> Iter([0, 1, 2, 3, 3, 2, 1, 0]).argmax()
+            >>> Iter((0, 1, 2, 3, 3, 2, 1, 0)).argmax()
             3
 
             ```
-            For example, identify the best machine learning model:
+            Identify the best machine learning model:
             ```python
-            >>> models = Seq(["svm", "random forest", "knn", "naïve bayes"])
-            >>> accuracy = Seq([68, 61, 84, 72])
+            >>> models = Seq(("svm", "random forest", "knn", "naïve bayes"))
+            >>> accuracy = Seq((68, 61, 84, 72))
             >>> # Most accurate model
             >>> models.get(accuracy.iter().argmax()).unwrap()
             'knn'
-            >>>
             >>> # Best accuracy
             >>> accuracy.max()
             84

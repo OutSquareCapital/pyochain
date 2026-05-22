@@ -30,6 +30,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
         ```python
         >>> from pyochain.abc import PyoIterable
         >>> from dataclasses import dataclass
+        >>>
         >>> @dataclass(slots=True)
         ... class ClientRegistry(PyoIterable[str]):
         ...     clients: list[str]
@@ -279,7 +280,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
         """
         return min(iter(self))
 
-    def min_by[U: SupportsRichComparison[Any]](self, *, key: Callable[[T], U]) -> T:
+    def min_by[U: SupportsRichComparison[Any]](self, key: Callable[[T], U]) -> T:
         """Return the minimum element of the `Iterable` using a custom **key** function.
 
         If multiple elements are tied for the minimum value, the first one encountered is returned.
@@ -294,15 +295,27 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             ```python
             >>> from pyochain import Seq
             >>> from dataclasses import dataclass
-            >>> @dataclass
-            ... class Foo:
-            ...     x: int
-            ...     y: str
             >>>
-            >>> Seq((Foo(2, "a"), Foo(1, "b"), Foo(4, "c"))).min_by(key=lambda f: f.x)
-            Foo(x=1, y='b')
-            >>> Seq((Foo(2, "a"), Foo(1, "b"), Foo(1, "c"))).min_by(key=lambda f: f.x)
-            Foo(x=1, y='b')
+            >>> @dataclass
+            ... class Person:
+            ...     name: str
+            ...     age: int
+            ...     is_student: bool
+            ...
+            ...     def get_discount(self) -> float:
+            ...         return 0.1 if self.is_student else 0.0
+            >>>
+            >>> alice = Person("Alice", 30, False)
+            >>> bob = Person("Bob", 22, True)
+            >>> charlie = Person("Charlie", 25, False)
+            >>> persons = Seq((alice, bob, charlie))
+            >>>
+            >>> persons.min_by(lambda p: p.age).name
+            'Bob'
+            >>> persons.min_by(lambda p: p.name).name
+            'Alice'
+            >>> persons.min_by(Person.get_discount).name
+            'Alice'
 
             ```
         """
@@ -330,7 +343,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
         """
         return max(iter(self))
 
-    def max_by[U: SupportsRichComparison[Any]](self, *, key: Callable[[T], U]) -> T:
+    def max_by[U: SupportsRichComparison[Any]](self, key: Callable[[T], U]) -> T:
         """Return the maximum element of the `Iterable` using a custom **key** function.
 
         If multiple elements are tied for the maximum value, the first one encountered is returned.
@@ -345,15 +358,27 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             ```python
             >>> from pyochain import Seq
             >>> from dataclasses import dataclass
-            >>> @dataclass
-            ... class Foo:
-            ...     x: int
-            ...     y: str
             >>>
-            >>> Seq((Foo(2, "a"), Foo(3, "b"), Foo(4, "c"))).max_by(key=lambda f: f.x)
-            Foo(x=4, y='c')
-            >>> Seq((Foo(2, "a"), Foo(3, "b"), Foo(3, "c"))).max_by(key=lambda f: f.x)
-            Foo(x=3, y='b')
+            >>> @dataclass
+            ... class Person:
+            ...     name: str
+            ...     age: int
+            ...     is_student: bool
+            ...
+            ...     def get_discount(self) -> float:
+            ...         return 0.1 if self.is_student else 0.0
+            >>>
+            >>> alice = Person("Alice", 30, False)
+            >>> bob = Person("Bob", 22, True)
+            >>> charlie = Person("Charlie", 25, False)
+            >>> persons = Seq((alice, bob, charlie))
+            >>>
+            >>> persons.max_by(lambda p: p.age).name
+            'Alice'
+            >>> persons.max_by(lambda p: p.name).name
+            'Charlie'
+            >>> persons.max_by(Person.get_discount).name
+            'Bob'
 
             ```
         """
