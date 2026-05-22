@@ -12,7 +12,16 @@ from collections.abc import (
     Sequence,
     ValuesView,
 )
-from typing import TYPE_CHECKING, Any, Literal, Self, TypeIs, overload, override
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Literal,
+    Self,
+    TypeGuard,
+    TypeIs,
+    overload,
+    override,
+)
 
 from . import _tools as tls  # pyright: ignore[reportMissingModuleSource]
 from ._seq import Seq
@@ -26,6 +35,7 @@ if TYPE_CHECKING:
     from ._vec import Vec
 
 type AnyOpt = Option[Any]  # pyright: ignore[reportExplicitAny]
+type AnyIter = Iterable[Any]  # pyright: ignore[reportExplicitAny]
 Position = Literal["first", "middle", "last", "only"]
 """Literal type representing the position of an item in an iterable."""
 type ZippedLongest[T] = (
@@ -36,8 +46,8 @@ type ZippedLongest[T] = (
     | Iter[tuple[AnyOpt, ...]]
 )
 """Type representing the result of a `zip_longest` operation, which can yield tuples of varying lengths depending on the number of iterables zipped together."""
-
-
+type FilterFn[T, R] = Callable[[T], bool | TypeIs[R] | TypeGuard[R]] | None
+"""Optional closure that can be passed to `Iter::filter` to determine if an element should be yielded."""
 # TODO: structures that use python builtins should inerhit all their dunder, e.g __eq__.
 
 
@@ -514,7 +524,7 @@ class Iter[T](PyoIterator[T]):
     def flatten(self: Iter[Range]) -> Iter[int]: ...
     @overload
     def flatten[U](self: Iter[Dict[U, Any]]) -> Iter[U]: ...  # pyright: ignore[reportExplicitAny]
-    def flatten[U: Iterable[Any]](self: Iter[U]) -> Iter[Any]:  # pyright: ignore[reportExplicitAny]
+    def flatten[U: AnyIter](self: Iter[U]) -> Iter[Any]:  # pyright: ignore[reportExplicitAny]
         """Creates an `Iter` that flattens nested structures.
 
         This is useful when you have an `Iter` of `Iterable` and you want to remove one level of indirection.
@@ -704,10 +714,7 @@ class Iter[T](PyoIterator[T]):
         self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
     ) -> Iter[R]: ...
-    def map_star[U: Iterable[Any], R](
-        self: Iter[U],
-        func: Callable[..., R],
-    ) -> Iter[R]:
+    def map_star[U: AnyIter, R](self: Iter[U], func: Callable[..., R]) -> Iter[R]:
         """Applies a function to each element.where each element is an iterable.
 
         Unlike `.map()`, which passes each element as a single argument, `.starmap()` unpacks each element into positional arguments for the function.
@@ -739,6 +746,105 @@ class Iter[T](PyoIterator[T]):
             ```
         """
         return Iter(itertools.starmap(func, self._inner))
+
+    @overload
+    def map_with[T1, R](
+        self, iterable: Iterable[T1], /, *, func: Callable[[T, T1], R]
+    ) -> Iter[R]: ...
+    @overload
+    def map_with[T1, T2, R](
+        self,
+        iterable: Iterable[T1],
+        iter2: Iterable[T2],
+        /,
+        *,
+        func: Callable[[T, T1, T2], R],
+    ) -> Iter[R]: ...
+    @overload
+    def map_with[T1, T2, T3, R](
+        self,
+        iterable: Iterable[T1],
+        iter2: Iterable[T2],
+        iter3: Iterable[T3],
+        /,
+        *,
+        func: Callable[[T, T1, T2, T3], R],
+    ) -> Iter[R]: ...
+    @overload
+    def map_with[T1, T2, T3, T4, R](
+        self,
+        iterable: Iterable[T1],
+        iter2: Iterable[T2],
+        iter3: Iterable[T3],
+        iter4: Iterable[T4],
+        /,
+        *,
+        func: Callable[[T, T1, T2, T3, T4], R],
+    ) -> Iter[R]: ...
+    @overload
+    def map_with[T1, T2, T3, T4, T5, R](
+        self,
+        iterable: Iterable[T1],
+        iter2: Iterable[T2],
+        iter3: Iterable[T3],
+        iter4: Iterable[T4],
+        iter5: Iterable[T5],
+        /,
+        *,
+        func: Callable[[T, T1, T2, T3, T4, T5], R],
+    ) -> Iter[R]: ...
+    @overload
+    def map_with[R](
+        self,
+        iterable: AnyIter,
+        iter2: AnyIter,
+        iter3: AnyIter,
+        iter4: AnyIter,
+        iter5: AnyIter,
+        iter6: AnyIter,
+        /,
+        *iterables: AnyIter,
+        func: Callable[..., R],
+    ) -> Iter[R]: ...
+    def map_with[R](self, *iterables: AnyIter, func: Callable[..., R]) -> Iter[R]:
+        """Applies a function to the elements of this `Iterator` and additional iterables.
+
+        The provided function must take as many arguments as the number of iterables provided (including **self**).
+
+        It is then applied to the items from all iterables in parallel.
+
+        the iterator stops when the shortest iterable is exhausted.
+
+        Args:
+            func (Callable[..., R]): Function to apply to the elements of the iterables.
+            *iterables (AnyIter): Additional iterables to zip with **self**.
+
+        Returns:
+            Iter[R]: An `Iterator` of results from applying the function to the elements of the iterables.
+
+        See Also:
+            [`Iter::map_juxt`][map_juxt] to apply multiple functions to the same elements of the `Iterator`.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> from dataclasses import dataclass
+            >>> @dataclass
+            ... class Triangle:
+            ...     x: int
+            ...     y: int
+            ...     z: int
+            >>>
+            >>> x_list = [1, 2, 3]
+            >>> y_list = [4, 5, 6]
+            >>> z_list = [7, 8, 9]
+            >>> output = Iter(x_list).map_with(y_list, z_list, func=Triangle).collect()
+            >>> output
+            Seq(Triangle(x=1, y=4, z=7), Triangle(x=2, y=5, z=8), Triangle(x=3, y=6, z=9))
+
+            ```
+        """
+        return Iter(map(func, self._inner, *iterables))
 
     def map_while[R](self, func: Callable[[T], Option[R]]) -> Iter[R]:
         """Creates an iterator that both yields elements based on a predicate and maps.
@@ -871,19 +977,26 @@ class Iter[T](PyoIterator[T]):
 
         return Iter(_gen(self._inner))
 
-    # filters ------------------------------------------------------------
     @overload
-    def filter[U](self, func: Callable[[T], TypeIs[U]]) -> Iter[U]: ...
+    def filter[N](self: Iter[N | None], func: None = None) -> Iter[N]: ...
     @overload
-    def filter(self, func: Callable[[T], bool]) -> Iter[T]: ...
-    def filter[U](self, func: Callable[[T], bool | TypeIs[U]]) -> Iter[T] | Iter[U]:
-        """Creates an `Iter` which uses a closure to determine if an element should be yielded.
+    def filter[R](self, func: Callable[[T], TypeIs[R]]) -> Iter[R]: ...
+    @overload
+    def filter[R](self, func: Callable[[T], TypeGuard[R]]) -> Iter[R]: ...
+    @overload
+    def filter(self, func: Callable[[T], bool] | None) -> Self: ...
+    def filter[R, N](self, func: FilterFn[T, R] = None) -> Self | Iter[R] | Iter[N]:
+        """Creates an `Iter` with an optional closure to determine if an element should be yielded.
 
-        Given an element the closure must return true or false.
+        Given an element the closure must return `True` or `False`.
 
-        The returned `Iter` will yield only the elements for which the closure returns true.
+        The returned `Iter` will yield only the elements for which the closure returns `True`.
 
-        The closure can return a `TypeIs` to narrow the type of the returned iterable.
+        If no closure is provided, the elements are directly evaluated on their truthiness.
+
+        This means that empty collections, `0`, `False`, and `None` will be filtered out.
+
+        The closure can return a `TypeIs` or `TypeGuard` to narrow the type of the returned `Iterator`.
 
         This won't have any runtime effect, but allows for better type inference.
 
@@ -891,10 +1004,10 @@ class Iter[T](PyoIterator[T]):
             `Iter.filter(f).next()` is equivalent to `Iter.find(f)`.
 
         Args:
-            func (Callable[[T], bool | TypeIs[U]]): Function to evaluate each item.
+            func (FilterFn[T, R]): Function to evaluate each item.
 
         Returns:
-            Iter[T] | Iter[U]: An iterable of the items that satisfy the predicate.
+            Self | Iter[R] | Iter[N]: An `Iterator` of the items that satisfy the predicate.
 
         Example:
             ```python
@@ -914,10 +1027,16 @@ class Iter[T](PyoIterator[T]):
             >>> mixed_data = (1, "two", 3.0, "four")
             >>> Iter(mixed_data).filter(_is_str).collect()
             Seq('two', 'four')
+            >>> maybe_none = (1, None, 3, None)
+            >>> Iter(maybe_none).filter().collect()
+            Seq(1, 3)
+            >>> maybe_false = (0, 1, False, 2, "", 3, None)
+            >>> Iter(maybe_false).filter().collect()
+            Seq(1, 2, 3)
 
             ```
         """
-        return Iter(filter(func, self._inner))
+        return self.__class__(filter(func, self._inner))
 
     @overload
     def filter_star(
@@ -970,10 +1089,7 @@ class Iter[T](PyoIterator[T]):
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], bool],
     ) -> Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]]: ...
 
-    def filter_star[U: Iterable[Any]](
-        self: Iter[U],
-        func: Callable[..., bool],
-    ) -> Iter[U]:
+    def filter_star[U: AnyIter](self: Iter[U], func: Callable[..., bool]) -> Iter[U]:
         """Creates an `Iter` which uses a closure **func** to determine if an element should be yielded, where each element is an iterable.
 
         Unlike `.filter()`, which passes each element as a single argument, `.filter_star()` unpacks each element into positional arguments for the **func**.
@@ -1009,9 +1125,11 @@ class Iter[T](PyoIterator[T]):
     @overload
     def filter_false[U](self, func: Callable[[T], TypeIs[U]]) -> Iter[U]: ...
     @overload
+    def filter_false[U](self, func: Callable[[T], TypeGuard[U]]) -> Iter[U]: ...
+    @overload
     def filter_false(self, func: Callable[[T], bool]) -> Iter[T]: ...
     def filter_false[U](
-        self, func: Callable[[T], bool | TypeIs[U]]
+        self, func: Callable[[T], bool | TypeIs[U] | TypeGuard[U]] | None = None
     ) -> Iter[T] | Iter[U]:
         """Return elements for which **func** is `False`.
 
@@ -1049,6 +1167,9 @@ class Iter[T](PyoIterator[T]):
 
         Returns:
             Iter[R]: An iterable of the results where func returned `Some`.
+
+        See Also:
+            [`Iter::filter`][filter] with no closure provided if you want to filter out Python native `None` values.
 
         Example:
             ```python
@@ -1135,9 +1256,8 @@ class Iter[T](PyoIterator[T]):
         self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], Option[R]],
     ) -> Iter[R]: ...
-    def filter_map_star[U: Iterable[Any], R](
-        self: Iter[U],
-        func: Callable[..., Option[R]],
+    def filter_map_star[U: AnyIter, R](
+        self: Iter[U], func: Callable[..., Option[R]]
     ) -> Iter[R]:
         """Creates an iterator that both filters and maps, where each element is an iterable.
 
@@ -1221,11 +1341,7 @@ class Iter[T](PyoIterator[T]):
         *,
         strict: bool = ...,
     ) -> Iter[tuple[T, T1, T2, T3, T4]]: ...
-    def zip(
-        self,
-        *others: Iterable[Any],  # pyright: ignore[reportExplicitAny]
-        strict: bool = False,
-    ) -> Iter[tuple[Any, ...]]:  # pyright: ignore[reportExplicitAny]
+    def zip(self, *others: AnyIter, strict: bool = False) -> Iter[tuple[Any, ...]]:  # pyright: ignore[reportExplicitAny]
         """Yields n-length tuples, where n is the number of iterables passed as positional arguments.
 
         The i-th element in every tuple comes from the i-th iterable argument to `.zip()`.
@@ -1237,7 +1353,7 @@ class Iter[T](PyoIterator[T]):
             This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.
 
         Args:
-            *others (Iterable[Any]): Other iterables to zip with.
+            *others (AnyIter): Other iterables to zip with.
             strict (bool): If `True` and one of the arguments is exhausted before the others, raise a ValueError.
 
         Returns:
@@ -1297,9 +1413,9 @@ class Iter[T](PyoIterator[T]):
         iter5: Iterable[T],
         iter6: Iterable[T],
         /,
-        *iterables: Iterable[T],
+        *iterables: AnyIter,
     ) -> Iter[tuple[Option[T], ...]]: ...
-    def zip_longest(self, *others: Iterable[Any]) -> ZippedLongest[T]:  # pyright: ignore[reportExplicitAny]
+    def zip_longest(self, *others: AnyIter) -> ZippedLongest[T]:
         """Return a zip Iterator who yield a tuple where the i-th element comes from the i-th iterable argument.
 
         Yield values until the longest iterable in the argument sequence is exhausted, and then it raises StopIteration.
@@ -1309,7 +1425,7 @@ class Iter[T](PyoIterator[T]):
         When the shorter iterables are exhausted, they yield `NONE`.
 
         Args:
-            *others (Iterable[Any]): Other iterables to zip with.
+            *others (AnyIter): Other iterables to zip with.
 
         Returns:
             ZippedLongest[T]: An iterable of tuples containing optional elements from the zipped iterables.
@@ -1426,7 +1542,7 @@ class Iter[T](PyoIterator[T]):
         /,
     ) -> Iter[tuple[T, T1, T2, T3, T4]]: ...
 
-    def product(self, *others: Iterable[Any]) -> Iter[tuple[Any, ...]]:  # pyright: ignore[reportExplicitAny]
+    def product(self, *others: AnyIter) -> Iter[tuple[Any, ...]]:  # pyright: ignore[reportExplicitAny]
         """Computes the Cartesian product with another iterable.
 
         This is the declarative equivalent of nested for-loops.
@@ -1435,7 +1551,7 @@ class Iter[T](PyoIterator[T]):
         other iterable.
 
         Args:
-            *others (Iterable[Any]): Other iterables to compute the Cartesian product with.
+            *others (AnyIter): Other iterables to compute the Cartesian product with.
 
         Returns:
             Iter[tuple[Any, ...]]: An iterable of tuples containing elements from the Cartesian product.

@@ -7,6 +7,15 @@
 - **Vec MRO**: `Vec` does not inherit from `Seq` anymore, only from `PyoMutableSequence`. This means that if you were relying on `Vec` being a subclass of `Seq` for type checking or isinstance checks, you should now check against `PyoMutableSequence` instead. The fact that `Seq` worked has a type hint for `Vec` was a problem in itself, but more broadly it didn't made much sense, whilst at the same time not bringing any real benefit besides 10 LOC for dunders methods like repr and getitem. Not methods nor attributes have been impacted by this change.
 - **API change**: `PyoIterator::{argmin, argmax}` have been renamed to `arg_min` and `arg_max`, and their `key` argument version is now in the form of a separate method, `arg_min_by` and `arg_max_by`. Just like the last releases with similar changes, adapt your code in consequence.
 
+### 🆕 New features
+
+- `Iter::map_with` for mapping multiple iterables at once, just like `map` builtin when provided with multiple iterables.
+
+### ✨ Enhancements
+
+- **typing**: `Iter::{filter, filter_false}` now handle type narrowing for `T | None` and `TypeGuard` when possible.
+- **API**: `Iter::{filter, filter_false}` provided closure is now optional, just like python builtins.
+
 ### 📖 Documentation
 
 - Correctly handle hyperlinks in `See Also` sections. WIP to do the same for the rest of the sections.

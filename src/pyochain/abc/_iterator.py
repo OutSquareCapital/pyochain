@@ -761,7 +761,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Credits to more-itertools for the implementation.
 
         Args:
-            key (Callable[[T], U] | None): Optional function to determine the value for comparison.
+            key (Callable[[T], U]): Function to determine the value for comparison.
 
         Returns:
             int: The index of the maximum value.
