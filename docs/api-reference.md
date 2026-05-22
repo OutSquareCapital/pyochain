@@ -2,55 +2,55 @@
 
 This page is the entry point to the **complete** public API documentation.
 
-## Collections
+## Mixins
 
-- [`Seq[T]`](reference/seq.md) — Immutable Sequence (`tuple`-backed)
-- [`Vec[T]`](reference/vec.md) — Mutable Sequence (`list`-backed)
-- [`Set[T]`](reference/set.md) — Immutable Set (`frozenset`-backed)
-- [`SetMut[T]`](reference/setmut.md) — Mutable Set (`set`-backed)
-- [`Dict[K, V]`](reference/dict.md) — Mutable Mapping (`dict`-backed)
-- [`Range`](reference/range.md) —  Integer ranges (`range`-backed)
+- [`Pipeable`](reference/pipeable.md)
+- [`Checkable`](reference/checkable.md)
 
-## Iterators
+## ABCs
 
-- [`Iter[T]`](reference/iter.md) — Lazy processing of iterators
+- [`PyoIterable[T]`](reference/pyoiterable.md)
+- [`PyoIterator[T]`](reference/pyoiterator.md)
+- [`PyoCollection[T]`](reference/pyocollection.md)
+- [`PyoSequence[T]`](reference/pyosequence.md)
+- [`PyoMutableSequence[T]`](reference/pyomutablesequence.md)
+- [`PyoSet[T]`](reference/pyoset.md)
+- [`PyoMappingView[T]`](reference/pyomappingview.md)
+- [`PyoMapping[K, V]`](reference/pyomapping.md)
+- [`PyoMutableMapping[K, V]`](reference/pyomutablemapping.md)
 
-## Error handling
+### Concrete Collections & Iterators
 
-- [`Result[T, E]`](reference/result.md) — Actual type to use for explicit error handling (`Ok` / `Err`). Used for type hints.
-- [`ResultType[T, E]`](reference/resulttype.md) — Common interface for `Ok` and `Err`. Reference their methods.
-- [`Ok[T]`](reference/ok.md) - `Ok` variant of `Result`
-- [`Err[E]`](reference/err.md) - `Err` variant of `Result`
-- [`ResultUnwrapError`](reference/resultunwraperror.md) - Exception raised when unwrapping a `Result` that is an `Err`
+### Collections
 
-## Optional values
-
-- [`Option[T]`](reference/option.md) — Optional values (`Some` / `NONE`)
-- [`Some[T]`](reference/some.md) - `Some` variant of `Option`
-- [`NONE`](reference/null.md) - `NONE` variant of `Option`. Constant singleton.
-- [`OptionUnwrapError`](reference/optionunwraperror.md) - Exception raised when unwrapping an `Option` that is `NONE`
-
-## Mixins & ABC's
-
-### Fluent Mixins
-
-- [`Pipeable`](reference/pipeable.md) — Fluent methods for chaining operations
-- [`Checkable`](reference/checkable.md) — Conversion to `Option`/`Result` based on instance truthiness
-
-### Abstract Base Classes
-
-- [`PyoIterable[T]`](reference/pyoiterable.md) — Base ABC for all iterables
-- [`PyoIterator[T]`](reference/pyoiterator.md) — Iterator ABC
-- [`PyoCollection[T]`](reference/pyocollection.md) — Base ABC for eager collections
-- [`PyoSequence[T]`](reference/pyosequence.md) — Sequence ABC
-- [`PyoMutableSequence[T]`](reference/pyomutablesequence.md) — Mutable sequence ABC
-- [`PyoSet[T]`](reference/pyoset.md) — Set ABC
-- [`PyoMappingView[T]`](reference/pyomappingview.md) — Mapping view ABC
-- [`PyoMapping[K, V]`](reference/pyomapping.md) — Mapping ABC
-- [`PyoMutableMapping[K, V]`](reference/pyomutablemapping.md) — Mutable mapping ABC
+- [`Seq[T]`](reference/seq.md)
+- [`Vec[T]`](reference/vec.md)
+- [`Set[T]`](reference/set.md)
+- [`SetMut[T]`](reference/setmut.md)
+- [`Dict[K, V]`](reference/dict.md)
+- [`Range`](reference/range.md)
 
 ### Mapping Views
 
-- [`PyoKeysView[K]`](reference/pyokeysview.md) — Keys view
-- [`PyoValuesView[V]`](reference/pyovaluesview.md) — Values view
-- [`PyoItemsView[K, V]`](reference/pyoitemsview.md) — Items view
+- [`PyoKeysView[K]`](reference/pyokeysview.md)
+- [`PyoValuesView[V]`](reference/pyovaluesview.md)
+- [`PyoItemsView[K, V]`](reference/pyoitemsview.md)
+
+### Iterators
+
+- [`Iter[T]`](reference/iter.md)
+
+## Error handling
+
+- [`Result[T, E]`](reference/result.md)
+- [`ResultType[T, E]`](reference/resulttype.md)
+- [`Ok[T]`](reference/ok.md)
+- [`Err[E]`](reference/err.md)
+- [`ResultUnwrapError`](reference/resultunwraperror.md)
+
+## Optional values
+
+- [`Option[T]`](reference/option.md)
+- [`Some[T]`](reference/some.md)
+- [`NONE`](reference/null.md)
+- [`OptionUnwrapError`](reference/optionunwraperror.md)
