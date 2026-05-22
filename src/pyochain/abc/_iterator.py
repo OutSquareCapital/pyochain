@@ -720,10 +720,43 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             return True
         return True
 
-    def argmax[U](self, key: Callable[[T], U] | None = None) -> int:
+    def arg_max(self) -> int:
         """Index of the first occurrence of a maximum value in the `Iterator`.
 
-        A function that accepts a single argument and returns a transformed version of each input item can be specified with **key**.
+        Credits to more-itertools for the implementation.
+
+        Returns:
+            int: The index of the maximum value.
+
+        Example:
+            Basic usage:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> Iter("abcdefghabcd").arg_max()
+            7
+            >>> Iter((0, 1, 2, 3, 3, 2, 1, 0)).arg_max()
+            3
+
+            ```
+            Identify the best machine learning model:
+            ```python
+            >>> models = Seq(("svm", "random forest", "knn", "naïve bayes"))
+            >>> accuracy = Seq((68, 61, 84, 72))
+            >>> # Most accurate model
+            >>> models.get(accuracy.iter().arg_max()).unwrap()
+            'knn'
+            >>> # Best accuracy
+            >>> accuracy.max()
+            84
+
+            ```
+        """
+        return max(enumerate(iter(self)), key=itemgetter(1))[0]
+
+    def arg_max_by[U](self, key: Callable[[T], U]) -> int:
+        """Index of the first occurrence of a maximum value in the `Iterator` based on a *key* function.
+
+        The *key* function must accept a single argument and return a transformed, comparable version of each input item.
 
         Credits to more-itertools for the implementation.
 
@@ -737,39 +770,31 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             Basic usage:
             ```python
             >>> from pyochain import Iter, Seq
-            >>> Iter("abcdefghabcd").argmax()
-            7
-            >>> Iter((0, 1, 2, 3, 3, 2, 1, 0)).argmax()
-            3
+            >>> Iter(("a", "bbb", "cc")).arg_max_by(len)
+            1
+            >>> Iter(("Alice", "bob", "charlie")).arg_max_by(str.lower)
+            2
 
             ```
             Identify the best machine learning model:
             ```python
             >>> models = Seq(("svm", "random forest", "knn", "naïve bayes"))
-            >>> accuracy = Seq((68, 61, 84, 72))
+            >>> accuracy = Seq(("68", "61", "84", "72"))
             >>> # Most accurate model
-            >>> models.get(accuracy.iter().argmax()).unwrap()
+            >>> models.get(accuracy.iter().arg_max_by(int)).unwrap()
             'knn'
             >>> # Best accuracy
-            >>> accuracy.max()
-            84
+            >>> accuracy.max_by(int)
+            '84'
 
             ```
         """
-        it = iter(self)
-        if key is not None:
-            it = map(key, it)
-        return max(enumerate(it), key=itemgetter(1))[0]
+        return max(enumerate(map(key, iter(self))), key=itemgetter(1))[0]
 
-    def argmin[U](self, key: Callable[[T], U] | None = None) -> int:
+    def arg_min(self) -> int:
         """Index of the first occurrence of a minimum value in the `Iterator`.
 
-        A function that accepts a single argument and returns a transformed version of each input item can be specified with **key**.
-
         Credits to more-itertools for the implementation.
-
-        Args:
-            key (Callable[[T], U] | None): Optional function to determine the value for comparison.
 
         Returns:
             int: The index of the minimum value.
@@ -778,11 +803,40 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ```python
             >>> from pyochain import Iter, Seq
             >>> # Example 1: Basic usage
-            >>> Iter("efghabcdijkl").argmin()
+            >>> Iter("efghabcdijkl").arg_min()
             4
-            >>> Iter((3, 2, 1, 0, 4, 2, 1, 0)).argmin()
+            >>> Iter((3, 2, 1, 0, 4, 2, 1, 0)).arg_min()
             3
-            >>> # Example 2: look up a label corresponding to the position of a value that minimizes a cost function
+
+            ```
+        """
+        return min(enumerate(iter(self)), key=itemgetter(1))[0]
+
+    def arg_min_by[U](self, key: Callable[[T], U]) -> int:
+        """Index of the first occurrence of a minimum value in the `Iterator` based on a *key* function.
+
+        The *key* function must accept a single argument and return a transformed, comparable version of each input item.
+
+        Credits to more-itertools for the implementation.
+
+        Args:
+            key (Callable[[T], U]): Function to determine the value for comparison.
+
+        Returns:
+            int: The index of the minimum value.
+
+        Example:
+            Basic usage:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> Iter(("aaa", "b", "cc")).arg_min_by(len)
+            1
+            >>> Iter(("Alice", "bob", "Charlie")).arg_min_by(str.lower)
+            0
+
+            ```
+            Identify the best machine learning model:
+            ```python
             >>> def cost(x: int) -> float:
             ...     "Days for a wound to heal given a subject's age."
             ...     return x**2 - 20 * x + 150
@@ -790,7 +844,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             >>> labels = Seq(("homer", "marge", "bart", "lisa", "maggie"))
             >>> ages = Seq((35, 30, 10, 9, 1))
             >>> # Fastest healing family member
-            >>> labels.get(ages.iter().argmin(key=cost)).unwrap()
+            >>> labels.get(ages.iter().arg_min_by(cost)).unwrap()
             'bart'
             >>> # Age with fastest healing
             >>> ages.min_by(key=cost)
@@ -798,10 +852,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        it = iter(self)
-        if key is not None:
-            it = map(key, it)
-        return min(enumerate(it), key=itemgetter(1))[0]
+        return min(enumerate(map(key, iter(self))), key=itemgetter(1))[0]
 
     def for_each[**P](
         self,
