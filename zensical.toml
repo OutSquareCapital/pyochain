@@ -70,14 +70,15 @@
         paths = ["src"]
 
     [project.plugins.mkdocstrings.handlers.python.options]
-        docstring_style     = "google"
-        filters             = ["!^_[^_]"]
-        inherited_members   = false
-        members_order       = "alphabetical"
-        scoped_crossrefs    = true
-        show_overloads      = true
-        show_source         = true
-        signature_crossrefs = true
+        docstring_style          = "google"
+        filters                  = ["!^_[^_]"]
+        inherited_members        = false
+        members_order            = "alphabetical"
+        scoped_crossrefs         = true
+        show_inheritance_diagram = true
+        show_overloads           = true
+        show_source              = true
+        signature_crossrefs      = true
 
 
     [project.markdown_extensions.pymdownx.superfences]
