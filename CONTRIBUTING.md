@@ -29,7 +29,7 @@ pyochain is a **mixed Python/Rust project**:
 - [rust/src/result.rs](rust/src/result.rs) — `Result[T, E]`, `Ok`, and `Err` implementations.
 - [rust/src/errors.rs](rust/src/errors.rs) — unwrap error types exposed to Python.
 - [rust/src/mixins.rs](rust/src/mixins.rs) — mixin types `Checkable` and `Pipeable`.
-- [rust/src/tools.rs](rust/src/tools.rs) — performance-oriented iterator helpers exposed through `pyochain._tools`.
+- [rust/src/tools.rs](rust/src/tools.rs) — iteration function and structs exposed through `pyochain._tools`.
 - [rust/src/args.rs](rust/src/args.rs) and [rust/src/hasher.rs](rust/src/hasher.rs) — internal argument parsing and hashing utilities used by the extension.
 
 ## Coding and documentation guidelines
@@ -80,11 +80,6 @@ def my_function(param1: int, param2: str) -> bool:
 TODO: We need to strip all types from the docstrings (i.e `param1 (int): Description`)
 TODO: We need to check if pydoclint can be safely replaced by zensical own checks.
 
-### Rust code
-
-- Use PyO3's modern Bound API (v0.27+).
-- Add docstrings in [src/pyochain/rs.pyi](src/pyochain/rs.pyi) for all public Rust types and methods. The `_tools` module is already tested by the caller site (e.g public classes methods)
-
 ## Setup
 
 After cloning the repo, set up the development environment (the project uses `uv` for both Python and Rust):
@@ -95,7 +90,7 @@ uv sync --dev
 
 ### Building the Rust extension
 
-For development mode (debug symbols, faster compile):
+For development mode (fast compile, no optimizations):
 
 ```bash
 uv run maturin develop --uv
@@ -113,7 +108,7 @@ To force a complete rebuild (clears all Rust artifacts):
 cd rust
 cargo clean
 cd ..
-uv run maturin develop --release --uv
+uv run maturin develop --uv
 ```
 
 ## Tests and quality checks
@@ -153,11 +148,12 @@ uv run -m scripts.generate_docs;
 uv run zensical build -c
 ```
 
-Then open your browser at the address shown.
+Then open your browser with the [site](site/index.html) to view the generated documentation.
 
 ### Benchmarks
 
-Benchmarks are located in [tests/benchmarks/](tests/benchmarks) and use `pytest-benchmark`. See [tests/benchmarks/README.md](tests/benchmarks/README.md) for details on running and interpreting benchmarks.
+Benchmarks are located in [tests/benchmarks/](tests/benchmarks) and use `pytest-benchmark`.
+See [tests/benchmarks/README.md](tests/benchmarks/README.md) for details on running and interpreting benchmarks.
 
 ```shell
 uv run pytest tests/benchmarks --benchmark-only --benchmark-warmup=True --benchmark-group-by=<name, param:<size>, group>
