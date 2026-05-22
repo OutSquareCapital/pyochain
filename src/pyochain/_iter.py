@@ -147,7 +147,7 @@ class Iter[T](PyoIterator[T]):
             However, once both iterators have passed a value, it's freed from memory.
 
         See Also:
-            - `Iter.cloned()` which is the instance method version of this function.
+            - [`Iter::cloned`][cloned] which is the instance method version of this function.
 
         Args:
             other (Self): An `Iter` instance to copy.
@@ -792,7 +792,7 @@ class Iter[T](PyoIterator[T]):
             Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken.
 
         See Also:
-            `Iter.cycle()` to repeat the *elements* of the `Iter` indefinitely.
+            [`Iter::cycle`][cycle] to repeat the *elements* of the `Iter` indefinitely.
 
         Args:
             n (int | None): Optional number of repetitions.
@@ -1541,7 +1541,7 @@ class Iter[T](PyoIterator[T]):
             Iter[R]: An iterator over the outputs of func.
 
         See Also:
-            `.map_windows_star()` for a version that unpacks the window into separate arguments.
+            [`Iter::map_windows_star`][map_windows_star] for a version that unpacks the window into separate arguments.
 
         Example:
             ```python
@@ -1619,7 +1619,7 @@ class Iter[T](PyoIterator[T]):
             Iter[R]: An iterator over the outputs of func.
 
         See Also:
-            `.map_windows()` for a version that passes the entire window as a single tuple argument.
+            [`Iter::map_windows`][map_windows] for a version that passes the entire window as a single tuple argument.
 
         Example:
             ```python
@@ -1698,7 +1698,7 @@ class Iter[T](PyoIterator[T]):
             tuple[Seq[T], Self]: A tuple containing the peeked elements and the remaining iterator.
 
         See Also:
-            `Iter.cloned()` to create an independent copy of the iterator.
+            [`Iter::cloned`][cloned] to create an independent copy of the iterator.
 
         Example:
             ```python
@@ -2378,10 +2378,10 @@ class Iter[T](PyoIterator[T]):
         Warning:
             This creates an infinite `Iterator`.
 
-            Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken.
+            Be sure to use [`Iter::take`][take] or [`Iter::slice`][slice] to limit the number of items taken.
 
         See Also:
-            `Iter.repeat()` to repeat *self* as elements (`Iter[Self]`).
+            [`Iter::repeat`][repeat] to repeat *self* as elements (`Iter[Self]`).
 
         Returns:
             Self: A new `Iterator` that cycles through the elements indefinitely.
@@ -2404,7 +2404,7 @@ class Iter[T](PyoIterator[T]):
             However, append add the value at the **end**, while insert add it at the **beginning**.
 
         See Also:
-            `Iter.chain()` to add multiple elements at the end of the `Iterator`.
+            [`Iter::chain`][chain] to add multiple elements at the end of the `Iterator`.
 
         Args:
             value (T): The value to prepend.
@@ -2458,7 +2458,7 @@ class Iter[T](PyoIterator[T]):
         This is equivalent to `list.extend()`, except it is fully lazy and works with any `Iterable`.
 
         See Also:
-            `Iter.insert()` to add a single element at the beginning of the `Iterator`.
+            [`Iter::insert`][insert] to add a single element at the beginning of the `Iterator`.
 
         Args:
             *others (Iterable[T]): Other iterables to concatenate.

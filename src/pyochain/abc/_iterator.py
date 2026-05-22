@@ -620,7 +620,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Credits to **more-itertools** for the implementation.
 
         See Also:
-            - `is_sorted_by()`: If your elements do not support comparison operations directly, or you want to sort based on a specific attribute or transformation.
+            [`PyoIterator::is_sorted_by`][is_sorted_by] if your elements do not support comparison operations directly, or you want to sort based on a specific attribute or transformation.
 
         Args:
             reverse (bool): Whether to check for descending order.

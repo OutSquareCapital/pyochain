@@ -17,9 +17,11 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
 
     As such, `Vec` is more suitable when you need to build up a collection incrementally, or when you need to perform many modifications on the collection,
 
-    while `Seq` is more memory efficient when you have a fixed collection that doesn't require modification.
+    On the other hand, `Seq` is more memory efficient when you have a fixed collection that doesn't require modification.
 
-    It uses a `list` as the underlying data structure, so it has the same performance characteristics as a standard Python `list` regarding indexing, slicing, and iteration.
+    This is due to the fact that CPython don't have to allocate extra space to account for potential future modifications.
+
+    It uses a `list` as the underlying data structure, so it has the same performance characteristics regarding indexing, slicing, and iteration.
 
     Args:
         data (Iterable[T]): The `Iterable` to wrap.
@@ -206,7 +208,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
             Vec[T]: The new `Vec` after concatenation.
 
         See Also:
-            `Vec::concat_mut` which modifies **self** in place.
+            [`Vec::concat_mut`][concat_mut] which modifies **self** in place.
 
         Example:
             ```python
@@ -247,8 +249,8 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
             Self: The modified `Vec` after concatenation (self).
 
         See Also:
-            `Vec::concat` which returns a new `Vec` (copy).
-            `Vec::extend` who can take any `Iterable`.
+            - [`Vec::concat`][concat] which returns a new `Vec` (copy).
+            - `Vec::extend` which can take any `Iterable`.
 
         Example:
             ```python

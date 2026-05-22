@@ -69,7 +69,7 @@ class PyoCollection[T](PyoIterable[T], Collection[T], ABC):
             Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken.
 
         See Also:
-            `Iter.cycle()` to repeat the *elements* of the `Iter` indefinitely.
+            [`Iter::cycle`][cycle] to repeat the *elements* of the `Iter` indefinitely.
 
         Args:
             n (int | None): Optional number of repetitions.

@@ -594,7 +594,7 @@ class OptionType[T](Pipeable):
             bool: `True` if both instances are equal, `False` otherwise.
 
         See Also:
-            - `Option.eq` for a type-safe, performant version that only accepts `Option[T]` instances.
+            [`Option::eq`][eq] for a type-safe, performant version that only accepts `Option[T]` instances.
 
         Example:
             ```python

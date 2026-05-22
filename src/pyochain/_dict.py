@@ -20,12 +20,14 @@ class Dict[K, V](PyoMutableMapping[K, V]):
         data (DictConvertible[K, V]): Initial data for the Dict that can converted to a dictionary.
 
     See Also:
-        - `Dict::from_ref`: Create a `Dict` from an existing dictionary, no-copy.
-        - `Dict::from_kwargs`: Create a `Dict` from keyword arguments.
-        - `Dict::from_object`: Create a `Dict` from an object's `__dict__` attribute, no-copy.
+        - [`Dict::from_ref`][from_ref]: Create a `Dict` from an existing dictionary, no-copy.
+        - [`Dict::from_kwargs`][from_kwargs]: Create a `Dict` from keyword arguments.
+        - [`Dict::from_object`][from_object]: Create a `Dict` from an object's `__dict__` attribute, no-copy.
 
     Example:
-        The most straightforward way to create a `Dict` is from a standard Python `dict`. This will copy the data, just like the built-in `dict` constructor.
+        The most straightforward way to create a `Dict` is from a standard Python `dict`.
+
+        This will copy the data, just like the built-in `dict` constructor.
         ```python
         >>> from pyochain import Dict
         >>> py_dict = {1: "a", 2: "b"}

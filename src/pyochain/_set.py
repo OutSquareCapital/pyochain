@@ -333,7 +333,7 @@ class PyoItemsView[K, V](  # pyright: ignore[reportUnsafeMultipleInheritance]
     Items are represented as tuples of `(key, value)` pairs, and the view supports set-like operations.
 
     See Also:
-        `PyoMapping.items()`: Method that returns this view.
+        `PyoMapping::items`: Method that returns this view.
     """
 
     # pyrefly: ignore [implicit-any-attribute]
