@@ -1,28 +1,11 @@
 # Contributing to pyochain
 
 Thank you for your interest in contributing to pyochain! This document outlines the repository structure, coding standards, and contribution workflow to help you get started.
+nchmarks.
 
 ## Repository overview
 
-Top-level files and folders of interest:
-
-- [pyproject.toml](pyproject.toml) — Python project metadata and build configuration.
-- [rust/Cargo.toml](rust/Cargo.toml) — Rust crate metadata and dependencies.
-- [zensical.toml](zensical.toml) — documentation site configuration.
-- [README.md](README.md), [CONTRIBUTING.md](CONTRIBUTING.md), [LICENSE.md](LICENSE.md) — user-facing docs.
-- [docs/](docs) — project documentation sources.
-- [site/](site) — generated documentation output.
-- [scripts/](scripts) — development helpers for docs and checks.
-- [src/pyochain/](src/pyochain) — Python package source code.
-- [rust/](rust) — Rust extension module built with PyO3.
-- [tests/](tests) — Python test suite and benchmarks.
-
-## Architecture: Hybrid Python/Rust
-
 pyochain is a **mixed Python/Rust project**:
-
-- **Public Python package**: [src/pyochain/](src/pyochain) contains the import surface, collection types, ABCs, and type stubs.
-- **Native Rust extension**: [rust/src/](rust/src) contains the PyO3 module compiled as `pyochain.rs` via [pyproject.toml](pyproject.toml) and [rust/Cargo.toml](rust/Cargo.toml).
 
 ### Python structure ([src/pyochain/](src/pyochain))
 
@@ -49,14 +32,6 @@ pyochain is a **mixed Python/Rust project**:
 - [rust/src/tools.rs](rust/src/tools.rs) — performance-oriented iterator helpers exposed through `pyochain._tools`.
 - [rust/src/args.rs](rust/src/args.rs) and [rust/src/hasher.rs](rust/src/hasher.rs) — internal argument parsing and hashing utilities used by the extension.
 
-### Build and integration
-
-- [pyproject.toml](pyproject.toml) configures `maturin` as the build backend and maps the compiled module name to `pyochain.rs`.
-- [rust/Cargo.toml](rust/Cargo.toml) defines the Rust crate compiled as a `cdylib`.
-- [rust/src/lib.rs](rust/src/lib.rs) injects the Rust `_tools` module into Python's import system so the Python layer can use it as `pyochain._tools`.
-
-## Package layout
-
 ## Coding and documentation guidelines
 
 ### Python code
@@ -77,33 +52,38 @@ The general idea being that if a method return an object from the same family (e
 
 On the other hand, if we go from a `PyoSequence` to an `Iter`, then it makes more sense to have it in the ABC, because it's a common operation that doesn't depend on the internal implementation of the collection, and goes from one structure to another.
 
-### Rust code
+#### Docstrings
 
-- Use PyO3's modern Bound API (v0.27+).
-- Add docstrings in [src/pyochain/rs.pyi](src/pyochain/rs.pyi) for all public Rust types and methods. The `_tools` module is already tested by the caller site (e.g public classes methods)
-
-Docstring example:
+docstrings should follow this format:
 
 ```python
 def my_function(param1: int, param2: str) -> bool:
     """One liner description of what the function does.
 
     Args:
-        param1 (int): Description.
-        param2 (str): Description.
+        param1: Description.
+        param2: Description.
 
     Returns:
-        bool: Description of the return value.
+        Description of the return value.
 
     Examples:
-    ```python
-    >>> my_function(5, "test")
-    True
+        ```python
+        >>> my_function(5, "test")
+        True
 
-    ```
+        ```
     """
     return True
 ```
+
+TODO: We need to strip all types from the docstrings (i.e `param1 (int): Description`)
+TODO: We need to check if pydoclint can be safely replaced by zensical own checks.
+
+### Rust code
+
+- Use PyO3's modern Bound API (v0.27+).
+- Add docstrings in [src/pyochain/rs.pyi](src/pyochain/rs.pyi) for all public Rust types and methods. The `_tools` module is already tested by the caller site (e.g public classes methods)
 
 ## Setup
 
@@ -164,23 +144,24 @@ uv run pydoclint src/pyochain;
 uv run pytest;
 ```
 
-## Benchmarks
+### Building docs
+
+To build and serve the documentation locally:
+
+```shell
+uv run -m scripts.generate_docs;
+uv run zensical build -c
+```
+
+Then open your browser at the address shown.
+
+### Benchmarks
 
 Benchmarks are located in [tests/benchmarks/](tests/benchmarks) and use `pytest-benchmark`. See [tests/benchmarks/README.md](tests/benchmarks/README.md) for details on running and interpreting benchmarks.
 
 ```shell
 uv run pytest tests/benchmarks --benchmark-only --benchmark-warmup=True --benchmark-group-by=<name, param:<size>, group>
 ```
-
-## Building docs
-
-To build and serve the documentation locally:
-
-```bash
-scripts\rebuild-docs.ps1
-```
-
-Then open your browser at the address shown.
 
 ## Contributing workflow
 
@@ -189,18 +170,9 @@ Then open your browser at the address shown.
 - Include tests or doctest examples for behavior changes whenever possible.
 - For Rust changes, consider adding benchmarks to verify performance impact.
 
-## Issue on release
+## Release process
 
-If an issue on a release appear, AND the package is NOT published on Pypi, running the following commands can help going back to a clean state without needing to create a new release:
-
-```bash
-git tag -d <tag_name>
-git push origin --delete <tag_name>
-```
-
-This will convert the last tag into a draft release, allowing you to fix the issue and publish the release again without creating a new one.
-
-## Changelogs and release template
+### Changelogs and release template
 
 Below is a template used for sections in CHANGELOG.md and release notes on GitHub.
 
@@ -239,3 +211,14 @@ When preparing a release, update the "unreleased" section with the relevant chan
 
 ### 🧪 Tests
 ```
+
+### Issue on release
+
+If an issue on a release appear, AND the package is NOT published on Pypi, running the following commands can help going back to a clean state without needing to create a new release:
+
+```bash
+git tag -d <tag_name>
+git push origin --delete <tag_name>
+```
+
+This will convert the last tag into a draft release, allowing you to fix the issue and publish the release again without creating a new one.
