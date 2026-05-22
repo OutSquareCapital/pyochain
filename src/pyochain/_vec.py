@@ -11,20 +11,20 @@ from .abc import PyoMutableSequence
 class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
     """A `MutableSequence` wrapper with functional API.
 
-    Implement `MutableSequence` Protocol from `collections.abc`.
+    Implement `collections::abc::MutableSequence` Protocol.
 
-    Unlike `Seq` which is immutable, `Vec` allows in-place modification of elements.
+    Unlike [`Seq`][Seq] which is immutable, `Vec` allows in-place modification of elements.
 
     As such, `Vec` is more suitable when you need to build up a collection incrementally, or when you need to perform many modifications on the collection,
 
-    On the other hand, `Seq` is more memory efficient when you have a fixed collection that doesn't require modification.
+    On the other hand, [`Seq`][Seq] is more memory efficient when you have a fixed collection that doesn't require modification.
 
     This is due to the fact that CPython don't have to allocate extra space to account for potential future modifications.
 
     It uses a `list` as the underlying data structure, so it has the same performance characteristics regarding indexing, slicing, and iteration.
 
     Args:
-        data (Iterable[T]): The `Iterable` to wrap.
+        data (Iterable[T]): Any `Iterable` of elements to initialize the `Vec` with.
     """
 
     __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]

@@ -2183,13 +2183,6 @@ class Iter[T](PyoIterator[T]):
     ) -> Iter[tuple[Any | T, Self]]:  # pyright: ignore[reportExplicitAny]
         """Make an `Iter` that returns consecutive keys and groups from the iterable.
 
-        Args:
-            key (Callable[[T], Any] | None): Function computing a key value for each element..
-        If not specified or is None, **key** defaults to an identity function and returns the element unchanged.
-
-        Returns:
-            Iter[tuple[Any | T, Self]]: An `Iter` of `(key, value)` tuples.
-
         The values yielded are `(K, Self)` tuples, where the first element is the group key and the second element is an `Iter` of type `T` over the group values.
 
         The `Iter` needs to already be sorted on the same key function.
@@ -2204,6 +2197,13 @@ class Iter[T](PyoIterator[T]):
             Because `.group_by()` uses Python's `itertools.groupby` under the hood, each group's iterator shares internal state.
 
             When you advance to the next group, the previous group's iterator becomes invalid and will yield empty results.
+
+        Args:
+            key (Callable[[T], Any] | None): Function computing a key value for each element..
+        If not specified or is None, **key** defaults to an identity function and returns the element unchanged.
+
+        Returns:
+            Iter[tuple[Any | T, Self]]: An `Iter` of `(key, value)` tuples.
 
         Example:
             `group_by` can let you compute complex operations very easily and efficiently.

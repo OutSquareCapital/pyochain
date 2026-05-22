@@ -18,16 +18,16 @@ class Seq[T](PyoSequence[T]):
 
     Implements the `Sequence` Protocol from `collections.abc`, as well as `PyoSequence`.
 
-    This class is notably the default return type of `Iter::collect`.
+    This class is notably the default return type of [`Iter::collect`][Iter.collect].
 
-    The underlying data structure is an immutable `tuple`, hence the memory efficiency is better than a `Vec`.
+    The underlying data structure is an immutable `tuple`, hence the memory efficiency is better than a [`Vec`][Vec].
 
     Tip:
         `Seq(tuple)` is preferred over `Seq(list)` as this is a no-copy operation (Python optimizes `tuple` creation from another `tuple`).
 
-        If you have an existing `list`, consider using `Vec.from_ref()` instead to avoid unnecessary copying.
+        If you have an existing `list`, consider using [`Vec::from_ref`][Vec.from_ref] instead to avoid unnecessary copying.
 
-        If you need immediate iteration anyway, you can directly use `Iter` instead.
+        If you need immediate iteration anyway, you can directly use [`Iter`][Iter] instead.
 
     Args:
         data (Iterable[T]): The data to initialize the Seq with.

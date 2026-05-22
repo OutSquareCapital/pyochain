@@ -23,12 +23,7 @@ class BaseConcreteSet[T](ABC):
 
     pyochain philosophy is to prefer explicit method calls that read like natural language instead of obscure operators.
 
-    Concrete set classes should inherit from this base class and implement the following abstract methods:
-
-        - `intersection()`
-        - `union()`
-        - `difference()`
-        - `symmetric_difference()`
+    Concrete set classes should inherit from this base class and implement it's abstract methods.
     """
 
     # pyrefly: ignore [implicit-any-attribute]
@@ -38,11 +33,10 @@ class BaseConcreteSet[T](ABC):
     def intersection(self, other: AbstractSet[T]) -> AbstractSet[T]:
         """Create a new set containing only elements present in both sets.
 
-        The result contains every element that exists in both this set and `other`.
-
         If the sets have no common elements, the result is empty.
 
         This operation is commutative: `A.intersection(B) == B.intersection(A)`.
+
 
         Args:
             other (AbstractSet[T]): The set to intersect with.
@@ -78,17 +72,13 @@ class BaseConcreteSet[T](ABC):
     def union(self, other: AbstractSet[T]) -> AbstractSet[T]:
         """Create a new set containing all unique elements from both sets.
 
-        The result includes every element from this set and every element from `other`.
-
-        Duplicates are automatically removed.
-
         This operation is commutative: `A.union(B) == B.union(A)`.
 
         Args:
             other (AbstractSet[T]): The set to combine with.
 
         Returns:
-            AbstractSet[T]: A new set containing all elements from both sets.
+            AbstractSet[T]: A new set containing all elements from **self** and **other**.
 
         Example:
             ```python
@@ -115,8 +105,6 @@ class BaseConcreteSet[T](ABC):
         The result contains every element that is in this set EXCEPT those that are also present in `other`.
 
         This operation is NOT commutative.
-
-        Use `r_difference()` if you need the reversed argument order for pipelines.
 
         Args:
             other (AbstractSet[T]): The set whose elements should be excluded.
@@ -150,7 +138,7 @@ class BaseConcreteSet[T](ABC):
 
         The result contains elements that are in this set XOR `other`—i.e., elements present in one set but not in both.
 
-        This is the opposite of intersection.
+        This is the opposite of [`Set::intersection`][Set.intersection].
 
         This operation is commutative: `A.symmetric_difference(B) == B.symmetric_difference(A)`.
 
@@ -189,16 +177,16 @@ class BaseConcreteSet[T](ABC):
 class Set[T](PyoSet[T], BaseConcreteSet[T]):
     """`Set` represent an in- memory **unordered**  collection of **unique** elements.
 
-    Implements the `Collection` Protocol from `collections.abc`, so it can be used as a standard immutable collection.
+    Implements the `collections::abc::Collection` Protocol, so it can be used as a standard immutable collection.
 
     The underlying data structure is a `frozenset`.
 
     Tip:
         - `Set(frozenset)` is a no-copy operation since Python optimizes this under the hood.
-        - If you have an existing `set`, prefer using `SetMut.from_ref()` to avoid unnecessary copying.
+        - If you have an existing `set`, consider using [`SetMut::from_ref`][SetMut.from_ref] to avoid unnecessary copying.
 
     Args:
-            data (Iterable[T]): The data to initialize the Set with.
+        data (Iterable[T]): Any `Iterable` of elements to initialize the set with.
 
     Example:
         ```python
@@ -279,8 +267,6 @@ class Set[T](PyoSet[T], BaseConcreteSet[T]):
 class PyoValuesView[V](ValuesView[V], PyoMappingView[V]):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """A view of the values in a pyochain mapping.
 
-    This concrete class is returned by the `PyoMapping.values()` method, and inherits from `collections.abc.ValuesView` and `PyoCollection`.
-
     See Also:
         `PyoMapping::values`: Method that returns this view.
     """
@@ -291,8 +277,6 @@ class PyoValuesView[V](ValuesView[V], PyoMappingView[V]):  # pyright: ignore[rep
 
 class PyoKeysView[K](KeysView[K], PyoMappingView[K], PyoSet[K], BaseConcreteSet[K]):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """A view of the keys in a pyochain mapping.
-
-    This concrete class is returned by the `PyoMapping.keys()` method, and inherits from `collections.abc.KeysView`, `PyoMappingView`, `PyoSet`, and `BaseConcreteSet`.
 
     Keys views support set-like operations since dictionary keys are unique.
 
@@ -328,8 +312,6 @@ class PyoItemsView[K, V](  # pyright: ignore[reportUnsafeMultipleInheritance]
 ):
     """A view of the items (key-value pairs) in a pyochain mapping.
 
-    This concrete class is returned by the `PyoMapping.items()` method, and inherits from `collections.abc.ItemsView`, `PyoMappingView`, `PyoSet`, and `BaseConcreteSet`.
-
     Items are represented as tuples of `(key, value)` pairs, and the view supports set-like operations.
 
     See Also:
@@ -359,19 +341,19 @@ class PyoItemsView[K, V](  # pyright: ignore[reportUnsafeMultipleInheritance]
 
 
 class SetMut[T](BaseConcreteSet[T], MutableSet[T], PyoCollection[T]):
-    """A mutable `set` wrapper with functional API.
+    """A mutable, unordered collection of unique elements.
 
-    Unlike `Set` which is immutable, `SetMut` allows in-place modification of elements.
+    Unlike [`Set`][Set] which is immutable, `SetMut` allows in-place modification of elements.
 
-    Implement the `MutableSet` interface, so elements can be modified in place, and passed to any function/object expecting a standard mutable `set`.
+    Implement the `collections::abc::MutableSet` interface, so elements can be modified in place, and passed to any function/object expecting a standard mutable `set`.
 
     Underlying data structure is a `set`.
 
     Tip:
-        If you have an existing `set`, prefer using `SetMut.from_ref()` to avoid unnecessary copying.
+        If you have an existing `set`, consider using [`SetMut::from_ref`][from_ref] to avoid unnecessary copying.
 
     Args:
-        data (Iterable[T]): The mutable set to wrap.
+        data (Iterable[T]): Any `Iterable` of elements to initialize the set with.
     """
 
     __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
@@ -403,7 +385,7 @@ class SetMut[T](BaseConcreteSet[T], MutableSet[T], PyoCollection[T]):
         Useful when interoperating with functions that require a standard Python `set`.
 
         Returns:
-            set[T]: The underlying set.
+            The underlying set.
         """
         return self._inner
 
@@ -422,7 +404,7 @@ class SetMut[T](BaseConcreteSet[T], MutableSet[T], PyoCollection[T]):
             data (set[V]): The `set` to wrap.
 
         Returns:
-            SetMut[V]: A new `SetMut` instance wrapping the provided `set`.
+            SetMut[V]: A new `SetMut` instance.
 
         Example:
             ```python
@@ -464,7 +446,7 @@ class SetMut[T](BaseConcreteSet[T], MutableSet[T], PyoCollection[T]):
     def discard(self, value: T) -> None:
         """Remove an element from **self** if it is a member.
 
-        Unlike `.remove()`, the `discard()` method does not raise an exception when an element is missing from the set.
+        Unlike [`SetMut::remove`][remove], this method does not raise an exception when an element is missing from the set.
 
         Args:
             value (T): The element to remove.
