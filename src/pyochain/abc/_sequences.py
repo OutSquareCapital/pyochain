@@ -85,6 +85,7 @@ class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
         ```
     """
 
+    # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     @override
@@ -124,6 +125,7 @@ class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
             ```
         """
         try:
+            # pyrefly: ignore [bad-return]
             return Some(self[index])  # pyright: ignore[reportReturnType]
         except IndexError:
             return NONE
