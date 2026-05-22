@@ -23,6 +23,7 @@ class PyoCollection[T](PyoIterable[T], Collection[T], ABC):
     - `__contains__`
     """
 
+    # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     @override

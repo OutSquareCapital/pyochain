@@ -45,6 +45,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         ```
     """
 
+    # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     @override

@@ -23,6 +23,7 @@ class PyoMappingView[T](MappingView, PyoCollection[T], ABC):
     - `__iter__`
     """
 
+    # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
 
@@ -38,6 +39,7 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
     - `__len__`
     """
 
+    # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     @override
@@ -120,6 +122,7 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
 
     """
 
+    # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     def insert(self, key: K, value: V) -> Option[V]:

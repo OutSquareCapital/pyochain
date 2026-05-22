@@ -31,6 +31,7 @@ class BaseConcreteSet[T](ABC):
         - `symmetric_difference()`
     """
 
+    # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     @abstractmethod
@@ -284,6 +285,7 @@ class PyoValuesView[V](ValuesView[V], PyoMappingView[V]):  # pyright: ignore[rep
         `PyoMapping::values`: Method that returns this view.
     """
 
+    # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
 
@@ -298,6 +300,7 @@ class PyoKeysView[K](KeysView[K], PyoMappingView[K], PyoSet[K], BaseConcreteSet[
         `PyoMapping::keys`: Method that returns this view.
     """
 
+    # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
     @override
@@ -333,6 +336,7 @@ class PyoItemsView[K, V](  # pyright: ignore[reportUnsafeMultipleInheritance]
         `PyoMapping.items()`: Method that returns this view.
     """
 
+    # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
     @override

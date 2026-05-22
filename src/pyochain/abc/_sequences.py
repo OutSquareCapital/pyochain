@@ -165,6 +165,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
     They are slower than simple `.extend()`, slices and `clear()` calls, but avoids all intermediate allocations, making them suitable for large collections where memory usage is a concern.
     """
 
+    # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     def retain(self, predicate: Callable[[T], bool]) -> None:
