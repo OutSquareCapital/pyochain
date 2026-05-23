@@ -3,7 +3,7 @@ from __future__ import annotations
 import functools
 import itertools
 from abc import ABC
-from collections.abc import Callable, Iterable, Iterator, MutableSequence
+from collections.abc import Callable, Collection, Iterable, Iterator, MutableSequence
 from operator import itemgetter
 from typing import TYPE_CHECKING, Any, Concatenate, overload
 
@@ -1006,6 +1006,68 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         """
         return tls.try_for_each(iter(self), f)
 
+    def collect[R: Collection[Any]](self, collector: Callable[[Iterator[T]], R]) -> R:
+        """Transforms the `Iterator` into a collection.
+
+        The most basic pattern in which `collect()` is used is to turn one collection into another.
+
+        You take a collection, call `iter()` on it, do a bunch of transformations, and then `collect()` at the end.
+
+        You specify the target `Collection` type by providing a **collector** function or type.
+
+        This can be any `Callable` that takes an `Iterator[T]` and returns a `Collection[T]` of those types.
+
+        This is equivalent to `Pipeable::into` at runtime, but with a few differences:
+
+            - A narrower constraint (`Collection[Any]`) to specify the intent
+            - Better performance (no args/kwargs unpacking).
+
+        If you need to pass additional arguments, you can use [`Pipeable::into`][Pipeable.into] instead.
+
+        Note:
+            `Iter::collect` is overriden to provide `Seq` as the default **collector**.
+
+        Args:
+            collector (Callable[[Iterator[T]], R]): Function|type that defines the target collection. `R` is constrained to a `Collection`.
+
+        Returns:
+            R: A materialized `Collection` containing the collected elements.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Range, Vec, Dict
+            >>> data = Range(0, 5)
+            >>> data.iter().collect(list)
+            [0, 1, 2, 3, 4]
+            >>> data.iter().collect(Vec)
+            Vec(0, 1, 2, 3, 4)
+            >>> data.iter().map(str).enumerate().collect(Dict)
+            Dict(0: '0', 1: '1', 2: '2', 3: '3', 4: '4')
+
+            ```
+            Sometimes type checkers can't infer the type of the collector, in which case you can use an explicit type annotation to help them out.
+
+            In the example below, without the annotation in `collect()`,
+
+            BasedPyright infer `data` as `Seq[Result[int, Any] | Result[Any, int]]` because of the conditional expression in the `map()`, which is not very useful.
+            ```python
+            >>> from pyochain import Range, Seq, Ok, Err, Result
+            >>> data = (
+            ...     Range(0, 5)
+            ...     .iter()
+            ...     .map(lambda x: Ok(x) if x % 2 == 0 else Err(x))
+            ...     .collect(Seq[Result[int, int]])
+            ... )
+            >>> data
+            Seq(Ok(0), Err(1), Ok(2), Err(3), Ok(4))
+
+            ```
+            Strictly speaking, this is equivalent to annotating the variable at the beginning, but some may prefer this style to keep the type information close to the actual collection operation.
+
+            This notably avoid repetition if you collect anything else than the default `Seq` type.
+        """
+        return collector(iter(self))
+
     @overload
     def collect_into(self, collection: Vec[T]) -> Vec[T]: ...
     @overload
@@ -1223,3 +1285,29 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         # Here we recollect it in a Seq to clearly indicate that we need to consume the entire iterator to get the tail.
         # Alternatively, add `deque` wrapper to public API, and `from_ref` it here.
         return Seq(deque(iter(self), n))
+
+    def partition(self, predicate: Callable[[T], bool]) -> tuple[Vec[T], Vec[T]]:
+        """Consumes the `Iterator`, creating two `Vec` from it.
+
+        The predicate passed to `partition()` can return true, or false.
+
+        `partition` returns a pair, all of the elements for which it returned `True`, and all of the elements for which it returned `False`.
+
+        Args:
+            predicate (Callable[[T], bool]): Function to determine partition boundaries.
+
+        Returns:
+            tuple[Vec[T], Vec[T]]: The resulting pair of collections
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3, 4, 5)).partition(lambda x: x % 2 == 0)
+            (Vec(2, 4), Vec(1, 3, 5))
+
+            ```
+        """
+        from .._vec import Vec
+
+        first, second = tls.partition(iter(self), predicate)
+        return Vec.from_ref(first), Vec.from_ref(second)

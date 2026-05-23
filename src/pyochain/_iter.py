@@ -395,66 +395,10 @@ class Iter[T](PyoIterator[T]):
             return Iter(itertools.repeat(obj))
         return Iter(itertools.repeat(obj, n))
 
+    @override
     def collect[R: Collection[Any]](
         self, collector: Callable[[Iterator[T]], R] = Seq[T]
     ) -> R:
-        """Transforms an `Iter` into a collection.
-
-        The most basic pattern in which collect() is used is to turn one collection into another.
-
-        You take a collection, call `iter()` on it, do a bunch of transformations, and then `collect()` at the end.
-
-        You can specify the target collection type by providing a **collector** function or type.
-
-        This can be any `Callable` that takes an `Iterator[T]` and returns a `Collection[T]` of those types.
-
-        This is equivalent to `Pipeable::into()` at runtime, but with a few differences:
-
-            - A default value (`Seq[T]`)
-            - Different constraint (`Collection[Any]`) to specify the intent
-            - Better performance (no args/kwargs unpacking).
-
-        If you need to pass additional arguments, you can use `Iter::into()` instead.
-
-        Args:
-            collector (Callable[[Iterator[T]], R]): Function|type that defines the target collection. `R` is constrained to a `Collection`.
-
-        Returns:
-            R: A materialized collection containing the collected elements.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Range, Vec, Dict
-            >>> data = Range(0, 5)
-            >>> data.iter().collect(list)
-            [0, 1, 2, 3, 4]
-            >>> data.iter().collect(Vec)
-            Vec(0, 1, 2, 3, 4)
-            >>> data.iter().map(str).enumerate().collect(Dict)
-            Dict(0: '0', 1: '1', 2: '2', 3: '3', 4: '4')
-
-            ```
-            Sometimes type checkers can't infer the type of the collector, in which case you can use an explicit type annotation to help them out.
-
-            In the example below, without the annotation in `collect()`,
-
-            BasedPyright infer `data` as `Seq[Result[int, Any] | Result[Any, int]]` because of the conditional expression in the `map()`, which is not very useful.
-            ```python
-            >>> from pyochain import Range, Seq, Ok, Err, Result
-            >>> data = (
-            ...     Range(0, 5)
-            ...     .iter()
-            ...     .map(lambda x: Ok(x) if x % 2 == 0 else Err(x))
-            ...     .collect(Seq[Result[int, int]])
-            ... )
-            >>> data
-            Seq(Ok(0), Err(1), Ok(2), Err(3), Ok(4))
-
-            ```
-            Strictly speaking, this is equivalent to annotating the variable at the beginning, but some may prefer this style to keep the type information close to the actual collection operation.
-
-            This notably avoid repetition if you collect anything else than the default `Seq` type.
-        """
         return collector(self._inner)
 
     def array_chunks(self, size: int) -> Iter[Self]:
@@ -1802,32 +1746,6 @@ class Iter[T](PyoIterator[T]):
             ```
         """
         return Iter(itertools.starmap(func, tls.SlidingWindow(self._inner, length)))
-
-    def partition(self, predicate: Callable[[T], bool]) -> tuple[Vec[T], Vec[T]]:
-        """Consumes the `Iterator`, creating two `Vec` from it.
-
-        The predicate passed to `partition()` can return true, or false.
-
-        `partition` returns a pair, all of the elements for which it returned `True`, and all of the elements for which it returned `False`.
-
-        Args:
-            predicate (Callable[[T], bool]): Function to determine partition boundaries.
-
-        Returns:
-            tuple[Vec[T], Vec[T]]: The resulting pair of collections
-
-        Example:
-            ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2, 3, 4, 5)).partition(lambda x: x % 2 == 0)
-            (Vec(2, 4), Vec(1, 3, 5))
-
-            ```
-        """
-        from ._vec import Vec
-
-        first, second = tls.partition(self._inner, predicate)
-        return Vec.from_ref(first), Vec.from_ref(second)
 
     def batch(self, n: int, *, strict: bool = False) -> Iter[tuple[T, ...]]:
         """Batch elements into tuples of length n and return a new Iter.

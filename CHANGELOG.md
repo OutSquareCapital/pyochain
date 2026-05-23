@@ -23,6 +23,7 @@
 
 - **typing**: `Iter::{filter, filter_false}` now handle type narrowing for `T | None` and `TypeGuard` when possible.
 - **API**: `Iter::{filter, filter_false}` provided closure is now optional, just like python builtins.
+- **API**: `Iter::{partition, collect}` has been moved to `PyoIterator`, meaning all user-defined iterators can now call them.
 
 ### 📖 Documentation
 
