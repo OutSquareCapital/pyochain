@@ -353,11 +353,11 @@ class Iter[T](PyoIterator[T]):
             This means that if the object is mutable and you modify one of the repetitions, all next repetitions will reflect that change.
 
         Args:
-            obj (T): The object to repeat.
+            obj (O): The object to repeat.
             n (int | None): Optional number of repetitions.
 
         Returns:
-            Self: An `Iter` of repeated `Iter`.
+            Iter[O]: An `Iterator` of repeated **obj**.
 
         See Also:
             [`Iter::cycle`][cycle] to repeat the *elements* of the `Iterator`.

@@ -233,6 +233,8 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
             >>> vec
             Vec(3)
 
+            ```
+
         """
         from .._iter import Iter
 
