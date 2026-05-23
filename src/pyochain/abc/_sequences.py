@@ -38,6 +38,7 @@ class DrainIterator[T](Iterator[T]):
         self._end_idx -= 1
         return val
 
+    # TODO: replace this by del slice, benchmark it
     def __del__(self) -> None:
         pop = self._vec.pop
         while self._idx < self._end_idx:
@@ -172,6 +173,72 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
     # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
+    def into_iter(self) -> Iter[T]:
+        """Creates an `Iterator` that consumes the `MutableSequence`, leaving it empty.
+
+        Each element is extracted from `self`, yielded, and removed from `self` in a single step.
+
+        Returns:
+            Iter[T]: An `Iterator` that consumes the `MutableSequence`.
+
+        Example:
+            ```python
+            >>> from pyochain import Vec
+            >>> vec = Vec((1, 2, 3))
+            >>> vec.into_iter().collect()
+            Seq(1, 2, 3)
+            >>> vec
+            Vec()
+
+            ```
+            This can be used to efficiently consume collections that you know you won't need anymore.
+            ```python
+            >>> from pyochain import Vec
+            >>> txt = "Paris.London.New York.Tokyo.Berlin"
+            >>> splitted = txt.split(".")
+            >>> vec = Vec.from_ref(splitted)
+            >>> words = vec.into_iter().join(", ")
+            >>> words
+            'Paris, London, New York, Tokyo, Berlin'
+            >>> vec
+            Vec()
+            >>> splitted
+            []
+
+            ```
+            Note that the `Iterator` will stop once the `MutableSequence` original length have been iterated over, regardless of the current state of the `MutableSequence`.
+
+            As such, if you append or insert elements before exhausting the `Iterator`, this will influence his behavior.
+
+            For example, if you append elements at the end, this will simply lead them to not be yielded nor removed by the `Iterator`:
+            ```python
+            >>> from pyochain import Vec
+            >>> vec = Vec((1, 2, 3))
+            >>> iterator = vec.into_iter()
+            >>> vec.append(4)
+            >>> iterator.collect()
+            Seq(1, 2, 3)
+            >>> vec
+            Vec(4)
+
+            ```
+            On the other hand, if you insert elements at the beginning, this will lead to the original last elements to not be yielded:
+            ```python
+            >>> from pyochain import Vec
+            >>> vec = Vec((1, 2, 3))
+            >>> iterator = vec.into_iter()
+            >>> vec.insert(0, 20)
+            >>> iterator.collect()
+            Seq(20, 1, 2)
+            >>> vec
+            Vec(3)
+
+        """
+        from .._iter import Iter
+
+        pop = self.pop
+        return Iter(pop(0) for _ in range(len(self)))
+
     def retain(self, predicate: Callable[[T], bool]) -> None:
         """Retains only the elements specified by the *predicate*.
 
@@ -209,7 +276,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
         """
         return tls.retain(self, predicate)
 
-    # NOTE: need to check what does `pop` do really here regarding index
+    # TODO: replace this by del slice, benchmark it
     def truncate(self, length: int) -> None:
         """Shortens the `MutableSequence`, keeping the first *length* elements and dropping the rest.
 
@@ -380,18 +447,24 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
             Vec(1)
             >>> u
             Seq(2, 3)
-            >>> # A full range clears the vector, like `clear()` does
-            >>> _ = v.drain().collect()
-            >>> v
-            Vec()
 
             ```
             Fully consuming the `Iterator` removes all drained elements
             ```python
             >>> from pyochain import Vec
             >>> v = Vec.from_ref([1, 2, 3])
-            >>> _ = v.drain(0, 3).collect()
+            >>> _ = v.drain().collect()
             >>> v
+            Vec()
+
+            ```
+            Deleting the `Iterator` will also remove all drained elements.
+            ```python
+            >>> from pyochain import Vec
+            >>> vec = Vec.from_ref([1, 2, 3])
+            >>> iterator = vec.drain()
+            >>> del iterator
+            >>> vec
             Vec()
 
             ```

@@ -18,6 +18,7 @@
 - `Vec::repeat_mut`, equivalent to `my_list *= n`.
 - `Iter::from_repeat` for repeating an object n times as elements of an `Iter`.
 - `Dict::union_mut`, similar to `dic_1 |= dic_2` for in-place union of two dicts.
+- `Vec::into_iter` for consuming a `Vec` into an `Iter` that yield and pop each element from the `Vec`.
 
 ### ✨ Enhancements
 
