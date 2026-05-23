@@ -1,19 +1,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import (
-    ItemsView,
-    Iterable,
-    Iterator,
-    KeysView,
-    MutableSet,
-    ValuesView,
-)
+from collections.abc import Iterable, Iterator, MutableSet
 from collections.abc import Set as AbstractSet
 from typing import Self, override
 
 from ._utils import get_repr
-from .abc import PyoCollection, PyoMappingView, PyoSet
+from .abc import PyoCollection, PyoSet
 
 
 class BaseConcreteSet[T](ABC):
@@ -248,6 +241,14 @@ class Set[T](PyoSet[T], BaseConcreteSet[T]):
         return len(self._inner)
 
     @override
+    def __eq__(self, other: object) -> bool:
+        return _set_eq(self, other)
+
+    @override
+    def __hash__(self) -> int:
+        return hash(self._inner)
+
+    @override
     def intersection(self, other: AbstractSet[T]) -> Self:
         return self.__class__(self._inner & other)
 
@@ -264,83 +265,7 @@ class Set[T](PyoSet[T], BaseConcreteSet[T]):
         return self.__class__(self._inner ^ other)
 
 
-class PyoValuesView[V](ValuesView[V], PyoMappingView[V]):  # pyright: ignore[reportUnsafeMultipleInheritance]
-    """A view of the values in a pyochain mapping.
-
-    See Also:
-        `PyoMapping::values`: Method that returns this view.
-    """
-
-    # pyrefly: ignore [implicit-any-attribute]
-    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
-
-
-class PyoKeysView[K](KeysView[K], PyoMappingView[K], PyoSet[K], BaseConcreteSet[K]):  # pyright: ignore[reportUnsafeMultipleInheritance]
-    """A view of the keys in a pyochain mapping.
-
-    Keys views support set-like operations since dictionary keys are unique.
-
-    See Also:
-        `PyoMapping::keys`: Method that returns this view.
-    """
-
-    # pyrefly: ignore [implicit-any-attribute]
-    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
-
-    @override
-    def intersection(self, other: AbstractSet[K]) -> SetMut[K]:
-        return SetMut.from_ref(self & other)
-
-    @override
-    def union(self, other: AbstractSet[K]) -> SetMut[K]:
-        return SetMut.from_ref(self | other)
-
-    @override
-    def difference(self, other: AbstractSet[K]) -> SetMut[K]:
-        return SetMut.from_ref(self - other)
-
-    @override
-    def symmetric_difference(self, other: AbstractSet[K]) -> SetMut[K]:
-        return SetMut.from_ref(self ^ other)
-
-
-class PyoItemsView[K, V](  # pyright: ignore[reportUnsafeMultipleInheritance]
-    ItemsView[K, V],
-    PyoMappingView[tuple[K, V]],
-    PyoSet[tuple[K, V]],
-    BaseConcreteSet[tuple[K, V]],
-):
-    """A view of the items (key-value pairs) in a pyochain mapping.
-
-    Items are represented as tuples of `(key, value)` pairs, and the view supports set-like operations.
-
-    See Also:
-        `PyoMapping::items`: Method that returns this view.
-    """
-
-    # pyrefly: ignore [implicit-any-attribute]
-    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
-
-    @override
-    def intersection(self, other: AbstractSet[tuple[K, V]]) -> SetMut[tuple[K, V]]:
-        return SetMut.from_ref(self & other)
-
-    @override
-    def union(self, other: AbstractSet[tuple[K, V]]) -> SetMut[tuple[K, V]]:
-        return SetMut.from_ref(self | other)
-
-    @override
-    def difference(self, other: AbstractSet[tuple[K, V]]) -> SetMut[tuple[K, V]]:
-        return SetMut.from_ref(self - other)
-
-    @override
-    def symmetric_difference(
-        self, other: AbstractSet[tuple[K, V]]
-    ) -> SetMut[tuple[K, V]]:
-        return SetMut.from_ref(self ^ other)
-
-
-class SetMut[T](BaseConcreteSet[T], MutableSet[T], PyoCollection[T]):
+class SetMut[T](BaseConcreteSet[T], MutableSet[T], PyoCollection[T]):  # noqa: PLW1641
     """A mutable, unordered collection of unique elements.
 
     Unlike [`Set`][Set] which is immutable, `SetMut` allows in-place modification of elements.
@@ -377,6 +302,10 @@ class SetMut[T](BaseConcreteSet[T], MutableSet[T], PyoCollection[T]):
     @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({get_repr(self._inner)})"
+
+    @override
+    def __eq__(self, other: object) -> bool:
+        return _set_eq(self, other)
 
     @property
     def inner(self) -> set[T]:
@@ -478,3 +407,22 @@ class SetMut[T](BaseConcreteSet[T], MutableSet[T], PyoCollection[T]):
     @override
     def symmetric_difference(self, other: AbstractSet[T]) -> SetMut[T]:
         return self.from_ref(self._inner ^ other)
+
+
+def _set_eq[T](left: SetMut[T] | Set[T], right: object) -> bool:
+    """Helper function to compare `Set` and `SetMut` instances for equality.
+
+    Oddly enough, the official doc says that two objects that compare equal must have the same hash.
+
+    But a `set` can compare equal to a `frozenset`, even though the former is not even hashable??
+
+    Returns:
+        `True` if the sets are equal, `False` otherwise.
+    """
+    match right:
+        case Set() | SetMut():
+            return left.inner == right.inner  # pyright: ignore[reportUnknownMemberType]
+        case frozenset() | set():
+            return left.inner == right
+        case _:
+            return False

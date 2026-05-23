@@ -10,6 +10,8 @@
 ### 🆕 New features
 
 - `Iter::map_with` for mapping multiple iterables at once, just like `map` builtin when provided with multiple iterables.
+- `Set::{__eq__, __hash__}`, with similar behavior than it's internal `frozenset` structure
+- `SetMut::__eq__`, with similar behavior than it's internal `set` structure
 
 ### ✨ Enhancements
 
@@ -24,6 +26,7 @@
 
 - Added `--preview` option to `Ruff` format workflow to garantuee markdown formatting
 - Reorganized the [`abc`](src/pyochain/abc) submodule by splitting the monolithic `_iterable.py` file into multiple ones with more specific content.
+- Moveed the views objects to a dedicated file for readability.
 - Improved the doc generator script redability and it's handling of submodules.
 
 ## [0.22.0] - 2026-05-21

@@ -8,7 +8,7 @@ from ..rs import NONE, Err, Ok, Option, Result, Some, option
 from ._collection import PyoCollection
 
 if TYPE_CHECKING:
-    from .._set import PyoItemsView, PyoKeysView, PyoValuesView
+    from .._views import PyoItemsView, PyoKeysView, PyoValuesView
     from ..rs import Option, Result
 
 
@@ -62,7 +62,7 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
 
             ```
         """
-        from .._set import PyoKeysView
+        from .._views import PyoKeysView
 
         return PyoKeysView(self)
 
@@ -82,7 +82,7 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
 
             ```
         """
-        from .._set import PyoValuesView
+        from .._views import PyoValuesView
 
         return PyoValuesView(self)
 
@@ -102,7 +102,7 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
 
             ```
         """
-        from .._set import PyoItemsView
+        from .._views import PyoItemsView
 
         return PyoItemsView(self)
 
