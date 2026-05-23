@@ -7,15 +7,17 @@
 - **Vec MRO**: `Vec` does not inherit from `Seq` anymore, only from `PyoMutableSequence`. This means that if you were relying on `Vec` being a subclass of `Seq` for type checking or isinstance checks, you should now check against `PyoMutableSequence` instead.
 - **API change**: `PyoIterator::{argmin, argmax}` have been renamed to `arg_min` and `arg_max`, and their `key` argument version is now in the form of a separate method, `arg_min_by` and `arg_max_by`. Just like the last releases with similar changes, adapt your code in consequence.
 - **Removed**: `PyoCollection::repeat` has been removed. You can do `my_collection.into(Iter.from_repeat, n)` to get the exact same behavior.
+- **API change**: `Dict::merge` has been renamed to `union`.
 
 ### 🆕 New features
 
 - `Iter::map_with` for mapping multiple iterables at once, just like `map` builtin when provided with multiple iterables.
-- `Set::{__eq__, __hash__}`, with similar behavior than it's internal `frozenset` structure
-- `SetMut::__eq__`, with similar behavior than it's internal `set` structure
+- `__eq__` for `Set`, `SetMut` and `Dict`, with similaor behavior than their internal data structures.
+- `Set::{__hash__}`, with similar behavior than it's internal `frozenset` structure
 - `repeat` method for `Seq` and `Vec`, which call the `__mul__` dunder method.
 - `Vec::repeat_mut`, equivalent to `my_list *= n`.
 - `Iter::from_repeat` for repeating an object n times as elements of an `Iter`.
+- `Dict::union_mut`, similar to `dic_1 |= dic_2` for in-place union of two dicts.
 
 ### ✨ Enhancements
 

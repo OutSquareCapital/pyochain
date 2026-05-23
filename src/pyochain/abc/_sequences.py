@@ -138,9 +138,11 @@ class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Seq
+            >>> from pyochain import Seq, Range
             >>> Seq((1, 2, 3)).rev().collect()
             Seq(3, 2, 1)
+            >>> Range(0, 5).rev().collect()
+            Seq(4, 3, 2, 1, 0)
 
             ```
         """
