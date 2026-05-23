@@ -1,14 +1,10 @@
 from __future__ import annotations
 
-import itertools
 from abc import ABC
 from collections.abc import Collection
-from typing import TYPE_CHECKING, Self, override
+from typing import override
 
 from ._iterable import PyoIterable
-
-if TYPE_CHECKING:
-    from .._iter import Iter
 
 
 class PyoCollection[T](PyoIterable[T], Collection[T], ABC):
@@ -57,43 +53,6 @@ class PyoCollection[T](PyoIterable[T], Collection[T], ABC):
             ```
         """
         return value in self
-
-    def repeat(self, n: int | None = None) -> Iter[Self]:
-        """Repeat the entire `Collection` **n** times (as elements) in an `Iter`.
-
-        If **n** is `None`, repeat indefinitely.
-
-        Warning:
-            If **n** is `None`, this will create an infinite `Iterator`.
-
-            Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken.
-
-        See Also:
-            [`Iter::cycle`][cycle] to repeat the *elements* of the `Iter` indefinitely.
-
-        Args:
-            n (int | None): Optional number of repetitions.
-
-        Returns:
-            Iter[Self]: An `Iter` of repeated `Iter`.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq
-            >>> Seq((1, 2)).repeat(3).collect()
-            Seq(Seq(1, 2), Seq(1, 2), Seq(1, 2))
-            >>> Seq(("a", "b")).repeat(2).collect()
-            Seq(Seq('a', 'b'), Seq('a', 'b'))
-            >>> Seq([0]).repeat().flatten().take(5).collect()
-            Seq(0, 0, 0, 0, 0)
-
-            ```
-        """
-        from .._iter import Iter
-
-        if n is None:
-            return Iter(itertools.repeat(self))
-        return Iter(itertools.repeat(self, n))
 
     def is_empty(self) -> bool:
         """Returns `True` if the `Collection` contains no elements.

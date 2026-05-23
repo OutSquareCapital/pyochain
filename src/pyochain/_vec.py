@@ -116,6 +116,61 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         instance._inner = data
         return instance
 
+    def repeat(self, n: int) -> Self:
+        """Repeat the elements of the `Vec` **n** times and return a new `Vec`.
+
+        This is equivalent to `list_1 * n` for standard lists.
+
+        Args:
+            n (int): The number of times to repeat the elements.
+
+        Returns:
+            Self: The new `Vec` after repetition.
+
+        See Also:
+            [`Vec::repeat_mut`][repeat_mut] which modifies the `Vec` in place.
+
+        Example:
+            ```python
+            >>> from pyochain import Vec
+            >>> Vec.from_ref([1, 2, 3]).repeat(2)
+            Vec(1, 2, 3, 1, 2, 3)
+
+            ```
+        """
+        return self.__class__(self._inner * n)
+
+    def repeat_mut(self, n: int) -> Self:
+        """Repeat the elements of the `Vec` in place.
+
+        This is equivalent to `list_1 *= n` for standard lists.
+
+        Warning:
+            This method modifies the `Vec` in place and returns the same instance for chaining.
+
+        Args:
+            n (int): The number of times to repeat the elements.
+
+        Returns:
+            Self: The modified `Vec` after repetition (self).
+
+        See Also:
+            [`Vec::repeat`][repeat] which returns a new `Vec` (copy).
+
+        Example:
+            ```python
+            >>> from pyochain import Vec
+            >>> vec = Vec.from_ref([1, 2, 3])
+            >>> vec.repeat_mut(2)
+            Vec(1, 2, 3, 1, 2, 3)
+            >>> vec
+            Vec(1, 2, 3, 1, 2, 3)
+
+            ```
+        """
+        self._inner *= n
+        return self
+
     @override
     def insert(self, index: int, value: T) -> None:
         """Inserts an element at position index within the vector, shifting all elements after it to the right.

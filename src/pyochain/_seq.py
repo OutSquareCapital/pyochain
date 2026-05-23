@@ -109,6 +109,28 @@ class Seq[T](PyoSequence[T]):
         """
         return self._inner
 
+    def repeat(self, n: int) -> Self:
+        """Repeat the `Seq` **n** times and return a new `Seq`.
+
+        This is equivalent to `tuple_1 * n` for standard tuples.
+
+        Args:
+            n (int): The number of times to repeat the elements.
+
+        Returns:
+            Self: The new `Seq` after repetition.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> s = Seq((1, 2, 3))
+            >>> s.repeat(2)
+            Seq(1, 2, 3, 1, 2, 3)
+
+            ```
+        """
+        return self.__class__(self._inner * n)
+
     def concat(self, other: tuple[T, ...] | Self) -> Self:
         """Concatenate another `Seq` or `tuple` to **self** and return a new `Seq`.
 

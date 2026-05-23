@@ -339,6 +339,62 @@ class Iter[T](PyoIterator[T]):
 
         return Iter(_successors())
 
+    @staticmethod
+    def from_repeat[O](obj: O, n: int | None = None) -> Iter[O]:
+        """Repeat the provided object **n** times (as elements) in an `Iter`.
+
+        If **n** is `None`, this will create an infinite `Iterator`.
+
+        Be sure to use [`Iter::take`][Iter.take] or [`Iter::slice`][Iter.slice] to limit the number of items taken.
+
+        Warning:
+            Each repetition is a reference to the same object, not a copy.
+
+            This means that if the object is mutable and you modify one of the repetitions, all next repetitions will reflect that change.
+
+        Args:
+            obj (T): The object to repeat.
+            n (int | None): Optional number of repetitions.
+
+        Returns:
+            Self: An `Iter` of repeated `Iter`.
+
+        See Also:
+            [`Iter::cycle`][cycle] to repeat the *elements* of the `Iterator`.
+            [`Iter::repeat`][repeat] to repeat the *entire `Iterator`.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq, Iter
+            >>> Iter.from_repeat(1, 3).collect()
+            Seq(1, 1, 1)
+            >>> Iter.from_repeat(("a", "b"), 2).collect()
+            Seq(('a', 'b'), ('a', 'b'))
+
+            ```
+            Shared reference behavior:
+            ```python
+            >>> from pyochain import Vec
+            >>>
+            >>> base = ["Alice", "Bob", "Charlie"]
+            >>>
+            >>> first, second = Iter.from_repeat(base).take(2).collect(tuple)
+            >>> first.append("Joe")
+            >>> first
+            ['Alice', 'Bob', 'Charlie', 'Joe']
+            >>> base
+            ['Alice', 'Bob', 'Charlie', 'Joe']
+            >>> second
+            ['Alice', 'Bob', 'Charlie', 'Joe']
+            >>> first is second and first is base and second is base
+            True
+
+            ```
+        """
+        if n is None:
+            return Iter(itertools.repeat(obj))
+        return Iter(itertools.repeat(obj, n))
+
     def collect[R: Collection[Any]](
         self, collector: Callable[[Iterator[T]], R] = Seq[T]
     ) -> R:
