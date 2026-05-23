@@ -251,7 +251,7 @@ def _check_errs(
         func_name.startswith("_")
         or func_name.istitle()
         or has_no_doctest_flag
-        or lines.any(
+        or lines.iter().any(
             lambda line: bool(
                 CODE_BLOCK_PATTERN.search(line.lstrip()) and "python" in line
             )

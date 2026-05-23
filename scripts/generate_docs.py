@@ -99,6 +99,7 @@ def _check_nav_completeness(config_path: Paths = Paths.ZENSICAL) -> None:
         .map(lambda path: path.relative_to(docs_dir).as_posix())
         .collect(Set)
         .difference(nav_paths)
+        .iter()
         .join("\n")
     )
     if missing:
@@ -109,7 +110,7 @@ def _check_nav_completeness(config_path: Paths = Paths.ZENSICAL) -> None:
         .map(lambda path: path.relative_to(docs_dir).as_posix())
         .collect(Set)
     )
-    invalid_nav_paths = nav_paths.difference(docs_paths).join("\n")
+    invalid_nav_paths = nav_paths.difference(docs_paths).iter().join("\n")
     if invalid_nav_paths:
         show(f"⚠️  Invalid nav links:\n {invalid_nav_paths}", style=Color.WARNING)
 

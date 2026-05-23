@@ -8,6 +8,7 @@
 - **API change**: `PyoIterator::{argmin, argmax}` have been renamed to `arg_min` and `arg_max`, and their `key` argument version is now in the form of a separate method, `arg_min_by` and `arg_max_by`. Just like the last releases with similar changes, adapt your code in consequence.
 - **Removed**: `PyoCollection::repeat` has been removed. You can do `my_collection.into(Iter.from_repeat, n)` to get the exact same behavior.
 - **API change**: `Dict::merge` has been renamed to `union`.
+- **API change**: `PyoIterable::{all, any, join}` have been moved to `PyoIterator`. Simply add a call to `iter()` in impacted code if a `PyoCollection` was used.
 
 ### 🆕 New features
 

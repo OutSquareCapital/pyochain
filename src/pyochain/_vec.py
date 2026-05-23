@@ -9,13 +9,13 @@ from .abc import PyoMutableSequence
 
 
 class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
-    """A `MutableSequence` wrapper with functional API.
+    """Represent a mutable sequence of elements.
 
-    Implement `collections::abc::MutableSequence` Protocol.
+    Implement `collections::abc::MutableSequence`, and pyochain's `PyoMutableSequence` ABC.
 
     Unlike [`Seq`][Seq] which is immutable, `Vec` allows in-place modification of elements.
 
-    As such, `Vec` is more suitable when you need to build up a collection incrementally, or when you need to perform many modifications on the collection,
+    As such, `Vec` is more suitable when you need to build up a collection incrementally, or when you need to perform many modifications on the collection.
 
     On the other hand, [`Seq`][Seq] is more memory efficient when you have a fixed collection that doesn't require modification.
 

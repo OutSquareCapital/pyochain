@@ -58,6 +58,83 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
     # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
+    def all(self, predicate: Callable[[T], bool] | None = None) -> bool:
+        """Tests if every element of the `Iterator` is truthy.
+
+        `PyoIterator::.all` can optionally take a closure that returns true or false.
+
+        It applies this closure to each element of the `Iterator`, and if they all return true, then so does `PyoIterator::.all`.
+
+        If any of them return false, it returns false.
+
+        An empty `Iterator` returns true.
+
+        Args:
+            predicate (Callable[[T], bool] | None): Optional function to evaluate each item.
+
+        Returns:
+            bool: True if all elements match the predicate, False otherwise.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, True)).all()
+            True
+            >>> Iter(()).all()
+            True
+            >>> Iter((1, 0)).all()
+            False
+            >>> def is_even(x: int) -> bool:
+            ...     return x % 2 == 0
+            >>>
+            >>> Iter((2, 4, 6)).all(is_even)
+            True
+            >>> Iter(("a", "", "c")).all()
+            False
+            >>> Iter((1, None, 3)).all()
+            False
+
+            ```
+        """
+        if predicate is None:
+            return all(iter(self))
+        return all(predicate(x) for x in iter(self))
+
+    def any(self, predicate: Callable[[T], bool] | None = None) -> bool:
+        """Tests if any element of the `Iterator` is truthy.
+
+        `PyoIterator::.any` can optionally take a closure that returns true or false.
+
+        It applies this closure to each element of the `Iterator`, and if any of them return true, then so does `PyoIterator::.any`.
+
+        If they all return false, it returns false.
+
+        An empty `Iterator` returns false.
+
+        Args:
+            predicate (Callable[[T], bool] | None): Optional function to evaluate each item.
+
+        Returns:
+            bool: True if any element matches the predicate, False otherwise.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Range
+            >>> Iter((0, 1)).any()
+            True
+            >>> Range(0, 0).iter().any()
+            False
+            >>> def is_even(x: int) -> bool:
+            ...     return x % 2 == 0
+            >>> Iter((1, 3, 4)).any(is_even)
+            True
+
+            ```
+        """
+        if predicate is None:
+            return any(iter(self))
+        return any(predicate(x) for x in iter(self))
+
     def nth(self, n: int) -> Option[T]:
         """Return the nth item of the `Iterable` at the specified *n*.
 
@@ -1311,3 +1388,24 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         first, second = tls.partition(iter(self), predicate)
         return Vec.from_ref(first), Vec.from_ref(second)
+
+    def join(self: PyoIterable[str], sep: str) -> str:
+        """Join all elements of the `Iterator` into a single `str`, with a specified separator.
+
+        This is equivalent to the built-in `str.join()` method, but as a method on the `Iterator` itself.
+
+        Args:
+            sep (str): Separator to use between elements.
+
+        Returns:
+            str: The joined string.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter(("a", "b", "c")).join("-")
+            'a-b-c'
+
+            ```
+        """
+        return sep.join(iter(self))
