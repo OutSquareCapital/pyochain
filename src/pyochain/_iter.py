@@ -816,8 +816,8 @@ class Iter[T](PyoIterator[T]):
         the iterator stops when the shortest iterable is exhausted.
 
         Args:
-            func (Callable[..., R]): Function to apply to the elements of the iterables.
             *iterables (AnyIter): Additional iterables to zip with **self**.
+            func (Callable[..., R]): Function to apply to the elements of the iterables.
 
         Returns:
             Iter[R]: An `Iterator` of results from applying the function to the elements of the iterables.
@@ -1128,9 +1128,7 @@ class Iter[T](PyoIterator[T]):
     def filter_false[U](self, func: Callable[[T], TypeGuard[U]]) -> Iter[U]: ...
     @overload
     def filter_false(self, func: Callable[[T], bool]) -> Iter[T]: ...
-    def filter_false[U](
-        self, func: Callable[[T], bool | TypeIs[U] | TypeGuard[U]] | None = None
-    ) -> Iter[T] | Iter[U]:
+    def filter_false[U](self, func: FilterFn[T, U] = None) -> Iter[T] | Iter[U]:
         """Return elements for which **func** is `False`.
 
         The **func** can return a `TypeIs` to narrow the type of the returned `Iter`.
@@ -1138,7 +1136,7 @@ class Iter[T](PyoIterator[T]):
         This won't have any runtime effect, but allows for better type inference.
 
         Args:
-            func (Callable[[T], bool | TypeIs[U]]): Function to evaluate each item.
+            func (FilterFn[T, U]): Function to evaluate each item.
 
         Returns:
             Iter[T] | Iter[U]: An `Iter` of the items that do not satisfy the predicate.

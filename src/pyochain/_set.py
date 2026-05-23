@@ -314,7 +314,7 @@ class SetMut[T](BaseConcreteSet[T], MutableSet[T], PyoCollection[T]):  # noqa: P
         Useful when interoperating with functions that require a standard Python `set`.
 
         Returns:
-            The underlying set.
+            set[T]: The underlying set.
         """
         return self._inner
 
@@ -416,8 +416,12 @@ def _set_eq[T](left: SetMut[T] | Set[T], right: object) -> bool:
 
     But a `set` can compare equal to a `frozenset`, even though the former is not even hashable??
 
+    Args:
+        left (SetMut[T] | Set[T]): The left-hand side set to compare.
+        right (object): The right-hand side object to compare against.
+
     Returns:
-        `True` if the sets are equal, `False` otherwise.
+        bool: `True` if the sets are equal, `False` otherwise.
     """
     match right:
         case Set() | SetMut():
