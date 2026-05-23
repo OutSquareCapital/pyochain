@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Iterator, MutableSet
 from collections.abc import Set as AbstractSet
-from typing import Self, override
+from typing import Final, Self, override
 
 from ._utils import get_repr
 from .abc import PyoCollection, PyoSet
@@ -208,7 +208,7 @@ class Set[T](PyoSet[T], BaseConcreteSet[T]):
 
     __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
     __match_args__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
-    _inner: frozenset[T]
+    _inner: Final[frozenset[T]]
 
     def __init__(self, data: Iterable[T]) -> None:
         self._inner = frozenset(data)

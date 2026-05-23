@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
-from typing import Any, overload, override
+from typing import Any, Final, overload, override
 
 from .abc import PyoSequence
 
@@ -40,7 +40,7 @@ class Range(PyoSequence[int]):
         ```
     """
 
-    _inner: range
+    _inner: Final[range]
     __slots__ = ("_inner",)  # pyright: ignore[reportIncompatibleUnannotatedOverride, reportUnannotatedClassAttribute]
 
     def __init__(self, start: int, stop: int, step: int = 1) -> None:

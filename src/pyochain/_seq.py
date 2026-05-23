@@ -5,7 +5,7 @@ from collections.abc import (
     Iterator,
     Sequence,
 )
-from typing import Any, Self, overload, override
+from typing import Any, Final, Self, overload, override
 
 from ._utils import get_repr
 from .abc import (
@@ -59,7 +59,7 @@ class Seq[T](PyoSequence[T]):
     """
 
     __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
-    _inner: tuple[T, ...]
+    _inner: Final[tuple[T, ...]]
 
     def __init__(self, data: Iterable[T]) -> None:
         self._inner = tuple(data)
