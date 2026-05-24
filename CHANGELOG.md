@@ -4,7 +4,7 @@
 
 ### 🏆 Highlights
 
-**Feat**: `SetMutOrdered`, a mutable, ordered collection of unique elements. Uses `dict::fromkeys` internally, thus has the same characteristics as a `dict` regarding lookup/insertion/deletion/iteration performance.
+- **Feat**: `SetMutOrdered`, a mutable, ordered collection of unique elements. Uses `dict::fromkeys` internally, thus has the same characteristics as a `dict` regarding lookup/insertion/deletion/iteration performance.
 
 ### 💥 Breaking changes
 
@@ -17,7 +17,7 @@
 ### 🆕 New features
 
 - `Iter::map_with` for mapping multiple iterables at once, just like `map` builtin when provided with multiple iterables.
-- `__eq__` for `Set`, `SetMut` and `Dict`, with similaor behavior than their internal data structures.
+- Improved `__eq__` for `Set`, `SetMut`, `SetMutOrdered`, and `Dict`, with similar behavior than their internal data structures, as well as pyochain objects handling.
 - `Set::{__hash__}`, with similar behavior than it's internal `frozenset` structure
 - `repeat` method for `Seq` and `Vec`, which call the `__mul__` dunder method.
 - `Vec::repeat_mut`, equivalent to `my_list *= n`.

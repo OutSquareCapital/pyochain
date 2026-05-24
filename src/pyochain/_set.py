@@ -253,7 +253,7 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
         return self.from_ref(self._inner ^ other)
 
 
-class SetMutOrdered[T](PyoMutableSet[T]):
+class SetMutOrdered[T](PyoMutableSet[T]):  # noqa: PLW1641
     """A mutable, ordered collection of unique elements.
 
     Uses a `dict` as the underlying data structure to maintain insertion order while ensuring uniqueness of elements.
@@ -301,6 +301,16 @@ class SetMutOrdered[T](PyoMutableSet[T]):
     @override
     def __contains__(self, item: object) -> bool:
         return item in self._inner
+
+    @override
+    def __eq__(self, other: object) -> bool:
+        match other:
+            case Set() | SetMut():
+                return self._inner.keys() == other.inner  # pyright: ignore[reportUnknownMemberType]
+            case AbstractSet():
+                return self._inner.keys() == other
+            case _:
+                return False
 
     @staticmethod
     def from_ref[V](data: dict[V, Any]) -> SetMutOrdered[V]:  # pyright: ignore[reportExplicitAny]
