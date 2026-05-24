@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from abc import ABC
 from collections.abc import Callable, Iterable
-from typing import TYPE_CHECKING, Any, Concatenate
+from typing import TYPE_CHECKING, Concatenate
 
 from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
-from .._types import SupportsRichComparison
 from ..rs import Checkable, Pipeable
 
 if TYPE_CHECKING:
@@ -62,11 +61,11 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
         >>> registry = ClientRegistry(["Alice", "Bob", "Charlie"])
         >>> registry.iter().all(lambda name: name.startswith("A"))
         False
-        >>> registry.join(", ")
+        >>> registry.iter().join(", ")
         'Alice, Bob, Charlie'
         >>> registry.iter().map(str.lower).join(", ")
         'alice, bob, charlie'
-        >>> registry.ok_or("Registry is empty").map(lambda s: s.join(", "))
+        >>> registry.ok_or("Registry is empty").map(lambda s: s.iter().join(", "))
         Ok('Alice, Bob, Charlie')
 
         ```
@@ -241,150 +240,6 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             ```
         """
         return tls.length(iter(self))
-
-    def sum[U: int | bool](self: PyoIterable[U]) -> int:
-        """Return the sum of the `Iterable`.
-
-        If the `Iterable` is empty, return 0.
-
-        Returns:
-            int: The sum of all elements.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq
-            >>> Seq((1, 2, 3)).sum()
-            6
-
-            ```
-        """
-        return sum(iter(self))
-
-    def min[U: SupportsRichComparison[Any]](self: PyoIterable[U]) -> U:
-        """Return the minimum of the `Iterable`.
-
-        The elements of the `Iterable` must support comparison operations.
-
-        For comparing elements using a custom **key** function, use `min_by()` instead.
-
-        If multiple elements are tied for the minimum value, the first one encountered is returned.
-
-        Returns:
-            U: The minimum value.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq
-            >>> Seq((3, 1, 2)).min()
-            1
-
-            ```
-        """
-        return min(iter(self))
-
-    def min_by[U: SupportsRichComparison[Any]](self, key: Callable[[T], U]) -> T:
-        """Return the minimum element of the `Iterable` using a custom **key** function.
-
-        If multiple elements are tied for the minimum value, the first one encountered is returned.
-
-        Args:
-            key (Callable[[T], U]): Function to extract a comparison key from each element.
-
-        Returns:
-            T: The element with the minimum key value.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq
-            >>> from dataclasses import dataclass
-            >>>
-            >>> @dataclass
-            ... class Person:
-            ...     name: str
-            ...     age: int
-            ...     is_student: bool
-            ...
-            ...     def get_discount(self) -> float:
-            ...         return 0.1 if self.is_student else 0.0
-            >>>
-            >>> alice = Person("Alice", 30, False)
-            >>> bob = Person("Bob", 22, True)
-            >>> charlie = Person("Charlie", 25, False)
-            >>> persons = Seq((alice, bob, charlie))
-            >>>
-            >>> persons.min_by(lambda p: p.age).name
-            'Bob'
-            >>> persons.min_by(lambda p: p.name).name
-            'Alice'
-            >>> persons.min_by(Person.get_discount).name
-            'Alice'
-
-            ```
-        """
-        return min(iter(self), key=key)
-
-    def max[U: SupportsRichComparison[Any]](self: PyoIterable[U]) -> U:
-        """Return the maximum element of the `Iterable`.
-
-        The elements of the `Iterable` must support comparison operations.
-
-        For comparing elements using a custom **key** function, use `max_by()` instead.
-
-        If multiple elements are tied for the maximum value, the first one encountered is returned.
-
-        Returns:
-            U: The maximum value.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq
-            >>> Seq((3, 1, 2)).max()
-            3
-
-            ```
-        """
-        return max(iter(self))
-
-    def max_by[U: SupportsRichComparison[Any]](self, key: Callable[[T], U]) -> T:
-        """Return the maximum element of the `Iterable` using a custom **key** function.
-
-        If multiple elements are tied for the maximum value, the first one encountered is returned.
-
-        Args:
-            key (Callable[[T], U]): Function to extract a comparison key from each element.
-
-        Returns:
-            T: The element with the maximum key value.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq
-            >>> from dataclasses import dataclass
-            >>>
-            >>> @dataclass
-            ... class Person:
-            ...     name: str
-            ...     age: int
-            ...     is_student: bool
-            ...
-            ...     def get_discount(self) -> float:
-            ...         return 0.1 if self.is_student else 0.0
-            >>>
-            >>> alice = Person("Alice", 30, False)
-            >>> bob = Person("Bob", 22, True)
-            >>> charlie = Person("Charlie", 25, False)
-            >>> persons = Seq((alice, bob, charlie))
-            >>>
-            >>> persons.max_by(lambda p: p.age).name
-            'Alice'
-            >>> persons.max_by(lambda p: p.name).name
-            'Charlie'
-            >>> persons.max_by(Person.get_discount).name
-            'Bob'
-
-            ```
-        """
-        return max(iter(self), key=key)
 
     def all_unique[U](self) -> bool:
         """Returns True if all the elements of **self** are unique.

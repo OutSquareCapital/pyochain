@@ -3,6 +3,10 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from typing import Any, Protocol
 
+# TODO: Theses types are manually extracted from typeshed and rewritten in modern python style
+# This is error prone, because we can very easily miss overloads, as well as being tedious¨
+# We should handle this automatically with a dedicated script, if possible.
+
 
 class SupportsDunderLT[T](Protocol):
     def __lt__(self, other: T, /) -> bool: ...

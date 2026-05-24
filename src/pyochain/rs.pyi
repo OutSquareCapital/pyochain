@@ -184,9 +184,9 @@ class Checkable(Protocol):
         Example:
             ```python
             >>> from pyochain import Seq
-            >>> Seq((1, 2, 3)).then(lambda s: s.sum())
+            >>> Seq((1, 2, 3)).then(lambda s: s.iter().sum())
             Some(6)
-            >>> Seq(()).then(lambda s: s.sum())
+            >>> Seq(()).then(lambda s: s.iter().sum())
             NONE
 
             ```
