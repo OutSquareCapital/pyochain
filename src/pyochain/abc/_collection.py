@@ -39,6 +39,9 @@ class PyoContainer[T](Container[T], ABC):
 
 
 class PyoSized(Sized, ABC):
+    # pyrefly: ignore [implicit-any-attribute]
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
+
     def is_empty(self) -> bool:
         """Returns `True` if the `Collection` contains no elements.
 

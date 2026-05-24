@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import Callable, Iterable
-from typing import TYPE_CHECKING, Concatenate
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
 from ..rs import Checkable, Pipeable
@@ -101,48 +101,6 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
         from .._iter import Iter
 
         return Iter(iter(self))
-
-    def unpack_into[**P, R](
-        self,
-        func: Callable[Concatenate[T, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> R:
-        """Unpack the `Iterable` in the provided *func*, and return the result.
-
-        This is similar to `Pipeable::into`, but instead of passing `Self`, we pass the elements inside `Self`.
-
-        This avoids you to do `iterable.into(lambda x: (*x))`, improving performance and readability.
-
-        Note:
-            This method, if called on a lazy `Iterator`, will consume it.
-
-            As such, this can be considered as an alternative `Iter::collect` method.
-
-        Args:
-            func (Callable[Concatenate[T, P], R]): Function to call with the unpacked elements of the `Iterable`.
-            *args (P.args): Additional positional arguments to pass to *func*
-            **kwargs (P.kwargs): Additional keyword arguments to pass to *func*
-
-        Returns:
-            R: The result of calling *func* with the unpacked elements of the `Iterable` and any additional arguments.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq
-
-            >>> data = Seq((1, 2, 3))
-            >>> def foo(*a: int, x: str) -> str:
-            ...     return x + str(sum(a))
-            >>> data.unpack_into(foo, x="Result: ")
-            'Result: 6'
-            >>> # The example below will work, but is not type safe, as the unpacked elements are passed as explicit positional arguments.
-            >>> data.unpack_into(lambda a, b, c: a + b + c)
-            6
-
-            ```
-        """
-        return func(*self, *args, **kwargs)
 
     def first(self) -> T:
         """Return the first element of the `Iterable`.
@@ -273,28 +231,3 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             ```
         """
         return tls.all_unique(iter(self))
-
-    def all_unique_by[U](self, key: Callable[[T], U]) -> bool:
-        """Returns True if all the elements of **self** transformed by **key** are unique.
-
-        The function returns as soon as the first non-unique element is encountered.
-
-        Credits to **more-itertools** for the implementation.
-
-        Args:
-            key (Callable[[T], U]): Function to transform items before comparison.
-
-        Returns:
-            bool: `True` if all elements are unique, `False` otherwise.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter
-            >>> Iter("ABCb").all_unique()
-            True
-            >>> Iter("ABCb").all_unique_by(str.lower)
-            False
-
-            ```
-        """
-        return tls.all_unique_by(iter(self), key)

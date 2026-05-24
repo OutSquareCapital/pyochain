@@ -1560,3 +1560,68 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ```
         """
         return max(iter(self), key=key)
+
+    def unpack_into[**P, R](
+        self,
+        func: Callable[Concatenate[T, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> R:
+        """Unpack the `Iterator` in the provided *func*, and return the result.
+
+        This is similar to `Pipeable::into`, but instead of passing `Self`, we pass the elements inside `Self`.
+
+        This avoids you to do `iterator.into(lambda x: (*x))`, improving performance and readability.
+
+        Note:
+            This method will consume the `Iterator`.
+
+        Args:
+            func (Callable[Concatenate[T, P], R]): Function to call with the unpacked elements of the `Iterator`.
+            *args (P.args): Additional positional arguments to pass to *func*
+            **kwargs (P.kwargs): Additional keyword arguments to pass to *func*
+
+        Returns:
+            R: The result of calling *func* with the unpacked elements of the `Iterator` and any additional arguments.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+
+            >>> data = Seq((1, 2, 3))
+            >>> def foo(*a: int, x: str) -> str:
+            ...     return x + str(sum(a))
+            >>> data.iter().unpack_into(foo, x="Result: ")
+            'Result: 6'
+            >>> # The example below will work, but is not type safe, as the unpacked elements are passed as explicit positional arguments.
+            >>> data.iter().unpack_into(lambda a, b, c: a + b + c)
+            6
+
+            ```
+        """
+        return func(*iter(self), *args, **kwargs)
+
+    def all_unique_by[U](self, key: Callable[[T], U]) -> bool:
+        """Returns True if all the elements of **self** transformed by **key** are unique.
+
+        The function returns as soon as the first non-unique element is encountered.
+
+        Credits to **more-itertools** for the implementation.
+
+        Args:
+            key (Callable[[T], U]): Function to transform items before comparison.
+
+        Returns:
+            bool: `True` if all elements are unique, `False` otherwise.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter("ABCb").all_unique()
+            True
+            >>> Iter("ABCb").all_unique_by(str.lower)
+            False
+
+            ```
+        """
+        return tls.all_unique_by(iter(self), key)

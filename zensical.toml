@@ -12,6 +12,7 @@
         { "API Reference" = [
             { "ABCs" = [
                 { "PyoCollection" = "reference/pyocollection.md" },
+                { "PyoContainer" = "reference/pyocontainer.md" },
                 { "PyoIterable" = "reference/pyoiterable.md" },
                 { "PyoIterator" = "reference/pyoiterator.md" },
                 { "PyoMapping" = "reference/pyomapping.md" },
@@ -19,8 +20,10 @@
                 { "PyoMutableMapping" = "reference/pyomutablemapping.md" },
                 { "PyoMutableSequence" = "reference/pyomutablesequence.md" },
                 { "PyoMutableSet" = "reference/pyomutableset.md" },
+                { "PyoReversible" = "reference/pyoreversible.md" },
                 { "PyoSequence" = "reference/pyosequence.md" },
                 { "PyoSet" = "reference/pyoset.md" },
+                { "PyoSized" = "reference/pyosized.md" },
             ] },
             { "Collections" = [
                 { "Dict" = "reference/dict.md" },
