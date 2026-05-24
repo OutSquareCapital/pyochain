@@ -19,6 +19,23 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
     - `__iter__`
     - `__len__`
 
+    The following informations comes directly from the official Python documentation regarding Set ABCs, and also applies for `PyoSet` and its subclasses:
+
+    > Since some set operations create new sets, the default mixin methods need a way to create new instances from an iterable.
+
+    > The class constructor is assumed to have a signature in the form ClassName(iterable).
+
+    > That assumption is factored-out to an internal classmethod called _from_iterable() which calls cls(iterable) to produce a new set.
+
+    > If the Set mixin is being used in a class with a different constructor signature,
+
+    > you will need to override _from_iterable() with a classmethod or regular method that can construct new instances from an iterable argument.
+
+    See Also:
+        The official Python documentation for more details:
+
+        https://docs.python.org/3/library/collections.abc.html#examples-and-recipes
+
     Example:
         ```python
         >>> from pyochain.abc import PyoSet
