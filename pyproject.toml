@@ -29,7 +29,7 @@
         "toml>=0.10.2",
         "typer>=0.21.1",
         "zensical>=0.0.42",
-]
+    ]
 [tool.pydoclint]
     arg-type-hints-in-docstring                   = true
     arg-type-hints-in-signature                   = true
@@ -59,7 +59,8 @@
     reportMissingSuperCall = false
     typeCheckingMode       = "all"
 [tool.pyrefly]
-    preset = "strict"
+    preset      = "strict"
+    search-path = [".", "src"]
 [tool.pytest.ini_options]
     addopts   = "--doctest-modules --markdown-docs --stubs --benchmark-skip"
     testpaths = ["README.md", "docs", "src/pyochain", "tests"]
