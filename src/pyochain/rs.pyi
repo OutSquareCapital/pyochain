@@ -15,9 +15,8 @@ from ._iter import Iter
 
 # Mixin classes for pipeable and checkable methods
 
-class Pipeable(Protocol):
-    """Mixin class providing pipeable methods for fluent chaining."""
-
+class Into(Protocol):
+    """Mixin class providing the `into` method for fluent chaining."""
     def into[**P, R](
         self,
         func: Callable[Concatenate[Self, P], R],
@@ -60,6 +59,8 @@ class Pipeable(Protocol):
             ```
         """
 
+class Inspect(Protocol):
+    """Mixin class providing the `inspect` method."""
     def inspect[**P](
         self,
         func: Callable[Concatenate[Self, P], object],
@@ -87,6 +88,9 @@ class Pipeable(Protocol):
 
             ```
         """
+
+class Pipeable(Into, Inspect, Protocol):
+    """Mixin class providing pipeable methods for fluent chaining."""
 
 class Checkable(Protocol):
     """Mixin class providing conditional chaining methods based on truthiness.
@@ -322,7 +326,7 @@ type Option[T] = Some[T] | Null[T]
 See `OptionType` for more details.
 """
 
-class OptionType[T](Pipeable):
+class OptionType[T](Into):
     """OptionType is the common interface for an optional value.
 
     `Option[T]` is the union of `Some[T]` and `Null[T]`, and represents a value that can only have two states:
@@ -1126,7 +1130,6 @@ class OptionType[T](Pipeable):
 
             ```
         """
-    @override
     def inspect[**P](
         self, f: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
     ) -> Option[T]:
@@ -1500,7 +1503,7 @@ See the `ResultType` Protocol for documentation on the methods available on `Res
 """
 
 @type_check_only
-class ResultType[T, E](Pipeable, Protocol):
+class ResultType[T, E](Into, Protocol):
     """This is the base Protocol defined for returning and propagating errors.
 
     `Result[T, E]` is a the type union of the two possibles variants of the Protocol:
@@ -2030,7 +2033,6 @@ class ResultType[T, E](Pipeable, Protocol):
 
             ```
         """
-    @override
     def inspect[**P](
         self, fn: Callable[Concatenate[T, P], object], *args: P.args, **kwargs: P.kwargs
     ) -> Result[T, E]:

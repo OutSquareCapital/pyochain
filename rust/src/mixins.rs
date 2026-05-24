@@ -2,6 +2,30 @@ use crate::args::{Args, Concatenate, Kwargs};
 use crate::option::{PyNull, PySome};
 use crate::result::{PyoErr, PyoOk};
 use pyo3::{IntoPyObjectExt, prelude::*};
+
+#[pyclass(frozen, subclass, name="Into")]
+pub struct PyoInto;
+
+#[pymethods]
+impl PyoInto {
+    #[new]
+    #[pyo3(signature = (*_args, **_kwargs))]
+    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> Self {
+        PyoInto {}
+    }
+}
+
+
+#[pyclass(frozen, subclass, name="Inspect")]
+pub struct PyoInspect;
+#[pymethods]
+impl PyoInspect {
+    #[new]
+    #[pyo3(signature = (*_args, **_kwargs))]
+    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> Self {
+        PyoInspect {}
+    }
+}
 #[pyclass(frozen, subclass)]
 pub struct Pipeable;
 

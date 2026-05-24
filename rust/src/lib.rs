@@ -48,8 +48,8 @@ macro_rules! impl_inspect {
         impl_inspect!($($rest),+);
     };
 }
-impl_inspect!(mixins::Pipeable);
-impl_py_into!(option::PySome, option::PyNull, result::PyoOk, result::PyoErr, mixins::Pipeable);
+impl_inspect!(mixins::Pipeable, mixins::PyoInspect);
+impl_py_into!(option::PySome, option::PyNull, result::PyoOk, result::PyoErr, mixins::Pipeable, mixins::PyoInto);
 
 #[pymodule]
 fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -69,6 +69,8 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<result::PyochainResult>()?;
     m.add_class::<mixins::Checkable>()?;
     m.add_class::<mixins::Pipeable>()?;
+    m.add_class::<mixins::PyoInto>()?;
+    m.add_class::<mixins::PyoInspect>()?;
     m.add_wrapped(pyo3::wrap_pymodule!(tools::tools))?;
     py.import("sys")?
         .getattr("modules")?

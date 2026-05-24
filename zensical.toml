@@ -44,6 +44,8 @@
             ] },
             { "Mixins" = [
                 { "Checkable" = "reference/checkable.md" },
+                { "Inspect" = "reference/inspect.md" },
+                { "Into" = "reference/into.md" },
                 { "Pipeable" = "reference/pipeable.md" },
             ] },
             { "Optional Values" = [

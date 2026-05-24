@@ -103,7 +103,8 @@ def _check_nav_completeness(config_path: Paths = Paths.ZENSICAL) -> None:
         .join("\n")
     )
     if missing:
-        show(f"⚠️  Missing generated files in nav:\n {missing}", style=Color.WARNING)
+        msg = f"⚠️  Missing generated files in {Paths.ZENSICAL.value.as_posix()}:\n {missing}"
+        show(msg, style=Color.WARNING)
 
     docs_paths = (
         Iter(docs_dir_mds)
