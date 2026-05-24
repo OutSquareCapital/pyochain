@@ -21,7 +21,7 @@
 - `Dict::union_mut`, similar to `dic_1 |= dic_2` for in-place union of two dicts.
 - `Vec::into_iter` for consuming a `Vec` into an `Iter` that yield and pop each element from the `Vec`.
 - `abc::{Into, Inspect}` mixins, each providing one method from the original `Pipeable`. The latter inherit from both of them, thus no behavior change.
-- `abc::PyoMutableSet` for mutable sets, which clean up the internal inerhitance hierarchy and better reflect the python collections ABCs. Allow to delete the intermediate `BaseConcreteSet` class.
+- `abc::{PyoMutableSet, PyoSized, PyoReversible, PyoContainer}` ABCs. This don't impact runtime nor existing API, but is used for the ABC hierarchy tree to better mimick python `collections.abc`.
 
 ### ✨ Enhancements
 

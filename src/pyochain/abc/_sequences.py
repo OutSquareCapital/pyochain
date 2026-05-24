@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import Callable, Iterator, MutableSequence, Sequence
+from collections.abc import Callable, Iterator, MutableSequence, Reversible, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Self, overload, override
 
@@ -46,7 +46,32 @@ class DrainIterator[T](Iterator[T]):
             self._end_idx -= 1
 
 
-class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
+class PyoReversible[T](Reversible[T], ABC):
+    # pyrefly: ignore [implicit-any-attribute]
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
+
+    def rev(self) -> Iter[T]:
+        """Return an `Iterator` with the elements of the `Sequence` in reverse order.
+
+        Returns:
+            Iter[T]: An `Iterator` with the elements in reverse order.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq, Range
+            >>> Seq((1, 2, 3)).rev().collect()
+            Seq(3, 2, 1)
+            >>> Range(0, 5).rev().collect()
+            Seq(4, 3, 2, 1, 0)
+
+            ```
+        """
+        from .._iter import Iter
+
+        return Iter(reversed(self))
+
+
+class PyoSequence[T](PyoCollection[T], PyoReversible[T], Sequence[T], ABC):
     """Extends `PyoCollection[T]` and `collections.abc.Sequence[T]`.
 
     Is the shared ABC for concrete sequences: `Seq`, `Range` and `Vec`.
@@ -130,26 +155,6 @@ class PyoSequence[T](PyoCollection[T], Sequence[T], ABC):
             return Some(self[index])  # pyright: ignore[reportReturnType]
         except IndexError:
             return NONE
-
-    def rev(self) -> Iter[T]:
-        """Return an `Iterator` with the elements of the `Sequence` in reverse order.
-
-        Returns:
-            Iter[T]: An `Iterator` with the elements in reverse order.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq, Range
-            >>> Seq((1, 2, 3)).rev().collect()
-            Seq(3, 2, 1)
-            >>> Range(0, 5).rev().collect()
-            Seq(4, 3, 2, 1, 0)
-
-            ```
-        """
-        from .._iter import Iter
-
-        return Iter(reversed(self))
 
 
 class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
