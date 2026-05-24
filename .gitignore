@@ -9,9 +9,10 @@ site/
 docs/sphinx/*.rst
 docs/sphinx/_build/
 *.egg-info
-# ignore cython compiled files
+# ignore compiled files
 *.so
 *.pyd
+*.pdb
 
 # Virtual environments
 .venv
