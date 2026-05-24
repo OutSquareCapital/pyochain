@@ -24,9 +24,30 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
 
     All concrete subclasses must implement `__iter__()`.
 
-    Since it's very straightforward to implement, it can very easily be integrated into business logic classes to provide them with a rich set of methods for free.
+    Note:
+        The difference between an `Iterable` and an `Iterator` is often misunderstood, but it's actually quite simple.
+
+        An `Iterable` is any object that can **create** an `Iterator`.
+
+        It's sole responsbility is to provide an `__iter__` method.
+
+        This method must return an object that have a `__next__` method, which is the actual `Iterator`.
+
+        An `Iterator` is an object that can produce elements one at a time, and can be exhausted.
+
+        When you do a `for x in my_iterable`, Python implicitly calls `my_iterable.__iter__(), and then repeatedly calls `next()` on the resulting `Iterator` to get the elements.
+
+        More concretely, a `list`, for example, is an `Iterable`.
+
+        You can't call `next()` on a `list`, because it don't know how to produce elements by itself, it's primary responsibility being to **store** them.
+
+        However, as soon as you call `map(my_list)`, `[x for x in my_list]`, (*my_list), or any other operation that needs to visit elements, an `Iterator` is created (implicitly or explicitly) from the `list`.
+
+        It's also why `abc::Iterator::__iter__` returns `Self` by convention.
 
     Example:
+        Since it's very straightforward to implement, it can very easily be integrated into business logic classes to provide them with a rich set of methods for free.
+
         ```python
         >>> from pyochain.abc import PyoIterable
         >>> from dataclasses import dataclass
