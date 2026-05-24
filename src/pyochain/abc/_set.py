@@ -133,8 +133,6 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         Sets are equal if they have the same number of elements and every element in one is present in the other.
 
-        Order is irrelevant for sets.
-
         This is an explicit method; you can also use the `==` operator directly.
 
         Args:
@@ -162,9 +160,11 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         Returns `True` if this set contains every element from `other`.
 
-        This is the inverse of `is_subset()` -> if A is a subset of B, then B is a superset of A.
+        This is the inverse of [`PyoSet::is_subset`][is_subset] ->
 
-        Use `is_superset_strict()` (if available) to exclude equality.
+            - if A is a subset of B, then B is a superset of A.
+
+        Use [`PyoSet::is_superset_strict`][is_superset_strict] to exclude equality.
 
         Args:
             other (AbstractSet[T]): The set to check containment for.
@@ -185,6 +185,35 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
             ```
         """
         return self >= other
+
+    def is_superset_strict(self, other: AbstractSet[T]) -> bool:
+        """Test whether all elements of `other` are in this set, excluding equality.
+
+        Returns `True` if this set contains every element from `other`, AND this set has at least one element not in `other`.
+
+        This is a proper (or strict) superset relation.
+
+        Use [`PyoSet::is_superset`][is_superset] if you want to accept equal sets as well.
+
+        Args:
+            other (AbstractSet[T]): The set to check strict containment for.
+
+        Returns:
+            bool: `True` if this is a strict superset, `False` otherwise.
+
+        Example:
+            ```python
+            >>> from pyochain import Set
+            >>> Set((1, 2, 3)).is_superset_strict({1, 2})  # Proper superset
+            True
+            >>> Set((1, 2)).is_superset_strict({1, 2})  # Equal, not proper
+            False
+            >>> Set((1, 2)).is_superset_strict({1, 2, 3})  # Missing element 3
+            False
+
+            ```
+        """
+        return self > other
 
     def is_disjoint(self, other: AbstractSet[T]) -> bool:
         """Test whether this set and `other` have no elements in common.
