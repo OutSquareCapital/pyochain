@@ -34,6 +34,7 @@
                 { "Seq" = "reference/seq.md" },
                 { "Set" = "reference/set.md" },
                 { "SetMut" = "reference/setmut.md" },
+                { "SetMutOrdered" = "reference/setmutordered.md" },
                 { "Vec" = "reference/vec.md" },
             ] },
             { "Error Handling" = [

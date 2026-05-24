@@ -5,7 +5,7 @@ from ._dict import Dict
 from ._iter import Iter
 from ._range import Range
 from ._seq import Seq
-from ._set import Set, SetMut
+from ._set import Set, SetMut, SetMutOrdered
 from ._vec import Vec
 from ._views import PyoItemsView, PyoKeysView, PyoValuesView
 from .rs import (
@@ -41,6 +41,7 @@ __all__ = [
     "Seq",
     "Set",
     "SetMut",
+    "SetMutOrdered",
     "Some",
     "Vec",
     "abc",

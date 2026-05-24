@@ -2,10 +2,14 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
 from collections.abc import Set as AbstractSet
-from typing import Final, Self, override
+from typing import Any, Final, Self, override
 
 from ._utils import get_repr
 from .abc import PyoMutableSet, PyoSet
+
+# TODO: address the following note from official python docs regarding Set performance, with benchmarks:
+# To override the comparisons (presumably for speed, as the semantics are fixed),
+# redefine __le__() and __ge__(), then the other operations will automatically follow suit.
 
 
 class Set[T](PyoSet[T]):
@@ -48,7 +52,6 @@ class Set[T](PyoSet[T]):
     """
 
     __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
-    __match_args__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
     _inner: Final[frozenset[T]]
 
     def __init__(self, data: Iterable[T]) -> None:
@@ -250,6 +253,114 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
         return self.from_ref(self._inner ^ other)
 
 
+class SetMutOrdered[T](PyoMutableSet[T]):
+    """A mutable, ordered collection of unique elements.
+
+    Uses a `dict` as the underlying data structure to maintain insertion order while ensuring uniqueness of elements.
+
+    Thus, it has the same characteristics of "standard" sets, with lookup and iteration speed the same as a `dict`.
+
+    Args:
+        data (Iterable[T]): Any `Iterable` of elements to initialize the set with.
+
+    Examples:
+        ```python
+        >>> from pyochain import SetMutOrdered
+        >>> s = SetMutOrdered(("a", "b", "c"))
+        >>> s
+        SetMutOrdered('a', 'b', 'c')
+        >>> s.add("d")
+        >>> s
+        SetMutOrdered('a', 'b', 'c', 'd')
+        >>> s.discard("b")
+        >>> s
+        SetMutOrdered('a', 'c', 'd')
+
+        ```
+
+    """
+
+    _inner: dict[T, None]
+    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
+
+    def __init__(self, data: Iterable[T]) -> None:
+        self._inner = dict.fromkeys(data)
+
+    @override
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({get_repr(self._inner.keys())})"
+
+    @override
+    def __iter__(self) -> Iterator[T]:
+        return iter(self._inner)
+
+    @override
+    def __len__(self) -> int:
+        return len(self._inner)
+
+    @override
+    def __contains__(self, item: object) -> bool:
+        return item in self._inner
+
+    @staticmethod
+    def from_ref[V](data: dict[V, Any]) -> SetMutOrdered[V]:  # pyright: ignore[reportExplicitAny]
+        """Create a `SetMutOrdered` from a reference to an existing `dict`.
+
+        This method wraps the provided `dict` without copying it, allowing for efficient object instanciation.
+
+        This is the recommended way to create a `SetMutOrdered` from foreign functions that return `dict` objects.
+
+        Warning:
+            Since the `SetMutOrdered` directly references the original `dict`, any modifications made to the `SetMutOrdered` will also affect the original `dict`, and vice versa.
+
+        Args:
+            data (dict[V, Any]): The `dict` to wrap.
+
+        Returns:
+            SetMutOrdered[V]: A new `SetMutOrdered` instance.
+
+        Example:
+            ```python
+            >>> from pyochain import SetMutOrdered
+            >>> original = {"Alice": 30, "Bob": 25, "Charlie": 35}
+            >>> set_obj = SetMutOrdered.from_ref(original)
+            >>> set_obj
+            SetMutOrdered('Alice', 'Bob', 'Charlie')
+            >>> original["David"] = 40
+            >>> set_obj
+            SetMutOrdered('Alice', 'Bob', 'Charlie', 'David')
+
+            ```
+        """
+        instance: SetMutOrdered[V] = SetMutOrdered.__new__(SetMutOrdered)  # pyright: ignore[reportUnknownVariableType]
+        instance._inner = data
+        return instance
+
+    @override
+    def add(self, value: T) -> None:
+        self._inner[value] = None
+
+    @override
+    def discard(self, value: T) -> None:
+        del self._inner[value]
+
+    @override
+    def intersection(self, other: AbstractSet[T]) -> Self:
+        return self.__class__(self._inner.keys() & other)
+
+    @override
+    def union(self, other: AbstractSet[T]) -> Self:
+        return self.__class__(self._inner.keys() | other)
+
+    @override
+    def difference(self, other: AbstractSet[T]) -> Self:
+        return self.__class__(self._inner.keys() - other)
+
+    @override
+    def symmetric_difference(self, other: AbstractSet[T]) -> Self:
+        return self.__class__(self._inner.keys() ^ other)
+
+
 def _set_eq[T](left: SetMut[T] | Set[T], right: object) -> bool:
     """Helper function to compare `Set` and `SetMut` instances for equality.
 
@@ -267,7 +378,7 @@ def _set_eq[T](left: SetMut[T] | Set[T], right: object) -> bool:
     match right:
         case Set() | SetMut():
             return left.inner == right.inner  # pyright: ignore[reportUnknownMemberType]
-        case frozenset() | set():
+        case frozenset() | set() | SetMutOrdered():
             return left.inner == right
         case _:
             return False

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### 🏆 Highlights
+
+**Feat**: `SetMutOrdered`, a mutable, ordered collection of unique elements. Uses `dict::fromkeys` internally, thus has the same characteristics as a `dict` regarding lookup/insertion/deletion/iteration performance.
+
 ### 💥 Breaking changes
 
 - **Vec MRO**: `Vec` does not inherit from `Seq` anymore, only from `PyoMutableSequence`. This means that if you were relying on `Vec` being a subclass of `Seq` for type checking or isinstance checks, you should now check against `PyoMutableSequence` instead.
