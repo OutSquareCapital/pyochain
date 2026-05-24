@@ -337,16 +337,6 @@ impl PySome {
         let value_repr = self.value.bind(py).repr()?;
         Ok(format!("Some({})", value_repr))
     }
-
-    #[pyo3(signature = (func, *args, **kwargs))]
-    fn into(
-        slf: &Bound<'_, Self>,
-        func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
-    ) -> PyResult<Py<PyAny>> {
-        Ok(func.concat(&slf, args, kwargs)?.unbind())
-    }
 }
 
 #[pyclass(frozen, name = "Null")]
@@ -577,15 +567,5 @@ impl PyNull {
 
     fn __eq__(&self, other: &Bound<'_, PyAny>) -> bool {
         other.is_none() || other.is_null()
-    }
-
-    #[pyo3(signature = (func, *args, **kwargs))]
-    fn into(
-        slf: &Bound<'_, Self>,
-        func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
-    ) -> PyResult<Py<PyAny>> {
-        Ok(func.concat(&slf, args, kwargs)?.unbind())
     }
 }

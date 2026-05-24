@@ -158,16 +158,6 @@ impl PyoOk {
         Ok(func.call(value_tuple, None)?.unbind())
     }
 
-    #[pyo3(signature = (func, *args, **kwargs))]
-    fn into(
-        slf: &Bound<'_, Self>,
-        func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
-    ) -> PyResult<Py<PyAny>> {
-        Ok(func.concat(&slf, args, kwargs)?.unbind())
-    }
-
     #[pyo3(signature = (pred, *args, **kwargs))]
     fn is_ok_and(
         &self,
@@ -450,16 +440,6 @@ impl PyoErr {
         _kwargs: Option<&Kwargs<'_>>,
     ) -> Self {
         Self::new(self.error.clone_ref(f.py()))
-    }
-
-    #[pyo3(signature = (func, *args, **kwargs))]
-    fn into(
-        slf: &Bound<'_, Self>,
-        func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
-    ) -> PyResult<Py<PyAny>> {
-        Ok(func.concat(&slf, args, kwargs)?.unbind())
     }
     fn swap(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         Ok(PyoOk::new(self.error.clone_ref(py)).into_py_any(py)?)

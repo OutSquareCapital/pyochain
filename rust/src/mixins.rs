@@ -12,25 +12,6 @@ impl Pipeable {
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> Self {
         Pipeable {}
     }
-    #[pyo3(signature = (func, *args, **kwargs))]
-    fn into(
-        slf: &Bound<'_, Self>,
-        func: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
-    ) -> PyResult<Py<PyAny>> {
-        Ok(func.concat(&slf, args, kwargs)?.unbind())
-    }
-    #[pyo3(signature = (f, *args, **kwargs))]
-    fn inspect(
-        slf: &Bound<'_, Self>,
-        f: &Bound<'_, PyAny>,
-        args: &Args<'_>,
-        kwargs: Option<&Kwargs<'_>>,
-    ) -> PyResult<Py<PyAny>> {
-        f.concat(&slf, args, kwargs)?;
-        Ok(slf.to_owned().into_any().unbind())
-    }
 }
 #[pyclass(frozen, subclass)]
 pub struct Checkable;

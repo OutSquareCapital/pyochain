@@ -7,6 +7,50 @@ mod result;
 mod tools;
 use pyo3::prelude::*;
 
+macro_rules! impl_py_into {
+    ($type:ty) => {
+        #[pymethods]
+        impl $type {
+            #[pyo3(name = "into", signature = (func, *args, **kwargs))]
+            fn py_into(
+                slf: &Bound<'_, Self>,
+                func: &Bound<'_, PyAny>,
+                args: &args::Args<'_>,
+                kwargs: Option<&args::Kwargs<'_>>,
+            ) -> PyResult<Py<PyAny>> {
+                Ok(
+                    args::Concatenate::concat(func, &slf, args, kwargs)?.unbind(),
+                )
+            }
+        }
+    };
+    ($first:ty, $($rest:ty),+ $(,)?) => {
+        impl_py_into!($first);
+        impl_py_into!($($rest),+);
+    };
+}
+macro_rules! impl_inspect {
+    ($type:ty) => {
+    #[pymethods]
+            impl $type {
+    #[pyo3(signature = (f, *args, **kwargs))]
+    fn inspect(
+        slf: &Bound<'_, Self>,
+        f: &Bound<'_, PyAny>,
+        args: &args::Args<'_>,
+        kwargs: Option<&args::Kwargs<'_>>,
+    ) -> PyResult<Py<PyAny>> {
+        args::Concatenate::concat(f, &slf, args, kwargs)?;
+        Ok(slf.to_owned().into_any().unbind())
+    }}};
+    ($first:ty, $($rest:ty),+ $(,)?) => {
+        impl_inspect!($first);
+        impl_inspect!($($rest),+);
+    };
+}
+impl_inspect!(mixins::Pipeable);
+impl_py_into!(option::PySome, option::PyNull, result::PyoOk, result::PyoErr, mixins::Pipeable);
+
 #[pymodule]
 fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     let py = m.py();
