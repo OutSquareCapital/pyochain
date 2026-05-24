@@ -1,4 +1,5 @@
 from collections.abc import Callable, Collection
+from collections.abc import Set as AbstractSet
 from functools import wraps
 
 
@@ -33,7 +34,7 @@ def get_repr(data: Collection[object]) -> str:
         return pformat(data, sort_dicts=False)[1:-1]
 
     match data:
-        case set() | frozenset():
+        case AbstractSet():
             return _repr_inner(tuple(data))
         case _:
             match len(data):
