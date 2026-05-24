@@ -13,6 +13,7 @@
 [dependency-groups]
     dev = [
         "basedpyright>=1.38.2",
+        "maturin>=1.13.3",
         "mkdocstrings-python>=1.18.2",
         "polars>=1.33.1",
         "pydoclint>=0.8.1",
@@ -28,7 +29,7 @@
         "toml>=0.10.2",
         "typer>=0.21.1",
         "zensical>=0.0.42",
-    ]
+]
 [tool.pydoclint]
     arg-type-hints-in-docstring                   = true
     arg-type-hints-in-signature                   = true

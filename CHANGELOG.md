@@ -31,6 +31,10 @@
 
 - Correctly handle hyperlinks in `See Also` sections. WIP to do the same for the rest of the sections.
 
+### 📦 Build system
+
+- **Fix**: Added `maturin` to [pyproject.toml](pyproject.toml) as a dev dependency.
+
 ### 🛠️ Other improvements
 
 - Added `--preview` option to `Ruff` format workflow to garantuee markdown formatting
