@@ -45,12 +45,14 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
     def __getitem__(self, index: int | slice) -> T | MutableSequence[T]:
         return self._inner[index]
 
+    # NOTE: typeshed typing makes it hard to satisfy both overloads of list and MutableSequence, I haven't found a way yet
     @overload
     def __setitem__(self, index: int, value: T) -> None: ...
     @overload
     def __setitem__(self, index: slice, value: Iterable[T]) -> None: ...
     @override
     def __setitem__(self, index: int | slice, value: T | Iterable[T]) -> None:
+        # pyrefly: ignore[no-matching-overload]
         return self._inner.__setitem__(index, value)  # pyright: ignore[reportCallIssue, reportUnknownVariableType, reportArgumentType]
 
     @override
