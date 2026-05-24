@@ -21,7 +21,7 @@ from ._iterable import PyoIterable
 from ._iterator import PyoIterator
 from ._mappings import PyoMapping, PyoMappingView, PyoMutableMapping
 from ._sequences import PyoMutableSequence, PyoSequence
-from ._set import PyoSet
+from ._set import PyoMutableSet, PyoSet
 
 __all__ = [
     "Checkable",
@@ -35,6 +35,7 @@ __all__ = [
     "PyoMappingView",
     "PyoMutableMapping",
     "PyoMutableSequence",
+    "PyoMutableSet",
     "PyoSequence",
     "PyoSet",
 ]

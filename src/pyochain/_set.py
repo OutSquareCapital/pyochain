@@ -1,173 +1,14 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from collections.abc import Iterable, Iterator, MutableSet
+from collections.abc import Iterable, Iterator
 from collections.abc import Set as AbstractSet
 from typing import Final, Self, override
 
 from ._utils import get_repr
-from .abc import PyoCollection, PyoSet
+from .abc import PyoMutableSet, PyoSet
 
 
-class BaseConcreteSet[T](ABC):
-    """Internal mixin for concrete set-like classes.
-
-    It provides a common interface for documentation, DRY code, and type consistency, as well as enforcing a *you must implement concrete methods for operator dunders* policy for set operations.
-
-    pyochain philosophy is to prefer explicit method calls that read like natural language instead of obscure operators.
-
-    Concrete set classes should inherit from this base class and implement it's abstract methods.
-    """
-
-    # pyrefly: ignore [implicit-any-attribute]
-    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
-
-    @abstractmethod
-    def intersection(self, other: AbstractSet[T]) -> AbstractSet[T]:
-        """Create a new set containing only elements present in both sets.
-
-        If the sets have no common elements, the result is empty.
-
-        This operation is commutative: `A.intersection(B) == B.intersection(A)`.
-
-
-        Args:
-            other (AbstractSet[T]): The set to intersect with.
-
-        Returns:
-            AbstractSet[T]: A new `Set` containing shared elements only.
-
-        Example:
-            ```python
-            >>> from pyochain import Set, Dict
-            >>> from_set = Set((1, 2))
-            >>> from_set.intersection({2, 3})
-            Set(2,)
-            >>> from_set.intersection({3, 4})
-            Set()
-            >>> dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
-            >>> from_keys = dct.keys().intersection({"b", "c", "d"}).iter().sort()
-            >>> from_keys
-            Vec('b', 'c')
-            >>> from_items = (
-            ...     dct.items()
-            ...     .intersection({("b", 2), ("c", 3), ("d", 4)})
-            ...     .iter()
-            ...     .sort()
-            ... )
-            >>> from_items
-            Vec(('b', 2), ('c', 3))
-
-            ```
-        """
-
-    @abstractmethod
-    def union(self, other: AbstractSet[T]) -> AbstractSet[T]:
-        """Create a new set containing all unique elements from both sets.
-
-        This operation is commutative: `A.union(B) == B.union(A)`.
-
-        Args:
-            other (AbstractSet[T]): The set to combine with.
-
-        Returns:
-            AbstractSet[T]: A new set containing all elements from **self** and **other**.
-
-        Example:
-            ```python
-            >>> from pyochain import Set, Dict
-            >>> Set((1, 2)).union({2, 3}).union({4}).iter().sort()
-            Vec(1, 2, 3, 4)
-            >>> dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
-            >>> from_keys = dct.keys().union({"b", "c", "d"}).iter().sort()
-            >>> from_keys
-            Vec('a', 'b', 'c', 'd')
-            >>> from_items = (
-            ...     dct.items().union({("b", 2), ("c", 3), ("d", 4)}).iter().sort()
-            ... )
-            >>> from_items
-            Vec(('a', 1), ('b', 2), ('c', 3), ('d', 4))
-
-            ```
-        """
-
-    @abstractmethod
-    def difference(self, other: AbstractSet[T]) -> AbstractSet[T]:
-        """Create a new set with elements in this set but not in `other`.
-
-        The result contains every element that is in this set EXCEPT those that are also present in `other`.
-
-        This operation is NOT commutative.
-
-        Args:
-            other (AbstractSet[T]): The set whose elements should be excluded.
-
-        Returns:
-            AbstractSet[T]: A new set containing elements unique to this set.
-
-        Example:
-            ```python
-            >>> from pyochain import Set, Dict
-            >>> Set((1, 2)).difference({2, 3})
-            Set(1,)
-            >>> Set((1, 2)).difference({3, 4}).iter().sort()
-            Vec(1, 2)
-            >>> dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
-            >>> from_keys = dct.keys().difference({"b", "c", "d"}).iter().sort()
-            >>> from_keys
-            Vec('a')
-            >>> from_items = (
-            ...     dct.items().difference({("b", 2), ("c", 3), ("d", 4)}).iter().sort()
-            ... )
-            >>> from_items
-            Vec(('a', 1))
-
-            ```
-        """
-
-    @abstractmethod
-    def symmetric_difference(self, other: AbstractSet[T]) -> AbstractSet[T]:
-        """Create a new set with elements in either set but not in both.
-
-        The result contains elements that are in this set XOR `other`—i.e., elements present in one set but not in both.
-
-        This is the opposite of [`Set::intersection`][Set.intersection].
-
-        This operation is commutative: `A.symmetric_difference(B) == B.symmetric_difference(A)`.
-
-        Args:
-            other (AbstractSet[T]): The set to compute symmetric difference with.
-
-        Returns:
-            AbstractSet[T]: A new set containing elements unique to each set.
-
-        Example:
-            ```python
-            >>> from pyochain import Set, Dict
-            >>> Set((1, 2)).symmetric_difference({2, 3}).iter().sort()
-            Vec(1, 3)
-            >>> Set((1, 2, 3)).symmetric_difference({3, 4, 5}).iter().sort()
-            Vec(1, 2, 4, 5)
-            >>> dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
-            >>> from_keys = (
-            ...     dct.keys().symmetric_difference({"b", "c", "d"}).iter().sort()
-            ... )
-            >>> from_keys
-            Vec('a', 'd')
-            >>> from_items = (
-            ...     dct.items()
-            ...     .symmetric_difference({("b", 2), ("c", 3), ("d", 4)})
-            ...     .iter()
-            ...     .sort()
-            ... )
-            >>> from_items
-            Vec(('a', 1), ('d', 4))
-
-            ```
-        """
-
-
-class Set[T](PyoSet[T], BaseConcreteSet[T]):
+class Set[T](PyoSet[T]):
     """`Set` represent an in- memory **unordered**  collection of **unique** elements.
 
     Implements the `collections::abc::Collection` Protocol, so it can be used as a standard immutable collection.
@@ -265,7 +106,7 @@ class Set[T](PyoSet[T], BaseConcreteSet[T]):
         return self.__class__(self._inner ^ other)
 
 
-class SetMut[T](BaseConcreteSet[T], MutableSet[T], PyoCollection[T]):  # noqa: PLW1641
+class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
     """A mutable, unordered collection of unique elements.
 
     Unlike [`Set`][Set] which is immutable, `SetMut` allows in-place modification of elements.
@@ -348,7 +189,7 @@ class SetMut[T](BaseConcreteSet[T], MutableSet[T], PyoCollection[T]):  # noqa: P
 
             ```
         """
-        instance: SetMut[V] = object.__new__(SetMut)  # pyright: ignore[reportUnknownVariableType]
+        instance: SetMut[V] = SetMut.__new__(SetMut)  # pyright: ignore[reportUnknownVariableType]
         instance._inner = data
         return instance
 

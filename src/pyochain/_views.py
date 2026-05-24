@@ -4,7 +4,7 @@ from collections.abc import ItemsView, KeysView, ValuesView
 from collections.abc import Set as AbstractSet
 from typing import override
 
-from ._set import BaseConcreteSet, SetMut
+from ._set import SetMut
 from .abc import PyoMappingView, PyoSet
 
 
@@ -19,7 +19,7 @@ class PyoValuesView[V](ValuesView[V], PyoMappingView[V]):  # pyright: ignore[rep
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
 
-class PyoKeysView[K](KeysView[K], PyoMappingView[K], PyoSet[K], BaseConcreteSet[K]):  # pyright: ignore[reportUnsafeMultipleInheritance]
+class PyoKeysView[K](KeysView[K], PyoMappingView[K], PyoSet[K]):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """A view of the keys in a pyochain mapping.
 
     Keys views support set-like operations since dictionary keys are unique.
@@ -49,10 +49,7 @@ class PyoKeysView[K](KeysView[K], PyoMappingView[K], PyoSet[K], BaseConcreteSet[
 
 
 class PyoItemsView[K, V](  # pyright: ignore[reportUnsafeMultipleInheritance]
-    ItemsView[K, V],
-    PyoMappingView[tuple[K, V]],
-    PyoSet[tuple[K, V]],
-    BaseConcreteSet[tuple[K, V]],
+    ItemsView[K, V], PyoMappingView[tuple[K, V]], PyoSet[tuple[K, V]]
 ):
     """A view of the items (key-value pairs) in a pyochain mapping.
 

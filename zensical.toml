@@ -18,6 +18,7 @@
                 { "PyoMappingView" = "reference/pyomappingview.md" },
                 { "PyoMutableMapping" = "reference/pyomutablemapping.md" },
                 { "PyoMutableSequence" = "reference/pyomutablesequence.md" },
+                { "PyoMutableSet" = "reference/pyomutableset.md" },
                 { "PyoSequence" = "reference/pyosequence.md" },
                 { "PyoSet" = "reference/pyoset.md" },
             ] },
@@ -54,9 +55,6 @@
                 { "OptionType" = "reference/optiontype.md" },
                 { "OptionUnwrapError" = "reference/optionunwraperror.md" },
                 { "Some" = "reference/some.md" },
-            ] },
-            { "Other Types" = [
-                { "BaseConcreteSet" = "reference/baseconcreteset.md" },
             ] },
             { "Overview" = "api-reference.md" },
         ] },
