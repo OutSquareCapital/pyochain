@@ -254,11 +254,16 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
 
 
 class SetMutOrdered[T](PyoMutableSet[T]):  # noqa: PLW1641
-    """A mutable, ordered collection of unique elements.
+    """A mutable collection of unique elements which remember their insertion order.
 
     Uses a `dict` as the underlying data structure to maintain insertion order while ensuring uniqueness of elements.
 
     Thus, it has the same characteristics of "standard" sets, with lookup and iteration speed the same as a `dict`.
+
+    This is very similar to using `Dict::from_keys` with `None` values, but with a specialized interface for set operations.
+
+    Note:
+        This is not the same as `sortedcontainers`, i.e it does not maintain the elements in sorted order, but rather in the order they were inserted.
 
     Args:
         data (Iterable[T]): Any `Iterable` of elements to initialize the set with.
@@ -355,20 +360,20 @@ class SetMutOrdered[T](PyoMutableSet[T]):  # noqa: PLW1641
         del self._inner[value]
 
     @override
-    def intersection(self, other: AbstractSet[T]) -> Self:
-        return self.__class__(self._inner.keys() & other)
+    def intersection(self, other: AbstractSet[T]) -> SetMut[T]:
+        return SetMut.from_ref(self._inner.keys() & other)
 
     @override
-    def union(self, other: AbstractSet[T]) -> Self:
-        return self.__class__(self._inner.keys() | other)
+    def union(self, other: AbstractSet[T]) -> SetMut[T]:
+        return SetMut.from_ref(self._inner.keys() | other)
 
     @override
-    def difference(self, other: AbstractSet[T]) -> Self:
-        return self.__class__(self._inner.keys() - other)
+    def difference(self, other: AbstractSet[T]) -> SetMut[T]:
+        return SetMut.from_ref(self._inner.keys() - other)
 
     @override
-    def symmetric_difference(self, other: AbstractSet[T]) -> Self:
-        return self.__class__(self._inner.keys() ^ other)
+    def symmetric_difference(self, other: AbstractSet[T]) -> SetMut[T]:
+        return SetMut.from_ref(self._inner.keys() ^ other)
 
 
 def _set_eq[T](left: SetMut[T] | Set[T], right: object) -> bool:
