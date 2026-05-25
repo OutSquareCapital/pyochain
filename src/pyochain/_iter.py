@@ -1195,14 +1195,7 @@ class Iter[T](PyoIterator[T]):
 
             ```
         """
-
-        def _filter_map(data: Iterable[T]) -> Iterator[R]:
-            for item in data:
-                res = func(item)
-                if res.is_some():
-                    yield res.unwrap()
-
-        return Iter(_filter_map(self._inner))
+        return Iter(tls.FilterMap(self._inner, func))
 
     @overload
     def filter_map_star[R](

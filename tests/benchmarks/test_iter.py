@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.benchmark(group="filter_map")
-@pytest.mark.parametrize("size", [100, 500, 2500])
+@pytest.mark.parametrize("size", [64, 256, 1024, 4096])
 def test_filter_map(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size)
     assert benchmark(_filter_map, data) == size - 2
