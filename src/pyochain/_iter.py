@@ -48,7 +48,8 @@ type ZippedLongest[T] = (
 """Type representing the result of a `zip_longest` operation, which can yield tuples of varying lengths depending on the number of iterables zipped together."""
 type FilterFn[T, R] = Callable[[T], bool | TypeIs[R] | TypeGuard[R]] | None
 """Optional closure that can be passed to `Iter::filter` to determine if an element should be yielded."""
-# TODO: structures that use python builtins should inerhit all their dunder, e.g __eq__.
+# TODO: move to Rust the following:
+# with_position, filter_map_star, zip_longest, filter_star, scan, repeat, map_while, array_chunks, successors, from_fn  # noqa: ERA001
 
 
 class Iter[T](PyoIterator[T]):

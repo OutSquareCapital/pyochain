@@ -7,14 +7,6 @@
 - **Feat**: `SetMutOrdered`, a mutable, ordered collection of unique elements. Uses `dict::fromkeys` internally, thus has the same characteristics as a `dict` regarding lookup/insertion/deletion/iteration performance.
 - **Feat**: `SliceView`, a zero-copy, composable slice view over any `collections.abc.Sequence`. It allows to create views into existing sequences without copying the data, and to compose them together in O(1) time. It also has an `advance` method for shifting the view's window forward or backward in-place, which can be useful for sliding windows. Credits to [@eirikurt](https://github.com/julianofischer/sliceview) for the implementation and the idea, as well as[@hwelch-fle](https://github.com/hwelch-fle/sliceview) for the typing improvements work, which I used as base for the integration in pyochain.
 
-### 💥 Breaking changes
-
-- **Vec MRO**: `Vec` does not inherit from `Seq` anymore, only from `PyoMutableSequence`. This means that if you were relying on `Vec` being a subclass of `Seq` for type checking or isinstance checks, you should now check against `PyoMutableSequence` instead.
-- **API change**: `PyoIterator::{argmin, argmax}` have been renamed to `arg_min` and `arg_max`, and their `key` argument version is now in the form of a separate method, `arg_min_by` and `arg_max_by`. Just like the last releases with similar changes, adapt your code in consequence.
-- **Removed**: `PyoCollection::repeat` has been removed. You can do `my_collection.into(Iter.from_repeat, n)` to get the exact same behavior.
-- **API change**: `Dict::merge` has been renamed to `union`.
-- **API change**: `PyoIterable::{all, any, join, sum, min, my_by, max, max_by, all_unique_by, unpack_into}` are moved to `PyoIterator`. Simply add a call to `iter()` in impacted code if a `PyoCollection` was used.
-
 ### 🆕 New features
 
 - `Iter::map_with` for mapping multiple iterables at once, just like `map` builtin when provided with multiple iterables.
@@ -28,6 +20,18 @@
 - `abc::{Into, Inspect}` mixins, each providing one method from the original `Pipeable`. The latter inherit from both of them, thus no behavior change.
 - `abc::{PyoMutableSet, PyoSized, PyoReversible, PyoContainer}` ABCs. This don't impact runtime nor existing API, but is used for the ABC hierarchy tree to better mimick python `collections.abc`.
 - `PyoSet::is_superset_strict` was missing. Added.
+
+### 💥 Breaking changes
+
+- **Vec MRO**: `Vec` does not inherit from `Seq` anymore, only from `PyoMutableSequence`. This means that if you were relying on `Vec` being a subclass of `Seq` for type checking or isinstance checks, you should now check against `PyoMutableSequence` instead.
+- **API change**: `PyoIterator::{argmin, argmax}` have been renamed to `arg_min` and `arg_max`, and their `key` argument version is now in the form of a separate method, `arg_min_by` and `arg_max_by`. Just like the last releases with similar changes, adapt your code in consequence.
+- **Removed**: `PyoCollection::repeat` has been removed. You can do `my_collection.into(Iter.from_repeat, n)` to get the exact same behavior.
+- **API change**: `Dict::merge` has been renamed to `union`.
+- **API change**: `PyoIterable::{all, any, join, sum, min, my_by, max, max_by, all_unique_by, unpack_into}` are moved to `PyoIterator`. Simply add a call to `iter()` in impacted code if a `PyoCollection` was used.
+
+### 🚀 Performance improvements
+
+- `Iter::filter_map` migrated to Rust. 1.15x (64 elements) to 1.25x (256, 1024, 4096 elements) faster than the former Python implementation.
 
 ### ✨ Enhancements
 
