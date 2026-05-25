@@ -1,11 +1,10 @@
 """pyochain - A functional programming library for Python."""
 
-from . import abc
 from ._dict import Dict
 from ._iter import Iter
 from ._range import Range
 from ._seq import Seq
-from ._set import Set, SetMut, SetMutOrdered
+from ._set import Set, SetMut
 from ._sliceview import SliceView
 from ._vec import Vec
 from ._views import PyoItemsView, PyoKeysView, PyoValuesView
@@ -42,11 +41,9 @@ __all__ = [
     "Seq",
     "Set",
     "SetMut",
-    "SetMutOrdered",
     "SliceView",
     "Some",
     "Vec",
-    "abc",
     "option",
     "then_if_some",
     "then_if_true",

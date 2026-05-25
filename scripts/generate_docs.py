@@ -19,9 +19,11 @@ DOCS_SITE_URL = "https://outsquarecapital.github.io/pyochain/"
 def main() -> None:
     """Main function to generate documentation and check navigation completeness."""
     import pyochain
+    from pyochain import collections
 
     show("Generating pyochain documentation...", style=Color.INFO)
     _generate_all_for_module(pyochain)
+    _generate_all_for_module(collections)
     show("✅ All files generated!", style=Color.SUCCESS)
     show("----------------------------------", style=Color.BLANK)
     show("Checking navigation completeness...", style=Color.INFO)

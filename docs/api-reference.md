@@ -29,6 +29,8 @@ This page is the entry point to the **complete** public API documentation.
 - [`SetMut[T]`](reference/setmut.md)
 - [`Dict[K, V]`](reference/dict.md)
 - [`Range`](reference/range.md)
+- [`SliceView[T]`](reference/sliceview.md)
+- [`StableSet[T]`](reference/stableset.md)
 
 ### Mapping Views
 

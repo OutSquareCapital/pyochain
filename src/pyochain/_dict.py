@@ -113,8 +113,9 @@ class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
             ```python
             >>> from pyochain import Dict
             >>> Dict.from_keys([1, 2, 3], "a")
-
             Dict(1: 'a', 2: 'a', 3: 'a')
+            >>> Dict.from_keys("abc")
+            Dict('a': None, 'b': None, 'c': None)
 
             ```
         """

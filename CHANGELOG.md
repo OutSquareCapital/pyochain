@@ -4,13 +4,15 @@
 
 ### 🏆 Highlights
 
-- **Feat**: `SetMutOrdered`, a mutable collection of unique elements which remember their insertion order. Uses `dict::fromkeys` internally, thus has the same characteristics as a `dict` regarding lookup/insertion/deletion/iteration performance.
+- **Feat**: `collections`, new module mimicking python `collections` module, aiming to provide additional, more specialized collections types.
+
+- **Feat**: `collections::StableSet`, a mutable collection of unique elements which remember their insertion order. Uses `dict::fromkeys` internally, thus has the same characteristics as a `dict` regarding lookup/insertion/deletion/iteration performance.
 - **Feat**: `SliceView`, a zero-copy, composable slice view over any `collections.abc.Sequence`. It allows to create views into existing sequences without copying the data, and to compose them together in O(1) time. It also has an `advance` method for shifting the view's window forward or backward in-place, which can be useful for sliding windows. Credits to [@eirikurt](https://github.com/julianofischer/sliceview) for the implementation and the idea, as well as[@hwelch-fle](https://github.com/hwelch-fle/sliceview) for the typing improvements work, which I used as base for the integration in pyochain.
 
 ### 🆕 New features
 
 - `Iter::map_with` for mapping multiple iterables at once, just like `map` builtin when provided with multiple iterables.
-- Improved `__eq__` for `Set`, `SetMut`, `SetMutOrdered`, and `Dict`, with similar behavior than their internal data structures, as well as pyochain objects handling.
+- Improved `__eq__` for `Set`, `SetMut`, and `Dict`, with similar behavior than their internal data structures, as well as pyochain objects handling.
 - `Set::{__hash__}`, with similar behavior than it's internal `frozenset` structure
 - `repeat` method for `Seq` and `Vec`, which call the `__mul__` dunder method.
 - `Vec::repeat_mut`, equivalent to `my_list *= n`.
