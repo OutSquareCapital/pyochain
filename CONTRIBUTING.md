@@ -10,13 +10,14 @@ pyochain is a **mixed Python/Rust project**:
 ### Python structure ([src/pyochain/](src/pyochain))
 
 - [src/pyochain/**init**.py](src/pyochain/__init__.py) — public API entrypoint and re-exports.
+- [src/pyochain/abc/](src/pyochain/abc) — abstract collections and iterator ABCs shared across the Python layer.
+- [src/pyochain/collections/](src/pyochain/collections) — non-core collection implementations.
 - [src/pyochain/_iter.py](src/pyochain/_iter.py) — `Iter` implementation.
 - [src/pyochain/_seq.py](src/pyochain/_seq.py) — `Seq` implementation.
 - [src/pyochain/_dict.py](src/pyochain/_dict.py) — `Dict` implementation and mapping-specific methods.
 - [src/pyochain/_range.py](src/pyochain/_range.py) — `Range` implementation.
 - [src/pyochain/_set.py](src/pyochain/_set.py) — `Set`, `SetMut`, `PyoKeysView`, `PyoValuesView`, and `PyoItemsView` implementations.
 - [src/pyochain/_vec.py](src/pyochain/_vec.py) — `Vec` implementation.
-- [src/pyochain/abc/](src/pyochain/abc) — abstract collections and iterator ABCs shared across the Python layer.
 - [src/pyochain/_utils.py](src/pyochain/_utils.py) — internal utilities used across the Python package.
 - [src/pyochain/rs.pyi](src/pyochain/rs.pyi) — stubs for the Rust-compiled public bindings.
 - [src/pyochain/_tools.pyi](src/pyochain/_tools.pyi) — stubs for the internal Rust helper module exposed as `pyochain._tools`.
@@ -36,9 +37,21 @@ pyochain is a **mixed Python/Rust project**:
 
 ### Python code
 
-- All public API functions and methods must include clear docstrings, full type hints, and overloads/generics where appropriate.
-- Follow the existing docstring style: one-line summary, optional extended description, `Args:`, `Returns:`, `Examples:` sections. Keep a blank line between sections.
-- Prefer simple, readable implementations. Hot paths use vanilla iteration to reduce call overhead.
+#### Public API
+
+All public API functions and methods must include clear docstrings, full type hints, and overloads/generics where appropriate.
+
+Type checkers/python typing limitations means we need sometimes to do things that are very "dumb" (see the signature of `Iter::flatten` for yourself).
+
+#### Performance-critical code
+
+Internal implementations must prioritize performance and don't need docstrings.
+
+We prefer "vanilla" Python code instead of our own API to maximize performance, i.e using for loops, comprehensions and built-in functions.
+
+We do it here so we don't have to do it anymore anywhere we use pyochain :-).
+
+We want to use each trick possible, for example `fn = object.method` and then `fn()` instead of `object.method()`, to avoid attribute lookups.
 
 #### Where should a method live?
 
@@ -54,18 +67,38 @@ On the other hand, if we go from a `PyoSequence` to an `Iter`, then it makes mor
 
 #### Docstrings
 
-docstrings should follow this format:
+docstrings should follow the format below.
+
+Note that blank line between the example result and the end of the code block.
+
+Doctest will fail otherwise, because it will consider the "```" as part of the output.
 
 ```python
 def my_function(param1: int, param2: str) -> bool:
     """One liner description of what the function does.
 
+    Additional explanations if needed.
+
+    List of points:
+        - Point 1
+        - Point 2
+        - Point 3
+
     Args:
-        param1: Description.
-        param2: Description.
+        param1 (int): Description.
+        param2 (str): Description.
+
+    Warning:
+        Description of the warning.
+
+    Note:
+        Description of the note.
+
+    Tip:
+        Description of the tip.
 
     Returns:
-        Description of the return value.
+        bool: Description of the return value.
 
     Examples:
         ```python
@@ -76,9 +109,6 @@ def my_function(param1: int, param2: str) -> bool:
     """
     return True
 ```
-
-TODO: We need to strip all types from the docstrings (i.e `param1 (int): Description`)
-TODO: We need to check if pydoclint can be safely replaced by zensical own checks.
 
 ## Setup
 
