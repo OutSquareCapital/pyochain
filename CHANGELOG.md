@@ -20,6 +20,7 @@
 - `abc::{Into, Inspect}` mixins, each providing one method from the original `Pipeable`. The latter inherit from both of them, thus no behavior change.
 - `abc::{PyoMutableSet, PyoSized, PyoReversible, PyoContainer}` ABCs. This don't impact runtime nor existing API, but is used for the ABC hierarchy tree to better mimick python `collections.abc`.
 - `PyoSet::is_superset_strict` was missing. Added.
+- `Dict::from_keys`, equivalent to `dict.fromkeys` python builtin.
 
 ### 💥 Breaking changes
 

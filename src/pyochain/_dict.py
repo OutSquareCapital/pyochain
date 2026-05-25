@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Any, Self, override
 
 from .abc import PyoMutableMapping
@@ -95,6 +95,30 @@ class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
 
     def __init__(self, data: DictConvertible[K, V]) -> None:
         self._inner = dict(data)
+
+    @classmethod
+    def from_keys[K1, V1](cls, keys: Iterable[K1], value: V1 = None) -> Dict[K1, V1]:
+        """Create a `Dict` from an iterable of keys, all mapped to the same value.
+
+        This is the equivalent of `dict.fromkeys`, but returns a `Dict` instance.
+
+        Args:
+            keys (Iterable[K1]): An iterable of keys to include in the mapping.
+            value (V1): The value that each key will be mapped to.
+
+        Returns:
+            Dict[K1, V1]: A new `PyoMapping` instance containing the specified keys and value.
+
+        Example:
+            ```python
+            >>> from pyochain import Dict
+            >>> Dict.from_keys([1, 2, 3], "a")
+
+            Dict(1: 'a', 2: 'a', 3: 'a')
+
+            ```
+        """
+        return cls.from_ref(dict.fromkeys(keys, value))
 
     @override
     def __repr__(self) -> str:
