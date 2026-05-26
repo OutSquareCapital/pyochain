@@ -64,6 +64,7 @@
             ] },
             { "Overview" = "api-reference.md" },
             { "collections" = [
+                { "Deque" = "reference/deque.md" },
                 { "StableSet" = "reference/stableset.md" },
             ] },
         ] },

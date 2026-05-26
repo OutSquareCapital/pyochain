@@ -3,18 +3,20 @@ from __future__ import annotations
 import functools
 import itertools
 from abc import ABC
-from collections.abc import Callable, Collection, Iterable, Iterator, MutableSequence
+from collections.abc import Iterator
 from operator import itemgetter
 from typing import TYPE_CHECKING, Any, Concatenate, overload
 
 from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
-from .._types import SupportsComparison, SupportsRichComparison
 from ..rs import NONE, Option, Result, Some, option
 from ._iterable import PyoIterable
 
 if TYPE_CHECKING:
-    from .._seq import Seq
+    from collections.abc import Callable, Collection, Iterable, MutableSequence
+
+    from .._types import SupportsComparison, SupportsRichComparison
     from .._vec import Vec
+    from ..collections import Deque
     from ..rs import Option, Result
     from ._sequences import PyoMutableSequence
 
@@ -1337,31 +1339,29 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         return Vec.from_ref(sorted(iter(self), reverse=reverse, key=key))
 
-    def tail(self, n: int) -> Seq[T]:
-        """Return a `Seq` of the last **n** elements of the `Iterator`.
+    def tail(self, n: int) -> Deque[T]:
+        """Return a `Deque` of the last **n** elements of the `Iterator`.
 
         Args:
             n (int): Number of elements to return.
 
         Returns:
-            Seq[T]: A `Seq` containing the last **n** elements.
+            Deque[T]: A `Deque` containing the last **n** elements.
 
         Example:
             ```python
             >>> from pyochain import Iter
             >>> Iter((1, 2, 3)).tail(2)
-            Seq(2, 3)
+            Deque([2, 3], maxlen=2)
 
             ```
         """
         from collections import deque
 
-        from .._seq import Seq
+        from ..collections import Deque
 
         # TODO: we should move this to Rust and make it fully lazy.
-        # Here we recollect it in a Seq to clearly indicate that we need to consume the entire iterator to get the tail.
-        # Alternatively, add `deque` wrapper to public API, and `from_ref` it here.
-        return Seq(deque(iter(self), n))
+        return Deque.from_ref(deque(iter(self), n))
 
     def partition(self, predicate: Callable[[T], bool]) -> tuple[Vec[T], Vec[T]]:
         """Consumes the `Iterator`, creating two `Vec` from it.

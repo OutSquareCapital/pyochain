@@ -7,6 +7,7 @@
 - **Feat**: `collections`, new module mimicking python `collections` module, aiming to provide additional, more specialized collections types.
 
 - **Feat**: `collections::StableSet`, a mutable collection of unique elements which remember their insertion order. Uses `dict::fromkeys` internally, thus has the same characteristics as a `dict` regarding lookup/insertion/deletion/iteration performance.
+- **Feat**: `collections::Deque`, pyochain version of python builtin `collections::deque`.
 - **Feat**: `SliceView`, a zero-copy, composable slice view over any `collections.abc.Sequence`. It allows to create views into existing sequences without copying the data, and to compose them together in O(1) time. It also has an `advance` method for shifting the view's window forward or backward in-place, which can be useful for sliding windows. Credits to [@eirikurt](https://github.com/julianofischer/sliceview) for the implementation and the idea, as well as[@hwelch-fle](https://github.com/hwelch-fle/sliceview) for the typing improvements work, which I used as base for the integration in pyochain.
 
 ### 🆕 New features
