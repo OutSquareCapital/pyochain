@@ -2208,7 +2208,7 @@ class Iter[T](PyoIterator[T]):
             >>> output = (
             ...     Iter(data)
             ...     .group_by(lambda x: x["gender"])
-            ...     .map_star(lambda g, vals: (g, vals.length()))
+            ...     .map_star(lambda g, vals: (g, vals.count()))
             ...     .collect()
             ... )
             >>> output

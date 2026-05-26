@@ -32,6 +32,7 @@
 - **Removed**: `PyoCollection::repeat` has been removed. You can do `my_collection.into(Iter.from_repeat, n)` to get the exact same behavior.
 - **API change**: `Dict::merge` has been renamed to `union`.
 - **API change**: `PyoIterable::{all, any, join, sum, min, my_by, max, max_by, all_unique_by, unpack_into}` are moved to `PyoIterator`. Simply add a call to `iter()` in impacted code if a `PyoCollection` was used.
+- **API change**: `PyoIterable::length` has been removed. `PyoIterator::count` and `PyoSized::len` are their replacement. Closer to Rust semantics, and do things more explicitely, as the former is a full iteration that count the elements, while the latter is a call to `len()`.
 
 ### 🚀 Performance improvements
 

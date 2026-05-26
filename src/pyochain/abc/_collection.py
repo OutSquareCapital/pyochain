@@ -42,6 +42,25 @@ class PyoSized(Sized, ABC):
     # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
+    def len(self) -> int:
+        """Return the length of `Self`.
+
+        Equivalent to `len(self)`, but as a method.
+
+        Returns:
+            int: The number of elements in `Self`.
+
+        Example:
+            ```python
+            >>> from pyochain import Dict
+            >>> data = Dict.from_ref({1: "a", 2: "b"})
+            >>> data.len()
+            2
+
+            ```
+        """
+        return len(self)
+
     def is_empty(self) -> bool:
         """Returns `True` if the `Collection` contains no elements.
 
@@ -78,10 +97,6 @@ class PyoCollection[T](PyoIterable[T], PyoContainer[T], PyoSized, Collection[T],
 
     # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
-
-    @override
-    def length(self) -> int:
-        return len(self)
 
     @override
     def all_unique(self) -> bool:

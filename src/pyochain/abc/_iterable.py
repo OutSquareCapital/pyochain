@@ -171,34 +171,6 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
         """
         return tls.last(iter(self))
 
-    def length(self) -> int:
-        """Return the length of the `Iterable`.
-
-        By default, this method converts the `Iterable` to an `Iterator` and counts the elements by consuming it.
-
-        This is overriden on `PyoCollection` and its subclasses to directly use an efficient `__len__` access.
-
-        Returns:
-            int: The count of elements.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq, Range, Iter
-            >>> Seq((1, 2)).length()
-            2
-            >>> Range(0, 5).length()
-            5
-            >>> data = Iter((1, 2, 3))
-            >>> data.length()
-            3
-            >>> # data is now empty
-            >>> data.length()
-            0
-
-            ```
-        """
-        return tls.length(iter(self))
-
     def all_unique[U](self) -> bool:
         """Returns True if all the elements of **self** are unique.
 

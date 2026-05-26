@@ -284,9 +284,7 @@ def _get_files(pattern: str) -> Seq[Path]:
         .iter_rglob(f"*.{pattern}")
         .collect()
         .inspect(
-            lambda p: show(
-                f"Checking {p.length()} {pattern} files...", style=Color.INFO
-            )
+            lambda p: show(f"Checking {p.len()} {pattern} files...", style=Color.INFO)
         )
     )
 
@@ -295,7 +293,7 @@ def _handle_errors(all_errors: Option[Seq[DocstringError]]) -> None:
     match all_errors:
         case Some(all_errs):
             _show_table(all_errs)
-            msg = f"[FAILED] Found {all_errs.length()} issue(s)"
+            msg = f"[FAILED] Found {all_errs.len()} issue(s)"
             show(msg, style=Color.ERROR)
         case Null():
             show("[OK] No issues found!", style=Color.SUCCESS)

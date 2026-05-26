@@ -60,6 +60,26 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
     # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
+    def count(self) -> int:
+        """Consume the `Iterator` and return the number of elements it contained.
+
+        Returns:
+            int: The count of elements.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> data = Iter((1, 2, 3))
+            >>> data.count()
+            3
+            >>> # data is now empty
+            >>> data.count()
+            0
+
+            ```
+        """
+        return tls.length(iter(self))
+
     def all(self, predicate: Callable[[T], bool] | None = None) -> bool:
         """Tests if every element of the `Iterator` is truthy.
 
@@ -1187,9 +1207,9 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             >>> from pyochain import Seq, Vec
             >>> a = Seq((1, 2, 3))
             >>> vec = Vec(())
-            >>> a.iter().collect_into(vec).length() == vec.length()
+            >>> a.iter().collect_into(vec).len() == vec.len()
             True
-            >>> a.iter().collect_into(vec).length() == vec.length()
+            >>> a.iter().collect_into(vec).len() == vec.len()
             True
 
             ```
