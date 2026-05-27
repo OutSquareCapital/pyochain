@@ -45,6 +45,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<FilterMap>()?;
     m.add_class::<FilterMapStar>()?;
     m.add_class::<Scan>()?;
+    m.add_class::<MapWhile>()?;
     Ok(())
 }
 #[pyfunction]
@@ -579,7 +580,6 @@ pub fn retain(data: Bound<'_, PySequence>, predicate: &Bound<'_, PyAny>) -> PyRe
     }
     Ok(())
 }
-
 #[pyclass]
 pub struct Juxt {
     funcs: Vec<Py<PyAny>>,
@@ -812,7 +812,8 @@ impl FilterMap {
         })
     }
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf    }
+        slf
+    }
 
     fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
         let py = slf.py();
@@ -847,7 +848,8 @@ impl FilterMapStar {
         })
     }
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf    }
+        slf
+    }
 
     fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
         let py = slf.py();
@@ -857,7 +859,7 @@ impl FilterMapStar {
             match iter.next() {
                 None => return Ok(None),
                 Some(result) => {
-                    let res = func.call1((result?.cast_exact::<PyTuple>()?))?;
+                    let res = func.call1(result?.cast_exact::<PyTuple>()?)?;
                     match res.cast_into_exact::<PySome>() {
                         Ok(some) => return Ok(Some(some.get().value.clone_ref(py))),
                         Err(_) => continue,
@@ -877,7 +879,11 @@ pub struct Scan {
 #[pymethods]
 impl Scan {
     #[new]
-    fn new(data: Bound<'_, PyIterator>, initial: Bound<'_, PyAny>, func: Bound<'_, PyAny>) -> PyResult<Self> {
+    fn new(
+        data: Bound<'_, PyIterator>,
+        initial: Bound<'_, PyAny>,
+        func: Bound<'_, PyAny>,
+    ) -> PyResult<Self> {
         Ok(Self {
             iter: data.unbind(),
             initial: initial.unbind(),
@@ -885,7 +891,8 @@ impl Scan {
         })
     }
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf    }
+        slf
+    }
 
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
         let py = slf.py();
@@ -909,5 +916,35 @@ impl Scan {
             }
         }
     }
+}
 
+#[pyclass]
+pub struct MapWhile {
+    iter: Py<PyIterator>,
+    func: Py<PyAny>,
+}
+#[pymethods]
+impl MapWhile {
+    #[new]
+    fn new(data: Bound<'_, PyIterator>, func: Bound<'_, PyAny>) -> Self {
+        Self {
+            iter: data.unbind(),
+            func: func.unbind(),
+        }
+    }
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
+        let py = slf.py();
+        let mut iter = slf.iter.clone_ref(py).into_bound(py);
+        match iter.next() {
+            None => Ok(None),
+            Some(result) => match slf.func.bind(py).call1((result?,))?.cast_exact::<PySome>() {
+                Ok(some) => Ok(Some(some.get().value.clone_ref(py))),
+                Err(_) => Ok(None),
+            },
+        }
+    }
 }

@@ -40,6 +40,7 @@
 - `Iter::filter_map` migrated to Rust. 1.15x (64 elements) to 1.25x (256, 1024, 4096 elements) faster.
 - `Iter::filter_map_star` migrated to Rust. 1.24x (64 elements) to 1.38x (256, 1024, 4096 elements) faster.
 - `Iter::scan` migrated to Rust. More or less 1.35x faster across sizes (64, 256, 1024, 4096, 16384 elements).
+- `Iter::map_while` migrated to Rust. 1.38x to 1.44x faster across sizes.
 
 ### ✨ Enhancements
 

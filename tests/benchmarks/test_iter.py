@@ -179,3 +179,13 @@ def test_scan(benchmark: BenchFixture, size: int) -> None:
 
 def _scan(data: Range) -> Seq[int]:
     return data.iter().scan(0, lambda acc, x: Some(acc + x)).collect()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_map_while(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_map_while, data, size) is not None
+
+
+def _map_while(data: Range, size: int) -> int:
+    return data.iter().map_while(lambda x: Some(x) if x < size else Null()).last()

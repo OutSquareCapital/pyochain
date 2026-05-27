@@ -49,7 +49,7 @@ type ZippedLongest[T] = (
 type FilterFn[T, R] = Callable[[T], bool | TypeIs[R] | TypeGuard[R]] | None
 """Optional closure that can be passed to `Iter::filter` to determine if an element should be yielded."""
 # TODO: move to Rust the following:
-# with_position, zip_longest, filter_star, repeat, map_while, array_chunks, successors, from_fn  # noqa: ERA001
+# with_position, zip_longest, filter_star, repeat,  array_chunks, successors, from_fn  # noqa: ERA001
 
 
 class Iter[T](PyoIterator[T]):
@@ -846,18 +846,19 @@ class Iter[T](PyoIterator[T]):
         return Iter(map(func, self._inner, *iterables))
 
     def map_while[R](self, func: Callable[[T], Option[R]]) -> Iter[R]:
-        """Creates an iterator that both yields elements based on a predicate and maps.
+        """Creates an `Iterator` that both yields elements based on a predicate and maps.
 
-        `map_while()` takes a closure as an argument. It will call this closure on each element of
-        the iterator, and yield elements while it returns `Some(_)`.
+        `map_while()` takes a closure as an argument.
 
-        After `NONE` is returned, `map_while()` stops and the rest of the elements are ignored.
+        It will call this closure on each element of the `Iterator`, and yield elements while it returns `Some(_)`.
+
+        After `NONE` is returned, `Iter::map_while` stops and the rest of the elements are ignored.
 
         Args:
             func (Callable[[T], Option[R]]): Function to apply to each element that returns `Option[R]`.
 
         Returns:
-            Iter[R]: An iterator of transformed elements until `NONE` is encountered.
+            Iter[R]: An `Iterator` of transformed elements until `NONE` is encountered.
 
         Example:
             ```python
@@ -875,14 +876,7 @@ class Iter[T](PyoIterator[T]):
 
             ```
         """
-
-        def _gen() -> Generator[R]:
-            for opt in map(func, self._inner):
-                if opt.is_none():
-                    return
-                yield opt.unwrap()
-
-        return Iter(_gen())
+        return Iter(tls.MapWhile(self._inner, func))
 
     def repeat(self, n: int | None = None) -> Iter[Self]:
         """Repeat the entire `Iter` **n** times (as elements).
@@ -1429,17 +1423,14 @@ class Iter[T](PyoIterator[T]):
     def unzip[U, V](self: Iter[tuple[U, V]]) -> tuple[Iter[U], Iter[V]]:
         """Converts an iterator of pairs into a pair of iterators.
 
-        Returns:
-            tuple[Iter[U], Iter[V]]: A tuple containing two iterators, one for each element of the pairs.
-
         This function is, in some sense, the opposite of `.zip()`.
 
-        Note:
-            Both iterators share the same underlying source.
+        Both iterators share the same underlying source.
 
-            Values consumed by one iterator remain in the shared buffer until the other iterator consumes them too.
+        Values consumed by one iterator remain in the shared buffer until the other iterator consumes them too.
 
-            This is the unavoidable cost of having two independent iterators over the same source.
+        Returns:
+            tuple[Iter[U], Iter[V]]: A tuple containing two iterators, one for each element of the pairs.
 
         Example:
             ```python
