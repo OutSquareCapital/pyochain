@@ -169,3 +169,13 @@ def _create_fn(i: int) -> Callable[[int], int]:
         return x * i
 
     return fn
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_scan(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_scan, data).last() is not None
+
+
+def _scan(data: Range) -> Seq[int]:
+    return data.iter().scan(0, lambda acc, x: Some(acc + x)).collect()

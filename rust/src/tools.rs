@@ -44,6 +44,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Juxt>()?;
     m.add_class::<FilterMap>()?;
     m.add_class::<FilterMapStar>()?;
+    m.add_class::<Scan>()?;
     Ok(())
 }
 #[pyfunction]
@@ -865,4 +866,48 @@ impl FilterMapStar {
             }
         }
     }
+}
+
+#[pyclass]
+pub struct Scan {
+    iter: Py<PyIterator>,
+    initial: Py<PyAny>,
+    func: Py<PyAny>,
+}
+#[pymethods]
+impl Scan {
+    #[new]
+    fn new(data: Bound<'_, PyIterator>, initial: Bound<'_, PyAny>, func: Bound<'_, PyAny>) -> PyResult<Self> {
+        Ok(Self {
+            iter: data.unbind(),
+            initial: initial.unbind(),
+            func: func.unbind(),
+        })
+    }
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf    }
+
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
+        let py = slf.py();
+        let func = slf.func.bind(py);
+        let mut iter = slf.iter.clone_ref(py).into_bound(py);
+
+        match iter.next() {
+            None => Ok(None),
+            Some(result) => {
+                let state = slf.initial.clone_ref(py);
+                let res = func.call1((state, result?))?;
+
+                match res.cast_exact::<PySome>() {
+                    Ok(some) => {
+                        let next_state = some.get().value.clone_ref(py);
+                        slf.initial = next_state.clone_ref(py);
+                        Ok(Some(next_state))
+                    }
+                    Err(_) => Ok(None),
+                }
+            }
+        }
+    }
+
 }

@@ -145,3 +145,14 @@ class FilterMapStar[T: Iterable[Any], R](Iterator[R]):
     @no_doctest
     @override
     def __next__(self) -> R: ...
+
+class Scan[T, B](Iterator[B]):
+    def __init__(
+        self, data: Iterator[T], initial: B, func: Callable[[B, T], Option[B]]
+    ) -> None: ...
+    @no_doctest
+    @override
+    def __iter__(self) -> Self: ...
+    @no_doctest
+    @override
+    def __next__(self) -> B: ...
