@@ -1,19 +1,24 @@
 from collections.abc import Callable, Collection
 from collections.abc import Set as AbstractSet
+from typing import overload
 
 
-def no_doctest[**P, R](func: Callable[P, R]) -> Callable[P, R]:
-    """Decorator to mark functions that should skip doctest checks.
+@overload
+def no_doctest[T](obj: type[T], /) -> type[T]: ...
+@overload
+def no_doctest[**P, R](obj: Callable[P, R], /) -> Callable[P, R]: ...
+def no_doctest(obj: object, /) -> object:
+    """Decorator to mark classes/functions that should skip doctest checks.
 
     This decorator has zero runtime effect.
 
     Args:
-        func (Callable[P, R]): The function to mark.
+        obj (type[T] | Callable[P, R]): The object to mark.
 
     Returns:
-        Callable[P, R]
+        type[T] | Callable[P, R]
     """
-    return func
+    return obj
 
 
 @no_doctest

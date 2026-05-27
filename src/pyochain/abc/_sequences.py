@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Self, overload, override
 
 from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
+from .._utils import no_doctest
 from ..rs import NONE, Option, Some
 from ._collection import PyoCollection
 
@@ -13,6 +14,7 @@ if TYPE_CHECKING:
     from .._iter import Iter
 
 
+@no_doctest
 @dataclass(slots=True)
 class DrainIterator[T](Iterator[T]):
     """An `Iterator` that drains elements from a `Vec` within a specified range.
