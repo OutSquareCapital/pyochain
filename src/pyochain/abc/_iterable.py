@@ -170,36 +170,3 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             ```
         """
         return tls.last(iter(self))
-
-    def all_unique[U](self) -> bool:
-        """Returns True if all the elements of **self** are unique.
-
-        The function returns as soon as the first non-unique element is encountered.
-
-        Elements are assumed to be hashable.
-
-        If you need to check uniqueness based on a custom key function, use `PyoIterable::all_unique_by` instead.
-
-        Note:
-            - On `PyoSequence` and subclasses, this is overriden to directly use an efficient `set` access and length comparison.
-            - On `PyoSet`, `PyoMapping` and their subclasses, this directly returns `True`.
-
-        Returns:
-            bool: `True` if all elements are unique, `False` otherwise.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Dict
-            >>> Iter("ABCB").all_unique()
-            False
-            >>> Iter("ABCb").all_unique()
-            True
-            >>> data = Dict.from_ref({1: "a", 2: "a"})
-            >>> data.all_unique()
-            True
-            >>> data.values().all_unique()
-            False
-
-            ```
-        """
-        return tls.all_unique(iter(self))

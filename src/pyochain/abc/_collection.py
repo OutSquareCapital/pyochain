@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from abc import ABC
 from collections.abc import Collection, Container, Sized
-from typing import override
 
 from ._iterable import PyoIterable
 
@@ -97,7 +96,3 @@ class PyoCollection[T](PyoIterable[T], PyoContainer[T], PyoSized, Collection[T],
 
     # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
-
-    @override
-    def all_unique(self) -> bool:
-        return len(self) == len(frozenset(self))

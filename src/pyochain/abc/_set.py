@@ -3,7 +3,6 @@ from __future__ import annotations
 from abc import ABC
 from collections.abc import MutableSet
 from collections.abc import Set as AbstractSet
-from typing import override
 
 from ._collection import PyoCollection
 
@@ -65,10 +64,6 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
     # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
-
-    @override
-    def all_unique(self) -> bool:
-        return True
 
     def is_subset(self, other: AbstractSet[T]) -> bool:
         """Test whether all elements of this set are in `other` (including equality).

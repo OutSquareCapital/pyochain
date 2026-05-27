@@ -844,6 +844,45 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             return True
         return True
 
+    def all_unique[U](self) -> bool:
+        """Returns `True` if all the elements of the `Iterator` are unique.
+
+        The function returns as soon as the first non-unique element is encountered.
+
+        Elements are assumed to be hashable.
+
+        If you need to check uniqueness based on a custom key function, use `PyoIterable::all_unique_by` instead.
+
+        Tip:
+            If you already have an existing `Collection`, you can alternatively check uniqueness by comparing the length of the collection to the length of a set created from it.
+
+            On a "worst" case scenario (all elements are unique), this can be a bit faster on large (100k + items) collections, by around 1.15x (i.e 15% faster).
+
+            Or on very small (10 items or less), where the overhead of creating the `Iterator` makes it 2x slower than simply creating the set.
+
+            Altough, at this point, the operation is so fast that the difference is negligible, unless you are doing it in a hot loop.
+
+            All things considered, `all_unique` early-exits on first duplicate can make it orders of magnitude faster, when your probability of duplicates is anything but very low.
+
+        Returns:
+            bool: `True` if all elements are unique, `False` otherwise.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq, Set
+            >>> Iter("ABCB").all_unique()
+            False
+            >>> Iter("ABCb").all_unique()
+            True
+            >>> # Alternative way to check uniqueness by comparing lengths:
+            >>> collection = Seq((1, 2, 3, 3))
+            >>> collection.len() == collection.into(Set).len()
+            False
+
+            ```
+        """
+        return tls.all_unique(iter(self))
+
     def arg_max(self) -> int:
         """Index of the first occurrence of a maximum value in the `Iterator`.
 

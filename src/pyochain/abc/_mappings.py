@@ -43,10 +43,6 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     @override
-    def all_unique(self) -> bool:
-        return True
-
-    @override
     def keys(self) -> PyoKeysView[K]:
         """Return a view of the `Mapping` keys.
 
