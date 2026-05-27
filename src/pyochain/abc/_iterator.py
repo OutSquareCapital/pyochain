@@ -5,7 +5,9 @@ import itertools
 from abc import ABC
 from collections.abc import Iterator
 from operator import itemgetter
-from typing import TYPE_CHECKING, Any, Concatenate, overload
+from typing import TYPE_CHECKING, Any, Concatenate, Self, overload
+
+from pyochain._utils import no_doctest
 
 from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
 from ..rs import NONE, Option, Result, Some, option
@@ -14,6 +16,7 @@ from ._iterable import PyoIterable
 if TYPE_CHECKING:
     from collections.abc import Callable, Collection, Iterable, MutableSequence
 
+    from .._seq import Seq
     from .._types import SupportsComparison, SupportsRichComparison
     from .._vec import Vec
     from ..collections import Deque
@@ -59,6 +62,28 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
     # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
+
+    @no_doctest
+    def _from_iterable(self, iterable: Iterable[T]) -> Self:
+        """Internal constructor.
+
+        Since some methods returns a new `PyoIterator`, we use this, with the assumption that the concrete subclass has an `__init__` that can accept an `Iterable[T]`.
+
+        If you want to implement a different constructor, you will need to override this method with one that can construct new instances from an iterable argument.
+
+        Args:
+            iterable (Iterable[T]): An iterable to create the new `PyoIterator` from.
+
+        Returns:
+            Self: A new instance of the concrete `PyoIterator` subclass.
+
+        See Also:
+            This is how python standard library handle `collections::abc::Set`, see the first point below `Notes on using Set [...]`:
+
+            https://docs.python.org/3/library/collections.abc.html#examples-and-recipes
+
+        """
+        return self.__class__(iterable)  # pyright: ignore[reportCallIssue]
 
     def count(self) -> int:
         """Consume the `Iterator` and return the number of elements it contained.
@@ -1645,3 +1670,382 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ```
         """
         return tls.all_unique_by(iter(self), key)
+
+    def take_while(self, predicate: Callable[[T], bool]) -> Self:
+        """Take items while predicate holds.
+
+        Args:
+            predicate (Callable[[T], bool]): Function to evaluate each item.
+
+        Returns:
+            Self: An `Iterator` of the items taken while the predicate is true.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 0)).take_while(lambda x: x > 0).collect()
+            Seq(1, 2)
+
+            ```
+        """
+        return self._from_iterable(itertools.takewhile(predicate, iter(self)))
+
+    def skip_while(self, predicate: Callable[[T], bool]) -> Self:
+        """Drop items while predicate holds.
+
+        Args:
+            predicate (Callable[[T], bool]): Function to evaluate each item.
+
+        Returns:
+            Self: An `Iterator` of the items after skipping those for which the predicate is true.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 0)).skip_while(lambda x: x > 0).collect()
+            Seq(0,)
+
+            ```
+        """
+        return self._from_iterable(itertools.dropwhile(predicate, iter(self)))
+
+    def compress(self, *selectors: bool) -> Self:
+        """Filter elements using a boolean selector iterable.
+
+        Args:
+            *selectors (bool): Boolean values indicating which elements to keep.
+
+        Returns:
+            Self: An `Iterator` of the items selected by the boolean selectors.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter("ABCDEF").compress(1, 0, 1, 0, 1, 1).collect()
+            Seq('A', 'C', 'E', 'F')
+
+            ```
+        """
+        return self._from_iterable(itertools.compress(iter(self), selectors))
+
+    def unique(self) -> Self:
+        """Return only unique elements of the iterable.
+
+        Returns:
+            Self: An `Iterator` of the unique items.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3)).unique().collect()
+            Seq(1, 2, 3)
+            >>> Iter([1, 2, 1, 3]).unique().collect()
+            Seq(1, 2, 3)
+
+            ```
+        """
+        return self._from_iterable(tls.UniqueIdentity(iter(self)))
+
+    def unique_by(self, key: Callable[[T], Any]) -> Self:  # pyright: ignore[reportExplicitAny]
+        """Return only unique elements of the iterable.
+
+        Args:
+            key (Callable[[T], Any]): Function to transform items before comparison.
+
+        Returns:
+            Self: An `Iterator` of the unique items.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter(["cat", "mouse", "dog", "hen"]).unique_by(key=len).collect()
+            Seq('cat', 'mouse')
+
+            ```
+        """
+        return self._from_iterable(tls.UniqueKey(iter(self), key=key))
+
+    def take(self, n: int) -> Self:
+        """Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner.
+
+        `Iter.take(n)` yields elements until n elements are yielded or the end of the iterator is reached (whichever happens first).
+
+        The returned iterator is either:
+
+        - A prefix of length n if the original iterator contains at least n elements
+        - All of the (fewer than n) elements of the original iterator if it contains fewer than n elements.
+
+        Args:
+            n (int): Number of elements to take.
+
+        Returns:
+            Self: An `Iterator` of the first n items.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> data = (1, 2, 3)
+            >>> Iter(data).take(2).collect()
+            Seq(1, 2)
+            >>> Iter(data).take(5).collect()
+            Seq(1, 2, 3)
+
+            ```
+        """
+        return self._from_iterable(itertools.islice(iter(self), n))
+
+    def skip(self, n: int) -> Self:
+        """Create an `Iterator` that skips the first n elements.
+
+        skip(**n**) skips elements until n elements are skipped or the end of the `Iterator` is reached (whichever happens first).
+
+        After that, all the remaining elements are yielded.
+
+        In particular, if the original `Iterator` is too short, then the returned `Iterator` is empty.
+
+        If **n** is negative or zero, the original `Iterator` is returned unchanged.
+
+        Args:
+            n (int): Number of elements to skip.
+
+        Returns:
+            Self: An `Iterator` of the remaining elements.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3)).skip(1).collect()
+            Seq(2, 3)
+            >>> Iter((1, 2, 3)).skip(5).collect()
+            Seq()
+            >>> Iter((1, 2, 3)).skip(0).collect()
+            Seq(1, 2, 3)
+
+            ```
+        """
+        return self._from_iterable(itertools.islice(iter(self), n, None))
+
+    def step_by(self, step: int) -> Self:
+        """Creates an `Iterator` starting at the same point, but stepping by the given **step** at each iteration.
+
+        Note:
+            The first element of the iterator will always be returned, regardless of the **step** given.
+
+        Args:
+            step (int): Step size for selecting items.
+
+        Returns:
+            Self: An `Iterator` of every nth item.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter([0, 1, 2, 3, 4, 5]).step_by(2).collect()
+            Seq(0, 2, 4)
+
+            ```
+        """
+        return self._from_iterable(itertools.islice(iter(self), 0, None, step))
+
+    def slice(
+        self,
+        start: int | None = None,
+        stop: int | None = None,
+        step: int | None = None,
+    ) -> Self:
+        """Return a slice of the `Iterator`.
+
+        Args:
+            start (int | None): Starting index of the slice.
+            stop (int | None): Ending index of the slice.
+            step (int | None): Step size for the slice.
+
+        Returns:
+            Self: An `Iterator` of the sliced items.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> data = (1, 2, 3, 4, 5)
+            >>> Iter(data).slice(1, 4).collect()
+            Seq(2, 3, 4)
+            >>> Iter(data).slice(step=2).collect()
+            Seq(1, 3, 5)
+
+            ```
+        """
+        return self._from_iterable(itertools.islice(iter(self), start, stop, step))
+
+    def cycle(self) -> Self:
+        """Repeat the `Iterator` indefinitely.
+
+        Warning:
+            This creates an infinite `Iterator`.
+
+            Be sure to use [`Iter::take`][take] or [`Iter::slice`][slice] to limit the number of items taken.
+
+        See Also:
+            [`Iter::repeat`][repeat] to repeat *self* as elements (`Iter[Self]`).
+
+        Returns:
+            Self: A new `Iterator` that cycles through the elements indefinitely.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2)).cycle().take(5).collect()
+            Seq(1, 2, 1, 2, 1)
+
+            ```
+        """
+        return self._from_iterable(itertools.cycle(iter(self)))
+
+    def insert(self, value: T) -> Self:
+        """Prepend the *value* to the `Iterator`.
+
+        Note:
+            This can be considered the equivalent as `list.append()`, but for a lazy `Iterator`.
+            However, append add the value at the **end**, while insert add it at the **beginning**.
+
+        See Also:
+            [`Iter::chain`][chain] to add multiple elements at the end of the `Iterator`.
+
+        Args:
+            value (T): The value to prepend.
+
+        Returns:
+            Self: A new Iterable wrapper with the value prepended.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((2, 3)).insert(1).collect()
+            Seq(1, 2, 3)
+
+            ```
+        """
+        return self._from_iterable(itertools.chain((value,), iter(self)))
+
+    def intersperse(self, element: T) -> Self:
+        """Creates a new `Iterator` which places a copy of separator between adjacent items of the original iterator.
+
+        Args:
+            element (T): The element to interpose between items.
+
+        Returns:
+            Self: A new `Iterator` with the element interposed.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> # Simple example with numbers
+            >>> Iter((1, 2, 3)).intersperse(0).collect()
+            Seq(1, 0, 2, 0, 3)
+            >>> # Useful when chaining with other operations
+            >>> Iter([10, 20, 30]).intersperse(5).sum()
+            70
+            >>> # Inserting separators between groups, then flattening
+            >>> Iter(((1, 2), (3, 4), (5, 6))).intersperse([-1]).flatten().collect()
+            Seq(1, 2, -1, 3, 4, -1, 5, 6)
+
+            ```
+        """
+        return self._from_iterable(tls.Intersperse(iter(self), element))
+
+    def chain(self, *others: Iterable[T]) -> Self:
+        """Concatenate **self** with one or more `Iterables`, any of which may be infinite.
+
+        In other words, it links **self** and **others** together, in a chain. 🔗
+
+        An infinite `Iterable` will prevent the rest of the arguments from being included.
+
+        This is equivalent to `list.extend()`, except it is fully lazy and works with any `Iterable`.
+
+        See Also:
+            [`Iter::insert`][insert] to add a single element at the beginning of the `Iterator`.
+
+        Args:
+            *others (Iterable[T]): Other iterables to concatenate.
+
+        Returns:
+            Self: A new `Iterator` which will first iterate over values from the original `Iterator` and then over values from the **others** `Iterable`s.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2)).chain((3, 4), [5]).collect()
+            Seq(1, 2, 3, 4, 5)
+            >>> Iter((1, 2)).chain(Iter.from_count(3)).take(5).collect()
+            Seq(1, 2, 3, 4, 5)
+
+            ```
+        """
+        return self._from_iterable(itertools.chain.from_iterable((iter(self), *others)))
+
+    def accumulate(self, func: Callable[[T, T], T], initial: T | None = None) -> Self:
+        """Return an `Iterator` of accumulated binary function results.
+
+        In principle, `.accumulate()` is similar to `.fold()` if you provide it with the same binary function.
+
+        However, instead of returning the final accumulated result, it returns an `Iterator` that yields the current value `T` of the accumulator for each iteration.
+
+        In other words, the last element yielded by `.accumulate()` is what would have been returned by `.fold()` if it had been used instead.
+
+        Args:
+            func (Callable[[T, T], T]): A binary function to apply cumulatively.
+            initial (T | None): Optional initial value to start the accumulation.
+
+        Returns:
+            Self: A new `Iterator` with accumulated results.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3)).accumulate(lambda a, b: a + b, 0).collect()
+            Seq(0, 1, 3, 6)
+            >>> # The final accumulated result is the same as fold:
+            >>> Iter((1, 2, 3)).fold(0, lambda a, b: a + b)
+            6
+            >>> Iter((1, 2, 3)).accumulate(lambda a, b: a * b).collect()
+            Seq(1, 2, 6)
+
+            ```
+        """
+        return self._from_iterable(
+            itertools.accumulate(iter(self), func, initial=initial)
+        )
+
+    def peekable(self, n: int) -> tuple[Seq[T], Self]:
+        """Retrieve the next **n** elements from the `Iterator`, whilst leaving the original iterator unconsumed.
+
+        The returned tuple contains two elements:
+
+        - A `Seq` of the next **n** elements.
+        - An `Iter` that includes the peeked elements followed by the remaining elements of the original `Iterator`.
+
+        Args:
+            n (int): Number of items to peek.
+
+        Returns:
+            tuple[Seq[T], Self]: A tuple containing the peeked elements and the remaining iterator.
+
+        See Also:
+            [`Iter::cloned`][cloned] to create an independent copy of the iterator.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> peeked, remaining = Iter((1, 2, 3)).peekable(2)
+            >>> peeked
+            Seq(1, 2)
+            >>> remaining.collect()
+            Seq(1, 2, 3)
+
+            ```
+        """
+        from .._seq import Seq
+
+        iterator = iter(self)
+        peeked = Seq(itertools.islice(iterator, n))
+        remaining = self._from_iterable(itertools.chain(peeked, iterator))
+        return peeked, remaining
