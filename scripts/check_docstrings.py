@@ -211,10 +211,7 @@ def _check_code_blocks(
         .collect(Vec)
     )
     doctest_errors = lines.into(
-        _check_errs,
-        func_name,
-        start_line,
-        has_no_doctest_flag=docstring.find("@no_doctest") != -1 or skip_doctest,
+        _check_errs, func_name, start_line, has_no_doctest_flag=skip_doctest
     )
 
     match doctest_errors:

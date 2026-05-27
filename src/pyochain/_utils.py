@@ -1,29 +1,19 @@
 from collections.abc import Callable, Collection
 from collections.abc import Set as AbstractSet
-from functools import wraps
 
 
 def no_doctest[**P, R](func: Callable[P, R]) -> Callable[P, R]:
     """Decorator to mark functions that should skip doctest checks.
 
-    This is type-checking only and has no runtime effect.
-
-    Can also be marked in docstrings like so:
-
-    @no_doctest
+    This decorator has zero runtime effect.
 
     Args:
         func (Callable[P, R]): The function to mark.
 
     Returns:
-        Callable[P, R]: The original function, unmodified.
+        Callable[P, R]
     """
-
-    @wraps(func)
-    def _wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-        return func(*args, **kwargs)
-
-    return _wrapper
+    return func
 
 
 @no_doctest
