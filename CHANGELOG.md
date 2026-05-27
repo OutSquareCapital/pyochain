@@ -34,6 +34,7 @@
 - **API change**: `PyoIterable::{all, any, join, sum, min, my_by, max, max_by, all_unique_by, unpack_into}` are moved to `PyoIterator`. Simply add a call to `iter()` in impacted code if a `PyoCollection` was used.
 - **API change**: `PyoIterable::length` has been removed. `PyoIterator::count` and `PyoSized::len` are their replacement. Closer to Rust semantics, and do things more explicitely, as the former is a full iteration that count the elements, while the latter is a call to `len()`.
 - **API change**: All the methods that have been moved from `PyoIterator` to `Iter` in the **0.20.0** release are now back in their original ABC. To handle this, a new `_from_iterable` private method has been added, the idea being identitcal to what python stdlib does with set ABCs.
+**API change**: `Iter::with_position` now yield `Position(StrEnum)`  values instead of literal strings.
 
 ### 🚀 Performance improvements
 

@@ -12,6 +12,7 @@ from collections.abc import (
     Sequence,
     ValuesView,
 )
+from enum import StrEnum, auto
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -36,8 +37,6 @@ if TYPE_CHECKING:
 
 type AnyOpt = Option[Any]  # pyright: ignore[reportExplicitAny]
 type AnyIter = Iterable[Any]  # pyright: ignore[reportExplicitAny]
-Position = Literal["first", "middle", "last", "only"]
-"""Literal type representing the position of an item in an iterable."""
 type ZippedLongest[T] = (
     Iter[tuple[Option[T], AnyOpt]]
     | Iter[tuple[Option[T], AnyOpt, AnyOpt]]
@@ -50,6 +49,15 @@ type FilterFn[T, R] = Callable[[T], bool | TypeIs[R] | TypeGuard[R]] | None
 """Optional closure that can be passed to `Iter::filter` to determine if an element should be yielded."""
 # TODO: move to Rust the following:
 # with_position, zip_longest, filter_star, repeat,  array_chunks, successors, from_fn  # noqa: ERA001
+
+
+class Position(StrEnum):
+    """Type representing the position of an item in an iterable."""
+
+    FIRST = auto()
+    MIDDLE = auto()
+    LAST = auto()
+    ONLY = auto()
 
 
 class Iter[T](PyoIterator[T]):
@@ -2046,10 +2054,10 @@ class Iter[T](PyoIterator[T]):
         Example:
             ```python
             >>> from pyochain import Iter
-            >>> Iter(("a", "b", "c")).with_position().collect()
-            Seq(('first', 'a'), ('middle', 'b'), ('last', 'c'))
-            >>> Iter(["a"]).with_position().collect()
-            Seq(('only', 'a'),)
+            >>> Iter(("a", "b", "c")).with_position().map_star(lambda pos, val: (pos.name, val)).collect()
+            Seq(('FIRST', 'a'), ('MIDDLE', 'b'), ('LAST', 'c'))
+            >>> Iter(["a"]).with_position().map_star(lambda pos, val: (pos.name, val)).collect()
+            Seq(('ONLY', 'a'),)
 
             ```
         """
@@ -2063,15 +2071,15 @@ class Iter[T](PyoIterator[T]):
             try:
                 second = next(data)
             except StopIteration:
-                yield ("only", first)
+                yield (Position.ONLY, first)
                 return
-            yield ("first", first)
+            yield (Position.FIRST, first)
 
             current: T = second
             for nxt in self._inner:
-                yield ("middle", current)
+                yield (Position.MIDDLE, current)
                 current = nxt
-            yield ("last", current)
+            yield (Position.LAST, current)
 
         return Iter(_gen(self._inner))
 
