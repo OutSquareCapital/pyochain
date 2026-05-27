@@ -49,7 +49,7 @@ type ZippedLongest[T] = (
 type FilterFn[T, R] = Callable[[T], bool | TypeIs[R] | TypeGuard[R]] | None
 """Optional closure that can be passed to `Iter::filter` to determine if an element should be yielded."""
 # TODO: move to Rust the following:
-# with_position, filter_map_star, zip_longest, filter_star, scan, repeat, map_while, array_chunks, successors, from_fn  # noqa: ERA001
+# with_position, zip_longest, filter_star, scan, repeat, map_while, array_chunks, successors, from_fn  # noqa: ERA001
 
 
 class Iter[T](PyoIterator[T]):
@@ -1285,16 +1285,8 @@ class Iter[T](PyoIterator[T]):
 
             ```
         """
+        return Iter(tls.FilterMapStar(self._inner, func))
 
-        def _filter_map_star(data: Iterable[U]) -> Iterator[R]:
-            for item in data:
-                res = func(*item)
-                if res.is_some():
-                    yield res.unwrap()
-
-        return Iter(_filter_map_star(self._inner))
-
-    # joins and zips ------------------------------------------------------------
     @overload
     def zip[T1](
         self,

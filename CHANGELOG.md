@@ -38,6 +38,7 @@
 ### 🚀 Performance improvements
 
 - `Iter::filter_map` migrated to Rust. 1.15x (64 elements) to 1.25x (256, 1024, 4096 elements) faster than the former Python implementation.
+- `Iter::filter_map_star` migrated to Rust. 1.24x (64 elements) to 1.38x (256, 1024, 4096 elements) faster than the former Python implementation.
 
 ### ✨ Enhancements
 

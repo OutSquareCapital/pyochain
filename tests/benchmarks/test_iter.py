@@ -25,6 +25,21 @@ def _filter_map(data: Range) -> int:
     return data.iter().filter_map(lambda i: Some(i) if i % 2 == 0 else Null()).last()
 
 
+@pytest.mark.parametrize("size", [64, 256, 1024, 4096])
+def test_filter_map_star(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).iter().enumerate().collect()
+    assert benchmark(_filter_map_star, data) == size - 2
+
+
+def _filter_map_star(data: Seq[tuple[int, int]]) -> int:
+    return (
+        data
+        .iter()
+        .filter_map_star(lambda x, y: Some((x, y)) if x % 2 == 0 else Null())
+        .last()[0]
+    )
+
+
 @pytest.mark.benchmark(group="try_collect")
 @pytest.mark.parametrize("size", SIZES)
 def test_try_collect(benchmark: BenchFixture, size: int) -> None:

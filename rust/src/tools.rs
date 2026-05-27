@@ -43,6 +43,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SlidingWindow>()?;
     m.add_class::<Juxt>()?;
     m.add_class::<FilterMap>()?;
+    m.add_class::<FilterMapStar>()?;
     Ok(())
 }
 #[pyfunction]
@@ -821,6 +822,41 @@ impl FilterMap {
                 None => return Ok(None),
                 Some(result) => {
                     let res = func.call1((result?,))?;
+                    match res.cast_into_exact::<PySome>() {
+                        Ok(some) => return Ok(Some(some.get().value.clone_ref(py))),
+                        Err(_) => continue,
+                    }
+                }
+            }
+        }
+    }
+}
+#[pyclass]
+pub struct FilterMapStar {
+    iter: Py<PyIterator>,
+    func: Py<PyAny>,
+}
+#[pymethods]
+impl FilterMapStar {
+    #[new]
+    fn new(data: Bound<'_, PyIterator>, func: Bound<'_, PyAny>) -> PyResult<Self> {
+        Ok(Self {
+            iter: data.unbind(),
+            func: func.unbind(),
+        })
+    }
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf    }
+
+    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
+        let py = slf.py();
+        let func = slf.func.bind(py);
+        let mut iter = slf.iter.clone_ref(py).into_bound(py);
+        loop {
+            match iter.next() {
+                None => return Ok(None),
+                Some(result) => {
+                    let res = func.call1((result?.cast_exact::<PyTuple>()?))?;
                     match res.cast_into_exact::<PySome>() {
                         Ok(some) => return Ok(Some(some.get().value.clone_ref(py))),
                         Err(_) => continue,
