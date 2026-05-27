@@ -13,10 +13,10 @@ def no_doctest(obj: object, /) -> object:
     This decorator has zero runtime effect.
 
     Args:
-        obj (type[T] | Callable[P, R]): The object to mark.
+        obj (object): The object to mark.
 
     Returns:
-        type[T] | Callable[P, R]
+        object: the same object, unchanged
     """
     return obj
 
