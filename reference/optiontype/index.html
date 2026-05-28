@@ -3224,7 +3224,8 @@ This allow to query the presence of a value and take action, always accounting f
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span><span class="p">,</span> <span class="n">Option</span>
+<span class="o">&gt;&gt;&gt;</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">sq</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
 <span class="o">...</span>     <span class="k">return</span> <span class="n">Some</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">nope</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
@@ -3901,10 +3902,11 @@ This allow to query the presence of a value and take action, always accounting f
 <details class="example" open>
   <summary>Example</summary>
   <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="p">:</span> <span class="n">Option</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">is_none</span><span class="p">()</span>
 <span class="kc">False</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span><span class="p">:</span> <span class="n">Option</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">NONE</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">y</span><span class="o">.</span><span class="n">is_none</span><span class="p">()</span>
 <span class="kc">True</span>
 </code></pre></div>
@@ -4072,10 +4074,11 @@ This allow to query the presence of a value and take action, always accounting f
 <details class="example" open>
   <summary>Example</summary>
   <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="p">:</span> <span class="n">Option</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">is_some</span><span class="p">()</span>
 <span class="kc">True</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span><span class="p">:</span> <span class="n">Option</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">NONE</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">NONE</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">y</span><span class="o">.</span><span class="n">is_some</span><span class="p">()</span>
 <span class="kc">False</span>
 </code></pre></div>
@@ -5124,7 +5127,7 @@ leaving a <code>None</code> value untouched.</p>
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Some</span><span class="p">,</span> <span class="n">NONE</span><span class="p">,</span> <span class="n">Option</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">nobody</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="o">...</span>     <span class="k">return</span> <span class="n">NONE</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">def</span><span class="w"> </span><span class="nf">vikings</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
