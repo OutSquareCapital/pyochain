@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+-
+
+## [0.23.0] - 2026-28-05
+
 ### 🏆 Highlights
 
 - **Feat**: `collections`, new module mimicking python `collections` module, aiming to provide additional, more specialized collections types.
@@ -14,7 +18,7 @@
 
 - `Iter::map_with` for mapping multiple iterables at once, just like `map` builtin when provided with multiple iterables.
 - Improved `__eq__` for `Set`, `SetMut`, and `Dict`, with similar behavior than their internal data structures, as well as pyochain objects handling.
-- `Set::{__hash__}`, with similar behavior than it's internal `frozenset` structure
+- `Set::__hash__`, with similar behavior than it's internal `frozenset` structure
 - `repeat` method for `Seq` and `Vec`, which call the `__mul__` dunder method.
 - `Vec::repeat_mut`, equivalent to `my_list *= n`.
 - `Iter::from_repeat` for repeating an object n times as elements of an `Iter`.
@@ -33,27 +37,30 @@
 - **API change**: `Dict::merge` has been renamed to `union`.
 - **API change**: `PyoIterable::{all, any, join, sum, min, my_by, max, max_by, all_unique_by, unpack_into}` are moved to `PyoIterator`. Simply add a call to `iter()` in impacted code if a `PyoCollection` was used.
 - **API change**: `PyoIterable::length` has been removed. `PyoIterator::count` and `PyoSized::len` are their replacement. Closer to Rust semantics, and do things more explicitely, as the former is a full iteration that count the elements, while the latter is a call to `len()`.
-- **API change**: All the methods that have been moved from `PyoIterator` to `Iter` in the **0.20.0** release are now back in their original ABC. To handle this, a new `_from_iterable` private method has been added, the idea being identitcal to what python stdlib does with set ABCs.
-**API change**: `Iter::with_position` now yield `Position(StrEnum)`  values instead of literal strings.
-**Removed**: `PyoIterable::all_unique` has been removed and is now only on `PyoIterator`. If you used it on a `PyoCollection`, you can either add a call to `iter()` before, or if you want to keep the exact same underlying implementation, compare the length of the collection with the length of a `Set` created from it. Examples and explanations in the documentation of `all_unique` method.
+- **API change**: All the methods that have been moved from `PyoIterator` to `Iter` in the **0.20.0** release are now back in their original ABC. To handle this, a new `_from_iterable` private method has been added, the idea being identical to what python stdlib does with set ABCs. See the method documentation for more details.
+- **API change**: `Iter::with_position` now yield `Position(StrEnum)`  values instead of literal strings.
+- **Removed**: `PyoIterable::all_unique` has been removed and is now only on `PyoIterator`. If you used it on a `PyoCollection`, you can either add a call to `iter()` before, or if you want to keep the exact same underlying implementation, compare the length of the collection with the length of a `Set` created from it. Examples and explanations in the documentation of `all_unique` method.
 - **Removed**: `PyoIterable::second`. Use 2 calls to `itertator.next()` or `sequence[1]` instead.
 
 ### 🚀 Performance improvements
 
-- `Iter::filter_map` migrated to Rust. 1.15x (64 elements) to 1.25x (256, 1024, 4096 elements) faster.
-- `Iter::filter_map_star` migrated to Rust. 1.24x (64 elements) to 1.38x (256, 1024, 4096 elements) faster.
-- `Iter::scan` migrated to Rust. More or less 1.35x faster across sizes (64, 256, 1024, 4096, 16384 elements).
-- `Iter::map_while` migrated to Rust. 1.38x to 1.44x faster across sizes.
+- **Moved to 🦀** -> `Iter::filter_map`. *1.15x* (64 elements) to *1.25x* (256, 1024, 4096 elements) faster.
+- **Moved to 🦀** -> `Iter::filter_map_star`. *1.24x* (64 elements) to *1.38x* (256, 1024, 4096 elements) faster.
+- **Moved to 🦀** -> `Iter::scan`. More or less *1.35x* faster across sizes (64, 256, 1024, 4096, 16384 elements).
+- **Moved to 🦀** -> `Iter::map_while`. *1.38x* to *1.44x* faster across sizes.
+- **tail no-copy**: `PyoIterator::tail` created internally a `deque` who was then re-wrapped in a `Seq` for the return. It now directly return a pyochain `Deque` created by reference from the aforementionned `deque`.
 
 ### ✨ Enhancements
 
 - **typing**: `Iter::{filter, filter_false}` now handle type narrowing for `T | None` and `TypeGuard` when possible.
 - **API**: `Iter::{filter, filter_false}` provided closure is now optional, just like python builtins.
 - **API**: `Iter::{partition, collect}` has been moved to `PyoIterator`, meaning all user-defined iterators can now call them.
+- **API**: `Iter::from_fn` now accepts `*args` and `**kwargs` to be passed to the generator function. Inputs are matched to minimize overhead and keep original performance if no additional arguments are needed.
 
 ### 📖 Documentation
 
 - Correctly handle hyperlinks in `See Also` sections. WIP to do the same for the rest of the sections.
+- Various docstrings changes with better explanations and examples.
 
 ### 📦 Build system
 
@@ -269,7 +276,6 @@ Method name               | Vs Cython | VS Python | Notes
 - **Check safety**: Guarantee singleton behavior for `Null`. Calling `Null()` will always return the same instance, which is `NONE`. This allows for identity checks (`is`) to work as expected with `Null`, and ensures that there are no multiple instances of `Null` floating around in the system. This also means that you can use `Null()` instead of `NONE` if you prefer, without worrying about breaking the singleton property.
 - **Feat**: `PyoIterator::all_unique` is migrated to `PyoIterable`, meaning ALL collections now can call it without converting to an iterator first. `PyoSequence` and `PyoSet` (and by extension `Seq`, `Set`, etc...) have their own optimized implementations
 - **Feat**: Added `PyoIterable::all_unique_by` for checking uniqueness based on a custom key function. This is the same as former `all_unique(key=...)`, but with a clearer name and intent.
-- **API**: `Iter::from_fn` now accepts `*args` and `**kwargs` to be passed to the generator function. Inputs are matched to minimize overhead and keep original performance if no additional arguments are needed.
 
 ### 🚀 Performance improvements
 

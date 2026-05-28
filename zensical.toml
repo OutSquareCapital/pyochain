@@ -48,6 +48,9 @@
                 { "Iterators" = [
                     { "Iter" = "reference/iter.md" },
                 ] },
+                { "Miscellaneous" = [
+                    { "Position" = "reference/position.md" },
+                ] },
                 { "Mixins" = [
                     { "Checkable" = "reference/checkable.md" },
                     { "Inspect" = "reference/inspect.md" },
