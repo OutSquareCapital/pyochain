@@ -27,7 +27,32 @@ if TYPE_CHECKING:
 class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
     """Extends `PyoIterable[T]` and `collections.abc.Iterator[T]`.
 
-    Is the base class for `Iter[T]`.
+    - An `Iterable` is any object capable of creating an `Iterator` (i.e., it implements the `__iter__()` method).
+    - An `Iterator` is an object representing a stream of data, generating the next value with each call to `__next__()`.
+
+    `Iterator`s are composable, meaning you can chain operations like `map()`, `filter()`, etc., that will simply add a new step to the processing pipeline without executing it.
+
+    Thus, it can be considered akin to a SQL query: An `Iterator` represents a recipe for how to process the data.
+
+    Terminal operations (like `collect()`, `count()`, `all()`, etc.) will "execute the query" by consuming the `Iterator` and producing a final result.
+
+    This is done by calling `__next__()` repeatedly until `StopIteration` is raised, which signals that the `Iterator` is exhausted.
+
+    Once this happened, the `Iterator` instance is empty and cannot be reused to produce new values.
+
+    A high-level way of thinking about how to use `Iterators` is to create one from a source of data, build a plan, and execute it.
+
+    Then, if the result is a new `Iterable`, you can create a new `Iterator` from it and repeat the process.
+
+    If all of this doesn't sound familiar, it's simply because Python does this in an implicit way.
+
+    A *for loop* will create an `Iterator` from the provided iterable, and consume it until exhaustion.
+
+    For example, a `list` knows its size, how to access items by index, etc..
+
+    But it does not know how to iterate over itself, i.e returns elements one by one and stop once x event happens.
+
+    It knows, however, how to create an `Iterator` object that will handle this.
 
     All concrete subclasses must implement the required `Iterator` dunder methods:
 
@@ -1944,6 +1969,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Note:
             This can be considered the equivalent as `list.append()`, but for a lazy `Iterator`.
+
             However, append add the value at the **end**, while insert add it at the **beginning**.
 
         See Also:

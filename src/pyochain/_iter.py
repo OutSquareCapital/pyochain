@@ -61,32 +61,22 @@ class Position(StrEnum):
 
 
 class Iter[T](PyoIterator[T]):
-    """A superset around Python's built-in `Iterator` Protocol, providing a rich set of functional programming tools.
+    """Concrete implementation for `abc::PyoIterator`.
 
-    Implements the `Iterator` Protocol from `collections.abc`, so it can be used as a standard iterator.
+    Can be instantiated from any `Iterable` (like lists, sets, generators, etc.) efficiently (it only calls the builtin `iter()` on the input).
 
-    It also provides a `__bool__()` method to check for emptiness without consuming elements.
+    As such, creating an `Iter` from an `Iterator` is virtually free.
 
-    - An `Iterable` is any object capable of returning its members one at a time, permitting it to be iterated over in a for-loop.
-    - An `Iterator` is an object representing a stream of data; returned by calling `iter()` on an `Iterable`.
-    - Once an `Iterator` is exhausted, it cannot be reused or reset.
+    Tip:
+        `Iter::__iter__()` returns the underlying wrapped `Iterator`, hence native speed is kept.
 
-    It's designed around lazy evaluation, allowing for efficient processing of large datasets.
-
-    Instanciating it from any `Iterable` (like lists, sets, generators, etc.) is free and efficient (it only calls the builtin `iter()` on the input).
-
-    Once an `Iter` is created, it can be transformed and manipulated using a variety of chainable methods.
-
-    However, keep in mind that `Iter` instances are single-use; once exhausted, they cannot be reused or reset.
-
-    If you need to reuse the data, consider collecting it into a collection first with `.collect()`, or clone it `.cloned()` to create an independent copy.
-
-    You can always convert back to an `Iter` using `.iter()` for free on any pyochain collection type.
-
-    In general, avoid intermediate references when dealing with lazy iterators, and prioritize method chaining instead.
+        i.e `Iter([...]).map(f).collect(list)` is as fast as `list(map(f, [...]))`.
 
     Args:
         data (Iterable[T]): Any object that can be iterated over.
+
+    See Also:
+        [`abc::PyoIterator`][PyoIterator]: The abstract base class that `Iter` implements.
 
     Example:
         ```python
@@ -107,6 +97,25 @@ class Iter[T](PyoIterator[T]):
         >>> # iterator is now exhausted
         >>> iterator.collect()
         Seq()
+
+        ```
+        You can also easily create an `Iter` from a generator expression:
+        ```python
+        >>> from pyochain import Iter
+        >>> gen_expr = (x * x for x in range(5))
+        >>> Iter(gen_expr).collect()
+        Seq(0, 1, 4, 9, 16)
+
+        ```
+        Or from a generator function:
+        ```python
+        >>> from pyochain import Iter
+        >>> def gen_func():
+        ...     for x in range(5):
+        ...         yield x * x
+        >>>
+        >>> Iter(gen_func()).collect()
+        Seq(0, 1, 4, 9, 16)
 
         ```
     """
@@ -222,7 +231,7 @@ class Iter[T](PyoIterator[T]):
 
         If you have a function which works on iterators, but you only need to process one value, you can use this method rather than doing something like `Iter([value])`.
 
-        This can be considered the equivalent of `.insert()` but as a constructor.
+        This can be considered the equivalent of [`PyoIterator::insert`][PyoIterator.insert] but as a constructor.
 
         Unlike `.once()`, this function will lazily generate the value on request.
 
