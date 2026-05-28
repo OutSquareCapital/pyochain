@@ -4,6 +4,9 @@
         <loc>https://outsquarecapital.github.io/pyochain/reference/pyocollection/</loc>
       </url>
       <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/pyocontainer/</loc>
+      </url>
+      <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/pyoiterable/</loc>
       </url>
       <url>
@@ -22,10 +25,19 @@
         <loc>https://outsquarecapital.github.io/pyochain/reference/pyomutablesequence/</loc>
       </url>
       <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/pyomutableset/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/pyoreversible/</loc>
+      </url>
+      <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/pyosequence/</loc>
       </url>
       <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/pyoset/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/pyosized/</loc>
       </url>
       <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/dict/</loc>
@@ -52,6 +64,9 @@
         <loc>https://outsquarecapital.github.io/pyochain/reference/setmut/</loc>
       </url>
       <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/sliceview/</loc>
+      </url>
+      <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/vec/</loc>
       </url>
       <url>
@@ -73,7 +88,16 @@
         <loc>https://outsquarecapital.github.io/pyochain/reference/iter/</loc>
       </url>
       <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/position/</loc>
+      </url>
+      <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/checkable/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/inspect/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/into/</loc>
       </url>
       <url>
         <loc>https://outsquarecapital.github.io/pyochain/reference/pipeable/</loc>
@@ -94,10 +118,13 @@
         <loc>https://outsquarecapital.github.io/pyochain/reference/some/</loc>
       </url>
       <url>
-        <loc>https://outsquarecapital.github.io/pyochain/reference/baseconcreteset/</loc>
+        <loc>https://outsquarecapital.github.io/pyochain/api-reference/</loc>
       </url>
       <url>
-        <loc>https://outsquarecapital.github.io/pyochain/api-reference/</loc>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/deque/</loc>
+      </url>
+      <url>
+        <loc>https://outsquarecapital.github.io/pyochain/reference/stableset/</loc>
       </url>
       <url>
         <loc>https://outsquarecapital.github.io/pyochain/overview/</loc>
