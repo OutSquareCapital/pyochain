@@ -2,7 +2,9 @@
 
 ## [Unreleased]
 
--
+### 🔗 Dependencies
+
+**Dev**: Deleted unused script dependencies: `typer`, `polars`.
 
 ## [0.23.1] - 2026-28-05
 
