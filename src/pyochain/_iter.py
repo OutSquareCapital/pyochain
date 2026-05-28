@@ -275,43 +275,105 @@ class Iter[T](PyoIterator[T]):
         return Iter(itertools.count(start, step))
 
     @staticmethod
-    def from_fn[R](f: Callable[[], Option[R]]) -> Iter[R]:
-        """Create an `Iter` from a nullary generator function.
+    def from_fn[**P, R](
+        f: Callable[P, Option[R]], *args: P.args, **kwargs: P.kwargs
+    ) -> Iter[R]:
+        """Create an `Iterator` from a generator function.
 
-        The callable must return:
+        The `Callable` must return:
 
         - `Some(value)` to yield a value
-        - `NONE` to stop
+        - `NONE` to stop the iteration
 
+        You could consider this as a way to create an `Iterator` where the `__next__()` is the `__call__()` method.
+
+        As such, you can either provide lambdas, partials, closures, or pre-existing classes where `__call__()` is implemented, but a `__next__()` is not desired.
+
+        If you do have an `Iterator` class, simply pass it to the regular constructor, as this will be more efficient, ergonomic and idiomatic.
 
         Args:
-            f (Callable[[], Option[R]]): Callable that returns the next item wrapped in `Option`.
+            f (Callable[P, Option[R]]): `Callable` that returns the next item wrapped in `Option`.
+            *args (P.args): Positional arguments to pass to **f**.
+            **kwargs (P.kwargs): Keyword arguments to pass to **f**.
 
         Returns:
             Iter[R]: An iterator yielding values produced by **f**.
 
+        Note:
+            In Rust, this avoids defining a full struct and implementing `Iterator` for it when you have simple logic to generate values.
+
+            This is implemented for "Rust API compliance", but in Python, generators comprehensions/functions with `yield` statements are the ergonomic equivalent.
+
         Example:
+            Closure with captured local variable:
             ```python
             >>> from pyochain import Iter, Some, NONE
-            >>> counter = 0
-            >>> def gen() -> Option[int]:
-            ...     global counter
-            ...     counter += 1
-            ...     return Some(counter) if counter < 6 else NONE
-            >>> Iter.from_fn(gen).collect()
+            >>> def make_counter(max_val: int):
+            ...     counter = 0
+            ...
+            ...     def gen() -> Option[int]:
+            ...         nonlocal counter
+            ...         counter += 1
+            ...         return Some(counter) if counter <= max_val else NONE
+            ...
+            ...     return gen
+            >>>
+            >>> Iter.from_fn(make_counter(5)).collect()
             Seq(1, 2, 3, 4, 5)
+
+            ```
+            Stateful callable class:
+            ```python
+            >>> from pyochain import Iter, Some, NONE
+            >>> from dataclasses import dataclass
+            >>> @dataclass
+            ... class Counter:
+            ...     max: int
+            ...     count: int = 0
+            ...
+            ...     def __call__(self) -> Option[int]:
+            ...         self.count += 1
+            ...         return Some(self.count) if self.count <= self.max else NONE
+            >>>
+            >>> Iter.from_fn(Counter(5)).collect()
+            Seq(1, 2, 3, 4, 5)
+
+            ```
+            Simulated file/queue reader:
+            ```python
+            >>> from pyochain import Iter, Some, NONE
+            >>> from pyochain.collections import Deque
+            >>>
+            >>> def queue_consumer(items: Deque[int]) -> Callable[[], Option[int]]:
+            ...     def consume() -> Option[int]:
+            ...         return Some(items.pop_left()) if items else NONE
+            ...
+            ...     return consume
+            >>>
+            >>> Iter.from_fn(Deque([1, 2, 3]).into(queue_consumer)).collect()
+            Seq(1, 2, 3)
 
             ```
         """
 
-        def _from_fn() -> Iterator[R]:
+        def _from_fn(f: Callable[[], Option[R]]) -> Iterator[R]:
             while True:
                 item = f()
                 if item.is_none():
                     return
                 yield item.unwrap()
 
-        return Iter(_from_fn())
+        match len(args), len(kwargs):
+            case 0, 0:
+                fn = f
+            case _, 0:
+                fn = functools.partial(f, *args)
+            case 0, _:
+                fn = functools.partial(f, **kwargs)
+            case _, _:
+                fn = functools.partial(f, *args, **kwargs)
+
+        return Iter(_from_fn(fn))
 
     @staticmethod
     def successors[U](first: Option[U], succ: Callable[[U], Option[U]]) -> Iter[U]:

@@ -269,6 +269,7 @@ Method name               | Vs Cython | VS Python | Notes
 - **Check safety**: Guarantee singleton behavior for `Null`. Calling `Null()` will always return the same instance, which is `NONE`. This allows for identity checks (`is`) to work as expected with `Null`, and ensures that there are no multiple instances of `Null` floating around in the system. This also means that you can use `Null()` instead of `NONE` if you prefer, without worrying about breaking the singleton property.
 - **Feat**: `PyoIterator::all_unique` is migrated to `PyoIterable`, meaning ALL collections now can call it without converting to an iterator first. `PyoSequence` and `PyoSet` (and by extension `Seq`, `Set`, etc...) have their own optimized implementations
 - **Feat**: Added `PyoIterable::all_unique_by` for checking uniqueness based on a custom key function. This is the same as former `all_unique(key=...)`, but with a clearer name and intent.
+- **API**: `Iter::from_fn` now accepts `*args` and `**kwargs` to be passed to the generator function. Inputs are matched to minimize overhead and keep original performance if no additional arguments are needed.
 
 ### 🚀 Performance improvements
 
