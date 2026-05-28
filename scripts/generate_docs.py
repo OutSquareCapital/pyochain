@@ -41,11 +41,11 @@ def _generate_all_for_module(module: ModuleType) -> None:
         .filter(_is_module)
         .filter(lambda m: m.__name__.startswith(module.__name__))
         .insert(module)
-        .for_each(_generate_markdown_for, generated_paths)
+        .for_each(_generate_mds, generated_paths)
     )
 
 
-def _generate_markdown_for(module: ModuleType, generated_paths: SetMut[str]) -> None:
+def _generate_mds(module: ModuleType, generated_paths: SetMut[str]) -> None:
     """Generate markdown files for all public classes in a module."""
     Paths.DOCS_REF.value.mkdir(parents=True, exist_ok=True)
 
@@ -53,7 +53,7 @@ def _generate_markdown_for(module: ModuleType, generated_paths: SetMut[str]) -> 
 
     def _write(path: Path, cls_name: str, cls_path: str) -> None:
         generated_paths.add(path.as_posix())
-        _ = path.write_text(_generate_markdown(cls_path, cls_name), encoding="utf-8")
+        _ = path.write_text(_finalize_md(cls_path, cls_name), encoding="utf-8")
         show(f"✓ Generated {path!s}", style=Color.SUCCESS)
 
     def _is_public_class(obj: tuple[str, Any]) -> TypeIs[tuple[str, type]]:  # pyright: ignore[reportExplicitAny]
@@ -78,7 +78,7 @@ def _generate_markdown_for(module: ModuleType, generated_paths: SetMut[str]) -> 
     )
 
 
-def _generate_markdown(full_path: str, class_name: str) -> str:
+def _finalize_md(full_path: str, class_name: str) -> str:
     return f"""# {class_name}
 
 ::: {full_path}
