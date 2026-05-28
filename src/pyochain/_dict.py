@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Any, Self, override
 
 from .abc import PyoMutableMapping
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
+
     from ._types import DictConvertible
 
 

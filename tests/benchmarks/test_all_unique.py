@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import pytest
@@ -10,6 +9,8 @@ from pyochain import Range, Seq
 from ._utils import SIZES
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from ._utils import BenchFixture
 
 

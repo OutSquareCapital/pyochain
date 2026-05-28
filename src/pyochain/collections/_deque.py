@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from collections import deque
-from collections.abc import Iterable, Iterator
-from typing import Self, SupportsIndex, overload, override
+from typing import TYPE_CHECKING, Self, SupportsIndex, overload, override
 
 from ..abc import PyoMutableSequence
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
 
 
 class Deque[T](PyoMutableSequence[T]):  # noqa: PLW1641

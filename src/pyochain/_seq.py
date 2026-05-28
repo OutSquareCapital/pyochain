@@ -1,16 +1,14 @@
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Sequence,
-)
-from typing import Any, Final, Self, overload, override
+from typing import TYPE_CHECKING, Any, Final, Self, overload, override
 
 from ._utils import get_repr
 from .abc import (
     PyoSequence,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator, Sequence
 
 
 class Seq[T](PyoSequence[T]):

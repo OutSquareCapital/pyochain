@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, MutableSequence
-from typing import Any, Self, overload, override
+from typing import TYPE_CHECKING, Any, Self, overload, override
 
 from ._types import SupportsRichComparison
 from ._utils import get_repr
 from .abc import PyoMutableSequence
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, MutableSequence
 
 
 class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641

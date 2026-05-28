@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Concatenate, Self
 
@@ -9,6 +8,8 @@ import pytest
 from pyochain.abc import Pipeable
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from ._utils import BenchFixture
 
 

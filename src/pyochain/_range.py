@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Iterator, Sequence
-from typing import Any, Final, overload, override
+from typing import TYPE_CHECKING, Any, Final, overload, override
 
 from .abc import PyoSequence
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
 
 
 class Range(PyoSequence[int]):

@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Iterator
-from collections.abc import Set as AbstractSet
-from typing import Final, Self, override
+from typing import TYPE_CHECKING, Final, Self, override
 
 from ._utils import get_repr
 from .abc import PyoMutableSet, PyoSet
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
+    from collections.abc import Set as AbstractSet
 
 # TODO: address the following note from official python docs regarding Set performance, with benchmarks:
 # To override the comparisons (presumably for speed, as the semantics are fixed),
