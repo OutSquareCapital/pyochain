@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 
 # TODO: Theses types are manually extracted from typeshed and rewritten in modern python style
 # This is error prone, because we can very easily miss overloads, as well as being tedious¨
@@ -28,6 +28,9 @@ class SupportsAdd[T, T1](Protocol):
     def __add__(self, x: T, /) -> T1: ...
 
 
+type SupportsAnyAdd = SupportsAdd[Any, Any]  # pyright: ignore[reportExplicitAny]
+
+
 class SupportsRAdd[T, T1](Protocol):
     def __radd__(self, x: T, /) -> T1: ...
 
@@ -37,9 +40,9 @@ class SupportsKeysAndGetItem[K, V](Protocol):
     def __getitem__(self, key: K, /) -> V: ...
 
 
-class SupportsSumWithNoDefaultGiven[T](
-    SupportsAdd[T, Any],  # pyright: ignore[reportExplicitAny]
-    SupportsRAdd[int, T],
+class SupportsSumWithNoDefaultGiven(
+    SupportsAdd[Any, Any],  # pyright: ignore[reportExplicitAny]
+    SupportsRAdd[int, Any],  # pyright: ignore[reportExplicitAny]
     Protocol,
 ): ...
 
@@ -54,3 +57,54 @@ type SupportsRichComparison[T] = SupportsDunderLT[T] | SupportsDunderGT[T]
 type DictConvertible[K, V] = (
     Mapping[K, V] | Iterable[tuple[K, V]] | SupportsKeysAndGetItem[K, V]
 )
+
+type PositiveInteger = Literal[
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+]
+type NegativeInteger = Literal[
+    -1,
+    -2,
+    -3,
+    -4,
+    -5,
+    -6,
+    -7,
+    -8,
+    -9,
+    -10,
+    -11,
+    -12,
+    -13,
+    -14,
+    -15,
+    -16,
+    -17,
+    -18,
+    -19,
+    -20,
+]
+type LiteralInteger = PositiveInteger | NegativeInteger | Literal[0]

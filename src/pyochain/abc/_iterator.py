@@ -5,7 +5,7 @@ import itertools
 from abc import ABC
 from collections.abc import Iterator
 from operator import itemgetter
-from typing import TYPE_CHECKING, Any, Concatenate, Self, overload
+from typing import TYPE_CHECKING, Any, Concatenate, Literal, Self, overload
 
 from pyochain._utils import no_doctest
 
@@ -17,7 +17,13 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Collection, Iterable, MutableSequence
 
     from .._seq import Seq
-    from .._types import SupportsComparison, SupportsRichComparison
+    from .._types import (
+        LiteralInteger,
+        SupportsAnyAdd,
+        SupportsComparison,
+        SupportsRichComparison,
+        SupportsSumWithNoDefaultGiven,
+    )
     from .._vec import Vec
     from ..collections import Deque
     from ..rs import Option, Result
@@ -1519,16 +1525,31 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         """
         return sep.join(iter(self))
 
-    def sum[U: int | bool](self: PyoIterable[U], start: int = 0) -> int:
+    @overload
+    def sum(self: PyoIterator[bool], start: int = 0) -> int: ...
+    @overload
+    def sum(self: PyoIterator[LiteralInteger], start: int = 0) -> int: ...
+    @overload
+    def sum[T1: SupportsSumWithNoDefaultGiven](
+        self: PyoIterator[T1],
+    ) -> T1 | Literal[0]: ...
+    @overload
+    def sum[A1: SupportsAnyAdd, A2: SupportsAnyAdd](
+        self: PyoIterator[A1], start: A2
+    ) -> A1 | A2: ...
+    def sum[T1: SupportsSumWithNoDefaultGiven, A1: SupportsAnyAdd, A2: SupportsAnyAdd](
+        self: PyoIterator[bool | LiteralInteger] | PyoIterator[T1] | PyoIterator[A1],
+        start: int | T1 | A2 = 0,
+    ) -> int | T1 | A1 | A2:
         """Return the sum of the `Iterator`.
 
         If the `Iterator` is empty (i.e., yields no elements), return the value of `start` (which defaults to `0`).
 
         Args:
-            start (int): The value to return if the `Iterator` is empty.
+            start (int | T1 | A2): The value to return if the `Iterator` is empty.
 
         Returns:
-            int: The sum of all elements.
+            int | T1 | A1 | A2: The sum of all elements.
 
         Example:
             ```python
