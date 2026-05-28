@@ -6,6 +6,10 @@
 
 **Dev**: Deleted unused script dependencies: `typer`, `polars`.
 
+### 🛠️ Other improvements
+
+- **Refactor**: Minor readability improvements in `scripts/`.
+
 ## [0.23.1] - 2026-28-05
 
 ### 🐞 Bug fixes
