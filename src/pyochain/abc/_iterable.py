@@ -133,26 +133,6 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
         """
         return next(iter(self))
 
-    def second(self) -> T:
-        """Return the second element of the `Iterable`.
-
-        Similar to `first()`, see its documentation for details.
-
-        Returns:
-            T: The second element of the `Iterable`.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq
-            >>> Seq((9, 8)).second()
-            8
-
-            ```
-        """
-        seq = iter(self)
-        _ = next(seq)
-        return next(seq)
-
     def last(self) -> T:
         """Return the last element of the `Iterable`.
 

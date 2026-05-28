@@ -121,10 +121,6 @@ class PyoSequence[T](PyoCollection[T], PyoReversible[T], Sequence[T], ABC):
         return self[0]
 
     @override
-    def second(self) -> T:
-        return self[1]
-
-    @override
     def last(self) -> T:
         return self[-1]
 

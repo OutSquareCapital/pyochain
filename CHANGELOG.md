@@ -36,6 +36,7 @@
 - **API change**: All the methods that have been moved from `PyoIterator` to `Iter` in the **0.20.0** release are now back in their original ABC. To handle this, a new `_from_iterable` private method has been added, the idea being identitcal to what python stdlib does with set ABCs.
 **API change**: `Iter::with_position` now yield `Position(StrEnum)`  values instead of literal strings.
 **Removed**: `PyoIterable::all_unique` has been removed and is now only on `PyoIterator`. If you used it on a `PyoCollection`, you can either add a call to `iter()` before, or if you want to keep the exact same underlying implementation, compare the length of the collection with the length of a `Set` created from it. Examples and explanations in the documentation of `all_unique` method.
+- **Removed**: `PyoIterable::second`. Use 2 calls to `itertator.next()` or `sequence[1]` instead.
 
 ### 🚀 Performance improvements
 
