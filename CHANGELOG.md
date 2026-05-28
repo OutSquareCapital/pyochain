@@ -4,6 +4,17 @@
 
 -
 
+## [0.23.1] - 2026-28-05
+
+### 🐞 Bug fixes
+
+- **typing**: `PyoIterator::sum` has been giving false positives for a while. This is now fixed, with the same inputs/outputs as the python builtin.
+
+### 🛠️ Other improvements
+
+- **Internal**: Python dev version is by default 3.13 to avoid any unsupported patterns on our minimum supported version.
+- **Imports**: Prioritizing `typing::TYPE_CHECKING` blocks import whenever possible. This could *maybe* speed-up initial import time.
+
 ## [0.23.0] - 2026-28-05
 
 ### 🏆 Highlights
