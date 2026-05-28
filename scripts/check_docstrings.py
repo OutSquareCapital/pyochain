@@ -72,33 +72,73 @@ class State(NamedTuple):
     errors: Vec[ErrorDetail]
     stack: Vec[int]
 
-    def to_blocks(self, start_line: int) -> Iter[ErrorDetail]:
-        """Convert unclosed blocks in the stack to error details.
 
-        Returns:
-            Iter[ErrorDetail]: An iterable of error details for unclosed blocks.
-        """
-        return self.errors.iter().chain(
-            self.stack.iter().map(
-                lambda idx: ErrorDetail(start_line + idx - 1, ErrorKind.UNCLOSED)
-            )
+def main() -> None:
+    """Check all docstrings in the project."""
+    msg = "Checking docstrings for properly closed code blocks..."
+    show(msg, style=Color.INFO)
+
+    return (
+        _get_files("py")
+        .iter()
+        .chain(_get_files("pyi"))
+        .filter_map(_check_file)
+        .flatten()
+        .collect()
+        .then(_handle_errors)
+        .unwrap_or_else(lambda: show("[OK] No issues found!", style=Color.SUCCESS))
+    )
+
+
+def _get_files(pattern: str) -> Seq[Path]:
+    return (
+        Paths.SRC_DIR
+        .iter_rglob(f"*.{pattern}")
+        .collect()
+        .inspect(
+            lambda p: show(f"Checking {p.len()} {pattern} files...", style=Color.INFO)
+        )
+    )
+
+
+def _handle_errors(all_errors: Seq[DocstringError]) -> None:
+    _show_table(all_errors)
+    msg = f"[FAILED] Found {all_errors.len()} issue(s)"
+    show(msg, style=Color.ERROR)
+
+
+def _show_table(all_errors: Seq[DocstringError]) -> None:
+    def _add_row(error: DocstringError) -> None:
+        file = f"{error.file_path.relative_to(Paths.ROOT.value)}:{error.error_line_no}"
+        table.add_row(
+            file, error.func_name, error.errors.iter().map(lambda e: e.value).join("\n")
         )
 
+    table: Table = Table(title="Issues Found", show_header=True)
+    table.add_column("File", style="cyan")
+    table.add_column("Function", style="magenta")
+    table.add_column("Error", style="red")
+    all_errors.iter().for_each(_add_row)
+    CONSOLE.print(table)
 
-def _check_file(file_path: Path) -> Seq[DocstringError]:
+
+def _check_file(file_path: Path) -> Option[Iter[DocstringError]]:
+
+    def _is_documentable(node: ast.AST) -> TypeIs[DocumentableNode]:
+        return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+
     try:
         tree = ast.parse(file_path.read_text(encoding="utf-8"))
     except SyntaxError:
-        return Seq(())
+        return NONE
 
     protocol_methods = _get_protocol_methods(tree)
 
-    return (
+    return Some(
         Iter(ast.walk(tree))
         .filter(_is_documentable)  # We do two filter for `TypeIs` inference
         .filter(lambda node: not _has_skip_decorator(node))
         .filter_map(lambda node: _process_node(file_path, node, protocol_methods))
-        .collect()
     )
 
 
@@ -117,6 +157,9 @@ def _get_protocol_methods(tree: ast.Module) -> Set[int]:
             isinstance(expr, ast.Attribute) and expr.attr == "Protocol"
         )
 
+    def _is_method(node: ast.AST) -> TypeIs[MethodNode]:
+        return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+
     return (
         Iter(ast.walk(tree))
         .filter(_is_class_def)
@@ -130,26 +173,8 @@ def _get_protocol_methods(tree: ast.Module) -> Set[int]:
 def _process_node(
     file_path: Path, node: DocumentableNode, protocol_methods: Set[int]
 ) -> Option[DocstringError]:
-    def _get_docstring_start_line(node: DocumentableNode) -> int:
-        match node.body:
-            case [ast.Expr(value=ast.Constant(value=str())), *_] as body:
-                _ = body
-                return node.body[0].lineno
-            case _:
-                return node.lineno
-
-    def _is_public(node: DocumentableNode) -> bool:
-        return not node.name.startswith("_") and not node.name.istitle()
-
-    def _should_report_missing_docstring(node: DocumentableNode) -> bool:
-        return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and (
-            _is_public(node)
-            and not _has_skip_decorator(node)
-            and node.lineno not in protocol_methods
-        )
-
     match option(ast.get_docstring(node)):
-        case Null() if _should_report_missing_docstring(node):
+        case Null() if _should_report_missing_docstring(node, protocol_methods):
             return Some(
                 DocstringError(
                     file_path,
@@ -181,6 +206,26 @@ def _process_node(
             return NONE
 
 
+def _should_report_missing_docstring(
+    node: DocumentableNode, protocol_methods: Set[int]
+) -> bool:
+    return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and (
+        not node.name.startswith("_")
+        and not node.name.istitle()
+        and not _has_skip_decorator(node)
+        and node.lineno not in protocol_methods
+    )
+
+
+def _get_docstring_start_line(node: DocumentableNode) -> int:
+    match node.body:
+        case [ast.Expr(value=ast.Constant(value=str())), *_] as body:
+            _ = body
+            return node.body[0].lineno
+        case _:
+            return node.lineno
+
+
 def _check_code_blocks(
     docstring: str, start_line: int, func_name: str, *, skip_doctest: bool = False
 ) -> Result[tuple[()], Vec[ErrorDetail]]:
@@ -202,12 +247,18 @@ def _check_code_blocks(
         return state
 
     lines = Vec.from_ref(docstring.split("\n"))
+    state = State(Vec(()), Vec(()))
     block_errors = (
         lines
         .iter()
         .enumerate()
-        .fold_star(State(Vec(()), Vec(())), _process_line)
-        .to_blocks(start_line)
+        .fold_star(state, _process_line)
+        .errors.iter()
+        .chain(
+            state.stack.iter().map(
+                lambda idx: ErrorDetail(start_line + idx - 1, ErrorKind.UNCLOSED)
+            )
+        )
         .collect(Vec)
     )
     doctest_errors = lines.into(
@@ -233,14 +284,6 @@ def _has_skip_decorator(node: DocumentableNode) -> bool:
     )
 
 
-def _is_method(node: ast.AST) -> TypeIs[MethodNode]:
-    return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-
-
-def _is_documentable(node: ast.AST) -> TypeIs[DocumentableNode]:
-    return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
-
-
 def _check_errs(
     lines: Vec[str], func_name: str, start_line: int, *, has_no_doctest_flag: bool
 ) -> Result[tuple[()], Vec[ErrorDetail]]:
@@ -257,58 +300,6 @@ def _check_errs(
     if should_skip:
         return Ok(())
     return Err(Vec([ErrorDetail(start_line, ErrorKind.NO_DOCTEST)]))
-
-
-def main() -> None:
-    """Check all docstrings in the project."""
-    msg = "Checking docstrings for properly closed code blocks..."
-    show(msg, style=Color.INFO)
-
-    return (
-        _get_files("py")
-        .iter()
-        .chain(_get_files("pyi"))
-        .flat_map(_check_file)
-        .collect()
-        .then_some()
-        .into(_handle_errors)
-    )
-
-
-def _get_files(pattern: str) -> Seq[Path]:
-    return (
-        Paths.SRC_DIR
-        .iter_rglob(f"*.{pattern}")
-        .collect()
-        .inspect(
-            lambda p: show(f"Checking {p.len()} {pattern} files...", style=Color.INFO)
-        )
-    )
-
-
-def _handle_errors(all_errors: Option[Seq[DocstringError]]) -> None:
-    match all_errors:
-        case Some(all_errs):
-            _show_table(all_errs)
-            msg = f"[FAILED] Found {all_errs.len()} issue(s)"
-            show(msg, style=Color.ERROR)
-        case Null():
-            show("[OK] No issues found!", style=Color.SUCCESS)
-
-
-def _show_table(all_errors: Seq[DocstringError]) -> None:
-    def _add_row(error: DocstringError) -> None:
-        file = f"{error.file_path.relative_to(Paths.ROOT.value)}:{error.error_line_no}"
-        table.add_row(
-            file, error.func_name, error.errors.iter().map(lambda e: e.value).join("\n")
-        )
-
-    table: Table = Table(title="Issues Found", show_header=True)
-    table.add_column("File", style="cyan")
-    table.add_column("Function", style="magenta")
-    table.add_column("Error", style="red")
-    all_errors.iter().for_each(_add_row)
-    CONSOLE.print(table)
 
 
 if __name__ == "__main__":
