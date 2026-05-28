@@ -657,10 +657,11 @@ class OptionType[T](Into):
         Example:
             ```python
             >>> from pyochain import Some, NONE
-            >>> x: Option[int] = Some(2)
+            >>>
+            >>> x = Some(2)
             >>> x.is_some()
             True
-            >>> y: Option[int] = NONE
+            >>> y = NONE
             >>> y.is_some()
             False
 
@@ -712,10 +713,11 @@ class OptionType[T](Into):
         Example:
             ```python
             >>> from pyochain import Some, NONE
-            >>> x: Option[int] = Some(2)
+            >>>
+            >>> x = Some(2)
             >>> x.is_none()
             False
-            >>> y: Option[int] = NONE
+            >>> y = NONE
             >>> y.is_none()
             True
 
@@ -938,7 +940,8 @@ class OptionType[T](Into):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
+            >>> from pyochain import Some, NONE, Option
+            >>>
             >>> def sq(x: int) -> Option[int]:
             ...     return Some(x * x)
             >>> def nope(x: int) -> Option[int]:
@@ -966,7 +969,7 @@ class OptionType[T](Into):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
+            >>> from pyochain import Some, NONE, Option
             >>> def nobody() -> Option[str]:
             ...     return NONE
             >>> def vikings() -> Option[str]:
@@ -1387,7 +1390,7 @@ class Null[T](OptionType[T]):
 
     Example:
         ```python
-        >>> from pyochain import Null, NONE, Some
+        >>> from pyochain import Null, NONE, Some, Option
         >>> Null() is NONE
         True
         >>> def is_none(x: Option[int]) -> bool:

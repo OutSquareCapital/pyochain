@@ -143,7 +143,7 @@ def main(dtype: type, rust_fns: Set[str], filters: Set[str]) -> None:
     fn: pl.Expr = pl.col("fn")
 
     return (
-        Iter(dtype.mro())
+        Iter(dtype.mro())  # pyright: ignore[reportUnknownMemberType]
         .flat_map(lambda x: x.__dict__.values())
         .filter(lambda x: callable(x) or isinstance(x, (staticmethod, classmethod)))  # pyright: ignore[reportAny]
         .map(_decorated)
