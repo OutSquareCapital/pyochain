@@ -47,6 +47,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Scan>()?;
     m.add_class::<MapWhile>()?;
     m.add_class::<FromFn>()?;
+    m.add_class::<Drain>()?;
     Ok(())
 }
 #[pyfunction]
@@ -1001,5 +1002,67 @@ impl FromFn {
             Ok(some) => Ok(Some(some.get().value.clone_ref(py))),
             Err(_) => Ok(None),
         }
+    }
+}
+#[pyclass]
+pub struct Drain {
+    vec: Py<PySequence>,
+    start: usize,
+    current: usize,
+    end: usize,
+    done: bool,
+}
+
+impl Drain {
+    fn finish(&mut self, py: Python<'_>) -> PyResult<()> {
+        if self.done {
+            return Ok(());
+        }
+        self.vec.bind(py).del_slice(self.start, self.end)?;
+        self.done = true;
+        Ok(())
+    }
+}
+
+#[pymethods]
+impl Drain {
+    #[new]
+    fn new(vec: Bound<'_, PySequence>, start: Option<usize>, end: Option<usize>) -> PyResult<Self> {
+        let s = start.unwrap_or_default();
+        let e = end.unwrap_or(vec.len()?);
+        Ok(Self {
+            vec: vec.unbind(),
+            start: s,
+            current: s,
+            end: e,
+            done: false,
+        })
+    }
+
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
+        let py = slf.py();
+        if &slf.current >= &slf.end {
+            slf.finish(py)?;
+            Ok(None)
+        } else {
+            let val = slf.vec.bind(py).get_item(slf.current)?.unbind();
+            slf.current += 1;
+            Ok(Some(val))
+        }
+    }
+}
+
+impl Drop for Drain {
+    fn drop(&mut self) {
+        if self.done {
+            return;
+        }
+        Python::attach(|py| {
+            let _ = self.finish(py);
+        });
     }
 }

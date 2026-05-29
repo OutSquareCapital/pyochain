@@ -176,3 +176,14 @@ class FromFn[T](Iterator[T]):
     @no_doctest
     @override
     def __next__(self) -> T: ...
+
+class Drain[T](Iterator[T]):
+    def __init__(
+        self, data: MutableSequence[T], start: int | None, end: int | None
+    ) -> None: ...
+    @no_doctest
+    @override
+    def __iter__(self) -> Self: ...
+    @no_doctest
+    @override
+    def __next__(self) -> T: ...

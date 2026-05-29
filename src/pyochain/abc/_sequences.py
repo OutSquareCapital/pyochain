@@ -2,59 +2,14 @@ from __future__ import annotations
 
 from abc import ABC
 from collections.abc import Callable, Iterator, MutableSequence, Reversible, Sequence
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Self, overload, override
 
 from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
-from .._utils import no_doctest
 from ..rs import NONE, Option, Some
 from ._collection import PyoCollection
 
 if TYPE_CHECKING:
     from .._iter import Iter
-
-
-@no_doctest
-@dataclass(slots=True)
-class DrainIterator[T](Iterator[T]):
-    """An `Iterator` that drains elements from a `Vec` within a specified range.
-
-    See `Vec.drain()` for details.
-    """
-
-    _vec: MutableSequence[T]
-    _start: int
-    _current: int
-    _end: int
-    _done: bool
-
-    def __init__(
-        self, vec: MutableSequence[T], start: int | None, end: int | None
-    ) -> None:
-        s = start or 0
-        self._vec = vec
-        self._start = s
-        self._current = s
-        self._end = end or len(vec)
-        self._done = False
-
-    @override
-    def __iter__(self) -> Self:
-        return self
-
-    @override
-    def __next__(self) -> T:
-        if self._current >= self._end:
-            del self._vec[self._start : self._end]
-            self._done = True
-            raise StopIteration
-        val = self._vec[self._current]
-        self._current += 1
-        return val
-
-    def __del__(self) -> None:
-        if not self._done:
-            del self._vec[self._start : self._end]
 
 
 class PyoReversible[T](Reversible[T], ABC):
@@ -480,4 +435,4 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
         """
         from .._iter import Iter
 
-        return Iter(DrainIterator(self, start, end))
+        return Iter(tls.Drain(self, start, end))
