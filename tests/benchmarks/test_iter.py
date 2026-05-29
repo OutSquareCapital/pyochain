@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from pyochain import Null, Option, Range, Seq, Some, Vec
+from pyochain import Iter, Null, Option, Range, Seq, Some, Vec
 from pyochain.abc import PyoSequence
 
-from ._utils import SIZES
+from ._utils import SIZES, Sizes
 
 if TYPE_CHECKING:
     from ._utils import BenchFixture
@@ -189,3 +189,41 @@ def test_map_while(benchmark: BenchFixture, size: int) -> None:
 
 def _map_while(data: Range, size: int) -> int:
     return data.iter().map_while(lambda x: Some(x) if x < size else Null()).last()
+
+
+def _from_fn() -> int:
+    return Iter.from_fn(lambda: Some(0)).take(Sizes.SIZE_4096).last()
+
+
+def _from_fn_args() -> int:
+    def fn(a: int, b: int, c: int) -> Option[int]:
+        return Some(a + b + c)
+
+    return Iter.from_fn(fn, 1, 2, 3).take(Sizes.SIZE_4096).last()
+
+
+def _from_fn_kwargs() -> int:
+    def fn(a: int, b: int, c: int) -> Option[int]:
+        return Some(a + b + c)
+
+    return Iter.from_fn(fn, a=1, b=2, c=3).take(Sizes.SIZE_4096).last()
+
+
+def _from_fn_args_and_kwargs() -> int:
+    def fn(a: int, b: int, c: int, d: int, e: int) -> Option[int]:
+        return Some(a + b + c + d + e)
+
+    return Iter.from_fn(fn, 1, 2, 3, d=4, e=5).take(Sizes.SIZE_4096).last()
+
+
+@pytest.mark.parametrize(
+    "fn",
+    [
+        pytest.param(_from_fn, id="from_fn"),
+        pytest.param(_from_fn_args, id="from_fn_args"),
+        pytest.param(_from_fn_kwargs, id="from_fn_kwargs"),
+        pytest.param(_from_fn_args_and_kwargs, id="from_fn_args_and_kwargs"),
+    ],
+)
+def test_from_fn(benchmark: BenchFixture, fn: Callable[[], int]) -> None:
+    assert benchmark(fn) is not None
