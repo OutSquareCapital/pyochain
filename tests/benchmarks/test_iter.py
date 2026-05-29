@@ -227,3 +227,15 @@ def _from_fn_args_and_kwargs() -> int:
 )
 def test_from_fn(benchmark: BenchFixture, fn: Callable[[], int]) -> None:
     assert benchmark(fn) is not None
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_successors(benchmark: BenchFixture, size: int) -> None:
+    assert benchmark(_successors, size) == Sizes.SIZE_4096
+
+
+def _successors(size: int) -> int:
+    def f(x: int) -> Option[int]:
+        return Some(x + 1) if x < size else Null()
+
+    return Iter.successors(Some(0), f).last()
