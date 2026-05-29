@@ -243,14 +243,13 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
     def retain(self, predicate: Callable[[T], bool]) -> None:
         """Retains only the elements specified by the *predicate*.
 
-        In other words, remove all elements e for which the *predicate* function returns `False`.
+        In other words, remove all elements for which the *predicate* function returns `False`.
 
-        This method operates in place, visiting each element exactly once in forward order, and preserves the order of the retained elements.
+        This is similar to filtering, but operates in place, visiting each element exactly once in forward order.
 
-        Note:
-            This is similar to filtering, but operates in place without allocating a new collection once collected.
+        Compared to `.iter().filter(predicate).collect()`, this avoids creating a new collection.
 
-            For example `new_list = list(filter(predicate, my_list))` followed by `my_list.clear()` would allocate a new collection before clearing the original, resulting in higher peak memory usage.
+        The order of the retained elements is preserved.
 
         Args:
             predicate (Callable[[T], bool]): A function that returns `True` for elements to keep and `False` for elements to remove.

@@ -576,9 +576,7 @@ pub fn retain(data: Bound<'_, PySequence>, predicate: &Bound<'_, PyAny>) -> PyRe
             write_idx += 1;
         }
     }
-    while data.len()? > write_idx {
-        data.del_item(write_idx)?;
-    }
+    data.del_slice(write_idx, usize::MAX)?;
     Ok(())
 }
 #[pyclass]
