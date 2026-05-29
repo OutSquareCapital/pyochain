@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Self, override
 
+from ._utils import no_doctest
 from .abc import PyoMutableMapping
 
 if TYPE_CHECKING:
@@ -131,6 +132,7 @@ class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
         )
 
     @property
+    @no_doctest
     def inner(self) -> dict[K, V]:
         """Get the underlying `dict` data structure.
 

@@ -151,6 +151,9 @@ Before committing, ensure all checks pass.
 uv run ruff check . --fix --unsafe-fixes;
 uv run ruff format . --preview;
 uv run basedpyright src/pyochain;
+uv run -m scripts.check_docstrings;
+uv run pydoclint src/pyochain;
+uv run -m scripts.generate_docs
 ```
 
 Unfortunately, `Ruff` doesn't work well when doctests are mixed with backticks sections in docstrings to format code examples.
@@ -164,9 +167,7 @@ For multiple sections, you can use your IDE to replace both of them by dummy tex
 Add `--cov=src --cov-report=term-missing` to the pytest command below to include coverage reports.
 
 ```bash
-uv run -m scripts.check_docstrings;
-uv run pydoclint src/pyochain;
-uv run pytest;
+uv run pytest
 ```
 
 ### Building docs
@@ -174,7 +175,6 @@ uv run pytest;
 To build and serve the documentation locally:
 
 ```shell
-uv run -m scripts.generate_docs;
 uv run zensical build -c
 ```
 

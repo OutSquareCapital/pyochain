@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Final, Self, override
 
-from ._utils import get_repr
+from ._utils import get_repr, no_doctest
 from .abc import PyoMutableSet, PyoSet
 
 if TYPE_CHECKING:
@@ -60,6 +60,7 @@ class Set[T](PyoSet[T]):
         self._inner = frozenset(data)
 
     @property
+    @no_doctest
     def inner(self) -> frozenset[T]:
         """Get the underlying `frozenset` data structure.
 
@@ -154,6 +155,7 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
         return _set_eq(self, other)
 
     @property
+    @no_doctest
     def inner(self) -> set[T]:
         """Get the underlying `set` data structure.
 

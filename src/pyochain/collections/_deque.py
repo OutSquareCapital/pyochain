@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import deque
 from typing import TYPE_CHECKING, Self, SupportsIndex, overload, override
 
+from .._utils import no_doctest
 from ..abc import PyoMutableSequence
 
 if TYPE_CHECKING:
@@ -196,6 +197,7 @@ class Deque[T](PyoMutableSequence[T]):  # noqa: PLW1641
                 return self._inner == value
 
     @property
+    @no_doctest
     def inner(self) -> deque[T]:
         """The underlying `deque` object."""
         return self._inner

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Self, overload, override
 
 from ._types import SupportsRichComparison
-from ._utils import get_repr
+from ._utils import get_repr, no_doctest
 from .abc import PyoMutableSequence
 
 if TYPE_CHECKING:
@@ -76,6 +76,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
                 return False
 
     @property
+    @no_doctest
     def inner(self) -> list[T]:
         """Get the underlying `list` data structure.
 

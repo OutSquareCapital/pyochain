@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Final, Self, overload, override
 
-from ._utils import get_repr
+from ._utils import get_repr, no_doctest
 from .abc import (
     PyoSequence,
 )
@@ -97,6 +97,7 @@ class Seq[T](PyoSequence[T]):
         return hash(self._inner)
 
     @property
+    @no_doctest
     def inner(self) -> tuple[T, ...]:
         """Get the underlying `tuple` data structure.
 
