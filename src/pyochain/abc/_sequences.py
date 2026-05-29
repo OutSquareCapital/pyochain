@@ -40,12 +40,8 @@ class DrainIterator[T](Iterator[T]):
         self._end_idx -= 1
         return val
 
-    # TODO: replace this by del slice, benchmark it
     def __del__(self) -> None:
-        pop = self._vec.pop
-        while self._idx < self._end_idx:
-            _ = pop(self._idx)
-            self._end_idx -= 1
+        del self._vec[self._idx : self._end_idx]
 
 
 class PyoReversible[T](Reversible[T], ABC):
@@ -281,16 +277,14 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
         """
         return tls.retain(self, predicate)
 
-    # TODO: replace this by del slice, benchmark it
     def truncate(self, length: int) -> None:
         """Shortens the `MutableSequence`, keeping the first *length* elements and dropping the rest.
 
         If *length* is greater or equal to the `MutableSequence` current `__len__()`, this has no effect.
 
-        The `Vec::drain` method can emulate `Vec::truncate`, but causes the excess elements to be returned instead of dropped.
+        `Vec::drain` can emulate `Vec::truncate`, but causes the excess elements to be returned instead of dropped.
 
-        Note:
-            This is equivalent to `del seq[length:]`, except that it won't create an intermediate slice object.
+        This is equivalent to `del seq[length:]`.
 
         Args:
             length (int): The length to truncate the `MutableSequence` to.
@@ -324,9 +318,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
 
             ```
         """
-        pop = self.pop
-        for _ in range(len(self) - length):
-            _ = pop()
+        del self[length:]
 
     # NOTE: Rust does not support MutableSequence ATM. We either need to find a new implementation, or wait until MutableSequence is supported to implement this method.
     def extend_move(self, other: Self | list[T]) -> None:

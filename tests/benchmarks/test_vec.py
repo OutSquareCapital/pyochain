@@ -6,7 +6,7 @@ import pytest
 
 from pyochain import Range, Vec
 
-from ._utils import SIZES
+from ._utils import SIZES, Sizes
 
 if TYPE_CHECKING:
     from ._utils import BenchFixture
@@ -30,3 +30,15 @@ def test_from_ref(benchmark: BenchFixture) -> None:
     assert benchmark(Vec.from_ref, data) is not None
     canary = Vec.from_ref(data)
     assert canary.inner == [1, 2, 3]
+
+
+def test_truncate(benchmark: BenchFixture) -> None:
+    data = Range(0, Sizes.SIZE_4096)
+
+    def fn() -> None:
+        return data.into(Vec).truncate(1)
+
+    assert benchmark(fn) is None
+    v = data.into(Vec)
+    v.truncate(1)
+    assert v.first() == 0

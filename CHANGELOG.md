@@ -22,6 +22,11 @@ x = Iter.from_fn(lambda: Some(0)).take(4096).last()
 y = Iter(Some(0) for _ in range(1_000_000)).take(4096).last()
 ```
 
+### 🚀 Performance improvements
+
+- `PyoMutableSequence::truncate` is now **11x** faster. The old implementation used an inefficient loop with `pop()` calls, while the new one uses `del self[length:]`, after double-checking that this is a no-copy operation.
+- `PyoMutableSequence::drain` also received a similar fix for the `__del__` method of the returned `DrainIterator`.
+
 ### 🔗 Dependencies
 
 **Dev**: Deleted unused script dependencies: `typer`, `polars`.
