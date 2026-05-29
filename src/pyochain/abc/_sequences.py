@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC
 from collections.abc import Callable, Iterator, MutableSequence, Reversible, Sequence
-from typing import TYPE_CHECKING, Self, overload, override
+from typing import TYPE_CHECKING, overload, override
 
 from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
 from ..rs import NONE, Option, Some
@@ -140,74 +140,6 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
     # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
-    def into_iter(self) -> Iter[T]:
-        """Creates an `Iterator` that consumes the `MutableSequence`, leaving it empty.
-
-        Each element is extracted from `self`, yielded, and removed from `self` in a single step.
-
-        Returns:
-            Iter[T]: An `Iterator` that consumes the `MutableSequence`.
-
-        Example:
-            ```python
-            >>> from pyochain import Vec
-            >>> vec = Vec((1, 2, 3))
-            >>> vec.into_iter().collect()
-            Seq(1, 2, 3)
-            >>> vec
-            Vec()
-
-            ```
-            This can be used to efficiently consume collections that you know you won't need anymore.
-            ```python
-            >>> from pyochain import Vec
-            >>> txt = "Paris.London.New York.Tokyo.Berlin"
-            >>> splitted = txt.split(".")
-            >>> vec = Vec.from_ref(splitted)
-            >>> words = vec.into_iter().join(", ")
-            >>> words
-            'Paris, London, New York, Tokyo, Berlin'
-            >>> vec
-            Vec()
-            >>> splitted
-            []
-
-            ```
-            Note that the `Iterator` will stop once the `MutableSequence` original length have been iterated over, regardless of the current state of the `MutableSequence`.
-
-            As such, if you append or insert elements before exhausting the `Iterator`, this will influence his behavior.
-
-            For example, if you append elements at the end, this will simply lead them to not be yielded nor removed by the `Iterator`:
-            ```python
-            >>> from pyochain import Vec
-            >>> vec = Vec((1, 2, 3))
-            >>> iterator = vec.into_iter()
-            >>> vec.append(4)
-            >>> iterator.collect()
-            Seq(1, 2, 3)
-            >>> vec
-            Vec(4)
-
-            ```
-            On the other hand, if you insert elements at the beginning, this will lead to the original last elements to not be yielded:
-            ```python
-            >>> from pyochain import Vec
-            >>> vec = Vec((1, 2, 3))
-            >>> iterator = vec.into_iter()
-            >>> vec.insert(0, 20)
-            >>> iterator.collect()
-            Seq(20, 1, 2)
-            >>> vec
-            Vec(3)
-
-            ```
-
-        """
-        from .._iter import Iter
-
-        pop = self.pop
-        return Iter(pop(0) for _ in range(len(self)))
-
     def retain(self, predicate: Callable[[T], bool]) -> None:
         """Retains only the elements specified by the *predicate*.
 
@@ -286,51 +218,6 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
             ```
         """
         del self[length:]
-
-    # NOTE: Rust does not support MutableSequence ATM. We either need to find a new implementation, or wait until MutableSequence is supported to implement this method.
-    def extend_move(self, other: Self | list[T]) -> None:
-        """Moves all the elements of *other* into *self*, leaving *other* empty.
-
-        This is equivalent to `extend(other)` followed by `other.clear()`, but avoids intermediate allocations by moving elements one at a time.
-
-        Each element is extracted from **other**, appended to **self**, and removed from **other** in a single step.
-
-        Args:
-            other (Self | list[T]): The other `MutableSequence` to move elements from.
-
-        Example:
-            ```python
-            >>> from pyochain import Vec
-            >>> v1 = Vec((1, 2, 3))
-            >>> v2 = Vec((4, 5, 6))
-            >>> v1.extend_move(v2)
-            >>> v1
-            Vec(1, 2, 3, 4, 5, 6)
-            >>> v2
-            Vec()
-
-            ```
-            If we compare to extend
-
-            ```python
-            >>> v1 = Vec((1, 2, 3))
-            >>> v2 = Vec((4, 5, 6))
-            >>> v1.extend(v2)
-            >>> v1
-            Vec(1, 2, 3, 4, 5, 6)
-            >>> # At this point v2 is still intact,
-            >>> # meaning that we have a full intermediate copy of v2 in memory,
-            >>> # which is not the case with extend_move
-            >>> v2
-            Vec(4, 5, 6)
-            >>> v2.clear()
-            >>> v2
-            Vec()
-
-            ```
-        """
-        pop = other.pop
-        self.extend(pop(0) for _ in range(len(other)))
 
     def extract_if(
         self, predicate: Callable[[T], bool], start: int = 0, end: int | None = None

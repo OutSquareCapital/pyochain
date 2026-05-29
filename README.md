@@ -8,7 +8,6 @@ Inspired by Rust's `Iterator`, `Result`, `Option`, and DataFrame libraries like 
 
 - ⛓️ **Declarative & fluent chaining** — Replace `for` loops, None checks, and error handling with chainable methods.
 - 🦥 **Lazy-first,  🔒 explicit mutability** — `Iter[T]` for lazy, efficient iterations; `Seq` and `Set` for immutable data; `Vec` and `SetMut` when you need to mutate.
-- **Memory efficient** - Almost all methods from `Iter[T]` operate in streaming fashion, and `Vec[T]` provides in-place methods with more memory efficiency than standard list methods (e.g. `x.extend_move(y)` won't create intermediate allocations like `x.extend(y)` followed by `y.clear()`).
 - 🎯 **Result and Option types** - Handle `None` and exceptions in a fluent, explicit way.
 - 🔥 **Blazingly fast** — Core `Option` and `Result` types are written in Rust for minimal overhead, and iterators use almost always compiled `C` or `Rust` level code, from the `builtins`, `itertools` or custom Pyo3 implementations.
 - 🛡️ **100% type-safe** — Full generic support and autocompletion in your IDE.

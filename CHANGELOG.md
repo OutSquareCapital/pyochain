@@ -22,6 +22,10 @@ x = Iter.from_fn(lambda: Some(0)).take(4096).last()
 y = Iter(Some(0) for _ in range(1_000_000)).take(4096).last()
 ```
 
+### 💥 Breaking changes
+
+- **Removed**: `PyoMutableSequence::{into_iter, extend_move}`. Python nature made these methods very situational, as well as the fact that their speed was very poor, led to this decision. `into_iter` can be replaced by `iter`, and `x.extend_move(y)` by `x.extend(y)` followed by `y.clear()`.
+
 ### 🚀 Performance improvements
 
 - `PyoMutableSequence::truncate` is now **11x** faster. The old implementation used an inefficient loop with `pop()` calls, while the new one uses `del self[length:]`, after double-checking that this is a no-copy operation.
