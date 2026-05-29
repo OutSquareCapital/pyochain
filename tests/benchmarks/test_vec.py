@@ -51,3 +51,12 @@ def test_drain(benchmark: BenchFixture) -> None:
         return data.into(Vec).drain().count()
 
     assert benchmark(fn) == Sizes.SIZE_4096
+
+
+def test_extract_if(benchmark: BenchFixture) -> None:
+    data = Range(0, Sizes.SIZE_4096)
+
+    def fn() -> int:
+        return data.into(Vec).extract_if(lambda _: True).last()
+
+    assert benchmark(fn) == Sizes.SIZE_4096 - 1
