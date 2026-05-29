@@ -48,6 +48,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<MapWhile>()?;
     m.add_class::<FromFn>()?;
     m.add_class::<Drain>()?;
+    m.add_class::<ExtractIf>()?;
     Ok(())
 }
 #[pyfunction]
@@ -1057,6 +1058,96 @@ impl Drain {
 }
 
 impl Drop for Drain {
+    fn drop(&mut self) {
+        if self.done {
+            return;
+        }
+        Python::attach(|py| {
+            let _ = self.finish(py);
+        });
+    }
+}
+#[pyclass]
+pub struct ExtractIf {
+    data: Py<PySequence>,
+    pred: Py<PyAny>,
+    idx: usize,
+    end: usize,
+    old_len: usize,
+    deleted: usize,
+    done: bool,
+}
+
+impl ExtractIf {
+    fn finish(&mut self, py: Python<'_>) -> PyResult<()> {
+        if self.done {
+            return Ok(());
+        }
+        let seq = self.data.bind(py);
+        if self.deleted > 0 {
+            let mut tail_start = self.idx - self.deleted;
+            let mut tail_src = self.idx;
+            while tail_src < self.old_len {
+                let item = seq.get_item(tail_src)?;
+                seq.set_item(tail_start, &item)?;
+                tail_start += 1;
+                tail_src += 1;
+            }
+            seq.del_slice(self.old_len - self.deleted, self.old_len)?;
+        }
+        self.done = true;
+        Ok(())
+    }
+}
+
+#[pymethods]
+impl ExtractIf {
+    #[new]
+    fn new(
+        data: Bound<'_, PySequence>,
+        pred: Bound<'_, PyAny>,
+        start: Option<usize>,
+        end: Option<usize>,
+    ) -> PyResult<Self> {
+        let old_len = data.len()?;
+        Ok(Self {
+            data: data.unbind(),
+            pred: pred.unbind(),
+            old_len,
+            idx: start.unwrap_or_default(),
+            end: end.unwrap_or(old_len),
+            deleted: 0,
+            done: false,
+        })
+    }
+
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
+        let py = slf.py();
+        let seq = slf.data.clone_ref(py).into_bound(py);
+        let pred = slf.pred.clone_ref(py).into_bound(py);
+        while slf.idx < slf.end {
+            let i = slf.idx;
+            let item = seq.get_item(i)?;
+            slf.idx += 1;
+
+            if pred.call1((&item,))?.is_truthy()? {
+                slf.deleted += 1;
+                return Ok(Some(item.unbind()));
+            }
+            if slf.deleted > 0 {
+                seq.set_item(i - slf.deleted, &item)?;
+            }
+        }
+
+        slf.finish(py)?;
+        Ok(None)
+    }
+}
+
+impl Drop for ExtractIf {
     fn drop(&mut self) {
         if self.done {
             return;

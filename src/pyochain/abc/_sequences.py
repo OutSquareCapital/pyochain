@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import Callable, Iterator, MutableSequence, Reversible, Sequence
-from typing import TYPE_CHECKING, Self, overload, override
+from collections.abc import Callable, MutableSequence, Reversible, Sequence
+from typing import TYPE_CHECKING, overload, override
 
 from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
 from ..rs import NONE, Option, Some
@@ -10,65 +10,6 @@ from ._collection import PyoCollection
 
 if TYPE_CHECKING:
     from .._iter import Iter
-
-
-class ExtractIf[T](Iterator[T]):
-    __slots__ = ("data", "deleted", "done", "end", "idx", "old_len", "pred")  # pyright: ignore[reportUnannotatedClassAttribute]
-
-    def __init__(
-        self,
-        data: MutableSequence[T],
-        pred: Callable[[T], bool],
-        start: int = 0,
-        end: int | None = None,
-    ) -> None:
-        self.data: MutableSequence[T] = data
-        self.pred: Callable[[T], bool] = pred
-        self.old_len: int = len(data)
-        self.idx: int = start
-        self.end: int = self.old_len if end is None else end
-        self.deleted: int = 0
-        self.done: bool = False
-
-    @override
-    def __iter__(self) -> Self:
-        return self
-
-    @override
-    def __next__(self) -> T:
-        while self.idx < self.end:
-            i = self.idx
-            item = self.data[i]
-            self.idx += 1
-
-            if self.pred(item):
-                self.deleted += 1
-                return item
-
-            if self.deleted:
-                self.data[i - self.deleted] = item
-
-        self._finish()
-        raise StopIteration
-
-    def _finish(self) -> None:
-        if self.done:
-            return
-
-        if self.deleted:
-            tail_start = self.idx - self.deleted
-            tail_src = self.idx
-            while tail_src < self.old_len:
-                self.data[tail_start] = self.data[tail_src]
-                tail_start += 1
-                tail_src += 1
-
-            del self.data[self.old_len - self.deleted : self.old_len]
-
-        self.done = True
-
-    def __del__(self) -> None:
-        self._finish()
 
 
 class PyoReversible[T](Reversible[T], ABC):
@@ -323,7 +264,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
         """
         from .._iter import Iter
 
-        return Iter(ExtractIf(self, predicate, start, end))
+        return Iter(tls.ExtractIf(self, predicate, start, end))
 
     def drain(self, start: int | None = None, end: int | None = None) -> Iter[T]:
         """Removes the subslice indicated by the given *start* and *end* from the `Vec`, returning an `Iterator` over the removed subslice.

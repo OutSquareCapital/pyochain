@@ -187,3 +187,18 @@ class Drain[T](Iterator[T]):
     @no_doctest
     @override
     def __next__(self) -> T: ...
+
+class ExtractIf[T](Iterator[T]):
+    def __init__(
+        self,
+        data: MutableSequence[T],
+        predicate: Callable[[T], bool],
+        start: int,
+        end: int | None,
+    ) -> None: ...
+    @no_doctest
+    @override
+    def __iter__(self) -> Self: ...
+    @no_doctest
+    @override
+    def __next__(self) -> T: ...
