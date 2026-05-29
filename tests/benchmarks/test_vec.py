@@ -42,3 +42,12 @@ def test_truncate(benchmark: BenchFixture) -> None:
     v = data.into(Vec)
     v.truncate(1)
     assert v.first() == 0
+
+
+def test_drain(benchmark: BenchFixture) -> None:
+    data = Range(0, Sizes.SIZE_4096)
+
+    def fn() -> int:
+        return data.into(Vec).drain().count()
+
+    assert benchmark(fn) == Sizes.SIZE_4096

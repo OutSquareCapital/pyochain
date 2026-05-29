@@ -19,14 +19,24 @@ if TYPE_CHECKING:
 class DrainIterator[T](Iterator[T]):
     """An `Iterator` that drains elements from a `Vec` within a specified range.
 
-    This class is not supposed to be used directly. Use `Vec.drain()` instead to obtain an `Iter` wrapper around it.
-
     See `Vec.drain()` for details.
     """
 
     _vec: MutableSequence[T]
-    _idx: int
-    _end_idx: int
+    _start: int
+    _current: int
+    _end: int
+    _done: bool
+
+    def __init__(
+        self, vec: MutableSequence[T], start: int | None, end: int | None
+    ) -> None:
+        s = start or 0
+        self._vec = vec
+        self._start = s
+        self._current = s
+        self._end = end or len(vec)
+        self._done = False
 
     @override
     def __iter__(self) -> Self:
@@ -34,14 +44,17 @@ class DrainIterator[T](Iterator[T]):
 
     @override
     def __next__(self) -> T:
-        if self._idx >= self._end_idx:
+        if self._current >= self._end:
+            del self._vec[self._start : self._end]
+            self._done = True
             raise StopIteration
-        val = self._vec.pop(self._idx)
-        self._end_idx -= 1
+        val = self._vec[self._current]
+        self._current += 1
         return val
 
     def __del__(self) -> None:
-        del self._vec[self._idx : self._end_idx]
+        if not self._done:
+            del self._vec[self._start : self._end]
 
 
 class PyoReversible[T](Reversible[T], ABC):
@@ -467,4 +480,4 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
         """
         from .._iter import Iter
 
-        return Iter(DrainIterator(self, start or 0, end or len(self)))
+        return Iter(DrainIterator(self, start, end))
