@@ -2,7 +2,7 @@ use crate::args::{Args, Concatenate, Kwargs};
 use crate::option::{PyNull, PySome};
 use crate::result::{PyoErr, PyoOk};
 use pyo3::types::{
-    PyAny, PyBool, PyFunction, PyIterator, PyList, PyModule, PySequence, PySet, PyTuple,
+    PyAny, PyBool, PyDict, PyFunction, PyIterator, PyList, PyModule, PySequence, PySet, PyTuple,
 };
 use pyo3::{IntoPyObjectExt, prelude::*};
 use pyo3::{ffi, intern};
@@ -46,6 +46,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<FilterMapStar>()?;
     m.add_class::<Scan>()?;
     m.add_class::<MapWhile>()?;
+    m.add_class::<FromFn>()?;
     Ok(())
 }
 #[pyfunction]
@@ -945,6 +946,62 @@ impl MapWhile {
                 Ok(some) => Ok(Some(some.get().value.clone_ref(py))),
                 Err(_) => Ok(None),
             },
+        }
+    }
+}
+
+enum FromFnStrategy {
+    NoArgs,
+    HasArgs(Py<PyTuple>),
+    HasKwargs(Py<PyDict>),
+    HasBoth(Py<PyTuple>, Py<PyDict>),
+}
+impl FromFnStrategy {
+    fn new(args: &Args<'_>, kwargs: Option<&Kwargs<'_>>) -> Self {
+        match (args.is_empty(), kwargs) {
+            (true, None) => Self::NoArgs,
+            (false, None) => Self::HasArgs(args.to_owned().unbind()),
+            (true, Some(kwargs)) => Self::HasKwargs(kwargs.to_owned().unbind()),
+            (false, Some(kwargs)) => {
+                Self::HasBoth(args.to_owned().unbind(), kwargs.to_owned().unbind())
+            }
+        }
+    }
+}
+#[pyclass]
+pub struct FromFn {
+    func: Py<PyAny>,
+    strategy: FromFnStrategy,
+}
+#[pymethods]
+impl FromFn {
+    #[pyo3(signature = (func, *args, **kwargs))]
+    #[new]
+    fn new(func: Bound<'_, PyAny>, args: &Args<'_>, kwargs: Option<&Kwargs<'_>>) -> Self {
+        Self {
+            func: func.unbind(),
+            strategy: FromFnStrategy::new(args, kwargs),
+        }
+    }
+
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
+        let py = slf.py();
+        let py_fn = slf.func.bind(py);
+        let res = match slf.strategy {
+            FromFnStrategy::NoArgs => py_fn.call0()?,
+            FromFnStrategy::HasArgs(ref args) => py_fn.call1(args.bind(py))?,
+            FromFnStrategy::HasKwargs(ref kwargs) => py_fn.call((), Some(kwargs.bind(py)))?,
+            FromFnStrategy::HasBoth(ref args, ref kwargs) => {
+                py_fn.call(args.bind(py), Some(kwargs.bind(py)))?
+            }
+        };
+        match res.cast_into_exact::<PySome>() {
+            Ok(some) => Ok(Some(some.get().value.clone_ref(py))),
+            Err(_) => Ok(None),
         }
     }
 }

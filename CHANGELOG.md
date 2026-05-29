@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+### 🏆 Highlights
+
+#### `Iter::from_fm` in Rust
+
+This release improve the performance of `Iter::from_fn` by:
+
+- **1.35x** (no `args`, i.e `f() -> Option[T]`)
+- **1.5x** (with `args` OR with `kwargs`)
+- **1.6x** (with `args` AND `kwargs`)
+
+This means that you can define generator functions in a new way
+
+The performance match "vanilla" user-defined generators functions (with yield statements)/Iterators classes, and is only 5-10% slower than an equivalent generator expression, for example:
+
+```python
+# args and/or kwargs don't change the ratio between both
+x = Iter.from_fn(lambda: Some(0)).take(4096).last()
+y = Iter(Some(0) for _ in range(1_000_000)).take(4096).last()
+```
+
 ### 🔗 Dependencies
 
 **Dev**: Deleted unused script dependencies: `typer`, `polars`.

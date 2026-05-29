@@ -165,3 +165,14 @@ class MapWhile[T, R](Iterator[R]):
     @no_doctest
     @override
     def __next__(self) -> R: ...
+
+class FromFn[T](Iterator[T]):
+    def __init__[**P](
+        self, func: Callable[P, Option[T]], *args: P.args, **kwargs: P.kwargs
+    ) -> None: ...
+    @no_doctest
+    @override
+    def __iter__(self) -> Self: ...
+    @no_doctest
+    @override
+    def __next__(self) -> T: ...

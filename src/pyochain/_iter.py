@@ -364,25 +364,7 @@ class Iter[T](PyoIterator[T]):
 
             ```
         """
-
-        def _from_fn(f: Callable[[], Option[R]]) -> Iterator[R]:
-            while True:
-                item = f()
-                if item.is_none():
-                    return
-                yield item.unwrap()
-
-        match len(args), len(kwargs):
-            case 0, 0:
-                fn = f
-            case _, 0:
-                fn = functools.partial(f, *args)
-            case 0, _:
-                fn = functools.partial(f, **kwargs)
-            case _, _:
-                fn = functools.partial(f, *args, **kwargs)
-
-        return Iter(_from_fn(fn))
+        return Iter(tls.FromFn(f, *args, **kwargs))
 
     @staticmethod
     def successors[U](first: Option[U], succ: Callable[[U], Option[U]]) -> Iter[U]:
