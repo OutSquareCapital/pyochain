@@ -2333,7 +2333,8 @@
 <span class="normal">108</span>
 <span class="normal">109</span>
 <span class="normal">110</span>
-<span class="normal">111</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Set</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoSet</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+<span class="normal">111</span>
+<span class="normal">112</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Set</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoSet</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;`Set` represent an in- memory **unordered**  collection of **unique** elements.</span>
 
 <span class="sd">    Implements the `collections::abc::Collection` Protocol, so it can be used as a standard immutable collection.</span>
@@ -2379,6 +2380,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
     <span class="nd">@property</span>
+    <span class="nd">@no_doctest</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">inner</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the underlying `frozenset` data structure.</span>
 
