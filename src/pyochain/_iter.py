@@ -1127,6 +1127,8 @@ class Iter[T](PyoIterator[T]):
         self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], bool],
     ) -> Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]]: ...
+    @overload
+    def filter_star[U: AnyIter](self: Iter[U], func: Callable[..., bool]) -> Iter[U]: ...
 
     def filter_star[U: AnyIter](self: Iter[U], func: Callable[..., bool]) -> Iter[U]:
         """Creates an `Iter` which uses a closure **func** to determine if an element should be yielded, where each element is an iterable.

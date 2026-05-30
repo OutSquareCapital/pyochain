@@ -1,6 +1,7 @@
 use crate::args::{Args, Concatenate, Kwargs};
 use crate::option::{PyNull, PySome};
 use crate::result::{PyoErr, PyoOk};
+use pyo3::exceptions::PyTypeError;
 use pyo3::types::{
     PyAny, PyBool, PyDict, PyFunction, PyIterator, PyList, PyModule, PySequence, PySet, PyTuple,
 };
@@ -827,9 +828,18 @@ impl FilterStar {
                 None => return Ok(None),
                 Some(result) => {
                     let item = result?;
-                    let tuple = item.cast_into_exact::<PyTuple>()?;
-                    if func.call1(tuple.clone())?.is_truthy()? {
-                        return Ok(Some(tuple.unbind().into_any()));
+                    let args = item
+                        .try_iter()
+                        .map_err(|_| {
+                            PyTypeError::new_err(
+                                "filter_star expected iterable elements to unpack",
+                            )
+                        })?
+                        .map(|value| value.map(Bound::unbind))
+                        .collect::<PyResult<Vec<_>>>()?;
+                    let args = PyTuple::new(py, args)?;
+                    if func.call1(args)?.is_truthy()? {
+                        return Ok(Some(item.unbind()));
                     }
                 }
             }
