@@ -28,7 +28,7 @@ The presence or absence of `*args` and `**kwargs` didn't have any substantial im
 
 Python way                                           | Relative performance
 -----------------------------------------------------|-----------
-`Iterator` class with `__iter__` and `__next__`        | **Identical**
+`Iterator` class with `__iter__` and `__next__`      | **Identical**
 function/method with `yield` statements              | **Identical**
 generator comprehension, i.e `(x for x in iterable)` | **0.9** to **0.95x** (i.e `from_fn` is 5-10% slower)
 
