@@ -4,23 +4,29 @@
 
 ### 🏆 Highlights
 
-#### `Iter::from_fm` in Rust
+#### `Iter::from_fn` in Rust
 
 This release improve the performance of `Iter::from_fn` by:
 
-- **1.35x** (no `args`, i.e `f() -> Option[T]`)
-- **1.5x** (with `args` OR with `kwargs`)
-- **1.6x** (with `args` AND `kwargs`)
+- **1.35x** with NO `args`/`kwargs` (i.e `f() -> Option[T]`)
+- **1.5x** with `args` OR `kwargs`
+- **1.6x** with `args` AND `kwargs`
 
-This means that you can define generator functions in a new way
+This means that you can define inline generators/iterators in a new way (predicate function), without performance trade-off in respect to the other three python-native paths.
 
-The performance match "vanilla" user-defined generators functions (with yield statements)/Iterators classes, and is only 5-10% slower than an equivalent generator expression, for example:
+In the benchmarks, only generator comprehensions has a slight performance advantage over `Iter::from_fn`.
 
-```python
-# args and/or kwargs don't change the ratio between both
-x = Iter.from_fn(lambda: Some(0)).take(4096).last()
-y = Iter(Some(0) for _ in range(1_000_000)).take(4096).last()
-```
+This is fine, because comprehensions should be the go-to solution whenever possible, as they are concise, idiomatic/pythonic, and fast.
+
+##### Performance vs python-native paths
+
+The presence or absence of `*args` and `**kwargs` didn't have any substantial impact on the relative performance.
+
+Python way                                           | Relative performance
+-----------------------------------------------------|-----------
+`Iterator` class with `__iter__` and `__next__`        | **Identical**
+function/method with `yield` statements              | **Identical**
+generator comprehension, i.e `(x for x in iterable)` | **0.9** to **0.95x** (i.e `from_fn` is 5-10% slower)
 
 ### 💥 Breaking changes
 
