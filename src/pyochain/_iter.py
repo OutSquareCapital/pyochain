@@ -48,7 +48,7 @@ type ZippedLongest[T] = (
 type FilterFn[T, R] = Callable[[T], bool | TypeIs[R] | TypeGuard[R]] | None
 """Optional closure that can be passed to `Iter::filter` to determine if an element should be yielded."""
 # TODO: move to Rust the following:
-# with_position, zip_longest, filter_star, repeat,  array_chunks, successors # noqa: ERA001
+# with_position, zip_longest, filter_star, repeat,  array_chunks # noqa: ERA001
 
 
 class Position(StrEnum):
@@ -394,15 +394,7 @@ class Iter[T](PyoIterator[T]):
 
             ```
         """
-
-        def _successors() -> Iterator[U]:
-            current = first
-            while current.is_some():
-                value = current.unwrap()
-                current = succ(value)
-                yield value
-
-        return Iter(_successors())
+        return Iter(tls.Successors(first, succ))
 
     @staticmethod
     def from_repeat[O](obj: O, n: int | None = None) -> Iter[O]:

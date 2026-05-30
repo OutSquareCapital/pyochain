@@ -49,6 +49,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<FromFn>()?;
     m.add_class::<Drain>()?;
     m.add_class::<ExtractIf>()?;
+    m.add_class::<Successors>()?;
     Ok(())
 }
 #[pyfunction]
@@ -1155,5 +1156,35 @@ impl Drop for ExtractIf {
         Python::attach(|py| {
             let _ = self.finish(py);
         });
+    }
+}
+#[pyclass]
+pub struct Successors {
+    succ: Py<PyAny>,
+    current: Py<PyAny>,
+}
+#[pymethods]
+impl Successors {
+    #[new]
+    fn new(start: Bound<'_, PyAny>, succ: Bound<'_, PyAny>) -> Self {
+        Self {
+            current: start.unbind(),
+            succ: succ.unbind(),
+        }
+    }
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
+        let py = slf.py();
+        let curr = slf.current.clone_ref(py);
+        match curr.bind(py).cast_exact::<PySome>() {
+            Ok(some) => {
+                let unwrapped = some.get().value.clone_ref(py);
+                slf.current = slf.succ.bind(py).call1((unwrapped.bind(py),))?.unbind();
+                Ok(Some(unwrapped))
+            }
+            Err(_) => Ok(None),
+        }
     }
 }

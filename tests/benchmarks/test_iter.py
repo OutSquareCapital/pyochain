@@ -231,7 +231,7 @@ def test_from_fn(benchmark: BenchFixture, fn: Callable[[], int]) -> None:
 
 @pytest.mark.parametrize("size", SIZES)
 def test_successors(benchmark: BenchFixture, size: int) -> None:
-    assert benchmark(_successors, size) == Sizes.SIZE_4096
+    assert benchmark(_successors, size) == size
 
 
 def _successors(size: int) -> int:

@@ -24,13 +24,14 @@ y = Iter(Some(0) for _ in range(1_000_000)).take(4096).last()
 
 ### 💥 Breaking changes
 
-- **Removed**: `PyoMutableSequence::{into_iter, extend_move}`. Python nature made these methods very situational, as well as the fact that their speed was very poor, led to this decision. `into_iter` can be replaced by `iter`, and `x.extend_move(y)` by `x.extend(y)` followed by `y.clear()`.
+- **Removed**: `PyoMutableSequence::{into_iter, extend_move}`. What led to this decision is the fact that Python nature made these methods very situational, as well as their poor speed. `into_iter` can be replaced by `iter`, and `x.extend_move(y)` by `x.extend(y)` followed by `y.clear()`.
 
 ### 🚀 Performance improvements
 
 - `PyoMutableSequence::truncate` is now **11x** faster. The old implementation used an inefficient loop with `pop()` calls, while the new one uses `del self[length:]`, after double-checking that this is a no-copy operation.
 - `PyoMutableSequence::drain` logic has been improved to avoid `pop` calls, which made it **6.5x** faster. The subsequent Rust migration upped the improvement to **10.69x**.
 - `PyoMutableSequence::extract_if` is the same story as `drain`. **5.18x** improvement from a logic change, and **8.28x** improvement after the Rust migration.
+- `Iter::successors` migrated to Rust. **1.3x** faster.
 
 ### 🔗 Dependencies
 
