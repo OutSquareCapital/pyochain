@@ -1,6 +1,10 @@
 # Changelog
 
-## [Unreleased]
+[Unreleased]
+
+-
+
+## [0.24.0] - 2026-05-30
 
 ### 🏆 Highlights
 
@@ -12,7 +16,7 @@ This release improve the performance of `Iter::from_fn` by:
 - **1.5x** with `args` OR `kwargs`
 - **1.6x** with `args` AND `kwargs`
 
-This means that you can define inline generators/iterators in a new way (predicate function), without performance trade-off in respect to the other three python-native paths.
+This means that you can define inline generators/iterators in a new way, without much, if any, performance trade-off in respect to the other three python-native paths.
 
 In the benchmarks, only generator comprehensions has a slight performance advantage over `Iter::from_fn`.
 
@@ -36,12 +40,12 @@ generator comprehension, i.e `(x for x in iterable)` | **0.9** to **0.95x** (i.e
 
 - `PyoMutableSequence::truncate` is now **11x** faster. The old implementation used an inefficient loop with `pop()` calls, while the new one uses `del self[length:]`, after double-checking that this is a no-copy operation.
 - `PyoMutableSequence::drain` logic has been improved to avoid `pop` calls, which made it **6.5x** faster. The subsequent Rust migration upped the improvement to **10.69x**.
-- `PyoMutableSequence::extract_if` is the same story as `drain`. **5.18x** improvement from a logic change, and **8.28x** improvement after the Rust migration.
+- `PyoMutableSequence::extract_if` is the same story as `drain`. **5.18x** improvement from a logic change, upped to **8.28x** once ported to Rust.
 - `Iter::successors` migrated to Rust. **1.3x** faster.
 
 ### 🔗 Dependencies
 
-**Dev**: Deleted unused script dependencies: `typer`, `polars`.
+- **Dev**: Deleted unused script dependencies: `typer`, `polars`.
 
 ### 🛠️ Other improvements
 
