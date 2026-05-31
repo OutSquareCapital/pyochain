@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import MutableSet
+from collections.abc import Iterable, MutableSet
 from collections.abc import Set as AbstractSet
+from typing import Any
 
 from ._collection import PyoCollection
+
+type AnySet = AbstractSet[Any]  # pyright: ignore[reportExplicitAny]
 
 
 class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
@@ -65,7 +68,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
     # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
-    def is_subset(self, other: AbstractSet[T]) -> bool:
+    def is_subset(self, other: AnySet) -> bool:
         """Test whether all elements of this set are in `other` (including equality).
 
         Returns `True` if every element in this set is also present in `other`.
@@ -75,7 +78,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         Use `is_subset_strict()` to exclude the equality case.
 
         Args:
-            other (AbstractSet[T]): The set to check containment against.
+            other (AnySet): The set to check containment against.
 
         Returns:
             bool: `True` if all elements are contained, `False` otherwise.
@@ -94,7 +97,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         """
         return self <= other
 
-    def is_subset_strict(self, other: AbstractSet[T]) -> bool:
+    def is_subset_strict(self, other: AnySet) -> bool:
         """Test whether all elements of this set are in `other`, excluding equality.
 
         Returns `True` if every element in this set is also present in `other`, AND `other` contains at least one element not in this set.
@@ -104,7 +107,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         Use `is_subset()` if you want to accept equal sets as well.
 
         Args:
-            other (AbstractSet[T]): The set to check strict containment against.
+            other (AnySet): The set to check strict containment against.
 
         Returns:
             bool: `True` if this is a strict subset, `False` otherwise.
@@ -123,7 +126,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         """
         return self < other
 
-    def eq(self, other: AbstractSet[T]) -> bool:
+    def eq(self, other: object) -> bool:
         """Test whether this set contains exactly the same elements as `other`.
 
         Sets are equal if they have the same number of elements and every element in one is present in the other.
@@ -131,7 +134,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         This is an explicit method; you can also use the `==` operator directly.
 
         Args:
-            other (AbstractSet[T]): The set to compare with.
+            other (object): The set to compare with.
 
         Returns:
             bool: `True` if both sets contain identical elements, `False` otherwise.
@@ -150,7 +153,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         """
         return self == other
 
-    def is_superset(self, other: AbstractSet[T]) -> bool:
+    def is_superset(self, other: AnySet) -> bool:
         """Test whether all elements of `other` are in this set (including equality).
 
         Returns `True` if this set contains every element from `other`.
@@ -162,7 +165,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         Use [`PyoSet::is_superset_strict`][is_superset_strict] to exclude equality.
 
         Args:
-            other (AbstractSet[T]): The set to check containment for.
+            other (AnySet): The set to check containment for.
 
         Returns:
             bool: `True` if all elements from `other` are present, `False` otherwise.
@@ -181,7 +184,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         """
         return self >= other
 
-    def is_superset_strict(self, other: AbstractSet[T]) -> bool:
+    def is_superset_strict(self, other: AnySet) -> bool:
         """Test whether all elements of `other` are in this set, excluding equality.
 
         Returns `True` if this set contains every element from `other`, AND this set has at least one element not in `other`.
@@ -191,7 +194,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         Use [`PyoSet::is_superset`][is_superset] if you want to accept equal sets as well.
 
         Args:
-            other (AbstractSet[T]): The set to check strict containment for.
+            other (AnySet): The set to check strict containment for.
 
         Returns:
             bool: `True` if this is a strict superset, `False` otherwise.
@@ -210,7 +213,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         """
         return self > other
 
-    def is_disjoint(self, other: AbstractSet[T]) -> bool:
+    def is_disjoint(self, other: Iterable[Any]) -> bool:  # pyright: ignore[reportExplicitAny]
         """Test whether this set and `other` have no elements in common.
 
         Returns `True` if the intersection of the two sets is empty.
@@ -218,7 +221,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         This is the opposite of having any overlap.
 
         Args:
-            other (AbstractSet[T]): The set to compare with.
+            other (Iterable[Any]): The set to compare with.
 
         Returns:
             bool: `True` if no common elements exist, `False` otherwise.
@@ -237,7 +240,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         """
         return self.isdisjoint(other)
 
-    def intersection(self, other: AbstractSet[T]) -> AbstractSet[T]:
+    def intersection(self, other: AnySet) -> AbstractSet[T]:
         """Create a new set containing only elements present in both sets.
 
         If the sets have no common elements, the result is empty.
@@ -246,7 +249,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
 
         Args:
-            other (AbstractSet[T]): The set to intersect with.
+            other (AnySet): The set to intersect with.
 
         Returns:
             AbstractSet[T]: A new `Set` containing shared elements only.
@@ -306,7 +309,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         """
         return self._from_iterable(self | other)
 
-    def difference(self, other: AbstractSet[T]) -> AbstractSet[T]:
+    def difference(self, other: AnySet) -> AbstractSet[T]:
         """Create a new set with elements in this set but not in `other`.
 
         The result contains every element that is in this set EXCEPT those that are also present in `other`.
@@ -314,7 +317,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         This operation is NOT commutative.
 
         Args:
-            other (AbstractSet[T]): The set whose elements should be excluded.
+            other (AnySet): The set whose elements should be excluded.
 
         Returns:
             AbstractSet[T]: A new set containing elements unique to this set.

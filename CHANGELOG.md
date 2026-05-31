@@ -1,8 +1,10 @@
 # Changelog
 
-[Unreleased]
+## [Unreleased]
 
--
+### ✨ Enhancements
+
+- **typing**: Improved the input types of various `PyoSet` methods to align them with typeshed, as they were too strict.
 
 ## [0.24.0] - 2026-05-30
 
