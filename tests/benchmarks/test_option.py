@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from pyochain import NONE, Err, Null, Ok, Option, Some, option
+from pyochain import NONE, Err, Null, Ok, Option, Range, Some, option
 
 from ._utils import VariantGroups
 
@@ -102,3 +102,12 @@ def test_transpose(benchmark: BenchFixture, fn: BenchCall) -> None:
         _ = fn()
 
     assert benchmark(run) is None
+
+
+def test_call_none(benchmark: BenchFixture) -> None:
+    data = Range(0, 100_000)
+
+    def fn() -> Option[int]:
+        return data.iter().map(lambda _: NONE).last()
+
+    assert benchmark(fn) is NONE
