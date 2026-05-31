@@ -9,7 +9,7 @@
 ### ✨ Enhancements
 
 - **typing**: Improved the input types of various `PyoSet` methods to align them with typeshed, as they were too strict.
-- **typing**: `Iter::map_star` handles 1 element tuples now.
+- **typing**: `Iter::{map_star, filter_star}` can handle 1 element tuples now.
 
 ### 🛠️ Other improvements
 

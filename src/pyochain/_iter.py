@@ -1073,10 +1073,9 @@ class Iter[T](PyoIterator[T]):
         return self.__class__(filter(func, self._inner))
 
     @overload
-    def filter_star(
-        self: Iter[tuple[Any]],  # pyright: ignore[reportExplicitAny]
-        func: Callable[[Any], bool],  # pyright: ignore[reportExplicitAny]
-    ) -> Iter[tuple[Any]]: ...  # pyright: ignore[reportExplicitAny]
+    def filter_star[T1](
+        self: Iter[tuple[T1]], func: Callable[[T1], bool]
+    ) -> Iter[tuple[T1]]: ...
     @overload
     def filter_star[T1, T2](
         self: Iter[tuple[T1, T2]],
