@@ -720,29 +720,22 @@ class Iter[T](PyoIterator[T]):
         return Iter(map(func, self._inner))
 
     @overload
-    def map_star[R](
-        self: Iter[tuple[Any]],  # pyright: ignore[reportExplicitAny]
-        func: Callable[[Any], R],  # pyright: ignore[reportExplicitAny]
-    ) -> Iter[R]: ...
+    def map_star[T1, R](self: Iter[tuple[T1]], func: Callable[[T1], R]) -> Iter[R]: ...
     @overload
     def map_star[T1, T2, R](
-        self: Iter[tuple[T1, T2]],
-        func: Callable[[T1, T2], R],
+        self: Iter[tuple[T1, T2]], func: Callable[[T1, T2], R]
     ) -> Iter[R]: ...
     @overload
     def map_star[T1, T2, T3, R](
-        self: Iter[tuple[T1, T2, T3]],
-        func: Callable[[T1, T2, T3], R],
+        self: Iter[tuple[T1, T2, T3]], func: Callable[[T1, T2, T3], R]
     ) -> Iter[R]: ...
     @overload
     def map_star[T1, T2, T3, T4, R](
-        self: Iter[tuple[T1, T2, T3, T4]],
-        func: Callable[[T1, T2, T3, T4], R],
+        self: Iter[tuple[T1, T2, T3, T4]], func: Callable[[T1, T2, T3, T4], R]
     ) -> Iter[R]: ...
     @overload
     def map_star[T1, T2, T3, T4, T5, R](
-        self: Iter[tuple[T1, T2, T3, T4, T5]],
-        func: Callable[[T1, T2, T3, T4, T5], R],
+        self: Iter[tuple[T1, T2, T3, T4, T5]], func: Callable[[T1, T2, T3, T4, T5], R]
     ) -> Iter[R]: ...
     @overload
     def map_star[T1, T2, T3, T4, T5, T6, R](
@@ -769,6 +762,8 @@ class Iter[T](PyoIterator[T]):
         self: Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
     ) -> Iter[R]: ...
+    @overload
+    def map_star[R](self: Iter[tuple[Any, ...]], func: Callable[..., R]) -> Iter[R]: ...  # pyright: ignore[reportExplicitAny]
     def map_star[U: AnyIter, R](self: Iter[U], func: Callable[..., R]) -> Iter[R]:
         """Applies a function to each element.where each element is an iterable.
 
