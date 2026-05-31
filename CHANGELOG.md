@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### 🚀 Performance improvements
+
+- **no-copy**: Avoid unecessary copy in `Vec::repeat` by constructing the new instance by reference.
+
 ### ✨ Enhancements
 
 - **typing**: Improved the input types of various `PyoSet` methods to align them with typeshed, as they were too strict.

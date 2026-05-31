@@ -121,7 +121,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         instance._inner = data
         return instance
 
-    def repeat(self, n: int) -> Self:
+    def repeat(self, n: int) -> Vec[T]:
         """Repeat the elements of the `Vec` **n** times and return a new `Vec`.
 
         This is equivalent to `list_1 * n` for standard lists.
@@ -143,7 +143,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
 
             ```
         """
-        return self.__class__(self._inner * n)
+        return self.from_ref(self._inner * n)
 
     def repeat_mut(self, n: int) -> Self:
         """Repeat the elements of the `Vec` in place.
