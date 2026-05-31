@@ -6,6 +6,10 @@
 
 - **typing**: Improved the input types of various `PyoSet` methods to align them with typeshed, as they were too strict.
 
+### 🛠️ Other improvements
+
+- Splitted check_nav and generate_docs logic in two separate scripts. Closes issue #15.
+
 ## [0.24.0] - 2026-05-30
 
 ### 🏆 Highlights

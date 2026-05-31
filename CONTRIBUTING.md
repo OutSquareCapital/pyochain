@@ -154,6 +154,7 @@ uv run basedpyright src/pyochain;
 uv run -m scripts.check_docstrings;
 uv run pydoclint src/pyochain;
 uv run -m scripts.generate_docs
+uv run -m scripts.check_nav
 ```
 
 Unfortunately, `Ruff` doesn't work well when doctests are mixed with backticks sections in docstrings to format code examples.

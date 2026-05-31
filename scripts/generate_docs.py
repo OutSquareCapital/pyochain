@@ -1,19 +1,16 @@
 """Generate reference markdown files and update zensical.toml navigation."""
 
-import re
-from pathlib import Path
-from types import ModuleType
-from typing import Any, TypeIs
-from urllib.parse import urlparse
+from __future__ import annotations
 
-from pyochain import Dict, Iter, Set, SetMut
+from types import ModuleType
+from typing import TYPE_CHECKING, Any, TypeIs
+
+from pyochain import Dict, Set, SetMut
 
 from ._utils import Color, Paths, show
 
-type JsonData = dict[str, Any] | list[str] | str  # pyright: ignore[reportExplicitAny]
-MARKDOWN_LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
-FENCED_CODE_BLOCK_RE = re.compile(r"```.*?```", re.DOTALL)
-DOCS_SITE_URL = "https://outsquarecapital.github.io/pyochain/"
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def main() -> None:
@@ -26,8 +23,7 @@ def main() -> None:
     _generate_all_for_module(collections)
     show("✅ All files generated!", style=Color.SUCCESS)
     show("----------------------------------", style=Color.BLANK)
-    show("Checking navigation completeness...", style=Color.INFO)
-    return _check_nav_completeness()
+    return show("Checking navigation completeness...", style=Color.INFO)
 
 
 def _generate_all_for_module(module: ModuleType) -> None:
@@ -83,120 +79,6 @@ def _finalize_md(full_path: str, class_name: str) -> str:
 
 ::: {full_path}
 """
-
-
-def _check_nav_completeness(config_path: Paths = Paths.ZENSICAL) -> None:
-    import tomllib
-
-    txt = config_path.value.read_text(encoding="utf-8")
-    config = tomllib.loads(txt)
-    docs_dir = config_path.value.parent.joinpath(config["project"]["docs_dir"])  # pyright: ignore[reportAny]
-    docs_dir_mds = docs_dir.rglob("*.md")
-    docs_ref = docs_dir.joinpath("reference").glob("*.md")
-    nav_item: JsonData = config["project"]["nav"]  # pyright: ignore[reportAny]
-    nav_paths = _collect_nav_paths(nav_item)
-
-    missing = (
-        Iter(docs_ref)
-        .map(lambda path: path.relative_to(docs_dir).as_posix())
-        .collect(Set)
-        .difference(nav_paths)
-        .iter()
-        .join("\n")
-    )
-    if missing:
-        msg = f"⚠️  Missing generated files in {Paths.ZENSICAL.value.as_posix()}:\n {missing}"
-        show(msg, style=Color.WARNING)
-
-    docs_paths = (
-        Iter(docs_dir_mds)
-        .map(lambda path: path.relative_to(docs_dir).as_posix())
-        .collect(Set)
-    )
-    invalid_nav_paths = nav_paths.difference(docs_paths).iter().join("\n")
-    if invalid_nav_paths:
-        show(f"⚠️  Invalid nav links:\n {invalid_nav_paths}", style=Color.WARNING)
-
-    invalid_markdown_links = _check_markdown_links(docs_dir)
-    if invalid_markdown_links:
-        msg = f"⚠️  Invalid markdown links:\n {invalid_markdown_links}"
-        show(msg, style=Color.WARNING)
-    if missing or invalid_nav_paths or invalid_markdown_links:
-        msg = "❌ Please fix the above issues before deploying the documentation."
-        return show(msg, style=Color.ERROR)
-    return show("✓ Navigation is complete!", style=Color.SUCCESS)
-
-
-def _collect_nav_paths(item: JsonData) -> SetMut[str]:
-
-    def _collect_paths(acc: SetMut[str], current: JsonData) -> SetMut[str]:
-        match current:
-            case dict():
-                return Iter(current.values()).fold(acc, _collect_paths)
-            case list():
-                return Iter(current).fold(acc, _collect_paths)
-            case str():
-                acc.add(current)
-                return acc
-
-    return _collect_paths(SetMut(()), item)
-
-
-def _check_markdown_links(docs_dir: Path) -> str:
-
-    return (
-        Iter((Paths.README.value, Paths.CONTRIBUTING.value))
-        .flat_map(
-            lambda doc_path: Iter(
-                MARKDOWN_LINK_RE.finditer(
-                    FENCED_CODE_BLOCK_RE.sub("", doc_path.read_text(encoding="utf-8"))
-                )
-            ).map(
-                lambda match: (
-                    doc_path.as_posix(),
-                    _normalize_link_target(match.group(1)),
-                )
-            )
-        )
-        .filter_star(
-            lambda doc_path, target: (
-                not _is_valid_markdown_link(Path(doc_path), target, docs_dir)
-            )
-        )
-        .map_star(lambda doc_path, target: f"{doc_path} -> {target}")
-        .join("\n")
-    )
-
-
-def _is_valid_markdown_link(doc_path: Path, target: str, docs_dir: Path) -> bool:
-    normalized_target = _normalize_link_target(target).partition("#")[0]
-
-    match normalized_target:
-        case "":
-            return True
-        case _ if normalized_target.startswith(DOCS_SITE_URL):
-            return _is_valid_docs_site_link(normalized_target, docs_dir)
-        case _ if normalized_target.startswith(("http://", "https://")):
-            return True
-        case _:
-            return doc_path.parent.joinpath(normalized_target).exists()
-
-
-def _is_valid_docs_site_link(target: str, docs_dir: Path) -> bool:
-    parsed_target = urlparse(target)
-    relative_path = parsed_target.path.removeprefix("/pyochain/").strip("/")
-
-    match relative_path:
-        case "":
-            return docs_dir.joinpath("index.md").exists()
-        case _ if parsed_target.path.endswith("/"):
-            return docs_dir.joinpath(relative_path).with_suffix(".md").exists()
-        case _:
-            return docs_dir.joinpath(relative_path).exists()
-
-
-def _normalize_link_target(target: str) -> str:
-    return target.strip().removeprefix("<").removesuffix(">")
 
 
 def _is_module(obj: object) -> TypeIs[ModuleType]:
