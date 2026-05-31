@@ -2,9 +2,14 @@
 
 ## [Unreleased]
 
+### 💥 Breaking changes
+
+**API change**: `Iter::filter_star` does not accept arbitrary `Iterable` as elements anymore, only tuples.
+
 ### 🚀 Performance improvements
 
 - **no-copy**: Avoid unecessary copy in `Vec::repeat` by constructing the new instance by reference.
+- `Iter::filter_star` has been moved to Rust. **1.45x** to **1.50x** faster across benchmarks (tuples with 2, 3, 4, 5 elements).
 
 ### ✨ Enhancements
 

@@ -48,7 +48,7 @@ type ZippedLongest[T] = (
 type FilterFn[T, R] = Callable[[T], bool | TypeIs[R] | TypeGuard[R]] | None
 """Optional closure that can be passed to `Iter::filter` to determine if an element should be yielded."""
 # TODO: move to Rust the following:
-# with_position, zip_longest, filter_star, repeat,  array_chunks # noqa: ERA001
+# with_position, zip_longest, repeat, array_chunks # noqa: ERA001
 
 
 class Position(StrEnum):
@@ -1122,7 +1122,9 @@ class Iter[T](PyoIterator[T]):
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], bool],
     ) -> Iter[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]]: ...
 
-    def filter_star[U: AnyIter](self: Iter[U], func: Callable[..., bool]) -> Iter[U]:
+    def filter_star[U: tuple[Any, ...]](
+        self: Iter[U], func: Callable[..., bool]
+    ) -> Iter[U]:
         """Creates an `Iter` which uses a closure **func** to determine if an element should be yielded, where each element is an iterable.
 
         Unlike `.filter()`, which passes each element as a single argument, `.filter_star()` unpacks each element into positional arguments for the **func**.
@@ -1153,7 +1155,7 @@ class Iter[T](PyoIterator[T]):
 
             ```
         """
-        return Iter(filter(lambda x: func(*x), self._inner))
+        return Iter(tls.FilterStar(self._inner, func))
 
     @overload
     def filter_false[N](self: Iter[N | None], func: None = None) -> Iter[None]: ...

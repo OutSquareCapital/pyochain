@@ -50,6 +50,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Drain>()?;
     m.add_class::<ExtractIf>()?;
     m.add_class::<Successors>()?;
+    m.add_class::<FilterStar>()?;
     Ok(())
 }
 #[pyfunction]
@@ -1185,6 +1186,46 @@ impl Successors {
                 Ok(Some(unwrapped))
             }
             Err(_) => Ok(None),
+        }
+    }
+}
+#[pyclass]
+pub struct FilterStar {
+    iter: Py<PyIterator>,
+    predicate: Py<PyAny>,
+}
+
+#[pymethods]
+impl FilterStar {
+    #[new]
+    fn new(data: Bound<'_, PyIterator>, predicate: Bound<'_, PyAny>) -> Self {
+        Self {
+            iter: data.unbind(),
+            predicate: predicate.unbind(),
+        }
+    }
+
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
+        let py = slf.py();
+        let mut iter = slf.iter.clone_ref(py).into_bound(py);
+        let predicate = slf.predicate.bind(py);
+        loop {
+            match iter.next() {
+                None => return Ok(None),
+                Some(result) => {
+                    let item = result?;
+                    if predicate
+                        .call1(item.cast_exact::<PyTuple>()?)?
+                        .is_truthy()?
+                    {
+                        return Ok(Some(item.unbind()));
+                    }
+                }
+            }
         }
     }
 }
