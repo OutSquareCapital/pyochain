@@ -37,6 +37,8 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(last, m)?)?;
     m.add_function(wrap_pyfunction!(length, m)?)?;
     m.add_function(wrap_pyfunction!(retain, m)?)?;
+    m.add_function(wrap_pyfunction!(any, m)?)?;
+    m.add_function(wrap_pyfunction!(all, m)?)?;
     m.add_class::<UniqueIdentity>()?;
     m.add_class::<UniqueKey>()?;
     m.add_class::<Intersperse>()?;
@@ -582,6 +584,22 @@ pub fn retain(data: Bound<'_, PySequence>, predicate: &Bound<'_, PyAny>) -> PyRe
     }
     data.del_slice(write_idx, usize::MAX)?;
     Ok(())
+}
+#[pyfunction]
+pub fn any(mut data: Bound<'_, PyIterator>, predicate: Bound<'_, PyAny>) -> bool {
+    data.any(|item| {
+        item.and_then(|it| predicate.call1((it,)))
+            .and_then(|res| res.is_truthy())
+            .expect("Error occurred while evaluating predicate in `any`")
+    })
+}
+#[pyfunction]
+pub fn all(mut data: Bound<'_, PyIterator>, predicate: Bound<'_, PyAny>) -> bool {
+    data.all(|item| {
+        item.and_then(|it| predicate.call1((it,)))
+            .and_then(|res| res.is_truthy())
+            .expect("Error occurred while evaluating predicate in `all`")
+    })
 }
 #[pyclass]
 pub struct Juxt {

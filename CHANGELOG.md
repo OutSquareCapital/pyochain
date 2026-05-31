@@ -10,6 +10,7 @@
 
 - **no-copy**: Avoid unecessary copy in `Vec::repeat` by constructing the new instance by reference.
 - `Iter::filter_star` has been moved to Rust. **1.45x** to **1.50x** faster across benchmarks (tuples with 2, 3, 4, 5 elements).
+- `PyoIterator::{all, any}` with predicate function migrated to Rust.**1.02x** to **1.05x** faster.
 
 ### ✨ Enhancements
 

@@ -239,3 +239,21 @@ def _successors(size: int) -> int:
         return Some(x + 1) if x < size else Null()
 
     return Iter.successors(Some(0), f).last()
+
+
+def test_all(benchmark: BenchFixture) -> None:
+    data = Range(0, 20_000)
+    assert benchmark(_all, data) is True
+
+
+def _all(data: Range) -> bool:
+    return data.iter().all(lambda x: x < 20_000)
+
+
+def test_any(benchmark: BenchFixture) -> None:
+    data = Range(0, 20_000)
+    assert benchmark(_any, data) is True
+
+
+def _any(data: Range) -> bool:
+    return data.iter().any(lambda x: x == 19_999)

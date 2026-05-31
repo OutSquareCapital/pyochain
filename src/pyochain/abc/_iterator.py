@@ -176,7 +176,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         """
         if predicate is None:
             return all(iter(self))
-        return all(predicate(x) for x in iter(self))
+        return tls.all(iter(self), predicate)
 
     def any(self, predicate: Callable[[T], bool] | None = None) -> bool:
         """Tests if any element of the `Iterator` is truthy.
@@ -211,7 +211,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         """
         if predicate is None:
             return any(iter(self))
-        return any(predicate(x) for x in iter(self))
+        return tls.any(iter(self), predicate)
 
     def nth(self, n: int) -> Option[T]:
         """Return the nth item of the `Iterable` at the specified *n*.

@@ -83,6 +83,10 @@ def try_collect[T](
 ) -> Option[list[T]]: ...
 @no_doctest
 def retain[T](data: MutableSequence[T], predicate: Callable[[T], bool]) -> None: ...
+@no_doctest
+def any[T](data: Iterator[T], predicate: Callable[[T], bool]) -> bool: ...  # noqa: A001
+@no_doctest
+def all[T](data: Iterator[T], predicate: Callable[[T], bool]) -> bool: ...  # noqa: A001
 
 class Juxt:
     @overload
