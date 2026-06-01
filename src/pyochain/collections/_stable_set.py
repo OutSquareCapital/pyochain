@@ -39,7 +39,6 @@ class StableSet[T](PyoMutableSet[T]):  # noqa: PLW1641
         StableSet('a', 'c', 'd')
 
         ```
-
     """
 
     _inner: dict[T, None]

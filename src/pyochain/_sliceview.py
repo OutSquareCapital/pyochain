@@ -236,7 +236,6 @@ class SliceView[T](PyoSequence[T]):  # noqa: PLW1641
             Seq(3, 4, 5)
 
             ```
-
         """
         b_len = len(self._base)
         cr = self._current_range()
@@ -262,6 +261,5 @@ class SliceView[T](PyoSequence[T]):  # noqa: PLW1641
             True
 
             ```
-
         """
         return self._base

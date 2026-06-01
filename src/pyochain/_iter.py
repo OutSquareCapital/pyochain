@@ -1144,7 +1144,8 @@ class Iter[T](PyoIterator[T]):
             >>> from pyochain import Seq
             >>> data = Seq(("apple", "banana", "cherry", "date"))
             >>> output = (
-            ...     data.iter()
+            ...     data
+            ...     .iter()
             ...     .enumerate()
             ...     .filter_star(lambda index, _: index % 2 == 0)
             ...     .map_star(lambda _, fruit: fruit.title())
@@ -1221,7 +1222,8 @@ class Iter[T](PyoIterator[T]):
             Seq(1, 5)
             >>> # Equivalent to:
             >>> parsed = (
-            ...     data.iter()
+            ...     data
+            ...     .iter()
             ...     .map(lambda s: _parse(s).ok())
             ...     .filter(lambda s: s.is_some())
             ...     .map(lambda s: s.unwrap())
@@ -2098,9 +2100,22 @@ class Iter[T](PyoIterator[T]):
         Example:
             ```python
             >>> from pyochain import Iter
-            >>> Iter(("a", "b", "c")).with_position().map_star(lambda pos, val: (pos.name, val)).collect()
+            >>> three_vals = (
+            ...     Iter(("a", "b", "c"))
+            ...     .with_position()
+            ...     .map_star(lambda pos, val: (pos.name, val))
+            ...     .collect()
+            ... )
+            >>> three_vals
             Seq(('FIRST', 'a'), ('MIDDLE', 'b'), ('LAST', 'c'))
-            >>> Iter(["a"]).with_position().map_star(lambda pos, val: (pos.name, val)).collect()
+            >>> only_a = (
+            ...     Iter
+            ...     .once("a")
+            ...     .with_position()
+            ...     .map_star(lambda pos, val: (pos.name, val))
+            ...     .collect()
+            ... )
+            >>> only_a
             Seq(('ONLY', 'a'),)
 
             ```
@@ -2172,7 +2187,8 @@ class Iter[T](PyoIterator[T]):
             >>> from operator import itemgetter
             >>> # Example 1: Group even and odd numbers
             >>> (
-            ...     Iter.from_count()  # create an infinite iterator of integers
+            ...     Iter
+            ...     .from_count()  # create an infinite iterator of integers
             ...     .take(8)  # take the first 8
             ...     .map(lambda x: (x % 2 == 0, x))  # map to (is_even, value)
             ...     .sort_by(itemgetter(0))  # sort by is_even

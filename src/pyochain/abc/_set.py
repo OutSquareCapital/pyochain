@@ -267,7 +267,8 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
             >>> from_keys
             Vec('b', 'c')
             >>> from_items = (
-            ...     dct.items()
+            ...     dct
+            ...     .items()
             ...     .intersection({("b", 2), ("c", 3), ("d", 4)})
             ...     .iter()
             ...     .sort()
@@ -372,7 +373,8 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
             >>> from_keys
             Vec('a', 'd')
             >>> from_items = (
-            ...     dct.items()
+            ...     dct
+            ...     .items()
             ...     .symmetric_difference({("b", 2), ("c", 3), ("d", 4)})
             ...     .iter()
             ...     .sort()
