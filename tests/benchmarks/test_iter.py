@@ -257,3 +257,12 @@ def test_any(benchmark: BenchFixture) -> None:
 
 def _any(data: Range) -> bool:
     return data.iter().any(lambda x: x == 19_999)
+
+
+def test_all_equal(benchmark: BenchFixture) -> None:
+    data = Iter.from_repeat(1).take(Sizes.SIZE_4096).collect()
+    assert benchmark(_all_equal, data) is True
+
+
+def _all_equal(data: Seq[int]) -> bool:
+    return data.iter().all_equal()
