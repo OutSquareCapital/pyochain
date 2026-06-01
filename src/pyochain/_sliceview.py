@@ -27,7 +27,6 @@ class _OpenRange:
         return range(self.start, stop, self.step)
 
 
-# TODO: move this to Rust
 # TODO: See if it make sense to separate mutable vs immutable slices
 # TODO: See if collections should have dedicated slice views methods
 

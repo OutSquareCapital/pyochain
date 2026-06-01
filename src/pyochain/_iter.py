@@ -47,8 +47,6 @@ type ZippedLongest[T] = (
 """Type representing the result of a `zip_longest` operation, which can yield tuples of varying lengths depending on the number of iterables zipped together."""
 type FilterFn[T, R] = Callable[[T], bool | TypeIs[R] | TypeGuard[R]] | None
 """Optional closure that can be passed to `Iter::filter` to determine if an element should be yielded."""
-# TODO: move to Rust the following:
-# with_position, zip_longest, repeat, array_chunks # noqa: ERA001
 
 
 class Position(StrEnum):
