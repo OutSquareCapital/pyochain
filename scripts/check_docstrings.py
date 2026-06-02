@@ -23,6 +23,7 @@ from pyochain import (
     Vec,
     option,
 )
+from pyochain.abc import PyoIterator
 
 from ._utils import CONSOLE, Color, Paths, show
 
@@ -84,7 +85,7 @@ def main() -> None:
         .chain(_get_files("pyi"))
         .filter_map(_check_file)
         .flatten()
-        .collect()
+        .collect(Seq)
         .then(_handle_errors)
         .unwrap_or_else(lambda: show("[OK] No issues found!", style=Color.SUCCESS))
     )
@@ -122,7 +123,7 @@ def _show_table(all_errors: Seq[DocstringError]) -> None:
     CONSOLE.print(table)
 
 
-def _check_file(file_path: Path) -> Option[Iter[DocstringError]]:
+def _check_file(file_path: Path) -> Option[PyoIterator[DocstringError]]:
 
     def _is_documentable(node: ast.AST) -> TypeIs[DocumentableNode]:
         return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
@@ -197,7 +198,7 @@ def _process_node(
                         node.name,
                         node.lineno,
                         errors.first().line_no,
-                        errors.iter().map(lambda e: e.message).collect(),
+                        errors.iter().map(lambda e: e.message).collect(Seq),
                     )
                     return Some(err)
                 case Ok(_):

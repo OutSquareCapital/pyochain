@@ -1,7 +1,7 @@
 """pyochain - A functional programming library for Python."""
 
 from ._dict import Dict
-from ._iter import Iter, Position
+from ._iter import Iter
 from ._range import Range
 from ._seq import Seq
 from ._set import Set, SetMut
@@ -32,7 +32,6 @@ __all__ = [
     "Ok",
     "Option",
     "OptionUnwrapError",
-    "Position",
     "PyoItemsView",
     "PyoKeysView",
     "PyoValuesView",

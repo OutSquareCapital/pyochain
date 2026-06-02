@@ -130,7 +130,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
             n (int): The number of times to repeat the elements.
 
         Returns:
-            Self: The new `Vec` after repetition.
+            Vec[T]: The new `Vec` after repetition.
 
         See Also:
             [`Vec::repeat_mut`][repeat_mut] which modifies the `Vec` in place.

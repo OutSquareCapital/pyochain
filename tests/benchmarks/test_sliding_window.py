@@ -18,4 +18,4 @@ def test_map_windows(benchmark: BenchFixture, size: int) -> None:
 
 
 def _map_windows(data: Range, size: int) -> Seq[tuple[int, ...]]:
-    return data.iter().map_windows(size, lambda x: x).collect()
+    return data.iter().map_windows(size, lambda x: x).collect(Seq)

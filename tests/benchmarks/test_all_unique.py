@@ -28,7 +28,7 @@ def test_int(benchmark: BenchFixture, size: int) -> None:
     def _fn(x: int) -> int:
         return 0 if x == size - 1 else x
 
-    data = Range(0, size).iter().map(_fn).collect()
+    data = Range(0, size).iter().map(_fn).collect(Seq)
     assert benchmark(_run, data) is False
 
 
@@ -38,7 +38,7 @@ def test_str(benchmark: BenchFixture, size: int) -> None:
     def _fn(i: int) -> str:
         return "0" if i == size - 1 else str(i)
 
-    data = Range(0, size).iter().map(_fn).collect()
+    data = Range(0, size).iter().map(_fn).collect(Seq)
     assert benchmark(_run, data) is False
 
 
@@ -48,7 +48,7 @@ def test_int_by(benchmark: BenchFixture, size: int) -> None:
     def _fn(x: int) -> int:
         return 0 if x == size - 1 else x
 
-    data = Range(0, size).iter().map(_fn).collect()
+    data = Range(0, size).iter().map(_fn).collect(Seq)
     assert benchmark(_run_by, data, lambda x: x + 10 - 10) is False
 
 
@@ -58,5 +58,5 @@ def test_str_by(benchmark: BenchFixture, size: int) -> None:
     def _fn(i: int) -> str:
         return "0" if i == size - 1 else str(i)
 
-    data = Range(0, size).iter().map(_fn).collect()
+    data = Range(0, size).iter().map(_fn).collect(Seq)
     assert benchmark(_run_by, data, str.lower) is False

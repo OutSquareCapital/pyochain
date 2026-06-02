@@ -26,7 +26,7 @@ def test_unique(benchmark: BenchFixture) -> None:
     def _fn(x: int) -> int:
         return 0 if x == SIZE - 1 else x
 
-    data = Range(0, SIZE).iter().map(_fn).collect()
+    data = Range(0, SIZE).iter().map(_fn).collect(Seq)
     assert benchmark(_run, data) == SIZE - 2
 
 
@@ -35,5 +35,5 @@ def test_unique_by(benchmark: BenchFixture) -> None:
     def _fn(x: int) -> int:
         return 0 if x == SIZE - 1 else x
 
-    data = Range(0, SIZE).iter().map(_fn).collect()
+    data = Range(0, SIZE).iter().map(_fn).collect(Seq)
     assert benchmark(_run_by, data, lambda x: x + 10 - 10) == SIZE - 2

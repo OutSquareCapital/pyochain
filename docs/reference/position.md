@@ -1,3 +1,3 @@
 # Position
 
-::: pyochain._iter.Position
+::: pyochain.abc._iterator.Position

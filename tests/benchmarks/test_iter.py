@@ -27,7 +27,7 @@ def _filter_map(data: Range) -> int:
 
 @pytest.mark.parametrize("size", [64, 256, 1024, 4096])
 def test_filter_map_star(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size).iter().enumerate().collect()
+    data = Range(0, size).iter().enumerate().collect(Seq)
     assert benchmark(_filter_map_star, data) == size - 2
 
 
@@ -107,7 +107,7 @@ def test_for_each(benchmark: BenchFixture, fn: ForEachFn[int], size: int) -> Non
 @pytest.mark.benchmark(group="for_each_star")
 @pytest.mark.parametrize("size", SIZES)
 def test_for_each_star(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size).iter().map(lambda i: (i, i * 2, i * 3)).collect()
+    data = Range(0, size).iter().map(lambda i: (i, i * 2, i * 3)).collect(Seq)
     assert benchmark(_for_each_star, data) is None
 
 
@@ -118,7 +118,7 @@ def _for_each_star(data: Seq[tuple[int, int, int]]) -> None:
 @pytest.mark.benchmark(group="for_each_star_args")
 @pytest.mark.parametrize("size", SIZES)
 def test_for_each_star_args(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size).iter().map(lambda i: (i, i * 2, i * 3)).collect()
+    data = Range(0, size).iter().map(lambda i: (i, i * 2, i * 3)).collect(Seq)
     assert benchmark(_for_each_star_args, data) is None
 
 
@@ -129,7 +129,7 @@ def _for_each_star_args(data: Seq[tuple[int, int, int]]) -> None:
 @pytest.mark.benchmark(group="for_each_star_kwargs")
 @pytest.mark.parametrize("size", SIZES)
 def test_for_each_star_kwargs(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size).iter().map(lambda i: (i, i * 2, i * 3)).collect()
+    data = Range(0, size).iter().map(lambda i: (i, i * 2, i * 3)).collect(Seq)
     assert benchmark(_for_each_star_kwargs, data) is None
 
 
@@ -148,7 +148,7 @@ def test_intersperse(benchmark: BenchFixture, size: int) -> None:
 
 
 def _intersperse(data: Range) -> Seq[int]:
-    return data.iter().intersperse(1).collect()
+    return data.iter().intersperse(1).collect(Seq)
 
 
 @pytest.mark.benchmark(group="map_juxt")
@@ -156,12 +156,12 @@ def _intersperse(data: Range) -> Seq[int]:
 def test_map_juxt(benchmark: BenchFixture, size: int) -> None:
 
     data = Range(0, 4096)
-    funcs = Range(0, size).iter().map(_create_fn).collect()
+    funcs = Range(0, size).iter().map(_create_fn).collect(Seq)
     assert benchmark(_map_juxt, data, funcs).last() is not None
 
 
 def _map_juxt(data: Range, funcs: Seq[Callable[[int], int]]) -> Seq[tuple[int, ...]]:
-    return data.iter().map_juxt(*funcs).collect()
+    return data.iter().map_juxt(*funcs).collect(Seq)
 
 
 def _create_fn(i: int) -> Callable[[int], int]:
@@ -178,7 +178,7 @@ def test_scan(benchmark: BenchFixture, size: int) -> None:
 
 
 def _scan(data: Range) -> Seq[int]:
-    return data.iter().scan(0, lambda acc, x: Some(acc + x)).collect()
+    return data.iter().scan(0, lambda acc, x: Some(acc + x)).collect(Seq)
 
 
 @pytest.mark.parametrize("size", SIZES)
@@ -260,7 +260,7 @@ def _any(data: Range) -> bool:
 
 
 def test_all_equal(benchmark: BenchFixture) -> None:
-    data = Iter.from_repeat(1).take(Sizes.SIZE_4096).collect()
+    data = Iter.from_repeat(1).take(Sizes.SIZE_4096).collect(Seq)
     assert benchmark(_all_equal, data) is True
 
 
