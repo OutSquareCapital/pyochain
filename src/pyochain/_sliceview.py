@@ -58,14 +58,14 @@ class SliceView[T](PyoSequence[T]):  # noqa: PLW1641
 
     Examples:
         ```python
-        >>> from pyochain import SliceView
+        >>> from pyochain import SliceView, Seq
         >>> sv = SliceView([0, 1, 2, 3, 4, 5])
-        >>> sv[1:4].iter().collect()
+        >>> sv[1:4].iter().collect(Seq)
         Seq(1, 2, 3)
-        >>> sv[::2].iter().collect()
+        >>> sv[::2].iter().collect(Seq)
         Seq(0, 2, 4)
         >>> sv2 = sv[1:][::2]  # composed — O(1), no copy
-        >>> sv2.iter().collect()
+        >>> sv2.iter().collect(Seq)
         Seq(1, 3, 5)
 
         ```
@@ -224,14 +224,14 @@ class SliceView[T](PyoSequence[T]):  # noqa: PLW1641
             This can be useful for sliding windows:
 
             ```python
-            >>> from pyochain import SliceView, Range
-            >>> data = Range(0, 10).iter().collect()
+            >>> from pyochain import SliceView, Range, Seq
+            >>> data = Range(0, 10).iter().collect(Seq)
             >>> sv = SliceView(data, 0, 3)
-            >>> sv.iter().collect()
+            >>> sv.iter().collect(Seq)
             Seq(0, 1, 2)
             >>> sv.advance(3)
             SliceView(Seq(0, 1, 2, 3, 4, 5, 6, 7, 8, 9))[3:6:1]
-            >>> sv.iter().collect()
+            >>> sv.iter().collect(Seq)
             Seq(3, 4, 5)
 
             ```

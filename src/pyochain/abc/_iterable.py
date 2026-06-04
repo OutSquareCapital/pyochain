@@ -90,10 +90,10 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
             >>> from pyochain import Seq
             >>> seq = Seq((1, 2, 3))
             >>> iterator = seq.iter()
-            >>> iterator.collect()
+            >>> iterator.collect(Seq)
             Seq(1, 2, 3)
             >>> # iterator is now empty
-            >>> iterator.collect()
+            >>> iterator.collect(Seq)
             Seq()
 
             ```

@@ -21,7 +21,7 @@ res = (
     .filter(lambda x: x % 2 != 0)
     .map(lambda x: x**2)
     .take(5)
-    .collect()
+    .collect(Seq)
 )
 assert res == (1, 9, 25, 49, 81)
 ```

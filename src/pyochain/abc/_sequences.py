@@ -25,9 +25,9 @@ class PyoReversible[T](Reversible[T], ABC):
         Example:
             ```python
             >>> from pyochain import Seq, Range
-            >>> Seq((1, 2, 3)).rev().collect()
+            >>> Seq((1, 2, 3)).rev().collect(Seq)
             Seq(3, 2, 1)
-            >>> Range(0, 5).rev().collect()
+            >>> Range(0, 5).rev().collect(Seq)
             Seq(4, 3, 2, 1, 0)
 
             ```
@@ -52,6 +52,8 @@ class PyoSequence[T](PyoCollection[T], PyoReversible[T], Sequence[T], ABC):
     Example:
         ```python
         >>> from pyochain.abc import PyoSequence
+        >>> from pyochain import Seq
+        >>>
         >>> class MySeq(PyoSequence[int]):
         ...     def __init__(self, data: list[int]):
         ...         self._data = data
@@ -71,7 +73,7 @@ class PyoSequence[T](PyoCollection[T], PyoReversible[T], Sequence[T], ABC):
         >>> my_seq = MySeq([10, 20, 30])
         >>> my_seq.first()
         10
-        >>> my_seq.rev().collect()
+        >>> my_seq.rev().collect(Seq)
         Seq(30, 20, 10)
 
         ```
@@ -147,7 +149,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
 
         This is similar to filtering, but operates in place, visiting each element exactly once in forward order.
 
-        Compared to `.iter().filter(predicate).collect()`, this avoids creating a new collection.
+        Compared to `.iter().filter(predicate).collect(Seq)`, this avoids creating a new collection.
 
         The order of the retained elements is preserved.
 
@@ -245,18 +247,18 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
             >>> from pyochain import Vec
             >>> data = (1, 2, 3, 4, 5)
             >>> vec = Vec(data)
-            >>> extracted = vec.extract_if(lambda x: x % 2 == 0).collect()
+            >>> extracted = vec.extract_if(lambda x: x % 2 == 0).collect(Vec)
             >>> extracted
-            Seq(2, 4)
+            Vec(2, 4)
             >>> vec
             Vec(1, 3, 5)
             >>> # Extracting with a range
             >>> vec = Vec(data)
             >>> extracted = vec.extract_if(
             ...     lambda x: x % 2 == 0, start=1, end=4
-            ... ).collect()
+            ... ).collect(Vec)
             >>> extracted
-            Seq(2, 4)
+            Vec(2, 4)
             >>> vec
             Vec(1, 3, 5)
 
@@ -282,18 +284,18 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
             ```python
             >>> from pyochain import Vec
             >>> v = Vec.from_ref([1, 2, 3])
-            >>> u = v.drain(1).collect()
+            >>> u = v.drain(1).collect(Vec)
             >>> v
             Vec(1)
             >>> u
-            Seq(2, 3)
+            Vec(2, 3)
 
             ```
             Fully consuming the `Iterator` removes all drained elements
             ```python
             >>> from pyochain import Vec
             >>> v = Vec.from_ref([1, 2, 3])
-            >>> _ = v.drain().collect()
+            >>> _ = v.drain().collect(Vec)
             >>> v
             Vec()
 

@@ -47,7 +47,7 @@ def test_drain_empty_immediately_gc() -> None:
 def test_drain_full_consumption() -> None:
     """Test drain with full consumption of iterator."""
     v = Vec([5, 6, 7])
-    drained = v.drain(1, 2).collect()
+    drained = v.drain(1, 2).collect(Seq)
     assert list(drained) == [6]
     assert list(v) == [5, 7]
 
@@ -150,7 +150,7 @@ def test_truncate_no_intermediate_copy() -> None:
 def test_extract_if_basic() -> None:
     """Test basic extract_if functionality."""
     v = Vec([1, 2, 3, 4, 5])
-    extracted = v.extract_if(lambda x: x % 2 == 0).collect()
+    extracted = v.extract_if(lambda x: x % 2 == 0).collect(Seq)
     # After extracting, only odd elements remain
     assert list(v) == [1, 3, 5]
     # Extracted elements should be even
@@ -160,7 +160,7 @@ def test_extract_if_basic() -> None:
 def test_extract_if_with_range() -> None:
     """Test extract_if with specified range."""
     v = Vec([1, 2, 3, 4, 5])
-    extracted = v.extract_if(lambda x: x % 2 == 0, start=1, end=4).collect()
+    extracted = v.extract_if(lambda x: x % 2 == 0, start=1, end=4).collect(Seq)
     # Only indices 1-3 are affected, so element 2 and 4 are extracted
     assert list(v) == [1, 3, 5]
     assert list(extracted) == [2, 4]
@@ -169,7 +169,7 @@ def test_extract_if_with_range() -> None:
 def test_extract_if_empty_result() -> None:
     """Test extract_if that matches no elements."""
     v = Vec([1, 2, 3, 4])
-    extracted = v.extract_if(lambda x: x > 10).collect()
+    extracted = v.extract_if(lambda x: x > 10).collect(Seq)
     assert list(extracted) == []
     assert list(v) == [1, 2, 3, 4]
 
@@ -177,7 +177,7 @@ def test_extract_if_empty_result() -> None:
 def test_extract_if_all_match() -> None:
     """Test extract_if that matches all elements."""
     v = Vec([1, 2, 3, 4])
-    extracted = v.extract_if(lambda x: x > 0).collect()
+    extracted = v.extract_if(lambda x: x > 0).collect(Seq)
     assert list(extracted) == [1, 2, 3, 4]
     assert list(v) == []
 

@@ -95,7 +95,7 @@ def _get_files(pattern: str) -> Seq[Path]:
     return (
         Paths.SRC_DIR
         .iter_rglob(f"*.{pattern}")
-        .collect()
+        .collect(Seq)
         .inspect(
             lambda p: show(f"Checking {p.len()} {pattern} files...", style=Color.INFO)
         )

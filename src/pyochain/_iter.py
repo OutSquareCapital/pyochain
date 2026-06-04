@@ -1,20 +1,14 @@
 from __future__ import annotations
 
 import itertools
-from collections.abc import (
-    Callable,
-    Collection,
-    Generator,
-    Iterable,
-    Iterator,
-)
-from typing import TYPE_CHECKING, Any, Self, override
+from typing import TYPE_CHECKING, Self, override
 
 from . import _tools as tls  # pyright: ignore[reportMissingModuleSource]
-from ._seq import Seq
 from .abc import PyoIterator
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Generator, Iterable, Iterator
+
     from .rs import Option
 
 
@@ -38,8 +32,10 @@ class Iter[T](PyoIterator[T]):
 
     Example:
         ```python
+        >>> from pyochain import Iter, Seq
+        >>>
         >>> data = (0, 1, 2, 3, 4)
-        >>> Iter(data).collect()
+        >>> Iter(data).collect(Seq)
         Seq(0, 1, 2, 3, 4)
         >>> iterator = Iter(data)
         >>> # First we have a tuple iterator
@@ -50,10 +46,10 @@ class Iter[T](PyoIterator[T]):
         >>> mapped._inner.__class__.__name__
         'map'
         >>> # We collect it, by default into a Seq
-        >>> mapped.collect()
+        >>> mapped.collect(Seq)
         Seq(0, 2, 4, 6, 8)
         >>> # iterator is now exhausted
-        >>> iterator.collect()
+        >>> iterator.collect(Seq)
         Seq()
 
         ```
@@ -61,7 +57,7 @@ class Iter[T](PyoIterator[T]):
         ```python
         >>> from pyochain import Iter
         >>> gen_expr = (x * x for x in range(5))
-        >>> Iter(gen_expr).collect()
+        >>> Iter(gen_expr).collect(Seq)
         Seq(0, 1, 4, 9, 16)
 
         ```
@@ -72,7 +68,7 @@ class Iter[T](PyoIterator[T]):
         ...     for x in range(5):
         ...         yield x * x
         >>>
-        >>> Iter(gen_func()).collect()
+        >>> Iter(gen_func()).collect(Seq)
         Seq(0, 1, 4, 9, 16)
 
         ```
@@ -102,11 +98,11 @@ class Iter[T](PyoIterator[T]):
 
         Example:
             ```python
-            >>> from pyochain import Iter
+            >>> from pyochain import Iter, Seq
             >>> it = Iter((1, 2, 3))
             >>> bool(it)
             True
-            >>> it.collect()  # All elements still available
+            >>> it.collect(Seq)  # All elements still available
             Seq(1, 2, 3)
 
             ```
@@ -143,10 +139,10 @@ class Iter[T](PyoIterator[T]):
 
         Example:
             ```python
-            >>> from pyochain import Iter
+            >>> from pyochain import Iter, Seq
             >>> original = Iter((1, 2, 3))
             >>> copy = Iter.from_ref(original)
-            >>> copy.map(lambda x: x * 2).collect()
+            >>> copy.map(lambda x: x * 2).collect(Seq)
             Seq(2, 4, 6)
             >>> original.next()
             Some(1)
@@ -173,8 +169,8 @@ class Iter[T](PyoIterator[T]):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter.once(42).collect()
+            >>> from pyochain import Iter, Seq
+            >>> Iter.once(42).collect(Seq)
             Seq(42,)
 
             ```
@@ -203,8 +199,8 @@ class Iter[T](PyoIterator[T]):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter.once_with(lambda: 42).collect()
+            >>> from pyochain import Iter, Seq
+            >>> Iter.once_with(lambda: 42).collect(Seq)
             Seq(42,)
 
             ```
@@ -233,8 +229,8 @@ class Iter[T](PyoIterator[T]):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter.from_count(10, 2).take(3).collect()
+            >>> from pyochain import Iter, Seq
+            >>> Iter.from_count(10, 2).take(3).collect(Seq)
             Seq(10, 12, 14)
 
             ```
@@ -274,7 +270,8 @@ class Iter[T](PyoIterator[T]):
         Example:
             Closure with captured local variable:
             ```python
-            >>> from pyochain import Iter, Some, NONE
+            >>> from pyochain import Iter, Some, NONE, Seq
+            >>>
             >>> def make_counter(max_val: int):
             ...     counter = 0
             ...
@@ -285,7 +282,7 @@ class Iter[T](PyoIterator[T]):
             ...
             ...     return gen
             >>>
-            >>> Iter.from_fn(make_counter(5)).collect()
+            >>> Iter.from_fn(make_counter(5)).collect(Seq)
             Seq(1, 2, 3, 4, 5)
 
             ```
@@ -302,7 +299,7 @@ class Iter[T](PyoIterator[T]):
             ...         self.count += 1
             ...         return Some(self.count) if self.count <= self.max else NONE
             >>>
-            >>> Iter.from_fn(Counter(5)).collect()
+            >>> Iter.from_fn(Counter(5)).collect(Seq)
             Seq(1, 2, 3, 4, 5)
 
             ```
@@ -317,7 +314,7 @@ class Iter[T](PyoIterator[T]):
             ...
             ...     return consume
             >>>
-            >>> Iter.from_fn(Deque([1, 2, 3]).into(queue_consumer)).collect()
+            >>> Iter.from_fn(Deque([1, 2, 3]).into(queue_consumer)).collect(Seq)
             Seq(1, 2, 3)
 
             ```
@@ -340,14 +337,14 @@ class Iter[T](PyoIterator[T]):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Some, NONE, Option
+            >>> from pyochain import Iter, Some, NONE, Option, Seq
             >>>
             >>> def next_pow10(x: int) -> Option[int]:
             ...     return Some(x * 10) if x < 10_000 else NONE
             >>>
-            >>> Iter.successors(Some(1), next_pow10).collect()
+            >>> Iter.successors(Some(1), next_pow10).collect(Seq)
             Seq(1, 10, 100, 1000, 10000)
-            >>> Iter.successors(NONE, next_pow10).collect()
+            >>> Iter.successors(NONE, next_pow10).collect(Seq)
             Seq()
 
             ```
@@ -381,9 +378,9 @@ class Iter[T](PyoIterator[T]):
         Example:
             ```python
             >>> from pyochain import Seq, Iter
-            >>> Iter.from_repeat(1, 3).collect()
+            >>> Iter.from_repeat(1, 3).collect(Seq)
             Seq(1, 1, 1)
-            >>> Iter.from_repeat(("a", "b"), 2).collect()
+            >>> Iter.from_repeat(("a", "b"), 2).collect(Seq)
             Seq(('a', 'b'), ('a', 'b'))
 
             ```
@@ -410,12 +407,6 @@ class Iter[T](PyoIterator[T]):
             return Iter(itertools.repeat(obj))
         return Iter(itertools.repeat(obj, n))
 
-    @override
-    def collect[R: Collection[Any]](
-        self, collector: Callable[[Iterator[T]], R] = Seq[T]
-    ) -> R:
-        return collector(self._inner)
-
     def cloned(self) -> PyoIterator[T]:
         """Clone the `Iter` into a new independent `Iter` using `itertools.tee`.
 
@@ -433,12 +424,12 @@ class Iter[T](PyoIterator[T]):
 
         Example:
             ```python
-            >>> from pyochain import Iter
+            >>> from pyochain import Iter, Seq
             >>> it = Iter((1, 2, 3))
             >>> cloned = it.cloned()
-            >>> cloned.collect()
+            >>> cloned.collect(Seq)
             Seq(1, 2, 3)
-            >>> it.collect()
+            >>> it.collect(Seq)
             Seq(1, 2, 3)
 
             ```

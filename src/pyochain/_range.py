@@ -20,13 +20,14 @@ class Range(PyoSequence[int]):
 
     Example:
         ```python
-        >>> from pyochain import Range, Dict
+        >>> from pyochain import Range, Dict, Seq
+        >>>
         >>> r = Range(1, 6, 2)
         >>> r
         Range(1, 6, 2)
-        >>> r.iter().collect()
+        >>> r.iter().collect(Seq)
         Seq(1, 3, 5)
-        >>> r.rev().collect()
+        >>> r.rev().collect(Seq)
         Seq(5, 3, 1)
         >>> names = ("alice", "bob", "CHARLIE", "dave")
         >>> indexed_names = (

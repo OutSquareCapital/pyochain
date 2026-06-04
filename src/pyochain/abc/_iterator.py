@@ -104,7 +104,9 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
     Example:
         ```python
+        >>> from pyochain import Seq
         >>> from pyochain.abc import PyoIterator
+        >>>
         >>> class Count(PyoIterator[int]):
         ...     def __init__(self, start: int = 0):
         ...         self.current = start
@@ -122,7 +124,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Some(5)
         >>> counter.next()
         Some(6)
-        >>> counter.iter().take(3).collect()
+        >>> counter.iter().take(3).collect(Seq)
         Seq(7, 8, 9)
 
         ```
@@ -1255,11 +1257,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         If you need to pass additional arguments, you can use [`Pipeable::into`][Pipeable.into] instead.
 
-        Note:
-            `Iter::collect` is overriden to provide `Seq` as the default **collector**.
-
         Args:
-            collector (Callable[[Iterator[T]], R]): Function|type that defines the target collection. `R` is constrained to a `Collection`.
+            collector (Callable[[Iterator[T]], R]): Function|type that defines the target collection.
 
         Returns:
             R: A materialized `Collection` containing the collected elements.
@@ -1458,11 +1457,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> str_numbers = ("3", "1", "2")
-            >>> Iter(str_numbers).sort_by(int)
+            >>> from pyochain import Seq
+            >>> str_numbers = Seq(("3", "1", "2"))
+            >>> str_numbers.iter().sort_by(int)
             Vec('1', '2', '3')
-            >>> Iter(str_numbers).sort_by(int, reverse=True)
+            >>> str_numbers.iter().sort_by(int, reverse=True)
             Vec('3', '2', '1')
             >>> from dataclasses import dataclass
             >>> @dataclass
@@ -1470,17 +1469,18 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ...     name: str
             ...     age: int
             >>>
-            >>> peoples = (
+            >>> peoples = Seq((
             ...     Person("Alice", 30),
             ...     Person("Bob", 25),
             ...     Person("Charlie", 35),
-            ... )
+            ... ))
             >>> sorted_names = (
-            ...     Iter(peoples)
+            ...     peoples
+            ...     .iter()
             ...     .sort_by(lambda x: x.age)
             ...     .iter()
             ...     .map(lambda x: x.name)
-            ...     .collect()
+            ...     .collect(Seq)
             ... )
             >>> sorted_names
             Seq('Bob', 'Alice', 'Charlie')
@@ -1804,8 +1804,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2, 0)).take_while(lambda x: x > 0).collect()
+            >>> from pyochain import Iter, Seq
+            >>> Iter((1, 2, 0)).take_while(lambda x: x > 0).collect(Seq)
             Seq(1, 2)
 
             ```
@@ -1823,9 +1823,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2, 0)).skip_while(lambda x: x > 0).collect()
-            Seq(0,)
+            >>> from pyochain import Seq
+            >>> out = Seq((1, 2, 0, -1)).iter().skip_while(lambda x: x > 0).collect(Seq)
+            >>> out
+            Seq(0, -1)
 
             ```
         """
@@ -1842,8 +1843,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter("ABCDEF").compress(1, 0, 1, 0, 1, 1).collect()
+            >>> from pyochain import Iter, Seq
+            >>> Iter("ABCDEF").compress(1, 0, 1, 0, 1, 1).collect(Seq)
             Seq('A', 'C', 'E', 'F')
 
             ```
@@ -1851,18 +1852,27 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         return self._from_iterable(itertools.compress(iter(self), selectors))
 
     def unique(self) -> PyoIterator[T]:
-        """Return only unique elements of the iterable.
+        """Return only unique elements of the `Iterator`.
+
+        This has the same effect as collecting the `Iterator` into a `StableSet` (keeps original ordering), but this returns a new `Iterator`.
+
+        This means that this operation stay lazy, and can be more efficient depending on the situation.
+
+        If you just need unique elements in a collection right away, collecting the `Iterator` into a `set`-like collection may have more raw speed.
+
+        Thus
 
         Returns:
             PyoIterator[T]: An `Iterator` of the unique items.
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2, 3)).unique().collect()
+            >>> from pyochain import Seq, Set
+            >>> data = Seq((1, 1, 2, 2,  3, 3))
+            >>> data.iter().unique().collect(Seq)
             Seq(1, 2, 3)
-            >>> Iter([1, 2, 1, 3]).unique().collect()
-            Seq(1, 2, 3)
+            >>> data.into(Set).iter().sort()
+            Vec(1, 2, 3)
 
             ```
         """
@@ -1879,8 +1889,9 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter(["cat", "mouse", "dog", "hen"]).unique_by(key=len).collect()
+            >>> from pyochain import Seq
+            >>> data = Seq(("cat", "mouse", "dog", "hen"))
+            >>> data.iter().unique_by(key=len).collect(Seq)
             Seq('cat', 'mouse')
 
             ```
@@ -1905,11 +1916,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> data = (1, 2, 3)
-            >>> Iter(data).take(2).collect()
+            >>> from pyochain import Seq
+            >>> data = Seq((1, 2, 3))
+            >>> data.iter().take(2).collect(Seq)
             Seq(1, 2)
-            >>> Iter(data).take(5).collect()
+            >>> data.iter().take(5).collect(Seq)
             Seq(1, 2, 3)
 
             ```
@@ -1935,12 +1946,13 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2, 3)).skip(1).collect()
+            >>> from pyochain import Seq
+            >>> data = Seq((1, 2, 3))
+            >>> data.iter().skip(1).collect(Seq)
             Seq(2, 3)
-            >>> Iter((1, 2, 3)).skip(5).collect()
+            >>> data.iter().skip(5).collect(Seq)
             Seq()
-            >>> Iter((1, 2, 3)).skip(0).collect()
+            >>> data.iter().skip(0).collect(Seq)
             Seq(1, 2, 3)
 
             ```
@@ -1961,8 +1973,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter([0, 1, 2, 3, 4, 5]).step_by(2).collect()
+            >>> from pyochain import Seq
+            >>> Seq((0, 1, 2, 3, 4, 5)).iter().step_by(2).collect(Seq)
             Seq(0, 2, 4)
 
             ```
@@ -1987,11 +1999,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> data = (1, 2, 3, 4, 5)
-            >>> Iter(data).slice(1, 4).collect()
+            >>> from pyochain import Seq
+            >>> data = Seq((1, 2, 3, 4, 5))
+            >>> data.iter().slice(1, 4).collect(Seq)
             Seq(2, 3, 4)
-            >>> Iter(data).slice(step=2).collect()
+            >>> data.iter().slice(step=2).collect(Seq)
             Seq(1, 3, 5)
 
             ```
@@ -2014,8 +2026,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2)).cycle().take(5).collect()
+            >>> from pyochain import Iter, Seq
+            >>> Iter((1, 2)).cycle().take(5).collect(Seq)
             Seq(1, 2, 1, 2, 1)
 
             ```
@@ -2041,8 +2053,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter((2, 3)).insert(1).collect()
+            >>> from pyochain import Iter, Seq
+            >>> Iter((2, 3)).insert(1).collect(Seq)
             Seq(1, 2, 3)
 
             ```
@@ -2060,15 +2072,15 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
+            >>> from pyochain import Iter, Seq
             >>> # Simple example with numbers
-            >>> Iter((1, 2, 3)).intersperse(0).collect()
+            >>> Iter((1, 2, 3)).intersperse(0).collect(Seq)
             Seq(1, 0, 2, 0, 3)
             >>> # Useful when chaining with other operations
             >>> Iter([10, 20, 30]).intersperse(5).sum()
             70
             >>> # Inserting separators between groups, then flattening
-            >>> Iter(((1, 2), (3, 4), (5, 6))).intersperse([-1]).flatten().collect()
+            >>> Iter(((1, 2), (3, 4), (5, 6))).intersperse([-1]).flatten().collect(Seq)
             Seq(1, 2, -1, 3, 4, -1, 5, 6)
 
             ```
@@ -2095,10 +2107,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2)).chain((3, 4), [5]).collect()
+            >>> from pyochain import Iter, Seq
+            >>> Iter((1, 2)).chain((3, 4), [5]).collect(Seq)
             Seq(1, 2, 3, 4, 5)
-            >>> Iter((1, 2)).chain(Iter.from_count(3)).take(5).collect()
+            >>> Iter((1, 2)).chain(Iter.from_count(3)).take(5).collect(Seq)
             Seq(1, 2, 3, 4, 5)
 
             ```
@@ -2125,13 +2137,13 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2, 3)).accumulate(lambda a, b: a + b, 0).collect()
+            >>> from pyochain import Iter, Seq
+            >>> Iter((1, 2, 3)).accumulate(lambda a, b: a + b, 0).collect(Seq)
             Seq(0, 1, 3, 6)
             >>> # The final accumulated result is the same as fold:
             >>> Iter((1, 2, 3)).fold(0, lambda a, b: a + b)
             6
-            >>> Iter((1, 2, 3)).accumulate(lambda a, b: a * b).collect()
+            >>> Iter((1, 2, 3)).accumulate(lambda a, b: a * b).collect(Seq)
             Seq(1, 2, 6)
 
             ```
@@ -2159,11 +2171,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
+            >>> from pyochain import Iter, Seq
             >>> peeked, remaining = Iter((1, 2, 3)).peekable(2)
             >>> peeked
             Seq(1, 2)
-            >>> remaining.collect()
+            >>> remaining.collect(Seq)
             Seq(1, 2, 3)
 
             ```
@@ -2194,14 +2206,14 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
+            >>> from pyochain import Iter, Seq
             >>> all_chunks = Iter.from_count().array_chunks(4)
             >>> c_1, c_2, c_3 = all_chunks.next(), all_chunks.next(), all_chunks.next()
-            >>> c_2.unwrap().collect()  # c_1's elements have been cached; c_3's haven't been
+            >>> c_2.unwrap().collect(Seq)  # c_1's elements have been cached; c_3's haven't been
             Seq(4, 5, 6, 7)
-            >>> c_1.unwrap().collect()
+            >>> c_1.unwrap().collect(Seq)
             Seq(0, 1, 2, 3)
-            >>> c_3.unwrap().collect()
+            >>> c_3.unwrap().collect(Seq)
             Seq(8, 9, 10, 11)
 
             ```
@@ -2211,7 +2223,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             >>> from pyochain.abc import PyoIterable
             >>> def collect_all_chunks(data: PyoIterable[int]) -> Seq[Seq[int]]:
             ...     return (
-            ...         data.iter().array_chunks(3).map(lambda c: c.collect()).collect()
+            ...         data.iter().array_chunks(3).map(lambda c: c.collect(Seq)).collect(Seq)
             ...     )
             >>> Seq((1, 2, 3, 4, 5, 6)).into(collect_all_chunks)
             Seq(Seq(1, 2, 3), Seq(4, 5, 6))
@@ -2313,9 +2325,9 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Example:
             Basic usage:
             ```python
-            >>> from pyochain import Iter
+            >>> from pyochain import Iter, Seq
             >>> data = ((1, 2, 3, 4), (5, 6))
-            >>> flattened = Iter(data).flatten().collect()
+            >>> flattened = Iter(data).flatten().collect(Seq)
             >>> flattened
             Seq(1, 2, 3, 4, 5, 6)
 
@@ -2324,7 +2336,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ```python
             >>> from pyochain import Iter
             >>> words = Iter(("alpha", "beta", "gamma"))
-            >>> merged = words.flatten().collect()
+            >>> merged = words.flatten().collect(Seq)
             >>> merged
             Seq('a', 'l', 'p', 'h', 'a', 'b', 'e', 't', 'a', 'g', 'a', 'm', 'm', 'a')
 
@@ -2333,10 +2345,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ```python
             >>> from pyochain import Iter
             >>> d3 = (((1, 2), (3, 4)), ((5, 6), (7, 8)))
-            >>> d2 = Iter(d3).flatten().collect()
+            >>> d2 = Iter(d3).flatten().collect(Seq)
             >>> d2
             Seq((1, 2), (3, 4), (5, 6), (7, 8))
-            >>> d1 = Iter(d3).flatten().flatten().collect()
+            >>> d1 = Iter(d3).flatten().flatten().collect(Seq)
             >>> d1
             Seq(1, 2, 3, 4, 5, 6, 7, 8)
 
@@ -2367,8 +2379,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2, 3)).flat_map(lambda x: range(x)).collect()
+            >>> from pyochain import Iter, Seq
+            >>> Iter((1, 2, 3)).flat_map(lambda x: range(x)).collect(Seq)
             Seq(0, 0, 1, 0, 1, 2)
 
             ```
@@ -2415,7 +2427,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         However, as `Iter.map()` is lazy, it is best used when you are already working with other `Iter` instances.
 
-        If you are doing some sort of looping for a side effect, it is considered more idiomatic to use `Iter.for_each()` than `Iter.map().collect()`.
+        If you are doing some sort of looping for a side effect, it is considered more idiomatic to use `Iter.for_each()` than `Iter.map().collect(Seq)`.
 
         Args:
             func (Callable[[T], R]): Function to apply to each element.
@@ -2426,13 +2438,13 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Example:
             ```python
             >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2)).map(lambda x: x + 1).collect()
+            >>> Iter((1, 2)).map(lambda x: x + 1).collect(Seq)
             Seq(2, 3)
             >>> # You can use methods on the class rather than on instance for convenience:
             >>> data = Seq(("a", "b", "c"))
-            >>> data.iter().map(str.upper).collect()
+            >>> data.iter().map(str.upper).collect(Seq)
             Seq('A', 'B', 'C')
-            >>> data.iter().map(lambda s: s.upper()).collect()
+            >>> data.iter().map(lambda s: s.upper()).collect(Seq)
             Seq('A', 'B', 'C')
 
             ```
@@ -2515,10 +2527,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             >>> def make_sku(color: str, size: str) -> str:
             ...     return f"{color}-{size}"
             >>> data = Seq(("blue", "red"))
-            >>> data.iter().product(["S", "M"]).map_star(make_sku).collect()
+            >>> data.iter().product(["S", "M"]).map_star(make_sku).collect(Seq)
             Seq('blue-S', 'blue-M', 'red-S', 'red-M')
             >>> # This is equivalent to:
-            >>> data.iter().product(["S", "M"]).map(lambda x: make_sku(*x)).collect()
+            >>> data.iter().product(["S", "M"]).map(lambda x: make_sku(*x)).collect(Seq)
             Seq('blue-S', 'blue-M', 'red-S', 'red-M')
 
             ```
@@ -2607,7 +2619,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
+            >>> from pyochain import Iter, Seq
             >>> from dataclasses import dataclass
             >>> @dataclass
             ... class Triangle:
@@ -2618,7 +2630,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             >>> x_list = [1, 2, 3]
             >>> y_list = [4, 5, 6]
             >>> z_list = [7, 8, 9]
-            >>> output = Iter(x_list).map_with(y_list, z_list, func=Triangle).collect()
+            >>> output = Iter(x_list).map_with(y_list, z_list, func=Triangle).collect(Seq)
             >>> output
             Seq(Triangle(x=1, y=4, z=7), Triangle(x=2, y=5, z=8), Triangle(x=3, y=6, z=9))
 
@@ -2643,16 +2655,17 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Some, NONE
+            >>> from pyochain import Iter, Some, NONE, Seq
+            >>>
             >>> def checked_div(x: int) -> Option[int]:
             ...     return Some(16 // x) if x != 0 else NONE
             >>>
             >>> data = Iter((-1, 4, 0, 1))
-            >>> data.map_while(checked_div).collect()
+            >>> data.map_while(checked_div).collect(Seq)
             Seq(-16, 4)
             >>> data = Iter((0, 1, 2, -3, 4, 5, -6))
             >>> # Convert to positive ints, stop at first negative
-            >>> data.map_while(lambda x: Some(x) if x >= 0 else NONE).collect()
+            >>> data.map_while(lambda x: Some(x) if x >= 0 else NONE).collect(Seq)
             Seq(0, 1, 2)
 
             ```
@@ -2664,7 +2677,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         If **n** is `None`, repeat indefinitely.
 
-        Operates lazily, hence if you need to get the underlying elements, you will need to collect each repeated `Iter` via `.map(lambda x: x.collect())` or similar.
+        Operates lazily, hence if you need to get the underlying elements, you will need to collect each repeated `Iter` via `.map(lambda x: x.collect(Seq))` or similar.
 
         Warning:
             If **n** is `None`, this will create an infinite `Iterator`.
@@ -2682,8 +2695,9 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2)).repeat(3).map(list).collect()
+            >>> from pyochain import Iter, Seq
+            >>>
+            >>> Iter((1, 2)).repeat(3).map(list).collect(Seq)
             Seq([1, 2], [1, 2], [1, 2])
 
             ```
@@ -2726,7 +2740,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Some, NONE
+            >>> from pyochain import Some, NONE, Range, Seq
+            >>>
             >>> def accumulate_until_limit(state: int, item: int) -> Option[int]:
             ...     new_state = state + item
             ...     match new_state:
@@ -2734,7 +2749,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ...             return Some(new_state)
             ...         case _:
             ...             return NONE
-            >>> Iter((1, 2, 3, 4, 5)).scan(0, accumulate_until_limit).collect()
+            >>> Range(1, 6).iter().scan(0, accumulate_until_limit).collect(Seq)
             Seq(1, 3, 6, 10)
 
             ```
@@ -2777,9 +2792,9 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
+            >>> from pyochain import Iter, Seq
             >>> data = (1, 2, 3)
-            >>> Iter(data).filter(lambda x: x > 1).collect()
+            >>> Iter(data).filter(lambda x: x > 1).collect(Seq)
             Seq(2, 3)
             >>> # See the equivalence of next and find:
             >>> Iter(data).filter(lambda x: x > 1).next()
@@ -2791,13 +2806,13 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             >>> def _is_str(x: object) -> TypeIs[str]:
             ...     return isinstance(x, str)
             >>> mixed_data = (1, "two", 3.0, "four")
-            >>> Iter(mixed_data).filter(_is_str).collect()
+            >>> Iter(mixed_data).filter(_is_str).collect(Seq)
             Seq('two', 'four')
             >>> maybe_none = (1, None, 3, None)
-            >>> Iter(maybe_none).filter().collect()
+            >>> Iter(maybe_none).filter().collect(Seq)
             Seq(1, 3)
             >>> maybe_false = (0, 1, False, 2, "", 3, None)
-            >>> Iter(maybe_false).filter().collect()
+            >>> Iter(maybe_false).filter().collect(Seq)
             Seq(1, 2, 3)
 
             ```
@@ -2881,7 +2896,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ...     .enumerate()
             ...     .filter_star(lambda index, _: index % 2 == 0)
             ...     .map_star(lambda _, fruit: fruit.title())
-            ...     .collect()
+            ...     .collect(Seq)
             ... )
             >>> output
             Seq('Apple', 'Cherry')
@@ -2917,8 +2932,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2, 3)).filter_false(lambda x: x > 1).collect()
+            >>> from pyochain import Iter, Seq
+            >>> Iter((1, 2, 3)).filter_false(lambda x: x > 1).collect(Seq)
             Seq(1,)
 
             ```
@@ -2953,7 +2968,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ...         return Err(f"Invalid integer, got {s!r}")
             >>>
             >>> data = Seq(("1", "two", "NaN", "four", "5"))
-            >>> parsed = data.iter().filter_map(lambda s: _parse(s).ok()).collect()
+            >>> parsed = data.iter().filter_map(lambda s: _parse(s).ok()).collect(Seq)
             >>> parsed
             Seq(1, 5)
             >>> # Equivalent to:
@@ -2963,7 +2978,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ...     .map(lambda s: _parse(s).ok())
             ...     .filter(lambda s: s.is_some())
             ...     .map(lambda s: s.unwrap())
-            ...     .collect()
+            ...     .collect(Seq)
             ... )
             >>> parsed
             Seq(1, 5)
@@ -3041,7 +3056,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Result, Ok, Err
+            >>> from pyochain import Iter, Result, Ok, Err, Seq
             >>> data = (("1", "10"), ("two", "20"), ("3", "thirty"))
             >>> def _parse_pair(s1: str, s2: str) -> Result[tuple[int, int], str]:
             ...     try:
@@ -3052,7 +3067,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             >>> parsed = (
             ...     Iter(data)
             ...     .filter_map_star(lambda s1, s2: _parse_pair(s1, s2).ok())
-            ...     .collect()
+            ...     .collect(Seq)
             ... )
             >>> parsed
             Seq((1, 10),)
@@ -3121,10 +3136,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2)).zip((10, 20)).collect()
+            >>> from pyochain import Iter, Seq
+            >>>
+            >>> Iter((1, 2)).zip((10, 20)).collect(Seq)
             Seq((1, 10), (2, 20))
-            >>> Iter(("a", "b")).zip((1, 2, 3)).collect()
+            >>> Iter(("a", "b")).zip((1, 2, 3)).collect(Seq)
             Seq(('a', 1), ('b', 2))
 
             ```
@@ -3193,17 +3209,17 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Example:
             ```python
             >>> from pyochain import Iter, Some, NONE, Vec
-            >>> Iter((1, 2)).zip_longest([10]).collect()
-            Seq((Some(1), Some(10)), (Some(2), NONE))
+            >>> Iter((1, 2)).zip_longest([10]).collect(Vec)
+            Vec((Some(1), Some(10)), (Some(2), NONE))
             >>> # Can be combined with try collect to filter out the NONE:
             >>> zipped = (
             ...     Iter((1, 2))
             ...     .zip_longest([10])
             ...     .map(lambda x: Iter(x).try_collect())
-            ...     .collect()
+            ...     .collect(Vec)
             ... )
             >>> zipped
-            Seq(Some(Vec(1, 10)), NONE)
+            Vec(Some(Vec(1, 10)), NONE)
 
             ```
         """
@@ -3228,12 +3244,12 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
+            >>> from pyochain import Iter, Seq
             >>> data = ((1, "a"), (2, "b"), (3, "c"))
             >>> left, right = Iter(data).unzip()
-            >>> left.collect()
+            >>> left.collect(Seq)
             Seq(1, 2, 3)
-            >>> right.collect()
+            >>> right.collect(Seq)
             Seq('a', 'b', 'c')
 
             ```
@@ -3288,32 +3304,37 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter(["blue", "red"]).product(["S", "M"]).collect()
+            >>> from pyochain import Seq, Range, Iter
+            >>>
+            >>> data = Seq(("blue", "red"))
+            >>> data.iter().product(["S", "M"]).collect(Seq)
             Seq(('blue', 'S'), ('blue', 'M'), ('red', 'S'), ('red', 'M'))
             >>> res = (
-            ...     Iter(["blue", "red"])
+            ...     data
+            ...     .iter()
             ...     .product(["S", "M"])
             ...     .map_star(lambda color, size: f"{color}-{size}")
-            ...     .collect()
+            ...     .collect(Seq)
             ... )
             >>> res
             Seq('blue-S', 'blue-M', 'red-S', 'red-M')
             >>> res = (
-            ...     Iter((1, 2, 3))
+            ...     Range(1, 4)
+            ...     .iter()
             ...     .product([10, 20])
             ...     .filter_star(lambda a, b: a * b >= 40)
             ...     .map_star(lambda a, b: a * b)
-            ...     .collect()
+            ...     .collect(Seq)
             ... )
             >>> res
             Seq(40, 60)
             >>> res = (
-            ...     Iter([1])
+            ...     Iter
+            ...     .once(1)
             ...     .product(["a", "b"], [True])
             ...     .filter_star(lambda _a, b, _c: b != "a")
             ...     .map_star(lambda a, b, c: f"{a}{b} is {c}")
-            ...     .collect()
+            ...     .collect(Seq)
             ... )
             >>> res
             Seq('1b is True',)
@@ -3391,18 +3412,18 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
+            >>> from pyochain import Iter, Seq
             >>> import statistics
-            >>> Iter((1, 2, 3, 4)).map_windows(2, statistics.mean).collect()
+            >>> Iter((1, 2, 3, 4)).map_windows(2, statistics.mean).collect(Seq)
             Seq(1.5, 2.5, 3.5)
             >>> joined = (
             ...     Iter("abcd")
             ...     .map_windows(3, lambda window: "".join(window).upper())
-            ...     .collect()
+            ...     .collect(Seq)
             ... )
             >>> joined
             Seq('ABC', 'BCD')
-            >>> sum_windows = Iter((10, 20, 30, 40, 50)).map_windows(4, sum).collect()
+            >>> sum_windows = Iter((10, 20, 30, 40, 50)).map_windows(4, sum).collect(Seq)
             >>> sum_windows
             Seq(100, 140)
 
@@ -3471,10 +3492,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter("abcd").map_windows_star(2, lambda x, y: f"{x}+{y}").collect()
+            >>> from pyochain import Iter, Seq
+            >>> Iter("abcd").map_windows_star(2, lambda x, y: f"{x}+{y}").collect(Seq)
             Seq('a+b', 'b+c', 'c+d')
-            >>> Iter([1, 2, 3, 4]).map_windows_star(2, lambda x, y: x + y).collect()
+            >>> Iter([1, 2, 3, 4]).map_windows_star(2, lambda x, y: x + y).collect(Seq)
             Seq(3, 5, 7)
 
             ```
@@ -3499,8 +3520,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter("ABCDEFG").batch(3).collect()
+            >>> from pyochain import Iter, Seq
+            >>> Iter("ABCDEFG").batch(3).collect(Seq)
             Seq(('A', 'B', 'C'), ('D', 'E', 'F'), ('G',))
 
             ```
@@ -3524,16 +3545,16 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
+            >>> from pyochain import Iter, Seq
             >>> data = ("apple", "banana", "cherry")
-            >>> output = Iter(data).enumerate().collect()
+            >>> output = Iter(data).enumerate().collect(Seq)
             >>> output
             Seq((0, 'apple'), (1, 'banana'), (2, 'cherry'))
             >>> output = (
             ...     Iter(data)
             ...     .enumerate()
             ...     .map_star(lambda idx, val: (idx, val.upper()))
-            ...     .collect()
+            ...     .collect(Seq)
             ... )
             >>> output
             Seq((0, 'APPLE'), (1, 'BANANA'), (2, 'CHERRY'))
@@ -3561,8 +3582,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2, 3)).combinations(2).collect()
+            >>> from pyochain import Iter, Seq
+            >>> Iter((1, 2, 3)).combinations(2).collect(Seq)
             Seq((1, 2), (1, 3), (2, 3))
 
             ```
@@ -3588,8 +3609,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2, 3)).permutations(2).collect()
+            >>> from pyochain import Iter, Seq
+            >>> Iter((1, 2, 3)).permutations(2).collect(Seq)
             Seq((1, 2), (1, 3), (2, 1), (2, 3), (3, 1), (3, 2))
 
             ```
@@ -3625,8 +3646,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2, 3)).combinations_with_replacement(2).collect()
+            >>> from pyochain import Iter, Seq
+            >>> Iter((1, 2, 3)).combinations_with_replacement(2).collect(Seq)
             Seq((1, 1), (1, 2), (1, 3), (2, 2), (2, 3), (3, 3))
 
             ```
@@ -3643,8 +3664,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2, 3)).pairwise().collect()
+            >>> from pyochain import Seq
+            >>> Seq((1, 2, 3)).iter().pairwise().collect(Seq)
             Seq((1, 2), (2, 3))
 
             ```
@@ -3769,13 +3790,14 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
+            >>> from pyochain import Iter, Seq
+            >>>
             >>> def is_even(n: int) -> bool:
             ...     return n % 2 == 0
             >>> def is_positive(n: int) -> bool:
             ...     return n > 0
             >>>
-            >>> Iter([1, -2, 3]).map_juxt(is_even, is_positive).collect()
+            >>> Iter([1, -2, 3]).map_juxt(is_even, is_positive).collect(Seq)
             Seq((False, True), (True, False), (False, True))
 
             ```
@@ -3787,7 +3809,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ...
             ...     return fn
             >>>
-            >>> Iter((1, 2, 3)).map_juxt(curried_add(10), curried_add(20)).collect()
+            >>> Iter((1, 2, 3)).map_juxt(curried_add(10), curried_add(20)).collect(Seq)
             Seq((11, 21), (12, 22), (13, 23))
 
             ```
@@ -3801,7 +3823,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ...     .iter()
             ...     .map_juxt(lambda x: x * 2, lambda x: x**2)
             ...     .filter_star(lambda double, square: double + square <= 5)
-            ...     .collect()
+            ...     .collect(Seq)
             ... )
             >>> res
             Seq((0, 0), (2, 1))
@@ -3820,12 +3842,13 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
+            >>> from pyochain import Iter, Seq
+            >>>
             >>> three_vals = (
             ...     Iter(("a", "b", "c"))
             ...     .with_position()
             ...     .map_star(lambda pos, val: (pos.name, val))
-            ...     .collect()
+            ...     .collect(Seq)
             ... )
             >>> three_vals
             Seq(('FIRST', 'a'), ('MIDDLE', 'b'), ('LAST', 'c'))
@@ -3834,7 +3857,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ...     .once("a")
             ...     .with_position()
             ...     .map_star(lambda pos, val: (pos.name, val))
-            ...     .collect()
+            ...     .collect(Seq)
             ... )
             >>> only_a
             Seq(('ONLY', 'a'),)
@@ -3906,7 +3929,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             For example, if we want to group even and odd numbers, we can do it like this:
             ```python
-            >>> from pyochain import Iter, Dict
+            >>> from pyochain import Iter, Dict, Seq
             >>> from operator import itemgetter
             >>> # Example 1: Group even and odd numbers
             >>> (
@@ -3919,7 +3942,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ...     .group_by(itemgetter(0))  # group by is_even
             ...     # extract values from groups, discarding keys, and materializing them
             ...     .map_star(
-            ...         lambda g, vals: (g, vals.map_star(lambda _, y: y).collect())
+            ...         lambda g, vals: (g, vals.map_star(lambda _, y: y).collect(Seq))
             ...     )
             ...     .collect(Dict)
             ... )
@@ -3940,7 +3963,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ...     Iter(data)
             ...     .group_by(lambda x: x["gender"])
             ...     .map_star(lambda g, vals: (g, vals.count()))
-            ...     .collect()
+            ...     .collect(Seq)
             ... )
             >>> output
             Seq(('F', 1), ('M', 3))
@@ -3952,10 +3975,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             >>> groups = (
             ...     Iter(("a1", "a2", "b1"))
             ...     .group_by(lambda x: x[0])
-            ...     .collect()
+            ...     .collect(Seq)
             ...     .iter()
-            ...     .map_star(lambda g, vals: (g, vals.collect()))
-            ...     .collect()
+            ...     .map_star(lambda g, vals: (g, vals.collect(Seq)))
+            ...     .collect(Seq)
             ... )
             >>> groups
             Seq(('a', Seq()), ('b', Seq()))
@@ -3967,10 +3990,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             >>> groups = (
             ...     Iter(("a1", "a2", "b1", "b2"))
             ...     .group_by(lambda x: x[0])
-            ...     .map_star(lambda g, vals: (g, vals.collect()))  # ✅ Materialize NOW
-            ...     .collect()
+            ...     .map_star(lambda g, vals: (g, vals.collect(Seq)))  # ✅ Materialize NOW
+            ...     .collect(Seq)
             ...     .iter()
-            ...     .collect()
+            ...     .collect(Seq)
             ... )
             >>> groups
             Seq(('a', Seq('a1', 'a2')), ('b', Seq('b1', 'b2')))

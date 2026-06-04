@@ -40,13 +40,14 @@ class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
         ```
         Another common case is when you have an iterable of key-value pairs, such as the one returned by `dict::items`, or an `Iterator` of tuples.
         ```python
-        >>> from pyochain import Dict, Iter
+        >>> from pyochain import Dict, Iter, Seq
+        >>>
         >>> names = ("alice", "bob", "charlie", "dave")
         >>> ages = (30, 25, 35, 40)
         >>> records = Iter(names).zip(ages).collect(Dict)
         >>> records
         Dict('alice': 30, 'bob': 25, 'charlie': 35, 'dave': 40)
-        >>> records.items().iter().collect()
+        >>> records.items().iter().collect(Seq)
         Seq(('alice', 30), ('bob', 25), ('charlie', 35), ('dave', 40))
 
         ```

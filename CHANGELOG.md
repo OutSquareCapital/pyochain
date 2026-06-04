@@ -6,7 +6,8 @@
 
 **API change**: `Iter::filter_star` does not accept arbitrary `Iterable` as elements anymore, only tuples.
 
-**Iterator refactor**: Almost all methods from `Iter` have been moved to `PyoIterator`. They are now typed to return `PyoIterator`, not new `Iter`, which means that the default `Seq` for `Iter::collect` is probably lost on many call sites, and that the `-> Iter[T]` for return types is probably now incorrect.
+**Iterator refactor**: Almost all methods from `Iter` have been moved to `PyoIterator`. They are now typed to return `PyoIterator`, not new `Iter`, which means that the `-> Iter[T]` for return types is probably now incorrect.
+The default `Seq` collector for `Iter::collect` has also been deleted.
 Adjust these in consequence, `.collect()` becomes `.collect(Seq)`, and `-> Iter[T]` becomes `-> PyoIterator[T]`.
 
 ### 🚀 Performance improvements
