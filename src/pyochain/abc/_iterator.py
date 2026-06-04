@@ -1868,7 +1868,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Example:
             ```python
             >>> from pyochain import Seq, Set
-            >>> data = Seq((1, 1, 2, 2,  3, 3))
+            >>> data = Seq((1, 1, 2, 2, 3, 3))
             >>> data.iter().unique().collect(Seq)
             Seq(1, 2, 3)
             >>> data.into(Set).iter().sort()
@@ -2209,7 +2209,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             >>> from pyochain import Iter, Seq
             >>> all_chunks = Iter.from_count().array_chunks(4)
             >>> c_1, c_2, c_3 = all_chunks.next(), all_chunks.next(), all_chunks.next()
-            >>> c_2.unwrap().collect(Seq)  # c_1's elements have been cached; c_3's haven't been
+            >>> # c_1's elements have been cached; c_3's haven't been
+            >>> c_2.unwrap().collect(Seq)
             Seq(4, 5, 6, 7)
             >>> c_1.unwrap().collect(Seq)
             Seq(0, 1, 2, 3)
@@ -2223,7 +2224,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             >>> from pyochain.abc import PyoIterable
             >>> def collect_all_chunks(data: PyoIterable[int]) -> Seq[Seq[int]]:
             ...     return (
-            ...         data.iter().array_chunks(3).map(lambda c: c.collect(Seq)).collect(Seq)
+            ...         data
+            ...         .iter()
+            ...         .array_chunks(3)
+            ...         .map(lambda c: c.collect(Seq))
+            ...         .collect(Seq)
             ...     )
             >>> Seq((1, 2, 3, 4, 5, 6)).into(collect_all_chunks)
             Seq(Seq(1, 2, 3), Seq(4, 5, 6))
@@ -2619,7 +2624,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq
+            >>> from pyochain import Seq
             >>> from dataclasses import dataclass
             >>> @dataclass
             ... class Triangle:
@@ -2627,10 +2632,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ...     y: int
             ...     z: int
             >>>
-            >>> x_list = [1, 2, 3]
-            >>> y_list = [4, 5, 6]
-            >>> z_list = [7, 8, 9]
-            >>> output = Iter(x_list).map_with(y_list, z_list, func=Triangle).collect(Seq)
+            >>> x = Seq((1, 2, 3))
+            >>> y = [4, 5, 6]
+            >>> z = [7, 8, 9]
+            >>> output = x.iter().map_with(y, z, func=Triangle).collect(Seq)
             >>> output
             Seq(Triangle(x=1, y=4, z=7), Triangle(x=2, y=5, z=8), Triangle(x=3, y=6, z=9))
 
@@ -3412,7 +3417,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq
+            >>> from pyochain import Iter, Seq, Range
             >>> import statistics
             >>> Iter((1, 2, 3, 4)).map_windows(2, statistics.mean).collect(Seq)
             Seq(1.5, 2.5, 3.5)
@@ -3423,7 +3428,13 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ... )
             >>> joined
             Seq('ABC', 'BCD')
-            >>> sum_windows = Iter((10, 20, 30, 40, 50)).map_windows(4, sum).collect(Seq)
+            >>> sum_windows = (
+            ...     Range(1, 5)
+            ...     .iter()
+            ...     .map(lambda x: x * 10)
+            ...     .map_windows(4, sum)
+            ...     .collect(Seq)
+            ... )
             >>> sum_windows
             Seq(100, 140)
 
@@ -3990,7 +4001,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             >>> groups = (
             ...     Iter(("a1", "a2", "b1", "b2"))
             ...     .group_by(lambda x: x[0])
-            ...     .map_star(lambda g, vals: (g, vals.collect(Seq)))  # ✅ Materialize NOW
+            ...     # ✅ Materialize NOW
+            ...     .map_star(lambda g, vals: (g, vals.collect(Seq)))
             ...     .collect(Seq)
             ...     .iter()
             ...     .collect(Seq)
