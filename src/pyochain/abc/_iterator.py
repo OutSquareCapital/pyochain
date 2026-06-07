@@ -1359,7 +1359,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Its main use case is simplifying conversions from iterators yielding `Option[T]` or `Result[T, E]` into `Option[Vec[T]]`.
 
-        Also, if a failure is encountered during `try_collect()`, the `Iter` is still valid and may continue to be used, in which case it will continue iterating starting after the element that triggered the failure.
+        Also, if a failure is encountered during `try_collect()`, the `Iterator` is still valid and may continue to be used, in which case it will continue iterating starting after the element that triggered the failure.
 
         See the last example below for an example of how this works.
 
@@ -2156,7 +2156,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         The returned tuple contains two elements:
 
         - A `Seq` of the next **n** elements.
-        - An `Iter` that includes the peeked elements followed by the remaining elements of the original `Iterator`.
+        - An `Iterator` that includes the peeked elements followed by the remaining elements of the original `Iterator`.
 
         Args:
             n (int): Number of items to peek.
@@ -2317,12 +2317,12 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
     @overload
     def flatten[U](self: PyoIterator[Dict[U, Any]]) -> PyoIterator[U]: ...  # pyright: ignore[reportExplicitAny]
     def flatten[U: AnyIter](self: PyoIterator[U]) -> PyoIterator[Any]:  # pyright: ignore[reportExplicitAny]
-        """Creates an `Iter` that flattens nested structures.
+        """Creates an `Iterator` that flattens nested structures.
 
-        This is useful when you have an `Iter` of `Iterable` and you want to remove one level of indirection.
+        This is useful when you have an `Iterator` of `Iterable` and you want to remove one level of indirection.
 
         Returns:
-            PyoIterator[Any]: An `Iter` of flattened elements.
+            PyoIterator[Any]: An `Iterator` of flattened elements.
 
 
         Example:
@@ -2418,19 +2418,19 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         return self.filter_map(func).next()
 
     def map[R](self, func: Callable[[T], R]) -> PyoIterator[R]:
-        """Apply a function **func** to each element of the `Iter`.
+        """Apply a function **func** to each element of the `Iterator`.
 
-        If you are good at thinking in types, you can think of `Iter.map()` like this:
+        If you are good at thinking in types, you can think of `PyoIterator::map` like this:
 
         - You have an `Iterator` that gives you elements of some type `A`
         - You want an `Iterator` of some other type `B`
         - Thenyou can use `.map()`, passing a closure **func** that takes an `A` and returns a `B`.
 
-        `Iter.map()` is conceptually similar to a for loop.
+        `PyoIterator::map` is conceptually similar to a for loop.
 
-        However, as `Iter.map()` is lazy, it is best used when you are already working with other `Iter` instances.
+        However, as `PyoIterator::map` is lazy, it is best used when you are already working with other `PyoIterator` instances.
 
-        If you are doing some sort of looping for a side effect, it is considered more idiomatic to use `Iter.for_each()` than `Iter.map().collect(Seq)`.
+        If you are doing some sort of looping for a side effect, it is considered more idiomatic to use `PyoIterator.for_each` than `PyoIterator.map().collect(Seq)`.
 
         Args:
             func (Callable[[T], R]): Function to apply to each element.
@@ -2512,10 +2512,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Unlike `.map()`, which passes each element as a single argument, `.starmap()` unpacks each element into positional arguments for the function.
 
-        In short, for each element in the `Iter`, it computes `func(*element)`.
+        In short, for each element in the `Iterator`, it computes `func(*element)`.
 
         Note:
-            Always prefer using `.map_star()` over `.map()` when working with `Iter` of `tuple` elements.
+            Always prefer using `.map_star()` over `.map()` when working with `Iterator` of `tuple` elements.
+
             Not only it is more readable, but it's also much more performant (up to 30% faster in benchmarks).
 
         Args:
@@ -2676,25 +2677,25 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         return self._from_iterable(tls.MapWhile(iter(self), func))
 
     def repeat(self, n: int | None = None) -> PyoIterator[PyoIterator[T]]:
-        """Repeat the entire `Iter` **n** times (as elements).
+        """Repeat the entire `Iterator` **n** times (as elements).
 
         If **n** is `None`, repeat indefinitely.
 
-        Operates lazily, hence if you need to get the underlying elements, you will need to collect each repeated `Iter` via `.map(lambda x: x.collect(Seq))` or similar.
+        Operates lazily, hence if you need to get the underlying elements, you will need to collect each repeated `Iterator` via `.map(lambda x: x.collect(Seq))` or similar.
 
         Warning:
             If **n** is `None`, this will create an infinite `Iterator`.
 
-            Be sure to use `Iter.take()` or `Iter.slice()` to limit the number of items taken.
+            Be sure to use `PyoIterator::take` or `PyoIterator::slice` to limit the number of items taken.
 
         See Also:
-            [`Iter::cycle`][cycle] to repeat the *elements* of the `Iter` indefinitely.
+            [`PyoIterator::cycle`][cycle] to repeat the *elements* of the `PyoIterator` indefinitely.
 
         Args:
             n (int | None): Optional number of repetitions.
 
         Returns:
-            PyoIterator[PyoIterator[T]]: An `Iter` of repeated `Iter`.
+            PyoIterator[PyoIterator[T]]: An `Iterator` of repeated `Iterator`s.
 
         Example:
             ```python
@@ -2770,11 +2771,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
     def filter[R, N](
         self, func: FilterFn[T, R] = None
     ) -> PyoIterator[T] | PyoIterator[R] | PyoIterator[N]:
-        """Creates an `Iter` with an optional closure to determine if an element should be yielded.
+        """Creates an `Iterator` with an optional closure to determine if an element should be yielded.
 
         Given an element the closure must return `True` or `False`.
 
-        The returned `Iter` will yield only the elements for which the closure returns `True`.
+        The returned `Iterator` will yield only the elements for which the closure returns `True`.
 
         If no closure is provided, the elements are directly evaluated on their truthiness.
 
@@ -2875,11 +2876,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
     def filter_star[U: tuple[Any, ...]](
         self: PyoIterator[U], func: Callable[..., bool]
     ) -> PyoIterator[U]:
-        """Creates an `Iter` which uses a closure **func** to determine if an element should be yielded, where each element is an iterable.
+        """Creates an `Iterator` which uses a closure **func** to determine if an element should be yielded, where each element is an iterable.
 
         Unlike `.filter()`, which passes each element as a single argument, `.filter_star()` unpacks each element into positional arguments for the **func**.
 
-        In short, for each element in the `Iter`, it computes `func(*element)`.
+        In short, for each element in the `Iterator`, it computes `func(*element)``.
 
         This is useful after using methods like `.zip()`, `.product()`, or `.enumerate()` that yield tuples.
 
@@ -2887,7 +2888,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             func (Callable[..., bool]): Function to evaluate unpacked elements.
 
         Returns:
-            PyoIterator[U]: An `Iter` of the items that satisfy the predicate.
+            PyoIterator[U]: An `Iterator` of the items that satisfy the predicate.
 
         Example:
             ```python
@@ -2931,7 +2932,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             func (FilterFn[T, U]): Function to evaluate each item.
 
         Returns:
-            PyoIterator[T] | PyoIterator[U]: An `Iter` of the items that do not satisfy the predicate.
+            PyoIterator[T] | PyoIterator[U]: An `Iterator` of the items that do not satisfy the predicate.
 
         Example:
             ```python
@@ -3135,7 +3136,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             strict (bool): If `True` and one of the arguments is exhausted before the others, raise a ValueError.
 
         Returns:
-            PyoIterator[tuple[Any, ...]]: An `Iter` of tuples containing elements from the zipped Iter and other iterables.
+            PyoIterator[tuple[Any, ...]]: An `Iterator` of tuples containing elements from the zipped `PyoIterator` and other iterables.
 
         Example:
             ```python
@@ -3540,10 +3541,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
     def enumerate(self, start: int = 0) -> PyoIterator[tuple[int, T]]:
         """Return a `Iterator` of (index, value) pairs.
 
-        Each value in the `Iter` is paired with its index, starting from 0.
+        Each value in the `Iterator` is paired with its index, starting from 0.
 
         Tip:
-            `Iter.map_star` can then be used for subsequent operations on the index and value, in a destructuring manner.
+            `PyoIterator::map_star` can then be used for subsequent operations on the index and value, in a destructuring manner.
             This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.
 
         Args:
@@ -3785,11 +3786,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
     def map_juxt(self, *funcs: Callable[[T], Any]) -> PyoIterator[tuple[Any, ...]]:  # pyright: ignore[reportExplicitAny]
         """Apply several functions to each item of the `Iterator`.
 
-        Returns a new `Iter` where each item is a tuple of the results of applying each function to the original item.
+        Returns a new `Iterator` where each item is a tuple of the results of applying each function to the original item.
 
         This can be very handy to compute multiple transformations or properties of the same item in a single pass, without needing to iterate multiple times.
 
-        As such, this can be considered as an alternative to various patterns, such as `Iter::{for_each, fold}` with mutable collections, or `Iter::map` followed by `Iter::zip` to combine the results.
+        As such, this can be considered as an alternative to various patterns, such as `PyoIterator::{for_each, fold}` with mutable collections, or `PyoIterator::map` followed by `PyoIterator::zip` to combine the results.
 
         Args:
             *funcs (Callable[[T], Any]): Functions to apply to each item.
@@ -3909,11 +3910,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         self,
         key: Callable[[T], Any] | None = None,  # pyright: ignore[reportExplicitAny]
     ) -> PyoIterator[tuple[Any | T, PyoIterator[T]]]:  # pyright: ignore[reportExplicitAny]
-        """Make an `Iter` that returns consecutive keys and groups from the iterable.
+        """Make an `Iterator` that returns consecutive keys and groups from the iterable.
 
-        The values yielded are `(K, PyoIterator[T])` tuples, where the first element is the group key and the second element is an `Iter` of type `T` over the group values.
+        The values yielded are `(K, PyoIterator[T])` tuples, where the first element is the group key and the second element is an `Iterator` of type `T` over the group values.
 
-        The `Iter` needs to already be sorted on the same key function.
+        The `Iterator` needs to already be sorted on the same key function.
 
         This is due to the fact that it generates a new `Group` every time the value of the **key** function changes.
 
@@ -3931,7 +3932,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         If not specified or is None, **key** defaults to an identity function and returns the element unchanged.
 
         Returns:
-            PyoIterator[tuple[Any | T, PyoIterator[T]]]: An `Iter` of `(key, value)` tuples.
+            PyoIterator[tuple[Any | T, PyoIterator[T]]]: An `Iterator` of `(key, value)` tuples.
 
         Example:
             `group_by` can let you compute complex operations very easily and efficiently.
