@@ -9,7 +9,6 @@ from ._collection import PyoCollection
 
 if TYPE_CHECKING:
     from .._views import PyoItemsView, PyoKeysView, PyoValuesView
-    from ..rs import Option, Result
 
 
 class PyoMappingView[T](MappingView, PyoCollection[T], ABC):

@@ -3,28 +3,27 @@ from __future__ import annotations
 import functools
 import itertools
 from abc import ABC
-from collections.abc import (
-    Callable,
-    Collection,
-    Generator,
-    Iterable,
-    Iterator,
-    KeysView,
-    Sequence,
-    ValuesView,
-)
+from collections.abc import Iterator
 from enum import StrEnum, auto
 from operator import itemgetter
 from typing import TYPE_CHECKING, Any, Concatenate, Literal, TypeGuard, TypeIs, overload
 
-from pyochain._utils import no_doctest
-
 from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
+from .._utils import no_doctest
 from ..rs import NONE, Option, Result, Some, option
 from ._iterable import PyoIterable
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Collection, Iterable, MutableSequence
+    from collections.abc import (
+        Callable,
+        Collection,
+        Generator,
+        Iterable,
+        KeysView,
+        MutableSequence,
+        Sequence,
+        ValuesView,
+    )
 
     from .._dict import Dict
     from .._iter import Iter
@@ -40,7 +39,6 @@ if TYPE_CHECKING:
     )
     from .._vec import Vec
     from ..collections import Deque
-    from ..rs import Option, Result
     from ._sequences import PyoMutableSequence
 
     type AnyOpt = Option[Any]  # pyright: ignore[reportExplicitAny]
