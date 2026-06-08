@@ -2724,9 +2724,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
                 yield new(iterators[0])
                 iterators = tee()
 
-        if n is None:
-            return self._from_iterable(_repeat_infinite())
-        return self._from_iterable(map(new, itertools.tee(iter(self), n)))
+        match n:
+            case None:
+                return new(_repeat_infinite())
+            case _:
+                return new(map(new, itertools.tee(iter(self), n)))
 
     def scan[U](self, initial: U, func: Callable[[U, T], Option[U]]) -> PyoIterator[U]:
         """Transform elements by sharing state between iterations.
@@ -3891,7 +3893,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             yield (Position.FIRST, first)
 
             current: T = second
-            for nxt in iter(self):
+            for nxt in data:
                 yield (Position.MIDDLE, current)
                 current = nxt
             yield (Position.LAST, current)
