@@ -4007,8 +4007,6 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ...     # ✅ Materialize NOW
             ...     .map_star(lambda g, vals: (g, vals.collect(Seq)))
             ...     .collect(Seq)
-            ...     .iter()
-            ...     .collect(Seq)
             ... )
             >>> groups
             Seq(('a', Seq('a1', 'a2')), ('b', Seq('b1', 'b2')))
