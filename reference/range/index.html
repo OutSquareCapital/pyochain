@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.43">
+      <meta name="generator" content="zensical-0.0.44">
     
     
       
@@ -2211,13 +2211,14 @@
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Range</span><span class="p">,</span> <span class="n">Dict</span>
+  <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Range</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Seq</span>
+<span class="o">&gt;&gt;&gt;</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">r</span> <span class="o">=</span> <span class="n">Range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">r</span>
 <span class="n">Range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">r</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">r</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">Seq</span><span class="p">)</span>
 <span class="n">Seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">r</span><span class="o">.</span><span class="n">rev</span><span class="p">()</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">r</span><span class="o">.</span><span class="n">rev</span><span class="p">()</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">Seq</span><span class="p">)</span>
 <span class="n">Seq</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">names</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;alice&quot;</span><span class="p">,</span> <span class="s2">&quot;bob&quot;</span><span class="p">,</span> <span class="s2">&quot;CHARLIE&quot;</span><span class="p">,</span> <span class="s2">&quot;dave&quot;</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">indexed_names</span> <span class="o">=</span> <span class="p">(</span>
@@ -2298,7 +2299,8 @@
 <span class="normal">66</span>
 <span class="normal">67</span>
 <span class="normal">68</span>
-<span class="normal">69</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Range</span><span class="p">(</span><span class="n">PyoSequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
+<span class="normal">69</span>
+<span class="normal">70</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Range</span><span class="p">(</span><span class="n">PyoSequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A wrapper around the built-in `range` type that implements the `PyoSequence` protocol.</span>
 
 <span class="sd">    `start` must be specified, unlike the built-in type, but everything else is the same.</span>
@@ -2310,13 +2312,14 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">        ```python</span>
-<span class="sd">        &gt;&gt;&gt; from pyochain import Range, Dict</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Range, Dict, Seq</span>
+<span class="sd">        &gt;&gt;&gt;</span>
 <span class="sd">        &gt;&gt;&gt; r = Range(1, 6, 2)</span>
 <span class="sd">        &gt;&gt;&gt; r</span>
 <span class="sd">        Range(1, 6, 2)</span>
-<span class="sd">        &gt;&gt;&gt; r.iter().collect()</span>
+<span class="sd">        &gt;&gt;&gt; r.iter().collect(Seq)</span>
 <span class="sd">        Seq(1, 3, 5)</span>
-<span class="sd">        &gt;&gt;&gt; r.rev().collect()</span>
+<span class="sd">        &gt;&gt;&gt; r.rev().collect(Seq)</span>
 <span class="sd">        Seq(5, 3, 1)</span>
 <span class="sd">        &gt;&gt;&gt; names = (&quot;alice&quot;, &quot;bob&quot;, &quot;CHARLIE&quot;, &quot;dave&quot;)</span>
 <span class="sd">        &gt;&gt;&gt; indexed_names = (</span>

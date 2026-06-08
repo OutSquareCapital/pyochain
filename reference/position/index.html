@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.43">
+      <meta name="generator" content="zensical-0.0.44">
     
     
       
@@ -1413,7 +1413,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain._iter.Position" class="md-nav__link">
+  <a href="#pyochain.abc._iterator.Position" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         Position
@@ -2031,7 +2031,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pyochain._iter.Position" class="md-nav__link">
+  <a href="#pyochain.abc._iterator.Position" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         Position
@@ -2063,24 +2063,24 @@
 
 
 
-<a id="pyochain._iter.Position"></a>
+<a id="pyochain.abc._iterator.Position"></a>
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
               Bases: <code><span title="enum.StrEnum">StrEnum</span></code></p>
 
             <div style="display: none">
-              <a class="autorefs autorefs-internal" title="pyochain._iter.Position" href="./#pyochain._iter.Position" id="mermaid-link-pyochain._iter.Position"></a>
+              <a class="autorefs autorefs-internal" title="pyochain.abc._iterator.Position" href="./#pyochain.abc._iterator.Position" id="mermaid-link-pyochain.abc._iterator.Position"></a>
             </div>
-            <pre class="mermaid"><code id="mermaid-diagram-pyochain._iter.Position">
+            <pre class="mermaid"><code id="mermaid-diagram-pyochain.abc._iterator.Position">
               flowchart TD
-              pyochain._iter.Position[Position]
+              pyochain.abc._iterator.Position[Position]
 
               
 
-              click pyochain._iter.Position href "" "pyochain._iter.Position"
+              click pyochain.abc._iterator.Position href "" "pyochain.abc._iterator.Position"
             </code></pre>
             <script>
-              var diagram = document.getElementById('mermaid-diagram-pyochain._iter.Position');
+              var diagram = document.getElementById('mermaid-diagram-pyochain.abc._iterator.Position');
               diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
                 try {
                   const link = document.getElementById("mermaid-link-" + nodeID).href;
@@ -2102,14 +2102,14 @@
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>src/pyochain/_iter.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">54</span>
-<span class="normal">55</span>
-<span class="normal">56</span>
-<span class="normal">57</span>
-<span class="normal">58</span>
-<span class="normal">59</span>
-<span class="normal">60</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Position</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+                <summary>Source code in <code>src/pyochain/abc/_iterator.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Position</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Type representing the position of an item in an iterable.&quot;&quot;&quot;</span>
 
     <span class="n">FIRST</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>

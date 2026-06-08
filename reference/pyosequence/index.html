@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.43">
+      <meta name="generator" content="zensical-0.0.44">
     
     
       
@@ -2171,6 +2171,8 @@
 <details class="example" open>
   <summary>Example</summary>
   <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">PyoSequence</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">Seq</span>
+<span class="o">&gt;&gt;&gt;</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">class</span><span class="w"> </span><span class="nc">MySeq</span><span class="p">(</span><span class="n">PyoSequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
 <span class="o">...</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
 <span class="o">...</span>         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">data</span>
@@ -2190,7 +2192,7 @@
 <span class="o">&gt;&gt;&gt;</span> <span class="n">my_seq</span> <span class="o">=</span> <span class="n">MySeq</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">])</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">my_seq</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 <span class="mi">10</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">my_seq</span><span class="o">.</span><span class="n">rev</span><span class="p">()</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">my_seq</span><span class="o">.</span><span class="n">rev</span><span class="p">()</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">Seq</span><span class="p">)</span>
 <span class="n">Seq</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
 </code></pre></div>
 </details>
@@ -2282,7 +2284,9 @@
 <span class="normal">116</span>
 <span class="normal">117</span>
 <span class="normal">118</span>
-<span class="normal">119</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoSequence</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoCollection</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">PyoReversible</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PyoSequence</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">PyoCollection</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">PyoReversible</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Extends `PyoCollection[T]` and `collections.abc.Sequence[T]`.</span>
 
 <span class="sd">    Is the shared ABC for concrete sequences: `Seq`, `Range` and `Vec`.</span>
@@ -2297,6 +2301,8 @@
 <span class="sd">    Example:</span>
 <span class="sd">        ```python</span>
 <span class="sd">        &gt;&gt;&gt; from pyochain.abc import PyoSequence</span>
+<span class="sd">        &gt;&gt;&gt; from pyochain import Seq</span>
+<span class="sd">        &gt;&gt;&gt;</span>
 <span class="sd">        &gt;&gt;&gt; class MySeq(PyoSequence[int]):</span>
 <span class="sd">        ...     def __init__(self, data: list[int]):</span>
 <span class="sd">        ...         self._data = data</span>
@@ -2316,7 +2322,7 @@
 <span class="sd">        &gt;&gt;&gt; my_seq = MySeq([10, 20, 30])</span>
 <span class="sd">        &gt;&gt;&gt; my_seq.first()</span>
 <span class="sd">        10</span>
-<span class="sd">        &gt;&gt;&gt; my_seq.rev().collect()</span>
+<span class="sd">        &gt;&gt;&gt; my_seq.rev().collect(Seq)</span>
 <span class="sd">        Seq(30, 20, 10)</span>
 
 <span class="sd">        ```</span>
@@ -2463,9 +2469,7 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/pyochain/abc/_sequences.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 95</span>
-<span class="normal"> 96</span>
-<span class="normal"> 97</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 97</span>
 <span class="normal"> 98</span>
 <span class="normal"> 99</span>
 <span class="normal">100</span>
@@ -2487,7 +2491,9 @@
 <span class="normal">116</span>
 <span class="normal">117</span>
 <span class="normal">118</span>
-<span class="normal">119</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">slice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">Option</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">]]:</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">slice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Option</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">Option</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the element at the specified index as `Some(value)`, or `None` if the index is out of bounds.</span>
 
 <span class="sd">    Args:</span>
