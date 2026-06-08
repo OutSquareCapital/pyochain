@@ -2,11 +2,16 @@
 
 ## [Unreleased]
 
+### 🏆 Highlights
+
+This release main change is a refactor of `Iter` and `PyoIterator` methods -> almost all methods from `Iter` have been moved to `PyoIterator`.
+
+Only a handful of them remain in `Iter`, mostly instance methods relying on direct manipulation of the inner iterator, as well as the dunder overrides for concrete implemetnation.
+
 ### 💥 Breaking changes
 
-**API change**: `Iter::filter_star` does not accept arbitrary `Iterable` as elements anymore, only tuples.
-**Iterator refactor**: Almost all methods from `Iter` have been moved to `PyoIterator`. Only a handful of them remain in `Iter`, mostly static methods and instance methods relying on itertools tee and direct manipulation of the inner iterator.
-**API change**: The default `Seq` collector for `Iter::collect` has been deleted. All `.collect()` becomes `.collect(Seq)` if you want to keep the same behavior as before.
+- **API change**: `Iter::filter_star` does not accept arbitrary `Iterable` as elements anymore, only tuples.
+- **API change**: The default `Seq` collector for `Iter::collect` has been deleted. All `.collect()` becomes `.collect(Seq)` if you want to keep the same behavior as before.
 
 ### 🚀 Performance improvements
 

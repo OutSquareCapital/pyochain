@@ -132,7 +132,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     @no_doctest
-    def _from_iterable[I](self, iterable: Iterable[I]) -> PyoIterator[I]:
+    @classmethod
+    def _from_iterable[I](cls, iterable: Iterable[I]) -> PyoIterator[I]:
         """Internal constructor.
 
         Since some methods returns a new `PyoIterator`, we use this, with the assumption that the concrete subclass has an `__init__` that can accept an `Iterable[T]`.
@@ -151,7 +152,265 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             https://docs.python.org/3/library/collections.abc.html#examples-and-recipes
 
         """
-        return self.__class__(iterable)  # pyright: ignore[reportReturnType, reportCallIssue]
+        return cls(iterable)  # pyright: ignore[reportReturnType, reportCallIssue]
+
+    @classmethod
+    def once[V](cls, value: V) -> PyoIterator[V]:
+        """Create an `Iterator` that yields a single value.
+
+        If you have a function which works on iterators, but you only need to process one value, you can use this method rather than doing something like `Iter([value])`.
+
+        This can be considered the equivalent of `.insert()` but as a constructor.
+
+        Args:
+            value (V): The single value to yield.
+
+        Returns:
+            PyoIterator[V]: An `Iterator` yielding the specified value.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> Iter.once(42).collect(Seq)
+            Seq(42,)
+
+            ```
+        """
+        return cls._from_iterable((value,))
+
+    @classmethod
+    def once_with[**P, R](
+        cls, func: Callable[P, R], *args: P.args, **kwargs: P.kwargs
+    ) -> PyoIterator[R]:
+        """Create an `Iterator`  that lazily generates a value exactly once by invoking the provided closure.
+
+        If you have a function which works on iterators, but you only need to process one value, you can use this method rather than doing something like `Iter([value])`.
+
+        This can be considered the equivalent of [`PyoIterator::insert`][PyoIterator.insert] but as a constructor.
+
+        Unlike `PyoIterator::once`, this function will lazily generate the value on request.
+
+        Args:
+            func (Callable[P, R]): The single value to yield.
+            *args (P.args): Positional arguments to pass to **func**.
+            **kwargs (P.kwargs): Keyword arguments to pass to **func**.
+
+        Returns:
+            PyoIterator[R]: An `Iterator` yielding the specified value.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> Iter.once_with(lambda: 42).collect(Seq)
+            Seq(42,)
+
+            ```
+        """
+
+        def _once_with() -> Generator[R]:
+            yield func(*args, **kwargs)
+
+        return cls._from_iterable(_once_with())
+
+    @classmethod
+    def from_count(cls, start: int = 0, step: int = 1) -> PyoIterator[int]:
+        """Create an `Iterator` of evenly spaced values.
+
+        Warning:
+            The `Iterator` returned is **infinite**, meaning it will never stop yielding elements.
+
+            Be sure to use `PyoIterator::take` or `PyoIterator::slice` to limit the number of items taken.
+
+            Otherwise you could quickly run out of memory, if you try to collect it into a collection.
+
+        Args:
+            start (int): Starting value of the sequence.
+            step (int): Difference between consecutive values.
+
+        Returns:
+            PyoIterator[int]: An `Iterator` generating the sequence.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> Iter.from_count(10, 2).take(3).collect(Seq)
+            Seq(10, 12, 14)
+
+            ```
+        """
+        return cls._from_iterable(itertools.count(start, step))
+
+    @classmethod
+    def from_fn[**P, R](
+        cls, f: Callable[P, Option[R]], *args: P.args, **kwargs: P.kwargs
+    ) -> PyoIterator[R]:
+        """Create an `Iterator` from a generator function.
+
+        The `Callable` must return:
+
+        - `Some(value)` to yield a value
+        - `NONE` to stop the iteration
+
+        You could consider this as a way to create an `Iterator` where the `__next__()` is the `__call__()` method.
+
+        As such, you can either provide lambdas, partials, closures, or pre-existing classes where `__call__()` is implemented, but a `__next__()` is not desired.
+
+        If you do have an `Iterator` class, simply pass it to the regular constructor, as this will be more efficient, ergonomic and idiomatic.
+
+        Args:
+            f (Callable[P, Option[R]]): `Callable` that returns the next item wrapped in `Option`.
+            *args (P.args): Positional arguments to pass to **f**.
+            **kwargs (P.kwargs): Keyword arguments to pass to **f**.
+
+        Returns:
+            PyoIterator[R]: An `Iterator` yielding values produced by **f**.
+
+        Note:
+            In Rust, this avoids defining a full struct and implementing `Iterator` for it when you have simple logic to generate values.
+
+            This is implemented for "Rust API compliance", but in Python, generators comprehensions/functions with `yield` statements are the ergonomic equivalent.
+
+        Example:
+            Closure with captured local variable:
+            ```python
+            >>> from pyochain import Iter, Some, NONE, Seq
+            >>>
+            >>> def make_counter(max_val: int):
+            ...     counter = 0
+            ...
+            ...     def gen() -> Option[int]:
+            ...         nonlocal counter
+            ...         counter += 1
+            ...         return Some(counter) if counter <= max_val else NONE
+            ...
+            ...     return gen
+            >>>
+            >>> Iter.from_fn(make_counter(5)).collect(Seq)
+            Seq(1, 2, 3, 4, 5)
+
+            ```
+            Stateful callable class:
+            ```python
+            >>> from pyochain import Iter, Some, NONE
+            >>> from dataclasses import dataclass
+            >>> @dataclass
+            ... class Counter:
+            ...     max: int
+            ...     count: int = 0
+            ...
+            ...     def __call__(self) -> Option[int]:
+            ...         self.count += 1
+            ...         return Some(self.count) if self.count <= self.max else NONE
+            >>>
+            >>> Iter.from_fn(Counter(5)).collect(Seq)
+            Seq(1, 2, 3, 4, 5)
+
+            ```
+            Simulated file/queue reader:
+            ```python
+            >>> from pyochain import Iter, Some, NONE
+            >>> from pyochain.collections import Deque
+            >>>
+            >>> def queue_consumer(items: Deque[int]) -> Callable[[], Option[int]]:
+            ...     def consume() -> Option[int]:
+            ...         return Some(items.pop_left()) if items else NONE
+            ...
+            ...     return consume
+            >>>
+            >>> Iter.from_fn(Deque([1, 2, 3]).into(queue_consumer)).collect(Seq)
+            Seq(1, 2, 3)
+
+            ```
+        """
+        return cls._from_iterable(tls.FromFn(f, *args, **kwargs))
+
+    @classmethod
+    def successors[U](
+        cls, first: Option[U], succ: Callable[[U], Option[U]]
+    ) -> PyoIterator[U]:
+        """Create an iterator of successive values computed from the previous one.
+
+        The iterator yields `first` (if it is `Some`), then repeatedly applies **succ** to the
+        previous yielded value until it returns `NONE`.
+
+        Args:
+            first (Option[U]): Initial item.
+            succ (Callable[[U], Option[U]]): Successor function.
+
+        Returns:
+            PyoIterator[U]: `Iterator` yielding `first` and its successors.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Some, NONE, Option, Seq
+            >>>
+            >>> def next_pow10(x: int) -> Option[int]:
+            ...     return Some(x * 10) if x < 10_000 else NONE
+            >>>
+            >>> Iter.successors(Some(1), next_pow10).collect(Seq)
+            Seq(1, 10, 100, 1000, 10000)
+            >>> Iter.successors(NONE, next_pow10).collect(Seq)
+            Seq()
+
+            ```
+        """
+        return cls._from_iterable(tls.Successors(first, succ))
+
+    @classmethod
+    def from_repeat[O](cls, obj: O, n: int | None = None) -> PyoIterator[O]:
+        """Repeat the provided object **n** times (as elements) in an `Iter`.
+
+        If **n** is `None`, this will create an infinite `Iterator`.
+
+        Be sure to use [`Iter::take`][Iter.take] or [`Iter::slice`][Iter.slice] to limit the number of items taken.
+
+        Warning:
+            Each repetition is a reference to the same object, not a copy.
+
+            This means that if the object is mutable and you modify one of the repetitions, all next repetitions will reflect that change.
+
+        Args:
+            obj (O): The object to repeat.
+            n (int | None): Optional number of repetitions.
+
+        Returns:
+            PyoIterator[O]: An `Iterator` of repeated **obj**.
+
+        See Also:
+            [`PyoIterator::cycle`][cycle] to repeat the **elements** of the `Iterator`.
+            [`PyoIterator::repeat`][repeat] to repeat the **entire** `Iterator`.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq, Iter
+            >>> Iter.from_repeat(1, 3).collect(Seq)
+            Seq(1, 1, 1)
+            >>> Iter.from_repeat(("a", "b"), 2).collect(Seq)
+            Seq(('a', 'b'), ('a', 'b'))
+
+            ```
+            Shared reference behavior:
+            ```python
+            >>> from pyochain import Vec
+            >>>
+            >>> base = ["Alice", "Bob", "Charlie"]
+            >>>
+            >>> first, second = Iter.from_repeat(base).take(2).collect(tuple)
+            >>> first.append("Joe")
+            >>> first
+            ['Alice', 'Bob', 'Charlie', 'Joe']
+            >>> base
+            ['Alice', 'Bob', 'Charlie', 'Joe']
+            >>> second
+            ['Alice', 'Bob', 'Charlie', 'Joe']
+            >>> first is second and first is base and second is base
+            True
+
+            ```
+        """
+        if n is None:
+            return cls._from_iterable(itertools.repeat(obj))
+        return cls._from_iterable(itertools.repeat(obj, n))
 
     def count(self) -> int:
         """Consume the `Iterator` and return the number of elements it contained.
