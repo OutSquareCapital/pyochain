@@ -660,6 +660,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Example:
             ```python
             >>> from pyochain import Iter
+            >>>
             >>> data = ((1, 2), (3, 4))
             >>> Iter(data).fold_star(0, lambda acc, x, y: acc + x + y)
             10
@@ -689,6 +690,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Example:
             ```python
             >>> from pyochain import Iter, Range
+            >>>
             >>> def gt_five(x: int) -> bool:
             ...     return x > 5
             >>>
@@ -720,6 +722,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Example:
             ```python
             >>> from pyochain import Ok, Result, Err, Range
+            >>>
             >>> def is_even(x: int) -> Result[bool, str]:
             ...     return Ok(x % 2 == 0) if x >= 0 else Err("negative number")
             >>>
@@ -749,6 +752,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Example:
             ```python
             >>> from pyochain import Iter, Ok, Err, Result
+            >>>
             >>> def checked_add(acc: int, x: int) -> Result[int, str]:
             ...     new_val = acc + x
             ...     if new_val > 100:
@@ -782,6 +786,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Example:
             ```python
             >>> from pyochain import Iter, Ok, Err, Result
+            >>>
             >>> def checked_add(x: int, y: int) -> Result[int, str]:
             ...     if x + y > 100:
             ...         return Err("overflow")
@@ -830,9 +835,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ```
             If strict, tests for strict sorting, that is, returns False if equal elements are found:
             ```python
-            >>> Iter([1, 2, 2]).is_sorted()
+            >>> from pyochain import Seq
+            >>> data = Seq((1, 2, 2))
+            >>> data.iter().is_sorted()
             True
-            >>> Iter([1, 2, 2]).is_sorted(strict=True)
+            >>> data.iter().is_sorted(strict=True)
             False
 
             ```
@@ -873,9 +880,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ```
             If strict, tests for strict sorting, that is, returns False if equal elements are found:
             ```python
-            >>> Iter(["1", "2", "2"]).is_sorted_by(int)
+            >>> from pyochain import Seq
+            >>> data = Seq(("1", "2", "2"))
+            >>> data.iter().is_sorted_by(int)
             True
-            >>> Iter(["1", "2", "2"]).is_sorted_by(key=int, strict=True)
+            >>> data.iter().is_sorted_by(int, strict=True)
             False
 
             ```
@@ -897,10 +906,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
+            >>> from pyochain import Iter, Range
             >>> Iter("AaaA").all_equal(key=str.casefold)
             True
-            >>> Iter((1, 2, 3)).all_equal(key=lambda x: x < 10)
+            >>> Range(0, 9).iter().all_equal(key=lambda x: x < 10)
             True
 
             ```
