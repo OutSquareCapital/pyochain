@@ -8,7 +8,7 @@ from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
 from ..rs import Checkable, Pipeable
 
 if TYPE_CHECKING:
-    from .._iter import Iter
+    from ._iterator import PyoIterator
 
 
 class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
@@ -74,16 +74,15 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
     # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
-    def iter(self) -> Iter[T]:
-        """Get an `Iter` over the `Iterable`.
+    def iter(self) -> PyoIterator[T]:
+        """Returns a `PyoIterator` object over the `Iterable`.
 
-        Call this to switch to lazy evaluation.
+        By default, this returns an `Iter`, but can be overriden by concrete subclasses.
 
-        Note:
-            Calling this method on a class who is itself an `Iterator` has no effect.
+        This method is the pyochain equivalent of the `__iter__` dunder method.
 
         Returns:
-            Iter[T]: An `Iterator` over the `Iterable`. The element type is inferred from the actual subclass.
+            PyoIterator[T]: An `Iterator` over the `Iterable`.
 
         Example:
             ```python

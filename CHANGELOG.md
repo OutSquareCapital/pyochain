@@ -20,6 +20,7 @@ Adjust these in consequence, `.collect()` becomes `.collect(Seq)`, and `-> Iter[
 
 - **typing**: Improved the input types of various `PyoSet` methods to align them with typeshed, as they were too strict.
 - **typing**: `Iter::{map_star, filter_star}` can handle 1 element tuples now.
+- **typing**: `PyoIterable::iter` now returns a `PyoIterator` instead of an `Iter`, allowing more flexibility for custom overrides.
 
 ### 🛠️ Other improvements
 
