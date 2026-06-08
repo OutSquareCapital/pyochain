@@ -8766,11 +8766,11 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_repeat</span><span class="p">[</span><span class="n">O</span><span class="p">](</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">O</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyoIterator</span><span class="p">[</span><span class="n">O</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Repeat the provided object **n** times (as elements) in an `Iter`.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Repeat the provided object **n** times (as elements) as elements of an `Iterator`.</span>
 
 <span class="sd">        If **n** is `None`, this will create an infinite `Iterator`.</span>
 
-<span class="sd">        Be sure to use [`Iter::take`][Iter.take] or [`Iter::slice`][Iter.slice] to limit the number of items taken.</span>
+<span class="sd">        Be sure to use [`PyoIterator::take`][PyoIterator.take] or [`PyoIterator::slice`][PyoIterator.slice] to limit the number of items taken.</span>
 
 <span class="sd">        Warning:</span>
 <span class="sd">            Each repetition is a reference to the same object, not a copy.</span>
@@ -9322,7 +9322,7 @@
 <span class="sd">            B: The final accumulated value.</span>
 
 <span class="sd">        Note:</span>
-<span class="sd">            This is similar to `Iter::reduce` but with an initial value.</span>
+<span class="sd">            This is similar to `PyoIterator::reduce` but with an initial value.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            ```python</span>
@@ -10690,10 +10690,10 @@
 <span class="sd">        Warning:</span>
 <span class="sd">            This creates an infinite `Iterator`.</span>
 
-<span class="sd">            Be sure to use [`Iter::take`][take] or [`Iter::slice`][slice] to limit the number of items taken.</span>
+<span class="sd">            Be sure to use [`PyoIterator::take`][take] or [`PyoIterator::slice`][slice] to limit the number of items taken.</span>
 
 <span class="sd">        See Also:</span>
-<span class="sd">            [`Iter::repeat`][repeat] to repeat *self* as elements (`Iter[PyoIterator[T]]`).</span>
+<span class="sd">            [`PyoIterator::repeat`][repeat] to repeat *self* as elements (`PyoIterator[PyoIterator[T]]`).</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            PyoIterator[T]: A new `Iterator` that cycles through the elements indefinitely.</span>
@@ -10717,7 +10717,7 @@
 <span class="sd">            However, append add the value at the **end**, while insert add it at the **beginning**.</span>
 
 <span class="sd">        See Also:</span>
-<span class="sd">            [`Iter::chain`][chain] to add multiple elements at the end of the `Iterator`.</span>
+<span class="sd">            [`PyoIterator::chain`][chain] to add multiple elements at the end of the `Iterator`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            value (T): The value to prepend.</span>
@@ -10771,7 +10771,7 @@
 <span class="sd">        This is equivalent to `list.extend()`, except it is fully lazy and works with any `Iterable`.</span>
 
 <span class="sd">        See Also:</span>
-<span class="sd">            [`Iter::insert`][insert] to add a single element at the beginning of the `Iterator`.</span>
+<span class="sd">            [`PyoIterator::insert`][insert] to add a single element at the beginning of the `Iterator`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            *others (Iterable[T]): Other iterables to concatenate.</span>
@@ -10796,11 +10796,11 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyoIterator</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return an `Iterator` of accumulated binary function results.</span>
 
-<span class="sd">        In principle, `.accumulate()` is similar to `.fold()` if you provide it with the same binary function.</span>
+<span class="sd">        In principle, `PyoIterator::accumulate` is similar to `PyoIterator::fold` if you provide it with the same binary function.</span>
 
 <span class="sd">        However, instead of returning the final accumulated result, it returns an `Iterator` that yields the current value `T` of the accumulator for each iteration.</span>
 
-<span class="sd">        In other words, the last element yielded by `.accumulate()` is what would have been returned by `.fold()` if it had been used instead.</span>
+<span class="sd">        In other words, the last element yielded by `PyoIterator::accumulate` is what would have been returned by `PyoIterator::fold` if it had been used instead.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            func (Callable[[T, T], T]): A binary function to apply cumulatively.</span>
@@ -11295,7 +11295,7 @@
 <span class="sd">            PyoIterator[R]: An `Iterator` of results from applying the function to the elements of the iterables.</span>
 
 <span class="sd">        See Also:</span>
-<span class="sd">            [`Iter::map_juxt`][map_juxt] to apply multiple functions to the same elements of the `Iterator`.</span>
+<span class="sd">            [`PyoIterator::map_juxt`][map_juxt] to apply multiple functions to the same elements of the `Iterator`.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            ```python</span>
@@ -11325,7 +11325,7 @@
 
 <span class="sd">        It will call this closure on each element of the `Iterator`, and yield elements while it returns `Some(_)`.</span>
 
-<span class="sd">        After `NONE` is returned, `Iter::map_while` stops and the rest of the elements are ignored.</span>
+<span class="sd">        After `NONE` is returned, `PyoIterator::map_while` stops and the rest of the elements are ignored.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            func (Callable[[T], Option[R]]): Function to apply to each element that returns `Option[R]`.</span>
@@ -11638,7 +11638,7 @@
 <span class="sd">            PyoIterator[R]: An iterable of the results where func returned `Some`.</span>
 
 <span class="sd">        See Also:</span>
-<span class="sd">            [`Iter::filter`][filter] with no closure provided if you want to filter out Python native `None` values.</span>
+<span class="sd">            [`PyoIterator::filter`][filter] with no closure provided if you want to filter out Python native `None` values.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            ```python</span>
@@ -12090,7 +12090,7 @@
 <span class="sd">            PyoIterator[R]: An iterator over the outputs of func.</span>
 
 <span class="sd">        See Also:</span>
-<span class="sd">            [`Iter::map_windows_star`][map_windows_star] for a version that unpacks the window into separate arguments.</span>
+<span class="sd">            [`PyoIterator::map_windows_star`][map_windows_star] for a version that unpacks the window into separate arguments.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            ```python</span>
@@ -12170,7 +12170,7 @@
 <span class="sd">            PyoIterator[R]: An iterator over the outputs of func.</span>
 
 <span class="sd">        See Also:</span>
-<span class="sd">            [`Iter::map_windows`][map_windows] for a version that passes the entire window as a single tuple argument.</span>
+<span class="sd">            [`PyoIterator::map_windows`][map_windows] for a version that passes the entire window as a single tuple argument.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            ```python</span>
@@ -12711,9 +12711,9 @@
     <div class="doc doc-contents ">
 
         <p>Return an <code>Iterator</code> of accumulated binary function results.</p>
-<p>In principle, <code>.accumulate()</code> is similar to <code>.fold()</code> if you provide it with the same binary function.</p>
+<p>In principle, <code>PyoIterator::accumulate</code> is similar to <code>PyoIterator::fold</code> if you provide it with the same binary function.</p>
 <p>However, instead of returning the final accumulated result, it returns an <code>Iterator</code> that yields the current value <code>T</code> of the accumulator for each iteration.</p>
-<p>In other words, the last element yielded by <code>.accumulate()</code> is what would have been returned by <code>.fold()</code> if it had been used instead.</p>
+<p>In other words, the last element yielded by <code>PyoIterator::accumulate</code> is what would have been returned by <code>PyoIterator::fold</code> if it had been used instead.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -12839,11 +12839,11 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyoIterator</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an `Iterator` of accumulated binary function results.</span>
 
-<span class="sd">    In principle, `.accumulate()` is similar to `.fold()` if you provide it with the same binary function.</span>
+<span class="sd">    In principle, `PyoIterator::accumulate` is similar to `PyoIterator::fold` if you provide it with the same binary function.</span>
 
 <span class="sd">    However, instead of returning the final accumulated result, it returns an `Iterator` that yields the current value `T` of the accumulator for each iteration.</span>
 
-<span class="sd">    In other words, the last element yielded by `.accumulate()` is what would have been returned by `.fold()` if it had been used instead.</span>
+<span class="sd">    In other words, the last element yielded by `PyoIterator::accumulate` is what would have been returned by `PyoIterator::fold` if it had been used instead.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        func (Callable[[T, T], T]): A binary function to apply cumulatively.</span>
@@ -14691,7 +14691,7 @@ You can collect the chunks into a collection of collections, for example:
 
 <details class="see-also" open>
   <summary>See Also</summary>
-  <p><a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;n&quot;&gt;insert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;" href="./#pyochain.abc._iterator.PyoIterator.insert"><code>Iter::insert</code></a> to add a single element at the beginning of the <code>Iterator</code>.</p>
+  <p><a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;n&quot;&gt;insert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;" href="./#pyochain.abc._iterator.PyoIterator.insert"><code>PyoIterator::insert</code></a> to add a single element at the beginning of the <code>Iterator</code>.</p>
 </details>
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -14798,7 +14798,7 @@ You can collect the chunks into a collection of collections, for example:
 <span class="sd">    This is equivalent to `list.extend()`, except it is fully lazy and works with any `Iterable`.</span>
 
 <span class="sd">    See Also:</span>
-<span class="sd">        [`Iter::insert`][insert] to add a single element at the beginning of the `Iterator`.</span>
+<span class="sd">        [`PyoIterator::insert`][insert] to add a single element at the beginning of the `Iterator`.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        *others (Iterable[T]): Other iterables to concatenate.</span>
@@ -15736,12 +15736,12 @@ The returned mutable sequence can be used to continue the call chain:
 <details class="warning" open>
   <summary>Warning</summary>
   <p>This creates an infinite <code>Iterator</code>.</p>
-<p>Be sure to use <a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;n&quot;&gt;take&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;" href="./#pyochain.abc._iterator.PyoIterator.take"><code>Iter::take</code></a> or <a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;nb&quot;&gt;slice&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;kc&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stop&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;kc&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;step&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;kc&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;" href="./#pyochain.abc._iterator.PyoIterator.slice"><code>Iter::slice</code></a> to limit the number of items taken.</p>
+<p>Be sure to use <a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;n&quot;&gt;take&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;" href="./#pyochain.abc._iterator.PyoIterator.take"><code>PyoIterator::take</code></a> or <a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;nb&quot;&gt;slice&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;kc&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stop&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;kc&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;step&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;kc&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;" href="./#pyochain.abc._iterator.PyoIterator.slice"><code>PyoIterator::slice</code></a> to limit the number of items taken.</p>
 </details>
 
 <details class="see-also" open>
   <summary>See Also</summary>
-  <p><a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;n&quot;&gt;repeat&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;kc&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;" href="./#pyochain.abc._iterator.PyoIterator.repeat"><code>Iter::repeat</code></a> to repeat <em>self</em> as elements (<code>Iter[PyoIterator[T]]</code>).</p>
+  <p><a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;n&quot;&gt;repeat&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;kc&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;" href="./#pyochain.abc._iterator.PyoIterator.repeat"><code>PyoIterator::repeat</code></a> to repeat <em>self</em> as elements (<code>PyoIterator[PyoIterator[T]]</code>).</p>
 </details>
 
     <p><span class="doc-section-title">Returns:</span></p>
@@ -15805,10 +15805,10 @@ The returned mutable sequence can be used to continue the call chain:
 <span class="sd">    Warning:</span>
 <span class="sd">        This creates an infinite `Iterator`.</span>
 
-<span class="sd">        Be sure to use [`Iter::take`][take] or [`Iter::slice`][slice] to limit the number of items taken.</span>
+<span class="sd">        Be sure to use [`PyoIterator::take`][take] or [`PyoIterator::slice`][slice] to limit the number of items taken.</span>
 
 <span class="sd">    See Also:</span>
-<span class="sd">        [`Iter::repeat`][repeat] to repeat *self* as elements (`Iter[PyoIterator[T]]`).</span>
+<span class="sd">        [`PyoIterator::repeat`][repeat] to repeat *self* as elements (`PyoIterator[PyoIterator[T]]`).</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        PyoIterator[T]: A new `Iterator` that cycles through the elements indefinitely.</span>
@@ -16610,7 +16610,7 @@ including <strong>self</strong> and <em>other</em> when <em>other</em> is itself
 
 <details class="see-also" open>
   <summary>See Also</summary>
-  <p><a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;nb&quot;&gt;filter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;func&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;kc&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;" href="./#pyochain.abc._iterator.PyoIterator.filter"><code>Iter::filter</code></a> with no closure provided if you want to filter out Python native <code>None</code> values.</p>
+  <p><a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;nb&quot;&gt;filter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;func&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;kc&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;" href="./#pyochain.abc._iterator.PyoIterator.filter"><code>PyoIterator::filter</code></a> with no closure provided if you want to filter out Python native <code>None</code> values.</p>
 </details>
 
 <details class="example" open>
@@ -16703,7 +16703,7 @@ including <strong>self</strong> and <em>other</em> when <em>other</em> is itself
 <span class="sd">        PyoIterator[R]: An iterable of the results where func returned `Some`.</span>
 
 <span class="sd">    See Also:</span>
-<span class="sd">        [`Iter::filter`][filter] with no closure provided if you want to filter out Python native `None` values.</span>
+<span class="sd">        [`PyoIterator::filter`][filter] with no closure provided if you want to filter out Python native `None` values.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        ```python</span>
@@ -18138,7 +18138,7 @@ returning the new accumulator value.</p>
 
 <details class="note" open>
   <summary>Note</summary>
-  <p>This is similar to <code>Iter::reduce</code> but with an initial value.</p>
+  <p>This is similar to <code>PyoIterator::reduce</code> but with an initial value.</p>
 </details>
 
 <details class="example" open>
@@ -18217,7 +18217,7 @@ returning the new accumulator value.</p>
 <span class="sd">        B: The final accumulated value.</span>
 
 <span class="sd">    Note:</span>
-<span class="sd">        This is similar to `Iter::reduce` but with an initial value.</span>
+<span class="sd">        This is similar to `PyoIterator::reduce` but with an initial value.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        ```python</span>
@@ -19132,9 +19132,9 @@ Simulated file/queue reader:
 
     <div class="doc doc-contents ">
 
-        <p>Repeat the provided object <strong>n</strong> times (as elements) in an <code>Iter</code>.</p>
+        <p>Repeat the provided object <strong>n</strong> times (as elements) as elements of an <code>Iterator</code>.</p>
 <p>If <strong>n</strong> is <code>None</code>, this will create an infinite <code>Iterator</code>.</p>
-<p>Be sure to use [<code>Iter::take</code>][pyochain._iter.Iter.take] or [<code>Iter::slice</code>][pyochain._iter.Iter.slice] to limit the number of items taken.</p>
+<p>Be sure to use <a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;n&quot;&gt;take&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;" href="./#pyochain.abc._iterator.PyoIterator.take"><code>PyoIterator::take</code></a> or <a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;nb&quot;&gt;slice&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;kc&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stop&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;kc&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;step&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;kc&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;" href="./#pyochain.abc._iterator.PyoIterator.slice"><code>PyoIterator::slice</code></a> to limit the number of items taken.</p>
 
 
 <details class="warning" open>
@@ -19303,11 +19303,11 @@ Shared reference behavior:
 <span class="normal">412</span>
 <span class="normal">413</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">from_repeat</span><span class="p">[</span><span class="n">O</span><span class="p">](</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">O</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyoIterator</span><span class="p">[</span><span class="n">O</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Repeat the provided object **n** times (as elements) in an `Iter`.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Repeat the provided object **n** times (as elements) as elements of an `Iterator`.</span>
 
 <span class="sd">    If **n** is `None`, this will create an infinite `Iterator`.</span>
 
-<span class="sd">    Be sure to use [`Iter::take`][Iter.take] or [`Iter::slice`][Iter.slice] to limit the number of items taken.</span>
+<span class="sd">    Be sure to use [`PyoIterator::take`][PyoIterator.take] or [`PyoIterator::slice`][PyoIterator.slice] to limit the number of items taken.</span>
 
 <span class="sd">    Warning:</span>
 <span class="sd">        Each repetition is a reference to the same object, not a copy.</span>
@@ -20080,7 +20080,7 @@ including <strong>self</strong> and <em>other</em> when <em>other</em> is itself
 
 <details class="see-also" open>
   <summary>See Also</summary>
-  <p><a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;n&quot;&gt;chain&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;others&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;" href="./#pyochain.abc._iterator.PyoIterator.chain"><code>Iter::chain</code></a> to add multiple elements at the end of the <code>Iterator</code>.</p>
+  <p><a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;n&quot;&gt;chain&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;others&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;" href="./#pyochain.abc._iterator.PyoIterator.chain"><code>PyoIterator::chain</code></a> to add multiple elements at the end of the <code>Iterator</code>.</p>
 </details>
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -20181,7 +20181,7 @@ including <strong>self</strong> and <em>other</em> when <em>other</em> is itself
 <span class="sd">        However, append add the value at the **end**, while insert add it at the **beginning**.</span>
 
 <span class="sd">    See Also:</span>
-<span class="sd">        [`Iter::chain`][chain] to add multiple elements at the end of the `Iterator`.</span>
+<span class="sd">        [`PyoIterator::chain`][chain] to add multiple elements at the end of the `Iterator`.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        value (T): The value to prepend.</span>
@@ -21888,7 +21888,7 @@ You can then combine this with various other methods to perform complex transfor
         <p>Creates an <code>Iterator</code> that both yields elements based on a predicate and maps.</p>
 <p><code>map_while()</code> takes a closure as an argument.</p>
 <p>It will call this closure on each element of the <code>Iterator</code>, and yield elements while it returns <code>Some(_)</code>.</p>
-<p>After <code>NONE</code> is returned, <code>Iter::map_while</code> stops and the rest of the elements are ignored.</p>
+<p>After <code>NONE</code> is returned, <code>PyoIterator::map_while</code> stops and the rest of the elements are ignored.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -22003,7 +22003,7 @@ You can then combine this with various other methods to perform complex transfor
 
 <span class="sd">    It will call this closure on each element of the `Iterator`, and yield elements while it returns `Some(_)`.</span>
 
-<span class="sd">    After `NONE` is returned, `Iter::map_while` stops and the rest of the elements are ignored.</span>
+<span class="sd">    After `NONE` is returned, `PyoIterator::map_while` stops and the rest of the elements are ignored.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        func (Callable[[T], Option[R]]): Function to apply to each element that returns `Option[R]`.</span>
@@ -22167,7 +22167,7 @@ You can then combine this with various other methods to perform complex transfor
 
 <details class="see-also" open>
   <summary>See Also</summary>
-  <p><a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;n&quot;&gt;map_windows_star&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;length&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;" href="./#pyochain.abc._iterator.PyoIterator.map_windows_star"><code>Iter::map_windows_star</code></a> for a version that unpacks the window into separate arguments.</p>
+  <p><a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;n&quot;&gt;map_windows_star&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;length&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;" href="./#pyochain.abc._iterator.PyoIterator.map_windows_star"><code>PyoIterator::map_windows_star</code></a> for a version that unpacks the window into separate arguments.</p>
 </details>
 
 <details class="example" open>
@@ -22250,7 +22250,7 @@ You can then combine this with various other methods to perform complex transfor
 <span class="sd">        PyoIterator[R]: An iterator over the outputs of func.</span>
 
 <span class="sd">    See Also:</span>
-<span class="sd">        [`Iter::map_windows_star`][map_windows_star] for a version that unpacks the window into separate arguments.</span>
+<span class="sd">        [`PyoIterator::map_windows_star`][map_windows_star] for a version that unpacks the window into separate arguments.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        ```python</span>
@@ -22403,7 +22403,7 @@ You can then combine this with various other methods to perform complex transfor
 
 <details class="see-also" open>
   <summary>See Also</summary>
-  <p><a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;n&quot;&gt;map_windows&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;length&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;" href="./#pyochain.abc._iterator.PyoIterator.map_windows"><code>Iter::map_windows</code></a> for a version that passes the entire window as a single tuple argument.</p>
+  <p><a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;n&quot;&gt;map_windows&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;length&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;" href="./#pyochain.abc._iterator.PyoIterator.map_windows"><code>PyoIterator::map_windows</code></a> for a version that passes the entire window as a single tuple argument.</p>
 </details>
 
 <details class="example" open>
@@ -22466,7 +22466,7 @@ You can then combine this with various other methods to perform complex transfor
 <span class="sd">        PyoIterator[R]: An iterator over the outputs of func.</span>
 
 <span class="sd">    See Also:</span>
-<span class="sd">        [`Iter::map_windows`][map_windows] for a version that passes the entire window as a single tuple argument.</span>
+<span class="sd">        [`PyoIterator::map_windows`][map_windows] for a version that passes the entire window as a single tuple argument.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        ```python</span>
@@ -22626,7 +22626,7 @@ You can then combine this with various other methods to perform complex transfor
 
 <details class="see-also" open>
   <summary>See Also</summary>
-  <p><a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;n&quot;&gt;map_juxt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;funcs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;" href="./#pyochain.abc._iterator.PyoIterator.map_juxt"><code>Iter::map_juxt</code></a> to apply multiple functions to the same elements of the <code>Iterator</code>.</p>
+  <p><a class="autorefs autorefs-internal" title="&lt;code class=&quot;highlight language-python&quot;&gt;&lt;span class=&quot;n&quot;&gt;map_juxt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;funcs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;" href="./#pyochain.abc._iterator.PyoIterator.map_juxt"><code>PyoIterator::map_juxt</code></a> to apply multiple functions to the same elements of the <code>Iterator</code>.</p>
 </details>
 
 <details class="example" open>
@@ -22709,7 +22709,7 @@ You can then combine this with various other methods to perform complex transfor
 <span class="sd">        PyoIterator[R]: An `Iterator` of results from applying the function to the elements of the iterables.</span>
 
 <span class="sd">    See Also:</span>
-<span class="sd">        [`Iter::map_juxt`][map_juxt] to apply multiple functions to the same elements of the `Iterator`.</span>
+<span class="sd">        [`PyoIterator::map_juxt`][map_juxt] to apply multiple functions to the same elements of the `Iterator`.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        ```python</span>
