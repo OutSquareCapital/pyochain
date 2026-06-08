@@ -53,7 +53,7 @@ if TYPE_CHECKING:
     )
     """Type representing the result of a `zip_longest` operation, which can yield tuples of varying lengths depending on the number of iterables zipped together."""
     type FilterFn[T, R] = Callable[[T], bool | TypeIs[R] | TypeGuard[R]] | None
-    """Optional closure that can be passed to `Iter::filter` to determine if an element should be yielded."""
+    """Optional closure that can be passed to `PyoIterator::filter` to determine if an element should be yielded."""
 
 
 class Position(StrEnum):
@@ -358,11 +358,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
     @classmethod
     def from_repeat[O](cls, obj: O, n: int | None = None) -> PyoIterator[O]:
-        """Repeat the provided object **n** times (as elements) in an `Iter`.
+        """Repeat the provided object **n** times (as elements) as elements of an `Iterator`.
 
         If **n** is `None`, this will create an infinite `Iterator`.
 
-        Be sure to use [`Iter::take`][Iter.take] or [`Iter::slice`][Iter.slice] to limit the number of items taken.
+        Be sure to use [`PyoIterator::take`][PyoIterator.take] or [`PyoIterator::slice`][PyoIterator.slice] to limit the number of items taken.
 
         Warning:
             Each repetition is a reference to the same object, not a copy.
@@ -914,7 +914,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             B: The final accumulated value.
 
         Note:
-            This is similar to `Iter::reduce` but with an initial value.
+            This is similar to `PyoIterator::reduce` but with an initial value.
 
         Example:
             ```python
@@ -2282,10 +2282,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Warning:
             This creates an infinite `Iterator`.
 
-            Be sure to use [`Iter::take`][take] or [`Iter::slice`][slice] to limit the number of items taken.
+            Be sure to use [`PyoIterator::take`][take] or [`PyoIterator::slice`][slice] to limit the number of items taken.
 
         See Also:
-            [`Iter::repeat`][repeat] to repeat *self* as elements (`Iter[PyoIterator[T]]`).
+            [`PyoIterator::repeat`][repeat] to repeat *self* as elements (`PyoIterator[PyoIterator[T]]`).
 
         Returns:
             PyoIterator[T]: A new `Iterator` that cycles through the elements indefinitely.
@@ -2309,7 +2309,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             However, append add the value at the **end**, while insert add it at the **beginning**.
 
         See Also:
-            [`Iter::chain`][chain] to add multiple elements at the end of the `Iterator`.
+            [`PyoIterator::chain`][chain] to add multiple elements at the end of the `Iterator`.
 
         Args:
             value (T): The value to prepend.
@@ -2363,7 +2363,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         This is equivalent to `list.extend()`, except it is fully lazy and works with any `Iterable`.
 
         See Also:
-            [`Iter::insert`][insert] to add a single element at the beginning of the `Iterator`.
+            [`PyoIterator::insert`][insert] to add a single element at the beginning of the `Iterator`.
 
         Args:
             *others (Iterable[T]): Other iterables to concatenate.
@@ -2388,11 +2388,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
     ) -> PyoIterator[T]:
         """Return an `Iterator` of accumulated binary function results.
 
-        In principle, `.accumulate()` is similar to `.fold()` if you provide it with the same binary function.
+        In principle, `PyoIterator::accumulate` is similar to `PyoIterator::fold` if you provide it with the same binary function.
 
         However, instead of returning the final accumulated result, it returns an `Iterator` that yields the current value `T` of the accumulator for each iteration.
 
-        In other words, the last element yielded by `.accumulate()` is what would have been returned by `.fold()` if it had been used instead.
+        In other words, the last element yielded by `PyoIterator::accumulate` is what would have been returned by `PyoIterator::fold` if it had been used instead.
 
         Args:
             func (Callable[[T, T], T]): A binary function to apply cumulatively.
@@ -2887,7 +2887,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             PyoIterator[R]: An `Iterator` of results from applying the function to the elements of the iterables.
 
         See Also:
-            [`Iter::map_juxt`][map_juxt] to apply multiple functions to the same elements of the `Iterator`.
+            [`PyoIterator::map_juxt`][map_juxt] to apply multiple functions to the same elements of the `Iterator`.
 
         Example:
             ```python
@@ -2917,7 +2917,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         It will call this closure on each element of the `Iterator`, and yield elements while it returns `Some(_)`.
 
-        After `NONE` is returned, `Iter::map_while` stops and the rest of the elements are ignored.
+        After `NONE` is returned, `PyoIterator::map_while` stops and the rest of the elements are ignored.
 
         Args:
             func (Callable[[T], Option[R]]): Function to apply to each element that returns `Option[R]`.
@@ -3230,7 +3230,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             PyoIterator[R]: An iterable of the results where func returned `Some`.
 
         See Also:
-            [`Iter::filter`][filter] with no closure provided if you want to filter out Python native `None` values.
+            [`PyoIterator::filter`][filter] with no closure provided if you want to filter out Python native `None` values.
 
         Example:
             ```python
@@ -3682,7 +3682,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             PyoIterator[R]: An iterator over the outputs of func.
 
         See Also:
-            [`Iter::map_windows_star`][map_windows_star] for a version that unpacks the window into separate arguments.
+            [`PyoIterator::map_windows_star`][map_windows_star] for a version that unpacks the window into separate arguments.
 
         Example:
             ```python
@@ -3762,7 +3762,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             PyoIterator[R]: An iterator over the outputs of func.
 
         See Also:
-            [`Iter::map_windows`][map_windows] for a version that passes the entire window as a single tuple argument.
+            [`PyoIterator::map_windows`][map_windows] for a version that passes the entire window as a single tuple argument.
 
         Example:
             ```python
