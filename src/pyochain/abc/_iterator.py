@@ -3426,6 +3426,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             [`Iter::map_windows_star`][map_windows_star] for a version that unpacks the window into separate arguments.
 
         Example:
+            ```python
             >>> from pyochain import Iter, Seq, Range
             >>> import statistics
             >>> Iter((1, 2, 3, 4)).map_windows(2, statistics.mean).collect(Seq)
