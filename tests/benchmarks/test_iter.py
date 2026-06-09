@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import operator
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
@@ -271,3 +272,21 @@ def _all_equal(data: Seq[int]) -> bool:
 def test_bool(benchmark: BenchFixture) -> None:
     data = Seq((1, 2, 3))
     assert benchmark(lambda: bool(data.iter())) is True
+
+
+def test_reduce(benchmark: BenchFixture) -> None:
+    data = Range(0, 20_000)
+    assert benchmark(_reduce, data) == 19999 * 20000 // 2
+
+
+def _reduce(data: Range) -> int:
+    return data.iter().reduce(operator.add)
+
+
+def test_find(benchmark: BenchFixture) -> None:
+    data = Range(0, 20_000)
+    assert benchmark(_find, data) == Some(19_999)
+
+
+def _find(data: Range) -> Option[int]:
+    return data.iter().find(lambda x: x == 19_999)

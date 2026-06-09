@@ -782,7 +782,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        return functools.reduce(func, self)
+        return functools.reduce(func, iter(self))
 
     def fold[B](self, init: B, func: Callable[[B, T], B]) -> B:
         """Fold every element of the `Iterator` into an accumulator by applying an operation, returning the final result.
@@ -811,7 +811,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        return functools.reduce(func, self, init)
+        return functools.reduce(func, iter(self), init)
 
     @overload
     def fold_star[**P, B](
@@ -933,7 +933,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         def _reducer(acc: B, item: U) -> B:
             return func(acc, *item, *args, **kwargs)
 
-        return functools.reduce(_reducer, self, init)
+        return functools.reduce(_reducer, iter(self), init)
 
     def find(self, predicate: Callable[[T], bool]) -> Option[T]:
         """Searches for an element of an iterator that satisfies a `predicate`.
@@ -963,7 +963,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        return option(next(filter(predicate, self), None))
+        return option(next(filter(predicate, iter(self)), None))
 
     def try_find[E](
         self, predicate: Callable[[T], Result[bool, E]]
