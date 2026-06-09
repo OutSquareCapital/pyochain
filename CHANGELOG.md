@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-06-09
+
 ### 🏆 Highlights
 
 This release main change is a refactor of `Iter` and `PyoIterator` methods -> almost all methods from `Iter` have been moved to `PyoIterator`.
