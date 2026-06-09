@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### 🚀 Performance improvements
+
+- `Iter::__bool__` is now **1.16x** faster by avoiding to use `itertools::islice`, this logic has been replaced by a `next` call and sentinel object check.
+
 ## [0.25.0] - 2026-06-09
 
 ### 🏆 Highlights

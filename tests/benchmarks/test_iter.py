@@ -266,3 +266,8 @@ def test_all_equal(benchmark: BenchFixture) -> None:
 
 def _all_equal(data: Seq[int]) -> bool:
     return data.iter().all_equal()
+
+
+def test_bool(benchmark: BenchFixture) -> None:
+    data = Seq((1, 2, 3))
+    assert benchmark(lambda: bool(data.iter())) is True

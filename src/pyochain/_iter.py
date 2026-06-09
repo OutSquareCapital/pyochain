@@ -8,6 +8,9 @@ from .abc import PyoIterator
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
 
+BOOL_SENTINEL = object()
+"""Sentinel object used in `Iter::__bool__` to check for emptiness without consuming elements."""
+
 
 class Iter[T](PyoIterator[T]):
     """Concrete implementation for `abc::PyoIterator`.
@@ -104,9 +107,12 @@ class Iter[T](PyoIterator[T]):
 
             ```
         """
-        first = tuple(itertools.islice(self._inner, 1))
-        self._inner = itertools.chain(first, self._inner)
-        return len(first) > 0
+        match next(self._inner, BOOL_SENTINEL):
+            case sentinel if sentinel is BOOL_SENTINEL:
+                return False
+            case some_val:
+                self._inner = itertools.chain((some_val,), self._inner)  # pyright: ignore[reportAttributeAccessIssue]
+                return True
 
     @override
     def __repr__(self) -> str:
