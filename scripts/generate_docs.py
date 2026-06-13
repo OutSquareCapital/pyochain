@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, TypeIs
 
 from pyochain import Dict, Set, SetMut
 
-from ._utils import Color, Paths, show
+from ._utils import Color, Paths
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -18,12 +18,12 @@ def main() -> None:
     import pyochain
     from pyochain import collections
 
-    show("Generating pyochain documentation...", style=Color.INFO)
+    Color.INFO.show("Generating pyochain documentation...")
     _generate_all_for_module(pyochain)
     _generate_all_for_module(collections)
-    show("✅ All files generated!", style=Color.SUCCESS)
-    show("----------------------------------", style=Color.BLANK)
-    return show("Checking navigation completeness...", style=Color.INFO)
+    Color.SUCCESS.show("✅ All files generated!")
+    Color.BLANK.show("----------------------------------")
+    return Color.INFO.show("Checking navigation completeness...")
 
 
 def _generate_all_for_module(module: ModuleType) -> None:
@@ -50,7 +50,7 @@ def _generate_mds(module: ModuleType, generated_paths: SetMut[str]) -> None:
     def _write(path: Path, cls_name: str, cls_path: str) -> None:
         generated_paths.add(path.as_posix())
         _ = path.write_text(_finalize_md(cls_path, cls_name), encoding="utf-8")
-        show(f"✓ Generated {path!s}", style=Color.SUCCESS)
+        Color.SUCCESS.show(f"✓ Generated {path!s}")
 
     def _is_public_class(obj: tuple[str, Any]) -> TypeIs[tuple[str, type]]:  # pyright: ignore[reportExplicitAny]
         name, cls = obj  # pyright: ignore[reportAny]

@@ -25,7 +25,7 @@ from pyochain import (
 )
 from pyochain.abc import PyoIterator
 
-from ._utils import CONSOLE, Color, Paths, show
+from ._utils import CONSOLE, Color, Paths
 
 CODE_BLOCK_PATTERN = re.compile(r"^```(\w*)", re.MULTILINE)
 SKIP_DECORATORS = SetMut.from_ref({"overload", "override", "no_doctest", "wraps"})
@@ -77,7 +77,7 @@ class State(NamedTuple):
 def main() -> None:
     """Check all docstrings in the project."""
     msg = "Checking docstrings for properly closed code blocks..."
-    show(msg, style=Color.INFO)
+    Color.INFO.show(msg)
 
     return (
         _get_files("py")
@@ -87,7 +87,7 @@ def main() -> None:
         .flatten()
         .collect(Seq)
         .then(_handle_errors)
-        .unwrap_or_else(lambda: show("[OK] No issues found!", style=Color.SUCCESS))
+        .unwrap_or_else(lambda: Color.SUCCESS.show("[OK] No issues found!"))
     )
 
 
@@ -96,16 +96,14 @@ def _get_files(pattern: str) -> Seq[Path]:
         Paths.SRC_DIR
         .iter_rglob(f"*.{pattern}")
         .collect(Seq)
-        .inspect(
-            lambda p: show(f"Checking {p.len()} {pattern} files...", style=Color.INFO)
-        )
+        .inspect(lambda p: Color.INFO.show(f"Checking {p.len()} {pattern} files..."))
     )
 
 
 def _handle_errors(all_errors: Seq[DocstringError]) -> None:
     _show_table(all_errors)
     msg = f"[FAILED] Found {all_errors.len()} issue(s)"
-    show(msg, style=Color.ERROR)
+    Color.ERROR.show(msg)
 
 
 def _show_table(all_errors: Seq[DocstringError]) -> None:

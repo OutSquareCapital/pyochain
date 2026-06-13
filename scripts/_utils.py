@@ -42,6 +42,5 @@ class Color(StrEnum):
     ERROR = "red bold"
     BLANK = "white"
 
-
-def show(msg: str, style: Color) -> None:
-    CONSOLE.print(Text(msg, style=style.value))
+    def show(self, msg: str) -> None:
+        CONSOLE.print(Text(msg, style=self.value))

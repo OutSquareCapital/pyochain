@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 
 from pyochain import Iter, Set, SetMut
 
-from ._utils import Color, Paths, show
+from ._utils import Color, Paths
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -36,26 +36,25 @@ def main(config_path: Paths = Paths.ZENSICAL) -> None:
     txt = config_path.value.read_text(encoding="utf-8")
     config: ZensicalConfig = tomllib.loads(txt)["project"]  # pyright: ignore[reportAny]
     docs_dir = config_path.value.parent.joinpath(config["docs_dir"])
-    nav_item: JsonData = config["nav"]
-    nav_paths = _collect_nav_paths(nav_item)
+    nav_paths = _collect_nav_paths(config["nav"])
     missing = _missing_paths(
         docs_dir.joinpath("reference").glob("*.md"), nav_paths, docs_dir
     )
     if missing:
         msg = f"⚠️  Missing generated files in {Paths.ZENSICAL.value.as_posix()}:\n {missing}"
-        show(msg, style=Color.WARNING)
+        Color.WARNING.show(msg)
     invalid_nav_paths = _invalid_paths(docs_dir.rglob("*.md"), nav_paths, docs_dir)
     if invalid_nav_paths:
-        show(f"⚠️  Invalid nav links:\n {invalid_nav_paths}", style=Color.WARNING)
+        Color.WARNING.show(f"⚠️  Invalid nav links:\n {invalid_nav_paths}")
 
     invalid_markdown_links = _check_markdown_links(docs_dir)
     if invalid_markdown_links:
         msg = f"⚠️  Invalid markdown links:\n {invalid_markdown_links}"
-        show(msg, style=Color.WARNING)
+        Color.WARNING.show(msg)
     if missing or invalid_nav_paths or invalid_markdown_links:
         msg = "❌ Please fix the above issues before deploying the documentation."
-        return show(msg, style=Color.ERROR)
-    return show("✓ Navigation is complete!", style=Color.SUCCESS)
+        return Color.ERROR.show(msg)
+    return Color.SUCCESS.show("✓ Navigation is complete!")
 
 
 def _collect_nav_paths(item: JsonData) -> SetMut[str]:
