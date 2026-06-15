@@ -54,6 +54,7 @@ type SupportsComparison[T] = (
     | SupportsDunderLT[T]
 )
 type SupportsRichComparison[T] = SupportsDunderLT[T] | SupportsDunderGT[T]
+type SupportsAnyRichComparison = SupportsRichComparison[Any]  # pyright: ignore[reportExplicitAny]
 type DictConvertible[K, V] = (
     Mapping[K, V] | Iterable[tuple[K, V]] | SupportsKeysAndGetItem[K, V]
 )

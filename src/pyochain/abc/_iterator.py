@@ -33,8 +33,8 @@ if TYPE_CHECKING:
     from .._types import (
         LiteralInteger,
         SupportsAnyAdd,
+        SupportsAnyRichComparison,
         SupportsComparison,
-        SupportsRichComparison,
         SupportsSumWithNoDefaultGiven,
     )
     from .._vec import Vec
@@ -1671,7 +1671,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         return tls.try_collect(iter(self)).map(Vec.from_ref)
 
-    def sort[U: SupportsRichComparison[Any]](
+    def sort[U: SupportsAnyRichComparison](
         self: PyoIterator[U], *, reverse: bool = False
     ) -> Vec[U]:
         """Sort the elements of the `Iterator`.
@@ -1702,10 +1702,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         return Vec.from_ref(sorted(iter(self), reverse=reverse))
 
     def sort_by(
-        self,
-        key: Callable[[T], SupportsRichComparison[Any]],  # pyright: ignore[reportExplicitAny]
-        *,
-        reverse: bool = False,
+        self, key: Callable[[T], SupportsAnyRichComparison], *, reverse: bool = False
     ) -> Vec[T]:
         """Sort the elements of the sequence transformed by the key function.
 
@@ -1715,7 +1712,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             The result is a new `Vec` over the sorted sequence.
 
         Args:
-            key (Callable[[T], SupportsRichComparison[Any]]): Function to extract a comparison key from each element.
+            key (Callable[[T], SupportsAnyRichComparison]): Function to extract a comparison key from each element.
             reverse (bool): Whether to sort in descending order.
 
         Returns:
@@ -1868,7 +1865,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         """
         return sum(iter(self), start)
 
-    def min[U: SupportsRichComparison[Any]](self: PyoIterable[U]) -> U:
+    def min[U: SupportsAnyRichComparison](self: PyoIterable[U]) -> U:
         """Return the minimum of the `Iterator`.
 
         The elements of the `Iterator` must support comparison operations.
@@ -1890,7 +1887,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         """
         return min(iter(self))
 
-    def min_by[U: SupportsRichComparison[Any]](self, key: Callable[[T], U]) -> T:
+    def min_by[U: SupportsAnyRichComparison](self, key: Callable[[T], U]) -> T:
         """Return the minimum element of the `Iterator` using a custom **key** function.
 
         If multiple elements are tied for the minimum value, the first one encountered is returned.
@@ -1931,7 +1928,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         """
         return min(iter(self), key=key)
 
-    def max[U: SupportsRichComparison[Any]](self: PyoIterable[U]) -> U:
+    def max[U: SupportsAnyRichComparison](self: PyoIterable[U]) -> U:
         """Return the maximum element of the `Iterator`.
 
         The elements of the `Iterator` must support comparison operations.
@@ -1953,7 +1950,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         """
         return max(iter(self))
 
-    def max_by[U: SupportsRichComparison[Any]](self, key: Callable[[T], U]) -> T:
+    def max_by[U: SupportsAnyRichComparison](self, key: Callable[[T], U]) -> T:
         """Return the maximum element of the `Iterator` using a custom **key** function.
 
         If multiple elements are tied for the maximum value, the first one encountered is returned.
