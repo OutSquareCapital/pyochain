@@ -1,11 +1,13 @@
 use crate::args::{Args, Concatenate, Kwargs};
 use crate::option::{PyNull, PySome};
 use crate::result::{PyoErr, PyoOk};
+use pyo3::exceptions::PyStopIteration;
 use pyo3::types::{
     PyAny, PyBool, PyDict, PyFunction, PyIterator, PyList, PyModule, PySequence, PySet, PyTuple,
 };
 use pyo3::{IntoPyObjectExt, prelude::*};
 use pyo3::{ffi, intern};
+use tap::prelude::*;
 /// Create a unique sentinel object
 #[inline]
 fn sentinel(py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
@@ -136,8 +138,12 @@ pub fn try_find(data: &Bound<'_, PyAny>, predicate: &Bound<'_, PyFunction>) -> P
                         .cast_bound_unchecked::<PyBool>(py)
                         .is_true()
                 } {
-                    let some_val = PySome::new(val.unbind()).into_py_any(py)?;
-                    return Ok(PyoOk::new(some_val).into_py_any(py)?);
+                    return Ok(val
+                        .unbind()
+                        .pipe(PySome::new)
+                        .into_py_any(py)?
+                        .pipe(PyoOk::new)
+                        .into_py_any(py)?);
                 }
             }
             Err(_) => {
@@ -149,8 +155,10 @@ pub fn try_find(data: &Bound<'_, PyAny>, predicate: &Bound<'_, PyFunction>) -> P
             }
         }
     }
-    let none = PyNull::get(py);
-    Ok(PyoOk::new(none.into_py_any(py)?).into_py_any(py)?)
+    PyNull::get(py)
+        .into_py_any(py)?
+        .pipe(PyoOk::new)
+        .into_py_any(py)
 }
 #[pyfunction]
 pub fn try_fold(
@@ -182,7 +190,10 @@ pub fn try_reduce(data: &Bound<'_, PyAny>, func: &Bound<'_, PyFunction>) -> PyRe
     let mut iterator = data.try_iter()?;
     let first = iterator.next();
     if first.is_none() {
-        return Ok(PyoOk::new(PyNull::get(py).into_py_any(py)?).into_py_any(py)?);
+        return PyNull::get(py)
+            .into_py_any(py)?
+            .pipe(PyoOk::new)
+            .into_py_any(py);
     }
 
     let mut accumulator = first.unwrap()?.to_owned().unbind();
@@ -200,7 +211,10 @@ pub fn try_reduce(data: &Bound<'_, PyAny>, func: &Bound<'_, PyFunction>) -> PyRe
         }
     }
 
-    PyoOk::new(PySome::new(accumulator).into_py_any(py)?).into_py_any(py)
+    PySome::new(accumulator)
+        .into_py_any(py)?
+        .pipe(PyoOk::new)
+        .into_py_any(py)
 }
 #[pyfunction]
 pub fn try_collect(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
@@ -354,9 +368,7 @@ pub fn ne(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
     loop {
         match (left_iter.next(), right_iter.next()) {
             (Some(left_res), Some(right_res)) => {
-                let left = left_res?;
-                let right = right_res?;
-                if !left.eq(&right)? {
+                if !left_res?.eq(&right_res?)? {
                     return Ok(true);
                 }
             }
@@ -508,11 +520,11 @@ pub fn last(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
         let mut last = next(iterator);
         if last.is_null() {
             if ffi::PyErr_Occurred().is_null() {
-                return Err(pyo3::exceptions::PyStopIteration::new_err(""));
+                return Err(PyStopIteration::new_err(""));
             }
             if ffi::PyErr_ExceptionMatches(ffi::PyExc_StopIteration) != 0 {
                 ffi::PyErr_Clear();
-                return Err(pyo3::exceptions::PyStopIteration::new_err(""));
+                return Err(PyStopIteration::new_err(""));
             }
             return Err(PyErr::fetch(py));
         }
@@ -788,7 +800,9 @@ impl SlidingWindow {
     #[new]
     fn new(mut data: Bound<'_, PyIterator>, n: usize) -> PyResult<Self> {
         let py = data.py();
-        let mut prev: Vec<Py<PyAny>> = (0..n).map(|_| py.None().into_any()).collect();
+        let mut prev = (0..n)
+            .map(|_| py.None().into_any())
+            .collect::<Vec<Py<PyAny>>>();
         for i in 1..n {
             match data.next() {
                 None => break,
@@ -814,8 +828,7 @@ impl SlidingWindow {
         slf.prev.rotate_left(1);
         let last = slf.prev.len() - 1;
         slf.prev[last] = item;
-        let tuple = PyTuple::new(py, slf.prev.iter())?;
-        Ok(Some(tuple.into()))
+        Ok(Some(PyTuple::new(py, slf.prev.iter())?.into()))
     }
 }
 #[pyclass]

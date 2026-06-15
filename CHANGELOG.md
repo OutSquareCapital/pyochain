@@ -19,6 +19,11 @@
 ### 🛠️ Other improvements
 
 - **Fix**: the `check_nav` script wasn't launching its `main` function.
+- **Refactor**: Use the `tap` crate troughout the Rust code for improved readability.
+
+### 🔗 Dependencies
+
+- Added `tap` crate for Rust code.
 
 ## [0.25.0] - 2026-06-09
 
