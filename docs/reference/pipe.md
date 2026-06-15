@@ -1,0 +1,3 @@
+# Pipe
+
+::: pyochain.rs.Pipe

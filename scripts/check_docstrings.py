@@ -262,7 +262,7 @@ def _check_code_blocks(
         )
         .collect(Vec)
     )
-    doctest_errors = lines.into(
+    doctest_errors = lines.pipe(
         _check_errs, func_name, start_line, has_no_doctest_flag=skip_doctest
     )
 

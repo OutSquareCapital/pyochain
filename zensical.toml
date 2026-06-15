@@ -53,7 +53,7 @@
                 ] },
                 { "Mixins" = [
                     { "Checkable" = "reference/checkable.md" },
-                    { "Into" = "reference/into.md" },
+                    { "Pipe" = "reference/pipe.md" },
                     { "Pipeable" = "reference/pipeable.md" },
                     { "Tap" = "reference/tap.md" },
                 ] },

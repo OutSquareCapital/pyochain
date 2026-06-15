@@ -3,15 +3,15 @@ use crate::option::{PyNull, PySome};
 use crate::result::{PyoErr, PyoOk};
 use pyo3::{IntoPyObjectExt, prelude::*};
 
-#[pyclass(frozen, subclass, name = "Into")]
-pub struct PyoInto;
+#[pyclass(frozen, subclass, name = "Pipe")]
+pub struct PyoPipe;
 
 #[pymethods]
-impl PyoInto {
+impl PyoPipe {
     #[new]
     #[pyo3(signature = (*_args, **_kwargs))]
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> Self {
-        PyoInto {}
+        PyoPipe {}
     }
 }
 

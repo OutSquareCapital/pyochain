@@ -22,8 +22,8 @@ def test_ok_and_then() -> None:
     assert Ok(0).and_then(safe_divide).unwrap_err() == "Division by zero"
 
 
-def test_ok_into() -> None:
-    assert Ok(42).into(lambda res: f"Result: {res.unwrap()}") == "Result: 42"
+def test_ok_pipe() -> None:
+    assert Ok(42).pipe(lambda res: f"Result: {res.unwrap()}") == "Result: 42"
 
 
 def test_err_unwrap_formats_python_exception_readably() -> None:

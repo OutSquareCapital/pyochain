@@ -13,7 +13,7 @@ Inspired by Rust's `Iterator`, `Result`, `Option`, and DataFrame libraries like 
 - 🛡️ **100% type-safe** — Full generic support and autocompletion in your IDE.
 - 📚 **Accurate Documentation** — Every method is documented and tested with runnable examples.
 Every code example in the website (or this README) is also tested, ensuring accuracy and reliability.
-- 🔄 **Interoperable** — Seamlessly convert to/from types with various methods like `.into()` and `.collect()`, convert `Iterables` to `Option` or `Result` based on their truthiness, and more.
+- 🔄 **Interoperable** — Seamlessly convert to/from types with various methods like `.pipe()` and `.collect()`, convert `Iterables` to `Option` or `Result` based on their truthiness, and more.
 - 🐍 **Mixins and ABC's** — Extend your own classes with the mixins, Protocol and ABC's provided by the `abc` module.
 
 ## Installation
@@ -119,8 +119,8 @@ def handle_result(res: Result[int, ValueError]) -> str:
             return f"Error parsing int!"
 
 
-assert try_parse_int("123").into(handle_result) == "Parsed value: 123"
-assert try_parse_int("abc").into(handle_result) == "Error parsing int!"
+assert try_parse_int("123").pipe(handle_result) == "Parsed value: 123"
+assert try_parse_int("abc").pipe(handle_result) == "Error parsing int!"
 ```
 
 ## Documentation

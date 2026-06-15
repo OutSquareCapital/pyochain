@@ -15,7 +15,7 @@ The mixins are simple, implementation-agnostic classes that can be added to any 
 
 """
 
-from ..rs import Checkable, Into, Pipeable, Tap
+from ..rs import Checkable, Pipe, Pipeable, Tap
 from ._collection import PyoCollection, PyoContainer, PyoSized
 from ._iterable import PyoIterable
 from ._iterator import Position, PyoIterator
@@ -25,7 +25,7 @@ from ._set import PyoMutableSet, PyoSet
 
 __all__ = [
     "Checkable",
-    "Into",
+    "Pipe",
     "Pipeable",
     "Position",
     "PyoCollection",

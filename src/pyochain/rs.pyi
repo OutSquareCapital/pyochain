@@ -15,9 +15,9 @@ from ._iter import Iter
 
 # Mixin classes for pipeable and checkable methods
 
-class Into(Protocol):
-    """Mixin class providing the `into` method for fluent chaining."""
-    def into[**P, R](
+class Pipe(Protocol):
+    """Mixin class providing the `pipe` method for fluent chaining."""
+    def pipe[**P, R](
         self,
         func: Callable[Concatenate[Self, P], R],
         *args: P.args,
@@ -27,7 +27,7 @@ class Into(Protocol):
 
         This method allows to pipe the instance into an object or function that can convert `Self` into another type.
 
-        Conceptually, this allow to do `x.into(f)` instead of `f(x)`, hence keeping a fluent chaining style.
+        Conceptually, this allow to do `x.pipe(f)` instead of `f(x)`, hence keeping a fluent chaining style.
 
         Args:
             func (Callable[Concatenate[Self, P], R]): Function for conversion.
@@ -53,7 +53,7 @@ class Into(Protocol):
             ...         case Err(err):
             ...             return f"Data is invalid: {err}"
             >>>
-            >>> Seq((1, 2, 3)).into(check_data).into(handle_result)
+            >>> Seq((1, 2, 3)).pipe(check_data).pipe(handle_result)
             'Data is valid: Seq(1, 2, 3)'
 
             ```
@@ -91,7 +91,7 @@ class Tap(Protocol):
             ```
         """
 
-class Pipeable(Into, Tap, Protocol):
+class Pipeable(Pipe, Tap, Protocol):
     """Mixin class providing pipeable methods for fluent chaining."""
 
 class Checkable(Protocol):
@@ -328,7 +328,7 @@ type Option[T] = Some[T] | Null[T]
 See `OptionType` for more details.
 """
 
-class OptionType[T](Into):
+class OptionType[T](Pipe):
     """OptionType is the common interface for an optional value.
 
     `Option[T]` is the union of `Some[T]` and `Null[T]`, and represents a value that can only have two states:
@@ -1508,7 +1508,7 @@ See the `ResultType` Protocol for documentation on the methods available on `Res
 """
 
 @type_check_only
-class ResultType[T, E](Into, Protocol):
+class ResultType[T, E](Pipe, Protocol):
     """This is the base Protocol defined for returning and propagating errors.
 
     `Result[T, E]` is a the type union of the two possibles variants of the Protocol:
@@ -1551,9 +1551,9 @@ class ResultType[T, E](Into, Protocol):
         ...         case Err(error):
         ...             return f"Failure: {error}"
         >>>
-        >>> is_positive(5).map(lambda s: s.upper()).into(handle_variant)
+        >>> is_positive(5).map(lambda s: s.upper()).pipe(handle_variant)
         'Success: VALUE IS 5'
-        >>> is_positive(-3).map(lambda s: s.upper()).into(handle_variant)
+        >>> is_positive(-3).map(lambda s: s.upper()).pipe(handle_variant)
         'Failure: -3 is not positive'
 
         ```

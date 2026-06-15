@@ -317,7 +317,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ...
             ...     return consume
             >>>
-            >>> Iter.from_fn(Deque([1, 2, 3]).into(queue_consumer)).collect(Seq)
+            >>> Iter.from_fn(Deque([1, 2, 3]).pipe(queue_consumer)).collect(Seq)
             Seq(1, 2, 3)
 
             ```
@@ -1212,7 +1212,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             True
             >>> # Alternative way to check uniqueness by comparing lengths:
             >>> collection = Seq((1, 2, 3, 3))
-            >>> collection.len() == collection.into(Set).len()
+            >>> collection.len() == collection.pipe(Set).len()
             False
 
             ```
@@ -1521,7 +1521,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             - A narrower constraint (`Collection[Any]`) to specify the intent
             - Better performance (no args/kwargs unpacking).
 
-        If you need to pass additional arguments, you can use [`Pipeable::into`][Pipeable.into] instead.
+        If you need to pass additional arguments, you can use [`Pipe::pipe`][Pipe.pipe] instead.
 
         Args:
             collector (Callable[[Iterator[T]], R]): Function|type that defines the target collection.
@@ -1999,9 +1999,9 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
     ) -> R:
         """Unpack the `Iterator` in the provided *func*, and return the result.
 
-        This is similar to `Pipeable::into`, but instead of passing `PyoIterator[T]`, we pass the elements inside `PyoIterator[T]`.
+        This is similar to `Pipe::pipe`, but instead of passing `PyoIterator[T]`, we pass the elements inside `PyoIterator[T]`.
 
-        This avoids you to do `iterator.into(lambda x: (*x))`, improving performance and readability.
+        This avoids you to do `iterator.pipe(lambda x: (*x))`, improving performance and readability.
 
         Note:
             This method will consume the `Iterator`.
@@ -2134,7 +2134,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             >>> data = Seq((1, 1, 2, 2, 3, 3))
             >>> data.iter().unique().collect(Seq)
             Seq(1, 2, 3)
-            >>> data.into(Set).iter().sort()
+            >>> data.pipe(Set).iter().sort()
             Vec(1, 2, 3)
 
             ```
@@ -2493,9 +2493,9 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ...         .map(lambda c: c.collect(Seq))
             ...         .collect(Seq)
             ...     )
-            >>> Seq((1, 2, 3, 4, 5, 6)).into(collect_all_chunks)
+            >>> Seq((1, 2, 3, 4, 5, 6)).pipe(collect_all_chunks)
             Seq(Seq(1, 2, 3), Seq(4, 5, 6))
-            >>> Seq((1, 2, 3, 4, 5, 6, 7, 8)).into(collect_all_chunks)
+            >>> Seq((1, 2, 3, 4, 5, 6, 7, 8)).pipe(collect_all_chunks)
             Seq(Seq(1, 2, 3), Seq(4, 5, 6), Seq(7, 8))
 
             ```

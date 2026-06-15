@@ -7,12 +7,12 @@ mod result;
 mod tools;
 use pyo3::prelude::*;
 
-macro_rules! impl_py_into {
+macro_rules! impl_py_pipe {
     ($type:ty) => {
         #[pymethods]
         impl $type {
-            #[pyo3(name = "into", signature = (func, *args, **kwargs))]
-            fn py_into(
+            #[pyo3(name = "pipe", signature = (func, *args, **kwargs))]
+            fn py_pipe(
                 slf: &Bound<'_, Self>,
                 func: &Bound<'_, PyAny>,
                 args: &args::Args<'_>,
@@ -25,8 +25,8 @@ macro_rules! impl_py_into {
         }
     };
     ($first:ty, $($rest:ty),+ $(,)?) => {
-        impl_py_into!($first);
-        impl_py_into!($($rest),+);
+        impl_py_pipe!($first);
+        impl_py_pipe!($($rest),+);
     };
 }
 macro_rules! impl_tap {
@@ -49,13 +49,13 @@ macro_rules! impl_tap {
     };
 }
 impl_tap!(mixins::Pipeable, mixins::PyoTap);
-impl_py_into!(
+impl_py_pipe!(
     option::PySome,
     option::PyNull,
     result::PyoOk,
     result::PyoErr,
     mixins::Pipeable,
-    mixins::PyoInto
+    mixins::PyoPipe
 );
 
 #[pymodule]
@@ -76,7 +76,7 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<result::PyochainResult>()?;
     m.add_class::<mixins::Checkable>()?;
     m.add_class::<mixins::Pipeable>()?;
-    m.add_class::<mixins::PyoInto>()?;
+    m.add_class::<mixins::PyoPipe>()?;
     m.add_class::<mixins::PyoTap>()?;
     m.add_wrapped(pyo3::wrap_pymodule!(tools::tools))?;
     py.import("sys")?

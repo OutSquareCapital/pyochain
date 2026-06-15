@@ -15,8 +15,8 @@ if TYPE_CHECKING:
 @pytest.mark.parametrize("size", SIZES)
 def test_retain(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size)
-    assert benchmark(_retain, data.into(Vec)) is None
-    canary = data.into(Vec)
+    assert benchmark(_retain, data.pipe(Vec)) is None
+    canary = data.pipe(Vec)
     canary.retain(lambda i: i < 5)
     assert canary.inner == [0, 1, 2, 3, 4]
 
@@ -36,10 +36,10 @@ def test_truncate(benchmark: BenchFixture) -> None:
     data = Range(0, Sizes.SIZE_4096)
 
     def fn() -> None:
-        return data.into(Vec).truncate(1)
+        return data.pipe(Vec).truncate(1)
 
     assert benchmark(fn) is None
-    v = data.into(Vec)
+    v = data.pipe(Vec)
     v.truncate(1)
     assert v.first() == 0
 
@@ -48,7 +48,7 @@ def test_drain(benchmark: BenchFixture) -> None:
     data = Range(0, Sizes.SIZE_4096)
 
     def fn() -> int:
-        return data.into(Vec).drain().count()
+        return data.pipe(Vec).drain().count()
 
     assert benchmark(fn) == Sizes.SIZE_4096
 
@@ -57,6 +57,6 @@ def test_extract_if(benchmark: BenchFixture) -> None:
     data = Range(0, Sizes.SIZE_4096)
 
     def fn() -> int:
-        return data.into(Vec).extract_if(lambda _: True).last()
+        return data.pipe(Vec).extract_if(lambda _: True).last()
 
     assert benchmark(fn) == Sizes.SIZE_4096 - 1

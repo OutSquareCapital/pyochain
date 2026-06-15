@@ -13,8 +13,8 @@ def test_and_then_basic_callable() -> None:
     assert Some(5).and_then(lambda x: Some(x * 2)).unwrap() == 10
 
 
-def test_into_basic_callable() -> None:
-    assert Some(5).into(lambda opt: opt.unwrap() * 2) == 10
+def test_pipe_basic_callable() -> None:
+    assert Some(5).pipe(lambda opt: opt.unwrap() * 2) == 10
 
 
 def test_args_no_kwargs() -> None:
@@ -40,11 +40,11 @@ def test_map_supports_high_arity_callable() -> None:
     assert Some(1).map(many_args, 2, 3, 4, 5, 6).unwrap() == 21
 
 
-def test_into_supports_kwargs_on_self() -> None:
+def test_pipe_supports_kwargs_on_self() -> None:
     def format_option(opt: Option[int], fmt: str = "decimal") -> str:
         return hex(opt.unwrap()) if fmt == "hex" else str(opt.unwrap())
 
-    assert Some(255).into(format_option, fmt="hex") == "0xff"
+    assert Some(255).pipe(format_option, fmt="hex") == "0xff"
 
 
 def _raise_value_error(_x: int) -> int:
