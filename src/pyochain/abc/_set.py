@@ -77,6 +77,8 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         Use `is_subset_strict()` to exclude the equality case.
 
+        This is equivalent to the `self <= other` operator.
+
         Args:
             other (AnySet): The set to check containment against.
 
@@ -106,6 +108,8 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         Use `is_subset()` if you want to accept equal sets as well.
 
+        This is equivalent to the `self < other` operator.
+
         Args:
             other (AnySet): The set to check strict containment against.
 
@@ -131,7 +135,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         Sets are equal if they have the same number of elements and every element in one is present in the other.
 
-        This is an explicit method; you can also use the `==` operator directly.
+        This is equivalent to the `self == other` operator.
 
         Args:
             other (object): The set to compare with.
@@ -164,6 +168,8 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         Use [`PyoSet::is_superset_strict`][is_superset_strict] to exclude equality.
 
+        This is equivalent to the `self >= other` operator.
+
         Args:
             other (AnySet): The set to check containment for.
 
@@ -193,6 +199,8 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         Use [`PyoSet::is_superset`][is_superset] if you want to accept equal sets as well.
 
+        This is equivalent to the `self > other` operator.
+
         Args:
             other (AnySet): The set to check strict containment for.
 
@@ -219,6 +227,8 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         Returns `True` if the intersection of the two sets is empty.
 
         This is the opposite of having any overlap.
+
+        This operation is commutative: `A.is_disjoint(B) == B.is_disjoint(A)`.
 
         Args:
             other (Iterable[Any]): The set to compare with.
@@ -247,6 +257,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         This operation is commutative: `A.intersection(B) == B.intersection(A)`.
 
+        This is equivalent to the `self & other` operator.
 
         Args:
             other (AnySet): The set to intersect with.
@@ -285,6 +296,8 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         This operation is commutative: `A.union(B) == B.union(A)`.
 
+        This is equivalent to the `self | other` operator.
+
         Args:
             other (AbstractSet[S]): The set to combine with.
 
@@ -315,7 +328,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 
         The result contains every element that is in this set EXCEPT those that are also present in `other`.
 
-        This operation is NOT commutative.
+        This is equivalent to the `self - other` operator.
 
         Args:
             other (AnySet): The set whose elements should be excluded.
@@ -352,6 +365,8 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         This is the opposite of [`Set::intersection`][Set.intersection].
 
         This operation is commutative: `A.symmetric_difference(B) == B.symmetric_difference(A)`.
+
+        This is equivalent to the `self ^ other` operator.
 
         Args:
             other (AbstractSet[S]): The set to compute symmetric difference with.

@@ -20,6 +20,7 @@
 
 - **Fix**: the `check_nav` script wasn't launching its `main` function.
 - **Refactor**: Use the `tap` crate troughout the Rust code for improved readability.
+- Various minor docstring improvements
 
 ### 🔗 Dependencies
 
