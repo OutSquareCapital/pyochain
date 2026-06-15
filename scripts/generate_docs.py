@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from types import ModuleType
-from typing import TYPE_CHECKING, Any, TypeIs
+from typing import TYPE_CHECKING, TypeIs
 
 from pyochain import Dict, Set, SetMut
 
@@ -52,8 +52,8 @@ def _generate_mds(module: ModuleType, generated_paths: SetMut[str]) -> None:
         _ = path.write_text(_finalize_md(cls_path, cls_name), encoding="utf-8")
         Color.SUCCESS.show(f"✓ Generated {path!s}")
 
-    def _is_public_class(obj: tuple[str, Any]) -> TypeIs[tuple[str, type]]:  # pyright: ignore[reportExplicitAny]
-        name, cls = obj  # pyright: ignore[reportAny]
+    def _is_public_class(obj: tuple[str, object]) -> TypeIs[tuple[str, type]]:
+        name, cls = obj
         return name in public_api and isinstance(cls, type)
 
     return (

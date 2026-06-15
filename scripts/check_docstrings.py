@@ -152,8 +152,9 @@ def _get_protocol_methods(tree: ast.Module) -> Set[int]:
         return isinstance(node, ast.ClassDef)
 
     def _is_protocol(expr: ast.expr) -> TypeIs[ast.Name | ast.Attribute]:
-        return (isinstance(expr, ast.Name) and expr.id == "Protocol") or (
-            isinstance(expr, ast.Attribute) and expr.attr == "Protocol"
+        protocol = "Protocol"
+        return (isinstance(expr, ast.Name) and expr.id == protocol) or (
+            isinstance(expr, ast.Attribute) and expr.attr == protocol
         )
 
     def _is_method(node: ast.AST) -> TypeIs[MethodNode]:
@@ -184,10 +185,11 @@ def _process_node(
                 )
             )
         case Some(docstring):
-            has_decorator = _has_skip_decorator(node)
-            docstring_start_line = _get_docstring_start_line(node)
             result = _check_code_blocks(
-                docstring, docstring_start_line, node.name, skip_doctest=has_decorator
+                docstring,
+                _get_docstring_start_line(node),
+                node.name,
+                skip_doctest=_has_skip_decorator(node),
             )
             match result:
                 case Err(errors):
