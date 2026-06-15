@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### 💥 Breaking changes
+
+- **API change**: `Inspect` mixin is renamed to `Tap`, and it's `inspect` method is renamed to `tap`. This aligns better with the Rust crate `tap` and it's traits, as well as avoiding confusion with the `inspect` method on `Result` and `Option` types.
+
 ### 🚀 Performance improvements
 
 - `Iter::__bool__` is now **1.16x** faster by avoiding to use `itertools::islice`, this logic has been replaced by a `next` call and sentinel object check.

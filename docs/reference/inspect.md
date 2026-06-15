@@ -1,3 +1,0 @@
-# Inspect
-
-::: pyochain.rs.Inspect

@@ -29,12 +29,12 @@ macro_rules! impl_py_into {
         impl_py_into!($($rest),+);
     };
 }
-macro_rules! impl_inspect {
+macro_rules! impl_tap {
     ($type:ty) => {
     #[pymethods]
             impl $type {
     #[pyo3(signature = (f, *args, **kwargs))]
-    fn inspect(
+    fn tap(
         slf: &Bound<'_, Self>,
         f: &Bound<'_, PyAny>,
         args: &args::Args<'_>,
@@ -44,12 +44,19 @@ macro_rules! impl_inspect {
         Ok(slf.to_owned().into_any().unbind())
     }}};
     ($first:ty, $($rest:ty),+ $(,)?) => {
-        impl_inspect!($first);
-        impl_inspect!($($rest),+);
+        impl_tap!($first);
+        impl_tap!($($rest),+);
     };
 }
-impl_inspect!(mixins::Pipeable, mixins::PyoInspect);
-impl_py_into!(option::PySome, option::PyNull, result::PyoOk, result::PyoErr, mixins::Pipeable, mixins::PyoInto);
+impl_tap!(mixins::Pipeable, mixins::PyoTap);
+impl_py_into!(
+    option::PySome,
+    option::PyNull,
+    result::PyoOk,
+    result::PyoErr,
+    mixins::Pipeable,
+    mixins::PyoInto
+);
 
 #[pymodule]
 fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -70,7 +77,7 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<mixins::Checkable>()?;
     m.add_class::<mixins::Pipeable>()?;
     m.add_class::<mixins::PyoInto>()?;
-    m.add_class::<mixins::PyoInspect>()?;
+    m.add_class::<mixins::PyoTap>()?;
     m.add_wrapped(pyo3::wrap_pymodule!(tools::tools))?;
     py.import("sys")?
         .getattr("modules")?

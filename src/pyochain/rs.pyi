@@ -59,17 +59,19 @@ class Into(Protocol):
             ```
         """
 
-class Inspect(Protocol):
-    """Mixin class providing the `inspect` method."""
-    def inspect[**P](
+class Tap(Protocol):
+    """Mixin class providing the `tap` method."""
+    def tap[**P](
         self,
         func: Callable[Concatenate[Self, P], object],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Self:
-        """Pass `Self` to **func** to perform side effects without altering the data.
+        """Pass `Self` to **func**, call it, and return `Self` to continue chaining.
 
-        This method is very useful for debugging or passing the instance to other functions for side effects, without breaking the fluent method chaining.
+        This method is very useful for debugging or passing the instance to other functions for side effects (debugging, IO operations, logging, etc.), without breaking the fluent method chaining.
+
+        The return type *assume* that **func** does not modify the instance, and that it returns `None` or any other value that is not used.
 
         Args:
             func (Callable[Concatenate[Self, P], object]): Function to apply to the instance for side effects.
@@ -82,14 +84,14 @@ class Inspect(Protocol):
         Example:
             ```python
             >>> from pyochain import Seq
-            >>> Seq((1, 2, 3, 4)).inspect(print).last()
+            >>> Seq((1, 2, 3, 4)).tap(print).last()
             Seq(1, 2, 3, 4)
             4
 
             ```
         """
 
-class Pipeable(Into, Inspect, Protocol):
+class Pipeable(Into, Tap, Protocol):
     """Mixin class providing pipeable methods for fluent chaining."""
 
 class Checkable(Protocol):

@@ -4,6 +4,7 @@ This page is the entry point to the **complete** public API documentation.
 
 ## Mixins
 
+- [`Tap`](reference/tap.md)
 - [`Pipeable`](reference/pipeable.md)
 - [`Checkable`](reference/checkable.md)
 
