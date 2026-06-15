@@ -19,8 +19,9 @@
 
 ### 🛠️ Other improvements
 
-- **Fix**: the `check_nav` script wasn't launching its `main` function.
+- **Fix**: the [check_nav](scripts/check_nav.py) script wasn't launching its `main` function.
 - **Refactor**: Use the `tap` crate troughout the Rust code for improved readability.
+- **Refactor**: replaced `unwrap` calls with `expect` or match cases in [tools.rs](rust/src/tools.rs) for improved safety.
 - Various minor docstring improvements
 
 ### 🔗 Dependencies
