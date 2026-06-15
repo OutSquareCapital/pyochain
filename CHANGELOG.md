@@ -10,6 +10,10 @@
 
 - **typing**: widened the input types of various methods on set-like concrete classes (`Set`, `SetMut`, `StableSet`, views classes).
 
+### 🛠️ Other improvements
+
+- **Fix**: the `check_nav` script wasn't launching its `main` function.
+
 ## [0.25.0] - 2026-06-09
 
 ### 🏆 Highlights

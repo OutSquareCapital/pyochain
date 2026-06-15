@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, TypedDict
 from urllib.parse import urlparse
 
-from pyochain import Iter, Set, SetMut
+from pyochain import Dict, Iter, Set, SetMut
 
 from ._utils import Color, Paths
 
@@ -33,6 +33,7 @@ class ZensicalConfig(TypedDict):
 
 def main(config_path: Paths = Paths.ZENSICAL) -> None:
     """Main entry point."""
+    Color.INFO.show("Checking navigation completeness...")
     txt = config_path.value.read_text(encoding="utf-8")
     config: ZensicalConfig = tomllib.loads(txt)["project"]  # pyright: ignore[reportAny]
     docs_dir = config_path.value.parent.joinpath(config["docs_dir"])
@@ -62,7 +63,7 @@ def _collect_nav_paths(item: JsonData) -> SetMut[str]:
     def _collect_paths(acc: SetMut[str], current: JsonData) -> SetMut[str]:
         match current:
             case dict():
-                return Iter(current.values()).fold(acc, _collect_paths)
+                return Dict.from_ref(current).values().iter().fold(acc, _collect_paths)
             case list():
                 return Iter(current).fold(acc, _collect_paths)
             case str():
@@ -153,3 +154,7 @@ def _is_valid_docs_site_link(target: str, docs_dir: Path) -> bool:
 
 def _normalize_link_target(target: str) -> str:
     return target.strip().removeprefix("<").removesuffix(">")
+
+
+if __name__ == "__main__":
+    main()

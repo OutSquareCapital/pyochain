@@ -21,9 +21,7 @@ def main() -> None:
     Color.INFO.show("Generating pyochain documentation...")
     _generate_all_for_module(pyochain)
     _generate_all_for_module(collections)
-    Color.SUCCESS.show("✅ All files generated!")
-    Color.BLANK.show("----------------------------------")
-    return Color.INFO.show("Checking navigation completeness...")
+    return Color.SUCCESS.show("✅ All files generated!")
 
 
 def _generate_all_for_module(module: ModuleType) -> None:
@@ -45,7 +43,7 @@ def _generate_mds(module: ModuleType, generated_paths: SetMut[str]) -> None:
     """Generate markdown files for all public classes in a module."""
     Paths.DOCS_REF.value.mkdir(parents=True, exist_ok=True)
 
-    public_api = Set(getattr(module, "__all__", ()))
+    public_api = Set[str](getattr(module, "__all__", ()))
 
     def _write(path: Path, cls_name: str, cls_path: str) -> None:
         generated_paths.add(path.as_posix())
