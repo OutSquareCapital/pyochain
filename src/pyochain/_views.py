@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import ItemsView, Iterable, KeysView, ValuesView
-from typing import override
+from typing import Any, override
 
 from ._set import SetMut
 from .abc import PyoMappingView, PyoSet
+
+type AnyIter = Iterable[Any]  # pyright: ignore[reportExplicitAny]
 
 
 class PyoValuesView[V](ValuesView[V], PyoMappingView[V]):  # pyright: ignore[reportUnsafeMultipleInheritance]
@@ -31,19 +33,19 @@ class PyoKeysView[K](KeysView[K], PyoMappingView[K], PyoSet[K]):  # pyright: ign
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
     @override
-    def intersection(self, other: Iterable[K]) -> SetMut[K]:
+    def intersection(self, other: AnyIter) -> SetMut[K]:
         return SetMut.from_ref(self & other)
 
     @override
-    def union(self, other: Iterable[K]) -> SetMut[K]:
+    def union[T](self, other: Iterable[T]) -> SetMut[K | T]:
         return SetMut.from_ref(self | other)
 
     @override
-    def difference(self, other: Iterable[K]) -> SetMut[K]:
+    def difference(self, other: AnyIter) -> SetMut[K]:
         return SetMut.from_ref(self - other)
 
     @override
-    def symmetric_difference(self, other: Iterable[K]) -> SetMut[K]:
+    def symmetric_difference[T](self, other: Iterable[T]) -> SetMut[K | T]:
         return SetMut.from_ref(self ^ other)
 
 
@@ -62,17 +64,17 @@ class PyoItemsView[K, V](  # pyright: ignore[reportUnsafeMultipleInheritance]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
     @override
-    def intersection(self, other: Iterable[tuple[K, V]]) -> SetMut[tuple[K, V]]:
+    def intersection(self, other: AnyIter) -> SetMut[tuple[K, V]]:
         return SetMut.from_ref(self & other)
 
     @override
-    def union(self, other: Iterable[tuple[K, V]]) -> SetMut[tuple[K, V]]:
+    def union[T](self, other: Iterable[T]) -> SetMut[tuple[K, V] | T]:
         return SetMut.from_ref(self | other)
 
     @override
-    def difference(self, other: Iterable[tuple[K, V]]) -> SetMut[tuple[K, V]]:
+    def difference(self, other: AnyIter) -> SetMut[tuple[K, V]]:
         return SetMut.from_ref(self - other)
 
     @override
-    def symmetric_difference(self, other: Iterable[tuple[K, V]]) -> SetMut[tuple[K, V]]:
+    def symmetric_difference[T](self, other: Iterable[T]) -> SetMut[tuple[K, V] | T]:
         return SetMut.from_ref(self ^ other)

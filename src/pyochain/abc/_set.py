@@ -280,16 +280,16 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         """
         return self._from_iterable(self & other)
 
-    def union(self, other: AbstractSet[T]) -> AbstractSet[T]:
+    def union[S](self, other: AbstractSet[S]) -> AbstractSet[T | S]:
         """Create a new set containing all unique elements from both sets.
 
         This operation is commutative: `A.union(B) == B.union(A)`.
 
         Args:
-            other (AbstractSet[T]): The set to combine with.
+            other (AbstractSet[S]): The set to combine with.
 
         Returns:
-            AbstractSet[T]: A new set containing all elements from **self** and **other**.
+            AbstractSet[T | S]: A new set containing all elements from **self** and **other**.
 
         Example:
             ```python
@@ -344,7 +344,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         """
         return self._from_iterable(self - other)
 
-    def symmetric_difference(self, other: AbstractSet[T]) -> AbstractSet[T]:
+    def symmetric_difference[S](self, other: AbstractSet[S]) -> AbstractSet[T | S]:
         """Create a new set with elements in either set but not in both.
 
         The result contains elements that are in this set XOR `other`—i.e., elements present in one set but not in both.
@@ -354,10 +354,10 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         This operation is commutative: `A.symmetric_difference(B) == B.symmetric_difference(A)`.
 
         Args:
-            other (AbstractSet[T]): The set to compute symmetric difference with.
+            other (AbstractSet[S]): The set to compute symmetric difference with.
 
         Returns:
-            AbstractSet[T]: A new set containing elements unique to each set.
+            AbstractSet[T | S]: A new set containing elements unique to each set.
 
         Example:
             ```python

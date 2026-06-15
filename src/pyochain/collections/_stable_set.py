@@ -8,6 +8,8 @@ from .._set import Set, SetMut
 from .._utils import get_repr
 from ..abc import PyoMutableSet
 
+type AnyIter = Iterable[Any]  # pyright: ignore[reportExplicitAny]
+
 
 class StableSet[T](PyoMutableSet[T]):  # noqa: PLW1641
     """A mutable collection of unique elements which remember their insertion order.
@@ -117,17 +119,17 @@ class StableSet[T](PyoMutableSet[T]):  # noqa: PLW1641
         del self._inner[value]
 
     @override
-    def intersection(self, other: Iterable[Any]) -> SetMut[T]:  # pyright: ignore[reportExplicitAny]
+    def intersection(self, other: AnyIter) -> SetMut[T]:
         return SetMut.from_ref(self._inner.keys() & other)
 
     @override
-    def union(self, other: Iterable[T]) -> SetMut[T]:
+    def union[S](self, other: Iterable[S]) -> SetMut[T | S]:
         return SetMut.from_ref(self._inner.keys() | other)
 
     @override
-    def difference(self, other: Iterable[Any]) -> SetMut[T]:  # pyright: ignore[reportExplicitAny]
+    def difference(self, other: AnyIter) -> SetMut[T]:
         return SetMut.from_ref(self._inner.keys() - other)
 
     @override
-    def symmetric_difference(self, other: Iterable[T]) -> SetMut[T]:
+    def symmetric_difference[S](self, other: Iterable[S]) -> SetMut[T | S]:
         return SetMut.from_ref(self._inner.keys() ^ other)

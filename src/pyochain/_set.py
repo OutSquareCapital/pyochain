@@ -100,16 +100,16 @@ class Set[T](PyoSet[T]):
         return self.__class__(self._inner & other)
 
     @override
-    def union(self, other: AbstractSet[T]) -> Self:
-        return self.__class__(self._inner | other)
+    def union[S](self, other: AbstractSet[S]) -> Set[T | S]:
+        return Set(self._inner | other)
 
     @override
     def difference(self, other: AbstractSet[object]) -> Self:
         return self.__class__(self._inner - other)
 
     @override
-    def symmetric_difference(self, other: AbstractSet[T]) -> Self:
-        return self.__class__(self._inner ^ other)
+    def symmetric_difference[S](self, other: AbstractSet[S]) -> Set[T | S]:
+        return Set(self._inner ^ other)
 
 
 class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
@@ -245,7 +245,7 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
         return self.from_ref(self._inner & other)
 
     @override
-    def union(self, other: AbstractSet[T]) -> SetMut[T]:
+    def union[S](self, other: AbstractSet[S]) -> SetMut[T | S]:
         return self.from_ref(self._inner | other)
 
     @override
@@ -253,7 +253,7 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
         return self.from_ref(self._inner - other)
 
     @override
-    def symmetric_difference(self, other: AbstractSet[T]) -> SetMut[T]:
+    def symmetric_difference[S](self, other: AbstractSet[S]) -> SetMut[T | S]:
         return self.from_ref(self._inner ^ other)
 
 
