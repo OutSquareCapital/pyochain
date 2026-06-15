@@ -71,10 +71,10 @@ class SliceView[T](PyoSequence[T]):  # noqa: PLW1641
         ```
     """
 
-    _base: Sequence[T] | MutableSequence[T]
+    _inner: Sequence[T] | MutableSequence[T]
     _range: range | _OpenRange
 
-    __slots__ = ("_base", "_range")  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
+    __slots__ = ("_inner", "_range")  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
     @overload
     def __init__(self, base: Sequence[T]) -> None: ...
@@ -96,7 +96,7 @@ class SliceView[T](PyoSequence[T]):  # noqa: PLW1641
         stop: int | None = None,
         step: int | None = None,
     ) -> None:
-        self._base = base
+        self._inner = base
         if isinstance(start, slice):
             sl: slice = start
         else:
@@ -114,13 +114,13 @@ class SliceView[T](PyoSequence[T]):  # noqa: PLW1641
     @classmethod
     def _from_range(cls, base: Sequence[T], r: range) -> SliceView[T]:
         sv = cls.__new__(cls)
-        sv._base = base
+        sv._inner = base
         sv._range = r
         return sv
 
     @override
     def __iter__(self) -> Iterator[T]:
-        base = self._base
+        base = self._inner
         for i in self._current_range():
             yield base[i]
 
@@ -130,7 +130,7 @@ class SliceView[T](PyoSequence[T]):  # noqa: PLW1641
 
     @override
     def __reversed__(self) -> Iterator[T]:
-        base = self._base
+        base = self._inner
         return (base[i] for i in reversed(self._current_range()))
 
     @override
@@ -145,7 +145,7 @@ class SliceView[T](PyoSequence[T]):  # noqa: PLW1641
     def __repr__(self) -> str:
         cr = self._current_range()
         name = self.__class__.__name__
-        return f"{name}({self._base!r})[{cr.start}:{cr.stop}:{cr.step}]"
+        return f"{name}({self._inner!r})[{cr.start}:{cr.stop}:{cr.step}]"
 
     @override
     def __len__(self) -> int:
@@ -160,7 +160,7 @@ class SliceView[T](PyoSequence[T]):  # noqa: PLW1641
         if isinstance(index, slice):
             # Compose slices using Python's range slicing — O(1), exact.
             sub = self._current_range()[index]
-            return self.__class__._from_range(self._base, sub)
+            return self.__class__._from_range(self._inner, sub)
 
         cr = self._current_range()
         length = len(cr)
@@ -170,14 +170,14 @@ class SliceView[T](PyoSequence[T]):  # noqa: PLW1641
         if not (0 <= index < length):
             msg = "sliceview index out of range"
             raise IndexError(msg)
-        return self._base[cr[index]]
+        return self._inner[cr[index]]
 
     @overload
     def __setitem__(self, index: SupportsIndex, value: T) -> None: ...
     @overload
     def __setitem__(self, index: slice, value: Iterable[T]) -> None: ...
     def __setitem__(self, index: slice | SupportsIndex, value: T | Iterable[T]) -> None:
-        match self._base, index:
+        match self._inner, index:
             case MutableSequence(), slice():
                 tr = self._current_range()[index]
                 if abs(tr.step) != 1:
@@ -186,9 +186,9 @@ class SliceView[T](PyoSequence[T]):  # noqa: PLW1641
                         msg = f"attempt to assign sequence of size {len(values)} to slice of size {len(tr)}"
                         raise ValueError(msg)
                     for i, v in zip(tr, values, strict=False):
-                        self._base[i] = v
+                        self._inner[i] = v
                     return
-                self._base[slice(tr.start, tr.stop, tr.step)] = value  # pyright: ignore[reportCallIssue, reportArgumentType]
+                self._inner[slice(tr.start, tr.stop, tr.step)] = value  # pyright: ignore[reportCallIssue, reportArgumentType]
                 return
             case MutableSequence(), SupportsIndex():
                 cr = self._current_range()
@@ -199,16 +199,16 @@ class SliceView[T](PyoSequence[T]):  # noqa: PLW1641
                 if not (0 <= index < length):
                     msg = "SliceView index out of range"
                     raise IndexError(msg)
-                self._base[cr[index]] = value  # pyright: ignore[reportArgumentType, reportCallIssue]
+                self._inner[cr[index]] = value  # pyright: ignore[reportArgumentType, reportCallIssue]
             case _:
-                msg = f"underlying sequence of type '{self._base.__class__}' has no '__setitem__'"
+                msg = f"underlying sequence of type '{self._inner.__class__}' has no '__setitem__'"
                 raise TypeError(msg)
 
     def _current_range(self) -> range:
         """Return a concrete ``range`` clamped to the current base length."""
         r = self._range
         if isinstance(r, _OpenRange):
-            return r.resolve(len(self._base))
+            return r.resolve(len(self._inner))
         return r
 
     def advance(self, n: int) -> Self:
@@ -236,7 +236,7 @@ class SliceView[T](PyoSequence[T]):  # noqa: PLW1641
 
             ```
         """
-        b_len = len(self._base)
+        b_len = len(self._inner)
         cr = self._current_range()
         new_start = max(0, min(cr.start + n, b_len))
         delta = new_start - cr.start
@@ -245,7 +245,7 @@ class SliceView[T](PyoSequence[T]):  # noqa: PLW1641
         return self
 
     @property
-    def base(self) -> Sequence[T] | MutableSequence[T]:
+    def inner(self) -> Sequence[T] | MutableSequence[T]:
         """The underlying sequence this view points into.
 
         Returns:
@@ -256,9 +256,9 @@ class SliceView[T](PyoSequence[T]):  # noqa: PLW1641
             >>> from pyochain import SliceView
             >>> data = [1, 2, 3, 4, 5]
             >>> sv = SliceView(data)[1:4]
-            >>> sv.base is data
+            >>> sv.inner is data
             True
 
             ```
         """
-        return self._base
+        return self._inner

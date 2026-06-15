@@ -80,13 +80,13 @@ def test_no_copy_on_slice() -> None:
     data = [1, 2, 3, 4, 5]
     sv = SliceView(data)
     sv2 = sv[1:4]
-    assert sv2.base is data
+    assert sv2.inner is data
 
 
 def test_full_slice_is_same_base() -> None:
     data = [1, 2, 3]
     sv = SliceView(data)
-    assert sv[:].base is data
+    assert sv[:].inner is data
 
 
 def test_negative_step_composition() -> None:
@@ -261,13 +261,13 @@ def test_tolist() -> None:
 def test_base_is_original() -> None:
     data = [1, 2, 3]
     sv = SliceView(data)
-    assert sv.base is data
+    assert sv.inner is data
 
 
 def test_composed_base_is_original() -> None:
     data = [1, 2, 3, 4, 5]
     sv = SliceView(data)[1:][::2]
-    assert sv.base is data
+    assert sv.inner is data
 
 
 def test_write_through() -> None:

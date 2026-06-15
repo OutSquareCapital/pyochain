@@ -7,6 +7,7 @@
 - **API change**: `Inspect` mixin is renamed to `Tap`, and it's `inspect` method is renamed to `tap`. This aligns better with the Rust crate `tap` and it's traits, as well as avoiding confusion with the `inspect` method on `Result` and `Option` types.
 - **API change**: `Into` mixin is renamed to `Pipe`, and it's `into` method is renamed to `pipe`. Same reasoning as for `Inspect` mixin, and also aligns with polars, pandas and sqlglot API's.
 - **API change**: `Pipeable` mixin is renamed to `Fluent`, to avoid confusion with `Pipe` mixin.
+- **API change**: `SliceView::base` property is renamed to `inner`.
 
 ### 🚀 Performance improvements
 
