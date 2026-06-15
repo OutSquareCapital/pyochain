@@ -544,7 +544,8 @@ impl PyNull {
 
     fn xor(&self, optb: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         if optb.is_null() {
-            Self::get(optb.py()).into_py_any(optb.py())
+            let py = optb.py();
+            Self::get(py).into_py_any(py)
         } else {
             Ok(optb.clone().unbind())
         }

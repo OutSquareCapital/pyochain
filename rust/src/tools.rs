@@ -189,32 +189,35 @@ pub fn try_reduce(data: &Bound<'_, PyAny>, func: &Bound<'_, PyFunction>) -> PyRe
     let py = data.py();
     let mut iterator = data.try_iter()?;
     let first = iterator.next();
-    if first.is_none() {
-        return PyNull::get(py)
-            .into_py_any(py)?
-            .pipe(PyoOk::new)
-            .into_py_any(py);
-    }
+    match first {
+        None => {
+            return PyNull::get(py)
+                .into_py_any(py)?
+                .pipe(PyoOk::new)
+                .into_py_any(py);
+        }
+        Some(first_val) => {
+            let mut accumulator = first_val?.to_owned().unbind();
 
-    let mut accumulator = first.unwrap()?.to_owned().unbind();
-
-    for item in iterator {
-        let val = item?;
-        let result = func.call1((&accumulator, val))?;
-        match result.cast_exact::<PyoOk>() {
-            Ok(ok_ref) => {
-                accumulator = ok_ref.get().value.clone_ref(py);
+            for item in iterator {
+                let val = item?;
+                let result = func.call1((&accumulator, val))?;
+                match result.cast_exact::<PyoOk>() {
+                    Ok(ok_ref) => {
+                        accumulator = ok_ref.get().value.clone_ref(py);
+                    }
+                    Err(_) => {
+                        return result.cast_exact::<PyoErr>()?.into_py_any(py);
+                    }
+                }
             }
-            Err(_) => {
-                return result.cast_exact::<PyoErr>()?.into_py_any(py);
-            }
+            accumulator
+                .pipe(PySome::new)
+                .into_py_any(py)?
+                .pipe(PyoOk::new)
+                .into_py_any(py)
         }
     }
-
-    PySome::new(accumulator)
-        .into_py_any(py)?
-        .pipe(PyoOk::new)
-        .into_py_any(py)
 }
 #[pyfunction]
 pub fn try_collect(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
@@ -515,7 +518,9 @@ pub fn last(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
     //   fetching and returning the Python exception.
     unsafe {
         let iterator = data.as_ptr();
-        let next = (*(*iterator).ob_type).tp_iternext.unwrap();
+        let next = (*(*iterator).ob_type)
+            .tp_iternext
+            .expect("Iterator does not have tp_iternext");
 
         let mut last = next(iterator);
         if last.is_null() {
@@ -563,7 +568,9 @@ pub fn length(data: Bound<'_, PyIterator>) -> PyResult<usize> {
     // - Each non-null `item` is a new owned reference returned by CPython and is released exactly
     //   once with `Py_DECREF` after it has been counted.
     unsafe {
-        let next = (*(*iterator).ob_type).tp_iternext.unwrap();
+        let next = (*(*iterator).ob_type)
+            .tp_iternext
+            .expect("Iterator does not have tp_iternext");
         loop {
             let item = next(iterator);
             if item.is_null() {
