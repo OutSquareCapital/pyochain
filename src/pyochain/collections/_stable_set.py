@@ -117,17 +117,17 @@ class StableSet[T](PyoMutableSet[T]):  # noqa: PLW1641
         del self._inner[value]
 
     @override
-    def intersection(self, other: AbstractSet[T]) -> SetMut[T]:
+    def intersection(self, other: Iterable[Any]) -> SetMut[T]:  # pyright: ignore[reportExplicitAny]
         return SetMut.from_ref(self._inner.keys() & other)
 
     @override
-    def union(self, other: AbstractSet[T]) -> SetMut[T]:
+    def union(self, other: Iterable[T]) -> SetMut[T]:
         return SetMut.from_ref(self._inner.keys() | other)
 
     @override
-    def difference(self, other: AbstractSet[T]) -> SetMut[T]:
+    def difference(self, other: Iterable[Any]) -> SetMut[T]:  # pyright: ignore[reportExplicitAny]
         return SetMut.from_ref(self._inner.keys() - other)
 
     @override
-    def symmetric_difference(self, other: AbstractSet[T]) -> SetMut[T]:
+    def symmetric_difference(self, other: Iterable[T]) -> SetMut[T]:
         return SetMut.from_ref(self._inner.keys() ^ other)

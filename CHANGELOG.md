@@ -6,6 +6,10 @@
 
 - `Iter::__bool__` is now **1.16x** faster by avoiding to use `itertools::islice`, this logic has been replaced by a `next` call and sentinel object check.
 
+### ✨ Enhancements
+
+- **typing**: widened the input types of various methods on set-like concrete classes (`Set`, `SetMut`, `StableSet`, views classes).
+
 ## [0.25.0] - 2026-06-09
 
 ### 🏆 Highlights

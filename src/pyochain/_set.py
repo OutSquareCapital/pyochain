@@ -96,7 +96,7 @@ class Set[T](PyoSet[T]):
         return hash(self._inner)
 
     @override
-    def intersection(self, other: AbstractSet[T]) -> Self:
+    def intersection(self, other: AbstractSet[object]) -> Self:
         return self.__class__(self._inner & other)
 
     @override
@@ -104,7 +104,7 @@ class Set[T](PyoSet[T]):
         return self.__class__(self._inner | other)
 
     @override
-    def difference(self, other: AbstractSet[T]) -> Self:
+    def difference(self, other: AbstractSet[object]) -> Self:
         return self.__class__(self._inner - other)
 
     @override
@@ -241,7 +241,7 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
         self._inner.discard(value)
 
     @override
-    def intersection(self, other: AbstractSet[T]) -> SetMut[T]:
+    def intersection(self, other: AbstractSet[object]) -> SetMut[T]:
         return self.from_ref(self._inner & other)
 
     @override
@@ -249,7 +249,7 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
         return self.from_ref(self._inner | other)
 
     @override
-    def difference(self, other: AbstractSet[T]) -> SetMut[T]:
+    def difference(self, other: AbstractSet[object]) -> SetMut[T]:
         return self.from_ref(self._inner - other)
 
     @override
