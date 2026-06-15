@@ -26,14 +26,14 @@ impl PyoTap {
     }
 }
 #[pyclass(frozen, subclass)]
-pub struct Pipeable;
+pub struct Fluent;
 
 #[pymethods]
-impl Pipeable {
+impl Fluent {
     #[new]
     #[pyo3(signature = (*_args, **_kwargs))]
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> Self {
-        Pipeable {}
+        Fluent {}
     }
 }
 #[pyclass(frozen, subclass)]

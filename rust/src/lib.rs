@@ -48,13 +48,13 @@ macro_rules! impl_tap {
         impl_tap!($($rest),+);
     };
 }
-impl_tap!(mixins::Pipeable, mixins::PyoTap);
+impl_tap!(mixins::Fluent, mixins::PyoTap);
 impl_py_pipe!(
     option::PySome,
     option::PyNull,
     result::PyoOk,
     result::PyoErr,
-    mixins::Pipeable,
+    mixins::Fluent,
     mixins::PyoPipe
 );
 
@@ -75,7 +75,7 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<errors::ResultUnwrapError>()?;
     m.add_class::<result::PyochainResult>()?;
     m.add_class::<mixins::Checkable>()?;
-    m.add_class::<mixins::Pipeable>()?;
+    m.add_class::<mixins::Fluent>()?;
     m.add_class::<mixins::PyoPipe>()?;
     m.add_class::<mixins::PyoTap>()?;
     m.add_wrapped(pyo3::wrap_pymodule!(tools::tools))?;

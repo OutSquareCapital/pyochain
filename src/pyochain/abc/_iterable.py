@@ -5,13 +5,13 @@ from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
-from ..rs import Checkable, Pipeable
+from ..rs import Checkable, Fluent
 
 if TYPE_CHECKING:
     from ._iterator import PyoIterator
 
 
-class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
+class PyoIterable[T](Fluent, Checkable, Iterable[T], ABC):
     """Base ABC for all pyochain `Iterables`.
 
     It's the common API surface shared by:
@@ -19,7 +19,7 @@ class PyoIterable[T](Pipeable, Checkable, Iterable[T], ABC):
     - eager `Collections`: `Seq`, `Vec`, `Set`, `SetMut`, `Dict`
     - lazy `Iterator`: `Iter`
 
-    It extends the standard `Iterable[T]` protocol, as well as `Pipeable` and `Checkable`.
+    It extends the standard `Iterable[T]` protocol, as well as `Fluent` and `Checkable`.
 
     All concrete subclasses must implement `__iter__()`.
 

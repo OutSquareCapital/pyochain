@@ -1,3 +1,0 @@
-# Pipeable
-
-::: pyochain.rs.Pipeable

@@ -1516,7 +1516,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         This can be any `Callable` that takes an `Iterator[T]` and returns a `Collection[T]` of those types.
 
-        This is equivalent to `Pipeable::into` at runtime, but with a few differences:
+        This is equivalent to `Pipe::pipe` at runtime, but with a few differences:
 
             - A narrower constraint (`Collection[Any]`) to specify the intent
             - Better performance (no args/kwargs unpacking).

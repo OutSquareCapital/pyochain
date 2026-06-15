@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Concatenate, Self
 
 import pytest
 
-from pyochain.abc import Pipeable
+from pyochain.abc import Fluent
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(slots=True)
-class FooRust(Pipeable):
+class FooRust(Fluent):
     value: int
 
 

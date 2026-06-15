@@ -91,8 +91,8 @@ class Tap(Protocol):
             ```
         """
 
-class Pipeable(Pipe, Tap, Protocol):
-    """Mixin class providing pipeable methods for fluent chaining."""
+class Fluent(Pipe, Tap, Protocol):
+    """Mixin class providing `pipe` and `tap` methods for fluent chaining."""
 
 class Checkable(Protocol):
     """Mixin class providing conditional chaining methods based on truthiness.

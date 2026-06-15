@@ -18,7 +18,7 @@ config:
   layout: elk
 ---
 flowchart TB
-    Pipeable["Pipeable"] ==> PyoIterable["PyoIterable[T]"] & Result["Result[T, E]"] & Option["Option[T]"]
+    Fluent["Fluent"] ==> PyoIterable["PyoIterable[T]"] & Result["Result[T, E]"] & Option["Option[T]"]
     Checkable["Checkable"] ==> PyoIterable
     PyoIterable --> PyoIterator["PyoIterator[T]"] & PyoCollection["PyoCollection[T]"]
     PyoIterator ==> Iter["Iter[T]"]
@@ -35,7 +35,7 @@ flowchart TB
     Set ==> SetMut["SetMut[T]"]
     Seq ==> Vec
 
-    style Pipeable stroke:#9C27B0,stroke-width:2px
+    style Fluent stroke:#9C27B0,stroke-width:2px
     style PyoIterable stroke:#00C853,stroke-width:2px
     style Result stroke:#E53935,stroke-width:2px
     style Option stroke:#FDD835,stroke-width:2px
@@ -101,7 +101,7 @@ They depend only on `Self` for their implementation, making them universally app
 
 | Mixin       | Purpose                | Main Capabilities               |
 | ----------- | ---------------------- | ------------------------------- |
-| `Pipeable`  | Functional chaining    | `into()`, `inspect()`           |
+| `Fluent`    | Functional chaining    | `into()`, `inspect()`           |
 | `Checkable` | Conditional operations | `then()`, `ok_or()`, `err_or()` |
 
 ## Abstract Collection protocols
@@ -112,17 +112,17 @@ Each protocol extends the corresponding one from `collections.abc`, inheriting i
 
 Concrete types must implement the required methods (dunders) to satisfy the protocol contract.
 
-| **ABC**             | **Extends**                        | **Required Methods**                   |
-| ------------------- | ---------------------------------- | -------------------------------------- |
-| `PyoIterable`       | `Pipeable`, `Checkable`, `Iterable`| `__iter__`                             |
-| `PyoIterator`       | `PyoIterable`, `Iterator`          | `__iter__`, `__next__`                 |
-| `PyoCollection`     | `PyoIterable`, `Collection`        | `__iter__`,`__contains__`, `__len__`   |
-| `PyoSequence`       | `PyoCollection`, `Sequence`        | `__getitem__`, `__len__`               |
-| `PyoMutableSequence`| `PyoSequence`, `MutableSequence`   | `__setitem__`, `__delitem__`, `insert` |
-| `PyoSet`            | `PyoCollection`, `Set`             |  `__iter__`, `__contains__`, `__len__` |
-| `PyoMappingView`    | `PyoCollection`, `MappingView`     | `__len__`                              |
-| `PyoMapping`        | `PyoCollection`, `Mapping`         | `__iter__`, `__getitem__`, `__len__`   |
-| `PyoMutableMapping` | `PyoMapping`, `MutableMapping`     | `__setitem__`, `__delitem__`           |
+| **ABC**             | **Extends**                      | **Required Methods**                   |
+| ------------------- | -------------------------------- | -------------------------------------- |
+| `PyoIterable`       | `Fluent`, `Checkable`, `Iterable`| `__iter__`                             |
+| `PyoIterator`       | `PyoIterable`, `Iterator`        | `__iter__`, `__next__`                 |
+| `PyoCollection`     | `PyoIterable`, `Collection`      | `__iter__`,`__contains__`, `__len__`   |
+| `PyoSequence`       | `PyoCollection`, `Sequence`      | `__getitem__`, `__len__`               |
+| `PyoMutableSequence`| `PyoSequence`, `MutableSequence` | `__setitem__`, `__delitem__`, `insert` |
+| `PyoSet`            | `PyoCollection`, `Set`           |  `__iter__`, `__contains__`, `__len__` |
+| `PyoMappingView`    | `PyoCollection`, `MappingView`   | `__len__`                              |
+| `PyoMapping`        | `PyoCollection`, `Mapping`       | `__iter__`, `__getitem__`, `__len__`   |
+| `PyoMutableMapping` | `PyoMapping`, `MutableMapping`   | `__setitem__`, `__delitem__`           |
 
 ## Concrete Collections & Iterators
 

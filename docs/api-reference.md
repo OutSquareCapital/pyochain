@@ -5,7 +5,8 @@ This page is the entry point to the **complete** public API documentation.
 ## Mixins
 
 - [`Tap`](reference/tap.md)
-- [`Pipeable`](reference/pipeable.md)
+- [`Pipe`](reference/pipe.md)
+- [`Fluent`](reference/fluent.md)
 - [`Checkable`](reference/checkable.md)
 
 ## ABCs
