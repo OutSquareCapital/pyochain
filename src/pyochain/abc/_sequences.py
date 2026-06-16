@@ -9,18 +9,18 @@ from ..rs import NONE, Option, Some
 from ._collection import PyoCollection
 
 if TYPE_CHECKING:
-    from .._iter import Iter
+    from ._iterator import PyoIterator
 
 
 class PyoReversible[T](Reversible[T], ABC):
     # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
-    def rev(self) -> Iter[T]:
+    def rev(self) -> PyoIterator[T]:
         """Return an `Iterator` with the elements of the `Sequence` in reverse order.
 
         Returns:
-            Iter[T]: An `Iterator` with the elements in reverse order.
+            PyoIterator[T]: An `Iterator` with the elements in reverse order.
 
         Example:
             ```python
@@ -223,7 +223,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
 
     def extract_if(
         self, predicate: Callable[[T], bool], start: int = 0, end: int | None = None
-    ) -> Iter[T]:
+    ) -> PyoIterator[T]:
         """Creates an `Iter` which uses a *predicate* to determine if an element in `Self` should be removed.
 
         If the *predicate* returns `True`, the element is removed from `Self` and yielded.
@@ -240,7 +240,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
             end (int | None): The ending index of the range to consider for extraction. Defaults to `None`, which means the end of `Self`.
 
         Returns:
-            Iter[T]: An `Iter` that yields the extracted elements.
+            PyoIterator[T]: An `Iterator` that yields the extracted elements.
 
         Example:
             ```python
@@ -268,7 +268,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
 
         return Iter(tls.ExtractIf(self, predicate, start, end))
 
-    def drain(self, start: int | None = None, end: int | None = None) -> Iter[T]:
+    def drain(self, start: int | None = None, end: int | None = None) -> PyoIterator[T]:
         """Removes the subslice indicated by the given *start* and *end* from the `Vec`, returning an `Iterator` over the removed subslice.
 
         If the `Iterator` is dropped before being fully consumed, it drops the remaining removed elements.
@@ -278,7 +278,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
             end (int | None): Ending index of the subslice to drain. Defaults to `len(self)` if `None`.
 
         Returns:
-            Iter[T]: An `Iterator` over the drained elements.
+            PyoIterator[T]: An `Iterator` over the drained elements.
 
         Example:
             ```python

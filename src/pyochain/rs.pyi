@@ -11,7 +11,7 @@ from typing import (
     type_check_only,
 )
 
-from ._iter import Iter
+from .abc import PyoIterator
 
 # Mixin classes for pipeable and checkable methods
 
@@ -1114,8 +1114,8 @@ class OptionType[T](Pipe):
             ```
         """
 
-    def iter(self) -> Iter[T]:
-        """Creates an `Iter` over the optional value.
+    def iter(self) -> PyoIterator[T]:
+        """Creates an `Iterator` over the optional value.
 
         - If the option is `Some(value)`, the iterator yields `value`.
         - If the option is `NONE`, the iterator yields nothing.
@@ -1123,7 +1123,7 @@ class OptionType[T](Pipe):
         Equivalent to `Iter((self,))`.
 
         Returns:
-            Iter[T]: An iterator over the optional value.
+            PyoIterator[T]: An `Iterator` over the optional value.
 
         Example:
             ```python
@@ -1600,13 +1600,11 @@ class ResultType[T, E](Pipe, Protocol):
             ```
         """
 
-    def iter(self) -> Iter[T]:
-        """Returns a `Iter[T]` over the possibly contained value.
-
-        The iterator yields one value if the result is `Ok`, otherwise none.
+    def iter(self) -> PyoIterator[T]:
+        """Returns an `Iterator` over the possibly contained value.
 
         Returns:
-            Iter[T]: An iterator over the `Ok` value, or empty if `Err`.
+            PyoIterator[T]: An `Iterator` over the `Ok` value, or empty if `Err`.
 
         Example:
             ```python
