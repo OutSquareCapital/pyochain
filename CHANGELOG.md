@@ -2,7 +2,9 @@
 
 ## [Unreleased]
 
--
+### 🚀 Performance improvements
+
+- `PyoIterator::fold_star` args/kwargs truthiness are now matched to check if they are actually needed, and each case passes an optimized function to `itertools::reduce`. Without both for example, the method is now **1.2x** faster.
 
 ## [0.26.0] - 2026-06-16
 

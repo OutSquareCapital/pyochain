@@ -922,11 +922,28 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
+        match bool(args), bool(kwargs):
+            case False, False:
 
-        def _reducer(acc: B, item: U) -> B:
-            return func(acc, *item, *args, **kwargs)
+                def f(acc: B, item: U) -> B:
+                    return func(acc, *item)
 
-        return functools.reduce(_reducer, iter(self), init)
+            case True, False:
+
+                def f(acc: B, item: U) -> B:
+                    return func(acc, *item, *args)
+
+            case False, True:
+
+                def f(acc: B, item: U) -> B:
+                    return func(acc, *item, **kwargs)
+
+            case True, True:
+
+                def f(acc: B, item: U) -> B:
+                    return func(acc, *item, *args, **kwargs)
+
+        return functools.reduce(f, iter(self), init)
 
     def find(self, predicate: Callable[[T], bool]) -> Option[T]:
         """Searches for an element of an iterator that satisfies a `predicate`.
