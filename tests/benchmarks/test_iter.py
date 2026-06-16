@@ -300,3 +300,12 @@ def test_with_position(benchmark: BenchFixture, size: int) -> None:
 
 def _with_position(data: Range) -> str:
     return data.iter().with_position().last()[0]
+
+
+def test_fold_star(benchmark: BenchFixture) -> None:
+    data = Range(0, 4096).iter().enumerate().collect(Seq)
+    assert benchmark(_fold_star, data) is not None
+
+
+def _fold_star(data: Seq[tuple[int, int]]) -> int:
+    return data.iter().fold_star(0, lambda acc, x, y: acc + x + y)
