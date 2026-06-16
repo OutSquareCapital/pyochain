@@ -2147,11 +2147,11 @@
     <span class="c1"># pyrefly: ignore [implicit-any-attribute]</span>
     <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>  <span class="c1"># pyright: ignore[reportUnannotatedClassAttribute]</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">rev</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rev</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyoIterator</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return an `Iterator` with the elements of the `Sequence` in reverse order.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Iter[T]: An `Iterator` with the elements in reverse order.</span>
+<span class="sd">            PyoIterator[T]: An `Iterator` with the elements in reverse order.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            ```python</span>
@@ -2207,11 +2207,11 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain._iter.Iter" href="../iter/#pyochain._iter.Iter">Iter</a>[<span title="pyochain.abc._sequences.PyoReversible[T]">T</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.abc._iterator.PyoIterator" href="../pyoiterator/#pyochain.abc._iterator.PyoIterator">PyoIterator</a>[<span title="pyochain.abc._sequences.PyoReversible[T]">T</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Iter[T]: An <code>Iterator</code> with the elements in reverse order.</p>
+                <p>PyoIterator[T]: An <code>Iterator</code> with the elements in reverse order.</p>
               </div>
             </td>
           </tr>
@@ -2249,11 +2249,11 @@
 <span class="normal">34</span>
 <span class="normal">35</span>
 <span class="normal">36</span>
-<span class="normal">37</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">rev</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+<span class="normal">37</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">rev</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyoIterator</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an `Iterator` with the elements of the `Sequence` in reverse order.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Iter[T]: An `Iterator` with the elements in reverse order.</span>
+<span class="sd">        PyoIterator[T]: An `Iterator` with the elements in reverse order.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        ```python</span>

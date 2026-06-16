@@ -1416,7 +1416,7 @@
   <a href="#pyochain.abc._iterator.Position" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Position
+        pyochain.abc._iterator.Position
       </span>
     </span>
   </a>
@@ -2034,7 +2034,7 @@
   <a href="#pyochain.abc._iterator.Position" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Position
+        pyochain.abc._iterator.Position
       </span>
     </span>
   </a>
@@ -2059,82 +2059,15 @@
 <h1 id="position">Position</h1>
 
 
-<div class="doc doc-object doc-class">
+<div class="doc doc-object doc-attribute">
+
 
 
 
 <a id="pyochain.abc._iterator.Position"></a>
     <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><span title="enum.StrEnum">StrEnum</span></code></p>
 
-            <div style="display: none">
-              <a class="autorefs autorefs-internal" title="pyochain.abc._iterator.Position" href="./#pyochain.abc._iterator.Position" id="mermaid-link-pyochain.abc._iterator.Position"></a>
-            </div>
-            <pre class="mermaid"><code id="mermaid-diagram-pyochain.abc._iterator.Position">
-              flowchart TD
-              pyochain.abc._iterator.Position[Position]
-
-              
-
-              click pyochain.abc._iterator.Position href "" "pyochain.abc._iterator.Position"
-            </code></pre>
-            <script>
-              var diagram = document.getElementById('mermaid-diagram-pyochain.abc._iterator.Position');
-              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
-                try {
-                  const link = document.getElementById("mermaid-link-" + nodeID).href;
-                  return `click ${nodeID} href "${link}" "${nodeID}"`
-                } catch (e) {
-                  return '';
-                }
-              });
-            </script>
-
-
-        <p>Type representing the position of an item in an iterable.</p>
-
-
-
-
-
-
-
-
-              <details class="mkdocstrings-source">
-                <summary>Source code in <code>src/pyochain/abc/_iterator.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">59</span>
-<span class="normal">60</span>
-<span class="normal">61</span>
-<span class="normal">62</span>
-<span class="normal">63</span>
-<span class="normal">64</span>
-<span class="normal">65</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Position</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Type representing the position of an item in an iterable.&quot;&quot;&quot;</span>
-
-    <span class="n">FIRST</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
-    <span class="n">MIDDLE</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
-    <span class="n">LAST</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
-    <span class="n">ONLY</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
-</code></pre></div></td></tr></table></div>
-              </details>
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
+        <p>Type representing the position of an item in an <code>Iterator</code>.</p>
 
     </div>
 

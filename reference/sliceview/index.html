@@ -1049,10 +1049,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain._sliceview.SliceView.base" class="md-nav__link">
+  <a href="#pyochain._sliceview.SliceView.inner" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        base
+        inner
       </span>
     </span>
   </a>
@@ -2064,10 +2064,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyochain._sliceview.SliceView.base" class="md-nav__link">
+  <a href="#pyochain._sliceview.SliceView.inner" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        base
+        inner
       </span>
     </span>
   </a>
@@ -2576,10 +2576,10 @@
 <span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">_base</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">MutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">]</span>
+    <span class="n">_inner</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">MutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">]</span>
     <span class="n">_range</span><span class="p">:</span> <span class="nb">range</span> <span class="o">|</span> <span class="n">_OpenRange</span>
 
-    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;_base&quot;</span><span class="p">,</span> <span class="s2">&quot;_range&quot;</span><span class="p">)</span>  <span class="c1"># pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;_inner&quot;</span><span class="p">,</span> <span class="s2">&quot;_range&quot;</span><span class="p">)</span>  <span class="c1"># pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]</span>
 
     <span class="nd">@overload</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
@@ -2601,7 +2601,7 @@
         <span class="n">stop</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">step</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_base</span> <span class="o">=</span> <span class="n">base</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span> <span class="o">=</span> <span class="n">base</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
             <span class="n">sl</span><span class="p">:</span> <span class="nb">slice</span> <span class="o">=</span> <span class="n">start</span>
         <span class="k">else</span><span class="p">:</span>
@@ -2619,13 +2619,13 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_from_range</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">base</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">r</span><span class="p">:</span> <span class="nb">range</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SliceView</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
         <span class="n">sv</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
-        <span class="n">sv</span><span class="o">.</span><span class="n">_base</span> <span class="o">=</span> <span class="n">base</span>
+        <span class="n">sv</span><span class="o">.</span><span class="n">_inner</span> <span class="o">=</span> <span class="n">base</span>
         <span class="n">sv</span><span class="o">.</span><span class="n">_range</span> <span class="o">=</span> <span class="n">r</span>
         <span class="k">return</span> <span class="n">sv</span>
 
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
-        <span class="n">base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_range</span><span class="p">():</span>
             <span class="k">yield</span> <span class="n">base</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
 
@@ -2635,7 +2635,7 @@
 
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__reversed__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
-        <span class="n">base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">base</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_current_range</span><span class="p">()))</span>
 
     <span class="nd">@override</span>
@@ -2650,7 +2650,7 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">cr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_range</span><span class="p">()</span>
         <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_base</span><span class="si">!r}</span><span class="s2">)[</span><span class="si">{</span><span class="n">cr</span><span class="o">.</span><span class="n">start</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">cr</span><span class="o">.</span><span class="n">stop</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">cr</span><span class="o">.</span><span class="n">step</span><span class="si">}</span><span class="s2">]&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="si">!r}</span><span class="s2">)[</span><span class="si">{</span><span class="n">cr</span><span class="o">.</span><span class="n">start</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">cr</span><span class="o">.</span><span class="n">stop</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">cr</span><span class="o">.</span><span class="n">step</span><span class="si">}</span><span class="s2">]&quot;</span>
 
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
@@ -2665,7 +2665,7 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
             <span class="c1"># Compose slices using Python&#39;s range slicing — O(1), exact.</span>
             <span class="n">sub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_range</span><span class="p">()[</span><span class="n">index</span><span class="p">]</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">_from_range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_base</span><span class="p">,</span> <span class="n">sub</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">_from_range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="p">,</span> <span class="n">sub</span><span class="p">)</span>
 
         <span class="n">cr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_range</span><span class="p">()</span>
         <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cr</span><span class="p">)</span>
@@ -2675,14 +2675,14 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="n">length</span><span class="p">):</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;sliceview index out of range&quot;</span>
             <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base</span><span class="p">[</span><span class="n">cr</span><span class="p">[</span><span class="n">index</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="p">[</span><span class="n">cr</span><span class="p">[</span><span class="n">index</span><span class="p">]]</span>
 
     <span class="nd">@overload</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="n">SupportsIndex</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
     <span class="nd">@overload</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">slice</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">slice</span> <span class="o">|</span> <span class="n">SupportsIndex</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">T</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">match</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span>
+        <span class="k">match</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span>
             <span class="k">case</span> <span class="n">MutableSequence</span><span class="p">(),</span> <span class="nb">slice</span><span class="p">():</span>
                 <span class="n">tr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_range</span><span class="p">()[</span><span class="n">index</span><span class="p">]</span>
                 <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">step</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
@@ -2691,9 +2691,9 @@
                         <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;attempt to assign sequence of size </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span><span class="si">}</span><span class="s2"> to slice of size </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
                         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
                     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">_base</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
                     <span class="k">return</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_base</span><span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">tr</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span> <span class="n">tr</span><span class="o">.</span><span class="n">step</span><span class="p">)]</span> <span class="o">=</span> <span class="n">value</span>  <span class="c1"># pyright: ignore[reportCallIssue, reportArgumentType]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">tr</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span> <span class="n">tr</span><span class="o">.</span><span class="n">step</span><span class="p">)]</span> <span class="o">=</span> <span class="n">value</span>  <span class="c1"># pyright: ignore[reportCallIssue, reportArgumentType]</span>
                 <span class="k">return</span>
             <span class="k">case</span> <span class="n">MutableSequence</span><span class="p">(),</span> <span class="n">SupportsIndex</span><span class="p">():</span>
                 <span class="n">cr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_range</span><span class="p">()</span>
@@ -2704,16 +2704,16 @@
                 <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="n">length</span><span class="p">):</span>
                     <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;SliceView index out of range&quot;</span>
                     <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_base</span><span class="p">[</span><span class="n">cr</span><span class="p">[</span><span class="n">index</span><span class="p">]]</span> <span class="o">=</span> <span class="n">value</span>  <span class="c1"># pyright: ignore[reportArgumentType, reportCallIssue]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="p">[</span><span class="n">cr</span><span class="p">[</span><span class="n">index</span><span class="p">]]</span> <span class="o">=</span> <span class="n">value</span>  <span class="c1"># pyright: ignore[reportArgumentType, reportCallIssue]</span>
             <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;underlying sequence of type &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_base</span><span class="o">.</span><span class="vm">__class__</span><span class="si">}</span><span class="s2">&#39; has no &#39;__setitem__&#39;&quot;</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;underlying sequence of type &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="o">.</span><span class="vm">__class__</span><span class="si">}</span><span class="s2">&#39; has no &#39;__setitem__&#39;&quot;</span>
                 <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_current_range</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">range</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a concrete ``range`` clamped to the current base length.&quot;&quot;&quot;</span>
         <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_range</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">_OpenRange</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">r</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_base</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">r</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">r</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">advance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
@@ -2741,7 +2741,7 @@
 
 <span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">b_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_base</span><span class="p">)</span>
+        <span class="n">b_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="p">)</span>
         <span class="n">cr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_range</span><span class="p">()</span>
         <span class="n">new_start</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">cr</span><span class="o">.</span><span class="n">start</span> <span class="o">+</span> <span class="n">n</span><span class="p">,</span> <span class="n">b_len</span><span class="p">))</span>
         <span class="n">delta</span> <span class="o">=</span> <span class="n">new_start</span> <span class="o">-</span> <span class="n">cr</span><span class="o">.</span><span class="n">start</span>
@@ -2750,7 +2750,7 @@
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">base</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">MutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inner</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">MutableSequence</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The underlying sequence this view points into.</span>
 
 <span class="sd">        Returns:</span>
@@ -2761,12 +2761,12 @@
 <span class="sd">            &gt;&gt;&gt; from pyochain import SliceView</span>
 <span class="sd">            &gt;&gt;&gt; data = [1, 2, 3, 4, 5]</span>
 <span class="sd">            &gt;&gt;&gt; sv = SliceView(data)[1:4]</span>
-<span class="sd">            &gt;&gt;&gt; sv.base is data</span>
+<span class="sd">            &gt;&gt;&gt; sv.inner is data</span>
 <span class="sd">            True</span>
 
 <span class="sd">            ```</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -2784,8 +2784,8 @@
 
 
 
-<h2 id="pyochain._sliceview.SliceView.base" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">base</span></code>
+<h2 id="pyochain._sliceview.SliceView.inner" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">inner</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-property"><code>property</code></small>
@@ -2826,7 +2826,7 @@
     <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">pyochain</span><span class="w"> </span><span class="kn">import</span> <span class="n">SliceView</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">sv</span> <span class="o">=</span> <span class="n">SliceView</span><span class="p">(</span><span class="n">data</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">sv</span><span class="o">.</span><span class="n">base</span> <span class="ow">is</span> <span class="n">data</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">sv</span><span class="o">.</span><span class="n">inner</span> <span class="ow">is</span> <span class="n">data</span>
 <span class="kc">True</span>
 </code></pre></div>
 
@@ -2977,7 +2977,7 @@
 
 <span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">b_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_base</span><span class="p">)</span>
+    <span class="n">b_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="p">)</span>
     <span class="n">cr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_range</span><span class="p">()</span>
     <span class="n">new_start</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">cr</span><span class="o">.</span><span class="n">start</span> <span class="o">+</span> <span class="n">n</span><span class="p">,</span> <span class="n">b_len</span><span class="p">))</span>
     <span class="n">delta</span> <span class="o">=</span> <span class="n">new_start</span> <span class="o">-</span> <span class="n">cr</span><span class="o">.</span><span class="n">start</span>

@@ -2544,7 +2544,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">extract_if</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">predicate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">bool</span><span class="p">],</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyoIterator</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Creates an `Iter` which uses a *predicate* to determine if an element in `Self` should be removed.</span>
 
 <span class="sd">        If the *predicate* returns `True`, the element is removed from `Self` and yielded.</span>
@@ -2561,7 +2561,7 @@
 <span class="sd">            end (int | None): The ending index of the range to consider for extraction. Defaults to `None`, which means the end of `Self`.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Iter[T]: An `Iter` that yields the extracted elements.</span>
+<span class="sd">            PyoIterator[T]: An `Iterator` that yields the extracted elements.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            ```python</span>
@@ -2589,7 +2589,7 @@
 
         <span class="k">return</span> <span class="n">Iter</span><span class="p">(</span><span class="n">tls</span><span class="o">.</span><span class="n">ExtractIf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">predicate</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">))</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">drain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">drain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyoIterator</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Removes the subslice indicated by the given *start* and *end* from the `Vec`, returning an `Iterator` over the removed subslice.</span>
 
 <span class="sd">        If the `Iterator` is dropped before being fully consumed, it drops the remaining removed elements.</span>
@@ -2599,7 +2599,7 @@
 <span class="sd">            end (int | None): Ending index of the subslice to drain. Defaults to `len(self)` if `None`.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Iter[T]: An `Iterator` over the drained elements.</span>
+<span class="sd">            PyoIterator[T]: An `Iterator` over the drained elements.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            ```python</span>
@@ -2724,11 +2724,11 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain._iter.Iter" href="../iter/#pyochain._iter.Iter">Iter</a>[<span title="pyochain.abc._sequences.PyoMutableSequence[T]">T</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.abc._iterator.PyoIterator" href="../pyoiterator/#pyochain.abc._iterator.PyoIterator">PyoIterator</a>[<span title="pyochain.abc._sequences.PyoMutableSequence[T]">T</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Iter[T]: An <code>Iterator</code> over the drained elements.</p>
+                <p>PyoIterator[T]: An <code>Iterator</code> over the drained elements.</p>
               </div>
             </td>
           </tr>
@@ -2810,7 +2810,7 @@ Deleting the <code>Iterator</code> will also remove all drained elements.
 <span class="normal">313</span>
 <span class="normal">314</span>
 <span class="normal">315</span>
-<span class="normal">316</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">drain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+<span class="normal">316</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">drain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyoIterator</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Removes the subslice indicated by the given *start* and *end* from the `Vec`, returning an `Iterator` over the removed subslice.</span>
 
 <span class="sd">    If the `Iterator` is dropped before being fully consumed, it drops the remaining removed elements.</span>
@@ -2820,7 +2820,7 @@ Deleting the <code>Iterator</code> will also remove all drained elements.
 <span class="sd">        end (int | None): Ending index of the subslice to drain. Defaults to `len(self)` if `None`.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Iter[T]: An `Iterator` over the drained elements.</span>
+<span class="sd">        PyoIterator[T]: An `Iterator` over the drained elements.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        ```python</span>
@@ -2954,11 +2954,11 @@ Deleting the <code>Iterator</code> will also remove all drained elements.
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain._iter.Iter" href="../iter/#pyochain._iter.Iter">Iter</a>[<span title="pyochain.abc._sequences.PyoMutableSequence[T]">T</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.abc._iterator.PyoIterator" href="../pyoiterator/#pyochain.abc._iterator.PyoIterator">PyoIterator</a>[<span title="pyochain.abc._sequences.PyoMutableSequence[T]">T</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Iter[T]: An <code>Iter</code> that yields the extracted elements.</p>
+                <p>PyoIterator[T]: An <code>Iterator</code> that yields the extracted elements.</p>
               </div>
             </td>
           </tr>
@@ -3037,7 +3037,7 @@ Deleting the <code>Iterator</code> will also remove all drained elements.
 <span class="normal">268</span>
 <span class="normal">269</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_if</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">predicate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">bool</span><span class="p">],</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iter</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyoIterator</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates an `Iter` which uses a *predicate* to determine if an element in `Self` should be removed.</span>
 
 <span class="sd">    If the *predicate* returns `True`, the element is removed from `Self` and yielded.</span>
@@ -3054,7 +3054,7 @@ Deleting the <code>Iterator</code> will also remove all drained elements.
 <span class="sd">        end (int | None): The ending index of the range to consider for extraction. Defaults to `None`, which means the end of `Self`.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Iter[T]: An `Iter` that yields the extracted elements.</span>
+<span class="sd">        PyoIterator[T]: An `Iterator` that yields the extracted elements.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        ```python</span>

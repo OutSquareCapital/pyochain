@@ -4027,8 +4027,7 @@ logging or debugging error paths while keeping the <code>Result</code> unchanged
 
     <div class="doc doc-contents ">
 
-        <p>Returns a <code>Iter[T]</code> over the possibly contained value.</p>
-<p>The iterator yields one value if the result is <code>Ok</code>, otherwise none.</p>
+        <p>Returns an <code>Iterator</code> over the possibly contained value.</p>
 
 
     <p><span class="doc-section-title">Returns:</span></p>
@@ -4042,11 +4041,11 @@ logging or debugging error paths while keeping the <code>Result</code> unchanged
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pyochain._iter.Iter" href="../iter/#pyochain._iter.Iter">Iter</a>[<span title="pyochain.rs.ResultType[T]">T</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="pyochain.abc.PyoIterator" href="../pyoiterator/#pyochain.abc._iterator.PyoIterator">PyoIterator</a>[<span title="pyochain.rs.ResultType[T]">T</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Iter[T]: An iterator over the <code>Ok</code> value, or empty if <code>Err</code>.</p>
+                <p>PyoIterator[T]: An <code>Iterator</code> over the <code>Ok</code> value, or empty if <code>Err</code>.</p>
               </div>
             </td>
           </tr>
