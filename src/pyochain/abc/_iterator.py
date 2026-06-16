@@ -911,14 +911,26 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter
+            >>> from pyochain import Iter, Seq
             >>>
-            >>> data = ((1, 2), (3, 4))
-            >>> Iter(data).fold_star(0, lambda acc, x, y: acc + x + y)
+            >>> data = Seq(((1, 2), (3, 4)))
+            >>> data.iter().fold_star(0, lambda acc, x, y: acc + x + y)
             10
-            >>> data = (("a", "b"), ("c", "d"))
-            >>> Iter(data).fold_star("", lambda acc, x, y: acc + x + y)
+            >>> data = Seq((("a", "b"), ("c", "d")))
+            >>> data.iter().fold_star("", lambda acc, x, y: acc + x + y)
             'abcd'
+
+            ```
+            You can also pass additional arguments to the folding function:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>>
+            >>> data = Seq(((1, 2), (3, 4)))
+            >>> def add_with_offset(acc: int, x: int, y: int, offset: int) -> int:
+            ...     return acc + x + y + offset
+            >>>
+            >>> data.iter().fold_star(0, add_with_offset, 10)
+            30
 
             ```
         """
