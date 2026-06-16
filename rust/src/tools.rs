@@ -3,10 +3,10 @@ use crate::option::{PyNull, PySome};
 use crate::result::{PyoErr, PyoOk};
 use pyo3::exceptions::PyStopIteration;
 use pyo3::types::{
-    PyAny, PyBool, PyDict, PyFunction, PyIterator, PyList, PyModule, PySequence, PySet, PyTuple,
+    PyAny, PyBool, PyDict, PyFunction, PyIterator, PyList, PyModule, PySequence, PySet, PyString,
+    PyTuple,
 };
-use pyo3::{IntoPyObjectExt, prelude::*};
-use pyo3::{ffi, intern};
+use pyo3::{IntoPyObjectExt, ffi, intern, prelude::*};
 use tap::prelude::*;
 /// Create a unique sentinel object
 #[inline]
@@ -55,6 +55,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<ExtractIf>()?;
     m.add_class::<Successors>()?;
     m.add_class::<FilterStar>()?;
+    m.add_class::<WithPosition>()?;
     Ok(())
 }
 #[pyfunction]
@@ -1265,5 +1266,60 @@ impl FilterStar {
                 }
             }
         }
+    }
+}
+
+#[pyclass]
+pub struct WithPosition {
+    iter: Py<PyIterator>,
+    did_iter: bool,
+    peeked: Option<Py<PyAny>>,
+}
+#[pymethods]
+impl WithPosition {
+    #[new]
+    fn new(data: Bound<'_, PyIterator>) -> Self {
+        Self {
+            iter: data.unbind(),
+            did_iter: false,
+            peeked: None,
+        }
+    }
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+    fn __next__(
+        mut slf: PyRefMut<'_, Self>,
+    ) -> PyResult<Option<(&Bound<'_, PyString>, Bound<'_, PyAny>)>> {
+        let py = slf.py();
+        let mut iterator = slf.iter.clone_ref(py).into_bound(py);
+
+        let current = match slf.peeked.take() {
+            Some(item) => item.into_bound(py),
+            None => match iterator.next() {
+                Some(item) => item?,
+                None => return Ok(None),
+            },
+        };
+
+        let has_next = match iterator.next() {
+            Some(item) => {
+                slf.peeked = Some(item?.unbind());
+                true
+            }
+            None => false,
+        };
+
+        let did_iter = slf.did_iter;
+        slf.did_iter = true;
+
+        let position = match (did_iter, has_next) {
+            (false, true) => intern!(py, "first"),
+            (false, false) => intern!(py, "only"),
+            (true, true) => intern!(py, "middle"),
+            (true, false) => intern!(py, "last"),
+        };
+
+        Ok(Some((position, current)))
     }
 }

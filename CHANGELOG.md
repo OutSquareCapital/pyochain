@@ -8,14 +8,16 @@
 - **API change**: `Into` mixin is renamed to `Pipe`, and it's `into` method is renamed to `pipe`. Same reasoning as for `Inspect` mixin, and also aligns with polars, pandas and sqlglot API's.
 - **API change**: `Pipeable` mixin is renamed to `Fluent`, to avoid confusion with `Pipe` mixin.
 - **API change**: `SliceView::base` property is renamed to `inner`.
+- **Return type**: `PyoIterator::with_position` returned `Position` values are now back to `typing::Literal` values rather than `enum::StrEnum`. Unfortunately, `Pyo3` doesn't have good native support for python enums yet, and this would have required a lot of maintenance burden for something that doesn't really change the behavior of the method.
 
 ### 🚀 Performance improvements
 
 - `Iter::__bool__` is now **1.16x** faster by avoiding to use `itertools::islice`, this logic has been replaced by a `next` call and sentinel object check.
+- `PyoIterator::with_position` has been moved to Rust. **2.88x** faster.
 
 ### ✨ Enhancements
 
-- **typing**: widened the input types of various methods on set-like concrete classes (`Set`, `SetMut`, `StableSet`, views classes).
+- **typing**: Widened the input types of various methods on set-like concrete classes (`Set`, `SetMut`, `StableSet`, views classes).
 
 ### 🛠️ Other improvements
 

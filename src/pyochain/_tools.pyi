@@ -2,6 +2,7 @@ from collections.abc import Callable, Iterable, Iterator, MutableSequence
 from typing import Any, Concatenate, Self, overload, override
 
 from pyochain import Option, Result
+from pyochain.abc import Position
 
 from ._utils import no_doctest
 
@@ -224,3 +225,12 @@ class FilterStar[T: Iterable[Any]](Iterator[T]):
     @no_doctest
     @override
     def __next__(self) -> T: ...
+
+class WithPosition[T](Iterator[tuple[Position, T]]):
+    def __init__(self, data: Iterator[T]) -> None: ...
+    @no_doctest
+    @override
+    def __iter__(self) -> Self: ...
+    @no_doctest
+    @override
+    def __next__(self) -> tuple[Position, T]: ...

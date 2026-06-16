@@ -4,7 +4,6 @@ import functools
 import itertools
 from abc import ABC
 from collections.abc import Iterator
-from enum import StrEnum, auto
 from operator import itemgetter
 from typing import TYPE_CHECKING, Any, Concatenate, Literal, TypeGuard, TypeIs, overload
 
@@ -55,14 +54,8 @@ if TYPE_CHECKING:
     type FilterFn[T, R] = Callable[[T], bool | TypeIs[R] | TypeGuard[R]] | None
     """Optional closure that can be passed to `PyoIterator::filter` to determine if an element should be yielded."""
 
-
-class Position(StrEnum):
-    """Type representing the position of an item in an iterable."""
-
-    FIRST = auto()
-    MIDDLE = auto()
-    LAST = auto()
-    ONLY = auto()
+Position = Literal["first", "middle", "last", "only"]
+"""Type representing the position of an item in an `Iterator`."""
 
 
 class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
@@ -4104,58 +4097,28 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         return self._from_iterable(map(tls.Juxt(*funcs), iter(self)))
 
     def with_position(self) -> PyoIterator[tuple[Position, T]]:
-        """Return an iterable over (`Position`, `T`) tuples.
+        """Return an `Iterator` over (`Position`, `T`) tuples.
 
-        The `Position` indicates whether the item `T` is the first, middle, last, or only element in the iterable.
+        The `Position` indicates whether the item `T` is the first, middle, last, or only element in the `Iterator`.
 
         Returns:
-            PyoIterator[tuple[Position, T]]: An iterable of (`Position`, item) tuples.
+            PyoIterator[tuple[Position, T]]: An `Iterator` of (`Position`, item) tuples.
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq
+            >>> from pyochain import Seq
             >>>
-            >>> three_vals = (
-            ...     Iter(("a", "b", "c"))
-            ...     .with_position()
-            ...     .map_star(lambda pos, val: (pos.name, val))
-            ...     .collect(Seq)
-            ... )
-            >>> three_vals
-            Seq(('FIRST', 'a'), ('MIDDLE', 'b'), ('LAST', 'c'))
-            >>> only_a = (
-            ...     Iter
-            ...     .once("a")
-            ...     .with_position()
-            ...     .map_star(lambda pos, val: (pos.name, val))
-            ...     .collect(Seq)
-            ... )
-            >>> only_a
-            Seq(('ONLY', 'a'),)
+            >>> data = Seq(("a", "b", "c", "d"))
+            >>> data.iter().with_position().collect(Seq)
+            Seq(('first', 'a'), ('middle', 'b'), ('middle', 'c'), ('last', 'd'))
+            >>> data.iter().take(1).with_position().collect(Seq)
+            Seq(('only', 'a'),)
+            >>> data.iter().take(2).with_position().collect(Seq)
+            Seq(('first', 'a'), ('last', 'b'))
 
             ```
         """
-
-        def _gen(data: Iterator[T]) -> Iterator[tuple[Position, T]]:
-            try:
-                first = next(data)
-            except StopIteration:
-                return
-
-            try:
-                second = next(data)
-            except StopIteration:
-                yield (Position.ONLY, first)
-                return
-            yield (Position.FIRST, first)
-
-            current: T = second
-            for nxt in data:
-                yield (Position.MIDDLE, current)
-                current = nxt
-            yield (Position.LAST, current)
-
-        return self._from_iterable(_gen(iter(self)))
+        return self._from_iterable(tls.WithPosition(iter(self)))
 
     @overload
     def group_by(self, key: None = None) -> PyoIterator[tuple[T, PyoIterator[T]]]: ...

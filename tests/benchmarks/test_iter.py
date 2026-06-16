@@ -290,3 +290,13 @@ def test_find(benchmark: BenchFixture) -> None:
 
 def _find(data: Range) -> Option[int]:
     return data.iter().find(lambda x: x == 19_999)
+
+
+@pytest.mark.parametrize("size", [1, 2, 4096])
+def test_with_position(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_with_position, data) is not None
+
+
+def _with_position(data: Range) -> str:
+    return data.iter().with_position().last()[0]
