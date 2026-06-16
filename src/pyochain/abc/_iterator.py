@@ -423,7 +423,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        return tls.length(iter(self))
+        return tls.count(iter(self))
 
     def all(self, predicate: Callable[[T], bool] | None = None) -> bool:
         """Tests if every element of the `Iterator` is truthy.

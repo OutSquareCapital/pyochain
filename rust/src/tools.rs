@@ -37,7 +37,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(all_unique_by, m)?)?;
     m.add_function(wrap_pyfunction!(partition, m)?)?;
     m.add_function(wrap_pyfunction!(last, m)?)?;
-    m.add_function(wrap_pyfunction!(length, m)?)?;
+    m.add_function(wrap_pyfunction!(count, m)?)?;
     m.add_function(wrap_pyfunction!(retain, m)?)?;
     m.add_function(wrap_pyfunction!(any, m)?)?;
     m.add_function(wrap_pyfunction!(all, m)?)?;
@@ -557,7 +557,7 @@ pub fn last(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
 }
 /// We use unsafe code here to match the performance of a Cython implementation
 #[pyfunction]
-pub fn length(data: Bound<'_, PyIterator>) -> PyResult<usize> {
+pub fn count(data: Bound<'_, PyIterator>) -> PyResult<usize> {
     let py = data.py();
     let mut count = 0usize;
     let iterator = data.as_ptr();
