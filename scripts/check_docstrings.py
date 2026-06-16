@@ -218,15 +218,6 @@ def _should_report_missing_docstring(
     )
 
 
-def _get_docstring_start_line(node: DocumentableNode) -> int:
-    match node.body:
-        case [ast.Expr(value=ast.Constant(value=str())), *_] as body:
-            _ = body
-            return node.body[0].lineno
-        case _:
-            return node.lineno
-
-
 def _check_code_blocks(
     docstring: str, start_line: int, func_name: str, *, skip_doctest: bool = False
 ) -> Result[tuple[()], Vec[ErrorDetail]]:
@@ -274,6 +265,15 @@ def _check_code_blocks(
         case Err(errors):
             errors.extend(block_errors)
             return Err(errors)
+
+
+def _get_docstring_start_line(node: DocumentableNode) -> int:
+    match node.body:
+        case [ast.Expr(value=ast.Constant(value=str())), *_] as body:
+            _ = body
+            return node.body[0].lineno
+        case _:
+            return node.lineno
 
 
 def _has_skip_decorator(node: DocumentableNode) -> bool:

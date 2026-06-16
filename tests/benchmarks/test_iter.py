@@ -60,10 +60,6 @@ def _with_args(*args: int) -> tuple[int, ...]:
     return args
 
 
-def _with_kwargs(**kwargs: int) -> dict[str, int]:
-    return kwargs
-
-
 def _with_args_and_kwargs(
     *args: int, **kwargs: int
 ) -> tuple[tuple[int, ...], dict[str, int]]:
@@ -80,6 +76,10 @@ def _for_each_args(data: Range) -> None:
 
 def _for_each_kwargs(data: Range) -> None:
     data.iter().for_each(lambda x: _with_kwargs(a=x, b=2, c=3))
+
+
+def _with_kwargs(**kwargs: int) -> dict[str, int]:
+    return kwargs
 
 
 def _for_each_args_and_kwargs(data: Range) -> None:

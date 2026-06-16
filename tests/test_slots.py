@@ -3,14 +3,6 @@
 import pyochain as pc
 
 
-def _check_slots(obj: object) -> bool:
-    try:
-        _x = obj.__dict__
-        return False  # noqa: TRY300
-    except AttributeError:
-        return True
-
-
 def test_slots() -> None:
     assert _check_slots(pc.Iter(()))
     assert _check_slots(pc.Seq(()))
@@ -23,3 +15,11 @@ def test_slots() -> None:
     assert _check_slots(pc.NONE)
     assert _check_slots(pc.Err[int, object](42))
     assert _check_slots(pc.Ok[int, object](42))
+
+
+def _check_slots(obj: object) -> bool:
+    try:
+        _x = obj.__dict__
+        return False  # noqa: TRY300
+    except AttributeError:
+        return True
