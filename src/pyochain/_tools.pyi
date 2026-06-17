@@ -96,6 +96,8 @@ def fold_star[U: Iterable[Any], **P, B](
     *args: P.args,
     **kwargs: P.kwargs,
 ) -> B: ...
+@no_doctest
+def nth[T](data: Iterator[T], n: int) -> Option[T]: ...
 
 class Juxt:
     @overload

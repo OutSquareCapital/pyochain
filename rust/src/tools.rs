@@ -42,6 +42,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(any, m)?)?;
     m.add_function(wrap_pyfunction!(all, m)?)?;
     m.add_function(wrap_pyfunction!(fold_star, m)?)?;
+    m.add_function(wrap_pyfunction!(nth, m)?)?;
     m.add_class::<UniqueIdentity>()?;
     m.add_class::<UniqueKey>()?;
     m.add_class::<Intersperse>()?;
@@ -650,6 +651,14 @@ fn fold_star<'py>(
             func.fold_concat_star(&acc, item?.cast_exact::<PyTuple>()?, &args, kwargs)
         }),
     }
+}
+///TODO: Currently 10% slower than Python implementation with itertools::islice, must optimize.
+#[pyfunction]
+fn nth(mut data: Bound<'_, PyIterator>, n: usize) -> PyResult<Py<PyAny>> {
+    let py = data.py();
+    data.nth(n)
+        .map(|opt| opt?.unbind().pipe(PySome::new).into_py_any(py))
+        .unwrap_or_else(|| PyNull::get(py).into_any().pipe(Ok))
 }
 #[pyclass]
 struct Juxt {
