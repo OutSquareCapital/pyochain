@@ -2610,7 +2610,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             Flattening only removes one level of nesting at a time:
             ```python
             >>> from pyochain import Seq
-            >>> d3 = Seq(((1, 2), (3, 4)), ((5, 6), (7, 8)))
+            >>> d3 = Seq((((1, 2), (3, 4)), ((5, 6), (7, 8))))
             >>> d2 = d3.iter().flatten().collect(Seq)
             >>> d2
             Seq((1, 2), (3, 4), (5, 6), (7, 8))
@@ -3812,6 +3812,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             >>> from pyochain import Iter, Seq
             >>> Iter("ABCDEFG").batch(3).collect(Seq)
             Seq(('A', 'B', 'C'), ('D', 'E', 'F'), ('G',))
+            >>> data = Seq((1, 1, 2, -2, 6, 0, 3, 1, 0))
+            >>> #           ^-----^  ^------^  ^-----^
+            >>> data.iter().batch(3, strict=True).map(sum).all(lambda x: x == 4)
+            True
 
             ```
         """
