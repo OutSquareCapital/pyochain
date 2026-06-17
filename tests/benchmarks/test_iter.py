@@ -309,3 +309,15 @@ def test_fold_star(benchmark: BenchFixture) -> None:
 
 def _fold_star(data: Seq[tuple[int, int]]) -> int:
     return data.iter().fold_star(0, lambda acc, x, y: acc + x + y)
+
+
+def test_fold_star_args_and_kwargs(benchmark: BenchFixture) -> None:
+    data = Range(0, 4096).iter().enumerate().collect(Seq)
+    assert benchmark(_fold_star_args_and_kwargs, data) is not None
+
+
+def _fold_star_args_and_kwargs(data: Seq[tuple[int, int]]) -> int:
+    def f(acc: int, x: int, y: int, offset: int) -> int:
+        return acc + x + y + offset
+
+    return data.iter().fold_star(0, f, 10)
