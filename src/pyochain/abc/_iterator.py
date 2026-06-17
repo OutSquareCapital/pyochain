@@ -2456,17 +2456,15 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         The last chunk will be shorter if there are not enough elements.
 
+        If the sub-iterators are read in order, the elements of the `Iterator` won't be stored in memory.
+
+        If they are read out of order, `itertools::tee` is used to cache elements as necessary.
+
         Args:
             size (int): Number of elements in each chunk.
 
         Returns:
-            PyoIterator[PyoIterator[T]]: An iterable of iterators, each yielding n elements.
-
-        If the sub-iterables are read in order, the elements of *iterable*
-        won't be stored in memory.
-
-        If they are read out of order, :func:`itertools.tee` is used to cache
-        elements as necessary.
+            PyoIterator[PyoIterator[T]]: An `Iterator` of iterators, each yielding *n* elements.
 
         Example:
             ```python
@@ -2486,7 +2484,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ```python
             >>> from pyochain import Seq
             >>> from pyochain.abc import PyoIterable
-            >>> def collect_all_chunks(data: PyoIterable[int]) -> Seq[Seq[int]]:
+            >>>
+            >>> def collect_all_chunks[T](data: PyoIterable[T]) -> Seq[Seq[T]]:
             ...     return (
             ...         data
             ...         .iter()
@@ -2504,7 +2503,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         from collections import deque
         from contextlib import suppress
 
-        def _chunks() -> Iterator[PyoIterator[T]]:
+        def _chunks(iterator: Iterator[T]) -> Iterator[PyoIterator[T]]:
             def _ichunk(
                 iterator: Iterator[T], n: int
             ) -> tuple[Iterator[T], Callable[[int], int]]:
@@ -2534,7 +2533,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             new = self._from_iterable
             while True:
                 # Create new chunk
-                chunk, materialize_next = _ichunk(iter(self), size)
+                chunk, materialize_next = _ichunk(iterator, size)
 
                 # Check to see whether we're at the end of the source iterable
                 if not materialize_next(size):
@@ -2543,7 +2542,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
                 yield new(chunk)
                 _ = materialize_next(size)
 
-        return self._from_iterable(_chunks())
+        return self._from_iterable(_chunks(iter(self)))
 
     @overload
     def flatten[U](self: PyoIterator[KeysView[U]]) -> PyoIterator[U]: ...
@@ -2563,7 +2562,6 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
     def flatten[U](self: PyoIterator[list[U]]) -> PyoIterator[U]: ...
     @overload
     def flatten[U](self: PyoIterator[tuple[U, ...]]) -> PyoIterator[U]: ...
-
     @overload
     def flatten[U](self: PyoIterator[PyoIterator[U]]) -> PyoIterator[U]: ...
     @overload
@@ -2590,7 +2588,6 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Returns:
             PyoIterator[Any]: An `Iterator` of flattened elements.
 
-
         Example:
             Basic usage:
             ```python
@@ -2603,21 +2600,21 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ```
             Mapping and then flattening:
             ```python
-            >>> from pyochain import Iter
-            >>> words = Iter(("alpha", "beta", "gamma"))
-            >>> merged = words.flatten().collect(Seq)
+            >>> from pyochain import Seq
+            >>> words = Seq(("alpha", "beta", "gamma"))
+            >>> merged = words.iter().flatten().collect(Seq)
             >>> merged
             Seq('a', 'l', 'p', 'h', 'a', 'b', 'e', 't', 'a', 'g', 'a', 'm', 'm', 'a')
 
             ```
             Flattening only removes one level of nesting at a time:
             ```python
-            >>> from pyochain import Iter
-            >>> d3 = (((1, 2), (3, 4)), ((5, 6), (7, 8)))
-            >>> d2 = Iter(d3).flatten().collect(Seq)
+            >>> from pyochain import Seq
+            >>> d3 = Seq(((1, 2), (3, 4)), ((5, 6), (7, 8)))
+            >>> d2 = d3.iter().flatten().collect(Seq)
             >>> d2
             Seq((1, 2), (3, 4), (5, 6), (7, 8))
-            >>> d1 = Iter(d3).flatten().flatten().collect(Seq)
+            >>> d1 = d3.iter().flatten().flatten().collect(Seq)
             >>> d1
             Seq(1, 2, 3, 4, 5, 6, 7, 8)
 
