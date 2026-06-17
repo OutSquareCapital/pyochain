@@ -61,7 +61,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
 }
 #[pyfunction]
 #[pyo3(signature = (data, func, *args, **kwargs))]
-pub fn for_each(
+fn for_each(
     data: &Bound<'_, PyAny>,
     func: &Bound<'_, PyAny>,
     args: &Args<'_>,
@@ -88,7 +88,7 @@ pub fn for_each(
 }
 #[pyfunction]
 #[pyo3(signature = (data, func, *args, **kwargs))]
-pub fn for_each_star(
+fn for_each_star(
     data: Bound<'_, PyIterator>,
     func: Bound<'_, PyAny>,
     args: Args<'_>,
@@ -114,7 +114,7 @@ pub fn for_each_star(
     }
 }
 #[pyfunction]
-pub fn try_for_each(data: Bound<'_, PyIterator>, f: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
+fn try_for_each(data: Bound<'_, PyIterator>, f: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
     let py = data.py();
     for item in data {
         let result = f.call1((&item?,))?;
@@ -126,7 +126,7 @@ pub fn try_for_each(data: Bound<'_, PyIterator>, f: &Bound<'_, PyFunction>) -> P
     PyoOk::new(PyTuple::empty(py).into()).into_py_any(py)
 }
 #[pyfunction]
-pub fn try_find(data: &Bound<'_, PyAny>, predicate: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
+fn try_find(data: &Bound<'_, PyAny>, predicate: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
     let py = data.py();
     for item in data.try_iter()? {
         let val = item?;
@@ -164,7 +164,7 @@ pub fn try_find(data: &Bound<'_, PyAny>, predicate: &Bound<'_, PyFunction>) -> P
         .into_py_any(py)
 }
 #[pyfunction]
-pub fn try_fold(
+fn try_fold(
     data: &Bound<'_, PyAny>,
     init: &Bound<'_, PyAny>,
     func: &Bound<'_, PyFunction>,
@@ -188,7 +188,7 @@ pub fn try_fold(
 }
 
 #[pyfunction]
-pub fn try_reduce(data: &Bound<'_, PyAny>, func: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
+fn try_reduce(data: &Bound<'_, PyAny>, func: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
     let py = data.py();
     let mut iterator = data.try_iter()?;
     let first = iterator.next();
@@ -223,7 +223,7 @@ pub fn try_reduce(data: &Bound<'_, PyAny>, func: &Bound<'_, PyFunction>) -> PyRe
     }
 }
 #[pyfunction]
-pub fn try_collect(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
+fn try_collect(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
     let py = data.py();
     let collected = PyList::empty(py);
 
@@ -240,7 +240,7 @@ pub fn try_collect(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
     PySome::new(collected.into()).into_py_any(py)
 }
 #[pyfunction]
-pub fn is_sorted(
+fn is_sorted(
     data: &Bound<'_, PyAny>,
     reverse: &Bound<'_, PyBool>,
     strict: &Bound<'_, PyBool>,
@@ -292,7 +292,7 @@ pub fn is_sorted(
     Ok(true)
 }
 #[pyfunction]
-pub fn is_sorted_by(
+fn is_sorted_by(
     data: &Bound<'_, PyAny>,
     key: &Bound<'_, PyAny>,
     reverse: &Bound<'_, PyBool>,
@@ -345,7 +345,7 @@ pub fn is_sorted_by(
 }
 
 #[pyfunction]
-pub fn eq(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+fn eq(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
     let py = data.py();
     let sentinel = sentinel(py)?;
 
@@ -367,7 +367,7 @@ pub fn eq(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
     }
 }
 #[pyfunction]
-pub fn ne(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+fn ne(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
     let mut left_iter = data.try_iter()?;
     let mut right_iter = other.try_iter()?;
 
@@ -384,7 +384,7 @@ pub fn ne(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
     }
 }
 #[pyfunction]
-pub fn le(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+fn le(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
     let mut left_iter = data.try_iter()?;
     let mut right_iter = other.try_iter()?;
 
@@ -404,7 +404,7 @@ pub fn le(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
     }
 }
 #[pyfunction]
-pub fn lt(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+fn lt(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
     let mut left_iter = data.try_iter()?;
     let mut right_iter = other.try_iter()?;
 
@@ -424,7 +424,7 @@ pub fn lt(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
     }
 }
 #[pyfunction]
-pub fn gt(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+fn gt(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
     let mut left_iter = data.try_iter()?;
     let mut right_iter = other.try_iter()?;
 
@@ -444,7 +444,7 @@ pub fn gt(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
     }
 }
 #[pyfunction]
-pub fn ge(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+fn ge(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
     let mut left_iter = data.try_iter()?;
     let mut right_iter = other.try_iter()?;
 
@@ -464,7 +464,7 @@ pub fn ge(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
     }
 }
 #[pyfunction]
-pub fn all_unique(mut data: Bound<'_, PyIterator>) -> PyResult<bool> {
+fn all_unique(mut data: Bound<'_, PyIterator>) -> PyResult<bool> {
     let seen = PySet::empty(data.py())?;
     while let Some(item) = data.next() {
         let key_value = item?;
@@ -476,7 +476,7 @@ pub fn all_unique(mut data: Bound<'_, PyIterator>) -> PyResult<bool> {
     Ok(true)
 }
 #[pyfunction]
-pub fn all_unique_by(data: Bound<'_, PyIterator>, key: &Bound<'_, PyAny>) -> PyResult<bool> {
+fn all_unique_by(data: Bound<'_, PyIterator>, key: &Bound<'_, PyAny>) -> PyResult<bool> {
     let mut iter = data.map(|item| key.call1((item?,)));
     let seen = PySet::empty(key.py())?;
     while let Some(item) = iter.next() {
@@ -489,7 +489,7 @@ pub fn all_unique_by(data: Bound<'_, PyIterator>, key: &Bound<'_, PyAny>) -> PyR
     Ok(true)
 }
 #[pyfunction]
-pub fn partition(
+fn partition(
     data: Bound<'_, PyIterator>,
     predicate: &Bound<'_, PyAny>,
 ) -> PyResult<(Py<PyList>, Py<PyList>)> {
@@ -508,7 +508,7 @@ pub fn partition(
 }
 /// We use unsafe code here to match the performance of a Cython implementation
 #[pyfunction]
-pub fn last(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
+fn last(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
     let py = data.py();
 
     // SAFETY:
@@ -559,7 +559,7 @@ pub fn last(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
 }
 /// We use unsafe code here to match the performance of a Cython implementation
 #[pyfunction]
-pub fn count(data: Bound<'_, PyIterator>) -> PyResult<usize> {
+fn count(data: Bound<'_, PyIterator>) -> PyResult<usize> {
     let py = data.py();
     let mut count = 0usize;
     let iterator = data.as_ptr();
@@ -594,7 +594,7 @@ pub fn count(data: Bound<'_, PyIterator>) -> PyResult<usize> {
     Ok(count)
 }
 #[pyfunction]
-pub fn retain(data: Bound<'_, PySequence>, predicate: &Bound<'_, PyAny>) -> PyResult<()> {
+fn retain(data: Bound<'_, PySequence>, predicate: &Bound<'_, PyAny>) -> PyResult<()> {
     let mut write_idx = 0;
     let length = data.len()?;
     for read_idx in 0..length {
@@ -608,7 +608,7 @@ pub fn retain(data: Bound<'_, PySequence>, predicate: &Bound<'_, PyAny>) -> PyRe
     Ok(())
 }
 #[pyfunction]
-pub fn any(mut data: Bound<'_, PyIterator>, predicate: Bound<'_, PyAny>) -> bool {
+fn any(mut data: Bound<'_, PyIterator>, predicate: Bound<'_, PyAny>) -> bool {
     data.any(|item| {
         item.and_then(|it| predicate.call1((it,)))
             .and_then(|res| res.is_truthy())
@@ -616,7 +616,7 @@ pub fn any(mut data: Bound<'_, PyIterator>, predicate: Bound<'_, PyAny>) -> bool
     })
 }
 #[pyfunction]
-pub fn all(mut data: Bound<'_, PyIterator>, predicate: Bound<'_, PyAny>) -> bool {
+fn all(mut data: Bound<'_, PyIterator>, predicate: Bound<'_, PyAny>) -> bool {
     data.all(|item| {
         item.and_then(|it| predicate.call1((it,)))
             .and_then(|res| res.is_truthy())
@@ -652,7 +652,7 @@ fn fold_star<'py>(
     }
 }
 #[pyclass]
-pub struct Juxt {
+struct Juxt {
     funcs: Vec<Py<PyAny>>,
 }
 
@@ -683,7 +683,7 @@ impl Juxt {
 /// TODO: speed is 0.76x compared to the Cython implementation.
 /// Saved in `.benchmarks/unique_cy`
 #[pyclass(frozen)]
-pub struct UniqueIdentity {
+struct UniqueIdentity {
     iter: Py<PyIterator>,
     seen: Py<PySet>,
 }
@@ -727,7 +727,7 @@ impl UniqueIdentity {
 /// TODO: speed is 0.95x compared to the Cython implementation.
 /// Saved in `.benchmarks/unique_cy`
 #[pyclass(frozen)]
-pub struct UniqueKey {
+struct UniqueKey {
     iter: Py<PyIterator>,
     key: Py<PyAny>,
     seen: Py<PySet>,
@@ -779,7 +779,7 @@ impl UniqueKey {
 /// 1024 elements: 37.3
 /// 4096 elements: 127.7
 #[pyclass]
-pub struct Intersperse {
+struct Intersperse {
     data: Py<PyIterator>,
     element: Py<PyAny>,
     val: Option<Py<PyAny>>,
@@ -831,7 +831,7 @@ impl Intersperse {
 /// **1.17x** -> `n=32`\
 /// **1.40x** -> `n=128`\
 #[pyclass]
-pub struct SlidingWindow {
+struct SlidingWindow {
     iter: Py<PyIterator>,
     prev: Vec<Py<PyAny>>,
 }
@@ -874,7 +874,7 @@ impl SlidingWindow {
     }
 }
 #[pyclass]
-pub struct FilterMap {
+struct FilterMap {
     iter: Py<PyIterator>,
     func: Py<PyAny>,
 }
@@ -911,7 +911,7 @@ impl FilterMap {
     }
 }
 #[pyclass]
-pub struct FilterMapStar {
+struct FilterMapStar {
     iter: Py<PyIterator>,
     func: Py<PyAny>,
 }
@@ -949,7 +949,7 @@ impl FilterMapStar {
 }
 
 #[pyclass]
-pub struct Scan {
+struct Scan {
     iter: Py<PyIterator>,
     initial: Py<PyAny>,
     func: Py<PyAny>,
@@ -998,7 +998,7 @@ impl Scan {
 }
 
 #[pyclass]
-pub struct MapWhile {
+struct MapWhile {
     iter: Py<PyIterator>,
     func: Py<PyAny>,
 }
@@ -1047,7 +1047,7 @@ impl FromFnStrategy {
     }
 }
 #[pyclass]
-pub struct FromFn {
+struct FromFn {
     func: Py<PyAny>,
     strategy: FromFnStrategy,
 }
@@ -1084,7 +1084,7 @@ impl FromFn {
     }
 }
 #[pyclass]
-pub struct Drain {
+struct Drain {
     vec: Py<PySequence>,
     start: usize,
     current: usize,
@@ -1147,7 +1147,7 @@ impl Drop for Drain {
     }
 }
 #[pyclass]
-pub struct ExtractIf {
+struct ExtractIf {
     data: Py<PySequence>,
     pred: Py<PyAny>,
     idx: usize,
@@ -1238,7 +1238,7 @@ impl Drop for ExtractIf {
     }
 }
 #[pyclass]
-pub struct Successors {
+struct Successors {
     succ: Py<PyAny>,
     current: Py<PyAny>,
 }
@@ -1268,7 +1268,7 @@ impl Successors {
     }
 }
 #[pyclass]
-pub struct FilterStar {
+struct FilterStar {
     iter: Py<PyIterator>,
     predicate: Py<PyAny>,
 }
@@ -1309,7 +1309,7 @@ impl FilterStar {
 }
 
 #[pyclass]
-pub struct WithPosition {
+struct WithPosition {
     iter: Py<PyIterator>,
     did_iter: bool,
     peeked: Option<Py<PyAny>>,
