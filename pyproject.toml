@@ -57,7 +57,7 @@
     reportMissingSuperCall = false
     typeCheckingMode       = "all"
 [tool.pyrefly]
-    preset      = "strict"
+    preset      = "all"
     search-path = [".", "src"]
 [tool.pytest.ini_options]
     addopts   = "--doctest-modules --markdown-docs --stubs --benchmark-skip"

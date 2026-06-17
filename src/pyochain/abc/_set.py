@@ -65,7 +65,6 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         ```
     """
 
-    # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     def is_subset(self, other: AnySet) -> bool:
@@ -405,5 +404,4 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
 class PyoMutableSet[T](PyoSet[T], MutableSet[T], ABC):
     """ABCs for read-only and mutable sets."""
 
-    # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
