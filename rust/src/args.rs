@@ -42,6 +42,22 @@ pub trait Concatenate<'py> {
     ) -> PyResult<Bound<'py, PyAny>>;
     /// same as `concat_star`, but does not handle `**kwargs`. Use this whenever possible as it is faster.
     fn concat_star1(self, value: &Args<'py>, args: &Args<'py>) -> PyResult<Bound<'py, PyAny>>;
+
+    /// Prepend `acc` to `item` and concatenate with `args`, then call the function with `**kwargs`
+    fn fold_concat_star(
+        self,
+        acc: &Bound<'py, PyAny>,
+        item: &Args<'py>,
+        args: &Args<'py>,
+        kwargs: Option<&Kwargs<'py>>,
+    ) -> PyResult<Bound<'py, PyAny>>;
+    /// same as `fold_concat_star`, but does not handle `**kwargs`
+    fn fold_concat_star1(
+        self,
+        acc: &Bound<'py, PyAny>,
+        item: &Args<'py>,
+        args: &Args<'py>,
+    ) -> PyResult<Bound<'py, PyAny>>;
 }
 impl<'py> Concatenate<'py> for &Bound<'py, PyAny> {
     #[inline]
@@ -83,6 +99,29 @@ impl<'py> Concatenate<'py> for &Bound<'py, PyAny> {
     #[inline]
     fn concat_star1(self, value: &Args<'py>, args: &Args<'py>) -> PyResult<Bound<'py, PyAny>> {
         self.call1(unsafe { concat_tup_with_args(value, args, args.len()) })
+    }
+    #[inline]
+    fn fold_concat_star(
+        self,
+        acc: &Bound<'py, PyAny>,
+        item: &Args<'py>,
+        args: &Args<'py>,
+        kwargs: Option<&Kwargs<'py>>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        self.call(
+            unsafe { concat_acc_tup_with_args(acc, item, args, args.len()) },
+            kwargs,
+        )
+    }
+
+    #[inline]
+    fn fold_concat_star1(
+        self,
+        acc: &Bound<'py, PyAny>,
+        item: &Args<'py>,
+        args: &Args<'py>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        self.call1(unsafe { concat_acc_tup_with_args(acc, item, args, args.len()) })
     }
 }
 #[inline]
@@ -130,5 +169,36 @@ unsafe fn concat_tup_with_args<'py>(
         }
 
         Py::<PyTuple>::from_owned_ptr(value.py(), new_args_ptr)
+    }
+}
+#[inline]
+unsafe fn concat_acc_tup_with_args<'py>(
+    acc: &Bound<'py, PyAny>,
+    value: &Args<'py>,
+    args: &Args<'py>,
+    args_len: usize,
+) -> Py<PyTuple> {
+    unsafe {
+        let tuple_len = value.len();
+        let total_len = 1 + tuple_len + args_len;
+        let new_args_ptr = ffi::PyTuple_New(total_len as ffi::Py_ssize_t);
+
+        ffi::Py_INCREF(acc.as_ptr());
+        ffi::PyTuple_SetItem(new_args_ptr, 0, acc.as_ptr());
+
+        let tuple_ptr = value.as_ptr();
+        for i in 0..tuple_len {
+            let item = ffi::PyTuple_GET_ITEM(tuple_ptr, i as ffi::Py_ssize_t);
+            ffi::Py_INCREF(item);
+            ffi::PyTuple_SetItem(new_args_ptr, (1 + i) as ffi::Py_ssize_t, item);
+        }
+        let args_ptr = args.as_ptr();
+        for i in 0..args_len {
+            let item = ffi::PyTuple_GET_ITEM(args_ptr, i as ffi::Py_ssize_t);
+            ffi::Py_INCREF(item);
+            ffi::PyTuple_SetItem(new_args_ptr, (1 + tuple_len + i) as ffi::Py_ssize_t, item);
+        }
+
+        Py::<PyTuple>::from_owned_ptr(acc.py(), new_args_ptr)
     }
 }

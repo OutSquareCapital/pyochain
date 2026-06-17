@@ -41,6 +41,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(retain, m)?)?;
     m.add_function(wrap_pyfunction!(any, m)?)?;
     m.add_function(wrap_pyfunction!(all, m)?)?;
+    m.add_function(wrap_pyfunction!(fold_star, m)?)?;
     m.add_class::<UniqueIdentity>()?;
     m.add_class::<UniqueKey>()?;
     m.add_class::<Intersperse>()?;
@@ -620,6 +621,34 @@ pub fn all(mut data: Bound<'_, PyIterator>, predicate: Bound<'_, PyAny>) -> bool
             .and_then(|res| res.is_truthy())
             .expect("Error occurred while evaluating predicate in `all`")
     })
+}
+
+#[pyfunction]
+#[pyo3(signature = (data, init, func, *args, **kwargs))]
+fn fold_star<'py>(
+    mut data: Bound<'py, PyIterator>,
+    init: Bound<'py, PyAny>,
+    func: Bound<'py, PyAny>,
+    args: Args<'py>,
+    kwargs: Option<&Kwargs<'py>>,
+) -> PyResult<Bound<'py, PyAny>> {
+    match (args.is_empty(), kwargs) {
+        (true, None) => data.try_fold(init, |acc, item| {
+            func.fold_concat_star1(&acc, item?.cast_exact::<PyTuple>()?, &args)
+        }),
+
+        (false, None) => data.try_fold(init, |acc, item| {
+            func.fold_concat_star1(&acc, item?.cast_exact::<PyTuple>()?, &args)
+        }),
+
+        (true, Some(_)) => data.try_fold(init, |acc, item| {
+            func.fold_concat_star(&acc, item?.cast_exact::<PyTuple>()?, &args, kwargs)
+        }),
+
+        (false, Some(_)) => data.try_fold(init, |acc, item| {
+            func.fold_concat_star(&acc, item?.cast_exact::<PyTuple>()?, &args, kwargs)
+        }),
+    }
 }
 #[pyclass]
 pub struct Juxt {

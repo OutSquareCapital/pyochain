@@ -88,6 +88,14 @@ def retain[T](data: MutableSequence[T], predicate: Callable[[T], bool]) -> None:
 def any[T](data: Iterator[T], predicate: Callable[[T], bool]) -> bool: ...  # noqa: A001
 @no_doctest
 def all[T](data: Iterator[T], predicate: Callable[[T], bool]) -> bool: ...  # noqa: A001
+@no_doctest
+def fold_star[U: Iterable[Any], **P, B](
+    data: Iterator[U],
+    init: B,
+    func: Callable[..., B],
+    *args: P.args,
+    **kwargs: P.kwargs,
+) -> B: ...
 
 class Juxt:
     @overload

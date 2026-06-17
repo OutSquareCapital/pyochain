@@ -4,7 +4,7 @@
 
 ### 🚀 Performance improvements
 
-- `PyoIterator::fold_star` args/kwargs truthiness are now matched to check if they are actually needed, and each case passes an optimized function to `itertools::reduce`. Without both for example, the method is now **1.2x** faster.
+- **Rust migration and logic optimization**: `PyoIterator::fold_star` args/kwargs truthiness are now matched to check if they are actually needed, and each case passes an optimized function to `itertools::reduce`. Without both for example, the method is was **1.2x** faster. Once migrated to Rust, this case is now **2.23x** faster. With args, the *relative* improvement is of **2.08x**. With args AND kwargs, **1.87x**.
 
 ## [0.26.0] - 2026-06-16
 
