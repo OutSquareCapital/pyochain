@@ -3773,6 +3773,26 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             itertools.starmap(func, tls.SlidingWindow(iter(self), length))
         )
 
+    @overload
+    def batch(
+        self, n: Literal[1], *, strict: Literal[True]
+    ) -> PyoIterator[tuple[T]]: ...
+    @overload
+    def batch(
+        self, n: Literal[2], *, strict: Literal[True]
+    ) -> PyoIterator[tuple[T, T]]: ...
+    @overload
+    def batch(
+        self, n: Literal[3], *, strict: Literal[True]
+    ) -> PyoIterator[tuple[T, T, T]]: ...
+    @overload
+    def batch(
+        self, n: Literal[4], *, strict: Literal[True]
+    ) -> PyoIterator[tuple[T, T, T, T]]: ...
+    @overload
+    def batch(
+        self, n: Literal[5], *, strict: Literal[True]
+    ) -> PyoIterator[tuple[T, T, T, T, T]]: ...
     def batch(self, n: int, *, strict: bool = False) -> PyoIterator[tuple[T, ...]]:
         """Batch elements into tuples of length n and return a new Iter.
 
