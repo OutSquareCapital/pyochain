@@ -510,17 +510,18 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         If *n* is out of bounds, returns `NONE`.
 
         Args:
-            n (int): The index of the item to retrieve.
+            n (int): The index of the item to retrieve. It must be a non-negative integer.
 
         Returns:
             Option[T]: `Some(item)` at the specified *n*.
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter([10, 20]).nth(1)
-            Some(20)
-            >>> Iter([10, 20]).nth(3)
+            >>> from pyochain import Range
+            >>> data = Range(0, 10)
+            >>> data.iter().nth(1)
+            Some(1)
+            >>> data.iter().nth(10)
             NONE
 
             ```
