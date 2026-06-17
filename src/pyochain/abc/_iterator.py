@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, Concatenate, Literal, TypeGuard, TypeIs, 
 
 from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
 from .._utils import no_doctest
-from ..rs import NONE, Option, Result, Some, option
+from ..rs import Option, Result, option
 from ._iterable import PyoIterable
 
 if TYPE_CHECKING:
@@ -526,10 +526,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        try:
-            return Some(next(itertools.islice(iter(self), n, n + 1)))
-        except StopIteration:
-            return NONE
+        return option(next(itertools.islice(iter(self), n, n + 1), None))
 
     def eq(self, other: Iterable[T]) -> bool:
         """Return `True` if **self** and *other* contain the same items in the same order.
