@@ -321,3 +321,12 @@ def _fold_star_args_and_kwargs(data: Seq[tuple[int, int]]) -> int:
         return acc + x + y + offset + additional
 
     return data.iter().fold_star(0, f, 10, additional=5)
+
+
+def test_nth(benchmark: BenchFixture) -> None:
+    data = Range(0, 4096)
+    assert benchmark(_nth, data, 4096 + 1).is_none()
+
+
+def _nth(data: Range, n: int) -> Option[int]:
+    return data.iter().nth(n)
