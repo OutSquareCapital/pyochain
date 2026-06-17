@@ -60,7 +60,7 @@ impl PyoOk {
     }
 
     fn __hash__(&self, py: Python<'_>) -> PyResult<u64> {
-        Ok(hash_fn(0_u8, self.value.bind(py).hash()?))
+        hash_fn(0_u8, self.value.bind(py).hash()?).pipe(Ok)
     }
 
     fn ok(&self, py: Python<'_>) -> PySome {
@@ -94,10 +94,10 @@ impl PyoOk {
         args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Self> {
-        Ok(func
-            .concat(&self.value.bind(func.py()), args, kwargs)?
+        func.concat(&self.value.bind(func.py()), args, kwargs)?
             .unbind()
-            .pipe(Self::new))
+            .pipe(Self::new)
+            .pipe(Ok)
     }
 
     fn and_(&self, resb: &Bound<'_, PyAny>) -> Py<PyAny> {
@@ -105,7 +105,7 @@ impl PyoOk {
     }
 
     fn or_(&self, rese: &Bound<'_, PyAny>) -> PyResult<Self> {
-        Ok(self.value.clone_ref(rese.py()).pipe(Self::new))
+        self.value.clone_ref(rese.py()).pipe(Self::new).pipe(Ok)
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]
@@ -115,9 +115,9 @@ impl PyoOk {
         args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
-        Ok(func
-            .concat(&self.value.bind(func.py()), args, kwargs)?
-            .unbind())
+        func.concat(&self.value.bind(func.py()), args, kwargs)?
+            .unbind()
+            .pipe(Ok)
     }
 
     fn or_else(&self, f: &Bound<'_, PyAny>) -> Self {
@@ -144,19 +144,19 @@ impl PyoOk {
     }
 
     fn iter(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        Ok(self.ok(py).into_py_any(py)?.call_method0(py, "iter")?)
+        self.ok(py).into_py_any(py)?.call_method0(py, "iter")
     }
 
     fn map_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Self> {
-        Ok(func
-            .call(self.value.bind(func.py()).cast::<PyTuple>()?, None)?
+        func.call(self.value.bind(func.py()).cast::<PyTuple>()?, None)?
             .unbind()
-            .pipe(Self::new))
+            .pipe(Self::new)
+            .pipe(Ok)
     }
 
     fn and_then_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let value_tuple = self.value.bind(func.py()).cast::<PyTuple>()?;
-        Ok(func.call(value_tuple, None)?.unbind())
+        func.call(value_tuple, None)?.unbind().pipe(Ok)
     }
 
     #[pyo3(signature = (pred, *args, **kwargs))]
@@ -222,16 +222,16 @@ impl PyoOk {
         args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
-        Ok(func
-            .concat(&self.value.bind(default.py()), args, kwargs)?
-            .unbind())
+        func.concat(&self.value.bind(default.py()), args, kwargs)?
+            .unbind()
+            .pipe(Ok)
     }
 
     fn map_or_else(&self, ok: &Bound<'_, PyAny>, _err: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        Ok(ok.call1((&self.value,))?.unbind())
+        ok.call1((&self.value,))?.unbind().pipe(Ok)
     }
     fn swap(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        Ok(self.value.clone_ref(py).pipe(PyoErr::new).into_py_any(py)?)
+        self.value.clone_ref(py).pipe(PyoErr::new).into_py_any(py)
     }
 
     #[pyo3(signature = (f, *args, **kwargs))]
@@ -243,7 +243,7 @@ impl PyoOk {
     ) -> PyResult<Self> {
         let py = f.py();
         f.concat(&self.value.bind(py), args, kwargs)?;
-        Ok(self.value.clone_ref(py).pipe(Self::new))
+        self.value.clone_ref(py).pipe(Self::new).pipe(Ok)
     }
 }
 
@@ -275,7 +275,7 @@ impl PyoErr {
     }
 
     fn __hash__(&self, py: Python<'_>) -> PyResult<u64> {
-        Ok(hash_fn(1, self.error.bind(py).hash()?))
+        hash_fn(1, self.error.bind(py).hash()?).pipe(Ok)
     }
 
     fn ok(&self, py: Python<'_>) -> Py<PyNull> {
@@ -307,10 +307,11 @@ impl PyoErr {
     }
 
     fn iter(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        Ok(PyModule::import(py, "pyochain")?
+        PyModule::import(py, "pyochain")?
             .getattr("Iter")?
             .call1((PyTuple::empty(py),))?
-            .unbind())
+            .unbind()
+            .pipe(Ok)
     }
 
     fn unwrap_or(&self, default: Py<PyAny>) -> Py<PyAny> {
@@ -318,7 +319,7 @@ impl PyoErr {
     }
 
     fn unwrap_or_else(&self, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        Ok(f.call1((&self.error,))?.unbind())
+        f.call1((&self.error,))?.unbind().pipe(Ok)
     }
 
     #[pyo3(signature = (func, *_args, **_kwargs))]
@@ -345,7 +346,7 @@ impl PyoErr {
     }
 
     fn or_else(&self, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        Ok(f.call1((&self.error,))?.unbind())
+        f.call1((&self.error,))?.unbind().pipe(Ok)
     }
 
     fn map_star(&self, func: &Bound<'_, PyAny>) -> Self {
@@ -388,10 +389,10 @@ impl PyoErr {
         args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Self> {
-        Ok(func
-            .concat(&self.error.bind(func.py()), args, kwargs)?
+        func.concat(&self.error.bind(func.py()), args, kwargs)?
             .unbind()
-            .pipe(PyoErr::new))
+            .pipe(PyoErr::new)
+            .pipe(Ok)
     }
 
     #[pyo3(signature = (func, *args, **kwargs))]
@@ -403,7 +404,7 @@ impl PyoErr {
     ) -> PyResult<Self> {
         let py = func.py();
         func.concat(&self.error.bind(py), args, kwargs)?;
-        Ok(self.error.clone_ref(py).pipe(Self::new))
+        self.error.clone_ref(py).pipe(Self::new).pipe(Ok)
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
@@ -427,7 +428,7 @@ impl PyoErr {
     }
 
     fn map_or_else(&self, _ok: &Bound<'_, PyAny>, err: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        Ok(err.call1((&self.error,))?.unbind())
+        err.call1((&self.error,))?.unbind().pipe(Ok)
     }
 
     #[pyo3(signature = (func, *_args, **_kwargs))]
@@ -450,6 +451,6 @@ impl PyoErr {
         self.error.clone_ref(f.py()).pipe(Self::new)
     }
     fn swap(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        Ok(self.error.clone_ref(py).pipe(PyoOk::new).into_py_any(py)?)
+        self.error.clone_ref(py).pipe(PyoOk::new).into_py_any(py)
     }
 }

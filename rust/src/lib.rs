@@ -6,6 +6,7 @@ mod option;
 mod result;
 mod tools;
 use pyo3::prelude::*;
+use tap::prelude::*;
 
 macro_rules! impl_py_pipe {
     ($type:ty) => {
@@ -18,8 +19,8 @@ macro_rules! impl_py_pipe {
                 args: &args::Args<'_>,
                 kwargs: Option<&args::Kwargs<'_>>,
             ) -> PyResult<Py<PyAny>> {
-                Ok(
-                    args::Concatenate::concat(func, &slf, args, kwargs)?.unbind(),
+                (
+                    args::Concatenate::concat(func, &slf, args, kwargs)?.unbind().pipe(Ok)
                 )
             }
         }
@@ -41,7 +42,7 @@ macro_rules! impl_tap {
         kwargs: Option<&args::Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
         args::Concatenate::concat(f, &slf, args, kwargs)?;
-        Ok(slf.to_owned().into_any().unbind())
+        slf.to_owned().into_any().unbind().pipe(Ok)
     }}};
     ($first:ty, $($rest:ty),+ $(,)?) => {
         impl_tap!($first);

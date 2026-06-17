@@ -34,7 +34,7 @@ pub struct PyochainOption;
 pub fn option(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
     let py = value.py();
     if value.is_none() {
-        Ok(PyNull::get(py).into_any())
+        PyNull::get(py).into_any().pipe(Ok)
     } else {
         value.to_owned().unbind().pipe(PySome::new).into_py_any(py)
     }
@@ -46,7 +46,7 @@ pub fn then_if_some(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
     if value.is_truthy()? {
         value.to_owned().unbind().pipe(PySome::new).into_py_any(py)
     } else {
-        Ok(PyNull::get(py).into_any())
+        PyNull::get(py).into_any().pipe(Ok)
     }
 }
 
@@ -56,7 +56,7 @@ pub fn then_if_true(value: &Bound<'_, PyAny>, predicate: &Bound<'_, PyAny>) -> P
     if predicate.call1((value,))?.is_truthy()? {
         value.to_owned().unbind().pipe(PySome::new).into_py_any(py)
     } else {
-        Ok(PyNull::get(py).into_any())
+        PyNull::get(py).into_any().pipe(Ok)
     }
 }
 
@@ -91,7 +91,7 @@ impl PySome {
     }
 
     fn __hash__(&self, py: Python<'_>) -> PyResult<u64> {
-        Ok(hash_fn(0_u8, self.value.bind(py).hash()?))
+        hash_fn(0_u8, self.value.bind(py).hash()?).pipe(Ok)
     }
 
     fn is_some(&self) -> bool {
@@ -168,9 +168,9 @@ impl PySome {
         args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
-        Ok(func
-            .concat(&self.value.bind(func.py()), args, kwargs)?
-            .unbind())
+        func.concat(&self.value.bind(func.py()), args, kwargs)?
+            .unbind()
+            .pipe(Ok)
     }
 
     fn or_else(&self, f: &Bound<'_, PyAny>) -> Self {
@@ -194,13 +194,14 @@ impl PySome {
         args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
-        Ok(f.concat(&self.value.bind(default.py()), args, kwargs)?
-            .unbind())
+        f.concat(&self.value.bind(default.py()), args, kwargs)?
+            .unbind()
+            .pipe(Ok)
     }
 
     #[allow(unused_variables)]
     fn map_or_else(&self, default: &Bound<'_, PyAny>, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        Ok(f.call1((&self.value,))?.unbind())
+        f.call1((&self.value,))?.unbind().pipe(Ok)
     }
 
     #[pyo3(signature = (predicate, *args, **kwargs))]
@@ -217,7 +218,7 @@ impl PySome {
         {
             self.value.clone_ref(py).pipe(Self::new).into_py_any(py)
         } else {
-            Ok(PyNull::get(py).into_any())
+            PyNull::get(py).into_any().pipe(Ok)
         }
     }
 
@@ -248,15 +249,15 @@ impl PySome {
         PySome::new(func.call1(self.value.bind(py).cast::<PyTuple>()?)?.unbind()).into_py_any(py)
     }
     fn and_then_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        Ok(func
-            .call1(self.value.bind(func.py()).cast::<PyTuple>()?)?
-            .unbind())
+        func.call1(self.value.bind(func.py()).cast::<PyTuple>()?)?
+            .unbind()
+            .pipe(Ok)
     }
 
     fn zip(&self, other: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = other.py();
         if other.is_null() {
-            return Ok(PyNull::get(py).into_any());
+            return PyNull::get(py).into_any().pipe(Ok);
         }
         PyTuple::new(
             py,
@@ -274,7 +275,7 @@ impl PySome {
     fn zip_with(&self, other: &Bound<'_, PyAny>, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = other.py();
         if other.is_null() {
-            return Ok(PyNull::get(py).into_any());
+            return PyNull::get(py).into_any().pipe(Ok);
         }
         f.call1((&self.value, &other.cast_exact::<Self>()?.get().value))?
             .unbind()
@@ -298,16 +299,16 @@ impl PySome {
         if optb.is_null() {
             self.value.clone_ref(py).pipe(Self::new).into_py_any(py)
         } else {
-            Ok(PyNull::get(py).into_any())
+            PyNull::get(py).into_any().pipe(Ok)
         }
     }
 
     fn iter(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        Ok(py
-            .import("pyochain")?
+        py.import("pyochain")?
             .getattr("Iter")?
             .call_method1("once", (&self.value,))?
-            .unbind())
+            .unbind()
+            .pipe(Ok)
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
@@ -321,13 +322,13 @@ impl PySome {
                 .into_py_any(py)?
                 .pipe(PyoOk::new)
                 .into_py_any(py),
-            Err(_) => Ok(inner
+            Err(_) => inner
                 .cast_exact::<PyoErr>()?
                 .get()
                 .error
                 .clone_ref(py)
                 .pipe(PyoErr::new)
-                .into_py_any(py)?),
+                .into_py_any(py),
         }
     }
     fn eq(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
@@ -346,7 +347,7 @@ impl PySome {
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let value_repr = self.value.bind(py).repr()?;
-        Ok(format!("Some({})", value_repr))
+        format!("Some({})", value_repr).pipe(Ok)
     }
 }
 
@@ -436,7 +437,7 @@ impl PyNull {
     }
 
     fn unwrap_or_else(&self, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        Ok(f.call0()?.unbind())
+        f.call0()?.unbind().pipe(Ok)
     }
 
     #[pyo3(signature = (func, *_args, **_kwargs))]
@@ -467,7 +468,7 @@ impl PyNull {
     }
 
     fn or_else(&self, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        Ok(f.call0()?.unbind())
+        f.call0()?.unbind().pipe(Ok)
     }
 
     fn ok_or(&self, err: &Bound<'_, PyAny>) -> PyoErr {
@@ -475,7 +476,7 @@ impl PyNull {
     }
 
     fn ok_or_else(&self, err: &Bound<'_, PyAny>) -> PyResult<PyoErr> {
-        Ok(err.call0()?.unbind().pipe(PyoErr::new))
+        err.call0()?.unbind().pipe(PyoErr::new).pipe(Ok)
     }
 
     #[pyo3(signature = (default, _f, *_args, **_kwargs))]
@@ -490,7 +491,7 @@ impl PyNull {
     }
     #[allow(unused_variables)]
     fn map_or_else(&self, default: &Bound<'_, PyAny>, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        Ok(default.call0()?.unbind())
+        default.call0()?.unbind().pipe(Ok)
     }
 
     #[pyo3(signature = (predicate, *_args, **_kwargs))]
@@ -547,16 +548,16 @@ impl PyNull {
             let py = optb.py();
             Self::get(py).into_py_any(py)
         } else {
-            Ok(optb.clone().unbind())
+            optb.clone().unbind().pipe(Ok)
         }
     }
 
     fn iter(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        Ok(py
-            .import("pyochain")?
+        py.import("pyochain")?
             .getattr("Iter")?
             .call1(((),))?
-            .unbind())
+            .unbind()
+            .pipe(Ok)
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {

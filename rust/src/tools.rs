@@ -11,10 +11,10 @@ use tap::prelude::*;
 /// Create a unique sentinel object
 #[inline]
 fn sentinel(py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
-    let sentinel = PyModule::import(py, intern!(py, "builtins"))?
+    PyModule::import(py, intern!(py, "builtins"))?
         .getattr(intern!(py, "object"))?
-        .call0()?;
-    Ok(sentinel)
+        .call0()?
+        .pipe(Ok)
 }
 #[pymodule(name = "_tools")]
 pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -140,20 +140,21 @@ pub fn try_find(data: &Bound<'_, PyAny>, predicate: &Bound<'_, PyFunction>) -> P
                         .cast_bound_unchecked::<PyBool>(py)
                         .is_true()
                 } {
-                    return Ok(val
+                    return val
                         .unbind()
                         .pipe(PySome::new)
                         .into_py_any(py)?
                         .pipe(PyoOk::new)
-                        .into_py_any(py)?);
+                        .into_py_any(py);
                 }
             }
             Err(_) => {
-                return Ok(result
+                return result
                     .cast_exact::<PyoErr>()?
                     .to_owned()
                     .unbind()
-                    .into_any());
+                    .into_any()
+                    .pipe(Ok);
             }
         }
     }
@@ -393,7 +394,7 @@ pub fn le(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
                 let left = left_res?;
                 let right = right_res?;
                 if !left.eq(&right)? {
-                    return Ok(left.lt(&right)?);
+                    return left.lt(&right);
                 }
             }
             (None, None) => return Ok(true),
@@ -413,7 +414,7 @@ pub fn lt(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
                 let left = left_res?;
                 let right = right_res?;
                 if !left.eq(&right)? {
-                    return Ok(left.lt(&right)?);
+                    return left.lt(&right);
                 }
             }
             (None, None) => return Ok(false),
@@ -433,7 +434,7 @@ pub fn gt(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
                 let left = left_res?;
                 let right = right_res?;
                 if !left.eq(&right)? {
-                    return Ok(left.gt(&right)?);
+                    return left.gt(&right);
                 }
             }
             (None, None) => return Ok(false),
@@ -453,7 +454,7 @@ pub fn ge(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
                 let left = left_res?;
                 let right = right_res?;
                 if !left.eq(&right)? {
-                    return Ok(left.gt(&right)?);
+                    return left.gt(&right);
                 }
             }
             (None, None) => return Ok(true),
@@ -553,7 +554,7 @@ pub fn last(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
             last = item;
         }
 
-        Ok(Bound::from_owned_ptr(py, last).unbind())
+        Bound::from_owned_ptr(py, last).unbind().pipe(Ok)
     }
 }
 /// We use unsafe code here to match the performance of a Cython implementation
@@ -665,7 +666,7 @@ impl Juxt {
             .map(|item| item.map(Bound::unbind))
             .collect::<PyResult<Vec<_>>>()?;
 
-        Ok(Self { funcs: collected })
+        Self { funcs: collected }.pipe(Ok)
     }
 
     #[pyo3(signature = (*args))]
@@ -676,7 +677,7 @@ impl Juxt {
             .iter()
             .map(|func| func.call1(py, args))
             .collect::<PyResult<Vec<_>>>()?;
-        Ok(PyTuple::new(py, results)?.unbind())
+        PyTuple::new(py, results)?.unbind().pipe(Ok)
     }
 }
 /// TODO: speed is 0.76x compared to the Cython implementation.
@@ -692,10 +693,11 @@ impl UniqueIdentity {
     #[new]
     fn new(data: Bound<'_, PyIterator>) -> PyResult<Self> {
         let py = data.py();
-        Ok(Self {
+        Self {
             iter: data.unbind(),
             seen: PySet::empty(py)?.unbind(),
-        })
+        }
+        .pipe(Ok)
     }
 
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
@@ -736,11 +738,12 @@ impl UniqueKey {
     #[new]
     fn new(data: Bound<'_, PyIterator>, key: Bound<'_, PyAny>) -> PyResult<Self> {
         let py = data.py();
-        Ok(Self {
+        Self {
             iter: data.unbind(),
             key: key.unbind(),
             seen: PySet::empty(py)?.unbind(),
-        })
+        }
+        .pipe(Ok)
     }
 
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
@@ -791,12 +794,13 @@ impl Intersperse {
             None => (None, true),
             Some(item) => (Some(item?.unbind()), false),
         };
-        Ok(Self {
+        Self {
             data: data.unbind(),
             element,
             val,
             must_process,
-        })
+        }
+        .pipe(Ok)
     }
 
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
@@ -816,7 +820,7 @@ impl Intersperse {
             }
         } else {
             slf.must_process = true;
-            Ok(slf.val.as_ref().map(|v| v.clone_ref(py)))
+            slf.val.as_ref().map(|v| v.clone_ref(py)).pipe(Ok)
         }
     }
 }
@@ -846,10 +850,11 @@ impl SlidingWindow {
                 Some(item) => prev[i] = item?.unbind(),
             }
         }
-        Ok(Self {
+        Self {
             iter: data.unbind(),
             prev,
-        })
+        }
+        .pipe(Ok)
     }
 
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
@@ -877,10 +882,11 @@ pub struct FilterMap {
 impl FilterMap {
     #[new]
     fn new(data: Bound<'_, PyIterator>, func: Bound<'_, PyAny>) -> PyResult<Self> {
-        Ok(Self {
+        Self {
             iter: data.unbind(),
             func: func.unbind(),
-        })
+        }
+        .pipe(Ok)
     }
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
         slf
@@ -913,10 +919,11 @@ pub struct FilterMapStar {
 impl FilterMapStar {
     #[new]
     fn new(data: Bound<'_, PyIterator>, func: Bound<'_, PyAny>) -> PyResult<Self> {
-        Ok(Self {
+        Self {
             iter: data.unbind(),
             func: func.unbind(),
-        })
+        }
+        .pipe(Ok)
     }
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
         slf
@@ -955,11 +962,12 @@ impl Scan {
         initial: Bound<'_, PyAny>,
         func: Bound<'_, PyAny>,
     ) -> PyResult<Self> {
-        Ok(Self {
+        Self {
             iter: data.unbind(),
             initial: initial.unbind(),
             func: func.unbind(),
-        })
+        }
+        .pipe(Ok)
     }
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
         slf
@@ -1101,13 +1109,14 @@ impl Drain {
     fn new(vec: Bound<'_, PySequence>, start: Option<usize>, end: Option<usize>) -> PyResult<Self> {
         let s = start.unwrap_or_default();
         let e = end.unwrap_or(vec.len()?);
-        Ok(Self {
+        Self {
             vec: vec.unbind(),
             start: s,
             current: s,
             end: e,
             done: false,
-        })
+        }
+        .pipe(Ok)
     }
 
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
@@ -1180,7 +1189,7 @@ impl ExtractIf {
         end: Option<usize>,
     ) -> PyResult<Self> {
         let old_len = data.len()?;
-        Ok(Self {
+        Self {
             data: data.unbind(),
             pred: pred.unbind(),
             old_len,
@@ -1188,7 +1197,8 @@ impl ExtractIf {
             end: end.unwrap_or(old_len),
             deleted: 0,
             done: false,
-        })
+        }
+        .pipe(Ok)
     }
 
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
