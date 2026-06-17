@@ -317,7 +317,7 @@ def test_fold_star_args_and_kwargs(benchmark: BenchFixture) -> None:
 
 
 def _fold_star_args_and_kwargs(data: Seq[tuple[int, int]]) -> int:
-    def f(acc: int, x: int, y: int, offset: int) -> int:
-        return acc + x + y + offset
+    def f(acc: int, x: int, y: int, offset: int, additional: int) -> int:
+        return acc + x + y + offset + additional
 
-    return data.iter().fold_star(0, f, 10)
+    return data.iter().fold_star(0, f, 10, additional=5)
