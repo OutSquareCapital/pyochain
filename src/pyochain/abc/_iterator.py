@@ -1249,7 +1249,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        return max(enumerate(iter(self)), key=itemgetter(1))[0]
+        return tls.arg_max(iter(self))
 
     def arg_max_by[U](self, key: Callable[[T], U]) -> int:
         """Index of the first occurrence of a maximum value in the `Iterator` based on a *key* function.

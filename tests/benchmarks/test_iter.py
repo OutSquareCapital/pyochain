@@ -341,3 +341,13 @@ def test_arg_min(benchmark: BenchFixture, size: int) -> None:
 
 def _arg_min(data: Seq[int]) -> int:
     return data.iter().arg_min()
+
+
+@pytest.mark.parametrize("size", [10, 100, 1000, 10_000])
+def test_arg_max(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).iter().map(lambda x: size + x).collect(Seq)
+    assert benchmark(_arg_max, data) == size - 1
+
+
+def _arg_max(data: Seq[int]) -> int:
+    return data.iter().arg_max()

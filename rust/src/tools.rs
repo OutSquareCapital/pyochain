@@ -44,6 +44,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(fold_star, m)?)?;
     m.add_function(wrap_pyfunction!(nth, m)?)?;
     m.add_function(wrap_pyfunction!(arg_min, m)?)?;
+    m.add_function(wrap_pyfunction!(arg_max, m)?)?;
     m.add_class::<UniqueIdentity>()?;
     m.add_class::<UniqueKey>()?;
     m.add_class::<Intersperse>()?;
@@ -675,6 +676,28 @@ fn arg_min(mut data: Bound<'_, PyIterator>) -> PyResult<usize> {
             for (index, item) in data.enumerate() {
                 let value = item?;
                 if value.lt(&best_value)? {
+                    best_index = index + 1;
+                    best_value = value;
+                }
+            }
+
+            Ok(best_index)
+        }
+    }
+}
+#[pyfunction]
+fn arg_max(mut data: Bound<'_, PyIterator>) -> PyResult<usize> {
+    match data.next() {
+        None => Err(PyValueError::new_err(
+            "Cannot compute arg_max of an empty Iterator",
+        )),
+        Some(first) => {
+            let mut best_index = 0;
+            let mut best_value = first?;
+
+            for (index, item) in data.enumerate() {
+                let value = item?;
+                if value.gt(&best_value)? {
                     best_index = index + 1;
                     best_value = value;
                 }
