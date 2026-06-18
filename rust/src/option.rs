@@ -34,7 +34,7 @@ pub struct PyochainOption;
 pub fn option(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
     let py = value.py();
     if value.is_none() {
-        PyNull::get(py).into_any().pipe(Ok)
+        PyNull::get_any_ok(py)
     } else {
         value.to_owned().unbind().pipe(PySome::new).into_py_any(py)
     }
@@ -46,7 +46,7 @@ pub fn then_if_some(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
     if value.is_truthy()? {
         value.to_owned().unbind().pipe(PySome::new).into_py_any(py)
     } else {
-        PyNull::get(py).into_any().pipe(Ok)
+        PyNull::get_any_ok(py)
     }
 }
 
@@ -56,7 +56,7 @@ pub fn then_if_true(value: &Bound<'_, PyAny>, predicate: &Bound<'_, PyAny>) -> P
     if predicate.call1((value,))?.is_truthy()? {
         value.to_owned().unbind().pipe(PySome::new).into_py_any(py)
     } else {
-        PyNull::get(py).into_any().pipe(Ok)
+        PyNull::get_any_ok(py)
     }
 }
 
@@ -218,7 +218,7 @@ impl PySome {
         {
             self.value.clone_ref(py).pipe(Self::new).into_py_any(py)
         } else {
-            PyNull::get(py).into_any().pipe(Ok)
+            PyNull::get_any_ok(py)
         }
     }
 
@@ -257,7 +257,7 @@ impl PySome {
     fn zip(&self, other: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = other.py();
         if other.is_null() {
-            return PyNull::get(py).into_any().pipe(Ok);
+            return PyNull::get_any_ok(py);
         }
         PyTuple::new(
             py,
@@ -275,7 +275,7 @@ impl PySome {
     fn zip_with(&self, other: &Bound<'_, PyAny>, f: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         let py = other.py();
         if other.is_null() {
-            return PyNull::get(py).into_any().pipe(Ok);
+            return PyNull::get_any_ok(py);
         }
         f.call1((&self.value, &other.cast_exact::<Self>()?.get().value))?
             .unbind()
@@ -299,7 +299,7 @@ impl PySome {
         if optb.is_null() {
             self.value.clone_ref(py).pipe(Self::new).into_py_any(py)
         } else {
-            PyNull::get(py).into_any().pipe(Ok)
+            PyNull::get_any_ok(py)
         }
     }
 
@@ -372,6 +372,10 @@ impl PyNull {
         NONE.get(py)
             .expect("NONE singleton not initialized")
             .clone_ref(py)
+    }
+    #[inline]
+    pub fn get_any_ok(py: Python<'_>) -> PyResult<Py<PyAny>> {
+        PyNull::get(py).into_any().pipe(Ok)
     }
 }
 
