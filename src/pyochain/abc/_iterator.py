@@ -1292,19 +1292,38 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
     def arg_min(self) -> int:
         """Index of the first occurrence of a minimum value in the `Iterator`.
 
-        Credits to more-itertools for the implementation.
+        Credits to **more-itertools** for the examples.
 
         Returns:
             int: The index of the minimum value.
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq
+            >>> from pyochain import Iter
             >>> # Example 1: Basic usage
             >>> Iter("efghabcdijkl").arg_min()
             4
             >>> Iter((3, 2, 1, 0, 4, 2, 1, 0)).arg_min()
             3
+
+            ```
+            For example, look up a label corresponding to the position of a value that minimizes a cost function:
+
+            ```python
+            >>> from pyochain import Seq
+            >>> def cost(x):
+            ...     "Days for a wound to heal given a subject's age."
+            ...     return x**2 - 20*x + 150
+            >>>
+            >>> labels = Seq(("homer", "marge", "bart", "lisa", "maggie"))
+            >>> ages = Seq((35, 30, 10, 9, 1))
+            >>>
+            >>> # Fastest healing family member
+            >>> labels.get(ages.iter().arg_min_by(cost)).unwrap()
+            'bart'
+            >>> # Age with fastest healing
+            >>> ages.iter().min_by(key=cost)
+            10
 
             ```
         """
