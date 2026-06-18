@@ -52,6 +52,7 @@ if TYPE_CHECKING:
     """Type representing the result of a `zip_longest` operation, which can yield tuples of varying lengths depending on the number of iterables zipped together."""
     type FilterFn[T, R] = Callable[[T], bool | TypeIs[R] | TypeGuard[R]] | None
     """Optional closure that can be passed to `PyoIterator::filter` to determine if an element should be yielded."""
+    type SupportsAnyComparison = SupportsComparison[Any]  # pyright: ignore[reportExplicitAny]
 
 Position = Literal["first", "middle", "last", "only"]
 """Type representing the position of an item in an `Iterator`."""
@@ -1060,7 +1061,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         """
         return tls.try_reduce(iter(self), func)
 
-    def is_sorted[U: SupportsComparison[Any]](
+    def is_sorted[U: SupportsAnyComparison](
         self: PyoIterator[U], *, reverse: bool = False, strict: bool = False
     ) -> bool:
         """Returns `True` if the items of the `Iterator` are in sorted order.
@@ -1105,7 +1106,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
     def is_sorted_by(
         self,
-        key: Callable[[T], SupportsComparison[Any]],  # pyright: ignore[reportExplicitAny]
+        key: Callable[[T], SupportsAnyComparison],
         *,
         reverse: bool = False,
         strict: bool = False,
@@ -1119,7 +1120,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Credits to **more-itertools** for the implementation.
 
         Args:
-            key (Callable[[T], SupportsComparison[Any]]): Function to extract a comparison key from each element.
+            key (Callable[[T], SupportsAnyComparison]): Function to extract a comparison key from each element.
             reverse (bool): Whether to check for descending order.
             strict (bool): Whether to enforce strict sorting (no equal elements).
 
