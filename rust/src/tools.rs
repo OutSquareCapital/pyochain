@@ -1,7 +1,7 @@
 use crate::args::{Args, Concatenate, Kwargs};
 use crate::option::{PyNull, PySome};
 use crate::result::{PyoErr, PyoOk};
-use pyo3::exceptions::PyStopIteration;
+use pyo3::exceptions::{PyStopIteration, PyValueError};
 use pyo3::types::{
     PyAny, PyBool, PyDict, PyFunction, PyIterator, PyList, PyModule, PySequence, PySet, PyString,
     PyTuple,
@@ -43,6 +43,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(all, m)?)?;
     m.add_function(wrap_pyfunction!(fold_star, m)?)?;
     m.add_function(wrap_pyfunction!(nth, m)?)?;
+    m.add_function(wrap_pyfunction!(arg_min, m)?)?;
     m.add_class::<UniqueIdentity>()?;
     m.add_class::<UniqueKey>()?;
     m.add_class::<Intersperse>()?;
@@ -659,6 +660,29 @@ fn nth(mut data: Bound<'_, PyIterator>, n: usize) -> PyResult<Py<PyAny>> {
     data.nth(n)
         .map(|opt| opt?.unbind().pipe(PySome::new).into_py_any(py))
         .unwrap_or_else(|| PyNull::get(py).into_any().pipe(Ok))
+}
+
+#[pyfunction]
+fn arg_min(mut data: Bound<'_, PyIterator>) -> PyResult<usize> {
+    match data.next() {
+        None => Err(PyValueError::new_err(
+            "Cannot compute arg_min of an empty Iterator",
+        )),
+        Some(first) => {
+            let mut best_index = 0;
+            let mut best_value = first?;
+
+            for (index, item) in data.enumerate() {
+                let value = item?;
+                if value.lt(&best_value)? {
+                    best_index = index + 1;
+                    best_value = value;
+                }
+            }
+
+            Ok(best_index)
+        }
+    }
 }
 #[pyclass]
 struct Juxt {

@@ -331,3 +331,13 @@ def test_nth(benchmark: BenchFixture) -> None:
 
 def _nth(data: Range, n: int) -> Option[int]:
     return data.iter().nth(n)
+
+
+@pytest.mark.parametrize("size", [10, 100, 1000, 10_000])
+def test_arg_min(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).iter().map(lambda x: size - x).collect(Seq)
+    assert benchmark(_arg_min, data) == size - 1
+
+
+def _arg_min(data: Seq[int]) -> int:
+    return data.iter().arg_min()

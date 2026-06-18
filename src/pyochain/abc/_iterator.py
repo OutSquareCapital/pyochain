@@ -1328,7 +1328,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        return min(enumerate(iter(self)), key=itemgetter(1))[0]
+        return tls.arg_min(iter(self))
 
     def arg_min_by[U](self, key: Callable[[T], U]) -> int:
         """Index of the first occurrence of a minimum value in the `Iterator` based on a *key* function.
