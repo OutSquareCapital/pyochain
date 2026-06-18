@@ -663,7 +663,7 @@ fn nth(mut data: Bound<'_, PyIterator>, n: usize) -> PyResult<Py<PyAny>> {
     let py = data.py();
     data.nth(n)
         .map(|opt| opt?.unbind().pipe(PySome::new).into_py_any(py))
-        .unwrap_or_else(|| PyNull::get(py).into_any().pipe(Ok))
+        .unwrap_or_else(|| PyNull::get_any_ok(py))
 }
 
 #[pyfunction]
@@ -777,7 +777,7 @@ fn find(data: Bound<'_, PyIterator>, predicate: &Bound<'_, PyAny>) -> PyResult<P
     })
     .next()
     .map(|x| x?.unbind().pipe(PySome::new).into_py_any(py)?.pipe(Ok))
-    .unwrap_or_else(|| PyNull::get(py).into_any().pipe(Ok))
+    .unwrap_or_else(|| PyNull::get_any_ok(py))
 }
 
 #[pyclass]
