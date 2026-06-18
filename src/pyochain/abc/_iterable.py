@@ -71,7 +71,6 @@ class PyoIterable[T](Fluent, Checkable, Iterable[T], ABC):
         ```
     """
 
-    # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     def iter(self) -> PyoIterator[T]:

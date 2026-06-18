@@ -121,7 +121,6 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         ```
     """
 
-    # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     @no_doctest

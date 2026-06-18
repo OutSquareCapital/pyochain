@@ -9,7 +9,6 @@ from ._iterable import PyoIterable
 class PyoContainer[T](Container[T], ABC):
     """ABC for `collections.abc.Container` Protocol."""
 
-    # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     def contains(self, value: T) -> bool:
@@ -38,7 +37,6 @@ class PyoContainer[T](Container[T], ABC):
 
 
 class PyoSized(Sized, ABC):
-    # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     def len(self) -> int:
@@ -94,5 +92,4 @@ class PyoCollection[T](PyoIterable[T], PyoContainer[T], PyoSized, Collection[T],
     - `__contains__`
     """
 
-    # pyrefly: ignore [implicit-any-attribute]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
