@@ -333,7 +333,10 @@ def _nth(data: Range, n: int) -> Option[int]:
     return data.iter().nth(n)
 
 
-@pytest.mark.parametrize("size", [10, 100, 1000, 10_000])
+ARG_SIZES = [10, 100, 1000, 10_000]
+
+
+@pytest.mark.parametrize("size", ARG_SIZES)
 def test_arg_min(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size).iter().map(lambda x: size - x).collect(Seq)
     assert benchmark(_arg_min, data) == size - 1
@@ -343,7 +346,7 @@ def _arg_min(data: Seq[int]) -> int:
     return data.iter().arg_min()
 
 
-@pytest.mark.parametrize("size", [10, 100, 1000, 10_000])
+@pytest.mark.parametrize("size", ARG_SIZES)
 def test_arg_max(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size).iter().map(lambda x: size + x).collect(Seq)
     assert benchmark(_arg_max, data) == size - 1
@@ -351,3 +354,23 @@ def test_arg_max(benchmark: BenchFixture, size: int) -> None:
 
 def _arg_max(data: Seq[int]) -> int:
     return data.iter().arg_max()
+
+
+@pytest.mark.parametrize("size", ARG_SIZES)
+def test_arg_max_by(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).iter().enumerate().collect(Seq)
+    assert benchmark(_arg_max_by, data) == 0
+
+
+def _arg_max_by(data: Seq[tuple[int, int]]) -> int:
+    return data.iter().arg_max_by(operator.itemgetter(1))
+
+
+@pytest.mark.parametrize("size", ARG_SIZES)
+def test_arg_min_by(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).iter().enumerate().collect(Seq)
+    assert benchmark(_arg_min_by, data) == 0
+
+
+def _arg_min_by(data: Seq[tuple[int, int]]) -> int:
+    return data.iter().arg_min_by(operator.itemgetter(1))
