@@ -22,7 +22,7 @@ class Sizes(IntEnum):
     SIZE_4096 = 4096
 
 
-SIZES = [64, 256, 1024, 4096, 16384]
+SIZES = [10, 100, 1_000, 10_000]
 
 
 class VariantGroups(StrEnum):

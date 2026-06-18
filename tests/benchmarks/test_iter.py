@@ -283,13 +283,14 @@ def _reduce(data: Range) -> int:
     return data.iter().reduce(operator.add)
 
 
-def test_find(benchmark: BenchFixture) -> None:
-    data = Range(0, 20_000)
-    assert benchmark(_find, data) == Some(19_999)
+@pytest.mark.parametrize("size", SIZES)
+def test_find(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_find, data) == Some(size - 1)
 
 
 def _find(data: Range) -> Option[int]:
-    return data.iter().find(lambda x: x == 19_999)
+    return data.iter().find(lambda x: x == data.last())
 
 
 @pytest.mark.parametrize("size", [1, 2, 4096])
@@ -333,10 +334,7 @@ def _nth(data: Range, n: int) -> Option[int]:
     return data.iter().nth(n)
 
 
-ARG_SIZES = [10, 100, 1000, 10_000]
-
-
-@pytest.mark.parametrize("size", ARG_SIZES)
+@pytest.mark.parametrize("size", SIZES)
 def test_arg_min(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size).iter().map(lambda x: size - x).collect(Seq)
     assert benchmark(_arg_min, data) == size - 1
@@ -346,7 +344,7 @@ def _arg_min(data: Seq[int]) -> int:
     return data.iter().arg_min()
 
 
-@pytest.mark.parametrize("size", ARG_SIZES)
+@pytest.mark.parametrize("size", SIZES)
 def test_arg_max(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size).iter().map(lambda x: size + x).collect(Seq)
     assert benchmark(_arg_max, data) == size - 1
@@ -356,7 +354,7 @@ def _arg_max(data: Seq[int]) -> int:
     return data.iter().arg_max()
 
 
-@pytest.mark.parametrize("size", ARG_SIZES)
+@pytest.mark.parametrize("size", SIZES)
 def test_arg_max_by(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size).iter().enumerate().collect(Seq)
     assert benchmark(_arg_max_by, data) == size - 1
@@ -366,7 +364,7 @@ def _arg_max_by(data: Seq[tuple[int, int]]) -> int:
     return data.iter().arg_max_by(operator.itemgetter(1))
 
 
-@pytest.mark.parametrize("size", ARG_SIZES)
+@pytest.mark.parametrize("size", SIZES)
 def test_arg_min_by(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size).iter().map(lambda x: (x, size - x)).collect(Seq)
     assert benchmark(_arg_min_by, data) == size - 1
