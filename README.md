@@ -6,15 +6,37 @@ Inspired by Rust's `Iterator`, `Result`, `Option`, and DataFrame libraries like 
 
 ## Key Features
 
-- ⛓️ **Declarative & fluent chaining** — Replace `for` loops, None checks, and error handling with chainable methods.
-- 🦥 **Lazy-first,  🔒 explicit mutability** — `Iter[T]` for lazy, efficient iterations; `Seq` and `Set` for immutable data; `Vec` and `SetMut` when you need to mutate.
-- 🎯 **Result and Option types** - Handle `None` and exceptions in a fluent, explicit way.
-- 🔥 **Blazingly fast** — Core `Option` and `Result` types are written in Rust for minimal overhead, and iterators use almost always compiled `C` or `Rust` level code, from the `builtins`, `itertools` or custom Pyo3 implementations.
-- 🛡️ **100% type-safe** — Full generic support and autocompletion in your IDE.
-- 📚 **Accurate Documentation** — Every method is documented and tested with runnable examples.
+### ⛓️ Declarative & fluent chaining
+
+Replace `for` loops, None checks, and error handling with chainable methods.
+
+### 🎯 Result and Option types
+
+Handle `None` and exceptions in a fluent, explicit way.
+
+### 🔥 Blazingly fast
+
+Core `Option` and `Result` types are implemented in Rust for minimal overhead, and iterators use almost always compiled `C` or `Rust` level code, from the python builtins, `itertools`, or custom Pyo3 implementations.
+
+### 🛡️ 100% type-safe
+
+IDE autocompletion is a primary concern, and pyochain bring exhaustive overloads and generics support for all it's constructs.
+
+### 📚 Accurate, tested Documentation
+
+Every method is documented and tested with runnable examples.
+
 Every code example in the website (or this README) is also tested, ensuring accuracy and reliability.
-- 🔄 **Interoperable** — Seamlessly convert to/from types with various methods like `.pipe()` and `.collect()`, convert `Iterables` to `Option` or `Result` based on their truthiness, and more.
-- 🐍 **Mixins and ABC's** — Extend your own classes with the mixins, Protocol and ABC's provided by the `abc` module.
+
+### 🔄 Interoperable
+
+Seamlessly convert to/from types with various methods like `.pipe()` and `.collect()`, convert `Iterables` to `Option` or `Result` based on their truthiness, and more.
+
+### 🐍 Mixins and ABC's
+
+Extend your own classes with the mixins, Protocol and ABC's provided by the `abc` module.
+
+---
 
 ## Installation
 
@@ -23,6 +45,8 @@ uv add pyochain # or pip install pyochain
 ```
 
 [See the package page on Pypi](<https://pypi.org/project/pyochain/>)
+
+---
 
 ## Quick Start
 
