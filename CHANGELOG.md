@@ -10,6 +10,8 @@
 
 - **Rust migration and logic optimization**: `PyoIterator::fold_star` args/kwargs truthiness are now matched to check if they are actually needed, and each case passes an optimized function to `itertools::reduce`. Without both for example, the method is was **1.2x** faster. Once migrated to Rust, this case is now **2.23x** faster. With args, the *relative* improvement is of **2.08x**. With args AND kwargs, **1.87x**.
 - **Rust migration**: `PyoIterator::{arg_min, arg_max}` now in Rust. **1.25x** faster with `Iterator` of 10 items, **1.72x** for 100 elements, **3.33x** for 1_000, **4.05x** for 10_000.
+- **Rust migration**: `PyoIterator::arg_max_by` now in Rust. **1.24x** faster with `Iterator` of 10 items, **1.58x** for 100 elements, **2.70x** for 1_000, **3.10x** for 10_000.
+- **Rust migration**: `PyoIterator::arg_min_by` now in Rust. **1.29x** faster with `Iterator` of 10 items, **1.62x** for 100 elements, **2.59x** for 1_000, **3.03x** for 10_000.
 
 ### 🛠️ Other improvements
 

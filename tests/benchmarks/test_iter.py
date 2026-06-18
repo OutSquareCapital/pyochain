@@ -368,7 +368,7 @@ def _arg_max_by(data: Seq[tuple[int, int]]) -> int:
 
 @pytest.mark.parametrize("size", ARG_SIZES)
 def test_arg_min_by(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size).iter().enumerate().collect(Seq)
+    data = Range(0, size).iter().map(lambda x: (x, size - x)).collect(Seq)
     assert benchmark(_arg_min_by, data) == size - 1
 
 

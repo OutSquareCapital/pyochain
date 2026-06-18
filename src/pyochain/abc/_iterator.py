@@ -4,7 +4,6 @@ import functools
 import itertools
 from abc import ABC
 from collections.abc import Iterator
-from operator import itemgetter
 from typing import TYPE_CHECKING, Any, Concatenate, Literal, TypeGuard, TypeIs, overload
 
 from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
@@ -1287,7 +1286,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        return max(enumerate(map(key, iter(self))), key=itemgetter(1))[0]
+        return tls.arg_max_by(iter(self), key)
 
     def arg_min(self) -> int:
         """Index of the first occurrence of a minimum value in the `Iterator`.
@@ -1349,7 +1348,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        return min(enumerate(map(key, iter(self))), key=itemgetter(1))[0]
+        return tls.arg_min_by(iter(self), key)
 
     def for_each[**P](
         self,

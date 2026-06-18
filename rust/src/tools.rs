@@ -45,6 +45,8 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(nth, m)?)?;
     m.add_function(wrap_pyfunction!(arg_min, m)?)?;
     m.add_function(wrap_pyfunction!(arg_max, m)?)?;
+    m.add_function(wrap_pyfunction!(arg_min_by, m)?)?;
+    m.add_function(wrap_pyfunction!(arg_max_by, m)?)?;
     m.add_class::<UniqueIdentity>()?;
     m.add_class::<UniqueKey>()?;
     m.add_class::<Intersperse>()?;
@@ -667,19 +669,20 @@ fn nth(mut data: Bound<'_, PyIterator>, n: usize) -> PyResult<Py<PyAny>> {
 fn arg_min(mut data: Bound<'_, PyIterator>) -> PyResult<usize> {
     match data.next() {
         None => Err(PyValueError::new_err(
-            "Cannot compute arg_min of an empty Iterator",
+            "Cannot compute `PyoIterator::arg_min` of an empty Iterator",
         )),
         Some(first) => {
             let mut best_index = 0;
             let mut best_value = first?;
 
-            for (index, item) in data.enumerate() {
+            data.enumerate().try_for_each(|(index, item)| {
                 let value = item?;
                 if value.lt(&best_value)? {
                     best_index = index + 1;
                     best_value = value;
                 }
-            }
+                Ok::<(), PyErr>(())
+            })?;
 
             Ok(best_index)
         }
@@ -689,19 +692,71 @@ fn arg_min(mut data: Bound<'_, PyIterator>) -> PyResult<usize> {
 fn arg_max(mut data: Bound<'_, PyIterator>) -> PyResult<usize> {
     match data.next() {
         None => Err(PyValueError::new_err(
-            "Cannot compute arg_max of an empty Iterator",
+            "Cannot compute `PyoIterator::arg_max` of an empty Iterator",
         )),
         Some(first) => {
             let mut best_index = 0;
             let mut best_value = first?;
 
-            for (index, item) in data.enumerate() {
+            data.enumerate().try_for_each(|(index, item)| {
                 let value = item?;
                 if value.gt(&best_value)? {
                     best_index = index + 1;
                     best_value = value;
                 }
-            }
+                Ok::<(), PyErr>(())
+            })?;
+
+            Ok(best_index)
+        }
+    }
+}
+#[pyfunction]
+fn arg_min_by(mut data: Bound<'_, PyIterator>, key: &Bound<'_, PyAny>) -> PyResult<usize> {
+    match data.next() {
+        None => Err(PyValueError::new_err(
+            "Cannot compute `PyoIterator::arg_min_by` of an empty Iterator",
+        )),
+        Some(first) => {
+            let mut best_index = 0;
+            let mut best_value = key.call1((first?,))?;
+
+            data.map(|x| key.call1((x?,)))
+                .enumerate()
+                .try_for_each(|(index, item)| {
+                    let value = item?;
+                    if value.lt(&best_value)? {
+                        best_index = index + 1;
+                        best_value = value;
+                    }
+
+                    Ok::<(), PyErr>(())
+                })?;
+
+            Ok(best_index)
+        }
+    }
+}
+#[pyfunction]
+fn arg_max_by(mut data: Bound<'_, PyIterator>, key: &Bound<'_, PyAny>) -> PyResult<usize> {
+    match data.next() {
+        None => Err(PyValueError::new_err(
+            "Cannot compute `PyoIterator::arg_max_by` of an empty Iterator",
+        )),
+        Some(first) => {
+            let mut best_index = 0;
+            let mut best_value = key.call1((first?,))?;
+
+            data.map(|x| key.call1((x?,)))
+                .enumerate()
+                .try_for_each(|(index, item)| {
+                    let value = item?;
+                    if value.gt(&best_value)? {
+                        best_index = index + 1;
+                        best_value = value;
+                    }
+                    Ok::<(), PyErr>(())
+                })?;
 
             Ok(best_index)
         }
