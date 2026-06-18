@@ -47,6 +47,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(arg_max, m)?)?;
     m.add_function(wrap_pyfunction!(arg_min_by, m)?)?;
     m.add_function(wrap_pyfunction!(arg_max_by, m)?)?;
+    m.add_function(wrap_pyfunction!(find, m)?)?;
     m.add_class::<UniqueIdentity>()?;
     m.add_class::<UniqueKey>()?;
     m.add_class::<Intersperse>()?;
@@ -762,6 +763,23 @@ fn arg_max_by(mut data: Bound<'_, PyIterator>, key: &Bound<'_, PyAny>) -> PyResu
         }
     }
 }
+#[pyfunction]
+fn find(data: Bound<'_, PyIterator>, predicate: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+    let py = data.py();
+    data.filter(|x| {
+        predicate
+            .call1((x
+                .as_ref()
+                .expect("Error occurred while unwrapping item in `PyoIterator::find`"),))
+            .expect("Error occurred while calling predicate function in `PyoIterator::find`")
+            .is_truthy()
+            .expect("Error occurred while evaluating predicate output in `PyoIterator::find`")
+    })
+    .next()
+    .map(|x| x?.unbind().pipe(PySome::new).into_py_any(py)?.pipe(Ok))
+    .unwrap_or_else(|| PyNull::get(py).into_any().pipe(Ok))
+}
+
 #[pyclass]
 struct Juxt {
     funcs: Vec<Py<PyAny>>,

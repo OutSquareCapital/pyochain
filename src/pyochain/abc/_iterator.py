@@ -961,7 +961,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        return option(next(filter(predicate, iter(self)), None))
+        return tls.find(iter(self), predicate)
 
     def try_find[E](
         self, predicate: Callable[[T], Result[bool, E]]

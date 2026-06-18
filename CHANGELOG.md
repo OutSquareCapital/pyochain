@@ -29,6 +29,7 @@ Name         | 10 items | 100 items | 1_000 items | 10_000 items
 
 - Various minor docstring improvements.
 - Code readability and privacy management improvements in Rust source code.
+- `PyoIterator::find` has been moved to Rust, performance is identical as before.
 
 ## [0.26.0] - 2026-06-16
 
