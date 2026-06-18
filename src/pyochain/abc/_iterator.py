@@ -1298,20 +1298,21 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             int: The index of the minimum value.
 
         Example:
+            Basic usage:
             ```python
             >>> from pyochain import Iter
-            >>> # Example 1: Basic usage
             >>> Iter("efghabcdijkl").arg_min()
             4
             >>> Iter((3, 2, 1, 0, 4, 2, 1, 0)).arg_min()
             3
 
             ```
-            For example, look up a label corresponding to the position of a value that minimizes a cost function:
+            Look up a label corresponding to the position of a value that minimizes a cost function:
 
             ```python
             >>> from pyochain import Seq
-            >>> def cost(x):
+            >>>
+            >>> def cost(x: int) -> int:
             ...     "Days for a wound to heal given a subject's age."
             ...     return x**2 - 20*x + 150
             >>>
