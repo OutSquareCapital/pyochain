@@ -784,15 +784,19 @@ fn next(mut data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
         })
         .unwrap_or_else(|| PyNull::get_any_ok(py))
 }
-///TODO: currently buggy
 #[pyfunction]
+#[pyo3(signature = (data, func, *args, **kwargs))]
 fn unpack_into<'py>(
-    data: &Bound<'py, PyIterator>,
+    data: Bound<'py, PyIterator>,
     func: &Bound<'py, PyAny>,
     args: &Args<'py>,
     kwargs: Option<&Kwargs<'py>>,
 ) -> PyResult<Bound<'py, PyAny>> {
-    func.concat(data, args, kwargs)
+    let py = data.py();
+    let unpacked_items = data
+        .map(|item| item.map(Bound::unbind))
+        .collect::<PyResult<Vec<_>>>()?;
+    func.concat_star(&PyTuple::new(py, unpacked_items)?, args, kwargs)
 }
 ///TODO: Currently 10% slower than Python implementation with itertools::islice, must optimize.
 #[pyfunction]
