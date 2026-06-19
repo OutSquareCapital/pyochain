@@ -3457,11 +3457,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         *iterables: AnyIter,
     ) -> PyoIterator[tuple[Option[T], ...]]: ...
     def zip_longest(self, *others: AnyIter) -> ZippedLongest[T]:
-        """Return a zip Iterator who yield a tuple where the i-th element comes from the i-th iterable argument.
+        """Return a zip `Iterator` who yield a `tuple` where the i-th element comes from the i-th `Iterable` argument.
 
-        Yield values until the longest iterable in the argument sequence is exhausted, and then it raises StopIteration.
+        Yield values until the longest `Iterable` in the argument sequence is exhausted, and then it raises `StopIteration`.
 
-        The longest iterable determines the length of the returned iterator, and will return `Some[T]` until exhaustion.
+        The longest `Iterable` determines the length of the returned `Iterator`, and will return `Some[T]` until exhaustion.
 
         When the shorter iterables are exhausted, they yield `NONE`.
 
@@ -3469,20 +3469,17 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             *others (AnyIter): Other iterables to zip with.
 
         Returns:
-            ZippedLongest[T]: An iterable of tuples containing optional elements from the zipped iterables.
+            ZippedLongest[T]: An `Iterator` of tuples containing optional elements from the zipped iterables.
 
         Example:
             ```python
-            >>> from pyochain import Iter, Some, NONE, Vec
-            >>> Iter((1, 2)).zip_longest([10]).collect(Vec)
+            >>> from pyochain import Iter, Some, NONE, Vec, Seq
+            >>> data = Seq((1, 2))
+            >>> out = data.iter().zip_longest([10]).collect(Vec)
+            >>> out
             Vec((Some(1), Some(10)), (Some(2), NONE))
             >>> # Can be combined with try collect to filter out the NONE:
-            >>> zipped = (
-            ...     Iter((1, 2))
-            ...     .zip_longest([10])
-            ...     .map(lambda x: Iter(x).try_collect())
-            ...     .collect(Vec)
-            ... )
+            >>> zipped = out.iter().map(lambda x: Iter(x).try_collect()).collect(Vec)
             >>> zipped
             Vec(Some(Vec(1, 10)), NONE)
 
