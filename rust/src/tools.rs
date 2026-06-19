@@ -1,5 +1,5 @@
 use crate::args::{Args, Concatenate, Kwargs};
-use crate::option::{PyNull, PySome};
+use crate::option::{PyNull, PySome, option};
 use crate::result::{PyoErr, PyoOk};
 use pyo3::exceptions::{PyStopIteration, PyValueError};
 use pyo3::types::{
@@ -65,6 +65,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Successors>()?;
     m.add_class::<FilterStar>()?;
     m.add_class::<WithPosition>()?;
+    m.add_class::<ZipLongest>()?;
     Ok(())
 }
 #[pyfunction]
@@ -1516,5 +1517,37 @@ impl WithPosition {
         };
 
         Ok(Some((position, current)))
+    }
+}
+#[pyclass]
+struct ZipLongest {
+    iterator: Py<PyIterator>,
+}
+#[pymethods]
+impl ZipLongest {
+    #[new]
+    fn new(data: Bound<'_, PyIterator>) -> Self {
+        Self {
+            iterator: data.unbind(),
+        }
+    }
+
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyTuple>>> {
+        let py = slf.py();
+        let mut iter = slf.iterator.clone_ref(py).into_bound(py);
+        match iter.next() {
+            None => Ok(None),
+            Some(item) => item?
+                // SAFETY: we know the passed `PyIterator` is from `itertools::zip_longest`, which yields tuples, so we can safely cast the result to a `PyTuple`.
+                .pipe(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
+                .iter()
+                .map(|x| option(&x))
+                .collect::<PyResult<Vec<_>>>()
+                .and_then(|v| PyTuple::new(py, v)?.unbind().pipe(Some).pipe(Ok)),
+        }
     }
 }

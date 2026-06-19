@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from pyochain import Iter, Null, Option, Range, Seq, Some, Vec
+from pyochain import NONE, Iter, Null, Option, Range, Seq, Some, Vec
 from pyochain.abc import PyoSequence
 
 from ._utils import SIZES, Sizes
@@ -385,3 +385,14 @@ def _unpack_into(data: Range) -> int:
         return sum(args)
 
     return data.iter().unpack_into(func)
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_zip_longest(benchmark: BenchFixture, size: int) -> None:
+    data1 = Range(0, size)
+    data2 = Range(0, size // 2)
+    assert benchmark(_zip_longest, data1, data2) == (Some(size - 1), NONE)
+
+
+def _zip_longest(data1: Range, data2: Range) -> tuple[Option[int], Option[int]]:
+    return data1.iter().zip_longest(data2).last()

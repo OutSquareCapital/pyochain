@@ -3486,8 +3486,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ```
         """
         return self._from_iterable(
-            tuple(option(t) for t in tup)
-            for tup in itertools.zip_longest(iter(self), *others, fillvalue=None)
+            tls.ZipLongest(itertools.zip_longest(iter(self), *others, fillvalue=None))
         )
 
     def unzip[U, V](
