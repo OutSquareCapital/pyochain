@@ -108,6 +108,8 @@ def fold_star[U: Iterable[Any], **P, B](
 def nth[T](data: Iterator[T], n: int) -> Option[T]: ...
 @no_doctest
 def find[T](data: Iterator[T], predicate: Callable[[T], bool]) -> Option[T]: ...
+@no_doctest
+def next[T](data: Iterator[T]) -> Option[T]: ...  # noqa: A001
 
 class Juxt:
     @overload

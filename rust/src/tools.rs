@@ -48,6 +48,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(arg_min_by, m)?)?;
     m.add_function(wrap_pyfunction!(arg_max_by, m)?)?;
     m.add_function(wrap_pyfunction!(find, m)?)?;
+    m.add_function(wrap_pyfunction!(next, m)?)?;
     m.add_class::<UniqueIdentity>()?;
     m.add_class::<UniqueKey>()?;
     m.add_class::<Intersperse>()?;
@@ -779,7 +780,17 @@ fn find(data: Bound<'_, PyIterator>, predicate: &Bound<'_, PyAny>) -> PyResult<P
     .map(|x| x?.unbind().pipe(PySome::new).into_py_any(py)?.pipe(Ok))
     .unwrap_or_else(|| PyNull::get_any_ok(py))
 }
-
+#[pyfunction]
+fn next(mut data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
+    let py = data.py();
+    data.next()
+        .map(|item| {
+            item.map(Bound::unbind)
+                .map(PySome::new)
+                .and_then(|some| some.into_py_any(py))
+        })
+        .unwrap_or_else(|| PyNull::get_any_ok(py))
+}
 #[pyclass]
 struct Juxt {
     funcs: Vec<Py<PyAny>>,
