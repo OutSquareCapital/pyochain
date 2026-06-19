@@ -110,6 +110,13 @@ def nth[T](data: Iterator[T], n: int) -> Option[T]: ...
 def find[T](data: Iterator[T], predicate: Callable[[T], bool]) -> Option[T]: ...
 @no_doctest
 def next[T](data: Iterator[T]) -> Option[T]: ...  # noqa: A001
+@no_doctest
+def unpack_into[**P, R, T](
+    data: Iterator[T],
+    func: Callable[Concatenate[T, P], R],
+    *args: P.args,
+    **kwargs: P.kwargs,
+) -> R: ...
 
 class Juxt:
     @overload

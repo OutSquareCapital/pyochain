@@ -49,6 +49,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(arg_max_by, m)?)?;
     m.add_function(wrap_pyfunction!(find, m)?)?;
     m.add_function(wrap_pyfunction!(next, m)?)?;
+    m.add_function(wrap_pyfunction!(unpack_into, m)?)?;
     m.add_class::<UniqueIdentity>()?;
     m.add_class::<UniqueKey>()?;
     m.add_class::<Intersperse>()?;
@@ -658,15 +659,6 @@ fn fold_star<'py>(
         }),
     }
 }
-///TODO: Currently 10% slower than Python implementation with itertools::islice, must optimize.
-#[pyfunction]
-fn nth(mut data: Bound<'_, PyIterator>, n: usize) -> PyResult<Py<PyAny>> {
-    let py = data.py();
-    data.nth(n)
-        .map(|opt| opt?.unbind().pipe(PySome::new).into_py_any(py))
-        .unwrap_or_else(|| PyNull::get_any_ok(py))
-}
-
 #[pyfunction]
 fn arg_min(mut data: Bound<'_, PyIterator>) -> PyResult<usize> {
     match data.next() {
@@ -780,6 +772,7 @@ fn find(data: Bound<'_, PyIterator>, predicate: &Bound<'_, PyAny>) -> PyResult<P
     .map(|x| x?.unbind().pipe(PySome::new).into_py_any(py)?.pipe(Ok))
     .unwrap_or_else(|| PyNull::get_any_ok(py))
 }
+///TODO: must benchmark and test
 #[pyfunction]
 fn next(mut data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
     let py = data.py();
@@ -789,6 +782,24 @@ fn next(mut data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
                 .map(PySome::new)
                 .and_then(|some| some.into_py_any(py))
         })
+        .unwrap_or_else(|| PyNull::get_any_ok(py))
+}
+///TODO: currently buggy
+#[pyfunction]
+fn unpack_into<'py>(
+    data: &Bound<'py, PyIterator>,
+    func: &Bound<'py, PyAny>,
+    args: &Args<'py>,
+    kwargs: Option<&Kwargs<'py>>,
+) -> PyResult<Bound<'py, PyAny>> {
+    func.concat(data, args, kwargs)
+}
+///TODO: Currently 10% slower than Python implementation with itertools::islice, must optimize.
+#[pyfunction]
+fn nth(mut data: Bound<'_, PyIterator>, n: usize) -> PyResult<Py<PyAny>> {
+    let py = data.py();
+    data.nth(n)
+        .map(|opt| opt?.unbind().pipe(PySome::new).into_py_any(py))
         .unwrap_or_else(|| PyNull::get_any_ok(py))
 }
 #[pyclass]
