@@ -372,3 +372,16 @@ def test_arg_min_by(benchmark: BenchFixture, size: int) -> None:
 
 def _arg_min_by(data: Seq[tuple[int, int]]) -> int:
     return data.iter().arg_min_by(operator.itemgetter(1))
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_unpack_into(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_unpack_into, data) == size * (size - 1) // 2
+
+
+def _unpack_into(data: Range) -> int:
+    def func(*args: int) -> int:
+        return sum(args)
+
+    return data.iter().unpack_into(func)

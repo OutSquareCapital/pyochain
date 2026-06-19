@@ -14,12 +14,15 @@ The "family" of `PyoIterator::arg_*` methods have been migrated to Rust.
 
 See the table below for the performance improvements, with the number of items processed in each `Iterator` when testing.
 
+Note that for `unpack_into`, even if it's worse on a relative basis on small `Iterator`'s, the median absolute speed improvement on larger ones more than makes up for it, since on 10 items, it's **2.6 us (new)** vs **2.42 us (old)**, while on 10k items, it's **229 us (new)** vs **253 us (old)**.
+
 Name         | 10 items | 100 items | 1_000 items | 10_000 items
 -------------|----------|-----------|-------------|-------------
 `arg_max`    | **1.26x**| **1.78x** | **3.40x**   | **4.15x**
 `arg_min`    | **1.25x**| **1.73x** | **3.37x**   | **4.18x**
 `arg_max_by` | **1.24x**| **1.58x** | **2.70x**   | **3.10x**
 `arg_min_by` | **1.29x**| **1.62x** | **2.59x**   | **3.03x**
+`unpack_into`| **0.93x**| **0.99x** | **1.09x**   | **1.11x**
 
 ---
 

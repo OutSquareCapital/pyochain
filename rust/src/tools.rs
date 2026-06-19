@@ -793,10 +793,11 @@ fn unpack_into<'py>(
     kwargs: Option<&Kwargs<'py>>,
 ) -> PyResult<Bound<'py, PyAny>> {
     let py = data.py();
-    let unpacked_items = data
-        .map(|item| item.map(Bound::unbind))
-        .collect::<PyResult<Vec<_>>>()?;
-    func.concat_star(&PyTuple::new(py, unpacked_items)?, args, kwargs)
+    let unpacked = unsafe {
+        Bound::from_owned_ptr(py, ffi::PySequence_Tuple(data.as_ptr()))
+            .cast_into_unchecked::<PyTuple>()
+    };
+    func.concat_star(&unpacked, args, kwargs)
 }
 ///TODO: Currently 10% slower than Python implementation with itertools::islice, must optimize.
 #[pyfunction]

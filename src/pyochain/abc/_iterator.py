@@ -2026,7 +2026,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        return func(*iter(self), *args, **kwargs)
+        return tls.unpack_into(iter(self), func, *args, **kwargs)
 
     def all_unique_by[U](self, key: Callable[[T], U]) -> bool:
         """Returns True if all the elements of **self** transformed by **key** are unique.
