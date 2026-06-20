@@ -1082,9 +1082,9 @@ class OptionType[T](Pipe):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Option[T]:
-        """Returns None if the option is None, otherwise calls predicate with the wrapped value.
+        """Returns `NONE` if the option is `NONE`, otherwise calls predicate with the wrapped value.
 
-        This function works similar to `Iter.filter` in the sense that we only keep the value if it matches a predicate.
+        This function works similar to `PyoIterator::filter` in the sense that we only keep the value if it matches a predicate.
 
         You can imagine the `Option[T]` being an iterator over one or zero elements.
 

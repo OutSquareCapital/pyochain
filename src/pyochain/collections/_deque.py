@@ -19,7 +19,7 @@ class Deque[T](PyoMutableSequence[T]):  # noqa: PLW1641
 
     Though list objects support similar operations, they are optimized for fast fixed-length operations and incur O(n) memory movement costs for pop(0) and insert(0, v) operations which change both the size and position of the underlying data representation.
 
-    If `max_length` is not specified or is None, `Deque`s may grow to an arbitrary length.
+    If `max_length` is not specified or is `None`, `Deque`s may grow to an arbitrary length.
 
     Otherwise, the `Deque` is bounded to the specified maximum length.
 

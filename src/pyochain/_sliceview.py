@@ -106,10 +106,11 @@ class SliceView[T](PyoSequence[T]):  # noqa: PLW1641
 
         # If the original stop was None, store an open sentinel so that the
         # view grows when elements are appended to the base.
-        if sl.stop is None:  # pyright: ignore[reportAny]
-            self._range = _OpenRange(i_start, i_step)
-        else:
-            self._range = range(i_start, i_stop, i_step)
+        match sl.stop:  # pyright: ignore[reportAny]
+            case None:
+                self._range = _OpenRange(i_start, i_step)
+            case _:  # pyright: ignore[reportAny]
+                self._range = range(i_start, i_stop, i_step)
 
     @classmethod
     def _from_range(cls, base: Sequence[T], r: range) -> SliceView[T]:

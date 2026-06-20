@@ -400,9 +400,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        if n is None:
-            return cls._from_iterable(itertools.repeat(obj))
-        return cls._from_iterable(itertools.repeat(obj, n))
+        match n:
+            case None:
+                return cls._from_iterable(itertools.repeat(obj))
+            case _:
+                return cls._from_iterable(itertools.repeat(obj, n))
 
     def count(self) -> int:
         """Consume the `Iterator` and return the number of elements it contained.
@@ -462,9 +464,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        if predicate is None:
-            return all(iter(self))
-        return tls.all(iter(self), predicate)
+        match predicate:
+            case None:
+                return all(iter(self))
+            case _:
+                return tls.all(iter(self), predicate)
 
     def any(self, predicate: Callable[[T], bool] | None = None) -> bool:
         """Tests if any element of the `Iterator` is truthy.
@@ -497,9 +501,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        if predicate is None:
-            return any(iter(self))
-        return tls.any(iter(self), predicate)
+        match predicate:
+            case None:
+                return any(iter(self))
+            case _:
+                return tls.any(iter(self), predicate)
 
     def nth(self, n: int) -> Option[T]:
         """Return the nth item of the `Iterable` at the specified *n*.
@@ -4168,13 +4174,12 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         Warning:
             You must materialize the second element of the tuple immediately when iterating over groups.
 
-            Because `.group_by()` uses Python's `itertools.groupby` under the hood, each group's iterator shares internal state.
+            Because `.group_by()` uses Python's `itertools::groupby` under the hood, each group's iterator shares internal state.
 
             When you advance to the next group, the previous group's iterator becomes invalid and will yield empty results.
 
         Args:
-            key (Callable[[T], Any] | None): Function computing a key value for each element..
-        If not specified or is None, **key** defaults to an identity function and returns the element unchanged.
+            key (Callable[[T], Any] | None): Function computing a key value for each element. If `None`, this defaults to an identity function and returns the element unchanged.
 
         Returns:
             PyoIterator[tuple[Any | T, PyoIterator[T]]]: An `Iterator` of `(key, value)` tuples.
