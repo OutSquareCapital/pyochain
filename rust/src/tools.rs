@@ -8,10 +8,15 @@ use pyo3::types::{
 };
 use pyo3::{IntoPyObjectExt, ffi, intern, prelude::*};
 use tap::prelude::*;
+#[inline(always)]
+fn builtins(py: Python<'_>) -> Bound<'_, PyModule> {
+    PyModule::import(py, intern!(py, "builtins")).unwrap()
+}
+
 /// Create a unique sentinel object
-#[inline]
+#[inline(always)]
 fn sentinel(py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
-    PyModule::import(py, intern!(py, "builtins"))?
+    builtins(py)
         .getattr(intern!(py, "object"))?
         .call0()?
         .pipe(Ok)
@@ -308,19 +313,20 @@ fn is_sorted(
 }
 #[pyfunction]
 fn is_sorted_by(
-    mut data: Bound<'_, PyIterator>,
+    data: Bound<'_, PyIterator>,
     key: &Bound<'_, PyAny>,
     reverse: &Bound<'_, PyBool>,
     strict: &Bound<'_, PyBool>,
 ) -> PyResult<bool> {
-    match data.next() {
+    let mut iterator = data.map(|item| key.call1((item?,)));
+    match iterator.next() {
         None => Ok(true),
         Some(first) => {
-            let mut prev = key.call1((first?,))?;
+            let mut prev = first?;
             match (strict.is_true(), reverse.is_true()) {
                 (true, false) => {
-                    for item in data {
-                        let curr = key.call1((item?,))?;
+                    for item in iterator {
+                        let curr = item?;
                         if !prev.lt(&curr)? {
                             return Ok(false);
                         }
@@ -328,8 +334,8 @@ fn is_sorted_by(
                     }
                 }
                 (false, false) => {
-                    for item in data {
-                        let curr = key.call1((item?,))?;
+                    for item in iterator {
+                        let curr = item?;
                         if !prev.le(&curr)? {
                             return Ok(false);
                         }
@@ -337,8 +343,8 @@ fn is_sorted_by(
                     }
                 }
                 (true, true) => {
-                    for item in data {
-                        let curr = key.call1((item?,))?;
+                    for item in iterator {
+                        let curr = item?;
                         if !prev.gt(&curr)? {
                             return Ok(false);
                         }
@@ -346,8 +352,8 @@ fn is_sorted_by(
                     }
                 }
                 (false, true) => {
-                    for item in data {
-                        let curr = key.call1((item?,))?;
+                    for item in iterator {
+                        let curr = item?;
                         if !prev.ge(&curr)? {
                             return Ok(false);
                         }
@@ -361,11 +367,12 @@ fn is_sorted_by(
 }
 
 #[pyfunction]
-fn eq(mut data: Bound<'_, PyIterator>, mut other: Bound<'_, PyIterator>) -> PyResult<bool> {
+fn eq(mut data: Bound<'_, PyIterator>, other: Bound<'_, PyAny>) -> PyResult<bool> {
     let py = data.py();
     let sentinel = sentinel(py)?;
+    let mut other_iterator = other.try_iter()?;
     loop {
-        match (data.next(), other.next()) {
+        match (data.next(), other_iterator.next()) {
             (Some(left_res), Some(right_res)) => {
                 let left = left_res?;
                 let right = right_res?;
@@ -374,28 +381,30 @@ fn eq(mut data: Bound<'_, PyIterator>, mut other: Bound<'_, PyIterator>) -> PyRe
                 }
             }
             (None, None) => return Ok(true),
-            _ => return Ok(false),
+            (Some(_), None) | (None, Some(_)) => return Ok(false),
         }
     }
 }
 #[pyfunction]
-fn ne(mut data: Bound<'_, PyIterator>, mut other: Bound<'_, PyIterator>) -> PyResult<bool> {
+fn ne(mut data: Bound<'_, PyIterator>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+    let mut other_iterator = other.try_iter()?;
     loop {
-        match (data.next(), other.next()) {
+        match (data.next(), other_iterator.next()) {
             (Some(left_res), Some(right_res)) => {
                 if !left_res?.eq(&right_res?)? {
                     return Ok(true);
                 }
             }
             (None, None) => return Ok(false),
-            _ => return Ok(true),
+            (Some(_), None) | (None, Some(_)) => return Ok(true),
         }
     }
 }
 #[pyfunction]
-fn le(mut data: Bound<'_, PyIterator>, mut other: Bound<'_, PyIterator>) -> PyResult<bool> {
+fn le(mut data: Bound<'_, PyIterator>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+    let mut other_iterator = other.try_iter()?;
     loop {
-        match (data.next(), other.next()) {
+        match (data.next(), other_iterator.next()) {
             (Some(left_res), Some(right_res)) => {
                 let left = left_res?;
                 let right = right_res?;
@@ -403,16 +412,16 @@ fn le(mut data: Bound<'_, PyIterator>, mut other: Bound<'_, PyIterator>) -> PyRe
                     return left.lt(&right);
                 }
             }
-            (None, None) => return Ok(true),
-            (None, Some(_)) => return Ok(true),
+            (None, None) | (None, Some(_)) => return Ok(true),
             (Some(_), None) => return Ok(false),
         }
     }
 }
 #[pyfunction]
-fn lt(mut data: Bound<'_, PyIterator>, mut other: Bound<'_, PyIterator>) -> PyResult<bool> {
+fn lt(mut data: Bound<'_, PyIterator>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+    let mut other_iterator = other.try_iter()?;
     loop {
-        match (data.next(), other.next()) {
+        match (data.next(), other_iterator.next()) {
             (Some(left_res), Some(right_res)) => {
                 let left = left_res?;
                 let right = right_res?;
@@ -420,16 +429,16 @@ fn lt(mut data: Bound<'_, PyIterator>, mut other: Bound<'_, PyIterator>) -> PyRe
                     return left.lt(&right);
                 }
             }
-            (None, None) => return Ok(false),
+            (None, None) | (Some(_), None) => return Ok(false),
             (None, Some(_)) => return Ok(true),
-            (Some(_), None) => return Ok(false),
         }
     }
 }
 #[pyfunction]
-fn gt(mut data: Bound<'_, PyIterator>, mut other: Bound<'_, PyIterator>) -> PyResult<bool> {
+fn gt(mut data: Bound<'_, PyIterator>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+    let mut other_iterator = other.try_iter()?;
     loop {
-        match (data.next(), other.next()) {
+        match (data.next(), other_iterator.next()) {
             (Some(left_res), Some(right_res)) => {
                 let left = left_res?;
                 let right = right_res?;
@@ -437,16 +446,16 @@ fn gt(mut data: Bound<'_, PyIterator>, mut other: Bound<'_, PyIterator>) -> PyRe
                     return left.gt(&right);
                 }
             }
-            (None, None) => return Ok(false),
-            (None, Some(_)) => return Ok(false),
+            (None, None) | (None, Some(_)) => return Ok(false),
             (Some(_), None) => return Ok(true),
         }
     }
 }
 #[pyfunction]
-fn ge(mut data: Bound<'_, PyIterator>, mut other: Bound<'_, PyIterator>) -> PyResult<bool> {
+fn ge(mut data: Bound<'_, PyIterator>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+    let mut other_iterator = other.try_iter()?;
     loop {
-        match (data.next(), other.next()) {
+        match (data.next(), other_iterator.next()) {
             (Some(left_res), Some(right_res)) => {
                 let left = left_res?;
                 let right = right_res?;
@@ -454,9 +463,8 @@ fn ge(mut data: Bound<'_, PyIterator>, mut other: Bound<'_, PyIterator>) -> PyRe
                     return left.gt(&right);
                 }
             }
-            (None, None) => return Ok(true),
+            (None, None) | (Some(_), None) => return Ok(true),
             (None, Some(_)) => return Ok(false),
-            (Some(_), None) => return Ok(true),
         }
     }
 }
@@ -582,8 +590,9 @@ fn count(data: Bound<'_, PyIterator>) -> PyResult<usize> {
                 }
                 return Err(PyErr::fetch(py));
             }
-            count += 1;
+
             ffi::Py_DECREF(item);
+            count += 1;
         }
     }
 

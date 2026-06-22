@@ -250,6 +250,16 @@ def _all(data: Range) -> bool:
     return data.iter().all(lambda x: x < 20_000)
 
 
+@pytest.mark.parametrize("size", SIZES)
+def test_all_no_closure(benchmark: BenchFixture, size: int) -> None:
+    data = Range(1, size)
+    assert benchmark(_all_no_closure, data) is True
+
+
+def _all_no_closure(data: Range) -> bool:
+    return data.iter().all()
+
+
 def test_any(benchmark: BenchFixture) -> None:
     data = Range(0, 20_000)
     assert benchmark(_any, data) is True
