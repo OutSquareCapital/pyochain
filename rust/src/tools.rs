@@ -55,6 +55,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(find, m)?)?;
     m.add_function(wrap_pyfunction!(next, m)?)?;
     m.add_function(wrap_pyfunction!(unpack_into, m)?)?;
+    m.add_function(wrap_pyfunction!(all_equal, m)?)?;
     m.add_class::<UniqueIdentity>()?;
     m.add_class::<UniqueKey>()?;
     m.add_class::<Intersperse>()?;
@@ -805,6 +806,18 @@ fn nth(mut data: Bound<'_, PyIterator>, n: usize) -> PyResult<Py<PyAny>> {
         .map(|opt| opt?.unbind().pipe(PySome::new).into_py_any(py))
         .unwrap_or_else(|| PyNull::get_any_ok(py))
 }
+#[pyfunction]
+fn all_equal(data: Bound<'_, PyIterator>, key: Option<Bound<'_, PyAny>>) -> PyResult<bool> {
+    let iterator = pyitertools::group_by(data, key)?;
+    for _first in &iterator {
+        for _second in iterator {
+            return Ok(false);
+        }
+        return Ok(true);
+    }
+    Ok(true)
+}
+
 #[pyclass]
 struct Juxt {
     funcs: Vec<Py<PyAny>>,
@@ -1582,10 +1595,8 @@ impl Unzip {
     }
     #[staticmethod]
     fn from_iterator(data: Bound<'_, PyIterator>) -> (Unzip, Unzip) {
-        let py = data.py();
-        data.pipe(|x| pyitertools::tee(py).call1((x,)))
+        pyitertools::tee(data, None)
             .unwrap()
-            .pipe(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
             .pipe(|iterators| (Unzip::new(&iterators, 0), Unzip::new(&iterators, 1)))
     }
 }

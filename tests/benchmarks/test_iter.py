@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from pyochain import NONE, Iter, Null, Option, Range, Seq, Some, Vec
-from pyochain.abc import PyoSequence
+from pyochain.abc import PyoIterable, PyoSequence
 
 from ._utils import SIZES, Sizes
 
@@ -269,15 +269,6 @@ def _any(data: Range) -> bool:
     return data.iter().any(lambda x: x == 19_999)
 
 
-def test_all_equal(benchmark: BenchFixture) -> None:
-    data = Iter.from_repeat(1).take(Sizes.SIZE_4096).collect(Seq)
-    assert benchmark(_all_equal, data) is True
-
-
-def _all_equal(data: Seq[int]) -> bool:
-    return data.iter().all_equal()
-
-
 def test_bool(benchmark: BenchFixture) -> None:
     data = Seq((1, 2, 3))
     assert benchmark(lambda: bool(data.iter())) is True
@@ -417,3 +408,14 @@ def test_unzip(benchmark: BenchFixture, size: int) -> None:
 def _unzip(data: Seq[tuple[int, int]]) -> tuple[int, int]:
     left, right = data.iter().unzip()
     return left.last(), right.last()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_all_equal(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).iter().map(lambda _: 1).collect(Vec)
+    data.append(2)
+    assert benchmark(_all_equal, data) is False
+
+
+def _all_equal(data: PyoIterable[int]) -> bool:
+    return data.iter().all_equal()

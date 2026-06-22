@@ -1177,12 +1177,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        iterator = itertools.groupby(iter(self), key)
-        for _first in iterator:
-            for _second in iterator:
-                return False
-            return True
-        return True
+        return tls.all_equal(iter(self), key)
 
     def all_unique[U](self) -> bool:
         """Returns `True` if all the elements of the `Iterator` are unique.
