@@ -4,7 +4,6 @@ from abc import ABC
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
-from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
 from ..rs import Checkable, Fluent
 
 if TYPE_CHECKING:
@@ -99,21 +98,3 @@ class PyoIterable[T](Fluent, Checkable, Iterable[T], ABC):
         from .._iter import Iter
 
         return Iter(iter(self))
-
-    def last(self) -> T:
-        """Return the last element of the `Iterable`.
-
-        This is similar to `__getitem__` but works on lazy `Iterators`.
-
-        Returns:
-            T: The last element of the `Iterable`.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq
-            >>> Seq((7, 8, 9)).last()
-            9
-
-            ```
-        """
-        return tls.last(iter(self))

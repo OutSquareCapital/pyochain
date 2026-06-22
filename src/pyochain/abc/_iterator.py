@@ -426,6 +426,29 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         """
         return tls.count(iter(self))
 
+    def last(self) -> T:
+        """Consume the `Iterator` and return it's last element.
+
+        Warning:
+            This will never return if the `Iterator` is infinite.
+
+        Returns:
+            T: The last element of the `Iterator`.
+
+        Example:
+            ```python
+            >>> from pyochain import Dict, Seq
+            >>> data = Dict({"a": 1, "b": 2, "c": 3})
+            >>> data.iter().last()
+            'c'
+            >>> # If you have a `Sequence`, you can use `PyoSequence::last` instead, which is more efficient.
+            >>> data.pipe(Seq).last()
+            'c'
+
+            ```
+        """
+        return tls.last(iter(self))
+
     def all(self, predicate: Callable[[T], bool] | None = None) -> bool:
         """Tests if every element of the `Iterator` is truthy.
 

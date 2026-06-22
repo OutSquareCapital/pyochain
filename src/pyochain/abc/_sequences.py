@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC
 from collections.abc import Callable, MutableSequence, Reversible, Sequence
-from typing import TYPE_CHECKING, overload, override
+from typing import TYPE_CHECKING, overload
 
 from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
 from ..rs import NONE, Option, Some
@@ -101,8 +101,22 @@ class PyoSequence[T](PyoCollection[T], PyoReversible[T], Sequence[T], ABC):
         """
         return self[0]
 
-    @override
     def last(self) -> T:
+        """Return the last element of the `Sequence`.
+
+        This is similar to `my_sequence[-1]`.
+
+        Returns:
+            T: The last element of the `Sequence`.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> Seq((1, 2, 3)).last()
+            3
+
+            ```
+        """
         return self[-1]
 
     @overload

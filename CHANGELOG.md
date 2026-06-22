@@ -4,7 +4,10 @@
 
 ### 💥 Breaking changes
 
+`PyoIterable` is now only here for the `iter` method, and doesn't provide methods that implicitely convert the `Iterable` into a `PyoIterator` anymore. `last` and `first`, depending on the concrete subclass, were either redundant (`first` for `PyoIterator` who already has `next`) or not really useful (`last` for non-ordered `Collection`s).
+
 - **API change**: `PyoIterable::first` has been deleted. This impacts all non-sequence types (`PyoSequence` is unchanged). If you need the old behavior on an `Iterator` or a `Collection`, call `.iter().next().unwrap()` instead.
+- **API change**: `PyoIterable::last` has been moved to `PyoIterator` and `PyoSequence` as separate methods without class inheritance. This impacts all custom `PyoIterable` subclasses who aren't `Iterator`s nor `Sequences`. If you need the old behavior (e.g calling `last` on a `set`-like collection), call `iter().last()` instead.
 
 ### ✨ Enhancements
 
