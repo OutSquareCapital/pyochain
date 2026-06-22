@@ -62,7 +62,7 @@ class Set[T](PyoSet[T]):
     @property
     @no_doctest
     def inner(self) -> frozenset[T]:
-        """Get the underlying `frozenset` data structure.
+        """The underlying `frozenset` data structure.
 
         Useful when interoperating with functions that require a standard Python `frozenset`.
 
@@ -157,7 +157,7 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
     @property
     @no_doctest
     def inner(self) -> set[T]:
-        """Get the underlying `set` data structure.
+        """The underlying `set` data structure.
 
         Useful when interoperating with functions that require a standard Python `set`.
 

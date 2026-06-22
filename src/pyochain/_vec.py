@@ -78,7 +78,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
     @property
     @no_doctest
     def inner(self) -> list[T]:
-        """Get the underlying `list` data structure.
+        """The underlying `list` data structure.
 
         Useful when interoperating with functions that require a standard Python `list`.
 

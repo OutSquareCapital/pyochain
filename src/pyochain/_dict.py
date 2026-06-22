@@ -135,7 +135,7 @@ class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
     @property
     @no_doctest
     def inner(self) -> dict[K, V]:
-        """Get the underlying `dict` data structure.
+        """The underlying `dict` data structure.
 
         Useful when interoperating with functions that require a standard Python `dict`.
 

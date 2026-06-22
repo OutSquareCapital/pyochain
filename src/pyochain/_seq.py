@@ -99,7 +99,7 @@ class Seq[T](PyoSequence[T]):
     @property
     @no_doctest
     def inner(self) -> tuple[T, ...]:
-        """Get the underlying `tuple` data structure.
+        """The underlying `tuple` data structure.
 
         Useful when interoperating with functions that require a standard Python `tuple`.
 
