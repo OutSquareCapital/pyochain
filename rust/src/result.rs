@@ -148,15 +148,16 @@ impl PyoOk {
     }
 
     fn map_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Self> {
-        func.call(self.value.bind(func.py()).cast::<PyTuple>()?, None)?
+        func.call1(self.value.bind(func.py()).cast::<PyTuple>()?)?
             .unbind()
             .pipe(Self::new)
             .pipe(Ok)
     }
 
     fn and_then_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        let value_tuple = self.value.bind(func.py()).cast::<PyTuple>()?;
-        func.call(value_tuple, None)?.unbind().pipe(Ok)
+        func.call1((self.value.bind(func.py()).cast::<PyTuple>()?,))?
+            .unbind()
+            .pipe(Ok)
     }
 
     #[pyo3(signature = (pred, *args, **kwargs))]

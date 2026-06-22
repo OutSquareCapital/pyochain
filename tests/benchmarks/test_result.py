@@ -42,8 +42,10 @@ def test_map_star(benchmark: BenchFixture) -> None:
     def combine(_a: int, _b: int, _c: int) -> int:
         return 1
 
+    res = Ok((1, 2, 3))
+
     def fn() -> Result[int, int]:
-        return Ok((1, 2, 3)).map_star(combine)
+        return res.map_star(combine)
 
     assert benchmark(fn).unwrap() == 1
 
