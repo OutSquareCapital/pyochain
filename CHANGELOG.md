@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### 🏆 Highlights
+
+- `abc::PyoIterable` has been moved to Rust.
+
 ### 💥 Breaking changes
 
 `PyoIterable` is now only here for the `iter` method, and doesn't provide methods that implicitely convert the `Iterable` into a `PyoIterator` anymore. `last` and `first`, depending on the concrete subclass, were either redundant (`first` for `PyoIterator` who already has `next`) or not really useful (`last` for non-ordered `Collection`s).

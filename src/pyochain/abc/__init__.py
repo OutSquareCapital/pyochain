@@ -15,13 +15,15 @@ The mixins are simple, implementation-agnostic classes that can be added to any 
 
 """
 
-from ..rs import Checkable, Fluent, Pipe, Tap
+from ..rs import Checkable, Fluent, Pipe, Tap  # noqa: I001
+
 from ._collection import PyoCollection, PyoContainer, PyoSized
-from ._iterable import PyoIterable
 from ._iterator import Position, PyoIterator
 from ._mappings import PyoMapping, PyoMappingView, PyoMutableMapping
 from ._sequences import PyoMutableSequence, PyoReversible, PyoSequence
 from ._set import PyoMutableSet, PyoSet
+
+from .._abc import PyoIterable  # pyright: ignore[reportMissingModuleSource]
 
 __all__ = [
     "Checkable",

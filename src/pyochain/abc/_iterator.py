@@ -7,9 +7,9 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, Concatenate, Literal, TypeGuard, TypeIs, overload
 
 from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
+from .._abc import PyoIterable  # pyright: ignore[reportMissingModuleSource]
 from .._utils import no_doctest
 from ..rs import Option, Result, option
-from ._iterable import PyoIterable
 
 if TYPE_CHECKING:
     from collections.abc import (

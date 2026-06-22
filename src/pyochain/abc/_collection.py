@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from collections.abc import Collection, Container, Sized
 
-from ._iterable import PyoIterable
+from .._abc import PyoIterable  # pyright: ignore[reportMissingModuleSource]
 
 
 class PyoContainer[T](Container[T], ABC):

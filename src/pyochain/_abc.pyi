@@ -1,16 +1,11 @@
-from __future__ import annotations
-
-from abc import ABC
 from collections.abc import Iterable
-from typing import TYPE_CHECKING
+from typing import Protocol, runtime_checkable
 
-from ..rs import Checkable, Fluent
+from .abc import PyoIterator
+from .rs import Checkable, Fluent
 
-if TYPE_CHECKING:
-    from ._iterator import PyoIterator
-
-
-class PyoIterable[T](Fluent, Checkable, Iterable[T], ABC):
+@runtime_checkable
+class PyoIterable[T](Fluent, Checkable, Iterable[T], Protocol):
     """Base ABC for all pyochain `Iterables`.
 
     It's the common API surface shared by:
@@ -70,9 +65,7 @@ class PyoIterable[T](Fluent, Checkable, Iterable[T], ABC):
         ```
     """
 
-    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
-
-    def iter(self) -> PyoIterator[T]:
+    def iter[I](self: PyoIterable[I]) -> PyoIterator[I]:
         """Returns a `PyoIterator` object over the `Iterable`.
 
         By default, this returns an `Iter`, but can be overriden by concrete subclasses.
@@ -95,6 +88,3 @@ class PyoIterable[T](Fluent, Checkable, Iterable[T], ABC):
 
             ```
         """
-        from .._iter import Iter
-
-        return Iter(iter(self))

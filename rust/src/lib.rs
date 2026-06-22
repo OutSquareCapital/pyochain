@@ -1,3 +1,4 @@
+mod abc;
 mod args;
 mod errors;
 mod hasher;
@@ -50,14 +51,15 @@ macro_rules! impl_tap {
         impl_tap!($($rest),+);
     };
 }
-impl_tap!(mixins::Fluent, mixins::PyoTap);
+impl_tap!(mixins::Fluent, mixins::PyoTap, abc::PyoIterable);
 impl_py_pipe!(
     option::PySome,
     option::PyNull,
     result::PyoOk,
     result::PyoErr,
     mixins::Fluent,
-    mixins::PyoPipe
+    mixins::PyoPipe,
+    abc::PyoIterable
 );
 
 #[pymodule]
@@ -81,9 +83,14 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<mixins::PyoPipe>()?;
     m.add_class::<mixins::PyoTap>()?;
     m.add_wrapped(pyo3::wrap_pymodule!(tools::tools))?;
-    py.import("sys")?
-        .getattr("modules")?
-        .set_item("pyochain._tools", m.getattr("_tools")?)?;
+    m.add_wrapped(pyo3::wrap_pymodule!(abc::abc))?;
+    let sys_mods = py.import("sys")?.getattr("modules")?;
+    sys_mods.set_item("pyochain._tools", m.getattr("_tools")?)?;
+    sys_mods.set_item("pyochain._abc", m.getattr("_abc")?)?;
+
+    py.import("collections.abc")?
+        .getattr("Iterable")?
+        .call_method1("register", (m.getattr("_abc")?.getattr("PyoIterable")?,))?;
 
     Ok(())
 }
