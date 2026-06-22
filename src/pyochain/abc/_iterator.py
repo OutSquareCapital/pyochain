@@ -3511,11 +3511,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq
-            >>> data = ((1, "a"), (2, "b"), (3, "c"))
-            >>> left, right = Iter(data).unzip()
+            >>> from pyochain import Seq
+            >>> data = Seq(("a", "b", "c"))
+            >>> left, right = data.iter().enumerate().unzip()
             >>> left.collect(Seq)
-            Seq(1, 2, 3)
+            Seq(0, 1, 2)
             >>> right.collect(Seq)
             Seq('a', 'b', 'c')
 
