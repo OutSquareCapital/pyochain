@@ -2973,18 +2973,24 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
         """
         new = self._from_iterable
 
-        def _repeat_infinite() -> Generator[PyoIterator[T]]:
-            tee = functools.partial(itertools.tee, iter(self), 1)
-            iterators = tee()
-            while True:
-                yield new(iterators[0])
-                iterators = tee()
+        def repeat(iterator: Iterator[T], n: int | None) -> Iterator[PyoIterator[T]]:
 
-        match n:
-            case None:
-                return new(_repeat_infinite())
-            case _:
-                return new(map(new, itertools.tee(iter(self), n)))
+            def _repeat_infinite(iterator: Iterator[T]) -> Generator[PyoIterator[T]]:
+                def tee() -> tuple[Iterator[T], ...]:
+                    return itertools.tee(iterator, 1)
+
+                iterators = tee()
+                while True:
+                    yield new(iterators[0])
+                    iterators = tee()
+
+            match n:
+                case None:
+                    return _repeat_infinite(iterator)
+                case _:
+                    return map(new, itertools.tee(iterator, n))
+
+        return new(repeat(iter(self), n))
 
     def scan[U](self, initial: U, func: Callable[[U, T], Option[U]]) -> PyoIterator[U]:
         """Transform elements by sharing state between iterations.
