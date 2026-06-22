@@ -1680,9 +1680,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        from .._vec import Vec
-
-        return tls.try_collect(iter(self)).map(Vec.from_ref)
+        return tls.try_collect(iter(self))
 
     def sort[U: SupportsAnyRichComparison](
         self: PyoIterator[U], *, reverse: bool = False

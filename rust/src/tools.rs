@@ -232,7 +232,7 @@ fn try_reduce(
     }
 }
 #[pyfunction]
-fn try_collect(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
+fn try_collect<'py>(data: Bound<'py, PyIterator>) -> PyResult<Py<PyAny>> {
     let py = data.py();
     let collected = PyList::empty(py);
 
@@ -242,11 +242,17 @@ fn try_collect(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
             Ok(ok) => collected.append(&ok.get().value)?,
             Err(_) => match val.cast_into_exact::<PySome>() {
                 Ok(some) => collected.append(&some.get().value)?,
-                Err(_) => return PyNull::get(py).into_py_any(py),
+                Err(_) => return PyNull::get_any_ok(py)?.pipe(Ok),
             },
         }
     }
-    PySome::new(collected.into()).into_py_any(py)
+    collected
+        .into_any()
+        .pipe(pylibs::pyochain::vec::from_ref)?
+        .unbind()
+        .pipe(PySome::new)
+        .into_py_any(py)?
+        .pipe(Ok)
 }
 #[pyfunction]
 fn is_sorted(

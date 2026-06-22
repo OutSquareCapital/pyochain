@@ -1,6 +1,6 @@
-use pyo3::prelude::*;
 use pyo3::sync::PyOnceLock;
 use pyo3::types::{PyBool, PyIterator, PyTuple};
+use pyo3::{intern, prelude::*};
 use tap::prelude::*;
 
 /// Built-in Python functions and objects
@@ -61,5 +61,20 @@ pub mod itertools {
             .call1((iterator, key))?
             .pipe(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
             .pipe(Ok)
+    }
+}
+pub mod pyochain {
+    use super::*;
+    const PYOCHAIN: &str = "pyochain";
+    pub mod vec {
+        use super::*;
+        static VEC: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+        pub fn from_ref<'py>(obj: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+            let py = obj.py();
+            VEC.import(py, PYOCHAIN, "Vec")?
+                .getattr(intern!(py, "from_ref"))?
+                .call1((obj,))?
+                .pipe(Ok)
+        }
     }
 }

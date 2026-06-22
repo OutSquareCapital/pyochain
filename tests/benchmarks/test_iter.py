@@ -41,7 +41,6 @@ def _filter_map_star(data: Seq[tuple[int, int]]) -> int:
     )
 
 
-@pytest.mark.benchmark(group="try_collect")
 @pytest.mark.parametrize("size", SIZES)
 def test_try_collect(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size)
