@@ -247,7 +247,6 @@ fn try_collect<'py>(data: Bound<'py, PyIterator>) -> PyResult<Py<PyAny>> {
         }
     }
     collected
-        .into_any()
         .pipe(pylibs::pyochain::vec::from_ref)?
         .unbind()
         .pipe(PySome::new)
@@ -440,10 +439,10 @@ fn all_unique_by(data: Bound<'_, PyIterator>, key: &Bound<'_, PyAny>) -> PyResul
     Ok(true)
 }
 #[pyfunction]
-fn partition(
-    data: Bound<'_, PyIterator>,
-    predicate: &Bound<'_, PyAny>,
-) -> PyResult<(Py<PyList>, Py<PyList>)> {
+fn partition<'py>(
+    data: Bound<'py, PyIterator>,
+    predicate: &Bound<'py, PyAny>,
+) -> PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
     let py = data.py();
     let true_list = PyList::empty(py);
     let false_list = PyList::empty(py);
@@ -455,7 +454,10 @@ fn partition(
             false_list.append(item)?;
         }
     }
-    Ok((true_list.unbind(), false_list.unbind()))
+    Ok((
+        pylibs::pyochain::vec::from_ref(true_list)?,
+        pylibs::pyochain::vec::from_ref(false_list)?,
+    ))
 }
 /// We use unsafe code here to match the performance of a Cython implementation
 #[pyfunction]

@@ -1,5 +1,5 @@
 use pyo3::sync::PyOnceLock;
-use pyo3::types::{PyBool, PyIterator, PyTuple};
+use pyo3::types::{PyBool, PyIterator, PyList, PyTuple};
 use pyo3::{intern, prelude::*};
 use tap::prelude::*;
 
@@ -69,7 +69,7 @@ pub mod pyochain {
     pub mod vec {
         use super::*;
         static VEC: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-        pub fn from_ref<'py>(obj: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+        pub fn from_ref<'py>(obj: Bound<'py, PyList>) -> PyResult<Bound<'py, PyAny>> {
             let py = obj.py();
             VEC.import(py, PYOCHAIN, "Vec")?
                 .getattr(intern!(py, "from_ref"))?

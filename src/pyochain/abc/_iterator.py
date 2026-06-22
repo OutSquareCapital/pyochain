@@ -1810,10 +1810,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        from .._vec import Vec
-
-        first, second = tls.partition(iter(self), predicate)
-        return Vec.from_ref(first), Vec.from_ref(second)
+        return tls.partition(iter(self), predicate)
 
     def join(self: PyoIterable[str], sep: str) -> str:
         """Join all elements of the `Iterator` into a single `str`, with a specified separator.

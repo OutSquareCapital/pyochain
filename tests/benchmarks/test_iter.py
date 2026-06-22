@@ -428,3 +428,14 @@ def test_all_equal(benchmark: BenchFixture, size: int) -> None:
 
 def _all_equal(data: PyoIterable[int]) -> bool:
     return data.iter().all_equal()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_partition(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, stop=size)
+    assert benchmark(_partition, data) == (size // 2, size - size // 2)
+
+
+def _partition(data: Range) -> tuple[int, int]:
+    x, y = data.iter().partition(lambda x: x % 2 == 0)
+    return x.len(), y.len()
