@@ -3521,7 +3521,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        left, right = itertools.tee(iter(self), 2)
+        left, right = itertools.tee(iter(self))
         return self._from_iterable(x[0] for x in left), self._from_iterable(
             x[1] for x in right
         )
