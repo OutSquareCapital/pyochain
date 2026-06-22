@@ -269,45 +269,14 @@ fn is_sorted(
     match data.next() {
         None => Ok(true),
         Some(first) => {
+            let cmp_fn = is_sorted_cmp_fn(strict, reverse);
             let mut prev = first?;
-
-            match (strict.is_true(), reverse.is_true()) {
-                (true, false) => {
-                    for item in data {
-                        let curr = item?;
-                        if !prev.lt(&curr)? {
-                            return Ok(false);
-                        }
-                        prev = curr;
-                    }
+            for item in data {
+                let curr = item?;
+                if !cmp_fn(&prev, &curr)? {
+                    return Ok(false);
                 }
-                (false, false) => {
-                    for item in data {
-                        let curr = item?;
-                        if !prev.le(&curr)? {
-                            return Ok(false);
-                        }
-                        prev = curr;
-                    }
-                }
-                (true, true) => {
-                    for item in data {
-                        let curr = item?;
-                        if !prev.gt(&curr)? {
-                            return Ok(false);
-                        }
-                        prev = curr;
-                    }
-                }
-                (false, true) => {
-                    for item in data {
-                        let curr = item?;
-                        if !prev.ge(&curr)? {
-                            return Ok(false);
-                        }
-                        prev = curr;
-                    }
-                }
+                prev = curr;
             }
             Ok(true)
         }
@@ -324,47 +293,29 @@ fn is_sorted_by(
     match iterator.next() {
         None => Ok(true),
         Some(first) => {
+            let cmp_fn = is_sorted_cmp_fn(strict, reverse);
             let mut prev = first?;
-            match (strict.is_true(), reverse.is_true()) {
-                (true, false) => {
-                    for item in iterator {
-                        let curr = item?;
-                        if !prev.lt(&curr)? {
-                            return Ok(false);
-                        }
-                        prev = curr;
-                    }
+            for item in iterator {
+                let curr = item?;
+                if !cmp_fn(&prev, &curr)? {
+                    return Ok(false);
                 }
-                (false, false) => {
-                    for item in iterator {
-                        let curr = item?;
-                        if !prev.le(&curr)? {
-                            return Ok(false);
-                        }
-                        prev = curr;
-                    }
-                }
-                (true, true) => {
-                    for item in iterator {
-                        let curr = item?;
-                        if !prev.gt(&curr)? {
-                            return Ok(false);
-                        }
-                        prev = curr;
-                    }
-                }
-                (false, true) => {
-                    for item in iterator {
-                        let curr = item?;
-                        if !prev.ge(&curr)? {
-                            return Ok(false);
-                        }
-                        prev = curr;
-                    }
-                }
+                prev = curr;
             }
             Ok(true)
         }
+    }
+}
+#[inline(always)]
+fn is_sorted_cmp_fn(
+    strict: &Bound<'_, PyBool>,
+    reverse: &Bound<'_, PyBool>,
+) -> impl Fn(&Bound<'_, PyAny>, &Bound<'_, PyAny>) -> PyResult<bool> {
+    match (strict.is_true(), reverse.is_true()) {
+        (true, false) => |prev: &Bound<'_, PyAny>, curr: &Bound<'_, PyAny>| prev.lt(curr),
+        (false, false) => |prev: &Bound<'_, PyAny>, curr: &Bound<'_, PyAny>| prev.le(curr),
+        (true, true) => |prev: &Bound<'_, PyAny>, curr: &Bound<'_, PyAny>| prev.gt(curr),
+        (false, true) => |prev: &Bound<'_, PyAny>, curr: &Bound<'_, PyAny>| prev.ge(curr),
     }
 }
 
