@@ -155,7 +155,7 @@ impl PyoOk {
     }
 
     fn and_then_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        func.call1((self.value.bind(func.py()).cast::<PyTuple>()?,))?
+        func.call1(self.value.bind(func.py()).cast::<PyTuple>()?)?
             .unbind()
             .pipe(Ok)
     }
