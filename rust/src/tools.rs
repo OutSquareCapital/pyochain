@@ -801,13 +801,12 @@ struct Juxt {
 impl Juxt {
     #[new]
     #[pyo3(signature = (*funcs))]
-    fn new(funcs: &Bound<'_, PyTuple>) -> PyResult<Self> {
-        let collected = funcs
-            .try_iter()?
-            .map(|item| item.map(Bound::unbind))
-            .collect::<PyResult<Vec<_>>>()?;
-
-        Self { funcs: collected }.pipe(Ok)
+    fn new(funcs: &Bound<'_, PyTuple>) -> Self {
+        funcs
+            .iter()
+            .map(Bound::unbind)
+            .collect::<Vec<_>>()
+            .pipe(|collected| Self { funcs: collected })
     }
 
     #[pyo3(signature = (*args))]
