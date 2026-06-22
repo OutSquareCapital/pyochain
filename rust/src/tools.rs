@@ -259,50 +259,52 @@ fn is_sorted(
     reverse: &Bound<'_, PyBool>,
     strict: &Bound<'_, PyBool>,
 ) -> PyResult<bool> {
-    let Some(first) = data.next() else {
-        return Ok(true);
-    };
-    let mut prev = first?;
+    match data.next() {
+        None => Ok(true),
+        Some(first) => {
+            let mut prev = first?;
 
-    match (strict.is_true(), reverse.is_true()) {
-        (true, false) => {
-            for item in data {
-                let curr = item?;
-                if !prev.lt(&curr)? {
-                    return Ok(false);
+            match (strict.is_true(), reverse.is_true()) {
+                (true, false) => {
+                    for item in data {
+                        let curr = item?;
+                        if !prev.lt(&curr)? {
+                            return Ok(false);
+                        }
+                        prev = curr;
+                    }
                 }
-                prev = curr;
-            }
-        }
-        (false, false) => {
-            for item in data {
-                let curr = item?;
-                if !prev.le(&curr)? {
-                    return Ok(false);
+                (false, false) => {
+                    for item in data {
+                        let curr = item?;
+                        if !prev.le(&curr)? {
+                            return Ok(false);
+                        }
+                        prev = curr;
+                    }
                 }
-                prev = curr;
-            }
-        }
-        (true, true) => {
-            for item in data {
-                let curr = item?;
-                if !prev.gt(&curr)? {
-                    return Ok(false);
+                (true, true) => {
+                    for item in data {
+                        let curr = item?;
+                        if !prev.gt(&curr)? {
+                            return Ok(false);
+                        }
+                        prev = curr;
+                    }
                 }
-                prev = curr;
-            }
-        }
-        (false, true) => {
-            for item in data {
-                let curr = item?;
-                if !prev.ge(&curr)? {
-                    return Ok(false);
+                (false, true) => {
+                    for item in data {
+                        let curr = item?;
+                        if !prev.ge(&curr)? {
+                            return Ok(false);
+                        }
+                        prev = curr;
+                    }
                 }
-                prev = curr;
             }
+            Ok(true)
         }
     }
-    Ok(true)
 }
 #[pyfunction]
 fn is_sorted_by(
@@ -311,49 +313,51 @@ fn is_sorted_by(
     reverse: &Bound<'_, PyBool>,
     strict: &Bound<'_, PyBool>,
 ) -> PyResult<bool> {
-    let Some(first) = data.next() else {
-        return Ok(true);
-    };
-    let mut prev = key.call1((first?,))?;
-    match (strict.is_true(), reverse.is_true()) {
-        (true, false) => {
-            for item in data {
-                let curr = key.call1((item?,))?;
-                if !prev.lt(&curr)? {
-                    return Ok(false);
+    match data.next() {
+        None => Ok(true),
+        Some(first) => {
+            let mut prev = key.call1((first?,))?;
+            match (strict.is_true(), reverse.is_true()) {
+                (true, false) => {
+                    for item in data {
+                        let curr = key.call1((item?,))?;
+                        if !prev.lt(&curr)? {
+                            return Ok(false);
+                        }
+                        prev = curr;
+                    }
                 }
-                prev = curr;
-            }
-        }
-        (false, false) => {
-            for item in data {
-                let curr = key.call1((item?,))?;
-                if !prev.le(&curr)? {
-                    return Ok(false);
+                (false, false) => {
+                    for item in data {
+                        let curr = key.call1((item?,))?;
+                        if !prev.le(&curr)? {
+                            return Ok(false);
+                        }
+                        prev = curr;
+                    }
                 }
-                prev = curr;
-            }
-        }
-        (true, true) => {
-            for item in data {
-                let curr = key.call1((item?,))?;
-                if !prev.gt(&curr)? {
-                    return Ok(false);
+                (true, true) => {
+                    for item in data {
+                        let curr = key.call1((item?,))?;
+                        if !prev.gt(&curr)? {
+                            return Ok(false);
+                        }
+                        prev = curr;
+                    }
                 }
-                prev = curr;
-            }
-        }
-        (false, true) => {
-            for item in data {
-                let curr = key.call1((item?,))?;
-                if !prev.ge(&curr)? {
-                    return Ok(false);
+                (false, true) => {
+                    for item in data {
+                        let curr = key.call1((item?,))?;
+                        if !prev.ge(&curr)? {
+                            return Ok(false);
+                        }
+                        prev = curr;
+                    }
                 }
-                prev = curr;
             }
+            Ok(true)
         }
     }
-    Ok(true)
 }
 
 #[pyfunction]
@@ -457,9 +461,9 @@ fn ge(mut data: Bound<'_, PyIterator>, mut other: Bound<'_, PyIterator>) -> PyRe
     }
 }
 #[pyfunction]
-fn all_unique(mut data: Bound<'_, PyIterator>) -> PyResult<bool> {
+fn all_unique(data: Bound<'_, PyIterator>) -> PyResult<bool> {
     let seen = PySet::empty(data.py())?;
-    while let Some(item) = data.next() {
+    for item in data {
         let key_value = item?;
         if seen.contains(&key_value)? {
             return Ok(false);
@@ -470,9 +474,8 @@ fn all_unique(mut data: Bound<'_, PyIterator>) -> PyResult<bool> {
 }
 #[pyfunction]
 fn all_unique_by(data: Bound<'_, PyIterator>, key: &Bound<'_, PyAny>) -> PyResult<bool> {
-    let mut iter = data.map(|item| key.call1((item?,)));
     let seen = PySet::empty(key.py())?;
-    while let Some(item) = iter.next() {
+    for item in data.map(|item| key.call1((item?,))) {
         let item = item?;
         if seen.contains(&item)? {
             return Ok(false);
