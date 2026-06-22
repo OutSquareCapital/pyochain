@@ -1,6 +1,6 @@
 use crate::args::{Args, Concatenate, Kwargs};
 use crate::option::{PyNull, PySome, option};
-use crate::pyitertools;
+use crate::pylibs;
 use crate::result::{PyoErr, PyoOk};
 use pyo3::exceptions::{PyStopIteration, PyValueError};
 use pyo3::types::{
@@ -9,18 +9,6 @@ use pyo3::types::{
 };
 use pyo3::{IntoPyObjectExt, ffi, intern, prelude::*};
 use tap::prelude::*;
-#[inline(always)]
-fn builtins(py: Python<'_>) -> Bound<'_, PyModule> {
-    PyModule::import(py, intern!(py, "builtins")).unwrap()
-}
-/// Create a unique sentinel object
-#[inline(always)]
-fn sentinel(py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
-    builtins(py)
-        .getattr(intern!(py, "object"))?
-        .call0()?
-        .pipe(Ok)
-}
 #[pymodule(name = "_tools")]
 pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(try_find, m)?)?;
@@ -322,7 +310,7 @@ fn is_sorted_cmp_fn(
 #[pyfunction]
 fn eq(mut data: Bound<'_, PyIterator>, other: Bound<'_, PyAny>) -> PyResult<bool> {
     let py = data.py();
-    let sentinel = sentinel(py)?;
+    let sentinel = pylibs::builtins::sentinel(py)?;
     let mut other_iterator = other.try_iter()?;
     loop {
         match (data.next(), other_iterator.next()) {
@@ -759,7 +747,7 @@ fn nth(mut data: Bound<'_, PyIterator>, n: usize) -> PyResult<Py<PyAny>> {
 }
 #[pyfunction]
 fn all_equal(data: Bound<'_, PyIterator>, key: Option<Bound<'_, PyAny>>) -> PyResult<bool> {
-    let iterator = pyitertools::group_by(data, key)?;
+    let iterator = pylibs::itertools::group_by(data, key)?;
     for _first in &iterator {
         for _second in iterator {
             return Ok(false);
@@ -1546,7 +1534,7 @@ impl Unzip {
     }
     #[staticmethod]
     fn from_iterator(data: Bound<'_, PyIterator>) -> (Unzip, Unzip) {
-        pyitertools::tee(data, None)
+        pylibs::itertools::tee(data, None)
             .unwrap()
             .pipe(|iterators| (Unzip::new(&iterators, 0), Unzip::new(&iterators, 1)))
     }

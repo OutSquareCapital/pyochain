@@ -4,7 +4,7 @@ mod errors;
 mod hasher;
 mod mixins;
 mod option;
-mod pyitertools;
+mod pylibs;
 mod result;
 mod tools;
 use pyo3::prelude::*;
