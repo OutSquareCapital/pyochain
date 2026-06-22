@@ -4090,26 +4090,35 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq
+            >>> from pyochain import Seq
             >>>
             >>> def is_even(n: int) -> bool:
             ...     return n % 2 == 0
             >>> def is_positive(n: int) -> bool:
             ...     return n > 0
             >>>
-            >>> Iter([1, -2, 3]).map_juxt(is_even, is_positive).collect(Seq)
+            >>> out = Seq((1, -2, 3)).iter().map_juxt(is_even, is_positive).collect(Seq)
+            >>> out
             Seq((False, True), (True, False), (False, True))
 
             ```
             If you need to pass additional args and kwargs to the functions, you can use `functools::partial` or create curried functions like this:
             ```python
+            >>> from pyochain import Range
+            >>>
             >>> def curried_add(a: int) -> Callable[[int], int]:
             ...     def fn(b: int) -> int:
             ...         return a + b
             ...
             ...     return fn
             >>>
-            >>> Iter((1, 2, 3)).map_juxt(curried_add(10), curried_add(20)).collect(Seq)
+            >>> out = (
+            ...     Range(1, 4)
+            ...     .iter()
+            ...     .map_juxt(curried_add(10), curried_add(20))
+            ...     .collect(Seq)
+            ... )
+            >>> out
             Seq((11, 21), (12, 22), (13, 23))
 
             ```
@@ -4117,7 +4126,6 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             Example with `filter_star`:
             ```python
-            >>> from pyochain import Range
             >>> res = (
             ...     Range(0, 5)
             ...     .iter()
@@ -4130,7 +4138,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        return self._from_iterable(map(tls.Juxt(*funcs), iter(self)))
+        return self._from_iterable(tls.MapJuxt(iter(self), *funcs))
 
     def with_position(self) -> PyoIterator[tuple[Position, T]]:
         """Return an `Iterator` over (`Position`, `T`) tuples.
@@ -4201,7 +4209,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             >>> from pyochain import Iter, Dict, Seq
             >>> from operator import itemgetter
             >>> # Example 1: Group even and odd numbers
-            >>> (
+            >>> res = (
             ...     Iter
             ...     .from_count()  # create an infinite iterator of integers
             ...     .take(8)  # take the first 8
@@ -4215,21 +4223,23 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ...     )
             ...     .collect(Dict)
             ... )
+            >>> res
             Dict(False: Seq(1, 3, 5, 7), True: Seq(0, 2, 4, 6))
 
             ```
             If we have a dataset who's items have a common key and who's already sorted by that key, we can easily perform grouped operations on it, like this:
             ```python
-            >>> from pyochain import Iter
-            >>> data = (
+            >>> from pyochain import Seq
+            >>> data = Seq((
             ...     {"name": "Alice", "gender": "F"},
             ...     {"name": "Bob", "gender": "M"},
             ...     {"name": "Charlie", "gender": "M"},
             ...     {"name": "Dan", "gender": "M"},
-            ... )
+            ... ))
             >>> # group by the gender key, and count the number of people in each group
             >>> output = (
-            ...     Iter(data)
+            ...     data
+            ...     .iter()
             ...     .group_by(lambda x: x["gender"])
             ...     .map_star(lambda g, vals: (g, vals.count()))
             ...     .collect(Seq)
@@ -4240,9 +4250,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ```
             However, you must be careful to materialize the group values immediately when iterating over groups, see below how the values of the groups are empty::
             ```python
-            >>> from pyochain import Iter
+            >>> from pyochain import Seq
             >>> groups = (
-            ...     Iter(("a1", "a2", "b1"))
+            ...     Seq(("a1", "a2", "b1"))
+            ...     .iter()
             ...     .group_by(lambda x: x[0])
             ...     .collect(Seq)
             ...     .iter()
@@ -4255,9 +4266,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
             ```
             As such, the correct pattern is the following:
             ```python
-            >>> from pyochain import Iter
+            >>> from pyochain import Seq
             >>> groups = (
-            ...     Iter(("a1", "a2", "b1", "b2"))
+            ...     Seq(("a1", "a2", "b1", "b2"))
+            ...     .iter()
             ...     .group_by(lambda x: x[0])
             ...     # ✅ Materialize NOW
             ...     .map_star(lambda g, vals: (g, vals.collect(Seq)))

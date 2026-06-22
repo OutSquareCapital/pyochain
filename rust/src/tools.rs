@@ -48,7 +48,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<UniqueKey>()?;
     m.add_class::<Intersperse>()?;
     m.add_class::<SlidingWindow>()?;
-    m.add_class::<Juxt>()?;
+    m.add_class::<MapJuxt>()?;
     m.add_class::<FilterMap>()?;
     m.add_class::<FilterMapStar>()?;
     m.add_class::<Scan>()?;
@@ -785,33 +785,45 @@ fn all_equal(data: Bound<'_, PyIterator>, key: Option<Bound<'_, PyAny>>) -> PyRe
     }
     Ok(true)
 }
-
+//TODO: the double collect in `Vec` => `PyTuple` is a performance tax on large Vecs of funcs. Need to optimize.
 #[pyclass]
-struct Juxt {
+struct MapJuxt {
+    iterator: Py<PyIterator>,
     funcs: Vec<Py<PyAny>>,
 }
 
 #[pymethods]
-impl Juxt {
+impl MapJuxt {
     #[new]
-    #[pyo3(signature = (*funcs))]
-    fn new(funcs: &Bound<'_, PyTuple>) -> Self {
+    #[pyo3(signature = (iterator, *funcs))]
+    fn new(iterator: Bound<'_, PyIterator>, funcs: &Bound<'_, PyTuple>) -> Self {
         funcs
             .iter()
             .map(Bound::unbind)
             .collect::<Vec<_>>()
-            .pipe(|collected| Self { funcs: collected })
+            .pipe(|collected| Self {
+                iterator: iterator.unbind(),
+                funcs: collected,
+            })
     }
-
-    #[pyo3(signature = (*args))]
-    fn __call__(&self, args: &Bound<'_, PyTuple>) -> PyResult<Py<PyTuple>> {
-        let py = args.py();
-        let results = self
-            .funcs
-            .iter()
-            .map(|func| func.call1(py, args))
-            .collect::<PyResult<Vec<_>>>()?;
-        PyTuple::new(py, results)?.unbind().pipe(Ok)
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+    fn __next__(slf: PyRef<'_, Self>) -> PyResult<Option<Bound<'_, PyTuple>>> {
+        let py = slf.py();
+        match slf.iterator.clone_ref(py).into_bound(py).next() {
+            Some(item) => {
+                let args = item?;
+                slf.funcs
+                    .iter()
+                    .map(|func| func.call1(py, (&args,)))
+                    .collect::<PyResult<Vec<_>>>()?
+                    .pipe(|x| PyTuple::new(py, x))?
+                    .pipe(Some)
+                    .pipe(Ok)
+            }
+            None => Ok(None),
+        }
     }
 }
 /// TODO: speed is 0.76x compared to the Cython implementation.

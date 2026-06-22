@@ -44,6 +44,8 @@ Name         | 10 items | 100 items | 1_000 items | 10_000 items
 
 - **Rust migration and logic optimization**: `PyoIterator::fold_star` args/kwargs truthiness are now matched to check if they are actually needed, and each case passes an optimized function to `itertools::reduce`. Without both for example, the method is was **1.2x** faster. Once migrated to Rust, this case is now **2.23x** faster. With args, the *relative* improvement is of **2.08x**. With args AND kwargs, **1.87x**.
 
+- **Rust migration and logic optimization**: `PyoIterator::map_juxt` is now fully in Rust as a "real" `Iterator` instead of a `Callable` used on `builtin::map`. Performance gains on small funcs tuples, performance regressions on large funcs tuples => **1.16x** faster for 1 func, **1.08x** for 4 funcs, **1.02x** faster for 16 funcs, and **0.95x** slower for 64 funcs. Optimizing the latter is on the roadmap, but all considered, I doubt most ppl will be using `map_juxt` with more than 16 funcs, so It's acceptable in the meantime.
+
 ### ⚠️ Performance regressions
 
 - `PyoIterator::{all, any}` with no predicate is now fully in Rust. unfortunately, a constant ~100 ns performance regression has been observed on benchmarks. On a relative basis, this is a 7 to 8% performance hit on small iterators(10 to 100 items). On 1000 items, a 2% hit, and on 10k it's barely noticeable (absolute time  is 35 us for reference on 10k items).
