@@ -405,3 +405,15 @@ def test_zip_longest(benchmark: BenchFixture, size: int) -> None:
 
 def _zip_longest(data1: Range, data2: Range) -> tuple[Option[int], Option[int]]:
     return data1.iter().zip_longest(data2).last()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_unzip(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).iter().enumerate().collect(Seq)
+    expected = size - 1
+    assert benchmark(_unzip, data) == (expected, expected)
+
+
+def _unzip(data: Seq[tuple[int, int]]) -> tuple[int, int]:
+    left, right = data.iter().unzip()
+    return left.last(), right.last()
