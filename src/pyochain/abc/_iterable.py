@@ -100,37 +100,6 @@ class PyoIterable[T](Fluent, Checkable, Iterable[T], ABC):
 
         return Iter(iter(self))
 
-    def first(self) -> T:
-        """Return the first element of the `Iterable`.
-
-        By default, this method convert the `Iterable` to an `Iterator` and returns the first element by calling `next()` on it.
-
-        On `PyoSequence` and its subclasses (`Seq`, `Range`, etc.), this is overriden to directly use an efficient `__getitem__` access.
-
-        If you already are using an `Iter`, prefer `Iter.next()` instead, which returns an `Option[T]` to handle exhaustion gracefully.
-
-        Returns:
-            T: The first element of the `Iterable`.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq
-            >>> data = Seq((1, 2))
-            >>> data.first()
-            1
-            >>> iterator = data.iter()
-            >>> iterator.first()
-            1
-            >>> iterator.first()
-            2
-            >>> # iterator is now empty, using first again would raise an error
-            >>> iterator.next()
-            NONE
-
-            ```
-        """
-        return next(iter(self))
-
     def last(self) -> T:
         """Return the last element of the `Iterable`.
 

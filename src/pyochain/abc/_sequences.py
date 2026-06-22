@@ -80,8 +80,25 @@ class PyoSequence[T](PyoCollection[T], PyoReversible[T], Sequence[T], ABC):
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
-    @override
     def first(self) -> T:
+        """Return the first element of the `Sequence`.
+
+        Returns:
+            T: The first element of the `Sequence`.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> from pyochain.collections import StableSet
+            >>> data = Seq((1, 2))
+            >>> data.first()
+            1
+            >>> # With an Iterator, the equivalent would be:
+            >>> data.iter().next().unwrap()
+            1
+
+            ```
+        """
         return self[0]
 
     @override

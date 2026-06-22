@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### 💥 Breaking changes
+
+- **API change**: `PyoIterable::first` has been deleted. This impacts all non-sequence types (`PyoSequence` is unchanged). If you need the old behavior on an `Iterator` or a `Collection`, call `.iter().next().unwrap()` instead.
+
 ### ✨ Enhancements
 
 - **typing**: added overloads to `PyoIterator::batch` to return precise tuple types for batch sizes up to 5 if *strict* is `True`.
