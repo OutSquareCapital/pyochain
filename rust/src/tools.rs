@@ -1,5 +1,6 @@
 use crate::args::{Args, Concatenate, Kwargs};
 use crate::option::{PyNull, PySome, option};
+use crate::pyitertools;
 use crate::result::{PyoErr, PyoOk};
 use pyo3::exceptions::{PyStopIteration, PyValueError};
 use pyo3::types::{
@@ -11,10 +12,6 @@ use tap::prelude::*;
 #[inline(always)]
 fn builtins(py: Python<'_>) -> Bound<'_, PyModule> {
     PyModule::import(py, intern!(py, "builtins")).unwrap()
-}
-#[inline(always)]
-fn itertools(py: Python<'_>) -> Bound<'_, PyModule> {
-    PyModule::import(py, intern!(py, "itertools")).unwrap()
 }
 /// Create a unique sentinel object
 #[inline(always)]
@@ -1586,14 +1583,9 @@ impl Unzip {
     #[staticmethod]
     fn from_iterator(data: Bound<'_, PyIterator>) -> (Unzip, Unzip) {
         let py = data.py();
-        data.pipe(|x| {
-            itertools(py)
-                .getattr(intern!(py, "tee"))
-                .unwrap()
-                .call1((x,))
-        })
-        .unwrap()
-        .pipe(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
-        .pipe(|iterators| (Unzip::new(&iterators, 0), Unzip::new(&iterators, 1)))
+        data.pipe(|x| pyitertools::tee(py).call1((x,)))
+            .unwrap()
+            .pipe(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
+            .pipe(|iterators| (Unzip::new(&iterators, 0), Unzip::new(&iterators, 1)))
     }
 }
