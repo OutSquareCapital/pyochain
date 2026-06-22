@@ -269,6 +269,16 @@ def _any(data: Range) -> bool:
     return data.iter().any(lambda x: x == 19_999)
 
 
+@pytest.mark.parametrize("size", SIZES)
+def test_any_no_closure(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).iter().map(lambda _: False).collect(Seq)
+    assert benchmark(_any_no_closure, data) is False
+
+
+def _any_no_closure(data: Seq[bool]) -> bool:
+    return data.iter().any()
+
+
 def test_bool(benchmark: BenchFixture) -> None:
     data = Seq((1, 2, 3))
     assert benchmark(lambda: bool(data.iter())) is True

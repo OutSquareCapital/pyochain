@@ -95,9 +95,9 @@ def try_collect[T](
 @no_doctest
 def retain[T](data: MutableSequence[T], predicate: Callable[[T], bool]) -> None: ...
 @no_doctest
-def any[T](data: Iterator[T], predicate: Callable[[T], bool]) -> bool: ...  # noqa: A001
+def any[T](data: Iterator[T], predicate: Callable[[T], bool] | None = None) -> bool: ...  # noqa: A001
 @no_doctest
-def all[T](data: Iterator[T], predicate: Callable[[T], bool]) -> bool: ...  # noqa: A001
+def all[T](data: Iterator[T], predicate: Callable[[T], bool] | None = None) -> bool: ...  # noqa: A001
 @no_doctest
 def fold_star[U: Iterable[Any], **P, B](
     data: Iterator[U],

@@ -7,7 +7,7 @@ use pyo3::types::{
     PyAny, PyBool, PyDict, PyFunction, PyIterator, PyList, PyModule, PySequence, PySet, PyString,
     PyTuple,
 };
-use pyo3::{IntoPyObjectExt, ffi, intern, prelude::*};
+use pyo3::{BoundObject, IntoPyObjectExt, ffi, intern, prelude::*};
 use tap::prelude::*;
 #[pymodule(name = "_tools")]
 pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -553,21 +553,42 @@ fn retain(data: Bound<'_, PySequence>, predicate: &Bound<'_, PyAny>) -> PyResult
     data.del_slice(write_idx, usize::MAX)?;
     Ok(())
 }
-#[pyfunction]
-fn any(mut data: Bound<'_, PyIterator>, predicate: Bound<'_, PyAny>) -> bool {
-    data.any(|item| {
-        item.and_then(|it| predicate.call1((it,)))
-            .and_then(|res| res.is_truthy())
-            .expect("Error occurred while evaluating predicate in `any`")
-    })
+
+#[pyfunction(signature = (data, predicate=None))]
+fn any<'py>(
+    mut data: Bound<'py, PyIterator>,
+    predicate: Option<Bound<'py, PyAny>>,
+) -> PyResult<Bound<'py, PyBool>> {
+    match predicate {
+        Some(pred) => data
+            .any(|item| {
+                item.and_then(|it| pred.call1((it,)))
+                    .and_then(|res| res.is_truthy())
+                    .expect("Error occurred while evaluating predicate in `any`")
+            })
+            .pipe(|x| PyBool::new(data.py(), x))
+            .into_bound()
+            .pipe(Ok),
+        None => pylibs::builtins::any(data),
+    }
 }
-#[pyfunction]
-fn all(mut data: Bound<'_, PyIterator>, predicate: Bound<'_, PyAny>) -> bool {
-    data.all(|item| {
-        item.and_then(|it| predicate.call1((it,)))
-            .and_then(|res| res.is_truthy())
-            .expect("Error occurred while evaluating predicate in `all`")
-    })
+#[pyfunction(signature = (data, predicate=None))]
+fn all<'py>(
+    mut data: Bound<'py, PyIterator>,
+    predicate: Option<Bound<'py, PyAny>>,
+) -> PyResult<Bound<'py, PyBool>> {
+    match predicate {
+        Some(pred) => data
+            .all(|item| {
+                item.and_then(|it| pred.call1((it,)))
+                    .and_then(|res| res.is_truthy())
+                    .expect("Error occurred while evaluating predicate in `all`")
+            })
+            .pipe(|x| PyBool::new(data.py(), x))
+            .into_bound()
+            .pipe(Ok),
+        None => pylibs::builtins::all(data),
+    }
 }
 
 #[pyfunction]

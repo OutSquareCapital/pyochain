@@ -487,11 +487,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        match predicate:
-            case None:
-                return all(iter(self))
-            case _:
-                return tls.all(iter(self), predicate)
+        return tls.all(iter(self), predicate)
 
     def any(self, predicate: Callable[[T], bool] | None = None) -> bool:
         """Tests if any element of the `Iterator` is truthy.
@@ -524,11 +520,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
             ```
         """
-        match predicate:
-            case None:
-                return any(iter(self))
-            case _:
-                return tls.any(iter(self), predicate)
+        return tls.any(iter(self), predicate)
 
     def nth(self, n: int) -> Option[T]:
         """Return the nth item of the `Iterable` at the specified *n*.
@@ -568,7 +560,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Note:
             This consumes any `Iterator` instances involved in the comparison,
-            including **self** and *other* when *other* is itself an iterator.
+            including **self** and *other* when *other* is itself an `Iterator`.
 
         Args:
             other (Iterable[T]): Another `Iterable[T]` to compare against.
@@ -604,7 +596,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Note:
             This consumes any `Iterator` instances involved in the comparison,
-            including **self** and *other* when *other* is itself an iterator.
+            including **self** and *other* when *other* is itself an `Iterator`.
 
         Args:
             other (Iterable[T]): Another `Iterable[T]` to compare against.
@@ -637,7 +629,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Note:
             This consumes any `Iterator` instances involved in the comparison,
-            including **self** and *other* when *other* is itself an iterator.
+            including **self** and *other* when *other* is itself an `Iterator`.
 
         Args:
             other (Iterable[T]): Another `Iterable[T]` to compare against.
@@ -668,7 +660,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Note:
             This consumes any `Iterator` instances involved in the comparison,
-            including **self** and *other* when *other* is itself an iterator.
+            including **self** and *other* when *other* is itself an `Iterator`.
 
         Args:
             other (Iterable[T]): Another `Iterable[T]` to compare against.
@@ -699,7 +691,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Note:
             This consumes any `Iterator` instances involved in the comparison,
-            including **self** and *other* when *other* is itself an iterator.
+            including **self** and *other* when *other* is itself an `Iterator`.
 
         Args:
             other (Iterable[T]): Another `Iterable[T]` to compare against.
@@ -733,7 +725,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
 
         Note:
             This consumes any `Iterator` instances involved in the comparison,
-            including **self** and *other* when *other* is itself an iterator.
+            including **self** and *other* when *other* is itself an `Iterator`.
 
         Args:
             other (Iterable[T]): Another `Iterable[T]` to compare against.
