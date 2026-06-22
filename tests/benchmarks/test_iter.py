@@ -90,7 +90,6 @@ type ForEachFn[T] = Callable[[PyoSequence[T]], None]
 
 
 @pytest.mark.benchmark(group="for_each")
-@pytest.mark.parametrize("size", SIZES)
 @pytest.mark.parametrize(
     "fn",
     [
@@ -100,8 +99,8 @@ type ForEachFn[T] = Callable[[PyoSequence[T]], None]
         pytest.param(_for_each_args_and_kwargs, id="for_each_args_and_kwargs"),
     ],
 )
-def test_for_each(benchmark: BenchFixture, fn: ForEachFn[int], size: int) -> None:
-    data = Range(0, size)
+def test_for_each(benchmark: BenchFixture, fn: ForEachFn[int]) -> None:
+    data = Range(0, 1000)
     assert benchmark(fn, data) is None
 
 

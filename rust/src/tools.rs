@@ -71,25 +71,25 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
 #[pyfunction]
 #[pyo3(signature = (data, func, *args, **kwargs))]
 fn for_each(
-    data: &Bound<'_, PyAny>,
+    mut data: Bound<'_, PyIterator>,
     func: &Bound<'_, PyAny>,
     args: &Args<'_>,
     kwargs: Option<&Kwargs<'_>>,
 ) -> PyResult<()> {
     match (args.is_empty(), kwargs) {
-        (true, None) => data.try_iter()?.try_for_each(|item| {
+        (true, None) => data.try_for_each(|item| {
             func.call1((&item?,))?;
             Ok(())
         }),
-        (true, Some(_)) => data.try_iter()?.try_for_each(|item| {
+        (true, Some(_)) => data.try_for_each(|item| {
             func.call((&item?,), kwargs)?;
             Ok(())
         }),
-        (false, Some(_)) => data.try_iter()?.try_for_each(|item| {
+        (false, Some(_)) => data.try_for_each(|item| {
             func.concat(&item?, args, kwargs)?;
             Ok(())
         }),
-        (false, None) => data.try_iter()?.try_for_each(|item| {
+        (false, None) => data.try_for_each(|item| {
             func.concat1(&item?, args)?;
             Ok(())
         }),
@@ -98,25 +98,25 @@ fn for_each(
 #[pyfunction]
 #[pyo3(signature = (data, func, *args, **kwargs))]
 fn for_each_star(
-    data: Bound<'_, PyIterator>,
+    mut data: Bound<'_, PyIterator>,
     func: Bound<'_, PyAny>,
     args: Args<'_>,
     kwargs: Option<&Kwargs<'_>>,
 ) -> PyResult<()> {
     match (args.is_empty(), kwargs) {
-        (true, None) => data.try_iter()?.try_for_each(|item| {
+        (true, None) => data.try_for_each(|item| {
             func.call1(item?.cast_exact::<PyTuple>()?)?;
             Ok(())
         }),
-        (true, Some(_)) => data.try_iter()?.try_for_each(|item| {
+        (true, Some(_)) => data.try_for_each(|item| {
             func.call(item?.cast_exact::<PyTuple>()?, kwargs)?;
             Ok(())
         }),
-        (false, None) => data.try_iter()?.try_for_each(|item| {
+        (false, None) => data.try_for_each(|item| {
             func.concat_star1(item?.cast_exact::<PyTuple>()?, &args)?;
             Ok(())
         }),
-        (false, Some(_)) => data.try_iter()?.try_for_each(|item| {
+        (false, Some(_)) => data.try_for_each(|item| {
             func.concat_star(item?.cast_exact::<PyTuple>()?, &args, kwargs)?;
             Ok(())
         }),
@@ -135,9 +135,12 @@ fn try_for_each(data: Bound<'_, PyIterator>, f: &Bound<'_, PyFunction>) -> PyRes
     PyoOk::new(PyTuple::empty(py).into()).into_py_any(py)
 }
 #[pyfunction]
-fn try_find(data: &Bound<'_, PyAny>, predicate: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
+fn try_find(
+    data: &Bound<'_, PyIterator>,
+    predicate: &Bound<'_, PyFunction>,
+) -> PyResult<Py<PyAny>> {
     let py = data.py();
-    for item in data.try_iter()? {
+    for item in data {
         let val = item?;
         let result = predicate.call1((&val,))?;
         match result.cast_exact::<PyoOk>() {
@@ -174,14 +177,14 @@ fn try_find(data: &Bound<'_, PyAny>, predicate: &Bound<'_, PyFunction>) -> PyRes
 }
 #[pyfunction]
 fn try_fold(
-    data: &Bound<'_, PyAny>,
+    data: &Bound<'_, PyIterator>,
     init: &Bound<'_, PyAny>,
     func: &Bound<'_, PyFunction>,
 ) -> PyResult<Py<PyAny>> {
     let py = data.py();
     let mut accumulator = init.to_owned().unbind();
 
-    for item in data.try_iter()? {
+    for item in data {
         let item = item?;
         let result = func.call1((accumulator, item))?;
         match result.cast_exact::<PyoOk>() {
@@ -197,10 +200,12 @@ fn try_fold(
 }
 
 #[pyfunction]
-fn try_reduce(data: &Bound<'_, PyAny>, func: &Bound<'_, PyFunction>) -> PyResult<Py<PyAny>> {
+fn try_reduce(
+    mut data: Bound<'_, PyIterator>,
+    func: &Bound<'_, PyFunction>,
+) -> PyResult<Py<PyAny>> {
     let py = data.py();
-    let mut iterator = data.try_iter()?;
-    let first = iterator.next();
+    let first = data.next();
     match first {
         None => {
             return PyNull::get(py)
@@ -211,7 +216,7 @@ fn try_reduce(data: &Bound<'_, PyAny>, func: &Bound<'_, PyFunction>) -> PyResult
         Some(first_val) => {
             let mut accumulator = first_val?.to_owned().unbind();
 
-            for item in iterator {
+            for item in data {
                 let val = item?;
                 let result = func.call1((&accumulator, val))?;
                 match result.cast_exact::<PyoOk>() {
@@ -250,19 +255,18 @@ fn try_collect(data: Bound<'_, PyIterator>) -> PyResult<Py<PyAny>> {
 }
 #[pyfunction]
 fn is_sorted(
-    data: &Bound<'_, PyAny>,
+    mut data: Bound<'_, PyIterator>,
     reverse: &Bound<'_, PyBool>,
     strict: &Bound<'_, PyBool>,
 ) -> PyResult<bool> {
-    let mut iter = data.try_iter()?;
-    let Some(first) = iter.next() else {
+    let Some(first) = data.next() else {
         return Ok(true);
     };
     let mut prev = first?;
 
     match (strict.is_true(), reverse.is_true()) {
         (true, false) => {
-            for item in iter {
+            for item in data {
                 let curr = item?;
                 if !prev.lt(&curr)? {
                     return Ok(false);
@@ -271,7 +275,7 @@ fn is_sorted(
             }
         }
         (false, false) => {
-            for item in iter {
+            for item in data {
                 let curr = item?;
                 if !prev.le(&curr)? {
                     return Ok(false);
@@ -280,7 +284,7 @@ fn is_sorted(
             }
         }
         (true, true) => {
-            for item in iter {
+            for item in data {
                 let curr = item?;
                 if !prev.gt(&curr)? {
                     return Ok(false);
@@ -289,7 +293,7 @@ fn is_sorted(
             }
         }
         (false, true) => {
-            for item in iter {
+            for item in data {
                 let curr = item?;
                 if !prev.ge(&curr)? {
                     return Ok(false);
@@ -302,19 +306,18 @@ fn is_sorted(
 }
 #[pyfunction]
 fn is_sorted_by(
-    data: &Bound<'_, PyAny>,
+    mut data: Bound<'_, PyIterator>,
     key: &Bound<'_, PyAny>,
     reverse: &Bound<'_, PyBool>,
     strict: &Bound<'_, PyBool>,
 ) -> PyResult<bool> {
-    let mut iter = data.try_iter()?;
-    let Some(first) = iter.next() else {
+    let Some(first) = data.next() else {
         return Ok(true);
     };
     let mut prev = key.call1((first?,))?;
     match (strict.is_true(), reverse.is_true()) {
         (true, false) => {
-            for item in iter {
+            for item in data {
                 let curr = key.call1((item?,))?;
                 if !prev.lt(&curr)? {
                     return Ok(false);
@@ -323,7 +326,7 @@ fn is_sorted_by(
             }
         }
         (false, false) => {
-            for item in iter {
+            for item in data {
                 let curr = key.call1((item?,))?;
                 if !prev.le(&curr)? {
                     return Ok(false);
@@ -332,7 +335,7 @@ fn is_sorted_by(
             }
         }
         (true, true) => {
-            for item in iter {
+            for item in data {
                 let curr = key.call1((item?,))?;
                 if !prev.gt(&curr)? {
                     return Ok(false);
@@ -341,7 +344,7 @@ fn is_sorted_by(
             }
         }
         (false, true) => {
-            for item in iter {
+            for item in data {
                 let curr = key.call1((item?,))?;
                 if !prev.ge(&curr)? {
                     return Ok(false);
@@ -354,15 +357,11 @@ fn is_sorted_by(
 }
 
 #[pyfunction]
-fn eq(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+fn eq(mut data: Bound<'_, PyIterator>, mut other: Bound<'_, PyIterator>) -> PyResult<bool> {
     let py = data.py();
     let sentinel = sentinel(py)?;
-
-    let mut left_iter = data.try_iter()?;
-    let mut right_iter = other.try_iter()?;
-
     loop {
-        match (left_iter.next(), right_iter.next()) {
+        match (data.next(), other.next()) {
             (Some(left_res), Some(right_res)) => {
                 let left = left_res?;
                 let right = right_res?;
@@ -376,12 +375,9 @@ fn eq(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
     }
 }
 #[pyfunction]
-fn ne(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-    let mut left_iter = data.try_iter()?;
-    let mut right_iter = other.try_iter()?;
-
+fn ne(mut data: Bound<'_, PyIterator>, mut other: Bound<'_, PyIterator>) -> PyResult<bool> {
     loop {
-        match (left_iter.next(), right_iter.next()) {
+        match (data.next(), other.next()) {
             (Some(left_res), Some(right_res)) => {
                 if !left_res?.eq(&right_res?)? {
                     return Ok(true);
@@ -393,12 +389,9 @@ fn ne(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
     }
 }
 #[pyfunction]
-fn le(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-    let mut left_iter = data.try_iter()?;
-    let mut right_iter = other.try_iter()?;
-
+fn le(mut data: Bound<'_, PyIterator>, mut other: Bound<'_, PyIterator>) -> PyResult<bool> {
     loop {
-        match (left_iter.next(), right_iter.next()) {
+        match (data.next(), other.next()) {
             (Some(left_res), Some(right_res)) => {
                 let left = left_res?;
                 let right = right_res?;
@@ -413,12 +406,9 @@ fn le(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
     }
 }
 #[pyfunction]
-fn lt(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-    let mut left_iter = data.try_iter()?;
-    let mut right_iter = other.try_iter()?;
-
+fn lt(mut data: Bound<'_, PyIterator>, mut other: Bound<'_, PyIterator>) -> PyResult<bool> {
     loop {
-        match (left_iter.next(), right_iter.next()) {
+        match (data.next(), other.next()) {
             (Some(left_res), Some(right_res)) => {
                 let left = left_res?;
                 let right = right_res?;
@@ -433,12 +423,9 @@ fn lt(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
     }
 }
 #[pyfunction]
-fn gt(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-    let mut left_iter = data.try_iter()?;
-    let mut right_iter = other.try_iter()?;
-
+fn gt(mut data: Bound<'_, PyIterator>, mut other: Bound<'_, PyIterator>) -> PyResult<bool> {
     loop {
-        match (left_iter.next(), right_iter.next()) {
+        match (data.next(), other.next()) {
             (Some(left_res), Some(right_res)) => {
                 let left = left_res?;
                 let right = right_res?;
@@ -453,12 +440,9 @@ fn gt(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
     }
 }
 #[pyfunction]
-fn ge(data: &Bound<'_, PyAny>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-    let mut left_iter = data.try_iter()?;
-    let mut right_iter = other.try_iter()?;
-
+fn ge(mut data: Bound<'_, PyIterator>, mut other: Bound<'_, PyIterator>) -> PyResult<bool> {
     loop {
-        match (left_iter.next(), right_iter.next()) {
+        match (data.next(), other.next()) {
             (Some(left_res), Some(right_res)) => {
                 let left = left_res?;
                 let right = right_res?;
