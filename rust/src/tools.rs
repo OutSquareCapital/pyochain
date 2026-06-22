@@ -12,7 +12,10 @@ use tap::prelude::*;
 fn builtins(py: Python<'_>) -> Bound<'_, PyModule> {
     PyModule::import(py, intern!(py, "builtins")).unwrap()
 }
-
+#[inline(always)]
+fn itertools(py: Python<'_>) -> Bound<'_, PyModule> {
+    PyModule::import(py, intern!(py, "itertools")).unwrap()
+}
 /// Create a unique sentinel object
 #[inline(always)]
 fn sentinel(py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
@@ -71,6 +74,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<FilterStar>()?;
     m.add_class::<WithPosition>()?;
     m.add_class::<ZipLongest>()?;
+    m.add_class::<Unzip>()?;
     Ok(())
 }
 #[pyfunction]
@@ -1544,5 +1548,52 @@ impl ZipLongest {
                 .collect::<PyResult<Vec<_>>>()
                 .and_then(|v| PyTuple::new(py, v)?.unbind().pipe(Some).pipe(Ok)),
         }
+    }
+}
+#[pyclass]
+struct Unzip {
+    iterator: Py<PyIterator>,
+    n: usize,
+}
+#[pymethods]
+impl Unzip {
+    #[new]
+    fn new(data: &Bound<'_, PyTuple>, n: usize) -> Self {
+        let iterator = data
+            .get_item(n)
+            .unwrap()
+            .pipe(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
+            .unbind();
+        Self {
+            iterator: iterator,
+            n,
+        }
+    }
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
+        let py = slf.py();
+        match slf.iterator.clone_ref(py).into_bound(py).next() {
+            Some(item) => item?
+                .pipe(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
+                .get_item(slf.n)?
+                .pipe(Some)
+                .pipe(Ok),
+            None => Ok(None),
+        }
+    }
+    #[staticmethod]
+    fn from_iterator(data: Bound<'_, PyIterator>) -> (Unzip, Unzip) {
+        let py = data.py();
+        data.pipe(|x| {
+            itertools(py)
+                .getattr(intern!(py, "tee"))
+                .unwrap()
+                .call1((x,))
+        })
+        .unwrap()
+        .pipe(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
+        .pipe(|iterators| (Unzip::new(&iterators, 0), Unzip::new(&iterators, 1)))
     }
 }

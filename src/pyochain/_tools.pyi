@@ -272,3 +272,16 @@ class ZipLongest[T: Iterable[Any]](Iterator[tuple[Option[Any], ...]]):  # pyrigh
     @no_doctest
     @override
     def __next__(self) -> tuple[Option[Any], ...]: ...  # pyright: ignore[reportExplicitAny]
+
+class Unzip[T](Iterator[T]):
+    def __init__(self, data: Iterator[T], n: int) -> None: ...
+    @no_doctest
+    @override
+    def __iter__(self) -> Self: ...
+    @no_doctest
+    @override
+    def __next__(self) -> T: ...
+    @staticmethod
+    def from_iterator[A, B](
+        data: Iterator[tuple[A, B]],
+    ) -> tuple[Unzip[A], Unzip[B]]: ...
