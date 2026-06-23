@@ -11,6 +11,7 @@ pub mod builtins {
     static OBJECT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static ALL: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static ANY: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static MAP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     /// Create a unique sentinel object
     #[inline(always)]
     pub fn sentinel(py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
@@ -28,6 +29,15 @@ pub mod builtins {
             .call1((iterator,))
             .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
     }
+    #[inline(always)]
+    pub fn map<'py>(
+        func: Bound<'py, PyAny>,
+        iterator: Bound<'py, PyIterator>,
+    ) -> PyResult<Bound<'py, PyIterator>> {
+        MAP.import(iterator.py(), BUILTINS, "map")?
+            .call1((func, iterator))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
+    }
 }
 
 /// Python itertools module functions and objects
@@ -41,6 +51,7 @@ pub mod itertools {
     static TEE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static GROUP_BY: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static ZIP_LONGEST: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static MAP_STAR: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
 
     #[inline(always)]
     pub fn tee<'py>(
@@ -70,6 +81,16 @@ pub mod itertools {
         ZIP_LONGEST
             .import(py, ITERTOOLS, "zip_longest")?
             .concat1(&iterator, others)
+            .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
+    }
+    #[inline(always)]
+    pub fn map_star<'py>(
+        func: Bound<'py, PyAny>,
+        iterable: Bound<'py, PyIterator>,
+    ) -> PyResult<Bound<'py, PyIterator>> {
+        MAP_STAR
+            .import(iterable.py(), ITERTOOLS, "starmap")?
+            .call1((func, iterable))
             .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
     }
 }
