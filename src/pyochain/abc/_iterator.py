@@ -3,12 +3,13 @@ from __future__ import annotations
 import functools
 import itertools
 from abc import ABC
-from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, Concatenate, Literal, TypeGuard, TypeIs, overload
 
 from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
-from .._abc import PyoIterable  # pyright: ignore[reportMissingModuleSource]
-from .._utils import no_doctest
+from .._abc import (  # pyright: ignore[reportMissingModuleSource]
+    PyoIterable,
+    PyoIteratorRS,
+)
 from ..rs import Option, Result, option
 
 if TYPE_CHECKING:
@@ -17,6 +18,7 @@ if TYPE_CHECKING:
         Collection,
         Generator,
         Iterable,
+        Iterator,
         KeysView,
         MutableSequence,
         Sequence,
@@ -58,7 +60,7 @@ Position = Literal["first", "middle", "last", "only"]
 """Type representing the position of an item in an `Iterator`."""
 
 
-class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
+class PyoIterator[T](PyoIteratorRS[T], ABC):
     """Extends `PyoIterable[T]` and `collections.abc.Iterator[T]`.
 
     - An `Iterable` is any object capable of creating an `Iterator` (i.e., it implements the `__iter__()` method).
@@ -122,29 +124,6 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], ABC):
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
-
-    @no_doctest
-    @classmethod
-    def _from_iterable[I](cls, iterable: Iterable[I]) -> PyoIterator[I]:
-        """Internal constructor.
-
-        Since some methods returns a new `PyoIterator`, we use this, with the assumption that the concrete subclass has an `__init__` that can accept an `Iterable[T]`.
-
-        If you want to implement a different constructor, you will need to override this method with one that can construct new instances from an iterable argument.
-
-        Args:
-            iterable (Iterable[I]): An iterable to create the new `PyoIterator` from.
-
-        Returns:
-            PyoIterator[I]: A new instance of the concrete `PyoIterator` subclass.
-
-        See Also:
-            This is how python standard library handle `collections::abc::Set`, see the first point below `Notes on using Set [...]`:
-
-            https://docs.python.org/3/library/collections.abc.html#examples-and-recipes
-
-        """
-        return cls(iterable)  # pyright: ignore[reportReturnType, reportCallIssue]
 
     @classmethod
     def once[V](cls, value: V) -> PyoIterator[V]:

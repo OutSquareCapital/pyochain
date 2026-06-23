@@ -59,7 +59,8 @@ impl_py_pipe!(
     result::PyoErr,
     mixins::Fluent,
     mixins::PyoPipe,
-    abc::PyoIterable
+    abc::PyoIterable,
+    abc::PyoIterator
 );
 
 #[pymodule]
@@ -88,9 +89,14 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     sys_mods.set_item("pyochain._tools", m.getattr("_tools")?)?;
     sys_mods.set_item("pyochain._abc", m.getattr("_abc")?)?;
 
-    py.import("collections.abc")?
+    let abc_mod = py.import("collections.abc")?;
+
+    abc_mod
         .getattr("Iterable")?
         .call_method1("register", (m.getattr("_abc")?.getattr("PyoIterable")?,))?;
+    abc_mod
+        .getattr("Iterator")?
+        .call_method1("register", (m.getattr("_abc")?.getattr("PyoIteratorRS")?,))?;
 
     Ok(())
 }

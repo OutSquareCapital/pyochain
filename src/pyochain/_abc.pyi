@@ -1,6 +1,7 @@
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from typing import Protocol, runtime_checkable
 
+from ._utils import no_doctest
 from .abc import PyoIterator
 from .rs import Checkable, Fluent
 
@@ -87,4 +88,89 @@ class PyoIterable[T](Fluent, Checkable, Iterable[T], Protocol):
             Seq()
 
             ```
+        """
+
+class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
+    """Extends `PyoIterable[T]` and `collections.abc.Iterator[T]`.
+
+    - An `Iterable` is any object capable of creating an `Iterator` (i.e., it implements the `__iter__()` method).
+    - An `Iterator` is an object representing a stream of data, generating the next value with each call to `__next__()`.
+
+    `Iterator`s are composable, meaning you can chain operations like `map()`, `filter()`, etc., that will simply add a new step to the processing pipeline without executing it.
+
+    Thus, it can be considered akin to a SQL query: An `Iterator` represents a recipe for how to process the data.
+
+    Terminal operations (like `collect()`, `count()`, `all()`, etc.) will "execute the query" by consuming the `Iterator` and producing a final result.
+
+    This is done by calling `__next__()` repeatedly until `StopIteration` is raised, which signals that the `Iterator` is exhausted.
+
+    Once this happened, the `Iterator` instance is empty and cannot be reused to produce new values.
+
+    A high-level way of thinking about how to use `Iterators` is to create one from a source of data, build a plan, and execute it.
+
+    Then, if the result is a new `Iterable`, you can create a new `Iterator` from it and repeat the process.
+
+    If all of this doesn't sound familiar, it's simply because Python does this in an implicit way.
+
+    A *for loop* will create an `Iterator` from the provided iterable, and consume it until exhaustion.
+
+    For example, a `list` knows its size, how to access items by index, etc..
+
+    But it does not know how to iterate over itself, i.e returns elements one by one and stop once x event happens.
+
+    It knows, however, how to create an `Iterator` object that will handle this.
+
+    All concrete subclasses must implement the required `Iterator` dunder methods:
+
+    - `__iter__`
+    - `__next__`
+
+    Example:
+        ```python
+        >>> from pyochain import Seq
+        >>> from pyochain.abc import PyoIterator
+        >>>
+        >>> class Count(PyoIterator[int]):
+        ...     def __init__(self, start: int = 0):
+        ...         self.current = start
+        ...
+        ...     def __iter__(self):
+        ...         return self
+        ...
+        ...     def __next__(self):
+        ...         val = self.current
+        ...         self.current += 1
+        ...         return val
+        >>>
+        >>> counter = Count(5)
+        >>> counter.next()
+        Some(5)
+        >>> counter.next()
+        Some(6)
+        >>> counter.iter().take(3).collect(Seq)
+        Seq(7, 8, 9)
+
+        ```
+    """
+
+    @no_doctest
+    @classmethod
+    def _from_iterable[I](cls, iterable: Iterable[I]) -> PyoIterator[I]:
+        """Internal constructor.
+
+        Since some methods returns a new `PyoIterator`, we use this, with the assumption that the concrete subclass has an `__init__` that can accept an `Iterable[T]`.
+
+        If you want to implement a different constructor, you will need to override this method with one that can construct new instances from an iterable argument.
+
+        Args:
+            iterable (Iterable[I]): An `Iterable` to create the new `PyoIterator` from.
+
+        Returns:
+            PyoIterator[I]: A new instance of the concrete `PyoIterator` subclass.
+
+        See Also:
+            This is how python standard library handle `collections::abc::Set`, see the first point below `Notes on using Set [...]`:
+
+            https://docs.python.org/3/library/collections.abc.html#examples-and-recipes
+
         """

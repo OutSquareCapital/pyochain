@@ -7,11 +7,12 @@ from typing import TYPE_CHECKING
 import pytest
 
 from pyochain import NONE, Iter, Null, Option, Range, Seq, Some, Vec
-from pyochain.abc import PyoIterable, PyoSequence
 
 from ._utils import SIZES, Sizes
 
 if TYPE_CHECKING:
+    from pyochain.abc import PyoIterable, PyoIterator, PyoSequence
+
     from ._utils import BenchFixture
 
 
@@ -438,3 +439,12 @@ def test_partition(benchmark: BenchFixture, size: int) -> None:
 def _partition(data: Range) -> tuple[int, int]:
     x, y = data.iter().partition(lambda x: x % 2 == 0)
     return x.len(), y.len()
+
+
+def test_from_iterable(benchmark: BenchFixture) -> None:
+    data = [1, 2, 3, 4, 5]
+    assert benchmark(_from_iterable, data) is not None
+
+
+def _from_iterable(data: list[int]) -> PyoIterator[int]:
+    return Iter._from_iterable(data)
