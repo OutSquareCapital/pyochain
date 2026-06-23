@@ -10,7 +10,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<UniqueIdentity>()?;
     m.add_class::<UniqueKey>()?;
     m.add_class::<Intersperse>()?;
-    m.add_class::<SlidingWindow>()?;
+    m.add_class::<MapWindow>()?;
     m.add_class::<MapJuxt>()?;
     m.add_class::<FilterMap>()?;
     m.add_class::<FilterMapStar>()?;
@@ -235,15 +235,15 @@ impl Intersperse {
 /// **1.17x** -> `n=32`\
 /// **1.40x** -> `n=128`\
 #[pyclass]
-struct SlidingWindow {
+pub struct MapWindow {
     iter: Py<PyIterator>,
     prev: Vec<Py<PyAny>>,
 }
 
 #[pymethods]
-impl SlidingWindow {
+impl MapWindow {
     #[new]
-    fn new(mut data: Bound<'_, PyIterator>, n: usize) -> PyResult<Self> {
+    pub fn new(mut data: Bound<'_, PyIterator>, n: usize) -> PyResult<Self> {
         let py = data.py();
         let mut prev = (0..n)
             .map(|_| py.None().into_any())

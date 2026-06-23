@@ -1923,6 +1923,162 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
+    @overload
+    def map_windows[R](
+        self, length: Literal[1], func: Callable[[tuple[T]], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_windows[R](
+        self, length: Literal[2], func: Callable[[tuple[T, T]], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_windows[R](
+        self, length: Literal[3], func: Callable[[tuple[T, T, T]], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_windows[R](
+        self, length: Literal[4], func: Callable[[tuple[T, T, T, T]], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_windows[R](
+        self, length: Literal[5], func: Callable[[tuple[T, T, T, T, T]], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_windows[R](
+        self, length: Literal[6], func: Callable[[tuple[T, T, T, T, T, T]], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_windows[R](
+        self, length: Literal[7], func: Callable[[tuple[T, T, T, T, T, T, T]], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_windows[R](
+        self, length: Literal[8], func: Callable[[tuple[T, T, T, T, T, T, T, T]], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_windows[R](
+        self, length: Literal[9], func: Callable[[tuple[T, T, T, T, T, T, T, T, T]], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_windows[R](
+        self,
+        length: Literal[10],
+        func: Callable[[tuple[T, T, T, T, T, T, T, T, T, T]], R],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_windows[R](
+        self, length: int, func: Callable[[tuple[T, ...]], R]
+    ) -> PyoIterator[R]: ...
+    def map_windows[R](
+        self,
+        length: int,
+        func: Callable[[tuple[Any, ...]], R],  # pyright: ignore[reportExplicitAny]
+    ) -> PyoIterator[R]:
+        """Calls the given *func* for each contiguous window of size *length* over **self**.
+
+        The windows during mapping overlaps.
+
+        The provided function is called with the entire window as a single tuple argument.
+
+        Args:
+            length (int): The length of each window.
+            func (Callable[[tuple[Any, ...]], R]): Function to apply to each window.
+
+        Returns:
+            PyoIterator[R]: An iterator over the outputs of func.
+
+        See Also:
+            [`PyoIterator::map_windows_star`][map_windows_star] for a version that unpacks the window into separate arguments.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq, Range
+            >>> import statistics
+            >>> Iter((1, 2, 3, 4)).map_windows(2, statistics.mean).collect(Seq)
+            Seq(1.5, 2.5, 3.5)
+            >>> joined = (
+            ...     Iter("abcd")
+            ...     .map_windows(3, lambda window: "".join(window).upper())
+            ...     .collect(Seq)
+            ... )
+            >>> joined
+            Seq('ABC', 'BCD')
+            >>> sum_windows = Range(0, 5).iter().map_windows(4, sum).collect(Seq)
+            >>> sum_windows
+            Seq(6, 10)
+
+            ```
+        """
+
+    @overload
+    def map_windows_star[R](
+        self, length: Literal[1], func: Callable[[T], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_windows_star[R](
+        self, length: Literal[2], func: Callable[[T, T], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_windows_star[R](
+        self, length: Literal[3], func: Callable[[T, T, T], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_windows_star[R](
+        self, length: Literal[4], func: Callable[[T, T, T, T], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_windows_star[R](
+        self, length: Literal[5], func: Callable[[T, T, T, T, T], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_windows_star[R](
+        self, length: Literal[6], func: Callable[[T, T, T, T, T, T], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_windows_star[R](
+        self, length: Literal[7], func: Callable[[T, T, T, T, T, T, T], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_windows_star[R](
+        self, length: Literal[8], func: Callable[[T, T, T, T, T, T, T, T], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_windows_star[R](
+        self, length: Literal[9], func: Callable[[T, T, T, T, T, T, T, T, T], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_windows_star[R](
+        self, length: Literal[10], func: Callable[[T, T, T, T, T, T, T, T, T, T], R]
+    ) -> PyoIterator[R]: ...
+    def map_windows_star[R](
+        self, length: int, func: Callable[..., R]
+    ) -> PyoIterator[R]:
+        """Calls the given *func* for each contiguous window of size *length* over **self**.
+
+        The windows during mapping overlaps.
+
+        The provided function is called with each element of the window as separate arguments.
+
+        Args:
+            length (int): The length of each window.
+            func (Callable[..., R]): Function to apply to each window.
+
+        Returns:
+            PyoIterator[R]: An iterator over the outputs of func.
+
+        See Also:
+            [`PyoIterator::map_windows`][map_windows] for a version that passes the entire window as a single tuple argument.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> Iter("abcd").map_windows_star(2, lambda x, y: f"{x}+{y}").collect(Seq)
+            Seq('a+b', 'b+c', 'c+d')
+            >>> Iter([1, 2, 3, 4]).map_windows_star(2, lambda x, y: x + y).collect(Seq)
+            Seq(3, 5, 7)
+
+            ```
+        """
     def partition(self, predicate: Callable[[T], bool]) -> tuple[Vec[T], Vec[T]]:
         """Consumes the `Iterator`, creating two `Vec` from it.
 
