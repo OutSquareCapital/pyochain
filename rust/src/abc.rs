@@ -50,15 +50,6 @@ impl PyoIterator {
         cls.call1((iterable,))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
-    #[inline(always)]
-    fn _into_self<'py>(
-        slf: &Bound<'py, Self>,
-        iterator: &Bound<'py, PyIterator>,
-    ) -> PyResult<Bound<'py, Self>> {
-        slf.get_type()
-            .call1((iterator,))
-            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
-    }
     #[pyo3(signature = (f, *args, **kwargs))]
     #[classmethod]
     fn from_fn<'py>(
