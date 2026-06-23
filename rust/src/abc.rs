@@ -50,6 +50,15 @@ impl PyoIterator {
         cls.call1((iterable,))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
+    #[inline(always)]
+    fn _into_self<'py>(
+        slf: &Bound<'py, Self>,
+        iterator: &Bound<'py, PyIterator>,
+    ) -> PyResult<Bound<'py, Self>> {
+        slf.get_type()
+            .call1((iterator,))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
     #[pyo3(signature = (f, *args, **kwargs))]
     #[classmethod]
     fn from_fn<'py>(
@@ -733,6 +742,16 @@ impl PyoIterator {
         slf.try_iter()
             .and_then(|x| pylibs::itertools::group_by(x, key))
             .map(tls::GroupBy::new)
+            .and_then(|x| slf.get_type().call1((x,)))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+    #[pyo3(signature = (func=None))]
+    fn filter<'py>(
+        slf: Bound<'py, Self>,
+        func: Option<Bound<'py, PyAny>>,
+    ) -> PyResult<Bound<'py, Self>> {
+        slf.try_iter()
+            .and_then(|x| pylibs::builtins::filter(func, x))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }

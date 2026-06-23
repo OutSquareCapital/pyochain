@@ -1358,69 +1358,6 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
         return new(repeat(iter(self), n))
 
     @overload
-    def filter[N](self: PyoIterator[N | None], func: None = None) -> PyoIterator[N]: ...
-    @overload
-    def filter[R](self, func: Callable[[T], TypeIs[R]]) -> PyoIterator[R]: ...
-    @overload
-    def filter[R](self, func: Callable[[T], TypeGuard[R]]) -> PyoIterator[R]: ...
-    @overload
-    def filter(self, func: Callable[[T], bool] | None) -> PyoIterator[T]: ...
-    def filter[R, N](
-        self, func: FilterFn[T, R] = None
-    ) -> PyoIterator[T] | PyoIterator[R] | PyoIterator[N]:
-        """Creates an `Iterator` with an optional closure to determine if an element should be yielded.
-
-        Given an element the closure must return `True` or `False`.
-
-        The returned `Iterator` will yield only the elements for which the closure returns `True`.
-
-        If no closure is provided, the elements are directly evaluated on their truthiness.
-
-        This means that empty collections, `0`, `False`, and `None` will be filtered out.
-
-        The closure can return a `TypeIs` or `TypeGuard` to narrow the type of the returned `Iterator`.
-
-        This won't have any runtime effect, but allows for better type inference.
-
-        Note:
-            `Iter.filter(f).next()` is equivalent to `Iter.find(f)`.
-
-        Args:
-            func (FilterFn[T, R]): Function to evaluate each item.
-
-        Returns:
-            PyoIterator[T] | PyoIterator[R] | PyoIterator[N]: An `Iterator` of the items that satisfy the predicate.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> data = (1, 2, 3)
-            >>> Iter(data).filter(lambda x: x > 1).collect(Seq)
-            Seq(2, 3)
-            >>> # See the equivalence of next and find:
-            >>> Iter(data).filter(lambda x: x > 1).next()
-            Some(2)
-            >>> Iter(data).find(lambda x: x > 1)
-            Some(2)
-            >>> # Using TypeIs to narrow type:
-            >>> from typing import TypeIs
-            >>> def _is_str(x: object) -> TypeIs[str]:
-            ...     return isinstance(x, str)
-            >>> mixed_data = (1, "two", 3.0, "four")
-            >>> Iter(mixed_data).filter(_is_str).collect(Seq)
-            Seq('two', 'four')
-            >>> maybe_none = (1, None, 3, None)
-            >>> Iter(maybe_none).filter().collect(Seq)
-            Seq(1, 3)
-            >>> maybe_false = (0, 1, False, 2, "", 3, None)
-            >>> Iter(maybe_false).filter().collect(Seq)
-            Seq(1, 2, 3)
-
-            ```
-        """
-        return self._from_iterable(filter(func, iter(self)))
-
-    @overload
     def filter_false[N](
         self: PyoIterator[N | None], func: None = None
     ) -> PyoIterator[None]: ...

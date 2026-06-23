@@ -12,6 +12,7 @@ pub mod builtins {
     static ALL: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static ANY: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static MAP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static FILTER: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     /// Create a unique sentinel object
     #[inline(always)]
     pub fn sentinel(py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
@@ -35,6 +36,16 @@ pub mod builtins {
         iterator: Bound<'py, PyIterator>,
     ) -> PyResult<Bound<'py, PyIterator>> {
         MAP.import(iterator.py(), BUILTINS, "map")?
+            .call1((func, iterator))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
+    }
+    #[inline(always)]
+    pub fn filter<'py>(
+        func: Option<Bound<'py, PyAny>>,
+        iterator: Bound<'py, PyIterator>,
+    ) -> PyResult<Bound<'py, PyIterator>> {
+        FILTER
+            .import(iterator.py(), BUILTINS, "filter")?
             .call1((func, iterator))
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
     }
