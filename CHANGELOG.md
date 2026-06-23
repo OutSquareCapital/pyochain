@@ -4,7 +4,7 @@
 
 ### 🏆 Highlights
 
-- `abc::PyoIterable` has been moved to Rust.
+- `abc::PyoIterable` has been moved to Rust, and it's generic type is now covariant.
 
 ### 💥 Breaking changes
 
