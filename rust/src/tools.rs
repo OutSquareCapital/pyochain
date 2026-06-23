@@ -764,13 +764,13 @@ impl WithPosition {
     }
 }
 #[pyclass]
-struct ZipLongest {
+pub struct ZipLongest {
     iterator: Py<PyIterator>,
 }
 #[pymethods]
 impl ZipLongest {
     #[new]
-    fn new(data: Bound<'_, PyIterator>) -> Self {
+    pub fn new(data: Bound<'_, PyIterator>) -> Self {
         Self {
             iterator: data.unbind(),
         }
@@ -785,9 +785,9 @@ impl ZipLongest {
         let mut iter = slf.iterator.clone_ref(py).into_bound(py);
         match iter.next() {
             None => Ok(None),
-            Some(item) => item?
+            Some(item) => item
                 // SAFETY: we know the passed `PyIterator` is from `itertools::zip_longest`, which yields tuples, so we can safely cast the result to a `PyTuple`.
-                .pipe(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
+                .map(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })?
                 .iter()
                 .map(|x| option(&x))
                 .collect::<PyResult<Vec<_>>>()

@@ -841,6 +841,17 @@ impl PyoIterator {
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
+    #[pyo3(signature = (*others))]
+    fn zip_longest<'py>(
+        slf: Bound<'py, Self>,
+        others: &Bound<'py, PyTuple>,
+    ) -> PyResult<Bound<'py, Self>> {
+        slf.try_iter()
+            .and_then(|x| pylibs::itertools::zip_longest(x, others))
+            .map(tls::ZipLongest::new)
+            .and_then(|x| slf.get_type().call1((x,)))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
 }
 
 #[inline(always)]

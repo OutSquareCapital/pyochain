@@ -50,17 +50,7 @@ if TYPE_CHECKING:
     from ..collections import Deque
     from ._sequences import PyoMutableSequence
 
-    type AnyOpt = Option[Any]  # pyright: ignore[reportExplicitAny]
-
     type AnyIter = Iterable[Any]  # pyright: ignore[reportExplicitAny]
-    type ZippedLongest[T] = (
-        PyoIterator[tuple[Option[T], AnyOpt]]
-        | PyoIterator[tuple[Option[T], AnyOpt, AnyOpt]]
-        | PyoIterator[tuple[Option[T], AnyOpt, AnyOpt, AnyOpt]]
-        | PyoIterator[tuple[Option[T], AnyOpt, AnyOpt, AnyOpt, AnyOpt]]
-        | PyoIterator[tuple[AnyOpt, ...]]
-    )
-    """Type representing the result of a `zip_longest` operation, which can yield tuples of varying lengths depending on the number of iterables zipped together."""
     type FilterFn[T, R] = Callable[[T], bool | TypeIs[R] | TypeGuard[R]] | None
     """Optional closure that can be passed to `PyoIterator::filter` to determine if an element should be yielded."""
     type SupportsAnyComparison = SupportsComparison[Any]  # pyright: ignore[reportExplicitAny]
@@ -1688,83 +1678,6 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
             ```
         """
         return self._from_iterable(zip(iter(self), *others, strict=strict))
-
-    @overload
-    def zip_longest[T2](
-        self, iter2: Iterable[T2], /
-    ) -> PyoIterator[tuple[Option[T], Option[T2]]]: ...
-    @overload
-    def zip_longest[T2, T3](
-        self, iter2: Iterable[T2], iter3: Iterable[T3], /
-    ) -> PyoIterator[tuple[Option[T], Option[T2], Option[T3]]]: ...
-    @overload
-    def zip_longest[T2, T3, T4](
-        self,
-        iter2: Iterable[T2],
-        iter3: Iterable[T3],
-        iter4: Iterable[T4],
-        /,
-    ) -> PyoIterator[tuple[Option[T], Option[T2], Option[T3], Option[T4]]]: ...
-    @overload
-    def zip_longest[T2, T3, T4, T5](
-        self,
-        iter2: Iterable[T2],
-        iter3: Iterable[T3],
-        iter4: Iterable[T4],
-        iter5: Iterable[T5],
-        /,
-    ) -> PyoIterator[
-        tuple[
-            Option[T],
-            Option[T2],
-            Option[T3],
-            Option[T4],
-            Option[T5],
-        ]
-    ]: ...
-    @overload
-    def zip_longest(
-        self,
-        iter2: Iterable[T],
-        iter3: Iterable[T],
-        iter4: Iterable[T],
-        iter5: Iterable[T],
-        iter6: Iterable[T],
-        /,
-        *iterables: AnyIter,
-    ) -> PyoIterator[tuple[Option[T], ...]]: ...
-    def zip_longest(self, *others: AnyIter) -> ZippedLongest[T]:
-        """Return a zip `Iterator` who yield a `tuple` where the i-th element comes from the i-th `Iterable` argument.
-
-        Yield values until the longest `Iterable` in the argument sequence is exhausted, and then it raises `StopIteration`.
-
-        The longest `Iterable` determines the length of the returned `Iterator`, and will return `Some[T]` until exhaustion.
-
-        When the shorter iterables are exhausted, they yield `NONE`.
-
-        Args:
-            *others (AnyIter): Other iterables to zip with.
-
-        Returns:
-            ZippedLongest[T]: An `Iterator` of tuples containing optional elements from the zipped iterables.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Some, NONE, Vec, Seq
-            >>> data = Seq((1, 2))
-            >>> out = data.iter().zip_longest([10]).collect(Vec)
-            >>> out
-            Vec((Some(1), Some(10)), (Some(2), NONE))
-            >>> # Can be combined with try collect to filter out the NONE:
-            >>> zipped = out.iter().map(lambda x: Iter(x).try_collect()).collect(Vec)
-            >>> zipped
-            Vec(Some(Vec(1, 10)), NONE)
-
-            ```
-        """
-        return self._from_iterable(
-            tls.ZipLongest(itertools.zip_longest(iter(self), *others, fillvalue=None))
-        )
 
     def unzip[U, V](
         self: PyoIterator[tuple[U, V]],

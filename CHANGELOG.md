@@ -33,16 +33,16 @@ Note that for `unpack_into`, even if it's worse on a relative basis on small `It
 
 Name         | 10 items | 100 items | 1_000 items | 10_000 items | Note
 -------------|----------|-----------|-------------|------------- | ----
-`arg_max`    | **1.26x**| **1.78x** | **3.40x**   | **4.15x**    | -
-`arg_min`    | **1.25x**| **1.73x** | **3.37x**   | **4.18x**    | -
-`arg_max_by` | **1.24x**| **1.58x** | **2.70x**   | **3.10x**    | -
-`arg_min_by` | **1.29x**| **1.62x** | **2.59x**   | **3.03x**    | -
-`unpack_into`| **0.93x**| **0.99x** | **1.09x**   | **1.11x**    | -
-`zip_longest`| **2.42x**| **4.40x** | **4.64x**   | **4.46x**    | Due to option creation in Rust
+`arg_max`    | **1.26x**| **1.78x** | **3.40x**   | **4.15x**    | Low items counts are likely higher after full Rust migration
+`arg_min`    | **1.25x**| **1.73x** | **3.37x**   | **4.18x**    | Low items counts are likely higher after full Rust migration
+`arg_max_by` | **1.24x**| **1.58x** | **2.70x**   | **3.10x**    | Low items counts are likely higher after full Rust migration
+`arg_min_by` | **1.29x**| **1.62x** | **2.59x**   | **3.03x**    | Low items counts are likely higher after full Rust migration
+`unpack_into`| **0.93x**| **0.99x** | **1.09x**   | **1.11x**    | Low items counts are likely higher after full Rust migration
+`zip_longest`| **2.83x**| **4.57x** | **4.64x**   | **4.46x**    | Due to option creation in Rust
 `unzip`      | **1.36** | **2.64x** | **3.75x**   | **4.09x**    | Due to tuple access in Rust
-`all_equal`  | **0.99x**| **1.02x** | **0.98x**   | **1.01x**    | Identical perf
-`try_collect`| **1.26x**| **1.08x** | **1.01x**   | **1.00x**    | Due to `Vec` creation in Rust
-`partition`  | **1.24x**| **1.05x** | **1.02x**   | **1.02x**    | Due to `Vec` creation in Rust
+`all_equal`  | **0.99x**| **1.02x** | **0.98x**   | **1.01x**    | Identical perf, Low items counts are likely higher after full Rust migration
+`try_collect`| **1.26x**| **1.08x** | **1.01x**   | **1.00x**    | Due to `Vec` creation in Rust, Low items counts are likely higher after full Rust migration
+`partition`  | **1.24x**| **1.05x** | **1.02x**   | **1.02x**    | Due to `Vec` creation in Rust, Low items counts are likely higher after full Rust migration
 `is_sorted`  | **1.12x**| **1.07x** | **1.01x**   | **1.00x**    | Due to default param now in Rust.
 `group_by`   | **1.39x**| **1.42x** | **1.43x**   | **1.40x**    | -
 
