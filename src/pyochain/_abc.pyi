@@ -1233,6 +1233,122 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
+    @overload
+    def group_by(self, key: None = None) -> PyoIterator[tuple[T, PyoIterator[T]]]: ...
+    @overload
+    def group_by[K](
+        self, key: Callable[[T], K]
+    ) -> PyoIterator[tuple[K, PyoIterator[T]]]: ...
+    @overload
+    def group_by[K](
+        self, key: Callable[[T], K] | None = None
+    ) -> PyoIterator[tuple[K, PyoIterator[T]] | tuple[T, PyoIterator[T]]]: ...
+    def group_by(
+        self,
+        key: Callable[[T], Any] | None = None,  # pyright: ignore[reportExplicitAny]
+    ) -> PyoIterator[tuple[Any | T, PyoIterator[T]]]:  # pyright: ignore[reportExplicitAny]
+        """Make an `Iterator` that returns consecutive keys and groups from the iterable.
+
+        The values yielded are `(K, PyoIterator[T])` tuples, where the first element is the group key and the second element is an `Iterator` of type `T` over the group values.
+
+        The `Iterator` needs to already be sorted on the same key function.
+
+        This is due to the fact that it generates a new `Group` every time the value of the **key** function changes.
+
+        That behavior differs from SQL's `GROUP BY` which aggregates common elements regardless of their input order.
+
+        Warning:
+            You must materialize the second element of the tuple immediately when iterating over groups.
+
+            Because `.group_by()` uses Python's `itertools::groupby` under the hood, each group's iterator shares internal state.
+
+            When you advance to the next group, the previous group's iterator becomes invalid and will yield empty results.
+
+        Args:
+            key (Callable[[T], Any] | None): Function computing a key value for each element. If `None`, this defaults to an identity function and returns the element unchanged.
+
+        Returns:
+            PyoIterator[tuple[Any | T, PyoIterator[T]]]: An `Iterator` of `(key, value)` tuples.
+
+        Example:
+            `group_by` can let you compute complex operations very easily and efficiently.
+
+            For example, if we want to group even and odd numbers, we can do it like this:
+            ```python
+            >>> from pyochain import Iter, Dict, Seq
+            >>> from operator import itemgetter
+            >>> # Example 1: Group even and odd numbers
+            >>> res = (
+            ...     Iter
+            ...     .from_count()  # create an infinite iterator of integers
+            ...     .take(8)  # take the first 8
+            ...     .map(lambda x: (x % 2 == 0, x))  # map to (is_even, value)
+            ...     .sort_by(itemgetter(0))  # sort by is_even
+            ...     .iter()  # Since sort collect to a Vec, we need to convert back to Iter
+            ...     .group_by(itemgetter(0))  # group by is_even
+            ...     # extract values from groups, discarding keys, and materializing them
+            ...     .map_star(
+            ...         lambda g, vals: (g, vals.map_star(lambda _, y: y).collect(Seq))
+            ...     )
+            ...     .collect(Dict)
+            ... )
+            >>> res
+            Dict(False: Seq(1, 3, 5, 7), True: Seq(0, 2, 4, 6))
+
+            ```
+            If we have a dataset who's items have a common key and who's already sorted by that key, we can easily perform grouped operations on it, like this:
+            ```python
+            >>> from pyochain import Seq
+            >>> data = Seq((
+            ...     {"name": "Alice", "gender": "F"},
+            ...     {"name": "Bob", "gender": "M"},
+            ...     {"name": "Charlie", "gender": "M"},
+            ...     {"name": "Dan", "gender": "M"},
+            ... ))
+            >>> # group by the gender key, and count the number of people in each group
+            >>> output = (
+            ...     data
+            ...     .iter()
+            ...     .group_by(lambda x: x["gender"])
+            ...     .map_star(lambda g, vals: (g, vals.count()))
+            ...     .collect(Seq)
+            ... )
+            >>> output
+            Seq(('F', 1), ('M', 3))
+
+            ```
+            However, you must be careful to materialize the group values immediately when iterating over groups, see below how the values of the groups are empty::
+            ```python
+            >>> from pyochain import Seq
+            >>> groups = (
+            ...     Seq(("a1", "a2", "b1"))
+            ...     .iter()
+            ...     .group_by(lambda x: x[0])
+            ...     .collect(Seq)
+            ...     .iter()
+            ...     .map_star(lambda g, vals: (g, vals.collect(Seq)))
+            ...     .collect(Seq)
+            ... )
+            >>> groups
+            Seq(('a', Seq()), ('b', Seq()))
+
+            ```
+            As such, the correct pattern is the following:
+            ```python
+            >>> from pyochain import Seq
+            >>> groups = (
+            ...     Seq(("a1", "a2", "b1", "b2"))
+            ...     .iter()
+            ...     .group_by(lambda x: x[0])
+            ...     # ✅ Materialize NOW
+            ...     .map_star(lambda g, vals: (g, vals.collect(Seq)))
+            ...     .collect(Seq)
+            ... )
+            >>> groups
+            Seq(('a', Seq('a1', 'a2')), ('b', Seq('b1', 'b2')))
+
+            ```
+        """
     def partition(self, predicate: Callable[[T], bool]) -> tuple[Vec[T], Vec[T]]:
         """Consumes the `Iterator`, creating two `Vec` from it.
 

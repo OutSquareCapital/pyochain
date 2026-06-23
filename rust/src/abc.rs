@@ -3,6 +3,7 @@ use crate::mixins::Checkable;
 use crate::option::{PyNull, PySome};
 use crate::pylibs;
 use crate::result::{PyoErr, PyoOk};
+use crate::tools::GroupBy;
 use pyo3::exceptions::{PyStopIteration, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::{PyBool, PyFunction, PyIterator, PyList, PySet, PyTuple, PyType};
@@ -43,7 +44,7 @@ impl PyoIterator {
     }
     #[classmethod]
     fn _from_iterable<'py>(
-        cls: Bound<'py, PyType>,
+        cls: &Bound<'py, PyType>,
         iterable: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, PyoIterator>> {
         cls.call1((iterable,))?
@@ -688,6 +689,18 @@ impl PyoIterator {
         .map(|x| x?.unbind().pipe(PySome::new).into_py_any(py)?.pipe(Ok))
         .unwrap_or_else(|| PyNull::get_any_ok(py))
     }
+
+    fn group_by<'py>(
+        slf: &Bound<'py, Self>,
+        key: Option<Bound<'py, PyAny>>,
+    ) -> PyResult<Bound<'py, Self>> {
+        slf.try_iter()
+            .and_then(|x| pylibs::itertools::group_by(x, key))
+            .map(GroupBy::new)
+            .and_then(|x| slf.get_type().call1((x,)))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+
     fn partition<'py>(
         slf: &Bound<'py, Self>,
         predicate: &Bound<'py, PyAny>,

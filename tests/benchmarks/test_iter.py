@@ -458,3 +458,13 @@ def test_is_sorted(benchmark: BenchFixture, size: int) -> None:
 
 def _is_sorted(data: Range) -> bool:
     return data.iter().is_sorted()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_group_by(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_group_by, data) is not None
+
+
+def _group_by(data: Range) -> tuple[int, PyoIterator[int]]:
+    return data.iter().group_by(lambda x: x % 2).last()

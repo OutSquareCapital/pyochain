@@ -24,6 +24,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<WithPosition>()?;
     m.add_class::<ZipLongest>()?;
     m.add_class::<Unzip>()?;
+    m.add_class::<GroupBy>()?;
     Ok(())
 }
 
@@ -835,5 +836,35 @@ impl Unzip {
         pylibs::itertools::tee(data, None)
             .unwrap()
             .pipe(|iterators| (Unzip::new(&iterators, 0), Unzip::new(&iterators, 1)))
+    }
+}
+#[pyclass]
+pub struct GroupBy {
+    iterator: Py<PyIterator>,
+}
+#[pymethods]
+impl GroupBy {
+    #[new]
+    pub fn new(data: Bound<'_, PyIterator>) -> Self {
+        Self {
+            iterator: data.unbind(),
+        }
+    }
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+    fn __next__(
+        slf: PyRefMut<'_, Self>,
+    ) -> PyResult<Option<(Bound<'_, PyAny>, Bound<'_, PyIterator>)>> {
+        let py = slf.py();
+        match slf.iterator.clone_ref(py).into_bound(py).next() {
+            Some(item) => unsafe {
+                let tup = item?.cast_into_unchecked::<PyTuple>();
+                let (key, group) = (tup.get_item_unchecked(0), tup.get_item_unchecked(1));
+
+                Ok(Some((key, pylibs::pyochain::iter::new(&group)?)))
+            },
+            None => Ok(None),
+        }
     }
 }
