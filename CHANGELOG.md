@@ -6,7 +6,7 @@
 
 - `abc::PyoIterable` has been moved to Rust, and it's generic type is now covariant.
 - `abc::PyoIterator` migration to Rust has been started
-- `abc::PyoIterator::peekable` has been completely refactored and now aligns with Rust std Iterator, with the methods `peek`, `next_if`, `next_if_eq`, and `next_if_map`.
+- `abc::PyoIterator::peekable` has been completely refactored and now aligns with Rust std `Iterator`, with the methods `peek`, `next_if`, `next_if_eq`, and `next_if_map`.
 
 ### 💥 Breaking changes
 
@@ -14,10 +14,12 @@
 
 - **API change**: `PyoIterable::first` has been deleted. This impacts all non-sequence types (`PyoSequence` is unchanged). If you need the old behavior on an `Iterator` or a `Collection`, call `.iter().next().unwrap()` instead.
 - **API change**: `PyoIterable::last` has been moved to `PyoIterator` and `PyoSequence` as separate methods without class inheritance. This impacts all custom `PyoIterable` subclasses who aren't `Iterator`s nor `Sequences`. If you need the old behavior (e.g calling `last` on a `set`-like collection), call `iter().last()` instead.
+- **API change**: `PyoIterator::batch` has been renamed to `PyoIterator::batched`.
+- **Method removal**: `PyoIterator::array_chunks` has been removed. Use `PyoIterator::batched` instead.
 
 ### ✨ Enhancements
 
-- **typing**: added overloads to `PyoIterator::batch` to return precise tuple types for batch sizes up to 5 if *strict* is `True`.
+- **typing**: added overloads to `PyoIterator::batched` to return precise tuple types for batch sizes up to 5 if *strict* is `True`.
 
 ### 🚀 Performance improvements
 

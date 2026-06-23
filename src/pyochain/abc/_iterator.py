@@ -1300,99 +1300,6 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
         """
         return Peekable(iter(self))
 
-    def array_chunks(self, size: int) -> PyoIterator[PyoIterator[T]]:
-        """Yield subiterators (chunks) that each yield a fixed number elements, determined by size.
-
-        The last chunk will be shorter if there are not enough elements.
-
-        If the sub-iterators are read in order, the elements of the `Iterator` won't be stored in memory.
-
-        If they are read out of order, `itertools::tee` is used to cache elements as necessary.
-
-        Args:
-            size (int): Number of elements in each chunk.
-
-        Returns:
-            PyoIterator[PyoIterator[T]]: An `Iterator` of iterators, each yielding *n* elements.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> all_chunks = Iter.from_count().array_chunks(4)
-            >>> c_1, c_2, c_3 = all_chunks.next(), all_chunks.next(), all_chunks.next()
-            >>> # c_1's elements have been cached; c_3's haven't been
-            >>> c_2.unwrap().collect(Seq)
-            Seq(4, 5, 6, 7)
-            >>> c_1.unwrap().collect(Seq)
-            Seq(0, 1, 2, 3)
-            >>> c_3.unwrap().collect(Seq)
-            Seq(8, 9, 10, 11)
-
-            ```
-            You can collect the chunks into a collection of collections, for example:
-            ```python
-            >>> from pyochain import Seq
-            >>> from pyochain.abc import PyoIterable
-            >>>
-            >>> def collect_all_chunks[T](data: PyoIterable[T]) -> Seq[Seq[T]]:
-            ...     return (
-            ...         data
-            ...         .iter()
-            ...         .array_chunks(3)
-            ...         .map(lambda c: c.collect(Seq))
-            ...         .collect(Seq)
-            ...     )
-            >>> Seq((1, 2, 3, 4, 5, 6)).pipe(collect_all_chunks)
-            Seq(Seq(1, 2, 3), Seq(4, 5, 6))
-            >>> Seq((1, 2, 3, 4, 5, 6, 7, 8)).pipe(collect_all_chunks)
-            Seq(Seq(1, 2, 3), Seq(4, 5, 6), Seq(7, 8))
-
-            ```
-        """
-        from collections import deque
-        from contextlib import suppress
-
-        def _chunks(iterator: Iterator[T]) -> Iterator[PyoIterator[T]]:
-            def _ichunk(
-                iterator: Iterator[T], n: int
-            ) -> tuple[Iterator[T], Callable[[int], int]]:
-                cache: deque[T] = deque()
-                chunk = itertools.islice(iterator, n)
-
-                def _generator() -> Iterator[T]:
-                    with suppress(StopIteration):
-                        while True:
-                            if cache:
-                                yield cache.popleft()
-                            else:
-                                yield next(chunk)
-
-                def _materialize_next(n: int) -> int:
-                    to_cache = n - len(cache)
-
-                    # materialize up to n
-                    if to_cache > 0:
-                        cache.extend(itertools.islice(chunk, to_cache))
-
-                    # return number materialized up to n
-                    return min(n, len(cache))
-
-                return (_generator(), _materialize_next)
-
-            new = self._from_iterable
-            while True:
-                # Create new chunk
-                chunk, materialize_next = _ichunk(iterator, size)
-
-                # Check to see whether we're at the end of the source iterable
-                if not materialize_next(size):
-                    return
-
-                yield new(chunk)
-                _ = materialize_next(size)
-
-        return self._from_iterable(_chunks(iter(self)))
-
     @overload
     def flatten[U](self: PyoIterator[KeysView[U]]) -> PyoIterator[U]: ...
     @overload
@@ -2623,31 +2530,34 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
         )
 
     @overload
-    def batch(
+    def batched(
         self, n: Literal[1], *, strict: Literal[True]
     ) -> PyoIterator[tuple[T]]: ...
     @overload
-    def batch(
+    def batched(
         self, n: Literal[2], *, strict: Literal[True]
     ) -> PyoIterator[tuple[T, T]]: ...
     @overload
-    def batch(
+    def batched(
         self, n: Literal[3], *, strict: Literal[True]
     ) -> PyoIterator[tuple[T, T, T]]: ...
     @overload
-    def batch(
+    def batched(
         self, n: Literal[4], *, strict: Literal[True]
     ) -> PyoIterator[tuple[T, T, T, T]]: ...
     @overload
-    def batch(
+    def batched(
         self, n: Literal[5], *, strict: Literal[True]
     ) -> PyoIterator[tuple[T, T, T, T, T]]: ...
-    def batch(self, n: int, *, strict: bool = False) -> PyoIterator[tuple[T, ...]]:
+    def batched(self, n: int, *, strict: bool = False) -> PyoIterator[tuple[T, ...]]:
         """Batch elements into tuples of length n and return a new Iter.
 
         - The last batch may be shorter than n.
         - The data is consumed lazily, just enough to fill a batch.
         - The result is yielded as soon as a batch is full or when the input iterable is exhausted.
+
+        Note:
+            This is the closest equivalent to `Iterator::array_chunks` in Rust.
 
         Args:
             n (int): Number of elements in each batch.
@@ -2658,12 +2568,12 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter("ABCDEFG").batch(3).collect(Seq)
+            >>> from pyochain import Seq
+            >>> Seq("ABCDEFG").iter().batched(3).collect(Seq)
             Seq(('A', 'B', 'C'), ('D', 'E', 'F'), ('G',))
             >>> data = Seq((1, 1, 2, -2, 6, 0, 3, 1, 0))
             >>> #           ^-----^  ^------^  ^-----^
-            >>> data.iter().batch(3, strict=True).map(sum).all(lambda x: x == 4)
+            >>> data.iter().batched(3, strict=True).map(sum).all(lambda x: x == 4)
             True
 
             ```
