@@ -5,6 +5,7 @@
 ### 🏆 Highlights
 
 - `abc::PyoIterable` has been moved to Rust, and it's generic type is now covariant.
+- `abc::PyoIterator` migration to Rust has been started
 
 ### 💥 Breaking changes
 
@@ -27,18 +28,19 @@ See the table below for the performance improvements, with the number of items p
 
 Note that for `unpack_into`, even if it's worse on a relative basis on small `Iterator`'s, the median absolute speed improvement on larger ones more than makes up for it, since on 10 items, it's **2.6 us (new)** vs **2.42 us (old)**, while on 10k items, it's **229 us (new)** vs **253 us (old)**.
 
-Name         | 10 items | 100 items | 1_000 items | 10_000 items
--------------|----------|-----------|-------------|-------------
-`arg_max`    | **1.26x**| **1.78x** | **3.40x**   | **4.15x**
-`arg_min`    | **1.25x**| **1.73x** | **3.37x**   | **4.18x**
-`arg_max_by` | **1.24x**| **1.58x** | **2.70x**   | **3.10x**
-`arg_min_by` | **1.29x**| **1.62x** | **2.59x**   | **3.03x**
-`unpack_into`| **0.93x**| **0.99x** | **1.09x**   | **1.11x**
-`zip_longest`| **2.42x**| **4.40x** | **4.64x**   | **4.46x**
-`unzip`      | **1.36** | **2.64x** | **3.75x**   | **4.09x**
-`all_equal`  | **0.99x**| **1.02x** | **0.98x**   | **1.01x**
-`try_collect`| **1.26x**| **1.08x** | **1.01x**   | **1.00x**
-`partition`  | **1.24x**| **1.05x** | **1.02x**   | **1.02x**
+Name         | 10 items | 100 items | 1_000 items | 10_000 items | Note
+-------------|----------|-----------|-------------|------------- | ----
+`arg_max`    | **1.26x**| **1.78x** | **3.40x**   | **4.15x**    | -
+`arg_min`    | **1.25x**| **1.73x** | **3.37x**   | **4.18x**    | -
+`arg_max_by` | **1.24x**| **1.58x** | **2.70x**   | **3.10x**    | -
+`arg_min_by` | **1.29x**| **1.62x** | **2.59x**   | **3.03x**    | -
+`unpack_into`| **0.93x**| **0.99x** | **1.09x**   | **1.11x**    | -
+`zip_longest`| **2.42x**| **4.40x** | **4.64x**   | **4.46x**    | Due to option creation in Rust
+`unzip`      | **1.36** | **2.64x** | **3.75x**   | **4.09x**    | Due to tuple access in Rust
+`all_equal`  | **0.99x**| **1.02x** | **0.98x**   | **1.01x**    | Identical perf
+`try_collect`| **1.26x**| **1.08x** | **1.01x**   | **1.00x**    | Due to `Vec` creation in Rust
+`partition`  | **1.24x**| **1.05x** | **1.02x**   | **1.02x**    | Due to `Vec` creation in Rust
+`is_sorted`  | **1.12x**| **1.07x** | **1.01x**   | **1.00x**    | Due to default param now in Rust.
 
 ---
 

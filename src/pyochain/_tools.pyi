@@ -1,124 +1,13 @@
 from collections.abc import Callable, Iterable, Iterator, MutableSequence
-from typing import Any, Concatenate, Self, overload, override
+from typing import Any, Self, override
 
-from pyochain import Option, Result, Vec
+from pyochain import Option
 from pyochain.abc import Position
 
 from ._utils import no_doctest
 
 @no_doctest
-def try_find[T, E](
-    data: Iterator[T], predicate: Callable[[T], Result[bool, E]]
-) -> Result[Option[T], E]: ...
-@no_doctest
-def try_fold[T, B, E](
-    data: Iterator[T], init: B, func: Callable[[B, T], Result[B, E]]
-) -> Result[B, E]: ...
-@no_doctest
-def try_reduce[T, E](
-    data: Iterator[T], func: Callable[[T, T], Result[T, E]]
-) -> Result[Option[T], E]: ...
-@no_doctest
-def eq[T](data: Iterator[T], other: Iterable[T]) -> bool: ...
-@no_doctest
-def ne[T](data: Iterator[T], other: Iterable[T]) -> bool: ...
-@no_doctest
-def lt[T](data: Iterator[T], other: Iterable[T]) -> bool: ...
-@no_doctest
-def gt[T](data: Iterator[T], other: Iterable[T]) -> bool: ...
-@no_doctest
-def le[T](data: Iterator[T], other: Iterable[T]) -> bool: ...
-@no_doctest
-def ge[T](data: Iterator[T], other: Iterable[T]) -> bool: ...
-@no_doctest
-def is_sorted[T](
-    data: Iterator[T], *, reverse: bool = False, strict: bool = False
-) -> bool: ...
-@no_doctest
-def is_sorted_by[T, U](
-    data: Iterator[T],
-    key: Callable[[T], U],
-    *,
-    reverse: bool = False,
-    strict: bool = False,
-) -> bool: ...
-@no_doctest
-def for_each[**P, T](
-    data: Iterator[T],
-    func: Callable[Concatenate[T, P], None],
-    *args: P.args,
-    **kwargs: P.kwargs,
-) -> None: ...
-@no_doctest
-def for_each_star[**P, T](
-    data: Iterator[T],
-    func: Callable[..., Any],  # pyright: ignore[reportExplicitAny]
-    *args: P.args,
-    **kwargs: P.kwargs,
-) -> None: ...
-@no_doctest
-def all_unique[T](data: Iterator[T]) -> bool: ...
-@no_doctest
-def all_unique_by[T, U](data: Iterator[T], key: Callable[[T], U]) -> bool: ...
-@no_doctest
-def all_equal[T](data: Iterator[T], key: Callable[[T], object] | None) -> bool: ...
-@no_doctest
-def partition[T](
-    data: Iterator[T], predicate: Callable[[T], bool]
-) -> tuple[Vec[T], Vec[T]]: ...
-@no_doctest
-def last[T](data: Iterator[T]) -> T: ...
-@no_doctest
-def count[T](data: Iterator[T]) -> int: ...
-@no_doctest
-def arg_max[T](data: Iterator[T]) -> int: ...
-@no_doctest
-def arg_min[T](data: Iterator[T]) -> int: ...
-@no_doctest
-def arg_max_by[T, U](data: Iterator[T], key: Callable[[T], U]) -> int: ...
-@no_doctest
-def arg_min_by[T, U](data: Iterator[T], key: Callable[[T], U]) -> int: ...
-@no_doctest
-def try_for_each[T, E](
-    data: Iterator[T],
-    f: Callable[[T], Result[Any, E]],  # pyright: ignore[reportExplicitAny]
-) -> Result[tuple[()], E]: ...
-@no_doctest
-@overload
-def try_collect[T](data: Iterator[Option[T]]) -> Option[Vec[T]]: ...
-@overload
-def try_collect[T, E](data: Iterator[Result[T, E]]) -> Option[Vec[T]]: ...
-@no_doctest
-def try_collect[T](
-    data: Iterator[Option[T]] | Iterator[Result[T, Any]],  # pyright: ignore[reportExplicitAny]
-) -> Option[Vec[T]]: ...
-@no_doctest
 def retain[T](data: MutableSequence[T], predicate: Callable[[T], bool]) -> None: ...
-@no_doctest
-def any[T](data: Iterator[T], predicate: Callable[[T], bool] | None = None) -> bool: ...  # noqa: A001
-@no_doctest
-def all[T](data: Iterator[T], predicate: Callable[[T], bool] | None = None) -> bool: ...  # noqa: A001
-@no_doctest
-def fold_star[U: Iterable[Any], **P, B](
-    data: Iterator[U],
-    init: B,
-    func: Callable[..., B],
-    *args: P.args,
-    **kwargs: P.kwargs,
-) -> B: ...
-@no_doctest
-def nth[T](data: Iterator[T], n: int) -> Option[T]: ...
-@no_doctest
-def find[T](data: Iterator[T], predicate: Callable[[T], bool]) -> Option[T]: ...
-@no_doctest
-def next[T](data: Iterator[T]) -> Option[T]: ...  # noqa: A001
-@no_doctest
-def unpack_into[**P, R, T](
-    data: Iterator[T],
-    func: Callable[Concatenate[T, P], R],
-    *args: P.args,
-    **kwargs: P.kwargs,
-) -> R: ...
 
 class MapJuxt[R](Iterator[tuple[R, ...]]):
     def __init__(

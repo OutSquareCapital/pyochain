@@ -448,3 +448,13 @@ def test_from_iterable(benchmark: BenchFixture) -> None:
 
 def _from_iterable(data: list[int]) -> PyoIterator[int]:
     return Iter._from_iterable(data)
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_is_sorted(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_is_sorted, data) is True
+
+
+def _is_sorted(data: Range) -> bool:
+    return data.iter().is_sorted()
