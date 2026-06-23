@@ -2,8 +2,8 @@ from collections.abc import Callable, Iterable, Iterator, MutableSequence
 from typing import Any, Self, override
 
 from pyochain import Option
-from pyochain.abc import Position
 
+from ._abc import Position
 from ._utils import no_doctest
 
 @no_doctest

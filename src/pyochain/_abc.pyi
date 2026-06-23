@@ -1,5 +1,5 @@
 from collections.abc import Callable, Iterable, Iterator
-from typing import Any, Concatenate, Protocol, overload, runtime_checkable
+from typing import Any, Concatenate, Literal, Protocol, overload, runtime_checkable
 
 from ._types import SupportsComparison
 from ._utils import no_doctest
@@ -8,6 +8,10 @@ from .abc import PyoIterator
 from .rs import Checkable, Fluent, Option, Result
 
 type SupportsAnyComparison = SupportsComparison[Any]  # pyright: ignore[reportExplicitAny]
+type AnyIter = Iterable[Any]  # pyright: ignore[reportExplicitAny]
+
+type Position = Literal["first", "middle", "last", "only"]
+"""Type representing the position of an item in an `Iterator`."""
 
 @runtime_checkable
 class PyoIterable[T](Fluent, Checkable, Iterable[T], Protocol):
@@ -177,6 +181,121 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
             https://docs.python.org/3/library/collections.abc.html#examples-and-recipes
 
+        """
+
+    @classmethod
+    def from_fn[**P, R](
+        cls, f: Callable[P, Option[R]], *args: P.args, **kwargs: P.kwargs
+    ) -> PyoIterator[R]:
+        """Create an `Iterator` from a generator function.
+
+        The `Callable` must return:
+
+        - `Some(value)` to yield a value
+        - `NONE` to stop the iteration
+
+        You could consider this as a way to create an `Iterator` where the `__next__()` is the `__call__()` method.
+
+        As such, you can either provide lambdas, partials, closures, or pre-existing classes where `__call__()` is implemented, but a `__next__()` is not desired.
+
+        If you do have an `Iterator` class, simply pass it to the regular constructor, as this will be more efficient, ergonomic and idiomatic.
+
+        Args:
+            f (Callable[P, Option[R]]): `Callable` that returns the next item wrapped in `Option`.
+            *args (P.args): Positional arguments to pass to **f**.
+            **kwargs (P.kwargs): Keyword arguments to pass to **f**.
+
+        Returns:
+            PyoIterator[R]: An `Iterator` yielding values produced by **f**.
+
+        Note:
+            In Rust, this avoids defining a full struct and implementing `Iterator` for it when you have simple logic to generate values.
+
+            This is implemented for "Rust API compliance", but in Python, generators comprehensions/functions with `yield` statements are the ergonomic equivalent.
+
+        Example:
+            Closure with captured local variable:
+            ```python
+            >>> from pyochain import Iter, Some, NONE, Seq, Option
+            >>>
+            >>> def make_counter(max_val: int):
+            ...     counter = 0
+            ...
+            ...     def gen() -> Option[int]:
+            ...         nonlocal counter
+            ...         counter += 1
+            ...         return Some(counter) if counter <= max_val else NONE
+            ...
+            ...     return gen
+            >>>
+            >>> Iter.from_fn(make_counter(5)).collect(Seq)
+            Seq(1, 2, 3, 4, 5)
+
+            ```
+            Stateful callable class:
+            ```python
+            >>> from pyochain import Iter, Some, NONE, Option, Seq
+            >>> from dataclasses import dataclass
+            >>> @dataclass
+            ... class Counter:
+            ...     max: int
+            ...     count: int = 0
+            ...
+            ...     def __call__(self) -> Option[int]:
+            ...         self.count += 1
+            ...         return Some(self.count) if self.count <= self.max else NONE
+            >>>
+            >>> Iter.from_fn(Counter(5)).collect(Seq)
+            Seq(1, 2, 3, 4, 5)
+
+            ```
+            Simulated file/queue reader:
+            ```python
+            >>> from pyochain import Iter, Some, NONE, Option, Seq
+            >>> from pyochain.collections import Deque
+            >>> from collections.abc import Callable
+            >>>
+            >>> def queue_consumer(items: Deque[int]) -> Callable[[], Option[int]]:
+            ...     def consume() -> Option[int]:
+            ...         return Some(items.pop_left()) if items else NONE
+            ...
+            ...     return consume
+            >>>
+            >>> Iter.from_fn(Deque([1, 2, 3]).pipe(queue_consumer)).collect(Seq)
+            Seq(1, 2, 3)
+
+            ```
+        """
+
+    @classmethod
+    def successors[U](
+        cls, first: Option[U], succ: Callable[[U], Option[U]]
+    ) -> PyoIterator[U]:
+        """Create an iterator of successive values computed from the previous one.
+
+        The iterator yields `first` (if it is `Some`), then repeatedly applies **succ** to the
+        previous yielded value until it returns `NONE`.
+
+        Args:
+            first (Option[U]): Initial item.
+            succ (Callable[[U], Option[U]]): Successor function.
+
+        Returns:
+            PyoIterator[U]: `Iterator` yielding `first` and its successors.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Some, NONE, Option, Seq
+            >>>
+            >>> def next_pow10(x: int) -> Option[int]:
+            ...     return Some(x * 10) if x < 10_000 else NONE
+            >>>
+            >>> Iter.successors(Some(1), next_pow10).collect(Seq)
+            Seq(1, 10, 100, 1000, 10000)
+            >>> Iter.successors(NONE, next_pow10).collect(Seq)
+            Seq()
+
+            ```
         """
 
     def count(self) -> int:
@@ -1233,6 +1352,30 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
+    def intersperse(self, element: T) -> PyoIterator[T]:
+        """Creates a new `Iterator` which places a copy of separator between adjacent items of the original iterator.
+
+        Args:
+            element (T): The element to interpose between items.
+
+        Returns:
+            PyoIterator[T]: A new `Iterator` with the element interposed.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> # Simple example with numbers
+            >>> Iter((1, 2, 3)).intersperse(0).collect(Seq)
+            Seq(1, 0, 2, 0, 3)
+            >>> # Useful when chaining with other operations
+            >>> Iter([10, 20, 30]).intersperse(5).sum()
+            70
+            >>> # Inserting separators between groups, then flattening
+            >>> Iter(((1, 2), (3, 4), (5, 6))).intersperse([-1]).flatten().collect(Seq)
+            Seq(1, 2, -1, 3, 4, -1, 5, 6)
+
+            ```
+        """
     @overload
     def group_by(self, key: None = None) -> PyoIterator[tuple[T, PyoIterator[T]]]: ...
     @overload
@@ -1349,6 +1492,427 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
             ```
         """
+
+    @overload
+    def filter_star[T1](
+        self: PyoIterator[tuple[T1]], func: Callable[[T1], bool]
+    ) -> PyoIterator[tuple[T1]]: ...
+    @overload
+    def filter_star[T1, T2](
+        self: PyoIterator[tuple[T1, T2]],
+        func: Callable[[T1, T2], bool],
+    ) -> PyoIterator[tuple[T1, T2]]: ...
+    @overload
+    def filter_star[T1, T2, T3](
+        self: PyoIterator[tuple[T1, T2, T3]],
+        func: Callable[[T1, T2, T3], bool],
+    ) -> PyoIterator[tuple[T1, T2, T3]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4](
+        self: PyoIterator[tuple[T1, T2, T3, T4]],
+        func: Callable[[T1, T2, T3, T4], bool],
+    ) -> PyoIterator[tuple[T1, T2, T3, T4]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4, T5](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
+        func: Callable[[T1, T2, T3, T4, T5], bool],
+    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4, T5, T6](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
+        func: Callable[[T1, T2, T3, T4, T5, T6], bool],
+    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4, T5, T6, T7](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7], bool],
+    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4, T5, T6, T7, T8](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], bool],
+    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4, T5, T6, T7, T8, T9](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], bool],
+    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], bool],
+    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]]: ...
+    def filter_star[U: tuple[Any, ...]](
+        self: PyoIterator[U], func: Callable[..., bool]
+    ) -> PyoIterator[U]:
+        """Creates an `Iterator` which uses a closure **func** to determine if an element should be yielded, where each element is an iterable.
+
+        Unlike `.filter()`, which passes each element as a single argument, `.filter_star()` unpacks each element into positional arguments for the **func**.
+
+        In short, for each element in the `Iterator`, it computes `func(*element)``.
+
+        This is useful after using methods like `.zip()`, `.product()`, or `.enumerate()` that yield tuples.
+
+        Args:
+            func (Callable[..., bool]): Function to evaluate unpacked elements.
+
+        Returns:
+            PyoIterator[U]: An `Iterator` of the items that satisfy the predicate.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> data = Seq(("apple", "banana", "cherry", "date"))
+            >>> output = (
+            ...     data
+            ...     .iter()
+            ...     .enumerate()
+            ...     .filter_star(lambda index, _: index % 2 == 0)
+            ...     .map_star(lambda _, fruit: fruit.title())
+            ...     .collect(Seq)
+            ... )
+            >>> output
+            Seq('Apple', 'Cherry')
+
+            ```
+        """
+
+    def filter_map[R](self, func: Callable[[T], Option[R]]) -> PyoIterator[R]:
+        """Creates an iterator that both filters and maps.
+
+        The returned iterator yields only the values for which the supplied closure returns Some(value).
+
+        `filter_map` can be used to make chains of `filter` and map more concise.
+
+        The example below shows how a `map().filter().map()` can be shortened to a single call to `filter_map`.
+
+        Args:
+            func (Callable[[T], Option[R]]): Function to apply to each item.
+
+        Returns:
+            PyoIterator[R]: An iterable of the results where func returned `Some`.
+
+        See Also:
+            [`PyoIterator::filter`][filter] with no closure provided if you want to filter out Python native `None` values.
+
+        Example:
+            ```python
+            >>> from pyochain import Result, Ok, Err, Seq
+            >>> def _parse(s: str) -> Result[int, str]:
+            ...     try:
+            ...         return Ok(int(s))
+            ...     except ValueError:
+            ...         return Err(f"Invalid integer, got {s!r}")
+            >>>
+            >>> data = Seq(("1", "two", "NaN", "four", "5"))
+            >>> parsed = data.iter().filter_map(lambda s: _parse(s).ok()).collect(Seq)
+            >>> parsed
+            Seq(1, 5)
+            >>> # Equivalent to:
+            >>> parsed = (
+            ...     data
+            ...     .iter()
+            ...     .map(lambda s: _parse(s).ok())
+            ...     .filter(lambda s: s.is_some())
+            ...     .map(lambda s: s.unwrap())
+            ...     .collect(Seq)
+            ... )
+            >>> parsed
+            Seq(1, 5)
+
+            ```
+        """
+
+    @overload
+    def filter_map_star[R](
+        self: PyoIterator[tuple[Any]],  # pyright: ignore[reportExplicitAny]
+        func: Callable[[Any], Option[R]],  # pyright: ignore[reportExplicitAny]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def filter_map_star[T1, T2, R](
+        self: PyoIterator[tuple[T1, T2]],
+        func: Callable[[T1, T2], Option[R]],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def filter_map_star[T1, T2, T3, R](
+        self: PyoIterator[tuple[T1, T2, T3]],
+        func: Callable[[T1, T2, T3], Option[R]],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def filter_map_star[T1, T2, T3, T4, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4]],
+        func: Callable[[T1, T2, T3, T4], Option[R]],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def filter_map_star[T1, T2, T3, T4, T5, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
+        func: Callable[[T1, T2, T3, T4, T5], Option[R]],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def filter_map_star[T1, T2, T3, T4, T5, T6, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
+        func: Callable[[T1, T2, T3, T4, T5, T6], Option[R]],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def filter_map_star[T1, T2, T3, T4, T5, T6, T7, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7], Option[R]],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def filter_map_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], Option[R]],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def filter_map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], Option[R]],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def filter_map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], Option[R]],
+    ) -> PyoIterator[R]: ...
+    def filter_map_star[U: AnyIter, R](
+        self: PyoIterator[U], func: Callable[..., Option[R]]
+    ) -> PyoIterator[R]:
+        """Creates an iterator that both filters and maps, where each element is an iterable.
+
+        Unlike `.filter_map()`, which passes each element as a single argument, `.filter_map_star()` unpacks each element into positional arguments for the function.
+
+        In short, for each `element` in the sequence, it computes `func(*element)`.
+
+        This is useful after using methods like `zip`, `product`, or `enumerate` that yield tuples.
+
+        Args:
+            func (Callable[..., Option[R]]): Function to apply to unpacked elements.
+
+        Returns:
+            PyoIterator[R]: An iterable of the results where func returned `Some`.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Result, Ok, Err, Seq
+            >>> data = (("1", "10"), ("two", "20"), ("3", "thirty"))
+            >>> def _parse_pair(s1: str, s2: str) -> Result[tuple[int, int], str]:
+            ...     try:
+            ...         return Ok((int(s1), int(s2)))
+            ...     except ValueError:
+            ...         return Err(f"Invalid integer pair: {s1!r}, {s2!r}")
+            >>>
+            >>> parsed = (
+            ...     Iter(data)
+            ...     .filter_map_star(lambda s1, s2: _parse_pair(s1, s2).ok())
+            ...     .collect(Seq)
+            ... )
+            >>> parsed
+            Seq((1, 10),)
+
+            ```
+        """
+
+    @overload
+    def map_juxt[R1, R2](
+        self,
+        func1: Callable[[T], R1],
+        func2: Callable[[T], R2],
+        /,
+    ) -> PyoIterator[tuple[R1, R2]]: ...
+    @overload
+    def map_juxt[R1, R2, R3](
+        self,
+        func1: Callable[[T], R1],
+        func2: Callable[[T], R2],
+        func3: Callable[[T], R3],
+        /,
+    ) -> PyoIterator[tuple[R1, R2, R3]]: ...
+    @overload
+    def map_juxt[R1, R2, R3, R4](
+        self,
+        func1: Callable[[T], R1],
+        func2: Callable[[T], R2],
+        func3: Callable[[T], R3],
+        func4: Callable[[T], R4],
+        /,
+    ) -> PyoIterator[tuple[R1, R2, R3, R4]]: ...
+    @overload
+    def map_juxt[R1, R2, R3, R4, R5](
+        self,
+        func1: Callable[[T], R1],
+        func2: Callable[[T], R2],
+        func3: Callable[[T], R3],
+        func4: Callable[[T], R4],
+        func5: Callable[[T], R5],
+        /,
+    ) -> PyoIterator[tuple[R1, R2, R3, R4, R5]]: ...
+    @overload
+    def map_juxt[R1, R2, R3, R4, R5, R6](
+        self,
+        func1: Callable[[T], R1],
+        func2: Callable[[T], R2],
+        func3: Callable[[T], R3],
+        func4: Callable[[T], R4],
+        func5: Callable[[T], R5],
+        func6: Callable[[T], R6],
+        /,
+    ) -> PyoIterator[tuple[R1, R2, R3, R4, R5, R6]]: ...
+    @overload
+    def map_juxt[R1, R2, R3, R4, R5, R6, R7](
+        self,
+        func1: Callable[[T], R1],
+        func2: Callable[[T], R2],
+        func3: Callable[[T], R3],
+        func4: Callable[[T], R4],
+        func5: Callable[[T], R5],
+        func6: Callable[[T], R6],
+        func7: Callable[[T], R7],
+        /,
+    ) -> PyoIterator[tuple[R1, R2, R3, R4, R5, R6, R7]]: ...
+    @overload
+    def map_juxt[R1, R2, R3, R4, R5, R6, R7, R8](
+        self,
+        func1: Callable[[T], R1],
+        func2: Callable[[T], R2],
+        func3: Callable[[T], R3],
+        func4: Callable[[T], R4],
+        func5: Callable[[T], R5],
+        func6: Callable[[T], R6],
+        func7: Callable[[T], R7],
+        func8: Callable[[T], R8],
+        /,
+    ) -> PyoIterator[tuple[R1, R2, R3, R4, R5, R6, R7, R8]]: ...
+    @overload
+    def map_juxt[R1, R2, R3, R4, R5, R6, R7, R8, R9](
+        self,
+        func1: Callable[[T], R1],
+        func2: Callable[[T], R2],
+        func3: Callable[[T], R3],
+        func4: Callable[[T], R4],
+        func5: Callable[[T], R5],
+        func6: Callable[[T], R6],
+        func7: Callable[[T], R7],
+        func8: Callable[[T], R8],
+        func9: Callable[[T], R9],
+        /,
+    ) -> PyoIterator[tuple[R1, R2, R3, R4, R5, R6, R7, R8, R9]]: ...
+    @overload
+    def map_juxt[R1, R2, R3, R4, R5, R6, R7, R8, R9, R10](
+        self,
+        func1: Callable[[T], R1],
+        func2: Callable[[T], R2],
+        func3: Callable[[T], R3],
+        func4: Callable[[T], R4],
+        func5: Callable[[T], R5],
+        func6: Callable[[T], R6],
+        func7: Callable[[T], R7],
+        func8: Callable[[T], R8],
+        func9: Callable[[T], R9],
+        func10: Callable[[T], R10],
+        /,
+    ) -> PyoIterator[tuple[R1, R2, R3, R4, R5, R6, R7, R8, R9, R10]]: ...
+    @overload
+    def map_juxt[R](self, *funcs: Callable[[T], R]) -> PyoIterator[tuple[R, ...]]: ...
+    def map_juxt(self, *funcs: Callable[[T], Any]) -> PyoIterator[tuple[Any, ...]]:  # pyright: ignore[reportExplicitAny]
+        """Apply several functions to each item of the `Iterator`.
+
+        Returns a new `Iterator` where each item is a tuple of the results of applying each function to the original item.
+
+        This can be very handy to compute multiple transformations or properties of the same item in a single pass, without needing to iterate multiple times.
+
+        As such, this can be considered as an alternative to various patterns, such as `PyoIterator::{for_each, fold}` with mutable collections, or `PyoIterator::map` followed by `PyoIterator::zip` to combine the results.
+
+        Args:
+            *funcs (Callable[[T], Any]): Functions to apply to each item.
+
+        Returns:
+            PyoIterator[tuple[Any, ...]]: An iterable of tuples containing the results of each function.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>>
+            >>> def is_even(n: int) -> bool:
+            ...     return n % 2 == 0
+            >>> def is_positive(n: int) -> bool:
+            ...     return n > 0
+            >>>
+            >>> out = Seq((1, -2, 3)).iter().map_juxt(is_even, is_positive).collect(Seq)
+            >>> out
+            Seq((False, True), (True, False), (False, True))
+
+            ```
+            If you need to pass additional args and kwargs to the functions, you can use `functools::partial` or create curried functions like this:
+            ```python
+            >>> from pyochain import Range, Seq
+            >>> from collections.abc import Callable
+            >>>
+            >>> def curried_add(a: int) -> Callable[[int], int]:
+            ...     def fn(b: int) -> int:
+            ...         return a + b
+            ...
+            ...     return fn
+            >>>
+            >>> out = (
+            ...     Range(1, 4)
+            ...     .iter()
+            ...     .map_juxt(curried_add(10), curried_add(20))
+            ...     .collect(Seq)
+            ... )
+            >>> out
+            Seq((11, 21), (12, 22), (13, 23))
+
+            ```
+            You can then combine this with various other methods to perform complex transformations in a clean and efficient way, without needing to iterate multiple times or create intermediate collections.
+
+            Example with `filter_star`:
+            ```python
+            >>> from pyochain import Range, Seq
+            >>> res = (
+            ...     Range(0, 5)
+            ...     .iter()
+            ...     .map_juxt(lambda x: x * 2, lambda x: x**2)
+            ...     .filter_star(lambda double, square: double + square <= 5)
+            ...     .collect(Seq)
+            ... )
+            >>> res
+            Seq((0, 0), (2, 1))
+
+            ```
+        """
+
+    def map_while[R](self, func: Callable[[T], Option[R]]) -> PyoIterator[R]:
+        """Creates an `Iterator` that both yields elements based on a predicate and maps.
+
+        `map_while()` takes a closure as an argument.
+
+        It will call this closure on each element of the `Iterator`, and yield elements while it returns `Some(_)`.
+
+        After `NONE` is returned, `PyoIterator::map_while` stops and the rest of the elements are ignored.
+
+        Args:
+            func (Callable[[T], Option[R]]): Function to apply to each element that returns `Option[R]`.
+
+        Returns:
+            PyoIterator[R]: An `Iterator` of transformed elements until `NONE` is encountered.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Some, NONE, Seq, Option
+            >>>
+            >>> def checked_div(x: int) -> Option[int]:
+            ...     return Some(16 // x) if x != 0 else NONE
+            >>>
+            >>> data = Iter((-1, 4, 0, 1))
+            >>> data.map_while(checked_div).collect(Seq)
+            Seq(-16, 4)
+            >>> data = Iter((0, 1, 2, -3, 4, 5, -6))
+            >>> # Convert to positive ints, stop at first negative
+            >>> data.map_while(lambda x: Some(x) if x >= 0 else NONE).collect(Seq)
+            Seq(0, 1, 2)
+
+            ```
+        """
+
     def partition(self, predicate: Callable[[T], bool]) -> tuple[Vec[T], Vec[T]]:
         """Consumes the `Iterator`, creating two `Vec` from it.
 
@@ -1371,6 +1935,45 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
+    def scan[U](self, initial: U, func: Callable[[U, T], Option[U]]) -> PyoIterator[U]:
+        """Transform elements by sharing state between iterations.
+
+        `scan` takes two arguments:
+
+            - an **initial** value which seeds the internal state
+            - a **func** with two arguments
+
+        The first being a reference to the internal state and the second an iterator element.
+
+        The **func** can assign to the internal state to share state between iterations.
+
+        On iteration, the **func** will be applied to each element of the iterator and the return value from the func, an Option, is returned by the next method.
+
+        Thus the **func** can return `Some(value)` to yield value, or `NONE` to end the iteration.
+
+        Args:
+            initial (U): Initial state.
+            func (Callable[[U, T], Option[U]]): Function that takes the current state and an item, and returns an Option.
+
+        Returns:
+            PyoIterator[U]: An iterable of the yielded values.
+
+        Example:
+            ```python
+            >>> from pyochain import Some, NONE, Range, Seq, Option
+            >>>
+            >>> def accumulate_until_limit(state: int, item: int) -> Option[int]:
+            ...     new_state = state + item
+            ...     match new_state:
+            ...         case _ if new_state <= 10:
+            ...             return Some(new_state)
+            ...         case _:
+            ...             return NONE
+            >>> Range(1, 6).iter().scan(0, accumulate_until_limit).collect(Seq)
+            Seq(1, 3, 6, 10)
+
+            ```
+        """
     def unpack_into[**P, R](
         self,
         func: Callable[Concatenate[T, P], R],
@@ -1406,6 +2009,74 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             >>> # The example below will work, but is not type safe, as the unpacked elements are passed as explicit positional arguments.
             >>> data.iter().unpack_into(lambda a, b, c: a + b + c)
             6
+
+            ```
+        """
+
+    def unique(self) -> PyoIterator[T]:
+        """Return only unique elements of the `Iterator`.
+
+        This has the same effect as collecting the `Iterator` into a `StableSet` (keeps original ordering), but this returns a new `Iterator`.
+
+        This means that this operation stay lazy, and can be more efficient depending on the situation.
+
+        If you just need unique elements in a collection right away, collecting the `Iterator` into a `set`-like collection may have more raw speed.
+
+        Thus
+
+        Returns:
+            PyoIterator[T]: An `Iterator` of the unique items.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq, Set
+            >>> data = Seq((1, 1, 2, 2, 3, 3))
+            >>> data.iter().unique().collect(Seq)
+            Seq(1, 2, 3)
+            >>> data.pipe(Set).iter().sort()
+            Vec(1, 2, 3)
+
+            ```
+        """
+
+    def unique_by(self, key: Callable[[T], Any]) -> PyoIterator[T]:  # pyright: ignore[reportExplicitAny]
+        """Return only unique elements of the iterable.
+
+        Args:
+            key (Callable[[T], Any]): Function to transform items before comparison.
+
+        Returns:
+            PyoIterator[T]: An `Iterator` of the unique items.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> data = Seq(("cat", "mouse", "dog", "hen"))
+            >>> data.iter().unique_by(key=len).collect(Seq)
+            Seq('cat', 'mouse')
+
+            ```
+        """
+
+    def with_position(self) -> PyoIterator[tuple[Position, T]]:
+        """Return an `Iterator` over (`Position`, `T`) tuples.
+
+        The `Position` indicates whether the item `T` is the first, middle, last, or only element in the `Iterator`.
+
+        Returns:
+            PyoIterator[tuple[Position, T]]: An `Iterator` of (`Position`, item) tuples.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>>
+            >>> data = Seq(("a", "b", "c", "d"))
+            >>> data.iter().with_position().collect(Seq)
+            Seq(('first', 'a'), ('middle', 'b'), ('middle', 'c'), ('last', 'd'))
+            >>> data.iter().take(1).with_position().collect(Seq)
+            Seq(('only', 'a'),)
+            >>> data.iter().take(2).with_position().collect(Seq)
+            Seq(('first', 'a'), ('last', 'b'))
 
             ```
         """

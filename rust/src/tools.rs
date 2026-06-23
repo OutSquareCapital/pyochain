@@ -45,7 +45,7 @@ fn retain(data: Bound<'_, PySequence>, predicate: &Bound<'_, PyAny>) -> PyResult
 
 //TODO: the double collect in `Vec` => `PyTuple` is a performance tax on large Vecs of funcs. Need to optimize.
 #[pyclass]
-struct MapJuxt {
+pub struct MapJuxt {
     iterator: Py<PyIterator>,
     funcs: Vec<Py<PyAny>>,
 }
@@ -54,7 +54,7 @@ struct MapJuxt {
 impl MapJuxt {
     #[new]
     #[pyo3(signature = (iterator, *funcs))]
-    fn new(iterator: Bound<'_, PyIterator>, funcs: &Bound<'_, PyTuple>) -> Self {
+    pub fn new(iterator: Bound<'_, PyIterator>, funcs: &Bound<'_, PyTuple>) -> Self {
         funcs
             .iter()
             .map(Bound::unbind)
@@ -87,7 +87,7 @@ impl MapJuxt {
 /// TODO: speed is 0.76x compared to the Cython implementation.
 /// Saved in `.benchmarks/unique_cy`
 #[pyclass(frozen)]
-struct UniqueIdentity {
+pub struct UniqueIdentity {
     iter: Py<PyIterator>,
     seen: Py<PySet>,
 }
@@ -95,7 +95,7 @@ struct UniqueIdentity {
 #[pymethods]
 impl UniqueIdentity {
     #[new]
-    fn new(data: Bound<'_, PyIterator>) -> PyResult<Self> {
+    pub fn new(data: Bound<'_, PyIterator>) -> PyResult<Self> {
         let py = data.py();
         Self {
             iter: data.unbind(),
@@ -131,7 +131,7 @@ impl UniqueIdentity {
 /// TODO: speed is 0.95x compared to the Cython implementation.
 /// Saved in `.benchmarks/unique_cy`
 #[pyclass(frozen)]
-struct UniqueKey {
+pub struct UniqueKey {
     iter: Py<PyIterator>,
     key: Py<PyAny>,
     seen: Py<PySet>,
@@ -140,7 +140,7 @@ struct UniqueKey {
 #[pymethods]
 impl UniqueKey {
     #[new]
-    fn new(data: Bound<'_, PyIterator>, key: Bound<'_, PyAny>) -> PyResult<Self> {
+    pub fn new(data: Bound<'_, PyIterator>, key: Bound<'_, PyAny>) -> PyResult<Self> {
         let py = data.py();
         Self {
             iter: data.unbind(),
@@ -183,7 +183,7 @@ impl UniqueKey {
 /// 1024 elements: 37.3
 /// 4096 elements: 127.7
 #[pyclass]
-struct Intersperse {
+pub struct Intersperse {
     data: Py<PyIterator>,
     element: Py<PyAny>,
     val: Option<Py<PyAny>>,
@@ -193,7 +193,7 @@ struct Intersperse {
 #[pymethods]
 impl Intersperse {
     #[new]
-    fn new(mut data: Bound<'_, PyIterator>, element: Py<PyAny>) -> PyResult<Self> {
+    pub fn new(mut data: Bound<'_, PyIterator>, element: Py<PyAny>) -> PyResult<Self> {
         let (val, must_process) = match data.next() {
             None => (None, true),
             Some(item) => (Some(item?.unbind()), false),
@@ -278,19 +278,18 @@ impl SlidingWindow {
     }
 }
 #[pyclass]
-struct FilterMap {
+pub struct FilterMap {
     iter: Py<PyIterator>,
     func: Py<PyAny>,
 }
 #[pymethods]
 impl FilterMap {
     #[new]
-    fn new(data: Bound<'_, PyIterator>, func: Bound<'_, PyAny>) -> PyResult<Self> {
+    pub fn new(data: Bound<'_, PyIterator>, func: Bound<'_, PyAny>) -> Self {
         Self {
             iter: data.unbind(),
             func: func.unbind(),
         }
-        .pipe(Ok)
     }
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
         slf
@@ -315,19 +314,18 @@ impl FilterMap {
     }
 }
 #[pyclass]
-struct FilterMapStar {
+pub struct FilterMapStar {
     iter: Py<PyIterator>,
     func: Py<PyAny>,
 }
 #[pymethods]
 impl FilterMapStar {
     #[new]
-    fn new(data: Bound<'_, PyIterator>, func: Bound<'_, PyAny>) -> PyResult<Self> {
+    pub fn new(data: Bound<'_, PyIterator>, func: Bound<'_, PyAny>) -> Self {
         Self {
             iter: data.unbind(),
             func: func.unbind(),
         }
-        .pipe(Ok)
     }
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
         slf
@@ -353,7 +351,7 @@ impl FilterMapStar {
 }
 
 #[pyclass]
-struct Scan {
+pub struct Scan {
     iter: Py<PyIterator>,
     initial: Py<PyAny>,
     func: Py<PyAny>,
@@ -361,17 +359,16 @@ struct Scan {
 #[pymethods]
 impl Scan {
     #[new]
-    fn new(
+    pub fn new(
         data: Bound<'_, PyIterator>,
         initial: Bound<'_, PyAny>,
         func: Bound<'_, PyAny>,
-    ) -> PyResult<Self> {
+    ) -> Self {
         Self {
             iter: data.unbind(),
             initial: initial.unbind(),
             func: func.unbind(),
         }
-        .pipe(Ok)
     }
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
         slf
@@ -402,14 +399,14 @@ impl Scan {
 }
 
 #[pyclass]
-struct MapWhile {
+pub struct MapWhile {
     iter: Py<PyIterator>,
     func: Py<PyAny>,
 }
 #[pymethods]
 impl MapWhile {
     #[new]
-    fn new(data: Bound<'_, PyIterator>, func: Bound<'_, PyAny>) -> Self {
+    pub fn new(data: Bound<'_, PyIterator>, func: Bound<'_, PyAny>) -> Self {
         Self {
             iter: data.unbind(),
             func: func.unbind(),
@@ -451,7 +448,7 @@ impl FromFnStrategy {
     }
 }
 #[pyclass]
-struct FromFn {
+pub struct FromFn {
     func: Py<PyAny>,
     strategy: FromFnStrategy,
 }
@@ -459,7 +456,7 @@ struct FromFn {
 impl FromFn {
     #[pyo3(signature = (func, *args, **kwargs))]
     #[new]
-    fn new(func: Bound<'_, PyAny>, args: &Args<'_>, kwargs: Option<&Kwargs<'_>>) -> Self {
+    pub fn new(func: Bound<'_, PyAny>, args: &Args<'_>, kwargs: Option<&Kwargs<'_>>) -> Self {
         Self {
             func: func.unbind(),
             strategy: FromFnStrategy::new(args, kwargs),
@@ -642,14 +639,14 @@ impl Drop for ExtractIf {
     }
 }
 #[pyclass]
-struct Successors {
+pub struct Successors {
     succ: Py<PyAny>,
     current: Py<PyAny>,
 }
 #[pymethods]
 impl Successors {
     #[new]
-    fn new(start: Bound<'_, PyAny>, succ: Bound<'_, PyAny>) -> Self {
+    pub fn new(start: Bound<'_, PyAny>, succ: Bound<'_, PyAny>) -> Self {
         Self {
             current: start.unbind(),
             succ: succ.unbind(),
@@ -672,7 +669,7 @@ impl Successors {
     }
 }
 #[pyclass]
-struct FilterStar {
+pub struct FilterStar {
     iter: Py<PyIterator>,
     predicate: Py<PyAny>,
 }
@@ -680,7 +677,7 @@ struct FilterStar {
 #[pymethods]
 impl FilterStar {
     #[new]
-    fn new(data: Bound<'_, PyIterator>, predicate: Bound<'_, PyAny>) -> Self {
+    pub fn new(data: Bound<'_, PyIterator>, predicate: Bound<'_, PyAny>) -> Self {
         Self {
             iter: data.unbind(),
             predicate: predicate.unbind(),
@@ -713,7 +710,7 @@ impl FilterStar {
 }
 
 #[pyclass]
-struct WithPosition {
+pub struct WithPosition {
     iter: Py<PyIterator>,
     did_iter: bool,
     peeked: Option<Py<PyAny>>,
@@ -721,7 +718,7 @@ struct WithPosition {
 #[pymethods]
 impl WithPosition {
     #[new]
-    fn new(data: Bound<'_, PyIterator>) -> Self {
+    pub fn new(data: Bound<'_, PyIterator>) -> Self {
         Self {
             iter: data.unbind(),
             did_iter: false,
