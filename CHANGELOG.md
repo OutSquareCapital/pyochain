@@ -6,6 +6,7 @@
 
 - `abc::PyoIterable` has been moved to Rust, and it's generic type is now covariant.
 - `abc::PyoIterator` migration to Rust has been started
+- `abc::PyoIterator::peekable` has been completely refactored and now aligns with Rust std Iterator, with the methods `peek`, `next_if`, `next_if_eq`, and `next_if_map`.
 
 ### 💥 Breaking changes
 
