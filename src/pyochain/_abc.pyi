@@ -1751,6 +1751,128 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
+    def map[R](self, func: Callable[[T], R]) -> PyoIterator[R]:
+        """Apply a function **func** to each element of the `Iterator`.
+
+        If you are good at thinking in types, you can think of `PyoIterator::map` like this:
+
+        - You have an `Iterator` that gives you elements of some type `A`
+        - You want an `Iterator` of some other type `B`
+        - Thenyou can use `.map()`, passing a closure **func** that takes an `A` and returns a `B`.
+
+        `PyoIterator::map` is conceptually similar to a for loop.
+
+        However, as `PyoIterator::map` is lazy, it is best used when you are already working with other `PyoIterator` instances.
+
+        If you are doing some sort of looping for a side effect, it is considered more idiomatic to use `PyoIterator.for_each` than `PyoIterator.map().collect(Seq)`.
+
+        Args:
+            func (Callable[[T], R]): Function to apply to each element.
+
+        Returns:
+            PyoIterator[R]: An iterator of transformed elements.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> Iter((1, 2)).map(lambda x: x + 1).collect(Seq)
+            Seq(2, 3)
+            >>> # You can use methods on the class rather than on instance for convenience:
+            >>> data = Seq(("a", "b", "c"))
+            >>> data.iter().map(str.upper).collect(Seq)
+            Seq('A', 'B', 'C')
+            >>> data.iter().map(lambda s: s.upper()).collect(Seq)
+            Seq('A', 'B', 'C')
+
+            ```
+        """
+
+    @overload
+    def map_star[T1, R](
+        self: PyoIterator[tuple[T1]], func: Callable[[T1], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star[T1, T2, R](
+        self: PyoIterator[tuple[T1, T2]], func: Callable[[T1, T2], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star[T1, T2, T3, R](
+        self: PyoIterator[tuple[T1, T2, T3]], func: Callable[[T1, T2, T3], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4]], func: Callable[[T1, T2, T3, T4], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
+        func: Callable[[T1, T2, T3, T4, T5], R],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
+        func: Callable[[T1, T2, T3, T4, T5, T6], R],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, T7, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7], R],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], R],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], R],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star[R](
+        self: PyoIterator[tuple[Any, ...]],  # pyright: ignore[reportExplicitAny]
+        func: Callable[..., R],
+    ) -> PyoIterator[R]: ...
+    def map_star[U: AnyIter, R](
+        self: PyoIterator[U], func: Callable[..., R]
+    ) -> PyoIterator[R]:
+        """Applies a function to each element.where each element is an iterable.
+
+        Unlike `.map()`, which passes each element as a single argument, `.starmap()` unpacks each element into positional arguments for the function.
+
+        In short, for each element in the `Iterator`, it computes `func(*element)`.
+
+        Note:
+            Always prefer using `.map_star()` over `.map()` when working with `Iterator` of `tuple` elements.
+
+            Not only it is more readable, but it's also much more performant (up to 30% faster in benchmarks).
+
+        Args:
+            func (Callable[..., R]): Function to apply to unpacked elements.
+
+        Returns:
+            PyoIterator[R]: An iterable of results from applying the function to unpacked elements.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> def make_sku(color: str, size: str) -> str:
+            ...     return f"{color}-{size}"
+            >>> data = Seq(("blue", "red"))
+            >>> data.iter().product(["S", "M"]).map_star(make_sku).collect(Seq)
+            Seq('blue-S', 'blue-M', 'red-S', 'red-M')
+            >>> # This is equivalent to:
+            >>> data.iter().product(["S", "M"]).map(lambda x: make_sku(*x)).collect(Seq)
+            Seq('blue-S', 'blue-M', 'red-S', 'red-M')
+
+            ```
+        """
+
     @overload
     def map_juxt[R1, R2](
         self,

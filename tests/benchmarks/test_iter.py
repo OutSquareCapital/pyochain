@@ -478,3 +478,13 @@ def test_map_windows(benchmark: BenchFixture, size: int) -> None:
 
 def _map_windows(data: Range, size: int) -> tuple[int, ...]:
     return data.iter().map_windows(size, lambda x: x).last()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_map(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_map, data) == size - 1
+
+
+def _map(data: Range) -> int:
+    return data.iter().map(lambda x: x).last()

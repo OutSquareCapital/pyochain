@@ -47,9 +47,8 @@ impl PyoIterator {
         cls: &Bound<'py, PyType>,
         iterable: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
-        cls.call1((iterable,))?
-            .pipe(|x| unsafe { x.cast_into_unchecked::<Self>() })
-            .pipe(Ok)
+        cls.call1((iterable,))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
     #[pyo3(signature = (f, *args, **kwargs))]
     #[classmethod]
@@ -59,9 +58,8 @@ impl PyoIterator {
         args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Bound<'py, Self>> {
-        cls.call1((tls::FromFn::new(f, args, kwargs),))?
-            .pipe(|x| unsafe { x.cast_into_unchecked::<Self>() })
-            .pipe(Ok)
+        cls.call1((tls::FromFn::new(f, args, kwargs),))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
     #[classmethod]
     fn successors<'py>(
@@ -69,9 +67,8 @@ impl PyoIterator {
         first: Bound<'py, PyAny>,
         succ: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
-        cls.call1((tls::Successors::new(first, succ),))?
-            .pipe(|x| unsafe { x.cast_into_unchecked::<Self>() })
-            .pipe(Ok)
+        cls.call1((tls::Successors::new(first, succ),))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
     #[classmethod]
     #[pyo3(signature = (start=0, step=1))]
@@ -80,9 +77,8 @@ impl PyoIterator {
         start: i32,
         step: i32,
     ) -> PyResult<Bound<'py, Self>> {
-        cls.call1((pylibs::itertools::count(cls.py(), &start, &step)?,))?
-            .pipe(|x| unsafe { x.cast_into_unchecked::<Self>() })
-            .pipe(Ok)
+        cls.call1((pylibs::itertools::count(cls.py(), &start, &step)?,))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
 
     /// We use unsafe code here to match the performance of a Cython implementation
@@ -594,8 +590,8 @@ impl PyoIterator {
             }
         }
         PyNull::get(py)
-            .into_py_any(py)?
-            .pipe(PyoOk::new)
+            .into_py_any(py)
+            .map(PyoOk::new)?
             .into_py_any(py)
     }
     fn try_fold(
@@ -629,8 +625,8 @@ impl PyoIterator {
         match first {
             None => {
                 return PyNull::get(py)
-                    .into_py_any(py)?
-                    .pipe(PyoOk::new)
+                    .into_py_any(py)
+                    .map(PyoOk::new)?
                     .into_py_any(py);
             }
             Some(first_val) => {
@@ -650,8 +646,8 @@ impl PyoIterator {
                 }
                 accumulator
                     .pipe(PySome::new)
-                    .into_py_any(py)?
-                    .pipe(PyoOk::new)
+                    .into_py_any(py)
+                    .map(PyoOk::new)?
                     .into_py_any(py)
             }
         }
@@ -667,7 +663,7 @@ impl PyoIterator {
                 Ok(ok) => collected.append(&ok.get().value)?,
                 Err(_) => match val.cast_into_exact::<PySome>() {
                     Ok(some) => collected.append(&some.get().value)?,
-                    Err(_) => return PyNull::get_any_ok(py)?.pipe(Ok),
+                    Err(_) => return PyNull::get_any_ok(py),
                 },
             }
         }
@@ -675,8 +671,7 @@ impl PyoIterator {
             .pipe_ref(pylibs::pyochain::vec::from_ref)?
             .unbind()
             .pipe(PySome::new)
-            .into_py_any(py)?
-            .pipe(Ok)
+            .into_py_any(py)
     }
 
     #[pyo3(signature = (init, func, *args, **kwargs))]
@@ -719,7 +714,7 @@ impl PyoIterator {
                 .expect("Error occurred while evaluating predicate output in `PyoIterator::find`")
         })
         .next()
-        .map(|x| x?.unbind().pipe(PySome::new).into_py_any(py)?.pipe(Ok))
+        .map(|x| x?.unbind().pipe(PySome::new).into_py_any(py))
         .unwrap_or_else(|| PyNull::get_any_ok(py))
     }
     fn intersperse<'py>(
@@ -765,6 +760,18 @@ impl PyoIterator {
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
             .map(|x| tls::FilterMapStar::new(x, func))
+            .and_then(|x| slf.get_type().call1((x,)))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+    fn map<'py>(slf: Bound<'py, Self>, func: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        slf.try_iter()
+            .and_then(|x| pylibs::builtins::map(func, x))
+            .and_then(|x| slf.get_type().call1((x,)))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+    fn map_star<'py>(slf: Bound<'py, Self>, func: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        slf.try_iter()
+            .and_then(|x| pylibs::itertools::map_star(func, x))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }

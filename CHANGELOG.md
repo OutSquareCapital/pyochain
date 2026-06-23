@@ -45,6 +45,7 @@ Name         | 10 items | 100 items | 1_000 items | 10_000 items | Note
 `partition`  | **1.24x**| **1.05x** | **1.02x**   | **1.02x**    | Due to `Vec` creation in Rust, Low items counts are likely higher after full Rust migration
 `is_sorted`  | **1.12x**| **1.07x** | **1.01x**   | **1.00x**    | Due to default param now in Rust.
 `group_by`   | **1.39x**| **1.42x** | **1.43x**   | **1.40x**    | -
+`map`        | **1.08x**| **1.03x** | **1.00x**   | **1.04x**    | -
 
 ---
 

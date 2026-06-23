@@ -319,8 +319,8 @@ impl PySome {
                 .value
                 .clone_ref(py)
                 .pipe(Self::new)
-                .into_py_any(py)?
-                .pipe(PyoOk::new)
+                .into_py_any(py)
+                .map(PyoOk::new)?
                 .into_py_any(py),
             Err(_) => inner
                 .cast_exact::<PyoErr>()?
