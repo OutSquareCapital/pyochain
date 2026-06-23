@@ -488,3 +488,13 @@ def test_map(benchmark: BenchFixture, size: int) -> None:
 
 def _map(data: Range) -> int:
     return data.iter().map(lambda x: x).last()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_accumulate(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_accumulate, data) == size * (size - 1) // 2
+
+
+def _accumulate(data: Range) -> int:
+    return data.iter().accumulate(operator.add, 0).last()

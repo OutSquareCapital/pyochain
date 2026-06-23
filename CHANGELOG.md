@@ -20,6 +20,8 @@
 ### ✨ Enhancements
 
 - **typing**: added overloads to `PyoIterator::batched` to return precise tuple types for batch sizes up to 5 if *strict* is `True`.
+- **API**: `PyoIterator::accumulate` is now aligned with `itertools`, with the possibility to not provide a function, in which case the default is to use addition.
+- **API**: `PyoIterator::product` missed it's `repeat` argument. This is now fixed.
 
 ### 🚀 Performance improvements
 
@@ -46,6 +48,7 @@ Name         | 10 items | 100 items | 1_000 items | 10_000 items | Note
 `is_sorted`  | **1.12x**| **1.07x** | **1.01x**   | **1.00x**    | Due to default param now in Rust.
 `group_by`   | **1.39x**| **1.42x** | **1.43x**   | **1.40x**    | -
 `map`        | **1.08x**| **1.03x** | **1.00x**   | **1.04x**    | -
+`accumulate` | **1.11x**| **1.05x** | **1.04x**   | **1.00x**    | -
 
 ---
 

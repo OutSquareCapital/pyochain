@@ -3,16 +3,7 @@ from __future__ import annotations
 import functools
 import itertools
 from abc import ABC
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Literal,
-    Self,
-    TypeGuard,
-    TypeIs,
-    overload,
-    override,
-)
+from typing import TYPE_CHECKING, Any, Literal, Self, overload, override
 
 from .._abc import (  # pyright: ignore[reportMissingModuleSource]
     PyoIterable,
@@ -50,8 +41,6 @@ if TYPE_CHECKING:
     from ._sequences import PyoMutableSequence
 
     type AnyIter = Iterable[Any]  # pyright: ignore[reportExplicitAny]
-    type FilterFn[T, R] = Callable[[T], bool | TypeIs[R] | TypeGuard[R]] | None
-    """Optional closure that can be passed to `PyoIterator::filter` to determine if an element should be yielded."""
     type SupportsAnyComparison = SupportsComparison[Any]  # pyright: ignore[reportExplicitAny]
 
 
@@ -742,64 +731,6 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
         """
         return max(iter(self), key=key)
 
-    def take_while(self, predicate: Callable[[T], bool]) -> PyoIterator[T]:
-        """Take items while predicate holds.
-
-        Args:
-            predicate (Callable[[T], bool]): Function to evaluate each item.
-
-        Returns:
-            PyoIterator[T]: An `Iterator` of the items taken while the predicate is true.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2, 0)).take_while(lambda x: x > 0).collect(Seq)
-            Seq(1, 2)
-
-            ```
-        """
-        return self._from_iterable(itertools.takewhile(predicate, iter(self)))
-
-    def skip_while(self, predicate: Callable[[T], bool]) -> PyoIterator[T]:
-        """Drop items while predicate holds.
-
-        Args:
-            predicate (Callable[[T], bool]): Function to evaluate each item.
-
-        Returns:
-            PyoIterator[T]: An `Iterator` of the items after skipping those for which the predicate is true.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq
-            >>> out = Seq((1, 2, 0, -1)).iter().skip_while(lambda x: x > 0).collect(Seq)
-            >>> out
-            Seq(0, -1)
-
-            ```
-        """
-        return self._from_iterable(itertools.dropwhile(predicate, iter(self)))
-
-    def compress(self, *selectors: bool) -> PyoIterator[T]:
-        """Filter elements using a boolean selector iterable.
-
-        Args:
-            *selectors (bool): Boolean values indicating which elements to keep.
-
-        Returns:
-            PyoIterator[T]: An `Iterator` of the items selected by the boolean selectors.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter("ABCDEF").compress(1, 0, 1, 0, 1, 1).collect(Seq)
-            Seq('A', 'C', 'E', 'F')
-
-            ```
-        """
-        return self._from_iterable(itertools.compress(iter(self), selectors))
-
     def take(self, n: int) -> PyoIterator[T]:
         """Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner.
 
@@ -912,30 +843,6 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
         """
         return self._from_iterable(itertools.islice(iter(self), start, stop, step))
 
-    def cycle(self) -> PyoIterator[T]:
-        """Repeat the `Iterator` indefinitely.
-
-        Warning:
-            This creates an infinite `Iterator`.
-
-            Be sure to use [`PyoIterator::take`][take] or [`PyoIterator::slice`][slice] to limit the number of items taken.
-
-        See Also:
-            [`PyoIterator::repeat`][repeat] to repeat *self* as elements (`PyoIterator[PyoIterator[T]]`).
-
-        Returns:
-            PyoIterator[T]: A new `Iterator` that cycles through the elements indefinitely.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2)).cycle().take(5).collect(Seq)
-            Seq(1, 2, 1, 2, 1)
-
-            ```
-        """
-        return self._from_iterable(itertools.cycle(iter(self)))
-
     def insert(self, value: T) -> PyoIterator[T]:
         """Prepend the *value* to the `Iterator`.
 
@@ -992,41 +899,6 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
             ```
         """
         return self._from_iterable(itertools.chain.from_iterable((iter(self), *others)))
-
-    def accumulate(
-        self, func: Callable[[T, T], T], initial: T | None = None
-    ) -> PyoIterator[T]:
-        """Return an `Iterator` of accumulated binary function results.
-
-        In principle, `PyoIterator::accumulate` is similar to `PyoIterator::fold` if you provide it with the same binary function.
-
-        However, instead of returning the final accumulated result, it returns an `Iterator` that yields the current value `T` of the accumulator for each iteration.
-
-        In other words, the last element yielded by `PyoIterator::accumulate` is what would have been returned by `PyoIterator::fold` if it had been used instead.
-
-        Args:
-            func (Callable[[T, T], T]): A binary function to apply cumulatively.
-            initial (T | None): Optional initial value to start the accumulation.
-
-        Returns:
-            PyoIterator[T]: A new `Iterator` with accumulated results.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2, 3)).accumulate(lambda a, b: a + b, 0).collect(Seq)
-            Seq(0, 1, 3, 6)
-            >>> # The final accumulated result is the same as fold:
-            >>> Iter((1, 2, 3)).fold(0, lambda a, b: a + b)
-            6
-            >>> Iter((1, 2, 3)).accumulate(lambda a, b: a * b).collect(Seq)
-            Seq(1, 2, 6)
-
-            ```
-        """
-        return self._from_iterable(
-            itertools.accumulate(iter(self), func, initial=initial)
-        )
 
     def peekable(self) -> Peekable[T]:
         """Creates an iterator which can use the peek and peek_mut methods to look at the next element of the `Iterator` without consuming it.
@@ -1358,41 +1230,6 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
         return new(repeat(iter(self), n))
 
     @overload
-    def filter_false[N](
-        self: PyoIterator[N | None], func: None = None
-    ) -> PyoIterator[None]: ...
-    @overload
-    def filter_false[U](self, func: Callable[[T], TypeIs[U]]) -> PyoIterator[U]: ...
-    @overload
-    def filter_false[U](self, func: Callable[[T], TypeGuard[U]]) -> PyoIterator[U]: ...
-    @overload
-    def filter_false(self, func: Callable[[T], bool]) -> PyoIterator[T]: ...
-    def filter_false[U](
-        self, func: FilterFn[T, U] = None
-    ) -> PyoIterator[T] | PyoIterator[U]:
-        """Return elements for which **func** is `False`.
-
-        The **func** can return a `TypeIs` to narrow the type of the returned `Iterator`.
-
-        This won't have any runtime effect, but allows for better type inference.
-
-        Args:
-            func (FilterFn[T, U]): Function to evaluate each item.
-
-        Returns:
-            PyoIterator[T] | PyoIterator[U]: An `Iterator` of the items that do not satisfy the predicate.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2, 3)).filter_false(lambda x: x > 1).collect(Seq)
-            Seq(1,)
-
-            ```
-        """
-        return self._from_iterable(itertools.filterfalse(func, iter(self)))
-
-    @overload
     def zip[T1](
         self,
         iter1: Iterable[T1],
@@ -1492,7 +1329,9 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
         /,
     ) -> PyoIterator[tuple[T, T1, T2, T3, T4]]: ...
 
-    def product(self, *others: AnyIter) -> PyoIterator[tuple[Any, ...]]:  # pyright: ignore[reportExplicitAny]
+    def product(
+        self, *others: AnyIter, repeat: int = 1
+    ) -> PyoIterator[tuple[Any, ...]]:  # pyright: ignore[reportExplicitAny]
         """Computes the Cartesian product with another iterable.
 
         This is the declarative equivalent of nested for-loops.
@@ -1502,6 +1341,7 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
 
         Args:
             *others (AnyIter): Other iterables to compute the Cartesian product with.
+            repeat (int): The number of repetitions of the Cartesian product.
 
         Returns:
             PyoIterator[tuple[Any, ...]]: An iterable of tuples containing elements from the Cartesian product.
@@ -1510,13 +1350,14 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
             ```python
             >>> from pyochain import Seq, Range, Iter
             >>>
-            >>> data = Seq(("blue", "red"))
-            >>> data.iter().product(["S", "M"]).collect(Seq)
+            >>> colors = Seq(("blue", "red"))
+            >>> sizes = Seq(("S", "M"))
+            >>> colors.iter().product(sizes).collect(Seq)
             Seq(('blue', 'S'), ('blue', 'M'), ('red', 'S'), ('red', 'M'))
             >>> res = (
-            ...     data
+            ...     colors
             ...     .iter()
-            ...     .product(["S", "M"])
+            ...     .product(sizes)
             ...     .map_star(lambda color, size: f"{color}-{size}")
             ...     .collect(Seq)
             ... )
@@ -1525,7 +1366,7 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
             >>> res = (
             ...     Range(1, 4)
             ...     .iter()
-            ...     .product([10, 20])
+            ...     .product((10, 20))
             ...     .filter_star(lambda a, b: a * b >= 40)
             ...     .map_star(lambda a, b: a * b)
             ...     .collect(Seq)
@@ -1535,7 +1376,7 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
             >>> res = (
             ...     Iter
             ...     .once(1)
-            ...     .product(["a", "b"], [True])
+            ...     .product(("a", "b"), [True])
             ...     .filter_star(lambda _a, b, _c: b != "a")
             ...     .map_star(lambda a, b, c: f"{a}{b} is {c}")
             ...     .collect(Seq)
@@ -1545,58 +1386,9 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
 
             ```
         """
-        return self._from_iterable(itertools.product(iter(self), *others))
-
-    @overload
-    def batched(
-        self, n: Literal[1], *, strict: Literal[True]
-    ) -> PyoIterator[tuple[T]]: ...
-    @overload
-    def batched(
-        self, n: Literal[2], *, strict: Literal[True]
-    ) -> PyoIterator[tuple[T, T]]: ...
-    @overload
-    def batched(
-        self, n: Literal[3], *, strict: Literal[True]
-    ) -> PyoIterator[tuple[T, T, T]]: ...
-    @overload
-    def batched(
-        self, n: Literal[4], *, strict: Literal[True]
-    ) -> PyoIterator[tuple[T, T, T, T]]: ...
-    @overload
-    def batched(
-        self, n: Literal[5], *, strict: Literal[True]
-    ) -> PyoIterator[tuple[T, T, T, T, T]]: ...
-    def batched(self, n: int, *, strict: bool = False) -> PyoIterator[tuple[T, ...]]:
-        """Batch elements into tuples of length n and return a new Iter.
-
-        - The last batch may be shorter than n.
-        - The data is consumed lazily, just enough to fill a batch.
-        - The result is yielded as soon as a batch is full or when the input iterable is exhausted.
-
-        Note:
-            This is the closest equivalent to `Iterator::array_chunks` in Rust.
-
-        Args:
-            n (int): Number of elements in each batch.
-            strict (bool): If `True`, raises a ValueError if the last batch is not of length n.
-
-        Returns:
-            PyoIterator[tuple[T, ...]]: An iterable of batched tuples.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq
-            >>> Seq("ABCDEFG").iter().batched(3).collect(Seq)
-            Seq(('A', 'B', 'C'), ('D', 'E', 'F'), ('G',))
-            >>> data = Seq((1, 1, 2, -2, 6, 0, 3, 1, 0))
-            >>> #           ^-----^  ^------^  ^-----^
-            >>> data.iter().batched(3, strict=True).map(sum).all(lambda x: x == 4)
-            True
-
-            ```
-        """
-        return self._from_iterable(itertools.batched(iter(self), n, strict=strict))
+        return self._from_iterable(
+            itertools.product(iter(self), *others, repeat=repeat)
+        )
 
     def enumerate(self, start: int = 0) -> PyoIterator[tuple[int, T]]:
         """Return a `Iterator` of (index, value) pairs.
@@ -1632,115 +1424,6 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
             ```
         """
         return self._from_iterable(enumerate(iter(self), start))
-
-    @overload
-    def combinations(self, r: Literal[2]) -> PyoIterator[tuple[T, T]]: ...
-    @overload
-    def combinations(self, r: Literal[3]) -> PyoIterator[tuple[T, T, T]]: ...
-    @overload
-    def combinations(self, r: Literal[4]) -> PyoIterator[tuple[T, T, T, T]]: ...
-    @overload
-    def combinations(self, r: Literal[5]) -> PyoIterator[tuple[T, T, T, T, T]]: ...
-    def combinations(self, r: int) -> PyoIterator[tuple[T, ...]]:
-        """Return all combinations of length r.
-
-        Args:
-            r (int): Length of each combination.
-
-        Returns:
-            PyoIterator[tuple[T, ...]]: An iterable of combinations.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2, 3)).combinations(2).collect(Seq)
-            Seq((1, 2), (1, 3), (2, 3))
-
-            ```
-        """
-        return self._from_iterable(itertools.combinations(iter(self), r))
-
-    @overload
-    def permutations(self, r: Literal[2]) -> PyoIterator[tuple[T, T]]: ...
-    @overload
-    def permutations(self, r: Literal[3]) -> PyoIterator[tuple[T, T, T]]: ...
-    @overload
-    def permutations(self, r: Literal[4]) -> PyoIterator[tuple[T, T, T, T]]: ...
-    @overload
-    def permutations(self, r: Literal[5]) -> PyoIterator[tuple[T, T, T, T, T]]: ...
-    def permutations(self, r: int | None = None) -> PyoIterator[tuple[T, ...]]:
-        """Return all permutations of length r.
-
-        Args:
-            r (int | None): Length of each permutation. Defaults to the length of the iterable.
-
-        Returns:
-            PyoIterator[tuple[T, ...]]: An iterable of permutations.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2, 3)).permutations(2).collect(Seq)
-            Seq((1, 2), (1, 3), (2, 1), (2, 3), (3, 1), (3, 2))
-
-            ```
-        """
-        return self._from_iterable(itertools.permutations(iter(self), r))
-
-    @overload
-    def combinations_with_replacement(
-        self, r: Literal[2]
-    ) -> PyoIterator[tuple[T, T]]: ...
-    @overload
-    def combinations_with_replacement(
-        self, r: Literal[3]
-    ) -> PyoIterator[tuple[T, T, T]]: ...
-    @overload
-    def combinations_with_replacement(
-        self,
-        r: Literal[4],
-    ) -> PyoIterator[tuple[T, T, T, T]]: ...
-    @overload
-    def combinations_with_replacement(
-        self,
-        r: Literal[5],
-    ) -> PyoIterator[tuple[T, T, T, T, T]]: ...
-    def combinations_with_replacement(self, r: int) -> PyoIterator[tuple[T, ...]]:
-        """Return all combinations with replacement of length r.
-
-        Args:
-            r (int): Length of each combination.
-
-        Returns:
-            PyoIterator[tuple[T, ...]]: An iterable of combinations with replacement.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2, 3)).combinations_with_replacement(2).collect(Seq)
-            Seq((1, 1), (1, 2), (1, 3), (2, 2), (2, 3), (3, 3))
-
-            ```
-        """
-        return self._from_iterable(
-            itertools.combinations_with_replacement(iter(self), r)
-        )
-
-    def pairwise(self) -> PyoIterator[tuple[T, T]]:
-        """Return an iterator over pairs of consecutive elements.
-
-        Returns:
-            PyoIterator[tuple[T, T]]: An iterable of pairs of consecutive elements.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq
-            >>> Seq((1, 2, 3)).iter().pairwise().collect(Seq)
-            Seq((1, 2), (2, 3))
-
-            ```
-        """
-        return self._from_iterable(itertools.pairwise(iter(self)))
 
 
 class Peekable[T](PyoIterator[T]):
