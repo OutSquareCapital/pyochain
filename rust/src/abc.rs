@@ -1,9 +1,8 @@
 use crate::args::{Args, Kwargs};
 use crate::mixins::Checkable;
+use crate::pylibs;
 use pyo3::prelude::*;
-use pyo3::sync::PyOnceLock;
 use pyo3::types::PyIterator;
-use tap::prelude::*;
 
 #[pymodule(name = "_abc")]
 pub fn abc(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -20,12 +19,7 @@ impl PyoIterable {
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
         PyClassInitializer::from(Checkable).add_subclass(PyoIterable {})
     }
-    fn iter(slf: Bound<'_, Self>) -> PyResult<Bound<'_, PyIterator>> {
-        static ITER: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-        ITER.import(slf.py(), "pyochain", "Iter")
-            .unwrap()
-            .call1((slf,))?
-            .pipe(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
-            .pipe(Ok)
+    fn iter<'py>(slf: &'py Bound<'py, Self>) -> PyResult<Bound<'py, PyIterator>> {
+        pylibs::pyochain::iter::new(slf)
     }
 }

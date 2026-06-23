@@ -247,7 +247,7 @@ fn try_collect<'py>(data: Bound<'py, PyIterator>) -> PyResult<Py<PyAny>> {
         }
     }
     collected
-        .pipe(pylibs::pyochain::vec::from_ref)?
+        .pipe_ref(pylibs::pyochain::vec::from_ref)?
         .unbind()
         .pipe(PySome::new)
         .into_py_any(py)?
@@ -455,8 +455,8 @@ fn partition<'py>(
         }
     }
     Ok((
-        pylibs::pyochain::vec::from_ref(true_list)?,
-        pylibs::pyochain::vec::from_ref(false_list)?,
+        pylibs::pyochain::vec::from_ref(&true_list)?,
+        pylibs::pyochain::vec::from_ref(&false_list)?,
     ))
 }
 /// We use unsafe code here to match the performance of a Cython implementation

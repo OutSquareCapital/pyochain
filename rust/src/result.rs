@@ -2,9 +2,11 @@ use crate::args::{Args, Concatenate, Kwargs};
 use crate::errors::ResultUnwrapError;
 use crate::hasher::hash_fn;
 use crate::option::{PyNull, PySome};
+use crate::pylibs;
 use pyderive::*;
 use pyo3::IntoPyObjectExt;
 use pyo3::exceptions::PyBaseException;
+use pyo3::types::PyIterator;
 use pyo3::{
     prelude::*,
     types::{PyString, PyTuple},
@@ -148,14 +150,20 @@ impl PyoOk {
     }
 
     fn map_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Self> {
-        func.call1(self.value.bind(func.py()).cast::<PyTuple>()?)?
+        self.value
+            .bind(func.py())
+            .cast::<PyTuple>()?
+            .pipe(|x| func.call1(x))?
             .unbind()
             .pipe(Self::new)
             .pipe(Ok)
     }
 
     fn and_then_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-        func.call1(self.value.bind(func.py()).cast::<PyTuple>()?)?
+        self.value
+            .bind(func.py())
+            .cast::<PyTuple>()?
+            .pipe(|x| func.call1(x))?
             .unbind()
             .pipe(Ok)
     }
@@ -307,12 +315,8 @@ impl PyoErr {
         self.error.clone_ref(py)
     }
 
-    fn iter(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        PyModule::import(py, "pyochain")?
-            .getattr("Iter")?
-            .call1((PyTuple::empty(py),))?
-            .unbind()
-            .pipe(Ok)
+    fn iter<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyIterator>> {
+        pylibs::pyochain::iter::new(&PyTuple::empty(slf.py()))
     }
 
     fn unwrap_or(&self, default: Py<PyAny>) -> Py<PyAny> {

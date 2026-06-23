@@ -1,13 +1,14 @@
 use crate::args::{Args, Concatenate, Kwargs};
 use crate::errors::OptionUnwrapError;
 use crate::hasher::hash_fn;
+use crate::pylibs;
 use crate::result::{PyoErr, PyoOk};
 use pyo3::IntoPyObjectExt;
 use pyo3::exceptions::PyTypeError;
 use pyo3::{
     prelude::*,
     sync::PyOnceLock,
-    types::{PyString, PyTuple},
+    types::{PyIterator, PyString, PyTuple},
 };
 use tap::prelude::*;
 
@@ -303,12 +304,11 @@ impl PySome {
         }
     }
 
-    fn iter(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        py.import("pyochain")?
-            .getattr("Iter")?
-            .call_method1("once", (&self.value,))?
-            .unbind()
-            .pipe(Ok)
+    fn iter<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyIterator>> {
+        slf.get()
+            .value
+            .bind(slf.py())
+            .pipe_ref(pylibs::pyochain::iter::once)
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
@@ -556,12 +556,8 @@ impl PyNull {
         }
     }
 
-    fn iter(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        py.import("pyochain")?
-            .getattr("Iter")?
-            .call1(((),))?
-            .unbind()
-            .pipe(Ok)
+    fn iter<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyIterator>> {
+        pylibs::pyochain::iter::new(&PyTuple::empty(slf.py()))
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {

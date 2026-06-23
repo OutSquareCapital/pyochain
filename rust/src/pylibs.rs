@@ -69,11 +69,31 @@ pub mod pyochain {
     pub mod vec {
         use super::*;
         static VEC: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-        pub fn from_ref<'py>(obj: Bound<'py, PyList>) -> PyResult<Bound<'py, PyAny>> {
+        #[inline(always)]
+        pub fn from_ref<'py>(obj: &Bound<'py, PyList>) -> PyResult<Bound<'py, PyAny>> {
             let py = obj.py();
             VEC.import(py, PYOCHAIN, "Vec")?
                 .getattr(intern!(py, "from_ref"))?
-                .call1((obj,))?
+                .call1((obj,))
+        }
+    }
+    pub mod iter {
+        use super::*;
+        static ITER: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+        #[inline(always)]
+        pub fn new<'py>(iterable: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyIterator>> {
+            ITER.import(iterable.py(), PYOCHAIN, "Iter")?
+                .call1((iterable,))?
+                .pipe(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
+                .pipe(Ok)
+        }
+        #[inline(always)]
+        pub fn once<'py>(val: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyIterator>> {
+            let py = val.py();
+            ITER.import(py, PYOCHAIN, "Iter")?
+                .getattr(intern!(py, "once"))?
+                .call1((val,))?
+                .pipe(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
                 .pipe(Ok)
         }
     }
