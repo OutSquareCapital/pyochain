@@ -1,9 +1,8 @@
 name: Deploy Documentation
 
 on:
-  push:
-    branches: [master]
-  workflow_dispatch:
+  release:
+    types: [published]
 
 permissions:
   contents: write
