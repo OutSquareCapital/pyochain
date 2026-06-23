@@ -52,6 +52,19 @@ pub mod itertools {
     static GROUP_BY: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static ZIP_LONGEST: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static MAP_STAR: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static COUNT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+
+    #[inline(always)]
+    pub fn count<'py>(
+        py: Python<'py>,
+        start: &i32,
+        step: &i32,
+    ) -> PyResult<Bound<'py, PyIterator>> {
+        COUNT
+            .import(py, ITERTOOLS, "count")?
+            .call1((start, step))
+            .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
+    }
 
     #[inline(always)]
     pub fn tee<'py>(

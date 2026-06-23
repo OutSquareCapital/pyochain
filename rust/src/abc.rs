@@ -73,6 +73,17 @@ impl PyoIterator {
             .pipe(|x| unsafe { x.cast_into_unchecked::<Self>() })
             .pipe(Ok)
     }
+    #[classmethod]
+    #[pyo3(signature = (start=0, step=1))]
+    fn from_count<'py>(
+        cls: &Bound<'py, PyType>,
+        start: i32,
+        step: i32,
+    ) -> PyResult<Bound<'py, Self>> {
+        cls.call1((pylibs::itertools::count(cls.py(), &start, &step)?,))?
+            .pipe(|x| unsafe { x.cast_into_unchecked::<Self>() })
+            .pipe(Ok)
+    }
 
     /// We use unsafe code here to match the performance of a Cython implementation
     fn last(slf: &Bound<'_, Self>) -> PyResult<Py<PyAny>> {

@@ -278,6 +278,36 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
         """
 
     @classmethod
+    def from_count(cls, start: int = 0, step: int = 1) -> PyoIterator[int]:
+        """Create an `Iterator` of evenly spaced values.
+
+        Warning:
+            The `Iterator` returned is **infinite**, meaning it will never stop yielding elements.
+
+            Be sure to use `PyoIterator::take` or `PyoIterator::slice` to limit the number of items taken.
+
+            Otherwise you could quickly run out of memory, if you try to collect it into a collection.
+
+        Args:
+            start (int): Starting value of the `Iterator`.
+            step (int): Difference between consecutive values.
+
+        Returns:
+            PyoIterator[int]: An `Iterator` of integers starting from **start** and increasing by **step**.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> Iter.from_count(10, 2).take(3).collect(Seq)
+            Seq(10, 12, 14)
+            >>> Iter.from_count(-5, 5).take(4).collect(Seq)
+            Seq(-5, 0, 5, 10)
+            >>> Iter.from_count(0, -1).take(5).collect(Seq)
+            Seq(0, -1, -2, -3, -4)
+
+            ```
+        """
+    @classmethod
     def successors[U](
         cls, first: Option[U], succ: Callable[[U], Option[U]]
     ) -> PyoIterator[U]:
@@ -368,21 +398,21 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, True)).all()
+            >>> from pyochain import Seq
+            >>> Seq((1, True)).iter().all()
             True
-            >>> Iter(()).all()
+            >>> Seq(()).iter().all()
             True
-            >>> Iter((1, 0)).all()
+            >>> Seq((1, 0)).iter().all()
             False
             >>> def is_even(x: int) -> bool:
             ...     return x % 2 == 0
             >>>
-            >>> Iter((2, 4, 6)).all(is_even)
+            >>> Seq((2, 4, 6)).iter().all(is_even)
             True
-            >>> Iter(("a", "", "c")).all()
+            >>> Seq(("a", "", "c")).iter().all()
             False
-            >>> Iter((1, None, 3)).all()
+            >>> Seq((1, None, 3)).iter().all()
             False
 
             ```
@@ -407,14 +437,14 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Range
-            >>> Iter((0, 1)).any()
+            >>> from pyochain import Seq, Range
+            >>> Seq((0, 1)).iter().any()
             True
             >>> Range(0, 0).iter().any()
             False
             >>> def is_even(x: int) -> bool:
             ...     return x % 2 == 0
-            >>> Iter((1, 3, 4)).any(is_even)
+            >>> Seq((1, 3, 4)).iter().any(is_even)
             True
 
             ```
@@ -441,14 +471,13 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2, 3)).eq(Seq((1, 2, 3)))
+            >>> from pyochain import Range, Seq
+            >>> data = Range(1, 4)
+            >>> data.iter().eq((1, 2, 3)) and data.iter().eq(data)
             True
-            >>> Iter((1, 2, 3)).eq((1, 2, 4))
+            >>> data.iter().eq((1, 2, 4))
             False
-            >>> Iter((1, 2, 3)).eq((1, 2))
-            False
-            >>> Iter((1, 2)).eq((1, 2, 3))
+            >>> data.iter().eq((1, 2))
             False
 
             ```
@@ -476,12 +505,13 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2, 3)).ne(Seq((1, 2, 3)))
+            >>> from pyochain import Range
+            >>> data = Range(1, 4)
+            >>> data.iter().ne((1, 2, 3))
             False
-            >>> Iter((1, 2, 3)).ne((1, 2, 4))
+            >>> data.iter().ne((1, 2, 4))
             True
-            >>> Iter((1, 2, 3)).ne((1, 2))
+            >>> data.iter().ne((1, 2))
             True
 
             ```
@@ -660,10 +690,10 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
         Example:
             Basic usage:
             ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter(("a", "bbb", "cc")).arg_max_by(len)
+            >>> from pyochain import Seq
+            >>> Seq(("a", "bbb", "cc")).iter().arg_max_by(len)
             1
-            >>> Iter(("Alice", "bob", "charlie")).arg_max_by(str.lower)
+            >>> Seq(("Alice", "bob", "charlie")).iter().arg_max_by(str.lower)
             2
 
             ```
@@ -691,10 +721,10 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter("efghabcdijkl").arg_min()
+            >>> from pyochain import Seq
+            >>> Seq("efghabcdijkl").iter().arg_min()
             4
-            >>> Iter((3, 2, 1, 0, 4, 2, 1, 0)).arg_min()
+            >>> Seq((3, 2, 1, 0, 4, 2, 1, 0)).iter().arg_min()
             3
 
             ```
@@ -715,10 +745,10 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
         Example:
             Basic usage:
             ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter(("aaa", "b", "cc")).arg_min_by(len)
+            >>> from pyochain import Seq
+            >>> Seq(("aaa", "b", "cc")).iter().arg_min_by(len)
             1
-            >>> Iter(("Alice", "bob", "Charlie")).arg_min_by(str.lower)
+            >>> Seq(("Alice", "bob", "Charlie")).iter().arg_min_by(str.lower)
             0
 
             ```
@@ -755,8 +785,8 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Range
-            >>> Iter("AaaA").all_equal(key=str.casefold)
+            >>> from pyochain import Seq, Range
+            >>> Seq("AaaA").iter().all_equal(key=str.casefold)
             True
             >>> Range(0, 9).iter().all_equal(key=lambda x: x < 10)
             True
@@ -789,10 +819,10 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq, Set
-            >>> Iter("ABCB").all_unique()
+            >>> from pyochain import Seq, Set
+            >>> Seq("ABCB").iter().all_unique()
             False
-            >>> Iter("ABCb").all_unique()
+            >>> Seq("ABCb").iter().all_unique()
             True
             >>> # Alternative way to check uniqueness by comparing lengths:
             >>> collection = Seq((1, 2, 3, 3))
@@ -817,10 +847,10 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter("ABCb").all_unique()
+            >>> from pyochain import Seq
+            >>> Seq("ABCb").iter().all_unique()
             True
-            >>> Iter("ABCb").all_unique_by(str.lower)
+            >>> Seq("ABCb").iter().all_unique_by(str.lower)
             False
 
             ```
@@ -843,8 +873,8 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2, 3)).for_each(lambda x: print(x + 1))
+            >>> from pyochain import Range
+            >>> Range(1, 4).iter().for_each(lambda x: print(x + 1))
             2
             3
             4
@@ -918,10 +948,10 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter(["1", "2", "3", "4", "5"]).is_sorted_by(int)
+            >>> from pyochain import Range, Seq
+            >>> Range(1, 6).iter().map(str).is_sorted_by(int)
             True
-            >>> Iter(["5", "4", "3", "1", "2"]).is_sorted_by(int, reverse=True)
+            >>> Seq((5, 4, 3, 1, 2)).iter().map(str).is_sorted_by(int, reverse=True)
             False
 
             ```
@@ -1022,8 +1052,8 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter(((1, 2), (3, 4))).for_each_star(lambda x, y: print(x + y))
+            >>> from pyochain import Range
+            >>> Range(1, 5).iter().batched(2).for_each_star(lambda x, y: print(x + y))
             3
             7
 
@@ -1101,7 +1131,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Ok, Err, Result
+            >>> from pyochain import Ok, Err, Result, Range, Iter, Seq
             >>>
             >>> def checked_add(acc: int, x: int) -> Result[int, str]:
             ...     new_val = acc + x
@@ -1109,11 +1139,11 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ...         return Err("overflow")
             ...     return Ok(new_val)
             >>>
-            >>> Iter((1, 2, 3)).try_fold(0, checked_add)
+            >>> Range(1, 4).iter().try_fold(0, checked_add)
             Ok(6)
-            >>> Iter([50, 40, 20]).try_fold(0, checked_add)
+            >>> Iter.from_count(50, -10).take(5).try_fold(0, checked_add)
             Err('overflow')
-            >>> Iter(()).try_fold(0, checked_add)
+            >>> Seq(()).iter().try_fold(0, checked_add)
             Ok(0)
 
             ```
@@ -1134,18 +1164,18 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Ok, Err, Result
+            >>> from pyochain import Ok, Err, Result, Range, Seq
             >>>
             >>> def checked_add(x: int, y: int) -> Result[int, str]:
             ...     if x + y > 100:
             ...         return Err("overflow")
             ...     return Ok(x + y)
             >>>
-            >>> Iter((1, 2, 3)).try_reduce(checked_add)
+            >>> Range(1, 4).iter().try_reduce(checked_add)
             Ok(Some(6))
-            >>> Iter([50, 60]).try_reduce(checked_add)
+            >>> Seq((50, 60)).iter().try_reduce(checked_add)
             Err('overflow')
-            >>> Iter(()).try_reduce(checked_add)
+            >>> Range(0, 0).iter().try_reduce(checked_add)
             Ok(NONE)
 
             ```
@@ -2074,7 +2104,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             >>> from pyochain import Iter, Seq
             >>> Iter("abcd").map_windows_star(2, lambda x, y: f"{x}+{y}").collect(Seq)
             Seq('a+b', 'b+c', 'c+d')
-            >>> Iter([1, 2, 3, 4]).map_windows_star(2, lambda x, y: x + y).collect(Seq)
+            >>> Iter((1, 2, 3, 4)).map_windows_star(2, lambda x, y: x + y).collect(Seq)
             Seq(3, 5, 7)
 
             ```

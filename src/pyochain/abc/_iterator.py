@@ -179,34 +179,6 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
         return cls._from_iterable(_once_with())
 
     @classmethod
-    def from_count(cls, start: int = 0, step: int = 1) -> PyoIterator[int]:
-        """Create an `Iterator` of evenly spaced values.
-
-        Warning:
-            The `Iterator` returned is **infinite**, meaning it will never stop yielding elements.
-
-            Be sure to use `PyoIterator::take` or `PyoIterator::slice` to limit the number of items taken.
-
-            Otherwise you could quickly run out of memory, if you try to collect it into a collection.
-
-        Args:
-            start (int): Starting value of the sequence.
-            step (int): Difference between consecutive values.
-
-        Returns:
-            PyoIterator[int]: An `Iterator` generating the sequence.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter.from_count(10, 2).take(3).collect(Seq)
-            Seq(10, 12, 14)
-
-            ```
-        """
-        return cls._from_iterable(itertools.count(start, step))
-
-    @classmethod
     def from_repeat[O](cls, obj: O, n: int | None = None) -> PyoIterator[O]:
         """Repeat the provided object **n** times (as elements) as elements of an `Iterator`.
 
