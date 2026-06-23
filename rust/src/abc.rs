@@ -835,6 +835,29 @@ impl PyoIterator {
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
+    fn unzip<'py>(slf: Bound<'py, Self>) -> PyResult<(Bound<'py, Self>, Bound<'py, Self>)> {
+        slf.try_iter()
+            .and_then(|data| pylibs::itertools::tee(data, None))
+            .map(|iterators| {
+                (
+                    tls::Unzip::new(&iterators, 0),
+                    tls::Unzip::new(&iterators, 1),
+                )
+            })
+            .map(|(left, right)| {
+                let cls = slf.get_type();
+                (
+                    cls.call1((left,))
+                        .map(|x| unsafe { x.cast_into_unchecked::<Self>() }),
+                    cls.call1((right,))
+                        .map(|x| unsafe { x.cast_into_unchecked::<Self>() }),
+                )
+            })
+            .and_then(|results| match results {
+                (Ok(a), Ok(b)) => Ok((a, b)),
+                (Err(e), _) | (_, Err(e)) => Err(e),
+            })
+    }
     fn with_position<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
             .map(|x| tls::WithPosition::new(x))

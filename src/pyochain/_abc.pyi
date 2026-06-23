@@ -2068,6 +2068,33 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
+    def unzip[U, V](
+        self: PyoIterator[tuple[U, V]],
+    ) -> tuple[PyoIterator[U], PyoIterator[V]]:
+        """Converts an `Iterator` of pairs into a pair of `Iterator`s.
+
+        This function is, in some sense, the opposite of `PyoIterator::zip`.
+
+        Both `Iterator`s share the same underlying source.
+
+        Values consumed by one `Iterator` remain in the shared buffer until the other `Iterator` consumes them too.
+
+        Returns:
+            tuple[PyoIterator[U], PyoIterator[V]]: A tuple containing two `Iterator`s, one for each element of the pairs.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> data = Seq(("a", "b", "c"))
+            >>> left, right = data.iter().enumerate().unzip()
+            >>> left.collect(Seq)
+            Seq(0, 1, 2)
+            >>> right.collect(Seq)
+            Seq('a', 'b', 'c')
+
+            ```
+        """
+
     def with_position(self) -> PyoIterator[tuple[Position, T]]:
         """Return an `Iterator` over (`Position`, `T`) tuples.
 

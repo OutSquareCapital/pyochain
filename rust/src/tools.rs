@@ -796,14 +796,14 @@ impl ZipLongest {
     }
 }
 #[pyclass]
-struct Unzip {
+pub struct Unzip {
     iterator: Py<PyIterator>,
     n: usize,
 }
 #[pymethods]
 impl Unzip {
     #[new]
-    fn new(data: &Bound<'_, PyTuple>, n: usize) -> Self {
+    pub fn new(data: &Bound<'_, PyTuple>, n: usize) -> Self {
         let iterator = data
             .get_item(n)
             .unwrap()
@@ -827,12 +827,6 @@ impl Unzip {
                 .pipe(Ok),
             None => Ok(None),
         }
-    }
-    #[staticmethod]
-    fn from_iterator(data: Bound<'_, PyIterator>) -> (Unzip, Unzip) {
-        pylibs::itertools::tee(data, None)
-            .unwrap()
-            .pipe(|iterators| (Unzip::new(&iterators, 0), Unzip::new(&iterators, 1)))
     }
 }
 #[pyclass]
