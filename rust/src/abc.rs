@@ -50,6 +50,22 @@ impl PyoIterator {
         cls.call1((iterable,))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
+    /// Utility function to convert an arbitrary `collections::abc::Iterator` into a `PyoIterator`.\
+    /// Equivalent to `self._from_iterable(iterator)`.
+    #[inline(always)]
+    fn _into_self<'py>(
+        slf: &Bound<'py, Self>,
+        iterator: Bound<'py, PyIterator>,
+    ) -> PyResult<Bound<'py, Self>> {
+        slf.get_type()
+            .call1((iterator,))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+    #[classmethod]
+    fn once<'py>(cls: &Bound<'py, PyType>, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        cls.call1((PyTuple::new(cls.py(), &[value])?,))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
     #[pyo3(signature = (f, *args, **kwargs))]
     #[classmethod]
     fn from_fn<'py>(
@@ -489,6 +505,13 @@ impl PyoIterator {
             }
         }
     }
+    #[pyo3(signature = (n = 0))]
+    fn enumerate<'py>(slf: &Bound<'py, Self>, n: usize) -> PyResult<Bound<'py, Self>> {
+        slf.try_iter()
+            .and_then(|x| pylibs::builtins::enumerate(x, n))
+            .and_then(|x| slf.get_type().call1((x,)))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
     #[pyo3(signature = (func, *args, **kwargs))]
     fn for_each(
         slf: &Bound<'_, Self>,
@@ -673,6 +696,12 @@ impl PyoIterator {
             .pipe(PySome::new)
             .into_py_any(py)
     }
+    fn collect<'py>(
+        slf: &Bound<'py, Self>,
+        collector: &Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        slf.try_iter().and_then(|x| collector.call1((x,)))
+    }
 
     #[pyo3(signature = (init, func, *args, **kwargs))]
     fn fold_star<'py>(
@@ -801,6 +830,14 @@ impl PyoIterator {
             .and_then(|x| pylibs::itertools::combinations_with_replacement(&x, r))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+    fn fold<'py>(
+        slf: &Bound<'py, Self>,
+        init: &Bound<'py, PyAny>,
+        func: &Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        slf.try_iter()
+            .and_then(|x| pylibs::functools::reduce(func, &x, Some(init)))
     }
     fn group_by<'py>(
         slf: &Bound<'py, Self>,
@@ -955,6 +992,13 @@ impl PyoIterator {
             pylibs::pyochain::vec::from_ref(&true_list)?,
             pylibs::pyochain::vec::from_ref(&false_list)?,
         ))
+    }
+    fn reduce<'py>(
+        slf: &Bound<'py, Self>,
+        func: &Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        slf.try_iter()
+            .and_then(|x| pylibs::functools::reduce(func, &x, None))
     }
     fn scan<'py>(
         slf: &Bound<'py, Self>,

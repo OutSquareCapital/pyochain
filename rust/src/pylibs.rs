@@ -1,8 +1,12 @@
+/// This module contains Python built-in functions and objects, as well as functions and objects from the `itertools` and `functools` modules.
+/// Each submodule declares a const string with the name of the module, and a static `PyOnceLock` + associated fn for each function or object that is imported from that module.
+/// This pattern ensure maximum performance by only importing the function or object once, and reusing it for subsequent calls.
+/// We also use unsafe casts to correct types, aggressive inlining, and `&Bound` to maximize performance.
 use pyo3::sync::PyOnceLock;
 use pyo3::types::{PyBool, PyInt, PyIterator, PyList, PyTuple};
 use pyo3::{intern, prelude::*};
 
-/// Built-in Python functions and objects
+/// Python `builtins` functions and objects
 pub mod builtins {
     use super::*;
 
@@ -11,9 +15,10 @@ pub mod builtins {
     static OBJECT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static ALL: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static ANY: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static ENUMERATE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static MAP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static FILTER: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    /// Create a unique sentinel object
+    /// Create a unique sentinel object. Equivalent to `object()` in Python. On >=3.15, this will become unneded thanks to the new sentinel builtin.
     #[inline(always)]
     pub fn sentinel(py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
         OBJECT.import(py, BUILTINS, "object")?.call0()
@@ -29,6 +34,16 @@ pub mod builtins {
         ANY.import(iterator.py(), BUILTINS, "any")?
             .call1((iterator,))
             .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
+    }
+    #[inline(always)]
+    pub fn enumerate<'py>(
+        iterator: Bound<'py, PyIterator>,
+        start: usize,
+    ) -> PyResult<Bound<'py, PyIterator>> {
+        ENUMERATE
+            .import(iterator.py(), BUILTINS, "enumerate")?
+            .call1((iterator, start))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
     }
     #[inline(always)]
     pub fn map<'py>(
@@ -51,7 +66,7 @@ pub mod builtins {
     }
 }
 
-/// Python itertools module functions and objects
+/// Python `itertools` module functions and objects
 pub mod itertools {
 
     use pyo3::types::PyDict;
@@ -243,6 +258,26 @@ pub mod itertools {
             .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
     }
 }
+/// Python `functools` module functions and objects
+pub mod functools {
+    use super::*;
+    const FUNCTOOLS: &str = "functools";
+    static REDUCE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    #[inline(always)]
+    pub fn reduce<'py>(
+        function: &Bound<'py, PyAny>,
+        iterable: &Bound<'py, PyIterator>,
+        initial: Option<&Bound<'py, PyAny>>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let py = function.py();
+        let args = match initial {
+            Some(initial) => PyTuple::new(py, &[function, iterable, initial])?,
+            None => PyTuple::new(py, &[function, iterable])?,
+        };
+        REDUCE.import(py, FUNCTOOLS, "reduce")?.call1(args)
+    }
+}
+/// pyochain Python objects. This should not exist at the end of the migration.
 pub mod pyochain {
     use super::*;
     const PYOCHAIN: &str = "pyochain";

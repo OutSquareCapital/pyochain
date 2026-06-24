@@ -283,9 +283,10 @@ def test_bool(benchmark: BenchFixture) -> None:
     assert benchmark(lambda: bool(data.iter())) is True
 
 
-def test_reduce(benchmark: BenchFixture) -> None:
-    data = Range(0, 20_000)
-    assert benchmark(_reduce, data) == 19999 * 20000 // 2
+@pytest.mark.parametrize("size", SIZES)
+def test_reduce(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_reduce, data) == size * (size - 1) // 2
 
 
 def _reduce(data: Range) -> int:
@@ -508,3 +509,17 @@ def test_product(benchmark: BenchFixture, size: int) -> None:
 
 def _product(data: Range) -> tuple[int, ...]:
     return data.iter().product([1], [2], [3], repeat=4).take(10).last()
+
+
+def test_once(benchmark: BenchFixture) -> None:
+    assert benchmark(lambda: Iter.once(1)) is not None
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_collect(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_collect, data)[-1] == size - 1
+
+
+def _collect(data: Range) -> tuple[int, ...]:
+    return data.iter().collect(tuple)

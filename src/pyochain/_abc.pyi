@@ -1,4 +1,4 @@
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Callable, Collection, Iterable, Iterator
 from typing import (
     Any,
     Concatenate,
@@ -205,6 +205,28 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
         """
 
+    @classmethod
+    def once[V](cls, value: V) -> PyoIterator[V]:
+        """Create an `Iterator` that yields a single value.
+
+        If you have a function which works on iterators, but you only need to process one value, you can use this method rather than doing something like `Iter([value])`.
+
+        This can be considered the equivalent of `.insert()` but as a constructor.
+
+        Args:
+            value (V): The single value to yield.
+
+        Returns:
+            PyoIterator[V]: An `Iterator` yielding the specified value.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> Iter.once(42).collect(Seq)
+            Seq(42,)
+
+            ```
+        """
     @classmethod
     def from_fn[**P, R](
         cls, f: Callable[P, Option[R]], *args: P.args, **kwargs: P.kwargs
@@ -978,6 +1000,40 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
             ```
         """
+
+    def enumerate(self, start: int = 0) -> PyoIterator[tuple[int, T]]:
+        """Return a `Iterator` of (index, value) pairs.
+
+        Each value in the `Iterator` is paired with its index, starting from 0.
+
+        Tip:
+            `PyoIterator::map_star` can then be used for subsequent operations on the index and value, in a destructuring manner.
+            This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.
+
+        Args:
+            start (int): The starting index.
+
+        Returns:
+            PyoIterator[tuple[int, T]]: An `Iterator` of (index, value) pairs.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> data = ("apple", "banana", "cherry")
+            >>> output = Iter(data).enumerate().collect(Seq)
+            >>> output
+            Seq((0, 'apple'), (1, 'banana'), (2, 'cherry'))
+            >>> output = (
+            ...     Iter(data)
+            ...     .enumerate()
+            ...     .map_star(lambda idx, val: (idx, val.upper()))
+            ...     .collect(Seq)
+            ... )
+            >>> output
+            Seq((0, 'APPLE'), (1, 'BANANA'), (2, 'CHERRY'))
+
+            ```
+        """
     @overload
     def for_each_star[T1, T2, **P, R](
         self: PyoIterator[tuple[T1, T2]],
@@ -1247,6 +1303,63 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
+    def collect[R: Collection[Any]](self, collector: Callable[[Iterator[T]], R]) -> R:
+        """Transforms the `Iterator` into a collection.
+
+        The most basic pattern in which `collect()` is used is to turn one collection into another.
+
+        You take a collection, call `iter()` on it, do a bunch of transformations, and then `collect()` at the end.
+
+        You specify the target `Collection` type by providing a **collector** function or type.
+
+        This can be any `Callable` that takes an `Iterator[T]` and returns a `Collection[T]` of those types.
+
+        This is equivalent to `Pipe::pipe` at runtime, but with a few differences:
+
+            - A narrower constraint (`Collection[Any]`) to specify the intent
+            - Better performance (no args/kwargs unpacking).
+
+        If you need to pass additional arguments, you can use [`Pipe::pipe`][Pipe.pipe] instead.
+
+        Args:
+            collector (Callable[[Iterator[T]], R]): Function|type that defines the target collection.
+
+        Returns:
+            R: A materialized `Collection` containing the collected elements.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Range, Vec, Dict
+            >>> data = Range(0, 5)
+            >>> data.iter().collect(list)
+            [0, 1, 2, 3, 4]
+            >>> data.iter().collect(Vec)
+            Vec(0, 1, 2, 3, 4)
+            >>> data.iter().map(str).enumerate().collect(Dict)
+            Dict(0: '0', 1: '1', 2: '2', 3: '3', 4: '4')
+
+            ```
+            Sometimes type checkers can't infer the type of the collector, in which case you can use an explicit type annotation to help them out.
+
+            In the example below, without the annotation in `collect()`,
+
+            BasedPyright infer `data` as `Seq[Result[int, Any] | Result[Any, int]]` because of the conditional expression in the `map()`, which is not very useful.
+            ```python
+            >>> from pyochain import Range, Seq, Ok, Err, Result
+            >>> data = (
+            ...     Range(0, 5)
+            ...     .iter()
+            ...     .map(lambda x: Ok(x) if x % 2 == 0 else Err(x))
+            ...     .collect(Seq[Result[int, int]])
+            ... )
+            >>> data
+            Seq(Ok(0), Err(1), Ok(2), Err(3), Ok(4))
+
+            ```
+            Strictly speaking, this is equivalent to annotating the variable at the beginning, but some may prefer this style to keep the type information close to the actual collection operation.
+
+            This notably avoid repetition if you collect anything else than the default `Seq` type.
+        """
     @overload
     def fold_star[**P, B](
         self: PyoIterator[tuple[Any]],  # pyright: ignore[reportExplicitAny]
@@ -1375,6 +1488,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
             ```
         """
+
     def find(self, predicate: Callable[[T], bool]) -> Option[T]:
         """Searches for an element of an iterator that satisfies a `predicate`.
 
@@ -2626,6 +2740,58 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             >>> from pyochain import Iter
             >>> Iter((1, 2, 3, 4, 5)).partition(lambda x: x % 2 == 0)
             (Vec(2, 4), Vec(1, 3, 5))
+
+            ```
+        """
+
+    def reduce(self, func: Callable[[T, T], T]) -> T:
+        """Apply a function of two arguments cumulatively to the items of an iterable, from left to right.
+
+        This effectively reduces the `Iterator` to a single value.
+
+        If initial is present, it is placed before the items of the `Iterator` in the calculation.
+
+        It then serves as a default when the `Iterator` is empty.
+
+        Args:
+            func (Callable[[T, T], T]): Function to apply cumulatively to the items of the iterable.
+
+        Returns:
+            T: Single value resulting from cumulative reduction.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3)).reduce(lambda a, b: a + b)
+            6
+
+            ```
+        """
+
+    def fold[B](self, init: B, func: Callable[[B, T], B]) -> B:
+        """Fold every element of the `Iterator` into an accumulator by applying an operation, returning the final result.
+
+        Args:
+            init (B): Initial value for the accumulator.
+            func (Callable[[B, T], B]): Function that takes the accumulator and current element,
+                returning the new accumulator value.
+
+        Returns:
+            B: The final accumulated value.
+
+        Note:
+            This is similar to `reduce()` but with an initial value.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> data = (1, 2, 3)
+            >>> Iter(data).fold(0, lambda acc, x: acc + x)
+            6
+            >>> Iter(data).fold(10, lambda acc, x: acc + x)
+            16
+            >>> Iter(("a", "b", "c")).fold("", lambda acc, x: acc + x)
+            'abc'
 
             ```
         """
