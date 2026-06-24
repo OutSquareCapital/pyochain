@@ -20,6 +20,7 @@
 ### ✨ Enhancements
 
 - **typing**: added overloads to `PyoIterator::batched` to return precise tuple types for batch sizes up to 5 if *strict* is `True`.
+- **typing**: added overloads to `PyoIterator::product` to return precise tuple types for up to 10 iterables.
 - **API**: `PyoIterator::accumulate` is now aligned with `itertools`, with the possibility to not provide a function, in which case the default is to use addition.
 - **API**: `PyoIterator::product` missed it's `repeat` argument. This is now fixed.
 

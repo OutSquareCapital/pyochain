@@ -1301,46 +1301,102 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
         return self._from_iterable(zip(iter(self), *others, strict=strict))
 
     @overload
-    def product(self) -> PyoIterator[tuple[T]]: ...
+    def product(self, /) -> PyoIterator[tuple[T]]: ...
     @overload
-    def product[T1](self, iter1: Iterable[T1], /) -> PyoIterator[tuple[T, T1]]: ...
+    def product[T2](self, iter2: Iterable[T2], /) -> PyoIterator[tuple[T, T2]]: ...
     @overload
-    def product[T1, T2](
+    def product[T2, T3](
+        self, iter2: Iterable[T2], iter3: Iterable[T3], /
+    ) -> PyoIterator[tuple[T, T2, T3]]: ...
+    @overload
+    def product[T2, T3, T4](
+        self, iter2: Iterable[T2], iter3: Iterable[T3], iter4: Iterable[T4], /
+    ) -> PyoIterator[tuple[T, T2, T3, T4]]: ...
+    @overload
+    def product[T2, T3, T4, T5](
         self,
-        iter1: Iterable[T1],
-        iter2: Iterable[T2],
-        /,
-    ) -> PyoIterator[tuple[T, T1, T2]]: ...
-    @overload
-    def product[T1, T2, T3](
-        self,
-        iter1: Iterable[T1],
-        iter2: Iterable[T2],
-        iter3: Iterable[T3],
-        /,
-    ) -> PyoIterator[tuple[T, T1, T2, T3]]: ...
-    @overload
-    def product[T1, T2, T3, T4](
-        self,
-        iter1: Iterable[T1],
         iter2: Iterable[T2],
         iter3: Iterable[T3],
         iter4: Iterable[T4],
+        iter5: Iterable[T5],
         /,
-    ) -> PyoIterator[tuple[T, T1, T2, T3, T4]]: ...
-
+    ) -> PyoIterator[tuple[T, T2, T3, T4, T5]]: ...
+    @overload
+    def product[T2, T3, T4, T5, T6](
+        self,
+        iter2: Iterable[T2],
+        iter3: Iterable[T3],
+        iter4: Iterable[T4],
+        iter5: Iterable[T5],
+        iter6: Iterable[T6],
+        /,
+    ) -> PyoIterator[tuple[T, T2, T3, T4, T5, T6]]: ...
+    @overload
+    def product[T2, T3, T4, T5, T6, T7](
+        self,
+        iter2: Iterable[T2],
+        iter3: Iterable[T3],
+        iter4: Iterable[T4],
+        iter5: Iterable[T5],
+        iter6: Iterable[T6],
+        iter7: Iterable[T7],
+        /,
+    ) -> PyoIterator[tuple[T, T2, T3, T4, T5, T6, T7]]: ...
+    @overload
+    def product[T2, T3, T4, T5, T6, T7, T8](
+        self,
+        iter2: Iterable[T2],
+        iter3: Iterable[T3],
+        iter4: Iterable[T4],
+        iter5: Iterable[T5],
+        iter6: Iterable[T6],
+        iter7: Iterable[T7],
+        iter8: Iterable[T8],
+        /,
+    ) -> PyoIterator[tuple[T, T2, T3, T4, T5, T6, T7, T8]]: ...
+    @overload
+    def product[T2, T3, T4, T5, T6, T7, T8, T9](
+        self,
+        iter2: Iterable[T2],
+        iter3: Iterable[T3],
+        iter4: Iterable[T4],
+        iter5: Iterable[T5],
+        iter6: Iterable[T6],
+        iter7: Iterable[T7],
+        iter8: Iterable[T8],
+        iter9: Iterable[T9],
+        /,
+    ) -> PyoIterator[tuple[T, T2, T3, T4, T5, T6, T7, T8, T9]]: ...
+    @overload
+    def product[T2, T3, T4, T5, T6, T7, T8, T9, T10](
+        self,
+        iter2: Iterable[T2],
+        iter3: Iterable[T3],
+        iter4: Iterable[T4],
+        iter5: Iterable[T5],
+        iter6: Iterable[T6],
+        iter7: Iterable[T7],
+        iter8: Iterable[T8],
+        iter9: Iterable[T9],
+        iter10: Iterable[T10],
+        /,
+    ) -> PyoIterator[tuple[T, T2, T3, T4, T5, T6, T7, T8, T9, T10]]: ...
+    @overload
     def product(
-        self, *others: AnyIter, repeat: int = 1
+        self, *iterables: Iterable[T], repeat: int = ...
+    ) -> PyoIterator[tuple[T, ...]]: ...
+    def product(
+        self, *iterables: AnyIter, repeat: int = 1
     ) -> PyoIterator[tuple[Any, ...]]:  # pyright: ignore[reportExplicitAny]
-        """Computes the Cartesian product with another iterable.
+        """Computes the Cartesian product with other iterables.
 
         This is the declarative equivalent of nested for-loops.
 
         It pairs every element from the source iterable with every element from the
-        other iterable.
+        other iterables.
 
         Args:
-            *others (AnyIter): Other iterables to compute the Cartesian product with.
+            *iterables (AnyIter): Other iterables to compute the Cartesian product with.
             repeat (int): The number of repetitions of the Cartesian product.
 
         Returns:
@@ -1368,26 +1424,32 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
             ...     .iter()
             ...     .product((10, 20))
             ...     .filter_star(lambda a, b: a * b >= 40)
-            ...     .map_star(lambda a, b: a * b)
             ...     .collect(Seq)
             ... )
             >>> res
-            Seq(40, 60)
+            Seq((2, 20), (3, 20))
             >>> res = (
-            ...     Iter
-            ...     .once(1)
-            ...     .product(("a", "b"), [True])
-            ...     .filter_star(lambda _a, b, _c: b != "a")
-            ...     .map_star(lambda a, b, c: f"{a}{b} is {c}")
-            ...     .collect(Seq)
+            ...     Seq((26, 33))
+            ...     .iter()
+            ...     .product(("Michael", "Sophie"), ["Engineer"])
+            ...     .map_star(lambda age, name, profession: f"{name} is {age} and is {profession}")
+            ...     .collect(tuple)
             ... )
             >>> res
-            Seq('1b is True',)
+            ('Michael is 26 and is Engineer', 'Sophie is 26 and is Engineer', 'Michael is 33 and is Engineer', 'Sophie is 33 and is Engineer')
+
+            ```
+            If repeat is specified, the Cartesian product is repeated that many times.
+            ```python
+            >>> from pyochain import Seq
+            >>> colors = Seq(("blue", "red"))
+            >>> colors.iter().product(repeat=2).collect(Seq)
+            Seq(('blue', 'blue'), ('blue', 'red'), ('red', 'blue'), ('red', 'red'))
 
             ```
         """
         return self._from_iterable(
-            itertools.product(iter(self), *others, repeat=repeat)
+            itertools.product(iter(self), *iterables, repeat=repeat)
         )
 
     def enumerate(self, start: int = 0) -> PyoIterator[tuple[int, T]]:
