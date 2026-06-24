@@ -50,17 +50,6 @@ impl PyoIterator {
         cls.call1((iterable,))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
-    /// Utility function to convert an arbitrary `collections::abc::Iterator` into a `PyoIterator`.\
-    /// Equivalent to `self._from_iterable(iterator)`.
-    #[inline(always)]
-    fn _into_self<'py>(
-        slf: &Bound<'py, Self>,
-        iterator: Bound<'py, PyIterator>,
-    ) -> PyResult<Bound<'py, Self>> {
-        slf.get_type()
-            .call1((iterator,))
-            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
-    }
     #[classmethod]
     fn once<'py>(cls: &Bound<'py, PyType>, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         cls.call1((PyTuple::new(cls.py(), &[value])?,))
