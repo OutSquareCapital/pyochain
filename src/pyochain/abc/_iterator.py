@@ -941,65 +941,60 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
 
     @overload
     def map_with[T1, R](
-        self, iterable: Iterable[T1], /, *, func: Callable[[T, T1], R]
+        self, func: Callable[[T, T1], R], iterable: Iterable[T1], /
     ) -> PyoIterator[R]: ...
     @overload
     def map_with[T1, T2, R](
         self,
+        func: Callable[[T, T1, T2], R],
         iterable: Iterable[T1],
         iter2: Iterable[T2],
         /,
-        *,
-        func: Callable[[T, T1, T2], R],
     ) -> PyoIterator[R]: ...
     @overload
     def map_with[T1, T2, T3, R](
         self,
+        func: Callable[[T, T1, T2, T3], R],
         iterable: Iterable[T1],
         iter2: Iterable[T2],
         iter3: Iterable[T3],
         /,
-        *,
-        func: Callable[[T, T1, T2, T3], R],
     ) -> PyoIterator[R]: ...
     @overload
     def map_with[T1, T2, T3, T4, R](
         self,
+        func: Callable[[T, T1, T2, T3, T4], R],
         iterable: Iterable[T1],
         iter2: Iterable[T2],
         iter3: Iterable[T3],
         iter4: Iterable[T4],
         /,
-        *,
-        func: Callable[[T, T1, T2, T3, T4], R],
     ) -> PyoIterator[R]: ...
     @overload
     def map_with[T1, T2, T3, T4, T5, R](
         self,
+        func: Callable[[T, T1, T2, T3, T4, T5], R],
         iterable: Iterable[T1],
         iter2: Iterable[T2],
         iter3: Iterable[T3],
         iter4: Iterable[T4],
         iter5: Iterable[T5],
         /,
-        *,
-        func: Callable[[T, T1, T2, T3, T4, T5], R],
     ) -> PyoIterator[R]: ...
     @overload
-    def map_with[R](
+    def map_with[T1, T2, T3, T4, T5, T6, R](
         self,
-        iterable: AnyIter,
-        iter2: AnyIter,
-        iter3: AnyIter,
-        iter4: AnyIter,
-        iter5: AnyIter,
-        iter6: AnyIter,
+        func: Callable[[T, T1, T2, T3, T4, T5, T6], R],
+        iterable: Iterable[T1],
+        iter2: Iterable[T2],
+        iter3: Iterable[T3],
+        iter4: Iterable[T4],
+        iter5: Iterable[T5],
+        iter6: Iterable[T6],
         /,
-        *iterables: AnyIter,
-        func: Callable[..., R],
     ) -> PyoIterator[R]: ...
     def map_with[R](
-        self, *iterables: AnyIter, func: Callable[..., R]
+        self, func: Callable[..., R], *iterables: AnyIter
     ) -> PyoIterator[R]:
         """Applies a function to the elements of this `Iterator` and additional iterables.
 
@@ -1007,7 +1002,7 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
 
         It is then applied to the items from all iterables in parallel.
 
-        the iterator stops when the shortest iterable is exhausted.
+        The `Iterator` stops when the shortest iterable is exhausted.
 
         Args:
             *iterables (AnyIter): Additional iterables to zip with **self**.
@@ -1032,7 +1027,7 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
             >>> x = Seq((1, 2, 3))
             >>> y = [4, 5, 6]
             >>> z = [7, 8, 9]
-            >>> output = x.iter().map_with(y, z, func=Triangle).collect(Seq)
+            >>> output = x.iter().map_with(Triangle, y, z).collect(Seq)
             >>> output
             Seq(Triangle(x=1, y=4, z=7), Triangle(x=2, y=5, z=8), Triangle(x=3, y=6, z=9))
 
@@ -1090,77 +1085,6 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
                     return map(new, itertools.tee(iterator, n))
 
         return new(repeat(iter(self), n))
-
-    @overload
-    def zip[T1](
-        self,
-        iter1: Iterable[T1],
-        /,
-        *,
-        strict: bool = ...,
-    ) -> PyoIterator[tuple[T, T1]]: ...
-    @overload
-    def zip[T1, T2](
-        self,
-        iter1: Iterable[T1],
-        iter2: Iterable[T2],
-        /,
-        *,
-        strict: bool = ...,
-    ) -> PyoIterator[tuple[T, T1, T2]]: ...
-    @overload
-    def zip[T1, T2, T3](
-        self,
-        iter1: Iterable[T1],
-        iter2: Iterable[T2],
-        iter3: Iterable[T3],
-        /,
-        *,
-        strict: bool = ...,
-    ) -> PyoIterator[tuple[T, T1, T2, T3]]: ...
-    @overload
-    def zip[T1, T2, T3, T4](
-        self,
-        iter1: Iterable[T1],
-        iter2: Iterable[T2],
-        iter3: Iterable[T3],
-        iter4: Iterable[T4],
-        /,
-        *,
-        strict: bool = ...,
-    ) -> PyoIterator[tuple[T, T1, T2, T3, T4]]: ...
-    def zip(
-        self, *others: AnyIter, strict: bool = False
-    ) -> PyoIterator[tuple[Any, ...]]:  # pyright: ignore[reportExplicitAny]
-        """Yields n-length tuples, where n is the number of iterables passed as positional arguments.
-
-        The i-th element in every tuple comes from the i-th iterable argument to `.zip()`.
-
-        This continues until the shortest argument is exhausted.
-
-        Note:
-            `Iter.map_star` can then be used for subsequent operations on the index and value, in a destructuring manner.
-            This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.
-
-        Args:
-            *others (AnyIter): Other iterables to zip with.
-            strict (bool): If `True` and one of the arguments is exhausted before the others, raise a ValueError.
-
-        Returns:
-            PyoIterator[tuple[Any, ...]]: An `Iterator` of tuples containing elements from the zipped `PyoIterator` and other iterables.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>>
-            >>> Iter((1, 2)).zip((10, 20)).collect(Seq)
-            Seq((1, 10), (2, 20))
-            >>> Iter(("a", "b")).zip((1, 2, 3)).collect(Seq)
-            Seq(('a', 1), ('b', 2))
-
-            ```
-        """
-        return self._from_iterable(zip(iter(self), *others, strict=strict))
 
     @overload
     def product(self, /) -> PyoIterator[tuple[T]]: ...

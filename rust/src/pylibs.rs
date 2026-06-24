@@ -1,9 +1,10 @@
+use crate::args::{Args, Concatenate};
 /// This module contains Python built-in functions and objects, as well as functions and objects from the `itertools` and `functools` modules.
 /// Each submodule declares a const string with the name of the module, and a static `PyOnceLock` + associated fn for each function or object that is imported from that module.
 /// This pattern ensure maximum performance by only importing the function or object once, and reusing it for subsequent calls.
 /// We also use unsafe casts to correct types, aggressive inlining, and `&Bound` to maximize performance.
 use pyo3::sync::PyOnceLock;
-use pyo3::types::{PyBool, PyInt, PyIterator, PyList, PyTuple};
+use pyo3::types::{PyBool, PyDict, PyInt, PyIterator, PyList, PyTuple};
 use pyo3::{intern, prelude::*};
 
 /// Python `builtins` functions and objects
@@ -18,26 +19,27 @@ pub mod builtins {
     static ENUMERATE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static MAP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static FILTER: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static ZIP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     /// Create a unique sentinel object. Equivalent to `object()` in Python. On >=3.15, this will become unneded thanks to the new sentinel builtin.
     #[inline(always)]
     pub fn sentinel(py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
         OBJECT.import(py, BUILTINS, "object")?.call0()
     }
     #[inline(always)]
-    pub fn all(iterator: Bound<'_, PyIterator>) -> PyResult<Bound<'_, PyBool>> {
+    pub fn all<'py>(iterator: &Bound<'py, PyIterator>) -> PyResult<Bound<'py, PyBool>> {
         ALL.import(iterator.py(), BUILTINS, "all")?
             .call1((iterator,))
             .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
     }
     #[inline(always)]
-    pub fn any(iterator: Bound<'_, PyIterator>) -> PyResult<Bound<'_, PyBool>> {
+    pub fn any<'py>(iterator: &Bound<'py, PyIterator>) -> PyResult<Bound<'py, PyBool>> {
         ANY.import(iterator.py(), BUILTINS, "any")?
             .call1((iterator,))
             .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
     }
     #[inline(always)]
     pub fn enumerate<'py>(
-        iterator: Bound<'py, PyIterator>,
+        iterator: &Bound<'py, PyIterator>,
         start: usize,
     ) -> PyResult<Bound<'py, PyIterator>> {
         ENUMERATE
@@ -47,8 +49,8 @@ pub mod builtins {
     }
     #[inline(always)]
     pub fn map<'py>(
-        func: Bound<'py, PyAny>,
-        iterator: Bound<'py, PyIterator>,
+        func: &Bound<'py, PyAny>,
+        iterator: &Bound<'py, PyIterator>,
     ) -> PyResult<Bound<'py, PyIterator>> {
         MAP.import(iterator.py(), BUILTINS, "map")?
             .call1((func, iterator))
@@ -56,22 +58,31 @@ pub mod builtins {
     }
     #[inline(always)]
     pub fn filter<'py>(
-        func: Option<Bound<'py, PyAny>>,
-        iterator: Bound<'py, PyIterator>,
+        func: Option<&Bound<'py, PyAny>>,
+        iterator: &Bound<'py, PyIterator>,
     ) -> PyResult<Bound<'py, PyIterator>> {
         FILTER
             .import(iterator.py(), BUILTINS, "filter")?
             .call1((func, iterator))
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
     }
+    #[inline(always)]
+    pub fn zip<'py>(
+        iterator: &Bound<'py, PyIterator>,
+        others: &Args<'py>,
+        strict: bool,
+    ) -> PyResult<Bound<'py, PyIterator>> {
+        let py = iterator.py();
+        let kwargs = PyDict::new(py);
+        kwargs.set_item(intern!(py, "strict"), strict)?;
+        ZIP.import(py, BUILTINS, "zip")?
+            .concat(iterator, others, Some(&kwargs))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
+    }
 }
 
 /// Python `itertools` module functions and objects
 pub mod itertools {
-
-    use pyo3::types::PyDict;
-
-    use crate::args::Concatenate;
 
     use super::*;
 
@@ -143,7 +154,7 @@ pub mod itertools {
         let kwargs = PyDict::new(py);
         kwargs.set_item(intern!(py, "initial"), initial)?;
         ACCUMULATE
-            .import(iterator.py(), ITERTOOLS, "accumulate")?
+            .import(py, ITERTOOLS, "accumulate")?
             .call((iterator, func), Some(&kwargs))
             .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
     }
@@ -157,14 +168,14 @@ pub mod itertools {
         let kwargs = PyDict::new(py);
         kwargs.set_item(intern!(py, "strict"), strict)?;
         BATCHED
-            .import(iterator.py(), ITERTOOLS, "batched")?
+            .import(py, ITERTOOLS, "batched")?
             .call((iterator, n), Some(&kwargs))
             .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
     }
     #[inline(always)]
     pub fn compress<'py>(
         iterator: &Bound<'py, PyIterator>,
-        selectors: &Bound<'py, PyTuple>,
+        selectors: &Args<'py>,
     ) -> PyResult<Bound<'py, PyIterator>> {
         COMPRESS
             .import(iterator.py(), ITERTOOLS, "compress")?
@@ -249,7 +260,7 @@ pub mod itertools {
     #[inline(always)]
     pub fn zip_longest<'py>(
         iterator: &Bound<'py, PyIterator>,
-        others: &Bound<'py, PyTuple>,
+        others: &Args<'py>,
     ) -> PyResult<Bound<'py, PyIterator>> {
         let py = iterator.py();
         ZIP_LONGEST

@@ -16,6 +16,7 @@
 - **API change**: `PyoIterable::last` has been moved to `PyoIterator` and `PyoSequence` as separate methods without class inheritance. This impacts all custom `PyoIterable` subclasses who aren't `Iterator`s nor `Sequences`. If you need the old behavior (e.g calling `last` on a `set`-like collection), call `iter().last()` instead.
 - **API change**: `PyoIterator::batch` has been renamed to `PyoIterator::batched`.
 - **Method removal**: `PyoIterator::array_chunks` has been removed. Use `PyoIterator::batched` instead.
+- **API change**: `PyoIterator::map_with` *function* argument now need to be the **first** argument, followed by the various iterables. It was previously a kword only argument at the end. Swap the order at call sites to migrate your code.
 
 ### ✨ Enhancements
 

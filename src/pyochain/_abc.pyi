@@ -2970,6 +2970,72 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
         """
 
     @overload
+    def zip(self, /, *, strict: bool = False) -> PyoIterator[tuple[T]]: ...
+    @overload
+    def zip[T2](
+        self, iter2: Iterable[T2], /, *, strict: bool = False
+    ) -> PyoIterator[tuple[T, T2]]: ...
+    @overload
+    def zip[T2, T3](
+        self, iter2: Iterable[T2], iter3: Iterable[T3], /, *, strict: bool = False
+    ) -> PyoIterator[tuple[T, T2, T3]]: ...
+    @overload
+    def zip[T2, T3, T4](
+        self,
+        iter2: Iterable[T2],
+        iter3: Iterable[T3],
+        iter4: Iterable[T4],
+        /,
+        *,
+        strict: bool = False,
+    ) -> PyoIterator[tuple[T, T2, T3, T4]]: ...
+    @overload
+    def zip[T2, T3, T4, T5](
+        self,
+        iter2: Iterable[T2],
+        iter3: Iterable[T3],
+        iter4: Iterable[T4],
+        iter5: Iterable[T5],
+        /,
+        *,
+        strict: bool = False,
+    ) -> PyoIterator[tuple[T, T2, T3, T4, T5]]: ...
+    @overload
+    def zip(
+        self, /, *others: Iterable[T], strict: bool = False
+    ) -> PyoIterator[tuple[T, ...]]: ...
+    def zip(
+        self, /, *others: AnyIter, strict: bool = False
+    ) -> PyoIterator[tuple[Any, ...]]:  # pyright: ignore[reportExplicitAny]
+        """Yields n-length tuples, where n is the number of iterables passed as positional arguments.
+
+        The i-th element in every tuple comes from the i-th iterable argument to `.zip()`.
+
+        This continues until the shortest argument is exhausted.
+
+        Note:
+            `Iter::map_star` can then be used for subsequent operations on the index and value, in a destructuring manner.
+            This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.
+
+        Args:
+            *others (AnyIter): Other iterables to zip with.
+            strict (bool): If `True` and one of the arguments is exhausted before the others, raise a ValueError.
+
+        Returns:
+            PyoIterator[tuple[Any, ...]]: An `Iterator` of tuples containing elements from the zipped `PyoIterator` and other iterables.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>>
+            >>> Iter((1, 2)).zip((10, 20)).collect(Seq)
+            Seq((1, 10), (2, 20))
+            >>> Iter(("a", "b")).zip((1, 2, 3)).collect(Seq)
+            Seq(('a', 1), ('b', 2))
+
+            ```
+        """
+    @overload
     def zip_longest[T2](
         self, iter2: Iterable[T2], /
     ) -> PyoIterator[tuple[Option[T], Option[T2]]]: ...
