@@ -165,8 +165,6 @@ For multiple sections, you can use your IDE to replace both of them by dummy tex
 
 ### tests
 
-Add `--cov=src --cov-report=term-missing` to the pytest command below to include coverage reports.
-
 ```bash
 uv run pytest
 ```

@@ -17,7 +17,6 @@
         "mkdocstrings-python>=1.18.2",
         "pydoclint>=0.8.1",
         "pytest-benchmark>=5.2.3",
-        "pytest-cov>=7.0.0",
         "pytest-doctest-mkdocstrings>=0.1.1",
         "pytest-markdown-docs>=0.9.2",
         "pytest-stubtester",

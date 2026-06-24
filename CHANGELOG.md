@@ -69,6 +69,10 @@ Name         | 10 items | 100 items | 1_000 items | 10_000 items | Note
 - Code readability and privacy management improvements in Rust source code.
 - `PyoIterator::find` has been moved to Rust, performance is identical as before.
 
+### 🔗 Dependencies
+
+- Removed `pytest-cov` from dev dependencies.
+
 ## [0.26.0] - 2026-06-16
 
 ### 💥 Breaking changes
