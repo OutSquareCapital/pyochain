@@ -67,6 +67,7 @@ Name         | 10 items | 100 items | 1_000 items | 10_000 items | Note
 
 - **Rust migration and logic optimization**: `PyoIterator::map_juxt` is now fully in Rust as a "real" `Iterator` instead of a `Callable` used on `builtin::map`. Performance gains on small funcs tuples, performance regressions on large funcs tuples => **1.16x** faster for 1 func, **1.08x** for 4 funcs, **1.02x** faster for 16 funcs, and **0.95x** slower for 64 funcs. Optimizing the latter is on the roadmap, but all considered, I doubt most ppl will be using `map_juxt` with more than 16 funcs, so It's acceptable in the meantime.
 - **Rust migration**: `PyoIterator::once` is now **1.26x** faster.
+- **Logic optimization**: `PyoIterator::chain` doesn't call `from_iterable` needlessly anymore. Unchanged on small iterators, but around **1.06x** faster on 1k and 10k items when provided with a single `Iterable` argument.
 
 ### ⚠️ Performance regressions
 

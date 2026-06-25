@@ -186,15 +186,16 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2)).chain((3, 4), [5]).collect(Seq)
+            >>> from pyochain import Seq, Iter
+            >>> data = Seq((1, 2))
+            >>> data.iter().chain((3, 4), [5]).collect(Seq)
             Seq(1, 2, 3, 4, 5)
-            >>> Iter((1, 2)).chain(Iter.from_count(3)).take(5).collect(Seq)
+            >>> data.iter().chain(Iter.from_count(3)).take(5).collect(Seq)
             Seq(1, 2, 3, 4, 5)
 
             ```
         """
-        return self._from_iterable(itertools.chain.from_iterable((iter(self), *others)))
+        return self._from_iterable(itertools.chain(iter(self), *others))
 
     def peekable(self) -> Peekable[T]:
         """Creates an iterator which can use the peek and peek_mut methods to look at the next element of the `Iterator` without consuming it.

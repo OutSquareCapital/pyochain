@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import operator
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING
 
 import pytest
@@ -574,3 +574,14 @@ def test_slice(benchmark: BenchFixture, size: int) -> None:
 
 def _slice(data: Range, size: int) -> int:
     return data.iter().slice(0, size).last()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_chain(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    other = data.iter().collect(Seq)
+    assert benchmark(_chain, data, other) == other.last()
+
+
+def _chain(data: Range, other: Iterable[int]) -> int:
+    return data.iter().chain(other).last()
