@@ -554,3 +554,23 @@ def test_collect_into(benchmark: BenchFixture, size: int) -> None:
 
 def _collect_into(data: Range, collector: Vec[int]) -> Vec[int]:
     return data.iter().collect_into(collector)
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_take(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, SIZES.last())
+    assert benchmark(_take, data, size) == size - 1
+
+
+def _take(data: Range, size: int) -> int:
+    return data.iter().take(size).last()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_slice(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, SIZES.last())
+    assert benchmark(_slice, data, size) == size - 1
+
+
+def _slice(data: Range, size: int) -> int:
+    return data.iter().slice(0, size).last()

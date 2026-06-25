@@ -4,6 +4,8 @@ from typing import Protocol
 
 from rich.traceback import install
 
+from pyochain import Seq
+
 _ = install(show_locals=True)
 
 type BenchFn = Callable[[int], object]
@@ -26,7 +28,7 @@ class Sizes(IntEnum):
     SIZE_4096 = 4096
 
 
-SIZES = [10, 100, 1_000, 10_000]
+SIZES = Seq([10, 100, 1_000, 10_000])
 
 
 class VariantGroups(StrEnum):
