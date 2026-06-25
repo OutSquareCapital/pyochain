@@ -465,6 +465,36 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
+    def chain(self, *others: Iterable[T]) -> PyoIterator[T]:
+        """Concatenate **self** with one or more `Iterables`, any of which may be infinite.
+
+        In other words, it links **self** and **others** together, in a chain. 🔗
+
+        An infinite `Iterable` will prevent the rest of the arguments from being included.
+
+        This is equivalent to `list.extend()`, except it is fully lazy and works with any `Iterable`.
+
+        See Also:
+            [`PyoIterator::insert`][insert] to add a single element at the beginning of the `Iterator`.
+
+        Args:
+            *others (Iterable[T]): Other iterables to concatenate.
+
+        Returns:
+            PyoIterator[T]: A new `Iterator` which will first iterate over values from the original `Iterator` and then over values from the **others** `Iterable`s.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq, Iter
+            >>> data = Seq((1, 2))
+            >>> data.iter().chain((3, 4), [5]).collect(Seq)
+            Seq(1, 2, 3, 4, 5)
+            >>> data.iter().chain(Iter.from_count(3), Iter.from_count(2)).take(5).collect(Seq)
+            Seq(1, 2, 3, 4, 5)
+
+            ```
+        """
+
     def last(self) -> T:
         """Consume the `Iterator` and return it's last element.
 

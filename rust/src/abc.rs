@@ -507,6 +507,20 @@ impl PyoIterator {
             }
         }
     }
+    #[pyo3(signature = (*others))]
+    fn chain<'py>(slf: Bound<'py, Self>, others: &Args<'py>) -> PyResult<Bound<'py, Self>> {
+        let py = slf.py();
+        let cls = slf.get_type();
+
+        slf.into_any()
+            .pipe(std::iter::once)
+            .chain(others.iter())
+            .collect::<Vec<Bound<'py, PyAny>>>()
+            .pipe(|x| PyTuple::new(py, x))
+            .and_then(|x| pylibs::itertools::chain::new(&x))
+            .and_then(|x| cls.call1((&x,)))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
     #[pyo3(signature = (n = 0))]
     fn enumerate<'py>(slf: &Bound<'py, Self>, n: usize) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()

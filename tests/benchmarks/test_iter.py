@@ -578,10 +578,10 @@ def _slice(data: Range, size: int) -> int:
 
 @pytest.mark.parametrize("size", SIZES)
 def test_chain(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size)
-    other = data.iter().collect(Seq)
-    assert benchmark(_chain, data, other) == other.last()
+    data = Range(0, 2)
+    others = data.iter().repeat(size).map(lambda x: x.collect(Seq)).collect(Seq)
+    assert benchmark(_chain, data, others) == others.last().last()
 
 
-def _chain(data: Range, other: Iterable[int]) -> int:
-    return data.iter().chain(other).last()
+def _chain(data: Range, others: Iterable[Iterable[int]]) -> int:
+    return data.iter().chain(*others).last()

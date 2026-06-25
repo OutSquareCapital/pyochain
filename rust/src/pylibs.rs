@@ -179,6 +179,15 @@ pub mod itertools {
         static CHAIN: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
 
         #[inline(always)]
+        pub fn new<'py>(iterables: &Args<'py>) -> PyResult<Bound<'py, PyIterator>> {
+            let py = iterables.py();
+            CHAIN
+                .import(py, ITERTOOLS, "chain")?
+                .call1(iterables)
+                .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
+        }
+
+        #[inline(always)]
         pub fn from_iterable<'py>(
             iterable: &Bound<'py, PyIterator>,
         ) -> PyResult<Bound<'py, PyIterator>> {
