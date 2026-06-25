@@ -94,6 +94,9 @@ class Peekable[T](PyoIterator[T]):
     def next_if_eq(self, expected: T) -> Option[T]:
         """Return the next item if it is equal to expected.
 
+        Args:
+            expected (T): The value to compare the next item against.
+
         Returns:
             Option[T]: The next value wrapped in `Some(T)` if it is equal to expected, or `NONE` if it is not equal or the iteration is over.
 

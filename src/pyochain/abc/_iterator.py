@@ -271,8 +271,8 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
         The `Iterator` stops when the shortest iterable is exhausted.
 
         Args:
-            *iterables (Iterable[Any]): Additional iterables to zip with **self**.
             func (Callable[..., R]): Function to apply to the elements of the iterables.
+            *iterables (Iterable[Any]): Additional iterables to zip with **self**.
 
         Returns:
             PyoIterator[R]: An `Iterator` of results from applying the function to the elements of the iterables.
