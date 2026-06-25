@@ -62,7 +62,7 @@ class Range(PyoSequence[int]):
     @overload
     def __getitem__(self, index: slice) -> Sequence[int]: ...
     @override
-    def __getitem__(self, index: int | slice[Any, Any, Any]) -> int | Sequence[int]:  # pyright: ignore[reportExplicitAny]
+    def __getitem__(self, index: int | slice[Any, Any, Any]) -> int | Sequence[int]:
         return self._inner.__getitem__(index)
 
     @override

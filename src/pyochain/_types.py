@@ -28,7 +28,7 @@ class SupportsAdd[T, T1](Protocol):
     def __add__(self, x: T, /) -> T1: ...
 
 
-type SupportsAnyAdd = SupportsAdd[Any, Any]  # pyright: ignore[reportExplicitAny]
+type SupportsAnyAdd = SupportsAdd[Any, Any]
 
 
 class SupportsRAdd[T, T1](Protocol):
@@ -41,9 +41,7 @@ class SupportsKeysAndGetItem[K, V](Protocol):
 
 
 class SupportsSumWithNoDefaultGiven(
-    SupportsAdd[Any, Any],  # pyright: ignore[reportExplicitAny]
-    SupportsRAdd[int, Any],  # pyright: ignore[reportExplicitAny]
-    Protocol,
+    SupportsAdd[Any, Any], SupportsRAdd[int, Any], Protocol
 ): ...
 
 
@@ -54,7 +52,6 @@ type SupportsComparison[T] = (
     | SupportsDunderLT[T]
 )
 type SupportsRichComparison[T] = SupportsDunderLT[T] | SupportsDunderGT[T]
-type SupportsAnyRichComparison = SupportsRichComparison[Any]  # pyright: ignore[reportExplicitAny]
 type DictConvertible[K, V] = (
     Mapping[K, V] | Iterable[tuple[K, V]] | SupportsKeysAndGetItem[K, V]
 )

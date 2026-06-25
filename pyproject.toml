@@ -26,7 +26,7 @@
         "sdsort>=0.5.0",
         "toml>=0.10.2",
         "zensical>=0.0.42",
-]
+    ]
 [tool.pydoclint]
     arg-type-hints-in-docstring                   = true
     arg-type-hints-in-signature                   = true
@@ -52,12 +52,10 @@
     module-name   = "pyochain.rs"
     python-source = "src"
 [tool.basedpyright]
+    reportExplicitAny      = false # As a library we have no choice but to use `Any` in some places, so we disable this check.
     reportImportCycles     = false
     reportMissingSuperCall = false
     typeCheckingMode       = "all"
-[tool.pyrefly]
-    preset      = "all"
-    search-path = [".", "src"]
 [tool.pytest.ini_options]
     addopts   = "--doctest-modules --markdown-docs --stubs --benchmark-skip"
     testpaths = ["README.md", "docs", "src/pyochain", "tests"]

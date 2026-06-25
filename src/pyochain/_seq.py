@@ -79,7 +79,7 @@ class Seq[T](PyoSequence[T]):
     @overload
     def __getitem__(self, index: slice) -> Sequence[T]: ...
     @override
-    def __getitem__(self, index: int | slice[Any, Any, Any]) -> T | Sequence[T]:  # pyright: ignore[reportExplicitAny]
+    def __getitem__(self, index: int | slice[Any, Any, Any]) -> T | Sequence[T]:
         return self._inner.__getitem__(index)
 
     @override

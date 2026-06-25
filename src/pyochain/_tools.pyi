@@ -154,14 +154,14 @@ class WithPosition[T](Iterator[tuple[Position, T]]):
     @override
     def __next__(self) -> tuple[Position, T]: ...
 
-class ZipLongest[T: Iterable[Any]](Iterator[tuple[Option[Any], ...]]):  # pyright: ignore[reportExplicitAny]
+class ZipLongest[T: Iterable[Any]](Iterator[tuple[Option[Any], ...]]):
     def __init__(self, data: Iterator[T]) -> None: ...
     @no_doctest
     @override
     def __iter__(self) -> Self: ...
     @no_doctest
     @override
-    def __next__(self) -> tuple[Option[Any], ...]: ...  # pyright: ignore[reportExplicitAny]
+    def __next__(self) -> tuple[Option[Any], ...]: ...
 
 class Unzip[T](Iterator[T]):
     def __init__(self, data: Iterator[T], n: int) -> None: ...

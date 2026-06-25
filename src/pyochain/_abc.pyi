@@ -29,8 +29,8 @@ from pyochain._set import Set, SetMut
 from ._types import (
     LiteralInteger,
     SupportsAnyAdd,
-    SupportsAnyRichComparison,
     SupportsComparison,
+    SupportsRichComparison,
     SupportsSumWithNoDefaultGiven,
 )
 from ._utils import no_doctest
@@ -38,13 +38,10 @@ from ._vec import Vec
 from .abc import PyoIterator, PyoMutableSequence
 from .rs import Checkable, Fluent, Option, Result
 
-type SupportsAnyComparison = SupportsComparison[Any]  # pyright: ignore[reportExplicitAny]
-type AnyIter = Iterable[Any]  # pyright: ignore[reportExplicitAny]
-
 type Position = Literal["first", "middle", "last", "only"]
 """Type representing the position of an item in an `Iterator`."""
 
-type AnyOpt = Option[Any]  # pyright: ignore[reportExplicitAny]
+type AnyOpt = Option[Any]
 type ZippedLongest[T] = (
     PyoIterator[tuple[Option[T], AnyOpt]]
     | PyoIterator[tuple[Option[T], AnyOpt, AnyOpt]]
@@ -1043,7 +1040,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
         """
     def for_each[**P](
         self,
-        func: Callable[Concatenate[T, P], Any],  # pyright: ignore[reportExplicitAny]
+        func: Callable[Concatenate[T, P], Any],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> None:
@@ -1068,7 +1065,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def is_sorted[U: SupportsAnyComparison](
+    def is_sorted[U: SupportsComparison[Any]](
         self: PyoIterator[U], *, reverse: bool = False, strict: bool = False
     ) -> bool:
         """Returns `True` if the items of the `Iterator` are in sorted order.
@@ -1111,7 +1108,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
         """
     def is_sorted_by(
         self,
-        key: Callable[[T], SupportsAnyComparison],
+        key: Callable[[T], SupportsComparison[Any]],
         *,
         reverse: bool = False,
         strict: bool = False,
@@ -1125,7 +1122,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
         Credits to **more-itertools** for the implementation.
 
         Args:
-            key (Callable[[T], SupportsAnyComparison]): Function to extract a comparison key from each element.
+            key (Callable[[T], SupportsComparison[Any]]): Function to extract a comparison key from each element.
             reverse (bool): Whether to check for descending order.
             strict (bool): Whether to enforce strict sorting (no equal elements).
 
@@ -1279,7 +1276,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
             ```
         """
-    def try_for_each[E](self, f: Callable[[T], Result[Any, E]]) -> Result[tuple[()], E]:  # pyright: ignore[reportExplicitAny]
+    def try_for_each[E](self, f: Callable[[T], Result[Any, E]]) -> Result[tuple[()], E]:
         """Applies a fallible function to each item in the `Iterator`, stopping at the first error and returning that error.
 
         This can also be thought of as the fallible form of `.for_each()`.
@@ -1406,7 +1403,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
     @overload
     def try_collect[U, E](self: PyoIterator[Result[U, E]]) -> Option[Vec[U]]: ...
     def try_collect[U](
-        self: PyoIterator[Option[U]] | PyoIterator[Result[U, Any]],  # pyright: ignore[reportExplicitAny]
+        self: PyoIterator[Option[U]] | PyoIterator[Result[U, Any]],
     ) -> Option[Vec[U]]:
         """Fallibly transforms **self** into a `Vec`, short circuiting if a failure is encountered.
 
@@ -1514,9 +1511,9 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
         """
     @overload
     def fold_star[**P, B](
-        self: PyoIterator[tuple[Any]],  # pyright: ignore[reportExplicitAny]
+        self: PyoIterator[tuple[Any]],
         init: B,
-        func: Callable[[Any], B],  # pyright: ignore[reportExplicitAny]
+        func: Callable[[Any], B],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> B: ...
@@ -1754,8 +1751,8 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
     @overload
     def flatten(self: PyoIterator[Range]) -> PyoIterator[int]: ...
     @overload
-    def flatten[U](self: PyoIterator[Dict[U, Any]]) -> PyoIterator[U]: ...  # pyright: ignore[reportExplicitAny]
-    def flatten[U: AnyIter](self: PyoIterator[U]) -> PyoIterator[Any]:  # pyright: ignore[reportExplicitAny]
+    def flatten[U](self: PyoIterator[Dict[U, Any]]) -> PyoIterator[U]: ...
+    def flatten[U: Iterable[Any]](self: PyoIterator[U]) -> PyoIterator[Any]:
         """Creates an `Iterator` that flattens nested structures.
 
         This is useful when you have an `Iterator` of `Iterable` and you want to remove one level of indirection.
@@ -2010,8 +2007,8 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
     ) -> PyoIterator[tuple[K, PyoIterator[T]] | tuple[T, PyoIterator[T]]]: ...
     def group_by(
         self,
-        key: Callable[[T], Any] | None = None,  # pyright: ignore[reportExplicitAny]
-    ) -> PyoIterator[tuple[Any | T, PyoIterator[T]]]:  # pyright: ignore[reportExplicitAny]
+        key: Callable[[T], Any] | None = None,
+    ) -> PyoIterator[tuple[Any | T, PyoIterator[T]]]:
         """Make an `Iterator` that returns consecutive keys and groups from the iterable.
 
         The values yielded are `(K, PyoIterator[T])` tuples, where the first element is the group key and the second element is an `Iterator` of type `T` over the group values.
@@ -2442,8 +2439,8 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
     @overload
     def filter_map_star[R](
-        self: PyoIterator[tuple[Any]],  # pyright: ignore[reportExplicitAny]
-        func: Callable[[Any], Option[R]],  # pyright: ignore[reportExplicitAny]
+        self: PyoIterator[tuple[Any]],
+        func: Callable[[Any], Option[R]],
     ) -> PyoIterator[R]: ...
     @overload
     def filter_map_star[T1, T2, R](
@@ -2490,7 +2487,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
         self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], Option[R]],
     ) -> PyoIterator[R]: ...
-    def filter_map_star[U: AnyIter, R](
+    def filter_map_star[U: Iterable[Any], R](
         self: PyoIterator[U], func: Callable[..., Option[R]]
     ) -> PyoIterator[R]:
         """Creates an iterator that both filters and maps, where each element is an iterable.
@@ -2631,10 +2628,10 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
     ) -> PyoIterator[R]: ...
     @overload
     def map_star[R](
-        self: PyoIterator[tuple[Any, ...]],  # pyright: ignore[reportExplicitAny]
+        self: PyoIterator[tuple[Any, ...]],
         func: Callable[..., R],
     ) -> PyoIterator[R]: ...
-    def map_star[U: AnyIter, R](
+    def map_star[U: Iterable[Any], R](
         self: PyoIterator[U], func: Callable[..., R]
     ) -> PyoIterator[R]:
         """Applies a function to each element.where each element is an iterable.
@@ -2770,7 +2767,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
     ) -> PyoIterator[tuple[R1, R2, R3, R4, R5, R6, R7, R8, R9, R10]]: ...
     @overload
     def map_juxt[R](self, *funcs: Callable[[T], R]) -> PyoIterator[tuple[R, ...]]: ...
-    def map_juxt(self, *funcs: Callable[[T], Any]) -> PyoIterator[tuple[Any, ...]]:  # pyright: ignore[reportExplicitAny]
+    def map_juxt(self, *funcs: Callable[[T], Any]) -> PyoIterator[tuple[Any, ...]]:
         """Apply several functions to each item of the `Iterator`.
 
         Returns a new `Iterator` where each item is a tuple of the results of applying each function to the original item.
@@ -2920,7 +2917,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
     def map_windows[R](
         self,
         length: int,
-        func: Callable[[tuple[Any, ...]], R],  # pyright: ignore[reportExplicitAny]
+        func: Callable[[tuple[Any, ...]], R],
     ) -> PyoIterator[R]:
         """Calls the given *func* for each contiguous window of size *length* over **self**.
 
@@ -3067,7 +3064,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def min[U: SupportsAnyRichComparison](self: PyoIterable[U]) -> U:
+    def min[U: SupportsRichComparison[Any]](self: PyoIterable[U]) -> U:
         """Return the minimum of the `Iterator`.
 
         The elements of the `Iterator` must support comparison operations.
@@ -3088,7 +3085,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def min_by[U: SupportsAnyRichComparison](self, key: Callable[[T], U]) -> T:
+    def min_by[U: SupportsRichComparison[Any]](self, key: Callable[[T], U]) -> T:
         """Return the minimum element of the `Iterator` using a custom **key** function.
 
         If multiple elements are tied for the minimum value, the first one encountered is returned.
@@ -3128,7 +3125,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def max[U: SupportsAnyRichComparison](self: PyoIterable[U]) -> U:
+    def max[U: SupportsRichComparison[Any]](self: PyoIterable[U]) -> U:
         """Return the maximum element of the `Iterator`.
 
         The elements of the `Iterator` must support comparison operations.
@@ -3149,7 +3146,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def max_by[U: SupportsAnyRichComparison](self, key: Callable[[T], U]) -> T:
+    def max_by[U: SupportsRichComparison[Any]](self, key: Callable[[T], U]) -> T:
         """Return the maximum element of the `Iterator` using a custom **key** function.
 
         If multiple elements are tied for the maximum value, the first one encountered is returned.
@@ -3322,8 +3319,8 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
         self, *iterables: Iterable[T], repeat: int = ...
     ) -> PyoIterator[tuple[T, ...]]: ...
     def product(
-        self, *iterables: AnyIter, repeat: int = 1
-    ) -> PyoIterator[tuple[Any, ...]]:  # pyright: ignore[reportExplicitAny]
+        self, *iterables: Iterable[Any], repeat: int = 1
+    ) -> PyoIterator[tuple[Any, ...]]:
         """Computes the Cartesian product with other iterables.
 
         This is the declarative equivalent of nested for-loops.
@@ -3332,7 +3329,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
         other iterables.
 
         Args:
-            *iterables (AnyIter): Other iterables to compute the Cartesian product with.
+            *iterables (Iterable[Any]): Other iterables to compute the Cartesian product with.
             repeat (int): The number of repetitions of the Cartesian product.
 
         Returns:
@@ -3535,7 +3532,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
             ```
         """
-    def sort[U: SupportsAnyRichComparison](
+    def sort[U: SupportsRichComparison[Any]](
         self: PyoIterator[U], *, reverse: bool = False
     ) -> Vec[U]:
         """Sort the elements of the `Iterator`.
@@ -3563,7 +3560,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
         """
 
     def sort_by(
-        self, key: Callable[[T], SupportsAnyRichComparison], *, reverse: bool = False
+        self, key: Callable[[T], SupportsRichComparison[Any]], *, reverse: bool = False
     ) -> Vec[T]:
         """Sort the elements of the sequence transformed by the key function.
 
@@ -3573,7 +3570,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             The result is a new `Vec` over the sorted sequence.
 
         Args:
-            key (Callable[[T], SupportsAnyRichComparison]): Function to extract a comparison key from each element.
+            key (Callable[[T], SupportsRichComparison[Any]]): Function to extract a comparison key from each element.
             reverse (bool): Whether to sort in descending order.
 
         Returns:
@@ -3725,7 +3722,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def unique_by(self, key: Callable[[T], Any]) -> PyoIterator[T]:  # pyright: ignore[reportExplicitAny]
+    def unique_by(self, key: Callable[[T], Any]) -> PyoIterator[T]:
         """Return only unique elements of the iterable.
 
         Args:
@@ -3830,8 +3827,8 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
         self, /, *others: Iterable[T], strict: bool = False
     ) -> PyoIterator[tuple[T, ...]]: ...
     def zip(
-        self, /, *others: AnyIter, strict: bool = False
-    ) -> PyoIterator[tuple[Any, ...]]:  # pyright: ignore[reportExplicitAny]
+        self, /, *others: Iterable[Any], strict: bool = False
+    ) -> PyoIterator[tuple[Any, ...]]:
         """Yields n-length tuples, where n is the number of iterables passed as positional arguments.
 
         The i-th element in every tuple comes from the i-th iterable argument to `.zip()`.
@@ -3843,7 +3840,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.
 
         Args:
-            *others (AnyIter): Other iterables to zip with.
+            *others (Iterable[Any]): Other iterables to zip with.
             strict (bool): If `True` and one of the arguments is exhausted before the others, raise a ValueError.
 
         Returns:
@@ -3902,9 +3899,9 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
         iter5: Iterable[T],
         iter6: Iterable[T],
         /,
-        *iterables: AnyIter,
+        *iterables: Iterable[Any],
     ) -> PyoIterator[tuple[Option[T], ...]]: ...
-    def zip_longest(self, *others: AnyIter) -> ZippedLongest[T]:
+    def zip_longest(self, *others: Iterable[Any]) -> ZippedLongest[T]:
         """Return a zip `Iterator` who yield a `tuple` where the i-th element comes from the i-th `Iterable` argument.
 
         Yield values until the longest `Iterable` in the argument sequence is exhausted, and then it raises `StopIteration`.
@@ -3914,7 +3911,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
         When the shorter iterables are exhausted, they yield `NONE`.
 
         Args:
-            *others (AnyIter): Other iterables to zip with.
+            *others (Iterable[Any]): Other iterables to zip with.
 
         Returns:
             ZippedLongest[T]: An `Iterator` of tuples containing optional elements from the zipped iterables.

@@ -230,7 +230,7 @@ class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
         return Dict.from_ref(kwargs)
 
     @staticmethod
-    def from_object(obj: object) -> Dict[str, Any]:  # pyright: ignore[reportExplicitAny]
+    def from_object(obj: object) -> Dict[str, Any]:
         """Create a `Dict` from an object `__dict__` attribute.
 
         We can't know in advance the values types, so we use `Any`.

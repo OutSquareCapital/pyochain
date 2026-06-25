@@ -8,8 +8,6 @@ from .._set import Set, SetMut
 from .._utils import get_repr
 from ..abc import PyoMutableSet
 
-type AnyIter = Iterable[Any]  # pyright: ignore[reportExplicitAny]
-
 
 class StableSet[T](PyoMutableSet[T]):  # noqa: PLW1641
     """A mutable collection of unique elements which remember their insertion order.
@@ -76,7 +74,7 @@ class StableSet[T](PyoMutableSet[T]):  # noqa: PLW1641
                 return False
 
     @staticmethod
-    def from_ref[V](data: dict[V, Any]) -> StableSet[V]:  # pyright: ignore[reportExplicitAny]
+    def from_ref[V](data: dict[V, Any]) -> StableSet[V]:
         """Create a `StableSet` from a reference to an existing `dict`.
 
         This method wraps the provided `dict` without copying it, allowing for efficient object instanciation.
@@ -119,7 +117,7 @@ class StableSet[T](PyoMutableSet[T]):  # noqa: PLW1641
         del self._inner[value]
 
     @override
-    def intersection(self, other: AnyIter) -> SetMut[T]:
+    def intersection(self, other: Iterable[Any]) -> SetMut[T]:
         return SetMut.from_ref(self._inner.keys() & other)
 
     @override
@@ -127,7 +125,7 @@ class StableSet[T](PyoMutableSet[T]):  # noqa: PLW1641
         return SetMut.from_ref(self._inner.keys() | other)
 
     @override
-    def difference(self, other: AnyIter) -> SetMut[T]:
+    def difference(self, other: Iterable[Any]) -> SetMut[T]:
         return SetMut.from_ref(self._inner.keys() - other)
 
     @override

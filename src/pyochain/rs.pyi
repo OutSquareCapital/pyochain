@@ -418,8 +418,8 @@ class OptionType[T](Pipe):
 
     @overload
     def map_star[R](
-        self: Option[tuple[Any]],  # pyright: ignore[reportExplicitAny]
-        func: Callable[[Any], R],  # pyright: ignore[reportExplicitAny]
+        self: Option[tuple[Any]],
+        func: Callable[[Any], R],
     ) -> Option[R]: ...
     @overload
     def map_star[T1, T2, R](
@@ -493,8 +493,8 @@ class OptionType[T](Pipe):
 
     @overload
     def and_then_star[R](
-        self: Option[tuple[Any]],  # pyright: ignore[reportExplicitAny]
-        func: Callable[[Any], Option[R]],  # pyright: ignore[reportExplicitAny]
+        self: Option[tuple[Any]],
+        func: Callable[[Any], Option[R]],
     ) -> Option[R]: ...
     @overload
     def and_then_star[T1, T2, R](
@@ -1411,7 +1411,7 @@ class Null[T](OptionType[T]):
         ```
     """
 
-NONE: Final[Null[Any]] = ...  # pyright: ignore[reportAny, reportExplicitAny]
+NONE: Final[Null[Any]] = ...  # pyright: ignore[reportAny]
 """Singleton instance representing the absence of a value.
 
 This is the only instance of `Null` who exists, and is similar to the logic used by `None` in standard Python.
@@ -1619,8 +1619,8 @@ class ResultType[T, E](Pipe, Protocol):
 
     @overload
     def map_star[R](
-        self: Result[tuple[Any], E],  # pyright: ignore[reportExplicitAny]
-        func: Callable[[Any], R],  # pyright: ignore[reportExplicitAny]
+        self: Result[tuple[Any], E],
+        func: Callable[[Any], R],
     ) -> Result[R, E]: ...
     @overload
     def map_star[T1, T2, R](
@@ -1694,8 +1694,8 @@ class ResultType[T, E](Pipe, Protocol):
 
     @overload
     def and_then_star[R](
-        self: Result[tuple[Any], E],  # pyright: ignore[reportExplicitAny]
-        func: Callable[[Any], Result[R, E]],  # pyright: ignore[reportExplicitAny]
+        self: Result[tuple[Any], E],
+        func: Callable[[Any], Result[R, E]],
     ) -> Result[R, E]: ...
     @overload
     def and_then_star[T1, T2, R](
@@ -2377,11 +2377,11 @@ class Ok[T, E](ResultType[T, E]):
     value: T
     # NOTE: this is an hack to avoid errors by immediatly casting `E` as `Any`, thus avoiding any type errors with incompatible types.
     @overload
-    def __new__(cls, value: Result[T, E]) -> Result[Result[T, E], Any]: ...  # pyright: ignore[reportExplicitAny]
+    def __new__(cls, value: Result[T, E]) -> Result[Result[T, E], Any]: ...
     @overload
-    def __new__(cls, value: Option[T]) -> Result[Option[T], Any]: ...  # pyright: ignore[reportExplicitAny]
+    def __new__(cls, value: Option[T]) -> Result[Option[T], Any]: ...
     @overload
-    def __new__(cls, value: T) -> Result[T, Any]: ...  # pyright: ignore[reportExplicitAny]
+    def __new__(cls, value: T) -> Result[T, Any]: ...
 
 @final
 class Err[T, E](ResultType[T, E]):
@@ -2400,8 +2400,8 @@ class Err[T, E](ResultType[T, E]):
     error: E
     # NOTE: same hack as in `Ok` for type errors
     @overload
-    def __new__(cls, error: Result[T, E]) -> Result[Any, Result[T, E]]: ...  # pyright: ignore[reportExplicitAny]
+    def __new__(cls, error: Result[T, E]) -> Result[Any, Result[T, E]]: ...
     @overload
-    def __new__(cls, error: Option[E]) -> Result[Any, Option[E]]: ...  # pyright: ignore[reportExplicitAny]
+    def __new__(cls, error: Option[E]) -> Result[Any, Option[E]]: ...
     @overload
-    def __new__(cls, error: E) -> Result[Any, E]: ...  # pyright: ignore[reportExplicitAny]
+    def __new__(cls, error: E) -> Result[Any, E]: ...

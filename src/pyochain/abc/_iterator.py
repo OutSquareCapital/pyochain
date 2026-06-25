@@ -13,11 +13,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Iterable, Iterator
 
     from .._peekable import Peekable
-    from .._types import SupportsComparison
     from ..collections import Deque
-
-    type AnyIter = Iterable[Any]  # pyright: ignore[reportExplicitAny]
-    type SupportsAnyComparison = SupportsComparison[Any]  # pyright: ignore[reportExplicitAny]
 
 
 class PyoIterator[T](PyoIteratorRS[T], ABC):
@@ -264,7 +260,7 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
         /,
     ) -> PyoIterator[R]: ...
     def map_with[R](
-        self, func: Callable[..., R], *iterables: AnyIter
+        self, func: Callable[..., R], *iterables: Iterable[Any]
     ) -> PyoIterator[R]:
         """Applies a function to the elements of this `Iterator` and additional iterables.
 
@@ -275,7 +271,7 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
         The `Iterator` stops when the shortest iterable is exhausted.
 
         Args:
-            *iterables (AnyIter): Additional iterables to zip with **self**.
+            *iterables (Iterable[Any]): Additional iterables to zip with **self**.
             func (Callable[..., R]): Function to apply to the elements of the iterables.
 
         Returns:

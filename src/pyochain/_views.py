@@ -6,7 +6,7 @@ from typing import Any, override
 from ._set import SetMut
 from .abc import PyoMappingView, PyoSet
 
-type AnyIter = Iterable[Any]  # pyright: ignore[reportExplicitAny]
+type AnyIter = Iterable[Any]
 
 
 class PyoValuesView[V](ValuesView[V], PyoMappingView[V]):  # pyright: ignore[reportUnsafeMultipleInheritance]

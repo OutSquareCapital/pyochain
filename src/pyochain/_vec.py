@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self, overload, override
+from typing import TYPE_CHECKING, Any, Self, overload, override
 
-from ._types import SupportsAnyRichComparison
+from ._types import SupportsRichComparison
 from ._utils import get_repr, no_doctest
 from .abc import PyoMutableSequence
 
@@ -199,7 +199,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         """
         self._inner.insert(index, value)
 
-    def sort[U: SupportsAnyRichComparison](
+    def sort[U: SupportsRichComparison[Any]](
         self: Vec[U], *, reverse: bool = False
     ) -> Vec[U]:
         """Sort the elements of the `Vec` in place.
@@ -225,7 +225,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         return self
 
     def sort_by(
-        self, key: Callable[[T], SupportsAnyRichComparison], *, reverse: bool = False
+        self, key: Callable[[T], SupportsRichComparison[Any]], *, reverse: bool = False
     ) -> Self:
         """Sort the elements of the `Vec`  in place with a key function.
 
@@ -235,7 +235,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
             This method modifies the `Vec` in place and returns the same instance for chaining.
 
         Args:
-            key (Callable[[T], SupportsAnyRichComparison]): function to extract a comparison key from each element.
+            key (Callable[[T], SupportsRichComparison[Any]]): function to extract a comparison key from each element.
             reverse (bool): If True, sort in descending order.
 
         Returns:
