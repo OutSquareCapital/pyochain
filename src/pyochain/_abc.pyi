@@ -3219,6 +3219,83 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
             ```
         """
+
+    def sort[U: SupportsAnyRichComparison](
+        self: PyoIterator[U], *, reverse: bool = False
+    ) -> Vec[U]:
+        """Sort the elements of the `Iterator`.
+
+        The elements must support rich comparison operations (i.e., they must implement the necessary comparison dunder methods).
+
+        Note:
+            This method must consume the entire `Iterator` to perform the sort.
+
+            The result is a new `Vec` over the sorted sequence.
+
+        Args:
+            reverse (bool): Whether to sort in descending order.
+
+        Returns:
+            Vec[U]: A `Vec` with elements sorted.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((3, 1, 2)).sort()
+            Vec(1, 2, 3)
+
+            ```
+        """
+
+    def sort_by(
+        self, key: Callable[[T], SupportsAnyRichComparison], *, reverse: bool = False
+    ) -> Vec[T]:
+        """Sort the elements of the sequence transformed by the key function.
+
+        Note:
+            This method must consume the entire `Iterator` to perform the sort.
+
+            The result is a new `Vec` over the sorted sequence.
+
+        Args:
+            key (Callable[[T], SupportsAnyRichComparison]): Function to extract a comparison key from each element.
+            reverse (bool): Whether to sort in descending order.
+
+        Returns:
+            Vec[T]: A `Vec` with elements sorted.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> str_numbers = Seq(("3", "1", "2"))
+            >>> str_numbers.iter().sort_by(int)
+            Vec('1', '2', '3')
+            >>> str_numbers.iter().sort_by(int, reverse=True)
+            Vec('3', '2', '1')
+            >>> from dataclasses import dataclass
+            >>> @dataclass
+            ... class Person:
+            ...     name: str
+            ...     age: int
+            >>>
+            >>> peoples = Seq((
+            ...     Person("Alice", 30),
+            ...     Person("Bob", 25),
+            ...     Person("Charlie", 35),
+            ... ))
+            >>> sorted_names = (
+            ...     peoples
+            ...     .iter()
+            ...     .sort_by(lambda x: x.age)
+            ...     .iter()
+            ...     .map(lambda x: x.name)
+            ...     .collect(Seq)
+            ... )
+            >>> sorted_names
+            Seq('Bob', 'Alice', 'Charlie')
+
+            ```
+        """
     def unpack_into[**P, R](
         self,
         func: Callable[Concatenate[T, P], R],

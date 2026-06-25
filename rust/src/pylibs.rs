@@ -4,7 +4,7 @@ use crate::args::{Args, Concatenate};
 /// This pattern ensure maximum performance by only importing the function or object once, and reusing it for subsequent calls.
 /// We also use unsafe casts to correct types, aggressive inlining, and `&Bound` to maximize performance.
 use pyo3::sync::PyOnceLock;
-use pyo3::types::{PyBool, PyDict, PyInt, PyIterator, PyList, PyTuple};
+use pyo3::types::{PyBool, PyDict, PyInt, PyIterator, PyList, PySequence, PyTuple};
 use pyo3::{intern, prelude::*};
 
 /// Python `builtins` functions and objects
@@ -22,6 +22,7 @@ pub mod builtins {
     static ENUMERATE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static MAP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static FILTER: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static SORTED: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static ZIP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     /// Create a unique sentinel object. Equivalent to `object()` in Python. On >=3.15, this will become unneded thanks to the new sentinel builtin.
     #[inline(always)]
@@ -102,6 +103,34 @@ pub mod builtins {
             .import(iterator.py(), BUILTINS, "filter")?
             .call1((func, iterator))
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
+    }
+    #[inline(always)]
+    pub fn sorted<'py>(
+        iterator: &Bound<'py, PyIterator>,
+        reverse: bool,
+    ) -> PyResult<Bound<'py, PyList>> {
+        let py = iterator.py();
+        let kwargs = PyDict::new(py);
+        kwargs.set_item(intern!(py, "reverse"), reverse)?;
+        SORTED
+            .import(py, BUILTINS, "sorted")?
+            .call((iterator,), Some(&kwargs))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
+    }
+    #[inline(always)]
+    pub fn sorted_by<'py>(
+        iterator: &Bound<'py, PyIterator>,
+        reverse: bool,
+        key: &Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyList>> {
+        let py = iterator.py();
+        let kwargs = PyDict::new(py);
+        kwargs.set_item(intern!(py, "reverse"), reverse)?;
+        kwargs.set_item(intern!(py, "key"), key)?;
+        SORTED
+            .import(py, BUILTINS, "sorted")?
+            .call((iterator,), Some(&kwargs))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
     }
     #[inline(always)]
     pub fn zip<'py>(
@@ -351,11 +380,12 @@ pub mod pyochain {
         use super::*;
         static VEC: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
         #[inline(always)]
-        pub fn from_ref<'py>(obj: &Bound<'py, PyList>) -> PyResult<Bound<'py, PyAny>> {
+        pub fn from_ref<'py>(obj: &Bound<'py, PyList>) -> PyResult<Bound<'py, PySequence>> {
             let py = obj.py();
             VEC.import(py, PYOCHAIN, "Vec")?
                 .getattr(intern!(py, "from_ref"))?
                 .call1((obj,))
+                .map(|obj| unsafe { obj.cast_into_unchecked::<PySequence>() })
         }
     }
     pub mod iter {

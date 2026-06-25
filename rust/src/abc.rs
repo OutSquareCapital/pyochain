@@ -685,6 +685,7 @@ impl PyoIterator {
         collected
             .pipe_ref(pylibs::pyochain::vec::from_ref)?
             .unbind()
+            .into_any()
             .pipe(PySome::new)
             .into_py_any(py)
     }
@@ -1034,7 +1035,7 @@ impl PyoIterator {
     fn partition<'py>(
         slf: &Bound<'py, Self>,
         predicate: &Bound<'py, PyAny>,
-    ) -> PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
+    ) -> PyResult<(Bound<'py, PySequence>, Bound<'py, PySequence>)> {
         let slf = slf.try_iter()?;
         let py = slf.py();
         let true_list = PyList::empty(py);
@@ -1068,6 +1069,22 @@ impl PyoIterator {
             .map(|x| tls::Scan::new(x, initial, func))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+    #[pyo3(signature = (*, reverse=false))]
+    fn sort<'py>(slf: &Bound<'py, Self>, reverse: bool) -> PyResult<Bound<'py, PySequence>> {
+        slf.try_iter()
+            .and_then(|x| pylibs::builtins::sorted(&x, reverse))
+            .and_then(|x| pylibs::pyochain::vec::from_ref(&x))
+    }
+    #[pyo3(signature = (key, *,reverse=false))]
+    fn sort_by<'py>(
+        slf: &Bound<'py, Self>,
+        key: &Bound<'py, PyAny>,
+        reverse: bool,
+    ) -> PyResult<Bound<'py, PySequence>> {
+        slf.try_iter()
+            .and_then(|x| pylibs::builtins::sorted_by(&x, reverse, key))
+            .and_then(|x| pylibs::pyochain::vec::from_ref(&x))
     }
     #[pyo3 (signature = (start=0))]
     fn sum<'py>(slf: &Bound<'py, Self>, start: i32) -> PyResult<Bound<'py, PyAny>> {
