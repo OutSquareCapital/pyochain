@@ -1,0 +1,5 @@
+preset      = "all"
+search-path = [".", "src"]
+[errors]
+
+    explicit-any = false # We have no choice as a library.
