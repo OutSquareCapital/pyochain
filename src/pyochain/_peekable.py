@@ -83,6 +83,8 @@ class Peekable[T](PyoIterator[T]):
             >>> # The next value returned will be 10
             >>> iterator.next()
             Some(10)
+
+            ```
         """
         match self.next():
             case Some(matched) if func(matched):

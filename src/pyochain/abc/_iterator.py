@@ -200,6 +200,7 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
             >>> iterator.next()
             NONE
 
+            ```
         """
         from .._peekable import Peekable
 

@@ -1,3 +1,3 @@
 # PyoIterable
 
-::: pyochain.abc._iterable.PyoIterable
+::: pyochain.rs.PyoIterable
