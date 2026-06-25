@@ -17,6 +17,7 @@
 - **API change**: `PyoIterator::batch` has been renamed to `PyoIterator::batched`.
 - **Method removal**: `PyoIterator::array_chunks` has been removed. Use `PyoIterator::batched` instead.
 - **API change**: `PyoIterator::map_with` *function* argument now need to be the **first** argument, followed by the various iterables. It was previously a kword only argument at the end. Swap the order at call sites to migrate your code.
+- **Removal**: `PyoIterator::insert` has been removed. Replace `y.insert(x)` by `Iter.once(x).chain(y)` to migrate your code. This makes thing clearer at both reading-order level, and semantics level, as this avoid treating an `Iterator` as "sort of" mutable collection.
 
 ### ✨ Enhancements
 

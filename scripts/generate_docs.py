@@ -5,7 +5,7 @@ from __future__ import annotations
 from types import ModuleType
 from typing import TYPE_CHECKING, TypeIs
 
-from pyochain import Dict, Set, SetMut
+from pyochain import Dict, Iter, Set, SetMut
 
 from ._utils import Color, Paths
 
@@ -28,13 +28,16 @@ def _generate_all_for_module(module: ModuleType) -> None:
     generated_paths = SetMut[str](())
 
     return (
-        Dict
-        .from_ref(vars(module))
-        .values()
-        .iter()
-        .filter(_is_module)
-        .filter(lambda m: m.__name__.startswith(module.__name__))
-        .insert(module)
+        Iter
+        .once(module)
+        .chain(
+            Dict
+            .from_ref(vars(module))
+            .values()
+            .iter()
+            .filter(_is_module)
+            .filter(lambda m: m.__name__.startswith(module.__name__))
+        )
         .for_each(_generate_mds, generated_paths)
     )
 

@@ -362,33 +362,6 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
         """
         return self._from_iterable(itertools.islice(iter(self), start, stop, step))
 
-    def insert(self, value: T) -> PyoIterator[T]:
-        """Prepend the *value* to the `Iterator`.
-
-        Note:
-            This can be considered the equivalent as `list.append()`, but for a lazy `Iterator`.
-
-            However, append add the value at the **end**, while insert add it at the **beginning**.
-
-        See Also:
-            [`PyoIterator::chain`][chain] to add multiple elements at the end of the `Iterator`.
-
-        Args:
-            value (T): The value to prepend.
-
-        Returns:
-            PyoIterator[T]: A new Iterable wrapper with the value prepended.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter((2, 3)).insert(1).collect(Seq)
-            Seq(1, 2, 3)
-
-            ```
-        """
-        return self._from_iterable(itertools.chain((value,), iter(self)))
-
     def chain(self, *others: Iterable[T]) -> PyoIterator[T]:
         """Concatenate **self** with one or more `Iterables`, any of which may be infinite.
 
