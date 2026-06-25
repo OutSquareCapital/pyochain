@@ -1,6 +1,7 @@
 use pyo3::ffi;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyTuple};
+use tap::prelude::*;
 /// Type alias representing the `*args` parameter in Python functions (or any argument that is expected to be a tuple)
 pub type Args<'py> = Bound<'py, PyTuple>;
 /// Type alias representing the `**kwargs` parameter in Python functions
@@ -122,6 +123,19 @@ impl<'py> Concatenate<'py> for &Bound<'py, PyAny> {
         args: &Args<'py>,
     ) -> PyResult<Bound<'py, PyAny>> {
         self.call1(unsafe { concat_acc_tup_with_args(acc, item, args, args.len()) })
+    }
+}
+pub trait ConcatWith<'py> {
+    fn concat_with(self, others: &Args<'py>) -> PyResult<Bound<'py, PyTuple>>;
+}
+impl<'py> ConcatWith<'py> for Bound<'py, PyAny> {
+    #[inline(always)]
+    fn concat_with(self, others: &Args<'py>) -> PyResult<Bound<'py, PyTuple>> {
+        let py = self.py();
+        self.pipe(std::iter::once)
+            .chain(others.iter())
+            .collect::<Vec<Bound<'py, PyAny>>>()
+            .pipe_ref(|x| PyTuple::new(py, x))
     }
 }
 #[inline]

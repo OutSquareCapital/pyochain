@@ -1,4 +1,4 @@
-use crate::args::{Args, Concatenate, Kwargs};
+use crate::args::{Args, ConcatWith, Concatenate, Kwargs};
 use crate::mixins::Checkable;
 use crate::option::{PyNull, PySome};
 use crate::pylibs;
@@ -509,14 +509,10 @@ impl PyoIterator {
     }
     #[pyo3(signature = (*others))]
     fn chain<'py>(slf: Bound<'py, Self>, others: &Args<'py>) -> PyResult<Bound<'py, Self>> {
-        let py = slf.py();
         let cls = slf.get_type();
 
         slf.into_any()
-            .pipe(std::iter::once)
-            .chain(others.iter())
-            .collect::<Vec<Bound<'py, PyAny>>>()
-            .pipe(|x| PyTuple::new(py, x))
+            .concat_with(others)
             .and_then(|x| pylibs::itertools::chain::new(&x))
             .and_then(|x| cls.call1((&x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
@@ -1085,6 +1081,19 @@ impl PyoIterator {
             pylibs::pyochain::vec::from_ref(&true_list)?,
             pylibs::pyochain::vec::from_ref(&false_list)?,
         ))
+    }
+    #[pyo3(signature = (*others, repeat=1))]
+    fn product<'py>(
+        slf: Bound<'py, Self>,
+        others: &Args<'py>,
+        repeat: usize,
+    ) -> PyResult<Bound<'py, Self>> {
+        let cls = slf.get_type();
+        slf.into_any()
+            .concat_with(others)
+            .and_then(|x| pylibs::itertools::product(&x, repeat))
+            .and_then(|x| cls.call1((x,)))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
     fn reduce<'py>(
         slf: &Bound<'py, Self>,

@@ -503,12 +503,13 @@ def _accumulate(data: Range) -> int:
 
 @pytest.mark.parametrize("size", SIZES)
 def test_product(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size)
-    assert benchmark(_product, data) is not None
+    data = Range(0, 2)
+    others = data.iter().repeat(size).map(lambda x: x.collect(Seq)).collect(Seq)
+    assert benchmark(_product, data, others) is not None
 
 
-def _product(data: Range) -> tuple[int, ...]:
-    return data.iter().product([1], [2], [3], repeat=4).take(10).last()
+def _product(data: Range, others: Seq[Seq[int]]) -> tuple[int, ...]:
+    return data.iter().product(*others, repeat=4).take(10).last()
 
 
 def test_once(benchmark: BenchFixture) -> None:

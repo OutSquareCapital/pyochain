@@ -169,6 +169,7 @@ pub mod itertools {
     static COMPRESS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static CYCLE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static PAIRWISE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static PRODUCT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static PERMUTATIONS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static REPEAT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static ISLICE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
@@ -340,6 +341,15 @@ pub mod itertools {
         PAIRWISE
             .import(iterator.py(), ITERTOOLS, "pairwise")?
             .call1((iterator,))
+            .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
+    }
+    #[inline(always)]
+    pub fn product<'py>(iterables: &Args<'py>, repeat: usize) -> PyResult<Bound<'py, PyIterator>> {
+        let kwargs = PyDict::new(iterables.py());
+        kwargs.set_item(intern!(iterables.py(), "repeat"), repeat)?;
+        PRODUCT
+            .import(iterables.py(), ITERTOOLS, "product")?
+            .call(iterables, Some(&kwargs))
             .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
     }
     #[inline(always)]
