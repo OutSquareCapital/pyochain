@@ -394,6 +394,58 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
+    @classmethod
+    def from_repeat[O](cls, obj: O, n: int | None = None) -> PyoIterator[O]:
+        """Repeat the provided object **n** times (as elements) as elements of an `Iterator`.
+
+        If **n** is `None`, this will create an infinite `Iterator`.
+
+        Be sure to use [`PyoIterator::take`][PyoIterator.take] or [`PyoIterator::slice`][PyoIterator.slice] to limit the number of items taken.
+
+        Warning:
+            Each repetition is a reference to the same object, not a copy.
+
+            This means that if the object is mutable and you modify one of the repetitions, all next repetitions will reflect that change.
+
+        Args:
+            obj (O): The object to repeat.
+            n (int | None): Optional number of repetitions.
+
+        Returns:
+            PyoIterator[O]: An `Iterator` of repeated **obj**.
+
+        See Also:
+            [`PyoIterator::cycle`][cycle] to repeat the **elements** of the `Iterator`.
+            [`PyoIterator::repeat`][repeat] to repeat the **entire** `Iterator`.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq, Iter
+            >>> Iter.from_repeat(1, 3).collect(Seq)
+            Seq(1, 1, 1)
+            >>> Iter.from_repeat(("a", "b"), 2).collect(Seq)
+            Seq(('a', 'b'), ('a', 'b'))
+
+            ```
+            Shared reference behavior:
+            ```python
+            >>> from pyochain import Vec
+            >>>
+            >>> base = ["Alice", "Bob", "Charlie"]
+            >>>
+            >>> first, second = Iter.from_repeat(base).take(2).collect(tuple)
+            >>> first.append("Joe")
+            >>> first
+            ['Alice', 'Bob', 'Charlie', 'Joe']
+            >>> base
+            ['Alice', 'Bob', 'Charlie', 'Joe']
+            >>> second
+            ['Alice', 'Bob', 'Charlie', 'Joe']
+            >>> first is second and first is base and second is base
+            True
+
+            ```
+        """
     def count(self) -> int:
         """Consume the `Iterator` and return the number of elements it contained.
 
@@ -3106,6 +3158,32 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
             ```
         """
+
+    def nth(self, n: int) -> Option[T]:
+        """Return the nth item of the `Iterable` at the specified *n*.
+
+        This is similar to `__getitem__` but for lazy `Iterators`.
+
+        If *n* is out of bounds, returns `NONE`.
+
+        Args:
+            n (int): The index of the item to retrieve. It must be a non-negative integer.
+
+        Returns:
+            Option[T]: `Some(item)` at the specified *n*.
+
+        Example:
+            ```python
+            >>> from pyochain import Range
+            >>> data = Range(0, 10)
+            >>> data.iter().nth(1)
+            Some(1)
+            >>> data.iter().nth(10)
+            NONE
+
+            ```
+        """
+
     def partition(self, predicate: Callable[[T], bool]) -> tuple[Vec[T], Vec[T]]:
         """Consumes the `Iterator`, creating two `Vec` from it.
 
@@ -3148,6 +3226,36 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             >>> from pyochain import Iter
             >>> Iter((1, 2, 3)).reduce(lambda a, b: a + b)
             6
+
+            ```
+        """
+    def skip(self, n: int) -> PyoIterator[T]:
+        """Create an `Iterator` that skips the first n elements.
+
+        skip(**n**) skips elements until n elements are skipped or the end of the `Iterator` is reached (whichever happens first).
+
+        After that, all the remaining elements are yielded.
+
+        In particular, if the original `Iterator` is too short, then the returned `Iterator` is empty.
+
+        If **n** is negative or zero, the original `Iterator` is returned unchanged.
+
+        Args:
+            n (int): Number of elements to skip.
+
+        Returns:
+            PyoIterator[T]: An `Iterator` of the remaining elements.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> data = Seq((1, 2, 3))
+            >>> data.iter().skip(1).collect(Seq)
+            Seq(2, 3)
+            >>> data.iter().skip(5).collect(Seq)
+            Seq()
+            >>> data.iter().skip(0).collect(Seq)
+            Seq(1, 2, 3)
 
             ```
         """
@@ -3220,6 +3328,35 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
+    def slice(
+        self,
+        start: int | None = None,
+        stop: int | None = None,
+        step: int | None = None,
+    ) -> PyoIterator[T]:
+        """Return a slice of the `Iterator`.
+
+        Args:
+            start (int | None): Starting index of the slice.
+            stop (int | None): Ending index of the slice.
+            step (int | None): Step size for the slice.
+
+        Returns:
+            PyoIterator[T]: An `Iterator` of the sliced items.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> data = Seq((1, 2, 3, 4, 5))
+            >>> data.iter().slice(1, 4).collect(Seq)
+            Seq(2, 3, 4)
+            >>> data.iter().slice(step=2).collect(Seq)
+            Seq(1, 3, 5)
+            >>> data.iter().slice().collect(Seq)
+            Seq(1, 2, 3, 4, 5)
+
+            ```
+        """
     def sort[U: SupportsAnyRichComparison](
         self: PyoIterator[U], *, reverse: bool = False
     ) -> Vec[U]:
@@ -3293,6 +3430,55 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ... )
             >>> sorted_names
             Seq('Bob', 'Alice', 'Charlie')
+
+            ```
+        """
+
+    def step_by(self, step: int) -> PyoIterator[T]:
+        """Creates an `Iterator` starting at the same point, but stepping by the given **step** at each iteration.
+
+        Note:
+            The first element of the iterator will always be returned, regardless of the **step** given.
+
+        Args:
+            step (int): Step size for selecting items.
+
+        Returns:
+            PyoIterator[T]: An `Iterator` of every nth item.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> Seq((0, 1, 2, 3, 4, 5)).iter().step_by(2).collect(Seq)
+            Seq(0, 2, 4)
+
+            ```
+        """
+
+    def take(self, n: int) -> PyoIterator[T]:
+        """Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner.
+
+        `Iter.take(n)` yields elements until n elements are yielded or the end of the iterator is reached (whichever happens first).
+
+        The returned iterator is either:
+
+        - A prefix of length n if the original iterator contains at least n elements
+        - All of the (fewer than n) elements of the original iterator if it contains fewer than n elements.
+
+        Args:
+            n (int): Number of elements to take.
+
+        Returns:
+            PyoIterator[T]: An `Iterator` of the first n items.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> data = Seq((1, 2, 3))
+            >>> data.iter().take(2).collect(Seq)
+            Seq(1, 2)
+            >>> data.iter().take(5).collect(Seq)
+            Seq(1, 2, 3)
 
             ```
         """

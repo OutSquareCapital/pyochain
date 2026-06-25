@@ -38,6 +38,8 @@ Note that for `unpack_into`, even if it's worse on a relative basis on small `It
 
 What was observed is that the upper values outliers are much less frequent, especially on smaller sizes, where they have been reduced by a factor of 4.
 
+The performance improvements on small Iterators are expected, but the slowdown (albeit minor) on large Iterators is very surprising. There's less outliers, but their magnitude is worse, which can't be explained easily.
+
 Name         | 10 items | 100 items | 1_000 items | 10_000 items | Note
 -------------|----------|-----------|-------------|------------- | ----
 `arg_max`    | **1.26x**| **1.78x** | **3.40x**   | **4.15x**    | Low items counts are likely higher after full Rust migration
@@ -56,6 +58,8 @@ Name         | 10 items | 100 items | 1_000 items | 10_000 items | Note
 `accumulate` | **1.11x**| **1.05x** | **1.04x**   | **1.00x**    | -
 `reduce`     | **1.05x**| **1.01x** | **1.00x**   | **1.00x**    | -
 `find_map`   | **1.16x**| **1.02x** | **0.98x**   | **0.99x**    | -
+`take`       | **1.12x**| **1.09x** | **1.01x**   | **1.00x**    | -
+`slice`      | **1.12x**| **1.09x** | **1.01x**   | **0.97x**    | -
 
 ---
 

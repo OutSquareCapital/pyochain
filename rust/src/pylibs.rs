@@ -4,8 +4,9 @@ use crate::args::{Args, Concatenate};
 /// This pattern ensure maximum performance by only importing the function or object once, and reusing it for subsequent calls.
 /// We also use unsafe casts to correct types, aggressive inlining, and `&Bound` to maximize performance.
 use pyo3::sync::PyOnceLock;
-use pyo3::types::{PyBool, PyDict, PyInt, PyIterator, PyList, PySequence, PyTuple};
+use pyo3::types::{PyBool, PyDict, PyInt, PyIterator, PyList, PyNone, PySequence, PyTuple};
 use pyo3::{intern, prelude::*};
+use tap::prelude::*;
 
 /// Python `builtins` functions and objects
 pub mod builtins {
@@ -169,6 +170,8 @@ pub mod itertools {
     static CYCLE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static PAIRWISE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static PERMUTATIONS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static REPEAT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static ISLICE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
 
     /// `itertools::chain` class.
     pub mod chain {
@@ -340,6 +343,43 @@ pub mod itertools {
             .call1((func, iterable))
             .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
     }
+    #[inline(always)]
+    pub fn nth<'py>(
+        iterator: &Bound<'py, PyIterator>,
+        n: usize,
+    ) -> PyResult<Option<Bound<'py, PyAny>>> {
+        let py = iterator.py();
+        ISLICE
+            .import(py, ITERTOOLS, "islice")?
+            .call1((iterator, n, n + 1))?
+            .pipe(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
+            .next()
+            .transpose()
+    }
+    #[inline(always)]
+    pub fn slice<'py>(
+        iterator: &Bound<'py, PyIterator>,
+        start: &Option<&Bound<'py, PyInt>>,
+        stop: &Option<&Bound<'py, PyInt>>,
+        step: &Option<&Bound<'py, PyInt>>,
+    ) -> PyResult<Bound<'py, PyIterator>> {
+        let py = iterator.py();
+        ISLICE
+            .import(py, ITERTOOLS, "islice")?
+            .call1((iterator, start, stop, step))
+            .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
+    }
+    #[inline(always)]
+    pub fn skip<'py>(
+        iterator: &Bound<'py, PyIterator>,
+        n: &Bound<'py, PyInt>,
+    ) -> PyResult<Bound<'py, PyIterator>> {
+        let py = iterator.py();
+        ISLICE
+            .import(py, ITERTOOLS, "islice")?
+            .call1((iterator, n, PyNone::get(py)))
+            .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
+    }
 
     #[inline(always)]
     pub fn zip_longest<'py>(
@@ -350,6 +390,41 @@ pub mod itertools {
         ZIP_LONGEST
             .import(py, ITERTOOLS, "zip_longest")?
             .concat1(iterator, others)
+            .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
+    }
+    #[inline(always)]
+    pub fn repeat<'py>(
+        obj: &Bound<'py, PyAny>,
+        n: Option<&Bound<'py, PyInt>>,
+    ) -> PyResult<Bound<'py, PyIterator>> {
+        let py = obj.py();
+        let func = REPEAT.import(py, ITERTOOLS, "repeat")?;
+        match n {
+            Some(n) => func.call1((obj, n)),
+            None => func.call1((obj,)),
+        }
+        .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
+    }
+    #[inline(always)]
+    pub fn step_by<'py>(
+        iterator: &Bound<'py, PyIterator>,
+        step: &Bound<'py, PyInt>,
+    ) -> PyResult<Bound<'py, PyIterator>> {
+        let py = iterator.py();
+        ISLICE
+            .import(py, ITERTOOLS, "islice")?
+            .call1((iterator, 0, PyNone::get(py), step))
+            .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
+    }
+    #[inline(always)]
+    pub fn take<'py>(
+        iterator: &Bound<'py, PyIterator>,
+        stop: &Bound<'py, PyInt>,
+    ) -> PyResult<Bound<'py, PyIterator>> {
+        let py = iterator.py();
+        ISLICE
+            .import(py, ITERTOOLS, "islice")?
+            .call1((iterator, stop))
             .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
     }
 }
