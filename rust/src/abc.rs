@@ -6,9 +6,12 @@ use crate::result::{PyoErr, PyoOk};
 use crate::tools as tls;
 use pyo3::exceptions::{PyStopIteration, PyValueError};
 use pyo3::prelude::*;
-use pyo3::types::{PyBool, PyFunction, PyInt, PyIterator, PyList, PySet, PyTuple, PyType};
-use pyo3::{BoundObject, IntoPyObjectExt, ffi};
+use pyo3::types::{
+    PyBool, PyFunction, PyInt, PyIterator, PyList, PySequence, PySet, PyString, PyTuple, PyType,
+};
+use pyo3::{BoundObject, IntoPyObjectExt, ffi, intern};
 use tap::prelude::*;
+
 #[pymodule(name = "_abc")]
 pub fn abc(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyoIterable>()?;
@@ -691,6 +694,16 @@ impl PyoIterator {
     ) -> PyResult<Bound<'py, PyAny>> {
         slf.try_iter().and_then(|x| collector.call1((x,)))
     }
+    fn collect_into<'py>(
+        slf: &Bound<'py, Self>,
+        collector: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PySequence>> {
+        slf.try_iter()
+            .and_then(|x| collector.call_method1(intern!(slf.py(), "extend"), (x,)))?;
+        collector
+            .pipe(|x| unsafe { x.cast_into_unchecked::<PySequence>() })
+            .pipe(Ok)
+    }
 
     #[pyo3(signature = (init, func, *args, **kwargs))]
     fn fold_star<'py>(
@@ -838,6 +851,14 @@ impl PyoIterator {
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
+    fn join<'py>(
+        slf: &Bound<'py, Self>,
+        sep: &Bound<'py, PyString>,
+    ) -> PyResult<Bound<'py, PyString>> {
+        slf.try_iter()
+            .and_then(|x| sep.call_method1(intern!(sep.py(), "join"), (x,)))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyString>() })
+    }
     fn pairwise<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
             .and_then(|x| pylibs::itertools::pairwise(&x))
@@ -895,6 +916,41 @@ impl PyoIterator {
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
             .map(|x| tls::FilterMapStar::new(x, func))
+            .and_then(|x| slf.get_type().call1((x,)))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+    fn find_map<'py>(
+        slf: &Bound<'py, Self>,
+        func: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let py = slf.py();
+        let mut iter = slf.try_iter()?.map(|x| func.call1((x?,)));
+        loop {
+            match iter.next() {
+                None => return PyNull::get(py).into_bound(py).into_any().pipe(Ok),
+                Some(result) => {
+                    let item = result?;
+                    match item.is(PyNull::get(py)) {
+                        false => return Ok(item),
+                        true => continue,
+                    }
+                }
+            }
+        }
+    }
+    fn flat_map<'py>(
+        slf: &Bound<'py, Self>,
+        func: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
+        slf.try_iter()
+            .and_then(|x| pylibs::builtins::map(&func, &x))
+            .and_then(|x| pylibs::itertools::chain::from_iterable(&x))
+            .and_then(|x| slf.get_type().call1((x,)))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+    fn flatten<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
+        slf.try_iter()
+            .and_then(|x| pylibs::itertools::chain::from_iterable(&x))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -961,6 +1017,20 @@ impl PyoIterator {
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
+    fn max<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        slf.try_iter().and_then(|x| pylibs::builtins::max(&x))
+    }
+    fn max_by<'py>(slf: &Bound<'py, Self>, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+        slf.try_iter()
+            .and_then(|x| pylibs::builtins::max_by(&x, key))
+    }
+    fn min<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        slf.try_iter().and_then(|x| pylibs::builtins::min(&x))
+    }
+    fn min_by<'py>(slf: &Bound<'py, Self>, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+        slf.try_iter()
+            .and_then(|x| pylibs::builtins::min_by(&x, key))
+    }
     fn partition<'py>(
         slf: &Bound<'py, Self>,
         predicate: &Bound<'py, PyAny>,
@@ -998,6 +1068,11 @@ impl PyoIterator {
             .map(|x| tls::Scan::new(x, initial, func))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+    #[pyo3 (signature = (start=0))]
+    fn sum<'py>(slf: &Bound<'py, Self>, start: i32) -> PyResult<Bound<'py, PyAny>> {
+        slf.try_iter()
+            .and_then(|x| pylibs::builtins::sum(&x, &start))
     }
     #[pyo3(signature = (func, *args, **kwargs))]
     fn unpack_into<'py>(

@@ -523,3 +523,34 @@ def test_collect(benchmark: BenchFixture, size: int) -> None:
 
 def _collect(data: Range) -> tuple[int, ...]:
     return data.iter().collect(tuple)
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_find_map(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_find_map, data) == Some(size - 1)
+
+
+def _find_map(data: Range) -> Option[int]:
+    return data.iter().find_map(lambda x: Some(x) if x == data.last() else Null())
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_join(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).iter().map(str).collect(Seq)
+    assert benchmark(_join, data)[-1] == "9"
+
+
+def _join(data: Seq[str]) -> str:
+    return data.iter().join(", ")
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_collect_into(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    collector = Vec[int](())
+    assert benchmark(_collect_into, data, collector).last() == size - 1
+
+
+def _collect_into(data: Range, collector: Vec[int]) -> Vec[int]:
+    return data.iter().collect_into(collector)

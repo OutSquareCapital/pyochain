@@ -27,13 +27,15 @@
 
 ### 🚀 Performance improvements
 
-#### `PyoIterator::arg_*` methods
+#### `PyoIterator` methods
 
-The "family" of `PyoIterator::arg_*` methods have been migrated to Rust.
+Many methods have been migrated to Rust.
 
 See the table below for the performance improvements, with the number of items processed in each `Iterator` when testing.
 
 Note that for `unpack_into`, even if it's worse on a relative basis on small `Iterator`'s, the median absolute speed improvement on larger ones more than makes up for it, since on 10 items, it's **2.6 us (new)** vs **2.42 us (old)**, while on 10k items, it's **229 us (new)** vs **253 us (old)**.
+
+What was observed is that the upper values outliers are much less frequent, especially on smaller sizes, where they have been reduced by a factor of 4.
 
 Name         | 10 items | 100 items | 1_000 items | 10_000 items | Note
 -------------|----------|-----------|-------------|------------- | ----
@@ -52,6 +54,7 @@ Name         | 10 items | 100 items | 1_000 items | 10_000 items | Note
 `map`        | **1.08x**| **1.03x** | **1.00x**   | **1.04x**    | -
 `accumulate` | **1.11x**| **1.05x** | **1.04x**   | **1.00x**    | -
 `reduce`     | **1.05x**| **1.01x** | **1.00x**   | **1.00x**    | -
+`find_map`   | **1.16x**| **1.02x** | **0.98x**   | **0.99x**    | -
 
 ---
 

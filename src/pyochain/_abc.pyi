@@ -1,4 +1,14 @@
-from collections.abc import Callable, Collection, Iterable, Iterator
+from collections.abc import (
+    Callable,
+    Collection,
+    Generator,
+    Iterable,
+    Iterator,
+    KeysView,
+    MutableSequence,
+    Sequence,
+    ValuesView,
+)
 from typing import (
     Any,
     Concatenate,
@@ -10,10 +20,22 @@ from typing import (
     runtime_checkable,
 )
 
-from ._types import SupportsComparison
+from pyochain._dict import Dict
+from pyochain._iter import Iter
+from pyochain._range import Range
+from pyochain._seq import Seq
+from pyochain._set import Set, SetMut
+
+from ._types import (
+    LiteralInteger,
+    SupportsAnyAdd,
+    SupportsAnyRichComparison,
+    SupportsComparison,
+    SupportsSumWithNoDefaultGiven,
+)
 from ._utils import no_doctest
 from ._vec import Vec
-from .abc import PyoIterator
+from .abc import PyoIterator, PyoMutableSequence
 from .rs import Checkable, Fluent, Option, Result
 
 type SupportsAnyComparison = SupportsComparison[Any]  # pyright: ignore[reportExplicitAny]
@@ -889,6 +911,54 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
             ```
         """
+
+    @overload
+    def collect_into(self, collection: Vec[T]) -> Vec[T]: ...
+    @overload
+    def collect_into(
+        self, collection: PyoMutableSequence[T]
+    ) -> PyoMutableSequence[T]: ...
+    @overload
+    def collect_into(self, collection: list[T]) -> list[T]: ...
+    def collect_into(self, collection: MutableSequence[T]) -> MutableSequence[T]:
+        """Collects all the items from the `Iterator` into a `MutableSequence`.
+
+        The `MutableSequence` is then returned, so the call chain can be continued.
+
+        This is useful when you already have a `MutableSequence` and want to add the `Iterator` items to it.
+
+        This method is a convenience method to call `MutableSequence.extend()`, but instead of being called on a `MutableSequence`, it's called on an `Iterator`.
+
+        Args:
+            collection (MutableSequence[T]): A mutable collection to collect items into.
+
+        Returns:
+            MutableSequence[T]: The same mutable collection passed as argument, now containing the collected items.
+
+        Example:
+            Basic usage:
+            ```python
+            >>> from pyochain import Seq, Iter, Vec
+            >>> a = Seq((1, 2, 3))
+            >>> vec = Vec.from_ref([0, 1])
+            >>> a.iter().map(lambda x: x * 2).collect_into(vec)
+            Vec(0, 1, 2, 4, 6)
+            >>> a.iter().map(lambda x: x * 10).collect_into(vec)
+            Vec(0, 1, 2, 4, 6, 10, 20, 30)
+
+            ```
+            The returned mutable sequence can be used to continue the call chain:
+            ```python
+            >>> from pyochain import Seq, Vec
+            >>> a = Seq((1, 2, 3))
+            >>> vec = Vec(())
+            >>> a.iter().collect_into(vec).len() == vec.len()
+            True
+            >>> a.iter().collect_into(vec).len() == vec.len()
+            True
+
+            ```
+        """
     def for_each[**P](
         self,
         func: Callable[Concatenate[T, P], Any],  # pyright: ignore[reportExplicitAny]
@@ -1516,6 +1586,140 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             'missing'
 
             ```
+        """
+
+    def find_map[R](self, func: Callable[[T], Option[R]]) -> Option[R]:
+        """Applies function to the elements of the `Iterator` and returns the first Some(R) result.
+
+        `Iter.find_map(f)` is equivalent to `Iter.filter_map(f).next()`.
+
+        Args:
+            func (Callable[[T], Option[R]]): Function to apply to each element, returning an `Option[R]`.
+
+        Returns:
+            Option[R]: The first `Some(R)` result from applying `func`, or `NONE` if no such result is found.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq, Some, NONE, Option
+            >>>
+            >>> def _parse(s: str) -> Option[int]:
+            ...     try:
+            ...         return Some(int(s))
+            ...     except ValueError:
+            ...         return NONE
+            >>>
+            >>> Seq(("lol", "NaN", "2", "5")).iter().find_map(_parse)
+            Some(2)
+
+            ```
+        """
+
+    def flat_map[R](self, func: Callable[[T], Iterable[R]]) -> PyoIterator[R]:
+        """Creates an iterator that applies a function to each element of the original iterator and flattens the result.
+
+        This is useful when the **func** you want to pass to `.map()` itself returns an iterable, and you want to avoid having nested iterables in the output.
+
+        This is equivalent to calling `.map(func).flatten()`.
+
+        Args:
+            func (Callable[[T], Iterable[R]]): Function to apply to each element.
+
+        Returns:
+            PyoIterator[R]: An iterable of flattened transformed elements.
+
+        Example:
+            ```python
+            >>> from pyochain import Range, Seq
+            >>> Range(1, 4).iter().flat_map(range).collect(Seq)
+            Seq(0, 0, 1, 0, 1, 2)
+
+            ```
+        """
+
+    @overload
+    def flatten[U](self: PyoIterator[KeysView[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[Iterable[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[Generator[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[ValuesView[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[Iterator[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[Collection[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[Sequence[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[list[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[tuple[U, ...]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[PyoIterator[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[Iter[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[Seq[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[Set[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[SetMut[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[Vec[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten(self: PyoIterator[range]) -> PyoIterator[int]: ...
+    @overload
+    def flatten(self: PyoIterator[Range]) -> PyoIterator[int]: ...
+    @overload
+    def flatten[U](self: PyoIterator[Dict[U, Any]]) -> PyoIterator[U]: ...  # pyright: ignore[reportExplicitAny]
+    def flatten[U: AnyIter](self: PyoIterator[U]) -> PyoIterator[Any]:  # pyright: ignore[reportExplicitAny]
+        """Creates an `Iterator` that flattens nested structures.
+
+        This is useful when you have an `Iterator` of `Iterable` and you want to remove one level of indirection.
+
+        Returns:
+            PyoIterator[Any]: An `Iterator` of flattened elements.
+
+        Example:
+            Basic usage:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> data = ((1, 2, 3, 4), (5, 6))
+            >>> flattened = Iter(data).flatten().collect(Seq)
+            >>> flattened
+            Seq(1, 2, 3, 4, 5, 6)
+
+            ```
+            Mapping and then flattening:
+            ```python
+            >>> from pyochain import Seq
+            >>> words = Seq(("alpha", "beta", "gamma"))
+            >>> merged = words.iter().flatten().collect(Seq)
+            >>> merged
+            Seq('a', 'l', 'p', 'h', 'a', 'b', 'e', 't', 'a', 'g', 'a', 'm', 'm', 'a')
+
+            ```
+            Flattening only removes one level of nesting at a time:
+            ```python
+            >>> from pyochain import Seq
+            >>> d3 = Seq((((1, 2), (3, 4)), ((5, 6), (7, 8))))
+            >>> d2 = d3.iter().flatten().collect(Seq)
+            >>> d2
+            Seq((1, 2), (3, 4), (5, 6), (7, 8))
+            >>> d1 = d3.iter().flatten().flatten().collect(Seq)
+            >>> d1
+            Seq(1, 2, 3, 4, 5, 6, 7, 8)
+
+            ```
+            Here we see that `flatten()` does not perform a “deep” flatten.
+
+            Instead, only **one** level of nesting is removed.
+
+            That is, if you `flatten()` a three-dimensional array, the result will be two-dimensional and not one-dimensional.
+
+            To get a one-dimensional structure, you have to `flatten()` again.
+
         """
 
     def intersperse(self, element: T) -> PyoIterator[T]:
@@ -2242,6 +2446,25 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
+    def join(self: PyoIterable[str], sep: str) -> str:
+        """Join all elements of the `Iterator` into a single `str`, with a specified separator.
+
+        This is equivalent to the built-in `str.join()` method, but as a method on the `Iterator` itself.
+
+        Args:
+            sep (str): Separator to use between elements.
+
+        Returns:
+            str: The joined string.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter(("a", "b", "c")).join("-")
+            'a-b-c'
+
+            ```
+        """
     def map[R](self, func: Callable[[T], R]) -> PyoIterator[R]:
         """Apply a function **func** to each element of the `Iterator`.
 
@@ -2719,6 +2942,167 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             Seq('a+b', 'b+c', 'c+d')
             >>> Iter((1, 2, 3, 4)).map_windows_star(2, lambda x, y: x + y).collect(Seq)
             Seq(3, 5, 7)
+
+            ```
+        """
+
+    @overload
+    def sum(self: PyoIterator[bool], start: int = 0) -> int: ...
+    @overload
+    def sum(self: PyoIterator[LiteralInteger], start: int = 0) -> int: ...
+    @overload
+    def sum[T1: SupportsSumWithNoDefaultGiven](
+        self: PyoIterator[T1],
+    ) -> T1 | Literal[0]: ...
+    @overload
+    def sum[A1: SupportsAnyAdd, A2: SupportsAnyAdd](
+        self: PyoIterator[A1], start: A2
+    ) -> A1 | A2: ...
+    def sum[T1: SupportsSumWithNoDefaultGiven, A1: SupportsAnyAdd, A2: SupportsAnyAdd](
+        self: PyoIterator[bool | LiteralInteger] | PyoIterator[T1] | PyoIterator[A1],
+        start: int | T1 | A2 = 0,
+    ) -> int | T1 | A1 | A2:
+        """Return the sum of the `Iterator`.
+
+        If the `Iterator` is empty (i.e., yields no elements), return the value of `start` (which defaults to `0`).
+
+        Args:
+            start (int | T1 | A2): The value to return if the `Iterator` is empty.
+
+        Returns:
+            int | T1 | A1 | A2: The sum of all elements.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> Iter((1, 2, 3)).sum()
+            6
+            >>> Iter(()).sum()
+            0
+            >>> Iter(()).sum(10)
+            10
+
+            ```
+        """
+
+    def min[U: SupportsAnyRichComparison](self: PyoIterable[U]) -> U:
+        """Return the minimum of the `Iterator`.
+
+        The elements of the `Iterator` must support comparison operations.
+
+        For comparing elements using a custom **key** function, use [`min_by`][min_by] instead.
+
+        If multiple elements are tied for the minimum value, the first one encountered is returned.
+
+        Returns:
+            U: The minimum value.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((3, 1, 2)).min()
+            1
+
+            ```
+        """
+
+    def min_by[U: SupportsAnyRichComparison](self, key: Callable[[T], U]) -> T:
+        """Return the minimum element of the `Iterator` using a custom **key** function.
+
+        If multiple elements are tied for the minimum value, the first one encountered is returned.
+
+        Args:
+            key (Callable[[T], U]): Function to extract a comparison key from each element.
+
+        Returns:
+            T: The element with the minimum key value.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> from dataclasses import dataclass
+            >>>
+            >>> @dataclass
+            ... class Person:
+            ...     name: str
+            ...     age: int
+            ...     is_student: bool
+            ...
+            ...     def get_discount(self) -> float:
+            ...         return 0.1 if self.is_student else 0.0
+            >>>
+            >>> alice = Person("Alice", 30, False)
+            >>> bob = Person("Bob", 22, True)
+            >>> charlie = Person("Charlie", 25, False)
+            >>> persons = Seq((alice, bob, charlie))
+            >>>
+            >>> persons.iter().min_by(lambda p: p.age).name
+            'Bob'
+            >>> persons.iter().min_by(lambda p: p.name).name
+            'Alice'
+            >>> persons.iter().min_by(Person.get_discount).name
+            'Alice'
+
+            ```
+        """
+
+    def max[U: SupportsAnyRichComparison](self: PyoIterable[U]) -> U:
+        """Return the maximum element of the `Iterator`.
+
+        The elements of the `Iterator` must support comparison operations.
+
+        For comparing elements using a custom **key** function, use [`max_by`][max_by] instead.
+
+        If multiple elements are tied for the maximum value, the first one encountered is returned.
+
+        Returns:
+            U: The maximum value.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((3, 1, 2)).max()
+            3
+
+            ```
+        """
+
+    def max_by[U: SupportsAnyRichComparison](self, key: Callable[[T], U]) -> T:
+        """Return the maximum element of the `Iterator` using a custom **key** function.
+
+        If multiple elements are tied for the maximum value, the first one encountered is returned.
+
+        Args:
+            key (Callable[[T], U]): Function to extract a comparison key from each element.
+
+        Returns:
+            T: The element with the maximum key value.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> from dataclasses import dataclass
+            >>>
+            >>> @dataclass
+            ... class Person:
+            ...     name: str
+            ...     age: int
+            ...     is_student: bool
+            ...
+            ...     def get_discount(self) -> float:
+            ...         return 0.1 if self.is_student else 0.0
+            >>>
+            >>> alice = Person("Alice", 30, False)
+            >>> bob = Person("Bob", 22, True)
+            >>> charlie = Person("Charlie", 25, False)
+            >>> persons = Seq((alice, bob, charlie))
+            >>>
+            >>> persons.iter().max_by(lambda p: p.age).name
+            'Alice'
+            >>> persons.iter().max_by(lambda p: p.name).name
+            'Charlie'
+            >>> persons.iter().max_by(Person.get_discount).name
+            'Bob'
 
             ```
         """

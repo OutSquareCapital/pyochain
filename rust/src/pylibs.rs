@@ -16,6 +16,9 @@ pub mod builtins {
     static OBJECT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static ALL: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static ANY: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static MAX: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static MIN: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    static SUM: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static ENUMERATE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static MAP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static FILTER: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
@@ -38,6 +41,40 @@ pub mod builtins {
             .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
     }
     #[inline(always)]
+    pub fn max<'py>(iterator: &Bound<'py, PyIterator>) -> PyResult<Bound<'py, PyAny>> {
+        MAX.import(iterator.py(), BUILTINS, "max")?
+            .call1((iterator,))
+    }
+    #[inline(always)]
+    pub fn max_by<'py>(
+        iterator: &Bound<'py, PyIterator>,
+        key: &Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let kwargs = PyDict::new(iterator.py());
+        kwargs.set_item(intern!(iterator.py(), "key"), key)?;
+        MAX.import(iterator.py(), BUILTINS, "max")?
+            .call((iterator,), Some(&kwargs))
+    }
+    #[inline(always)]
+    pub fn min<'py>(iterator: &Bound<'py, PyIterator>) -> PyResult<Bound<'py, PyAny>> {
+        MIN.import(iterator.py(), BUILTINS, "min")?
+            .call1((iterator,))
+    }
+    #[inline(always)]
+    pub fn min_by<'py>(
+        iterator: &Bound<'py, PyIterator>,
+        key: &Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let kwargs = PyDict::new(iterator.py());
+        kwargs.set_item(intern!(iterator.py(), "key"), key)?;
+        MIN.import(iterator.py(), BUILTINS, "min")?
+            .call((iterator,), Some(&kwargs))
+    }
+    #[inline(always)]
+    pub fn sum<'py>(iterator: &Bound<'py, PyIterator>, start: &i32) -> PyResult<Bound<'py, PyAny>> {
+        SUM.import(iterator.py(), BUILTINS, "sum")?
+            .call1((iterator, start))
+    }
     pub fn enumerate<'py>(
         iterator: &Bound<'py, PyIterator>,
         start: usize,
@@ -103,6 +140,24 @@ pub mod itertools {
     static CYCLE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static PAIRWISE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     static PERMUTATIONS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+
+    /// `itertools::chain` class.
+    pub mod chain {
+        use super::*;
+        static CHAIN: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+
+        #[inline(always)]
+        pub fn from_iterable<'py>(
+            iterable: &Bound<'py, PyIterator>,
+        ) -> PyResult<Bound<'py, PyIterator>> {
+            let py = iterable.py();
+            CHAIN
+                .import(py, ITERTOOLS, "chain")?
+                .getattr(intern!(py, "from_iterable"))?
+                .call1((iterable,))
+                .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
+        }
+    }
     #[inline(always)]
     pub fn count<'py>(
         py: Python<'py>,
