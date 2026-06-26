@@ -8,6 +8,7 @@ from collections.abc import (
     KeysView,
     MutableSequence,
     Sequence,
+    Sized,
     ValuesView,
 )
 from typing import (
@@ -4169,6 +4170,46 @@ class PyoContainer[T](Container[T], Protocol):
             >>> data.contains(1)
             True
             >>> data.contains(3)
+            False
+
+            ```
+        """
+
+@runtime_checkable
+class PyoSized(Sized, Protocol):
+    def len(self) -> int:
+        """Return the length of `Self`.
+
+        Equivalent to `len(self)`, but as a method.
+
+        Returns:
+            int: The number of elements in `Self`.
+
+        Example:
+            ```python
+            >>> from pyochain import Dict
+            >>> data = Dict.from_ref({1: "a", 2: "b"})
+            >>> data.len()
+            2
+
+            ```
+        """
+
+    def is_empty(self) -> bool:
+        """Returns `True` if the `Collection` contains no elements.
+
+        Returns:
+            bool: `True` if the `Collection` is empty, `False` otherwise.
+
+        Example:
+            ```python
+            >>> from pyochain import Dict
+            >>> d = Dict(())
+            >>> d.is_empty()
+            True
+            >>> d.insert(1, "a")
+            NONE
+            >>> d.is_empty()
             False
 
             ```
