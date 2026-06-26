@@ -1,6 +1,6 @@
 """Tests for slot usage in pyochain classes."""
 
-from collections.abc import Collection, Container, Iterable, Iterator, Sized
+from collections.abc import Collection, Container, Iterable, Iterator, Reversible, Sized
 
 import pyochain as pc
 from pyochain import abc as pyoabc
@@ -38,6 +38,7 @@ def test_abcs() -> None:
         pyoabc.PyoCollection,
         (pyoabc.PyoIterable, pyoabc.PyoContainer, pyoabc.PyoSized, Collection),
     )
+    assert issubclass(pyoabc.PyoReversible, Reversible)
 
 
 def test_inerhitance() -> None:
