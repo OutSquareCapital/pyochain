@@ -1,14 +1,10 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING
 
 from .._abc import (  # pyright: ignore[reportMissingModuleSource]
     PyoIteratorRS,
 )
-
-if TYPE_CHECKING:
-    from ..collections import Deque
 
 
 class PyoIterator[T](PyoIteratorRS[T], ABC):
@@ -75,28 +71,3 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
     """
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
-
-    def tail(self, n: int) -> Deque[T]:
-        """Return a `Deque` of the last **n** elements of the `Iterator`.
-
-        Args:
-            n (int): Number of elements to return.
-
-        Returns:
-            Deque[T]: A `Deque` containing the last **n** elements.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2, 3)).tail(2)
-            Deque([2, 3], maxlen=2)
-
-            ```
-        """
-        from collections import deque
-
-        from ..collections import Deque
-
-        # TODO: we should move this to Rust and make it fully lazy.
-        # NOTE: If we could know that the `Iterator` is double-ended, we could iterate from the end. In rust? easy. In python we don't have builtins to get the class, because Iterators are opaque most of the time. There's not abc with both `Iterator` and `Reversible`.
-        return Deque.from_ref(deque(iter(self), n))

@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use crate::args::{Args, Kwargs};
 use crate::option::{PySome, option};
 use crate::pylibs;
@@ -906,6 +908,64 @@ impl OnceWith {
         }
     }
 }
+#[pyclass]
+pub struct Tail {
+    data: VecDeque<PyResult<Py<PyAny>>>,
+}
+#[pymethods]
+impl Tail {
+    /// # Credits
+    /// code taken and adapted from [itertools](https://docs.rs/itertools/latest/itertools/)
+    #[new]
+    pub fn new(iterator: Bound<'_, PyIterator>, n: usize) -> PyResult<Self> {
+        match n {
+            0 => {
+                iterator.last();
+                VecDeque::new()
+            }
+            1 => iterator
+                .last()
+                .into_iter()
+                .map(|item| item.map(|i| i.unbind()))
+                .collect(),
+            _ => {
+                // Skip the starting part of the iterator if possible.
+                let (low, _) = iterator.size_hint();
+                let mut iter = iterator
+                    .fuse()
+                    .skip(low.saturating_sub(n))
+                    .map(|item| item.map(|i| i.unbind()));
+                // TODO: If VecDeque has a more efficient method than
+                // `.pop_front();.push_back(val)` in the future then maybe revisit this.
+                let mut data = iter.by_ref().take(n).collect::<Vec<_>>();
+                // Update `data` cyclically.
+                let idx = iter.fold(0, |i, val| {
+                    debug_assert_eq!(data.len(), n);
+                    data[i] = val;
+                    if i + 1 == n { 0 } else { i + 1 }
+                });
+                // Respect the insertion order, efficiently.
+                let mut data = VecDeque::from(data);
+                data.rotate_left(idx);
+                data
+            }
+        }
+        .pipe(|data| Self { data })
+        .pipe(Ok)
+    }
+
+    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
+        slf
+    }
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
+        slf.data
+            .pop_front()
+            .transpose()?
+            .map(|item| item.into_bound(slf.py()))
+            .pipe(Ok)
+    }
+}
+
 // TODO: check if it aligns with `last` logic, AND if it is faster than pyo3 `PyIterator::next()`
 #[allow(dead_code)]
 pub struct PyUnsafeIterator<'py> {

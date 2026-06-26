@@ -639,3 +639,13 @@ def _next(data: Range) -> int:
     for _ in data:
         _ = iterator.next()
     return 1
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_tail(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_tail, data, 10) == size - 1
+
+
+def _tail(data: Range, n: int) -> int:
+    return data.iter().tail(n).iter().last()

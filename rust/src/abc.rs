@@ -1194,6 +1194,13 @@ impl PyoIterator {
         slf.try_iter()
             .and_then(|x| pylibs::builtins::sum(&x, &start))
     }
+    fn tail<'py>(slf: &Bound<'py, Self>, n: usize) -> PyResult<Bound<'py, Self>> {
+        slf.try_iter()
+            .and_then(|x| tls::Tail::new(x, n))
+            .and_then(|x| slf.get_type().call1((x,)))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+
     fn take<'py>(slf: &Bound<'py, Self>, n: &Bound<'py, PyInt>) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
             .and_then(|x| pylibs::itertools::take(&x, n))

@@ -3827,6 +3827,23 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
+    def tail(self, n: int) -> PyoIterator[T]:
+        """Return an `Iterator` of the last **n** elements of the `Iterator`.
+
+        Args:
+            n (int): Number of elements to return.
+
+        Returns:
+            PyoIterator[T]: An `Iterator` containing the last **n** elements.
+
+        Example:
+            ```python
+            >>> from pyochain import Range
+            >>> Range(0, 10).iter().tail(2).collect(tuple)
+            (8, 9)
+
+            ```
+        """
     def take(self, n: int) -> PyoIterator[T]:
         """Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner.
 
