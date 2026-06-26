@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 
 class Peekable[T](PyoIterator[T]):
-    __slots__ = ("_it", "_peeked")  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
+    __slots__ = ("_it", "_peeked")  # pyright: ignore[reportUnannotatedClassAttribute]
 
     def __init__(self, iterable: Iterable[T]) -> None:
         self._it: Iterator[T] = iter(iterable)

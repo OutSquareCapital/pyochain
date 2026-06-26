@@ -12,7 +12,7 @@ use pyo3::types::{
 use pyo3::{BoundObject, IntoPyObjectExt, ffi, intern};
 use tap::prelude::*;
 
-#[pymodule(name = "_abc")]
+#[pymodule(name = "_iterator")]
 pub fn abc(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyoIterable>()?;
     m.add_class::<PyoIterator>()?;
@@ -32,8 +32,7 @@ impl PyoIterable {
         pylibs::pyochain::iter::new(slf)
     }
 }
-///TODO: once the migration is done, rename it to `PyoIterator`
-#[pyclass(name="PyoIteratorRS", subclass, frozen, generic, extends=PyoIterable)]
+#[pyclass(subclass, frozen, generic, extends=PyoIterable)]
 pub struct PyoIterator;
 
 #[pymethods]

@@ -26,18 +26,18 @@ from pyochain._peekable import Peekable
 from pyochain._range import Range
 from pyochain._seq import Seq
 from pyochain._set import Set, SetMut
+from pyochain._utils import no_doctest
+from pyochain._vec import Vec
+from pyochain.abc import PyoMutableSequence
+from pyochain.rs import Checkable, Fluent, Option, Result
 
-from ._types import (
+from .._types import (
     LiteralInteger,
     SupportsAnyAdd,
     SupportsComparison,
     SupportsRichComparison,
     SupportsSumWithNoDefaultGiven,
 )
-from ._utils import no_doctest
-from ._vec import Vec
-from .abc import PyoIterator, PyoMutableSequence
-from .rs import Checkable, Fluent, Option, Result
 
 type Position = Literal["first", "middle", "last", "only"]
 """Type representing the position of an item in an `Iterator`."""
@@ -140,7 +140,7 @@ class PyoIterable[T](Fluent, Checkable, Iterable[T], Protocol):
             ```
         """
 
-class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
+class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
     """Extends `PyoIterable[T]` and `collections.abc.Iterator[T]`.
 
     - An `Iterable` is any object capable of creating an `Iterator` (i.e., it implements the `__iter__()` method).

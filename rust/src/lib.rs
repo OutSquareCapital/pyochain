@@ -87,16 +87,18 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_wrapped(pyo3::wrap_pymodule!(abc::abc))?;
     let sys_mods = py.import("sys")?.getattr("modules")?;
     sys_mods.set_item("pyochain._tools", m.getattr("_tools")?)?;
-    sys_mods.set_item("pyochain._abc", m.getattr("_abc")?)?;
+    sys_mods.set_item("pyochain.abc._iterator", m.getattr("_iterator")?)?;
 
     let abc_mod = py.import("collections.abc")?;
 
-    abc_mod
-        .getattr("Iterable")?
-        .call_method1("register", (m.getattr("_abc")?.getattr("PyoIterable")?,))?;
-    abc_mod
-        .getattr("Iterator")?
-        .call_method1("register", (m.getattr("_abc")?.getattr("PyoIteratorRS")?,))?;
+    abc_mod.getattr("Iterable")?.call_method1(
+        "register",
+        (m.getattr("_iterator")?.getattr("PyoIterable")?,),
+    )?;
+    abc_mod.getattr("Iterator")?.call_method1(
+        "register",
+        (m.getattr("_iterator")?.getattr("PyoIterator")?,),
+    )?;
 
     Ok(())
 }

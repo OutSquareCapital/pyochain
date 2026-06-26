@@ -75,7 +75,7 @@ class Iter[T](PyoIterator[T]):
     """
 
     _inner: Iterator[T]
-    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
+    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
 
     def __init__(self, data: Iterable[T]) -> None:
         self._inner = iter(data)

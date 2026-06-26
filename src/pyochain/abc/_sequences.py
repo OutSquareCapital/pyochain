@@ -9,7 +9,7 @@ from ..rs import NONE, Option, Some
 from ._collection import PyoCollection
 
 if TYPE_CHECKING:
-    from ._iterator import PyoIterator
+    from ._iterator import PyoIterator  # pyright: ignore[reportMissingModuleSource]
 
 
 class PyoReversible[T](Reversible[T], ABC):

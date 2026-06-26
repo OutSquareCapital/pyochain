@@ -3,8 +3,8 @@ from typing import Any, Self, override
 
 from pyochain import Option
 
-from ._abc import Position
 from ._utils import no_doctest
+from .abc._iterator import Position
 
 @no_doctest
 def retain[T](data: MutableSequence[T], predicate: Callable[[T], bool]) -> None: ...
