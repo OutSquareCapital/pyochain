@@ -586,3 +586,17 @@ def test_chain(benchmark: BenchFixture, size: int) -> None:
 
 def _chain(data: Range, others: Iterable[Iterable[int]]) -> int:
     return data.iter().chain(*others).last()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_map_with(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, 11).iter().collect(Seq)
+    others = data.repeat(size).iter().batched(10).collect(Seq)
+    assert benchmark(_map_with, data, others) is not None
+
+
+def _map_with(data: PyoIterable[int], others: Iterable[Iterable[int]]) -> int:
+    def f(*args: int) -> int:
+        return sum(args)
+
+    return data.iter().map_with(f, *others).last()
