@@ -1,8 +1,8 @@
 use crate::args::{Args, Kwargs};
 use crate::option::{PySome, option};
 use crate::pylibs;
-use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyDict, PyIterator, PyModule, PySequence, PySet, PyString, PyTuple};
+use pyo3::{ffi, prelude::*};
 use tap::prelude::*;
 #[pymodule(name = "_tools")]
 pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -906,20 +906,48 @@ impl OnceWith {
         }
     }
 }
-/// TODO: This is a draft test to see if we can use a Rust Iterator to implement a Python iterator.\
-/// The goal is to see if we can avoid the overhead of using a Python iterator and instead use a Rust iterator directly.
-#[pyclass]
-struct Iterator {
-    iter: Box<dyn std::iter::Iterator<Item = Py<PyAny>> + Send + Sync>,
+// TODO: check if it aligns with `last` logic, AND if it is faster than pyo3 `PyIterator::next()`
+#[allow(dead_code)]
+pub struct PyUnsafeIterator<'py> {
+    py: Python<'py>,
+    ptr: *mut ffi::PyObject,
+    next: ffi::iternextfunc,
 }
+#[allow(dead_code)]
+impl<'py> PyUnsafeIterator<'py> {
+    #[inline(always)]
+    pub fn new(iter: &Bound<'py, PyIterator>) -> Self {
+        let ptr = iter.as_ptr();
 
-#[pymethods]
-impl Iterator {
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
+        Self {
+            py: iter.py(),
+            ptr,
+            next: unsafe { (*(*ptr).ob_type).tp_iternext.unwrap_unchecked() },
+        }
     }
+}
+impl<'py> Iterator for PyUnsafeIterator<'py> {
+    type Item = PyResult<Bound<'py, PyAny>>;
 
-    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<Py<PyAny>> {
-        slf.iter.next()
+    #[inline(always)]
+    fn next(&mut self) -> Option<Self::Item> {
+        unsafe {
+            let item = (self.next)(self.ptr);
+
+            if item.is_null() {
+                if ffi::PyErr_Occurred().is_null() {
+                    return None;
+                }
+
+                if ffi::PyErr_ExceptionMatches(ffi::PyExc_StopIteration) != 0 {
+                    ffi::PyErr_Clear();
+                    return None;
+                }
+
+                return Some(Err(PyErr::fetch(self.py)));
+            }
+
+            Some(Ok(Bound::from_owned_ptr(self.py, item)))
+        }
     }
 }
