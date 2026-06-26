@@ -4,8 +4,7 @@
 
 ### 🏆 Highlights
 
-- `abc::PyoIterable` has been moved to Rust, and it's generic type is now covariant.
-- `abc::PyoIterator` migration to Rust has been started
+- `abc::{PyoIterable, PyoIterator, PyoSized, PyoContainer}` have been fully moved to Rust.
 - `abc::PyoIterator::peekable` has been completely refactored and now aligns with Rust std `Iterator`, with the methods `peek`, `next_if`, `next_if_eq`, and `next_if_map`.
 
 ### 💥 Breaking changes
@@ -26,6 +25,7 @@
 - **typing**: added overloads to `PyoIterator::product` to return precise tuple types for up to 10 iterables.
 - **API**: `PyoIterator::accumulate` is now aligned with `itertools`, with the possibility to not provide a function, in which case the default is to use addition.
 - **API**: `PyoIterator::product` missed it's `repeat` argument. This is now fixed.
+- **typing**: `abc::PyoIterable` is now covariant in it's generic type.
 
 ### 🚀 Performance improvements
 
