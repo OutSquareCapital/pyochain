@@ -297,6 +297,8 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
             >>> output = x.iter().map_with(Triangle, y, z).collect(Seq)
             >>> output
             Seq(Triangle(x=1, y=4, z=7), Triangle(x=2, y=5, z=8), Triangle(x=3, y=6, z=9))
+            >>> x.iter().map_with(lambda a, b, c: a + b + c, y, z).collect(Seq)
+            Seq(12, 15, 18)
 
             ```
         """

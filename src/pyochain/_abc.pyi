@@ -1944,6 +1944,14 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
     def batched(
         self, n: Literal[5], *, strict: Literal[True]
     ) -> PyoIterator[tuple[T, T, T, T, T]]: ...
+    @overload
+    def batched(
+        self, n: int, *, strict: Literal[False]
+    ) -> PyoIterator[tuple[T, ...]]: ...
+    @overload
+    def batched(
+        self, n: int, *, strict: bool = False
+    ) -> PyoIterator[tuple[T, ...]]: ...
     def batched(self, n: int, *, strict: bool = False) -> PyoIterator[tuple[T, ...]]:
         """Batch elements into tuples of length n and return a new Iter.
 
