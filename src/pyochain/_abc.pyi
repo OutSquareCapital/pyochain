@@ -247,6 +247,36 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
             ```
         """
+
+    @classmethod
+    def once_with[**P, R](
+        cls, func: Callable[P, R], *args: P.args, **kwargs: P.kwargs
+    ) -> PyoIterator[R]:
+        """Create an `Iterator`  that lazily generates a value exactly once by invoking the provided closure.
+
+        If you have a function which works on iterators, but you only need to process one value, you can use this method rather than doing something like `Iter([value])`.
+
+        This can be considered the equivalent of [`PyoIterator::insert`][PyoIterator.insert] but as a constructor.
+
+        Unlike `PyoIterator::once`, this function will lazily generate the value on request.
+
+        Args:
+            func (Callable[P, R]): The single value to yield.
+            *args (P.args): Positional arguments to pass to **func**.
+            **kwargs (P.kwargs): Keyword arguments to pass to **func**.
+
+        Returns:
+            PyoIterator[R]: An `Iterator` yielding the specified value.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> Iter.once_with(lambda: 42).collect(Seq)
+            Seq(42,)
+
+            ```
+        """
+
     @classmethod
     def from_fn[**P, R](
         cls, f: Callable[P, Option[R]], *args: P.args, **kwargs: P.kwargs

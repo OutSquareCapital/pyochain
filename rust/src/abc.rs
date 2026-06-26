@@ -58,6 +58,17 @@ impl PyoIterator {
         cls.call1((PyTuple::new(cls.py(), &[value])?,))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
+    #[pyo3(signature = (func, *args, **kwargs))]
+    #[classmethod]
+    fn once_with<'py>(
+        cls: &Bound<'py, PyType>,
+        func: Bound<'py, PyAny>,
+        args: Args<'_>,
+        kwargs: Option<Kwargs<'_>>,
+    ) -> PyResult<Bound<'py, Self>> {
+        cls.call1((tls::OnceWith::new(func, args, kwargs),))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
     #[pyo3(signature = (f, *args, **kwargs))]
     #[classmethod]
     fn from_fn<'py>(

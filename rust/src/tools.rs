@@ -871,3 +871,55 @@ impl GroupBy {
         }
     }
 }
+#[pyclass]
+pub struct OnceWith {
+    func: Py<PyAny>,
+    args: Py<PyTuple>,
+    kwargs: Option<Py<PyDict>>,
+    yielded: bool,
+}
+#[pymethods]
+impl OnceWith {
+    #[new]
+    #[pyo3(signature = (func, *args, **kwargs))]
+    pub fn new(func: Bound<'_, PyAny>, args: Args<'_>, kwargs: Option<Kwargs<'_>>) -> Self {
+        Self {
+            func: func.unbind(),
+            args: args.unbind(),
+            kwargs: kwargs.map(|k| k.unbind()),
+            yielded: false,
+        }
+    }
+
+    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
+        slf
+    }
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
+        if !slf.yielded {
+            slf.yielded = true;
+            let py = slf.py();
+            let args = slf.args.bind(py);
+            let kwargs = slf.kwargs.as_ref().map(|k| k.bind(py));
+            slf.func.bind(py).call(args, kwargs).map(Some)
+        } else {
+            Ok(None)
+        }
+    }
+}
+/// TODO: This is a draft test to see if we can use a Rust Iterator to implement a Python iterator.\
+/// The goal is to see if we can avoid the overhead of using a Python iterator and instead use a Rust iterator directly.
+#[pyclass]
+struct Iterator {
+    iter: Box<dyn std::iter::Iterator<Item = Py<PyAny>> + Send + Sync>,
+}
+
+#[pymethods]
+impl Iterator {
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<Py<PyAny>> {
+        slf.iter.next()
+    }
+}

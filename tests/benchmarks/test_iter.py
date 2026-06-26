@@ -513,16 +513,33 @@ def _accumulate(data: Range) -> int:
 @pytest.mark.parametrize("size", SIZES)
 def test_product(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, 2)
-    others = data.iter().repeat(size).map(lambda x: x.collect(Seq)).collect(Seq)
-    assert benchmark(_product, data, others) is not None
+    others = data.iter().map(lambda _: Range(0, size)).collect(Seq)
+    # Invariance issue here
+    assert benchmark(_product, data, others) is not None  # pyright: ignore[reportArgumentType]
 
 
-def _product(data: Range, others: Seq[Seq[int]]) -> tuple[int, ...]:
+def _product(data: Range, others: Seq[Iterable[int]]) -> tuple[int, ...]:
     return data.iter().product(*others, repeat=4).take(10).last()
 
 
 def test_once(benchmark: BenchFixture) -> None:
     assert benchmark(lambda: Iter.once(1)) is not None
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_once_with(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+
+    def fn() -> int:
+        return 1
+
+    assert benchmark(_once_with, data, fn) == 1
+
+
+def _once_with(data: Range, fn: Callable[[], int]) -> int:
+    for _ in data:
+        _ = next(Iter.once_with(fn))
+    return Iter.once_with(fn).next().unwrap()
 
 
 @pytest.mark.parametrize("size", SIZES)
@@ -589,7 +606,7 @@ def _slice(data: Range, size: int) -> int:
 @pytest.mark.parametrize("size", SIZES)
 def test_chain(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, 2)
-    others = data.iter().repeat(size).map(lambda x: x.collect(Seq)).collect(Seq)
+    others = data.iter().map(lambda _: Range(0, size)).collect(Seq)
     assert benchmark(_chain, data, others) == others.last().last()
 
 
