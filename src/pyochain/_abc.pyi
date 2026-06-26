@@ -3063,6 +3063,103 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
+    @overload
+    def map_with[T1, R](
+        self, func: Callable[[T, T1], R], iterable: Iterable[T1], /
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_with[T1, T2, R](
+        self,
+        func: Callable[[T, T1, T2], R],
+        iterable: Iterable[T1],
+        iter2: Iterable[T2],
+        /,
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_with[T1, T2, T3, R](
+        self,
+        func: Callable[[T, T1, T2, T3], R],
+        iterable: Iterable[T1],
+        iter2: Iterable[T2],
+        iter3: Iterable[T3],
+        /,
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_with[T1, T2, T3, T4, R](
+        self,
+        func: Callable[[T, T1, T2, T3, T4], R],
+        iterable: Iterable[T1],
+        iter2: Iterable[T2],
+        iter3: Iterable[T3],
+        iter4: Iterable[T4],
+        /,
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_with[T1, T2, T3, T4, T5, R](
+        self,
+        func: Callable[[T, T1, T2, T3, T4, T5], R],
+        iterable: Iterable[T1],
+        iter2: Iterable[T2],
+        iter3: Iterable[T3],
+        iter4: Iterable[T4],
+        iter5: Iterable[T5],
+        /,
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_with[T1, T2, T3, T4, T5, T6, R](
+        self,
+        func: Callable[[T, T1, T2, T3, T4, T5, T6], R],
+        iterable: Iterable[T1],
+        iter2: Iterable[T2],
+        iter3: Iterable[T3],
+        iter4: Iterable[T4],
+        iter5: Iterable[T5],
+        iter6: Iterable[T6],
+        /,
+    ) -> PyoIterator[R]: ...
+    def map_with[R](
+        self, func: Callable[..., R], *iterables: Iterable[Any]
+    ) -> PyoIterator[R]:
+        """Applies a function to the elements of this `Iterator` and additional iterables.
+
+        The provided function must take as many arguments as the number of iterables provided (including **self**).
+
+        It is then applied to the items from all iterables in parallel.
+
+        The `Iterator` stops when the shortest iterable is exhausted.
+
+        Args:
+            func (Callable[..., R]): Function to apply to the elements of the iterables.
+            *iterables (Iterable[Any]): Additional iterables to zip with **self**.
+
+        Returns:
+            PyoIterator[R]: An `Iterator` of results from applying the function to the elements of the iterables.
+
+        See Also:
+            [`PyoIterator::map_juxt`][map_juxt] to apply multiple functions to the same elements of the `Iterator`.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> from dataclasses import dataclass
+            >>> @dataclass
+            ... class Triangle:
+            ...     x: int
+            ...     y: int
+            ...     z: int
+            >>>
+            >>> x = Seq((1, 2, 3))
+            >>> y = [4, 5, 6]
+            >>> z = [7, 8, 9]
+            >>> output = x.iter().map_with(Triangle, y, z).collect(Seq)
+            >>> output
+            Seq(Triangle(x=1, y=4, z=7), Triangle(x=2, y=5, z=8), Triangle(x=3, y=6, z=9))
+            >>> x.iter().map_with(lambda a, b, c: a + b + c, y, z).collect(Seq)
+            Seq(12, 15, 18)
+
+            ```
+        """
+
     def next(self) -> Option[T]:
         """Return the next element in the `Iterator`.
 

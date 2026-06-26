@@ -95,6 +95,14 @@ pub mod builtins {
             .call1((func, iterator))
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
     }
+    /// first arg is a function, the rest is a variable number of iterables.
+    #[inline(always)]
+    pub fn map_with<'py>(args: &Args<'py>) -> PyResult<Bound<'py, PyIterator>> {
+        let py = args.py();
+        MAP.import(py, BUILTINS, "map")?
+            .call1(args)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
+    }
     #[inline(always)]
     pub fn filter<'py>(
         func: Option<&Bound<'py, PyAny>>,

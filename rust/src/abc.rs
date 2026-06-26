@@ -1049,6 +1049,19 @@ impl PyoIterator {
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
+    #[pyo3(signature = (func, *iterables))]
+    fn map_with<'py>(
+        slf: &Bound<'py, Self>,
+        func: Bound<'py, PyAny>,
+        iterables: &Args<'py>,
+    ) -> PyResult<Bound<'py, Self>> {
+        let cls = slf.get_type();
+        func.concat_with_2(slf.try_iter()?.as_any(), iterables)
+            .pipe_ref(pylibs::builtins::map_with)
+            .and_then(|x| cls.call1((&x,)))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+
     fn max<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
         slf.try_iter().and_then(|x| pylibs::builtins::max(&x))
     }

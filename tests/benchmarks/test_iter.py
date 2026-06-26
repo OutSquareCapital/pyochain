@@ -616,8 +616,8 @@ def _chain(data: Range, others: Iterable[Iterable[int]]) -> int:
 
 @pytest.mark.parametrize("size", SIZES)
 def test_map_with(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, 11).iter().collect(Seq)
-    others = data.repeat(size).iter().batched(10).collect(Seq)
+    data = Range(0, size)
+    others = Range(0, 7).iter().map(lambda _: data).collect(Seq)
     assert benchmark(_map_with, data, others) is not None
 
 

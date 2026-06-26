@@ -127,6 +127,7 @@ impl<'py> Concatenate<'py> for &Bound<'py, PyAny> {
 }
 pub trait ConcatWith<'py> {
     fn concat_with(self, others: &Args<'py>) -> PyResult<Bound<'py, PyTuple>>;
+    fn concat_with_2(self, b: &Bound<'py, PyAny>, others: &Args<'py>) -> Bound<'py, PyTuple>;
 }
 impl<'py> ConcatWith<'py> for Bound<'py, PyAny> {
     #[inline(always)]
@@ -136,6 +137,31 @@ impl<'py> ConcatWith<'py> for Bound<'py, PyAny> {
             .chain(others.iter())
             .collect::<Vec<Bound<'py, PyAny>>>()
             .pipe_ref(|x| PyTuple::new(py, x))
+    }
+
+    #[inline]
+    fn concat_with_2(
+        self: Bound<'py, PyAny>,
+        b: &Bound<'py, PyAny>,
+        args: &Args<'py>,
+    ) -> Bound<'py, PyTuple> {
+        unsafe {
+            let args_len = args.len();
+            let new_args_ptr = ffi::PyTuple_New((args_len + 2) as ffi::Py_ssize_t);
+            let a_ptr = self.as_ptr();
+            ffi::Py_INCREF(a_ptr);
+            ffi::PyTuple_SetItem(new_args_ptr, 0, a_ptr);
+            let b_ptr = b.as_ptr();
+            ffi::Py_INCREF(b_ptr);
+            ffi::PyTuple_SetItem(new_args_ptr, 1, b_ptr);
+            let args_ptr = args.as_ptr();
+            for i in 0..args_len {
+                let item = ffi::PyTuple_GET_ITEM(args_ptr, i as ffi::Py_ssize_t);
+                ffi::Py_INCREF(item);
+                ffi::PyTuple_SetItem(new_args_ptr, (i + 2) as ffi::Py_ssize_t, item);
+            }
+            Bound::from_owned_ptr(self.py(), new_args_ptr).cast_into_unchecked::<PyTuple>()
+        }
     }
 }
 #[inline]
