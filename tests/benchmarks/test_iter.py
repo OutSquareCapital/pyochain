@@ -89,19 +89,28 @@ def _for_each_args_and_kwargs(data: Range) -> None:
 type ForEachFn[T] = Callable[[PyoSequence[T]], None]
 
 
-@pytest.mark.benchmark(group="for_each")
-@pytest.mark.parametrize(
-    "fn",
-    [
-        pytest.param(_for_each, id="for_each"),
-        pytest.param(_for_each_args, id="for_each_args"),
-        pytest.param(_for_each_kwargs, id="for_each_kwargs"),
-        pytest.param(_for_each_args_and_kwargs, id="for_each_args_and_kwargs"),
-    ],
-)
-def test_for_each(benchmark: BenchFixture, fn: ForEachFn[int]) -> None:
-    data = Range(0, 1000)
-    assert benchmark(fn, data) is None
+@pytest.mark.parametrize("size", SIZES)
+def test_for_each(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_for_each, data) is None
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_for_each_args(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_for_each_args, data) is None
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_for_each_kwargs(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_for_each_kwargs, data) is None
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_for_each_args_and_kwargs(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_for_each_args_and_kwargs, data) is None
 
 
 @pytest.mark.benchmark(group="for_each_star")

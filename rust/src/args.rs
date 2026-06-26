@@ -143,12 +143,13 @@ unsafe fn concat_val_with_args<'py>(
     value: &Bound<'py, PyAny>,
     args: &Args<'py>,
     args_len: usize,
-) -> Py<PyTuple> {
+) -> Bound<'py, PyTuple> {
     unsafe {
+        let ptr = value.as_ptr();
         let new_argc = args_len + 1;
         let new_args_ptr = ffi::PyTuple_New(new_argc as ffi::Py_ssize_t);
-        ffi::Py_INCREF(value.as_ptr());
-        ffi::PyTuple_SetItem(new_args_ptr, 0, value.as_ptr());
+        ffi::Py_INCREF(ptr);
+        ffi::PyTuple_SetItem(new_args_ptr, 0, ptr);
 
         let args_ptr = args.as_ptr();
         for i in 0..args_len {
@@ -156,7 +157,7 @@ unsafe fn concat_val_with_args<'py>(
             ffi::Py_INCREF(item);
             ffi::PyTuple_SetItem(new_args_ptr, (i + 1) as ffi::Py_ssize_t, item);
         }
-        Py::<PyTuple>::from_owned_ptr(value.py(), new_args_ptr)
+        Bound::from_owned_ptr(value.py(), new_args_ptr).cast_into_unchecked::<PyTuple>()
     }
 }
 #[inline]
@@ -164,7 +165,7 @@ unsafe fn concat_tup_with_args<'py>(
     value: &Args<'py>,
     args: &Args<'py>,
     args_len: usize,
-) -> Py<PyTuple> {
+) -> Bound<'py, PyTuple> {
     unsafe {
         let tuple_len = value.len();
         let total_len = tuple_len + args_len;
@@ -182,7 +183,7 @@ unsafe fn concat_tup_with_args<'py>(
             ffi::PyTuple_SetItem(new_args_ptr, (tuple_len + i) as ffi::Py_ssize_t, item);
         }
 
-        Py::<PyTuple>::from_owned_ptr(value.py(), new_args_ptr)
+        Bound::from_owned_ptr(value.py(), new_args_ptr).cast_into_unchecked::<PyTuple>()
     }
 }
 #[inline]
@@ -191,7 +192,7 @@ unsafe fn concat_acc_tup_with_args<'py>(
     value: &Args<'py>,
     args: &Args<'py>,
     args_len: usize,
-) -> Py<PyTuple> {
+) -> Bound<'py, PyTuple> {
     unsafe {
         let tuple_len = value.len();
         let total_len = 1 + tuple_len + args_len;
@@ -213,6 +214,6 @@ unsafe fn concat_acc_tup_with_args<'py>(
             ffi::PyTuple_SetItem(new_args_ptr, (1 + tuple_len + i) as ffi::Py_ssize_t, item);
         }
 
-        Py::<PyTuple>::from_owned_ptr(acc.py(), new_args_ptr)
+        Bound::from_owned_ptr(acc.py(), new_args_ptr).cast_into_unchecked::<PyTuple>()
     }
 }
