@@ -1,6 +1,6 @@
 """Tests for slot usage in pyochain classes."""
 
-from collections.abc import Iterable, Iterator
+from collections.abc import Collection, Container, Iterable, Iterator, Sized
 
 import pyochain as pc
 from pyochain import abc as pyoabc
@@ -28,7 +28,17 @@ def _check_slots(obj: object) -> bool:
         return True
 
 
-def test_inerhitance() -> None:
+def test_abcs() -> None:
+
     assert issubclass(pyoabc.PyoIterable, Iterable)
     assert issubclass(pyoabc.PyoIterator, (pyoabc.PyoIterable, Iterable, Iterator))
+    assert issubclass(pyoabc.PyoContainer, Container)
+    assert issubclass(pyoabc.PyoSized, Sized)
+    assert issubclass(
+        pyoabc.PyoCollection,
+        (pyoabc.PyoIterable, pyoabc.PyoContainer, pyoabc.PyoSized, Collection),
+    )
+
+
+def test_inerhitance() -> None:
     assert issubclass(pc.Vec, (Iterable, pyoabc.PyoIterable))
