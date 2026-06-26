@@ -7,7 +7,7 @@ mod option;
 mod pylibs;
 mod result;
 mod tools;
-use pyo3::prelude::*;
+use pyo3::{PyTypeInfo, prelude::*};
 use tap::prelude::*;
 
 macro_rules! impl_py_pipe {
@@ -91,14 +91,12 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     let abc_mod = py.import("collections.abc")?;
 
-    abc_mod.getattr("Iterable")?.call_method1(
-        "register",
-        (m.getattr("_iterator")?.getattr("PyoIterable")?,),
-    )?;
-    abc_mod.getattr("Iterator")?.call_method1(
-        "register",
-        (m.getattr("_iterator")?.getattr("PyoIterator")?,),
-    )?;
+    abc_mod
+        .getattr("Iterable")?
+        .call_method1("register", (abc::PyoIterable::type_object(py),))?;
+    abc_mod
+        .getattr("Iterator")?
+        .call_method1("register", (abc::PyoIterator::type_object(py),))?;
 
     Ok(())
 }
