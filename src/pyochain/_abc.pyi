@@ -423,8 +423,8 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
         """
 
     @classmethod
-    def from_repeat[O](cls, obj: O, n: int | None = None) -> PyoIterator[O]:
-        """Repeat the provided object **n** times (as elements) as elements of an `Iterator`.
+    def repeat[O](cls, obj: O, n: int | None = None) -> PyoIterator[O]:
+        """Repeat the provided object **n** times as elements of an `Iterator`.
 
         If **n** is `None`, this will create an infinite `Iterator`.
 
@@ -444,14 +444,13 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
 
         See Also:
             [`PyoIterator::cycle`][cycle] to repeat the **elements** of the `Iterator`.
-            [`PyoIterator::repeat`][repeat] to repeat the **entire** `Iterator`.
 
         Example:
             ```python
             >>> from pyochain import Seq, Iter
-            >>> Iter.from_repeat(1, 3).collect(Seq)
+            >>> Iter.repeat(1, 3).collect(Seq)
             Seq(1, 1, 1)
-            >>> Iter.from_repeat(("a", "b"), 2).collect(Seq)
+            >>> Iter.repeat(("a", "b"), 2).collect(Seq)
             Seq(('a', 'b'), ('a', 'b'))
 
             ```
@@ -461,7 +460,7 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             >>>
             >>> base = ["Alice", "Bob", "Charlie"]
             >>>
-            >>> first, second = Iter.from_repeat(base).take(2).collect(tuple)
+            >>> first, second = Iter.repeat(base).take(2).collect(tuple)
             >>> first.append("Joe")
             >>> first
             ['Alice', 'Bob', 'Charlie', 'Joe']

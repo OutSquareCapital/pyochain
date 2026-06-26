@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import itertools
 from abc import ABC
 from typing import TYPE_CHECKING, Any, overload
 
@@ -9,7 +8,7 @@ from .._abc import (  # pyright: ignore[reportMissingModuleSource]
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Generator, Iterable, Iterator
+    from collections.abc import Callable, Iterable
 
     from ..collections import Deque
 
@@ -200,54 +199,3 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
             ```
         """
         return self._from_iterable(map(func, iter(self), *iterables))
-
-    def repeat(self, n: int | None = None) -> PyoIterator[PyoIterator[T]]:
-        """Repeat the entire `Iterator` **n** times (as elements).
-
-        If **n** is `None`, repeat indefinitely.
-
-        Operates lazily, hence if you need to get the underlying elements, you will need to collect each repeated `Iterator` via `.map(lambda x: x.collect(Seq))` or similar.
-
-        Warning:
-            If **n** is `None`, this will create an infinite `Iterator`.
-
-            Be sure to use `PyoIterator::take` or `PyoIterator::slice` to limit the number of items taken.
-
-        See Also:
-            [`PyoIterator::cycle`][cycle] to repeat the *elements* of the `PyoIterator` indefinitely.
-
-        Args:
-            n (int | None): Optional number of repetitions.
-
-        Returns:
-            PyoIterator[PyoIterator[T]]: An `Iterator` of repeated `Iterator`s.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>>
-            >>> Iter((1, 2)).repeat(3).map(list).collect(Seq)
-            Seq([1, 2], [1, 2], [1, 2])
-
-            ```
-        """
-        new = self._from_iterable
-
-        def repeat(iterator: Iterator[T], n: int | None) -> Iterator[PyoIterator[T]]:
-
-            def _repeat_infinite(iterator: Iterator[T]) -> Generator[PyoIterator[T]]:
-                def tee() -> tuple[Iterator[T], ...]:
-                    return itertools.tee(iterator, 1)
-
-                iterators = tee()
-                while True:
-                    yield new(iterators[0])
-                    iterators = tee()
-
-            match n:
-                case None:
-                    return _repeat_infinite(iterator)
-                case _:
-                    return map(new, itertools.tee(iterator, n))
-
-        return new(repeat(iter(self), n))

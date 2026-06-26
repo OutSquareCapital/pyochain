@@ -82,7 +82,7 @@ impl PyoIterator {
     }
     #[pyo3(signature = (obj, n=None))]
     #[classmethod]
-    fn from_repeat<'py>(
+    fn repeat<'py>(
         cls: &Bound<'py, PyType>,
         obj: &Bound<'py, PyAny>,
         n: Option<&Bound<'py, PyInt>>,

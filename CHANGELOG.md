@@ -18,6 +18,7 @@
 - **Method removal**: `PyoIterator::array_chunks` has been removed. Use `PyoIterator::batched` instead.
 - **API change**: `PyoIterator::map_with` *function* argument now need to be the **first** argument, followed by the various iterables. It was previously a kword only argument at the end. Swap the order at call sites to migrate your code.
 - **Removal**: `PyoIterator::insert` has been removed. Replace `y.insert(x)` by `Iter.once(x).chain(y)` to migrate your code. This makes thing clearer at both reading-order level, and semantics level, as this avoid treating an `Iterator` as "sort of" mutable collection.
+- **Removal**: Original `PyoIterator::repeat` has been removed, and `PyoIterator::from_repeat` renamed to `repeat`, i.e `from_repeat` replaces the old `repeat`. The original had complex semantics, niche use cases, without a real performance/memory benefit. To get the same behavior, use something like `my_iter.collect(Seq).pipe(lambda it: Iter.repeat(it, n)).map(lambda x: x.iter())`. This also better align with rust `Iterator::repeat` semantics and naming.
 
 ### ✨ Enhancements
 
