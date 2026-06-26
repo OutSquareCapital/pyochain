@@ -1,8 +1,8 @@
 use crate::args::{Args, Kwargs};
 use crate::option::{PySome, option};
 use crate::pylibs;
+use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyDict, PyIterator, PyModule, PySequence, PySet, PyString, PyTuple};
-use pyo3::{intern, prelude::*};
 use tap::prelude::*;
 #[pymodule(name = "_tools")]
 pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -709,6 +709,26 @@ impl FilterStar {
     }
 }
 
+/// Equivalent of a `Literal` in Python.\
+/// Defining an Enum here, I feel isn't needed since we only pass around the string values, and we don't need to do anything with them later.
+mod position {
+    use super::*;
+    use pyo3::intern;
+    const FIRST: &str = "first";
+    const MIDDLE: &str = "middle";
+    const LAST: &str = "last";
+    const ONLY: &str = "only";
+    #[inline(always)]
+    pub fn get(did_iter: bool, has_next: bool, py: Python<'_>) -> &Bound<'_, PyString> {
+        match (did_iter, has_next) {
+            (false, true) => intern!(py, FIRST),
+            (false, false) => intern!(py, ONLY),
+            (true, true) => intern!(py, MIDDLE),
+            (true, false) => intern!(py, LAST),
+        }
+    }
+}
+
 #[pyclass]
 pub struct WithPosition {
     iter: Py<PyIterator>,
@@ -749,16 +769,8 @@ impl WithPosition {
             }
             None => false,
         };
-
-        let did_iter = slf.did_iter;
+        let position = position::get(slf.did_iter, has_next, py);
         slf.did_iter = true;
-
-        let position = match (did_iter, has_next) {
-            (false, true) => intern!(py, "first"),
-            (false, false) => intern!(py, "only"),
-            (true, true) => intern!(py, "middle"),
-            (true, false) => intern!(py, "last"),
-        };
 
         Ok(Some((position, current)))
     }
