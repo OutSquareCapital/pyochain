@@ -62,6 +62,7 @@ Name         | 10 items | 100 items | 1_000 items | 10_000 items | Note
 `slice`      | **1.12x**| **1.09x** | **1.01x**   | **0.97x**    | -
 `chain`      | **1.14x**| **1.04x** | **1.02x**   | **1.02x**    | The items here are the nb of `Iterable` arguments, not the total number of items in the base `PyoIterator`.
 `product`    | **1.03x**| **1.01x** | **1.01x**   | **0.99x**    | The items here are the nb of `Iterable` arguments, not the total number of items in the base `PyoIterator`.
+`next`       | **1.31x**| **1.45x** | **1.47x**   | **1.47x**    | The items here are the nb of calls to `next` in a loop.
 
 ---
 

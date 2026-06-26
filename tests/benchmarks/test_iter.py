@@ -600,3 +600,16 @@ def _map_with(data: PyoIterable[int], others: Iterable[Iterable[int]]) -> int:
         return sum(args)
 
     return data.iter().map_with(f, *others).last()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_next(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_next, data) == 1
+
+
+def _next(data: Range) -> int:
+    iterator = data.iter()
+    for _ in data:
+        _ = iterator.next()
+    return 1

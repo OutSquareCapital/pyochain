@@ -3033,6 +3033,28 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
+    def next(self) -> Option[T]:
+        """Return the next element in the `Iterator`.
+
+        The actual `__next__()` method must be conform to the Python `Iterator` Protocol, and is what will be actually called if you iterate over the `PyoIterator` instance.
+
+        `PyoIterator::next` is a convenience method that wraps the result in an `Option` to handle exhaustion gracefully, for custom use cases.
+
+        Returns:
+            Option[T]: The next element in the iterator. `Some[T]`, or `NONE` if the iterator is exhausted.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> it = Seq((1, 2, 3)).iter()
+            >>> it.next().unwrap()
+            1
+            >>> it.next().unwrap()
+            2
+
+            ```
+        """
+
     @overload
     def sum(self: PyoIterator[bool], start: int = 0) -> int: ...
     @overload
