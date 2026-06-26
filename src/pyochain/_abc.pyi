@@ -22,6 +22,7 @@ from typing import (
 
 from pyochain._dict import Dict
 from pyochain._iter import Iter
+from pyochain._peekable import Peekable
 from pyochain._range import Range
 from pyochain._seq import Seq
 from pyochain._set import Set, SetMut
@@ -3055,6 +3056,46 @@ class PyoIteratorRS[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
+    def peekable(self) -> Peekable[T]:
+        """Creates an iterator which can use the peek and peek_mut methods to look at the next element of the `Iterator` without consuming it.
+
+        See their documentation for more information.
+
+        Note that the underlying `Iterator` is still advanced when peek or peek_mut are called for the first time.
+
+        In order to retrieve the next element, `next` is called on the underlying `Iterator`, hence any side effects (i.e. anything other than fetching the next value) of the `next` method will occur.
+
+        Returns:
+            Peekable[T]: A new `Iterator` that allows peeking at the next element.
+
+        Examples:
+            Basic usage:
+            ```python
+            >>> from pyochain import Range
+            >>> xs = Range(1, 4)
+            >>> iterator = xs.iter().peekable()
+            >>> # peek() lets us see into the future
+            >>> iterator.peek()
+            Some(1)
+            >>> iterator.next()
+            Some(1)
+            >>> iterator.next()
+            Some(2)
+            >>> # we can peek() multiple times, the iterator won't advance
+            >>> iterator.peek()
+            Some(3)
+            >>> iterator.peek()
+            Some(3)
+            >>> iterator.next()
+            Some(3)
+            >>> # after the iterator is finished, so is peek()
+            >>> iterator.peek()
+            NONE
+            >>> iterator.next()
+            NONE
+
+            ```
+        """
     @overload
     def sum(self: PyoIterator[bool], start: int = 0) -> int: ...
     @overload

@@ -11,7 +11,6 @@ from .._abc import (  # pyright: ignore[reportMissingModuleSource]
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Iterable, Iterator
 
-    from .._peekable import Peekable
     from ..collections import Deque
 
 
@@ -137,50 +136,6 @@ class PyoIterator[T](PyoIteratorRS[T], ABC):
 
         # TODO: we should move this to Rust and make it fully lazy.
         return Deque.from_ref(deque(iter(self), n))
-
-    def peekable(self) -> Peekable[T]:
-        """Creates an iterator which can use the peek and peek_mut methods to look at the next element of the `Iterator` without consuming it.
-
-        See their documentation for more information.
-
-        Note that the underlying `Iterator` is still advanced when peek or peek_mut are called for the first time.
-
-        In order to retrieve the next element, `next` is called on the underlying `Iterator`, hence any side effects (i.e. anything other than fetching the next value) of the `next` method will occur.
-
-        Returns:
-            Peekable[T]: A new `Iterator` that allows peeking at the next element.
-
-        Examples:
-            Basic usage:
-            ```python
-            >>> from pyochain import Range
-            >>> xs = Range(1, 4)
-            >>> iterator = xs.iter().peekable()
-            >>> # peek() lets us see into the future
-            >>> iterator.peek()
-            Some(1)
-            >>> iterator.next()
-            Some(1)
-            >>> iterator.next()
-            Some(2)
-            >>> # we can peek() multiple times, the iterator won't advance
-            >>> iterator.peek()
-            Some(3)
-            >>> iterator.peek()
-            Some(3)
-            >>> iterator.next()
-            Some(3)
-            >>> # after the iterator is finished, so is peek()
-            >>> iterator.peek()
-            NONE
-            >>> iterator.next()
-            NONE
-
-            ```
-        """
-        from .._peekable import Peekable
-
-        return Peekable(iter(self))
 
     @overload
     def map_with[T1, R](
