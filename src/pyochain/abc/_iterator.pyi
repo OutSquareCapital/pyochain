@@ -1,6 +1,7 @@
 from collections.abc import (
     Callable,
     Collection,
+    Container,
     Generator,
     Iterable,
     Iterator,
@@ -140,6 +141,7 @@ class PyoIterable[T](Fluent, Checkable, Iterable[T], Protocol):
             ```
         """
 
+@runtime_checkable
 class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
     """Extends `PyoIterable[T]` and `collections.abc.Iterator[T]`.
 
@@ -4141,6 +4143,33 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             >>> zipped = out.iter().map(lambda x: Iter(x).try_collect()).collect(Vec)
             >>> zipped
             Vec(Some(Vec(1, 10)), NONE)
+
+            ```
+        """
+
+@runtime_checkable
+class PyoContainer[T](Container[T], Protocol):
+    """ABC for `collections.abc.Container` Protocol."""
+
+    def contains(self, value: T) -> bool:
+        """Check if the `Container` contains the specified **value**.
+
+        This is equivalent to `value in self`, but as a method.
+
+        Args:
+            value (T): The value to check for existence.
+
+        Returns:
+            bool: True if the value exists in the Collection, False otherwise.
+
+        Example:
+            ```python
+            >>> from pyochain import Dict
+            >>> data = Dict.from_ref({1: "a", 2: "b"})
+            >>> data.contains(1)
+            True
+            >>> data.contains(3)
+            False
 
             ```
         """

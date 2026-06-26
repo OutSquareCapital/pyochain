@@ -1,39 +1,12 @@
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import Collection, Container, Sized
+from collections.abc import Collection, Sized
 
-from ._iterator import PyoIterable  # pyright: ignore[reportMissingModuleSource]
-
-
-class PyoContainer[T](Container[T], ABC):
-    """ABC for `collections.abc.Container` Protocol."""
-
-    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
-
-    def contains(self, value: T) -> bool:
-        """Check if the `Container` contains the specified **value**.
-
-        This is equivalent to using the `in` keyword directly on the `Container`.
-
-        Args:
-            value (T): The value to check for existence.
-
-        Returns:
-            bool: True if the value exists in the Collection, False otherwise.
-
-        Example:
-            ```python
-            >>> from pyochain import Dict
-            >>> data = Dict.from_ref({1: "a", 2: "b"})
-            >>> data.contains(1)
-            True
-            >>> data.contains(3)
-            False
-
-            ```
-        """
-        return value in self
+from ._iterator import (  # pyright: ignore[reportMissingModuleSource]
+    PyoContainer,
+    PyoIterable,
+)
 
 
 class PyoSized(Sized, ABC):
@@ -80,7 +53,7 @@ class PyoSized(Sized, ABC):
         return len(self) == 0
 
 
-class PyoCollection[T](PyoIterable[T], PyoContainer[T], PyoSized, Collection[T], ABC):
+class PyoCollection[T](PyoIterable[T], PyoContainer[T], PyoSized, Collection[T]):  # pyright: ignore[reportImplicitAbstractClass]
     """`Extends `PyoIterable[T]` and `collections.abc.Collection[T]`.
 
     This includes `Seq`, `Vec`, `Set`, `SetMut`, `Dict`, etc...

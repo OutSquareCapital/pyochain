@@ -97,6 +97,9 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     abc_mod
         .getattr("Iterator")?
         .call_method1("register", (abc::PyoIterator::type_object(py),))?;
+    abc_mod
+        .getattr("Container")?
+        .call_method1("register", (abc::PyoContainer::type_object(py),))?;
 
     Ok(())
 }

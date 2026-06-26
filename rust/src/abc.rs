@@ -16,6 +16,7 @@ use tap::prelude::*;
 pub fn abc(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyoIterable>()?;
     m.add_class::<PyoIterator>()?;
+    m.add_class::<PyoContainer>()?;
     Ok(())
 }
 #[pyclass(subclass, frozen, generic, extends=Checkable)]
@@ -1296,5 +1297,15 @@ fn is_sorted_cmp_fn(
         (false, false) => |prev: &Bound<'_, PyAny>, curr: &Bound<'_, PyAny>| prev.le(curr),
         (true, true) => |prev: &Bound<'_, PyAny>, curr: &Bound<'_, PyAny>| prev.gt(curr),
         (false, true) => |prev: &Bound<'_, PyAny>, curr: &Bound<'_, PyAny>| prev.ge(curr),
+    }
+}
+#[pyclass(subclass, frozen, generic)]
+pub struct PyoContainer {}
+
+#[pymethods]
+impl PyoContainer {
+    #[pyo3(name = "contains")]
+    fn pyo_contains(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<bool> {
+        slf.contains(value)
     }
 }

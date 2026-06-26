@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from ._iterator import PyoIterator  # pyright: ignore[reportMissingModuleSource]
 
 
-class PyoReversible[T](Reversible[T], ABC):
+class PyoReversible[T](Reversible[T]):  # pyright: ignore[reportImplicitAbstractClass]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
 
     def rev(self) -> PyoIterator[T]:
@@ -36,7 +36,7 @@ class PyoReversible[T](Reversible[T], ABC):
         return Iter(reversed(self))
 
 
-class PyoSequence[T](PyoCollection[T], PyoReversible[T], Sequence[T], ABC):
+class PyoSequence[T](PyoCollection[T], PyoReversible[T], Sequence[T]):  # pyright: ignore[reportImplicitAbstractClass]
     """Extends `PyoCollection[T]` and `collections.abc.Sequence[T]`.
 
     Is the shared ABC for concrete sequences: `Seq`, `Range` and `Vec`.
