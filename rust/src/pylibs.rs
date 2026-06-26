@@ -1,6 +1,6 @@
 use crate::args::{Args, Concatenate};
 /// This module contains Python built-in functions and objects, as well as functions and objects from the `itertools` and `functools` modules.
-/// Each submodule declares a const string with the name of the module, and a static `PyOnceLock` + associated fn for each function or object that is imported from that module.
+/// Each submodule declares a const string with the name of the module, and a const `PyOnceLock` + associated fn for each function or object that is imported from that module.
 /// This pattern ensure maximum performance by only importing the function or object once, and reusing it for subsequent calls.
 /// We also use unsafe casts to correct types, aggressive inlining, and `&Bound` to maximize performance.
 use pyo3::sync::PyOnceLock;
@@ -14,17 +14,17 @@ pub mod builtins {
 
     const BUILTINS: &str = "builtins";
 
-    static OBJECT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static ALL: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static ANY: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static MAX: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static MIN: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static SUM: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static ENUMERATE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static MAP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static FILTER: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static SORTED: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static ZIP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const OBJECT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const ALL: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const ANY: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const MAX: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const MIN: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const SUM: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const ENUMERATE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const MAP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const FILTER: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const SORTED: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const ZIP: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     /// Create a unique sentinel object. Equivalent to `object()` in Python. On >=3.15, this will become unneded thanks to the new sentinel builtin.
     #[inline(always)]
     pub fn sentinel(py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
@@ -154,30 +154,30 @@ pub mod itertools {
     use super::*;
 
     const ITERTOOLS: &str = "itertools";
-    static ACCUMULATE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static BATCHED: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static TEE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static GROUP_BY: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static ZIP_LONGEST: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static FILTER_FALSE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static MAP_STAR: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static COUNT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static TAKE_WHILE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static DROP_WHILE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static COMBINATIONS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static COMBINATIONS_WITH_REPLACEMENT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static COMPRESS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static CYCLE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static PAIRWISE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static PRODUCT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static PERMUTATIONS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static REPEAT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    static ISLICE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const ACCUMULATE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const BATCHED: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const TEE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const GROUP_BY: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const ZIP_LONGEST: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const FILTER_FALSE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const MAP_STAR: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const COUNT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const TAKE_WHILE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const DROP_WHILE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const COMBINATIONS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const COMBINATIONS_WITH_REPLACEMENT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const COMPRESS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const CYCLE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const PAIRWISE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const PRODUCT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const PERMUTATIONS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const REPEAT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const ISLICE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
 
     /// `itertools::chain` class.
     pub mod chain {
         use super::*;
-        static CHAIN: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+        const CHAIN: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
 
         #[inline(always)]
         pub fn new<'py>(iterables: &Args<'py>) -> PyResult<Bound<'py, PyIterator>> {
@@ -417,12 +417,13 @@ pub mod itertools {
         n: Option<&Bound<'py, PyInt>>,
     ) -> PyResult<Bound<'py, PyIterator>> {
         let py = obj.py();
-        let func = REPEAT.import(py, ITERTOOLS, "repeat")?;
-        match n {
-            Some(n) => func.call1((obj, n)),
-            None => func.call1((obj,)),
-        }
-        .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
+        REPEAT
+            .import(py, ITERTOOLS, "repeat")
+            .and_then(|func| match n {
+                Some(n) => func.call1((obj, n)),
+                None => func.call1((obj,)),
+            })
+            .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
     }
     #[inline(always)]
     pub fn step_by<'py>(
@@ -451,7 +452,7 @@ pub mod itertools {
 pub mod functools {
     use super::*;
     const FUNCTOOLS: &str = "functools";
-    static REDUCE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const REDUCE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     #[inline(always)]
     pub fn reduce<'py>(
         function: &Bound<'py, PyAny>,
@@ -472,7 +473,7 @@ pub mod pyochain {
     const PYOCHAIN: &str = "pyochain";
     pub mod vec {
         use super::*;
-        static VEC: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+        const VEC: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
         #[inline(always)]
         pub fn from_ref<'py>(obj: &Bound<'py, PyList>) -> PyResult<Bound<'py, PySequence>> {
             let py = obj.py();
@@ -484,7 +485,7 @@ pub mod pyochain {
     }
     pub mod iter {
         use super::*;
-        static ITER: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+        const ITER: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
         #[inline(always)]
         pub fn new<'py>(iterable: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyIterator>> {
             ITER.import(iterable.py(), PYOCHAIN, "Iter")?
