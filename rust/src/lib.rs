@@ -7,7 +7,7 @@ mod option;
 mod pylibs;
 mod result;
 mod tools;
-use pyo3::{PyTypeInfo, prelude::*};
+use pyo3::{PyTypeInfo, intern, prelude::*, types::PyType};
 use tap::prelude::*;
 
 macro_rules! impl_py_pipe {
@@ -91,18 +91,16 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     let abc_mod = py.import("collections.abc")?;
 
-    abc_mod
-        .getattr("Iterable")?
-        .call_method1("register", (abc::PyoIterable::type_object(py),))?;
-    abc_mod
-        .getattr("Iterator")?
-        .call_method1("register", (abc::PyoIterator::type_object(py),))?;
-    abc_mod
-        .getattr("Container")?
-        .call_method1("register", (abc::PyoContainer::type_object(py),))?;
-    abc_mod
-        .getattr("Sized")?
-        .call_method1("register", (abc::PyoSized::type_object(py),))?;
+    register(&abc_mod, "Iterable", &abc::PyoIterable::type_object(py))?;
+    register(&abc_mod, "Iterator", &abc::PyoIterator::type_object(py))?;
+    register(&abc_mod, "Container", &abc::PyoContainer::type_object(py))?;
+    register(&abc_mod, "Sized", &abc::PyoSized::type_object(py))?;
 
+    Ok(())
+}
+
+fn register(abc: &Bound<'_, PyModule>, name: &str, cls: &Bound<'_, PyType>) -> PyResult<()> {
+    abc.getattr(name)?
+        .call_method1(intern!(abc.py(), "register"), (cls,))?;
     Ok(())
 }
