@@ -42,6 +42,27 @@ pub mod builtins {
             .call1((iterator,))
             .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
     }
+
+    pub fn enumerate<'py>(
+        iterator: &Bound<'py, PyIterator>,
+        start: usize,
+    ) -> PyResult<Bound<'py, PyIterator>> {
+        ENUMERATE
+            .import(iterator.py(), BUILTINS, "enumerate")?
+            .call1((iterator, start))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
+    }
+
+    #[inline(always)]
+    pub fn filter<'py>(
+        func: Option<&Bound<'py, PyAny>>,
+        iterator: &Bound<'py, PyIterator>,
+    ) -> PyResult<Bound<'py, PyIterator>> {
+        FILTER
+            .import(iterator.py(), BUILTINS, "filter")?
+            .call1((func, iterator))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
+    }
     #[inline(always)]
     pub fn max<'py>(iterator: &Bound<'py, PyIterator>) -> PyResult<Bound<'py, PyAny>> {
         MAX.import(iterator.py(), BUILTINS, "max")?
@@ -77,15 +98,6 @@ pub mod builtins {
         SUM.import(iterator.py(), BUILTINS, "sum")?
             .call1((iterator, start))
     }
-    pub fn enumerate<'py>(
-        iterator: &Bound<'py, PyIterator>,
-        start: usize,
-    ) -> PyResult<Bound<'py, PyIterator>> {
-        ENUMERATE
-            .import(iterator.py(), BUILTINS, "enumerate")?
-            .call1((iterator, start))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
-    }
     #[inline(always)]
     pub fn map<'py>(
         func: &Bound<'py, PyAny>,
@@ -101,16 +113,6 @@ pub mod builtins {
         let py = args.py();
         MAP.import(py, BUILTINS, "map")?
             .call1(args)
-            .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
-    }
-    #[inline(always)]
-    pub fn filter<'py>(
-        func: Option<&Bound<'py, PyAny>>,
-        iterator: &Bound<'py, PyIterator>,
-    ) -> PyResult<Bound<'py, PyIterator>> {
-        FILTER
-            .import(iterator.py(), BUILTINS, "filter")?
-            .call1((func, iterator))
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
     }
     #[inline(always)]

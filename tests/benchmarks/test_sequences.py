@@ -17,11 +17,11 @@ if TYPE_CHECKING:
 @pytest.mark.parametrize("size", SIZES)
 def test_rev(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size)
-    assert benchmark(_rev, data, size) == 1
+    assert benchmark(_rev, data) == 1
 
 
-def _rev(data: PyoReversible[int], size: int) -> int:
-    for _ in range(size):
+def _rev(data: PyoReversible[int]) -> int:
+    for _ in data:
         _ = data.rev()
 
     return 1

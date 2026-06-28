@@ -1301,7 +1301,7 @@ fn is_sorted_cmp_fn(
     }
 }
 #[pyclass(subclass, frozen, generic)]
-pub struct PyoContainer {}
+pub struct PyoContainer;
 
 #[pymethods]
 impl PyoContainer {
@@ -1312,7 +1312,7 @@ impl PyoContainer {
 }
 
 #[pyclass(subclass, frozen, generic)]
-pub struct PyoSized {}
+pub struct PyoSized;
 
 #[pymethods]
 impl PyoSized {
