@@ -1,5 +1,5 @@
 from collections.abc import Callable, Iterable, Iterator, MutableSequence
-from typing import Any, Final, Self, override
+from typing import Any, Self, override
 
 from pyochain import Option
 from pyochain.abc import PyoIterator
@@ -238,8 +238,6 @@ class Iter[T](PyoIterator[T]):
 
         ```
     """
-
-    _inner: Final[Iterator[T]]
 
     def __init__(self, data: Iterable[T]) -> None: ...
     @override

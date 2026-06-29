@@ -43,3 +43,4 @@ def test_abcs() -> None:
 
 def test_inerhitance() -> None:
     assert issubclass(pc.Vec, (Iterable, pyoabc.PyoIterable))
+    assert issubclass(pc.Iter, (Iterator, pyoabc.PyoIterator))

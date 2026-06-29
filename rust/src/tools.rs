@@ -967,7 +967,7 @@ impl Tail {
 
 #[pyclass(frozen, generic, extends=abc::PyoIterator)]
 pub struct Iter {
-    _inner: Py<PyIterator>,
+    inner: Py<PyIterator>,
 }
 impl Iter {
     /// New constructor for `Iter` in rust.
@@ -986,19 +986,19 @@ impl Iter {
             .add_subclass(abc::PyoIterable {})
             .add_subclass(abc::PyoIterator {})
             .add_subclass(Self {
-                _inner: data.try_iter()?.unbind(),
+                inner: data.try_iter()?.unbind(),
             })
             .pipe(Ok)
     }
 
     fn __iter__<'py>(slf: &Bound<'py, Self>) -> Py<PyIterator> {
-        slf.get()._inner.clone_ref(slf.py())
+        slf.get().inner.clone_ref(slf.py())
     }
 
     fn __next__<'py>(slf: &Bound<'py, Self>) -> PyResult<Option<Bound<'py, PyAny>>> {
         let py = slf.py();
         slf.get()
-            ._inner
+            .inner
             .clone_ref(py)
             .into_bound(py)
             .next()
@@ -1008,7 +1008,7 @@ impl Iter {
     fn __repr__(slf: &Bound<'_, Self>) -> PyResult<String> {
         let py = slf.py();
         let name = slf.get_type().name();
-        let inner_repr = slf.get()._inner.clone_ref(py).into_bound(py).repr()?;
+        let inner_repr = slf.get().inner.clone_ref(py).into_bound(py).repr()?;
         Ok(format!("{:?}({:?})", name, inner_repr))
     }
 }
