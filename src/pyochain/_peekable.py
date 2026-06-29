@@ -40,17 +40,30 @@ class Peekable[T](PyoIterator[T]):
 
         Returns:
             Option[T]: The next value wrapped in `Some(T)` if available, or `NONE` if the iteration is over.
+
+        Examples:
+            Peek at the next value of an iterator without consuming it.
+            ```python
+            >>> from pyochain import Range
+            >>> iterator = Range(0, 5).iter().peekable()
+            >>> # Peek at the first item of the iterator without consuming it.
+            >>> iterator.peek()
+            Some(0)
+            >>> # The next item returned is still 0, as we haven't consumed it yet.
+            >>> iterator.next()
+            Some(0)
+            >>> # Now the next item returned is 1, as we have consumed the first item.
+            >>> iterator.next()
+            Some(1)
+
+            ```
         """
         match self._peeked:
             case Some(_):
                 return self._peeked
             case Null():
-                try:
-                    self._peeked = option(next(self._iter))
-                except StopIteration:
-                    return NONE
-                else:
-                    return self._peeked
+                self._peeked = option(next(self._iter, None))
+                return self._peeked
 
     def next_if(self, func: Callable[[T], bool]) -> Option[T]:
         """Consume and return the next value of this iterator if a condition is `True`.
