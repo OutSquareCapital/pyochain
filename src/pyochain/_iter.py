@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import itertools
-from typing import TYPE_CHECKING, Self, override
+from typing import TYPE_CHECKING, override
 
 from .abc import PyoIterator
 
@@ -91,72 +90,3 @@ class Iter[T](PyoIterator[T]):
     @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self._inner.__repr__()})"
-
-    @classmethod
-    def from_ref(cls, other: Self) -> Self:
-        """Create an independent lazy copy from another `Iter`.
-
-        Both the original and the returned `Iter` can be consumed independently, in a lazy manner.
-
-        Note:
-            Values consumed by one iterator remain in the shared buffer until the other iterator consumes them too.
-
-            This is the unavoidable cost of having two independent iterators over the same source.
-
-            However, once both iterators have passed a value, it's freed from memory.
-
-        See Also:
-            - [`Iter::cloned`][cloned] which is the instance method version of this function.
-
-        Args:
-            other (Self): An `Iter` instance to copy.
-
-        Returns:
-            Self: A new `Iter` instance that is independent from the original.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> original = Iter((1, 2, 3))
-            >>> copy = Iter.from_ref(original)
-            >>> copy.map(lambda x: x * 2).collect(Seq)
-            Seq(2, 4, 6)
-            >>> original.next()
-            Some(1)
-
-            ```
-        """
-        it1, it2 = itertools.tee(other._inner)
-        other._inner = it1
-        return cls(it2)
-
-    def cloned(self) -> PyoIterator[T]:
-        """Clone the `Iter` into a new independent `Iter` using `itertools.tee`.
-
-        After calling this method, the original `Iter` will continue to yield elements independently of the cloned one.
-
-        Note:
-            Values consumed by one iterator remain in the shared buffer until the other iterator consumes them too.
-
-            This is the unavoidable cost of having two independent iterators over the same source.
-
-            However, once both iterators have passed a value, it's freed from memory.
-
-        Returns:
-            PyoIterator[T]: A new independent cloned iterator.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> it = Iter((1, 2, 3))
-            >>> cloned = it.cloned()
-            >>> cloned.collect(Seq)
-            Seq(1, 2, 3)
-            >>> it.collect(Seq)
-            Seq(1, 2, 3)
-
-            ```
-        """
-        it1, it2 = itertools.tee(self._inner)
-        self._inner = it1
-        return self._from_iterable(it2)

@@ -3874,6 +3874,32 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
 
             ```
         """
+
+    def tee(self, n: int = 2) -> tuple[PyoIterator[T], ...]:
+        """Split the `Iterator` into `n` new independants `Iterators`.
+
+        This method may require significant auxiliary storage (depending on how much temporary data needs to be stored).
+
+        In general, if one `Iterator` uses most or all of the data before another `Iterator` starts, it is faster to use `collect()` instead of `tee()`.
+
+        Args:
+            n (int): The number of new `Iterators` to create. Defaults to 2.
+
+        Returns:
+            tuple[PyoIterator[T], ...]: A tuple of `n` new `Iterators` that can be used independently.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> data = Seq((1, 2, 3))
+            >>> it1, it2 = data.iter().tee()
+            >>> it1.collect(Seq)
+            Seq(1, 2, 3)
+            >>> it2.collect(Seq)
+            Seq(1, 2, 3)
+
+            ```
+        """
     def unpack_into[**P, R](
         self,
         func: Callable[Concatenate[T, P], R],
