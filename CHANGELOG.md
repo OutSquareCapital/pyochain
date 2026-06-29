@@ -27,7 +27,7 @@
 - **typing**: added overloads to `PyoIterator::product` to return precise tuple types for up to 10 iterables.
 - **API**: `PyoIterator::accumulate` is now aligned with `itertools`, with the possibility to not provide a function, in which case the default is to use addition.
 - **API**: `PyoIterator::product` missed it's `repeat` argument. This is now fixed.
-- **typing**: `Iter`, `Option`, `Result`, and `abc::{PyoIterable, PyoIterator, PyoCollection}` are now covariant in their generic type.
+- **typing**: `Iter`, `Option`, `Result`, and `abc::{PyoIterable, PyoIterator, PyoCollection}` types are now covariant in their generic type.
 
 ### 🚀 Performance improvements
 
