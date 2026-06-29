@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from pyochain import Iter
 
 if TYPE_CHECKING:
+    from pyochain._peekable import Peekable
     from pyochain.abc import PyoIterable, PyoIterator
 
 
@@ -20,3 +21,4 @@ def check_covariance() -> None:
     _abc_iterable: PyoIterable[Animal] = base
     _abc_iterator: PyoIterator[Animal] = base
     _concrete_iterator: Iter[Animal] = base
+    _peekable_iterator: Peekable[Animal] = base.peekable()

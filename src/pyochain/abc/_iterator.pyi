@@ -495,7 +495,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def chain(self, *others: Iterable[T]) -> PyoIterator[T]:
+    def chain[S](self: PyoIterator[S], *others: Iterable[S]) -> PyoIterator[S]:
         """Concatenate **self** with one or more `Iterables`, any of which may be infinite.
 
         In other words, it links **self** and **others** together, in a chain. 🔗
@@ -617,7 +617,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
 
             ```
         """
-    def eq(self, other: Iterable[T]) -> bool:
+    def eq(self, other: Iterable[object]) -> bool:
         """Return `True` if **self** and *other* contain the same items in the same order.
 
         Comparison is performed element by element.
@@ -632,7 +632,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             including **self** and *other* when *other* is itself an `Iterator`.
 
         Args:
-            other (Iterable[T]): Another `Iterable[T]` to compare against.
+            other (Iterable[object]): Another `Iterable` to compare against.
 
         Returns:
             bool: `True` when both iterables yield the same sequence of values.
@@ -651,7 +651,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def ne(self, other: Iterable[T]) -> bool:
+    def ne(self, other: Iterable[object]) -> bool:
         """Return `True` if **self** and *other* differ in value or length.
 
         This is the logical opposite of `eq()`.
@@ -666,7 +666,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             including **self** and *other* when *other* is itself an `Iterator`.
 
         Args:
-            other (Iterable[T]): Another `Iterable[T]` to compare against.
+            other (Iterable[object]): Another `Iterable` to compare against.
 
         Returns:
             bool: `True` when the two iterables are not equal.
@@ -685,7 +685,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def le(self, other: Iterable[T]) -> bool:
+    def le(self, other: Iterable[object]) -> bool:
         """Return `True` if **self** is lexicographically less than or equal to *other*.
 
         Comparison is performed element by element, like Python sequence ordering.
@@ -699,7 +699,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             including **self** and *other* when *other* is itself an `Iterator`.
 
         Args:
-            other (Iterable[T]): Another `Iterable[T]` to compare against.
+            other (Iterable[object]): Another `Iterable` to compare against.
 
         Returns:
             bool: `True` if **self** is smaller than *other*, or equal to it.
@@ -717,7 +717,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def lt(self, other: Iterable[T]) -> bool:
+    def lt(self, other: Iterable[object]) -> bool:
         """Return `True` if **self** is lexicographically strictly less than *other*.
 
         The first differing pair of elements decides the result.
@@ -729,7 +729,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             including **self** and *other* when *other* is itself an `Iterator`.
 
         Args:
-            other (Iterable[T]): Another `Iterable[T]` to compare against.
+            other (Iterable[object]): Another `Iterable` to compare against.
 
         Returns:
             bool: `True` if **self** compares strictly before *other*.
@@ -747,7 +747,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def gt(self, other: Iterable[T]) -> bool:
+    def gt(self, other: Iterable[object]) -> bool:
         """Return `True` if **self** is lexicographically strictly greater than *other*.
 
         The first differing pair of elements decides the result.
@@ -759,7 +759,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             including **self** and *other* when *other* is itself an `Iterator`.
 
         Args:
-            other (Iterable[T]): Another `Iterable[T]` to compare against.
+            other (Iterable[object]): Another `Iterable` to compare against.
 
         Returns:
             bool: `True` if **self** compares strictly after *other*.
@@ -777,7 +777,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def ge(self, other: Iterable[T]) -> bool:
+    def ge(self, other: Iterable[object]) -> bool:
         """Return `True` if **self** is lexicographically greater than or equal to *other*.
 
         Comparison is performed element by element, like Python sequence ordering.
@@ -792,7 +792,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             including **self** and *other* when *other* is itself an `Iterator`.
 
         Args:
-            other (Iterable[T]): Another `Iterable[T]` to compare against.
+            other (Iterable[object]): Another `Iterable` to compare against.
 
         Returns:
             bool: `True` if **self** is greater than *other*, or equal to it.
@@ -1025,13 +1025,13 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
         """
 
     @overload
-    def collect_into(self, collection: Vec[T]) -> Vec[T]: ...
+    def collect_into[S](self: PyoIterator[S], collection: Vec[S]) -> Vec[S]: ...
     @overload
-    def collect_into(
-        self, collection: PyoMutableSequence[T]
-    ) -> PyoMutableSequence[T]: ...
+    def collect_into[S](
+        self: PyoIterator[S], collection: PyoMutableSequence[S]
+    ) -> PyoMutableSequence[S]: ...
     @overload
-    def collect_into(self, collection: list[T]) -> list[T]: ...
+    def collect_into[S](self: PyoIterator[S], collection: list[S]) -> list[S]: ...
     def collect_into(self, collection: MutableSequence[T]) -> MutableSequence[T]:
         """Collects all the items from the `Iterator` into a `MutableSequence`.
 
@@ -1337,18 +1337,18 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def try_find[E](
-        self, predicate: Callable[[T], Result[bool, E]]
-    ) -> Result[Option[T], E]:
+    def try_find[S, E](
+        self: PyoIterator[S], predicate: Callable[[S], Result[bool, E]]
+    ) -> Result[Option[S], E]:
         """Applies a function returning `Result[bool, E]` to find first matching element.
 
         Short-circuits: stops at the first successful `True` or on the first error.
 
         Args:
-            predicate (Callable[[T], Result[bool, E]]): Function returning a `Result[bool, E]`.
+            predicate (Callable[[S], Result[bool, E]]): Function returning a `Result[bool, E]`.
 
         Returns:
-            Result[Option[T], E]: The first matching element, or the first error.
+            Result[Option[S], E]: The first matching element, or the first error.
 
         Example:
             ```python
@@ -1399,18 +1399,18 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def try_reduce[E](
-        self, func: Callable[[T, T], Result[T, E]]
-    ) -> Result[Option[T], E]:
+    def try_reduce[S, E](
+        self: PyoIterator[S], func: Callable[[S, S], Result[S, E]]
+    ) -> Result[Option[S], E]:
         """Reduces elements to a single one, short-circuiting on error.
 
         Uses the first element as the initial accumulator. If **func** returns an error, stops immediately.
 
         Args:
-            func (Callable[[T, T], Result[T, E]]): Function that reduces two items, returns a `Result[T, E]`.
+            func (Callable[[S, S], Result[S, E]]): Function that reduces two items, returns a `Result[S, E]`.
 
         Returns:
-            Result[Option[T], E]: Final accumulated value or the first error. Returns `Ok(NONE)` for empty iterable.
+            Result[Option[S], E]: Final accumulated value or the first error. Returns `Ok(NONE)` for empty iterable.
 
         Example:
             ```python
@@ -1671,7 +1671,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def find(self, predicate: Callable[[T], bool]) -> Option[T]:
+    def find[S](self: PyoIterator[S], predicate: Callable[[S], bool]) -> Option[S]:
         """Searches for an element of an iterator that satisfies a `predicate`.
 
         Takes a closure that returns true or false as `predicate`, and applies it to each element of the iterator.
@@ -1750,33 +1750,13 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
         """
 
     @overload
-    def flatten[U](self: PyoIterator[KeysView[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[Iterable[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[Generator[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[ValuesView[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[Iterator[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[Collection[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[Sequence[U]]) -> PyoIterator[U]: ...
-    @overload
     def flatten[U](self: PyoIterator[list[U]]) -> PyoIterator[U]: ...
     @overload
     def flatten[U](self: PyoIterator[tuple[U, ...]]) -> PyoIterator[U]: ...
     @overload
-    def flatten[U](self: PyoIterator[PyoIterator[U]]) -> PyoIterator[U]: ...
-    @overload
     def flatten[U](self: PyoIterator[Iter[U]]) -> PyoIterator[U]: ...
     @overload
     def flatten[U](self: PyoIterator[Seq[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[Set[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[SetMut[U]]) -> PyoIterator[U]: ...
     @overload
     def flatten[U](self: PyoIterator[Vec[U]]) -> PyoIterator[U]: ...
     @overload
@@ -1784,7 +1764,27 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
     @overload
     def flatten(self: PyoIterator[Range]) -> PyoIterator[int]: ...
     @overload
+    def flatten[U](self: PyoIterator[Set[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[SetMut[U]]) -> PyoIterator[U]: ...
+    @overload
     def flatten[U](self: PyoIterator[Dict[U, Any]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[KeysView[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[Generator[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[ValuesView[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[PyoIterator[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[Iterator[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[Sequence[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[Collection[U]]) -> PyoIterator[U]: ...
+    @overload
+    def flatten[U](self: PyoIterator[Iterable[U]]) -> PyoIterator[U]: ...
     def flatten[U: Iterable[Any]](self: PyoIterator[U]) -> PyoIterator[Any]:
         """Creates an `Iterator` that flattens nested structures.
 
@@ -1834,14 +1834,14 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
 
         """
 
-    def intersperse(self, element: T) -> PyoIterator[T]:
+    def intersperse[S](self: PyoIterator[S], element: S) -> PyoIterator[S]:
         """Creates a new `Iterator` which places a copy of separator between adjacent items of the original iterator.
 
         Args:
-            element (T): The element to interpose between items.
+            element (S): The element to interpose between items.
 
         Returns:
-            PyoIterator[T]: A new `Iterator` with the element interposed.
+            PyoIterator[S]: A new `Iterator` with the element interposed.
 
         Example:
             ```python
@@ -1896,18 +1896,20 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
         """
 
     @overload
-    def accumulate(
-        self, func: None = None, initial: T | None = None
-    ) -> PyoIterator[T]: ...
+    def accumulate[S](
+        self: PyoIterator[S], func: None = None, initial: S | None = None
+    ) -> PyoIterator[S]: ...
     @overload
+    def accumulate[I, N](
+        self: PyoIterator[N],
+        func: Callable[[I, N], I],
+        initial: I | None = None,
+    ) -> PyoIterator[I]: ...
     def accumulate[S](
         self: PyoIterator[S],
-        func: Callable[[T, S], T],
-        initial: T | None = None,
-    ) -> PyoIterator[T]: ...
-    def accumulate(
-        self, func: Callable[[T, T], T] | None = None, initial: T | None = None
-    ) -> PyoIterator[T]:
+        func: Callable[[S, S], S] | None = None,
+        initial: S | None = None,
+    ) -> PyoIterator[S]:
         """Return an `Iterator` of accumulated binary function results.
 
         In principle, `PyoIterator::accumulate` is similar to `PyoIterator::fold` if you provide it with the same binary function.
@@ -3163,7 +3165,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def next(self) -> Option[T]:
+    def next[S](self: PyoIterator[S]) -> Option[S]:
         """Return the next element in the `Iterator`.
 
         The actual `__next__()` method must be conform to the Python `Iterator` Protocol, and is what will be actually called if you iterate over the `PyoIterator` instance.
@@ -3185,7 +3187,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def peekable(self) -> Peekable[T]:
+    def peekable[S](self: PyoIterator[S]) -> Peekable[S]:
         """Creates an iterator which can use the peek and peek_mut methods to look at the next element of the `Iterator` without consuming it.
 
         See their documentation for more information.
@@ -3386,7 +3388,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def nth(self, n: int) -> Option[T]:
+    def nth[S](self: PyoIterable[S], n: int) -> Option[S]:
         """Return the nth item of the `Iterable` at the specified *n*.
 
         This is similar to `__getitem__` but for lazy `Iterators`.
@@ -3397,7 +3399,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             n (int): The index of the item to retrieve. It must be a non-negative integer.
 
         Returns:
-            Option[T]: `Some(item)` at the specified *n*.
+            Option[S]: `Some(item)` at the specified *n*.
 
         Example:
             ```python
@@ -3411,7 +3413,9 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def partition(self, predicate: Callable[[T], bool]) -> tuple[Vec[T], Vec[T]]:
+    def partition[S](
+        self: PyoIterable[S], predicate: Callable[[S], bool]
+    ) -> tuple[Vec[S], Vec[S]]:
         """Consumes the `Iterator`, creating two `Vec` from it.
 
         The predicate passed to `partition()` can return true, or false.
@@ -3419,10 +3423,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
         `partition` returns a pair, all of the elements for which it returned `True`, and all of the elements for which it returned `False`.
 
         Args:
-            predicate (Callable[[T], bool]): Function to determine partition boundaries.
+            predicate (Callable[[S], bool]): Function to determine partition boundaries.
 
         Returns:
-            tuple[Vec[T], Vec[T]]: The resulting pair of collections
+            tuple[Vec[S], Vec[S]]: The resulting pair of collections
 
         Example:
             ```python
@@ -3515,9 +3519,9 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
         /,
     ) -> PyoIterator[tuple[T, T2, T3, T4, T5, T6, T7, T8, T9, T10]]: ...
     @overload
-    def product(
-        self, *iterables: Iterable[T], repeat: int = ...
-    ) -> PyoIterator[tuple[T, ...]]: ...
+    def product[S](
+        self: PyoIterator[S], *iterables: Iterable[S], repeat: int = ...
+    ) -> PyoIterator[tuple[S, ...]]: ...
     def product(
         self, *iterables: Iterable[Any], repeat: int = 1
     ) -> PyoIterator[tuple[Any, ...]]:
@@ -3581,7 +3585,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
 
             ```
         """
-    def reduce(self, func: Callable[[T, T], T]) -> T:
+    def reduce[S](self: PyoIterator[S], func: Callable[[S, S], S]) -> S:
         """Apply a function of two arguments cumulatively to the items of an iterable, from left to right.
 
         This effectively reduces the `Iterator` to a single value.
@@ -3591,10 +3595,10 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
         It then serves as a default when the `Iterator` is empty.
 
         Args:
-            func (Callable[[T, T], T]): Function to apply cumulatively to the items of the iterable.
+            func (Callable[[S, S], S]): Function to apply cumulatively to the items of the iterable.
 
         Returns:
-            T: Single value resulting from cumulative reduction.
+            S: Single value resulting from cumulative reduction.
 
         Example:
             ```python
@@ -3759,9 +3763,12 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def sort_by(
-        self, key: Callable[[T], SupportsRichComparison[Any]], *, reverse: bool = False
-    ) -> Vec[T]:
+    def sort_by[S](
+        self: PyoIterator[S],
+        key: Callable[[S], SupportsRichComparison[Any]],
+        *,
+        reverse: bool = False,
+    ) -> Vec[S]:
         """Sort the elements of the sequence transformed by the key function.
 
         Note:
@@ -3770,11 +3777,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             The result is a new `Vec` over the sorted sequence.
 
         Args:
-            key (Callable[[T], SupportsRichComparison[Any]]): Function to extract a comparison key from each element.
+            key (Callable[[S], SupportsRichComparison[Any]]): Function to extract a comparison key from each element.
             reverse (bool): Whether to sort in descending order.
 
         Returns:
-            Vec[T]: A `Vec` with elements sorted.
+            Vec[S]: A `Vec` with elements sorted.
 
         Example:
             ```python
@@ -4066,9 +4073,9 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
         strict: bool = False,
     ) -> PyoIterator[tuple[T, T2, T3, T4, T5]]: ...
     @overload
-    def zip(
-        self, /, *others: Iterable[T], strict: bool = False
-    ) -> PyoIterator[tuple[T, ...]]: ...
+    def zip[S](
+        self: PyoIterator[S], /, *others: Iterable[S], strict: bool = False
+    ) -> PyoIterator[tuple[S, ...]]: ...
     def zip(
         self, /, *others: Iterable[Any], strict: bool = False
     ) -> PyoIterator[tuple[Any, ...]]:
@@ -4100,25 +4107,26 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
 
             ```
         """
+
     @overload
-    def zip_longest[T2](
-        self, iter2: Iterable[T2], /
-    ) -> PyoIterator[tuple[Option[T], Option[T2]]]: ...
+    def zip_longest[S, T2](
+        self: PyoIterator[S], iter2: Iterable[T2], /
+    ) -> PyoIterator[tuple[Option[S], Option[T2]]]: ...
     @overload
-    def zip_longest[T2, T3](
-        self, iter2: Iterable[T2], iter3: Iterable[T3], /
-    ) -> PyoIterator[tuple[Option[T], Option[T2], Option[T3]]]: ...
+    def zip_longest[S, T2, T3](
+        self: PyoIterator[S], iter2: Iterable[T2], iter3: Iterable[T3], /
+    ) -> PyoIterator[tuple[Option[S], Option[T2], Option[T3]]]: ...
     @overload
-    def zip_longest[T2, T3, T4](
-        self,
+    def zip_longest[S, T2, T3, T4](
+        self: PyoIterator[S],
         iter2: Iterable[T2],
         iter3: Iterable[T3],
         iter4: Iterable[T4],
         /,
-    ) -> PyoIterator[tuple[Option[T], Option[T2], Option[T3], Option[T4]]]: ...
+    ) -> PyoIterator[tuple[Option[S], Option[T2], Option[T3], Option[T4]]]: ...
     @overload
-    def zip_longest[T2, T3, T4, T5](
-        self,
+    def zip_longest[S, T2, T3, T4, T5](
+        self: PyoIterator[S],
         iter2: Iterable[T2],
         iter3: Iterable[T3],
         iter4: Iterable[T4],
@@ -4126,24 +4134,13 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
         /,
     ) -> PyoIterator[
         tuple[
-            Option[T],
+            Option[S],
             Option[T2],
             Option[T3],
             Option[T4],
             Option[T5],
         ]
     ]: ...
-    @overload
-    def zip_longest(
-        self,
-        iter2: Iterable[T],
-        iter3: Iterable[T],
-        iter4: Iterable[T],
-        iter5: Iterable[T],
-        iter6: Iterable[T],
-        /,
-        *iterables: Iterable[Any],
-    ) -> PyoIterator[tuple[Option[T], ...]]: ...
     def zip_longest(self, *others: Iterable[Any]) -> ZippedLongest[T]:
         """Return a zip `Iterator` who yield a `tuple` where the i-th element comes from the i-th `Iterable` argument.
 
