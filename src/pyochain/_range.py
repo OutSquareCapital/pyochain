@@ -68,3 +68,7 @@ class Range(PyoSequence[int]):
     @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self._inner.start}, {self._inner.stop}, {self._inner.step})"
+
+    @override
+    def __reversed__(self) -> Iterator[int]:
+        return reversed(self._inner)

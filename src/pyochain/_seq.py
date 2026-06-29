@@ -3,9 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Final, Self, overload, override
 
 from ._utils import get_repr, no_doctest
-from .abc import (
-    PyoSequence,
-)
+from .abc import PyoSequence
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
@@ -129,6 +127,10 @@ class Seq[T](PyoSequence[T]):
             ```
         """
         return self.__class__(self._inner * n)
+
+    @override
+    def __reversed__(self) -> Iterator[T]:
+        return reversed(self._inner)
 
     def concat[O](self, other: tuple[O, ...] | Seq[O]) -> Seq[T | O]:
         """Concatenate another `Seq` or `tuple` to **self** and return a new `Seq`.

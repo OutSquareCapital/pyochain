@@ -7,7 +7,7 @@ from ._utils import get_repr, no_doctest
 from .abc import PyoMutableSequence
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, MutableSequence
+    from collections.abc import Callable, Iterable, Iterator, MutableSequence
 
 
 class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
@@ -327,3 +327,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
             case list():
                 self._inner += other
         return self
+
+    @override
+    def __reversed__(self) -> Iterator[T]:
+        return reversed(self._inner)
