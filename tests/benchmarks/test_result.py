@@ -149,6 +149,6 @@ def test_iter_err(benchmark: BenchFixture, size: int) -> None:
 
 
 def _iter(data: Range, opt: Result[int, int]) -> Option[int]:
-    for _ in data.iter():
+    for _ in data:
         _ = opt.iter()
     return opt.iter().next()

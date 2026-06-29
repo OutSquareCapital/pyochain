@@ -128,6 +128,6 @@ def test_iter_none(benchmark: BenchFixture, size: int) -> None:
 
 
 def _iter(data: Range, opt: Option[int]) -> Option[int]:
-    for _ in data.iter():
+    for _ in data:
         _ = opt.iter()
     return opt.iter().next()
