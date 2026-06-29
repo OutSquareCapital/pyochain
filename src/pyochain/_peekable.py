@@ -136,10 +136,10 @@ class Peekable[T](PyoIterator[T]):
         If a different value is returned, the next `peek()` or `next()` call will result in this new value.
 
         Args:
-            f (Callable[[T], Result[R, T]]): A function that takes the next value and returns a Result.
+            f (Callable[[S], Result[R, S]]): A function that takes the next value and returns a Result.
 
         Returns:
-            Option[R]: The result of the function wrapped in `Some(R)` if the function returns `Ok(R)`, or `NONE` if the function returns `Err(T)` or the iteration is over.
+            Option[R]: The result of the function wrapped in `Some(R)` if the function returns `Ok(R)`, or `NONE` if the function returns `Err(S)` or the iteration is over.
 
         Examples:
             Parse the leading decimal number from an iterator of characters.

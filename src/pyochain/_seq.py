@@ -136,10 +136,10 @@ class Seq[T](PyoSequence[T]):
         This is equivalent to `tuple_1 + tuple_2` for standard tuples.
 
         Args:
-            other (tuple[T, ...] | Self): The other `Seq` to concatenate.
+            other (tuple[O, ...] | Seq[O]): The other `Seq` to concatenate.
 
         Returns:
-            Self: The new `Seq` after concatenation.
+            Seq[T | O]: The new `Seq` after concatenation.
 
         Example:
             ```python
