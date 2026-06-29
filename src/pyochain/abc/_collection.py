@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Collection
+from typing import Any
 
 from ._iterator import (  # pyright: ignore[reportMissingModuleSource]
     PyoContainer,
@@ -9,7 +10,7 @@ from ._iterator import (  # pyright: ignore[reportMissingModuleSource]
 )
 
 
-class PyoCollection[T](PyoIterable[T], PyoContainer[T], PyoSized, Collection[T]):  # pyright: ignore[reportImplicitAbstractClass]
+class PyoCollection[T](PyoIterable[T], PyoContainer[Any], PyoSized, Collection[T]):  # pyright: ignore[reportImplicitAbstractClass]
     """`Extends `PyoIterable[T]` and `collections.abc.Collection[T]`.
 
     This includes `Seq`, `Vec`, `Set`, `SetMut`, `Dict`, etc...
