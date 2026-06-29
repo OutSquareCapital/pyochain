@@ -4,7 +4,9 @@ from abc import ABC
 from collections.abc import Callable, MutableSequence, Reversible, Sequence
 from typing import TYPE_CHECKING, overload
 
-from .. import _tools as tls  # pyright: ignore[reportMissingModuleSource]
+from .. import (
+    _tools as tls,  # pyright: ignore[reportMissingModuleSource, reportPrivateUsage]
+)
 from ..rs import NONE, Option, Some
 from ._collection import PyoCollection
 
@@ -31,9 +33,7 @@ class PyoReversible[T](Reversible[T]):  # pyright: ignore[reportImplicitAbstract
 
             ```
         """
-        from .._iter import Iter
-
-        return Iter(reversed(self))
+        return tls.Iter(reversed(self))
 
 
 class PyoSequence[T](PyoCollection[T], PyoReversible[T], Sequence[T]):  # pyright: ignore[reportImplicitAbstractClass]
@@ -292,9 +292,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
 
             ```
         """
-        from .._iter import Iter
-
-        return Iter(tls.ExtractIf(self, predicate, start, end))
+        return tls.Iter(tls.ExtractIf(self, predicate, start, end))
 
     def drain(self, start: int | None = None, end: int | None = None) -> PyoIterator[T]:
         """Removes the subslice indicated by the given *start* and *end* from the `Vec`, returning an `Iterator` over the removed subslice.
@@ -339,6 +337,4 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
 
             ```
         """
-        from .._iter import Iter
-
-        return Iter(tls.Drain(self, start, end))
+        return tls.Iter(tls.Drain(self, start, end))

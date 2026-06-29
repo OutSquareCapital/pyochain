@@ -18,6 +18,8 @@
 - **API change**: `PyoIterator::map_with` *function* argument now need to be the **first** argument, followed by the various iterables. It was previously a kword only argument at the end. Swap the order at call sites to migrate your code.
 - **Removal**: `PyoIterator::insert` has been removed. Replace `y.insert(x)` by `Iter.once(x).chain(y)` to migrate your code. This makes thing clearer at both reading-order level, and semantics level, as this avoid treating an `Iterator` as "sort of" mutable collection.
 - **Removal**: Original `PyoIterator::repeat` has been removed, and `PyoIterator::from_repeat` renamed to `repeat`, i.e `from_repeat` replaces the old `repeat`. The original had complex semantics, niche use cases, without a real performance/memory benefit. To get the same behavior, use something like `my_iter.collect(Seq).pipe(lambda it: Iter.repeat(it, n)).map(lambda x: x.iter())`. This also better align with rust `Iterator::repeat` semantics and naming.
+- **Removal**: `Iter::__bool__` has been removed. Use `PyoIterator::peekable::__bool__` instead. This avoid implicit `tee` use.
+- **Removal**: `Iter::{from_ref, cloned}` have been removed. Use `a, b = x.tee()` instead (for `cloned`), or `a, b = Iter(x).tee()` (for `from_ref`), where *a* is the original `Iterator`, and *b* the cloned one.
 
 ### ✨ Enhancements
 
@@ -41,32 +43,38 @@ What was observed is that the upper values outliers are much less frequent, espe
 
 The performance improvements on small Iterators are expected, but the slowdown (albeit minor) on large Iterators is very surprising. There's less outliers, but their magnitude is worse, which can't be explained easily.
 
-Name         | 10 items | 100 items | 1_000 items | 10_000 items | Note
--------------|----------|-----------|-------------|------------- | ----
-`arg_max`    | **1.26x**| **1.78x** | **3.40x**   | **4.15x**    | Low items counts are likely higher after full Rust migration
-`arg_min`    | **1.25x**| **1.73x** | **3.37x**   | **4.18x**    | Low items counts are likely higher after full Rust migration
-`arg_max_by` | **1.24x**| **1.58x** | **2.70x**   | **3.10x**    | Low items counts are likely higher after full Rust migration
-`arg_min_by` | **1.29x**| **1.62x** | **2.59x**   | **3.03x**    | Low items counts are likely higher after full Rust migration
-`unpack_into`| **0.93x**| **0.99x** | **1.09x**   | **1.11x**    | Low items counts are likely higher after full Rust migration
-`zip_longest`| **2.83x**| **4.57x** | **4.64x**   | **4.46x**    | Due to option creation in Rust
-`unzip`      | **1.61** | **2.80x** | **3.82x**   | **4.09x**    | Due to tuple access in Rust
-`all_equal`  | **0.99x**| **1.02x** | **0.98x**   | **1.01x**    | Identical perf, Low items counts are likely higher after full Rust migration
-`try_collect`| **1.26x**| **1.08x** | **1.01x**   | **1.00x**    | Due to `Vec` creation in Rust, Low items counts are likely higher after full Rust migration
-`partition`  | **1.24x**| **1.05x** | **1.02x**   | **1.02x**    | Due to `Vec` creation in Rust, Low items counts are likely higher after full Rust migration
-`is_sorted`  | **1.12x**| **1.07x** | **1.01x**   | **1.00x**    | Due to default param now in Rust.
-`group_by`   | **1.39x**| **1.42x** | **1.43x**   | **1.40x**    | -
-`map`        | **1.08x**| **1.03x** | **1.00x**   | **1.04x**    | -
-`accumulate` | **1.11x**| **1.05x** | **1.04x**   | **1.00x**    | -
-`reduce`     | **1.05x**| **1.01x** | **1.00x**   | **1.00x**    | -
-`find_map`   | **1.16x**| **1.02x** | **0.98x**   | **0.99x**    | -
-`take`       | **1.12x**| **1.09x** | **1.01x**   | **1.00x**    | -
-`slice`      | **1.12x**| **1.09x** | **1.01x**   | **0.97x**    | -
-`chain`      | **1.14x**| **1.04x** | **1.02x**   | **1.02x**    | The items here are the nb of `Iterable` arguments, not the total number of items in the base `PyoIterator`.
-`product`    | **1.03x**| **1.01x** | **1.01x**   | **0.99x**    | The items here are the nb of `Iterable` arguments, not the total number of items in the base `PyoIterator`.
-`next`       | **1.31x**| **1.45x** | **1.47x**   | **1.47x**    | The items here are the nb of calls to `next` in a loop.
-`once_with`  | **1.75x**| **1.83x** | **1.84x**   | **1.84x**    | The items here are the nb of time we create a `PyoIterator` with a `once_with` call, and then call `next` on it.
-`map_with`   | **0.97x**| **0.98x** | **0.97x**   | **0.99x**    | Tested with 7 args, and also with variable args. They both show slight regressions, since we must reconstruct the tuple args for each call in that way (func, self, others).
-`tail`       | **1.20x**| **1.24x** | **1.23x**   | **1.19x**    | -
+Name                | 10 items | 100 items | 1_000 items | 10_000 items | Note
+--------------------|----------|-----------|-------------|------------- | ----
+`arg_max`           | **1.26x**| **1.78x** | **3.40x**   | **4.15x**    | Low items counts are likely higher after full Rust migration
+`arg_min`           | **1.25x**| **1.73x** | **3.37x**   | **4.18x**    | Low items counts are likely higher after full Rust migration
+`arg_max_by`        | **1.24x**| **1.58x** | **2.70x**   | **3.10x**    | Low items counts are likely higher after full Rust migration
+`arg_min_by`        | **1.29x**| **1.62x** | **2.59x**   | **3.03x**    | Low items counts are likely higher after full Rust migration
+`unpack_into`       | **0.93x**| **0.99x** | **1.09x**   | **1.11x**    | Low items counts are likely higher after full Rust migration
+`zip_longest`       | **2.83x**| **4.57x** | **4.64x**   | **4.46x**    | Due to option creation in Rust
+`unzip`             | **1.61** | **2.80x** | **3.82x**   | **4.09x**    | Due to tuple access in Rust
+`all_equal`         | **0.99x**| **1.02x** | **0.98x**   | **1.01x**    | Identical perf, Low items counts are likely higher after full Rust migration
+`try_collect`       | **1.26x**| **1.08x** | **1.01x**   | **1.00x**    | Due to `Vec` creation in Rust, Low items counts are likely higher after full Rust migration
+`partition`         | **1.24x**| **1.05x** | **1.02x**   | **1.02x**    | Due to `Vec` creation in Rust, Low items counts are likely higher after full Rust migration
+`is_sorted`         | **1.12x**| **1.07x** | **1.01x**   | **1.00x**    | Due to default param now in Rust.
+`group_by`          | **1.70x**| **2.30x** | **2.39x**   | **2.37x**    | -
+`map`               | **1.08x**| **1.03x** | **1.00x**   | **1.04x**    | -
+`accumulate`        | **1.11x**| **1.05x** | **1.04x**   | **1.00x**    | -
+`reduce`            | **1.05x**| **1.01x** | **1.00x**   | **1.00x**    | -
+`find_map`          | **1.16x**| **1.02x** | **0.98x**   | **0.99x**    | -
+`take`              | **1.12x**| **1.09x** | **1.01x**   | **1.00x**    | -
+`slice`             | **1.12x**| **1.09x** | **1.01x**   | **0.97x**    | -
+`chain`             | **1.14x**| **1.04x** | **1.02x**   | **1.02x**    | The items here are the nb of `Iterable` arguments, not the total number of items in the base `PyoIterator`.
+`product`           | **1.03x**| **1.01x** | **1.01x**   | **0.99x**    | The items here are the nb of `Iterable` arguments, not the total number of items in the base `PyoIterator`.
+`next`              | **1.31x**| **1.45x** | **1.47x**   | **1.47x**    | The items here are the nb of calls to `next` in a loop.
+`once_with`         | **1.75x**| **1.83x** | **1.84x**   | **1.84x**    | The items here are the nb of time we create a `PyoIterator` with a `once_with` call, and then call `next` on it.
+`map_with`          | **0.97x**| **0.98x** | **0.97x**   | **0.99x**    | Tested with 7 args, and also with variable args. Slight regressions -> we must reconstruct the tuple args for each call (func, self, others).
+`tail`              | **1.20x**| **1.24x** | **1.23x**   | **1.19x**    | -
+`Some::iter`        | **4.66x**| **5.28x** | **5.28x**   | **5.20x**    | `Iter` is directly created from `new` constructor, no `getattr` pattern.
+`Null::iter`        | **5.87x**| **7.13x** | **7.07x**   | **6.96x**    | `Iter` is directly created from `new` constructor, no `getattr` pattern.
+`Err::iter`         | **5.75x**| **6.95x** | **6.92x**   | **6.89x**    | `Iter` is directly created from `new` constructor, no `getattr` pattern.
+`Ok::iter`          | **7.16x**| **8.62x** | **8.71x**   | **8.67x**    | It was calling `self.ok()` before internally.
+`PyoIterable::iter` | **1.16x**| **1.19x** | **1.18x**   | **1.17x**    | -
+`Iter::__init__`    | **1.82x**| **1.93x** | **1.93x**   | **1.92x**    | Also impact `PyoMutableSequence::{extract_if, drain}` and `PyoReversible::rev` since they create an `Iter` internally.
 
 ---
 

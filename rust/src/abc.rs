@@ -30,8 +30,8 @@ impl PyoIterable {
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
         PyClassInitializer::from(Checkable).add_subclass(PyoIterable {})
     }
-    fn iter<'py>(slf: &'py Bound<'py, Self>) -> PyResult<Bound<'py, PyIterator>> {
-        pylibs::pyochain::iter::new(slf)
+    fn iter<'py>(slf: Bound<'py, Self>) -> PyResult<Py<tls::Iter>> {
+        slf.into_any().pipe(tls::Iter::new)
     }
 }
 #[pyclass(subclass, frozen, generic, extends=PyoIterable)]
@@ -55,7 +55,10 @@ impl PyoIterator {
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
     #[classmethod]
-    fn once<'py>(cls: &Bound<'py, PyType>, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+    pub fn once<'py>(
+        cls: &Bound<'py, PyType>,
+        value: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
         cls.call1((PyTuple::new(cls.py(), &[value])?,))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -1208,6 +1211,16 @@ impl PyoIterator {
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
+    #[pyo3(signature = (n=2))]
+    fn tee<'py>(slf: &Bound<'py, Self>, n: usize) -> PyResult<Bound<'py, PyTuple>> {
+        slf.try_iter()
+            .and_then(|x| pylibs::itertools::tee(x, n))?
+            .iter()
+            .map(|x| slf.get_type().call1((x,)))
+            .collect::<PyResult<Vec<_>>>()
+            .and_then(|v| PyTuple::new(slf.py(), v))
+    }
+
     #[pyo3(signature = (func, *args, **kwargs))]
     fn unpack_into<'py>(
         slf: &Bound<'py, Self>,
@@ -1237,7 +1250,7 @@ impl PyoIterator {
     }
     fn unzip<'py>(slf: Bound<'py, Self>) -> PyResult<(Bound<'py, Self>, Bound<'py, Self>)> {
         slf.try_iter()
-            .and_then(|data| pylibs::itertools::tee(data, None))
+            .and_then(|data| pylibs::itertools::tee(data, 2))
             .map(|iterators| {
                 (
                     tls::Unzip::new(&iterators, 0),

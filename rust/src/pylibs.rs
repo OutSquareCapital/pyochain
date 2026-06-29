@@ -223,12 +223,9 @@ pub mod itertools {
     }
 
     #[inline(always)]
-    pub fn tee<'py>(
-        iterator: Bound<'py, PyIterator>,
-        n: Option<usize>,
-    ) -> PyResult<Bound<'py, PyTuple>> {
+    pub fn tee<'py>(iterator: Bound<'py, PyIterator>, n: usize) -> PyResult<Bound<'py, PyTuple>> {
         TEE.import(iterator.py(), ITERTOOLS, "tee")?
-            .call1((iterator, n.unwrap_or(2)))
+            .call1((iterator, n))
             .map(|obj| unsafe { obj.cast_into_unchecked::<PyTuple>() })
     }
     #[inline(always)]
@@ -504,24 +501,6 @@ pub mod pyochain {
                 .getattr(intern!(py, "from_ref"))?
                 .call1((obj,))
                 .map(|obj| unsafe { obj.cast_into_unchecked::<PySequence>() })
-        }
-    }
-    pub mod iter {
-        use super::*;
-        const ITER: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-        #[inline(always)]
-        pub fn new<'py>(iterable: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyIterator>> {
-            ITER.import(iterable.py(), PYOCHAIN, "Iter")?
-                .call1((iterable,))
-                .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
-        }
-        #[inline(always)]
-        pub fn once<'py>(val: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyIterator>> {
-            let py = val.py();
-            ITER.import(py, PYOCHAIN, "Iter")?
-                .getattr(intern!(py, "once"))?
-                .call1((val,))
-                .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
         }
     }
 }

@@ -1,7 +1,8 @@
 from collections.abc import Callable, Iterable, Iterator, MutableSequence
-from typing import Any, Self, override
+from typing import Any, Final, Self, override
 
 from pyochain import Option
+from pyochain.abc import PyoIterator
 
 from ._utils import no_doctest
 from .abc._iterator import Position
@@ -175,3 +176,73 @@ class Unzip[T](Iterator[T]):
     def from_iterator[A, B](
         data: Iterator[tuple[A, B]],
     ) -> tuple[Unzip[A], Unzip[B]]: ...
+
+class Iter[T](PyoIterator[T]):
+    """Concrete implementation for `abc::PyoIterator`.
+
+    Can be instantiated from any `Iterable` (like lists, sets, generators, etc.) efficiently (it only calls the builtin `iter()` on the input).
+
+    As such, creating an `Iter` from an `Iterator` is virtually free.
+
+    Tip:
+        `Iter::__iter__()` returns the underlying wrapped `Iterator`, hence native speed is kept.
+
+        i.e `Iter([...]).map(f).collect(list)` is as fast as `list(map(f, [...]))`.
+
+    Args:
+        data (Iterable[T]): Any object that can be iterated over.
+
+    See Also:
+        [`abc::PyoIterator`][PyoIterator]: The abstract base class that `Iter` implements.
+
+    Example:
+        ```python
+        >>> from pyochain import Iter, Seq
+        >>>
+        >>> data = (0, 1, 2, 3, 4)
+        >>> Iter(data).collect(Seq)
+        Seq(0, 1, 2, 3, 4)
+        >>> iterator = Iter(data)
+        >>> # First we have a tuple iterator
+        >>> iterator._inner.__class__.__name__
+        'tuple_iterator'
+        >>> # Now we have a map object
+        >>> mapped = iterator.map(lambda x: x * 2)
+        >>> mapped._inner.__class__.__name__
+        'map'
+        >>> # We collect it, by default into a Seq
+        >>> mapped.collect(Seq)
+        Seq(0, 2, 4, 6, 8)
+        >>> # iterator is now exhausted
+        >>> iterator.collect(Seq)
+        Seq()
+
+        ```
+        You can also easily create an `Iter` from a generator expression:
+        ```python
+        >>> from pyochain import Iter
+        >>> gen_expr = (x * x for x in range(5))
+        >>> Iter(gen_expr).collect(Seq)
+        Seq(0, 1, 4, 9, 16)
+
+        ```
+        Or from a generator function:
+        ```python
+        >>> from pyochain import Iter
+        >>> def gen_func():
+        ...     for x in range(5):
+        ...         yield x * x
+        >>>
+        >>> Iter(gen_func()).collect(Seq)
+        Seq(0, 1, 4, 9, 16)
+
+        ```
+    """
+
+    _inner: Final[Iterator[T]]
+
+    def __init__(self, data: Iterable[T]) -> None: ...
+    @override
+    def __iter__(self) -> Iterator[T]: ...
+    @override
+    def __next__(self) -> T: ...

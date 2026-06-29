@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use crate::args::{Args, Kwargs};
 use crate::option::{PySome, option};
-use crate::pylibs;
+use crate::{abc, mixins};
 use pyo3::types::{PyAny, PyDict, PyIterator, PyModule, PySequence, PySet, PyString, PyTuple};
 use pyo3::{ffi, prelude::*};
 use tap::prelude::*;
@@ -27,6 +27,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<ZipLongest>()?;
     m.add_class::<Unzip>()?;
     m.add_class::<GroupBy>()?;
+    m.add_class::<Iter>()?;
     Ok(())
 }
 
@@ -858,16 +859,14 @@ impl GroupBy {
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
         slf
     }
-    fn __next__(
-        slf: PyRefMut<'_, Self>,
-    ) -> PyResult<Option<(Bound<'_, PyAny>, Bound<'_, PyIterator>)>> {
+    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<(Bound<'_, PyAny>, Py<Iter>)>> {
         let py = slf.py();
         match slf.iterator.clone_ref(py).into_bound(py).next() {
             Some(item) => unsafe {
                 let tup = item?.cast_into_unchecked::<PyTuple>();
                 let (key, group) = (tup.get_item_unchecked(0), tup.get_item_unchecked(1));
 
-                Ok(Some((key, pylibs::pyochain::iter::new(&group)?)))
+                Ok(Some((key, Iter::new(group)?)))
             },
             None => Ok(None),
         }
@@ -963,6 +962,54 @@ impl Tail {
             .transpose()?
             .map(|item| item.into_bound(slf.py()))
             .pipe(Ok)
+    }
+}
+
+#[pyclass(frozen, generic, extends=abc::PyoIterator)]
+pub struct Iter {
+    _inner: Py<PyIterator>,
+}
+impl Iter {
+    /// New constructor for `Iter` in rust.
+    /// We do this because `PyClassInitializer` can't be converted to pyobject directly, so we need to wrap it in a `Py` first.
+    pub fn new(data: Bound<'_, PyAny>) -> PyResult<Py<Self>> {
+        let py = data.py();
+        let initializer = Self::py_new(data)?;
+        Py::new(py, initializer)
+    }
+}
+#[pymethods]
+impl Iter {
+    #[new]
+    fn py_new(data: Bound<'_, PyAny>) -> PyResult<PyClassInitializer<Self>> {
+        PyClassInitializer::from(mixins::Checkable)
+            .add_subclass(abc::PyoIterable {})
+            .add_subclass(abc::PyoIterator {})
+            .add_subclass(Self {
+                _inner: data.try_iter()?.unbind(),
+            })
+            .pipe(Ok)
+    }
+
+    fn __iter__<'py>(slf: &Bound<'py, Self>) -> Py<PyIterator> {
+        slf.get()._inner.clone_ref(slf.py())
+    }
+
+    fn __next__<'py>(slf: &Bound<'py, Self>) -> PyResult<Option<Bound<'py, PyAny>>> {
+        let py = slf.py();
+        slf.get()
+            ._inner
+            .clone_ref(py)
+            .into_bound(py)
+            .next()
+            .transpose()
+    }
+
+    fn __repr__(slf: &Bound<'_, Self>) -> PyResult<String> {
+        let py = slf.py();
+        let name = slf.get_type().name();
+        let inner_repr = slf.get()._inner.clone_ref(py).into_bound(py).repr()?;
+        Ok(format!("{:?}({:?})", name, inner_repr))
     }
 }
 

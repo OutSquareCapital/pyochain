@@ -1,14 +1,14 @@
 use crate::args::{Args, Concatenate, Kwargs};
 use crate::errors::OptionUnwrapError;
 use crate::hasher::hash_fn;
-use crate::pylibs;
 use crate::result::{PyoErr, PyoOk};
-use pyo3::IntoPyObjectExt;
+use crate::{abc, tools};
 use pyo3::exceptions::PyTypeError;
+use pyo3::{IntoPyObjectExt, PyTypeInfo};
 use pyo3::{
     prelude::*,
     sync::PyOnceLock,
-    types::{PyIterator, PyString, PyTuple},
+    types::{PyString, PyTuple},
 };
 use tap::prelude::*;
 
@@ -304,11 +304,13 @@ impl PySome {
         }
     }
 
-    fn iter<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyIterator>> {
+    fn iter<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        let py = slf.py();
         slf.get()
             .value
-            .bind(slf.py())
-            .pipe_ref(pylibs::pyochain::iter::once)
+            .clone_ref(py)
+            .into_bound(py)
+            .pipe(|x| abc::PyoIterator::once(&tools::Iter::type_object(py), x))
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
@@ -556,8 +558,8 @@ impl PyNull {
         }
     }
 
-    fn iter<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyIterator>> {
-        pylibs::pyochain::iter::new(&PyTuple::empty(slf.py()))
+    fn iter<'py>(slf: &Bound<'py, Self>) -> PyResult<Py<tools::Iter>> {
+        PyTuple::empty(slf.py()).into_any().pipe(tools::Iter::new)
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {

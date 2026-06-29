@@ -17,6 +17,18 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.parametrize("size", SIZES)
+def test_init(benchmark: BenchFixture, size: int) -> None:
+    assert benchmark(_init, size).next().is_none()
+
+
+def _init(size: int) -> PyoIterator[int]:
+    data = ()
+    for _ in range(size):
+        _ = Iter(data)
+    return Iter(data)
+
+
+@pytest.mark.parametrize("size", SIZES)
 def test_iter(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size)
     assert benchmark(_iter, data) == Some(0)
