@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from pyochain import NONE, Err, Ok, Result, Some
+from pyochain import NONE, Err, Ok, Option, Range, Result, Some
 
-from ._utils import VariantGroups
+from ._utils import SIZES, VariantGroups
 
 if TYPE_CHECKING:
     from ._utils import BenchFixture
@@ -132,3 +132,23 @@ def test_swap(benchmark: BenchFixture, fn: BenchCall) -> None:
         _ = fn()
 
     assert benchmark(run) is None
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_iter_ok(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    opt = Ok(1)
+    assert benchmark(_iter, data, opt).is_some()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_iter_err(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    opt = Err(0)
+    assert benchmark(_iter, data, opt).is_none()
+
+
+def _iter(data: Range, opt: Result[int, int]) -> Option[int]:
+    for _ in data.iter():
+        _ = opt.iter()
+    return opt.iter().next()

@@ -7,7 +7,7 @@ import pytest
 
 from pyochain import NONE, Err, Null, Ok, Option, Range, Some, option
 
-from ._utils import VariantGroups
+from ._utils import SIZES, VariantGroups
 
 if TYPE_CHECKING:
     from ._utils import BenchFixture
@@ -111,3 +111,23 @@ def test_call_none(benchmark: BenchFixture) -> None:
         return data.iter().map(lambda _: NONE).last()
 
     assert benchmark(fn) is NONE
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_iter_some(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    opt = Some(0)
+    assert benchmark(_iter, data, opt).is_some()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_iter_none(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    opt = NONE
+    assert benchmark(_iter, data, opt).is_none()
+
+
+def _iter(data: Range, opt: Option[int]) -> Option[int]:
+    for _ in data.iter():
+        _ = opt.iter()
+    return opt.iter().next()
