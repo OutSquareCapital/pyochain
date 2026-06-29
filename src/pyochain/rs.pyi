@@ -563,11 +563,11 @@ class OptionType[T](Pipe):
             ```
         """
 
-    def ne(self, other: Option[T]) -> bool:
+    def ne(self, other: Option[object]) -> bool:
         """Checks if two `Option[T]` instances are not equal.
 
         Args:
-            other (Option[T]): The other `Option[T]` instance to compare with.
+            other (Option[object]): The other `Option[object]` instance to compare with.
 
         Returns:
             bool: `True` if both instances are not equal, `False` otherwise.
@@ -621,7 +621,7 @@ class OptionType[T](Pipe):
             ```
         """
 
-    def eq(self, other: Option[T]) -> bool:
+    def eq(self, other: Option[object]) -> bool:
         """Checks if two `Option[T]` instances are equal.
 
         Note:
@@ -807,14 +807,14 @@ class OptionType[T](Pipe):
             ```
         """
 
-    def unwrap_or(self, default: T) -> T:
+    def unwrap_or[S](self, default: S) -> T | S:
         """Returns the contained `Some` value or a provided default.
 
         Args:
-            default (T): The value to return if the result is `None`.
+            default (S): The value to return if the result is `None`.
 
         Returns:
-            T: The contained `Some` value or the provided default.
+            T | S: The contained `Some` value or the provided default.
 
         Example:
             ```python
@@ -827,14 +827,14 @@ class OptionType[T](Pipe):
             ```
         """
 
-    def unwrap_or_else(self, f: Callable[[], T]) -> T:
+    def unwrap_or_else[S](self, f: Callable[[], S]) -> T | S:
         """Returns the contained `Some` value or computes it from a function.
 
         Args:
-            f (Callable[[], T]): A function that returns a default value if the result is `None`.
+            f (Callable[[], S]): A function that returns a default value if the result is `None`.
 
         Returns:
-            T: The contained `Some` value or the result of the function.
+            T | S: The contained `Some` value or the result of the function.
 
         Example:
             ```python
@@ -899,15 +899,14 @@ class OptionType[T](Pipe):
 
             ```
         """
-
-    def or_(self, optb: Option[T]) -> Option[T]:
+    def or_[S](self, optb: Option[S]) -> Option[T | S]:
         """Returns the option if it contains a value, otherwise returns optb.
 
         Args:
-            optb (Option[T]): The option to return if the original option is `NONE`.
+            optb (Option[S]): The option to return if the original option is `NONE`.
 
         Returns:
-            Option[T]: The original option if it is `Some`, otherwise `optb`.
+            Option[T | S]: The original option if it is `Some`, otherwise `optb`.
 
         Example:
             ```python
@@ -960,7 +959,7 @@ class OptionType[T](Pipe):
             ```
         """
 
-    def or_else(self, f: Callable[[], Option[T]]) -> Option[T]:
+    def or_else[S](self, f: Callable[[], Option[S]]) -> Option[T | S]:
         """Returns the `Option[T]` if it contains a value, otherwise calls a function and returns the result.
 
         Args:
@@ -1166,14 +1165,14 @@ class OptionType[T](Pipe):
             ```
         """
 
-    def unzip[U](self: OptionType[tuple[T, U]]) -> tuple[Option[T], Option[U]]:
+    def unzip[S, U](self: OptionType[tuple[S, U]]) -> tuple[Option[S], Option[U]]:
         """Unzips an `Option` of a tuple into a tuple of `Option`s.
 
         If the option is `Some((a, b))`, this method returns `(Some(a), Some(b))`.
         If the option is `NONE`, it returns `(NONE, NONE)`.
 
         Returns:
-            tuple[Option[T], Option[U]]: A tuple containing two options.
+            tuple[Option[S], Option[U]]: A tuple containing two options.
 
         Example:
             ```python
@@ -1244,7 +1243,7 @@ class OptionType[T](Pipe):
             ```
         """
 
-    def reduce(self, other: Option[T], func: Callable[[T, T], T]) -> Option[T]:
+    def reduce[O, R](self, other: Option[O], func: Callable[[T, O], R]) -> Option[R]:
         """Reduces two options into one, using the provided function if both are Some.
 
         If **self** is `Some(s)` and **other** is `Some(o)`, this method returns `Some(func(s, o))`.
@@ -1254,11 +1253,11 @@ class OptionType[T](Pipe):
         If both **self** and **other** are `NONE`, `NONE` is returned.
 
         Args:
-            other (Option[T]): The second option.
-            func (Callable[[T, T], T]): The function to apply to the unwrapped values.
+            other (Option[O]): The second option.
+            func (Callable[[T, O], R]): The function to apply to the unwrapped values.
 
         Returns:
-            Option[T]: The resulting option after reduction.
+            Option[R]: The resulting option after reduction.
 
         Example:
             ```python
@@ -1277,6 +1276,12 @@ class OptionType[T](Pipe):
             Some(17)
             >>> NONE.reduce(NONE, add)
             NONE
+            >>> def concat(a: str, b: str) -> str:
+            >>>    return a + b
+            >>> Some("Hello, ").reduce(Some("World!"), concat)
+            Some('Hello, World!')
+            >>> Some("I am ").reduce(Some(26), lambda a, b: a + str(b))
+            Some('I am 26')
 
             ```
         """
@@ -1306,11 +1311,11 @@ class OptionType[T](Pipe):
             ```
         """
 
-    def xor(self, optb: Option[T]) -> Option[T]:
+    def xor[O](self, optb: Option[object]) -> Option[T]:
         """Returns `Some` if exactly one of **self**, optb is `Some`, otherwise returns `NONE`.
 
         Args:
-            optb (Option[T]): The other option to compare with.
+            optb (Option[object]): The other option to compare with.
 
         Returns:
             Option[T]: `Some` value if exactly one option is `Some`, otherwise `NONE`.
@@ -1325,6 +1330,8 @@ class OptionType[T](Pipe):
             >>> Some(2).xor(Some(2))
             NONE
             >>> NONE.xor(NONE)
+            NONE
+            >>> Some("hello").xor(Some(1))
             NONE
 
             ```
@@ -1370,7 +1377,7 @@ class Some[T](OptionType[T]):
         ```
     """
 
-    value: T
+    value: Final[T]
     __match_args__ = ("value",)
     # Hack to immediately handle it as an "enum".
     @overload
@@ -1667,7 +1674,7 @@ class ResultType[T, E](Pipe, Protocol):
         self: Result[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], E],
         func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
     ) -> Result[R, E]: ...
-    def map_star[U: Iterable[Any], R](
+    def map_star[U: tuple[Any, ...], R](
         self: ResultType[U, E],
         func: Callable[..., R],
     ) -> Result[R, E]:
@@ -1693,58 +1700,57 @@ class ResultType[T, E](Pipe, Protocol):
         """
 
     @overload
-    def and_then_star[R](
-        self: Result[tuple[Any], E],
-        func: Callable[[Any], Result[R, E]],
-    ) -> Result[R, E]: ...
+    def and_then_star[S, T1, R](
+        self: Result[tuple[T1], S],
+        func: Callable[[T1], Result[R, S]],
+    ) -> Result[R, S]: ...
     @overload
-    def and_then_star[T1, T2, R](
-        self: Result[tuple[T1, T2], E],
-        func: Callable[[T1, T2], Result[R, E]],
-    ) -> Result[R, E]: ...
+    def and_then_star[S, T1, T2, R](
+        self: Result[tuple[T1, T2], S],
+        func: Callable[[T1, T2], Result[R, S]],
+    ) -> Result[R, S]: ...
     @overload
-    def and_then_star[T1, T2, T3, R](
-        self: Result[tuple[T1, T2, T3], E],
-        func: Callable[[T1, T2, T3], Result[R, E]],
-    ) -> Result[R, E]: ...
+    def and_then_star[S, T1, T2, T3, R](
+        self: Result[tuple[T1, T2, T3], S],
+        func: Callable[[T1, T2, T3], Result[R, S]],
+    ) -> Result[R, S]: ...
     @overload
-    def and_then_star[T1, T2, T3, T4, R](
-        self: Result[tuple[T1, T2, T3, T4], E],
-        func: Callable[[T1, T2, T3, T4], Result[R, E]],
-    ) -> Result[R, E]: ...
+    def and_then_star[S, T1, T2, T3, T4, R](
+        self: Result[tuple[T1, T2, T3, T4], S],
+        func: Callable[[T1, T2, T3, T4], Result[R, S]],
+    ) -> Result[R, S]: ...
     @overload
-    def and_then_star[T1, T2, T3, T4, T5, R](
-        self: Result[tuple[T1, T2, T3, T4, T5], E],
-        func: Callable[[T1, T2, T3, T4, T5], Result[R, E]],
-    ) -> Result[R, E]: ...
+    def and_then_star[S, T1, T2, T3, T4, T5, R](
+        self: Result[tuple[T1, T2, T3, T4, T5], S],
+        func: Callable[[T1, T2, T3, T4, T5], Result[R, S]],
+    ) -> Result[R, S]: ...
     @overload
-    def and_then_star[T1, T2, T3, T4, T5, T6, R](
-        self: Result[tuple[T1, T2, T3, T4, T5, T6], E],
-        func: Callable[[T1, T2, T3, T4, T5, T6], Result[R, E]],
-    ) -> Result[R, E]: ...
+    def and_then_star[S, T1, T2, T3, T4, T5, T6, R](
+        self: Result[tuple[T1, T2, T3, T4, T5, T6], S],
+        func: Callable[[T1, T2, T3, T4, T5, T6], Result[R, S]],
+    ) -> Result[R, S]: ...
     @overload
-    def and_then_star[T1, T2, T3, T4, T5, T6, T7, R](
-        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7], E],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7], Result[R, E]],
-    ) -> Result[R, E]: ...
+    def and_then_star[S, T1, T2, T3, T4, T5, T6, T7, R](
+        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7], S],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7], Result[R, S]],
+    ) -> Result[R, S]: ...
     @overload
-    def and_then_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
-        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7, T8], E],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], Result[R, E]],
-    ) -> Result[R, E]: ...
+    def and_then_star[S, T1, T2, T3, T4, T5, T6, T7, T8, R](
+        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7, T8], S],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], Result[R, S]],
+    ) -> Result[R, S]: ...
     @overload
-    def and_then_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
-        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9], E],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], Result[R, E]],
-    ) -> Result[R, E]: ...
+    def and_then_star[S, T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
+        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9], S],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], Result[R, S]],
+    ) -> Result[R, S]: ...
     @overload
-    def and_then_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
-        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], E],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], Result[R, E]],
-    ) -> Result[R, E]: ...
-    def and_then_star[U: Iterable[Any], R](
-        self: ResultType[U, E],
-        func: Callable[..., Result[R, E]],
+    def and_then_star[S, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
+        self: Result[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], S],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], Result[R, S]],
+    ) -> Result[R, S]: ...
+    def and_then_star[U: tuple[Any, ...], R](
+        self: Result[U, E], func: Callable[..., Result[R, E]]
     ) -> Result[R, E]:
         """Calls a function if the result is `Ok`, unpacking the tuple.
 
@@ -1938,7 +1944,7 @@ class ResultType[T, E](Pipe, Protocol):
             ```
         """
 
-    def unwrap_or(self, default: T) -> T:
+    def unwrap_or[D](self, default: D) -> T | D:
         """Returns the contained `Ok` value or a provided default.
 
         Args:
@@ -1958,18 +1964,18 @@ class ResultType[T, E](Pipe, Protocol):
             ```
         """
 
-    def unwrap_or_else[**P](
-        self, fn: Callable[Concatenate[E, P], T], *args: P.args, **kwargs: P.kwargs
-    ) -> T:
+    def unwrap_or_else[**P, O](
+        self, fn: Callable[Concatenate[E, P], O], *args: P.args, **kwargs: P.kwargs
+    ) -> T | O:
         """Returns the contained `Ok` value or computes it from a function.
 
         Args:
-            fn (Callable[Concatenate[E, P], T]): A function that takes the `Err` value and returns a default value.
+            fn (Callable[Concatenate[E, P], O]): A function that takes the `Err` value and returns a default value.
             *args (P.args): Additional positional arguments to pass to fn.
             **kwargs (P.kwargs): Additional keyword arguments to pass to fn.
 
         Returns:
-            T: The contained `Ok` value or the result of the function.
+            T | O: The contained `Ok` value or the result of the function.
 
         Example:
             ```python
@@ -2092,16 +2098,16 @@ class ResultType[T, E](Pipe, Protocol):
             ```
         """
 
-    def and_[U](self, res: Result[U, E]) -> Result[U, E]:
+    def and_[O, U](self, res: Result[U, O]) -> Result[U, E | O]:
         """Returns `res` if the result is `Ok`, otherwise returns the `Err` value.
 
         This is often used for chaining operations that might fail.
 
         Args:
-            res (Result[U, E]): The result to return if the original result is `Ok`.
+            res (Result[U, O]): The result to return if the original result is `Ok`.
 
         Returns:
-            Result[U, E]: `res` if the original result is `Ok`, otherwise the original `Err`.
+            Result[U, E | O]: `res` if the original result is `Ok`, otherwise the original `Err`.
 
         Example:
             ```python
@@ -2128,9 +2134,9 @@ class ResultType[T, E](Pipe, Protocol):
             ```
         """
 
-    def and_then[**P, R](
+    def and_then[**P, R, NE](
         self,
-        fn: Callable[Concatenate[T, P], Result[R, E]],
+        fn: Callable[Concatenate[T, P], Result[R, object]],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Result[R, E]:
@@ -2139,7 +2145,7 @@ class ResultType[T, E](Pipe, Protocol):
         This is often used for chaining operations that might fail.
 
         Args:
-            fn (Callable[Concatenate[T, P], Result[R, E]]): The function to call with the `Ok` value.
+            fn (Callable[Concatenate[T, P], Result[R, object]]): The function to call with the `Ok` value.
             *args (P.args): Additional positional arguments to pass to fn.
             **kwargs (P.kwargs): Additional keyword arguments to pass to fn.
 
@@ -2159,12 +2165,12 @@ class ResultType[T, E](Pipe, Protocol):
             ```
         """
 
-    def or_else[**P](
+    def or_else[**P, R](
         self,
-        fn: Callable[Concatenate[E, P], Result[T, E]],
+        fn: Callable[Concatenate[E, P], Result[object, R]],
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> Result[T, E]:
+    ) -> Result[T, R]:
         """Calls a function if the result is `Err`, otherwise returns the `Ok` value.
 
         This is often used for handling errors by trying an alternative operation.
@@ -2336,14 +2342,14 @@ class ResultType[T, E](Pipe, Protocol):
             ```
         """
 
-    def or_[F](self, res: Result[T, F]) -> Result[T, F]:
+    def or_[S, F](self, res: Result[S, F]) -> Result[T | S, F]:
         """Returns res if the result is `Err`, otherwise returns the `Ok` value of **self**.
 
         Args:
-            res (Result[T, F]): The result to return if the original result is `Err`.
+            res (Result[S, F]): The result to return if the original result is `Err`.
 
         Returns:
-            Result[T, F]: The original `Ok` value, or `res` if the original result is `Err`.
+            Result[T | S, F]: The original `Ok` value, or `res` if the original result is `Err`.
 
         Example:
             ```python
@@ -2373,8 +2379,7 @@ class Ok[T, E](ResultType[T, E]):
     """
 
     __match_args__ = ("value",)
-
-    value: T
+    value: Final[T]
     # NOTE: this is an hack to avoid errors by immediatly casting `E` as `Any`, thus avoiding any type errors with incompatible types.
     @overload
     def __new__(cls, value: Result[T, E]) -> Result[Result[T, E], Any]: ...
@@ -2396,8 +2401,7 @@ class Err[T, E](ResultType[T, E]):
     """
 
     __match_args__ = ("error",)
-
-    error: E
+    error: Final[E]
     # NOTE: same hack as in `Ok` for type errors
     @overload
     def __new__(cls, error: Result[T, E]) -> Result[Any, Result[T, E]]: ...

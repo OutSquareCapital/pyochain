@@ -1337,18 +1337,18 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def try_find[S, E](
-        self: PyoIterator[S], predicate: Callable[[S], Result[bool, E]]
-    ) -> Result[Option[S], E]:
+    def try_find[E](
+        self, predicate: Callable[[T], Result[bool, E]]
+    ) -> Result[Option[T], E]:
         """Applies a function returning `Result[bool, E]` to find first matching element.
 
         Short-circuits: stops at the first successful `True` or on the first error.
 
         Args:
-            predicate (Callable[[S], Result[bool, E]]): Function returning a `Result[bool, E]`.
+            predicate (Callable[[T], Result[bool, E]]): Function returning a `Result[bool, E]`.
 
         Returns:
-            Result[Option[S], E]: The first matching element, or the first error.
+            Result[Option[T], E]: The first matching element, or the first error.
 
         Example:
             ```python
@@ -1671,7 +1671,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def find[S](self: PyoIterator[S], predicate: Callable[[S], bool]) -> Option[S]:
+    def find(self, predicate: Callable[[T], bool]) -> Option[T]:
         """Searches for an element of an iterator that satisfies a `predicate`.
 
         Takes a closure that returns true or false as `predicate`, and applies it to each element of the iterator.
@@ -3165,7 +3165,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def next[S](self: PyoIterator[S]) -> Option[S]:
+    def next(self) -> Option[T]:
         """Return the next element in the `Iterator`.
 
         The actual `__next__()` method must be conform to the Python `Iterator` Protocol, and is what will be actually called if you iterate over the `PyoIterator` instance.
@@ -3388,7 +3388,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    def nth[S](self: PyoIterable[S], n: int) -> Option[S]:
+    def nth(self, n: int) -> Option[T]:
         """Return the nth item of the `Iterable` at the specified *n*.
 
         This is similar to `__getitem__` but for lazy `Iterators`.
@@ -3399,7 +3399,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             n (int): The index of the item to retrieve. It must be a non-negative integer.
 
         Returns:
-            Option[S]: `Some(item)` at the specified *n*.
+            Option[T]: `Some(item)` at the specified *n*.
 
         Example:
             ```python
@@ -4109,37 +4109,31 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
         """
 
     @overload
-    def zip_longest[S, T2](
-        self: PyoIterator[S], iter2: Iterable[T2], /
-    ) -> PyoIterator[tuple[Option[S], Option[T2]]]: ...
+    def zip_longest[T2](
+        self, iter2: Iterable[T2], /
+    ) -> PyoIterator[tuple[Option[T], Option[T2]]]: ...
     @overload
-    def zip_longest[S, T2, T3](
-        self: PyoIterator[S], iter2: Iterable[T2], iter3: Iterable[T3], /
-    ) -> PyoIterator[tuple[Option[S], Option[T2], Option[T3]]]: ...
+    def zip_longest[T2, T3](
+        self, iter2: Iterable[T2], iter3: Iterable[T3], /
+    ) -> PyoIterator[tuple[Option[T], Option[T2], Option[T3]]]: ...
     @overload
-    def zip_longest[S, T2, T3, T4](
-        self: PyoIterator[S],
+    def zip_longest[T2, T3, T4](
+        self,
         iter2: Iterable[T2],
         iter3: Iterable[T3],
         iter4: Iterable[T4],
         /,
-    ) -> PyoIterator[tuple[Option[S], Option[T2], Option[T3], Option[T4]]]: ...
+    ) -> PyoIterator[tuple[Option[T], Option[T2], Option[T3], Option[T4]]]: ...
     @overload
-    def zip_longest[S, T2, T3, T4, T5](
-        self: PyoIterator[S],
+    def zip_longest[T2, T3, T4, T5](
+        self,
         iter2: Iterable[T2],
         iter3: Iterable[T3],
         iter4: Iterable[T4],
         iter5: Iterable[T5],
         /,
     ) -> PyoIterator[
-        tuple[
-            Option[S],
-            Option[T2],
-            Option[T3],
-            Option[T4],
-            Option[T5],
-        ]
+        tuple[Option[T], Option[T2], Option[T3], Option[T4], Option[T5]]
     ]: ...
     def zip_longest(self, *others: Iterable[Any]) -> ZippedLongest[T]:
         """Return a zip `Iterator` who yield a `tuple` where the i-th element comes from the i-th `Iterable` argument.
