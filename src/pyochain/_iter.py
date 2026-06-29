@@ -88,32 +88,6 @@ class Iter[T](PyoIterator[T]):
     def __next__(self) -> T:
         return next(self._inner)
 
-    def __bool__(self) -> bool:
-        """Check if the `Iterator` has at least one element (mutates **self**).
-
-        After calling this, the `Iterator` still contains all elements.
-
-        Returns:
-            bool: True if the `Iterator` has at least one element, False otherwise.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> it = Iter((1, 2, 3))
-            >>> bool(it)
-            True
-            >>> it.collect(Seq)  # All elements still available
-            Seq(1, 2, 3)
-
-            ```
-        """
-        match next(self._inner, BOOL_SENTINEL):
-            case sentinel if sentinel is BOOL_SENTINEL:
-                return False
-            case some_val:
-                self._inner = itertools.chain((some_val,), self._inner)  # pyright: ignore[reportAttributeAccessIssue]
-                return True
-
     @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self._inner.__repr__()})"

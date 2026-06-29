@@ -19,13 +19,13 @@ if TYPE_CHECKING:
 @pytest.mark.parametrize("size", SIZES)
 def test_iter(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size)
-    assert benchmark(_iter, data) == 1
+    assert benchmark(_iter, data) == Some(0)
 
 
-def _iter(data: Range) -> int:
+def _iter(data: Range) -> Option[int]:
     for _ in data:
         _ = data.iter()
-    return 1
+    return data.iter().next()
 
 
 @pytest.mark.benchmark(group="filter_map")
@@ -297,11 +297,6 @@ def test_any_no_closure(benchmark: BenchFixture, size: int) -> None:
 
 def _any_no_closure(data: Seq[bool]) -> bool:
     return data.iter().any()
-
-
-def test_bool(benchmark: BenchFixture) -> None:
-    data = Seq((1, 2, 3))
-    assert benchmark(lambda: bool(data.iter())) is True
 
 
 @pytest.mark.parametrize("size", SIZES)
