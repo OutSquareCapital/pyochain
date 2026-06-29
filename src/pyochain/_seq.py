@@ -86,7 +86,7 @@ class Seq[T](PyoSequence[T]):
     def __eq__(self, other: object) -> bool:
         match other:
             case Seq():
-                return self._inner == other._inner  # pyright: ignore[reportUnknownMemberType]
+                return self._inner == other._inner
             case tuple():
                 return self._inner == other
             case _:
@@ -130,7 +130,7 @@ class Seq[T](PyoSequence[T]):
         """
         return self.__class__(self._inner * n)
 
-    def concat(self, other: tuple[T, ...] | Self) -> Self:
+    def concat[O](self, other: tuple[O, ...] | Seq[O]) -> Seq[T | O]:
         """Concatenate another `Seq` or `tuple` to **self** and return a new `Seq`.
 
         This is equivalent to `tuple_1 + tuple_2` for standard tuples.
@@ -157,4 +157,4 @@ class Seq[T](PyoSequence[T]):
                 data = self._inner + other._inner
             case tuple():
                 data = self._inner + other
-        return self.__class__(data)
+        return Seq(data)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self, override
+from typing import TYPE_CHECKING, Final, Self, final, override
 
 from .abc import PyoIterator
 from .rs import NONE, Err, Null, Ok, Option, Result, Some, option
@@ -9,12 +9,15 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
 
 
+@final
 class Peekable[T](PyoIterator[T]):
-    __slots__ = ("_it", "_peeked")  # pyright: ignore[reportUnannotatedClassAttribute]
+    __slots__ = ("_iter", "_peeked")
+    _iter: Final[Iterator[T]]
+    _peeked: Option[T]
 
     def __init__(self, iterable: Iterable[T]) -> None:
-        self._it: Iterator[T] = iter(iterable)
-        self._peeked: Option[T] = NONE
+        self._iter = iter(iterable)
+        self._peeked = NONE
 
     @override
     def __iter__(self) -> Self:
@@ -27,7 +30,7 @@ class Peekable[T](PyoIterator[T]):
                 self._peeked = NONE
                 return value
             case Null():
-                return next(self._it)
+                return next(self._iter)
 
     def __bool__(self) -> bool:
         return self.peek().is_some()
@@ -43,7 +46,7 @@ class Peekable[T](PyoIterator[T]):
                 return self._peeked
             case Null():
                 try:
-                    self._peeked = option(next(self._it))
+                    self._peeked = option(next(self._iter))
                 except StopIteration:
                     return NONE
                 else:
@@ -93,11 +96,11 @@ class Peekable[T](PyoIterator[T]):
                 self._peeked = other
                 return NONE
 
-    def next_if_eq(self, expected: T) -> Option[T]:
+    def next_if_eq(self, expected: object) -> Option[T]:
         """Return the next item if it is equal to expected.
 
         Args:
-            expected (T): The value to compare the next item against.
+            expected (object): The value to compare the next item against.
 
         Returns:
             Option[T]: The next value wrapped in `Some(T)` if it is equal to expected, or `NONE` if it is not equal or the iteration is over.
@@ -121,9 +124,8 @@ class Peekable[T](PyoIterator[T]):
         """
         return self.next_if(lambda nxt: nxt == expected)
 
-    def next_if_map[R](
-        self,
-        f: Callable[[T], Result[R, T]],
+    def next_if_map[S, R](
+        self: Peekable[S], f: Callable[[S], Result[R, S]]
     ) -> Option[R]:
         """Consumes the next value of this `Iterator` and applies a function *f* on it, returning the result if the closure returns `Ok`.
 

@@ -534,7 +534,7 @@ def test_product(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, 2)
     others = data.iter().map(lambda _: Range(0, size)).collect(Seq)
     # Invariance issue here
-    assert benchmark(_product, data, others) is not None  # pyright: ignore[reportArgumentType]
+    assert benchmark(_product, data, others) is not None
 
 
 def _product(data: Range, others: Seq[Iterable[int]]) -> tuple[int, ...]:
