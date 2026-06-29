@@ -36,7 +36,14 @@ def test_abcs() -> None:
     assert issubclass(pyoabc.PyoSized, Sized)
     assert issubclass(
         pyoabc.PyoCollection,
-        (pyoabc.PyoIterable, pyoabc.PyoContainer, pyoabc.PyoSized, Collection),
+        (
+            pyoabc.PyoIterable,
+            pyoabc.PyoContainer,
+            pyoabc.PyoSized,
+            Collection,
+            Container,
+            Sized,
+        ),
     )
     assert issubclass(pyoabc.PyoReversible, Reversible)
 
