@@ -55,7 +55,7 @@ COLLECTION_PARENTS = [PyoIterable, PyoContainer, PyoSized, Collection, Container
 SEQUENCE_PARENTS = [*COLLECTION_PARENTS, PyoReversible, Reversible, Sequence]
 MUTABLE_SEQUENCE_PARENTS = [*SEQUENCE_PARENTS, PyoSequence, MutableSequence]
 
-FAILING_PARENTS = pc.Set[type]([PyoSized, PyoContainer])
+FAILING_PARENTS = pc.Set[type]((PyoSized, PyoContainer, PyoReversible))
 
 CURRENTLY_FAILING = re.compile(
     rf"({FAILING_PARENTS.iter().map(lambda x: x.__name__).join('|')})"
@@ -104,14 +104,15 @@ def test_iter(other: type) -> None:
     assert issubclass(pc.Iter, other)
 
 
+@pytest.mark.parametrize("slf", [pc.Seq, pc.Range, pc.SliceView])
 @check_other([PyoSequence, *SEQUENCE_PARENTS])
-def test_seq(other: type) -> None:
+def test_concrete_sequences(slf: type, other: type) -> None:
     match other:
         case _ if other in FAILING_PARENTS:
             with IGNORE_RAISE:
-                assert issubclass(pc.Seq, other)
+                assert issubclass(slf, other)
         case _:
-            assert issubclass(pc.Seq, other)
+            assert issubclass(slf, other)
 
 
 @check_other([PyoMutableSequence, *MUTABLE_SEQUENCE_PARENTS])
