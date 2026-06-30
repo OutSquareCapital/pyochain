@@ -5,7 +5,7 @@ from ._range import Range
 from ._seq import Seq
 from ._set import Set, SetMut
 from ._sliceview import SliceView
-from ._tools import Iter  # pyright: ignore[reportMissingModuleSource]
+from ._tools import Iter, Peekable  # pyright: ignore[reportMissingModuleSource]
 from ._vec import Vec
 from ._views import PyoItemsView, PyoKeysView, PyoValuesView
 from .rs import (
@@ -32,6 +32,7 @@ __all__ = [
     "Ok",
     "Option",
     "OptionUnwrapError",
+    "Peekable",
     "PyoItemsView",
     "PyoKeysView",
     "PyoValuesView",

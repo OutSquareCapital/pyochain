@@ -1096,8 +1096,11 @@ impl PyoIterator {
             .map(|x| x?.unbind().pipe(PySome::new).into_bound_py_any(py))
             .unwrap_or_else(|| PyNull::get(py).into_bound_py_any(py))
     }
-    fn peekable<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyIterator>> {
-        pylibs::pyochain::peekable::new(&slf)
+    fn peekable<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, tls::Peekable>> {
+        let py = slf.py();
+        slf.try_iter()
+            .and_then(tls::Peekable::new)
+            .map(|x| x.into_bound(py))
     }
     fn partition<'py>(
         slf: &Bound<'py, Self>,

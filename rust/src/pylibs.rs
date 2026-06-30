@@ -478,19 +478,6 @@ pub mod functools {
 pub mod pyochain {
     use super::*;
     const PYOCHAIN: &str = "pyochain";
-    pub mod peekable {
-        use super::*;
-        const PEEKABLE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-        #[inline(always)]
-        pub fn new<'py>(iterable: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyIterator>> {
-            let py = iterable.py();
-            PEEKABLE
-                .import(py, PYOCHAIN, "_peekable")?
-                .getattr(intern!(py, "Peekable"))?
-                .call1((iterable,))
-                .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
-        }
-    }
     pub mod vec {
         use super::*;
         const VEC: PyOnceLock<Py<PyAny>> = PyOnceLock::new();

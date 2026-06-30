@@ -1,10 +1,11 @@
 use std::collections::VecDeque;
 
 use crate::args::{Args, Kwargs};
-use crate::option::{PySome, option};
+use crate::option::{PyNull, PySome, option};
+use crate::result::{PyoErr, PyoOk};
 use crate::{abc, mixins};
 use pyo3::types::{PyAny, PyDict, PyIterator, PyModule, PySequence, PySet, PyString, PyTuple};
-use pyo3::{ffi, prelude::*};
+use pyo3::{IntoPyObjectExt, ffi, prelude::*};
 use tap::prelude::*;
 #[pymodule(name = "_tools")]
 pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -28,6 +29,7 @@ pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Unzip>()?;
     m.add_class::<GroupBy>()?;
     m.add_class::<Iter>()?;
+    m.add_class::<Peekable>()?;
     Ok(())
 }
 
@@ -1056,5 +1058,137 @@ impl<'py> Iterator for PyUnsafeIterator<'py> {
 
             Some(Ok(Bound::from_owned_ptr(self.py, item)))
         }
+    }
+}
+#[pyclass(generic, extends=abc::PyoIterator)]
+pub struct Peekable {
+    iterator: Py<PyIterator>,
+    peeked: Option<Py<PyAny>>,
+}
+impl Peekable {
+    /// New constructor for `Peekable` in rust.
+    /// We do this because `PyClassInitializer` can't be converted to pyobject directly, so we need to wrap it in a `Py` first.
+    pub fn new(data: Bound<'_, PyIterator>) -> PyResult<Py<Self>> {
+        let py = data.py();
+        let initializer = Self::py_new(data);
+        Py::new(py, initializer)
+    }
+}
+#[pymethods]
+impl Peekable {
+    #[new]
+    fn py_new(iterable: Bound<'_, PyIterator>) -> PyClassInitializer<Self> {
+        PyClassInitializer::from(mixins::Checkable)
+            .add_subclass(abc::PyoIterable {})
+            .add_subclass(abc::PyoIterator {})
+            .add_subclass(Self {
+                iterator: iterable.unbind(),
+                peeked: None,
+            })
+    }
+
+    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
+        slf
+    }
+
+    fn __next__<'py>(&mut self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
+        match self.peeked.take() {
+            Some(value) => Ok(Some(value.into_bound(py))),
+            None => self
+                .iterator
+                .clone_ref(py)
+                .into_bound(py)
+                .next()
+                .transpose(),
+        }
+    }
+
+    fn __bool__(&mut self, py: Python<'_>) -> bool {
+        self.peek(py)
+            .map(|x| x.bind(py).cast_exact::<PySome>().is_ok())
+            .unwrap_or(false)
+    }
+
+    fn peek(&mut self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        if self.peeked.is_none() {
+            self.peeked = self
+                .iterator
+                .clone_ref(py)
+                .into_bound(py)
+                .next()
+                .transpose()?
+                .map(Bound::unbind);
+        }
+
+        self.peeked
+            .as_ref()
+            .map(|x| x.clone_ref(py))
+            .map(PySome::new)
+            .into_py_any(py)
+    }
+
+    fn next_if(&mut self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+        let py = func.py();
+        match self
+            .iterator
+            .clone_ref(py)
+            .into_bound(py)
+            .next()
+            .transpose()?
+        {
+            Some(matched) if func.call1((&matched,))?.is_truthy()? => {
+                matched.unbind().pipe(PySome::new).into_py_any(py)
+            }
+            other => {
+                self.peeked = other.map(Bound::unbind);
+                PyNull::get(py).into_py_any(py)
+            }
+        }
+    }
+
+    fn next_if_eq(&mut self, expected: Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+        let py = expected.py();
+        match self
+            .iterator
+            .clone_ref(py)
+            .into_bound(py)
+            .next()
+            .transpose()?
+        {
+            Some(nxt) if nxt.eq(expected)? => nxt.unbind().pipe(PySome::new).into_py_any(py),
+            other => {
+                self.peeked = other.map(Bound::unbind);
+                PyNull::get(py).into_py_any(py)
+            }
+        }
+    }
+
+    fn next_if_map(&mut self, f: Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+        let py = f.py();
+        self.peeked = match self.iterator.clone_ref(py).into_bound(py).next() {
+            Some(item) => {
+                let call_result = f.call1((&item?,))?;
+                match call_result.cast_exact::<PyoOk>() {
+                    Ok(result) => {
+                        return result
+                            .get()
+                            .value
+                            .clone_ref(py)
+                            .pipe(PySome::new)
+                            .into_py_any(py);
+                    }
+                    Err(_) => Some(
+                        call_result
+                            .cast_into_exact::<PyoErr>()?
+                            .get()
+                            .error
+                            .clone_ref(py),
+                    ),
+                }
+            }
+            None => None,
+        };
+
+        PyNull::get_any_ok(py)
     }
 }

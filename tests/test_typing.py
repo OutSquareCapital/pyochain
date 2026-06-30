@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from pyochain import Iter, Ok, Option, Result, Seq, Set, Some
 
 if TYPE_CHECKING:
-    from pyochain._peekable import Peekable
+    from pyochain import Peekable
     from pyochain.abc import (
         PyoCollection,
         PyoIterable,
