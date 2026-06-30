@@ -604,7 +604,7 @@ def _collect_into(data: Range, collector: Vec[int]) -> Vec[int]:
 
 @pytest.mark.parametrize("size", SIZES)
 def test_take(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, SIZES.last())
+    data = Range(0, SIZES.iter().max())
     assert benchmark(_take, data, size) == size - 1
 
 
@@ -614,7 +614,7 @@ def _take(data: Range, size: int) -> int:
 
 @pytest.mark.parametrize("size", SIZES)
 def test_slice(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, SIZES.last())
+    data = Range(0, SIZES.iter().max())
     assert benchmark(_slice, data, size) == size - 1
 
 

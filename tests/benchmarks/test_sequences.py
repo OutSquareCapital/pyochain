@@ -4,11 +4,12 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from pyochain import Option, Range, Seq
+from pyochain.rs import Range, Seq
 
 from ._utils import SIZES
 
 if TYPE_CHECKING:
+    from pyochain import Option
     from pyochain.abc import PyoReversible, PyoSequence
 
     from ._utils import BenchFixture
@@ -64,3 +65,39 @@ def _get(data: PyoSequence[int], idx: int) -> Option[int]:
     for _ in data:
         _ = data.get(idx)
     return data.get(idx)
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_init_seq(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_init_seq, data, size).first() == data.first()
+
+
+def _init_seq(data: PyoSequence[int], size: int) -> Seq[int]:
+    for _ in range(SIZES[size]):
+        _ = Seq(data)
+    return Seq(data)
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_init_range(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_init_range, size).first() == data.first()
+
+
+def _init_range(size: int) -> Range:
+    for _ in range(SIZES[size]):
+        _ = Range(0, size)
+    return Range(0, size)
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_concat(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).pipe(Seq)
+    assert benchmark(_concat, data, size).last() == data.last()
+
+
+def _concat(data: Seq[int], size: int) -> Seq[int]:
+    for _ in range(SIZES[size]):
+        _ = data.concat(data)
+    return data.concat(data)

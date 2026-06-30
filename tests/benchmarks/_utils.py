@@ -4,7 +4,7 @@ from typing import Protocol
 
 from rich.traceback import install
 
-from pyochain import Seq
+from pyochain import Dict
 
 _ = install(show_locals=True)
 
@@ -28,7 +28,7 @@ class Sizes(IntEnum):
     SIZE_4096 = 4096
 
 
-SIZES = Seq([10, 100, 1_000, 10_000])
+SIZES = Dict({10: 10_000, 100: 1000, 1_000: 100, 10_000: 10})
 
 
 class VariantGroups(StrEnum):
