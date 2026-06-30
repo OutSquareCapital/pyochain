@@ -10,6 +10,7 @@ from pyochain.abc import (
     PyoIterable,
     PyoIterator,
     PyoReversible,
+    PyoSequence,
     PyoSized,
 )
 
@@ -50,6 +51,11 @@ def test_pyoiterator(other: type) -> None:
 @check_other(COLLECTION_PARENTS)
 def test_collection(other: type) -> None:
     assert issubclass(PyoCollection, other)
+
+
+@check_other([PyoReversible, *COLLECTION_PARENTS])
+def test_sequence(other: type) -> None:
+    assert issubclass(PyoSequence, other)
 
 
 @check_other([PyoIterator, *PYOITERATOR_PARENTS])
