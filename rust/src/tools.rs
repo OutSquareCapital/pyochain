@@ -80,10 +80,9 @@ impl MapJuxt {
                 slf.funcs
                     .iter()
                     .map(|func| func.call1(py, (&args,)))
-                    .collect::<PyResult<Vec<_>>>()?
-                    .pipe(|x| PyTuple::new(py, x))?
-                    .pipe(Some)
-                    .pipe(Ok)
+                    .collect::<PyResult<Vec<_>>>()
+                    .and_then(|x| PyTuple::new(py, x))
+                    .map(Some)
             }
             None => Ok(None),
         }
@@ -808,7 +807,9 @@ impl ZipLongest {
                 .iter()
                 .map(|x| option(&x))
                 .collect::<PyResult<Vec<_>>>()
-                .and_then(|v| PyTuple::new(py, v)?.unbind().pipe(Some).pipe(Ok)),
+                .and_then(|v| PyTuple::new(py, v))
+                .map(Bound::unbind)
+                .map(Some),
         }
     }
 }
@@ -839,9 +840,8 @@ impl Unzip {
         match slf.iterator.clone_ref(py).into_bound(py).next() {
             Some(item) => item?
                 .pipe(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
-                .get_item(slf.n)?
-                .pipe(Some)
-                .pipe(Ok),
+                .get_item(slf.n)
+                .map(Some),
             None => Ok(None),
         }
     }
