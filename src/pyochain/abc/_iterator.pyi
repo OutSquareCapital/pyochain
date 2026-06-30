@@ -24,14 +24,12 @@ from typing import (
 )
 
 from pyochain._dict import Dict
-from pyochain._range import Range
-from pyochain._seq import Seq
 from pyochain._set import Set, SetMut
 from pyochain._tools import Iter, Peekable
 from pyochain._utils import no_doctest
 from pyochain._vec import Vec
 from pyochain.abc import PyoMutableSequence
-from pyochain.rs import Checkable, Fluent, Option, Result
+from pyochain.rs import Checkable, Fluent, Option, Range, Result, Seq
 
 from .._types import (
     LiteralInteger,

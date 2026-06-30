@@ -1,17 +1,18 @@
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from typing import (
     Any,
     Concatenate,
     Final,
     Protocol,
     Self,
+    SupportsIndex,
     final,
     overload,
     override,
     type_check_only,
 )
 
-from .abc import PyoIterator
+from .abc import PyoIterator, PyoSequence
 
 # Mixin classes for pipeable and checkable methods
 
@@ -2409,3 +2410,166 @@ class Err[T, E](ResultType[T, E]):
     def __new__(cls, error: Option[E]) -> Result[Any, Option[E]]: ...
     @overload
     def __new__(cls, error: E) -> Result[Any, E]: ...
+
+class Seq[T](PyoSequence[T]):
+    """Represent an in memory `Sequence`.
+
+    Implements the `Sequence` Protocol from `collections.abc`, as well as `PyoSequence`.
+
+    This class is notably the default return type of [`Iter::collect`][Iter.collect].
+
+    The underlying data structure is an immutable `tuple`, hence the memory efficiency is better than a [`Vec`][Vec].
+
+    Tip:
+        `Seq(tuple)` is preferred over `Seq(list)` as this is a no-copy operation (Python optimizes `tuple` creation from another `tuple`).
+
+        If you have an existing `list`, consider using [`Vec::from_ref`][Vec.from_ref] instead to avoid unnecessary copying.
+
+        If you need immediate iteration anyway, you can directly use [`Iter`][Iter] instead.
+
+    Args:
+        data (Iterable[T]): The data to initialize the Seq with.
+
+    Example:
+        ```python
+        >>> from pyochain import Seq
+        >>> Seq(())
+        Seq()
+        >>> t = (1, 2, 3)
+        >>> seq = Seq(t)
+        >>> seq
+        Seq(1, 2, 3)
+        >>> seq_2 = Seq(seq.inner)
+        >>> # No copy is made when creating seq_2 from seq.inner, they reference the same underlying tuple.
+        >>> is_no_copy = (
+        ...     seq.inner is seq_2.inner
+        ...     and seq.inner is t
+        ...     and seq_2.inner is t
+        ...     and tuple(seq.inner) is t
+        ... )
+        >>> is_no_copy
+        True
+        >>> # However, creating a new Seq from seq (not using .inner) will be a copy operation.
+        >>> Seq(seq).inner is seq.inner
+        False
+
+        ```
+    """
+
+    inner: Final[tuple[T, ...]]
+
+    def __init__(self, data: Iterable[T]) -> None: ...
+    @override
+    def __iter__(self) -> Iterator[T]: ...
+    @override
+    def __len__(self) -> int: ...
+    @overload
+    def __getitem__(self, key: SupportsIndex, /) -> T: ...
+    @overload
+    def __getitem__(self, key: slice[SupportsIndex | None], /) -> tuple[T, ...]: ...
+    @override
+    def __getitem__(
+        self, index: SupportsIndex | slice[SupportsIndex | None]
+    ) -> T | Sequence[T]: ...
+    @override
+    def __eq__(self, other: object) -> bool: ...
+    @override
+    def __hash__(self) -> int: ...
+    def repeat(self, n: int) -> Self:
+        """Repeat the `Seq` **n** times and return a new `Seq`.
+
+        This is equivalent to `tuple_1 * n` for standard tuples.
+
+        Args:
+            n (int): The number of times to repeat the elements.
+
+        Returns:
+            Self: The new `Seq` after repetition.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> s = Seq((1, 2, 3))
+            >>> s.repeat(2)
+            Seq(1, 2, 3, 1, 2, 3)
+
+            ```
+        """
+
+    @override
+    def __reversed__(self) -> Iterator[T]: ...
+    def concat[O](self, other: tuple[O, ...] | Seq[O]) -> Seq[T | O]:
+        """Concatenate another `Seq` or `tuple` to **self** and return a new `Seq`.
+
+        This is equivalent to `tuple_1 + tuple_2` for standard tuples.
+
+        Args:
+            other (tuple[O, ...] | Seq[O]): The other `Seq` to concatenate.
+
+        Returns:
+            Seq[T | O]: The new `Seq` after concatenation.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> s1 = Seq((1, 2, 3))
+            >>> s2 = (4, 5, 6)  # Can also concatenate a standard tuple
+            >>> s3 = s1.concat(s2)
+            >>> s3
+            Seq(1, 2, 3, 4, 5, 6)
+
+            ```
+        """
+
+class Range(PyoSequence[int]):
+    """A wrapper around the built-in `range` type that implements the `PyoSequence` protocol.
+
+    `start` must be specified, unlike the built-in type, but everything else is the same.
+
+    Args:
+        start (int): The starting value of the range (inclusive).
+        stop (int): The ending value of the range (exclusive).
+        step (int, optional): The step size between values in the range. Defaults to 1.
+
+    Example:
+        ```python
+        >>> from pyochain import Range, Dict, Seq
+        >>>
+        >>> r = Range(1, 6, 2)
+        >>> r
+        Range(1, 6, 2)
+        >>> r.iter().collect(Seq)
+        Seq(1, 3, 5)
+        >>> r.rev().collect(Seq)
+        Seq(5, 3, 1)
+        >>> names = ("alice", "bob", "CHARLIE", "dave")
+        >>> indexed_names = (
+        ...     Range(0, 100)
+        ...     .iter()
+        ...     .zip(names)
+        ...     .map_star(lambda i, n: (i, n.title()))
+        ...     .collect(Dict)
+        ... )
+        >>> indexed_names
+        Dict(0: 'Alice', 1: 'Bob', 2: 'Charlie', 3: 'Dave')
+
+        ```
+    """
+
+    inner: Final[range]
+
+    def __init__(self, start: int, stop: int, step: int = 1) -> None: ...
+    @override
+    def __iter__(self) -> Iterator[int]: ...
+    @override
+    def __len__(self) -> int: ...
+    @overload
+    def __getitem__(self, key: SupportsIndex, /) -> int: ...
+    @overload
+    def __getitem__(self, key: slice[SupportsIndex | None], /) -> range: ...
+    @override
+    def __getitem__(
+        self, index: SupportsIndex | slice[SupportsIndex | None]
+    ) -> int | range: ...
+    @override
+    def __reversed__(self) -> Iterator[int]: ...

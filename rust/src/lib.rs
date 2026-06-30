@@ -6,6 +6,7 @@ mod mixins;
 mod option;
 mod pylibs;
 mod result;
+mod seq;
 mod tools;
 use pyo3::{
     PyTypeInfo, intern,
@@ -87,6 +88,8 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<mixins::Fluent>()?;
     m.add_class::<mixins::PyoPipe>()?;
     m.add_class::<mixins::PyoTap>()?;
+    m.add_class::<seq::Seq>()?;
+    m.add_class::<seq::Range>()?;
     m.add_wrapped(pyo3::wrap_pymodule!(tools::tools))?;
     m.add_wrapped(pyo3::wrap_pymodule!(abc::abc))?;
     let sys_mods = py.import("sys")?.getattr("modules")?;

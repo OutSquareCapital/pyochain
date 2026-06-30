@@ -4,7 +4,7 @@
 
 ### 🏆 Highlights
 
-- `abc::{PyoIterable, PyoIterator, PyoSized, PyoContainer, PyoCollection, PyoReversible, PyoSequence}` and `Iter` have been fully moved to Rust.
+- `abc::{PyoIterable, PyoIterator, PyoSized, PyoContainer, PyoCollection, PyoReversible, PyoSequence}` and `Iter`, `Seq`, `Range` have been fully moved to Rust.
 - `abc::PyoIterator::peekable` has been completely refactored and now aligns with Rust std `Iterator`, with the methods `peek`, `next_if`, `next_if_eq`, and `next_if_map`, all implemented in Rust.
 - `abc::Reversible::rev` got huge performance gains on concrete classes (`Range`, `Vec`, etc...), up to **28x** faster, by implementing `__reversed__` dunder, which now return the C level `Iterator` directly, instead of relying on the `abc` auto implementation.
 
@@ -83,6 +83,9 @@ Name                | 10 items | 100 items  | 1_000 items| 10_000 items| Note
 #### `PyoSequence` methods
 
 `first, last, get` are now around **1.7x** (`Range`) to **2.1x** (`Seq`) faster, after having both the ABC and the concrete classes migrated to Rust.
+`Seq::__init__` is **1.29x** (10 items), **1.14x** (100 items), **1.01x** (>= 1_000 items) after full Rust migration.
+`Range::__init__` is **1.62x** (10 items), **1.61x** (100 items), **1.58x** (1_000 items), **1.54x** (10_000 items) after full Rust migration.
+`Seq::concat` is **2.58x** (10 items), **1.78x** (100 items), **1.10x** (1_000 items), **1.02x** (10_000 items) after full Rust migration.
 
 ---
 
