@@ -10,6 +10,8 @@ use tap::prelude::*;
 
 /// Python `builtins` functions and objects
 pub mod builtins {
+    use pyo3::ffi;
+
     use super::*;
 
     const BUILTINS: &str = "builtins";
@@ -114,6 +116,18 @@ pub mod builtins {
         MAP.import(py, BUILTINS, "map")?
             .call1(args)
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
+    }
+    #[inline(always)]
+    pub fn reversed<'py>(sequence: &Bound<'py, PyAny>) -> Bound<'py, PyAny> {
+        unsafe {
+            ffi::PyObject_CallOneArg(
+                (&raw const ffi::PyReversed_Type)
+                    .cast::<ffi::PyObject>()
+                    .cast_mut(),
+                sequence.as_ptr(),
+            )
+            .pipe(|x| Bound::from_owned_ptr(sequence.py(), x))
+        }
     }
     #[inline(always)]
     pub fn sorted<'py>(

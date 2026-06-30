@@ -4,12 +4,11 @@ use crate::option::{PyNull, PySome};
 use crate::pylibs;
 use crate::result::{PyoErr, PyoOk};
 use crate::tools as tls;
-use pyo3::exceptions::{PyStopIteration, PyValueError};
-use pyo3::prelude::*;
+use pyo3::exceptions::{PyIndexError, PyStopIteration, PyValueError};
 use pyo3::types::{
     PyBool, PyFunction, PyInt, PyIterator, PyList, PySequence, PySet, PyString, PyTuple, PyType,
 };
-use pyo3::{BoundObject, IntoPyObjectExt, ffi, intern};
+use pyo3::{BoundObject, IntoPyObjectExt, PyTypeInfo, ffi, intern, prelude::*};
 use tap::prelude::*;
 
 #[pymodule(name = "_iterator")]
@@ -20,6 +19,7 @@ pub fn abc(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyoSized>()?;
     m.add_class::<PyoCollection>()?;
     m.add_class::<PyoReversible>()?;
+    m.add_class::<PyoSequence>()?;
     Ok(())
 }
 #[pyclass(subclass, frozen, generic, extends=Checkable)]
@@ -1376,15 +1376,49 @@ pub struct PyoReversible;
 impl PyoReversible {
     /// We use unsafe code here because calling `reversed` with `PyOnceLock` pattern is 2x slower than pure python for some reason.
     fn rev(slf: Bound<'_, Self>) -> PyResult<Py<tls::Iter>> {
-        unsafe {
-            ffi::PyObject_CallOneArg(
-                (&raw const ffi::PyReversed_Type)
-                    .cast::<ffi::PyObject>()
-                    .cast_mut(),
-                slf.as_ptr(),
-            )
-            .pipe(|x| Bound::from_owned_ptr(slf.py(), x))
+        slf.as_any()
+            .pipe(pylibs::builtins::reversed)
             .pipe(|x| tls::Iter::new(x))
+    }
+}
+
+#[pyclass(subclass, frozen, generic, extends=PyoCollection)]
+pub struct PyoSequence;
+#[pymethods]
+impl PyoSequence {
+    #[pyo3(signature = (*_args, **_kwargs))]
+    #[new]
+    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
+        PyClassInitializer::from(Checkable)
+            .add_subclass(PyoIterable)
+            .add_subclass(PyoCollection)
+            .add_subclass(Self {})
+    }
+    fn first<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        slf.get_item(0)
+    }
+
+    fn last<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        slf.get_item(-1)
+    }
+
+    fn get<'py>(slf: Bound<'py, Self>, index: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+        let py = slf.py();
+        let res = slf.get_item(index);
+        match res {
+            Ok(ok) => ok.unbind().pipe(PySome::new).into_bound_py_any(py),
+            Err(err) => {
+                if err.matches(py, PyIndexError::type_object(py)).unwrap() {
+                    PyNull::get(py).into_bound_py_any(py)
+                } else {
+                    Err(err)
+                }
+            }
         }
+    }
+    fn rev(slf: Bound<'_, Self>) -> PyResult<Py<tls::Iter>> {
+        slf.as_any()
+            .pipe(pylibs::builtins::reversed)
+            .pipe(|x| tls::Iter::new(x))
     }
 }

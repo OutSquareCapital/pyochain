@@ -4,7 +4,7 @@
 
 ### 🏆 Highlights
 
-- `abc::{PyoIterable, PyoIterator, PyoSized, PyoContainer, PyoCollection, PyoReversible}` have been fully moved to Rust.
+- `abc::{PyoIterable, PyoIterator, PyoSized, PyoContainer, PyoCollection, PyoReversible, PyoSequence}` and `Iter` have been fully moved to Rust.
 - `abc::PyoIterator::peekable` has been completely refactored and now aligns with Rust std `Iterator`, with the methods `peek`, `next_if`, `next_if_eq`, and `next_if_map`, all implemented in Rust.
 - `abc::Reversible::rev` got huge performance gains on concrete classes (`Range`, `Vec`, etc...), up to **28x** faster, by implementing `__reversed__` dunder, which now return the C level `Iterator` directly, instead of relying on the `abc` auto implementation.
 
@@ -79,6 +79,10 @@ Name                | 10 items | 100 items  | 1_000 items| 10_000 items| Note
 `PyoIterable::iter` | **1.16x**| **1.19x**  | **1.18x**  | **1.17x**   | -
 `Iter::__init__`    | **1.82x**| **1.93x**  | **1.93x**  | **1.92x**   | Also impact `PyoMutableSequence::{extract_if, drain}` and `PyoReversible::rev` since they create an `Iter` internally.
 `Reversible::rev`   | **5.23x**| **28.99x** | **28.08x** | **25.88x**  | This is for `Range`, `Vec` and `Seq` types. ABC's in itself is 2-3% faster on small iterators thanks to Rust migration.
+
+#### `PyoSequence` methods
+
+`first, last, get` are now around **1.7x** (`Range`) to **2.1x** (`Seq`) faster, after having both the ABC and the concrete classes migrated to Rust.
 
 ---
 

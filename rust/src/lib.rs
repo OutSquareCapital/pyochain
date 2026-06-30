@@ -7,7 +7,11 @@ mod option;
 mod pylibs;
 mod result;
 mod tools;
-use pyo3::{PyTypeInfo, intern, prelude::*, types::PyType};
+use pyo3::{
+    PyTypeInfo, intern,
+    prelude::*,
+    types::{PySequence, PyType},
+};
 use tap::prelude::*;
 
 macro_rules! impl_py_pipe {
@@ -99,6 +103,8 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     register(&abc_mod, "Sized", &abc::PyoCollection::type_object(py))?;
     register(&abc_mod, "Collection", &abc::PyoCollection::type_object(py))?;
     register(&abc_mod, "Reversible", &abc::PyoReversible::type_object(py))?;
+    register(&abc_mod, "Reversible", &abc::PyoSequence::type_object(py))?;
+    PySequence::register::<abc::PyoSequence>(py)?;
 
     Ok(())
 }
