@@ -1,9 +1,17 @@
-"""Tests for slot usage in pyochain classes."""
-
 from collections.abc import Collection, Container, Iterable, Iterator, Reversible, Sized
+from functools import partial
+
+import pytest
 
 import pyochain as pc
-from pyochain import abc as pyoabc
+from pyochain.abc import (
+    PyoCollection,
+    PyoContainer,
+    PyoIterable,
+    PyoIterator,
+    PyoReversible,
+    PyoSized,
+)
 
 
 def test_slots() -> None:
@@ -28,26 +36,40 @@ def _check_slots(obj: object) -> bool:
         return True
 
 
-def test_abcs() -> None:
+check_other = partial(pytest.mark.parametrize, "other")
 
-    assert issubclass(pyoabc.PyoIterable, Iterable)
-    assert issubclass(pyoabc.PyoIterator, (pyoabc.PyoIterable, Iterable, Iterator))
-    assert issubclass(pyoabc.PyoContainer, Container)
-    assert issubclass(pyoabc.PyoSized, Sized)
-    assert issubclass(
-        pyoabc.PyoCollection,
-        (
-            pyoabc.PyoIterable,
-            pyoabc.PyoContainer,
-            pyoabc.PyoSized,
-            Collection,
-            Container,
-            Sized,
-        ),
-    )
-    assert issubclass(pyoabc.PyoReversible, Reversible)
+PYOITERATOR_PARENTS = [Iterable, PyoIterable, Iterator]
+COLLECTION_PARENTS = [PyoIterable, PyoContainer, PyoSized, Collection, Container, Sized]
 
 
-def test_inerhitance() -> None:
-    assert issubclass(pc.Vec, (Iterable, pyoabc.PyoIterable))
-    assert issubclass(pc.Iter, (Iterator, pyoabc.PyoIterator))
+@check_other(PYOITERATOR_PARENTS)
+def test_pyoiterator(other: type) -> None:
+    assert issubclass(PyoIterator, other)
+
+
+@check_other(COLLECTION_PARENTS)
+def test_collection(other: type) -> None:
+    assert issubclass(PyoCollection, other)
+
+
+@check_other([PyoIterator, *PYOITERATOR_PARENTS])
+def test_iter(other: type) -> None:
+    assert issubclass(pc.Iter, other)
+
+
+@check_other([PyoCollection, *COLLECTION_PARENTS])
+def test_vec(other: type) -> None:
+    assert issubclass(pc.Vec, other)
+
+
+@pytest.mark.parametrize(
+    "classes",
+    [
+        (PyoIterable, Iterable),
+        (PyoContainer, Container),
+        (PyoSized, Sized),
+        (PyoReversible, Reversible),
+    ],
+)
+def test_simple_abcs(classes: tuple[type, type]) -> None:
+    assert issubclass(classes[0], classes[1])
