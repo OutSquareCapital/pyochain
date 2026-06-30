@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from pyochain import Option, Range, Vec
+from pyochain import Option, Range, Seq
 
 from ._utils import SIZES
 
@@ -26,7 +26,7 @@ def _rev(data: PyoReversible[int]) -> int:
 
 @pytest.mark.parametrize("size", SIZES)
 def test_first(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size).pipe(Vec)
+    data = Range(0, size).pipe(Seq)
     assert benchmark(_first, data) == 0
 
 
@@ -38,7 +38,7 @@ def _first(data: PyoSequence[int]) -> int:
 
 @pytest.mark.parametrize("size", SIZES)
 def test_last(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size).pipe(Vec)
+    data = Range(0, size).pipe(Seq)
     assert benchmark(_last, data) == size - 1
 
 
@@ -50,7 +50,7 @@ def _last(data: PyoSequence[int]) -> int:
 
 @pytest.mark.parametrize("size", SIZES)
 def test_get_some(benchmark: BenchFixture, size: int) -> None:
-    data = Range(0, size).pipe(Vec)
+    data = Range(0, size).pipe(Seq)
     assert benchmark(_get, data, size - 1).is_some()
 
 
