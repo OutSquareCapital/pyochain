@@ -1,39 +1,20 @@
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import Callable, MutableSequence, Reversible, Sequence
+from collections.abc import Callable, MutableSequence, Sequence
 from typing import TYPE_CHECKING, overload
 
 from .. import (
     _tools as tls,  # pyright: ignore[reportMissingModuleSource, reportPrivateUsage]
 )
 from ..rs import NONE, Option, Some
-from ._iterator import PyoCollection  # pyright: ignore[reportMissingModuleSource]
+from ._iterator import (  # pyright: ignore[reportMissingModuleSource]
+    PyoCollection,
+    PyoReversible,
+)
 
 if TYPE_CHECKING:
     from ._iterator import PyoIterator  # pyright: ignore[reportMissingModuleSource]
-
-
-class PyoReversible[T](Reversible[T]):  # pyright: ignore[reportImplicitAbstractClass]
-    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
-
-    def rev(self) -> PyoIterator[T]:
-        """Return an `Iterator` with the elements of the `Sequence` in reverse order.
-
-        Returns:
-            PyoIterator[T]: An `Iterator` with the elements in reverse order.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq, Range
-            >>> Seq((1, 2, 3)).rev().collect(Seq)
-            Seq(3, 2, 1)
-            >>> Range(0, 5).rev().collect(Seq)
-            Seq(4, 3, 2, 1, 0)
-
-            ```
-        """
-        return tls.Iter(reversed(self))
 
 
 class PyoSequence[T](PyoCollection[T], PyoReversible[T], Sequence[T]):  # pyright: ignore[reportImplicitAbstractClass]

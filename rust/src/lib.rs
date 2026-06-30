@@ -98,6 +98,7 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     register(&abc_mod, "Container", &abc::PyoCollection::type_object(py))?;
     register(&abc_mod, "Sized", &abc::PyoCollection::type_object(py))?;
     register(&abc_mod, "Collection", &abc::PyoCollection::type_object(py))?;
+    register(&abc_mod, "Reversible", &abc::PyoReversible::type_object(py))?;
 
     Ok(())
 }

@@ -7,6 +7,7 @@ from collections.abc import (
     Iterator,
     KeysView,
     MutableSequence,
+    Reversible,
     Sequence,
     Sized,
     ValuesView,
@@ -4245,3 +4246,22 @@ class PyoCollection[T](
     - `__len__`
     - `__contains__`
     """
+
+@runtime_checkable
+class PyoReversible[T](Reversible[T], Protocol):
+    def rev(self) -> PyoIterator[T]:
+        """Return an `Iterator` with the elements of the `Sequence` in reverse order.
+
+        Returns:
+            PyoIterator[T]: An `Iterator` with the elements in reverse order.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq, Range
+            >>> Seq((1, 2, 3)).rev().collect(Seq)
+            Seq(3, 2, 1)
+            >>> Range(0, 5).rev().collect(Seq)
+            Seq(4, 3, 2, 1, 0)
+
+            ```
+        """

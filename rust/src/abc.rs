@@ -19,6 +19,7 @@ pub fn abc(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyoContainer>()?;
     m.add_class::<PyoSized>()?;
     m.add_class::<PyoCollection>()?;
+    m.add_class::<PyoReversible>()?;
     Ok(())
 }
 #[pyclass(subclass, frozen, generic, extends=Checkable)]
@@ -1366,5 +1367,24 @@ impl PyoCollection {
     #[pyo3(name = "is_empty")]
     fn pyo_is_empty(slf: Bound<'_, Self>) -> PyResult<bool> {
         slf.is_empty()
+    }
+}
+#[pyclass(subclass, frozen, generic)]
+pub struct PyoReversible;
+
+#[pymethods]
+impl PyoReversible {
+    /// We use unsafe code here because calling `reversed` with `PyOnceLock` pattern is 2x slower than pure python for some reason.
+    fn rev(slf: Bound<'_, Self>) -> PyResult<Py<tls::Iter>> {
+        unsafe {
+            ffi::PyObject_CallOneArg(
+                (&raw const ffi::PyReversed_Type)
+                    .cast::<ffi::PyObject>()
+                    .cast_mut(),
+                slf.as_ptr(),
+            )
+            .pipe(|x| Bound::from_owned_ptr(slf.py(), x))
+            .pipe(|x| tls::Iter::new(x))
+        }
     }
 }
