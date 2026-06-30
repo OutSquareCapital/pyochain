@@ -1,4 +1,13 @@
-from collections.abc import Collection, Container, Iterable, Iterator, Reversible, Sized
+from collections.abc import (
+    Collection,
+    Container,
+    Iterable,
+    Iterator,
+    MutableSequence,
+    Reversible,
+    Sequence,
+    Sized,
+)
 from functools import partial
 
 import pytest
@@ -9,6 +18,7 @@ from pyochain.abc import (
     PyoContainer,
     PyoIterable,
     PyoIterator,
+    PyoMutableSequence,
     PyoReversible,
     PyoSequence,
     PyoSized,
@@ -41,6 +51,8 @@ check_other = partial(pytest.mark.parametrize, "other")
 
 PYOITERATOR_PARENTS = [Iterable, PyoIterable, Iterator]
 COLLECTION_PARENTS = [PyoIterable, PyoContainer, PyoSized, Collection, Container, Sized]
+SEQUENCE_PARENTS = [*COLLECTION_PARENTS, PyoReversible, Reversible, Sequence]
+MUTABLE_SEQUENCE_PARENTS = [*SEQUENCE_PARENTS, PyoSequence, MutableSequence]
 
 
 @check_other(PYOITERATOR_PARENTS)
@@ -53,9 +65,14 @@ def test_collection(other: type) -> None:
     assert issubclass(PyoCollection, other)
 
 
-@check_other([PyoReversible, *COLLECTION_PARENTS])
+@check_other(SEQUENCE_PARENTS)
 def test_sequence(other: type) -> None:
     assert issubclass(PyoSequence, other)
+
+
+@check_other(MUTABLE_SEQUENCE_PARENTS)
+def test_mutable_sequence(other: type) -> None:
+    assert issubclass(PyoMutableSequence, other)
 
 
 @check_other([PyoIterator, *PYOITERATOR_PARENTS])
@@ -63,7 +80,12 @@ def test_iter(other: type) -> None:
     assert issubclass(pc.Iter, other)
 
 
-@check_other([PyoCollection, *COLLECTION_PARENTS])
+@check_other([PyoSequence, *SEQUENCE_PARENTS])
+def test_seq(other: type) -> None:
+    assert issubclass(pc.Seq, other)
+
+
+@check_other([PyoMutableSequence, *MUTABLE_SEQUENCE_PARENTS])
 def test_vec(other: type) -> None:
     assert issubclass(pc.Vec, other)
 
