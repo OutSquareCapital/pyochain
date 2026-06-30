@@ -176,6 +176,7 @@ class Unzip[T](Iterator[T]):
         data: Iterator[tuple[A, B]],
     ) -> tuple[Unzip[A], Unzip[B]]: ...
 
+@final
 class Iter[T](PyoIterator[T]):
     """Concrete implementation for `abc::PyoIterator`.
 

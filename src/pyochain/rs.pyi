@@ -2411,6 +2411,7 @@ class Err[T, E](ResultType[T, E]):
     @overload
     def __new__(cls, error: E) -> Result[Any, E]: ...
 
+@final
 class Seq[T](PyoSequence[T]):
     """Represent an in memory `Sequence`.
 
@@ -2521,6 +2522,7 @@ class Seq[T](PyoSequence[T]):
             ```
         """
 
+@final
 class Range(PyoSequence[int]):
     """A wrapper around the built-in `range` type that implements the `PyoSequence` protocol.
 
