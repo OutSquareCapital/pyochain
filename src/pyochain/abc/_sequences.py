@@ -1,134 +1,16 @@
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import Callable, MutableSequence, Sequence
-from typing import TYPE_CHECKING, overload
+from collections.abc import Callable, MutableSequence
+from typing import TYPE_CHECKING
 
 from .. import (
     _tools as tls,  # pyright: ignore[reportMissingModuleSource, reportPrivateUsage]
 )
-from ..rs import NONE, Option, Some
-from ._iterator import (  # pyright: ignore[reportMissingModuleSource]
-    PyoCollection,
-    PyoReversible,
-)
+from ._iterator import PyoSequence  # pyright: ignore[reportMissingModuleSource]
 
 if TYPE_CHECKING:
     from ._iterator import PyoIterator  # pyright: ignore[reportMissingModuleSource]
-
-
-class PyoSequence[T](PyoCollection[T], PyoReversible[T], Sequence[T]):  # pyright: ignore[reportImplicitAbstractClass]
-    """Extends `PyoCollection[T]` and `collections.abc.Sequence[T]`.
-
-    Is the shared ABC for concrete sequences: `Seq`, `Range` and `Vec`.
-
-    Any concrete subclass must implement the required `Sequence` dunder methods:
-
-    - `__getitem__`
-    - `__len__`
-    - `__contains__`
-    - `__iter__`
-
-    Example:
-        ```python
-        >>> from pyochain.abc import PyoSequence
-        >>> from pyochain import Seq
-        >>>
-        >>> class MySeq(PyoSequence[int]):
-        ...     def __init__(self, data: list[int]):
-        ...         self._data = data
-        ...
-        ...     def __getitem__(self, index: int) -> int:
-        ...         return self._data[index]
-        ...
-        ...     def __len__(self) -> int:
-        ...         return len(self._data)
-        ...
-        ...     def __contains__(self, item: int) -> bool:
-        ...         return item in self._data
-        ...
-        ...     def __iter__(self) -> Iterator[int]:
-        ...         return iter(self._data)
-        >>>
-        >>> my_seq = MySeq([10, 20, 30])
-        >>> my_seq.first()
-        10
-        >>> my_seq.rev().collect(Seq)
-        Seq(30, 20, 10)
-
-        ```
-    """
-
-    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
-
-    def first(self) -> T:
-        """Return the first element of the `Sequence`.
-
-        Returns:
-            T: The first element of the `Sequence`.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq
-            >>> from pyochain.collections import StableSet
-            >>> data = Seq((1, 2))
-            >>> data.first()
-            1
-            >>> # With an Iterator, the equivalent would be:
-            >>> data.iter().next().unwrap()
-            1
-
-            ```
-        """
-        return self[0]
-
-    def last(self) -> T:
-        """Return the last element of the `Sequence`.
-
-        This is similar to `my_sequence[-1]`.
-
-        Returns:
-            T: The last element of the `Sequence`.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq
-            >>> Seq((1, 2, 3)).last()
-            3
-
-            ```
-        """
-        return self[-1]
-
-    @overload
-    def get(self, index: int) -> Option[T]: ...
-    @overload
-    def get(self, index: slice[int | None]) -> Option[Sequence[T]]: ...
-    def get(self, index: int | slice[int | None]) -> Option[T] | Option[Sequence[T]]:
-        """Return the element at the specified index as `Some(value)`, or `None` if the index is out of bounds.
-
-        Args:
-            index (int | slice): The index or slice of the element to retrieve.
-
-        Returns:
-            Option[T] | Option[Sequence[T]]: `Some(value)` if the index is valid, otherwise `None`.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq
-            >>> data = Seq((10, 20, 30))
-            >>> data.get(1)
-            Some(20)
-            >>> data.get(5)
-            NONE
-
-            ```
-        """
-        try:
-            # pyrefly: ignore [bad-return]
-            return Some(self[index])  # pyright: ignore[reportReturnType]
-        except IndexError:
-            return NONE
 
 
 class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):

@@ -74,7 +74,7 @@ class SliceView[T](PyoSequence[T]):  # noqa: PLW1641
     _inner: Sequence[T] | MutableSequence[T]
     _range: range | _OpenRange
 
-    __slots__ = ("_inner", "_range")  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
+    __slots__ = ("_inner", "_range")  # pyright: ignore[reportUnannotatedClassAttribute]
 
     @overload
     def __init__(self, base: Sequence[T]) -> None: ...

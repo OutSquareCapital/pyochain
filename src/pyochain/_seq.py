@@ -54,7 +54,7 @@ class Seq[T](PyoSequence[T]):
         ```
     """
 
-    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
+    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
     _inner: Final[tuple[T, ...]]
 
     def __init__(self, data: Iterable[T]) -> None:
