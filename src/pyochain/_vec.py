@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Self, overload, override
+from typing import TYPE_CHECKING, Any, Self, SupportsIndex, overload, override
 
 from ._types import SupportsRichComparison
 from ._utils import get_repr, no_doctest
 from .abc import PyoMutableSequence
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Iterator, MutableSequence
+    from collections.abc import Callable, Iterable, Iterator
 
 
 class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
@@ -40,14 +40,16 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         return f"{self.__class__.__name__}({get_repr(self._inner)})"
 
     @overload
-    def __getitem__(self, index: int) -> T: ...
+    def __getitem__(self, i: SupportsIndex, /) -> T: ...
+
     @overload
-    def __getitem__(self, index: slice) -> MutableSequence[T]: ...
+    def __getitem__(self, s: slice[SupportsIndex | None], /) -> list[T]: ...
     @override
-    def __getitem__(self, index: int | slice) -> T | MutableSequence[T]:
+    def __getitem__(
+        self, index: SupportsIndex | slice[SupportsIndex | None]
+    ) -> T | list[T]:
         return self._inner[index]
 
-    # NOTE: typeshed typing makes it hard to satisfy both overloads of list and MutableSequence, I haven't found a way yet
     @overload
     def __setitem__(self, index: int, value: T) -> None: ...
     @overload

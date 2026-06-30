@@ -29,6 +29,8 @@
 - **API**: `PyoIterator::accumulate` is now aligned with `itertools`, with the possibility to not provide a function, in which case the default is to use addition.
 - **API**: `PyoIterator::product` missed it's `repeat` argument. This is now fixed.
 - **typing**: `Iter`, `Option`, `Result`, `Peekable`, `Seq`, `Set`, and `abc::{PyoIterable, PyoIterator, PyoCollection, PyoSequence, PyoSet}` types are now covariant in their generic type.
+- **typing**: `PyoSequence::get` now has correct generic types for slice overload.
+- **typing**: fixed overloads of `__get_item__` for `Vec`, `Seq` and `Range`.
 
 ### 🚀 Performance improvements
 

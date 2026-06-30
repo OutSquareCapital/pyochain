@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Final, Self, overload, override
+from typing import TYPE_CHECKING, Final, Self, SupportsIndex, overload, override
 
 from ._utils import get_repr, no_doctest
 from .abc import PyoSequence
@@ -73,11 +73,14 @@ class Seq[T](PyoSequence[T]):
         return len(self._inner)
 
     @overload
-    def __getitem__(self, index: int) -> T: ...
+    def __getitem__(self, key: SupportsIndex, /) -> T: ...
+
     @overload
-    def __getitem__(self, index: slice) -> Sequence[T]: ...
+    def __getitem__(self, key: slice[SupportsIndex | None], /) -> tuple[T, ...]: ...
     @override
-    def __getitem__(self, index: int | slice[Any, Any, Any]) -> T | Sequence[T]:
+    def __getitem__(
+        self, index: SupportsIndex | slice[SupportsIndex | None]
+    ) -> T | Sequence[T]:
         return self._inner.__getitem__(index)
 
     @override

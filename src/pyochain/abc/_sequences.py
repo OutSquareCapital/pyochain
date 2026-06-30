@@ -103,8 +103,8 @@ class PyoSequence[T](PyoCollection[T], PyoReversible[T], Sequence[T]):  # pyrigh
     @overload
     def get(self, index: int) -> Option[T]: ...
     @overload
-    def get(self, index: slice) -> Option[Sequence[T]]: ...
-    def get(self, index: int | slice) -> Option[T] | Option[Sequence[T]]:
+    def get(self, index: slice[int | None]) -> Option[Sequence[T]]: ...
+    def get(self, index: int | slice[int | None]) -> Option[T] | Option[Sequence[T]]:
         """Return the element at the specified index as `Some(value)`, or `None` if the index is out of bounds.
 
         Args:

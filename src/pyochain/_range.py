@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Final, overload, override
+from typing import TYPE_CHECKING, Final, SupportsIndex, overload, override
 
 from .abc import PyoSequence
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Iterator
 
 
 class Range(PyoSequence[int]):
@@ -58,11 +58,14 @@ class Range(PyoSequence[int]):
         return len(self._inner)
 
     @overload
-    def __getitem__(self, index: int) -> int: ...
+    def __getitem__(self, key: SupportsIndex, /) -> int: ...
+
     @overload
-    def __getitem__(self, index: slice) -> Sequence[int]: ...
+    def __getitem__(self, key: slice[SupportsIndex | None], /) -> range: ...
     @override
-    def __getitem__(self, index: int | slice[Any, Any, Any]) -> int | Sequence[int]:
+    def __getitem__(
+        self, index: SupportsIndex | slice[SupportsIndex | None]
+    ) -> int | range:
         return self._inner.__getitem__(index)
 
     @override
