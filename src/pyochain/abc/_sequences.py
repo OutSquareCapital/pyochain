@@ -8,7 +8,7 @@ from .. import (
     _tools as tls,  # pyright: ignore[reportMissingModuleSource, reportPrivateUsage]
 )
 from ..rs import NONE, Option, Some
-from ._collection import PyoCollection
+from ._iterator import PyoCollection  # pyright: ignore[reportMissingModuleSource]
 
 if TYPE_CHECKING:
     from ._iterator import PyoIterator  # pyright: ignore[reportMissingModuleSource]

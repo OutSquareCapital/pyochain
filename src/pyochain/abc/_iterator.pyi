@@ -4230,3 +4230,18 @@ class PyoSized(Sized, Protocol):
 
             ```
         """
+
+@runtime_checkable
+class PyoCollection[T](
+    PyoIterable[T], PyoContainer[Any], PyoSized, Collection[T], Protocol
+):
+    """`Extends `PyoIterable[T]` and `collections.abc.Collection[T]`.
+
+    This includes `Seq`, `Vec`, `Set`, `SetMut`, `Dict`, etc...
+
+    Any concrete subclass must implement the required `Collection` dunder methods:
+
+    - `__iter__`
+    - `__len__`
+    - `__contains__`
+    """

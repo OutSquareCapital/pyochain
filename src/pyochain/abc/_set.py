@@ -5,7 +5,7 @@ from collections.abc import Iterable, MutableSet
 from collections.abc import Set as AbstractSet
 from typing import Any
 
-from ._collection import PyoCollection
+from ._iterator import PyoCollection  # pyright: ignore[reportMissingModuleSource]
 
 
 class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):

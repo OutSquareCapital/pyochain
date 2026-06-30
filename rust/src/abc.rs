@@ -18,6 +18,7 @@ pub fn abc(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyoIterator>()?;
     m.add_class::<PyoContainer>()?;
     m.add_class::<PyoSized>()?;
+    m.add_class::<PyoCollection>()?;
     Ok(())
 }
 #[pyclass(subclass, frozen, generic, extends=Checkable)]
@@ -1332,6 +1333,32 @@ pub struct PyoSized;
 
 #[pymethods]
 impl PyoSized {
+    #[pyo3(name = "len")]
+    fn pyo_len(slf: Bound<'_, Self>) -> PyResult<usize> {
+        slf.len()
+    }
+    #[pyo3(name = "is_empty")]
+    fn pyo_is_empty(slf: Bound<'_, Self>) -> PyResult<bool> {
+        slf.is_empty()
+    }
+}
+
+#[pyclass(subclass, frozen, generic, extends=PyoIterable)]
+pub struct PyoCollection;
+
+#[pymethods]
+impl PyoCollection {
+    #[pyo3(signature = (*_args, **_kwargs))]
+    #[new]
+    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
+        PyClassInitializer::from(Checkable)
+            .add_subclass(PyoIterable)
+            .add_subclass(Self {})
+    }
+    #[pyo3(name = "contains")]
+    fn pyo_contains(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<bool> {
+        slf.contains(value)
+    }
     #[pyo3(name = "len")]
     fn pyo_len(slf: Bound<'_, Self>) -> PyResult<usize> {
         slf.len()

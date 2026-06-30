@@ -95,6 +95,9 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     register(&abc_mod, "Iterator", &abc::PyoIterator::type_object(py))?;
     register(&abc_mod, "Container", &abc::PyoContainer::type_object(py))?;
     register(&abc_mod, "Sized", &abc::PyoSized::type_object(py))?;
+    register(&abc_mod, "Container", &abc::PyoCollection::type_object(py))?;
+    register(&abc_mod, "Sized", &abc::PyoCollection::type_object(py))?;
+    register(&abc_mod, "Collection", &abc::PyoCollection::type_object(py))?;
 
     Ok(())
 }

@@ -5,13 +5,13 @@ from collections.abc import Mapping, MappingView, MutableMapping
 from typing import TYPE_CHECKING, override
 
 from ..rs import NONE, Err, Ok, Option, Result, Some, option
-from ._collection import PyoCollection
+from ._iterator import PyoCollection  # pyright: ignore[reportMissingModuleSource]
 
 if TYPE_CHECKING:
     from .._views import PyoItemsView, PyoKeysView, PyoValuesView
 
 
-class PyoMappingView[T](MappingView, PyoCollection[T], ABC):
+class PyoMappingView[T](PyoCollection[T], MappingView, ABC):
     """Extends both `MappingView` from `collections.abc` and `PyoCollection[T]`.
 
     Is the base class shared by the views returned by `PyoMapping` methods.

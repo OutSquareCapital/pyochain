@@ -4,7 +4,7 @@
 
 ### 🏆 Highlights
 
-- `abc::{PyoIterable, PyoIterator, PyoSized, PyoContainer}` have been fully moved to Rust.
+- `abc::{PyoIterable, PyoIterator, PyoSized, PyoContainer, PyoCollection}` have been fully moved to Rust.
 - `abc::PyoIterator::peekable` has been completely refactored and now aligns with Rust std `Iterator`, with the methods `peek`, `next_if`, `next_if_eq`, and `next_if_map`, all implemented in Rust.
 
 ### 💥 Breaking changes
