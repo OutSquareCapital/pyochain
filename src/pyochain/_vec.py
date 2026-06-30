@@ -26,14 +26,18 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
     It uses a `list` as the underlying data structure, so it has the same performance characteristics regarding indexing, slicing, and iteration.
 
     Args:
-        data (Iterable[T]): Any `Iterable` of elements to initialize the `Vec` with.
+        data (Iterable[T]): Any `Iterable` of elements to initialize the `Vec` with. If the input is already a `list`, it will be used directly without copying.
     """
 
     __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
     _inner: list[T]
 
     def __init__(self, data: Iterable[T]) -> None:
-        self._inner = list(data)
+        match data:
+            case list():
+                self._inner = data
+            case _:
+                self._inner = list(data)
 
     @override
     def __repr__(self) -> str:
@@ -89,41 +93,29 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         """
         return self._inner
 
-    @staticmethod
-    def from_ref[V](data: list[V]) -> Vec[V]:
-        """Create a `Vec` from a reference to an existing `list`.
+    def copy(self) -> Self:
+        """Return a shallow copy of the `Vec`.
 
-        This method wraps the provided `list` without copying it, allowing for efficient creation of a `Vec`.
-
-        This is the recommended way to create a `Vec` from foreign functions.
-
-        Warning:
-            Since the `Vec` directly references the original `list`, any modifications made to the `Vec` will also affect the original `list`, and vice versa.
-
-        Args:
-            data (list[V]): The `list` to wrap.
+        This is equivalent to `list_1.copy()` for standard lists.
 
         Returns:
-            Vec[V]: A new Vec instance wrapping the provided `list`.
+            Self: A new `Vec` instance with the same elements.
 
         Example:
             ```python
             >>> from pyochain import Vec
-            >>> original_list = [1, 2, 3]
-            >>> vec = Vec.from_ref(original_list)
-            >>> vec
+            >>> v1 = Vec([1, 2, 3])
+            >>> v2 = v1.copy()
+            >>> v2
             Vec(1, 2, 3)
-            >>> vec[0] = 10
-            >>> original_list
-            [10, 2, 3]
+            >>> v1 is v2
+            False
 
             ```
         """
-        instance: Vec[V] = Vec.__new__(Vec)  # pyright: ignore[reportUnknownVariableType]
-        instance._inner = data
-        return instance
+        return self.__class__(self._inner.copy())
 
-    def repeat(self, n: int) -> Vec[T]:
+    def repeat(self, n: int) -> Self:
         """Repeat the elements of the `Vec` **n** times and return a new `Vec`.
 
         This is equivalent to `list_1 * n` for standard lists.
@@ -132,7 +124,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
             n (int): The number of times to repeat the elements.
 
         Returns:
-            Vec[T]: The new `Vec` after repetition.
+            Self: The new `Vec` after repetition.
 
         See Also:
             [`Vec::repeat_mut`][repeat_mut] which modifies the `Vec` in place.
@@ -140,12 +132,12 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         Example:
             ```python
             >>> from pyochain import Vec
-            >>> Vec.from_ref([1, 2, 3]).repeat(2)
+            >>> Vec([1, 2, 3]).repeat(2)
             Vec(1, 2, 3, 1, 2, 3)
 
             ```
         """
-        return self.from_ref(self._inner * n)
+        return self.__class__(self._inner * n)
 
     def repeat_mut(self, n: int) -> Self:
         """Repeat the elements of the `Vec` in place.
@@ -167,7 +159,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         Example:
             ```python
             >>> from pyochain import Vec
-            >>> vec = Vec.from_ref([1, 2, 3])
+            >>> vec = Vec([1, 2, 3])
             >>> vec.repeat_mut(2)
             Vec(1, 2, 3, 1, 2, 3)
             >>> vec
@@ -189,7 +181,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         Example:
             ```python
             >>> from pyochain import Vec
-            >>> vec = Vec.from_ref(["a", "b", "c"])
+            >>> vec = Vec(["a", "b", "c"])
             >>> vec.insert(1, "d")
             >>> vec
             Vec('a', 'd', 'b', 'c')
@@ -218,7 +210,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         Example:
             ```python
             >>> from pyochain import Vec, Iter
-            >>> Vec.from_ref([3, 1, 2]).sort()
+            >>> Vec([3, 1, 2]).sort()
             Vec(1, 2, 3)
 
             ```
@@ -246,7 +238,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         Example:
             ```python
             >>> from pyochain import Vec, Iter
-            >>> Vec.from_ref(["3", "1", "2"]).sort_by(int)
+            >>> Vec(["3", "1", "2"]).sort_by(int)
             Vec('1', '2', '3')
 
             ```
@@ -254,7 +246,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         self._inner.sort(key=key, reverse=reverse)
         return self
 
-    def concat(self, other: list[T] | Self) -> Vec[T]:
+    def concat(self, other: list[T] | Self) -> Self:
         """Concatenate another `Vec` or `list` to **self** and return a new `Vec`.
 
         Note:
@@ -264,7 +256,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
             other (list[T] | Self): The other `Vec` to concatenate.
 
         Returns:
-            Vec[T]: The new `Vec` after concatenation.
+            Self: The new `Vec` after concatenation.
 
         See Also:
             [`Vec::concat_mut`][concat_mut] which modifies **self** in place.
@@ -272,7 +264,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         Example:
             ```python
             >>> from pyochain import Vec
-            >>> v1 = Vec.from_ref([1, 2, 3])
+            >>> v1 = Vec([1, 2, 3])
             >>> v2 = [4, 5, 6]  # Can also concatenate a standard list
             >>> v3 = v1.concat(v2)
             >>> v3
@@ -291,7 +283,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
                 data = self._inner + other._inner
             case list():
                 data = self._inner + other
-        return Vec.from_ref(data)
+        return self.__class__(data)
 
     def concat_mut(self, other: list[T] | Self) -> Self:
         """Concatenate another `Vec` or `list` to **self** in place.
@@ -314,7 +306,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         Example:
             ```python
             >>> from pyochain import Vec
-            >>> v1 = Vec.from_ref([1, 2, 3])
+            >>> v1 = Vec([1, 2, 3])
             >>> v2 = [4, 5, 6]  # Can also concatenate a standard list
             >>> v1.concat_mut(v2)
             Vec(1, 2, 3, 4, 5, 6)

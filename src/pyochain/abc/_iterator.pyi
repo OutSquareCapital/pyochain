@@ -1050,7 +1050,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             ```python
             >>> from pyochain import Seq, Iter, Vec
             >>> a = Seq((1, 2, 3))
-            >>> vec = Vec.from_ref([0, 1])
+            >>> vec = Vec([0, 1])
             >>> a.iter().map(lambda x: x * 2).collect_into(vec)
             Vec(0, 1, 2, 4, 6)
             >>> a.iter().map(lambda x: x * 10).collect_into(vec)

@@ -2424,7 +2424,7 @@ class Seq[T](PyoSequence[T]):
     Tip:
         `Seq(tuple)` is preferred over `Seq(list)` as this is a no-copy operation (Python optimizes `tuple` creation from another `tuple`).
 
-        If you have an existing `list`, consider using [`Vec::from_ref`][Vec.from_ref] instead to avoid unnecessary copying.
+        If you have an existing `list`, consider using [`Vec`][Vec] instead to avoid unnecessary copying.
 
         If you need immediate iteration anyway, you can directly use [`Iter`][Iter] instead.
 

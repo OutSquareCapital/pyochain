@@ -20,6 +20,7 @@ pub fn abc(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyoCollection>()?;
     m.add_class::<PyoReversible>()?;
     m.add_class::<PyoSequence>()?;
+    m.add_class::<PyoMutableSequence>()?;
     Ok(())
 }
 #[pyclass(subclass, frozen, generic, extends=Checkable)]
@@ -720,7 +721,8 @@ impl PyoIterator {
             }
         }
         collected
-            .pipe_ref(pylibs::pyochain::vec::from_ref)?
+            .as_any()
+            .pipe_ref(pylibs::pyochain::vec::new)?
             .unbind()
             .into_any()
             .pipe(PySome::new)
@@ -1121,8 +1123,8 @@ impl PyoIterator {
             }
         }
         Ok((
-            pylibs::pyochain::vec::from_ref(&true_list)?,
-            pylibs::pyochain::vec::from_ref(&false_list)?,
+            pylibs::pyochain::vec::new(&true_list)?,
+            pylibs::pyochain::vec::new(&false_list)?,
         ))
     }
     #[pyo3(signature = (*others, repeat=1))]
@@ -1177,7 +1179,7 @@ impl PyoIterator {
     fn sort<'py>(slf: &Bound<'py, Self>, reverse: bool) -> PyResult<Bound<'py, PySequence>> {
         slf.try_iter()
             .and_then(|x| pylibs::builtins::sorted(&x, reverse))
-            .and_then(|x| pylibs::pyochain::vec::from_ref(&x))
+            .and_then(|x| pylibs::pyochain::vec::new(&x))
     }
     #[pyo3(signature = (key, *,reverse=false))]
     fn sort_by<'py>(
@@ -1187,7 +1189,7 @@ impl PyoIterator {
     ) -> PyResult<Bound<'py, PySequence>> {
         slf.try_iter()
             .and_then(|x| pylibs::builtins::sorted_by(&x, reverse, key))
-            .and_then(|x| pylibs::pyochain::vec::from_ref(&x))
+            .and_then(|x| pylibs::pyochain::vec::new(&x))
     }
     fn step_by<'py>(
         slf: &Bound<'py, Self>,

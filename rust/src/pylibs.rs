@@ -496,10 +496,9 @@ pub mod pyochain {
         use super::*;
         const VEC: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
         #[inline(always)]
-        pub fn from_ref<'py>(obj: &Bound<'py, PyList>) -> PyResult<Bound<'py, PySequence>> {
+        pub fn new<'py>(obj: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PySequence>> {
             let py = obj.py();
             VEC.import(py, PYOCHAIN, "Vec")?
-                .getattr(intern!(py, "from_ref"))?
                 .call1((obj,))
                 .map(|obj| unsafe { obj.cast_into_unchecked::<PySequence>() })
         }

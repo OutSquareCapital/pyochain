@@ -172,7 +172,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
         Example:
             ```python
             >>> from pyochain import Vec
-            >>> v = Vec.from_ref([1, 2, 3])
+            >>> v = Vec([1, 2, 3])
             >>> u = v.drain(1).collect(Vec)
             >>> v
             Vec(1)
@@ -183,7 +183,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
             Fully consuming the `Iterator` removes all drained elements
             ```python
             >>> from pyochain import Vec
-            >>> v = Vec.from_ref([1, 2, 3])
+            >>> v = Vec([1, 2, 3])
             >>> _ = v.drain().collect(Vec)
             >>> v
             Vec()
@@ -192,7 +192,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T], ABC):
             Deleting the `Iterator` will also remove all drained elements.
             ```python
             >>> from pyochain import Vec
-            >>> vec = Vec.from_ref([1, 2, 3])
+            >>> vec = Vec([1, 2, 3])
             >>> iterator = vec.drain()
             >>> del iterator
             >>> vec
