@@ -52,7 +52,7 @@ type ZippedLongest[T] = (
 )
 """Type representing the result of a `zip_longest` operation, which can yield tuples of varying lengths depending on the number of iterables zipped together."""
 
-type FilterFn[T, R] = Callable[[T], bool | TypeIs[R] | TypeGuard[R]] | None
+type FilterFn[T, R] = Callable[[T], object | TypeIs[R] | TypeGuard[R]] | None
 """Optional closure that can be passed to `PyoIterator::filter` to determine if an element should be yielded."""
 
 @runtime_checkable
@@ -2261,7 +2261,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
     @overload
     def filter[R](self, func: Callable[[T], TypeGuard[R]]) -> PyoIterator[R]: ...
     @overload
-    def filter(self, func: Callable[[T], bool] | None) -> PyoIterator[T]: ...
+    def filter(self, func: Callable[[T], object] | None) -> PyoIterator[T]: ...
     def filter[R, N](
         self, func: FilterFn[T, R] = None
     ) -> PyoIterator[T] | PyoIterator[R] | PyoIterator[N]:
@@ -2315,57 +2315,82 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
 
             ```
         """
+
+    @overload
+    def filter_star[T1, R](
+        self, func: Callable[[T1], TypeIs[R]]
+    ) -> PyoIterator[tuple[R]]: ...
+    @overload
+    def filter_star[T1, R](
+        self, func: Callable[[T1], TypeGuard[R]]
+    ) -> PyoIterator[tuple[R]]: ...
     @overload
     def filter_star[T1](
-        self: PyoIterator[tuple[T1]], func: Callable[[T1], bool]
+        self: PyoIterator[tuple[T1]], func: Callable[[T1], object]
     ) -> PyoIterator[tuple[T1]]: ...
+    @overload
+    def filter_star[T1, T2, R, R2](
+        self, func: Callable[[T1, T2], TypeIs[tuple[R, R2]]]
+    ) -> PyoIterator[tuple[R, R2]]: ...
+    @overload
+    def filter_star[T1, T2, R, R2](
+        self, func: Callable[[T1, T2], TypeGuard[tuple[R, R2]]]
+    ) -> PyoIterator[tuple[R, R2]]: ...
     @overload
     def filter_star[T1, T2](
         self: PyoIterator[tuple[T1, T2]],
-        func: Callable[[T1, T2], bool],
+        func: Callable[[T1, T2], object],
     ) -> PyoIterator[tuple[T1, T2]]: ...
+    @overload
+    def filter_star[T1, T2, T3, R, R2, R3](
+        self, func: Callable[[T1, T2, T3], TypeIs[tuple[R, R2, R3]]]
+    ) -> PyoIterator[tuple[R, R2, R3]]: ...
+    @overload
+    def filter_star[T1, T2, T3, R, R2, R3](
+        self, func: Callable[[T1, T2, T3], TypeGuard[tuple[R, R2, R3]]]
+    ) -> PyoIterator[tuple[R, R2, R3]]: ...
     @overload
     def filter_star[T1, T2, T3](
         self: PyoIterator[tuple[T1, T2, T3]],
-        func: Callable[[T1, T2, T3], bool],
+        func: Callable[[T1, T2, T3], object],
     ) -> PyoIterator[tuple[T1, T2, T3]]: ...
     @overload
     def filter_star[T1, T2, T3, T4](
         self: PyoIterator[tuple[T1, T2, T3, T4]],
-        func: Callable[[T1, T2, T3, T4], bool],
+        func: Callable[[T1, T2, T3, T4], object],
     ) -> PyoIterator[tuple[T1, T2, T3, T4]]: ...
     @overload
     def filter_star[T1, T2, T3, T4, T5](
         self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
-        func: Callable[[T1, T2, T3, T4, T5], bool],
+        func: Callable[[T1, T2, T3, T4, T5], object],
     ) -> PyoIterator[tuple[T1, T2, T3, T4, T5]]: ...
     @overload
     def filter_star[T1, T2, T3, T4, T5, T6](
         self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
-        func: Callable[[T1, T2, T3, T4, T5, T6], bool],
+        func: Callable[[T1, T2, T3, T4, T5, T6], object],
     ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6]]: ...
     @overload
     def filter_star[T1, T2, T3, T4, T5, T6, T7](
         self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7], bool],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7], object],
     ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]]: ...
     @overload
     def filter_star[T1, T2, T3, T4, T5, T6, T7, T8](
         self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], bool],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], object],
     ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]]: ...
     @overload
     def filter_star[T1, T2, T3, T4, T5, T6, T7, T8, T9](
         self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], bool],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], object],
     ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]]: ...
     @overload
     def filter_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
         self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], bool],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], object],
     ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]]: ...
     def filter_star[U: tuple[Any, ...]](
-        self: PyoIterator[U], func: Callable[..., bool]
+        self: PyoIterator[U], func: Callable[..., object]
     ) -> PyoIterator[U]:
         """Creates an `Iterator` which uses a closure **func** to determine if an element should be yielded, where each element is an iterable.
 
@@ -2376,7 +2401,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
         This is useful after using methods like `.zip()`, `.product()`, or `.enumerate()` that yield tuples.
 
         Args:
-            func (Callable[..., bool]): Function to evaluate unpacked elements.
+            func (Callable[..., object]): Function to evaluate unpacked elements.
 
         Returns:
             PyoIterator[U]: An `Iterator` of the items that satisfy the predicate.
@@ -2408,7 +2433,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
     @overload
     def filter_false[U](self, func: Callable[[T], TypeGuard[U]]) -> PyoIterator[U]: ...
     @overload
-    def filter_false(self, func: Callable[[T], bool]) -> PyoIterator[T]: ...
+    def filter_false(self, func: Callable[[T], object]) -> PyoIterator[T]: ...
     def filter_false[U](
         self, func: FilterFn[T, U] = None
     ) -> PyoIterator[T] | PyoIterator[U]:

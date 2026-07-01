@@ -37,6 +37,8 @@ TODO: rerun benchmark before release by finding a way to create a branch with "t
 - **typing**: `Iter`, `Option`, `Result`, `Peekable`, `Seq`, `Set`, and `abc::{PyoIterable, PyoIterator, PyoCollection, PyoSequence, PyoSet}` types are now covariant in their generic type.
 - **typing**: `PyoSequence::get` now has correct generic types for slice overload.
 - **typing**: fixed overloads of `__get_item__` for `Vec`, `Seq` and `Range`.
+- **typing**: added overloads to `PyoIterator::filter_star` to return precise tuple types for up to 3 elements when provided with a closure returning a TypeIs or TypeGuard specifying the narrowed tuple.
+- **typing**: relaxed closure return type for `PyoIterator::{filter, filter_star, filter_false}` to `object`, since all python objects can be evaluated for truthiness.
 
 ### 🚀 Performance improvements
 
