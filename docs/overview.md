@@ -97,21 +97,13 @@ flowchart TB
 
 Abstract collection protocols form a hierarchy that mirrors Python's `collections.abc` module.
 
-Each protocol extends the corresponding one from `collections.abc`, inheriting its interface while adding pyochain-specific functionality.
+They expose the same API as their Python counterparts (required dunders and provided default implementations), with the additional pyochain-specific methods.
 
-Concrete types must implement the required methods (dunders) to satisfy the protocol contract.
+To see how each ABC must be implemented and what it offers, please refer to the [related official Python documentation](https://docs.python.org/3/library/collections.abc.html#collections-abstract-base-classes).
 
-| **ABC**             | **Extends**                      | **Required Methods**                   |
-| ------------------- | -------------------------------- | -------------------------------------- |
-| `PyoIterable`       | `Fluent`, `Checkable`, `Iterable`| `__iter__`                             |
-| `PyoIterator`       | `PyoIterable`, `Iterator`        | `__iter__`, `__next__`                 |
-| `PyoCollection`     | `PyoIterable`, `Collection`      | `__iter__`,`__contains__`, `__len__`   |
-| `PyoSequence`       | `PyoCollection`, `Sequence`      | `__getitem__`, `__len__`               |
-| `PyoMutableSequence`| `PyoSequence`, `MutableSequence` | `__setitem__`, `__delitem__`, `insert` |
-| `PyoSet`            | `PyoCollection`, `Set`           |  `__iter__`, `__contains__`, `__len__` |
-| `PyoMappingView`    | `PyoCollection`, `MappingView`   | `__len__`                              |
-| `PyoMapping`        | `PyoCollection`, `Mapping`       | `__iter__`, `__getitem__`, `__len__`   |
-| `PyoMutableMapping` | `PyoMapping`, `MutableMapping`   | `__setitem__`, `__delitem__`           |
+Simply add `Pyo` as a prefix to the Python ABC name to get the corresponding pyochain ABC.
+
+Note that in the current version at the time of writing this (**v.0.26.0**), they are not all implemented yet.
 
 ## Concrete Collections & Iterators
 
@@ -119,20 +111,20 @@ Pyochain provides concrete collection types that implement the abstract protocol
 
 All collections can be created from any object implementing Python's `Iterable` protocol.
 
-Since these types fully implement their corresponding `collections.abc` protocols , they can act as drop-in replacements for their Python standard library counterparts.
+Since these types fully implement their corresponding interface, they can act as drop-in replacements for their Python standard library counterparts.
 
 ### Concrete Collection Types
 
-| Type                | Underlying Structure | Implements `collections.abc`        | Ordered | Uniqueness | Mutability |
-|---------------------|----------------------|-------------------------------------|---------|------------|------------|
-| `Iter[T]`           | `Iterator[T]`        | `Iterator[T]`                       | N/A     | N/A        | N/A        |
-| `Peekable[T]`       | `Iterator[T]`        | `Iterator[T]`                       | N/A     | N/A        | N/A        |
-| `Seq[T]`            | `tuple[T]`           | `Sequence[T]`                       | Yes     | No         | No         |
-| `Vec[T]`            | `list[T]`            | `MutableSequence[T]`                | Yes     | No         | Yes        |
-| `Set[T]`            | `frozenset[T]`       | `Set[T]`                            | No      | Yes        | No         |
-| `SetMut[T]`         | `set[T]`             | `MutableSet[T]`                     | No      | Yes        | Yes        |
-| `Dict[K,V]`         | `dict[K, V]`         | `MutableMapping[K, V]`              | Yes     | Keys       | Yes        |
-| `PyoKeysView[K]`    | `KeysView[K]`        | `KeysView[K]`, `Set[K]`             | No      | Yes        | No         |
-| `PyoValuesView[V]`  | `ValuesView[V]`      | `ValuesView[V]`                     | No      | No         | No         |
-| `PyoItemsView[K,V]` | `ItemsView[K,V]`     | `ItemsView[K,V]`, `Set[tuple[K,V]]` | No      | Yes        | No         |
-| `Range`             | `range`              | `Sequence[int]`                     | Yes     | No         | No         |
+| Type                | Underlying Structure | Ordered | Uniqueness | Mutability |
+|---------------------|----------------------|---------|------------|------------|
+| `Iter[T]`           | `Iterator[T]`        | N/A     | N/A        | N/A        |
+| `Peekable[T]`       | `Iterator[T]`        | N/A     | N/A        | N/A        |
+| `Seq[T]`            | `tuple[T]`           | Yes     | No         | No         |
+| `Vec[T]`            | `list[T]`            | Yes     | No         | Yes        |
+| `Set[T]`            | `frozenset[T]`       | No      | Yes        | No         |
+| `SetMut[T]`         | `set[T]`             | No      | Yes        | Yes        |
+| `Dict[K,V]`         | `dict[K, V]`         | Yes     | Keys       | Yes        |
+| `PyoKeysView[K]`    | `KeysView[K]`        | No      | Yes        | No         |
+| `PyoValuesView[V]`  | `ValuesView[V]`      | No      | No         | No         |
+| `PyoItemsView[K,V]` | `ItemsView[K,V]`     | No      | Yes        | No         |
+| `Range`             | `range`              | Yes     | No         | No         |
