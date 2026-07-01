@@ -2318,11 +2318,11 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
 
     @overload
     def filter_star[T1, R](
-        self, func: Callable[[T1], TypeIs[R]]
+        self: PyoIterator[tuple[T1]], func: Callable[[T1], TypeIs[R]]
     ) -> PyoIterator[tuple[R]]: ...
     @overload
     def filter_star[T1, R](
-        self, func: Callable[[T1], TypeGuard[R]]
+        self: PyoIterator[tuple[T1]], func: Callable[[T1], TypeGuard[R]]
     ) -> PyoIterator[tuple[R]]: ...
     @overload
     def filter_star[T1](
@@ -2330,11 +2330,12 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
     ) -> PyoIterator[tuple[T1]]: ...
     @overload
     def filter_star[T1, T2, R, R2](
-        self, func: Callable[[T1, T2], TypeIs[tuple[R, R2]]]
+        self: PyoIterator[tuple[T1, T2]], func: Callable[[T1, T2], TypeIs[tuple[R, R2]]]
     ) -> PyoIterator[tuple[R, R2]]: ...
     @overload
     def filter_star[T1, T2, R, R2](
-        self, func: Callable[[T1, T2], TypeGuard[tuple[R, R2]]]
+        self: PyoIterator[tuple[T1, T2]],
+        func: Callable[[T1, T2], TypeGuard[tuple[R, R2]]],
     ) -> PyoIterator[tuple[R, R2]]: ...
     @overload
     def filter_star[T1, T2](
@@ -2343,11 +2344,13 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
     ) -> PyoIterator[tuple[T1, T2]]: ...
     @overload
     def filter_star[T1, T2, T3, R, R2, R3](
-        self, func: Callable[[T1, T2, T3], TypeIs[tuple[R, R2, R3]]]
+        self: PyoIterator[tuple[T1, T2, T3]],
+        func: Callable[[T1, T2, T3], TypeIs[tuple[R, R2, R3]]],
     ) -> PyoIterator[tuple[R, R2, R3]]: ...
     @overload
     def filter_star[T1, T2, T3, R, R2, R3](
-        self, func: Callable[[T1, T2, T3], TypeGuard[tuple[R, R2, R3]]]
+        self: PyoIterator[tuple[T1, T2, T3]],
+        func: Callable[[T1, T2, T3], TypeGuard[tuple[R, R2, R3]]],
     ) -> PyoIterator[tuple[R, R2, R3]]: ...
     @overload
     def filter_star[T1, T2, T3](
