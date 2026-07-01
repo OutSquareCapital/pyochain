@@ -20,7 +20,6 @@ pub fn abc(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyoCollection>()?;
     m.add_class::<PyoReversible>()?;
     m.add_class::<PyoSequence>()?;
-    m.add_class::<PyoMutableSequence>()?;
     Ok(())
 }
 #[pyclass(subclass, frozen, generic, extends=Checkable)]
