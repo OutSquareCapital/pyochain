@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+TODO: rerun benchmark before release by finding a way to create a branch with "tests" up to latest commits, but "src" and "rust" at the last release tag.
+
 ### 🏆 Highlights
 
 - `abc::{PyoIterable, PyoIterator, PyoSized, PyoContainer, PyoCollection, PyoReversible, PyoSequence}` and `Iter`, `Seq`, `Range` have been fully moved to Rust.
@@ -48,7 +50,9 @@ Note that for `unpack_into`, even if it's worse on a relative basis on small `It
 
 What was observed is that the upper values outliers are much less frequent, especially on smaller sizes, where they have been reduced by a factor of 4.
 
-The performance improvements on small Iterators are expected, but the slowdown (albeit minor) on large Iterators is very surprising. There's less outliers, but their magnitude is worse, which can't be explained easily.
+The performance improvements on small Iterators are expected, but the slowdown (albeit minor) on large Iterators is very surprising.
+
+There's less outliers, but their magnitude is worse, which can't be explained easily.
 
 Name                | 10 items | 100 items  | 1_000 items| 10_000 items| Note
 --------------------|----------|------------|------------|-------------| ----
@@ -73,31 +77,28 @@ Name                | 10 items | 100 items  | 1_000 items| 10_000 items| Note
 `chain`             | **1.14x**| **1.04x**  | **1.02x**  | **1.02x**   | The items here are the nb of `Iterable` arguments, not the total number of items in the base `PyoIterator`.
 `product`           | **1.03x**| **1.01x**  | **1.01x**  | **0.99x**   | The items here are the nb of `Iterable` arguments, not the total number of items in the base `PyoIterator`.
 `next`              | **1.31x**| **1.45x**  | **1.47x**  | **1.47x**   | The items here are the nb of calls to `next` in a loop.
-`once_with`         | **1.75x**| **1.83x**  | **1.84x**  | **1.84x**   | The items here are the nb of time we create a `PyoIterator` with a `once_with` call, and then call `next` on it.
-`map_with`          | **0.97x**| **0.98x**  | **0.97x**  | **0.99x**   | Tested with 7 args, and also with variable args. Slight regressions -> we must reconstruct the tuple args for each call (func, self, others).
+`once_with`         | **1.75x**| **1.83x**  | **1.84x**  | **1.84x**   | The items here are the nb of time we create a `PyoIterator` with `once_with()`, and then call `next` on it.
+`map_with`          | **0.97x**| **0.98x**  | **0.97x**  | **0.99x**   | Slight regressions -> we must reconstruct the tuple args for each call (func, self, others).
 `tail`              | **1.20x**| **1.24x**  | **1.23x**  | **1.19x**   | -
 `Some::iter`        | **4.66x**| **5.28x**  | **5.28x**  | **5.20x**   | `Iter` is directly created from `new` constructor, no `getattr` pattern.
 `Null::iter`        | **5.87x**| **7.13x**  | **7.07x**  | **6.96x**   | `Iter` is directly created from `new` constructor, no `getattr` pattern.
 `Err::iter`         | **5.75x**| **6.95x**  | **6.92x**  | **6.89x**   | `Iter` is directly created from `new` constructor, no `getattr` pattern.
 `Ok::iter`          | **7.16x**| **8.62x**  | **8.71x**  | **8.67x**   | It was calling `self.ok()` before internally.
 `PyoIterable::iter` | **1.16x**| **1.19x**  | **1.18x**  | **1.17x**   | -
-`Iter::__init__`    | **1.82x**| **1.93x**  | **1.93x**  | **1.92x**   | Also impact `PyoMutableSequence::{extract_if, drain}` and `PyoReversible::rev` since they create an `Iter` internally.
-`Reversible::rev`   | **5.23x**| **28.99x** | **28.08x** | **25.88x**  | This is for `Range`, `Vec` and `Seq` types. ABC's in itself is 2-3% faster on small iterators thanks to Rust migration.
-
-#### `PyoSequence` methods
-
-- `first, last, get` are now around **1.7x** (`Range`) to **2.1x** (`Seq`) faster, after having both the ABC and the concrete classes migrated to Rust.
-- `Seq::__init__` is **1.29x** (10 items), **1.14x** (100 items), **1.01x** (>= 1_000 items) after full Rust migration.
-- `Range::__init__` is **1.62x** (10 items), **1.61x** (100 items), **1.58x** (1_000 items), **1.54x** (10_000 items) after full Rust migration.
-- `Seq::concat` is **2.58x** (10 items), **1.78x** (100 items), **1.10x** (1_000 items), **1.02x** (10_000 items) after full Rust migration.
+`Iter::__init__`    | **1.82x**| **1.93x**  | **1.93x**  | **1.92x**   | Also impact `PyoMutableSequence::{extract_if, drain}` and `PyoReversible::rev`
+`Reversible::rev`   | **5.23x**| **28.99x** | **28.08x** | **25.88x**  | For `Range`, `Vec` and `Seq` types. ABC's in itself is 2-3% faster on small iterators after Rust migration.
+`Seq::__init__`     | **1.29x**| **1.14x**  | **1.01x**  | **1.01x**   | -
+`Range::__init__`   | **1.62x**| **1.61x**  | **1.58x**  | **1.54x**   | -
+`Seq::concat`       | **2.58x**| **1.78x**  | **1.10x**  | **1.02x**   | -
 
 ---
 
 - **Rust migration and logic optimization**: `PyoIterator::fold_star` args/kwargs truthiness are now matched to check if they are actually needed, and each case passes an optimized function to `itertools::reduce`. Without both for example, the method is was **1.2x** faster. Once migrated to Rust, this case is now **2.23x** faster. With args, the *relative* improvement is of **2.08x**. With args AND kwargs, **1.87x**.
-
 - **Rust migration and logic optimization**: `PyoIterator::map_juxt` is now fully in Rust as a "real" `Iterator` instead of a `Callable` used on `builtin::map`. Performance gains on small funcs tuples, performance regressions on large funcs tuples => **1.16x** faster for 1 func, **1.08x** for 4 funcs, **1.02x** faster for 16 funcs, and **0.95x** slower for 64 funcs. Optimizing the latter is on the roadmap, but all considered, I doubt most ppl will be using `map_juxt` with more than 16 funcs, so It's acceptable in the meantime.
 - **Rust migration**: `PyoIterator::once` is now **1.26x** faster.
 - **Logic optimization**: `PyoIterator::chain` doesn't call `from_iterable` needlessly anymore. Unchanged on small iterators, but around **1.06x** faster on 1k and 10k items when provided with a single `Iterable` argument.
+
+- `PyoSequence::{first, last, get}` are now around **1.7x** (`Range`) to **2.1x** (`Seq`) faster, after having both the ABC and the concrete classes migrated to Rust.
 
 ### ⚠️ Performance regressions
 
