@@ -4,7 +4,7 @@ use crate::option::{PyNull, PySome};
 use crate::pylibs;
 use crate::result::{PyoErr, PyoOk};
 use crate::tools as tls;
-use pyo3::exceptions::{PyIndexError, PyStopIteration, PyValueError};
+use pyo3::exceptions::{PyIndexError, PyNotImplementedError, PyStopIteration, PyValueError};
 use pyo3::types::{
     PyBool, PyFunction, PyInt, PyIterator, PyList, PySequence, PySet, PyString, PyTuple, PyType,
 };
@@ -31,6 +31,14 @@ impl PyoIterable {
     #[pyo3(signature = (*_args, **_kwargs))]
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
         PyClassInitializer::from(Checkable).add_subclass(PyoIterable {})
+    }
+    fn __iter__<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        let name = slf.get_type().name()?.to_str()?.to_owned();
+        let txt = format!(
+            "As a subclass of 'PyoIterable', '__iter__' must be implemented by {}",
+            name
+        );
+        Err(PyNotImplementedError::new_err(txt))
     }
     fn iter<'py>(slf: Bound<'py, Self>) -> PyResult<Py<tls::Iter>> {
         slf.into_any().pipe(tls::Iter::new)
