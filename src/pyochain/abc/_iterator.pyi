@@ -4279,6 +4279,7 @@ class PyoSequence[T](PyoCollection[T], PyoReversible[T], Sequence[T], Protocol):
 
     Example:
         ```python
+        >>> from collections.abc import Iterator
         >>> from pyochain.abc import PyoSequence
         >>> from pyochain import Seq
         >>>

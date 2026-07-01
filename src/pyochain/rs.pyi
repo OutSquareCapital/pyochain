@@ -1278,7 +1278,7 @@ class OptionType[T](Pipe):
             >>> NONE.reduce(NONE, add)
             NONE
             >>> def concat(a: str, b: str) -> str:
-            >>>    return a + b
+            ...     return a + b
             >>> Some("Hello, ").reduce(Some("World!"), concat)
             Some('Hello, World!')
             >>> Some("I am ").reduce(Some(26), lambda a, b: a + str(b))

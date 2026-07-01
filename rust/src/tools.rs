@@ -1125,6 +1125,8 @@ impl Peekable {
             .map(|x| x.clone_ref(py))
             .map(PySome::new)
             .into_py_any(py)
+            .map(|x| PySome::new(x).into_py_any(py))
+            .unwrap_or_else(|_| PyNull::get(py).into_py_any(py))
     }
 
     fn next_if(&mut self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {

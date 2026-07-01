@@ -204,11 +204,11 @@ class Iter[T](PyoIterator[T]):
         Seq(0, 1, 2, 3, 4)
         >>> iterator = Iter(data)
         >>> # First we have a tuple iterator
-        >>> iterator._inner.__class__.__name__
+        >>> iterator.__iter__().__class__.__name__
         'tuple_iterator'
         >>> # Now we have a map object
         >>> mapped = iterator.map(lambda x: x * 2)
-        >>> mapped._inner.__class__.__name__
+        >>> mapped.__iter__().__class__.__name__
         'map'
         >>> # We collect it, by default into a Seq
         >>> mapped.collect(Seq)
@@ -360,7 +360,7 @@ class Peekable[T](PyoIterator[T]):
         Examples:
             Parse the leading decimal number from an iterator of characters.
             ```python
-            >>> from pyochain import Iter, Option, Some, NONE
+            >>> from pyochain import Iter, Option, Some, NONE, Result
             >>> import unicodedata
             >>>
             >>> iterator = Iter("125 GOTO 10").peekable()
