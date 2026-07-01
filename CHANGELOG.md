@@ -21,7 +21,6 @@
 - **Removal**: Original `PyoIterator::repeat` has been removed, and `PyoIterator::from_repeat` renamed to `repeat`, i.e `from_repeat` replaces the old `repeat`. The original had complex semantics, niche use cases, without a real performance/memory benefit. To get the same behavior, use something like `my_iter.collect(Seq).pipe(lambda it: Iter.repeat(it, n)).map(lambda x: x.iter())`. This also better align with rust `Iterator::repeat` semantics and naming.
 - **Removal**: `Iter::__bool__` has been removed. Use `PyoIterator::peekable::__bool__` instead. This avoid implicit `tee` use.
 - **Removal**: `Iter::{from_ref, cloned}` have been removed. Use `a, b = x.tee()` instead (for `cloned`), or `a, b = Iter(x).tee()` (for `from_ref`), where *a* is the original `Iterator`, and *b* the cloned one.
-- **Removal**: `Vec::from_ref` has been removed. The `Vec` constructor has now a no-copy behavior when provided with a `list` as input, so this method is no longer needed. If you do want to copy the input, call the new method `Vec::copy()` once initialized.
 
 ### 🆕 New features
 
