@@ -1087,10 +1087,6 @@ impl Peekable {
             })
     }
 
-    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
-        slf
-    }
-
     fn __next__<'py>(&mut self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
         match self.peeked.take() {
             Some(value) => Ok(Some(value.into_bound(py))),

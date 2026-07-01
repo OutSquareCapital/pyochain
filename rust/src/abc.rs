@@ -33,12 +33,7 @@ impl PyoIterable {
         PyClassInitializer::from(Checkable).add_subclass(PyoIterable {})
     }
     fn __iter__<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
-        let name = slf.get_type().name()?.to_str()?.to_owned();
-        let txt = format!(
-            "As a subclass of 'PyoIterable', '__iter__' must be implemented by {}",
-            name
-        );
-        Err(PyNotImplementedError::new_err(txt))
+        not_impl_error(slf.as_any(), "PyoIterable", "__iter__")
     }
     fn iter<'py>(slf: Bound<'py, Self>) -> PyResult<Py<tls::Iter>> {
         slf.into_any().pipe(tls::Iter::new)
@@ -55,6 +50,12 @@ impl PyoIterator {
         PyClassInitializer::from(Checkable)
             .add_subclass(PyoIterable {})
             .add_subclass(PyoIterator {})
+    }
+    fn __iter__<'py>(slf: Bound<'py, Self>) -> Bound<'py, Self> {
+        slf
+    }
+    fn __next__<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        not_impl_error(slf.as_any(), "PyoIterator", "__next__")
     }
     #[classmethod]
     fn _from_iterable<'py>(
@@ -1332,6 +1333,9 @@ pub struct PyoContainer;
 
 #[pymethods]
 impl PyoContainer {
+    fn __contains__<'py>(slf: Bound<'py, Self>, _other: &Bound<'py, PyAny>) -> PyResult<bool> {
+        not_impl_error(slf.as_any(), "PyoContainer", "__contains__")
+    }
     #[pyo3(name = "contains")]
     fn pyo_contains(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         slf.contains(value)
@@ -1343,6 +1347,9 @@ pub struct PyoSized;
 
 #[pymethods]
 impl PyoSized {
+    fn __len__<'py>(slf: Bound<'py, Self>) -> PyResult<usize> {
+        not_impl_error(slf.as_any(), "PyoSized", "__len__")
+    }
     #[pyo3(name = "len")]
     fn pyo_len(slf: Bound<'_, Self>) -> PyResult<usize> {
         slf.len()
@@ -1365,6 +1372,12 @@ impl PyoCollection {
             .add_subclass(PyoIterable)
             .add_subclass(Self {})
     }
+    fn __contains__<'py>(slf: Bound<'py, Self>, _other: &Bound<'py, PyAny>) -> PyResult<bool> {
+        not_impl_error(slf.as_any(), "PyoContainer", "__contains__")
+    }
+    fn __len__<'py>(slf: Bound<'py, Self>) -> PyResult<usize> {
+        not_impl_error(slf.as_any(), "PyoSized", "__len__")
+    }
     #[pyo3(name = "contains")]
     fn pyo_contains(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         slf.contains(value)
@@ -1383,6 +1396,9 @@ pub struct PyoReversible;
 
 #[pymethods]
 impl PyoReversible {
+    fn __reversed__<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, PyIterator>> {
+        not_impl_error(slf.as_any(), "PyoReversible", "__reversed__")
+    }
     /// We use unsafe code here because calling `reversed` with `PyOnceLock` pattern is 2x slower than pure python for some reason.
     fn rev(slf: Bound<'_, Self>) -> PyResult<Py<tls::Iter>> {
         slf.as_any()
@@ -1391,6 +1407,7 @@ impl PyoReversible {
     }
 }
 
+// TODO: check difference once we had `sequence` to pyclass macro
 #[pyclass(subclass, frozen, generic, extends=PyoCollection)]
 pub struct PyoSequence;
 #[pymethods]
@@ -1402,6 +1419,15 @@ impl PyoSequence {
             .add_subclass(PyoIterable)
             .add_subclass(PyoCollection)
             .add_subclass(Self {})
+    }
+    fn __reversed__<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, PyIterator>> {
+        not_impl_error(slf.as_any(), "PyoReversible", "__reversed__")
+    }
+    fn __getitem__<'py>(
+        slf: &Bound<'py, Self>,
+        _index: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        not_impl_error(slf.as_any(), "PyoSequence", "__getitem__")
     }
     fn first<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
         slf.get_item(0)
@@ -1430,4 +1456,14 @@ impl PyoSequence {
             .pipe(pylibs::builtins::reversed)
             .pipe(|x| tls::Iter::new(x))
     }
+}
+
+#[inline]
+fn not_impl_error<'py, T>(cls: &Bound<'py, PyAny>, parent: &str, method: &str) -> PyResult<T> {
+    let name = cls.get_type().name()?.to_str()?.to_owned();
+    let txt = format!(
+        "As a subclass of '{}', '{}' must be implemented by {}",
+        parent, method, name
+    );
+    Err(PyNotImplementedError::new_err(txt))
 }
