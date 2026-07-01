@@ -3,12 +3,14 @@
 ## [Unreleased]
 
 TODO: rerun benchmark before release by finding a way to create a branch with "tests" up to latest commits, but "src" and "rust" at the last release tag.
+TODO: check how to setup a "blog" section in the website for major releases, to avoid bloating the changelog with too much text.
 
 ### 🏆 Highlights
 
 - `abc::{PyoIterable, PyoIterator, PyoSized, PyoContainer, PyoCollection, PyoReversible, PyoSequence}` and `Iter`, `Seq`, `Range` have been fully moved to Rust.
 - `abc::PyoIterator::peekable` has been completely refactored and now aligns with Rust std `Iterator`, with the methods `peek`, `next_if`, `next_if_eq`, and `next_if_map`, all implemented in Rust.
 - `abc::Reversible::rev` got huge performance gains on concrete classes (`Range`, `Vec`, etc...), up to **28x** faster, by implementing `__reversed__` dunder, which now return the C level `Iterator` directly, instead of relying on the `abc` auto implementation.
+- **typing**: The variance of generics for immutable classes (abstract and concrete) is now correctly handled and align with python stdlib. For example, `PyoMapping`, `Seq` or `Set` are now covariant, whilst `Dict` or `Vec` stay invariant.
 
 ### 💥 Breaking changes
 
@@ -39,6 +41,7 @@ TODO: rerun benchmark before release by finding a way to create a branch with "t
 - **typing**: fixed overloads of `__get_item__` for `Vec`, `Seq` and `Range`.
 - **typing**: added overloads to `PyoIterator::filter_star` to return precise tuple types for up to 3 elements when provided with a closure returning a TypeIs or TypeGuard specifying the narrowed tuple.
 - **typing**: relaxed closure return type for `PyoIterator::{filter, filter_star, filter_false}` to `object`, since all python objects can be evaluated for truthiness.
+- **typing**: The variance of generics for immutable classes (abstract and concrete) is now correctly handled and align with python stdlib. For example, `PyoMapping`, `Seq` or `Set` are now covariant, whilst `Dict` or `Vec` stay invariant.
 
 ### 🚀 Performance improvements
 

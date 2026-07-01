@@ -2,13 +2,17 @@ from __future__ import annotations
 
 from abc import ABC
 from collections.abc import Mapping, MappingView, MutableMapping
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, Generic, TypeVar, override
 
 from ..rs import NONE, Err, Ok, Option, Result, Some, option
 from ._iterator import PyoCollection  # pyright: ignore[reportMissingModuleSource]
 
 if TYPE_CHECKING:
     from .._views import PyoItemsView, PyoKeysView, PyoValuesView
+
+# TODO: It doesn't seem possible ATM to make Mapping generics work regarding covariance with the modern syntax.
+K = TypeVar("K")
+V_co = TypeVar("V_co", covariant=True)
 
 
 class PyoMappingView[T](PyoCollection[T], MappingView, ABC):
@@ -25,7 +29,7 @@ class PyoMappingView[T](PyoCollection[T], MappingView, ABC):
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
 
-class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
+class PyoMapping(PyoCollection[K], Mapping[K, V_co], ABC, Generic[K, V_co]):  # noqa: UP046
     """Extends `PyoCollection[K]` and `collections.abc.Mapping[K, V]`.
 
     Serves as a base class for pyochain mappings, such as `Dict`.
@@ -60,11 +64,11 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
         return PyoKeysView(self)
 
     @override
-    def values(self) -> PyoValuesView[V]:
+    def values(self) -> PyoValuesView[V_co]:
         """Return a view of the `Mapping` values.
 
         Returns:
-            PyoValuesView[V]: A view of the dictionary's values.
+            PyoValuesView[V_co]: A view of the dictionary's values.
 
         Example:
             ```python
@@ -80,11 +84,11 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V], ABC):
         return PyoValuesView(self)
 
     @override
-    def items(self) -> PyoItemsView[K, V]:
+    def items(self) -> PyoItemsView[K, V_co]:
         """Return a view of the `Mapping` items.
 
         Returns:
-            PyoItemsView[K, V]: A view of the dictionary's (key, value) pairs.
+            PyoItemsView[K, V_co]: A view of the dictionary's (key, value) pairs.
 
         Example:
             ```python
