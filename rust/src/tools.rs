@@ -489,7 +489,7 @@ impl FromFn {
     }
 }
 #[pyclass]
-struct Drain {
+pub struct Drain {
     vec: Py<PySequence>,
     start: usize,
     current: usize,
@@ -511,7 +511,11 @@ impl Drain {
 #[pymethods]
 impl Drain {
     #[new]
-    fn new(vec: Bound<'_, PySequence>, start: Option<usize>, end: Option<usize>) -> PyResult<Self> {
+    pub fn new(
+        vec: Bound<'_, PySequence>,
+        start: Option<usize>,
+        end: Option<usize>,
+    ) -> PyResult<Self> {
         let s = start.unwrap_or_default();
         let e = end.unwrap_or(vec.len()?);
         Self {
@@ -552,7 +556,7 @@ impl Drop for Drain {
     }
 }
 #[pyclass]
-struct ExtractIf {
+pub struct ExtractIf {
     data: Py<PySequence>,
     pred: Py<PyAny>,
     idx: usize,
@@ -587,10 +591,10 @@ impl ExtractIf {
 #[pymethods]
 impl ExtractIf {
     #[new]
-    fn new(
+    pub fn new(
         data: Bound<'_, PySequence>,
         pred: Bound<'_, PyAny>,
-        start: Option<usize>,
+        start: usize,
         end: Option<usize>,
     ) -> PyResult<Self> {
         let old_len = data.len()?;
@@ -598,7 +602,7 @@ impl ExtractIf {
             data: data.unbind(),
             pred: pred.unbind(),
             old_len,
-            idx: start.unwrap_or_default(),
+            idx: start,
             end: end.unwrap_or(old_len),
             deleted: 0,
             done: false,
@@ -1123,10 +1127,8 @@ impl Peekable {
         self.peeked
             .as_ref()
             .map(|x| x.clone_ref(py))
-            .map(PySome::new)
-            .into_py_any(py)
             .map(|x| PySome::new(x).into_py_any(py))
-            .unwrap_or_else(|_| PyNull::get(py).into_py_any(py))
+            .unwrap_or_else(|| PyNull::get(py).into_py_any(py))
     }
 
     fn next_if(&mut self, func: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {

@@ -1424,3 +1424,52 @@ impl PyoSequence {
             .pipe(|x| tls::Iter::new(x))
     }
 }
+
+#[pyclass(subclass, frozen, generic, extends=PyoSequence)]
+pub struct PyoMutableSequence;
+#[pymethods]
+impl PyoMutableSequence {
+    fn retain(slf: Bound<'_, Self>, predicate: &Bound<'_, PyAny>) -> PyResult<()> {
+        let seq = unsafe { slf.cast_into_unchecked::<PySequence>() };
+        let mut write_idx = 0;
+        //TODO: why TF do we create an Iterator from a range instead of the Sequence itself??
+        for val in (0..seq.len()?).map(|x| seq.get_item(x)) {
+            let curr = val?;
+            if predicate.call1((&curr,))?.is_truthy()? {
+                seq.set_item(write_idx, curr)?;
+                write_idx += 1;
+            }
+        }
+        seq.del_slice(write_idx, usize::MAX)?;
+        Ok(())
+    }
+
+    fn truncate(slf: Bound<'_, Self>, length: usize) -> PyResult<()> {
+        unsafe { slf.cast_into_unchecked::<PySequence>() }.del_slice(length, usize::MAX)
+    }
+    #[pyo3(signature = (predicate, start=0, end=None))]
+    fn extract_if(
+        slf: Bound<'_, Self>,
+        predicate: Bound<'_, PyAny>,
+        start: usize,
+        end: Option<usize>,
+    ) -> PyResult<Py<tls::Iter>> {
+        let py = slf.py();
+        unsafe { slf.cast_into_unchecked::<PySequence>() }
+            .pipe(|x| tls::ExtractIf::new(x, predicate, start, end))?
+            .into_bound_py_any(py)
+            .and_then(tls::Iter::new)
+    }
+    #[pyo3(signature = (start=None, end=None))]
+    fn drain(
+        slf: Bound<'_, Self>,
+        start: Option<usize>,
+        end: Option<usize>,
+    ) -> PyResult<Py<tls::Iter>> {
+        let py = slf.py();
+        unsafe { slf.cast_into_unchecked::<PySequence>() }
+            .pipe(|x| tls::Drain::new(x, start, end))?
+            .into_bound_py_any(py)
+            .and_then(tls::Iter::new)
+    }
+}

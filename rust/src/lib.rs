@@ -90,6 +90,7 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<mixins::PyoTap>()?;
     m.add_class::<seq::Seq>()?;
     m.add_class::<seq::Range>()?;
+    m.add_class::<seq::PyoVec>()?;
     m.add_wrapped(pyo3::wrap_pymodule!(tools::tools))?;
     m.add_wrapped(pyo3::wrap_pymodule!(abc::abc))?;
     let sys_mods = py.import("sys")?.getattr("modules")?;
@@ -108,6 +109,11 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     register(&abc_mod, "Reversible", &abc::PyoReversible::type_object(py))?;
     register(&abc_mod, "Reversible", &abc::PyoSequence::type_object(py))?;
     PySequence::register::<abc::PyoSequence>(py)?;
+    register(
+        &abc_mod,
+        "MutableSequence",
+        &abc::PyoMutableSequence::type_object(py),
+    )?;
 
     Ok(())
 }
