@@ -230,13 +230,11 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
             >>> from pyochain import SetMut
             >>> s = SetMut(("a", "b"))
             >>> s_copy = s.copy()
-            >>> s_copy
-            {'a', 'b'}
             >>> s_copy.add("c")
-            >>> s_copy
-            {'a', 'b', 'c'}
-            >>> s
-            SetMut('a', 'b')
+            >>> "c" in s
+            False
+            >>> "c" in s_copy
+            True
 
             ```
         """
