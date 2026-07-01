@@ -1,10 +1,8 @@
 # Pyochain Library: Overview of the API
 
-Pyochain provides various types and utilities designed to work together in a cohesive and intuitive way.
-
 Below is a diagram showing the pyochain API, and the relationships between its core types.
 
-the colors represent the different categories:
+The colors represent the different categories:
   
 - **Purple**: small mixins classes
 - **Green**: abstract collection protocols, mirroring `collections.abc`
@@ -18,22 +16,23 @@ config:
   layout: elk
 ---
 flowchart TB
+    Pipe["Pipe"] --> Fluent
+    Tap["Tap"] --> Fluent
     Fluent["Fluent"] ==> PyoIterable["PyoIterable[T]"] & Result["Result[T, E]"] & Option["Option[T]"]
     Checkable["Checkable"] ==> PyoIterable
     PyoIterable --> PyoIterator["PyoIterator[T]"] & PyoCollection["PyoCollection[T]"]
-    PyoIterator ==> Iter["Iter[T]"]
+    PyoIterator ==> Iter["Iter[T]"] & Peekable["Peekable[T]"]
     PyoCollection --> PyoSequence["PyoSequence[T]"] & PyoSet["PyoSet[T]"] & PyoMappingView["PyoMappingView[T]"] & PyoMapping["PyoMapping[K,V]"]
     PyoSequence --> PyoMutableSequence["PyoMutableSequence[T]"]
-    PyoSequence ==> Seq["Seq[T]"]
-    PyoMutableSequence ==> Vec["Vec[T]"]
-    PyoSet ==> Set["Set[T]"] & PyoKeysView["PyoKeysView[K]"] & PyoItemsView["PyoItemsView[K,V]"]
+    PyoSequence ==> Seq["Seq[T]"] & SliceView["SliceView[T]"] & Range["Range"]
+    PyoMutableSequence ==> Vec["Vec[T]"] & Deque["Deque[T]"]
+    PyoSet ==> PyoMutableSet["PyoMutableSet[T]"] & Set["Set[T]"] & PyoKeysView["PyoKeysView[K]"] & PyoItemsView["PyoItemsView[K,V]"]
+    PyoMutableSet ==>  SetMut["SetMut[T]"] & StableSet["StableSet[T]"]
     PyoMappingView ==> PyoKeysView & PyoValuesView["PyoValuesView[V]"] & PyoItemsView
     PyoMapping ==> PyoMutableMapping["PyoMutableMapping[K,V]"]
     PyoMutableMapping ==> Dict["Dict[K,V]"]
     Result ==> Ok["Ok[T]"] & Err["Err[E]"]
-    Option ==> Some["Some[T]"] & NONE["NONE"]
-    Set ==> SetMut["SetMut[T]"]
-    Seq ==> Vec
+    Option ==> Some["Some[T]"] & Null["Null"]
 
     style Fluent stroke:#9C27B0,stroke-width:2px
     style PyoIterable stroke:#00C853,stroke-width:2px
@@ -43,12 +42,15 @@ flowchart TB
     style PyoIterator stroke:#00C853,stroke-width:2px
     style PyoCollection stroke:#00C853,stroke-width:2px
     style Iter stroke:#1E88E5,stroke-width:2px
+    style Peekable stroke:#1E88E5,stroke-width:2px
     style PyoSequence stroke:#00C853,stroke-width:2px
     style PyoSet stroke:#00C853,stroke-width:2px
     style PyoMappingView stroke:#00C853,stroke-width:2px
     style PyoMapping stroke:#00C853,stroke-width:2px
     style PyoMutableSequence stroke:#00C853,stroke-width:2px
     style Seq stroke:#1E88E5,stroke-width:2px
+    style SliceView stroke:#1E88E5,stroke-width:2px
+    style Range stroke:#1E88E5,stroke-width:2px
     style Vec stroke:#1E88E5,stroke-width:2px
     style Set stroke:#1E88E5,stroke-width:2px
     style PyoKeysView stroke:#1E88E5,stroke-width:2px
@@ -60,7 +62,7 @@ flowchart TB
     style Ok stroke:#E53935,stroke-width:2px
     style Err stroke:#E53935,stroke-width:2px
     style Some stroke:#FDD835,stroke-width:2px
-    style NONE stroke:#FDD835,stroke-width:2px
+    style Null stroke:#FDD835,stroke-width:2px
     linkStyle 0 stroke:#9C27B0,stroke-width:2px,fill:none
     linkStyle 1 stroke:#9C27B0,stroke-width:2px,fill:none
     linkStyle 2 stroke:#AA00FF,stroke-width:2px,fill:none
@@ -90,19 +92,6 @@ flowchart TB
     linkStyle 26 stroke:#2962FF,fill:none,stroke-width:2px
     linkStyle 27 stroke:#2962FF,fill:none,stroke-width:2px
 ```
-
-See the sections below for an overview of each category, and the types they contain.
-
-## Fluent mixins
-
-Fluent mixins are standalone classes that can be subclassed to enable functional method composition.
-
-They depend only on `Self` for their implementation, making them universally applicable.
-
-| Mixin       | Purpose                | Main Capabilities               |
-| ----------- | ---------------------- | ------------------------------- |
-| `Fluent`    | Functional chaining    | `into()`, `inspect()`           |
-| `Checkable` | Conditional operations | `then()`, `ok_or()`, `err_or()` |
 
 ## Abstract Collection protocols
 
@@ -137,6 +126,7 @@ Since these types fully implement their corresponding `collections.abc` protocol
 | Type                | Underlying Structure | Implements `collections.abc`        | Ordered | Uniqueness | Mutability |
 |---------------------|----------------------|-------------------------------------|---------|------------|------------|
 | `Iter[T]`           | `Iterator[T]`        | `Iterator[T]`                       | N/A     | N/A        | N/A        |
+| `Peekable[T]`       | `Iterator[T]`        | `Iterator[T]`                       | N/A     | N/A        | N/A        |
 | `Seq[T]`            | `tuple[T]`           | `Sequence[T]`                       | Yes     | No         | No         |
 | `Vec[T]`            | `list[T]`            | `MutableSequence[T]`                | Yes     | No         | Yes        |
 | `Set[T]`            | `frozenset[T]`       | `Set[T]`                            | No      | Yes        | No         |
@@ -146,19 +136,3 @@ Since these types fully implement their corresponding `collections.abc` protocol
 | `PyoValuesView[V]`  | `ValuesView[V]`      | `ValuesView[V]`                     | No      | No         | No         |
 | `PyoItemsView[K,V]` | `ItemsView[K,V]`     | `ItemsView[K,V]`, `Set[tuple[K,V]]` | No      | Yes        | No         |
 | `Range`             | `range`              | `Sequence[int]`                     | Yes     | No         | No         |
-
-## Option & Result Types
-
-Pyochain provides two fundamental types for explicit handling of nullable values and errors: `Option[T]` and `Result[T, E]`.
-
-### Option
-
-`Option[T]` represents values that may or may not be present, serving as a type-safe alternative to using `None`.
-
-### Result
-
-`Result[T, E]` represents the outcome of operations that can succeed or fail, promoting explicit error handling without exceptions.
-
-A `Result[T, E]` is either `Ok(value)` for successful operations, or `Err(error)` for failures.
-
-Using `Result` as a return type clearly signals to callers that error handling is required.
