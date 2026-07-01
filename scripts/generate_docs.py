@@ -32,7 +32,7 @@ def _generate_all_for_module(module: ModuleType) -> None:
         .once(module)
         .chain(
             Dict
-            .from_ref(vars(module))
+            .from_object(module)
             .values()
             .iter()
             .filter(_is_module)

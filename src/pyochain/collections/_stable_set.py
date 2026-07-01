@@ -112,6 +112,24 @@ class StableSet[T](PyoMutableSet[T]):  # noqa: PLW1641
     def add(self, value: T) -> None:
         self._inner[value] = None
 
+    def copy(self) -> StableSet[T]:
+        """Return a shallow copy of the `StableSet`.
+
+        Returns:
+            StableSet[T]: A new `StableSet` instance that is a shallow copy of the original.
+
+        Example:
+            ```python
+            >>> from pyochain.collections import StableSet
+            >>> s = StableSet(("a", "b", "c"))
+            >>> s_copy = s.copy()
+            >>> s_copy
+            StableSet('a', 'b', 'c')
+
+            ```
+        """
+        return StableSet.from_ref(self._inner.copy())
+
     @override
     def discard(self, value: T) -> None:
         del self._inner[value]

@@ -110,7 +110,7 @@ class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
             value (V1): The value that each key will be mapped to.
 
         Returns:
-            Dict[K1, V1]: A new `PyoMapping` instance containing the specified keys and value.
+            Dict[K1, V1]: A new `Dict` instance containing the specified keys and value.
 
         Example:
             ```python
@@ -267,6 +267,26 @@ class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
             ```
         """
         return Dict.from_ref(obj.__dict__)
+
+    def copy(self) -> Dict[K, V]:
+        """Create a shallow copy of the `Dict`.
+
+        Returns:
+            Dict[K, V]: A new `Dict` instance containing the same key-value pairs as the original.
+
+        Example:
+            ```python
+            >>> from pyochain import Dict
+            >>> d1 = Dict({1: "a", 2: "b"})
+            >>> d2 = d1.copy()
+            >>> d2
+            Dict(1: 'a', 2: 'b')
+            >>> d1 is d2
+            False
+
+            ```
+        """
+        return Dict.from_ref(self._inner.copy())
 
     def union(self, other: dict[K, V] | Self) -> Dict[K, V]:
         """Merge another `dict` or `Dict` with this `Dict`, returning a new one with the combined key-value pairs.

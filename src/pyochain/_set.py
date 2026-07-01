@@ -219,6 +219,29 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
         """
         self._inner.add(value)
 
+    def copy(self) -> Self:
+        """Create a shallow copy of the underlying `set`.
+
+        Returns:
+            Self: A shallow copy of the underlying `set`.
+
+        Example:
+            ```python
+            >>> from pyochain import SetMut
+            >>> s = SetMut(("a", "b"))
+            >>> s_copy = s.copy()
+            >>> s_copy
+            {'a', 'b'}
+            >>> s_copy.add("c")
+            >>> s_copy
+            {'a', 'b', 'c'}
+            >>> s
+            SetMut('a', 'b')
+
+            ```
+        """
+        return self.__class__(self._inner.copy())
+
     @override
     def discard(self, value: T) -> None:
         """Remove an element from **self** if it is a member.

@@ -25,7 +25,7 @@
 
 ### 🆕 New features
 
-- `Vec::copy` to create shallow copies of the `Vec` instance, just like `list.copy()` for builtins.
+- `{Dict, SetMut, StableSet, Vec}::copy` to create shallow copies of the instance, just like `x.copy()` for their respective underlying builtins.
 
 ### ✨ Enhancements
 
