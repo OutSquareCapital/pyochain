@@ -4330,8 +4330,8 @@ class PyoSequence[T](PyoCollection[T], PyoReversible[T], Sequence[T], Protocol):
         >>> my_seq = MySeq([10, 20, 30])
         >>> my_seq.first()
         10
-        >>> my_seq.rev().collect(Seq)
-        Seq(30, 20, 10)
+        >>> my_seq.get(2)
+        Some(30)
 
         ```
     """
