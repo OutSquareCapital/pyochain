@@ -1,26 +1,41 @@
 # pyochain
 
-`pyochain` is a python library that provides various classes with a fluent API, to work with iterations, collections, handle optional values, manage errors, and more.
+`pyochain` is a python library that provides various classes with a **fluent API**, to work with **iterations**, **collections**, **handle optional values**, **manage errors**, and more!
 
-The API and functionalities are inspired by Rust's `Iterator`, `Result`, `Option`, and libraries like `Polars`, `toolz` and `more-itertools`.
+## Table of Contents
+
+- [Key Features](#key-features)
+- [Core design principles](#core-design-principles)
+- [Installation](#installation)
+- [Links](#links)
+- [Why use pyochain?](#why-use-pyochain)
+- [Getting started](#getting-started)
+- [Notice on Stability](#notice-on-stability-)
+- [Contributing](#contributing)
+- [Credits](#credits)
+
+---
 
 ## Key Features
 
 - `Option[T]` to handle optional values instead of `T | None`.
 - `Result[T, E]` to handle success and error paths instead of `try.. except` blocks.
-- `Iterator` types covering all python builtins and `itertools`, as well as many methods from Rust's `Iterator` and `more-itertools`.
-- `Collection` types covering all built-in python types, and additional ones like no-copy slice views.
-- `ABC`'s hierarchy for duck typing, shared methods, and the possibility to implement your own subclasses.
-- `Mixin`'s addable to any class, to provide a fluent API , or `Option`/`Result` conversions on truthiness evaluation.
-- **Compiled** in Rust for maximum performance with Pyo3.
+- `Iterator` types for python builtins (`zip`, `map`, ...) and `itertools`, as well as many methods from Rust's `Iterator`, and libraries like `toolz` or `more-itertools`.
+- `Collection` types covering python builtins (`list`, `deque`, `set`, ...), and additional ones like no-copy slice views.
+- `ABC`'s hierarchy mimicking `collections.abc`, for duck typing, shared methods, and the possibility to implement your own subclasses.
+- `Mixin`'s addable to any class, to provide a fluent API with `pipe` and `tap`, or `Option`/`Result` conversions on truthiness evaluation.
+
+## Core design principles
+
+- **Compiled** in Rust for maximum performance with [Pyo3](https://pyo3.rs/).
 - **Fluent API** design for chaining method calls, to read your code just like a book => from top to bottom, left to right.
 - **First class static typing support**: Generics, overloads, and pattern matching for `Option` and `Result` types.
 
 That's why it's called `pyochain`: it allows you to build *chains* of operations on your data, with code compiled in Rust thanks to [*Pyo3*](https://pyo3.rs/).
 
----
-
 ## Installation
+
+Pyochain supports python **3.13 and above**, and compile wheels for Linux, Windows and MacOS.
 
 ```bash
 uv add pyochain # or pip install pyochain
@@ -28,13 +43,11 @@ uv add pyochain # or pip install pyochain
 
 ## Links
 
-[🐍Pypi](https://pypi.org/project/pyochain/)
+[🐍Pypi package](https://pypi.org/project/pyochain/)
 
 [📚 Full API Reference](https://outsquarecapital.github.io/pyochain/api-reference/)
 
 [📄 README.md](https://github.com/OutSquareCapital/pyochain)
-
-[🚀 Getting started](https://github.com/OutSquareCapital/pyochain#getting-started)
 
 ## Why use pyochain?
 
@@ -50,7 +63,7 @@ Even when the source code was still mostly python, great care had been taken to 
 
 ### 🌍 Rich ecosystem
 
-Pyochain provides a wide range of features designed to interact with each other and the wider Python ecosystem seamlessly, to act as a drop-in replacement for many built-in types and functions.
+Made to act as a drop-in replacement for many built-in types and functions, Pyochain provides a wide range of features designed to interact with each other and the wider Python ecosystem seamlessly.
 
 There's many additional functionalities planned for the future, including `Array`, sorted collections, unique mutable sequences, and more.
 
@@ -74,31 +87,31 @@ Even this README is tested!
 
 ### Mixin's
 
-`Pipe`, `Tap`, `Checkable`, and other mixins provide a fluent API for any class, allowing to chain method calls.
+`Pipe`, `Tap`, `Checkable`, and other mixins are addable to any class to add new methods, regardless of the underlying implementation.
 
 They don't depend on internal state except `__bool__`, thus making them universally applicable to any subclass, including your own.
 
-Users of `pandas`, `polars` or the Rust crate `tap` will feel right at home with `pipe()`, while Rust developers will appreciate the `Checkable` type, providing methods like `then`, `then_some`, or `ok_or_else`, evaluating the instance truthiness to return corresponding `Option` or `Result` types, just like the `bool` methods in Rust.
+Users of `pandas`, `polars` or the Rust crate `tap` will feel right at home with `pipe()` and `tap`, while Rust developers will appreciate the `Checkable` type, providing methods like `then`, `then_some`, or `ok_or_else`, evaluating the instance truthiness to return corresponding `Option` or `Result` types, just like the `bool` methods in Rust.
 
 All pyochain types herit from them, making control flow for collection emptyness or error handling a natural part of a pipeline.
 
 ### Iterators
 
-Pyochain provide various `Iterator` types with a fluent API.
+Pyochain has various `Iterator` types with a fluent API, whose functionnalities come from:
 
-Their methods bring functionnalities from various sources:
-
-- Python `builtins` (fully covered) **=>** `zip`, `map`, etc...
-- `itertools` module (fully covered) **=>** `chain`, `combinations`, etc...
-- Rust `std::iter::Iterator` **=>** `try_collect`, `partition`, etc...
-- `more-itertools` library **=>** `all_unique`, `arg_max`, `tail`, etc...
-- `toolz`  library **=>** `map_juxt`, `count`, `first`, etc...
+- Python `builtins` (fully covered) **=>** `zip`, `map`, ...
+- `itertools` module (fully covered) **=>** `chain`, `combinations`, ...
+- Rust `std::iter::Iterator` **=>** `try_collect`, `partition`, ...
+- `more-itertools` library **=>** `all_unique`, `arg_max`, `tail`, ...
+- `toolz`  library **=>** `map_juxt`, `count`, `first`, ...
 
 They can be used to build complex pipelines of transformations, filters, and aggregations in a readable way (no nested loops or comprehensions), without creating intermediate collections (lazy execution), thus improving performance and memory usage.
 
 Many methods act just like their Rust counterparts: `filter_map` filter the `Option` returned by a closure, `find` return the first element matching a predicate wrapped in an `Option`, etc...
 
 All the source code related to iterators is implemented in Rust and call either in-house implementations or CPython builtins.
+
+This garantee no trade-offs in performance, from the iterator instanciation in itself, to the actual iteration.
 
 Below is an example of how to use `Iter`, and how it compares to a pure Python implementation using `itertools`:
 
@@ -136,7 +149,7 @@ assert pyochain_res == py_res == wanted
 
 Each python built-in collection type (list, tuple, range, dict, set, etc...) has a corresponding pyochain type, with  additional collections like `SliceView` (no copy view of a slice), or `StableSet` (a mutable set that preserves insertion order), and more planned for the future.
 
-Many methods are designed to interoperate with the rest of the library: `Dict::get_item` or `PyoIterator::next` return an `Option`, `PyoIterator::try_fold` a `Result`, `Vec::drain` a `PyoIterator`, and so on.
+Many methods are designed to interoperate with the rest of the library: `Dict::get_item` or `Seq::get` return an `Option`, `Vec::drain` a `PyoIterator`, and so on.
 
 ```python
 from pyochain import Dict, Iter, Some
@@ -289,11 +302,11 @@ We are actively looking for contributors to help us improve `pyochain`! If you a
 
 ## Credits
 
-Most of the custom computation algorithms have been inspired by implementations from itertools, [`cytoolz`](https://github.com/pytoolz/cytoolz) and [`more-itertools`](https://github.com/more-itertools/more-itertools).
+Most of the custom computation algorithms have been inspired by implementations from [`itertools`](https://docs.python.org/3/library/itertools.html), [`cytoolz`](https://github.com/pytoolz/cytoolz) and [`more-itertools`](https://github.com/more-itertools/more-itertools).
 
 [Pyo3](https://pyo3.rs/) is used to compile the library in Rust, and provide a seamless integration with Python.
 
-[Polars](https://www.pola.rs/) has been what made me realize that reading my code from top to bottom was a better way to write python code, and also introduced me to Rust.
+Using [Polars](https://www.pola.rs/) made me realize that reading my code from top to bottom was a better way to write python, and also introduced me to Rust.
 
 ## Star History
 
