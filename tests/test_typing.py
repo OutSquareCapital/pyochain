@@ -3,16 +3,31 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from pyochain import Iter, Ok, Option, Result, Seq, Set, Some
+from pyochain import Iter, Ok, Option, Result, Seq, Set, Some, Vec
 
 if TYPE_CHECKING:
+    from collections.abc import (
+        Collection,
+        Container,
+        Iterable,
+        Iterator,
+        MutableSequence,
+        Reversible,
+        Sequence,
+        Sized,
+    )
+
     from pyochain import Peekable
     from pyochain.abc import (
         PyoCollection,
+        PyoContainer,
         PyoIterable,
         PyoIterator,
+        PyoMutableSequence,
+        PyoReversible,
         PyoSequence,
         PyoSet,
+        PyoSized,
     )
 
 
@@ -27,7 +42,6 @@ class Dog(Animal):
 
 
 def check_covariance() -> None:
-    """This can't be introspected at runtime. The type checker step is what will catch errors."""
     base: PyoIterable[Dog] = Iter(())
     opt: Option[Dog] = Some(Dog())
     res: Result[Dog, str] = Ok(Dog())
@@ -42,3 +56,203 @@ def check_covariance() -> None:
     _set_immutable: Set[Animal] = base.collect(Set)
     _as_opt: Option[Animal] = opt
     _as_res: Result[Animal, str] = res
+
+
+def _iterable[T](x: Iterable[T]) -> Iterable[T]:
+    return x
+
+
+def _iterator[T](x: Iterator[T]) -> Iterator[T]:
+    return x
+
+
+def _sized[T](x: Sized) -> Sized:
+    return x
+
+
+def _reversible[T](x: Reversible[T]) -> Reversible[T]:
+    return x
+
+
+def _container[T](x: Container[T]) -> Container[T]:
+    return x
+
+
+def _collection[T](x: Collection[T]) -> Collection[T]:
+    return x
+
+
+def _sequence[T](x: Sequence[T]) -> Sequence[T]:
+    return x
+
+
+def _mutable_sequence[T](x: MutableSequence[T]) -> MutableSequence[T]:
+    return x
+
+
+def check_iterable_args() -> None:
+    base: PyoIterable[Dog] = Iter(())
+    canary: Iterable[Dog] = base
+    _ = _iterable(base)
+    _ = _iterable(canary)
+    _ = _iterator(base)
+    _ = _iterator(canary)
+    _ = _sized(base)  # pyright: ignore[reportArgumentType]
+    _ = _sized(canary)  # pyright: ignore[reportArgumentType]
+    _ = _container(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _container(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _reversible(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _reversible(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _collection(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _collection(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _sequence(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _sequence(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+
+
+def check_iterator_args() -> None:
+    base: PyoIterator[Dog] = Iter(())
+    canary: Iterator[Dog] = base
+    _ = _iterable(base)
+    _ = _iterable(canary)
+    _ = _iterator(base)
+    _ = _iterator(canary)
+    _ = _sized(base)  # pyright: ignore[reportArgumentType]
+    _ = _sized(canary)  # pyright: ignore[reportArgumentType]
+    _ = _container(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _container(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _reversible(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _reversible(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _collection(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _collection(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _sequence(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _sequence(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+
+
+def check_sized_args() -> None:
+    base: PyoSized = Seq(())
+    canary: Sized = base
+    _ = _iterable(base)
+    _ = _iterable(canary)
+    _ = _iterator(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _iterator(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _sized(base)
+    _ = _sized(canary)
+    _ = _container(base)
+    _ = _container(canary)
+    _ = _reversible(base)
+    _ = _reversible(canary)
+    _ = _collection(base)
+    _ = _collection(canary)
+    _ = _sequence(base)
+    _ = _sequence(canary)
+    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+
+
+def check_reversible_args() -> None:
+    base: PyoReversible[Dog] = Seq(())
+    canary: Reversible[Dog] = base
+    _ = _iterable(base)
+    _ = _iterable(canary)
+    _ = _iterator(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _iterator(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _sized(base)
+    _ = _sized(canary)
+    _ = _container(base)
+    _ = _container(canary)
+    _ = _reversible(base)
+    _ = _reversible(canary)
+    _ = _collection(base)
+    _ = _collection(canary)
+    _ = _sequence(base)
+    _ = _sequence(canary)
+    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+
+
+def check_container_args() -> None:
+    base: PyoContainer[Dog] = Seq(())
+    canary: Container[Dog] = base
+    _ = _iterable(base)
+    _ = _iterable(canary)
+    _ = _iterator(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _iterator(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _sized(base)
+    _ = _sized(canary)
+    _ = _container(base)
+    _ = _container(canary)
+    _ = _reversible(base)
+    _ = _reversible(canary)
+    _ = _collection(base)
+    _ = _collection(canary)
+    _ = _sequence(base)
+    _ = _sequence(canary)
+    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+
+
+def check_collection_args() -> None:
+    base: PyoCollection[Dog] = Seq(())
+    canary: Collection[Dog] = base
+    _ = _iterable(base)
+    _ = _iterable(canary)
+    _ = _iterator(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _iterator(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _sized(base)
+    _ = _sized(canary)
+    _ = _container(base)
+    _ = _container(canary)
+    _ = _reversible(base)
+    _ = _reversible(canary)
+    _ = _collection(base)
+    _ = _collection(canary)
+    _ = _sequence(base)
+    _ = _sequence(canary)
+    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+
+
+def check_sequence_args() -> None:
+    base: PyoSequence[Dog] = Seq(())
+    canary: Sequence[Dog] = base
+    _ = _iterable(base)
+    _ = _iterable(canary)
+    _ = _iterator(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _iterator(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _sized(base)
+    _ = _sized(canary)
+    _ = _container(base)
+    _ = _container(canary)
+    _ = _reversible(base)
+    _ = _reversible(canary)
+    _ = _collection(base)
+    _ = _collection(canary)
+    _ = _sequence(base)
+    _ = _sequence(canary)
+    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+
+
+def check_mutable_sequence_args() -> None:
+    base: PyoMutableSequence[Dog] = Vec(())
+    canary: MutableSequence[Dog] = base
+    _ = _iterable(base)
+    _ = _iterable(canary)
+    _ = _iterator(base)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _iterator(canary)  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
+    _ = _sized(base)
+    _ = _sized(canary)
+    _ = _container(base)
+    _ = _container(canary)
+    _ = _reversible(base)
+    _ = _reversible(canary)
+    _ = _collection(base)
+    _ = _collection(canary)
+    _ = _sequence(base)
+    _ = _sequence(canary)
+    _ = _mutable_sequence(base)
+    _ = _mutable_sequence(canary)
