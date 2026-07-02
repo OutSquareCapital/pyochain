@@ -8,7 +8,6 @@ TODO: add comprehensive test suites for all ABCs, to:
 """
 
 from collections.abc import Container, Iterable, Iterator, Sized
-from typing import override
 
 import pytest
 
@@ -17,24 +16,18 @@ from pyochain.abc import PyoContainer, PyoIterable, PyoIterator, PyoSized
 DATA = [1, 2, 3]
 
 
-def _iter() -> Iterator[int]:
-    return iter(DATA)
-
-
 def test_iterable() -> None:
+    class Impl:
+        def __iter__(self) -> Iterator[int]:
+            return iter(DATA)
+
     class _PyFail(Iterable[int]): ...  # pyright: ignore[reportImplicitAbstractClass]
 
-    class _PyOk(Iterable[int]):
-        @override
-        def __iter__(self) -> Iterator[int]:
-            return _iter()
+    class _PyOk(Impl, Iterable[int]): ...
 
     class _Pyo(PyoIterable[int]): ...  # pyright: ignore[reportImplicitAbstractClass]
 
-    class _PyoOk(PyoIterable[int]):
-        @override
-        def __iter__(self) -> Iterator[int]:
-            return _iter()
+    class _PyoOk(Impl, PyoIterable[int]): ...
 
     # subclasshook of python Iterable raise error as soon as the class is instantiated
     with pytest.raises(TypeError):
@@ -42,51 +35,45 @@ def test_iterable() -> None:
     # we can't do that (as far as I know) with Pyo3, so we check on the abstract method instead
     with pytest.raises(NotImplementedError):
         _ = iter(_Pyo())  # pyright: ignore[reportAbstractUsage]
-    assert list(_PyOk()) == list(_PyoOk())
+    assert list(iter(_PyOk())) == list(iter(_PyoOk()))
 
 
 def test_iterator() -> None:
-    class _PyFail(Iterator[int]): ...  # pyright: ignore[reportImplicitAbstractClass]
-
-    class _PyOk(Iterator[int]):
+    class Impl:
         def __init__(self) -> None:
-            self._iter: Iterator[int] = _iter()
+            self._iter: Iterator[int] = iter(DATA)
 
-        @override
         def __next__(self) -> int:
             return next(self._iter)
+
+    class _PyFail(Iterator[int]): ...  # pyright: ignore[reportImplicitAbstractClass]
+
+    class _PyOk(Impl, Iterator[int]): ...
 
     class _PyoFail(PyoIterator[int]): ...  # pyright: ignore[reportImplicitAbstractClass]
 
-    class _PyoOk(PyoIterator[int]):
-        def __init__(self) -> None:
-            self._iter: Iterator[int] = _iter()
-
-        @override
-        def __next__(self) -> int:
-            return next(self._iter)
+    class _PyoOk(Impl, PyoIterator[int]): ...
 
     with pytest.raises(TypeError):
         _ = _PyFail()  # pyright: ignore[reportAbstractUsage]
     with pytest.raises(NotImplementedError):
         _ = next(_PyoFail())  # pyright: ignore[reportAbstractUsage]
-    assert list(_PyOk()) == list(_PyoOk())
+    assert list(iter(_PyOk())) == list(iter(_PyoOk()))
+    assert next(_PyOk()) == next(_PyoOk())
 
 
 def test_sized() -> None:
-    class _PyFail(Sized): ...  # pyright: ignore[reportImplicitAbstractClass]
-
-    class _PyOk(Sized):
-        @override
+    class Impl:
         def __len__(self) -> int:
             return len(DATA)
+
+    class _PyFail(Sized): ...  # pyright: ignore[reportImplicitAbstractClass]
+
+    class _PyOk(Impl, Sized): ...
 
     class _PyoFail(PyoSized): ...  # pyright: ignore[reportImplicitAbstractClass]
 
-    class _PyoOk(PyoSized):
-        @override
-        def __len__(self) -> int:
-            return len(DATA)
+    class _PyoOk(Impl, PyoSized): ...
 
     with pytest.raises(TypeError):
         _ = _PyFail()  # pyright: ignore[reportAbstractUsage]
@@ -96,19 +83,17 @@ def test_sized() -> None:
 
 
 def test_container() -> None:
-    class _PyFail(Container[int]): ...  # pyright: ignore[reportImplicitAbstractClass]
-
-    class _PyOk(Container[int]):
-        @override
+    class Impl:
         def __contains__(self, item: int) -> bool:
             return item in DATA
+
+    class _PyFail(Container[int]): ...  # pyright: ignore[reportImplicitAbstractClass]
+
+    class _PyOk(Impl, Container[int]): ...
 
     class _PyoFail(PyoContainer[int]): ...  # pyright: ignore[reportImplicitAbstractClass]
 
-    class _PyoOk(PyoContainer[int]):
-        @override
-        def __contains__(self, item: int) -> bool:
-            return item in DATA
+    class _PyoOk(Impl, PyoContainer[int]): ...
 
     with pytest.raises(TypeError):
         _ = _PyFail()  # pyright: ignore[reportAbstractUsage]
