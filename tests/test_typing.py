@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
-from pyochain import Iter, Ok, Option, Result, Seq, Set, Some, Vec
+from pyochain import Iter, Null, Ok, Option, Result, Seq, Set, Some, Vec, option
 
 if TYPE_CHECKING:
     from collections.abc import (
@@ -41,6 +41,9 @@ class Dog(Animal):
     pass
 
 
+type AnimalLit = Literal["dog", "cat"]
+
+
 def check_covariance() -> None:
     base: PyoIterable[Dog] = Iter(())
     opt: Option[Dog] = Some(Dog())
@@ -56,6 +59,18 @@ def check_covariance() -> None:
     _set_immutable: Set[Animal] = base.collect(Set)
     _as_opt: Option[Animal] = opt
     _as_res: Result[Animal, str] = res
+
+
+def _get_cat() -> AnimalLit | None:
+    return "cat"
+
+
+def _value(x: Animal) -> Animal:
+    return x
+
+
+def _literal(x: AnimalLit) -> AnimalLit:
+    return x
 
 
 def _iterable(x: Iterable[Animal]) -> Iterable[Animal]:
@@ -88,6 +103,63 @@ def _sequence(x: Sequence[Animal]) -> Sequence[Animal]:
 
 def _mutable_sequence(x: MutableSequence[Dog]) -> MutableSequence[Dog]:
     return x
+
+
+def check_option_basic() -> None:
+    base = Some(Dog())
+    canary: Dog | None = base.unwrap_or_none()
+    _ = base.map(_value)
+    if canary is not None:
+        _ = _value(canary)
+
+
+def check_option_literal() -> None:  # noqa: C901
+    lit = _get_cat()
+    # Inferred as Option[str]
+    opt_infered = option(lit)
+    opt_casted: Option[AnimalLit] = option(lit)
+    # Inferred as tuple[AnimalLit | None]
+    canary_infered_tup = (lit,)
+    # Inferred as list[str | None]
+    canary_infered_list = [lit]
+    canary_casted_list: list[AnimalLit | None] = [lit]
+    # TODO: check if the literal inference for tuple but not for option nor list is a variance issue for option, or a special casing for tuple.
+    _ = opt_infered.map(_literal)  # pyright: ignore[reportArgumentType]
+    _ = opt_casted.map(_literal)
+    _ = _literal(canary_infered_list[0]) if canary_infered_list[0] is not None else None  # pyright: ignore[reportArgumentType]
+    _ = _literal(canary_casted_list[0]) if canary_casted_list[0] is not None else None
+    _ = _literal(canary_infered_tup[0]) if canary_infered_tup[0] is not None else None
+
+    match lit:
+        case "dog":
+            pass
+        case "cat":
+            pass
+        case None:
+            pass
+    match canary_infered_tup:
+        case ("dog",):
+            pass
+        case ("cat",):
+            pass
+        case (None,):
+            pass
+    # Here it doesn't work due to invariance of list (I think).
+    match canary_casted_list:  # pyright: ignore[reportMatchNotExhaustive]
+        case ["dog"]:
+            pass
+        case ["cat"]:
+            pass
+        case [None]:
+            pass
+    # But here it's an issue: Literals aren't handled for type unions, even if both members are covariant.
+    match opt_casted:  # pyright: ignore[reportMatchNotExhaustive]
+        case Some("dog"):
+            pass
+        case Some("cat"):
+            pass
+        case Null():
+            pass
 
 
 def check_iterable_args() -> None:
