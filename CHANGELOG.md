@@ -9,9 +9,6 @@ TODO: check how to setup a "blog" section in the website for major releases, to 
 
 - `abc::{PyoIterable, PyoIterator, PyoSized, PyoContainer, PyoCollection, PyoReversible, PyoSequence}` and `Iter`, `Seq`, `Range` have been fully moved to Rust.
 - `abc::PyoIterator::peekable` has been completely refactored and now aligns with Rust std `Iterator`, with the methods `peek`, `next_if`, `next_if_eq`, and `next_if_map`, all implemented in Rust.
-- `abc::Reversible::rev` got huge performance gains on concrete classes (`Range`, `Vec`, etc...), up to **28x** faster, by implementing `__reversed__` dunder, which now return the C level `Iterator` directly, instead of relying on the `abc` auto implementation.
-- `Vec::__iter__` has received the same type of optimization as `rev`. A quick benchmark with timeit show improvements between **25x** to **45x** faster on sizes ranging between 10k to 100k items. `Dict::__contains__` has received the same changes, but the performance isn't really changed, as the default ABC implementation is not that different from an optimized one (at least with a `dict`).
-- `append`, `clear` and `extend` received the same optimization on `Vec` and `Deque`.
 - **typing**: The variance of generics for immutable classes (abstract and concrete) is now correctly handled and align with python stdlib. For example, `PyoMapping`, `Seq` or `Set` are now covariant, whilst `Dict` or `Vec` stay invariant.
 
 ### 💥 Breaking changes
@@ -50,6 +47,14 @@ TODO: check how to setup a "blog" section in the website for major releases, to 
 - **typing**: Thanks to covariance, `PyoIterator::flatten` should not give false positives anymore, since it seems there's no need anymore to manually maintain various overloads for nested `PyoIterator` types.
 
 ### 🚀 Performance improvements
+
+#### Underlying structure delegations
+
+Instead of relying on automatic ABCs implementations, concrete classes now delegate to their underlying structure systematically.
+
+- `abc::Reversible::rev` got huge performance gains on concrete classes (`Range`, `Vec`, etc...), up to **28x** faster, by implementing `__reversed__` dunder, which now return the C level `Iterator` directly, instead of relying on the `abc` auto implementation.
+- `Vec::__iter__` has received the same type of optimization as `rev`. A quick benchmark with timeit show improvements between **25x** to **45x** faster on sizes ranging between 10k to 100k items. `Dict::__contains__` has received the same changes, but the performance isn't really changed, as the default ABC implementation is not that different from an optimized one (at least with a `dict`).
+- `append`, `clear` and `extend` received the same optimization on `Vec` and `Deque`.
 
 #### `PyoIterator` methods
 

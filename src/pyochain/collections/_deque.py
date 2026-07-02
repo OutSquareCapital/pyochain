@@ -9,6 +9,8 @@ from ..abc import PyoMutableSequence
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
 
+type IntoDeque[T] = deque[T] | Deque[T]
+
 
 class Deque[T](PyoMutableSequence[T]):  # noqa: PLW1641
     """Returns a new `Deque` object initialized left-to-right (using append()) from `data`.
@@ -136,9 +138,13 @@ class Deque[T](PyoMutableSequence[T]):  # noqa: PLW1641
         """
         return self.from_ref(self._inner.__iadd__(value))
 
-    def __add__(self, value: Self, /) -> Deque[T]:
+    def __add__(self, value: IntoDeque[T], /) -> Deque[T]:
         """Return self+value."""
-        return self.from_ref(self._inner + value._inner)
+        match value:
+            case Deque():
+                return self.from_ref(self._inner + value._inner)
+            case deque():
+                return self.from_ref(self._inner + value)
 
     def __mul__(self, value: int, /) -> Deque[T]:
         """Return self*value."""
@@ -155,36 +161,36 @@ class Deque[T](PyoMutableSequence[T]):  # noqa: PLW1641
         """
         return self.from_ref(self._inner.__imul__(value))
 
-    def __lt__(self, value: deque[T] | Self, /) -> bool:
+    def __lt__(self, value: IntoDeque[T], /) -> bool:
         """Return self<value."""
         match value:
             case Deque():
                 return self._inner < value.inner
-            case _:
+            case deque():
                 return self._inner < value
 
-    def __le__(self, value: deque[T] | Self, /) -> bool:
+    def __le__(self, value: IntoDeque[T], /) -> bool:
         """Return self<=value."""
         match value:
             case Deque():
                 return self._inner <= value.inner
-            case _:
+            case deque():
                 return self._inner <= value
 
-    def __gt__(self, value: deque[T] | Self, /) -> bool:
+    def __gt__(self, value: IntoDeque[T], /) -> bool:
         """Return self>value."""
         match value:
             case Deque():
                 return self._inner > value.inner
-            case _:
+            case deque():
                 return self._inner > value
 
-    def __ge__(self, value: deque[T] | Self, /) -> bool:
+    def __ge__(self, value: IntoDeque[T], /) -> bool:
         """Return self>=value."""
         match value:
             case Deque():
                 return self._inner >= value.inner
-            case _:
+            case deque():
                 return self._inner >= value
 
     @override
@@ -193,8 +199,10 @@ class Deque[T](PyoMutableSequence[T]):  # noqa: PLW1641
         match value:
             case Deque():
                 return self._inner == value.inner  # pyright: ignore[reportUnknownMemberType]
-            case _:
+            case deque():
                 return self._inner == value
+            case _:
+                return False
 
     @property
     @no_doctest

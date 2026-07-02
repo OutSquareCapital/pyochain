@@ -9,6 +9,8 @@ from .abc import PyoMutableSequence
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
 
+type IntoVec[T] = Vec[T] | list[T]
+
 
 class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
     """Represent a mutable sequence of elements.
@@ -80,6 +82,67 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
                 return self._inner == other
             case _:
                 return False
+
+    @overload
+    def __add__[V](self: Vec[V], value: IntoVec[V], /) -> Vec[V]: ...
+
+    @overload
+    def __add__[S](self, value: IntoVec[S], /) -> Vec[S | T]: ...
+
+    def __add__[V, S](
+        self: Vec[V], value: IntoVec[V] | IntoVec[S], /
+    ) -> Vec[V] | Vec[S | V]:
+        match value:
+            case Vec():
+                return self.from_ref(self._inner + value._inner)  # pyright: ignore[reportArgumentType]
+            case list():
+                return self.from_ref(self._inner + value)  # pyright: ignore[reportArgumentType]
+
+    @override
+    def __iadd__(self, value: Iterable[T], /) -> Vec[T]:
+        return self.from_ref(self._inner.__iadd__(value))
+
+    def __mul__(self, value: SupportsIndex, /) -> Vec[T]:
+        return Vec.from_ref(self._inner * value)
+
+    def __rmul__(self, value: SupportsIndex, /) -> Vec[T]:
+        return Vec.from_ref(value * self._inner)
+
+    def __imul__(self, value: SupportsIndex, /) -> Vec[T]:
+        self._inner *= value
+        return self
+
+    @override
+    def __contains__(self, key: object, /) -> bool:
+        return key in self._inner
+
+    def __gt__(self, value: IntoVec[T], /) -> bool:
+        match value:
+            case Vec():
+                return self._inner > value._inner
+            case list():
+                return self._inner > value
+
+    def __ge__(self, value: IntoVec[T], /) -> bool:
+        match value:
+            case Vec():
+                return self._inner >= value._inner
+            case list():
+                return self._inner >= value
+
+    def __lt__(self, value: IntoVec[T], /) -> bool:
+        match value:
+            case Vec():
+                return self._inner < value._inner
+            case list():
+                return self._inner < value
+
+    def __le__(self, value: IntoVec[T], /) -> bool:
+        match value:
+            case Vec():
+                return self._inner <= value._inner
+            case list():
+                return self._inner <= value
 
     @property
     @no_doctest
