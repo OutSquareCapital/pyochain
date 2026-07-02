@@ -1430,9 +1430,6 @@ impl PyoSequence {
             .add_subclass(PyoCollection)
             .add_subclass(Self {})
     }
-    fn __reversed__<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, PyIterator>> {
-        not_impl_error(slf.as_any(), "PyoReversible", "__reversed__")
-    }
     fn __getitem__<'py>(
         slf: &Bound<'py, Self>,
         _index: Bound<'py, PyAny>,
