@@ -36,6 +36,10 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         self._inner = list(data)
 
     @override
+    def __iter__(self) -> Iterator[T]:
+        return iter(self._inner)
+
+    @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({get_repr(self._inner)})"
 

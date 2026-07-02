@@ -149,6 +149,10 @@ class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
         return iter(self._inner)
 
     @override
+    def __contains__(self, key: object) -> bool:
+        return key in self._inner
+
+    @override
     def __len__(self) -> int:
         return len(self._inner)
 
