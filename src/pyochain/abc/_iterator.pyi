@@ -20,6 +20,7 @@ from typing import (
     TypeGuard,
     TypeIs,
     overload,
+    override,
     runtime_checkable,
 )
 
@@ -203,7 +204,8 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
 
         ```
     """
-
+    @override
+    def __iter__(self) -> Iterator[T]: ...  # noqa: PYI034
     @no_doctest
     @classmethod
     def _from_iterable[I](cls, iterable: Iterable[I]) -> PyoIterator[I]:
