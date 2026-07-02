@@ -1328,11 +1328,16 @@ fn is_sorted_cmp_fn(
         (false, true) => |prev: &Bound<'_, PyAny>, curr: &Bound<'_, PyAny>| prev.ge(curr),
     }
 }
-#[pyclass(subclass, frozen, generic)]
+#[pyclass(subclass, frozen, generic, extends=Checkable)]
 pub struct PyoContainer;
 
 #[pymethods]
 impl PyoContainer {
+    #[new]
+    #[pyo3(signature = (*_args, **_kwargs))]
+    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
+        PyClassInitializer::from(Checkable).add_subclass(Self {})
+    }
     fn __contains__<'py>(slf: Bound<'py, Self>, _other: &Bound<'py, PyAny>) -> PyResult<bool> {
         not_impl_error(slf.as_any(), "PyoContainer", "__contains__")
     }
@@ -1342,11 +1347,16 @@ impl PyoContainer {
     }
 }
 
-#[pyclass(subclass, frozen, generic)]
+#[pyclass(subclass, frozen, generic, extends=Checkable)]
 pub struct PyoSized;
 
 #[pymethods]
 impl PyoSized {
+    #[pyo3(signature = (*_args, **_kwargs))]
+    #[new]
+    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
+        PyClassInitializer::from(Checkable).add_subclass(Self {})
+    }
     fn __len__<'py>(slf: Bound<'py, Self>) -> PyResult<usize> {
         not_impl_error(slf.as_any(), "PyoSized", "__len__")
     }

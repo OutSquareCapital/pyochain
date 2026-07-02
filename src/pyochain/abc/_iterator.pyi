@@ -56,7 +56,7 @@ type FilterFn[T, R] = Callable[[T], object | TypeIs[R] | TypeGuard[R]] | None
 """Optional closure that can be passed to `PyoIterator::filter` to determine if an element should be yielded."""
 
 @runtime_checkable
-class PyoIterable[T](Fluent, Checkable, Iterable[T], Protocol):
+class PyoIterable[T](Checkable, Fluent, Iterable[T], Protocol):
     """Base ABC for all pyochain `Iterables`.
 
     It's the common API surface shared by:
@@ -4192,7 +4192,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
         """
 
 @runtime_checkable
-class PyoContainer[T](Container[T], Protocol):
+class PyoContainer[T](Checkable, Container[T], Protocol):
     """ABC for `collections.abc.Container` Protocol."""
 
     def contains(self, value: T) -> bool:
@@ -4219,7 +4219,7 @@ class PyoContainer[T](Container[T], Protocol):
         """
 
 @runtime_checkable
-class PyoSized(Sized, Protocol):
+class PyoSized(Checkable, Sized, Protocol):
     def len(self) -> int:
         """Return the length of `Self`.
 
