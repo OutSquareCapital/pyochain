@@ -127,6 +127,18 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         instance._inner = data
         return instance
 
+    @override
+    def append(self, value: T) -> None:
+        return self._inner.append(value)
+
+    @override
+    def extend(self, iterable: Iterable[T]) -> None:
+        return self._inner.extend(iterable)
+
+    @override
+    def clear(self) -> None:
+        return self._inner.clear()
+
     def copy(self) -> Self:
         """Return a shallow copy of the `Vec`.
 

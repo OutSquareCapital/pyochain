@@ -220,6 +220,10 @@ class Deque[T](PyoMutableSequence[T]):  # noqa: PLW1641
         """
         return self._inner.maxlen
 
+    @override
+    def append(self, x: T, /) -> None:
+        return self._inner.append(x)
+
     def append_left(self, x: T, /) -> None:
         """Add an element to the left side of the deque.
 
@@ -237,6 +241,14 @@ class Deque[T](PyoMutableSequence[T]):  # noqa: PLW1641
             ```
         """
         return self._inner.appendleft(x)
+
+    @override
+    def extend(self, iterable: Iterable[T]) -> None:
+        return self._inner.extend(iterable)
+
+    @override
+    def clear(self) -> None:
+        return self._inner.clear()
 
     def copy(self) -> Deque[T]:
         """Return a shallow copy of a deque.
