@@ -15,7 +15,6 @@ from pyochain import (
     Seq,
     Set,
     Some,
-    Vec,
     option,
 )
 
@@ -263,9 +262,26 @@ def test_iter_flatten() -> None:
     _fail = ok.flatten()  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]
 
 
-def check_iterable_args() -> None:
-    base: PyoIterable[Dog] = Iter(())
-    canary: Iterable[Dog] = base
+def check_iterable_args(base: PyoIterable[Dog], canary: Iterable[Dog]) -> None:
+    _ = _iterable(base)
+    _ = _iterable(canary)
+    _ = _iterator(base)  # pyright: ignore[reportArgumentType]
+    _ = _iterator(canary)  # pyright: ignore[reportArgumentType]
+    _ = _sized(base)  # pyright: ignore[reportArgumentType]
+    _ = _sized(canary)  # pyright: ignore[reportArgumentType]
+    _ = _container(base)  # pyright: ignore[reportArgumentType]
+    _ = _container(canary)  # pyright: ignore[reportArgumentType]
+    _ = _reversible(base)  # pyright: ignore[reportArgumentType]
+    _ = _reversible(canary)  # pyright: ignore[reportArgumentType]
+    _ = _collection(base)  # pyright: ignore[reportArgumentType]
+    _ = _collection(canary)  # pyright: ignore[reportArgumentType]
+    _ = _sequence(base)  # pyright: ignore[reportArgumentType]
+    _ = _sequence(canary)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType]
+
+
+def check_iterator_args(base: PyoIterator[Dog], canary: Iterator[Dog]) -> None:
     _ = _iterable(base)
     _ = _iterable(canary)
     _ = _iterator(base)
@@ -284,15 +300,13 @@ def check_iterable_args() -> None:
     _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType]
 
 
-def check_iterator_args() -> None:
-    base: PyoIterator[Dog] = Iter(())
-    canary: Iterator[Dog] = base
-    _ = _iterable(base)
-    _ = _iterable(canary)
-    _ = _iterator(base)
-    _ = _iterator(canary)
-    _ = _sized(base)  # pyright: ignore[reportArgumentType]
-    _ = _sized(canary)  # pyright: ignore[reportArgumentType]
+def check_sized_args(base: PyoSized, canary: Sized) -> None:
+    _ = _iterable(base)  # pyright: ignore[reportArgumentType]
+    _ = _iterable(canary)  # pyright: ignore[reportArgumentType]
+    _ = _iterator(base)  # pyright: ignore[reportArgumentType]
+    _ = _iterator(canary)  # pyright: ignore[reportArgumentType]
+    _ = _sized(base)
+    _ = _sized(canary)
     _ = _container(base)  # pyright: ignore[reportArgumentType]
     _ = _container(canary)  # pyright: ignore[reportArgumentType]
     _ = _reversible(base)  # pyright: ignore[reportArgumentType]
@@ -305,9 +319,64 @@ def check_iterator_args() -> None:
     _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType]
 
 
-def check_sized_args() -> None:
-    base: PyoSized = Seq(())
-    canary: Sized = base
+def check_reversible_args(base: PyoReversible[Dog], canary: Reversible[Dog]) -> None:
+    _ = _iterable(base)
+    _ = _iterable(canary)
+    _ = _iterator(base)  # pyright: ignore[reportArgumentType]
+    _ = _iterator(canary)  # pyright: ignore[reportArgumentType]
+    _ = _sized(base)  # pyright: ignore[reportArgumentType]
+    _ = _sized(canary)  # pyright: ignore[reportArgumentType]
+    _ = _container(base)  # pyright: ignore[reportArgumentType]
+    _ = _container(canary)  # pyright: ignore[reportArgumentType]
+    _ = _reversible(base)
+    _ = _reversible(canary)
+    _ = _collection(base)  # pyright: ignore[reportArgumentType]
+    _ = _collection(canary)  # pyright: ignore[reportArgumentType]
+    _ = _sequence(base)  # pyright: ignore[reportArgumentType]
+    _ = _sequence(canary)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType]
+
+
+def check_container_args(base: PyoContainer[Animal], canary: Container[Animal]) -> None:
+    _ = _iterable(base)  # pyright: ignore[reportArgumentType]
+    _ = _iterable(canary)  # pyright: ignore[reportArgumentType]
+    _ = _iterator(base)  # pyright: ignore[reportArgumentType]
+    _ = _iterator(canary)  # pyright: ignore[reportArgumentType]
+    _ = _sized(base)  # pyright: ignore[reportArgumentType]
+    _ = _sized(canary)  # pyright: ignore[reportArgumentType]
+    _ = _container(base)
+    _ = _container(canary)
+    _ = _reversible(base)  # pyright: ignore[reportArgumentType]
+    _ = _reversible(canary)  # pyright: ignore[reportArgumentType]
+    _ = _collection(base)  # pyright: ignore[reportArgumentType]
+    _ = _collection(canary)  # pyright: ignore[reportArgumentType]
+    _ = _sequence(base)  # pyright: ignore[reportArgumentType]
+    _ = _sequence(canary)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType]
+
+
+def check_collection_args(base: PyoCollection[Dog], canary: Collection[Dog]) -> None:
+    _ = _iterable(base)
+    _ = _iterable(canary)
+    _ = _iterator(base)  # pyright: ignore[reportArgumentType]
+    _ = _iterator(canary)  # pyright: ignore[reportArgumentType]
+    _ = _sized(base)
+    _ = _sized(canary)
+    _ = _container(base)
+    _ = _container(canary)
+    _ = _reversible(base)  # pyright: ignore[reportArgumentType]
+    _ = _reversible(canary)  # pyright: ignore[reportArgumentType]
+    _ = _collection(base)
+    _ = _collection(canary)
+    _ = _sequence(base)  # pyright: ignore[reportArgumentType]
+    _ = _sequence(canary)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType]
+
+
+def check_sequence_args(base: PyoSequence[Dog], canary: Sequence[Dog]) -> None:
     _ = _iterable(base)
     _ = _iterable(canary)
     _ = _iterator(base)  # pyright: ignore[reportArgumentType]
@@ -326,93 +395,9 @@ def check_sized_args() -> None:
     _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType]
 
 
-def check_reversible_args() -> None:
-    base: PyoReversible[Dog] = Seq(())
-    canary: Reversible[Dog] = base
-    _ = _iterable(base)
-    _ = _iterable(canary)
-    _ = _iterator(base)  # pyright: ignore[reportArgumentType]
-    _ = _iterator(canary)  # pyright: ignore[reportArgumentType]
-    _ = _sized(base)
-    _ = _sized(canary)
-    _ = _container(base)
-    _ = _container(canary)
-    _ = _reversible(base)
-    _ = _reversible(canary)
-    _ = _collection(base)
-    _ = _collection(canary)
-    _ = _sequence(base)
-    _ = _sequence(canary)
-    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType]
-    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType]
-
-
-def check_container_args() -> None:
-    base: PyoContainer[Dog] = Seq(())
-    canary: Container[Dog] = base
-    _ = _iterable(base)
-    _ = _iterable(canary)
-    _ = _iterator(base)  # pyright: ignore[reportArgumentType]
-    _ = _iterator(canary)  # pyright: ignore[reportArgumentType]
-    _ = _sized(base)
-    _ = _sized(canary)
-    _ = _container(base)
-    _ = _container(canary)
-    _ = _reversible(base)
-    _ = _reversible(canary)
-    _ = _collection(base)
-    _ = _collection(canary)
-    _ = _sequence(base)
-    _ = _sequence(canary)
-    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType]
-    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType]
-
-
-def check_collection_args() -> None:
-    base: PyoCollection[Dog] = Seq(())
-    canary: Collection[Dog] = base
-    _ = _iterable(base)
-    _ = _iterable(canary)
-    _ = _iterator(base)  # pyright: ignore[reportArgumentType]
-    _ = _iterator(canary)  # pyright: ignore[reportArgumentType]
-    _ = _sized(base)
-    _ = _sized(canary)
-    _ = _container(base)
-    _ = _container(canary)
-    _ = _reversible(base)
-    _ = _reversible(canary)
-    _ = _collection(base)
-    _ = _collection(canary)
-    _ = _sequence(base)
-    _ = _sequence(canary)
-    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType]
-    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType]
-
-
-def check_sequence_args() -> None:
-    base: PyoSequence[Dog] = Seq(())
-    canary: Sequence[Dog] = base
-    _ = _iterable(base)
-    _ = _iterable(canary)
-    _ = _iterator(base)  # pyright: ignore[reportArgumentType]
-    _ = _iterator(canary)  # pyright: ignore[reportArgumentType]
-    _ = _sized(base)
-    _ = _sized(canary)
-    _ = _container(base)
-    _ = _container(canary)
-    _ = _reversible(base)
-    _ = _reversible(canary)
-    _ = _collection(base)
-    _ = _collection(canary)
-    _ = _sequence(base)
-    _ = _sequence(canary)
-    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType]
-    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType]
-
-
-def check_mutable_sequence_args() -> None:
-    base: PyoMutableSequence[Dog] = Vec(())
-    canary: MutableSequence[Dog] = base
+def check_mutable_sequence_args(
+    base: PyoMutableSequence[Dog], canary: MutableSequence[Dog]
+) -> None:
     _ = _iterable(base)
     _ = _iterable(canary)
     _ = _iterator(base)  # pyright: ignore[reportArgumentType]
