@@ -10,6 +10,8 @@ if TYPE_CHECKING:
 
     from ._types import DictConvertible
 
+type IntoDict[K, V] = dict[K, V] | Dict[K, V]
+
 
 class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
     """A `Dict` is a key-value store similar to Python's built-in `dict`, but with additional methods inspired by Rust's `HashMap`.
@@ -294,7 +296,7 @@ class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
         """
         return Dict.from_ref(self._inner.copy())
 
-    def union(self, other: dict[K, V] | Self) -> Dict[K, V]:
+    def union(self, other: IntoDict[K, V]) -> Dict[K, V]:
         """Merge another `dict` or `Dict` with this `Dict`, returning a new one with the combined key-value pairs.
 
         If there are duplicate keys, the values from *other* will overwrite those in `Self`.
@@ -302,7 +304,7 @@ class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
         This is equivalent to `|` on a standard Python `dict`.
 
         Args:
-            other (dict[K, V] | Self): The other mapping to merge with.
+            other (IntoDict[K, V]): The other mapping to merge with.
 
         Returns:
             Dict[K, V]: A new mapping containing the merged key-value pairs.
@@ -330,7 +332,7 @@ class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
                 new = self._inner | other
         return self.from_ref(new)
 
-    def union_mut(self, other: dict[K, V] | Self) -> Self:
+    def union_mut(self, other: IntoDict[K, V]) -> Self:
         """Merge another `dict` or `Dict` into `Self` in-place.
 
         If there are duplicate keys, the values from *other* will overwrite those in `Self`.
@@ -338,7 +340,7 @@ class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
         This is equivalent to `|=` on a standard Python `dict`.
 
         Args:
-            other (dict[K, V] | Self): The other mapping to merge with.
+            other (IntoDict[K, V]): The other mapping to merge with.
 
         Returns:
             Self: The modified `Dict` instance after merging.
