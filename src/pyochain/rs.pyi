@@ -1287,7 +1287,7 @@ class OptionType[T](Pipe):
             ```
         """
 
-    def transpose[E](self: OptionType[Result[T, E]]) -> Result[Option[T], E]:
+    def transpose[S, E](self: OptionType[Result[S, E]]) -> Result[Option[S], E]:
         """Transposes an `Option` of a `Result` into a `Result` of an `Option`.
 
         The mapping is as follows:
@@ -2316,10 +2316,10 @@ class ResultType[T, E](Pipe, Protocol):
             ```
         """
 
-    def transpose(self: ResultType[Option[T], E]) -> Option[Result[T, E]]:
+    def transpose[S](self: ResultType[Option[S], E]) -> Option[Result[S, E]]:
         """Transposes a Result containing an Option into an Option containing a Result.
 
-        Can only be called if the inner type is `Option[T, E]`.
+        Can only be called if the inner type is `Option[S, E]`.
 
         The mapping is as follows:
 

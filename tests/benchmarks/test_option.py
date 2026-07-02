@@ -92,7 +92,7 @@ def test_flatten_nested_none(benchmark: BenchFixture) -> None:
 @pytest.mark.parametrize(
     "fn",
     [
-        pytest.param(Some(Ok(10)).transpose, id="ok"),  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownArgumentType]
+        pytest.param(Some(Ok(10)).transpose, id="ok"),
         pytest.param(Some(Err(10)).transpose, id="err"),
         pytest.param(NONE.transpose, id="none"),
     ],

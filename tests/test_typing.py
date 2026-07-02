@@ -3,7 +3,20 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
-from pyochain import Iter, Null, Ok, Option, Result, Seq, Set, Some, Vec, option
+from pyochain import (
+    NONE,
+    Err,
+    Iter,
+    Null,
+    Ok,
+    Option,
+    Result,
+    Seq,
+    Set,
+    Some,
+    Vec,
+    option,
+)
 
 if TYPE_CHECKING:
     from collections.abc import (
@@ -113,6 +126,12 @@ def check_option_basic() -> None:
         _ = _value(canary)
 
 
+def check_option_transpose() -> None:
+    _a: Result[Option[int], int] = Some(Ok(10)).transpose()
+    _b: Result[Option[int], int] = Some(Err(10)).transpose()
+    _c: Result[Option[int], int] = NONE.transpose()
+
+
 def check_option_literal() -> None:  # noqa: C901
     lit = _get_cat()
     # Inferred as Option[str]
@@ -160,6 +179,32 @@ def check_option_literal() -> None:  # noqa: C901
             pass
         case Null():
             pass
+
+
+def check_result_basic() -> None:
+    ok = Ok(Dog())
+    err = Err(Dog())
+    _ = ok.map(lambda x: x).map(_value)
+    _ = err.map(lambda x: x).map_err(_value)
+
+
+def check_result_transpose() -> None:
+    """The error is expected.
+
+    Rust equivalent (won't compile):
+    ```rust
+    fn check_result_transpose() -> () {
+    let _a: Option<Result<u32, i32>> = Ok(Some(10)).transpose();
+    let _b: Option<Result<i32, i32>> = Err(Some(10)).transpose();
+    let _c: Option<Result<i32, i32>> = Ok(None).transpose();
+    let _d: Option<Result<i32, i32>> = Err(None).transpose();
+    }
+    ```
+    """
+    _a: Option[Result[int, int]] = Ok(Some(10)).transpose()
+    _b: Option[Result[int, int]] = Err(Some(10)).transpose()  # pyright: ignore[reportAssignmentType]
+    _c: Option[Result[int, int]] = Ok(NONE).transpose()
+    _d: Option[Result[int, int]] = Err(NONE).transpose()  # pyright: ignore[reportAssignmentType]
 
 
 def check_iterable_args() -> None:

@@ -107,7 +107,7 @@ def test_flatten(benchmark: BenchFixture, fn: BenchCall) -> None:
 @pytest.mark.parametrize(
     "fn",
     [
-        pytest.param(Ok(Some(10)).transpose, id="some"),  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownArgumentType]
+        pytest.param(Ok(Some(10)).transpose, id="some"),
         pytest.param(Ok(NONE).transpose, id="none"),
         pytest.param(Err(10).transpose, id="err"),
     ],
