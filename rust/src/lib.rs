@@ -107,6 +107,11 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     register(&abc_mod, "Collection", &abc::PyoCollection::type_object(py))?;
     register(&abc_mod, "Reversible", &abc::PyoReversible::type_object(py))?;
     register(&abc_mod, "Reversible", &abc::PyoSequence::type_object(py))?;
+    register(
+        &abc_mod,
+        "MutableSequence",
+        &abc::PyoMutableSequence::type_object(py),
+    )?;
     PySequence::register::<abc::PyoSequence>(py)?;
 
     Ok(())

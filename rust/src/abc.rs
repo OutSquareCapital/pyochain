@@ -20,6 +20,7 @@ pub fn abc(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyoCollection>()?;
     m.add_class::<PyoReversible>()?;
     m.add_class::<PyoSequence>()?;
+    m.add_class::<PyoMutableSequence>()?;
     Ok(())
 }
 #[pyclass(subclass, frozen, generic, extends=Checkable)]
@@ -1465,6 +1466,80 @@ impl PyoSequence {
     }
 }
 
+#[pyclass(subclass, frozen, generic, extends=PyoSequence)]
+pub struct PyoMutableSequence;
+#[pymethods]
+impl PyoMutableSequence {
+    #[pyo3(signature = (*_args, **_kwargs))]
+    #[new]
+    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
+        PyClassInitializer::from(Checkable)
+            .add_subclass(PyoIterable)
+            .add_subclass(PyoCollection)
+            .add_subclass(PyoSequence)
+            .add_subclass(Self {})
+    }
+    fn __setitem__<'py>(
+        slf: Bound<'py, Self>,
+        _index: Bound<'py, PyAny>,
+        _value: Bound<'py, PyAny>,
+    ) -> PyResult<()> {
+        not_impl_error(slf.as_any(), "PyoMutableSequence", "__setitem__")
+    }
+    fn __delitem__<'py>(slf: Bound<'py, Self>, _index: Bound<'py, PyAny>) -> PyResult<()> {
+        not_impl_error(slf.as_any(), "PyoMutableSequence", "__delitem__")
+    }
+    fn insert(
+        slf: Bound<'_, Self>,
+        _index: Bound<'_, PyAny>,
+        _value: Bound<'_, PyAny>,
+    ) -> PyResult<()> {
+        not_impl_error(slf.as_any(), "PyoMutableSequence", "insert")
+    }
+    fn retain(slf: Bound<'_, Self>, predicate: &Bound<'_, PyAny>) -> PyResult<()> {
+        let seq = unsafe { slf.cast_into_unchecked::<PySequence>() };
+        let mut write_idx = 0;
+        //TODO: why TF do we create an Iterator from a range instead of the Sequence itself??
+        for val in (0..seq.len()?).map(|x| seq.get_item(x)) {
+            let curr = val?;
+            if predicate.call1((&curr,))?.is_truthy()? {
+                seq.set_item(write_idx, curr)?;
+                write_idx += 1;
+            }
+        }
+        seq.del_slice(write_idx, usize::MAX)?;
+        Ok(())
+    }
+
+    fn truncate(slf: Bound<'_, Self>, length: usize) -> PyResult<()> {
+        unsafe { slf.cast_into_unchecked::<PySequence>() }.del_slice(length, usize::MAX)
+    }
+    #[pyo3(signature = (predicate, start=0, end=None))]
+    fn extract_if(
+        slf: Bound<'_, Self>,
+        predicate: Bound<'_, PyAny>,
+        start: usize,
+        end: Option<usize>,
+    ) -> PyResult<Py<tls::Iter>> {
+        let py = slf.py();
+        unsafe { slf.cast_into_unchecked::<PySequence>() }
+            .pipe(|x| tls::ExtractIf::new(x, predicate, start, end))?
+            .into_bound_py_any(py)
+            .and_then(tls::Iter::new)
+    }
+    #[pyo3(signature = (start=None, end=None))]
+    fn drain(
+        slf: Bound<'_, Self>,
+        start: Option<usize>,
+        end: Option<usize>,
+    ) -> PyResult<Py<tls::Iter>> {
+        let py = slf.py();
+        unsafe { slf.cast_into_unchecked::<PySequence>() }
+            .pipe(|x| tls::Drain::new(x, start, end))?
+            .into_bound_py_any(py)
+            .and_then(tls::Iter::new)
+    }
+}
 #[inline]
 fn not_impl_error<'py, T>(cls: &Bound<'py, PyAny>, parent: &str, method: &str) -> PyResult<T> {
     let name = cls.get_type().name()?.to_str()?.to_owned();
