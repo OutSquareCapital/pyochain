@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Self, override
+from typing import TYPE_CHECKING, Self, override
 
 from ._utils import no_doctest
 from .abc import PyoMutableMapping
@@ -234,19 +234,21 @@ class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
         return Dict.from_ref(kwargs)
 
     @staticmethod
-    def from_object(obj: object) -> Dict[str, Any]:
+    def from_object(obj: object) -> Dict[str, object]:
         """Create a `Dict` from an object `__dict__` attribute.
 
-        We can't know in advance the values types, so we use `Any`.
+        We can't know in advance the values types, so we use `object`.
+
+        Syntactic sugar for `Dict.from_ref(obj.__dict__)`.
 
         Warning:
             This take a direct reference to the object's `__dict__`, so any modifications to the resulting `Dict` will also affect the original object's attributes, and vice versa.
 
         Args:
-            obj (object): The object whose `__dict__` attribute will be used to create the Dict.
+            obj (object): The object whose `__dict__` attribute will be used to create the `Dict`.
 
         Returns:
-            Dict[str, Any]: A new Dict instance containing the attributes of the object.
+            Dict[str, object]: A new `Dict` instance containing the attributes of the object.
 
         Example:
             ```python
@@ -276,7 +278,7 @@ class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
         """Create a shallow copy of the `Dict`.
 
         Returns:
-            Dict[K, V]: A new `Dict` instance containing the same key-value pairs as the original.
+            Dict[K, V]: The copied `Dict` instance.
 
         Example:
             ```python
