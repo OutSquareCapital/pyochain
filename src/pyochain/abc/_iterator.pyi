@@ -2,15 +2,12 @@ from collections.abc import (
     Callable,
     Collection,
     Container,
-    Generator,
     Iterable,
     Iterator,
-    KeysView,
     MutableSequence,
     Reversible,
     Sequence,
     Sized,
-    ValuesView,
 )
 from typing import (
     Any,
@@ -24,13 +21,11 @@ from typing import (
     runtime_checkable,
 )
 
-from pyochain._dict import Dict
-from pyochain._set import Set, SetMut
-from pyochain._tools import Iter, Peekable
+from pyochain._tools import Peekable
 from pyochain._utils import no_doctest
 from pyochain._vec import Vec
 from pyochain.abc import PyoMutableSequence
-from pyochain.rs import Checkable, Fluent, Option, Range, Result, Seq
+from pyochain.rs import Checkable, Fluent, Option, Result
 
 from .._types import (
     LiteralInteger,
@@ -1749,43 +1744,7 @@ class PyoIterator[T](PyoIterable[T], Iterator[T], Protocol):
             ```
         """
 
-    @overload
-    def flatten[U](self: PyoIterator[list[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[tuple[U, ...]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[Iter[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[Seq[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[Vec[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten(self: PyoIterator[range]) -> PyoIterator[int]: ...
-    @overload
-    def flatten(self: PyoIterator[Range]) -> PyoIterator[int]: ...
-    @overload
-    def flatten[U](self: PyoIterator[Set[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[SetMut[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[Dict[U, Any]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[KeysView[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[Generator[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[ValuesView[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[PyoIterator[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[Iterator[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[Sequence[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[Collection[U]]) -> PyoIterator[U]: ...
-    @overload
-    def flatten[U](self: PyoIterator[Iterable[U]]) -> PyoIterator[U]: ...
-    def flatten[U: Iterable[Any]](self: PyoIterator[U]) -> PyoIterator[Any]:
+    def flatten[U](self: PyoIterator[Iterable[U]]) -> PyoIterator[U]:
         """Creates an `Iterator` that flattens nested structures.
 
         This is useful when you have an `Iterator` of `Iterable` and you want to remove one level of indirection.

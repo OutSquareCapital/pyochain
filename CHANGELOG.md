@@ -46,6 +46,7 @@ TODO: check how to setup a "blog" section in the website for major releases, to 
 - **typing**: The variance of generics for immutable classes (abstract and concrete) is now correctly handled and align with python stdlib. For example, `PyoMapping`, `Seq` or `Set` are now covariant, whilst `Dict` or `Vec` stay invariant.
 - **typing**: `Dict::from_object` now returns `Dict[str, object]` instead of `Dict[str, Any]` to avoid silencing errors with strict type checkers (e.g Pyrefly, Basedpyright) who forbid the use of `Any` in generic types. You can always use `typing::cast` if you need specific attribute access without runtime check AND no type checker errors.
 - **typing**: `Result` and `Option` method `transpose` give less false positives now.
+- **typing**: Thanks to covariance, `PyoIterator::flatten` should not give false positives anymore, since it seems there's no need anymore to manually maintain various overloads for nested `PyoIterator` types.
 
 ### 🚀 Performance improvements
 

@@ -10,6 +10,7 @@ from pyochain import (
     Null,
     Ok,
     Option,
+    Range,
     Result,
     Seq,
     Set,
@@ -184,8 +185,11 @@ def check_option_literal() -> None:  # noqa: C901
 def check_result_basic() -> None:
     ok = Ok(Dog())
     err = Err(Dog())
-    _ = ok.map(lambda x: x).map(_value)
-    _ = err.map(lambda x: x).map_err(_value)
+    _a: Result[Animal, Animal] = ok.map(lambda x: x).map_err(_value)
+    _b: Result[Animal, Animal] = ok.map_err(lambda x: x).map(_value)  # pyright: ignore[reportAny]
+    _c: Result[Animal, Animal] = err.map(lambda x: x).map_err(_value)  # pyright: ignore[reportAny]
+    # BUG: This should fail
+    _d: Result[Animal, Animal] = err.map_err(lambda x: x).map(_value)
 
 
 def check_result_transpose() -> None:
@@ -205,6 +209,58 @@ def check_result_transpose() -> None:
     _b: Option[Result[int, int]] = Err(Some(10)).transpose()  # pyright: ignore[reportAssignmentType]
     _c: Option[Result[int, int]] = Ok(NONE).transpose()
     _d: Option[Result[int, int]] = Err(NONE).transpose()  # pyright: ignore[reportAssignmentType]
+
+
+def check_option_flatten() -> None:
+    _a: Option[int] = Some(Some(10)).flatten()
+    _b: Option[int] = Some(NONE).flatten()
+    _c: Option[int] = NONE.flatten()
+
+
+def check_result_flatten() -> None:
+    _a: Result[int, str] = Ok(Ok(10)).flatten()
+    _b: Result[int, str] = Ok(Err("error")).flatten()
+    _c: Result[int, str] = Err("error").flatten()
+    # BUG: This should fail
+    _d: Result[int, str] = Err(Err("error")).flatten()
+
+
+def check_and_then() -> None:
+    """The last case failing is expected.
+
+    Rust equivalent (won't compile):
+    ```rust
+    fn test_flatten() {
+    let _a: Result<i32, &str> = Ok(Ok(10)).and_then(|x| x);
+    let _b: Result<i32, &str> = Ok(Err("error")).and_then(|x| x);
+    let _c: Result<i32, &str> = Err("error").and_then(|x| x);
+    let _d: Result<i32, &str> = Err(Err("error")).and_then(|x| x);
+    }
+    ```
+    """
+    _a: Result[int, str] = Ok(Ok(10)).and_then(lambda x: x)
+    _b: Result[int, str] = Ok(Err("error")).and_then(lambda x: x)
+    _c: Result[int, str] = Err("error").and_then(lambda x: x)  # pyright: ignore[reportAny]
+    _d: Result[int, str] = Err(Err("error")).and_then(lambda x: x)  # pyright: ignore[reportAssignmentType, reportAny]
+
+
+def test_iter_flatten() -> None:
+    nested: PyoIterator[PyoIterator[PyoIterator[list[int]]]] = (
+        Range(0, 3)
+        .iter()
+        .map(
+            lambda x: (
+                Range(0, x)
+                .iter()
+                .map(lambda y: Range(0, y).iter().map(lambda z: Range(0, z).pipe(list)))
+            )
+        )
+    )
+    one: PyoIterator[PyoIterator[list[int]]] = nested.flatten()
+    two: PyoIterator[list[int]] = one.flatten()
+    ok: PyoIterator[int] = two.flatten()
+    # Expected to fail
+    _fail = ok.flatten()  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]
 
 
 def check_iterable_args() -> None:
