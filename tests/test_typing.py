@@ -10,6 +10,9 @@ from pyochain import (
     Null,
     Ok,
     Option,
+    PyoItemsView,
+    PyoKeysView,
+    PyoValuesView,
     Range,
     Result,
     Seq,
@@ -22,12 +25,18 @@ if TYPE_CHECKING:
     from collections.abc import (
         Collection,
         Container,
+        ItemsView,
         Iterable,
         Iterator,
+        KeysView,
+        Mapping,
+        MappingView,
+        MutableMapping,
         MutableSequence,
         Reversible,
         Sequence,
         Sized,
+        ValuesView,
     )
 
     from pyochain import Peekable
@@ -36,6 +45,9 @@ if TYPE_CHECKING:
         PyoContainer,
         PyoIterable,
         PyoIterator,
+        PyoMapping,
+        PyoMappingView,
+        PyoMutableMapping,
         PyoMutableSequence,
         PyoReversible,
         PyoSequence,
@@ -115,6 +127,32 @@ def _sequence(x: Sequence[Animal]) -> Sequence[Animal]:
 
 
 def _mutable_sequence(x: MutableSequence[Dog]) -> MutableSequence[Dog]:
+    return x
+
+
+def _mapping(x: Mapping[Animal, Animal]) -> Mapping[Animal, Animal]:
+    return x
+
+
+def _mutable_mapping(
+    x: MutableMapping[Animal, Animal],
+) -> MutableMapping[Animal, Animal]:
+    return x
+
+
+def _mapping_view(x: MappingView) -> MappingView:
+    return x
+
+
+def _items_view(x: ItemsView[Animal, Animal]) -> ItemsView[Animal, Animal]:
+    return x
+
+
+def _keys_view(x: KeysView[Animal]) -> KeysView[Animal]:
+    return x
+
+
+def _values_view(x: ValuesView[Animal]) -> ValuesView[Animal]:
     return x
 
 
@@ -414,3 +452,155 @@ def check_mutable_sequence_args(
     _ = _sequence(canary)
     _ = _mutable_sequence(base)
     _ = _mutable_sequence(canary)
+
+
+def check_mapping(
+    base: PyoMapping[Animal, Animal], canary: Mapping[Animal, Animal]
+) -> None:
+    _ = _iterable(base)
+    _ = _iterable(canary)
+    _ = _iterator(base)  # pyright: ignore[reportArgumentType]
+    _ = _iterator(canary)  # pyright: ignore[reportArgumentType]
+    _ = _sized(base)
+    _ = _sized(canary)
+    _ = _container(base)
+    _ = _container(canary)
+    _ = _reversible(base)  # pyright: ignore[reportArgumentType]
+    _ = _reversible(canary)  # pyright: ignore[reportArgumentType]
+    _ = _collection(base)
+    _ = _collection(canary)
+    _ = _sequence(base)  # pyright: ignore[reportArgumentType]
+    _ = _sequence(canary)  # pyright: ignore[reportArgumentType]
+    _ = _mapping(base)
+    _ = _mapping(canary)
+    _ = _mutable_mapping(base)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_mapping(canary)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType]
+    _ = _mapping_view(base)  # pyright: ignore[reportArgumentType]
+    _ = _mapping_view(canary)  # pyright: ignore[reportArgumentType]
+
+
+def check_mutable_mapping(
+    base: PyoMutableMapping[Animal, Animal], canary: MutableMapping[Animal, Animal]
+) -> None:
+    _ = _iterable(base)
+    _ = _iterable(canary)
+    _ = _iterator(base)  # pyright: ignore[reportArgumentType]
+    _ = _iterator(canary)  # pyright: ignore[reportArgumentType]
+    _ = _sized(base)
+    _ = _sized(canary)
+    _ = _container(base)
+    _ = _container(canary)
+    _ = _reversible(base)  # pyright: ignore[reportArgumentType]
+    _ = _reversible(canary)  # pyright: ignore[reportArgumentType]
+    _ = _collection(base)
+    _ = _collection(canary)
+    _ = _sequence(base)  # pyright: ignore[reportArgumentType]
+    _ = _sequence(canary)  # pyright: ignore[reportArgumentType]
+    _ = _mapping(base)
+    _ = _mapping(canary)
+    _ = _mutable_mapping(base)
+    _ = _mutable_mapping(canary)
+    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType]
+    _ = _mapping_view(base)  # pyright: ignore[reportArgumentType]
+    _ = _mapping_view(canary)  # pyright: ignore[reportArgumentType]
+
+
+def check_mapping_view_args(base: PyoMappingView, canary: MappingView) -> None:
+    _ = _iterable(base)  # pyright: ignore[reportArgumentType]
+    _ = _iterable(canary)  # pyright: ignore[reportArgumentType]
+    _ = _iterator(base)  # pyright: ignore[reportArgumentType]
+    _ = _iterator(canary)  # pyright: ignore[reportArgumentType]
+    _ = _sized(base)
+    _ = _sized(canary)
+    _ = _container(base)  # pyright: ignore[reportArgumentType]
+    _ = _container(canary)  # pyright: ignore[reportArgumentType]
+    _ = _reversible(base)  # pyright: ignore[reportArgumentType]
+    _ = _reversible(canary)  # pyright: ignore[reportArgumentType]
+    _ = _collection(base)  # pyright: ignore[reportArgumentType]
+    _ = _collection(canary)  # pyright: ignore[reportArgumentType]
+    _ = _sequence(base)  # pyright: ignore[reportArgumentType]
+    _ = _sequence(canary)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType]
+    _ = _mapping_view(base)
+    _ = _mapping_view(canary)
+
+
+def check_items_view_args(
+    base: PyoItemsView[Animal, Animal], canary: ItemsView[Animal, Animal]
+) -> None:
+    _ = _iterable(base)  # pyright: ignore[reportArgumentType]
+    _ = _iterable(canary)  # pyright: ignore[reportArgumentType]
+    _ = _iterator(base)  # pyright: ignore[reportArgumentType]
+    _ = _iterator(canary)  # pyright: ignore[reportArgumentType]
+    _ = _sized(base)
+    _ = _sized(canary)
+    _ = _container(base)
+    _ = _container(canary)
+    _ = _reversible(base)  # pyright: ignore[reportArgumentType]
+    _ = _reversible(canary)  # pyright: ignore[reportArgumentType]
+    _ = _collection(base)  # pyright: ignore[reportArgumentType]
+    _ = _collection(canary)  # pyright: ignore[reportArgumentType]
+    _ = _sequence(base)  # pyright: ignore[reportArgumentType]
+    _ = _sequence(canary)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType]
+    _ = _mapping_view(base)
+    _ = _mapping_view(canary)
+    _ = _items_view(base)
+    _ = _items_view(canary)
+
+
+def check_values_view_args(
+    base: PyoValuesView[Animal], canary: ValuesView[Animal]
+) -> None:
+    _ = _iterable(base)
+    _ = _iterable(canary)
+    _ = _iterator(base)  # pyright: ignore[reportArgumentType]
+    _ = _iterator(canary)  # pyright: ignore[reportArgumentType]
+    _ = _sized(base)
+    _ = _sized(canary)
+    _ = _container(base)
+    _ = _container(canary)
+    _ = _reversible(base)  # pyright: ignore[reportArgumentType]
+    _ = _reversible(canary)  # pyright: ignore[reportArgumentType]
+    _ = _collection(base)
+    _ = _collection(canary)
+    _ = _sequence(base)  # pyright: ignore[reportArgumentType]
+    _ = _sequence(canary)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType]
+    _ = _mapping_view(base)
+    _ = _mapping_view(canary)
+    _ = _keys_view(base)  # pyright: ignore[reportArgumentType]
+    _ = _keys_view(canary)  # pyright: ignore[reportArgumentType]
+    _ = _values_view(base)
+    _ = _values_view(canary)
+
+
+def check_keys_view_args(base: PyoKeysView[Animal], canary: KeysView[Animal]) -> None:
+    _ = _iterable(base)
+    _ = _iterable(canary)
+    _ = _iterator(base)  # pyright: ignore[reportArgumentType]
+    _ = _iterator(canary)  # pyright: ignore[reportArgumentType]
+    _ = _sized(base)
+    _ = _sized(canary)
+    _ = _container(base)
+    _ = _container(canary)
+    _ = _reversible(base)  # pyright: ignore[reportArgumentType]
+    _ = _reversible(canary)  # pyright: ignore[reportArgumentType]
+    _ = _collection(base)
+    _ = _collection(canary)
+    _ = _sequence(base)  # pyright: ignore[reportArgumentType]
+    _ = _sequence(canary)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_sequence(base)  # pyright: ignore[reportArgumentType]
+    _ = _mutable_sequence(canary)  # pyright: ignore[reportArgumentType]
+    _ = _mapping_view(base)
+    _ = _mapping_view(canary)
+    _ = _keys_view(base)
+    _ = _keys_view(canary)
+    _ = _values_view(base)  # pyright: ignore[reportArgumentType]
+    _ = _values_view(canary)  # pyright: ignore[reportArgumentType]
