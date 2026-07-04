@@ -155,8 +155,8 @@ def test_iterator() -> None:
     _check_abc_next_fail(_PyoFail())  # pyright: ignore[reportAbstractUsage]
     py_ok = _PyOk()
     pyo_ok = _PyoOk()
-    _assert_iter_eq(py_ok, pyo_ok)
     assert next(py_ok) == next(pyo_ok)
+    _assert_iter_eq(py_ok, pyo_ok)
 
 
 def test_sized() -> None:
