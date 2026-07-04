@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Literal
 from pyochain import (
     NONE,
     Err,
-    Iter,
     Null,
     Ok,
     Option,
@@ -18,6 +17,7 @@ from pyochain import (
     Seq,
     Set,
     Some,
+    Vec,
     option,
 )
 
@@ -69,23 +69,6 @@ class Dog(Animal):
 type AnimalLit = Literal["dog", "cat"]
 
 
-def check_covariance() -> None:
-    base: PyoIterable[Dog] = Iter(())
-    opt: Option[Dog] = Some(Dog())
-    res: Result[Dog, str] = Ok(Dog())
-    _abc_iterable: PyoIterable[Animal] = base
-    _abc_iterator: PyoIterator[Animal] = base
-    _abc_collection: PyoCollection[Animal] = base.collect(Seq)
-    _abc_sequence: PyoSequence[Animal] = base.collect(Seq)
-    _concrete_iterator: Iter[Animal] = base
-    _peekable_iterator: Peekable[Animal] = base.peekable()
-    _abc_set_immutable: PyoSet[Animal] = base.collect(Set)
-    _seq_immutable: Seq[Animal] = base.collect(Seq)
-    _set_immutable: Set[Animal] = base.collect(Set)
-    _as_opt: Option[Animal] = opt
-    _as_res: Result[Animal, str] = res
-
-
 def _get_cat() -> AnimalLit | None:
     return "cat"
 
@@ -102,7 +85,15 @@ def _iterable(x: Iterable[Animal]) -> Iterable[Animal]:
     return x
 
 
+def _pyoiterable(x: PyoIterable[Dog]) -> PyoIterable[Dog]:
+    return x
+
+
 def _iterator(x: Iterator[Animal]) -> Iterator[Animal]:
+    return x
+
+
+def _pyoiterator(x: PyoIterator[Dog]) -> PyoIterator[Dog]:
     return x
 
 
@@ -122,7 +113,15 @@ def _collection(x: Collection[Animal]) -> Collection[Animal]:
     return x
 
 
+def _pyocollection(x: PyoCollection[Dog]) -> PyoCollection[Dog]:
+    return x
+
+
 def _sequence(x: Sequence[Animal]) -> Sequence[Animal]:
+    return x
+
+
+def _pyosequence(x: PyoSequence[Dog]) -> PyoSequence[Dog]:
     return x
 
 
@@ -154,6 +153,25 @@ def _keys_view(x: KeysView[Animal]) -> KeysView[Animal]:
 
 def _values_view(x: ValuesView[Animal]) -> ValuesView[Animal]:
     return x
+
+
+def _pyoset(x: PyoSet[Dog]) -> PyoSet[Dog]:
+    return x
+
+
+def check_covariance() -> None:
+    base = Vec[Dog](())
+    opt: Option[Dog] = Some(Dog())
+    res: Result[Dog, str] = Ok(Dog())
+    _abc_iterable: PyoIterable[Animal] = _pyoiterable(base)
+    _abc_iterator: PyoIterator[Animal] = _pyoiterator(base.iter())
+    _abc_collection: PyoCollection[Animal] = _pyocollection(base)
+    _abc_sequence: PyoSequence[Animal] = _pyosequence(base)
+    _peekable_iterator: Peekable[Animal] = base.iter().peekable()
+    _abc_set_immutable: PyoSet[Animal] = _pyoset(base.pipe(Set))
+    _seq_immutable: Seq[Animal] = base.pipe(Seq)
+    _as_opt: Option[Animal] = opt
+    _as_res: Result[Animal, str] = res
 
 
 def check_option_basic() -> None:
