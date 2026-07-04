@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from abc import ABC
 from collections.abc import Mapping, MappingView, MutableMapping
 from typing import TYPE_CHECKING, Generic, TypeVar, override
 
@@ -18,7 +17,7 @@ K = TypeVar("K")
 V_co = TypeVar("V_co", covariant=True)
 
 
-class PyoMappingView(PyoSized, MappingView, ABC):
+class PyoMappingView(PyoSized, MappingView):  # pyright: ignore[reportImplicitAbstractClass]
     """Extends both `MappingView` from `collections.abc` and `PyoCollection[T]`.
 
     Is the base class shared by the views returned by `PyoMapping` methods.
@@ -32,7 +31,7 @@ class PyoMappingView(PyoSized, MappingView, ABC):
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
 
-class PyoMapping(PyoCollection[K], Mapping[K, V_co], ABC, Generic[K, V_co]):  # noqa: UP046
+class PyoMapping(PyoCollection[K], Mapping[K, V_co], Generic[K, V_co]):  # noqa: UP046  # pyright: ignore[reportImplicitAbstractClass]
     """Extends `PyoCollection[K]` and `collections.abc.Mapping[K, V]`.
 
     Serves as a base class for pyochain mappings, such as `Dict`.
@@ -107,7 +106,7 @@ class PyoMapping(PyoCollection[K], Mapping[K, V_co], ABC, Generic[K, V_co]):  # 
         return PyoItemsView(self)
 
 
-class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V], ABC):
+class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):  # pyright: ignore[reportImplicitAbstractClass]
     """Extends `PyoMapping[K, V]` and `collections.abc.MutableMapping[K, V]`.
 
     Serves as a base class for pyochain mutable mappings, such as `Dict`.

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from abc import ABC
 from collections.abc import Iterable, MutableSet
 from collections.abc import Set as AbstractSet
 from typing import Any
@@ -8,7 +7,7 @@ from typing import Any
 from ._iterator import PyoCollection  # pyright: ignore[reportMissingModuleSource]
 
 
-class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
+class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImplicitAbstractClass]
     """Extends `PyoCollection[T]` and `collections.abc.Set[T]`.
 
     Is the shared ABC for concrete set-like collections: `Set` and `FrozenSet`.
@@ -399,7 +398,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T], ABC):
         return self._from_iterable(self ^ other)
 
 
-class PyoMutableSet[T](PyoSet[T], MutableSet[T], ABC):
+class PyoMutableSet[T](MutableSet[T], PyoSet[T]):  # pyright: ignore[reportImplicitAbstractClass]
     """ABCs for read-only and mutable sets."""
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]

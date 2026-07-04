@@ -12,7 +12,7 @@ V_co = TypeVar("V_co", covariant=True)
 K_co = TypeVar("K_co", covariant=True)
 
 
-class PyoValuesView[V](ValuesView[V], PyoMappingView, PyoCollection[Any]):  # pyright: ignore[reportUnsafeMultipleInheritance, reportImplicitAbstractClass]
+class PyoValuesView[V](PyoMappingView, PyoCollection[Any], ValuesView[V]):  # pyright: ignore[reportUnsafeMultipleInheritance, reportImplicitAbstractClass]
     """A view of the values in a pyochain mapping.
 
     See Also:
@@ -22,7 +22,7 @@ class PyoValuesView[V](ValuesView[V], PyoMappingView, PyoCollection[Any]):  # py
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
 
-class PyoKeysView(KeysView[K_co], PyoMappingView, PyoSet[K_co], Generic[K_co]):  # pyright: ignore[reportUnsafeMultipleInheritance, reportImplicitAbstractClass]  # noqa: UP046
+class PyoKeysView(PyoMappingView, PyoSet[K_co], KeysView[K_co], Generic[K_co]):  # pyright: ignore[reportUnsafeMultipleInheritance, reportImplicitAbstractClass]  # noqa: UP046
     """A view of the keys in a pyochain mapping.
 
     Keys views support set-like operations since dictionary keys are unique.
@@ -51,9 +51,9 @@ class PyoKeysView(KeysView[K_co], PyoMappingView, PyoSet[K_co], Generic[K_co]): 
 
 
 class PyoItemsView(  # pyright: ignore[reportUnsafeMultipleInheritance, reportImplicitAbstractClass]
-    ItemsView[K_co, V_co],
     PyoMappingView,
     PyoSet[tuple[K_co, V_co]],
+    ItemsView[K_co, V_co],
     Generic[K_co, V_co],  # noqa: UP046
 ):
     """A view of the items (key-value pairs) in a pyochain mapping.
