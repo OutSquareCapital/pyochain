@@ -1402,11 +1402,16 @@ impl PyoCollection {
         slf.is_empty()
     }
 }
-#[pyclass(subclass, frozen, generic)]
+#[pyclass(subclass, frozen, generic, extends=Checkable)]
 pub struct PyoReversible;
 
 #[pymethods]
 impl PyoReversible {
+    #[pyo3(signature = (*_args, **_kwargs))]
+    #[new]
+    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
+        PyClassInitializer::from(Checkable).add_subclass(Self {})
+    }
     fn __reversed__<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, PyIterator>> {
         not_impl_error(slf.as_any(), "PyoReversible", "__reversed__")
     }

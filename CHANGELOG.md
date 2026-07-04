@@ -28,7 +28,7 @@ TODO: check how to setup a "blog" section in the website for major releases, to 
 ### 🆕 New features
 
 - `{Dict, SetMut, StableSet, Vec}::copy` to create shallow copies of the instance, just like `x.copy()` for their respective underlying builtins.
-- `PyoSized` and `PyoContainer` now inerhit from `Checkable`, instead of relying on `PyoIterable` once mixed with it in `PyoCollection`.
+- `PyoSized`, `PyoReversible`, and `PyoContainer` now inerhit from `Checkable`, instead of relying on mixins heritance.
 
 ### ✨ Enhancements
 

@@ -4235,7 +4235,7 @@ class PyoCollection[T](
     """
 
 @runtime_checkable
-class PyoReversible[T](Reversible[T], Protocol):
+class PyoReversible[T](Checkable, Reversible[T], Protocol):
     def rev(self) -> PyoIterator[T]:
         """Return an `Iterator` with the elements of the `Sequence` in reverse order.
 
