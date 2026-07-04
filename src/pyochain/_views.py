@@ -1,18 +1,15 @@
 from __future__ import annotations
 
 from collections.abc import ItemsView, Iterable, KeysView, ValuesView
-from typing import Any, Generic, TypeVar, override
+from typing import Any, override
 
 from ._set import SetMut
 from .abc import PyoCollection, PyoMappingView, PyoSet
 
 type AnyIter = Iterable[Any]
-# TODO: It doesn't seem possible ATM to make Views generics work regarding covariance with the modern syntax.
-V_co = TypeVar("V_co", covariant=True)
-K_co = TypeVar("K_co", covariant=True)
 
 
-class PyoValuesView[V](PyoMappingView, PyoCollection[Any], ValuesView[V]):  # pyright: ignore[reportUnsafeMultipleInheritance, reportImplicitAbstractClass]
+class PyoValuesView[V](PyoMappingView, PyoCollection[V], ValuesView[V]):  # pyright: ignore[reportUnsafeMultipleInheritance, reportImplicitAbstractClass]
     """A view of the values in a pyochain mapping.
 
     See Also:
@@ -22,7 +19,7 @@ class PyoValuesView[V](PyoMappingView, PyoCollection[Any], ValuesView[V]):  # py
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
 
-class PyoKeysView(PyoMappingView, PyoSet[K_co], KeysView[K_co], Generic[K_co]):  # pyright: ignore[reportUnsafeMultipleInheritance, reportImplicitAbstractClass]  # noqa: UP046
+class PyoKeysView[K](PyoMappingView, PyoSet[K], KeysView[K]):  # pyright: ignore[reportUnsafeMultipleInheritance, reportImplicitAbstractClass]
     """A view of the keys in a pyochain mapping.
 
     Keys views support set-like operations since dictionary keys are unique.
@@ -34,27 +31,28 @@ class PyoKeysView(PyoMappingView, PyoSet[K_co], KeysView[K_co], Generic[K_co]): 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
     @override
-    def intersection(self, other: AnyIter) -> SetMut[K_co]:
+    def intersection(self, other: AnyIter) -> SetMut[K]:
         return SetMut.from_ref(self & other)
 
     @override
-    def union[T](self, other: Iterable[T]) -> SetMut[K_co | T]:
+    def union[S, T](self: PyoKeysView[S], other: Iterable[T]) -> SetMut[S | T]:
         return SetMut.from_ref(self | other)
 
     @override
-    def difference(self, other: AnyIter) -> SetMut[K_co]:
+    def difference(self, other: AnyIter) -> SetMut[K]:
         return SetMut.from_ref(self - other)
 
     @override
-    def symmetric_difference[T](self, other: Iterable[T]) -> SetMut[K_co | T]:
+    def symmetric_difference[S, T](
+        self: PyoKeysView[S], other: Iterable[T]
+    ) -> SetMut[S | T]:
         return SetMut.from_ref(self ^ other)
 
 
-class PyoItemsView(  # pyright: ignore[reportUnsafeMultipleInheritance, reportImplicitAbstractClass]
+class PyoItemsView[K, V](  # pyright: ignore[reportUnsafeMultipleInheritance, reportImplicitAbstractClass]
     PyoMappingView,
-    PyoSet[tuple[K_co, V_co]],
-    ItemsView[K_co, V_co],
-    Generic[K_co, V_co],  # noqa: UP046
+    PyoSet[tuple[K, V]],
+    ItemsView[K, V],
 ):
     """A view of the items (key-value pairs) in a pyochain mapping.
 
@@ -67,19 +65,17 @@ class PyoItemsView(  # pyright: ignore[reportUnsafeMultipleInheritance, reportIm
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
     @override
-    def intersection(self, other: AnyIter) -> SetMut[tuple[K_co, V_co]]:
+    def intersection(self, other: AnyIter) -> SetMut[tuple[K, V]]:
         return SetMut.from_ref(self & other)
 
     @override
-    def union[T](self, other: Iterable[T]) -> SetMut[tuple[K_co, V_co] | T]:
+    def union[T](self, other: Iterable[T]) -> SetMut[tuple[K, V] | T]:
         return SetMut.from_ref(self | other)
 
     @override
-    def difference(self, other: AnyIter) -> SetMut[tuple[K_co, V_co]]:
+    def difference(self, other: AnyIter) -> SetMut[tuple[K, V]]:
         return SetMut.from_ref(self - other)
 
     @override
-    def symmetric_difference[T](
-        self, other: Iterable[T]
-    ) -> SetMut[tuple[K_co, V_co] | T]:
+    def symmetric_difference[T](self, other: Iterable[T]) -> SetMut[tuple[K, V] | T]:
         return SetMut.from_ref(self ^ other)

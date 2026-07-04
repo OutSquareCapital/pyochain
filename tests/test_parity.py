@@ -55,7 +55,7 @@ SEQUENCE_METHODS: list[Fn[Sequence[object]]] = [
     lambda a: a.index(2),
     lambda a: a[1],  # noqa: FURB118
     lambda a: a[-1],  # noqa: FURB118
-    lambda x: list(reversed(x)),
+    lambda x: tuple(reversed(x)),
 ]
 
 TUP_METHODS: list[Fn[tuple[int, ...]]] = [

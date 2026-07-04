@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, MappingView, MutableMapping
-from typing import TYPE_CHECKING, Generic, TypeVar, override
+from typing import TYPE_CHECKING, override
 
 from ..rs import NONE, Err, Ok, Option, Result, Some, option
 from ._iterator import (  # pyright: ignore[reportMissingModuleSource]
@@ -11,10 +11,6 @@ from ._iterator import (  # pyright: ignore[reportMissingModuleSource]
 
 if TYPE_CHECKING:
     from .._views import PyoItemsView, PyoKeysView, PyoValuesView
-
-# TODO: It doesn't seem possible ATM to make Mapping generics work regarding covariance with the modern syntax.
-K = TypeVar("K")
-V_co = TypeVar("V_co", covariant=True)
 
 
 class PyoMappingView(PyoSized, MappingView):  # pyright: ignore[reportImplicitAbstractClass]
@@ -31,7 +27,7 @@ class PyoMappingView(PyoSized, MappingView):  # pyright: ignore[reportImplicitAb
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
 
-class PyoMapping(PyoCollection[K], Mapping[K, V_co], Generic[K, V_co]):  # noqa: UP046  # pyright: ignore[reportImplicitAbstractClass]
+class PyoMapping[K, V](PyoCollection[K], Mapping[K, V]):  # pyright: ignore[reportImplicitAbstractClass]
     """Extends `PyoCollection[K]` and `collections.abc.Mapping[K, V]`.
 
     Serves as a base class for pyochain mappings, such as `Dict`.
@@ -66,7 +62,7 @@ class PyoMapping(PyoCollection[K], Mapping[K, V_co], Generic[K, V_co]):  # noqa:
         return PyoKeysView(self)
 
     @override
-    def values(self) -> PyoValuesView[V_co]:
+    def values(self) -> PyoValuesView[V]:
         """Return a view of the `Mapping` values.
 
         Returns:
@@ -86,7 +82,7 @@ class PyoMapping(PyoCollection[K], Mapping[K, V_co], Generic[K, V_co]):  # noqa:
         return PyoValuesView(self)
 
     @override
-    def items(self) -> PyoItemsView[K, V_co]:
+    def items(self) -> PyoItemsView[K, V]:
         """Return a view of the `Mapping` items.
 
         Returns:
