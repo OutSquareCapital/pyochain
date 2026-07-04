@@ -46,6 +46,10 @@ TODO: check how to setup a "blog" section in the website for major releases, to 
 - **typing**: `Result` and `Option` method `transpose` give less false positives now.
 - **typing**: Thanks to covariance, `PyoIterator::flatten` should not give false positives anymore, since it seems there's no need anymore to manually maintain various overloads for nested `PyoIterator` types.
 
+### 🐞 Bug fixes
+
+- Aligned `abc::PyoMappingView` heritance and generics logic with python builtins.
+
 ### 🚀 Performance improvements
 
 #### Underlying structure delegations
