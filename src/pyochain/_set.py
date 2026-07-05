@@ -53,7 +53,7 @@ class Set[T](PyoSet[T]):
         ```
     """
 
-    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
+    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
     _inner: Final[frozenset[T]]
 
     def __init__(self, data: Iterable[T]) -> None:

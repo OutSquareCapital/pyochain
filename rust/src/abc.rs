@@ -1,15 +1,21 @@
 use crate::args::{Args, ConcatWith, Concatenate, Kwargs};
 use crate::mixins::Checkable;
 use crate::option::{PyNull, PySome};
-use crate::pylibs;
 use crate::result::{PyoErr, PyoOk};
 use crate::tools as tls;
-use pyo3::exceptions::{PyIndexError, PyNotImplementedError, PyStopIteration, PyValueError};
+use crate::{pylibs, tools};
+use pyo3::exceptions::{
+    PyIndexError, PyKeyError, PyNotImplementedError, PyStopIteration, PyValueError,
+};
+use pyo3::sync::PyOnceLock;
 use pyo3::types::{
     PyBool, PyFunction, PyInt, PyIterator, PyList, PySequence, PySet, PyString, PyTuple, PyType,
 };
 use pyo3::{BoundObject, IntoPyObjectExt, PyTypeInfo, ffi, intern, prelude::*};
 use tap::prelude::*;
+
+const ABC: &str = "collections.abc";
+const ABSTRACT_SET: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
 
 #[pymodule(name = "_iterator")]
 pub fn abc(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -17,10 +23,15 @@ pub fn abc(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyoIterator>()?;
     m.add_class::<PyoContainer>()?;
     m.add_class::<PyoSized>()?;
+    m.add_class::<PyoMappingView>()?;
     m.add_class::<PyoCollection>()?;
     m.add_class::<PyoReversible>()?;
     m.add_class::<PyoSequence>()?;
     m.add_class::<PyoMutableSequence>()?;
+    m.add_class::<PyoSet>()?;
+    m.add_class::<PyoKeysView>()?;
+    m.add_class::<PyoValuesView>()?;
+    m.add_class::<PyoItemsView>()?;
     Ok(())
 }
 #[pyclass(subclass, frozen, generic, extends=Checkable)]
@@ -1371,6 +1382,23 @@ impl PyoSized {
     }
 }
 
+#[pyclass(subclass, frozen, generic, extends=PyoSized)]
+pub struct PyoMappingView {
+    pub mapping: Py<PyAny>,
+}
+
+#[pymethods]
+impl PyoMappingView {
+    #[new]
+    fn new(mapping: Bound<'_, PyAny>) -> PyClassInitializer<Self> {
+        PyClassInitializer::from(Checkable)
+            .add_subclass(PyoSized)
+            .add_subclass(Self {
+                mapping: mapping.unbind(),
+            })
+    }
+}
+
 #[pyclass(subclass, frozen, generic, extends=PyoIterable)]
 pub struct PyoCollection;
 
@@ -1402,7 +1430,7 @@ impl PyoCollection {
         slf.is_empty()
     }
 }
-#[pyclass(subclass, frozen, generic, extends=Checkable)]
+#[pyclass(subclass, frozen, generic, extends=PyoIterable)]
 pub struct PyoReversible;
 
 #[pymethods]
@@ -1410,7 +1438,9 @@ impl PyoReversible {
     #[pyo3(signature = (*_args, **_kwargs))]
     #[new]
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        PyClassInitializer::from(Checkable).add_subclass(Self {})
+        PyClassInitializer::from(Checkable)
+            .add_subclass(PyoIterable)
+            .add_subclass(Self {})
     }
     fn __reversed__<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, PyIterator>> {
         not_impl_error(slf.as_any(), "PyoReversible", "__reversed__")
@@ -1423,7 +1453,7 @@ impl PyoReversible {
     }
 }
 
-// TODO: check difference once we had `sequence` to pyclass macro
+// TODO: check difference once we had `sequence` to pypub struct macro
 #[pyclass(subclass, frozen, generic, extends=PyoCollection)]
 pub struct PyoSequence;
 #[pymethods]
@@ -1441,6 +1471,66 @@ impl PyoSequence {
         _index: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, PyAny>> {
         not_impl_error(slf.as_any(), "PyoSequence", "__getitem__")
+    }
+
+    fn __iter__(slf: Bound<'_, Self>) -> tools::SequenceIterator {
+        slf.pipe(|x| unsafe { x.cast_into_unchecked::<PySequence>() })
+            .pipe(tools::SequenceIterator::new)
+    }
+    fn __contains__(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<bool> {
+        for v in slf.try_iter()? {
+            let item = v?;
+            if item.is(value) || item.eq(value)? {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
+    fn __reversed__(slf: Bound<'_, Self>) -> PyResult<tools::SequenceReverseIterator> {
+        slf.pipe(|x| unsafe { x.cast_into_unchecked::<PySequence>() })
+            .pipe(tools::SequenceReverseIterator::new)
+    }
+
+    #[pyo3(signature = (value, start=None, stop=None))]
+    fn index(
+        slf: Bound<'_, Self>,
+        value: &Bound<'_, PyAny>,
+        start: Option<usize>,
+        stop: Option<usize>,
+    ) -> PyResult<usize> {
+        let py = slf.py();
+        let start = start.map(|x| slf.len().map(|len| len + x)).transpose()?;
+        let stop = stop.map(|x| slf.len().map(|len| len + x)).transpose()?;
+
+        let mut i = start.unwrap_or_default();
+        while stop.map(|x| i < x).unwrap_or(true) {
+            let v = slf.get_item(i).map_err(|x| {
+                if x.is_instance_of::<PyIndexError>(py) {
+                    PyValueError::new_err("")
+                } else {
+                    x
+                }
+            })?;
+            if v.is(value) || v.eq(value)? {
+                break;
+            } else {
+                i += 1;
+                continue;
+            }
+        }
+        Ok(i)
+    }
+    fn count(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<usize> {
+        slf.try_iter().map(|iterator| {
+            iterator
+                .map(|x| x.expect("Unexpected error while iterating over sequence"))
+                .filter(|x| {
+                    x.is(value)
+                        || x.eq(value)
+                            .expect("Unexpected error while comparing values")
+                })
+                .count()
+        })
     }
     fn first<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
         slf.get_item(0)
@@ -1549,8 +1639,468 @@ impl PyoMutableSequence {
 fn not_impl_error<'py, T>(cls: &Bound<'py, PyAny>, parent: &str, method: &str) -> PyResult<T> {
     let name = cls.get_type().name()?.to_str()?.to_owned();
     let txt = format!(
-        "As a subclass of '{}', '{}' must be implemented by {}",
+        "As a subpub struct of '{}', '{}' must be implemented by {}",
         parent, method, name
     );
     Err(PyNotImplementedError::new_err(txt))
+}
+#[pyclass(subclass, frozen, generic, extends=PyoCollection)]
+pub struct PyoSet;
+#[pymethods]
+impl PyoSet {
+    #[pyo3(signature = (*_args, **_kwargs))]
+    #[new]
+    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
+        PyClassInitializer::from(Checkable)
+            .add_subclass(PyoIterable)
+            .add_subclass(PyoCollection)
+            .add_subclass(Self {})
+    }
+    #[classmethod]
+    fn _from_iterable<'py>(
+        cls: &Bound<'py, PyType>,
+        it: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
+        cls.call1((it,))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+    #[inline]
+    #[classmethod]
+    fn _py_from_iterable<'py>(
+        cls: &Bound<'py, PyType>,
+        it: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
+        cls.call_method1(intern!(cls.py(), "_from_iterable"), (it,))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+
+    fn __and__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        if !other.is_instance(ABSTRACT_SET.import(slf.py(), ABC, "Set")?)? {
+            return Err(PyNotImplementedError::new_err(""));
+        }
+        let py = slf.py();
+        slf.try_iter()?
+            .try_fold(PyList::empty(py), |init, x| {
+                let item = x?;
+                if other.contains(&item)? {
+                    init.append(item)?;
+                }
+                Ok::<_, PyErr>(init)
+            })?
+            .into_bound_py_any(py)
+            .and_then(|x| Self::_py_from_iterable(&slf.get_type(), x))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+    fn __or__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        if !other.is_instance(ABSTRACT_SET.import(slf.py(), ABC, "Set")?)? {
+            return Err(PyNotImplementedError::new_err(""));
+        }
+        let py = slf.py();
+        slf.try_iter()?
+            .chain(other.try_iter()?)
+            .try_fold(PyList::empty(py), |init, x| {
+                let item = x?;
+                init.append(item)?;
+                Ok::<_, PyErr>(init)
+            })?
+            .into_bound_py_any(py)
+            .and_then(|x| Self::_py_from_iterable(&slf.get_type(), x))
+    }
+
+    fn __sub__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        if !other.is_instance(ABSTRACT_SET.import(slf.py(), ABC, "Set")?)? {
+            return Err(PyNotImplementedError::new_err(""));
+        }
+        let py = slf.py();
+        other
+            .try_iter()
+            .map_err(|_| PyNotImplementedError::new_err(""))
+            .and_then(|iterator| {
+                let cls = slf.get_type();
+                let other_set = Self::_py_from_iterable(&cls, iterator.into_any())?;
+                slf.try_iter()?
+                    .try_fold(PyList::empty(py), |init, x| {
+                        let item = x?;
+                        if !other_set.contains(&item)? {
+                            init.append(item)?;
+                        }
+                        Ok::<_, PyErr>(init)
+                    })?
+                    .into_bound_py_any(py)
+                    .and_then(|x| Self::_py_from_iterable(&cls, x))
+            })
+    }
+
+    fn __rand__<'py>(
+        slf: Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
+        slf.bitand(other)
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+    fn __ror__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        slf.bitor(other)
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+
+    fn __rsub__<'py>(
+        slf: Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
+        let py = slf.py();
+        let cls = slf.get_type();
+        other
+            .try_iter()
+            .map_err(|_| PyNotImplementedError::new_err(""))
+            .and_then(|x| {
+                if !other.is_instance(ABSTRACT_SET.import(py, ABC, "Set")?)? {
+                    Self::_py_from_iterable(&cls, x.into_any())?.try_iter()
+                } else {
+                    Ok(x)
+                }
+            })?
+            .try_fold(PyList::empty(py), |init, x| {
+                let item = x?;
+                if !slf.contains(&item)? {
+                    init.append(item)?;
+                }
+                Ok::<_, PyErr>(init)
+            })?
+            .into_bound_py_any(py)
+            .and_then(|x| Self::_py_from_iterable(&cls, x))
+    }
+    fn __rxor__<'py>(
+        slf: Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
+        slf.bitxor(other)
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+
+    fn __xor__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        if other.is_instance(ABSTRACT_SET.import(slf.py(), ABC, "Set")?)? {
+            other
+                .try_iter()
+                .map_err(|_| PyNotImplementedError::new_err(""))
+                .and_then(|iterator| Self::_py_from_iterable(&slf.get_type(), iterator.into_any()))
+                .and_then(|x| (slf.sub(&x))?.bitor((x).sub(slf)?))
+                .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+        } else {
+            Err(PyNotImplementedError::new_err(""))
+        }
+    }
+
+    fn __eq__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+        if other.is_instance(ABSTRACT_SET.import(slf.py(), ABC, "Set")?)? {
+            Ok(slf.len()? == other.len()? && slf.le(other)?)
+        } else {
+            Err(PyNotImplementedError::new_err(""))
+        }
+    }
+    fn __le__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+        let py = slf.py();
+        if !other.is_instance(ABSTRACT_SET.import(py, ABC, "Set")?)? {
+            return Err(PyNotImplementedError::new_err(""));
+        }
+        if slf.len()? > other.len()? {
+            return Ok(false);
+        }
+        for elem in slf.try_iter()? {
+            if !other.contains(elem?)? {
+                return Ok(false);
+            }
+        }
+        return Ok(true);
+    }
+
+    fn __ge__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+        if !other.is_instance(ABSTRACT_SET.import(slf.py(), ABC, "Set")?)? {
+            return Err(PyNotImplementedError::new_err(""));
+        }
+        if slf.len()? < other.len()? {
+            return Ok(false);
+        }
+        for elem in other.try_iter()? {
+            if !slf.contains(elem?)? {
+                return Ok(false);
+            }
+        }
+        return Ok(true);
+    }
+
+    fn __lt__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+        if other.is_instance(ABSTRACT_SET.import(slf.py(), ABC, "Set")?)? {
+            Ok(slf.len()? < other.len()? && slf.le(other)?)
+        } else {
+            Err(PyNotImplementedError::new_err(""))
+        }
+    }
+
+    fn __gt__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+        if other.is_instance(ABSTRACT_SET.import(slf.py(), ABC, "Set")?)? {
+            Ok(slf.len()? > other.len()? && slf.ge(other)?)
+        } else {
+            Err(PyNotImplementedError::new_err(""))
+        }
+    }
+
+    fn isdisjoint(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+        for value in other.try_iter()? {
+            if slf.contains(value?)? {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
+    fn _hash(slf: Bound<'_, Self>) -> PyResult<isize> {
+        let max = isize::MAX / 2;
+        let mask = 2 * max + 1;
+        let n = slf.len()? as isize;
+        let mut h = 1927868237 * (n + 1);
+        h &= mask;
+        for x in slf.try_iter()? {
+            let hx = x?.hash()?;
+            h ^= (hx ^ (hx << 16) ^ 89869747) * 3644798167;
+            h &= mask;
+        }
+        h ^= (h >> 11) ^ (h >> 25);
+        h = h * 69069 + 907133923;
+        h &= mask;
+        if h > max {
+            h -= mask + 1;
+        }
+        if h == -1 {
+            h = 590923713;
+        }
+        Ok(h)
+    }
+
+    fn is_subset(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+        slf.le(other)
+    }
+    fn is_subset_strict(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+        slf.lt(other)
+    }
+    fn eq(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+        slf.eq(other)
+    }
+    fn is_superset(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+        slf.ge(other)
+    }
+    fn is_superset_strict(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+        slf.gt(other)
+    }
+    fn is_disjoint(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+        Self::isdisjoint(slf, other)
+    }
+    fn intersection<'py>(
+        slf: Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
+        slf.bitand(other)
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+    fn union<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        slf.bitor(other)
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+    fn difference<'py>(
+        slf: Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
+        slf.sub(other)
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+    fn symmetric_difference<'py>(
+        slf: Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
+        slf.bitxor(other)
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+}
+#[pyclass(subclass, frozen, generic,  extends=PyoSet)]
+pub struct PyoValuesView {
+    pub mapping: Py<PyAny>,
+}
+#[pymethods]
+impl PyoValuesView {
+    #[new]
+    fn new(mapping: Bound<'_, PyAny>) -> PyClassInitializer<Self> {
+        PyClassInitializer::from(Checkable)
+            .add_subclass(PyoIterable)
+            .add_subclass(PyoCollection)
+            .add_subclass(PyoSet)
+            .add_subclass(Self {
+                mapping: mapping.unbind(),
+            })
+    }
+
+    fn __contains__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+        let mapping = self.mapping.bind(value.py());
+        for item in mapping.try_iter()?.map(|key| mapping.get_item(&key?)) {
+            let v = item?;
+            if v.is(&value) || v.eq(&value)? {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
+
+    fn __iter__(slf: Bound<'_, Self>) -> PyResult<tls::ValuesViewIterator> {
+        let py = slf.py();
+        slf.get()
+            .mapping
+            .clone_ref(py)
+            .into_bound(py)
+            .pipe(tls::ValuesViewIterator::new)
+    }
+}
+
+#[pyclass(subclass, frozen, generic,  extends=PyoSet)]
+pub struct PyoKeysView {
+    pub mapping: Py<PyAny>,
+}
+#[pymethods]
+impl PyoKeysView {
+    #[new]
+    fn new(mapping: Bound<'_, PyAny>) -> PyClassInitializer<Self> {
+        PyClassInitializer::from(Checkable)
+            .add_subclass(PyoIterable)
+            .add_subclass(PyoCollection)
+            .add_subclass(PyoSet)
+            .add_subclass(Self {
+                mapping: mapping.unbind(),
+            })
+    }
+
+    #[classmethod]
+    fn _from_iterable<'py>(
+        cls: Bound<'py, PyType>,
+        it: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PySet>> {
+        let set = PySet::empty(cls.py())?;
+        for item in it.try_iter()? {
+            set.add(item?)?;
+        }
+        Ok(set)
+    }
+
+    fn __contains__(&self, key: Bound<'_, PyAny>) -> PyResult<bool> {
+        self.mapping.bind(key.py()).contains(key)
+    }
+
+    fn __iter__(slf: Bound<'_, Self>) -> PyResult<Bound<'_, PyIterator>> {
+        slf.get().mapping.bind(slf.py()).try_iter()
+    }
+
+    fn intersection<'py>(
+        slf: Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        pylibs::pyochain::setmut::from_ref(&slf.bitand(other)?)
+    }
+
+    fn union<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+        pylibs::pyochain::setmut::from_ref(&slf.bitor(other)?)
+    }
+
+    fn difference<'py>(
+        slf: Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        pylibs::pyochain::setmut::from_ref(&slf.sub(other)?)
+    }
+
+    fn symmetric_difference<'py>(
+        slf: Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        pylibs::pyochain::setmut::from_ref(&slf.bitxor(other)?)
+    }
+}
+
+#[pyclass(subclass, frozen, generic,  extends=PyoSet)]
+pub struct PyoItemsView {
+    pub mapping: Py<PyAny>,
+}
+#[pymethods]
+impl PyoItemsView {
+    #[new]
+    fn new(mapping: Bound<'_, PyAny>) -> PyClassInitializer<Self> {
+        PyClassInitializer::from(Checkable)
+            .add_subclass(PyoIterable)
+            .add_subclass(PyoCollection)
+            .add_subclass(PyoSet)
+            .add_subclass(Self {
+                mapping: mapping.unbind(),
+            })
+    }
+
+    #[classmethod]
+    fn _from_iterable<'py>(
+        cls: Bound<'py, PyType>,
+        it: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PySet>> {
+        let set = PySet::empty(cls.py())?;
+        for item in it.try_iter()? {
+            set.add(item?)?;
+        }
+        Ok(set)
+    }
+
+    fn __contains__(&self, item: (Bound<'_, PyAny>, Bound<'_, PyAny>)) -> PyResult<bool> {
+        let (key, value) = item;
+        let py = key.py();
+
+        let v = self
+            .mapping
+            .bind(py)
+            .get_item(key)
+            .and_then(|v| Ok(v.is(&value) || v.eq(&value)?));
+        match v {
+            Ok(v) => Ok(v),
+            Err(err) => {
+                if err.is_instance_of::<PyKeyError>(py) {
+                    Ok(false)
+                } else {
+                    Err(err)
+                }
+            }
+        }
+    }
+
+    fn __iter__(slf: Bound<'_, Self>) -> PyResult<tls::ItemsViewIterator> {
+        let py = slf.py();
+        slf.get()
+            .mapping
+            .clone_ref(py)
+            .into_bound(py)
+            .pipe(tls::ItemsViewIterator::new)
+    }
+
+    fn intersection<'py>(
+        slf: Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        pylibs::pyochain::setmut::from_ref(&slf.bitand(other)?)
+    }
+
+    fn union<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+        pylibs::pyochain::setmut::from_ref(&slf.bitor(other)?)
+    }
+
+    fn difference<'py>(
+        slf: Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        pylibs::pyochain::setmut::from_ref(&slf.sub(other)?)
+    }
+
+    fn symmetric_difference<'py>(
+        slf: Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        pylibs::pyochain::setmut::from_ref(&slf.bitxor(other)?)
+    }
 }

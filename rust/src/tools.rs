@@ -4,6 +4,7 @@ use crate::args::{Args, Kwargs};
 use crate::option::{PyNull, PySome, option};
 use crate::result::{PyoErr, PyoOk};
 use crate::{abc, mixins};
+use pyo3::exceptions::PyIndexError;
 use pyo3::types::{PyAny, PyDict, PyIterator, PyModule, PySequence, PySet, PyString, PyTuple};
 use pyo3::{IntoPyObjectExt, ffi, prelude::*};
 use tap::prelude::*;
@@ -1190,5 +1191,127 @@ impl Peekable {
         };
 
         PyNull::get_any_ok(py)
+    }
+}
+#[pyclass(generic)]
+pub struct SequenceIterator {
+    i: usize,
+    sequence: Py<PySequence>,
+}
+#[pymethods]
+impl SequenceIterator {
+    #[new]
+    pub fn new(sequence: Bound<'_, PySequence>) -> Self {
+        Self {
+            i: 0,
+            sequence: sequence.unbind(),
+        }
+    }
+    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
+        slf
+    }
+
+    fn __next__<'py>(&'py mut self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
+        let v = self.sequence.bind(py).get_item(self.i);
+        match v {
+            Ok(value) => {
+                self.i += 1;
+                Ok(Some(value))
+            }
+            Err(err) => {
+                if err.is_instance_of::<PyIndexError>(py) {
+                    Ok(None)
+                } else {
+                    Err(err)
+                }
+            }
+        }
+    }
+}
+#[pyclass(generic)]
+pub struct SequenceReverseIterator {
+    iterator: std::iter::Rev<std::ops::Range<usize>>,
+    sequence: Py<PySequence>,
+}
+#[pymethods]
+impl SequenceReverseIterator {
+    #[new]
+    pub fn new(sequence: Bound<'_, PySequence>) -> PyResult<Self> {
+        let iterator = (0..sequence.len()?).rev();
+        Ok(Self {
+            sequence: sequence.unbind(),
+            iterator,
+        })
+    }
+    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
+        slf
+    }
+
+    fn __next__<'py>(&'py mut self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
+        self.iterator
+            .next()
+            .map(|i| self.sequence.bind(py).get_item(i))
+            .transpose()
+    }
+}
+#[pyclass(generic)]
+pub struct ValuesViewIterator {
+    iterator: Py<PyIterator>,
+    mapping: Py<PyAny>,
+}
+#[pymethods]
+impl ValuesViewIterator {
+    #[new]
+    pub fn new(mapping: Bound<'_, PyAny>) -> PyResult<Self> {
+        Ok(Self {
+            iterator: mapping.try_iter()?.unbind(),
+            mapping: mapping.unbind(),
+        })
+    }
+    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
+        slf
+    }
+
+    fn __next__<'py>(&'py mut self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
+        self.iterator
+            .clone_ref(py)
+            .into_bound(py)
+            .next()
+            .map(|key| self.mapping.bind(py).get_item(&key?))
+            .transpose()
+    }
+}
+#[pyclass(generic)]
+pub struct ItemsViewIterator {
+    iterator: Py<PyIterator>,
+    mapping: Py<PyAny>,
+}
+#[pymethods]
+impl ItemsViewIterator {
+    #[new]
+    pub fn new(mapping: Bound<'_, PyAny>) -> PyResult<Self> {
+        Ok(Self {
+            iterator: mapping.try_iter()?.unbind(),
+            mapping: mapping.unbind(),
+        })
+    }
+    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
+        slf
+    }
+
+    fn __next__<'py>(
+        &'py mut self,
+        py: Python<'py>,
+    ) -> PyResult<Option<(Bound<'py, PyAny>, Bound<'py, PyAny>)>> {
+        self.iterator
+            .clone_ref(py)
+            .into_bound(py)
+            .next()
+            .transpose()?
+            .map(|key| {
+                let v = self.mapping.bind(py).get_item(&key)?;
+                Ok((key, v))
+            })
+            .transpose()
     }
 }

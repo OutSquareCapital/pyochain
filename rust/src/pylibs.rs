@@ -503,4 +503,15 @@ pub mod pyochain {
                 .map(|obj| unsafe { obj.cast_into_unchecked::<PySequence>() })
         }
     }
+    pub mod setmut {
+        use super::*;
+        const SETMUT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+        #[inline(always)]
+        pub fn from_ref<'py>(obj: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+            let py = obj.py();
+            SETMUT
+                .import(py, PYOCHAIN, "SetMut")?
+                .call_method1("from_ref", (obj,))
+        }
+    }
 }

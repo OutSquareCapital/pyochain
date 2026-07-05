@@ -56,6 +56,29 @@ macro_rules! impl_tap {
         impl_tap!($($rest),+);
     };
 }
+
+macro_rules! impl_mapping_view {
+    ($type:ty) => {
+        #[pymethods]
+        impl $type {
+
+    fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
+        Ok(format!(
+            "{}({:?})",
+            slf.get_type().name()?,
+            slf.get().mapping.bind(slf.py())
+        ))
+    }
+
+    fn __len__(slf: Bound<'_, Self>) -> PyResult<usize> {
+        slf.get().mapping.bind(slf.py()).len()
+    }}
+    };
+    ($first:ty, $($rest:ty),+ $(,)?) => {
+        impl_mapping_view!($first);
+        impl_mapping_view!($($rest),+);
+    };
+}
 impl_tap!(mixins::Fluent, mixins::PyoTap, abc::PyoIterable);
 impl_py_pipe!(
     option::PySome,
@@ -66,6 +89,12 @@ impl_py_pipe!(
     mixins::PyoPipe,
     abc::PyoIterable,
     abc::PyoIterator
+);
+impl_mapping_view!(
+    abc::PyoMappingView,
+    abc::PyoKeysView,
+    abc::PyoValuesView,
+    abc::PyoItemsView
 );
 
 #[pymodule]
@@ -109,10 +138,19 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     register(&abc_mod, "Reversible", &abc::PyoSequence::type_object(py))?;
     register(
         &abc_mod,
+        "MappingView",
+        &abc::PyoMappingView::type_object(py),
+    )?;
+    register(
+        &abc_mod,
         "MutableSequence",
         &abc::PyoMutableSequence::type_object(py),
     )?;
+    register(&abc_mod, "Set", &abc::PyoSet::type_object(py))?;
     PySequence::register::<abc::PyoSequence>(py)?;
+    register(&abc_mod, "KeysView", &abc::PyoKeysView::type_object(py))?;
+    register(&abc_mod, "ValuesView", &abc::PyoValuesView::type_object(py))?;
+    register(&abc_mod, "ItemsView", &abc::PyoItemsView::type_object(py))?;
 
     Ok(())
 }

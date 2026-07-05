@@ -1,30 +1,15 @@
 from __future__ import annotations
 
-from collections.abc import Mapping, MappingView, MutableMapping
-from typing import TYPE_CHECKING, override
+from collections.abc import Mapping, MutableMapping
+from typing import override
 
 from ..rs import NONE, Err, Ok, Option, Result, Some, option
 from ._iterator import (  # pyright: ignore[reportMissingModuleSource]
     PyoCollection,
-    PyoSized,
+    PyoItemsView,
+    PyoKeysView,
+    PyoValuesView,
 )
-
-if TYPE_CHECKING:
-    from .._views import PyoItemsView, PyoKeysView, PyoValuesView
-
-
-class PyoMappingView(PyoSized, MappingView):  # pyright: ignore[reportImplicitAbstractClass]
-    """Extends both `MappingView` from `collections.abc` and `PyoCollection[T]`.
-
-    Is the base class shared by the views returned by `PyoMapping` methods.
-
-    Any concrete subclass must implement the required `MappingView` dunder methods:
-
-    - `__contains__`
-    - `__iter__`
-    """
-
-    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
 
 class PyoMapping[K, V](PyoCollection[K], Mapping[K, V]):  # pyright: ignore[reportImplicitAbstractClass]
@@ -57,8 +42,6 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V]):  # pyright: ignore[repo
 
             ```
         """
-        from .._views import PyoKeysView
-
         return PyoKeysView(self)
 
     @override
@@ -77,8 +60,6 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V]):  # pyright: ignore[repo
 
             ```
         """
-        from .._views import PyoValuesView
-
         return PyoValuesView(self)
 
     @override
@@ -97,8 +78,6 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V]):  # pyright: ignore[repo
 
             ```
         """
-        from .._views import PyoItemsView
-
         return PyoItemsView(self)
 
 

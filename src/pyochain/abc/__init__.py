@@ -17,9 +17,9 @@ The mixins are simple, implementation-agnostic classes that can be added to any 
 
 from ..rs import Checkable, Fluent, Pipe, Tap  # noqa: I001
 
-from ._mappings import PyoMapping, PyoMappingView, PyoMutableMapping
+from ._mappings import PyoMapping, PyoMutableMapping
 from ._sequences import PyoMutableSequence
-from ._set import PyoMutableSet, PyoSet
+from ._set import PyoMutableSet
 
 from ._iterator import (  # pyright: ignore[reportMissingModuleSource]
     PyoIterable,
@@ -28,7 +28,12 @@ from ._iterator import (  # pyright: ignore[reportMissingModuleSource]
     PyoSized,
     PyoReversible,
     PyoCollection,
+    PyoMappingView,
     PyoSequence,
+    PyoSet,
+    PyoKeysView,
+    PyoValuesView,
+    PyoItemsView,
 )
 
 __all__ = [
@@ -37,8 +42,10 @@ __all__ = [
     "Pipe",
     "PyoCollection",
     "PyoContainer",
+    "PyoItemsView",
     "PyoIterable",
     "PyoIterator",
+    "PyoKeysView",
     "PyoMapping",
     "PyoMappingView",
     "PyoMutableMapping",
@@ -48,5 +55,6 @@ __all__ = [
     "PyoSequence",
     "PyoSet",
     "PyoSized",
+    "PyoValuesView",
     "Tap",
 ]
