@@ -19,7 +19,6 @@ from ..rs import Checkable, Fluent, Pipe, Tap  # noqa: I001
 
 from ._mappings import PyoMapping, PyoMutableMapping
 from ._sequences import PyoMutableSequence
-from ._set import PyoMutableSet
 
 from ._iterator import (  # pyright: ignore[reportMissingModuleSource]
     PyoIterable,
@@ -32,6 +31,7 @@ from ._iterator import (  # pyright: ignore[reportMissingModuleSource]
     PyoSequence,
     PyoSet,
     PyoKeysView,
+    PyoMutableSet,
     PyoValuesView,
     PyoItemsView,
 )

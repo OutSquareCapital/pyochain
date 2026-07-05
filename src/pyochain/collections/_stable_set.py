@@ -42,7 +42,7 @@ class StableSet[T](PyoMutableSet[T]):  # noqa: PLW1641
     """
 
     _inner: dict[T, None]
-    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
+    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
 
     def __init__(self, data: Iterable[T]) -> None:
         self._inner = dict.fromkeys(data)

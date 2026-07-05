@@ -147,6 +147,7 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
         &abc::PyoMutableSequence::type_object(py),
     )?;
     register(&abc_mod, "Set", &abc::PyoSet::type_object(py))?;
+    register(&abc_mod, "MutableSet", &abc::PyoMutableSet::type_object(py))?;
     PySequence::register::<abc::PyoSequence>(py)?;
     register(&abc_mod, "KeysView", &abc::PyoKeysView::type_object(py))?;
     register(&abc_mod, "ValuesView", &abc::PyoValuesView::type_object(py))?;

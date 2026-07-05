@@ -32,6 +32,7 @@ pub fn abc(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyoKeysView>()?;
     m.add_class::<PyoValuesView>()?;
     m.add_class::<PyoItemsView>()?;
+    m.add_class::<PyoMutableSet>()?;
     Ok(())
 }
 #[pyclass(subclass, frozen, generic, extends=Checkable)]
@@ -1668,7 +1669,7 @@ impl PyoSet {
     #[classmethod]
     fn _py_from_iterable<'py>(
         cls: &Bound<'py, PyType>,
-        it: Bound<'py, PyAny>,
+        it: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         cls.call_method1(intern!(cls.py(), "_from_iterable"), (it,))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
@@ -1688,7 +1689,7 @@ impl PyoSet {
                 Ok::<_, PyErr>(init)
             })?
             .into_bound_py_any(py)
-            .and_then(|x| Self::_py_from_iterable(&slf.get_type(), x))
+            .and_then(|x| Self::_py_from_iterable(&slf.get_type(), &x))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
     fn __or__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
@@ -1704,7 +1705,7 @@ impl PyoSet {
                 Ok::<_, PyErr>(init)
             })?
             .into_bound_py_any(py)
-            .and_then(|x| Self::_py_from_iterable(&slf.get_type(), x))
+            .and_then(|x| Self::_py_from_iterable(&slf.get_type(), &x))
     }
 
     fn __sub__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
@@ -1717,7 +1718,7 @@ impl PyoSet {
             .map_err(|_| PyNotImplementedError::new_err(""))
             .and_then(|iterator| {
                 let cls = slf.get_type();
-                let other_set = Self::_py_from_iterable(&cls, iterator.into_any())?;
+                let other_set = Self::_py_from_iterable(&cls, iterator.as_any())?;
                 slf.try_iter()?
                     .try_fold(PyList::empty(py), |init, x| {
                         let item = x?;
@@ -1727,7 +1728,7 @@ impl PyoSet {
                         Ok::<_, PyErr>(init)
                     })?
                     .into_bound_py_any(py)
-                    .and_then(|x| Self::_py_from_iterable(&cls, x))
+                    .and_then(|x| Self::_py_from_iterable(&cls, &x))
             })
     }
 
@@ -1754,7 +1755,7 @@ impl PyoSet {
             .map_err(|_| PyNotImplementedError::new_err(""))
             .and_then(|x| {
                 if !other.is_instance(ABSTRACT_SET.import(py, ABC, "Set")?)? {
-                    Self::_py_from_iterable(&cls, x.into_any())?.try_iter()
+                    Self::_py_from_iterable(&cls, x.as_any())?.try_iter()
                 } else {
                     Ok(x)
                 }
@@ -1767,7 +1768,7 @@ impl PyoSet {
                 Ok::<_, PyErr>(init)
             })?
             .into_bound_py_any(py)
-            .and_then(|x| Self::_py_from_iterable(&cls, x))
+            .and_then(|x| Self::_py_from_iterable(&cls, &x))
     }
     fn __rxor__<'py>(
         slf: Bound<'py, Self>,
@@ -1782,7 +1783,7 @@ impl PyoSet {
             other
                 .try_iter()
                 .map_err(|_| PyNotImplementedError::new_err(""))
-                .and_then(|iterator| Self::_py_from_iterable(&slf.get_type(), iterator.into_any()))
+                .and_then(|iterator| Self::_py_from_iterable(&slf.get_type(), iterator.as_any()))
                 .and_then(|x| (slf.sub(&x))?.bitor((x).sub(slf)?))
                 .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
         } else {
@@ -2102,5 +2103,108 @@ impl PyoItemsView {
         other: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, PyAny>> {
         pylibs::pyochain::setmut::from_ref(&slf.bitxor(other)?)
+    }
+}
+
+#[pyclass(subclass, frozen, generic,  extends=PyoSet)]
+pub struct PyoMutableSet;
+#[pymethods]
+impl PyoMutableSet {
+    #[pyo3(signature = (*_args, **_kwargs))]
+    #[new]
+    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
+        PyClassInitializer::from(Checkable)
+            .add_subclass(PyoIterable)
+            .add_subclass(PyoCollection)
+            .add_subclass(PyoSet)
+            .add_subclass(Self {})
+    }
+    fn _py_add(slf: &Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<()> {
+        slf.call_method1(intern!(slf.py(), "add"), (value,))?;
+        Ok(())
+    }
+    fn _py_discard(slf: &Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<()> {
+        slf.call_method1(intern!(slf.py(), "discard"), (value,))?;
+        Ok(())
+    }
+
+    fn __ior__<'py>(slf: Bound<'py, Self>, it: Bound<'py, PyAny>) -> PyResult<()> {
+        it.try_iter()?
+            .try_for_each(|value| Self::_py_add(&slf, &value?))
+    }
+
+    fn __iand__<'py>(slf: Bound<'py, Self>, it: Bound<'py, PyAny>) -> PyResult<()> {
+        slf.sub(&it)?
+            .try_iter()?
+            .try_for_each(|value| Self::_py_discard(&slf, &value?))
+    }
+
+    fn __isub__<'py>(slf: Bound<'py, Self>, it: Bound<'py, PyAny>) -> PyResult<()> {
+        let py = slf.py();
+        if it.is(&slf) {
+            slf.call_method0(intern!(py, "clear"))?;
+        } else {
+            for value in it.try_iter()? {
+                Self::_py_discard(&slf, &value?)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn __ixor__<'py>(slf: Bound<'py, Self>, it: Bound<'py, PyAny>) -> PyResult<()> {
+        let py = slf.py();
+        let cls = slf.get_type();
+        if it.is(&slf) {
+            slf.call_method0(intern!(py, "clear"))?;
+        } else {
+            let pyset = if !it.is_instance(ABSTRACT_SET.import(py, ABC, "Set")?)? {
+                PyoSet::_py_from_iterable(&cls, &it)?.into_any()
+            } else {
+                it
+            };
+            for value in pyset.try_iter()? {
+                let v = value?;
+                if slf.contains(&v)? {
+                    Self::_py_discard(&slf, &v)?;
+                } else {
+                    Self::_py_add(&slf, &v)?;
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    #[allow(unused)]
+    fn add(slf: Bound<'_, Self>, value: Bound<'_, PyAny>) -> PyResult<()> {
+        not_impl_error(slf.as_any(), "PyoMutableSet", "add")
+    }
+    #[allow(unused)]
+    fn discard(slf: Bound<'_, Self>, value: Bound<'_, PyAny>) -> PyResult<()> {
+        not_impl_error(slf.as_any(), "PyoMutableSet", "discard")
+    }
+
+    fn remove(slf: Bound<'_, Self>, value: Bound<'_, PyAny>) -> PyResult<()> {
+        if !slf.contains(&value)? {
+            Err(PyKeyError::new_err(format!("{}", value)))
+        } else {
+            Self::_py_discard(&slf, &value)?;
+            Ok(())
+        }
+    }
+
+    fn pop(slf: Bound<'_, Self>) -> PyResult<Bound<'_, PyAny>> {
+        match slf.try_iter()?.next() {
+            None => Err(PyKeyError::new_err("")),
+            Some(value) => value.and_then(|x| {
+                Self::_py_discard(&slf, &x)?;
+                Ok(x)
+            }),
+        }
+    }
+
+    fn clear(slf: Bound<'_, Self>) -> PyResult<()> {
+        slf.try_iter()?
+            .try_for_each(|x| Self::_py_discard(&slf, &x?))
     }
 }

@@ -128,7 +128,7 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
         data (Iterable[T]): Any `Iterable` of elements to initialize the set with.
     """
 
-    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
+    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
     _inner: set[T]
 
     def __init__(self, data: Iterable[T]) -> None:

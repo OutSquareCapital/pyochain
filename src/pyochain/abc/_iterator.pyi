@@ -8,6 +8,7 @@ from collections.abc import (
     KeysView,
     MappingView,
     MutableSequence,
+    MutableSet,
     Sequence,
     Sized,
     ValuesView,
@@ -4878,3 +4879,29 @@ class PyoItemsView[K, V](PyoMappingView, PyoSet[tuple[K, V]], ItemsView[K, V]): 
     def symmetric_difference[T](
         self, other: Iterable[T]
     ) -> SetMut[tuple[K, V] | T]: ...
+
+class PyoMutableSet[T](PyoSet[T], MutableSet[T]):  # pyright: ignore[reportImplicitAbstractClass]
+    """ABCs for read-only and mutable sets."""
+    @abstractmethod
+    @override
+    def add(self, value: T, /) -> None: ...
+    @abstractmethod
+    @override
+    def discard(self, value: T, /) -> None: ...
+    # Mixin methods
+    @override
+    def clear(self) -> None: ...
+    @override
+    def pop(self) -> T: ...
+    @override
+    def remove(self, value: T, /) -> None: ...
+
+    # Pyo3 forces incompatible implementations of those dunders -> they must return `None` instead of `Self`.
+    @override
+    def __ior__(self, it: AbstractSet[T], /) -> None: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    def __iand__(self, it: AbstractSet[Any], /) -> None: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    def __ixor__(self, it: AbstractSet[T], /) -> None: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    def __isub__(self, it: AbstractSet[Any], /) -> None: ...  # pyright: ignore[reportIncompatibleMethodOverride]
