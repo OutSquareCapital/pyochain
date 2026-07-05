@@ -4,6 +4,7 @@ from collections.abc import (
     Container,
     Iterable,
     Iterator,
+    MappingView,
     MutableSequence,
     Reversible,
     Sequence,
@@ -19,6 +20,7 @@ from pyochain.abc import (
     PyoContainer,
     PyoIterable,
     PyoIterator,
+    PyoMappingView,
     PyoMutableSequence,
     PyoReversible,
     PyoSequence,
@@ -132,6 +134,8 @@ def test_vec(other: type) -> None:
         (PyoContainer, Container),
         (PyoSized, Sized),
         (PyoReversible, Reversible),
+        (PyoMappingView, MappingView),
+        (PyoMappingView, Sized),
     ],
 )
 def test_simple_abcs(classes: tuple[type, type]) -> None:

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Literal
 
 from pyochain import (
     NONE,
+    Dict,
     Err,
     Null,
     Ok,
@@ -622,3 +623,13 @@ def check_keys_view_args(base: PyoKeysView[Animal], canary: KeysView[Animal]) ->
     _ = _keys_view(canary)
     _ = _values_view(base)  # pyright: ignore[reportArgumentType]
     _ = _values_view(canary)  # pyright: ignore[reportArgumentType]
+
+
+def covariance_pyomapping() -> PyoMapping[object, Sequence[object]]:
+    x: Dict[object, tuple[str, ...]] = Dict({"a": ("b", "c", "d")})
+    return x
+
+
+def covariance_mapping() -> Mapping[object, Sequence[object]]:
+    x: dict[object, tuple[str, ...]] = {"a": ("b", "c", "d")}
+    return x
