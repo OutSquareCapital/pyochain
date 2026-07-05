@@ -6,9 +6,13 @@ from collections.abc import (
     Iterator,
     MappingView,
     MutableSequence,
+    MutableSet,
     Reversible,
     Sequence,
     Sized,
+)
+from collections.abc import (
+    Set as AbstractSet,
 )
 from functools import partial
 
@@ -22,8 +26,10 @@ from pyochain.abc import (
     PyoIterator,
     PyoMappingView,
     PyoMutableSequence,
+    PyoMutableSet,
     PyoReversible,
     PyoSequence,
+    PyoSet,
     PyoSized,
 )
 
@@ -54,7 +60,9 @@ check_other = partial(pytest.mark.parametrize, "other")
 
 PYOITERATOR_PARENTS = [Iterable, PyoIterable, Iterator]
 COLLECTION_PARENTS = [PyoIterable, PyoContainer, PyoSized, Collection, Container, Sized]
+SET_PARENTS = [*COLLECTION_PARENTS, PyoSet, Collection, AbstractSet]
 SEQUENCE_PARENTS = [*COLLECTION_PARENTS, PyoReversible, Reversible, Sequence]
+MUTABLE_SET_PARENTS = [*SET_PARENTS, PyoMutableSet, MutableSet]
 MUTABLE_SEQUENCE_PARENTS = [*SEQUENCE_PARENTS, PyoSequence, MutableSequence]
 
 FAILING_PARENTS = pc.Set[type]((PyoSized, PyoContainer, PyoReversible))
@@ -99,6 +107,26 @@ def test_mutable_sequence(other: type) -> None:
                 assert issubclass(PyoMutableSequence, other)
         case _:
             assert issubclass(PyoMutableSequence, other)
+
+
+@check_other(SET_PARENTS)
+def test_set(other: type) -> None:
+    match other:
+        case _ if other in FAILING_PARENTS:
+            with IGNORE_RAISE:
+                assert issubclass(pc.Set, other)
+        case _:
+            assert issubclass(pc.Set, other)
+
+
+@check_other(MUTABLE_SET_PARENTS)
+def test_setmut(other: type) -> None:
+    match other:
+        case _ if other in FAILING_PARENTS:
+            with IGNORE_RAISE:
+                assert issubclass(pc.SetMut, other)
+        case _:
+            assert issubclass(pc.SetMut, other)
 
 
 @check_other([PyoIterator, *PYOITERATOR_PARENTS])
