@@ -4,7 +4,9 @@ from collections.abc import (
     Container,
     Iterable,
     Iterator,
+    Mapping,
     MappingView,
+    MutableMapping,
     MutableSequence,
     MutableSet,
     Reversible,
@@ -24,7 +26,9 @@ from pyochain.abc import (
     PyoContainer,
     PyoIterable,
     PyoIterator,
+    PyoMapping,
     PyoMappingView,
+    PyoMutableMapping,
     PyoMutableSequence,
     PyoMutableSet,
     PyoReversible,
@@ -63,7 +67,19 @@ COLLECTION_PARENTS = [PyoIterable, PyoContainer, PyoSized, Collection, Container
 SET_PARENTS = [*COLLECTION_PARENTS, PyoSet, Collection, AbstractSet]
 SEQUENCE_PARENTS = [*COLLECTION_PARENTS, PyoReversible, Reversible, Sequence]
 MUTABLE_SET_PARENTS = [*SET_PARENTS, PyoMutableSet, MutableSet]
-MUTABLE_SEQUENCE_PARENTS = [*SEQUENCE_PARENTS, PyoSequence, MutableSequence]
+MUTABLE_SEQUENCE_PARENTS = [
+    *SEQUENCE_PARENTS,
+    PyoSequence,
+    PyoMutableSequence,
+    MutableSequence,
+]
+MAPPING_PARENTS = [*COLLECTION_PARENTS, Mapping]
+MUTABLE_MAPPING_PARENTS = [
+    *MAPPING_PARENTS,
+    PyoMutableMapping,
+    PyoMapping,
+    MutableMapping,
+]
 
 FAILING_PARENTS = pc.Set[type]((PyoSized, PyoContainer, PyoReversible))
 
@@ -153,6 +169,16 @@ def test_vec(other: type) -> None:
                 assert issubclass(pc.Vec, other)
         case _:
             assert issubclass(pc.Vec, other)
+
+
+@check_other(MUTABLE_MAPPING_PARENTS)
+def test_dict(other: type) -> None:
+    match other:
+        case _ if other in FAILING_PARENTS:
+            with IGNORE_RAISE:
+                assert issubclass(pc.Dict, other)
+        case _:
+            assert issubclass(pc.Dict, other)
 
 
 @pytest.mark.parametrize(
