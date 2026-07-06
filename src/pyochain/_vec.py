@@ -31,7 +31,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         data (Iterable[T]): Any `Iterable` of elements to initialize the `Vec` with.
     """
 
-    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
+    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
     _inner: list[T]
 
     def __init__(self, data: Iterable[T]) -> None:

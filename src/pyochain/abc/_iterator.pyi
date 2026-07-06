@@ -6,7 +6,9 @@ from collections.abc import (
     Iterable,
     Iterator,
     KeysView,
+    Mapping,
     MappingView,
+    MutableMapping,
     MutableSequence,
     MutableSet,
     Sequence,
@@ -27,13 +29,17 @@ from typing import (
     runtime_checkable,
 )
 
-from _typeshed import SupportsGetItemViewable, Viewable
+from _typeshed import (
+    SupportsGetItem,
+    SupportsGetItemViewable,
+    SupportsKeysAndGetItem,
+    Viewable,
+)
 
 from pyochain import SetMut
 from pyochain._tools import Peekable
 from pyochain._utils import no_doctest
 from pyochain._vec import Vec
-from pyochain.abc import PyoMutableSequence
 from pyochain.rs import Checkable, Fluent, Option, Result
 
 from .._types import (
@@ -4907,3 +4913,504 @@ class PyoMutableSet[T](PyoSet[T], MutableSet[T]):  # pyright: ignore[reportImpli
     def __ixor__(self, it: AbstractSet[T], /) -> Self: ...
     @override
     def __isub__(self, it: AbstractSet[Any], /) -> Self: ...
+
+class PyoMapping[K, V](PyoCollection[K], Mapping[K, V]):  # pyright: ignore[reportImplicitAbstractClass]
+    """Extends `PyoCollection[K]` and `collections.abc.Mapping[K, V]`.
+
+    Serves as a base class for pyochain mappings, such as `Dict`.
+
+    Any concrete subclass must implement the required `Mapping` dunder methods:
+
+    - `__getitem__`
+    - `__iter__`
+    - `__len__`
+    """
+
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
+
+    @abstractmethod
+    @override
+    def __getitem__(self, key: K, /) -> V: ...
+    @override
+    def __contains__(self, key: object, /) -> bool: ...
+    @override
+    def __eq__(self, other: object, /) -> bool: ...
+    @override
+    def keys(self) -> PyoKeysView[K]:
+        """Return a view of the `Mapping` keys.
+
+        Returns:
+            PyoKeysView[K]: A view of the dictionary's keys.
+
+        Example:
+            ```python
+            >>> from pyochain import Dict
+            >>> data = Dict({1: "a", 2: "b"})
+            >>> data.keys()
+            PyoKeysView(Dict(1: 'a', 2: 'b'))
+
+            ```
+        """
+
+    @override
+    def values(self) -> PyoValuesView[V]:
+        """Return a view of the `Mapping` values.
+
+        Returns:
+            PyoValuesView[V_co]: A view of the dictionary's values.
+
+        Example:
+            ```python
+            >>> from pyochain import Dict
+            >>> data = Dict({1: "a", 2: "b"})
+            >>> data.values()
+            PyoValuesView(Dict(1: 'a', 2: 'b'))
+
+            ```
+        """
+
+    @override
+    def items(self) -> PyoItemsView[K, V]:
+        """Return a view of the `Mapping` items.
+
+        Returns:
+            PyoItemsView[K, V_co]: A view of the dictionary's (key, value) pairs.
+
+        Example:
+            ```python
+            >>> from pyochain import Dict
+            >>> data = Dict({1: "a", 2: "b"})
+            >>> data.items()
+            PyoItemsView(Dict(1: 'a', 2: 'b'))
+
+            ```
+        """
+
+    @overload
+    def get(self, key: K, /) -> V | None: ...
+    @overload
+    def get(self, key: K, default: V, /) -> V: ...  # Covariant type as parameter
+    @overload
+    def get[T](self, key: K, default: T, /) -> V | T: ...
+    @override
+    def get[T](self, key: K, default: T | None = None, /) -> V | T | None: ...
+    def get_item(self, key: K) -> Option[V]:
+        """Retrieve a value from the `MutableMapping`.
+
+        Returns `Some(value)` if the **key** exists, or `None` if it does not.
+
+        Args:
+            key (K): The key to look up.
+
+        Returns:
+            Option[V]: `Some(value)` that is associated with the **key**, or `None` if not found.
+
+        Example:
+            ```python
+            >>> from pyochain import Dict
+            >>> data = Dict.from_ref({"a": 1})
+            >>> data.get_item("a")
+            Some(1)
+            >>> data.get_item("x").unwrap_or("Not Found")
+            'Not Found'
+
+            ```
+        """
+
+class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):  # pyright: ignore[reportImplicitAbstractClass]
+    """Extends `PyoMapping[K, V]` and `collections.abc.MutableMapping[K, V]`.
+
+    Serves as a base class for pyochain mutable mappings, such as `Dict`.
+
+    Any concrete subclass must implement the required `MutableMapping` dunder methods:
+
+    - `__getitem__`
+    - `__setitem__`
+    - `__delitem__`
+    - `__iter__`
+    - `__len__`
+
+    """
+
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
+
+    @abstractmethod
+    @override
+    def __setitem__(self, key: K, value: V, /) -> None: ...
+    @abstractmethod
+    @override
+    def __delitem__(self, key: K, /) -> None: ...
+    @overload
+    def pop(self, key: K, /) -> V: ...
+    @overload
+    def pop(self, key: K, default: V, /) -> V: ...
+    @overload
+    def pop[T](self, key: K, default: T, /) -> V | T: ...
+    @override
+    def pop[T](self, key: K, default: T = ..., /) -> V | T: ...
+    @override
+    def popitem(self) -> tuple[K, V]: ...
+    @override
+    def clear(self) -> None: ...
+    @overload
+    def update(self, m: SupportsKeysAndGetItem[K, V], /) -> None: ...
+    @overload
+    def update(
+        self: SupportsGetItem[str, V],
+        m: SupportsKeysAndGetItem[str, V],
+        /,
+        **kwargs: V,
+    ) -> None: ...
+    @overload
+    def update(self, m: Iterable[tuple[K, V]], /) -> None: ...
+    @overload
+    def update(
+        self: SupportsGetItem[str, V], m: Iterable[tuple[str, V]], /, **kwargs: V
+    ) -> None: ...
+    @overload
+    def update(self: SupportsGetItem[str, V], /, **kwargs: V) -> None: ...
+    @override
+    def update(
+        self,
+        other: SupportsKeysAndGetItem[K, V]
+        | Iterable[tuple[K, V]]
+        | SupportsKeysAndGetItem[str, V] = (),
+        /,
+        **kwds: V,
+    ) -> None: ...
+    @overload
+    def setdefault[T](
+        self: MutableMapping[K, T | None], key: K, default: None = None, /
+    ) -> T | None: ...
+    @overload
+    def setdefault(self, key: K, default: V, /) -> V: ...
+    @override
+    def setdefault[T](self, key: K, default: object = None, /) -> V: ...
+    def insert(self, key: K, value: V) -> Option[V]:
+        """Insert a key-value pair into the `MutableMapping`.
+
+        If the `MutableMapping` did not have this **key** present, `NONE` is returned.
+
+        If the `MutableMapping` did have this **key** present, the **value** is updated, and the old value is returned.
+
+        The **key** is not updated.
+
+        Args:
+            key (K): The key to insert.
+            value (V): The value associated with the key.
+
+        Returns:
+            Option[V]: The previous value associated with the key, or None if the key was not present.
+
+        Example:
+            ```python
+            >>> from pyochain import Dict
+            >>> data = Dict(())
+            >>> data.insert(37, "a")
+            NONE
+            >>> data.is_empty()
+            False
+
+            >>> data.insert(37, "b")
+            Some('a')
+            >>> data.insert(37, "c")
+            Some('b')
+            >>> data[37]
+            'c'
+
+            ```
+        """
+    def try_insert(self, key: K, value: V) -> Result[V, KeyError]:
+        """Tries to insert a key-value pair into the `MutableMapping`, and returns a `Result[V, KeyError]` containing the value in the entry (if successful).
+
+        If the `MutableMapping` already had this **key** present, nothing is updated, and an error containing the occupied entry and the value is returned.
+
+        Args:
+            key (K): The key to insert.
+            value (V): The value associated with the key.
+
+        Returns:
+            Result[V, KeyError]: `Ok` containing the value if the **key** was not present, or `Err` containing a `KeyError` if the **key** already existed.
+
+        Example:
+            ```python
+            >>> from pyochain import Dict
+            >>> d = Dict(())
+            >>> d.try_insert(37, "a").unwrap()
+            'a'
+            >>> d.try_insert(37, "b")
+            Err(KeyError('Key 37 already exists with value a.'))
+
+            ```
+        """
+
+    def remove(self, key: K) -> Option[V]:
+        """Remove a **key** from the `MutableMapping` and return its value if it existed.
+
+        Equivalent to `dict.pop(key, None)`, with an `Option` return type.
+
+        Args:
+            key (K): The key to remove.
+
+        Returns:
+            Option[V]: The value associated with the removed **key**, or `None` if the **key** was not present.
+
+        Example:
+            ```python
+            >>> from pyochain import Dict
+            >>> data = Dict({1: "a", 2: "b"})
+            >>> data.remove(1)
+            Some('a')
+            >>> data.remove(3)
+            NONE
+
+            ```
+        """
+
+    def remove_entry(self, key: K) -> Option[tuple[K, V]]:
+        """Remove a key from the `MutableMapping` and return the item if it existed.
+
+        Return an `Option[tuple[K, V]]` containing the (key, value) pair if the key was present.
+
+        Args:
+            key (K): The key to remove.
+
+        Returns:
+            Option[tuple[K, V]]: `Some((key, value))` pair associated with the removed key, or `None` if the **key** was not present.
+
+        Example:
+            ```python
+            >>> from pyochain import Dict
+            >>> data = Dict({1: "a", 2: "b"})
+            >>> data.remove_entry(1)
+            Some((1, 'a'))
+            >>> data.remove_entry(3)
+            NONE
+
+            ```
+        """
+
+class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):  # pyright: ignore[reportImplicitAbstractClass]
+    """Extends `PyoSequence[T]` and `collections.abc.MutableSequence[T]`.
+
+    This ABC is the base class for mutable sequence types in pyochain, such as `Vec`.
+
+    Any concrete subclass must implement the required `MutableSequence` dunder methods:
+
+    - `__getitem__`
+    - `__setitem__`
+    - `__delitem__`
+    - `__len__`
+    - `insert`
+
+    This class notably provides various methods inspired from Rust's `Vec` type, which provides memory-efficient in-place operations.
+
+    They are slower than simple `.extend()`, slices and `clear()` calls, but avoids all intermediate allocations, making them suitable for large collections where memory usage is a concern.
+    """
+
+    @overload
+    @abstractmethod
+    def __getitem__(self, index: int, /) -> T: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, index: slice[int | None], /) -> MutableSequence[T]: ...
+    @overload
+    @abstractmethod
+    def __setitem__(self, index: int, value: T, /) -> None: ...
+    @overload
+    @abstractmethod
+    def __setitem__(self, index: slice[int | None], value: Iterable[T], /) -> None: ...
+    @abstractmethod
+    @override
+    def __setitem__(
+        self, index: int | slice[int | None], value: T | Iterable[T], /
+    ) -> None: ...
+    @overload
+    @abstractmethod
+    def __delitem__(self, index: int, /) -> None: ...
+    @overload
+    @abstractmethod
+    def __delitem__(self, index: slice[int | None], /) -> None: ...
+    @abstractmethod
+    @override
+    def __delitem__(self, index: int | slice[int | None], /) -> None: ...
+    @override
+    def __iadd__(self, values: Iterable[T], /) -> Self: ...
+    @abstractmethod
+    @override
+    def insert(self, index: int, value: T, /) -> None: ...
+    @override
+    def append(self, value: T, /) -> None: ...
+    @override
+    def clear(self) -> None: ...
+    @override
+    def extend(self, values: Iterable[T], /) -> None: ...
+    @override
+    def pop(self, index: int = -1, /) -> T: ...
+    @override
+    def remove(self, value: T, /) -> None: ...
+    @override
+    def reverse(self) -> None: ...
+    def retain(self, predicate: Callable[[T], bool]) -> None:
+        """Retains only the elements specified by the *predicate*.
+
+        In other words, remove all elements for which the *predicate* function returns `False`.
+
+        This is similar to filtering, but operates in place, visiting each element exactly once in forward order.
+
+        Compared to `.iter().filter(predicate).collect(Seq)`, this avoids creating a new collection.
+
+        The order of the retained elements is preserved.
+
+        Args:
+            predicate (Callable[[T], bool]): A function that returns `True` for elements to keep and `False` for elements to remove.
+
+        Example:
+            ```python
+            >>> from pyochain import Vec, Seq
+            >>> vec = Vec((1, 2, 3, 4))
+            >>> vec.retain(lambda x: x % 2 == 0)
+            >>> vec
+            Vec(2, 4)
+
+            ```
+            External state may be used to decide which elements to keep.
+
+            ```python
+            >>> vec = Vec((1, 2, 3, 4, 5))
+            >>> keep = Seq((False, True, True, False, True)).iter()
+            >>> vec.retain(lambda _: next(keep))
+            >>> vec
+            Vec(2, 3, 5)
+
+            ```
+        """
+
+    def truncate(self, length: int) -> None:
+        """Shortens the `MutableSequence`, keeping the first *length* elements and dropping the rest.
+
+        If *length* is greater or equal to the `MutableSequence` current `__len__()`, this has no effect.
+
+        `Vec::drain` can emulate `Vec::truncate`, but causes the excess elements to be returned instead of dropped.
+
+        This is equivalent to `del seq[length:]`.
+
+        Args:
+            length (int): The length to truncate the `MutableSequence` to.
+
+        Example:
+            ```python
+            >>> from pyochain import Vec
+            >>> # Truncating a five element vector to two elements:
+            >>> vec = Vec((1, 2, 3, 4, 5))
+            >>> vec.truncate(2)
+            >>> vec
+            Vec(1, 2)
+
+            ```
+            No truncation occurs when len is greater than the `MutableSequence` current length:
+            ```python
+            >>> from pyochain import Vec
+            >>> vec = Vec((1, 2, 3))
+            >>> vec.truncate(8)
+            >>> vec
+            Vec(1, 2, 3)
+
+            ```
+            Truncating when len == 0 is equivalent to calling the clear method.
+            ```python
+            >>> from pyochain import Vec
+            >>> vec = Vec((1, 2, 3))
+            >>> vec.truncate(0)
+            >>> vec
+            Vec()
+
+            ```
+        """
+    def extract_if(
+        self, predicate: Callable[[T], bool], start: int = 0, end: int | None = None
+    ) -> PyoIterator[T]:
+        """Creates an `Iter` which uses a *predicate* to determine if an element in `Self` should be removed.
+
+        If the *predicate* returns `True`, the element is removed from `Self` and yielded.
+
+        If the *predicate* returns `False`, the element remains in `Self` and will not be yielded.
+
+        You can specify a range for the extraction.
+
+        If the returned `Iterator` is not exhausted, e.g. because it is dropped without iterating or the iteration short-circuits, then the remaining elements will be retained.
+
+        Args:
+            predicate (Callable[[T], bool]): A function that takes an element and returns `True` if it should be extracted, or `False` if it should be retained.
+            start (int): The starting index of the range to consider for extraction. Defaults to `0`.
+            end (int | None): The ending index of the range to consider for extraction. Defaults to `None`, which means the end of `Self`.
+
+        Returns:
+            PyoIterator[T]: An `Iterator` that yields the extracted elements.
+
+        Example:
+            ```python
+            >>> from pyochain import Vec
+            >>> data = (1, 2, 3, 4, 5)
+            >>> vec = Vec(data)
+            >>> extracted = vec.extract_if(lambda x: x % 2 == 0).collect(Vec)
+            >>> extracted
+            Vec(2, 4)
+            >>> vec
+            Vec(1, 3, 5)
+            >>> # Extracting with a range
+            >>> vec = Vec(data)
+            >>> extracted = vec.extract_if(
+            ...     lambda x: x % 2 == 0, start=1, end=4
+            ... ).collect(Vec)
+            >>> extracted
+            Vec(2, 4)
+            >>> vec
+            Vec(1, 3, 5)
+
+            ```
+        """
+
+    def drain(self, start: int | None = None, end: int | None = None) -> PyoIterator[T]:
+        """Removes the subslice indicated by the given *start* and *end* from the `Vec`, returning an `Iterator` over the removed subslice.
+
+        If the `Iterator` is dropped before being fully consumed, it drops the remaining removed elements.
+
+        Args:
+            start (int | None): Starting index of the subslice to drain. Defaults to `0` if `None`.
+            end (int | None): Ending index of the subslice to drain. Defaults to `len(self)` if `None`.
+
+        Returns:
+            PyoIterator[T]: An `Iterator` over the drained elements.
+
+        Example:
+            ```python
+            >>> from pyochain import Vec
+            >>> v = Vec([1, 2, 3])
+            >>> u = v.drain(1).collect(Vec)
+            >>> v
+            Vec(1)
+            >>> u
+            Vec(2, 3)
+
+            ```
+            Fully consuming the `Iterator` removes all drained elements
+            ```python
+            >>> from pyochain import Vec
+            >>> v = Vec([1, 2, 3])
+            >>> _ = v.drain().collect(Vec)
+            >>> v
+            Vec()
+
+            ```
+            Deleting the `Iterator` will also remove all drained elements.
+            ```python
+            >>> from pyochain import Vec
+            >>> vec = Vec([1, 2, 3])
+            >>> iterator = vec.drain()
+            >>> del iterator
+            >>> vec
+            Vec()
+
+            ```
+        """

@@ -11,7 +11,7 @@ mod tools;
 use pyo3::{
     PyTypeInfo, intern,
     prelude::*,
-    types::{PySequence, PyType},
+    types::{PyMapping, PySequence, PyType},
 };
 use tap::prelude::*;
 
@@ -152,6 +152,12 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     register(&abc_mod, "KeysView", &abc::PyoKeysView::type_object(py))?;
     register(&abc_mod, "ValuesView", &abc::PyoValuesView::type_object(py))?;
     register(&abc_mod, "ItemsView", &abc::PyoItemsView::type_object(py))?;
+    PyMapping::register::<abc::PyoMapping>(py)?;
+    register(
+        &abc_mod,
+        "MutableMapping",
+        &abc::PyoMutableMapping::type_object(py),
+    )?;
 
     Ok(())
 }

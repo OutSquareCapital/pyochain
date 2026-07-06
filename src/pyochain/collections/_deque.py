@@ -43,7 +43,7 @@ class Deque[T](PyoMutableSequence[T]):  # noqa: PLW1641
         See https://docs.python.org/3/library/collections.html#collections.deque for more details.
     """
 
-    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
+    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
     _inner: deque[T]
 
     @overload

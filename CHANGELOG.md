@@ -7,7 +7,7 @@ TODO: check how to setup a "blog" section in the website for major releases, to 
 
 ### 🏆 Highlights
 
-- `abc::{PyoIterable, PyoIterator, PyoSized, PyoContainer, PyoCollection, PyoReversible, PyoSequence, PyoMappingView, PyoSet, PyoKeysView, PyoValuesView, PyoItemsView}` and `Iter`, `Seq`, `Range` have been fully moved to Rust.
+- `abc` classes and `Iter`, `Seq`, `Range` have been fully moved to Rust.
 - `abc::PyoIterator::peekable` has been completely refactored and now aligns with Rust std `Iterator`, with the methods `peek`, `next_if`, `next_if_eq`, and `next_if_map`, all implemented in Rust.
 - **typing**: The variance of generics for immutable classes (abstract and concrete) is now correctly handled and align with python stdlib. For example, `PyoMapping`, `Seq` or `Set` are now covariant, whilst `Dict` or `Vec` stay invariant.
 
@@ -29,6 +29,7 @@ TODO: check how to setup a "blog" section in the website for major releases, to 
 
 - `{Dict, SetMut, StableSet, Vec}::copy` to create shallow copies of the instance, just like `x.copy()` for their respective underlying builtins.
 - `PyoSized`, `PyoReversible`, and `PyoContainer` now inerhit from `Checkable`, instead of relying on mixins heritance.
+- `get_item` is now a `PyoMapping` method instead of a `PyoMutableMapping` one
 
 ### ✨ Enhancements
 
