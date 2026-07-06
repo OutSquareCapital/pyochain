@@ -1733,7 +1733,13 @@ impl PyoSet {
     ) -> PyResult<Bound<'py, Self>> {
         cls.call1((it,))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
-    }
+            .map_err(|e| {
+                let msg = format!("hint: As a `PyoSet` subclass, `{}::__init__` must accept a single `Iterable` argument. If you override it, make sure to override `PyoSet::_from_iterable` as well.", cls.name().unwrap());
+                e.add_note(cls.py(), msg,).unwrap(); 
+                e})
+    
+}
+    
     #[inline]
     #[classmethod]
     fn _py_from_iterable<'py>(

@@ -78,10 +78,13 @@ class _ImplContainer(_BaseImpl):
 class _ImplCollection(_ImplSized, _ImplContainer, _ImplIter):
     """Works to implement both `Collection` and `Set` ABCs as a standlone."""
 
+    def __init__(self, it: Iterable[int] | None = None) -> None:
+        self._data: list[int] = [1, 2, 3] if it is None else list(dict.fromkeys(it))
+
 
 class _ImplMutableSet(_ImplCollection):
-    def __init__(self) -> None:
-        self._data: set[int] = {1, 2, 3}  # pyright: ignore[reportIncompatibleVariableOverride]
+    def __init__(self, it: Iterable[int] | None = None) -> None:
+        self._data: set[int] = {1, 2, 3} if it is None else set(it)  # pyright: ignore[reportIncompatibleVariableOverride]
 
     def add(self, item: int) -> None:
         self._data.add(item)
@@ -256,7 +259,21 @@ def test_set() -> None:
     assert pyo_ok | py_ok == {1, 2, 3}
     assert pyo_ok - py_ok == frozenset() == py_ok - pyo_ok
     assert pyo_ok ^ py_ok == frozenset() == py_ok ^ pyo_ok
-    assert pyo_ok.isdisjoint(py_ok)
+    assert not pyo_ok.isdisjoint(py_ok)
+    assert pyo_ok.isdisjoint(_PyOk([4, 5, 6]))
+
+
+def test_set_from_iterable_note() -> None:
+    class _NoIterableInit(_ImplSized, _ImplContainer, _ImplIter): ...
+
+    class _Bad(_NoIterableInit, PyoSet[int]): ...
+
+    a = _Bad()
+    b = _Bad()
+    with pytest.raises(TypeError) as exc_info:
+        _ = a | b
+    assert exc_info.value.__notes__
+    assert "PyoSet" in exc_info.value.__notes__[0]
 
 
 def test_mutable_set() -> None:  # noqa: PLR0915
@@ -291,7 +308,8 @@ def test_mutable_set() -> None:  # noqa: PLR0915
     assert pyo_ok | py_ok == {1, 2, 3}
     assert pyo_ok - py_ok == frozenset() == py_ok - pyo_ok
     assert pyo_ok ^ py_ok == frozenset() == py_ok ^ pyo_ok
-    assert pyo_ok.isdisjoint(py_ok)
+    assert not pyo_ok.isdisjoint(py_ok)
+    assert pyo_ok.isdisjoint(_PyOk({4, 5, 6}))
     pyo_ok.add(4)
     py_ok.add(4)
     assert 4 in pyo_ok
