@@ -19,6 +19,7 @@ from typing import (
     Concatenate,
     Literal,
     Protocol,
+    Self,
     TypeGuard,
     TypeIs,
     overload,
@@ -4895,13 +4896,14 @@ class PyoMutableSet[T](PyoSet[T], MutableSet[T]):  # pyright: ignore[reportImpli
     def pop(self) -> T: ...
     @override
     def remove(self, value: T, /) -> None: ...
-
-    # Pyo3 forces incompatible implementations of those dunders -> they must return `None` instead of `Self`.
+    # TODO: check logic of typing and impl for vanilla collections.abc
+    # Pyo3 forces incompatible implementations of those dunders -> they return `None` instead of `Self`.
+    # However, typing-wise, they must return `Self`, otherwise type checkers will complain about unknown return types.
     @override
-    def __ior__(self, it: AbstractSet[T], /) -> None: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __ior__(self, it: AbstractSet[T], /) -> Self: ...
     @override
-    def __iand__(self, it: AbstractSet[Any], /) -> None: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __iand__(self, it: AbstractSet[Any], /) -> Self: ...
     @override
-    def __ixor__(self, it: AbstractSet[T], /) -> None: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __ixor__(self, it: AbstractSet[T], /) -> Self: ...
     @override
-    def __isub__(self, it: AbstractSet[Any], /) -> None: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __isub__(self, it: AbstractSet[Any], /) -> Self: ...
