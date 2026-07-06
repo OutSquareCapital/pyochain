@@ -44,32 +44,35 @@ from pyochain.abc import (
     PyoSized,
 )
 
-DATA = [1, 2, 3]
-
 # Subclasshook of python ABCs raise error as soon as the class is instantiated.
 CATCH_TYPE_ERROR = pytest.raises(TypeError)
 # we can't do that (as far as I know) with Pyo3, so we check on the abstracts methods instead
 CATCH_NOT_IMPLEMENTED = pytest.raises(NotImplementedError)
 
 
-class _ImplIter:
+class _BaseImpl:
+    def __init__(self) -> None:
+        self._data: list[int] = [1, 2, 3]
+
+
+class _ImplIter(_BaseImpl):
     def __iter__(self) -> Iterator[int]:
-        return iter(DATA)
+        return iter(self._data)
 
 
-class _ImplSized:
+class _ImplSized(_BaseImpl):
     def __len__(self) -> int:
-        return len(DATA)
+        return len(self._data)
 
 
 class _ImplRev(_ImplIter):
     def __reversed__(self) -> Iterator[int]:
-        return reversed(DATA)
+        return reversed(self._data)
 
 
-class _ImplContainer:
+class _ImplContainer(_BaseImpl):
     def __contains__(self, item: int) -> bool:
-        return item in DATA
+        return item in self._data
 
 
 class _ImplCollection(_ImplSized, _ImplContainer, _ImplIter):
@@ -78,7 +81,7 @@ class _ImplCollection(_ImplSized, _ImplContainer, _ImplIter):
 
 class _ImplMutableSet(_ImplCollection):
     def __init__(self) -> None:
-        self._data: set[int] = set(DATA)
+        self._data: set[int] = {1, 2, 3}  # pyright: ignore[reportIncompatibleVariableOverride]
 
     def add(self, item: int) -> None:
         self._data.add(item)
@@ -89,16 +92,15 @@ class _ImplMutableSet(_ImplCollection):
 
 class _ImplSequence(_ImplSized):
     def __getitem__(self, index: int) -> int:
-        return DATA[index]
+        return self._data[index]
 
 
-class _ImplMapping(_ImplSequence, _ImplIter): ...
+class _ImplMapping(_ImplSequence, _ImplIter):
+    def __init__(self) -> None:
+        self._data: dict[int, int] = {i: i * 10 for i in [0, 1, 2]}  # pyright: ignore[reportIncompatibleVariableOverride]
 
 
 class _ImplMutableMapping(_ImplMapping):
-    def __init__(self) -> None:
-        self._data: dict[int, int] = {i: i * 10 for i in DATA}
-
     def __setitem__(self, key: int, value: int) -> None:
         self._data[key] = value
 
@@ -107,9 +109,6 @@ class _ImplMutableMapping(_ImplMapping):
 
 
 class _ImplMutableSequence(_ImplSequence):
-    def __init__(self) -> None:
-        self._data: list[int] = DATA.copy()
-
     def __setitem__(self, index: int, value: int) -> None:
         self._data[index] = value
 
@@ -138,7 +137,7 @@ def test_iterable() -> None:
 def test_iterator() -> None:
     class Impl:
         def __init__(self) -> None:
-            self._iter: Iterator[int] = iter(DATA)
+            self._iter: Iterator[int] = iter([1, 2, 3])
 
         def __next__(self) -> int:
             return next(self._iter)
@@ -381,7 +380,7 @@ def test_mutable_mapping() -> None:
     _assert_iter_eq(py_ok.items(), pyo_ok.items())
     assert py_ok.get(0) == pyo_ok.get(0)
     assert not (py_ok != pyo_ok)  # noqa: SIM202
-    assert py_ok.pop(0) == pyo_ok.pop(0)
+    assert py_ok.pop(1) == pyo_ok.pop(1)
     assert py_ok.popitem() == pyo_ok.popitem()
     assert py_ok.setdefault(0, 0) == pyo_ok.setdefault(0, 0)
     assert py_ok.update({0: 0}) == pyo_ok.update({0: 0})

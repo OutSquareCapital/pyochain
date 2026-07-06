@@ -1643,15 +1643,16 @@ impl PyoMutableSequence {
     fn remove(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<()> {
         slf.del_item(unsafe { slf.cast_unchecked::<PySequence>() }.index(value)?)
     }
-
     fn reverse(slf: Bound<'_, Self>) -> PyResult<()> {
         let n = slf.len()?;
         for i in 0..n / 2 {
+            let tmp = slf.get_item(i)?;
             slf.set_item(i, slf.get_item(n - i - 1)?)?;
-            slf.set_item(n - i - 1, slf.get_item(i)?)?;
+            slf.set_item(n - i - 1, tmp)?;
         }
         Ok(())
     }
+
     #[allow(unused)]
     fn insert(
         slf: Bound<'_, Self>,
@@ -2386,12 +2387,16 @@ impl PyoMutableMapping {
             .add_subclass(Self {})
     }
     #[allow(unused)]
-    fn __setitem__(&self, key: &Bound<'_, PyAny>, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        Err(PyKeyError::new_err("KeyError"))
+    fn __setitem__(
+        slf: Bound<'_, Self>,
+        key: &Bound<'_, PyAny>,
+        value: &Bound<'_, PyAny>,
+    ) -> PyResult<()> {
+        not_impl_error(slf.as_any(), "PyoMutableMapping", "__setitem__")
     }
     #[allow(unused)]
-    fn __delitem__(&self, key: &Bound<'_, PyAny>) -> PyResult<()> {
-        Err(PyKeyError::new_err("KeyError"))
+    fn __delitem__(slf: Bound<'_, Self>, key: &Bound<'_, PyAny>) -> PyResult<()> {
+        not_impl_error(slf.as_any(), "PyoMutableMapping", "__delitem__")
     }
 
     #[pyo3(signature = (key, default=None))]
@@ -2428,7 +2433,19 @@ impl PyoMutableMapping {
     }
 
     fn clear(slf: Bound<'_, Self>) -> PyResult<()> {
-        slf.try_iter()?.try_for_each(|key| slf.del_item(&key?))
+        let py = slf.py();
+        loop {
+            match slf.call_method0(intern!(py, "popitem")) {
+                Ok(_) => continue,
+                Err(err) => {
+                    if err.is_instance_of::<PyKeyError>(py) {
+                        return Ok(());
+                    } else {
+                        return Err(err);
+                    }
+                }
+            }
+        }
     }
 
     #[pyo3(signature = (other=None, **kwds))]
