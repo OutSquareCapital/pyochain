@@ -5056,10 +5056,7 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):  # pyrigh
     def update(self, m: SupportsKeysAndGetItem[K, V], /) -> None: ...
     @overload
     def update(
-        self: SupportsGetItem[str, V],
-        m: SupportsKeysAndGetItem[str, V],
-        /,
-        **kwargs: V,
+        self: SupportsGetItem[str, V], m: SupportsKeysAndGetItem[str, V], /, **kwargs: V
     ) -> None: ...
     @overload
     def update(self, m: Iterable[tuple[K, V]], /) -> None: ...
@@ -5068,16 +5065,7 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):  # pyrigh
         self: SupportsGetItem[str, V], m: Iterable[tuple[str, V]], /, **kwargs: V
     ) -> None: ...
     @overload
-    def update(self: SupportsGetItem[str, V], /, **kwargs: V) -> None: ...
-    @override
-    def update(
-        self,
-        other: SupportsKeysAndGetItem[K, V]
-        | Iterable[tuple[K, V]]
-        | SupportsKeysAndGetItem[str, V] = (),
-        /,
-        **kwds: V,
-    ) -> None: ...
+    def update(self: SupportsGetItem[str, V], /, **kwargs: V) -> None: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @overload
     def setdefault[T](
         self: MutableMapping[K, T | None], key: K, default: None = None, /
