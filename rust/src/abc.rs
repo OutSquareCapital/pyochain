@@ -18,7 +18,7 @@ use tap::prelude::*;
 const ABC: &str = "collections.abc";
 const ABSTRACT_SET: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
 
-#[pyclass(subclass, frozen, generic, extends=Checkable)]
+#[pyclass(subclass, frozen, generic, extends=Checkable, module = "pyochain.abc._iterable")]
 pub struct PyoIterable;
 
 #[pymethods]
@@ -35,7 +35,7 @@ impl PyoIterable {
         slf.into_any().pipe(tls::Iter::new)
     }
 }
-#[pyclass(subclass, frozen, generic, extends=PyoIterable)]
+#[pyclass(subclass, frozen, generic, extends=PyoIterable, module = "pyochain.abc._iterator")]
 pub struct PyoIterator;
 
 #[pymethods]
@@ -1324,7 +1324,7 @@ fn is_sorted_cmp_fn(
         (false, true) => |prev: &Bound<'_, PyAny>, curr: &Bound<'_, PyAny>| prev.ge(curr),
     }
 }
-#[pyclass(subclass, frozen, generic, extends=Checkable)]
+#[pyclass(subclass, frozen, generic, extends=Checkable, module = "pyochain.abc._collection")]
 pub struct PyoContainer;
 
 #[pymethods]
@@ -1343,7 +1343,7 @@ impl PyoContainer {
     }
 }
 
-#[pyclass(subclass, frozen, generic, extends=Checkable)]
+#[pyclass(subclass, frozen, generic, extends=Checkable, module = "pyochain.abc._collection")]
 pub struct PyoSized;
 
 #[pymethods]
@@ -1366,7 +1366,7 @@ impl PyoSized {
     }
 }
 
-#[pyclass(subclass, frozen, generic, extends=PyoSized)]
+#[pyclass(subclass, frozen, generic, extends=PyoSized, module = "pyochain.abc._mappings")]
 pub struct PyoMappingView {
     pub mapping: Py<PyAny>,
 }
@@ -1383,7 +1383,7 @@ impl PyoMappingView {
     }
 }
 
-#[pyclass(subclass, frozen, generic, extends=PyoIterable)]
+#[pyclass(subclass, frozen, generic, extends=PyoIterable, module = "pyochain.abc._collection")]
 pub struct PyoCollection;
 
 #[pymethods]
@@ -1414,7 +1414,7 @@ impl PyoCollection {
         slf.is_empty()
     }
 }
-#[pyclass(subclass, frozen, generic, extends=PyoIterable)]
+#[pyclass(subclass, frozen, generic, extends=PyoIterable, module = "pyochain.abc._sequences")]
 pub struct PyoReversible;
 
 #[pymethods]
@@ -1438,7 +1438,7 @@ impl PyoReversible {
 }
 
 // TODO: check difference once we had `sequence` to pypub struct macro
-#[pyclass(subclass, frozen, generic, extends=PyoCollection)]
+#[pyclass(subclass, frozen, generic, extends=PyoCollection, module = "pyochain.abc._sequences")]
 pub struct PyoSequence;
 #[pymethods]
 impl PyoSequence {
@@ -1545,7 +1545,7 @@ impl PyoSequence {
     }
 }
 
-#[pyclass(subclass, frozen, generic, extends=PyoSequence)]
+#[pyclass(subclass, frozen, generic, extends=PyoSequence, module = "pyochain.abc._sequences")]
 pub struct PyoMutableSequence;
 #[pymethods]
 impl PyoMutableSequence {
@@ -1694,7 +1694,7 @@ fn not_impl_error<'py, T>(cls: &Bound<'py, PyAny>, parent: &str, method: &str) -
     );
     Err(PyNotImplementedError::new_err(txt))
 }
-#[pyclass(subclass, frozen, generic, extends=PyoCollection)]
+#[pyclass(subclass, frozen, generic, extends=PyoCollection, module = "pyochain.abc._sets")]
 pub struct PyoSet;
 #[pymethods]
 impl PyoSet {
@@ -1975,7 +1975,7 @@ impl PyoSet {
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
 }
-#[pyclass(subclass, frozen, generic,  extends=PyoSet)]
+#[pyclass(subclass, frozen, generic, extends=PyoSet, module = "pyochain.abc._mappings")]
 pub struct PyoValuesView {
     pub mapping: Py<PyAny>,
 }
@@ -2013,7 +2013,7 @@ impl PyoValuesView {
     }
 }
 
-#[pyclass(subclass, frozen, generic,  extends=PyoSet)]
+#[pyclass(subclass, frozen, generic, extends=PyoSet, module = "pyochain.abc._mappings")]
 pub struct PyoKeysView {
     pub mapping: Py<PyAny>,
 }
@@ -2076,7 +2076,7 @@ impl PyoKeysView {
     }
 }
 
-#[pyclass(subclass, frozen, generic,  extends=PyoSet)]
+#[pyclass(subclass, frozen, generic, extends=PyoSet, module = "pyochain.abc._mappings")]
 pub struct PyoItemsView {
     pub mapping: Py<PyAny>,
 }
@@ -2161,7 +2161,7 @@ impl PyoItemsView {
     }
 }
 
-#[pyclass(subclass, frozen, generic,  extends=PyoSet)]
+#[pyclass(subclass, frozen, generic, extends=PyoSet, module = "pyochain.abc._sets")]
 pub struct PyoMutableSet;
 #[pymethods]
 impl PyoMutableSet {
@@ -2263,7 +2263,7 @@ impl PyoMutableSet {
             .try_for_each(|x| Self::_py_discard(&slf, &x?))
     }
 }
-#[pyclass(subclass, frozen, generic,  extends=PyoCollection)]
+#[pyclass(subclass, frozen, generic, extends=PyoCollection, module = "pyochain.abc._mappings")]
 pub struct PyoMapping;
 #[pymethods]
 impl PyoMapping {
@@ -2358,7 +2358,7 @@ impl PyoMapping {
     }
 }
 
-#[pyclass(subclass, frozen, generic,  extends=PyoMapping)]
+#[pyclass(subclass, frozen, generic, extends=PyoMapping, module = "pyochain.abc._mappings")]
 pub struct PyoMutableMapping;
 
 #[pymethods]

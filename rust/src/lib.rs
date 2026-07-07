@@ -8,6 +8,7 @@ mod pylibs;
 mod result;
 mod seq;
 mod tools;
+
 use pyo3::{
     PyTypeInfo, intern,
     prelude::*,
@@ -122,21 +123,17 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_wrapped(pyo3::wrap_pymodule!(tools_mod))?;
     m.add_wrapped(pyo3::wrap_pymodule!(abc_mod))?;
     let sys_mods = py.import("sys")?.getattr("modules")?;
-    alias_mod(&sys_mods, &m.getattr("_tools")?, &["_tools"])?;
-    alias_mod(
-        &sys_mods,
-        &m.getattr("abc")?,
-        &[
-            "abc._iterator",
-            "abc._iterable",
-            "abc._collection",
-            "abc._sequences",
-            "abc._mappings",
-            "abc._sets",
-        ],
-    )?;
+    sys_mods.set_item("pyochain._tools", m.getattr("_tools")?)?;
+    let abc_mod = m.getattr("abc")?;
+    sys_mods.set_item("pyochain.abc._iterable", abc_mod.getattr("_iterable")?)?;
+    sys_mods.set_item("pyochain.abc._iterator", abc_mod.getattr("_iterator")?)?;
+    sys_mods.set_item("pyochain.abc._collection", abc_mod.getattr("_collection")?)?;
+    sys_mods.set_item("pyochain.abc._sequences", abc_mod.getattr("_sequences")?)?;
+    sys_mods.set_item("pyochain.abc._sets", abc_mod.getattr("_sets")?)?;
+    sys_mods.set_item("pyochain.abc._mappings", abc_mod.getattr("_mappings")?)?;
     register_all(py)
 }
+
 #[pymodule(name = "_tools")]
 pub fn tools_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(tools::retain, m)?)?;
@@ -159,28 +156,50 @@ pub fn tools_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<tools::Unzip>()?;
     m.add_class::<tools::GroupBy>()?;
     m.add_class::<tools::Iter>()?;
-    m.add_class::<tools::Peekable>()?;
-    Ok(())
+    m.add_class::<tools::Peekable>()
 }
 #[pymodule(name = "abc")]
 fn abc_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<abc::PyoIterable>()?;
-    m.add_class::<abc::PyoIterator>()?;
+    m.add_wrapped(pyo3::wrap_pymodule!(iterable_mod))?;
+    m.add_wrapped(pyo3::wrap_pymodule!(iterator_mod))?;
+    m.add_wrapped(pyo3::wrap_pymodule!(collection_mod))?;
+    m.add_wrapped(pyo3::wrap_pymodule!(sequences_mod))?;
+    m.add_wrapped(pyo3::wrap_pymodule!(sets_mod))?;
+    m.add_wrapped(pyo3::wrap_pymodule!(mappings_mod))
+}
+#[pymodule(name = "_iterable")]
+fn iterable_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_class::<abc::PyoIterable>()
+}
+#[pymodule(name = "_iterator")]
+fn iterator_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_class::<abc::PyoIterator>()
+}
+#[pymodule(name = "_collection")]
+fn collection_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<abc::PyoContainer>()?;
     m.add_class::<abc::PyoSized>()?;
-    m.add_class::<abc::PyoMappingView>()?;
-    m.add_class::<abc::PyoCollection>()?;
+    m.add_class::<abc::PyoCollection>()
+}
+#[pymodule(name = "_sequences")]
+fn sequences_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<abc::PyoReversible>()?;
     m.add_class::<abc::PyoSequence>()?;
-    m.add_class::<abc::PyoMutableSequence>()?;
+    m.add_class::<abc::PyoMutableSequence>()
+}
+#[pymodule(name = "_sets")]
+fn sets_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<abc::PyoSet>()?;
+    m.add_class::<abc::PyoMutableSet>()
+}
+#[pymodule(name = "_mappings")]
+fn mappings_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_class::<abc::PyoMappingView>()?;
+    m.add_class::<abc::PyoMapping>()?;
     m.add_class::<abc::PyoKeysView>()?;
     m.add_class::<abc::PyoValuesView>()?;
     m.add_class::<abc::PyoItemsView>()?;
-    m.add_class::<abc::PyoMutableSet>()?;
-    m.add_class::<abc::PyoMapping>()?;
-    m.add_class::<abc::PyoMutableMapping>()?;
-    Ok(())
+    m.add_class::<abc::PyoMutableMapping>()
 }
 
 fn register_all(py: Python<'_>) -> PyResult<()> {
@@ -215,17 +234,7 @@ fn register_all(py: Python<'_>) -> PyResult<()> {
         &abc_mod,
         "MutableMapping",
         &abc::PyoMutableMapping::type_object(py),
-    )?;
-    Ok(())
-}
-fn alias_mod(
-    sys_mods: &Bound<'_, PyAny>,
-    module: &Bound<'_, PyAny>,
-    targets: &[&str],
-) -> PyResult<()> {
-    targets
-        .iter()
-        .try_for_each(|target| sys_mods.set_item(format!("pyochain.{target}"), module))
+    )
 }
 fn register(abc: &Bound<'_, PyModule>, name: &str, cls: &Bound<'_, PyType>) -> PyResult<()> {
     abc.getattr(name)?
