@@ -1,125 +1,91 @@
-from pyochain import Seq, Vec
+from collections.abc import Callable
+from typing import Final
+
+import pytest
+
+from pyochain import Vec
+
+BASE: Final[list[int]] = [1, 2, 3, 4, 5]
+EMPTY: Final[list[int]] = []
+type Predicate = Callable[[int], bool]
 
 
-def test_drain_partial_consumption_then_gc() -> None:
-    v = Vec([1, 2, 3, 4, 5])
-    drain_iter = v.drain(1, 4)
-    assert next(drain_iter) == 2
+@pytest.mark.parametrize(
+    ("start", "stop", "expected_next", "expected_list"),
+    [
+        (1, 4, 2, [1, 5]),
+        (None, None, 1, EMPTY),
+        (0, 2, 1, [3, 4, 5]),
+        (2, None, 3, [1, 2]),
+        (None, 3, 1, [4, 5]),
+    ],
+)
+def test_drain_partial_consumption(
+    start: int | None, stop: int | None, expected_next: int, expected_list: list[int]
+) -> None:
+    v = Vec(BASE)
+    drain_iter = v.drain(start, stop)
+    assert drain_iter.next().unwrap() == expected_next
     del drain_iter
-    assert v == [1, 5]
-
-
-def test_drain_no_args_partial_consumption_then_gc() -> None:
-    v = Vec([1, 2, 3, 4, 5])
-    drain_iter = v.drain()
-    _ = next(drain_iter)
-    del drain_iter
-    assert v == []
+    assert v == expected_list
 
 
 def test_drain_no_consumption_gc() -> None:
-    v = Vec([1, 2, 3, 4])
+    v = Vec(BASE)
     drain_iter = v.drain(1, 3)
     del drain_iter
-    assert v == [1, 4]
+    assert v == [1, 4, 5]
 
 
 def test_drain_full_consumption() -> None:
-    v = Vec([5, 6, 7])
-    drained = v.drain(1, 2).collect(Seq)
-    assert list(drained) == [6]
-    assert v == [5, 7]
+    v = Vec(BASE)
+    drained = v.drain(1, 2).collect(Vec)
+    assert drained == [2]
+    assert v == [1, 3, 4, 5]
 
 
-def test_retain_basic() -> None:
-    v = Vec([1, 2, 3, 4, 5])
-    v.retain(lambda x: x % 2 == 0)
-    assert v == [2, 4]
+RETAIN_PARAMS: Final[list[tuple[Predicate, list[int]]]] = [
+    (lambda x: x % 2 == 0, [2, 4]),
+    (lambda x: x > 10, EMPTY),
+    (lambda x: x > 0, BASE),
+]
 
 
-def test_retain_empty_result() -> None:
-    v = Vec([1, 2, 3, 4])
-    v.retain(lambda x: x > 10)
-    assert v == []
+@pytest.mark.parametrize(("pred", "expected"), RETAIN_PARAMS)
+def test_retain(pred: Predicate, expected: list[int]) -> None:
+    v = Vec(BASE)
+    v.retain(pred)
+    assert v == expected
 
 
-def test_retain_all_kept() -> None:
-    v = Vec([1, 2, 3, 4])
-    v.retain(lambda x: x > 0)
-    assert v == [1, 2, 3, 4]
+@pytest.mark.parametrize(
+    ("n", "expected"), [(1, [1]), (0, []), (10, BASE), (3, [1, 2, 3])]
+)
+def test_truncate(n: int, expected: list[object]) -> None:
+    v = Vec(BASE)
+    v.truncate(n)
+    assert v == expected
 
 
-def test_retain_in_place() -> None:
-    v = Vec([1, 2, 3, 4])
-    inner_id = id(v.inner)
-    v.retain(lambda x: x % 2 == 0)
-    assert id(v.inner) == inner_id
-    assert v == [2, 4]
+EXTRACT_IF_PARAMS: Final[list[tuple[Predicate, int, int, list[int], list[int]]]] = [
+    (lambda x: x % 2 == 0, 0, 5, [2, 4], [1, 3, 5]),
+    (lambda x: x > 10, 0, 5, EMPTY, BASE),
+    (lambda x: x > 0, 0, 5, BASE, EMPTY),
+    (lambda x: x % 2 == 0, 1, 4, [2, 4], [1, 3, 5]),
+]
 
 
-def test_truncate_basic() -> None:
-    v = Vec([1, 2, 3, 4, 5])
-    v.truncate(2)
-    assert v == [1, 2]
-
-
-def test_truncate_to_zero() -> None:
-    v = Vec([1, 2, 3])
-    v.truncate(0)
-    assert v == []
-
-
-def test_truncate_no_effect() -> None:
-    v = Vec([1, 2, 3])
-    v.truncate(10)
-    assert v == [1, 2, 3]
-
-
-def test_truncate_same_length() -> None:
-    v = Vec([1, 2, 3])
-    v.truncate(3)
-    assert v == [1, 2, 3]
-
-
-def test_truncate_in_place() -> None:
-    v = Vec([1, 2, 3, 4, 5])
-    inner_id = id(v.inner)
-    v.truncate(2)
-    assert id(v.inner) == inner_id
-    assert v == [1, 2]
-
-
-def test_extract_if_basic() -> None:
-    v = Vec([1, 2, 3, 4, 5])
-    extracted = v.extract_if(lambda x: x % 2 == 0).collect(Seq)
-    assert v == [1, 3, 5]
-    assert list(extracted) == [2, 4]
-
-
-def test_extract_if_with_range() -> None:
-    v = Vec([1, 2, 3, 4, 5])
-    extracted = v.extract_if(lambda x: x % 2 == 0, start=1, end=4).collect(Seq)
-    assert v == [1, 3, 5]
-    assert list(extracted) == [2, 4]
-
-
-def test_extract_if_empty_result() -> None:
-    v = Vec([1, 2, 3, 4])
-    extracted = v.extract_if(lambda x: x > 10).collect(Seq)
-    assert list(extracted) == []
-    assert v == [1, 2, 3, 4]
-
-
-def test_extract_if_all_match() -> None:
-    v = Vec([1, 2, 3, 4])
-    extracted = v.extract_if(lambda x: x > 0).collect(Seq)
-    assert list(extracted) == [1, 2, 3, 4]
-    assert v == []
-
-
-def test_extract_if_partial_consumption() -> None:
-    v = Vec([1, 2, 3, 4, 5])
-    extract_iter = v.extract_if(lambda x: x % 2 == 0)
-    assert next(extract_iter) == 2
-    assert list(extract_iter) == [4]
-    assert v == [1, 3, 5]
+@pytest.mark.parametrize(
+    ("pred", "start", "stop", "extracted_expected", "original_expected"),
+    EXTRACT_IF_PARAMS,
+)
+def test_extract_if(
+    pred: Predicate,
+    start: int,
+    stop: int,
+    extracted_expected: list[int],
+    original_expected: list[int],
+) -> None:
+    v = Vec(BASE)
+    assert v.extract_if(pred, start, stop).collect(Vec) == extracted_expected
+    assert v == original_expected
