@@ -5,37 +5,11 @@ use crate::option::{PyNull, PySome, option};
 use crate::result::{PyoErr, PyoOk};
 use crate::{abc, mixins};
 use pyo3::exceptions::PyIndexError;
-use pyo3::types::{PyAny, PyDict, PyIterator, PyModule, PySequence, PySet, PyString, PyTuple};
+use pyo3::types::{PyAny, PyDict, PyIterator, PySequence, PySet, PyString, PyTuple};
 use pyo3::{IntoPyObjectExt, ffi, prelude::*};
 use tap::prelude::*;
-#[pymodule(name = "_tools")]
-pub fn tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(retain, m)?)?;
-    m.add_class::<UniqueIdentity>()?;
-    m.add_class::<UniqueKey>()?;
-    m.add_class::<Intersperse>()?;
-    m.add_class::<MapWindow>()?;
-    m.add_class::<MapJuxt>()?;
-    m.add_class::<FilterMap>()?;
-    m.add_class::<FilterMapStar>()?;
-    m.add_class::<Scan>()?;
-    m.add_class::<MapWhile>()?;
-    m.add_class::<FromFn>()?;
-    m.add_class::<Drain>()?;
-    m.add_class::<ExtractIf>()?;
-    m.add_class::<Successors>()?;
-    m.add_class::<FilterStar>()?;
-    m.add_class::<WithPosition>()?;
-    m.add_class::<ZipLongest>()?;
-    m.add_class::<Unzip>()?;
-    m.add_class::<GroupBy>()?;
-    m.add_class::<Iter>()?;
-    m.add_class::<Peekable>()?;
-    Ok(())
-}
-
 #[pyfunction]
-fn retain(data: Bound<'_, PySequence>, predicate: &Bound<'_, PyAny>) -> PyResult<()> {
+pub fn retain(data: Bound<'_, PySequence>, predicate: &Bound<'_, PyAny>) -> PyResult<()> {
     let mut write_idx = 0;
     let length = data.len()?;
     for read_idx in 0..length {

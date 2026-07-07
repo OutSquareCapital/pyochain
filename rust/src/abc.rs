@@ -18,26 +18,6 @@ use tap::prelude::*;
 const ABC: &str = "collections.abc";
 const ABSTRACT_SET: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
 
-#[pymodule(name = "_iterator")]
-pub fn abc(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<PyoIterable>()?;
-    m.add_class::<PyoIterator>()?;
-    m.add_class::<PyoContainer>()?;
-    m.add_class::<PyoSized>()?;
-    m.add_class::<PyoMappingView>()?;
-    m.add_class::<PyoCollection>()?;
-    m.add_class::<PyoReversible>()?;
-    m.add_class::<PyoSequence>()?;
-    m.add_class::<PyoMutableSequence>()?;
-    m.add_class::<PyoSet>()?;
-    m.add_class::<PyoKeysView>()?;
-    m.add_class::<PyoValuesView>()?;
-    m.add_class::<PyoItemsView>()?;
-    m.add_class::<PyoMutableSet>()?;
-    m.add_class::<PyoMapping>()?;
-    m.add_class::<PyoMutableMapping>()?;
-    Ok(())
-}
 #[pyclass(subclass, frozen, generic, extends=Checkable)]
 pub struct PyoIterable;
 
