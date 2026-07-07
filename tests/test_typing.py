@@ -625,11 +625,14 @@ def check_keys_view_args(base: PyoKeysView[Animal], canary: KeysView[Animal]) ->
     _ = _values_view(canary)  # pyright: ignore[reportArgumentType]
 
 
-def covariance_pyomapping() -> PyoMapping[object, Sequence[object]]:
-    x: Dict[object, tuple[str, ...]] = Dict({"a": ("b", "c", "d")})
+type EntryData = list[tuple[object, tuple[str, ...]]]
+
+
+def covariance_pyomapping(data: EntryData) -> PyoMapping[object, Sequence[object]]:
+    x: Dict[object, tuple[str, ...]] = Dict(data)
     return x
 
 
-def covariance_mapping() -> Mapping[object, Sequence[object]]:
-    x: dict[object, tuple[str, ...]] = {"a": ("b", "c", "d")}
+def covariance_mapping(data: EntryData) -> Mapping[object, Sequence[object]]:
+    x: dict[object, tuple[str, ...]] = dict(data)
     return x

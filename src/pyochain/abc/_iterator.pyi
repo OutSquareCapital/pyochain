@@ -19,11 +19,13 @@ from collections.abc import Set as AbstractSet
 from typing import (
     Any,
     Concatenate,
+    Generic,
     Literal,
     Protocol,
     Self,
     TypeGuard,
     TypeIs,
+    TypeVar,
     overload,
     override,
     runtime_checkable,
@@ -4821,72 +4823,6 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
             ```
         """
 
-class PyoValuesView[V](PyoMappingView, PyoCollection[V], ValuesView[V]):  # pyright: ignore[reportUnsafeMultipleInheritance]
-    """A view of the values in a pyochain mapping.
-
-    See Also:
-        `PyoMapping::values`: Method that returns this view.
-    """
-    def __init__(self, mapping: SupportsGetItemViewable[Any, V]) -> None: ...
-    @override
-    def __contains__(self, value: object, /) -> bool: ...
-    @override
-    def __iter__(self) -> Iterator[V]: ...
-
-class PyoKeysView[K](PyoMappingView, PyoSet[K], KeysView[K]):  # pyright: ignore[reportUnsafeMultipleInheritance]
-    """A view of the keys in a pyochain mapping.
-
-    Keys views support set-like operations since dictionary keys are unique.
-
-    See Also:
-        `PyoMapping::keys`: Method that returns this view.
-    """
-
-    def __init__(self, mapping: Viewable[K]) -> None: ...
-    @classmethod
-    @override
-    def _from_iterable[S](cls, it: Iterable[S], /) -> set[S]: ...
-    @override
-    def __contains__(self, key: object, /) -> bool: ...
-    @override
-    def __iter__(self) -> Iterator[K]: ...
-    @override
-    def intersection(self, other: Iterable[Any]) -> SetMut[K]: ...
-    @override
-    def union[S, T](self: PyoKeysView[S], other: Iterable[T]) -> SetMut[S | T]: ...
-    @override
-    def difference(self, other: Iterable[Any]) -> SetMut[K]: ...
-    @override
-    def symmetric_difference[S, T](
-        self: PyoKeysView[S], other: Iterable[T]
-    ) -> SetMut[S | T]: ...
-
-class PyoItemsView[K, V](PyoMappingView, PyoSet[tuple[K, V]], ItemsView[K, V]):  # pyright: ignore[reportUnsafeMultipleInheritance]
-    """A view of the items (key-value pairs) in a pyochain mapping.
-
-    Items are represented as tuples of `(key, value)` pairs, and the view supports set-like operations.
-
-    See Also:
-        `PyoMapping::items`: Method that returns this view.
-    """
-    @classmethod
-    @override
-    def _from_iterable[S](cls, it: Iterable[S], /) -> set[S]: ...
-    @override
-    def __contains__(self, item: tuple[object, object], /) -> bool: ...  # pyright: ignore[reportIncompatibleMethodOverride]
-    @override
-    def __iter__(self) -> Iterator[tuple[K, V]]: ...
-    @override
-    def intersection(self, other: Iterable[Any]) -> SetMut[tuple[K, V]]: ...
-    @override
-    def union[T](self, other: Iterable[T]) -> SetMut[tuple[K, V] | T]: ...
-    @override
-    def difference(self, other: Iterable[Any]) -> SetMut[tuple[K, V]]: ...
-    @override
-    def symmetric_difference[T](
-        self, other: Iterable[T]
-    ) -> SetMut[tuple[K, V] | T]: ...
-
 class PyoMutableSet[T](PyoSet[T], MutableSet[T]):  # pyright: ignore[reportImplicitAbstractClass]
     """ABCs for read-only and mutable sets."""
     @abstractmethod
@@ -4914,7 +4850,13 @@ class PyoMutableSet[T](PyoSet[T], MutableSet[T]):  # pyright: ignore[reportImpli
     @override
     def __isub__(self, it: AbstractSet[Any], /) -> Self: ...
 
-class PyoMapping[K, V](PyoCollection[K], Mapping[K, V]):  # pyright: ignore[reportImplicitAbstractClass]
+# NOTE: We are forced to use legacy `TypeVar` syntax here due to concrete limitations of the typing system. Typeshed explicitely ignore some typing warnings.
+# https://github.com/python/typing/pull/273
+_K = TypeVar("_K")
+_K_co = TypeVar("_K_co", covariant=True)
+_V_co = TypeVar("_V_co", covariant=True)
+
+class PyoMapping(PyoCollection[_K], Mapping[_K, _V_co], Generic[_K, _V_co]):  # pyright: ignore[reportImplicitAbstractClass]  # noqa: UP046
     """Extends `PyoCollection[K]` and `collections.abc.Mapping[K, V]`.
 
     Serves as a base class for pyochain mappings, such as `Dict`.
@@ -4926,21 +4868,19 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V]):  # pyright: ignore[repo
     - `__len__`
     """
 
-    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
-
     @abstractmethod
     @override
-    def __getitem__(self, key: K, /) -> V: ...
+    def __getitem__(self, key: _K, /) -> _V_co: ...
     @override
     def __contains__(self, key: object, /) -> bool: ...
     @override
     def __eq__(self, other: object, /) -> bool: ...
     @override
-    def keys(self) -> PyoKeysView[K]:
+    def keys(self) -> PyoKeysView[_K]:
         """Return a view of the `Mapping` keys.
 
         Returns:
-            PyoKeysView[K]: A view of the dictionary's keys.
+            PyoKeysView[_K]: A view of the dictionary's keys.
 
         Example:
             ```python
@@ -4953,11 +4893,11 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V]):  # pyright: ignore[repo
         """
 
     @override
-    def values(self) -> PyoValuesView[V]:
+    def values(self) -> PyoValuesView[_V_co]:
         """Return a view of the `Mapping` values.
 
         Returns:
-            PyoValuesView[V_co]: A view of the dictionary's values.
+            PyoValuesView[_V_co]: A view of the dictionary's values.
 
         Example:
             ```python
@@ -4970,11 +4910,11 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V]):  # pyright: ignore[repo
         """
 
     @override
-    def items(self) -> PyoItemsView[K, V]:
+    def items(self) -> PyoItemsView[_K, _V_co]:
         """Return a view of the `Mapping` items.
 
         Returns:
-            PyoItemsView[K, V_co]: A view of the dictionary's (key, value) pairs.
+            PyoItemsView[_K, _V_co]: A view of the dictionary's (key, value) pairs.
 
         Example:
             ```python
@@ -4987,14 +4927,19 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V]):  # pyright: ignore[repo
         """
 
     @overload
-    def get(self, key: K, /) -> V | None: ...
+    def get(self, key: _K, /) -> _V_co | None: ...
     @overload
-    def get(self, key: K, default: V, /) -> V: ...  # Covariant type as parameter
+    def get(
+        self,
+        key: _K,
+        default: _V_co,  # pyright: ignore[reportGeneralTypeIssues]
+        /,
+    ) -> _V_co: ...
     @overload
-    def get[T](self, key: K, default: T, /) -> V | T: ...
+    def get[T](self, key: _K, default: T, /) -> _V_co | T: ...
     @override
-    def get[T](self, key: K, default: T | None = None, /) -> V | T | None: ...
-    def get_item(self, key: K) -> Option[V]:
+    def get[T](self, key: _K, default: T | None = None, /) -> _V_co | T | None: ...
+    def get_item(self, key: _K) -> Option[_V_co]:
         """Retrieve a value from the `MutableMapping`.
 
         Returns `Some(value)` if the **key** exists, or `None` if it does not.
@@ -5016,6 +4961,77 @@ class PyoMapping[K, V](PyoCollection[K], Mapping[K, V]):  # pyright: ignore[repo
 
             ```
         """
+
+class PyoKeysView(PyoMappingView, PyoSet[_K_co], KeysView[_K_co]):  # pyright: ignore[reportUnsafeMultipleInheritance]
+    """A view of the keys in a pyochain mapping.
+
+    Keys views support set-like operations since dictionary keys are unique.
+
+    See Also:
+        `PyoMapping::keys`: Method that returns this view.
+    """
+
+    def __init__(self, mapping: Viewable[_K_co]) -> None: ...
+    @classmethod
+    @override
+    def _from_iterable[S](cls, it: Iterable[S], /) -> set[S]: ...
+    @override
+    def __contains__(self, key: object, /) -> bool: ...
+    @override
+    def __iter__(self) -> Iterator[_K_co]: ...
+    @override
+    def intersection(self, other: Iterable[Any]) -> SetMut[_K_co]: ...
+    @override
+    def union[S, T](self: PyoKeysView[S], other: Iterable[T]) -> SetMut[S | T]: ...
+    @override
+    def difference(self, other: Iterable[Any]) -> SetMut[_K_co]: ...
+    @override
+    def symmetric_difference[S, T](
+        self: PyoKeysView[S], other: Iterable[T]
+    ) -> SetMut[S | T]: ...
+
+class PyoValuesView[V](PyoMappingView, PyoCollection[V], ValuesView[V]):  # pyright: ignore[reportUnsafeMultipleInheritance]
+    """A view of the values in a pyochain mapping.
+
+    See Also:
+        `PyoMapping::values`: Method that returns this view.
+    """
+    def __init__(self, mapping: SupportsGetItemViewable[Any, V]) -> None: ...
+    @override
+    def __contains__(self, value: object, /) -> bool: ...
+    @override
+    def __iter__(self) -> Iterator[V]: ...
+
+class PyoItemsView(  # pyright: ignore[reportUnsafeMultipleInheritance]
+    PyoMappingView,
+    PyoSet[tuple[_K_co, _V_co]],
+    ItemsView[_K_co, _V_co],
+    Generic[_K_co, _V_co],  # noqa: UP046
+):
+    """A view of the items (key-value pairs) in a pyochain mapping.
+
+    Items are represented as tuples of `(key, value)` pairs, and the view supports set-like operations.
+
+    See Also:
+        `PyoMapping::items`: Method that returns this view.
+    """
+    @classmethod
+    @override
+    def _from_iterable[S](cls, it: Iterable[S], /) -> set[S]: ...
+    @override
+    def __contains__(self, item: tuple[object, object], /) -> bool: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    def __iter__(self) -> Iterator[tuple[_K_co, _V_co]]: ...
+    @override
+    def intersection(self, other: Iterable[Any]) -> SetMut[tuple[_K_co, _V_co]]: ...
+    @override
+    def union[T](self, other: Iterable[T]) -> SetMut[tuple[_K_co, _V_co] | T]: ...
+    @override
+    def difference(self, other: Iterable[Any]) -> SetMut[tuple[_K_co, _V_co]]: ...
+    @override
+    def symmetric_difference[T](
+        self, other: Iterable[T]
+    ) -> SetMut[tuple[_K_co, _V_co] | T]: ...
 
 class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):  # pyright: ignore[reportImplicitAbstractClass]
     """Extends `PyoMapping[K, V]` and `collections.abc.MutableMapping[K, V]`.
