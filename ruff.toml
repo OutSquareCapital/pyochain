@@ -14,6 +14,7 @@
         "PLR2004",
         "PYI021",
         "S101",
+        "S403",    # We don't care about insecure modules
         "S608",
         "SLF001",
         "T201",
