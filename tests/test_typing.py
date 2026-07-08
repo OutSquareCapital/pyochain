@@ -301,7 +301,7 @@ def check_and_then() -> None:
     _d: Result[int, str] = Err(Err("error")).and_then(lambda x: x)  # pyright: ignore[reportAssignmentType, reportAny]
 
 
-def test_iter_flatten() -> None:
+def check_iter_flatten() -> None:
     nested: PyoIterator[PyoIterator[PyoIterator[list[int]]]] = (
         Range(0, 3)
         .iter()
