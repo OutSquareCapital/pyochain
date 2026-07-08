@@ -404,7 +404,38 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    def chain[S](self: PyoIterator[S], *others: Iterable[S]) -> PyoIterator[S]:
+    @overload
+    def chain[S, O1](
+        self: PyoIterator[S], o1: Iterable[O1], /
+    ) -> PyoIterator[S | O1]: ...
+    @overload
+    def chain[S, O1, O2](
+        self: PyoIterator[S], o1: Iterable[O1], o2: Iterable[O2], /
+    ) -> PyoIterator[S | O1 | O2]: ...
+    @overload
+    def chain[S, O1, O2, O3](
+        self: PyoIterator[S], o1: Iterable[O1], o2: Iterable[O2], o3: Iterable[O3], /
+    ) -> PyoIterator[S | O1 | O2 | O3]: ...
+    @overload
+    def chain[S, O1, O2, O3, O4](
+        self: PyoIterator[S],
+        o1: Iterable[O1],
+        o2: Iterable[O2],
+        o3: Iterable[O3],
+        o4: Iterable[O4],
+        /,
+    ) -> PyoIterator[S | O1 | O2 | O3 | O4]: ...
+    @overload
+    def chain[S, O1, O2, O3, O4, O5](
+        self: PyoIterator[S],
+        o1: Iterable[O1],
+        o2: Iterable[O2],
+        o3: Iterable[O3],
+        o4: Iterable[O4],
+        o5: Iterable[O5],
+        /,
+    ) -> PyoIterator[S | O1 | O2 | O3 | O4 | O5]: ...
+    def chain[S, O](self: PyoIterator[S], *others: Iterable[O]) -> PyoIterator[S | O]:
         """Concatenate **self** with one or more `Iterables`, any of which may be infinite.
 
         In other words, it links **self** and **others** together, in a chain. 🔗

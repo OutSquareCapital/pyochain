@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
@@ -636,3 +637,14 @@ def covariance_pyomapping(data: EntryData) -> PyoMapping[object, Sequence[object
 def covariance_mapping(data: EntryData) -> Mapping[object, Sequence[object]]:
     x: dict[object, tuple[str, ...]] = dict(data)
     return x
+
+
+def check_chain_covariance[T, S](
+    base: Iterable[T], *others: Iterable[S]
+) -> tuple[PyoIterator[T | S], itertools.chain[T | S]]:
+    from pyochain import Iter
+
+    x = Iter(base).chain(*others)
+    y = itertools.chain(base, *others)
+
+    return x, y
