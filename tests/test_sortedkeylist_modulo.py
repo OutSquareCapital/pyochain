@@ -43,14 +43,6 @@ def test_init() -> None:
 
 
 def test_new() -> None:
-    slt = SortedList(iter(range(1000)), key=modulo)
-    assert slt == sorted(range(1000), key=modulo)
-    slt._check()
-
-    assert isinstance(slt, SortedList)
-    assert isinstance(slt, SortedKeyList)
-    assert type(slt) == SortedKeyList
-
     slt = SortedKeyList(iter(range(1000)), key=modulo)
     assert slt == sorted(range(1000), key=modulo)
     slt._check()
@@ -58,14 +50,6 @@ def test_new() -> None:
     assert isinstance(slt, SortedList)
     assert isinstance(slt, SortedKeyList)
     assert type(slt) == SortedKeyList
-
-
-def test_new_error() -> None:
-    class SortedListPlus(SortedList):
-        pass
-
-    with pytest.raises(TypeError):
-        SortedListPlus(key=modulo)
 
 
 def test_key() -> None:

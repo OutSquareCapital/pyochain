@@ -5,7 +5,7 @@ from collections.abc import ItemsView, KeysView, Mapping, Sequence, ValuesView
 from itertools import chain
 from typing import override
 
-from ._sorted_list import SortedList, recursive_repr
+from ._sorted_list import SortedKeyList, SortedList, recursive_repr
 from ._sorted_set import SortedSet
 
 
@@ -119,10 +119,11 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
         if args and (args[0] is None or callable(args[0])):
             key = self._key = args[0]
             args = args[1:]
+
+            self._list = SortedKeyList(key=key) if key is not None else SortedList()
         else:
             key = self._key = None
-
-        self._list = SortedList(key=key)
+            self._list = SortedList()
 
         # Reaching through ``self._list`` repeatedly adds unnecessary overhead
         # so cache references to sorted list methods.

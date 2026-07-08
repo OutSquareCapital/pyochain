@@ -7,7 +7,7 @@ from operator import eq, ge, gt, le, lt, ne
 from textwrap import dedent
 from typing import override
 
-from ._sorted_list import SortedList, recursive_repr
+from ._sorted_list import SortedKeyList, SortedList, recursive_repr
 
 
 class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
@@ -116,7 +116,11 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         if not hasattr(self, "_set"):
             self._set = set()
 
-        self._list = SortedList(self._set, key=key)
+        self._list = (
+            SortedKeyList(self._set, key=key)
+            if key is not None
+            else SortedList(self._set)
+        )
 
         # Expose some set methods publicly.
 

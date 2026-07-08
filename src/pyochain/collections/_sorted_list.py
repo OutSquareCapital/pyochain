@@ -73,7 +73,7 @@ class SortedList[T](MutableSequence[T]):
 
     DEFAULT_LOAD_FACTOR: Final[int] = 1000
 
-    def __init__(self, iterable=None, key=None) -> None:
+    def __init__(self, iterable=None) -> None:
         """Initialize sorted list instance.
 
         Optional `iterable` argument provides an initial iterable of values to
@@ -91,7 +91,6 @@ class SortedList[T](MutableSequence[T]):
         :param iterable: initial values (optional)
 
         """
-        assert key is None
         self._len = 0
         self._load = self.DEFAULT_LOAD_FACTOR
         self._lists = []
@@ -101,33 +100,6 @@ class SortedList[T](MutableSequence[T]):
 
         if iterable is not None:
             self._update(iterable)
-
-    def __new__(cls, iterable=None, key=None):
-        """Create new sorted list or sorted-key list instance.
-
-        Optional `key`-function argument will return an instance of subtype
-        :class:`SortedKeyList`.
-
-        >>> sl = SortedList()
-        >>> isinstance(sl, SortedList)
-        True
-        >>> sl = SortedList(key=lambda x: -x)
-        >>> isinstance(sl, SortedList)
-        True
-        >>> isinstance(sl, SortedKeyList)
-        True
-
-        :param iterable: initial values (optional)
-        :param key: function used to extract comparison key (optional)
-        :return: sorted list or sorted-key list instance
-
-        """
-        if key is None:
-            return object.__new__(cls)
-        if cls is SortedList:
-            return object.__new__(SortedKeyList)
-        msg = "inherit SortedKeyList for key argument"
-        raise TypeError(msg)
 
     @property
     def key(self) -> None:
@@ -1694,9 +1666,6 @@ class SortedKeyList[T](SortedList[T]):
         if iterable is not None:
             self._update(iterable)
 
-    def __new__(cls, iterable=None, key=identity):
-        return object.__new__(cls)
-
     @property
     @override
     def key(self):
@@ -2215,7 +2184,7 @@ class SortedKeyList[T](SortedList[T]):
         Runtime complexity: `O(log(n))` -- approximate.
 
         >>> from operator import neg
-        >>> skl = SortedList([5, 4, 3, 2, 1], key=neg)
+        >>> skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
         >>> skl.bisect_right(1)
         5
 
@@ -2273,7 +2242,7 @@ class SortedKeyList[T](SortedList[T]):
         Runtime complexity: `O(log(n))` -- approximate.
 
         >>> from operator import neg
-        >>> skl = SortedList([5, 4, 3, 2, 1], key=neg)
+        >>> skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
         >>> skl.bisect_key_right(-1)
         5
 
