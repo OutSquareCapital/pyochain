@@ -11,7 +11,7 @@ from math import log2
 from operator import add, eq, ge, gt, iadd, le, lt, ne
 from reprlib import recursive_repr
 from textwrap import dedent
-from typing import override
+from typing import Final, override
 
 
 class SortedList[T](MutableSequence[T]):
@@ -71,7 +71,7 @@ class SortedList[T](MutableSequence[T]):
 
     """
 
-    DEFAULT_LOAD_FACTOR = 1000
+    DEFAULT_LOAD_FACTOR: Final[int] = 1000
 
     def __init__(self, iterable=None, key=None) -> None:
         """Initialize sorted list instance.
@@ -361,7 +361,9 @@ class SortedList[T](MutableSequence[T]):
         ValueError: 0 not in list
 
         :param value: `value` to remove from sorted list
-        :raises ValueError: if `value` is not in sorted list
+
+        Raises:
+            ValueError: if `value` is not in sorted list
 
         """
         maxes = self._maxes
@@ -440,8 +442,9 @@ class SortedList[T](MutableSequence[T]):
             del index[:]
 
     def _loc(self, pos, idx):
-        """Convert an index pair (lists index, sublist index) into a single
-        index number that corresponds to the position of the value in the
+        """Convert an index pair (lists index, sublist index) into a single index number.
+
+        This number corresponds to the position of the value in the
         sorted list.
 
         Many queries require the index be built. Details of the index are
@@ -486,7 +489,9 @@ class SortedList[T](MutableSequence[T]):
 
         :param int pos: lists index
         :param int idx: sublist index
-        :return: index in sorted list
+
+        Returns:
+            index in sorted list
 
         """
         if not pos:
@@ -519,8 +524,9 @@ class SortedList[T](MutableSequence[T]):
         return total + idx
 
     def _pos(self, idx):
-        """Convert an index into an index pair (lists index, sublist index)
-        that can be used to access the corresponding lists position.
+        """Convert an index into an index pair (lists index, sublist index).
+
+        This pair can be used to access the corresponding lists position.
 
         Many queries require the index be built. Details of the index are
         described in ``SortedList._build_index``.
@@ -570,7 +576,12 @@ class SortedList[T](MutableSequence[T]):
         index 8 in the sorted list.
 
         :param int idx: index in sorted list
-        :return: (lists index, sublist index) pair
+
+        Raises:
+            IndexError: if `idx` is out of range
+
+        Returns:
+            (lists index, sublist index) pair
 
         """
         if idx < 0:
@@ -753,8 +764,12 @@ class SortedList[T](MutableSequence[T]):
         ['c', 'd', 'e']
 
         :param index: integer or slice for indexing
-        :return: value or list of values
-        :raises IndexError: if index out of range
+
+        Returns:
+            value or list of values
+
+        Raises:
+            IndexError: if index out of range
 
         """
         lists = self._lists
@@ -1012,7 +1027,9 @@ class SortedList[T](MutableSequence[T]):
         :param maximum: maximum value to stop iterating
         :param inclusive: pair of booleans
         :param bool reverse: yield values in reverse order
-        :return: iterator
+
+        Returns:
+            `Iterator`
 
         """
         maxes = self._maxes
@@ -1252,8 +1269,12 @@ class SortedList[T](MutableSequence[T]):
         SortedList(['a', 'b', 'd'])
 
         :param int index: index of value (default -1)
-        :return: value
-        :raises IndexError: if index is out of range
+
+        Raises:
+            IndexError: if index is out of range
+
+        Returns:
+            value
 
         """
         if not self._len:
@@ -1318,8 +1339,11 @@ class SortedList[T](MutableSequence[T]):
         :param value: value in sorted list
         :param int start: start index (default None, start of sorted list)
         :param int stop: stop index (default None, end of sorted list)
-        :return: index of value
-        :raises ValueError: if value is not present
+
+        Raises:
+            ValueError: if value is not present
+        Returns:
+            index of value
 
         """
         len_ = self._len
@@ -1414,7 +1438,9 @@ class SortedList[T](MutableSequence[T]):
         SortedList(['a', 'a', 'b', 'c', 't', 't'])
 
         :param other: other iterable
-        :return: existing sorted list
+
+        Returns:
+            existing sorted list
 
         """
         self._update(other)
@@ -1453,7 +1479,9 @@ class SortedList[T](MutableSequence[T]):
         SortedList(['a', 'a', 'a', 'b', 'b', 'b', 'c', 'c', 'c'])
 
         :param int num: count of shallow copies
-        :return: existing sorted list
+
+        Returns:
+            existing sorted list
 
         """
         values = reduce(iadd, self._lists, []) * num
@@ -2053,7 +2081,9 @@ class SortedKeyList[T](SortedList[T]):
         :param maximum: maximum value to stop iterating
         :param inclusive: pair of booleans
         :param bool reverse: yield values in reverse order
-        :return: iterator
+
+        Returns:
+            `Iterator`
 
         """
         min_key = self._key(minimum) if minimum is not None else None
@@ -2091,7 +2121,9 @@ class SortedKeyList[T](SortedList[T]):
         :param max_key: maximum key to stop iterating
         :param inclusive: pair of booleans
         :param bool reverse: yield values in reverse order
-        :return: iterator
+
+        Returns:
+            `Iterator`
 
         """
         maxes = self._maxes
@@ -2351,8 +2383,11 @@ class SortedKeyList[T](SortedList[T]):
         :param value: value in sorted-key list
         :param int start: start index (default None, start of sorted-key list)
         :param int stop: stop index (default None, end of sorted-key list)
-        :return: index of value
-        :raises ValueError: if value is not present
+
+        Raises:
+            ValueError: if value is not present
+        Returns:
+            index of value
 
         """
         len_ = self._len

@@ -203,8 +203,11 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         ['c', 'd', 'e']
 
         :param index: integer or slice for indexing
-        :return: value or list of values
-        :raises IndexError: if index out of range
+        Raises:
+            IndexError: if index out of range
+
+        Returns:
+            value or list of values
 
         """
         return self._list[index]
@@ -416,8 +419,9 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         SortedSet(['a', 'b', 'd'])
 
         :param int index: index of value (default -1)
-        :return: value
-        :raises IndexError: if index is out of range
+
+        Returns:
+            value
 
         """
         # pylint: disable=arguments-differ
@@ -485,7 +489,9 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         SortedSet([1, 2, 3])
 
         :param iterables: iterable arguments
-        :return: itself
+
+        Returns:
+            Self
 
         """
         set_ = self._set
@@ -542,7 +548,9 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         SortedSet([4, 5])
 
         :param iterables: iterable arguments
-        :return: itself
+
+        Returns:
+            Self
 
         """
         set_ = self._set
@@ -594,7 +602,9 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         SortedSet([1, 2, 3, 6, 7])
 
         :param other: `other` iterable
-        :return: itself
+
+        Returns:
+            Self
 
         """
         set_ = self._set
@@ -639,7 +649,9 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         SortedSet([1, 2, 3, 4, 5, 6, 7])
 
         :param iterables: iterable arguments
-        :return: itself
+
+        Returns:
+            Self
 
         """
         set_ = self._set
@@ -665,6 +677,9 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
 
         The tricks played with exposing methods in :func:`SortedSet.__init__`
         confuse pickle so customize the reducer.
+
+        Returns:
+            tuple of class and arguments
 
         """
         return (type(self), (self._set, self._key))

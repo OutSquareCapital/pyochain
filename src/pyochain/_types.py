@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Hashable, Iterable, Mapping
 from typing import Any, Literal, Protocol
 
 # TODO: Theses types are manually extracted from typeshed and rewritten in modern python style
@@ -106,3 +106,16 @@ type NegativeInteger = Literal[
     -20,
 ]
 type LiteralInteger = PositiveInteger | NegativeInteger | Literal[0]
+
+
+class SupportsHashableAndDunderGT[T](Hashable, SupportsDunderGT[T], Protocol): ...
+
+
+class SupportsHashableAndDunderLT[T](Hashable, SupportsDunderLT[T], Protocol): ...
+
+
+type SupportsHashableAndRichComparison = (
+    SupportsHashableAndDunderLT[Any] | SupportsHashableAndDunderGT[Any]
+)
+
+type KeyFunc[K, OT: SupportsHashableAndRichComparison] = Callable[[K], OT]

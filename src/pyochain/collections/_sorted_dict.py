@@ -357,8 +357,12 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
 
         :param key: `key` for item
         :param default: `default` value if key not found (optional)
-        :return: value for item
-        :raises KeyError: if `key` not found and `default` not given
+
+        Raises:
+            KeyError: if `key` not found and `default` not given
+
+        Returns:
+            value: value for item
 
         """
         if key in self:
@@ -392,9 +396,13 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
         IndexError: list index out of range
 
         :param int index: `index` of item (default -1)
-        :return: key and value pair
-        :raises KeyError: if sorted dict is empty
-        :raises IndexError: if `index` out of range
+
+        Returns:
+            tuple: key and value pair
+
+        Raises:
+            KeyError: if sorted dict is empty
+
 
         """
         if not self:
@@ -507,6 +515,9 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
         The tricks played with caching references in
         :func:`SortedDict.__init__` confuse pickle so customize the reducer.
 
+        Returns:
+            tuple: class and arguments for reconstruction
+
         """
         items = dict.copy(self)
         return (type(self), (self._key, items))
@@ -617,7 +628,9 @@ class SortedKeysView[K](KeysView[K], Sequence[K]):
         IndexError: list index out of range
 
         :param index: integer or slice for indexing
-        :return: key or list of keys
+
+        Returns:
+            key or list of keys
         :raises IndexError: if index out of range
 
         """
@@ -666,8 +679,9 @@ class SortedItemsView[K, V](ItemsView[K, V], Sequence[tuple[K, V]]):
         IndexError: list index out of range
 
         :param index: integer or slice for indexing
-        :return: item or list of items
-        :raises IndexError: if index out of range
+
+        Returns:
+            item or list of items
 
         """
         mapping = self._mapping
@@ -718,9 +732,9 @@ class SortedValuesView[V](ValuesView[V], Sequence[V]):
         IndexError: list index out of range
 
         :param index: integer or slice for indexing
-        :return: value or list of values
-        :raises IndexError: if index out of range
 
+        Returns:
+            value or list of values
         """
         mapping = self._mapping
         mapping_list = mapping._list
