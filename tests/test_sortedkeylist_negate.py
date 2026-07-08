@@ -9,15 +9,11 @@ from itertools import chain
 
 import pytest
 
-from pyochain.collections import SortedKeyList, SortedListWithKey
+from pyochain.collections import SortedKeyList
 
 
 def negate(val):
     return -val
-
-
-def test_alias() -> None:
-    assert SortedKeyList is SortedListWithKey
 
 
 def test_identity() -> None:
@@ -36,7 +32,9 @@ def test_init() -> None:
     slt._check()
 
     slt = SortedKeyList(range(10000), key=negate)
-    assert all(tup[0] == tup[1] for tup in zip(slt, reversed(range(10000)), strict=False))
+    assert all(
+        tup[0] == tup[1] for tup in zip(slt, reversed(range(10000)), strict=False)
+    )
 
     slt.clear()
     assert slt._len == 0
@@ -125,7 +123,9 @@ def test_discard() -> None:
     slt.discard(2)
     slt._check()
 
-    assert all(tup[0] == tup[1] for tup in zip(slt, reversed([1, 2, 2, 3, 3, 5]), strict=False))
+    assert all(
+        tup[0] == tup[1] for tup in zip(slt, reversed([1, 2, 2, 3, 3, 5]), strict=False)
+    )
 
 
 def test_remove() -> None:
@@ -141,7 +141,9 @@ def test_remove() -> None:
     slt.remove(2)
     slt._check()
 
-    assert all(tup[0] == tup[1] for tup in zip(slt, reversed([1, 2, 2, 3, 3, 5]), strict=False))
+    assert all(
+        tup[0] == tup[1] for tup in zip(slt, reversed([1, 2, 2, 3, 3, 5]), strict=False)
+    )
 
 
 def test_remove_valueerror1() -> None:

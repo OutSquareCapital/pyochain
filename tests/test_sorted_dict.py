@@ -7,7 +7,6 @@ https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_cov
 import gc
 import platform
 import string
-import warnings
 from typing import override
 
 import pytest
@@ -368,21 +367,6 @@ def test_index() -> None:
     temp = SortedDict(mapping)
     assert temp.index("a") == 0
     assert temp.index("f", 3, -3) == 5
-
-
-def test_iloc() -> None:
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=DeprecationWarning)
-        mapping = [(val, pos) for pos, val in enumerate(string.ascii_lowercase)]
-        temp = SortedDict(mapping)
-        assert len(temp.iloc) == 26
-        assert temp.iloc[0] == "a"
-        assert temp.iloc[-1] == "z"
-        assert temp.iloc[-3:] == ["x", "y", "z"]
-        del temp.iloc[0]
-        assert temp.iloc[0] == "b"
-        del temp.iloc[-3:]
-        assert temp.iloc[-1] == "w"
 
 
 def test_index_key() -> None:
