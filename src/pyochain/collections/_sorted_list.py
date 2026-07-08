@@ -2559,6 +2559,3 @@ class SortedKeyList[T](SortedList[T]):
             print("len_lists", len(self._lists))
             print("lists", self._lists)
             raise
-
-
-SortedListWithKey = SortedKeyList

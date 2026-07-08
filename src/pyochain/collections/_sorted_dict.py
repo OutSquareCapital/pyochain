@@ -1,7 +1,6 @@
 # Adapted from python-sortedcontainers (https://github.com/grantjenks/python-sortedcontainers)
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 
-import warnings
 from collections.abc import ItemsView, KeysView, Mapping, Sequence, ValuesView
 from itertools import chain
 from typing import override
@@ -163,26 +162,6 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
 
         """
         return self._key
-
-    @property
-    def iloc(self):
-        """Cached reference of sorted keys view.
-
-        Deprecated in version 2 of Sorted Containers. Use
-        :func:`SortedDict.keys` instead.
-
-        """
-        # pylint: disable=attribute-defined-outside-init
-        try:
-            return self._iloc
-        except AttributeError:
-            warnings.warn(
-                "sorted_dict.iloc is deprecated. Use SortedDict.keys() instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            iloc = self._iloc = SortedKeysView(self)
-            return iloc
 
     @override
     def clear(self) -> None:
