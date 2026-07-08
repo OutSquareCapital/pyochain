@@ -37,11 +37,9 @@
     [lint.per-file-ignores]
         "t.py" = ["ANN201", "D100", "D101", "D102", "D103"]
         "tests/*" = [
-            "D100",
-            "D101",
-            "D102",
-            "D103",
-            "D104",
+            "D",       # We don't want to document tests
+            "DOC",     # We don't want to document tests
+            "DOC201",
             "DTZ001",
             "FBT001",
             "PLC2801", # Dunders calls are more convenients in tests

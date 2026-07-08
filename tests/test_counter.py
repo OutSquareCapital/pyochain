@@ -51,7 +51,7 @@ def test_counter(fn: Callable[[], bool]) -> None:
 
 class CounterSubclassWithSetItem(PyoCounter[object]):
     # Test a counter subclass that overrides __setitem__
-    def __init__(self, *args: object, **kwds: object) -> None:  # noqa: D107
+    def __init__(self, *args: object, **kwds: object) -> None:
         self.called: bool = False
         PyoCounter[object].__init__(self, *args, **kwds)  # pyright: ignore[reportCallIssue, reportArgumentType]
 
@@ -63,7 +63,7 @@ class CounterSubclassWithSetItem(PyoCounter[object]):
 
 class CounterSubclassWithGet(PyoCounter[object]):
     # Test a counter subclass that overrides get()
-    def __init__(self, *args: object, **kwds: object) -> None:  # noqa: D107
+    def __init__(self, *args: object, **kwds: object) -> None:
         self.called: bool = False
         PyoCounter[object].__init__(self, *args, **kwds)  # pyright: ignore[reportCallIssue, reportArgumentType]
 
