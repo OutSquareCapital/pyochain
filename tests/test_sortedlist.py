@@ -14,7 +14,6 @@ from pyochain.collections import SortedList
 
 def test_init() -> None:
     slt = SortedList()
-    assert slt.key is None
     slt._check()
 
     slt = SortedList()

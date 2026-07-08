@@ -4,7 +4,7 @@
 import sys
 import traceback
 from bisect import bisect_left, bisect_right, insort
-from collections.abc import MutableSequence, Sequence
+from collections.abc import Iterable, MutableSequence, Sequence
 from functools import reduce
 from itertools import chain, repeat
 from math import log2
@@ -73,7 +73,7 @@ class SortedList[T](MutableSequence[T]):
 
     DEFAULT_LOAD_FACTOR: Final[int] = 1000
 
-    def __init__(self, iterable=None) -> None:
+    def __init__(self, iterable: Iterable[T] | None = None) -> None:
         """Initialize sorted list instance.
 
         Optional `iterable` argument provides an initial iterable of values to
@@ -100,15 +100,6 @@ class SortedList[T](MutableSequence[T]):
 
         if iterable is not None:
             self._update(iterable)
-
-    @property
-    def key(self) -> None:
-        """Function used to extract comparison key from values.
-
-        Sorted list compares values directly so the key function is none.
-
-        """
-        return None
 
     def _reset(self, load) -> None:
         """Reset sorted list load factor.
@@ -1630,7 +1621,7 @@ class SortedKeyList[T](SortedList[T]):
 
     """
 
-    def __init__(self, iterable=None, key=identity) -> None:
+    def __init__(self, iterable: Iterable[T] | None = None, key=identity) -> None:
         """Initialize sorted-key list instance.
 
         Optional `iterable` argument provides an initial iterable of values to
