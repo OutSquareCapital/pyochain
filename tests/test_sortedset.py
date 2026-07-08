@@ -4,6 +4,8 @@ Original source:
 https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_coverage_sortedset.py
 """
 
+from typing import override
+
 from pyochain.collections import SortedSet
 
 
@@ -509,6 +511,7 @@ class Identity:
     def __call__(self, value):
         return value
 
+    @override
     def __repr__(self) -> str:
         return "identity"
 
@@ -521,7 +524,8 @@ def test_repr() -> None:
 
 def test_repr_recursion() -> None:
     class HashableSortedSet(SortedSet):
-        def __hash__(self):
+        @override
+        def __hash__(self) -> int:
             return hash(tuple(self))
 
     temp = HashableSortedSet([HashableSortedSet([1]), HashableSortedSet([1, 2])])

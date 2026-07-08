@@ -5,11 +5,12 @@ from collections.abc import Set as AbstractSet
 from itertools import chain
 from operator import eq, ge, gt, le, lt, ne
 from textwrap import dedent
+from typing import override
 
 from ._sorted_list import SortedList, recursive_repr
 
 
-class SortedSet(MutableSet, Sequence):
+class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
     """Sorted set is a sorted mutable set.
 
     Sorted set values are maintained in sorted order. The design of sorted set
@@ -165,6 +166,7 @@ class SortedSet(MutableSet, Sequence):
         """
         return self._key
 
+    @override
     def __contains__(self, value) -> bool:
         """Return true if `value` is an element of the sorted set.
 
@@ -182,6 +184,7 @@ class SortedSet(MutableSet, Sequence):
         """
         return value in self._set
 
+    @override
     def __getitem__(self, index):
         """Lookup value at `index` in sorted set.
 
@@ -273,6 +276,7 @@ class SortedSet(MutableSet, Sequence):
     __le__ = __make_cmp(le, "<=", "a subset of")
     __ge__ = __make_cmp(ge, ">=", "a superset of")
 
+    @override
     def __len__(self) -> int:
         """Return the size of the sorted set.
 
@@ -283,6 +287,7 @@ class SortedSet(MutableSet, Sequence):
         """
         return len(self._set)
 
+    @override
     def __iter__(self):
         """Return an iterator over the sorted set.
 
@@ -294,6 +299,7 @@ class SortedSet(MutableSet, Sequence):
         """
         return iter(self._list)
 
+    @override
     def __reversed__(self):
         """Return a reverse iterator over the sorted set.
 
@@ -305,6 +311,7 @@ class SortedSet(MutableSet, Sequence):
         """
         return reversed(self._list)
 
+    @override
     def add(self, value) -> None:
         """Add `value` to sorted set.
 
@@ -327,6 +334,7 @@ class SortedSet(MutableSet, Sequence):
 
     _add = add
 
+    @override
     def clear(self) -> None:
         """Remove all values from sorted set.
 
@@ -348,6 +356,7 @@ class SortedSet(MutableSet, Sequence):
 
     __copy__ = copy
 
+    @override
     def count(self, value) -> int:
         """Return number of occurrences of `value` in the sorted set.
 
@@ -363,6 +372,7 @@ class SortedSet(MutableSet, Sequence):
         """
         return 1 if value in self._set else 0
 
+    @override
     def discard(self, value) -> None:
         """Remove `value` from sorted set if it is a member.
 
@@ -386,6 +396,7 @@ class SortedSet(MutableSet, Sequence):
 
     _discard = discard
 
+    @override
     def pop(self, index=-1):
         """Remove and return value at `index` in sorted set.
 
@@ -414,6 +425,7 @@ class SortedSet(MutableSet, Sequence):
         self._set.remove(value)
         return value
 
+    @override
     def remove(self, value) -> None:
         """Remove `value` from sorted set; `value` must be a member.
 
@@ -647,6 +659,7 @@ class SortedSet(MutableSet, Sequence):
     __ior__ = update
     _update = update
 
+    @override
     def __reduce__(self):
         """Support for pickle.
 

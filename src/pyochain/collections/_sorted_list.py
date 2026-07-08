@@ -11,9 +11,10 @@ from math import log2
 from operator import add, eq, ge, gt, iadd, le, lt, ne
 from reprlib import recursive_repr
 from textwrap import dedent
+from typing import override
 
 
-class SortedList(MutableSequence):
+class SortedList[T](MutableSequence[T]):
     """Sorted list is a sorted mutable sequence.
 
     Sorted list values are maintained in sorted order.
@@ -121,7 +122,6 @@ class SortedList(MutableSequence):
         :return: sorted list or sorted-key list instance
 
         """
-        # pylint: disable=unused-argument
         if key is None:
             return object.__new__(cls)
         if cls is SortedList:
@@ -130,7 +130,7 @@ class SortedList(MutableSequence):
         raise TypeError(msg)
 
     @property
-    def key(self) -> None:  # pylint: disable=useless-return
+    def key(self) -> None:
         """Function used to extract comparison key from values.
 
         Sorted list compares values directly so the key function is none.
@@ -161,6 +161,7 @@ class SortedList(MutableSequence):
         self._load = load
         self._update(values)
 
+    @override
     def clear(self) -> None:
         """Remove all values from sorted list.
 
@@ -272,15 +273,14 @@ class SortedList(MutableSequence):
                 return
 
         load = self._load
-        lists.extend(
-            values[pos : (pos + load)] for pos in range(0, len(values), load)
-        )
+        lists.extend(values[pos : (pos + load)] for pos in range(0, len(values), load))
         maxes.extend(sublist[-1] for sublist in lists)
         self._len = len(values)
         del self._index[:]
 
     _update = update
 
+    @override
     def __contains__(self, value) -> bool:
         """Return true if `value` is an element of the sorted list.
 
@@ -343,6 +343,7 @@ class SortedList(MutableSequence):
         if lists[pos][idx] == value:
             self._delete(pos, idx)
 
+    @override
     def remove(self, value) -> None:
         """Remove `value` from sorted list; `value` must be a member.
 
@@ -680,6 +681,7 @@ class SortedList(MutableSequence):
         reduce(iadd, reversed(tree), self._index)
         self._offset = size * 2 - 1
 
+    @override
     def __delitem__(self, index) -> None:
         """Remove value at `index` from sorted list.
 
@@ -732,6 +734,7 @@ class SortedList(MutableSequence):
             self._delete(pos, idx)
         return None
 
+    @override
     def __getitem__(self, index):
         """Lookup value at `index` in sorted list.
 
@@ -822,6 +825,7 @@ class SortedList(MutableSequence):
 
     _getitem = __getitem__
 
+    @override
     def __setitem__(self, index, value) -> None:
         """Raise not-implemented error.
 
@@ -834,6 +838,7 @@ class SortedList(MutableSequence):
         message = "use ``del sl[index]`` and ``sl.add(value)`` instead"
         raise NotImplementedError(message)
 
+    @override
     def __iter__(self):
         """Return an iterator over the sorted list.
 
@@ -845,6 +850,7 @@ class SortedList(MutableSequence):
         """
         return chain.from_iterable(self._lists)
 
+    @override
     def __reversed__(self):
         """Return a reverse iterator over the sorted list.
 
@@ -856,6 +862,7 @@ class SortedList(MutableSequence):
         """
         return chain.from_iterable(map(reversed, reversed(self._lists)))
 
+    @override
     def reverse(self):
         """Raise not-implemented error.
 
@@ -1061,6 +1068,7 @@ class SortedList(MutableSequence):
 
         return self._islice(min_pos, min_idx, max_pos, max_idx, reverse)
 
+    @override
     def __len__(self) -> int:
         """Return the size of the sorted list.
 
@@ -1136,6 +1144,7 @@ class SortedList(MutableSequence):
     bisect = bisect_right
     _bisect_right = bisect_right
 
+    @override
     def count(self, value):
         """Return number of occurrences of `value` in the sorted list.
 
@@ -1187,6 +1196,7 @@ class SortedList(MutableSequence):
 
     __copy__ = copy
 
+    @override
     def append(self, value):
         """Raise not-implemented error.
 
@@ -1199,6 +1209,7 @@ class SortedList(MutableSequence):
         msg = "use ``sl.add(value)`` instead"
         raise NotImplementedError(msg)
 
+    @override
     def extend(self, values):
         """Raise not-implemented error.
 
@@ -1211,6 +1222,7 @@ class SortedList(MutableSequence):
         msg = "use ``sl.update(values)`` instead"
         raise NotImplementedError(msg)
 
+    @override
     def insert(self, index, value):
         """Raise not-implemented error.
 
@@ -1220,6 +1232,7 @@ class SortedList(MutableSequence):
         msg = "use ``sl.add(value)`` instead"
         raise NotImplementedError(msg)
 
+    @override
     def pop(self, index=-1):
         """Remove and return value at `index` in sorted list.
 
@@ -1280,6 +1293,7 @@ class SortedList(MutableSequence):
         self._delete(pos, idx)
         return val
 
+    @override
     def index(self, value, start=None, stop=None):
         """Return first index of value in sorted list.
 
@@ -1359,6 +1373,7 @@ class SortedList(MutableSequence):
         msg = f"{value!r} is not in list"
         raise ValueError(msg)
 
+    @override
     def __add__(self, other):
         """Return new sorted list containing all values in both sequences.
 
@@ -1383,6 +1398,7 @@ class SortedList(MutableSequence):
 
     __radd__ = __add__
 
+    @override
     def __iadd__(self, other):
         """Update sorted list with values from `other`.
 
@@ -1493,6 +1509,7 @@ class SortedList(MutableSequence):
     __le__ = __make_cmp(le, "<=", "less than or equal to")
     __ge__ = __make_cmp(ge, ">=", "greater than or equal to")
 
+    @override
     def __reduce__(self):
         values = reduce(iadd, self._lists, [])
         return (type(self), (values,))
@@ -1587,7 +1604,7 @@ def identity(value):
     return value
 
 
-class SortedKeyList(SortedList):
+class SortedKeyList[T](SortedList[T]):
     """Sorted-key list is a subtype of sorted list.
 
     The sorted-key list maintains values in comparison order based on the
@@ -1653,10 +1670,12 @@ class SortedKeyList(SortedList):
         return object.__new__(cls)
 
     @property
+    @override
     def key(self):
         """Function used to extract comparison key from values."""
         return self._key
 
+    @override
     def clear(self) -> None:
         """Remove all values from sorted-key list.
 
@@ -1671,6 +1690,7 @@ class SortedKeyList(SortedList):
 
     _clear = clear
 
+    @override
     def add(self, value) -> None:
         """Add `value` to sorted-key list.
 
@@ -1714,6 +1734,7 @@ class SortedKeyList(SortedList):
 
         self._len += 1
 
+    @override
     def _expand(self, pos) -> None:
         """Split sublists with length greater than double the load-factor.
 
@@ -1751,6 +1772,7 @@ class SortedKeyList(SortedList):
                 child = (child - 1) >> 1
             index[0] += 1
 
+    @override
     def update(self, iterable) -> None:
         """Update sorted-key list by adding all values from `iterable`.
 
@@ -1783,9 +1805,7 @@ class SortedKeyList(SortedList):
                 return
 
         load = self._load
-        lists.extend(
-            values[pos : (pos + load)] for pos in range(0, len(values), load)
-        )
+        lists.extend(values[pos : (pos + load)] for pos in range(0, len(values), load))
         keys.extend(list(map(self._key, list_)) for list_ in lists)
         maxes.extend(sublist[-1] for sublist in keys)
         self._len = len(values)
@@ -1793,6 +1813,7 @@ class SortedKeyList(SortedList):
 
     _update = update
 
+    @override
     def __contains__(self, value) -> bool:
         """Return true if `value` is an element of the sorted-key list.
 
@@ -1841,6 +1862,7 @@ class SortedKeyList(SortedList):
                 len_sublist = len(keys[pos])
                 idx = 0
 
+    @override
     def discard(self, value) -> None:
         """Remove `value` from sorted-key list if it is a member.
 
@@ -1889,6 +1911,7 @@ class SortedKeyList(SortedList):
                 len_sublist = len(keys[pos])
                 idx = 0
 
+    @override
     def remove(self, value) -> None:
         """Remove `value` from sorted-key list; `value` must be a member.
 
@@ -1945,6 +1968,7 @@ class SortedKeyList(SortedList):
                 len_sublist = len(keys[pos])
                 idx = 0
 
+    @override
     def _delete(self, pos, idx) -> None:
         """Delete value at the given `(pos, idx)`.
 
@@ -2004,6 +2028,7 @@ class SortedKeyList(SortedList):
             del maxes[pos]
             del index[:]
 
+    @override
     def irange(self, minimum=None, maximum=None, inclusive=(True, True), reverse=False):
         """Create an iterator of values between `minimum` and `maximum`.
 
@@ -2124,6 +2149,7 @@ class SortedKeyList(SortedList):
 
     _irange_key = irange_key
 
+    @override
     def bisect_left(self, value):
         """Return an index to insert `value` in the sorted-key list.
 
@@ -2145,6 +2171,7 @@ class SortedKeyList(SortedList):
         """
         return self._bisect_key_left(self._key(value))
 
+    @override
     def bisect_right(self, value):
         """Return an index to insert `value` in the sorted-key list.
 
@@ -2239,6 +2266,7 @@ class SortedKeyList(SortedList):
     bisect_key = bisect_key_right
     _bisect_key_right = bisect_key_right
 
+    @override
     def count(self, value):
         """Return number of occurrences of `value` in the sorted-key list.
 
@@ -2284,6 +2312,7 @@ class SortedKeyList(SortedList):
                 len_sublist = len(keys[pos])
                 idx = 0
 
+    @override
     def copy(self):
         """Return a shallow copy of the sorted-key list.
 
@@ -2296,6 +2325,7 @@ class SortedKeyList(SortedList):
 
     __copy__ = copy
 
+    @override
     def index(self, value, start=None, stop=None):
         """Return first index of value in sorted-key list.
 
@@ -2384,6 +2414,7 @@ class SortedKeyList(SortedList):
         msg = f"{value!r} is not in list"
         raise ValueError(msg)
 
+    @override
     def __add__(self, other):
         """Return new sorted-key list containing all values in both sequences.
 
@@ -2409,6 +2440,7 @@ class SortedKeyList(SortedList):
 
     __radd__ = __add__
 
+    @override
     def __mul__(self, num):
         """Return new sorted-key list with `num` shallow copies of values.
 
@@ -2428,6 +2460,7 @@ class SortedKeyList(SortedList):
         values = reduce(iadd, self._lists, []) * num
         return self.__class__(values, key=self._key)
 
+    @override
     def __reduce__(self):
         values = reduce(iadd, self._lists, [])
         return (type(self), (values, self.key))
@@ -2444,6 +2477,7 @@ class SortedKeyList(SortedList):
         type_name = type(self).__name__
         return f"{type_name}({list(self)!r}, key={self._key!r})"
 
+    @override
     def _check(self) -> None:
         """Check invariants of sorted-key list.
 

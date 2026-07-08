@@ -8,6 +8,7 @@ import gc
 import platform
 import string
 import warnings
+from typing import override
 
 import pytest
 
@@ -106,7 +107,9 @@ def test_eq() -> None:
 def test_iter() -> None:
     mapping = [(val, pos) for pos, val in enumerate(string.ascii_lowercase)]
     temp = SortedDict(mapping)
-    assert all(lhs == rhs for lhs, rhs in zip(temp, string.ascii_lowercase, strict=False))
+    assert all(
+        lhs == rhs for lhs, rhs in zip(temp, string.ascii_lowercase, strict=False)
+    )
 
 
 def test_iter_key() -> None:
@@ -119,7 +122,10 @@ def test_reversed() -> None:
     mapping = [(val, pos) for pos, val in enumerate(string.ascii_lowercase)]
     temp = SortedDict(mapping)
     assert all(
-        lhs == rhs for lhs, rhs in zip(reversed(temp), reversed(string.ascii_lowercase), strict=False)
+        lhs == rhs
+        for lhs, rhs in zip(
+            reversed(temp), reversed(string.ascii_lowercase), strict=False
+        )
     )
 
 
@@ -127,7 +133,9 @@ def test_reversed_key() -> None:
     temp = SortedDict(modulo, ((val, val) for val in range(100)))
     temp._reset(7)
     values = sorted(range(100), key=modulo)
-    assert all(lhs == rhs for lhs, rhs in zip(reversed(temp), reversed(values), strict=False))
+    assert all(
+        lhs == rhs for lhs, rhs in zip(reversed(temp), reversed(values), strict=False)
+    )
 
 
 def test_islice() -> None:
@@ -331,6 +339,7 @@ class Identity:
     def __call__(self, value):
         return value
 
+    @override
     def __repr__(self) -> str:
         return "identity"
 

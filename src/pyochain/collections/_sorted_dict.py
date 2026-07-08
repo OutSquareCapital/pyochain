@@ -4,12 +4,13 @@
 import warnings
 from collections.abc import ItemsView, KeysView, Mapping, Sequence, ValuesView
 from itertools import chain
+from typing import override
 
 from ._sorted_list import SortedList, recursive_repr
 from ._sorted_set import SortedSet
 
 
-class SortedDict(dict):
+class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
     """Sorted dict is a sorted mutable mapping.
 
     Sorted dict keys are maintained in sorted order. The design of sorted dict
@@ -183,6 +184,7 @@ class SortedDict(dict):
             iloc = self._iloc = SortedKeysView(self)
             return iloc
 
+    @override
     def clear(self) -> None:
         """Remove all items from sorted dict.
 
@@ -192,6 +194,7 @@ class SortedDict(dict):
         dict.clear(self)
         self._list_clear()
 
+    @override
     def __delitem__(self, key) -> None:
         """Remove item from sorted dict identified by `key`.
 
@@ -215,6 +218,7 @@ class SortedDict(dict):
         dict.__delitem__(self, key)
         self._list_remove(key)
 
+    @override
     def __iter__(self):
         """Return an iterator over the keys of the sorted dict.
 
@@ -226,6 +230,7 @@ class SortedDict(dict):
         """
         return self._list_iter()
 
+    @override
     def __reversed__(self):
         """Return a reverse iterator over the keys of the sorted dict.
 
@@ -237,6 +242,7 @@ class SortedDict(dict):
         """
         return self._list_reversed()
 
+    @override
     def __setitem__(self, key, value) -> None:
         """Store item in sorted dict with `key` and corresponding `value`.
 
@@ -261,22 +267,26 @@ class SortedDict(dict):
 
     _setitem = __setitem__
 
+    @override
     def __or__(self, other):
         if not isinstance(other, Mapping):
             return NotImplemented
         items = chain(self.items(), other.items())
         return self.__class__(self._key, items)
 
+    @override
     def __ror__(self, other):
         if not isinstance(other, Mapping):
             return NotImplemented
         items = chain(other.items(), self.items())
         return self.__class__(self._key, items)
 
+    @override
     def __ior__(self, other):
         self._update(other)
         return self
 
+    @override
     def copy(self):
         """Return a shallow copy of the sorted dict.
 
@@ -290,6 +300,7 @@ class SortedDict(dict):
     __copy__ = copy
 
     @classmethod
+    @override
     def fromkeys(cls, iterable, value=None):
         """Return a new sorted dict initailized from `iterable` and `value`.
 
@@ -303,6 +314,7 @@ class SortedDict(dict):
         """
         return cls((key, value) for key in iterable)
 
+    @override
     def keys(self):
         """Return new sorted keys view of the sorted dict's keys.
 
@@ -313,6 +325,7 @@ class SortedDict(dict):
         """
         return SortedKeysView(self)
 
+    @override
     def items(self):
         """Return new sorted items view of the sorted dict's items.
 
@@ -323,6 +336,7 @@ class SortedDict(dict):
         """
         return SortedItemsView(self)
 
+    @override
     def values(self):
         """Return new sorted values view of the sorted dict's values.
 
@@ -337,11 +351,13 @@ class SortedDict(dict):
 
     class _NotGiven:
         # pylint: disable=too-few-public-methods
+        @override
         def __repr__(self) -> str:
             return "<not-given>"
 
     __not_given = _NotGiven()
 
+    @override
     def pop(self, key, default=__not_given):
         """Remove and return value for item identified by `key`.
 
@@ -373,6 +389,7 @@ class SortedDict(dict):
             raise KeyError(key)
         return default
 
+    @override
     def popitem(self, index=-1):
         """Remove and return ``(key, value)`` pair at `index` from sorted dict.
 
@@ -439,6 +456,7 @@ class SortedDict(dict):
         key = self._list[index]
         return key, self[key]
 
+    @override
     def setdefault(self, key, default=None):
         """Return value for item identified by `key` in sorted dict.
 
@@ -469,6 +487,7 @@ class SortedDict(dict):
         self._list_add(key)
         return default
 
+    @override
     def update(self, *args, **kwargs) -> None:
         """Update sorted dict with items from `args` and `kwargs`.
 
@@ -502,6 +521,7 @@ class SortedDict(dict):
 
     _update = update
 
+    @override
     def __reduce__(self):
         """Support for pickle.
 
@@ -578,7 +598,7 @@ def _view_delitem(self, index) -> None:
         dict_delitem(mapping, key)
 
 
-class SortedKeysView(KeysView, Sequence):
+class SortedKeysView[K](KeysView[K], Sequence[K]):
     """Sorted keys view is a dynamic view of the sorted dict's keys.
 
     When the sorted dict's keys change, the view reflects those changes.
@@ -590,9 +610,11 @@ class SortedKeysView(KeysView, Sequence):
     __slots__ = ()
 
     @classmethod
+    @override
     def _from_iterable(cls, it):
         return SortedSet(it)
 
+    @override
     def __getitem__(self, index):
         """Lookup key at `index` in sorted keys views.
 
@@ -625,7 +647,7 @@ class SortedKeysView(KeysView, Sequence):
     __delitem__ = _view_delitem
 
 
-class SortedItemsView(ItemsView, Sequence):
+class SortedItemsView[K, V](ItemsView[K, V], Sequence[tuple[K, V]]):
     """Sorted items view is a dynamic view of the sorted dict's items.
 
     When the sorted dict's items change, the view reflects those changes.
@@ -637,9 +659,11 @@ class SortedItemsView(ItemsView, Sequence):
     __slots__ = ()
 
     @classmethod
+    @override
     def _from_iterable(cls, it):
         return SortedSet(it)
 
+    @override
     def __getitem__(self, index):
         """Lookup item at `index` in sorted items view.
 
@@ -680,7 +704,7 @@ class SortedItemsView(ItemsView, Sequence):
     __delitem__ = _view_delitem
 
 
-class SortedValuesView(ValuesView, Sequence):
+class SortedValuesView[V](ValuesView[V], Sequence[V]):
     """Sorted values view is a dynamic view of the sorted dict's values.
 
     When the sorted dict's values change, the view reflects those changes.
@@ -691,6 +715,7 @@ class SortedValuesView(ValuesView, Sequence):
 
     __slots__ = ()
 
+    @override
     def __getitem__(self, index):
         """Lookup value at `index` in sorted values view.
 
