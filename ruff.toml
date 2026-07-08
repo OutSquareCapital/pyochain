@@ -1,6 +1,7 @@
 [lint]
     external = ["DOC"]
     ignore = [
+        "C413",    # Can be a behavioral change who introduce subtle bugs
         "C417",
         "COM812",
         "COM812",
