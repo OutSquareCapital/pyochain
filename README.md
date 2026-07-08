@@ -21,7 +21,7 @@
 - `Option[T]` to handle optional values instead of `T | None`.
 - `Result[T, E]` to handle success and error paths instead of `try.. except` blocks.
 - `Iterator` types for python builtins (`zip`, `map`, ...) and `itertools`, as well as many methods from Rust's `Iterator`, and libraries like `toolz` or `more-itertools`.
-- `Collection` types covering python builtins (`list`, `deque`, `set`, ...), and additional ones like no-copy slice views.
+- `Collection` types covering python builtins (`list`, `deque`, `set`, ...), additional ones like no-copy slice views, and reimplementation of `heapq` module in two dedicated types (`HeapMax` and `HeapMin`).
 - `ABC`'s hierarchy mimicking `collections.abc`, for duck typing, shared methods, and the possibility to implement your own subclasses.
 - `Mixin`'s addable to any class, to provide a fluent API with `pipe` and `tap`, or `Option`/`Result` conversions on truthiness evaluation.
 
