@@ -5,14 +5,19 @@ from __future__ import annotations
 import sys
 import traceback
 from bisect import bisect_left, bisect_right, insort
-from collections.abc import Iterable, MutableSequence, Sequence
+from collections.abc import Callable, Iterable, Iterator, MutableSequence, Sequence
 from functools import reduce
 from itertools import chain, repeat
 from math import log2
 from operator import add, eq, ge, gt, iadd, le, lt, ne
 from reprlib import recursive_repr
 from textwrap import dedent
-from typing import Final, override
+from typing import TYPE_CHECKING, Final, Self, overload, override
+
+if TYPE_CHECKING:
+    from _typeshed import SupportsRichComparison
+
+type KeyFunc[T, OT: SupportsRichComparison] = Callable[[T], OT]
 
 
 class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
@@ -102,7 +107,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         if iterable is not None:
             self._update(iterable)
 
-    def _reset(self, load) -> None:
+    def _reset(self, load: int) -> None:
         """Reset sorted list load factor.
 
         The `load` specifies the load-factor of the list. The default load
@@ -245,7 +250,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
     _update = update
 
     @override
-    def __contains__(self, value) -> bool:
+    def __contains__(self, value: object) -> bool:
         """Return true if `value` is an element of the sorted list.
 
         ``sl.__contains__(value)`` <==> ``value in sl``
@@ -275,7 +280,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
 
         return lists[pos][idx] == value
 
-    def discard(self, value) -> None:
+    def discard(self, value: T) -> None:
         """Remove `value` from sorted list if it is a member.
 
         If `value` is not a member, do nothing.
@@ -308,7 +313,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
             self._delete(pos, idx)
 
     @override
-    def remove(self, value) -> None:
+    def remove(self, value: T) -> None:
         """Remove `value` from sorted list; `value` must be a member.
 
         If `value` is not a member, raise ValueError.
@@ -657,7 +662,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         self._offset = size * 2 - 1
 
     @override
-    def __delitem__(self, index) -> None:
+    def __delitem__(self, index: int | slice) -> None:
         """Remove value at `index` from sorted list.
 
         ``sl.__delitem__(index)`` <==> ``del sl[index]``
@@ -709,8 +714,12 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
             self._delete(pos, idx)
         return None
 
+    @overload
+    def __getitem__(self, index: int) -> T: ...
+    @overload
+    def __getitem__(self, index: slice) -> list[T]: ...
     @override
-    def __getitem__(self, index):
+    def __getitem__(self, index: int | slice) -> T | list[T]:
         """Lookup value at `index` in sorted list.
 
         ``sl.__getitem__(index)`` <==> ``sl[index]``
@@ -804,8 +813,12 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
 
     _getitem = __getitem__
 
+    @overload
+    def __setitem__(self, index: int, value: T) -> None: ...
+    @overload
+    def __setitem__(self, index: slice, value: Iterable[T]) -> None: ...
     @override
-    def __setitem__(self, index, value) -> None:
+    def __setitem__(self, index: int | slice, value: T | Iterable[T]) -> None:
         """Raise not-implemented error.
 
         ``sl.__setitem__(index, value)`` <==> ``sl[index] = value``
@@ -830,7 +843,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         return chain.from_iterable(self._lists)
 
     @override
-    def __reversed__(self):
+    def __reversed__(self) -> Iterator[T]:
         """Return a reverse iterator over the sorted list.
 
         ``sl.__reversed__()`` <==> ``reversed(sl)``
@@ -860,7 +873,9 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         msg = "use ``reversed(sl)`` instead"
         raise NotImplementedError(msg)
 
-    def islice(self, start=None, stop=None, reverse=False):
+    def islice(
+        self, start: int | None = None, stop: int | None = None, reverse: bool = False
+    ) -> Iterator[T]:
         """Return an iterator that slices sorted list from `start` to `stop`.
 
         The `start` and `stop` index are treated inclusive and exclusive,
@@ -968,7 +983,13 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
             map(lists[max_pos].__getitem__, max_indices),
         )
 
-    def irange(self, minimum=None, maximum=None, inclusive=(True, True), reverse=False):
+    def irange(
+        self,
+        minimum: T | None = None,
+        maximum: T | None = None,
+        inclusive: tuple[bool, bool] = (True, True),
+        reverse: bool = False,
+    ) -> Iterator[T]:
         """Create an iterator of values between `minimum` and `maximum`.
 
         Both `minimum` and `maximum` default to `None` which is automatically
@@ -1060,7 +1081,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         """
         return self._len
 
-    def bisect_left(self, value):
+    def bisect_left(self, value: T) -> int:
         """Return an index to insert `value` in the sorted list.
 
         If the `value` is already present, the insertion point will be before
@@ -1091,7 +1112,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         idx = bisect_left(self._lists[pos], value)
         return self._loc(pos, idx)
 
-    def bisect_right(self, value):
+    def bisect_right(self, value: T) -> int:
         """Return an index to insert `value` in the sorted list.
 
         Similar to `bisect_left`, but if `value` is already present, the
@@ -1126,7 +1147,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
     _bisect_right = bisect_right
 
     @override
-    def count(self, value):
+    def count(self, value: T) -> int:
         """Return number of occurrences of `value` in the sorted list.
 
         Runtime complexity: `O(log(n))` -- approximate.
@@ -1165,7 +1186,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         left = self._loc(pos_left, idx_left)
         return right - left
 
-    def copy(self):
+    def copy(self) -> Self:
         """Return a shallow copy of the sorted list.
 
         Runtime complexity: `O(n)`
@@ -1175,7 +1196,8 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         """
         return self.__class__(self)
 
-    __copy__ = copy
+    def __copy__(self) -> Self:
+        return self.copy()
 
     @override
     def append(self, value):
@@ -1204,7 +1226,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         raise NotImplementedError(msg)
 
     @override
-    def insert(self, index, value):
+    def insert(self, index: int, value: T) -> None:
         """Raise not-implemented error.
 
         :raises NotImplementedError: use ``sl.add(value)`` instead
@@ -1279,7 +1301,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         return val
 
     @override
-    def index(self, value, start=None, stop=None):
+    def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:
         """Return first index of value in sorted list.
 
         Raise ValueError if `value` is not present.
@@ -1362,7 +1384,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         raise ValueError(msg)
 
     @override
-    def __add__(self, other):
+    def __add__(self, other: Iterable[T]) -> Self:
         """Return new sorted list containing all values in both sequences.
 
         ``sl.__add__(other)`` <==> ``sl + other``
@@ -1384,10 +1406,11 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         values.extend(other)
         return self.__class__(values)
 
-    __radd__ = __add__
+    def __radd__(self, other: Iterable[T]) -> Self:
+        return self.__add__(other)
 
     @override
-    def __iadd__(self, other):
+    def __iadd__(self, other: Iterable[T]) -> Self:
         """Update sorted list with values from `other`.
 
         ``sl.__iadd__(other)`` <==> ``sl += other``
@@ -1410,7 +1433,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         self._update(other)
         return self
 
-    def __mul__(self, num):
+    def __mul__(self, num: int) -> Self:
         """Return new sorted list with `num` shallow copies of values.
 
         ``sl.__mul__(num)`` <==> ``sl * num``
@@ -1428,9 +1451,10 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         values = reduce(iadd, self._lists, []) * num
         return self.__class__(values)
 
-    __rmul__ = __mul__
+    def __rmul__(self, num: int) -> Self:
+        return self.__mul__(num)
 
-    def __imul__(self, num):
+    def __imul__(self, num: int) -> Self:
         """Update the sorted list with `num` shallow copies of values.
 
         ``sl.__imul__(num)`` <==> ``sl *= num``
@@ -2434,7 +2458,8 @@ class SortedKeyList[T](SortedList[T]):
         values.extend(other)
         return self.__class__(values, key=self._key)
 
-    __radd__ = __add__
+    def __radd__(self, other: Iterable[T]) -> Self:
+        return self.__add__(other)
 
     @override
     def __mul__(self, num):
