@@ -1,11 +1,13 @@
 # Adapted from python-sortedcontainers (https://github.com/grantjenks/python-sortedcontainers)
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
+from __future__ import annotations
 
 from collections.abc import ItemsView, KeysView, Mapping, Sequence, ValuesView
 from itertools import chain
+from reprlib import recursive_repr
 from typing import override
 
-from ._sorted_list import SortedKeyList, SortedList, recursive_repr
+from ._sorted_list import SortedKeyList, SortedList
 from ._sorted_set import SortedSet
 
 

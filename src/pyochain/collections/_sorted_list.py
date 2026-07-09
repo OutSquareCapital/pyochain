@@ -1,5 +1,6 @@
 # Adapted from python-sortedcontainers (https://github.com/grantjenks/python-sortedcontainers)
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
+from __future__ import annotations
 
 import sys
 import traceback
@@ -14,7 +15,7 @@ from textwrap import dedent
 from typing import Final, override
 
 
-class SortedList[T](MutableSequence[T]):
+class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
     """Sorted list is a sorted mutable sequence.
 
     Sorted list values are maintained in sorted order.

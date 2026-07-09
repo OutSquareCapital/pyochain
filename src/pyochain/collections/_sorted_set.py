@@ -1,13 +1,16 @@
 # Adapted from python-sortedcontainers (https://github.com/grantjenks/python-sortedcontainers)
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
+from __future__ import annotations
+
 from collections.abc import MutableSet, Sequence
 from collections.abc import Set as AbstractSet
 from itertools import chain
 from operator import eq, ge, gt, le, lt, ne
+from reprlib import recursive_repr
 from textwrap import dedent
 from typing import override
 
-from ._sorted_list import SortedKeyList, SortedList, recursive_repr
+from ._sorted_list import SortedKeyList, SortedList
 
 
 class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
