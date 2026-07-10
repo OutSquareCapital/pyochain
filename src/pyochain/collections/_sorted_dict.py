@@ -2,10 +2,10 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
-from collections.abc import Iterator, Mapping
+from collections.abc import Hashable, Iterable, Iterator, Mapping, MutableMapping
 from itertools import chain
 from reprlib import recursive_repr
-from typing import TYPE_CHECKING, Self, override
+from typing import TYPE_CHECKING, Self, overload, override
 
 from ._sorted_list import KeyFunc, SortedKeyList, SortedList
 from ._sorted_views import SortedItemsView, SortedKeysView, SortedValuesView
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from _typeshed import SupportsRichComparison
 
 
-class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
+class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
     """Sorted dict is a sorted mutable mapping.
 
     Sorted dict keys are maintained in sorted order. The design of sorted dict
@@ -124,7 +124,7 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
         if args and (args[0] is None or callable(args[0])):
             args = args[1:]
 
-            self._list = SortedList()
+            self._list: SortedList[K] = SortedList()
         else:
             self._list = SortedList()
 
@@ -159,11 +159,11 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
         Runtime complexity: `O(n)`
 
         """
-        dict.clear(self)
+        super().clear()
         self._list_clear()
 
     @override
-    def __delitem__(self, key) -> None:
+    def __delitem__(self, key: K) -> None:
         """Remove item from sorted dict identified by `key`.
 
         ``sd.__delitem__(key)`` <==> ``del sd[key]``
@@ -183,11 +183,11 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
         :raises KeyError: if key not found
 
         """
-        dict.__delitem__(self, key)
+        super().__delitem__(key)
         self._list_remove(key)
 
     @override
-    def __iter__(self):
+    def __iter__(self) -> Iterator[K]:
         """Return an iterator over the keys of the sorted dict.
 
         ``sd.__iter__()`` <==> ``iter(sd)``
@@ -199,7 +199,7 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
         return self._list_iter()
 
     @override
-    def __reversed__(self):
+    def __reversed__(self) -> Iterator[K]:
         """Return a reverse iterator over the keys of the sorted dict.
 
         ``sd.__reversed__()`` <==> ``reversed(sd)``
@@ -211,7 +211,7 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
         return self._list_reversed()
 
     @override
-    def __setitem__(self, key, value) -> None:
+    def __setitem__(self, key: K, value: V) -> None:
         """Store item in sorted dict with `key` and corresponding `value`.
 
         ``sd.__setitem__(key, value)`` <==> ``sd[key] = value``
@@ -250,7 +250,7 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
         return self.__class__(items)
 
     @override
-    def __ior__(self, other):
+    def __ior__(self, other: object) -> Self:
         self._update(other)
         return self
 
@@ -268,8 +268,20 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
     __copy__ = copy
 
     @classmethod
+    @overload
+    def fromkeys[OT: SupportsRichComparison](
+        cls, seq: Iterable[OT]
+    ) -> SortedDict[OT, None]: ...
+    @classmethod
+    @overload
+    def fromkeys[OT: SupportsRichComparison](
+        cls, seq: Iterable[OT], value: V
+    ) -> SortedDict[OT, V]: ...
+    @classmethod
     @override
-    def fromkeys(cls, iterable, value=None):
+    def fromkeys[OT: SupportsRichComparison](
+        cls, iterable: Iterable[OT], value: V | None = None
+    ) -> SortedDict[OT, V | None]:
         """Return a new sorted dict initailized from `iterable` and `value`.
 
         Items in the sorted dict have keys from `iterable` and values equal to
@@ -283,7 +295,7 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
         return cls((key, value) for key in iterable)
 
     @override
-    def keys(self):
+    def keys(self) -> SortedKeysView[K]:
         """Return new sorted keys view of the sorted dict's keys.
 
         See :class:`SortedKeysView` for details.
@@ -294,7 +306,7 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
         return SortedKeysView(self)
 
     @override
-    def items(self):
+    def items(self) -> SortedItemsView[K, V]:
         """Return new sorted items view of the sorted dict's items.
 
         See :class:`SortedItemsView` for details.
@@ -305,7 +317,7 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
         return SortedItemsView(self)
 
     @override
-    def values(self):
+    def values(self) -> SortedValuesView[V]:
         """Return new sorted values view of the sorted dict's values.
 
         Note that the values view is sorted by key.
@@ -325,8 +337,14 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
 
     __not_given = _NotGiven()
 
+    @overload
+    def pop(self, key: K, /) -> V: ...
+    @overload
+    def pop(self, key: K, /, default: V) -> V: ...
+    @overload
+    def pop[T](self, key: K, /, default: T) -> V | T: ...
     @override
-    def pop(self, key, default=__not_given):
+    def pop[T](self, key: K, default: T = __not_given) -> V | T:
         """Remove and return value for item identified by `key`.
 
         If the `key` is not found then return `default` if given. If `default`
@@ -362,7 +380,7 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
         return default
 
     @override
-    def popitem(self, index=-1):
+    def popitem(self, index: int = -1) -> tuple[K, V]:
         """Remove and return ``(key, value)`` pair at `index` from sorted dict.
 
         Optional argument `index` defaults to -1, the last item in the sorted
@@ -402,7 +420,7 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
         value = dict.pop(self, key)
         return (key, value)
 
-    def peekitem(self, index=-1):
+    def peekitem(self, index: int = -1) -> tuple[K, V]:
         """Return ``(key, value)`` pair at `index` in sorted dict.
 
         Optional argument `index` defaults to -1, the last item in the sorted
@@ -432,8 +450,13 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
         key = self._list[index]
         return key, self[key]
 
+    @overload
+    def setdefault[T](self: MutableMapping[K, T | None], key: K) -> T | None: ...
+    # Our overload matches the implementation's permitted arguments, which allows keyword args, unlike SortedDict.
+    @overload
+    def setdefault(self, key: K, default: V) -> V: ...
     @override
-    def setdefault(self, key, default=None):
+    def setdefault[T](self, key: K, default: V | T = None) -> V | T:
         """Return value for item identified by `key` in sorted dict.
 
         If `key` is in the sorted dict then return its value. If `key` is not
@@ -537,7 +560,7 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
         assert all(key in self for key in list_)
 
 
-class SortedKeyDict[K, V, OT: SupportsRichComparison](SortedDict[K, V]):
+class SortedKeyDict[K: Hashable, V, OT: SupportsRichComparison](SortedDict[K, V]):
     def __init__(self, *args, **kwargs) -> None:
         """Initialize sorted dict instance.
 
@@ -578,7 +601,7 @@ class SortedKeyDict[K, V, OT: SupportsRichComparison](SortedDict[K, V]):
         self._key: KeyFunc[K, OT] = args[0]
         args = args[1:]
 
-        self._list = SortedKeyList(key=self._key)
+        self._list: SortedKeyList[K, OT] = SortedKeyList(key=self._key)
 
         # Reaching through ``self._list`` repeatedly adds unnecessary overhead
         # so cache references to sorted list methods.
