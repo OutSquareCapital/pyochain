@@ -231,7 +231,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
         """
         if key not in self:
             self._list_add(key)
-        dict.__setitem__(self, key, value)
+        super().__setitem__(key, value)
 
     _setitem = __setitem__
 
@@ -374,7 +374,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
         """
         if key in self:
             self._list_remove(key)
-            return dict.pop(self, key)
+            return super().pop(key)
         if default is self.__not_given:
             raise KeyError(key)
         return default
@@ -417,7 +417,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
             raise KeyError(msg)
 
         key = self._list_pop(index)
-        value = dict.pop(self, key)
+        value = super().pop(key)
         return (key, value)
 
     def peekitem(self, index: int = -1) -> tuple[K, V]:
@@ -482,7 +482,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
         """
         if key in self:
             return self[key]
-        dict.__setitem__(self, key, default)
+        super().__setitem__(key, default)
         self._list_add(key)
         return default
 
@@ -501,8 +501,8 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
 
         """
         if not self:
-            dict.update(self, *args, **kwargs)
-            self._list_update(dict.__iter__(self))
+            super().update(*args, **kwargs)
+            self._list_update(super().__iter__())
             return
 
         if not kwargs and len(args) == 1 and isinstance(args[0], dict):
@@ -511,9 +511,9 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
             pairs = dict(*args, **kwargs)
 
         if (10 * len(pairs)) > len(self):
-            dict.update(self, pairs)
+            super().update(pairs)
             self._list_clear()
-            self._list_update(dict.__iter__(self))
+            self._list_update(super().__iter__())
         else:
             for key in pairs:
                 self._setitem(key, pairs[key])
@@ -531,7 +531,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
             tuple: class and arguments for reconstruction
 
         """
-        items = dict.copy(self)
+        items = super().copy()
         return (type(self), (items,))
 
     @recursive_repr()
@@ -674,7 +674,7 @@ class SortedKeyDict[K: Hashable, V, OT: SupportsRichComparison](SortedDict[K, V]
 
     @override
     def __reduce__(self):
-        items = dict.copy(self)
+        items = dict[K, V].copy(self)
         return (type(self), (self._key, items))
 
     @recursive_repr()
