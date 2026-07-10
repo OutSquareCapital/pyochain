@@ -7,7 +7,7 @@ https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_cov
 import operator
 from typing import override
 
-from pyochain.collections import SortedSet
+from pyochain.collections import SortedKeySet, SortedSet
 
 
 def modulo(value: int) -> int:
@@ -16,14 +16,13 @@ def modulo(value: int) -> int:
 
 def test_init() -> None:
     temp = SortedSet(range(100))
-    assert temp.key is None
     temp._reset(7)
     temp._check()
     assert all(val == temp[val] for val in temp)
 
 
 def test_init_key() -> None:
-    temp = SortedSet(range(100), key=operator.neg)
+    temp = SortedKeySet(range(100), key=operator.neg)
     assert temp.key == operator.neg
 
 
@@ -48,7 +47,7 @@ def test_getitem_slice() -> None:
 
 
 def test_getitem_key() -> None:
-    temp = SortedSet(range(100), key=operator.neg)
+    temp = SortedKeySet(range(100), key=operator.neg)
     temp._reset(7)
     assert all(temp[val] == (99 - val) for val in range(100))
 
@@ -71,7 +70,7 @@ def test_delitem_slice() -> None:
 
 
 def test_delitem_key() -> None:
-    temp = SortedSet(range(100), key=modulo)
+    temp = SortedKeySet(range(100), key=modulo)
     temp._reset(7)
     values = sorted(range(100), key=modulo)
     for val in range(10):
@@ -218,7 +217,7 @@ def test_irange_key() -> None:
     values = sorted(range(100), key=modulo)
 
     for load in range(5, 16):
-        ss = SortedSet(range(100), key=modulo)
+        ss = SortedKeySet(range(100), key=modulo)
         ss._reset(load)
 
         for start in range(10):
@@ -277,7 +276,7 @@ def test_bisect() -> None:
 
 
 def test_bisect_key() -> None:
-    temp = SortedSet(range(100), key=lambda val: val)
+    temp = SortedKeySet(range(100), key=lambda val: val)
     temp._reset(7)
     assert all(temp.bisect_key_left(val) == val for val in range(100))
     assert all(temp.bisect_key(val) == (val + 1) for val in range(100))
@@ -514,9 +513,9 @@ class Identity:
 
 
 def test_repr() -> None:
-    temp = SortedSet(range(10), key=Identity())
+    temp = SortedKeySet(range(10), key=Identity())
     temp._reset(7)
-    assert repr(temp) == "SortedSet([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], key=identity)"
+    assert repr(temp) == "SortedKeySet([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], key=identity)"
 
 
 def test_repr_recursion() -> None:
@@ -536,7 +535,7 @@ def test_repr_recursion() -> None:
 def test_pickle() -> None:
     import pickle
 
-    alpha = SortedSet(range(10000), key=operator.neg)
+    alpha = SortedKeySet(range(10000), key=operator.neg)
     alpha._reset(500)
     data = pickle.dumps(alpha)
     beta = pickle.loads(data)

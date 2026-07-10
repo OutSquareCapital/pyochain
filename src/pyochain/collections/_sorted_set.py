@@ -10,13 +10,15 @@ from reprlib import recursive_repr
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Self, overload, override
 
-from ._sorted_list import SortedKeyList, SortedList
+from ._sorted_list import KeyFunc, SortedKeyList, SortedList, identity
 
 if TYPE_CHECKING:
     from types import NotImplementedType
 
+    from _typeshed import SupportsRichComparison
 
-class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
+
+class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa: PLW1641
     """Sorted set is a sorted mutable set.
 
     Sorted set values are maintained in sorted order. The design of sorted set
@@ -89,44 +91,29 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
 
     """
 
-    def __init__(self, iterable: Iterable[T] | None = None, key=None) -> None:
+    def __init__(self, iterable: Iterable[T] | None = None) -> None:
         """Initialize sorted set instance.
 
         Optional `iterable` argument provides an initial iterable of values to
         initialize the sorted set.
-
-        Optional `key` argument defines a callable that, like the `key`
-        argument to Python's `sorted` function, extracts a comparison key from
-        each value. The default, none, compares values directly.
 
         Runtime complexity: `O(n*log(n))`
 
         >>> ss = SortedSet([3, 1, 2, 5, 4])
         >>> ss
         SortedSet([1, 2, 3, 4, 5])
-        >>> from operator import neg
-        >>> ss = SortedSet([3, 1, 2, 5, 4], neg)
-        >>> ss
-        SortedSet([5, 4, 3, 2, 1], key=<built-in function neg>)
 
         :param iterable: initial values (optional)
-        :param key: function used to extract comparison key (optional)
 
         """
-        self._key = key
-
         # SortedSet._fromset calls SortedSet.__init__ after initializing the
         # _set attribute. So only create a new set if the _set attribute is not
         # already present.
 
         if not hasattr(self, "_set"):
-            self._set = set[T]()
+            self._set: set[T] = set[T]()
 
-        self._list = (
-            SortedKeyList(self._set, key=key)
-            if key is not None
-            else SortedList(self._set)
-        )
+        self._list: SortedList[T] = SortedList(self._set)
 
         # Expose some set methods publicly.
 
@@ -146,17 +133,11 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         self.islice = list_.islice
         self._reset = list_._reset
 
-        if key is not None:
-            self.bisect_key_left = list_.bisect_key_left
-            self.bisect_key_right = list_.bisect_key_right
-            self.bisect_key = list_.bisect_key
-            self.irange_key = list_.irange_key
-
         if iterable is not None:
             self._update(iterable)
 
     @classmethod
-    def _fromset(cls, values: set[T], key=None) -> Self:
+    def _fromset(cls, values: set[T]) -> Self:
         """Initialize sorted set from existing set.
 
         Used internally by set operations that return a new set.
@@ -164,17 +145,8 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         """
         sorted_set = object.__new__(cls)
         sorted_set._set = values
-        sorted_set.__init__(key=key)
+        sorted_set.__init__()  # noqa: PLC2801
         return sorted_set
-
-    @property
-    def key(self):
-        """Function used to extract comparison key from values.
-
-        Sorted set compares values directly when the key function is none.
-
-        """
-        return self._key
 
     @override
     def __contains__(self, value: object) -> bool:
@@ -369,7 +341,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         :return: new sorted set
 
         """
-        return self._fromset(set(self._set), key=self._key)
+        return self._fromset(set(self._set))
 
     def __copy__(self) -> Self:
         return self.copy()
@@ -487,7 +459,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
 
         """
         diff = self._set.difference(*iterables)
-        return self._fromset(diff, key=self._key)
+        return self._fromset(diff)
 
     __sub__ = difference
 
@@ -543,7 +515,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
 
         """
         intersect = self._set.intersection(*iterables)
-        return self._fromset(intersect, key=self._key)
+        return self._fromset(intersect)
 
     __and__ = intersection
     __rand__ = __and__
@@ -596,7 +568,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
 
         """
         diff = self._set.symmetric_difference(other)
-        return self._fromset(diff, key=self._key)
+        return self._fromset(diff)
 
     __xor__ = symmetric_difference
     __rxor__ = __xor__
@@ -646,7 +618,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         :return: new sorted set
 
         """
-        return self.__class__(chain(iter(self), *iterables), key=self._key)
+        return self.__class__(chain(iter(self), *iterables))
 
     __or__ = union
     __ror__ = __or__
@@ -708,10 +680,8 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         :return: string representation
 
         """
-        key_ = self._key
-        key = "" if key_ is None else f", key={key_!r}"
         type_name = type(self).__name__
-        return f"{type_name}({list(self)!r}{key})"
+        return f"{type_name}({list(self)!r})"
 
     def _check(self) -> None:
         """Check invariants of sorted set.
@@ -724,3 +694,135 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         list_._check()
         assert len(set_) == len(list_)
         assert all(value in set_ for value in list_)
+
+
+class SortedKeySet[T, OT: SupportsRichComparison](SortedSet[T]):  # pyright: ignore[reportInvalidTypeArguments]
+    def __init__(
+        self, iterable: Iterable[T] | None = None, key: KeyFunc[T, OT] = identity
+    ) -> None:
+        self._key: KeyFunc[T, OT] = key
+        """Initialize sorted set instance based on a key function.
+
+        Optional `iterable` argument provides an initial iterable of values to
+        initialize the sorted key set.
+
+        The `key` argument defines a callable that, like the `key`
+        argument to Python's `sorted` function, extracts a comparison key from
+        each value. The default, none, compares values directly.
+
+        Runtime complexity: `O(n*log(n))`
+
+        >>> from operator import neg
+        >>> ss = SortedKeySet([3, 1, 2, 5, 4], neg)
+        >>> ss
+        SortedKeySet([5, 4, 3, 2, 1], key=<built-in function neg>)
+
+        :param iterable: initial values (optional)
+        :param key: function used to extract comparison key
+
+        """
+        # SortedSet._fromset calls SortedSet.__init__ after initializing the
+        # _set attribute. So only create a new set if the _set attribute is not
+        # already present.
+
+        if not hasattr(self, "_set"):
+            self._set = set[T]()
+
+        self._list: SortedKeyList[T, OT] = SortedKeyList(self._set, key=key)
+
+        # Expose some set methods publicly.
+
+        set_ = self._set
+        self.isdisjoint = set_.isdisjoint
+        self.issubset = set_.issubset
+        self.issuperset = set_.issuperset
+
+        # Expose some sorted list methods publicly.
+
+        list_ = self._list
+        self.bisect_left = list_.bisect_left
+        self.bisect = list_.bisect
+        self.bisect_right = list_.bisect_right
+        self.index = list_.index
+        self.irange = list_.irange
+        self.islice = list_.islice
+        self._reset = list_._reset
+
+        self.bisect_key_left = list_.bisect_key_left
+        self.bisect_key_right = list_.bisect_key_right
+        self.bisect_key = list_.bisect_key
+
+        if iterable is not None:
+            self._update(iterable)
+
+    @classmethod
+    @override
+    def _fromset(cls, values: set[T], key: KeyFunc[T, OT] = identity) -> Self:
+        sorted_set = object.__new__(cls)
+        sorted_set._set = values
+        sorted_set.__init__(key=key)
+        return sorted_set
+
+    @property
+    def key(self) -> KeyFunc[T, OT]:
+        """Function used to extract comparison key from values.
+
+        Sorted set compares values directly when the key function is none.
+
+        """
+        return self._key
+
+    @recursive_repr()
+    def __repr__(self) -> str:
+        """Return string representation of sorted set.
+
+        ``ss.__repr__()`` <==> ``repr(ss)``
+
+        :return: string representation
+
+        """
+        key_ = self._key
+        key = f", key={key_!r}"
+        type_name = type(self).__name__
+        return f"{type_name}({list(self)!r}{key})"
+
+    def irange_key(
+        self,
+        min_key: OT | None = None,
+        max_key: OT | None = None,
+        inclusive: tuple[bool, bool] = (True, True),
+        reverse: bool = False,
+    ) -> Iterator[T]:
+        return self._list.irange_key(min_key, max_key, inclusive, reverse)
+
+    def bisect_key_left(self, key: OT) -> int:
+        return self._list.bisect_key_left(key)
+
+    def bisect_key_right(self, key: OT) -> int:
+        return self._list.bisect_key_right(key)
+
+    def bisect_key(self, key: OT) -> int:
+        return self._list.bisect_key(key)
+
+    @override
+    def union(self, *iterables: Iterable[T]) -> Self:
+        return self.__class__(chain(iter(self), *iterables), key=self._key)
+
+    @override
+    def symmetric_difference(self, other: Iterable[T]) -> Self:
+        diff = self._set.symmetric_difference(other)
+        return self._fromset(diff, key=self._key)
+
+    @override
+    def intersection(self, *iterables: Iterable[Any]) -> Self:
+        intersect = self._set.intersection(*iterables)
+        return self._fromset(intersect, key=self._key)
+
+    @override
+    def difference(self, *iterables: Iterable[Any]) -> Self:
+        diff = self._set.difference(*iterables)
+        return self._fromset(diff, key=self._key)
+
+    @override
+    def copy(self) -> Self:
+        return self._fromset(set(self._set), key=self._key)
