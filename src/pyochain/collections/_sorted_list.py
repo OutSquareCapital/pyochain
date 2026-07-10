@@ -15,6 +15,8 @@ from textwrap import dedent
 from typing import TYPE_CHECKING, Final, Self, overload, override
 
 if TYPE_CHECKING:
+    from types import NotImplementedType
+
     from _typeshed import SupportsRichComparison
 
 type KeyFunc[T, OT: SupportsRichComparison] = Callable[[T], OT]
@@ -100,7 +102,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         self._len: int = 0
         self._load: int = self.DEFAULT_LOAD_FACTOR
         self._lists: list[list[T]] = []
-        self._maxes: list[object] = []
+        self._maxes: list[T] = []
         self._index: list[int] = []
         self._offset: int = 0
 
@@ -1479,10 +1481,10 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         return self
 
     @staticmethod
-    def __make_cmp(seq_op, symbol: str, doc: str):
+    def __make_cmp(seq_op: Callable[[object, object], bool], symbol: str, doc: str):
         """Make comparator method."""
 
-        def comparer(self, other):
+        def comparer(self: Self, other: object) -> NotImplementedType | bool:
             """Compare method for sorted list and sequence."""
             if not isinstance(other, Sequence):
                 return NotImplemented
@@ -1542,7 +1544,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         """
         return f"{type(self).__name__}({list(self)!r})"
 
-    def _check(self) -> None:
+    def _check(self) -> None:  # noqa: C901
         """Check invariants of sorted list.
 
         Runtime complexity: `O(n)`
@@ -1677,8 +1679,8 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         self._len: int = 0
         self._load: int = self.DEFAULT_LOAD_FACTOR
         self._lists: list[list[T]] = []
-        self._keys: list[list[object]] = []
-        self._maxes: list[object] = []
+        self._keys: list[list[OT]] = []
+        self._maxes: list[OT] = []
         self._index: list[int] = []
         self._offset: int = 0
 
@@ -1686,7 +1688,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
             self._update(iterable)
 
     @property
-    @override
     def key(self) -> KeyFunc[T, OT]:
         """Function used to extract comparison key from values."""
         return self._key
@@ -1751,7 +1752,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         self._len += 1
 
     @override
-    def _expand(self, pos) -> None:
+    def _expand(self, pos: int) -> None:
         """Split sublists with length greater than double the load-factor.
 
         Updates the index when the sublist length is less than double the load
@@ -2511,7 +2512,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         return f"{type_name}({list(self)!r}, key={self._key!r})"
 
     @override
-    def _check(self) -> None:
+    def _check(self) -> None:  # noqa: C901, PLR0912
         """Check invariants of sorted-key list.
 
         Runtime complexity: `O(n)`
