@@ -63,7 +63,7 @@ def test_add() -> None:
         check_sorted_key_list(slt)
 
     slt = SortedKeyList(key=operator.neg)
-    for val in range(1000):
+    for _ in range(1000):
         slt.add(random.random())
         check_sorted_key_list(slt)
 
@@ -491,14 +491,14 @@ def test_pop_indexerror1() -> None:
     slt = SortedKeyList(range(10), key=operator.neg)
     slt.reset(4)
     with pytest.raises(IndexError):
-        slt.pop(-11)
+        _ = slt.pop(-11)
 
 
 def test_pop_indexerror2() -> None:
     slt = SortedKeyList(range(10), key=operator.neg)
     slt.reset(4)
     with pytest.raises(IndexError):
-        slt.pop(10)
+        _ = slt.pop(10)
 
 
 def test_index() -> None:
@@ -510,7 +510,7 @@ def test_index() -> None:
 
     assert slt.index(99, 0, 1000) == 0
 
-    slt = SortedKeyList((0 for rpt in range(100)), key=operator.neg)
+    slt = SortedKeyList((0 for _ in range(100)), key=operator.neg)
     slt.reset(17)
 
     for start in range(100):
@@ -527,41 +527,41 @@ def test_index_valueerror1() -> None:
     slt = SortedKeyList([0] * 10, key=operator.neg)
     slt.reset(4)
     with pytest.raises(ValueError):
-        slt.index(0, 10)
+        _ = slt.index(0, 10)
 
 
 def test_index_valueerror2() -> None:
     slt = SortedKeyList([0] * 10, key=operator.neg)
     slt.reset(4)
     with pytest.raises(ValueError):
-        slt.index(0, 0, -10)
+        _ = slt.index(0, 0, -10)
 
 
 def test_index_valueerror3() -> None:
     slt = SortedKeyList([0] * 10, key=operator.neg)
     slt.reset(4)
     with pytest.raises(ValueError):
-        slt.index(0, 7, 3)
+        _ = slt.index(0, 7, 3)
 
 
 def test_index_valueerror4() -> None:
     slt = SortedKeyList([0] * 10, key=operator.neg)
     slt.reset(4)
     with pytest.raises(ValueError):
-        slt.index(1)
+        _ = slt.index(1)
 
 
 def test_index_valueerror5() -> None:
     slt = SortedKeyList(key=operator.neg)
     with pytest.raises(ValueError):
-        slt.index(1)
+        _ = slt.index(1)
 
 
 def test_index_valueerror6() -> None:
     slt = SortedKeyList(range(10), key=operator.neg)
     slt.reset(4)
     with pytest.raises(ValueError):
-        slt.index(6, 5)
+        _ = slt.index(6, 5)
 
 
 def test_mul() -> None:

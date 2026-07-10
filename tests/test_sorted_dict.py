@@ -240,13 +240,13 @@ def test_items() -> None:
 def test_keys() -> None:
     mapping = [(val, pos) for pos, val in enumerate(string.ascii_lowercase)]
     temp = SortedDict(mapping)
-    assert list(temp.keys()) == [key for key, pos in mapping]
+    assert list(temp.keys()) == [key for key, _ in mapping]
 
 
 def test_values() -> None:
     mapping = [(val, pos) for pos, val in enumerate(string.ascii_lowercase)]
     temp = SortedDict(mapping)
-    assert list(temp.values()) == [pos for key, pos in mapping]
+    assert list(temp.values()) == [pos for _, pos in mapping]
 
 
 def test_iterkeys() -> None:
@@ -282,7 +282,7 @@ def test_popitem() -> None:
 def test_popitem2() -> None:
     temp = SortedDict()
     with pytest.raises(KeyError):
-        temp.popitem()
+        _ = temp.popitem()
 
 
 def test_popitem3() -> None:
@@ -303,7 +303,7 @@ def test_peekitem2() -> None:
     mapping = [(val, pos) for pos, val in enumerate(string.ascii_lowercase)]
     temp = SortedDict(mapping)
     with pytest.raises(IndexError):
-        temp.peekitem(index=100)
+        _ = temp.peekitem(index=100)
 
 
 def test_setdefault() -> None:
@@ -408,7 +408,7 @@ def test_keysview() -> None:
 
     assert len(keys) == 13
     assert "a" in keys
-    assert list(keys) == [val for val, pos in mapping[:13]]
+    assert list(keys) == [val for val, _ in mapping[:13]]
     assert keys[0] == "a"
     assert list(reversed(keys)) == list(reversed(string.ascii_lowercase[:13]))
     assert keys.index("f") == 5
@@ -420,7 +420,7 @@ def test_keysview() -> None:
 
     assert len(keys) == 26
     assert "z" in keys
-    assert list(keys) == [val for val, pos in mapping]
+    assert list(keys) == [val for val, _ in mapping]
 
     that = dict(mapping)
 
@@ -433,8 +433,8 @@ def test_keysview() -> None:
     assert keys <= that_keys
     assert keys >= that_keys
 
-    assert list(keys & that_keys) == [val for val, pos in mapping]
-    assert list(keys | that_keys) == [val for val, pos in mapping]
+    assert list(keys & that_keys) == [val for val, _ in mapping]
+    assert list(keys | that_keys) == [val for val, _ in mapping]
     assert list(keys - that_keys) == []
     assert list(keys ^ that_keys) == []
 
@@ -449,7 +449,7 @@ def test_valuesview() -> None:
 
     assert len(values) == 13
     assert 0 in values
-    assert list(values) == [pos for val, pos in mapping[:13]]
+    assert list(values) == [pos for _, pos in mapping[:13]]
     assert values[0] == 0
     assert values[-3:] == [10, 11, 12]
     assert list(reversed(values)) == list(reversed(range(13)))
@@ -460,7 +460,7 @@ def test_valuesview() -> None:
 
     assert len(values) == 26
     assert 25 in values
-    assert list(values) == [pos for val, pos in mapping]
+    assert list(values) == [pos for _, pos in mapping]
 
     values = SortedDict(mapping[:2]).values()
     assert repr(values) == "SortedValuesView(SortedDict({'a': 0, 'b': 1}))"
@@ -471,7 +471,7 @@ def test_values_view_index() -> None:
     temp = SortedDict(mapping[:13])
     values = temp.values()
     with pytest.raises(ValueError):
-        values.index(100)
+        _ = values.index(100)
 
 
 def test_itemsview() -> None:
@@ -520,7 +520,7 @@ def test_items_view_index() -> None:
     temp = SortedDict(mapping[:13])
     items = temp.items()
     with pytest.raises(ValueError):
-        items.index(("f", 100))
+        _ = items.index(("f", 100))
 
 
 def test_pickle() -> None:
@@ -562,7 +562,7 @@ def test_or() -> None:
 
 
 def test_or_not_implemented() -> None:
-    SortedDict() | CustomOr()
+    _ = SortedDict() | CustomOr()
 
 
 def test_ror() -> None:
@@ -575,7 +575,7 @@ def test_ror() -> None:
 
 def test_ror_not_implemented() -> None:
     with pytest.raises(TypeError):
-        CustomOr() | SortedDict()
+        _ = CustomOr() | SortedDict()
 
 
 def test_ior() -> None:

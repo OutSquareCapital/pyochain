@@ -134,7 +134,7 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
         self.reset = list_.reset
 
         if iterable is not None:
-            self.update(iterable)
+            _ = self.update(iterable)
 
     @classmethod
     def _fromset(cls, values: set[T]) -> Self:
@@ -760,7 +760,7 @@ class SortedKeySet[T, OT: SupportsRichComparison](SortedSet[T]):  # pyright: ign
         self.bisect_key = list_.bisect_key
 
         if iterable is not None:
-            self.update(iterable)
+            _ = self.update(iterable)
 
     @classmethod
     @override

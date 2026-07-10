@@ -68,7 +68,7 @@ def test_key2() -> None:
 
     a = Incomparable()
     b = Incomparable()
-    slt = SortedKeyList(key=lambda val: 1)
+    slt = SortedKeyList(key=lambda _: 1)
     slt.add(a)
     slt.add(b)
     assert slt == [a, b]
@@ -87,7 +87,7 @@ def test_add() -> None:
     check_sorted_key_list(slt)
 
     slt = SortedKeyList(key=modulo)
-    for val in range(1000):
+    for _ in range(1000):
         slt.add(random.random())
     check_sorted_key_list(slt)
 
@@ -232,7 +232,7 @@ def test_getitem() -> None:
     check_sorted_key_list(slt)
     slt.clear()
 
-    lst = [random.random() for rpt in range(100)]
+    lst = [random.random() for _ in range(100)]
     slt.update(lst)
     lst.sort(key=modulo)
 
@@ -618,14 +618,14 @@ def test_pop_indexerror1() -> None:
     slt = SortedKeyList(range(10), key=modulo)
     slt.reset(4)
     with pytest.raises(IndexError):
-        slt.pop(-11)
+        _ = slt.pop(-11)
 
 
 def test_pop_indexerror2() -> None:
     slt = SortedKeyList(range(10), key=modulo)
     slt.reset(4)
     with pytest.raises(IndexError):
-        slt.pop(10)
+        _ = slt.pop(10)
 
 
 def test_index() -> None:
@@ -637,7 +637,7 @@ def test_index() -> None:
 
     assert slt.index(9, 0, 1000) == 90
 
-    slt = SortedKeyList((0 for rpt in range(100)), key=modulo)
+    slt = SortedKeyList((0 for _ in range(100)), key=modulo)
     slt.reset(7)
 
     for start in range(100):
@@ -654,69 +654,69 @@ def test_index_valueerror1() -> None:
     slt = SortedKeyList([0] * 10, key=modulo)
     slt.reset(4)
     with pytest.raises(ValueError):
-        slt.index(0, 10)
+        _ = slt.index(0, 10)
 
 
 def test_index_valueerror2() -> None:
     slt = SortedKeyList([0] * 10, key=modulo)
     slt.reset(4)
     with pytest.raises(ValueError):
-        slt.index(0, 0, -10)
+        _ = slt.index(0, 0, -10)
 
 
 def test_index_valueerror3() -> None:
     slt = SortedKeyList([0] * 10, key=modulo)
     slt.reset(4)
     with pytest.raises(ValueError):
-        slt.index(0, 7, 3)
+        _ = slt.index(0, 7, 3)
 
 
 def test_index_valueerror4() -> None:
     slt = SortedKeyList([0] * 10, key=modulo)
     slt.reset(4)
     with pytest.raises(ValueError):
-        slt.index(1)
+        _ = slt.index(1)
 
 
 def test_index_valueerror5() -> None:
     slt = SortedKeyList(key=modulo)
     with pytest.raises(ValueError):
-        slt.index(1)
+        _ = slt.index(1)
 
 
 def test_index_valueerror6() -> None:
     slt = SortedKeyList(range(100), key=modulo)
     slt.reset(4)
     with pytest.raises(ValueError):
-        slt.index(91, 0, 15)
+        _ = slt.index(91, 0, 15)
 
 
 def test_index_valueerror7() -> None:
     slt = SortedKeyList([0] * 10 + [1] * 10 + [2] * 10, key=modulo)
     slt.reset(4)
     with pytest.raises(ValueError):
-        slt.index(1, 0, 10)
+        _ = slt.index(1, 0, 10)
 
 
 def test_index_valueerror8() -> None:
     slt = SortedKeyList(range(10), key=modulo)
     slt.reset(4)
     with pytest.raises(ValueError):
-        slt.index(4, 5)
+        _ = slt.index(4, 5)
 
 
 def test_index_valueerror9() -> None:
     slt = SortedKeyList(key=modulo)
     slt.reset(4)
     with pytest.raises(ValueError):
-        slt.index(5)
+        _ = slt.index(5)
 
 
 def test_index_valueerror10() -> None:
     slt = SortedKeyList(range(10), key=modulo)
     slt.reset(4)
     with pytest.raises(ValueError):
-        slt.index(19)
+        _ = slt.index(19)
 
 
 def test_mul() -> None:

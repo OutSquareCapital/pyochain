@@ -148,7 +148,7 @@ def test_islice() -> None:
     assert list(ss.islice()) == []
 
     values = list(range(53))
-    ss.update(values)
+    _ = ss.update(values)
 
     for start in range(53):
         for stop in range(53):
@@ -176,7 +176,7 @@ def test_irange() -> None:
     assert list(ss.irange()) == []
 
     values = list(range(53))
-    ss.update(values)
+    _ = ss.update(values)
 
     for start in range(53):
         for end in range(start, 53):
@@ -342,7 +342,7 @@ def test_difference() -> None:
 def test_difference_update() -> None:
     temp = SortedSet(range(100))
     temp.reset(7)
-    temp.difference_update(range(10), range(10, 20))
+    _ = temp.difference_update(range(10), range(10, 20))
     assert all((val + 20) == temp[val] for val in range(80))
 
 
@@ -456,8 +456,8 @@ def test_symmetric_difference_update() -> None:
 def test_pop() -> None:
     temp = SortedSet(range(100))
     temp.reset(7)
-    temp.pop()
-    temp.pop(0)
+    _ = temp.pop()
+    _ = temp.pop(0)
     assert all(temp[val] == (val + 1) for val in range(98))
 
 
@@ -492,7 +492,7 @@ def test_union() -> None:
 def test_update() -> None:
     temp = SortedSet(range(80))
     temp.reset(7)
-    temp.update(range(80, 90), range(90, 100))
+    _ = temp.update(range(80, 90), range(90, 100))
     assert all(temp[val] == val for val in range(100))
 
 

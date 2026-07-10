@@ -654,7 +654,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
             row = list(map(add, head, tail))
             tree.append(row)
 
-        reduce(iadd, reversed(tree), self._index)
+        _ = reduce(iadd, reversed(tree), self._index)
         self._offset = size * 2 - 1
 
     @override
