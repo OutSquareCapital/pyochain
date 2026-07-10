@@ -702,18 +702,6 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
         type_name = type(self).__name__
         return f"{type_name}({list(self)!r})"
 
-    def _check(self) -> None:
-        """Check invariants of sorted set.
-
-        Runtime complexity: `O(n)`
-
-        """
-        set_ = self._set
-        list_ = self._list
-        list_._check()
-        assert len(set_) == len(list_)
-        assert all(value in set_ for value in list_)
-
 
 class SortedKeySet[T, OT: SupportsRichComparison](SortedSet[T]):  # pyright: ignore[reportInvalidTypeArguments]
     def __init__(

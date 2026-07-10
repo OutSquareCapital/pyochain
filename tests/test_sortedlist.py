@@ -10,16 +10,17 @@ from itertools import chain
 import pytest
 
 from pyochain.collections import SortedList
+from tests._utils import check_sorted_list
 
 
 def test_init() -> None:
     slt = SortedList()
-    slt._check()
+    check_sorted_list(slt)
 
     slt = SortedList()
     slt.reset(10000)
     assert slt._load == 10000
-    slt._check()
+    check_sorted_list(slt)
 
     slt = SortedList(range(10000))
     assert all(tup[0] == tup[1] for tup in zip(slt, range(10000), strict=False))
@@ -28,7 +29,7 @@ def test_init() -> None:
     assert slt._len == 0
     assert slt._maxes == []
     assert slt._lists == []
-    slt._check()
+    check_sorted_list(slt)
 
 
 def test_add() -> None:
@@ -36,17 +37,17 @@ def test_add() -> None:
     slt = SortedList()
     for val in range(1000):
         slt.add(val)
-        slt._check()
+        check_sorted_list(slt)
 
     slt = SortedList()
     for val in range(1000, 0, -1):
         slt.add(val)
-        slt._check()
+        check_sorted_list(slt)
 
     slt = SortedList()
     for val in range(1000):
         slt.add(random.random())
-        slt._check()
+        check_sorted_list(slt)
 
 
 def test_update() -> None:
@@ -54,15 +55,15 @@ def test_update() -> None:
 
     slt.update(range(1000))
     assert len(slt) == 1000
-    slt._check()
+    check_sorted_list(slt)
 
     slt.update(range(100))
     assert len(slt) == 1100
-    slt._check()
+    check_sorted_list(slt)
 
     slt.update(range(10000))
     assert len(slt) == 11100
-    slt._check()
+    check_sorted_list(slt)
 
     values = sorted(chain(range(1000), range(100), range(10000)))
     assert all(tup[0] == tup[1] for tup in zip(slt, values, strict=False))
@@ -79,7 +80,7 @@ def test_contains() -> None:
 
     assert 10000 not in slt
 
-    slt._check()
+    check_sorted_list(slt)
 
 
 def test_discard() -> None:
@@ -87,17 +88,17 @@ def test_discard() -> None:
 
     assert slt.discard(0) is None
     assert len(slt) == 0
-    slt._check()
+    check_sorted_list(slt)
 
     slt = SortedList([1, 2, 2, 2, 3, 3, 5])
     slt.reset(4)
 
     slt.discard(6)
-    slt._check()
+    check_sorted_list(slt)
     slt.discard(4)
-    slt._check()
+    check_sorted_list(slt)
     slt.discard(2)
-    slt._check()
+    check_sorted_list(slt)
 
     assert all(tup[0] == tup[1] for tup in zip(slt, [1, 2, 2, 3, 3, 5], strict=False))
 
@@ -107,13 +108,13 @@ def test_remove() -> None:
 
     assert slt.discard(0) is None
     assert len(slt) == 0
-    slt._check()
+    check_sorted_list(slt)
 
     slt = SortedList([1, 2, 2, 2, 3, 3, 5])
     slt.reset(4)
 
     slt.remove(2)
-    slt._check()
+    check_sorted_list(slt)
 
     assert all(tup[0] == tup[1] for tup in zip(slt, [1, 2, 2, 3, 3, 5], strict=False))
 
@@ -140,10 +141,10 @@ def test_remove_valueerror3() -> None:
 def test_delete() -> None:
     slt = SortedList(range(20))
     slt.reset(4)
-    slt._check()
+    check_sorted_list(slt)
     for val in range(20):
         slt.remove(val)
-        slt._check()
+        check_sorted_list(slt)
     assert len(slt) == 0
     assert slt._maxes == []
     assert slt._lists == []
@@ -261,13 +262,13 @@ def test_delitem() -> None:
     while len(slt) > 0:
         pos = random.randrange(len(slt))
         del slt[pos]
-        slt._check()
+        check_sorted_list(slt)
 
     slt = SortedList(range(100))
     slt.reset(17)
     del slt[:]
     assert len(slt) == 0
-    slt._check()
+    check_sorted_list(slt)
 
 
 def test_delitem_slice() -> None:
@@ -384,7 +385,7 @@ def test_bisect_left() -> None:
     slt = SortedList(range(100))
     slt.reset(17)
     slt.update(range(100))
-    slt._check()
+    check_sorted_list(slt)
     assert slt.bisect_left(50) == 100
     assert slt.bisect_left(200) == 200
 
@@ -395,7 +396,7 @@ def test_bisect() -> None:
     slt = SortedList(range(100))
     slt.reset(17)
     slt.update(range(100))
-    slt._check()
+    check_sorted_list(slt)
     assert slt.bisect(10) == 22
     assert slt.bisect(200) == 200
 
@@ -406,7 +407,7 @@ def test_bisect_right() -> None:
     slt = SortedList(range(100))
     slt.reset(17)
     slt.update(range(100))
-    slt._check()
+    check_sorted_list(slt)
     assert slt.bisect_right(10) == 22
     assert slt.bisect_right(200) == 200
 
@@ -440,7 +441,7 @@ def test_count() -> None:
     for iii in range(100):
         for _jjj in range(iii):
             slt.add(iii)
-        slt._check()
+        check_sorted_list(slt)
 
     for iii in range(100):
         assert slt.count(iii) == iii
@@ -451,15 +452,15 @@ def test_count() -> None:
 def test_pop() -> None:
     slt = SortedList(range(10))
     slt.reset(4)
-    slt._check()
+    check_sorted_list(slt)
     assert slt.pop() == 9
-    slt._check()
+    check_sorted_list(slt)
     assert slt.pop(0) == 0
-    slt._check()
+    check_sorted_list(slt)
     assert slt.pop(-2) == 7
-    slt._check()
+    check_sorted_list(slt)
     assert slt.pop(4) == 5
-    slt._check()
+    check_sorted_list(slt)
 
 
 def test_pop_indexerror1() -> None:
@@ -556,8 +557,8 @@ def test_mul() -> None:
     this = SortedList(range(10))
     this.reset(4)
     that = this * 5
-    this._check()
-    that._check()
+    check_sorted_list(this)
+    check_sorted_list(that)
     assert this == list(range(10))
     assert that == sorted(list(range(10)) * 5)
     assert this != that
@@ -567,7 +568,7 @@ def test_imul() -> None:
     this = SortedList(range(10))
     this.reset(4)
     this *= 5
-    this._check()
+    check_sorted_list(this)
     assert this == sorted(list(range(10)) * 5)
 
 
@@ -670,7 +671,7 @@ def test_build_index() -> None:
     slt = SortedList([0])
     slt.reset(4)
     slt._build_index()
-    slt._check()
+    check_sorted_list(slt)
 
 
 def test_check() -> None:
@@ -678,4 +679,4 @@ def test_check() -> None:
     slt.reset(4)
     slt._len = 5
     with pytest.raises(AssertionError):
-        slt._check()
+        check_sorted_list(slt)

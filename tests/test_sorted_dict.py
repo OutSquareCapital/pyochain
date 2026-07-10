@@ -14,6 +14,8 @@ import pytest
 
 from pyochain.collections import SortedDict, SortedKeyDict
 
+from ._utils import check_sorted_dict
+
 
 def negate(value):
     return -value
@@ -33,13 +35,13 @@ def get_itemsview[K, V](dic: Mapping[K, V]):
 
 def test_init() -> None:
     temp = SortedDict()
-    temp._check()
+    check_sorted_dict(temp)
 
 
 def test_init_key() -> None:
     temp = SortedKeyDict(negate)
     assert temp.key == negate
-    temp._check()
+    check_sorted_dict(temp)
 
 
 def test_init_args() -> None:
@@ -47,7 +49,7 @@ def test_init_args() -> None:
     assert len(temp) == 2
     assert temp["a"] == 1
     assert temp["b"] == 2
-    temp._check()
+    check_sorted_dict(temp)
 
 
 def test_init_kwargs() -> None:
@@ -55,7 +57,7 @@ def test_init_kwargs() -> None:
     assert len(temp) == 2
     assert temp["a"] == 1
     assert temp["b"] == 2
-    temp._check()
+    check_sorted_dict(temp)
 
 
 def test_clear() -> None:
@@ -77,7 +79,7 @@ def test_delitem() -> None:
     mapping = [(val, pos) for pos, val in enumerate(string.ascii_lowercase)]
     temp = SortedDict(mapping)
     del temp["a"]
-    temp._check()
+    check_sorted_dict(temp)
 
 
 def test_getitem() -> None:
@@ -181,13 +183,13 @@ def test_setitem() -> None:
 
     for pos, key in enumerate(string.ascii_lowercase):
         temp[key] = pos
-        temp._check()
+        check_sorted_dict(temp)
 
     assert len(temp) == 26
 
     for pos, key in enumerate(string.ascii_lowercase):
         temp[key] = pos
-        temp._check()
+        check_sorted_dict(temp)
 
     assert len(temp) == 26
 

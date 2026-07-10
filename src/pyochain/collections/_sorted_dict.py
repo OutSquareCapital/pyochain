@@ -536,17 +536,6 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
         items = ", ".join(item_format(key, self[key]) for key in self._list)
         return f"{type_name}({{{items}}})"
 
-    def _check(self) -> None:
-        """Check invariants of sorted dict.
-
-        Runtime complexity: `O(n)`
-
-        """
-        list_ = self._list
-        list_._check()
-        assert len(self) == len(list_)
-        assert all(key in self for key in list_)
-
 
 class SortedKeyDict[K: Hashable, V, OT: SupportsRichComparison](SortedDict[K, V]):
     def __init__(self, *args, **kwargs) -> None:

@@ -8,6 +8,7 @@ import operator
 from typing import override
 
 from pyochain.collections import SortedKeySet, SortedSet
+from tests._utils import check_sorted_set
 
 
 def modulo(value: int) -> int:
@@ -17,7 +18,7 @@ def modulo(value: int) -> int:
 def test_init() -> None:
     temp = SortedSet(range(100))
     temp.reset(7)
-    temp._check()
+    check_sorted_set(temp)
     assert all(val == temp[val] for val in temp)
 
 
@@ -263,7 +264,7 @@ def test_add() -> None:
     temp.reset(7)
     temp.add(100)
     temp.add(90)
-    temp._check()
+    check_sorted_set(temp)
     assert all(val == temp[val] for val in range(101))
 
 
@@ -287,7 +288,7 @@ def test_clear() -> None:
     temp = SortedSet(range(100))
     temp.reset(7)
     temp.clear()
-    temp._check()
+    check_sorted_set(temp)
     assert len(temp) == 0
 
 
@@ -319,7 +320,7 @@ def test_count() -> None:
     assert temp.count(0) == 1
     temp.add(0)
     assert temp.count(0) == 1
-    temp._check()
+    check_sorted_set(temp)
 
 
 def test_sub() -> None:
@@ -360,7 +361,7 @@ def test_discard() -> None:
     temp.discard(99)
     temp.discard(50)
     temp.discard(1000)
-    temp._check()
+    check_sorted_set(temp)
     assert len(temp) == 97
 
 
