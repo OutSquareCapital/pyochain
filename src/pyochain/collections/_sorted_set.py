@@ -289,7 +289,7 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
         return iter(self._list)
 
     @override
-    def __reversed__(self):
+    def __reversed__(self) -> Iterator[T]:
         """Return a reverse iterator over the sorted set.
 
         ``ss.__reversed__()`` <==> ``reversed(ss)``
@@ -659,7 +659,9 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
     _update = update
 
     @override
-    def __reduce__(self):
+    def __reduce__(
+        self,
+    ) -> tuple[type[Self], tuple[AbstractSet[T]]]:
         """Support for pickle.
 
         The tricks played with exposing methods in :func:`SortedSet.__init__`
@@ -669,7 +671,7 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
             tuple of class and arguments
 
         """
-        return (type(self), (self._set, self._key))
+        return (type(self), (self._set,))
 
     @recursive_repr()
     def __repr__(self) -> str:
@@ -785,6 +787,12 @@ class SortedKeySet[T, OT: SupportsRichComparison](SortedSet[T]):  # pyright: ign
         key = f", key={key_!r}"
         type_name = type(self).__name__
         return f"{type_name}({list(self)!r}{key})"
+
+    @override
+    def __reduce__(  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+    ) -> tuple[type[Self], tuple[AbstractSet[T], Callable[[T], Any]]]:
+        return (type(self), (self._set, self._key))
 
     def irange_key(
         self,
