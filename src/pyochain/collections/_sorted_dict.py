@@ -132,14 +132,6 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
         # so cache references to sorted list methods.
 
         list_ = self._list
-        self._list_add = list_.add
-        self._list_clear = list_.clear
-        self._list_iter = list_.__iter__
-        self._list_reversed = list_.__reversed__
-        self._list_pop = list_.pop
-        self._list_remove = list_.remove
-        self._list_update = list_.update
-
         # Expose some sorted list methods publicly.
 
         self.bisect_left = list_.bisect_left
@@ -149,7 +141,6 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
         self.irange = list_.irange
         self.islice = list_.islice
         self._reset = list_._reset
-
         self.update(*args, **kwargs)
 
     @override
@@ -160,7 +151,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
 
         """
         super().clear()
-        self._list_clear()
+        self._list.clear()
 
     @override
     def __delitem__(self, key: K) -> None:
@@ -184,7 +175,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
 
         """
         super().__delitem__(key)
-        self._list_remove(key)
+        self._list.remove(key)
 
     @override
     def __iter__(self) -> Iterator[K]:
@@ -196,7 +187,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
         :exc:`RuntimeError` or fail to iterate over all keys.
 
         """
-        return self._list_iter()
+        return iter(self._list)
 
     @override
     def __reversed__(self) -> Iterator[K]:
@@ -208,7 +199,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
         :exc:`RuntimeError` or fail to iterate over all keys.
 
         """
-        return self._list_reversed()
+        return reversed(self._list)
 
     @override
     def __setitem__(self, key: K, value: V) -> None:
@@ -230,7 +221,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
 
         """
         if key not in self:
-            self._list_add(key)
+            self._list.add(key)
         super().__setitem__(key, value)
 
     @override
@@ -372,7 +363,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
 
         """
         if key in self:
-            self._list_remove(key)
+            self._list.remove(key)
             return super().pop(key)
         if default is self.__not_given:
             raise KeyError(key)
@@ -415,7 +406,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
             msg = "popitem(): dictionary is empty"
             raise KeyError(msg)
 
-        key = self._list_pop(index)
+        key = self._list.pop(index)
         value = super().pop(key)
         return (key, value)
 
@@ -482,7 +473,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
         if key in self:
             return self[key]
         super().__setitem__(key, default)
-        self._list_add(key)
+        self._list.add(key)
         return default
 
     @override
@@ -501,7 +492,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
         """
         if not self:
             super().update(*args, **kwargs)
-            self._list_update(super().__iter__())
+            self._list.update(super().__iter__())
             return
 
         if not kwargs and len(args) == 1 and isinstance(args[0], dict):
@@ -511,8 +502,8 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
 
         if (10 * len(pairs)) > len(self):
             super().update(pairs)
-            self._list_clear()
-            self._list_update(super().__iter__())
+            self._list.clear()
+            self._list.update(super().__iter__())
         else:
             for key in pairs:
                 self.__setitem__(key, pairs[key])
@@ -604,13 +595,6 @@ class SortedKeyDict[K: Hashable, V, OT: SupportsRichComparison](SortedDict[K, V]
         # so cache references to sorted list methods.
 
         list_ = self._list
-        self._list_add = list_.add
-        self._list_clear = list_.clear
-        self._list_iter = list_.__iter__
-        self._list_reversed = list_.__reversed__
-        self._list_pop = list_.pop
-        self._list_remove = list_.remove
-        self._list_update = list_.update
 
         # Expose some sorted list methods publicly.
 
