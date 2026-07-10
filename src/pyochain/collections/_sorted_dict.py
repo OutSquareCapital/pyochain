@@ -72,7 +72,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
     * :func:`SortedList.index`
     * :func:`SortedList.irange`
     * :func:`SortedList.islice`
-    * :func:`SortedList._reset`
+    * :func:`SortedList.reset`
 
     Additional sorted list methods available, if key-function used:
 
@@ -140,7 +140,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
         self.index = list_.index
         self.irange = list_.irange
         self.islice = list_.islice
-        self._reset = list_._reset
+        self.reset = list_.reset
         self.update(*args, **kwargs)
 
     @override
@@ -604,7 +604,7 @@ class SortedKeyDict[K: Hashable, V, OT: SupportsRichComparison](SortedDict[K, V]
         self.index = list_.index
         self.irange = list_.irange
         self.islice = list_.islice
-        self._reset = list_._reset
+        self.reset = list_.reset
 
         self.update(*args, **kwargs)
 

@@ -17,7 +17,7 @@ def test_init() -> None:
     slt._check()
 
     slt = SortedList()
-    slt._reset(10000)
+    slt.reset(10000)
     assert slt._load == 10000
     slt._check()
 
@@ -90,7 +90,7 @@ def test_discard() -> None:
     slt._check()
 
     slt = SortedList([1, 2, 2, 2, 3, 3, 5])
-    slt._reset(4)
+    slt.reset(4)
 
     slt.discard(6)
     slt._check()
@@ -110,7 +110,7 @@ def test_remove() -> None:
     slt._check()
 
     slt = SortedList([1, 2, 2, 2, 3, 3, 5])
-    slt._reset(4)
+    slt.reset(4)
 
     slt.remove(2)
     slt._check()
@@ -126,7 +126,7 @@ def test_remove_valueerror1() -> None:
 
 def test_remove_valueerror2() -> None:
     slt = SortedList(range(100))
-    slt._reset(10)
+    slt.reset(10)
     with pytest.raises(ValueError):
         slt.remove(100)
 
@@ -139,7 +139,7 @@ def test_remove_valueerror3() -> None:
 
 def test_delete() -> None:
     slt = SortedList(range(20))
-    slt._reset(4)
+    slt.reset(4)
     slt._check()
     for val in range(20):
         slt.remove(val)
@@ -152,7 +152,7 @@ def test_delete() -> None:
 def test_getitem() -> None:
     random.seed(0)
     slt = SortedList()
-    slt._reset(17)
+    slt.reset(17)
 
     lst = []
 
@@ -170,7 +170,7 @@ def test_getitem() -> None:
 def test_getitem_slice() -> None:
     random.seed(0)
     slt = SortedList()
-    slt._reset(17)
+    slt.reset(17)
 
     lst = []
 
@@ -230,7 +230,7 @@ def test_getitem_slice_big() -> None:
 
 def test_getitem_slicezero() -> None:
     slt = SortedList(range(100))
-    slt._reset(17)
+    slt.reset(17)
     with pytest.raises(ValueError):
         slt[::0]
 
@@ -257,14 +257,14 @@ def test_delitem() -> None:
     random.seed(0)
 
     slt = SortedList(range(100))
-    slt._reset(17)
+    slt.reset(17)
     while len(slt) > 0:
         pos = random.randrange(len(slt))
         del slt[pos]
         slt._check()
 
     slt = SortedList(range(100))
-    slt._reset(17)
+    slt.reset(17)
     del slt[:]
     assert len(slt) == 0
     slt._check()
@@ -272,7 +272,7 @@ def test_delitem() -> None:
 
 def test_delitem_slice() -> None:
     slt = SortedList(range(100))
-    slt._reset(17)
+    slt.reset(17)
     del slt[10:40:1]
     del slt[10:40:-1]
     del slt[10:40:2]
@@ -299,7 +299,7 @@ def test_reverse() -> None:
 
 def test_islice() -> None:
     sl = SortedList()
-    sl._reset(7)
+    sl.reset(7)
 
     assert list(sl.islice()) == []
 
@@ -327,7 +327,7 @@ def test_islice() -> None:
 
 def test_irange() -> None:
     sl = SortedList()
-    sl._reset(7)
+    sl.reset(7)
 
     assert list(sl.irange()) == []
 
@@ -382,7 +382,7 @@ def test_bisect_left() -> None:
     slt = SortedList()
     assert slt.bisect_left(0) == 0
     slt = SortedList(range(100))
-    slt._reset(17)
+    slt.reset(17)
     slt.update(range(100))
     slt._check()
     assert slt.bisect_left(50) == 100
@@ -393,7 +393,7 @@ def test_bisect() -> None:
     slt = SortedList()
     assert slt.bisect(10) == 0
     slt = SortedList(range(100))
-    slt._reset(17)
+    slt.reset(17)
     slt.update(range(100))
     slt._check()
     assert slt.bisect(10) == 22
@@ -404,7 +404,7 @@ def test_bisect_right() -> None:
     slt = SortedList()
     assert slt.bisect_right(10) == 0
     slt = SortedList(range(100))
-    slt._reset(17)
+    slt.reset(17)
     slt.update(range(100))
     slt._check()
     assert slt.bisect_right(10) == 22
@@ -413,7 +413,7 @@ def test_bisect_right() -> None:
 
 def test_copy() -> None:
     alpha = SortedList(range(100))
-    alpha._reset(7)
+    alpha.reset(7)
     beta = alpha.copy()
     alpha.add(100)
     assert len(alpha) == 101
@@ -424,7 +424,7 @@ def test_copy_copy() -> None:
     import copy
 
     alpha = SortedList(range(100))
-    alpha._reset(7)
+    alpha.reset(7)
     beta = copy.copy(alpha)
     alpha.add(100)
     assert len(alpha) == 101
@@ -433,7 +433,7 @@ def test_copy_copy() -> None:
 
 def test_count() -> None:
     slt = SortedList()
-    slt._reset(7)
+    slt.reset(7)
 
     assert slt.count(0) == 0
 
@@ -450,7 +450,7 @@ def test_count() -> None:
 
 def test_pop() -> None:
     slt = SortedList(range(10))
-    slt._reset(4)
+    slt.reset(4)
     slt._check()
     assert slt.pop() == 9
     slt._check()
@@ -464,14 +464,14 @@ def test_pop() -> None:
 
 def test_pop_indexerror1() -> None:
     slt = SortedList(range(10))
-    slt._reset(4)
+    slt.reset(4)
     with pytest.raises(IndexError):
         slt.pop(-11)
 
 
 def test_pop_indexerror2() -> None:
     slt = SortedList(range(10))
-    slt._reset(4)
+    slt.reset(4)
     with pytest.raises(IndexError):
         slt.pop(10)
 
@@ -484,7 +484,7 @@ def test_pop_indexerror3() -> None:
 
 def test_index() -> None:
     slt = SortedList(range(100))
-    slt._reset(17)
+    slt.reset(17)
 
     for val in range(100):
         assert val == slt.index(val)
@@ -492,7 +492,7 @@ def test_index() -> None:
     assert slt.index(99, 0, 1000) == 99
 
     slt = SortedList(0 for rpt in range(100))
-    slt._reset(17)
+    slt.reset(17)
 
     for start in range(100):
         for stop in range(start, 100):
@@ -506,28 +506,28 @@ def test_index() -> None:
 
 def test_index_valueerror1() -> None:
     slt = SortedList([0] * 10)
-    slt._reset(4)
+    slt.reset(4)
     with pytest.raises(ValueError):
         slt.index(0, 10)
 
 
 def test_index_valueerror2() -> None:
     slt = SortedList([0] * 10)
-    slt._reset(4)
+    slt.reset(4)
     with pytest.raises(ValueError):
         slt.index(0, 0, -10)
 
 
 def test_index_valueerror3() -> None:
     slt = SortedList([0] * 10)
-    slt._reset(4)
+    slt.reset(4)
     with pytest.raises(ValueError):
         slt.index(0, 7, 3)
 
 
 def test_index_valueerror4() -> None:
     slt = SortedList([0] * 10)
-    slt._reset(4)
+    slt.reset(4)
     with pytest.raises(ValueError):
         slt.index(1)
 
@@ -540,21 +540,21 @@ def test_index_valueerror5() -> None:
 
 def test_index_valueerror6() -> None:
     slt = SortedList(range(10))
-    slt._reset(4)
+    slt.reset(4)
     with pytest.raises(ValueError):
         slt.index(3, 5)
 
 
 def test_index_valueerror7() -> None:
     slt = SortedList([0] * 10 + [2] * 10)
-    slt._reset(4)
+    slt.reset(4)
     with pytest.raises(ValueError):
         slt.index(1, 0, 10)
 
 
 def test_mul() -> None:
     this = SortedList(range(10))
-    this._reset(4)
+    this.reset(4)
     that = this * 5
     this._check()
     that._check()
@@ -565,7 +565,7 @@ def test_mul() -> None:
 
 def test_imul() -> None:
     this = SortedList(range(10))
-    this._reset(4)
+    this.reset(4)
     this *= 5
     this._check()
     assert this == sorted(list(range(10)) * 5)
@@ -573,11 +573,11 @@ def test_imul() -> None:
 
 def test_op_add() -> None:
     this = SortedList(range(10))
-    this._reset(4)
+    this.reset(4)
     assert (this + this + this) == (this * 3)
 
     that = SortedList(range(10))
-    that._reset(4)
+    that.reset(4)
     that += that
     that += that
     assert that == (this * 4)
@@ -585,7 +585,7 @@ def test_op_add() -> None:
 
 def test_eq() -> None:
     this = SortedList(range(10))
-    this._reset(4)
+    this.reset(4)
     assert this == list(range(10))
     assert this == tuple(range(10))
     assert this != list(range(9))
@@ -593,7 +593,7 @@ def test_eq() -> None:
 
 def test_ne() -> None:
     this = SortedList(range(10))
-    this._reset(4)
+    this.reset(4)
     assert this != list(range(9))
     assert this != tuple(range(11))
     assert this != [0, 1, 2, 3, 3, 5, 6, 7, 8, 9]
@@ -603,7 +603,7 @@ def test_ne() -> None:
 
 def test_lt() -> None:
     this = SortedList(range(10, 15))
-    this._reset(4)
+    this.reset(4)
     assert this < [10, 11, 13, 13, 14]
     assert this < [10, 11, 12, 13, 14, 15]
     assert this < [11]
@@ -611,7 +611,7 @@ def test_lt() -> None:
 
 def test_le() -> None:
     this = SortedList(range(10, 15))
-    this._reset(4)
+    this.reset(4)
     assert this <= [10, 11, 12, 13, 14]
     assert this <= [10, 11, 12, 13, 14, 15]
     assert this <= [10, 11, 13, 13, 14]
@@ -620,7 +620,7 @@ def test_le() -> None:
 
 def test_gt() -> None:
     this = SortedList(range(10, 15))
-    this._reset(4)
+    this.reset(4)
     assert this > [10, 11, 11, 13, 14]
     assert this > [10, 11, 12, 13]
     assert this > [9]
@@ -628,7 +628,7 @@ def test_gt() -> None:
 
 def test_ge() -> None:
     this = SortedList(range(10, 15))
-    this._reset(4)
+    this.reset(4)
     assert this >= [10, 11, 12, 13, 14]
     assert this >= [10, 11, 12, 13]
     assert this >= [10, 11, 11, 13, 14]
@@ -637,7 +637,7 @@ def test_ge() -> None:
 
 def test_repr() -> None:
     this = SortedList(range(10))
-    this._reset(4)
+    this.reset(4)
     assert repr(this) == "SortedList([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])"
 
 
@@ -659,7 +659,7 @@ def test_pickle() -> None:
     import pickle
 
     alpha = SortedList(range(10000))
-    alpha._reset(500)
+    alpha.reset(500)
     beta = pickle.loads(pickle.dumps(alpha))
     assert alpha == beta
     assert alpha._load == 500
@@ -668,14 +668,14 @@ def test_pickle() -> None:
 
 def test_build_index() -> None:
     slt = SortedList([0])
-    slt._reset(4)
+    slt.reset(4)
     slt._build_index()
     slt._check()
 
 
 def test_check() -> None:
     slt = SortedList(range(10))
-    slt._reset(4)
+    slt.reset(4)
     slt._len = 5
     with pytest.raises(AssertionError):
         slt._check()

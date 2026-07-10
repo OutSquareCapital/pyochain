@@ -69,7 +69,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
     * :func:`SortedList.__len__`
     * :func:`SortedList.__repr__`
     * :func:`SortedList._check`
-    * :func:`SortedList._reset`
+    * :func:`SortedList.reset`
 
     Sorted lists use lexicographical ordering semantics when compared to other
     sequences.
@@ -109,7 +109,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         if iterable is not None:
             self.update(iterable)
 
-    def _reset(self, load: int) -> None:
+    def reset(self, load: int) -> None:
         """Reset sorted list load factor.
 
         The `load` specifies the load-factor of the list. The default load

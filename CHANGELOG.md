@@ -12,7 +12,13 @@ TODO: check how to setup a "blog" section in the website for major releases, to 
 - **typing**: The variance of generics for immutable classes (abstract and concrete) is now correctly handled and align with python stdlib. For example, `PyoMapping`, `Seq` or `Set` are now covariant, whilst `Dict` or `Vec` stay invariant.
 - `collections::PyoCounter`, pyochain version of python stdlib `collections::Counter`. Herit from `PyoMutableMapping` instead of `dict`, but behaves the same way.
 - `collections::{HeapMax, HeapMin}`, pyochain version of python stdlib `heapq` module.
-- `sortedcontainers` classes have been ported to pyochain, with the same functionnalities, only with a few differences: No dynamic dispatch of classes for `SortedList` to `SortedKeyList` if a *key* argument is provided, call the wanted class explicitely. Same behavior for `SortedSet` and `SortedDict`, with, respectively, new, explicit, corresponding `SortedKeySet`, and `SortedKeyDict` classes.
+
+#### sortedcontainers
+
+The classes from the `sortedcontainers` library have been ported to pyochain, with the same functionnalities, only with a few differences:
+
+- No dynamic dispatch of classes for `SortedList` to `SortedKeyList` if a *key* argument is provided, call the wanted class explicitely. Same behavior for `SortedSet` and `SortedDict`, with, respectively, new, explicit, corresponding `SortedKeySet`, and `SortedKeyDict` classes.
+- `_reset` method is public (i.e it's called `reset`).
 
 ### 💥 Breaking changes
 

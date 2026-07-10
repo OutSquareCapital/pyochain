@@ -73,7 +73,7 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
     * :func:`SortedList.index`
     * :func:`SortedList.irange`
     * :func:`SortedList.islice`
-    * :func:`SortedList._reset`
+    * :func:`SortedList.reset`
 
     Additional sorted list methods available, if key-function used:
 
@@ -131,7 +131,7 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
         self.index = list_.index
         self.irange = list_.irange
         self.islice = list_.islice
-        self._reset = list_._reset
+        self.reset = list_.reset
 
         if iterable is not None:
             self.update(iterable)
@@ -765,7 +765,7 @@ class SortedKeySet[T, OT: SupportsRichComparison](SortedSet[T]):  # pyright: ign
         self.index = list_.index
         self.irange = list_.irange
         self.islice = list_.islice
-        self._reset = list_._reset
+        self.reset = list_.reset
 
         self.bisect_key_left = list_.bisect_key_left
         self.bisect_key_right = list_.bisect_key_right

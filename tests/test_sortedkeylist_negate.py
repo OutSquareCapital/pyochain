@@ -4,6 +4,7 @@ Original source:
 https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_coverage_sortedkeylist_negate.py
 """
 
+import operator
 import random
 from itertools import chain
 
@@ -12,26 +13,22 @@ import pytest
 from pyochain.collections import SortedKeyList
 
 
-def negate(val):
-    return -val
-
-
 def test_identity() -> None:
     slt = SortedKeyList(range(100))
-    slt._reset(7)
+    slt.reset(7)
     slt._check()
 
 
 def test_init() -> None:
-    slt = SortedKeyList(key=negate)
+    slt = SortedKeyList(key=operator.neg)
     slt._check()
 
-    slt = SortedKeyList(key=negate)
-    slt._reset(10000)
+    slt = SortedKeyList(key=operator.neg)
+    slt.reset(10000)
     assert slt._load == 10000
     slt._check()
 
-    slt = SortedKeyList(range(10000), key=negate)
+    slt = SortedKeyList(range(10000), key=operator.neg)
     assert all(
         tup[0] == tup[1] for tup in zip(slt, reversed(range(10000)), strict=False)
     )
@@ -54,24 +51,24 @@ def test_key() -> None:
 
 def test_add() -> None:
     random.seed(0)
-    slt = SortedKeyList(key=negate)
+    slt = SortedKeyList(key=operator.neg)
     for val in range(1000):
         slt.add(val)
         slt._check()
 
-    slt = SortedKeyList(key=negate)
+    slt = SortedKeyList(key=operator.neg)
     for val in range(1000, 0, -1):
         slt.add(val)
         slt._check()
 
-    slt = SortedKeyList(key=negate)
+    slt = SortedKeyList(key=operator.neg)
     for val in range(1000):
         slt.add(random.random())
         slt._check()
 
 
 def test_update() -> None:
-    slt = SortedKeyList(key=negate)
+    slt = SortedKeyList(key=operator.neg)
 
     slt.update(range(1000))
     assert len(slt) == 1000
@@ -86,13 +83,13 @@ def test_update() -> None:
     slt._check()
 
     values = sorted(
-        (val for val in chain(range(100), range(1000), range(10000))), key=negate
+        (val for val in chain(range(100), range(1000), range(10000))), key=operator.neg
     )
     assert all(tup[0] == tup[1] for tup in zip(slt, values, strict=False))
 
 
 def test_contains() -> None:
-    slt = SortedKeyList(key=negate)
+    slt = SortedKeyList(key=operator.neg)
     assert 0 not in slt
 
     slt.update(range(10000))
@@ -107,14 +104,14 @@ def test_contains() -> None:
 
 
 def test_discard() -> None:
-    slt = SortedKeyList(key=negate)
+    slt = SortedKeyList(key=operator.neg)
 
     assert slt.discard(0) is None
     assert len(slt) == 0
     slt._check()
 
-    slt = SortedKeyList([1, 2, 2, 2, 3, 3, 5], key=negate)
-    slt._reset(4)
+    slt = SortedKeyList([1, 2, 2, 2, 3, 3, 5], key=operator.neg)
+    slt.reset(4)
 
     slt.discard(6)
     slt._check()
@@ -129,14 +126,14 @@ def test_discard() -> None:
 
 
 def test_remove() -> None:
-    slt = SortedKeyList(key=negate)
+    slt = SortedKeyList(key=operator.neg)
 
     assert slt.discard(0) is None
     assert len(slt) == 0
     slt._check()
 
-    slt = SortedKeyList([1, 2, 2, 2, 3, 3, 5], key=negate)
-    slt._reset(4)
+    slt = SortedKeyList([1, 2, 2, 2, 3, 3, 5], key=operator.neg)
+    slt.reset(4)
 
     slt.remove(2)
     slt._check()
@@ -147,27 +144,27 @@ def test_remove() -> None:
 
 
 def test_remove_valueerror1() -> None:
-    slt = SortedKeyList(key=negate)
+    slt = SortedKeyList(key=operator.neg)
     with pytest.raises(ValueError):
         slt.remove(0)
 
 
 def test_remove_valueerror2() -> None:
-    slt = SortedKeyList(range(100), key=negate)
-    slt._reset(10)
+    slt = SortedKeyList(range(100), key=operator.neg)
+    slt.reset(10)
     with pytest.raises(ValueError):
         slt.remove(100)
 
 
 def test_remove_valueerror3() -> None:
-    slt = SortedKeyList([1, 2, 2, 2, 3, 3, 5], key=negate)
+    slt = SortedKeyList([1, 2, 2, 2, 3, 3, 5], key=operator.neg)
     with pytest.raises(ValueError):
         slt.remove(4)
 
 
 def test_delete() -> None:
-    slt = SortedKeyList(range(20), key=negate)
-    slt._reset(4)
+    slt = SortedKeyList(range(20), key=operator.neg)
+    slt.reset(4)
     slt._check()
     for val in range(20):
         slt.remove(val)
@@ -179,8 +176,8 @@ def test_delete() -> None:
 
 def test_getitem() -> None:
     random.seed(0)
-    slt = SortedKeyList(key=negate)
-    slt._reset(17)
+    slt = SortedKeyList(key=operator.neg)
+    slt.reset(17)
 
     slt.add(5)
     assert slt[0] == 5
@@ -201,8 +198,8 @@ def test_getitem() -> None:
 
 def test_getitem_slice() -> None:
     random.seed(0)
-    slt = SortedKeyList(key=negate)
-    slt._reset(17)
+    slt = SortedKeyList(key=operator.neg)
+    slt.reset(17)
 
     lst = []
 
@@ -246,7 +243,7 @@ def test_getitem_slice() -> None:
 
 
 def test_getitem_slice_big() -> None:
-    slt = SortedKeyList(range(4), key=negate)
+    slt = SortedKeyList(range(4), key=operator.neg)
     lst = list(reversed(range(4)))
 
     itr = (
@@ -261,42 +258,42 @@ def test_getitem_slice_big() -> None:
 
 
 def test_getitem_slicezero() -> None:
-    slt = SortedKeyList(range(100), key=negate)
-    slt._reset(17)
+    slt = SortedKeyList(range(100), key=operator.neg)
+    slt.reset(17)
     with pytest.raises(ValueError):
         slt[::0]
 
 
 def test_getitem_indexerror1() -> None:
-    slt = SortedKeyList(key=negate)
+    slt = SortedKeyList(key=operator.neg)
     with pytest.raises(IndexError):
         slt[5]
 
 
 def test_getitem_indexerror2() -> None:
-    slt = SortedKeyList(range(100), key=negate)
+    slt = SortedKeyList(range(100), key=operator.neg)
     with pytest.raises(IndexError):
         slt[200]
 
 
 def test_getitem_indexerror3() -> None:
-    slt = SortedKeyList(range(100), key=negate)
+    slt = SortedKeyList(range(100), key=operator.neg)
     with pytest.raises(IndexError):
         slt[-101]
 
 
 def test_delitem() -> None:
     random.seed(0)
-    slt = SortedKeyList(range(100), key=negate)
-    slt._reset(17)
+    slt = SortedKeyList(range(100), key=operator.neg)
+    slt.reset(17)
     while len(slt) > 0:
         del slt[random.randrange(len(slt))]
         slt._check()
 
 
 def test_delitem_slice() -> None:
-    slt = SortedKeyList(range(100), key=negate)
-    slt._reset(17)
+    slt = SortedKeyList(range(100), key=operator.neg)
+    slt.reset(17)
     del slt[10:40:1]
     del slt[10:40:-1]
     del slt[10:40:2]
@@ -304,31 +301,31 @@ def test_delitem_slice() -> None:
 
 
 def test_iter() -> None:
-    slt = SortedKeyList(range(10000), key=negate)
+    slt = SortedKeyList(range(10000), key=operator.neg)
     itr = iter(slt)
     assert all(tup[0] == tup[1] for tup in zip(range(9999, -1, -1), itr, strict=False))
 
 
 def test_reversed() -> None:
-    slt = SortedKeyList(range(10000), key=negate)
+    slt = SortedKeyList(range(10000), key=operator.neg)
     rev = reversed(slt)
     assert all(tup[0] == tup[1] for tup in zip(range(10000), rev, strict=False))
 
 
 def test_reverse() -> None:
-    slt = SortedKeyList(range(10000), key=negate)
+    slt = SortedKeyList(range(10000), key=operator.neg)
     with pytest.raises(NotImplementedError):
         slt.reverse()
 
 
 def test_islice() -> None:
     return
-    slt = SortedKeyList(key=negate)
-    slt._reset(7)
+    slt = SortedKeyList(key=operator.neg)
+    slt.reset(7)
 
     assert list(slt.islice()) == []
 
-    values = sorted(range(53), key=negate)
+    values = sorted(range(53), key=operator.neg)
     slt.update(values)
 
     for start in range(53):
@@ -351,8 +348,8 @@ def test_islice() -> None:
 
 
 def test_irange() -> None:
-    slt = SortedKeyList(key=negate)
-    slt._reset(7)
+    slt = SortedKeyList(key=operator.neg)
+    slt.reset(7)
 
     assert list(slt.irange()) == []
 
@@ -399,7 +396,7 @@ def test_irange() -> None:
 
 
 def test_len() -> None:
-    slt = SortedKeyList(key=negate)
+    slt = SortedKeyList(key=operator.neg)
 
     for val in range(10000):
         slt.add(val)
@@ -407,10 +404,10 @@ def test_len() -> None:
 
 
 def test_bisect_left() -> None:
-    slt = SortedKeyList(key=negate)
+    slt = SortedKeyList(key=operator.neg)
     assert slt.bisect_left(0) == 0
-    slt = SortedKeyList(range(100), key=negate)
-    slt._reset(17)
+    slt = SortedKeyList(range(100), key=operator.neg)
+    slt.reset(17)
     slt.update(range(100))
     slt._check()
     assert slt.bisect_left(50) == 98
@@ -419,10 +416,10 @@ def test_bisect_left() -> None:
 
 
 def test_bisect() -> None:
-    slt = SortedKeyList(key=negate)
+    slt = SortedKeyList(key=operator.neg)
     assert slt.bisect(10) == 0
-    slt = SortedKeyList(range(100), key=negate)
-    slt._reset(17)
+    slt = SortedKeyList(range(100), key=operator.neg)
+    slt.reset(17)
     slt.update(range(100))
     slt._check()
     assert slt.bisect(10) == 180
@@ -430,10 +427,10 @@ def test_bisect() -> None:
 
 
 def test_bisect_right() -> None:
-    slt = SortedKeyList(key=negate)
+    slt = SortedKeyList(key=operator.neg)
     assert slt.bisect_right(10) == 0
-    slt = SortedKeyList(range(100), key=negate)
-    slt._reset(17)
+    slt = SortedKeyList(range(100), key=operator.neg)
+    slt.reset(17)
     slt.update(range(100))
     slt._check()
     assert slt.bisect_right(10) == 180
@@ -441,8 +438,8 @@ def test_bisect_right() -> None:
 
 
 def test_copy() -> None:
-    slt = SortedKeyList(range(100), key=negate)
-    slt._reset(7)
+    slt = SortedKeyList(range(100), key=operator.neg)
+    slt.reset(7)
     two = slt.copy()
     slt.add(100)
     assert len(slt) == 101
@@ -452,8 +449,8 @@ def test_copy() -> None:
 def test_copy_copy() -> None:
     import copy
 
-    slt = SortedKeyList(range(100), key=negate)
-    slt._reset(7)
+    slt = SortedKeyList(range(100), key=operator.neg)
+    slt.reset(7)
     two = copy.copy(slt)
     slt.add(100)
     assert len(slt) == 101
@@ -461,8 +458,8 @@ def test_copy_copy() -> None:
 
 
 def test_count() -> None:
-    slt = SortedKeyList(key=negate)
-    slt._reset(7)
+    slt = SortedKeyList(key=operator.neg)
+    slt.reset(7)
 
     assert slt.count(0) == 0
 
@@ -476,8 +473,8 @@ def test_count() -> None:
 
 
 def test_pop() -> None:
-    slt = SortedKeyList(range(10), key=negate)
-    slt._reset(4)
+    slt = SortedKeyList(range(10), key=operator.neg)
+    slt.reset(4)
     slt._check()
     assert slt.pop() == 0
     slt._check()
@@ -490,30 +487,30 @@ def test_pop() -> None:
 
 
 def test_pop_indexerror1() -> None:
-    slt = SortedKeyList(range(10), key=negate)
-    slt._reset(4)
+    slt = SortedKeyList(range(10), key=operator.neg)
+    slt.reset(4)
     with pytest.raises(IndexError):
         slt.pop(-11)
 
 
 def test_pop_indexerror2() -> None:
-    slt = SortedKeyList(range(10), key=negate)
-    slt._reset(4)
+    slt = SortedKeyList(range(10), key=operator.neg)
+    slt.reset(4)
     with pytest.raises(IndexError):
         slt.pop(10)
 
 
 def test_index() -> None:
-    slt = SortedKeyList(range(100), key=negate)
-    slt._reset(17)
+    slt = SortedKeyList(range(100), key=operator.neg)
+    slt.reset(17)
 
     for pos, val in enumerate(range(99, -1, -1)):
         assert val == slt.index(pos)
 
     assert slt.index(99, 0, 1000) == 0
 
-    slt = SortedKeyList((0 for rpt in range(100)), key=negate)
-    slt._reset(17)
+    slt = SortedKeyList((0 for rpt in range(100)), key=operator.neg)
+    slt.reset(17)
 
     for start in range(100):
         for stop in range(start, 100):
@@ -526,49 +523,49 @@ def test_index() -> None:
 
 
 def test_index_valueerror1() -> None:
-    slt = SortedKeyList([0] * 10, key=negate)
-    slt._reset(4)
+    slt = SortedKeyList([0] * 10, key=operator.neg)
+    slt.reset(4)
     with pytest.raises(ValueError):
         slt.index(0, 10)
 
 
 def test_index_valueerror2() -> None:
-    slt = SortedKeyList([0] * 10, key=negate)
-    slt._reset(4)
+    slt = SortedKeyList([0] * 10, key=operator.neg)
+    slt.reset(4)
     with pytest.raises(ValueError):
         slt.index(0, 0, -10)
 
 
 def test_index_valueerror3() -> None:
-    slt = SortedKeyList([0] * 10, key=negate)
-    slt._reset(4)
+    slt = SortedKeyList([0] * 10, key=operator.neg)
+    slt.reset(4)
     with pytest.raises(ValueError):
         slt.index(0, 7, 3)
 
 
 def test_index_valueerror4() -> None:
-    slt = SortedKeyList([0] * 10, key=negate)
-    slt._reset(4)
+    slt = SortedKeyList([0] * 10, key=operator.neg)
+    slt.reset(4)
     with pytest.raises(ValueError):
         slt.index(1)
 
 
 def test_index_valueerror5() -> None:
-    slt = SortedKeyList(key=negate)
+    slt = SortedKeyList(key=operator.neg)
     with pytest.raises(ValueError):
         slt.index(1)
 
 
 def test_index_valueerror6() -> None:
-    slt = SortedKeyList(range(10), key=negate)
-    slt._reset(4)
+    slt = SortedKeyList(range(10), key=operator.neg)
+    slt.reset(4)
     with pytest.raises(ValueError):
         slt.index(6, 5)
 
 
 def test_mul() -> None:
-    this = SortedKeyList(range(10), key=negate)
-    this._reset(4)
+    this = SortedKeyList(range(10), key=operator.neg)
+    this.reset(4)
     that = this * 5
     this._check()
     that._check()
@@ -578,30 +575,30 @@ def test_mul() -> None:
 
 
 def test_imul() -> None:
-    this = SortedKeyList(range(10), key=negate)
-    this._reset(4)
+    this = SortedKeyList(range(10), key=operator.neg)
+    this.reset(4)
     this *= 5
     this._check()
     assert this == sorted(list(range(10)) * 5, reverse=True)
 
 
 def test_op_add() -> None:
-    this = SortedKeyList(range(10), key=negate)
-    this._reset(4)
+    this = SortedKeyList(range(10), key=operator.neg)
+    this.reset(4)
     assert (this + this + this) == (this * 3)
 
-    that = SortedKeyList(range(10), key=negate)
-    that._reset(4)
+    that = SortedKeyList(range(10), key=operator.neg)
+    that.reset(4)
     that += that
     that += that
     assert that == (this * 4)
 
 
 def test_eq() -> None:
-    this = SortedKeyList(range(10), key=negate)
-    this._reset(4)
-    that = SortedKeyList(range(20), key=negate)
-    that._reset(4)
+    this = SortedKeyList(range(10), key=operator.neg)
+    this.reset(4)
+    that = SortedKeyList(range(20), key=operator.neg)
+    that.reset(4)
     assert this != that
     that.clear()
     that.update(range(10))
@@ -609,25 +606,25 @@ def test_eq() -> None:
 
 
 def test_lt() -> None:
-    this = SortedKeyList(range(10), key=negate)
-    this._reset(4)
-    that = SortedKeyList(range(10, 20), key=negate)
-    that._reset(5)
+    this = SortedKeyList(range(10), key=operator.neg)
+    this.reset(4)
+    that = SortedKeyList(range(10, 20), key=operator.neg)
+    that.reset(5)
     assert this < that
     assert not (that < this)
-    that = SortedKeyList(range(1, 20), key=negate)
-    that._reset(6)
+    that = SortedKeyList(range(1, 20), key=operator.neg)
+    that.reset(6)
     assert this < that
-    that = SortedKeyList(range(1, 10), key=negate)
-    that._reset(4)
+    that = SortedKeyList(range(1, 10), key=operator.neg)
+    that.reset(4)
     assert not (this < that)
 
 
 def test_lte() -> None:
-    this = SortedKeyList(range(10), key=negate)
-    this._reset(4)
-    that = SortedKeyList(range(10), key=negate)
-    that._reset(5)
+    this = SortedKeyList(range(10), key=operator.neg)
+    this.reset(4)
+    that = SortedKeyList(range(10), key=operator.neg)
+    that.reset(5)
     assert this <= that
     assert that <= this
     del this[-1]
@@ -636,25 +633,25 @@ def test_lte() -> None:
 
 
 def test_gt() -> None:
-    this = SortedKeyList(range(10), key=negate)
-    this._reset(4)
-    that = SortedKeyList(range(10, 20), key=negate)
-    that._reset(5)
+    this = SortedKeyList(range(10), key=operator.neg)
+    this.reset(4)
+    that = SortedKeyList(range(10, 20), key=operator.neg)
+    that.reset(5)
     assert that > this
     assert not (this > that)
-    that = SortedKeyList(range(1, 20), key=negate)
-    that._reset(6)
+    that = SortedKeyList(range(1, 20), key=operator.neg)
+    that.reset(6)
     assert that > this
-    that = SortedKeyList(range(1, 10), key=negate)
-    that._reset(4)
+    that = SortedKeyList(range(1, 10), key=operator.neg)
+    that.reset(4)
     assert not (that > this)
 
 
 def test_gte() -> None:
-    this = SortedKeyList(range(10), key=negate)
-    this._reset(4)
-    that = SortedKeyList(range(10), key=negate)
-    that._reset(5)
+    this = SortedKeyList(range(10), key=operator.neg)
+    this.reset(4)
+    that = SortedKeyList(range(10), key=operator.neg)
+    that.reset(5)
     assert this >= that
     assert that >= this
     del this[-1]
@@ -662,9 +659,13 @@ def test_gte() -> None:
     assert not (this >= that)
 
 
+def negate(val: int) -> int:  # noqa: FURB118
+    return -val
+
+
 def test_repr() -> None:
     this = SortedKeyList(range(10), key=negate)
-    this._reset(4)
+    this.reset(4)
     assert repr(this).startswith(
         "SortedKeyList([9, 8, 7, 6, 5, 4, 3, 2, 1, 0], key=<function negate at "
     )
@@ -673,8 +674,8 @@ def test_repr() -> None:
 def test_pickle() -> None:
     import pickle
 
-    alpha = SortedKeyList(range(10000), key=negate)
-    alpha._reset(500)
+    alpha = SortedKeyList(range(10000), key=operator.neg)
+    alpha.reset(500)
     beta = pickle.loads(pickle.dumps(alpha))
     assert alpha == beta
     assert alpha._key == beta._key
@@ -683,8 +684,8 @@ def test_pickle() -> None:
 
 
 def test_check() -> None:
-    slt = SortedKeyList(range(10), key=negate)
-    slt._reset(4)
+    slt = SortedKeyList(range(10), key=operator.neg)
+    slt.reset(4)
     slt._len = 5
     with pytest.raises(AssertionError):
         slt._check()
