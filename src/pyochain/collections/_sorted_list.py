@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 type KeyFunc[T, OT: SupportsRichComparison] = Callable[[T], OT]
 
 
-class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
+class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW1641
     """Sorted list is a sorted mutable sequence.
 
     Sorted list values are maintained in sorted order.
@@ -99,8 +99,8 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         """
         self._len: int = 0
         self._load: int = self.DEFAULT_LOAD_FACTOR
-        self._lists = []
-        self._maxes = []
+        self._lists: list[list[T]] = []
+        self._maxes: list[object] = []
         self._index: list[int] = []
         self._offset: int = 0
 
@@ -125,7 +125,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         :param int load: load-factor for sorted list sublists
 
         """
-        values = reduce(iadd, self._lists, [])
+        values: list[T] = reduce(iadd, self._lists, [])
         self._clear()
         self._load = load
         self._update(values)
@@ -145,7 +145,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
 
     _clear = clear
 
-    def add(self, value) -> None:
+    def add(self, value: T) -> None:
         """Add `value` to sorted list.
 
         Runtime complexity: `O(log(n))` -- approximate.
@@ -180,7 +180,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
 
         self._len += 1
 
-    def _expand(self, pos) -> None:
+    def _expand(self, pos: int) -> None:
         """Split sublists with length greater than double the load-factor.
 
         Updates the index when the sublist length is less than double the load
@@ -212,7 +212,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
                 child = (child - 1) >> 1
             index[0] += 1
 
-    def update(self, iterable) -> None:
+    def update(self, iterable: Iterable[T]) -> None:
         """Update sorted list by adding all values from `iterable`.
 
         Runtime complexity: `O(k*log(n))` -- approximate.
@@ -227,7 +227,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         """
         lists = self._lists
         maxes = self._maxes
-        values = sorted(iterable)
+        values: list[T] = sorted(iterable)
 
         if maxes:
             if len(values) * 4 >= self._len:
@@ -356,7 +356,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
             msg = f"{value!r} not in list"
             raise ValueError(msg)
 
-    def _delete(self, pos, idx) -> None:
+    def _delete(self, pos: int, idx: int) -> None:
         """Delete value at the given `(pos, idx)`.
 
         Combines lists that are less than half the load level.
@@ -410,7 +410,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
             del maxes[pos]
             del index[:]
 
-    def _loc(self, pos, idx):
+    def _loc(self, pos: int, idx: int) -> int:
         """Convert an index pair (lists index, sublist index) into a single index number.
 
         This number corresponds to the position of the value in the
@@ -492,7 +492,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
 
         return total + idx
 
-    def _pos(self, idx: int):
+    def _pos(self, idx: int) -> tuple[int, int]:
         """Convert an index into an index pair (lists index, sublist index).
 
         This pair can be used to access the corresponding lists position.
@@ -920,7 +920,9 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
 
         return self._islice(min_pos, min_idx, max_pos, max_idx, reverse)
 
-    def _islice(self, min_pos, min_idx, max_pos, max_idx, reverse):
+    def _islice(
+        self, min_pos: int, min_idx: int, max_pos: int, max_idx: int, reverse: bool
+    ) -> Iterator[T]:
         """Return an iterator that slices sorted list using two index pairs.
 
         The index pairs are (min_pos, min_idx) and (max_pos, max_idx), the
@@ -1301,7 +1303,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         return val
 
     @override
-    def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:
+    def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:  # noqa: C901
         """Return first index of value in sorted list.
 
         Raise ValueError if `value` is not present.
@@ -1383,7 +1385,6 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         msg = f"{value!r} is not in list"
         raise ValueError(msg)
 
-    @override
     def __add__(self, other: Iterable[T]) -> Self:
         """Return new sorted list containing all values in both sequences.
 
@@ -1402,7 +1403,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         :return: new sorted list
 
         """
-        values = reduce(iadd, self._lists, [])
+        values: list[T] = reduce(iadd, self._lists, [])
         values.extend(other)
         return self.__class__(values)
 
@@ -1448,7 +1449,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         :return: new sorted list
 
         """
-        values = reduce(iadd, self._lists, []) * num
+        values: list[T] = reduce(iadd, self._lists, []) * num
         return self.__class__(values)
 
     def __rmul__(self, num: int) -> Self:
@@ -1472,13 +1473,13 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
             existing sorted list
 
         """
-        values = reduce(iadd, self._lists, []) * num
+        values: list[T] = reduce(iadd, self._lists, []) * num
         self._clear()
         self._update(values)
         return self
 
     @staticmethod
-    def __make_cmp(seq_op, symbol, doc):
+    def __make_cmp(seq_op, symbol: str, doc: str):
         """Make comparator method."""
 
         def comparer(self, other):
@@ -1526,8 +1527,8 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
     __ge__ = __make_cmp(ge, ">=", "greater than or equal to")
 
     @override
-    def __reduce__(self):
-        values = reduce(iadd, self._lists, [])
+    def __reduce__(self) -> tuple[type[Self], tuple[list[T]]]:
+        values: list[T] = reduce(iadd, self._lists, [])
         return (type(self), (values,))
 
     @recursive_repr()
@@ -1620,7 +1621,7 @@ def identity[T](value: T) -> T:
     return value
 
 
-class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):
+class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: ignore[reportInvalidTypeArguments]
     """Sorted-key list is a subtype of sorted list.
 
     The sorted-key list maintains values in comparison order based on the
@@ -1675,11 +1676,11 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):
         self._key: KeyFunc[T, OT] = key
         self._len: int = 0
         self._load: int = self.DEFAULT_LOAD_FACTOR
-        self._lists = []
-        self._keys = []
-        self._maxes = []
-        self._index = []
-        self._offset = 0
+        self._lists: list[list[T]] = []
+        self._keys: list[list[object]] = []
+        self._maxes: list[object] = []
+        self._index: list[int] = []
+        self._offset: int = 0
 
         if iterable is not None:
             self._update(iterable)
@@ -1706,7 +1707,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):
     _clear = clear
 
     @override
-    def add(self, value) -> None:
+    def add(self, value: T) -> None:
         """Add `value` to sorted-key list.
 
         Runtime complexity: `O(log(n))` -- approximate.
@@ -1788,7 +1789,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):
             index[0] += 1
 
     @override
-    def update(self, iterable) -> None:
+    def update(self, iterable: Iterable[T]) -> None:
         """Update sorted-key list by adding all values from `iterable`.
 
         Runtime complexity: `O(k*log(n))` -- approximate.
@@ -1810,7 +1811,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):
         if maxes:
             if len(values) * 4 >= self._len:
                 lists.append(values)
-                values = reduce(iadd, lists, [])
+                values: list[T] = reduce(iadd, lists, [])
                 values.sort(key=self._key)
                 self._clear()
             else:
@@ -1829,7 +1830,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):
     _update = update
 
     @override
-    def __contains__(self, value) -> bool:
+    def __contains__(self, value: object) -> bool:
         """Return true if `value` is an element of the sorted-key list.
 
         ``skl.__contains__(value)`` <==> ``value in skl``
@@ -1878,7 +1879,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):
                 idx = 0
 
     @override
-    def discard(self, value) -> None:
+    def discard(self, value: T) -> None:
         """Remove `value` from sorted-key list if it is a member.
 
         If `value` is not a member, do nothing.
@@ -1927,7 +1928,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):
                 idx = 0
 
     @override
-    def remove(self, value) -> None:
+    def remove(self, value: T) -> None:
         """Remove `value` from sorted-key list; `value` must be a member.
 
         If `value` is not a member, raise ValueError.
@@ -1986,7 +1987,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):
                 idx = 0
 
     @override
-    def _delete(self, pos, idx) -> None:
+    def _delete(self, pos: int, idx: int) -> None:
         """Delete value at the given `(pos, idx)`.
 
         Combines lists that are less than half the load level.
@@ -2046,7 +2047,13 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):
             del index[:]
 
     @override
-    def irange(self, minimum=None, maximum=None, inclusive=(True, True), reverse=False):
+    def irange(
+        self,
+        minimum: T | None = None,
+        maximum: T | None = None,
+        inclusive: tuple[bool, bool] = (True, True),
+        reverse: bool = False,
+    ) -> Iterator[T]:
         """Create an iterator of values between `minimum` and `maximum`.
 
         Both `minimum` and `maximum` default to `None` which is automatically
@@ -2084,7 +2091,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):
             reverse=reverse,
         )
 
-    def irange_key(
+    def irange_key(  # noqa: PLR0912
         self,
         min_key: OT | None = None,
         max_key: OT | None = None,
@@ -2175,7 +2182,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):
     _irange_key = irange_key
 
     @override
-    def bisect_left(self, value):
+    def bisect_left(self, value: T) -> int:
         """Return an index to insert `value` in the sorted-key list.
 
         If the `value` is already present, the insertion point will be before
@@ -2197,7 +2204,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):
         return self._bisect_key_left(self._key(value))
 
     @override
-    def bisect_right(self, value):
+    def bisect_right(self, value: T) -> int:
         """Return an index to insert `value` in the sorted-key list.
 
         Similar to `bisect_left`, but if `value` is already present, the
@@ -2292,7 +2299,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):
     _bisect_key_right = bisect_key_right
 
     @override
-    def count(self, value):
+    def count(self, value: T) -> int:
         """Return number of occurrences of `value` in the sorted-key list.
 
         Runtime complexity: `O(log(n))` -- approximate.
@@ -2351,7 +2358,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):
     __copy__ = copy
 
     @override
-    def index(self, value, start=None, stop=None):
+    def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:  # noqa: C901, PLR0912
         """Return first index of value in sorted-key list.
 
         Raise ValueError if `value` is not present.
@@ -2443,7 +2450,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):
         raise ValueError(msg)
 
     @override
-    def __add__(self, other):
+    def __add__(self, other: Iterable[T]) -> Self:
         """Return new sorted-key list containing all values in both sequences.
 
         ``skl.__add__(other)`` <==> ``skl + other``
@@ -2462,15 +2469,12 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):
         :return: new sorted-key list
 
         """
-        values = reduce(iadd, self._lists, [])
+        values: list[T] = reduce(iadd, self._lists, [])
         values.extend(other)
         return self.__class__(values, key=self._key)
 
-    def __radd__(self, other: Iterable[T]) -> Self:
-        return self.__add__(other)
-
     @override
-    def __mul__(self, num):
+    def __mul__(self, num: int) -> Self:
         """Return new sorted-key list with `num` shallow copies of values.
 
         ``skl.__mul__(num)`` <==> ``skl * num``
@@ -2486,12 +2490,12 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):
         :return: new sorted-key list
 
         """
-        values = reduce(iadd, self._lists, []) * num
+        values: list[T] = reduce(iadd, self._lists, []) * num
         return self.__class__(values, key=self._key)
 
     @override
-    def __reduce__(self):
-        values = reduce(iadd, self._lists, [])
+    def __reduce__(self) -> tuple[type[Self], tuple[list[T], KeyFunc[T, OT]]]:
+        values: list[T] = reduce(iadd, self._lists, [])
         return (type(self), (values, self.key))
 
     @recursive_repr()
