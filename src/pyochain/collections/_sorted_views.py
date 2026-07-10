@@ -2,7 +2,14 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
-from collections.abc import ItemsView, Iterable, KeysView, Sequence, ValuesView
+from collections.abc import (
+    ItemsView,
+    Iterable,
+    KeysView,
+    MappingView,
+    Sequence,
+    ValuesView,
+)
 from typing import overload, override
 
 from ._sorted_set import SortedSet
@@ -187,7 +194,7 @@ class SortedValuesView[V](ValuesView[V], Sequence[V]):
         return _view_delitem(self, index)
 
 
-def _view_delitem(self, index) -> None:
+def _view_delitem(self: MappingView, index: int | slice) -> None:
     """Remove item at `index` from sorted dict.
 
     ``view.__delitem__(index)`` <==> ``del view[index]``

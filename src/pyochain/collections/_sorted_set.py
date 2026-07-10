@@ -134,7 +134,7 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
         self._reset = list_._reset
 
         if iterable is not None:
-            self._update(iterable)
+            self.update(iterable)
 
     @classmethod
     def _fromset(cls, values: set[T]) -> Self:
@@ -321,8 +321,6 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
             set_.add(value)
             self._list.add(value)
 
-    _add = add
-
     @override
     def clear(self) -> None:
         """Remove all values from sorted set.
@@ -383,8 +381,6 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
         if value in set_:
             set_.remove(value)
             self._list.remove(value)
-
-    _discard = discard
 
     @override
     def pop(self, index: int = -1) -> T:
@@ -461,7 +457,9 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
         diff = self._set.difference(*iterables)
         return self._fromset(diff)
 
-    __sub__ = difference
+    @override
+    def __sub__(self, other: Iterable[Any]) -> Self:
+        return self.difference(other)
 
     def difference_update(self, *iterables: Iterable[Any]) -> Self:
         """Remove all values of `iterables` from this sorted set.
@@ -489,12 +487,14 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
             list_.clear()
             list_.update(set_)
         else:
-            discard = self._discard
+            discard = self.discard
             for value in values:
                 discard(value)
         return self
 
-    __isub__ = difference_update
+    @override
+    def __isub__(self, other: Iterable[Any]) -> Self:
+        return self.difference_update(other)
 
     def intersection(self, *iterables: Iterable[Any]) -> Self:
         """Return the intersection of two or more sets as a new sorted set.
@@ -517,8 +517,12 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
         intersect = self._set.intersection(*iterables)
         return self._fromset(intersect)
 
-    __and__ = intersection
-    __rand__ = __and__
+    @override
+    def __and__(self, other: Iterable[Any]) -> Self:
+        return self.intersection(other)
+
+    def __rand__(self, other: Iterable[Any]) -> Self:
+        return self.intersection(other)
 
     def intersection_update(self, *iterables: Iterable[Any]) -> Self:
         """Update the sorted set with the intersection of `iterables`.
@@ -547,7 +551,9 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
         list_.update(set_)
         return self
 
-    __iand__ = intersection_update
+    @override
+    def __iand__(self, other: Iterable[Any]) -> Self:
+        return self.intersection_update(other)
 
     def symmetric_difference(self, other: Iterable[T]) -> Self:
         """Return the symmetric difference with `other` as a new sorted set.
@@ -570,8 +576,12 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
         diff = self._set.symmetric_difference(other)
         return self._fromset(diff)
 
-    __xor__ = symmetric_difference
-    __rxor__ = __xor__
+    @override
+    def __xor__(self, other: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
+        return self.symmetric_difference(other)
+
+    def __rxor__(self, other: Iterable[T]) -> Self:
+        return self.symmetric_difference(other)
 
     def symmetric_difference_update(self, other: Iterable[T]) -> Self:
         """Update the sorted set with the symmetric difference with `other`.
@@ -601,7 +611,9 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
         list_.update(set_)
         return self
 
-    __ixor__ = symmetric_difference_update
+    @override
+    def __ixor__(self, other: Iterable[T]) -> Self:
+        return self.symmetric_difference_update(other)
 
     def union(self, *iterables: Iterable[T]) -> Self:
         """Return new sorted set with values from itself and all `iterables`.
@@ -620,8 +632,12 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
         """
         return self.__class__(chain(iter(self), *iterables))
 
-    __or__ = union
-    __ror__ = __or__
+    @override
+    def __or__(self, other: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
+        return self.union(other)
+
+    def __ror__(self, other: Iterable[T]) -> Self:
+        return self.union(other)
 
     def update(self, *iterables: Iterable[T]) -> Self:
         """Update the sorted set adding values from all `iterables`.
@@ -650,13 +666,14 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
             list_.clear()
             list_.update(set_)
         else:
-            add = self._add
+            add = self.add
             for value in values:
                 add(value)
         return self
 
-    __ior__ = update
-    _update = update
+    @override
+    def __ior__(self, other: Iterable[T]) -> Self:
+        return self.update(other)
 
     @override
     def __reduce__(
@@ -755,7 +772,7 @@ class SortedKeySet[T, OT: SupportsRichComparison](SortedSet[T]):  # pyright: ign
         self.bisect_key = list_.bisect_key
 
         if iterable is not None:
-            self._update(iterable)
+            self.update(iterable)
 
     @classmethod
     @override

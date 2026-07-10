@@ -107,7 +107,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         self._offset: int = 0
 
         if iterable is not None:
-            self._update(iterable)
+            self.update(iterable)
 
     def _reset(self, load: int) -> None:
         """Reset sorted list load factor.
@@ -128,9 +128,9 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
 
         """
         values: list[T] = reduce(iadd, self._lists, [])
-        self._clear()
+        self.clear()
         self._load = load
-        self._update(values)
+        self.update(values)
 
     @override
     def clear(self) -> None:
@@ -144,8 +144,6 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         del self._maxes[:]
         del self._index[:]
         self._offset = 0
-
-    _clear = clear
 
     def add(self, value: T) -> None:
         """Add `value` to sorted list.
@@ -236,7 +234,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
                 lists.append(values)
                 values = reduce(iadd, lists, [])
                 values.sort()
-                self._clear()
+                self.clear()
             else:
                 add_ = self.add
                 for val in values:
@@ -248,8 +246,6 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         maxes.extend(sublist[-1] for sublist in lists)
         self._len = len(values)
         del self._index[:]
-
-    _update = update
 
     @override
     def __contains__(self, value: object) -> bool:
@@ -690,13 +686,13 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
 
             if step == 1 and start < stop:
                 if start == 0 and stop == self._len:
-                    return self._clear()
+                    return self.clear()
                 if self._len <= 8 * (stop - start):
-                    values = self._getitem(slice(None, start))
+                    values = self.__getitem__(slice(None, start))
                     if stop < self._len:
-                        values += self._getitem(slice(stop, None))
-                    self._clear()
-                    return self._update(values)
+                        values += self.__getitem__(slice(stop, None))
+                    self.clear()
+                    return self.update(values)
 
             indices = range(start, stop, step)
 
@@ -783,7 +779,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
                 return result
 
             if step == -1 and start > stop:
-                result = self._getitem(slice(stop + 1, start + 1))
+                result = self.__getitem__(slice(stop + 1, start + 1))
                 result.reverse()
                 return result
 
@@ -792,7 +788,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
             # be the desired behavior.
 
             indices = range(start, stop, step)
-            return [self._getitem(index) for index in indices]
+            return [self.__getitem__(index) for index in indices]
         if self._len:
             if index == 0:
                 return lists[0][0]
@@ -813,8 +809,6 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         pos, idx = self._pos(index)
         return lists[pos][idx]
 
-    _getitem = __getitem__
-
     @overload
     def __setitem__(self, index: int, value: T) -> None: ...
     @overload
@@ -833,7 +827,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         raise NotImplementedError(message)
 
     @override
-    def __iter__(self):
+    def __iter__(self) -> Iterator[T]:
         """Return an iterator over the sorted list.
 
         ``sl.__iter__()`` <==> ``iter(sl)``
@@ -1148,7 +1142,6 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         return self._loc(pos, idx)
 
     bisect = bisect_right
-    _bisect_right = bisect_right
 
     @override
     def count(self, value: T) -> int:
@@ -1240,7 +1233,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         raise NotImplementedError(msg)
 
     @override
-    def pop(self, index=-1):
+    def pop(self, index: int = -1) -> T:
         """Remove and return value at `index` in sorted list.
 
         Raise :exc:`IndexError` if the sorted list is empty or index is out of
@@ -1379,7 +1372,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
             if left <= stop:
                 return left
         else:
-            right = self._bisect_right(value) - 1
+            right = self.bisect_right(value) - 1
 
             if start <= right:
                 return start
@@ -1433,7 +1426,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
             existing sorted list
 
         """
-        self._update(other)
+        self.update(other)
         return self
 
     def __mul__(self, num: int) -> Self:
@@ -1476,8 +1469,8 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
 
         """
         values: list[T] = reduce(iadd, self._lists, []) * num
-        self._clear()
-        self._update(values)
+        self.clear()
+        self.update(values)
         return self
 
     @staticmethod
@@ -1685,7 +1678,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         self._offset: int = 0
 
         if iterable is not None:
-            self._update(iterable)
+            self.update(iterable)
 
     @property
     def key(self) -> KeyFunc[T, OT]:
@@ -1704,8 +1697,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         del self._keys[:]
         del self._maxes[:]
         del self._index[:]
-
-    _clear = clear
 
     @override
     def add(self, value: T) -> None:
@@ -1814,7 +1805,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
                 lists.append(values)
                 values: list[T] = reduce(iadd, lists, [])
                 values.sort(key=self._key)
-                self._clear()
+                self.clear()
             else:
                 add_ = self.add
                 for val in values:
@@ -1827,8 +1818,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         maxes.extend(sublist[-1] for sublist in keys)
         self._len = len(values)
         del self._index[:]
-
-    _update = update
 
     @override
     def __contains__(self, value: object) -> bool:
@@ -2085,7 +2074,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         """
         min_key = self._key(minimum) if minimum is not None else None
         max_key = self._key(maximum) if maximum is not None else None
-        return self._irange_key(
+        return self.irange_key(
             min_key=min_key,
             max_key=max_key,
             inclusive=inclusive,
@@ -2180,8 +2169,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
         return self._islice(min_pos, min_idx, max_pos, max_idx, reverse)
 
-    _irange_key = irange_key
-
     @override
     def bisect_left(self, value: T) -> int:
         """Return an index to insert `value` in the sorted-key list.
@@ -2202,7 +2189,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         :return: index
 
         """
-        return self._bisect_key_left(self._key(value))
+        return self.bisect_key_left(self._key(value))
 
     @override
     def bisect_right(self, value: T) -> int:
@@ -2224,7 +2211,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         :return: index
 
         """
-        return self._bisect_key_right(self._key(value))
+        return self.bisect_key_right(self._key(value))
 
     bisect = bisect_right
 
@@ -2261,8 +2248,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
         return self._loc(pos, idx)
 
-    _bisect_key_left = bisect_key_left
-
     def bisect_key_right(self, key: OT) -> int:
         """Return an index to insert `key` in the sorted-key list.
 
@@ -2297,7 +2282,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         return self._loc(pos, idx)
 
     bisect_key = bisect_key_right
-    _bisect_key_right = bisect_key_right
 
     @override
     def count(self, value: T) -> int:
@@ -2355,8 +2339,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
         """
         return self.__class__(self, key=self._key)
-
-    __copy__ = copy
 
     @override
     def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:  # noqa: C901, PLR0912

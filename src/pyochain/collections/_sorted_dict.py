@@ -150,7 +150,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
         self.islice = list_.islice
         self._reset = list_._reset
 
-        self._update(*args, **kwargs)
+        self.update(*args, **kwargs)
 
     @override
     def clear(self) -> None:
@@ -233,8 +233,6 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
             self._list_add(key)
         super().__setitem__(key, value)
 
-    _setitem = __setitem__
-
     @override
     def __or__(self, other: object):
         if not isinstance(other, Mapping):
@@ -251,7 +249,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
 
     @override
     def __ior__(self, other: object) -> Self:
-        self._update(other)
+        self.update(other)
         return self
 
     @override
@@ -265,7 +263,8 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
         """
         return self.__class__(self.items())
 
-    __copy__ = copy
+    def __copy__(self) -> Self:
+        return self.copy()
 
     @classmethod
     @overload
@@ -516,9 +515,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
             self._list_update(super().__iter__())
         else:
             for key in pairs:
-                self._setitem(key, pairs[key])
-
-    _update = update
+                self.__setitem__(key, pairs[key])
 
     @override
     def __reduce__(self):
@@ -625,7 +622,7 @@ class SortedKeyDict[K: Hashable, V, OT: SupportsRichComparison](SortedDict[K, V]
         self.islice = list_.islice
         self._reset = list_._reset
 
-        self._update(*args, **kwargs)
+        self.update(*args, **kwargs)
 
     @property
     def key(self) -> KeyFunc[K, OT]:
