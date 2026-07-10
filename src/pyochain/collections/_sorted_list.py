@@ -1139,8 +1139,6 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         idx = bisect_right(self._lists[pos], value)
         return self._loc(pos, idx)
 
-    bisect = bisect_right
-
     @override
     def count(self, value: T) -> int:
         """Return number of occurrences of `value` in the sorted list.
@@ -2137,8 +2135,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
         """
         return self.bisect_key_right(self._key(value))
-
-    bisect = bisect_right
 
     def bisect_key_left(self, key: OT) -> int:
         """Return an index to insert `key` in the sorted-key list.

@@ -382,13 +382,11 @@ def test_bisect() -> None:
     temp = SortedDict(mapping)
     assert temp.bisect_left("a") == 0
     assert temp.bisect_right("f") == 6
-    assert temp.bisect("f") == 6
 
 
 def test_bisect_key() -> None:
     temp = SortedKeyDict(modulo, ((val, val) for val in range(100)))
     temp.reset(7)
-    assert all(temp.bisect(val) == ((val % 10) + 1) * 10 for val in range(100))
     assert all(temp.bisect_right(val) == ((val % 10) + 1) * 10 for val in range(100))
     assert all(temp.bisect_left(val) == (val % 10) * 10 for val in range(100))
 

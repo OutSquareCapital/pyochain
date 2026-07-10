@@ -20,6 +20,7 @@ The classes from the `sortedcontainers` library have been ported to pyochain, wi
 - No dynamic dispatch of classes for `SortedList` to `SortedKeyList` if a *key* argument is provided, call the wanted class explicitely. Same behavior for `SortedSet` and `SortedDict`, with, respectively, new, explicit, corresponding `SortedKeySet`, and `SortedKeyDict` classes.
 - `_reset` method is public (i.e it's called `reset`).
 - `_check` method is deleted from classes, and is defined as pure functions only for tests.
+- `bisect` method alias is deleted, use `bisect_right` instead.
 
 ### 💥 Breaking changes
 

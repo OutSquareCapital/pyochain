@@ -390,17 +390,6 @@ def test_bisect_left() -> None:
     assert slt.bisect_left(200) == 200
 
 
-def test_bisect() -> None:
-    slt = SortedList()
-    assert slt.bisect(10) == 0
-    slt = SortedList(range(100))
-    slt.reset(17)
-    slt.update(range(100))
-    check_sorted_list(slt)
-    assert slt.bisect(10) == 22
-    assert slt.bisect(200) == 200
-
-
 def test_bisect_right() -> None:
     slt = SortedList()
     assert slt.bisect_right(10) == 0

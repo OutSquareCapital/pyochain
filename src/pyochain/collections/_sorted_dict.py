@@ -135,7 +135,6 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
         # Expose some sorted list methods publicly.
 
         self.bisect_left = list_.bisect_left
-        self.bisect = list_.bisect_right
         self.bisect_right = list_.bisect_right
         self.index = list_.index
         self.irange = list_.irange
@@ -588,7 +587,6 @@ class SortedKeyDict[K: Hashable, V, OT: SupportsRichComparison](SortedDict[K, V]
         # Expose some sorted list methods publicly.
 
         self.bisect_left = list_.bisect_left
-        self.bisect = list_.bisect_right
         self.bisect_right = list_.bisect_right
         self.index = list_.index
         self.irange = list_.irange

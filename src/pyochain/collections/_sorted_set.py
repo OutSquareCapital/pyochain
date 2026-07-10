@@ -126,7 +126,6 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
 
         list_ = self._list
         self.bisect_left = list_.bisect_left
-        self.bisect = list_.bisect
         self.bisect_right = list_.bisect_right
         self.index = list_.index
         self.irange = list_.irange
@@ -748,7 +747,6 @@ class SortedKeySet[T, OT: SupportsRichComparison](SortedSet[T]):  # pyright: ign
 
         list_ = self._list
         self.bisect_left = list_.bisect_left
-        self.bisect = list_.bisect
         self.bisect_right = list_.bisect_right
         self.index = list_.index
         self.irange = list_.irange

@@ -504,17 +504,6 @@ def test_bisect_left() -> None:
     assert slt.bisect_left(0) == 0
 
 
-def test_bisect() -> None:
-    slt = SortedKeyList(key=modulo)
-    assert slt.bisect(10) == 0
-    slt = SortedKeyList(range(100), key=modulo)
-    slt.reset(17)
-    slt.update(range(100))
-    check_sorted_key_list(slt)
-    assert slt.bisect(10) == 20
-    assert slt.bisect(0) == 20
-
-
 def test_bisect_right() -> None:
     slt = SortedKeyList(key=modulo)
     assert slt.bisect_right(10) == 0
