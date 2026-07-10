@@ -2,10 +2,10 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
-from collections.abc import ItemsView, KeysView, Mapping, Sequence, ValuesView
+from collections.abc import ItemsView, Iterable, KeysView, Mapping, Sequence, ValuesView
 from itertools import chain
 from reprlib import recursive_repr
-from typing import override
+from typing import overload, override
 
 from ._sorted_list import SortedKeyList, SortedList
 from ._sorted_set import SortedSet
@@ -604,11 +604,15 @@ class SortedKeysView[K](KeysView[K], Sequence[K]):
 
     @classmethod
     @override
-    def _from_iterable(cls, it):
+    def _from_iterable(cls, it: Iterable[K]) -> SortedSet[K]:  # pyright: ignore[reportIncompatibleMethodOverride]
         return SortedSet(it)
 
+    @overload
+    def __getitem__(self, index: int) -> K: ...
+    @overload
+    def __getitem__(self, index: slice) -> list[K]: ...
     @override
-    def __getitem__(self, index):
+    def __getitem__(self, index: int | slice) -> K | list[K]:
         """Lookup key at `index` in sorted keys views.
 
         ``skv.__getitem__(index)`` <==> ``skv[index]``
@@ -639,7 +643,8 @@ class SortedKeysView[K](KeysView[K], Sequence[K]):
         """
         return self._mapping._list[index]
 
-    __delitem__ = _view_delitem
+    def __delitem__(self, index: int | slice) -> None:
+        return _view_delitem(self, index)
 
 
 class SortedItemsView[K, V](ItemsView[K, V], Sequence[tuple[K, V]]):
@@ -658,8 +663,12 @@ class SortedItemsView[K, V](ItemsView[K, V], Sequence[tuple[K, V]]):
     def _from_iterable(cls, it):
         return SortedSet(it)
 
+    @overload
+    def __getitem__(self, index: int) -> tuple[K, V]: ...
+    @overload
+    def __getitem__(self, index: slice) -> list[tuple[K, V]]: ...
     @override
-    def __getitem__(self, index):
+    def __getitem__(self, index: int | slice) -> tuple[K, V] | list[tuple[K, V]]:
         """Lookup item at `index` in sorted items view.
 
         ``siv.__getitem__(index)`` <==> ``siv[index]``
@@ -697,7 +706,8 @@ class SortedItemsView[K, V](ItemsView[K, V], Sequence[tuple[K, V]]):
         key = mapping_list[index]
         return key, mapping[key]
 
-    __delitem__ = _view_delitem
+    def __delitem__(self, index: int | slice) -> None:
+        return _view_delitem(self, index)
 
 
 class SortedValuesView[V](ValuesView[V], Sequence[V]):
@@ -711,8 +721,12 @@ class SortedValuesView[V](ValuesView[V], Sequence[V]):
 
     __slots__ = ()
 
+    @overload
+    def __getitem__(self, index: int) -> V: ...
+    @overload
+    def __getitem__(self, index: slice) -> list[V]: ...
     @override
-    def __getitem__(self, index):
+    def __getitem__(self, index: int | slice) -> V | list[V]:
         """Lookup value at `index` in sorted values view.
 
         ``siv.__getitem__(index)`` <==> ``siv[index]``
@@ -749,4 +763,5 @@ class SortedValuesView[V](ValuesView[V], Sequence[V]):
         key = mapping_list[index]
         return mapping[key]
 
-    __delitem__ = _view_delitem
+    def __delitem__(self, index: int | slice) -> None:
+        return _view_delitem(self, index)

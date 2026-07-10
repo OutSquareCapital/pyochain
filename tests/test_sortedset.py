@@ -4,16 +4,13 @@ Original source:
 https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_coverage_sortedset.py
 """
 
+import operator
 from typing import override
 
 from pyochain.collections import SortedSet
 
 
-def negate(value):
-    return -value
-
-
-def modulo(value):
+def modulo(value: int) -> int:
     return value % 10
 
 
@@ -26,8 +23,8 @@ def test_init() -> None:
 
 
 def test_init_key() -> None:
-    temp = SortedSet(range(100), key=negate)
-    assert temp.key == negate
+    temp = SortedSet(range(100), key=operator.neg)
+    assert temp.key == operator.neg
 
 
 def test_contains() -> None:
@@ -51,7 +48,7 @@ def test_getitem_slice() -> None:
 
 
 def test_getitem_key() -> None:
-    temp = SortedSet(range(100), key=negate)
+    temp = SortedSet(range(100), key=operator.neg)
     temp._reset(7)
     assert all(temp[val] == (99 - val) for val in range(100))
 
@@ -539,7 +536,7 @@ def test_repr_recursion() -> None:
 def test_pickle() -> None:
     import pickle
 
-    alpha = SortedSet(range(10000), key=negate)
+    alpha = SortedSet(range(10000), key=operator.neg)
     alpha._reset(500)
     data = pickle.dumps(alpha)
     beta = pickle.loads(data)

@@ -2,15 +2,18 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
-from collections.abc import MutableSet, Sequence
+from collections.abc import Callable, Iterable, Iterator, MutableSet, Sequence
 from collections.abc import Set as AbstractSet
 from itertools import chain
 from operator import eq, ge, gt, le, lt, ne
 from reprlib import recursive_repr
 from textwrap import dedent
-from typing import override
+from typing import TYPE_CHECKING, Any, Self, overload, override
 
 from ._sorted_list import SortedKeyList, SortedList
+
+if TYPE_CHECKING:
+    from types import NotImplementedType
 
 
 class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
@@ -86,7 +89,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
 
     """
 
-    def __init__(self, iterable=None, key=None) -> None:
+    def __init__(self, iterable: Iterable[T] | None = None, key=None) -> None:
         """Initialize sorted set instance.
 
         Optional `iterable` argument provides an initial iterable of values to
@@ -117,7 +120,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         # already present.
 
         if not hasattr(self, "_set"):
-            self._set = set()
+            self._set = set[T]()
 
         self._list = (
             SortedKeyList(self._set, key=key)
@@ -153,7 +156,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
             self._update(iterable)
 
     @classmethod
-    def _fromset(cls, values, key=None):
+    def _fromset(cls, values: set[T], key=None) -> Self:
         """Initialize sorted set from existing set.
 
         Used internally by set operations that return a new set.
@@ -174,7 +177,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         return self._key
 
     @override
-    def __contains__(self, value) -> bool:
+    def __contains__(self, value: object) -> bool:
         """Return true if `value` is an element of the sorted set.
 
         ``ss.__contains__(value)`` <==> ``value in ss``
@@ -191,8 +194,12 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         """
         return value in self._set
 
+    @overload
+    def __getitem__(self, index: int) -> T: ...
+    @overload
+    def __getitem__(self, index: slice) -> list[T]: ...
     @override
-    def __getitem__(self, index):
+    def __getitem__(self, index: int | slice) -> T | list[T]:
         """Lookup value at `index` in sorted set.
 
         ``ss.__getitem__(index)`` <==> ``ss[index]``
@@ -219,7 +226,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         """
         return self._list[index]
 
-    def __delitem__(self, index) -> None:
+    def __delitem__(self, index: int | slice) -> None:
         """Remove value at `index` from sorted set.
 
         ``ss.__delitem__(index)`` <==> ``del ss[index]``
@@ -251,10 +258,10 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         del list_[index]
 
     @staticmethod
-    def __make_cmp(set_op, symbol, doc):
+    def __make_cmp(set_op: Callable[[object, object], bool], symbol: str, doc: str):
         """Make comparator method."""
 
-        def comparer(self, other):
+        def comparer(self: Self, other: object) -> bool | NotImplementedType:
             """Compare method for sorted set and set."""
             if isinstance(other, SortedSet):
                 return set_op(self._set, other._set)
@@ -298,7 +305,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         return len(self._set)
 
     @override
-    def __iter__(self):
+    def __iter__(self) -> Iterator[T]:
         """Return an iterator over the sorted set.
 
         ``ss.__iter__()`` <==> ``iter(ss)``
@@ -322,7 +329,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         return reversed(self._list)
 
     @override
-    def add(self, value) -> None:
+    def add(self, value: T) -> None:
         """Add `value` to sorted set.
 
         Runtime complexity: `O(log(n))` -- approximate.
@@ -354,7 +361,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         self._set.clear()
         self._list.clear()
 
-    def copy(self):
+    def copy(self) -> Self:
         """Return a shallow copy of the sorted set.
 
         Runtime complexity: `O(n)`
@@ -364,10 +371,11 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         """
         return self._fromset(set(self._set), key=self._key)
 
-    __copy__ = copy
+    def __copy__(self) -> Self:
+        return self.copy()
 
     @override
-    def count(self, value) -> int:
+    def count(self, value: T) -> int:
         """Return number of occurrences of `value` in the sorted set.
 
         Runtime complexity: `O(1)`
@@ -383,7 +391,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         return 1 if value in self._set else 0
 
     @override
-    def discard(self, value) -> None:
+    def discard(self, value: T) -> None:
         """Remove `value` from sorted set if it is a member.
 
         If `value` is not a member, do nothing.
@@ -407,7 +415,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
     _discard = discard
 
     @override
-    def pop(self, index=-1):
+    def pop(self, index: int = -1) -> T:
         """Remove and return value at `index` in sorted set.
 
         Raise :exc:`IndexError` if the sorted set is empty or index is out of
@@ -437,7 +445,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         return value
 
     @override
-    def remove(self, value) -> None:
+    def remove(self, value: T) -> None:
         """Remove `value` from sorted set; `value` must be a member.
 
         If `value` is not a member, raise :exc:`KeyError`.
@@ -460,7 +468,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
         self._set.remove(value)
         self._list.remove(value)
 
-    def difference(self, *iterables):
+    def difference(self, *iterables: Iterable[Any]) -> Self:
         """Return the difference of two or more sets as a new sorted set.
 
         The `difference` method also corresponds to operator ``-``.
@@ -483,7 +491,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
 
     __sub__ = difference
 
-    def difference_update(self, *iterables):
+    def difference_update(self, *iterables: Iterable[Any]) -> Self:
         """Remove all values of `iterables` from this sorted set.
 
         The `difference_update` method also corresponds to operator ``-=``.
@@ -516,7 +524,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
 
     __isub__ = difference_update
 
-    def intersection(self, *iterables):
+    def intersection(self, *iterables: Iterable[Any]) -> Self:
         """Return the intersection of two or more sets as a new sorted set.
 
         The `intersection` method also corresponds to operator ``&``.
@@ -540,7 +548,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
     __and__ = intersection
     __rand__ = __and__
 
-    def intersection_update(self, *iterables):
+    def intersection_update(self, *iterables: Iterable[Any]) -> Self:
         """Update the sorted set with the intersection of `iterables`.
 
         The `intersection_update` method also corresponds to operator ``&=``.
@@ -569,7 +577,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
 
     __iand__ = intersection_update
 
-    def symmetric_difference(self, other):
+    def symmetric_difference(self, other: Iterable[T]) -> Self:
         """Return the symmetric difference with `other` as a new sorted set.
 
         The `symmetric_difference` method also corresponds to operator ``^``.
@@ -593,7 +601,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
     __xor__ = symmetric_difference
     __rxor__ = __xor__
 
-    def symmetric_difference_update(self, other):
+    def symmetric_difference_update(self, other: Iterable[T]) -> Self:
         """Update the sorted set with the symmetric difference with `other`.
 
         The `symmetric_difference_update` method also corresponds to operator
@@ -623,7 +631,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
 
     __ixor__ = symmetric_difference_update
 
-    def union(self, *iterables):
+    def union(self, *iterables: Iterable[T]) -> Self:
         """Return new sorted set with values from itself and all `iterables`.
 
         The `union` method also corresponds to operator ``|``.
@@ -643,7 +651,7 @@ class SortedSet[T](MutableSet[T], Sequence[T]):  # noqa: PLW1641
     __or__ = union
     __ror__ = __or__
 
-    def update(self, *iterables):
+    def update(self, *iterables: Iterable[T]) -> Self:
         """Update the sorted set adding values from all `iterables`.
 
         The `update` method also corresponds to operator ``|=``.
