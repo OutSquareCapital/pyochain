@@ -2,13 +2,16 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
 from itertools import chain
 from reprlib import recursive_repr
-from typing import override
+from typing import TYPE_CHECKING, Self, override
 
-from ._sorted_list import SortedKeyList, SortedList
+from ._sorted_list import KeyFunc, SortedKeyList, SortedList
 from ._sorted_views import SortedItemsView, SortedKeysView, SortedValuesView
+
+if TYPE_CHECKING:
+    from _typeshed import SupportsRichComparison
 
 
 class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
@@ -119,12 +122,10 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
 
         """
         if args and (args[0] is None or callable(args[0])):
-            key = self._key = args[0]
             args = args[1:]
 
-            self._list = SortedKeyList(key=key) if key is not None else SortedList()
+            self._list = SortedList()
         else:
-            key = self._key = None
             self._list = SortedList()
 
         # Reaching through ``self._list`` repeatedly adds unnecessary overhead
@@ -149,22 +150,7 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
         self.islice = list_.islice
         self._reset = list_._reset
 
-        if key is not None:
-            self.bisect_key_left = list_.bisect_key_left
-            self.bisect_key_right = list_.bisect_key_right
-            self.bisect_key = list_.bisect_key
-            self.irange_key = list_.irange_key
-
         self._update(*args, **kwargs)
-
-    @property
-    def key(self):
-        """Function used to extract comparison key from keys.
-
-        Sorted dict compares keys directly when the key function is none.
-
-        """
-        return self._key
 
     @override
     def clear(self) -> None:
@@ -250,18 +236,18 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
     _setitem = __setitem__
 
     @override
-    def __or__(self, other):
+    def __or__(self, other: object):
         if not isinstance(other, Mapping):
             return NotImplemented
         items = chain(self.items(), other.items())
-        return self.__class__(self._key, items)
+        return self.__class__(items)
 
     @override
-    def __ror__(self, other):
+    def __ror__(self, other: object) -> Self:
         if not isinstance(other, Mapping):
             return NotImplemented
         items = chain(other.items(), self.items())
-        return self.__class__(self._key, items)
+        return self.__class__(items)
 
     @override
     def __ior__(self, other):
@@ -269,7 +255,7 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
         return self
 
     @override
-    def copy(self):
+    def copy(self) -> Self:
         """Return a shallow copy of the sorted dict.
 
         Runtime complexity: `O(n)`
@@ -277,7 +263,7 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
         :return: new sorted dict
 
         """
-        return self.__class__(self._key, self.items())
+        return self.__class__(self.items())
 
     __copy__ = copy
 
@@ -523,6 +509,149 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
 
         """
         items = dict.copy(self)
+        return (type(self), (items,))
+
+    @recursive_repr()
+    def __repr__(self) -> str:
+        """Return string representation of sorted dict.
+
+        ``sd.__repr__()`` <==> ``repr(sd)``
+
+        :return: string representation
+
+        """
+        type_name = type(self).__name__
+        item_format = "{!r}: {!r}".format
+        items = ", ".join(item_format(key, self[key]) for key in self._list)
+        return f"{type_name}({{{items}}})"
+
+    def _check(self) -> None:
+        """Check invariants of sorted dict.
+
+        Runtime complexity: `O(n)`
+
+        """
+        list_ = self._list
+        list_._check()
+        assert len(self) == len(list_)
+        assert all(key in self for key in list_)
+
+
+class SortedKeyDict[K, V, OT: SupportsRichComparison](SortedDict[K, V]):
+    def __init__(self, *args, **kwargs) -> None:
+        """Initialize sorted dict instance.
+
+        Optional key-function argument defines a callable that, like the `key`
+        argument to the built-in `sorted` function, extracts a comparison key
+        from each dictionary key. If no function is specified, the default
+        compares the dictionary keys directly. The key-function argument must
+        be provided as a positional argument and must come before all other
+        arguments.
+
+        Optional iterable argument provides an initial sequence of pairs to
+        initialize the sorted dict. Each pair in the sequence defines the key
+        and corresponding value. If a key is seen more than once, the last
+        value associated with it is stored in the new sorted dict.
+
+        Optional mapping argument provides an initial mapping of items to
+        initialize the sorted dict.
+
+        If keyword arguments are given, the keywords themselves, with their
+        associated values, are added as items to the dictionary. If a key is
+        specified both in the positional argument and as a keyword argument,
+        the value associated with the keyword is stored in the
+        sorted dict.
+
+        Sorted dict keys must be hashable, per the requirement for Python's
+        dictionaries. Keys (or the result of the key-function) must also be
+        comparable, per the requirement for sorted lists.
+
+        >>> d = {"alpha": 1, "beta": 2}
+        >>> SortedDict([("alpha", 1), ("beta", 2)]) == d
+        True
+        >>> SortedDict({"alpha": 1, "beta": 2}) == d
+        True
+        >>> SortedDict(alpha=1, beta=2) == d
+        True
+
+        """
+        self._key: KeyFunc[K, OT] = args[0]
+        args = args[1:]
+
+        self._list = SortedKeyList(key=self._key)
+
+        # Reaching through ``self._list`` repeatedly adds unnecessary overhead
+        # so cache references to sorted list methods.
+
+        list_ = self._list
+        self._list_add = list_.add
+        self._list_clear = list_.clear
+        self._list_iter = list_.__iter__
+        self._list_reversed = list_.__reversed__
+        self._list_pop = list_.pop
+        self._list_remove = list_.remove
+        self._list_update = list_.update
+
+        # Expose some sorted list methods publicly.
+
+        self.bisect_left = list_.bisect_left
+        self.bisect = list_.bisect_right
+        self.bisect_right = list_.bisect_right
+        self.index = list_.index
+        self.irange = list_.irange
+        self.islice = list_.islice
+        self._reset = list_._reset
+
+        self._update(*args, **kwargs)
+
+    @property
+    def key(self) -> KeyFunc[K, OT]:
+        """Function used to extract comparison key from keys.
+
+        Sorted dict compares keys directly when the key function is none.
+
+        """
+        return self._key
+
+    @override
+    def copy(self) -> Self:
+        return self.__class__(self._key, self.items())
+
+    def irange_key(
+        self,
+        min_key: OT | None = None,
+        max_key: OT | None = None,
+        inclusive: tuple[bool, bool] = (True, True),
+        reverse: bool = False,
+    ) -> Iterator[K]:
+        return self._list.irange_key(min_key, max_key, inclusive, reverse)
+
+    def bisect_key_left(self, key: OT) -> int:
+        return self._list.bisect_key_left(key)
+
+    def bisect_key_right(self, key: OT) -> int:
+        return self._list.bisect_key_right(key)
+
+    def bisect_key(self, key: OT) -> int:
+        return self._list.bisect_key(key)
+
+    @override
+    def __ror__(self, other: object) -> Self:
+        if not isinstance(other, Mapping):
+            return NotImplemented
+        items = chain(other.items(), self.items())
+        return self.__class__(self._key, items)
+
+    @override
+    def __or__(self, other: object) -> Self:
+        if not isinstance(other, Mapping):
+            return NotImplemented
+        items = chain(self.items(), other.items())
+        return self.__class__(self._key, items)
+
+    @override
+    def __reduce__(self):
+        items = dict.copy(self)
         return (type(self), (self._key, items))
 
     @recursive_repr()
@@ -540,14 +669,3 @@ class SortedDict[K, V](dict[K, V]):  # noqa: FURB189
         item_format = "{!r}: {!r}".format
         items = ", ".join(item_format(key, self[key]) for key in self._list)
         return f"{type_name}({key_arg}{{{items}}})"
-
-    def _check(self) -> None:
-        """Check invariants of sorted dict.
-
-        Runtime complexity: `O(n)`
-
-        """
-        list_ = self._list
-        list_._check()
-        assert len(self) == len(list_)
-        assert all(key in self for key in list_)

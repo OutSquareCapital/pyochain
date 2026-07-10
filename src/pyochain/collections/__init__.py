@@ -3,7 +3,7 @@
 from ._counter import PyoCounter
 from ._deque import Deque
 from ._heapq import Heap, HeapMax, HeapMin
-from ._sorted_dict import SortedDict
+from ._sorted_dict import SortedDict, SortedKeyDict
 from ._sorted_list import SortedKeyList, SortedList
 from ._sorted_set import SortedKeySet, SortedSet
 from ._stable_set import StableSet
@@ -15,6 +15,7 @@ __all__ = [
     "HeapMin",
     "PyoCounter",
     "SortedDict",
+    "SortedKeyDict",
     "SortedKeyList",
     "SortedKeySet",
     "SortedList",

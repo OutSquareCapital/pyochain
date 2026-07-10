@@ -7,11 +7,12 @@ https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_cov
 import gc
 import platform
 import string
+from collections.abc import Mapping
 from typing import override
 
 import pytest
 
-from pyochain.collections import SortedDict
+from pyochain.collections import SortedDict, SortedKeyDict
 
 
 def negate(value):
@@ -22,22 +23,21 @@ def modulo(value):
     return value % 10
 
 
-def get_keysview(dic):
+def get_keysview[K, V](dic: Mapping[K, V]):
     return dic.keys()
 
 
-def get_itemsview(dic):
+def get_itemsview[K, V](dic: Mapping[K, V]):
     return dic.items()
 
 
 def test_init() -> None:
     temp = SortedDict()
-    assert temp.key is None
     temp._check()
 
 
 def test_init_key() -> None:
-    temp = SortedDict(negate)
+    temp = SortedKeyDict(negate)
     assert temp.key == negate
     temp._check()
 
@@ -112,7 +112,7 @@ def test_iter() -> None:
 
 
 def test_iter_key() -> None:
-    temp = SortedDict(negate, ((val, val) for val in range(100)))
+    temp = SortedKeyDict(negate, ((val, val) for val in range(100)))
     temp._reset(7)
     assert all(lhs == rhs for lhs, rhs in zip(temp, reversed(range(100)), strict=False))
 
@@ -129,7 +129,7 @@ def test_reversed() -> None:
 
 
 def test_reversed_key() -> None:
-    temp = SortedDict(modulo, ((val, val) for val in range(100)))
+    temp = SortedKeyDict(modulo, ((val, val) for val in range(100)))
     temp._reset(7)
     values = sorted(range(100), key=modulo)
     assert all(
@@ -160,7 +160,7 @@ def test_irange() -> None:
 
 
 def test_irange_key() -> None:
-    temp = SortedDict(modulo, ((val, val) for val in range(100)))
+    temp = SortedKeyDict(modulo, ((val, val) for val in range(100)))
     temp._reset(7)
     values = sorted(range(100), key=modulo)
 
@@ -344,11 +344,11 @@ class Identity:
 
 
 def test_repr_recursion() -> None:
-    temp = SortedDict(Identity(), {"alice": 3, "bob": 1, "carol": 2, "dave": 4})
+    temp = SortedKeyDict(Identity(), {"alice": 3, "bob": 1, "carol": 2, "dave": 4})
     temp["bob"] = temp
     assert (
         repr(temp)
-        == "SortedDict(identity, {'alice': 3, 'bob': ..., 'carol': 2, 'dave': 4})"
+        == "SortedKeyDict(identity, {'alice': 3, 'bob': ..., 'carol': 2, 'dave': 4})"
     )
 
 
@@ -370,7 +370,7 @@ def test_index() -> None:
 
 
 def test_index_key() -> None:
-    temp = SortedDict(negate, ((val, val) for val in range(100)))
+    temp = SortedKeyDict(negate, ((val, val) for val in range(100)))
     temp._reset(7)
     assert all(temp.index(val) == (99 - val) for val in range(100))
 
@@ -384,7 +384,7 @@ def test_bisect() -> None:
 
 
 def test_bisect_key() -> None:
-    temp = SortedDict(modulo, ((val, val) for val in range(100)))
+    temp = SortedKeyDict(modulo, ((val, val) for val in range(100)))
     temp._reset(7)
     assert all(temp.bisect(val) == ((val % 10) + 1) * 10 for val in range(100))
     assert all(temp.bisect_right(val) == ((val % 10) + 1) * 10 for val in range(100))
@@ -392,7 +392,7 @@ def test_bisect_key() -> None:
 
 
 def test_bisect_key2() -> None:
-    temp = SortedDict(modulo, ((val, val) for val in range(100)))
+    temp = SortedKeyDict(modulo, ((val, val) for val in range(100)))
     temp._reset(7)
     assert all(temp.bisect_key(val) == ((val % 10) + 1) * 10 for val in range(10))
     assert all(temp.bisect_key_right(val) == ((val % 10) + 1) * 10 for val in range(10))
@@ -524,7 +524,7 @@ def test_items_view_index() -> None:
 def test_pickle() -> None:
     import pickle
 
-    alpha = SortedDict(negate, zip(range(10000), range(10000), strict=False))
+    alpha = SortedKeyDict(negate, zip(range(10000), range(10000), strict=False))
     alpha._reset(500)
     beta = pickle.loads(pickle.dumps(alpha))
     assert alpha == beta
