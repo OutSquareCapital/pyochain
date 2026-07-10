@@ -97,12 +97,12 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
         :param iterable: initial values (optional)
 
         """
-        self._len = 0
-        self._load = self.DEFAULT_LOAD_FACTOR
+        self._len: int = 0
+        self._load: int = self.DEFAULT_LOAD_FACTOR
         self._lists = []
         self._maxes = []
-        self._index = []
-        self._offset = 0
+        self._index: list[int] = []
+        self._offset: int = 0
 
         if iterable is not None:
             self._update(iterable)
@@ -492,7 +492,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
 
         return total + idx
 
-    def _pos(self, idx):
+    def _pos(self, idx: int):
         """Convert an index into an index pair (lists index, sublist index).
 
         This pair can be used to access the corresponding lists position.
@@ -719,7 +719,7 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
     @overload
     def __getitem__(self, index: slice) -> list[T]: ...
     @override
-    def __getitem__(self, index: int | slice) -> T | list[T]:
+    def __getitem__(self, index: int | slice) -> T | list[T]:  # noqa: C901, PLR0911, PLR0912, PLR0914
         """Lookup value at `index` in sorted list.
 
         ``sl.__getitem__(index)`` <==> ``sl[index]``
@@ -1615,12 +1615,12 @@ class SortedList[T](MutableSequence[T]):  # noqa: PLW1641
             raise
 
 
-def identity(value):
+def identity[T](value: T) -> T:
     """Identity function."""
     return value
 
 
-class SortedKeyList[T](SortedList[T]):
+class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):
     """Sorted-key list is a subtype of sorted list.
 
     The sorted-key list maintains values in comparison order based on the
@@ -1646,7 +1646,9 @@ class SortedKeyList[T](SortedList[T]):
 
     """
 
-    def __init__(self, iterable: Iterable[T] | None = None, key=identity) -> None:
+    def __init__(
+        self, iterable: Iterable[T] | None = None, key: KeyFunc[T, OT] = identity
+    ) -> None:
         """Initialize sorted-key list instance.
 
         Optional `iterable` argument provides an initial iterable of values to
@@ -1670,9 +1672,9 @@ class SortedKeyList[T](SortedList[T]):
         :param key: function used to extract comparison key (optional)
 
         """
-        self._key = key
-        self._len = 0
-        self._load = self.DEFAULT_LOAD_FACTOR
+        self._key: KeyFunc[T, OT] = key
+        self._len: int = 0
+        self._load: int = self.DEFAULT_LOAD_FACTOR
         self._lists = []
         self._keys = []
         self._maxes = []
@@ -1684,7 +1686,7 @@ class SortedKeyList[T](SortedList[T]):
 
     @property
     @override
-    def key(self):
+    def key(self) -> KeyFunc[T, OT]:
         """Function used to extract comparison key from values."""
         return self._key
 
@@ -1943,7 +1945,9 @@ class SortedKeyList[T](SortedList[T]):
         ValueError: 0 not in list
 
         :param value: `value` to remove from sorted-key list
-        :raises ValueError: if `value` is not in sorted-key list
+
+        Raises:
+            ValueError: if `value` is not in sorted-key list
 
         """
         maxes = self._maxes
@@ -2081,8 +2085,12 @@ class SortedKeyList[T](SortedList[T]):
         )
 
     def irange_key(
-        self, min_key=None, max_key=None, inclusive=(True, True), reverse=False
-    ):
+        self,
+        min_key: OT | None = None,
+        max_key: OT | None = None,
+        inclusive: tuple[bool, bool] = (True, True),
+        reverse: bool = False,
+    ) -> Iterator[T]:
         """Create an iterator of values between `min_key` and `max_key`.
 
         Both `min_key` and `max_key` default to `None` which is automatically
@@ -2212,7 +2220,7 @@ class SortedKeyList[T](SortedList[T]):
 
     bisect = bisect_right
 
-    def bisect_key_left(self, key):
+    def bisect_key_left(self, key: OT) -> int:
         """Return an index to insert `key` in the sorted-key list.
 
         If the `key` is already present, the insertion point will be before (to
@@ -2247,7 +2255,7 @@ class SortedKeyList[T](SortedList[T]):
 
     _bisect_key_left = bisect_key_left
 
-    def bisect_key_right(self, key):
+    def bisect_key_right(self, key: OT) -> int:
         """Return an index to insert `key` in the sorted-key list.
 
         Similar to `bisect_key_left`, but if `key` is already present, the
@@ -2330,7 +2338,7 @@ class SortedKeyList[T](SortedList[T]):
                 idx = 0
 
     @override
-    def copy(self):
+    def copy(self) -> Self:
         """Return a shallow copy of the sorted-key list.
 
         Runtime complexity: `O(n)`
