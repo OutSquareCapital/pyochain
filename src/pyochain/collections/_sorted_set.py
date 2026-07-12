@@ -141,6 +141,8 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
 
         Used internally by set operations that return a new set.
 
+        Returns:
+            Self
         """
         sorted_set = object.__new__(cls)
         sorted_set._set = values
@@ -230,10 +232,8 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
 
     @staticmethod
     def __make_cmp(set_op: Callable[[object, object], bool], symbol: str, doc: str):
-        """Make comparator method."""
 
         def comparer(self: Self, other: object) -> bool | NotImplementedType:
-            """Compare method for sorted set and set."""
             if isinstance(other, SortedSet):
                 return set_op(self._set, other._set)
             if isinstance(other, AbstractSet):

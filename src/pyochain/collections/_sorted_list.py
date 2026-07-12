@@ -107,6 +107,10 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         if iterable is not None:
             self.update(iterable)
 
+    def _collapse_lists(self) -> list[T]:
+        init: list[T] = []
+        return reduce(iadd, self._lists, init)
+
     def reset(self, load: int) -> None:
         """Reset sorted list load factor.
 
@@ -125,7 +129,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         :param int load: load-factor for sorted list sublists
 
         """
-        values: list[T] = reduce(iadd, self._lists, [])
+        values = self._collapse_lists()
         self.clear()
         self._load = load
         self.update(values)
@@ -751,7 +755,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
                 # sorted list.
 
                 if start == 0 and stop == self._len:
-                    return reduce(iadd, self._lists, [])
+                    return self._collapse_lists()
 
                 start_pos, start_idx = self._pos(start)
                 start_list = lists[start_pos]
@@ -1394,7 +1398,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         :return: new sorted list
 
         """
-        values: list[T] = reduce(iadd, self._lists, [])
+        values = self._collapse_lists()
         values.extend(other)
         return self.__class__(values)
 
@@ -1440,7 +1444,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         :return: new sorted list
 
         """
-        values: list[T] = reduce(iadd, self._lists, []) * num
+        values = self._collapse_lists() * num
         return self.__class__(values)
 
     def __rmul__(self, num: int) -> Self:
@@ -1464,7 +1468,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
             existing sorted list
 
         """
-        values: list[T] = reduce(iadd, self._lists, []) * num
+        values = self._collapse_lists() * num
         self.clear()
         self.update(values)
         return self
@@ -1519,7 +1523,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
 
     @override
     def __reduce__(self) -> tuple[type[Self], tuple[list[T]]]:
-        values: list[T] = reduce(iadd, self._lists, [])
+        values = self._collapse_lists()
         return (type(self), (values,))
 
     @recursive_repr()
@@ -2371,7 +2375,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         :return: new sorted-key list
 
         """
-        values: list[T] = reduce(iadd, self._lists, [])
+        values = self._collapse_lists()
         values.extend(other)
         return self.__class__(values, key=self._key)
 
@@ -2392,12 +2396,12 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         :return: new sorted-key list
 
         """
-        values: list[T] = reduce(iadd, self._lists, []) * num
+        values = self._collapse_lists() * num
         return self.__class__(values, key=self._key)
 
     @override
     def __reduce__(self) -> tuple[type[Self], tuple[list[T], KeyFunc[T, OT]]]:
-        values: list[T] = reduce(iadd, self._lists, [])
+        values = self._collapse_lists()
         return (type(self), (values, self.key))
 
     @recursive_repr()

@@ -531,7 +531,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
                 self[key] = pairs[key]
 
     @override
-    def __reduce__(self):
+    def __reduce__(self) -> tuple[type[Self], tuple[dict[K, V]]]:
         """Support for pickle.
 
         The tricks played with caching references in
@@ -662,7 +662,7 @@ class SortedKeyDict[K: Hashable, V, OT: SupportsRichComparison](SortedDict[K, V]
         return SortedKeyDict(items, key=self._key)
 
     @override
-    def __reduce__(self):
+    def __reduce__(self) -> tuple[partial[Self], tuple[dict[K, V]]]:
         items = dict[K, V].copy(self)
         return (partial(type(self), key=self._key), (items,))
 
