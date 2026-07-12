@@ -401,20 +401,20 @@ def test_isdisjoint() -> None:
     assert temp.isdisjoint(that)
 
 
-def test_issubset() -> None:
+def test_is_subset() -> None:
     temp = SortedSet(range(100))
     temp.reset(7)
     that = SortedSet(range(25, 75))
     that.reset(9)
-    assert that.issubset(temp)
+    assert that.is_subset(temp)
 
 
-def test_issuperset() -> None:
+def test_is_superset() -> None:
     temp = SortedSet(range(100))
     temp.reset(7)
     that = SortedSet(range(25, 75))
     that.reset(9)
-    assert temp.issuperset(that)
+    assert temp.is_superset(that)
 
 
 def test_xor() -> None:

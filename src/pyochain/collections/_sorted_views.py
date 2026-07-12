@@ -6,16 +6,20 @@ from collections.abc import (
     ItemsView,
     Iterable,
     KeysView,
-    MappingView,
     Sequence,
     ValuesView,
 )
-from typing import overload, override
+from typing import TYPE_CHECKING, Any, overload, override
 
 from ._sorted_set import SortedSet
 
+if TYPE_CHECKING:
+    from _typeshed import SupportsRichComparison
 
-class SortedKeysView[K](KeysView[K], Sequence[K]):
+    from pyochain.collections import SortedDict
+
+
+class SortedKeysView[K: SupportsRichComparison](KeysView[K], Sequence[K]):
     """Sorted keys view is a dynamic view of the sorted dict's keys.
 
     When the sorted dict's keys change, the view reflects those changes.
@@ -23,6 +27,8 @@ class SortedKeysView[K](KeysView[K], Sequence[K]):
     The keys view implements the set and sequence abstract base classes.
 
     """
+
+    _mapping: SortedDict[K, Any]
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
@@ -66,7 +72,7 @@ class SortedKeysView[K](KeysView[K], Sequence[K]):
         :raises IndexError: if index out of range
 
         """
-        return self._mapping._list[index]
+        return self._mapping._list[index]  # pyright: ignore[reportPrivateUsage]
 
     def __delitem__(self, index: int | slice) -> None:
         return _view_delitem(self, index)
@@ -81,11 +87,12 @@ class SortedItemsView[K, V](ItemsView[K, V], Sequence[tuple[K, V]]):
 
     """
 
-    __slots__ = ()
+    _mapping: SortedDict[K, V]
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
     @classmethod
     @override
-    def _from_iterable(cls, it):
+    def _from_iterable(cls, it: Iterable[tuple[K, V]]) -> SortedSet[tuple[K, V]]:  # pyright: ignore[reportIncompatibleMethodOverride]
         return SortedSet(it)
 
     @overload
@@ -123,7 +130,7 @@ class SortedItemsView[K, V](ItemsView[K, V], Sequence[tuple[K, V]]):
 
         """
         mapping = self._mapping
-        mapping_list = mapping._list
+        mapping_list = mapping._list  # pyright: ignore[reportPrivateUsage]
 
         if isinstance(index, slice):
             keys = mapping_list[index]
@@ -145,7 +152,8 @@ class SortedValuesView[V](ValuesView[V], Sequence[V]):
 
     """
 
-    __slots__ = ()
+    _mapping: SortedDict[Any, V]
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
     @overload
     def __getitem__(self, index: int) -> V: ...
@@ -181,20 +189,21 @@ class SortedValuesView[V](ValuesView[V], Sequence[V]):
             value or list of values
         """
         mapping = self._mapping
-        mapping_list = mapping._list
+        mapping_list = mapping._list  # pyright: ignore[reportPrivateUsage]
 
         if isinstance(index, slice):
-            keys = mapping_list[index]
-            return [mapping[key] for key in keys]
+            return [mapping[key] for key in mapping_list[index]]  # pyright: ignore[reportAny]
 
-        key = mapping_list[index]
-        return mapping[key]
+        return mapping[mapping_list[index]]
 
     def __delitem__(self, index: int | slice) -> None:
         return _view_delitem(self, index)
 
 
-def _view_delitem(self: MappingView, index: int | slice) -> None:
+def _view_delitem[K, V](
+    self: SortedKeysView[K] | SortedValuesView[V] | SortedItemsView[K, V],  # pyright: ignore[reportInvalidTypeArguments]
+    index: int | slice,
+) -> None:
     """Remove item at `index` from sorted dict.
 
     ``view.__delitem__(index)`` <==> ``del view[index]``
@@ -220,9 +229,9 @@ def _view_delitem(self: MappingView, index: int | slice) -> None:
     :raises IndexError: if index out of range
 
     """
-    mapping = self._mapping
-    list_ = mapping._list
-    dict_delitem = dict.__delitem__
+    mapping = self._mapping  # pyright: ignore[reportPrivateUsage]
+    list_ = mapping._list  # pyright: ignore[reportPrivateUsage]
+    dict_delitem = dict[K, V].__delitem__
     if isinstance(index, slice):
         keys = list_[index]
         del list_[index]

@@ -6,9 +6,9 @@ from collections.abc import Hashable, Iterable, Iterator, Mapping, MutableMappin
 from functools import partial
 from itertools import chain
 from reprlib import recursive_repr
-from typing import TYPE_CHECKING, Self, overload, override
+from typing import TYPE_CHECKING, Any, Self, overload, override
 
-from ._sorted_list import KeyFunc, SortedKeyList, SortedList
+from ._sorted_list import KeyFunc, SortedCollection, SortedKeyList, SortedList
 from ._sorted_views import SortedItemsView, SortedKeysView, SortedValuesView
 
 if TYPE_CHECKING:
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     )
 
 
-class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
+class SortedDict[K: Hashable, V](dict[K, V], SortedCollection[K]):
     """Sorted dict is a sorted mutable mapping.
 
     Sorted dict keys are maintained in sorted order. The design of sorted dict
@@ -130,19 +130,39 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
         """
         self._list: SortedList[K] = SortedList()
 
-        # Reaching through ``self._list`` repeatedly adds unnecessary overhead
-        # so cache references to sorted list methods.
-
-        list_ = self._list
-        # Expose some sorted list methods publicly.
-
-        self.bisect_left = list_.bisect_left
-        self.bisect_right = list_.bisect_right
-        self.index = list_.index
-        self.irange = list_.irange
-        self.islice = list_.islice
-        self.reset = list_.reset
         self.update(iterable, **kwargs)
+
+    @override
+    def reset(self, load: int) -> None:
+        return self._list.reset(load)
+
+    @override
+    def bisect_left(self, value: K) -> int:
+        return self._list.bisect_left(value)
+
+    @override
+    def bisect_right(self, value: K) -> int:
+        return self._list.bisect_right(value)
+
+    @override
+    def index(self, value: K, start: int | None = None, stop: int | None = None) -> int:
+        return self._list.index(value, start, stop)
+
+    @override
+    def islice(
+        self, start: int | None = None, stop: int | None = None, reverse: bool = False
+    ) -> Iterator[K]:
+        return self._list.islice(start, stop, reverse)
+
+    @override
+    def irange(
+        self,
+        minimum: K | None = None,
+        maximum: K | None = None,
+        inclusive: tuple[bool, bool] = (True, True),
+        reverse: bool = False,
+    ) -> Iterator[K]:
+        return self._list.irange(minimum, maximum, inclusive, reverse)
 
     @override
     def clear(self) -> None:
@@ -259,18 +279,19 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
     @classmethod
     @overload
     def fromkeys[OT: SupportsRichComparison](
-        cls, iterable: Iterable[OT]
-    ) -> SortedDict[OT, None]: ...
+        cls, iterable: Iterable[OT], value: None = None, /
+    ) -> SortedDict[OT, Any | None]: ...
+
     @classmethod
     @overload
-    def fromkeys[OT: SupportsRichComparison](
-        cls, iterable: Iterable[OT], value: V
-    ) -> SortedDict[OT, V]: ...
+    def fromkeys[OT: SupportsRichComparison, S](
+        cls, iterable: Iterable[OT], value: S, /
+    ) -> SortedDict[OT, S]: ...
     @classmethod
     @override
-    def fromkeys[OT: SupportsRichComparison](
-        cls, iterable: Iterable[OT], value: V | None = None
-    ) -> SortedDict[OT, V | None]:
+    def fromkeys[OT: SupportsRichComparison, S](
+        cls, iterable: Iterable[OT], value: S | None = None, /
+    ) -> SortedDict[OT, Any | S | None]:
         """Return a new sorted dict initailized from `iterable` and `value`.
 
         Items in the sorted dict have keys from `iterable` and values equal to
@@ -606,20 +627,6 @@ class SortedKeyDict[K: Hashable, V, OT: SupportsRichComparison](SortedDict[K, V]
         self._key: KeyFunc[K, OT] = key
 
         self._list: SortedKeyList[K, OT] = SortedKeyList(key=self._key)
-
-        # Reaching through ``self._list`` repeatedly adds unnecessary overhead
-        # so cache references to sorted list methods.
-
-        list_ = self._list
-
-        # Expose some sorted list methods publicly.
-
-        self.bisect_left = list_.bisect_left
-        self.bisect_right = list_.bisect_right
-        self.index = list_.index
-        self.irange = list_.irange
-        self.islice = list_.islice
-        self.reset = list_.reset
 
         self.update(iterable, **kwargs)
 

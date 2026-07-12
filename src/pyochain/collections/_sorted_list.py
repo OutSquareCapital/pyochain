@@ -2,6 +2,7 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from bisect import bisect_left, bisect_right, insort
 from collections.abc import Callable, Iterable, Iterator, MutableSequence, Sequence
 from functools import reduce
@@ -20,7 +21,190 @@ if TYPE_CHECKING:
 type KeyFunc[T, OT: SupportsRichComparison] = Callable[[T], OT]
 
 
-class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW1641
+class SortedCollection[T](ABC):
+    """Base class for sorted collections."""
+
+    @abstractmethod
+    def bisect_left(self, value: T) -> int:
+        """Return an index to insert `value` in the `SortedCollection`.
+
+        If the `value` is already present, the insertion point will be before
+        (to the left of) any existing values.
+
+        Similar to the `bisect` module in the standard library.
+
+        Runtime complexity: `O(log(n))` -- approximate.
+
+        >>> sl = SortedList([10, 11, 12, 13, 14])
+        >>> sl.bisect_left(12)
+        2
+
+        >>> from operator import neg
+        >>> skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
+        >>> skl.bisect_left(1)
+        4
+
+        :param value: insertion index of value in `SortedCollection`
+        :return: index
+
+        """
+
+    @abstractmethod
+    def bisect_right(self, value: T) -> int:
+        """Return an index to insert `value` in the `SortedCollection`.
+
+        Similar to `bisect_left`, but if `value` is already present, the
+        insertion point will be after (to the right of) any existing values.
+
+        Similar to the `bisect` module in the standard library.
+
+        Runtime complexity: `O(log(n))` -- approximate.
+
+        >>> sl = SortedList([10, 11, 12, 13, 14])
+        >>> sl.bisect_right(12)
+        3
+
+        >>> from operator import neg
+        >>> skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
+        >>> skl.bisect_right(1)
+        5
+
+        :param value: insertion index of value in `SortedCollection`
+        :return: index
+
+        """
+
+    @abstractmethod
+    def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:
+        """Return first index of value in sorted list.
+
+        Raise ValueError if `value` is not present.
+
+        Index must be between `start` and `stop` for the `value` to be
+        considered present. The default value, None, for `start` and `stop`
+        indicate the beginning and end of the sorted list.
+
+        Negative indices are supported.
+
+        Runtime complexity: `O(log(n))` -- approximate.
+
+        >>> sl = SortedList("abcde")
+        >>> sl.index("d")
+        3
+        >>> sl.index("z")
+        Traceback (most recent call last):
+          ...
+        ValueError: 'z' is not in list
+        >>> from operator import neg
+        >>> skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
+        >>> skl.index(2)
+        3
+        >>> skl.index(0)
+        Traceback (most recent call last):
+          ...
+        ValueError: 0 is not in list
+
+        :param value: value in sorted list
+        :param int start: start index (default None, start of sorted list)
+        :param int stop: stop index (default None, end of sorted list)
+
+        Raises:
+            ValueError: if value is not present
+        Returns:
+            index of value
+
+        """
+
+    @abstractmethod
+    def irange(
+        self,
+        minimum: T | None = None,
+        maximum: T | None = None,
+        inclusive: tuple[bool, bool] = (True, True),
+        reverse: bool = False,
+    ) -> Iterator[T]:
+        """Create an iterator of values between `minimum` and `maximum`.
+
+        Both `minimum` and `maximum` default to `None` which is automatically
+        inclusive of the beginning and end of the `SortedCollection`.
+
+        The argument `inclusive` is a pair of booleans that indicates whether
+        the minimum and maximum ought to be included in the range,
+        respectively. The default is ``(True, True)`` such that the range is
+        inclusive of both minimum and maximum.
+
+        When `reverse` is `True` the values are yielded from the iterator in
+        reverse order; `reverse` defaults to `False`.
+
+        >>> sl = SortedList("abcdefghij")
+        >>> it = sl.irange("c", "f")
+        >>> list(it)
+        ['c', 'd', 'e', 'f']
+        >>> from operator import neg
+        >>> skl = SortedKeyList([11, 12, 13, 14, 15], key=neg)
+        >>> it = skl.irange(14.5, 11.5)
+        >>> list(it)
+        [14, 13, 12]
+
+        :param minimum: minimum value to start iterating
+        :param maximum: maximum value to stop iterating
+        :param inclusive: pair of booleans
+        :param bool reverse: yield values in reverse order
+
+        Returns:
+            `Iterator`
+
+        """
+
+    @abstractmethod
+    def islice(
+        self, start: int | None = None, stop: int | None = None, reverse: bool = False
+    ) -> Iterator[T]:
+        """Return an iterator that slices sorted list from `start` to `stop`.
+
+        The `start` and `stop` index are treated inclusive and exclusive,
+        respectively.
+
+        Both `start` and `stop` default to `None` which is automatically
+        inclusive of the beginning and end of the sorted list.
+
+        When `reverse` is `True` the values are yielded from the iterator in
+        reverse order; `reverse` defaults to `False`.
+
+        >>> sl = SortedList("abcdefghij")
+        >>> it = sl.islice(2, 6)
+        >>> list(it)
+        ['c', 'd', 'e', 'f']
+
+        :param int start: start index (inclusive)
+        :param int stop: stop index (exclusive)
+        :param bool reverse: yield values in reverse order
+        :return: iterator
+
+        """
+
+    @abstractmethod
+    def reset(self, load: int) -> None:
+        """Reset sorted list load factor.
+
+        The `load` specifies the load-factor of the list. The default load
+        factor of 1000 works well for lists from tens to tens-of-millions of
+        values. Good practice is to use a value that is the cube root of the
+        list size. With billions of elements, the best load factor depends on
+        your usage. It's best to leave the load factor at the default until you
+        start benchmarking.
+
+        See :doc:`implementation` and :doc:`performance-scale` for more
+        information.
+
+        Runtime complexity: `O(n)`
+
+        :param int load: load-factor for sorted list sublists
+
+        """
+
+
+class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection[T]):  # noqa: PLW1641
     """Sorted list is a sorted mutable sequence.
 
     Sorted list values are maintained in sorted order.
@@ -111,24 +295,8 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         init: list[T] = []
         return reduce(iadd, self._lists, init)
 
+    @override
     def reset(self, load: int) -> None:
-        """Reset sorted list load factor.
-
-        The `load` specifies the load-factor of the list. The default load
-        factor of 1000 works well for lists from tens to tens-of-millions of
-        values. Good practice is to use a value that is the cube root of the
-        list size. With billions of elements, the best load factor depends on
-        your usage. It's best to leave the load factor at the default until you
-        start benchmarking.
-
-        See :doc:`implementation` and :doc:`performance-scale` for more
-        information.
-
-        Runtime complexity: `O(n)`
-
-        :param int load: load-factor for sorted list sublists
-
-        """
         values = self._collapse_lists()
         self.clear()
         self._load = load
@@ -270,13 +438,13 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         if not maxes:
             return False
 
-        pos = bisect_left(maxes, value)
+        pos = bisect_left(maxes, value)  # pyright: ignore[reportArgumentType]
 
         if pos == len(maxes):
             return False
 
         lists = self._lists
-        idx = bisect_left(lists[pos], value)
+        idx = bisect_left(lists[pos], value)  # pyright: ignore[reportArgumentType]
 
         return lists[pos][idx] == value
 
@@ -871,31 +1039,10 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         msg = "use ``reversed(sl)`` instead"
         raise NotImplementedError(msg)
 
+    @override
     def islice(
         self, start: int | None = None, stop: int | None = None, reverse: bool = False
     ) -> Iterator[T]:
-        """Return an iterator that slices sorted list from `start` to `stop`.
-
-        The `start` and `stop` index are treated inclusive and exclusive,
-        respectively.
-
-        Both `start` and `stop` default to `None` which is automatically
-        inclusive of the beginning and end of the sorted list.
-
-        When `reverse` is `True` the values are yielded from the iterator in
-        reverse order; `reverse` defaults to `False`.
-
-        >>> sl = SortedList("abcdefghij")
-        >>> it = sl.islice(2, 6)
-        >>> list(it)
-        ['c', 'd', 'e', 'f']
-
-        :param int start: start index (inclusive)
-        :param int stop: stop index (exclusive)
-        :param bool reverse: yield values in reverse order
-        :return: iterator
-
-        """
         len_ = self._len
 
         if not len_:
@@ -983,6 +1130,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
             map(lists[max_pos].__getitem__, max_indices),
         )
 
+    @override
     def irange(
         self,
         minimum: T | None = None,
@@ -990,33 +1138,6 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         inclusive: tuple[bool, bool] = (True, True),
         reverse: bool = False,
     ) -> Iterator[T]:
-        """Create an iterator of values between `minimum` and `maximum`.
-
-        Both `minimum` and `maximum` default to `None` which is automatically
-        inclusive of the beginning and end of the sorted list.
-
-        The argument `inclusive` is a pair of booleans that indicates whether
-        the minimum and maximum ought to be included in the range,
-        respectively. The default is ``(True, True)`` such that the range is
-        inclusive of both minimum and maximum.
-
-        When `reverse` is `True` the values are yielded from the iterator in
-        reverse order; `reverse` defaults to `False`.
-
-        >>> sl = SortedList("abcdefghij")
-        >>> it = sl.irange("c", "f")
-        >>> list(it)
-        ['c', 'd', 'e', 'f']
-
-        :param minimum: minimum value to start iterating
-        :param maximum: maximum value to stop iterating
-        :param inclusive: pair of booleans
-        :param bool reverse: yield values in reverse order
-
-        Returns:
-            `Iterator`
-
-        """
         maxes = self._maxes
 
         if not maxes:
@@ -1081,24 +1202,8 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         """
         return self._len
 
+    @override
     def bisect_left(self, value: T) -> int:
-        """Return an index to insert `value` in the sorted list.
-
-        If the `value` is already present, the insertion point will be before
-        (to the left of) any existing values.
-
-        Similar to the `bisect` module in the standard library.
-
-        Runtime complexity: `O(log(n))` -- approximate.
-
-        >>> sl = SortedList([10, 11, 12, 13, 14])
-        >>> sl.bisect_left(12)
-        2
-
-        :param value: insertion index of value in sorted list
-        :return: index
-
-        """
         maxes = self._maxes
 
         if not maxes:
@@ -1112,24 +1217,8 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         idx = bisect_left(self._lists[pos], value)
         return self._loc(pos, idx)
 
+    @override
     def bisect_right(self, value: T) -> int:
-        """Return an index to insert `value` in the sorted list.
-
-        Similar to `bisect_left`, but if `value` is already present, the
-        insertion point will be after (to the right of) any existing values.
-
-        Similar to the `bisect` module in the standard library.
-
-        Runtime complexity: `O(log(n))` -- approximate.
-
-        >>> sl = SortedList([10, 11, 12, 13, 14])
-        >>> sl.bisect_right(12)
-        3
-
-        :param value: insertion index of value in sorted list
-        :return: index
-
-        """
         maxes = self._maxes
 
         if not maxes:
@@ -1197,7 +1286,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         return self.copy()
 
     @override
-    def append(self, value):
+    def append(self, value: T) -> None:
         """Raise not-implemented error.
 
         Implemented to override `MutableSequence.append` which provides an
@@ -1210,7 +1299,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
         raise NotImplementedError(msg)
 
     @override
-    def extend(self, values):
+    def extend(self, values: object) -> None:
         """Raise not-implemented error.
 
         Implemented to override `MutableSequence.extend` which provides an
@@ -1299,36 +1388,6 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T]):  # noqa: PLW164
 
     @override
     def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:  # noqa: C901
-        """Return first index of value in sorted list.
-
-        Raise ValueError if `value` is not present.
-
-        Index must be between `start` and `stop` for the `value` to be
-        considered present. The default value, None, for `start` and `stop`
-        indicate the beginning and end of the sorted list.
-
-        Negative indices are supported.
-
-        Runtime complexity: `O(log(n))` -- approximate.
-
-        >>> sl = SortedList("abcde")
-        >>> sl.index("d")
-        3
-        >>> sl.index("z")
-        Traceback (most recent call last):
-          ...
-        ValueError: 'z' is not in list
-
-        :param value: value in sorted list
-        :param int start: start index (default None, start of sorted list)
-        :param int stop: stop index (default None, end of sorted list)
-
-        Raises:
-            ValueError: if value is not present
-        Returns:
-            index of value
-
-        """
         len_ = self._len
 
         if not len_:
@@ -1971,34 +2030,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         inclusive: tuple[bool, bool] = (True, True),
         reverse: bool = False,
     ) -> Iterator[T]:
-        """Create an iterator of values between `minimum` and `maximum`.
-
-        Both `minimum` and `maximum` default to `None` which is automatically
-        inclusive of the beginning and end of the sorted-key list.
-
-        The argument `inclusive` is a pair of booleans that indicates whether
-        the minimum and maximum ought to be included in the range,
-        respectively. The default is ``(True, True)`` such that the range is
-        inclusive of both minimum and maximum.
-
-        When `reverse` is `True` the values are yielded from the iterator in
-        reverse order; `reverse` defaults to `False`.
-
-        >>> from operator import neg
-        >>> skl = SortedKeyList([11, 12, 13, 14, 15], key=neg)
-        >>> it = skl.irange(14.5, 11.5)
-        >>> list(it)
-        [14, 13, 12]
-
-        :param minimum: minimum value to start iterating
-        :param maximum: maximum value to stop iterating
-        :param inclusive: pair of booleans
-        :param bool reverse: yield values in reverse order
-
-        Returns:
-            `Iterator`
-
-        """
         min_key = self._key(minimum) if minimum is not None else None
         max_key = self._key(maximum) if maximum is not None else None
         return self.irange_key(
@@ -2098,46 +2129,10 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
     @override
     def bisect_left(self, value: T) -> int:
-        """Return an index to insert `value` in the sorted-key list.
-
-        If the `value` is already present, the insertion point will be before
-        (to the left of) any existing values.
-
-        Similar to the `bisect` module in the standard library.
-
-        Runtime complexity: `O(log(n))` -- approximate.
-
-        >>> from operator import neg
-        >>> skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
-        >>> skl.bisect_left(1)
-        4
-
-        :param value: insertion index of value in sorted-key list
-        :return: index
-
-        """
         return self.bisect_key_left(self._key(value))
 
     @override
     def bisect_right(self, value: T) -> int:
-        """Return an index to insert `value` in the sorted-key list.
-
-        Similar to `bisect_left`, but if `value` is already present, the
-        insertion point will be after (to the right of) any existing values.
-
-        Similar to the `bisect` module in the standard library.
-
-        Runtime complexity: `O(log(n))` -- approximate.
-
-        >>> from operator import neg
-        >>> skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
-        >>> skl.bisect_right(1)
-        5
-
-        :param value: insertion index of value in sorted-key list
-        :return: index
-
-        """
         return self.bisect_key_right(self._key(value))
 
     def bisect_key_left(self, key: OT) -> int:
@@ -2265,37 +2260,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
     @override
     def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:  # noqa: C901, PLR0912
-        """Return first index of value in sorted-key list.
-
-        Raise ValueError if `value` is not present.
-
-        Index must be between `start` and `stop` for the `value` to be
-        considered present. The default value, None, for `start` and `stop`
-        indicate the beginning and end of the sorted-key list.
-
-        Negative indices are supported.
-
-        Runtime complexity: `O(log(n))` -- approximate.
-
-        >>> from operator import neg
-        >>> skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
-        >>> skl.index(2)
-        3
-        >>> skl.index(0)
-        Traceback (most recent call last):
-          ...
-        ValueError: 0 is not in list
-
-        :param value: value in sorted-key list
-        :param int start: start index (default None, start of sorted-key list)
-        :param int stop: stop index (default None, end of sorted-key list)
-
-        Raises:
-            ValueError: if value is not present
-        Returns:
-            index of value
-
-        """
         len_ = self._len
 
         if not len_:

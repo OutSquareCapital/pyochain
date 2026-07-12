@@ -10,7 +10,7 @@ from reprlib import recursive_repr
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Self, overload, override
 
-from ._sorted_list import KeyFunc, SortedKeyList, SortedList, identity
+from ._sorted_list import KeyFunc, SortedCollection, SortedKeyList, SortedList, identity
 
 if TYPE_CHECKING:
     from types import NotImplementedType
@@ -18,7 +18,9 @@ if TYPE_CHECKING:
     from _typeshed import SupportsRichComparison
 
 
-class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa: PLW1641
+class SortedSet[T: SupportsRichComparison](  # noqa: PLW1641
+    MutableSet[T], Sequence[T], SortedCollection[T]
+):
     """Sorted set is a sorted mutable set.
 
     Sorted set values are maintained in sorted order. The design of sorted set
@@ -115,25 +117,49 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
 
         self._list: SortedList[T] = SortedList(self._set)
 
-        # Expose some set methods publicly.
-
-        set_ = self._set
-        self.isdisjoint = set_.isdisjoint
-        self.issubset = set_.issubset
-        self.issuperset = set_.issuperset
-
-        # Expose some sorted list methods publicly.
-
-        list_ = self._list
-        self.bisect_left = list_.bisect_left
-        self.bisect_right = list_.bisect_right
-        self.index = list_.index
-        self.irange = list_.irange
-        self.islice = list_.islice
-        self.reset = list_.reset
-
         if iterable is not None:
             _ = self.update(iterable)
+
+    @override
+    def reset(self, load: int) -> None:
+        return self._list.reset(load)
+
+    @override
+    def bisect_left(self, value: T) -> int:
+        return self._list.bisect_left(value)
+
+    @override
+    def bisect_right(self, value: T) -> int:
+        return self._list.bisect_right(value)
+
+    @override
+    def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:
+        return self._list.index(value, start, stop)
+
+    @override
+    def islice(
+        self, start: int | None = None, stop: int | None = None, reverse: bool = False
+    ) -> Iterator[T]:
+        return self._list.islice(start, stop, reverse)
+
+    @override
+    def irange(
+        self,
+        minimum: T | None = None,
+        maximum: T | None = None,
+        inclusive: tuple[bool, bool] = (True, True),
+        reverse: bool = False,
+    ) -> Iterator[T]:
+        return self._list.irange(minimum, maximum, inclusive, reverse)
+
+    def is_disjoint(self, other: Iterable[object]) -> bool:
+        return self._set.isdisjoint(other)
+
+    def is_subset(self, other: Iterable[object]) -> bool:
+        return self._set.issubset(other)
+
+    def is_superset(self, other: Iterable[object]) -> bool:
+        return self._set.issuperset(other)
 
     @classmethod
     def _fromset(cls, values: set[T]) -> Self:
@@ -734,26 +760,6 @@ class SortedKeySet[T, OT: SupportsRichComparison](SortedSet[T]):  # pyright: ign
             self._set = set[T]()
 
         self._list: SortedKeyList[T, OT] = SortedKeyList(self._set, key=key)
-
-        # Expose some set methods publicly.
-
-        set_ = self._set
-        self.isdisjoint = set_.isdisjoint
-        self.issubset = set_.issubset
-        self.issuperset = set_.issuperset
-
-        # Expose some sorted list methods publicly.
-
-        list_ = self._list
-        self.bisect_left = list_.bisect_left
-        self.bisect_right = list_.bisect_right
-        self.index = list_.index
-        self.irange = list_.irange
-        self.islice = list_.islice
-        self.reset = list_.reset
-
-        self.bisect_key_left = list_.bisect_key_left
-        self.bisect_key_right = list_.bisect_key_right
 
         if iterable is not None:
             _ = self.update(iterable)
