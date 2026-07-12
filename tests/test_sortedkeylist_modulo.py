@@ -4,15 +4,21 @@ Original source:
 https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_coverage_sortedkeylist_modulo.py
 """
 
+from __future__ import annotations
+
 import random
+from typing import TYPE_CHECKING
 
 import pytest
 
 from pyochain.collections import SortedKeyList, SortedList
 from tests._utils import check_sorted_key_list
 
+if TYPE_CHECKING:
+    from _typeshed import SupportsRichComparison
 
-def modulo(val: int) -> int:
+
+def modulo(val: float) -> float:
     return val % 10
 
 
@@ -23,7 +29,7 @@ def test_init() -> None:
 
     slt = SortedKeyList(key=modulo)
     slt.reset(10000)
-    assert slt._load == 10000
+    assert slt._load == 10000  # pyright: ignore[reportPrivateUsage]
     check_sorted_key_list(slt)
 
     slt = SortedKeyList(range(10000), key=modulo)
@@ -33,9 +39,9 @@ def test_init() -> None:
     )
 
     slt.clear()
-    assert slt._len == 0
-    assert slt._maxes == []
-    assert slt._lists == []
+    assert slt._len == 0  # pyright: ignore[reportPrivateUsage]
+    assert slt._maxes == []  # pyright: ignore[reportPrivateUsage]
+    assert slt._lists == []  # pyright: ignore[reportPrivateUsage]
 
     assert isinstance(slt, SortedList)
     assert isinstance(slt, SortedKeyList)
@@ -50,7 +56,7 @@ def test_new() -> None:
 
     assert isinstance(slt, SortedList)
     assert isinstance(slt, SortedKeyList)
-    assert type(slt) == SortedKeyList
+    assert slt.__class__ is SortedKeyList
 
 
 def test_key() -> None:
@@ -68,7 +74,7 @@ def test_key2() -> None:
 
     a = Incomparable()
     b = Incomparable()
-    slt = SortedKeyList(key=lambda _: 1)
+    slt = SortedKeyList[Incomparable, int](key=lambda _: 1)
     slt.add(a)
     slt.add(b)
     assert slt == [a, b]
@@ -181,32 +187,32 @@ def test_remove() -> None:
 
 def test_remove_valueerror1() -> None:
     slt = SortedKeyList(key=modulo)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         slt.remove(0)
 
 
 def test_remove_valueerror2() -> None:
     slt = SortedKeyList(range(100), key=modulo)
     slt.reset(10)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         slt.remove(100)
 
 
 def test_remove_valueerror3() -> None:
     slt = SortedKeyList([1, 2, 2, 2, 3, 3, 5], key=modulo)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         slt.remove(4)
 
 
 def test_remove_valueerror4() -> None:
     slt = SortedKeyList([1, 1, 1, 2, 2, 2], key=modulo)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         slt.remove(13)
 
 
 def test_remove_valueerror5() -> None:
     slt = SortedKeyList([1, 1, 1, 2, 2, 2], key=modulo)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         slt.remove(12)
 
 
@@ -218,8 +224,8 @@ def test_delete() -> None:
         slt.remove(val)
         check_sorted_key_list(slt)
     assert len(slt) == 0
-    assert slt._maxes == []
-    assert slt._lists == []
+    assert slt._maxes == []  # pyright: ignore[reportPrivateUsage]
+    assert slt._lists == []  # pyright: ignore[reportPrivateUsage]
 
 
 def test_getitem() -> None:
@@ -228,7 +234,7 @@ def test_getitem() -> None:
     slt.reset(17)
 
     slt.add(5)
-    slt._build_index()
+    slt._build_index()  # pyright: ignore[reportPrivateUsage]
     check_sorted_key_list(slt)
     slt.clear()
 
@@ -245,7 +251,7 @@ def test_getitem_slice() -> None:
     slt = SortedKeyList(key=modulo)
     slt.reset(17)
 
-    lst = []
+    lst: list[float] = []
 
     for _rpt in range(100):
         val = random.random()
@@ -304,7 +310,7 @@ def test_getitem_slice_big() -> None:
 def test_getitem_slicezero() -> None:
     slt = SortedKeyList(range(100), key=modulo)
     slt.reset(17)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         slt[::0]
 
 
@@ -407,7 +413,7 @@ def test_islice() -> None:
         assert list(sl.islice(stop=stop, reverse=True)) == values[:stop][::-1]
 
 
-def test_irange() -> None:
+def test_irange() -> None:  # noqa: C901
     values = sorted(range(100), key=modulo)
 
     for load in range(5, 16):
@@ -446,7 +452,7 @@ def test_irange() -> None:
             assert temp == values[: (end + 1) * 10]
 
 
-def test_irange_key() -> None:
+def test_irange_key() -> None:  # noqa: C901
     values = sorted(range(100), key=modulo)
 
     for load in range(5, 16):
@@ -537,18 +543,6 @@ def test_bisect_key_right() -> None:
     assert slt.bisect_key_right(0) == 20
     assert slt.bisect_key_right(5) == 120
     assert slt.bisect_key_right(10) == 200
-
-
-def test_bisect_key() -> None:
-    slt = SortedKeyList(key=modulo)
-    assert slt.bisect_key(0) == 0
-    slt = SortedKeyList(range(100), key=modulo)
-    slt.reset(17)
-    slt.update(range(100))
-    check_sorted_key_list(slt)
-    assert slt.bisect_key(0) == 20
-    assert slt.bisect_key(5) == 120
-    assert slt.bisect_key(10) == 200
 
 
 def test_copy() -> None:
@@ -642,69 +636,69 @@ def test_index() -> None:
 def test_index_valueerror1() -> None:
     slt = SortedKeyList([0] * 10, key=modulo)
     slt.reset(4)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = slt.index(0, 10)
 
 
 def test_index_valueerror2() -> None:
     slt = SortedKeyList([0] * 10, key=modulo)
     slt.reset(4)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = slt.index(0, 0, -10)
 
 
 def test_index_valueerror3() -> None:
     slt = SortedKeyList([0] * 10, key=modulo)
     slt.reset(4)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = slt.index(0, 7, 3)
 
 
 def test_index_valueerror4() -> None:
     slt = SortedKeyList([0] * 10, key=modulo)
     slt.reset(4)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = slt.index(1)
 
 
 def test_index_valueerror5() -> None:
     slt = SortedKeyList(key=modulo)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = slt.index(1)
 
 
 def test_index_valueerror6() -> None:
     slt = SortedKeyList(range(100), key=modulo)
     slt.reset(4)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = slt.index(91, 0, 15)
 
 
 def test_index_valueerror7() -> None:
     slt = SortedKeyList([0] * 10 + [1] * 10 + [2] * 10, key=modulo)
     slt.reset(4)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = slt.index(1, 0, 10)
 
 
 def test_index_valueerror8() -> None:
     slt = SortedKeyList(range(10), key=modulo)
     slt.reset(4)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = slt.index(4, 5)
 
 
 def test_index_valueerror9() -> None:
     slt = SortedKeyList(key=modulo)
     slt.reset(4)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = slt.index(5)
 
 
 def test_index_valueerror10() -> None:
     slt = SortedKeyList(range(10), key=modulo)
     slt.reset(4)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = slt.index(19)
 
 
@@ -800,15 +794,17 @@ def test_repr() -> None:
 
 
 def test_repr_recursion() -> None:
-    this = SortedKeyList([[1], [2], [3], [4]], key=lambda val: val)
-    this._lists[-1].append(this)
+    this: SortedKeyList[list[int], list[int]] = SortedKeyList(
+        [[1], [2], [3], [4]], key=lambda val: val
+    )
+    this._lists[-1].append(this)  # pyright: ignore[reportArgumentType, reportPrivateUsage]
     assert repr(this).startswith(
         "SortedKeyList([[1], [2], [3], [4], ...], key=<function "
     )
 
 
 def test_repr_subclass() -> None:
-    class CustomSortedKeyList(SortedKeyList):
+    class CustomSortedKeyList[T, OT: SupportsRichComparison](SortedKeyList[T, OT]):
         pass
 
     this = CustomSortedKeyList(range(10), key=modulo)
@@ -821,6 +817,6 @@ def test_repr_subclass() -> None:
 def test_check() -> None:
     slt = SortedKeyList(range(10), key=modulo)
     slt.reset(4)
-    slt._len = 5
+    slt._len = 5  # pyright: ignore[reportPrivateUsage]
     with pytest.raises(AssertionError):
         check_sorted_key_list(slt)

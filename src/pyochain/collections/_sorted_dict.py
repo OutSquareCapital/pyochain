@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Hashable, Iterable, Iterator, Mapping, MutableMapping
+from functools import partial
 from itertools import chain
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Self, overload, override
@@ -11,7 +12,11 @@ from ._sorted_list import KeyFunc, SortedKeyList, SortedList
 from ._sorted_views import SortedItemsView, SortedKeysView, SortedValuesView
 
 if TYPE_CHECKING:
-    from _typeshed import SupportsRichComparison
+    from _typeshed import (
+        SupportsGetItem,
+        SupportsKeysAndGetItem,
+        SupportsRichComparison,
+    )
 
 
 class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
@@ -84,7 +89,9 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
 
     """
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(
+        self, iterable: Iterable[tuple[K, V]] | Mapping[K, V] = (), **kwargs: V
+    ) -> None:
         """Initialize sorted dict instance.
 
         Optional key-function argument defines a callable that, like the `key`
@@ -121,12 +128,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
         True
 
         """
-        if args and (args[0] is None or callable(args[0])):
-            args = args[1:]
-
-            self._list: SortedList[K] = SortedList()
-        else:
-            self._list = SortedList()
+        self._list: SortedList[K] = SortedList()
 
         # Reaching through ``self._list`` repeatedly adds unnecessary overhead
         # so cache references to sorted list methods.
@@ -140,7 +142,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
         self.irange = list_.irange
         self.islice = list_.islice
         self.reset = list_.reset
-        self.update(*args, **kwargs)
+        self.update(iterable, **kwargs)
 
     @override
     def clear(self) -> None:
@@ -224,21 +226,19 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
         super().__setitem__(key, value)
 
     @override
-    def __or__(self, other: object):
-        if not isinstance(other, Mapping):
-            return NotImplemented
-        items = chain(self.items(), other.items())
-        return self.__class__(items)
+    def __or__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]:
+        items = chain(self.items(), value.items())
+        return SortedDict(items)
 
     @override
-    def __ror__(self, other: object) -> Self:
-        if not isinstance(other, Mapping):
-            return NotImplemented
-        items = chain(other.items(), self.items())
-        return self.__class__(items)
+    def __ror__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]:
+        items = chain(value.items(), self.items())
+        return SortedDict(items)
 
     @override
-    def __ior__(self, other: object) -> Self:
+    def __ior__(
+        self, other: Iterable[tuple[K, V]] | SupportsKeysAndGetItem[K, V]
+    ) -> Self:
         self.update(other)
         return self
 
@@ -259,12 +259,12 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
     @classmethod
     @overload
     def fromkeys[OT: SupportsRichComparison](
-        cls, seq: Iterable[OT]
+        cls, iterable: Iterable[OT]
     ) -> SortedDict[OT, None]: ...
     @classmethod
     @overload
     def fromkeys[OT: SupportsRichComparison](
-        cls, seq: Iterable[OT], value: V
+        cls, iterable: Iterable[OT], value: V
     ) -> SortedDict[OT, V]: ...
     @classmethod
     @override
@@ -281,7 +281,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
         :return: new sorted dict
 
         """
-        return cls((key, value) for key in iterable)
+        return SortedDict((key, value) for key in iterable)
 
     @override
     def keys(self) -> SortedKeysView[K]:
@@ -475,8 +475,31 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
         self._list.add(key)
         return default
 
+    @overload
+    def update(self, m: SupportsKeysAndGetItem[K, V], /) -> None: ...
+    @overload
+    def update(
+        self: SupportsGetItem[str, V],
+        m: SupportsKeysAndGetItem[str, V],
+        /,
+        **kwargs: V,
+    ) -> None: ...
+    @overload
+    def update(self, m: Iterable[tuple[K, V]], /) -> None: ...
+    @overload
+    def update(
+        self: SupportsGetItem[str, V], m: Iterable[tuple[str, V]], /, **kwargs: V
+    ) -> None: ...
+    @overload
+    def update(self: SupportsGetItem[str, V], /, **kwargs: V) -> None: ...
+
     @override
-    def update(self, *args, **kwargs) -> None:
+    def update(
+        self,
+        m: SupportsKeysAndGetItem[K, V] | Iterable[tuple[K, V]] = (),
+        /,
+        **kwargs: V,
+    ) -> None:
         """Update sorted dict with items from `args` and `kwargs`.
 
         Overwrites existing items.
@@ -490,14 +513,14 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
 
         """
         if not self:
-            super().update(*args, **kwargs)
+            super().update(m, **kwargs)
             self._list.update(super().__iter__())
             return
 
-        if not kwargs and len(args) == 1 and isinstance(args[0], dict):
-            pairs = args[0]
+        if not kwargs and isinstance(m, dict):
+            pairs: dict[K, V] = m
         else:
-            pairs = dict(*args, **kwargs)
+            pairs = dict(m, **kwargs)
 
         if (10 * len(pairs)) > len(self):
             super().update(pairs)
@@ -505,7 +528,7 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
             self._list.update(super().__iter__())
         else:
             for key in pairs:
-                self.__setitem__(key, pairs[key])
+                self[key] = pairs[key]
 
     @override
     def __reduce__(self):
@@ -537,7 +560,13 @@ class SortedDict[K: Hashable, V](dict[K, V]):  # noqa: FURB189
 
 
 class SortedKeyDict[K: Hashable, V, OT: SupportsRichComparison](SortedDict[K, V]):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(
+        self,
+        iterable: Iterable[tuple[K, V]] | Mapping[K, V] = (),
+        *,
+        key: KeyFunc[K, OT],
+        **kwargs: V,
+    ) -> None:
         """Initialize sorted dict instance.
 
         Optional key-function argument defines a callable that, like the `key`
@@ -574,8 +603,7 @@ class SortedKeyDict[K: Hashable, V, OT: SupportsRichComparison](SortedDict[K, V]
         True
 
         """
-        self._key: KeyFunc[K, OT] = args[0]
-        args = args[1:]
+        self._key: KeyFunc[K, OT] = key
 
         self._list: SortedKeyList[K, OT] = SortedKeyList(key=self._key)
 
@@ -593,7 +621,7 @@ class SortedKeyDict[K: Hashable, V, OT: SupportsRichComparison](SortedDict[K, V]
         self.islice = list_.islice
         self.reset = list_.reset
 
-        self.update(*args, **kwargs)
+        self.update(iterable, **kwargs)
 
     @property
     def key(self) -> KeyFunc[K, OT]:
@@ -606,7 +634,7 @@ class SortedKeyDict[K: Hashable, V, OT: SupportsRichComparison](SortedDict[K, V]
 
     @override
     def copy(self) -> Self:
-        return self.__class__(self._key, self.items())
+        return self.__class__(self.items(), key=self._key)
 
     def irange_key(
         self,
@@ -623,27 +651,20 @@ class SortedKeyDict[K: Hashable, V, OT: SupportsRichComparison](SortedDict[K, V]
     def bisect_key_right(self, key: OT) -> int:
         return self._list.bisect_key_right(key)
 
-    def bisect_key(self, key: OT) -> int:
-        return self._list.bisect_key(key)
+    @override
+    def __ror__[T1, T2](self, value: Mapping[K, T2], /) -> SortedKeyDict[K, V | T2, OT]:
+        items = chain(value.items(), self.items())
+        return SortedKeyDict(items, key=self._key)
 
     @override
-    def __ror__(self, other: object) -> Self:
-        if not isinstance(other, Mapping):
-            return NotImplemented
-        items = chain(other.items(), self.items())
-        return self.__class__(self._key, items)
-
-    @override
-    def __or__(self, other: object) -> Self:
-        if not isinstance(other, Mapping):
-            return NotImplemented
-        items = chain(self.items(), other.items())
-        return self.__class__(self._key, items)
+    def __or__[T1, T2](self, value: Mapping[K, T2], /) -> SortedKeyDict[K, V | T2, OT]:
+        items = chain(self.items(), value.items())
+        return SortedKeyDict(items, key=self._key)
 
     @override
     def __reduce__(self):
         items = dict[K, V].copy(self)
-        return (type(self), (self._key, items))
+        return (partial(type(self), key=self._key), (items,))
 
     @recursive_repr()
     def __repr__(self) -> str:

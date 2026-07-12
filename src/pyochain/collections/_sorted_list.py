@@ -2202,8 +2202,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
         return self._loc(pos, idx)
 
-    bisect_key = bisect_key_right
-
     @override
     def count(self, value: T) -> int:
         """Return number of occurrences of `value` in the sorted-key list.

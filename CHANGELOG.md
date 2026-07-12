@@ -21,6 +21,8 @@ The classes from the `sortedcontainers` library have been ported to pyochain, wi
 - `_reset` method is public (i.e it's called `reset`).
 - `_check` method is deleted from classes, and is defined as pure functions only for tests.
 - `bisect` method alias is deleted, use `bisect_right` instead.
+- `update` and `__init__` methods arguments are explicit instead of `*args`.
+- `__or__` and `__ror__` don't return `NotImplemented` if the provided *value* is not a `Mapping`.
 
 ### 💥 Breaking changes
 

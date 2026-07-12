@@ -24,7 +24,7 @@ class SortedKeysView[K](KeysView[K], Sequence[K]):
 
     """
 
-    __slots__ = ()
+    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
     @classmethod
     @override

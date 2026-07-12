@@ -486,9 +486,8 @@ class SortedSet[T: SupportsRichComparison](MutableSet[T], Sequence[T]):  # noqa:
             list_.clear()
             list_.update(set_)
         else:
-            discard = self.discard
             for value in values:
-                discard(value)
+                self.discard(value)
         return self
 
     @override
@@ -755,7 +754,6 @@ class SortedKeySet[T, OT: SupportsRichComparison](SortedSet[T]):  # pyright: ign
 
         self.bisect_key_left = list_.bisect_key_left
         self.bisect_key_right = list_.bisect_key_right
-        self.bisect_key = list_.bisect_key
 
         if iterable is not None:
             _ = self.update(iterable)
@@ -811,9 +809,6 @@ class SortedKeySet[T, OT: SupportsRichComparison](SortedSet[T]):  # pyright: ign
 
     def bisect_key_right(self, key: OT) -> int:
         return self._list.bisect_key_right(key)
-
-    def bisect_key(self, key: OT) -> int:
-        return self._list.bisect_key(key)
 
     @override
     def union(self, *iterables: Iterable[T]) -> Self:

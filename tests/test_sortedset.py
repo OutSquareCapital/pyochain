@@ -86,7 +86,7 @@ def test_eq() -> None:
     beta = SortedSet(range(100))
     beta.reset(17)
     assert alpha == beta
-    assert alpha == beta._set
+    assert alpha == beta._set  # pyright: ignore[reportPrivateUsage]
     beta.add(101)
     assert alpha != beta
 
@@ -99,7 +99,7 @@ def test_ne() -> None:
     assert alpha != beta
     beta.add(100)
     assert alpha != beta
-    assert alpha != beta._set
+    assert alpha != beta._set  # pyright: ignore[reportPrivateUsage]
     assert alpha != list(range(101))
 
 
@@ -110,10 +110,10 @@ def test_lt_gt() -> None:
     that.reset(9)
     assert that < temp
     assert not (temp < that)
-    assert that < temp._set
+    assert that < temp._set  # pyright: ignore[reportPrivateUsage]
     assert temp > that
     assert not (that > temp)
-    assert temp > that._set
+    assert temp > that._set  # pyright: ignore[reportPrivateUsage]
 
 
 def test_le_ge() -> None:
@@ -123,10 +123,10 @@ def test_le_ge() -> None:
     beta.reset(17)
     assert alpha <= beta
     assert not (beta <= alpha)
-    assert alpha <= beta._set
+    assert alpha <= beta._set  # pyright: ignore[reportPrivateUsage]
     assert beta >= alpha
     assert not (alpha >= beta)
-    assert beta >= alpha._set
+    assert beta >= alpha._set  # pyright: ignore[reportPrivateUsage]
 
 
 def test_iter() -> None:
@@ -142,7 +142,7 @@ def test_reversed() -> None:
 
 
 def test_islice() -> None:
-    ss = SortedSet()
+    ss = SortedSet[int]()
     ss.reset(7)
 
     assert list(ss.islice()) == []
@@ -169,8 +169,8 @@ def test_islice() -> None:
         assert list(ss.islice(stop=stop, reverse=True)) == values[:stop][::-1]
 
 
-def test_irange() -> None:
-    ss = SortedSet()
+def test_irange() -> None:  # noqa: C901
+    ss = SortedSet[int]()
     ss.reset(7)
 
     assert list(ss.irange()) == []
@@ -214,7 +214,7 @@ def test_irange() -> None:
     assert values == list(ss.irange(None, 53, (True, False)))
 
 
-def test_irange_key() -> None:
+def test_irange_key() -> None:  # noqa: C901
     values = sorted(range(100), key=modulo)
 
     for load in range(5, 16):
@@ -279,7 +279,6 @@ def test_bisect_key() -> None:
     temp = SortedKeySet(range(100), key=lambda val: val)
     temp.reset(7)
     assert all(temp.bisect_key_left(val) == val for val in range(100))
-    assert all(temp.bisect_key(val) == (val + 1) for val in range(100))
     assert all(temp.bisect_key_right(val) == (val + 1) for val in range(100))
 
 
@@ -504,7 +503,7 @@ def test_ior() -> None:
 
 
 class Identity:
-    def __call__(self, value):
+    def __call__[T](self, value: T) -> T:
         return value
 
     @override
@@ -519,7 +518,7 @@ def test_repr() -> None:
 
 
 def test_repr_recursion() -> None:
-    class HashableSortedSet(SortedSet):
+    class HashableSortedSet[T](SortedSet[T]):
         @override
         def __hash__(self) -> int:
             return hash(tuple(self))
@@ -538,6 +537,6 @@ def test_pickle() -> None:
     alpha = SortedKeySet(range(10000), key=operator.neg)
     alpha.reset(500)
     data = pickle.dumps(alpha)
-    beta = pickle.loads(data)
+    beta: SortedKeySet[int, int] = pickle.loads(data)  # pyright: ignore[reportAny]
     assert alpha == beta
-    assert alpha._key == beta._key
+    assert alpha._key == beta._key  # pyright: ignore[reportPrivateUsage]

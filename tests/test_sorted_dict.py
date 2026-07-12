@@ -5,9 +5,10 @@ https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_cov
 """
 
 import gc
+import operator
 import platform
 import string
-from collections.abc import Mapping
+from collections.abc import ItemsView, KeysView, Mapping
 from typing import override
 
 import pytest
@@ -17,30 +18,26 @@ from pyochain.collections import SortedDict, SortedKeyDict
 from ._utils import check_sorted_dict
 
 
-def negate(value):
-    return -value
-
-
-def modulo(value):
+def modulo(value: int) -> int:
     return value % 10
 
 
-def get_keysview[K, V](dic: Mapping[K, V]):
+def get_keysview[K, V](dic: Mapping[K, V]) -> KeysView[K]:
     return dic.keys()
 
 
-def get_itemsview[K, V](dic: Mapping[K, V]):
+def get_itemsview[K, V](dic: Mapping[K, V]) -> ItemsView[K, V]:
     return dic.items()
 
 
 def test_init() -> None:
-    temp = SortedDict()
+    temp = SortedDict[str, int]()
     check_sorted_dict(temp)
 
 
 def test_init_key() -> None:
-    temp = SortedKeyDict(negate)
-    assert temp.key == negate
+    temp = SortedKeyDict[int, int, int](key=operator.neg)
+    assert temp.key == operator.neg
     check_sorted_dict(temp)
 
 
@@ -53,7 +50,7 @@ def test_init_args() -> None:
 
 
 def test_init_kwargs() -> None:
-    temp = SortedDict(a=1, b=2)
+    temp = SortedDict[str, int](a=1, b=2)
     assert len(temp) == 2
     assert temp["a"] == 1
     assert temp["b"] == 2
@@ -114,7 +111,7 @@ def test_iter() -> None:
 
 
 def test_iter_key() -> None:
-    temp = SortedKeyDict(negate, ((val, val) for val in range(100)))
+    temp = SortedKeyDict(((val, val) for val in range(100)), key=operator.neg)
     temp.reset(7)
     assert all(lhs == rhs for lhs, rhs in zip(temp, reversed(range(100)), strict=False))
 
@@ -131,7 +128,7 @@ def test_reversed() -> None:
 
 
 def test_reversed_key() -> None:
-    temp = SortedKeyDict(modulo, ((val, val) for val in range(100)))
+    temp = SortedKeyDict(((val, val) for val in range(100)), key=modulo)
     temp.reset(7)
     values = sorted(range(100), key=modulo)
     assert all(
@@ -162,7 +159,7 @@ def test_irange() -> None:
 
 
 def test_irange_key() -> None:
-    temp = SortedKeyDict(modulo, ((val, val) for val in range(100)))
+    temp = SortedKeyDict(((val, val) for val in range(100)), key=modulo)
     temp.reset(7)
     values = sorted(range(100), key=modulo)
 
@@ -179,7 +176,7 @@ def test_len() -> None:
 
 
 def test_setitem() -> None:
-    temp = SortedDict()
+    temp = SortedDict[str, int]()
 
     for pos, key in enumerate(string.ascii_lowercase):
         temp[key] = pos
@@ -249,12 +246,6 @@ def test_values() -> None:
     assert list(temp.values()) == [pos for _, pos in mapping]
 
 
-def test_iterkeys() -> None:
-    temp = SortedDict()
-    with pytest.raises(AttributeError):
-        temp.iterkeys
-
-
 def test_notgiven() -> None:
     assert repr(SortedDict._SortedDict__not_given) == "<not-given>"
 
@@ -270,7 +261,7 @@ def test_pop2() -> None:
     mapping = [(val, pos) for pos, val in enumerate(string.ascii_lowercase)]
     temp = SortedDict(mapping)
     with pytest.raises(KeyError):
-        temp.pop("A")
+        _ = temp.pop("A")
 
 
 def test_popitem() -> None:
@@ -280,7 +271,7 @@ def test_popitem() -> None:
 
 
 def test_popitem2() -> None:
-    temp = SortedDict()
+    temp = SortedDict[str, str]()
     with pytest.raises(KeyError):
         _ = temp.popitem()
 
@@ -316,7 +307,7 @@ def test_setdefault() -> None:
 
 def test_update() -> None:
     mapping = [(val, pos) for pos, val in enumerate(string.ascii_lowercase)]
-    temp = SortedDict()
+    temp = SortedDict[str, int]()
     temp.update()
     temp.update(mapping)
     temp.update(dict(mapping))
@@ -326,7 +317,7 @@ def test_update() -> None:
 
 def test_update2() -> None:
     mapping = [(val, pos) for pos, val in enumerate(string.ascii_lowercase)]
-    temp = SortedDict()
+    temp = SortedDict[str, int]()
     temp.update(**dict(mapping))
     assert list(temp.items()) == mapping
 
@@ -337,7 +328,7 @@ def test_repr() -> None:
 
 
 class Identity:
-    def __call__(self, value):
+    def __call__[T](self, value: T) -> T:
         return value
 
     @override
@@ -346,7 +337,7 @@ class Identity:
 
 
 def test_repr_recursion() -> None:
-    temp = SortedKeyDict(Identity(), {"alice": 3, "bob": 1, "carol": 2, "dave": 4})
+    temp = SortedKeyDict({"alice": 3, "bob": 1, "carol": 2, "dave": 4}, key=Identity())
     temp["bob"] = temp
     assert (
         repr(temp)
@@ -355,7 +346,7 @@ def test_repr_recursion() -> None:
 
 
 def test_repr_subclass() -> None:
-    class CustomSortedDict(SortedDict):
+    class CustomSortedDict[K, V](SortedDict[K, V]):
         pass
 
     temp = CustomSortedDict({"alice": 3, "bob": 1, "carol": 2, "dave": 4})
@@ -372,7 +363,7 @@ def test_index() -> None:
 
 
 def test_index_key() -> None:
-    temp = SortedKeyDict(negate, ((val, val) for val in range(100)))
+    temp = SortedKeyDict(((val, val) for val in range(100)), key=operator.neg)
     temp.reset(7)
     assert all(temp.index(val) == (99 - val) for val in range(100))
 
@@ -385,16 +376,15 @@ def test_bisect() -> None:
 
 
 def test_bisect_key() -> None:
-    temp = SortedKeyDict(modulo, ((val, val) for val in range(100)))
+    temp = SortedKeyDict(((val, val) for val in range(100)), key=modulo)
     temp.reset(7)
     assert all(temp.bisect_right(val) == ((val % 10) + 1) * 10 for val in range(100))
     assert all(temp.bisect_left(val) == (val % 10) * 10 for val in range(100))
 
 
 def test_bisect_key2() -> None:
-    temp = SortedKeyDict(modulo, ((val, val) for val in range(100)))
+    temp = SortedKeyDict(((val, val) for val in range(100)), key=modulo)
     temp.reset(7)
-    assert all(temp.bisect_key(val) == ((val % 10) + 1) * 10 for val in range(10))
     assert all(temp.bisect_key_right(val) == ((val % 10) + 1) * 10 for val in range(10))
     assert all(temp.bisect_key_left(val) == (val % 10) * 10 for val in range(10))
 
@@ -468,7 +458,7 @@ def test_values_view_index() -> None:
     mapping = [(val, pos) for pos, val in enumerate(string.ascii_lowercase)]
     temp = SortedDict(mapping[:13])
     values = temp.values()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = values.index(100)
 
 
@@ -517,38 +507,32 @@ def test_items_view_index() -> None:
     mapping = [(val, pos) for pos, val in enumerate(string.ascii_lowercase)]
     temp = SortedDict(mapping[:13])
     items = temp.items()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = items.index(("f", 100))
 
 
 def test_pickle() -> None:
     import pickle
 
-    alpha = SortedKeyDict(negate, zip(range(10000), range(10000), strict=False))
+    alpha = SortedKeyDict(
+        zip(range(10000), range(10000), strict=False), key=operator.neg
+    )
     alpha.reset(500)
-    beta = pickle.loads(pickle.dumps(alpha))
+    beta: SortedKeyDict[int, int, int] = pickle.loads(pickle.dumps(alpha))  # pyright: ignore[reportAny]
     assert alpha == beta
-    assert alpha._key == beta._key
+    assert alpha._key == beta._key  # pyright: ignore[reportPrivateUsage]
 
 
 if platform.python_implementation() == "CPython":
 
     def test_ref_counts() -> None:
         start_count = len(gc.get_objects())
-        temp = SortedDict()
+        temp = SortedDict[float, float]()
         init_count = len(gc.get_objects())
         assert init_count > start_count
         del temp
         del_count = len(gc.get_objects())
         assert start_count == del_count
-
-
-class CustomOr:
-    def __or__(self, other):
-        return NotImplemented
-
-    def __ror__(self, other):
-        return self
 
 
 def test_or() -> None:
@@ -559,21 +543,12 @@ def test_or() -> None:
     assert temp3 == dict(mapping)
 
 
-def test_or_not_implemented() -> None:
-    _ = SortedDict() | CustomOr()
-
-
 def test_ror() -> None:
     mapping = [(val, pos) for pos, val in enumerate(string.ascii_lowercase)]
     temp1 = dict(mapping[:13])
     temp2 = SortedDict(mapping[13:])
     temp3 = temp1 | temp2
     assert temp3 == dict(mapping)
-
-
-def test_ror_not_implemented() -> None:
-    with pytest.raises(TypeError):
-        _ = CustomOr() | SortedDict()
 
 
 def test_ior() -> None:

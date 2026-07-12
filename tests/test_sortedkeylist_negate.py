@@ -21,12 +21,12 @@ def test_identity() -> None:
 
 
 def test_init() -> None:
-    slt = SortedKeyList(key=operator.neg)
+    slt = SortedKeyList[float, float](key=operator.neg)
     check_sorted_key_list(slt)
 
-    slt = SortedKeyList(key=operator.neg)
+    slt = SortedKeyList[float, float](key=operator.neg)
     slt.reset(10000)
-    assert slt._load == 10000
+    assert slt._load == 10000  # pyright: ignore[reportPrivateUsage]
     check_sorted_key_list(slt)
 
     slt = SortedKeyList(range(10000), key=operator.neg)
@@ -35,9 +35,9 @@ def test_init() -> None:
     )
 
     slt.clear()
-    assert slt._len == 0
-    assert slt._maxes == []
-    assert slt._lists == []
+    assert slt._len == 0  # pyright: ignore[reportPrivateUsage]
+    assert slt._maxes == []  # pyright: ignore[reportPrivateUsage]
+    assert slt._lists == []  # pyright: ignore[reportPrivateUsage]
     check_sorted_key_list(slt)
 
 
@@ -52,24 +52,24 @@ def test_key() -> None:
 
 def test_add() -> None:
     random.seed(0)
-    slt = SortedKeyList(key=operator.neg)
+    slt = SortedKeyList[float, float](key=operator.neg)
     for val in range(1000):
         slt.add(val)
         check_sorted_key_list(slt)
 
-    slt = SortedKeyList(key=operator.neg)
+    slt = SortedKeyList[float, float](key=operator.neg)
     for val in range(1000, 0, -1):
         slt.add(val)
         check_sorted_key_list(slt)
 
-    slt = SortedKeyList(key=operator.neg)
+    slt = SortedKeyList[float, float](key=operator.neg)
     for _ in range(1000):
         slt.add(random.random())
         check_sorted_key_list(slt)
 
 
 def test_update() -> None:
-    slt = SortedKeyList(key=operator.neg)
+    slt = SortedKeyList[float, float](key=operator.neg)
 
     slt.update(range(1000))
     assert len(slt) == 1000
@@ -90,7 +90,7 @@ def test_update() -> None:
 
 
 def test_contains() -> None:
-    slt = SortedKeyList(key=operator.neg)
+    slt = SortedKeyList[float, float](key=operator.neg)
     assert 0 not in slt
 
     slt.update(range(10000))
@@ -105,7 +105,7 @@ def test_contains() -> None:
 
 
 def test_discard() -> None:
-    slt = SortedKeyList(key=operator.neg)
+    slt = SortedKeyList[float, float](key=operator.neg)
 
     assert slt.discard(0) is None
     assert len(slt) == 0
@@ -127,7 +127,7 @@ def test_discard() -> None:
 
 
 def test_remove() -> None:
-    slt = SortedKeyList(key=operator.neg)
+    slt = SortedKeyList[float, float](key=operator.neg)
 
     assert slt.discard(0) is None
     assert len(slt) == 0
@@ -145,21 +145,21 @@ def test_remove() -> None:
 
 
 def test_remove_valueerror1() -> None:
-    slt = SortedKeyList(key=operator.neg)
-    with pytest.raises(ValueError):
+    slt = SortedKeyList[float, float](key=operator.neg)
+    with pytest.raises(ValueError):  # noqa: PT011
         slt.remove(0)
 
 
 def test_remove_valueerror2() -> None:
     slt = SortedKeyList(range(100), key=operator.neg)
     slt.reset(10)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         slt.remove(100)
 
 
 def test_remove_valueerror3() -> None:
     slt = SortedKeyList([1, 2, 2, 2, 3, 3, 5], key=operator.neg)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         slt.remove(4)
 
 
@@ -171,20 +171,20 @@ def test_delete() -> None:
         slt.remove(val)
         check_sorted_key_list(slt)
     assert len(slt) == 0
-    assert slt._maxes == []
-    assert slt._lists == []
+    assert slt._maxes == []  # pyright: ignore[reportPrivateUsage]
+    assert slt._lists == []  # pyright: ignore[reportPrivateUsage]
 
 
 def test_getitem() -> None:
     random.seed(0)
-    slt = SortedKeyList(key=operator.neg)
+    slt = SortedKeyList[float, float](key=operator.neg)
     slt.reset(17)
 
     slt.add(5)
     assert slt[0] == 5
     slt.clear()
 
-    lst = []
+    lst: list[float] = []
 
     for _rpt in range(100):
         val = random.random()
@@ -199,10 +199,10 @@ def test_getitem() -> None:
 
 def test_getitem_slice() -> None:
     random.seed(0)
-    slt = SortedKeyList(key=operator.neg)
+    slt = SortedKeyList[float, float](key=operator.neg)
     slt.reset(17)
 
-    lst = []
+    lst: list[float] = []
 
     for _rpt in range(100):
         val = random.random()
@@ -261,12 +261,12 @@ def test_getitem_slice_big() -> None:
 def test_getitem_slicezero() -> None:
     slt = SortedKeyList(range(100), key=operator.neg)
     slt.reset(17)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         slt[::0]
 
 
 def test_getitem_indexerror1() -> None:
-    slt = SortedKeyList(key=operator.neg)
+    slt = SortedKeyList[float, float](key=operator.neg)
     with pytest.raises(IndexError):
         slt[5]
 
@@ -320,8 +320,7 @@ def test_reverse() -> None:
 
 
 def test_islice() -> None:
-    return
-    slt = SortedKeyList(key=operator.neg)
+    slt = SortedKeyList[float, float](key=operator.neg)
     slt.reset(7)
 
     assert list(slt.islice()) == []
@@ -348,8 +347,8 @@ def test_islice() -> None:
         assert list(slt.islice(stop=stop, reverse=True)) == values[:stop][::-1]
 
 
-def test_irange() -> None:
-    slt = SortedKeyList(key=operator.neg)
+def test_irange() -> None:  # noqa: C901
+    slt = SortedKeyList[float, float](key=operator.neg)
     slt.reset(7)
 
     assert list(slt.irange()) == []
@@ -397,7 +396,7 @@ def test_irange() -> None:
 
 
 def test_len() -> None:
-    slt = SortedKeyList(key=operator.neg)
+    slt = SortedKeyList[float, float](key=operator.neg)
 
     for val in range(10000):
         slt.add(val)
@@ -405,7 +404,7 @@ def test_len() -> None:
 
 
 def test_bisect_left() -> None:
-    slt = SortedKeyList(key=operator.neg)
+    slt = SortedKeyList[float, float](key=operator.neg)
     assert slt.bisect_left(0) == 0
     slt = SortedKeyList(range(100), key=operator.neg)
     slt.reset(17)
@@ -417,7 +416,7 @@ def test_bisect_left() -> None:
 
 
 def test_bisect_right() -> None:
-    slt = SortedKeyList(key=operator.neg)
+    slt = SortedKeyList[float, float](key=operator.neg)
     assert slt.bisect_right(10) == 0
     slt = SortedKeyList(range(100), key=operator.neg)
     slt.reset(17)
@@ -448,7 +447,7 @@ def test_copy_copy() -> None:
 
 
 def test_count() -> None:
-    slt = SortedKeyList(key=operator.neg)
+    slt = SortedKeyList[float, float](key=operator.neg)
     slt.reset(7)
 
     assert slt.count(0) == 0
@@ -515,41 +514,41 @@ def test_index() -> None:
 def test_index_valueerror1() -> None:
     slt = SortedKeyList([0] * 10, key=operator.neg)
     slt.reset(4)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = slt.index(0, 10)
 
 
 def test_index_valueerror2() -> None:
     slt = SortedKeyList([0] * 10, key=operator.neg)
     slt.reset(4)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = slt.index(0, 0, -10)
 
 
 def test_index_valueerror3() -> None:
     slt = SortedKeyList([0] * 10, key=operator.neg)
     slt.reset(4)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = slt.index(0, 7, 3)
 
 
 def test_index_valueerror4() -> None:
     slt = SortedKeyList([0] * 10, key=operator.neg)
     slt.reset(4)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = slt.index(1)
 
 
 def test_index_valueerror5() -> None:
-    slt = SortedKeyList(key=operator.neg)
-    with pytest.raises(ValueError):
+    slt = SortedKeyList[float, float](key=operator.neg)
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = slt.index(1)
 
 
 def test_index_valueerror6() -> None:
     slt = SortedKeyList(range(10), key=operator.neg)
     slt.reset(4)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = slt.index(6, 5)
 
 
@@ -666,16 +665,16 @@ def test_pickle() -> None:
 
     alpha = SortedKeyList(range(10000), key=operator.neg)
     alpha.reset(500)
-    beta = pickle.loads(pickle.dumps(alpha))
+    beta: SortedKeyList[int, int] = pickle.loads(pickle.dumps(alpha))  # pyright: ignore[reportAny]
     assert alpha == beta
-    assert alpha._key == beta._key
-    assert alpha._load == 500
-    assert beta._load == 1000
+    assert alpha._key == beta._key  # pyright: ignore[reportPrivateUsage]
+    assert alpha._load == 500  # pyright: ignore[reportPrivateUsage]
+    assert beta._load == 1000  # pyright: ignore[reportPrivateUsage]
 
 
 def test_check() -> None:
     slt = SortedKeyList(range(10), key=operator.neg)
     slt.reset(4)
-    slt._len = 5
+    slt._len = 5  # pyright: ignore[reportPrivateUsage]
     with pytest.raises(AssertionError):
         check_sorted_key_list(slt)
