@@ -1,19 +1,21 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self, override
+from typing import TYPE_CHECKING, Self, overload, override
 
 from ._utils import no_doctest
-from .abc import PyoMutableMapping
+from .abc import PyoMutableMapping, PyoReversible
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
+
+    from _typeshed import SupportsKeysAndGetItem
 
     from ._types import DictConvertible
 
 type IntoDict[K, V] = dict[K, V] | Dict[K, V]
 
 
-class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
+class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):  # noqa: PLW1641
     """A `Dict` is a key-value store similar to Python's built-in `dict`, but with additional methods inspired by Rust's `HashMap`.
 
     Accept the same input types as the built-in `dict`, including `Mapping`, `Iterable` of key-value pairs, and objects implementing `__getitem__()` and `keys()`.
@@ -180,6 +182,26 @@ class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
             case _:
                 return False
 
+    def __or__[T1, T2](self, value: IntoDict[T1, T2], /) -> Dict[K | T1, V | T2]:
+        return self.union(value)
+
+    def __ror__[T1, T2](self, value: IntoDict[T1, T2], /) -> Dict[K | T1, V | T2]:
+        match value:
+            case Dict():
+                new = value._inner | self._inner
+            case dict():
+                new = value | self._inner
+        return self.from_ref(new)
+
+    def __ior__(
+        self, value: SupportsKeysAndGetItem[K, V] | Iterable[tuple[K, V]], /
+    ) -> Self:
+        return self.union_mut(value)
+
+    @override
+    def __reversed__(self) -> Iterator[K]:
+        return reversed(self._inner)
+
     @staticmethod
     def from_ref[K1, V1](data: dict[K1, V1]) -> Dict[K1, V1]:
         """Wrap an existing Python builtin `dict` without copying.
@@ -296,7 +318,17 @@ class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
         """
         return Dict.from_ref(self._inner.copy())
 
-    def union(self, other: IntoDict[K, V]) -> Dict[K, V]:
+    @overload
+    def pop(self, key: K, /) -> V: ...
+    @overload
+    def pop(self, key: K, default: V, /) -> V: ...
+    @overload
+    def pop[T](self, key: K, default: T, /) -> V | T: ...
+    @override
+    def pop[T](self, key: K, default: T | None = None, /) -> V | T | None:
+        return self._inner.pop(key, default)
+
+    def union[T1, T2](self, other: IntoDict[T1, T2]) -> Dict[K | T1, V | T2]:
         """Merge another `dict` or `Dict` with this `Dict`, returning a new one with the combined key-value pairs.
 
         If there are duplicate keys, the values from *other* will overwrite those in `Self`.
@@ -332,7 +364,9 @@ class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
                 new = self._inner | other
         return self.from_ref(new)
 
-    def union_mut(self, other: IntoDict[K, V]) -> Self:
+    def union_mut(
+        self, other: SupportsKeysAndGetItem[K, V] | Iterable[tuple[K, V]]
+    ) -> Self:
         """Merge another `dict` or `Dict` into `Self` in-place.
 
         If there are duplicate keys, the values from *other* will overwrite those in `Self`.
@@ -340,7 +374,7 @@ class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
         This is equivalent to `|=` on a standard Python `dict`.
 
         Args:
-            other (IntoDict[K, V]): The other mapping to merge with.
+            other (SupportsKeysAndGetItem[K, V] | Iterable[tuple[K, V]]): The other mapping to merge with.
 
         Returns:
             Self: The modified `Dict` instance after merging.
@@ -361,7 +395,7 @@ class Dict[K, V](PyoMutableMapping[K, V]):  # noqa: PLW1641
         """
         match other:
             case Dict():
-                self._inner |= other._inner
-            case dict():
+                self._inner |= other._inner  # pyright: ignore[reportUnknownMemberType]
+            case _:
                 self._inner |= other
         return self
