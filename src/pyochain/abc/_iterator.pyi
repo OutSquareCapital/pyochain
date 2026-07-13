@@ -18,6 +18,8 @@ from typing import (
     runtime_checkable,
 )
 
+from _typeshed import SupportsRichComparison
+
 from pyochain._tools import Peekable
 from pyochain._utils import no_doctest
 from pyochain._vec import Vec
@@ -28,7 +30,6 @@ from .._types import (
     LiteralInteger,
     SupportsAnyAdd,
     SupportsComparison,
-    SupportsRichComparison,
     SupportsSumWithNoDefaultGiven,
 )
 
@@ -3198,7 +3199,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    def min[U: SupportsRichComparison[Any]](self: PyoIterable[U]) -> U:
+    def min[U: SupportsRichComparison](self: PyoIterable[U]) -> U:
         """Return the minimum of the `Iterator`.
 
         The elements of the `Iterator` must support comparison operations.
@@ -3219,7 +3220,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    def min_by[U: SupportsRichComparison[Any]](self, key: Callable[[T], U]) -> T:
+    def min_by[U: SupportsRichComparison](self, key: Callable[[T], U]) -> T:
         """Return the minimum element of the `Iterator` using a custom **key** function.
 
         If multiple elements are tied for the minimum value, the first one encountered is returned.
@@ -3259,7 +3260,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    def max[U: SupportsRichComparison[Any]](self: PyoIterable[U]) -> U:
+    def max[U: SupportsRichComparison](self: PyoIterable[U]) -> U:
         """Return the maximum element of the `Iterator`.
 
         The elements of the `Iterator` must support comparison operations.
@@ -3280,7 +3281,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    def max_by[U: SupportsRichComparison[Any]](self, key: Callable[[T], U]) -> T:
+    def max_by[U: SupportsRichComparison](self, key: Callable[[T], U]) -> T:
         """Return the maximum element of the `Iterator` using a custom **key** function.
 
         If multiple elements are tied for the maximum value, the first one encountered is returned.
@@ -3668,7 +3669,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             ```
         """
-    def sort[U: SupportsRichComparison[Any]](
+    def sort[U: SupportsRichComparison](
         self: PyoIterator[U], *, reverse: bool = False
     ) -> Vec[U]:
         """Sort the elements of the `Iterator`.
@@ -3697,7 +3698,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
     def sort_by[S](
         self: PyoIterator[S],
-        key: Callable[[S], SupportsRichComparison[Any]],
+        key: Callable[[S], SupportsRichComparison],
         *,
         reverse: bool = False,
     ) -> Vec[S]:
@@ -3709,7 +3710,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             The result is a new `Vec` over the sorted sequence.
 
         Args:
-            key (Callable[[S], SupportsRichComparison[Any]]): Function to extract a comparison key from each element.
+            key (Callable[[S], SupportsRichComparison]): Function to extract a comparison key from each element.
             reverse (bool): Whether to sort in descending order.
 
         Returns:

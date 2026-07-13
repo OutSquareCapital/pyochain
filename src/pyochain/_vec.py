@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Self, SupportsIndex, overload, override
+from typing import TYPE_CHECKING, Self, SupportsIndex, overload, override
 
-from ._types import SupportsRichComparison
 from ._utils import get_repr, no_doctest
 from .abc import PyoMutableSequence
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
+
+    from _typeshed import SupportsRichComparison
 
 type IntoVec[T] = Vec[T] | list[T]
 
@@ -57,17 +58,21 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         return self._inner[index]
 
     @overload
-    def __setitem__(self, index: int, value: T) -> None: ...
+    def __setitem__(self, key: SupportsIndex, value: T) -> None: ...
     @overload
-    def __setitem__(self, index: slice, value: Iterable[T]) -> None: ...
+    def __setitem__(
+        self, key: slice[SupportsIndex | None], value: Iterable[T]
+    ) -> None: ...
     @override
-    def __setitem__(self, index: int | slice, value: T | Iterable[T]) -> None:
+    def __setitem__(
+        self, key: SupportsIndex | slice[SupportsIndex | None], value: T | Iterable[T]
+    ) -> None:
         # pyrefly: ignore[no-matching-overload]
-        return self._inner.__setitem__(index, value)  # pyright: ignore[reportCallIssue, reportUnknownVariableType, reportArgumentType]
+        return self._inner.__setitem__(key, value)  # pyright: ignore[reportCallIssue, reportUnknownVariableType, reportArgumentType]
 
     @override
-    def __delitem__(self, index: int | slice) -> None:
-        del self._inner[index]
+    def __delitem__(self, key: SupportsIndex | slice[SupportsIndex | None]) -> None:
+        del self._inner[key]
 
     @override
     def __len__(self) -> int:
@@ -302,7 +307,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         """
         self._inner.insert(index, value)
 
-    def sort[U: SupportsRichComparison[Any]](
+    def sort[U: SupportsRichComparison](
         self: Vec[U], *, reverse: bool = False
     ) -> Vec[U]:
         """Sort the elements of the `Vec` in place.
@@ -328,7 +333,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         return self
 
     def sort_by(
-        self, key: Callable[[T], SupportsRichComparison[Any]], *, reverse: bool = False
+        self, key: Callable[[T], SupportsRichComparison], *, reverse: bool = False
     ) -> Self:
         """Sort the elements of the `Vec`  in place with a key function.
 
