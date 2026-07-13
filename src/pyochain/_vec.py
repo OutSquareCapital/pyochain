@@ -343,7 +343,7 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
             This method modifies the `Vec` in place and returns the same instance for chaining.
 
         Args:
-            key (Callable[[T], SupportsRichComparison[Any]]): function to extract a comparison key from each element.
+            key (Callable[[T], SupportsRichComparison]): function to extract a comparison key from each element.
             reverse (bool): If True, sort in descending order.
 
         Returns:

@@ -1,3 +1,3 @@
 # PyoItemsView
 
-::: pyochain._views.PyoItemsView
+::: pyochain.abc._mappings.PyoItemsView

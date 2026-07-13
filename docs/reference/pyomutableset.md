@@ -1,3 +1,3 @@
 # PyoMutableSet
 
-::: pyochain.abc._set.PyoMutableSet
+::: pyochain.abc._sets.PyoMutableSet

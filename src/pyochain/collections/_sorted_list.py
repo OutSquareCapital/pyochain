@@ -36,11 +36,11 @@ class SortedCollection[T](ABC):
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        Parameters:
-            value: insertion index of value in `SortedCollection`
+        Args:
+            value (T): value to insert in `SortedCollection`.
 
         Returns:
-            int
+            int: insertion index of value in `SortedCollection`.
 
         Examples:
             >>> sl = SortedList([10, 11, 12, 13, 14])
@@ -65,11 +65,11 @@ class SortedCollection[T](ABC):
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        Parameters:
-            value (T): insertion index of value in `SortedCollection`
+        Args:
+            value (T): value to insert in `SortedCollection`.
 
         Returns:
-            int
+            int: insertion index of value in `SortedCollection`.
 
         >>> sl = SortedList([10, 11, 12, 13, 14])
         >>> sl.bisect_right(12)
@@ -112,14 +112,15 @@ class SortedCollection[T](ABC):
           ...
         ValueError: 0 is not in list
 
-        :param value: value in sorted list
-        :param int start: start index (default None, start of sorted list)
-        :param int stop: stop index (default None, end of sorted list)
+        Args:
+            value (T): value in sorted list
+            start (int | None): start index (default None, start of sorted list)
+            stop (int | None): stop index (default None, end of sorted list)
 
         Raises:
             ValueError: if value is not present
         Returns:
-            index of value
+            int: index of value
 
         """
 
@@ -155,13 +156,14 @@ class SortedCollection[T](ABC):
         >>> list(it)
         [14, 13, 12]
 
-        :param minimum: minimum value to start iterating
-        :param maximum: maximum value to stop iterating
-        :param inclusive: pair of booleans
-        :param bool reverse: yield values in reverse order
+        Args:
+            minimum (T | None): minimum value to start iterating
+            maximum (T | None): maximum value to stop iterating
+            inclusive (tuple[bool, bool]): pair of booleans
+            reverse (bool): yield values in reverse order
 
         Returns:
-            `Iterator`
+            Iterator[T]: an iterator of values between `minimum` and `maximum`
 
         """
 
@@ -272,28 +274,23 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
     Some methods of mutable sequences are not supported and will raise
     not-implemented error.
 
+    Optional `iterable` argument provides an initial iterable of values to
+    initialize the sorted list.
+
+    Runtime complexity: `O(n*log(n))`
+
+    >>> sl = SortedList()
+    >>> sl
+    SortedList([])
+    >>> sl = SortedList([3, 1, 2, 5, 4])
+    >>> sl
+    SortedList([1, 2, 3, 4, 5])
+
     """
 
     DEFAULT_LOAD_FACTOR: Final[int] = 1000
 
     def __init__(self, iterable: Iterable[T] | None = None) -> None:
-        """Initialize sorted list instance.
-
-        Optional `iterable` argument provides an initial iterable of values to
-        initialize the sorted list.
-
-        Runtime complexity: `O(n*log(n))`
-
-        >>> sl = SortedList()
-        >>> sl
-        SortedList([])
-        >>> sl = SortedList([3, 1, 2, 5, 4])
-        >>> sl
-        SortedList([1, 2, 3, 4, 5])
-
-        :param iterable: initial values (optional)
-
-        """
         self._len: int = 0
         self._load: int = self.DEFAULT_LOAD_FACTOR
         self._lists: list[list[T]] = []
@@ -503,7 +500,8 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
           ...
         ValueError: 0 not in list
 
-        :param value: `value` to remove from sorted list
+        Args:
+            value (T): `value` to remove from sorted list
 
         Raises:
             ValueError: if `value` is not in sorted list
@@ -630,11 +628,12 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
 
         The index is then the sum of the total and sublist index: 5 + 3 = 8.
 
-        :param int pos: lists index
-        :param int idx: sublist index
+        Args:
+            pos (int): lists index
+            idx (int): sublist index
 
         Returns:
-            index in sorted list
+            int: index in sorted list
 
         """
         if not pos:
@@ -718,10 +717,11 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
         The final index pair from our example is (2, 3) which corresponds to
         index 8 in the sorted list.
 
-        :param int idx: index in sorted list
+        Args:
+            idx (int): index in sorted list
 
         Returns:
-            (lists index, sublist index) pair
+            tuple[int, int]: (lists index, sublist index) pair
 
         Raises:
             IndexError: if `idx` is out of range
@@ -910,10 +910,11 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
         >>> sl[2:5]
         ['c', 'd', 'e']
 
-        :param index: integer or slice for indexing
+        Args:
+            index (int | slice): integer or slice for indexing
 
         Returns:
-            value or list of values
+            T | list[T]: value or list of values
 
         Raises:
             IndexError: if index out of range
@@ -1349,10 +1350,11 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
         >>> sl
         SortedList(['a', 'b', 'd'])
 
-        :param int index: index of value (default -1)
+        Args:
+            index (int): index of value (default -1)
 
         Returns:
-            T
+            T: value at `index` in sorted list
 
         Raises:
             IndexError: if index is out of range
@@ -1488,10 +1490,11 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
         >>> sl
         SortedList(['a', 'a', 'b', 'c', 't', 't'])
 
-        :param other: other iterable
+        Args:
+            other (Iterable[T]): other iterable
 
         Returns:
-            existing sorted list
+            Self: existing sorted list
 
         """
         self.update(other)
@@ -1530,10 +1533,11 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
         >>> sl
         SortedList(['a', 'a', 'a', 'b', 'b', 'b', 'c', 'c', 'c'])
 
-        :param int num: count of shallow copies
+        Args:
+            num (int): count of shallow copies
 
         Returns:
-            existing sorted list
+            Self: existing sorted list
 
         """
         values = _collapse_lists(self._lists) * num
@@ -1718,6 +1722,27 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
     >>> neg(1)
     -1
 
+    Optional `iterable` argument provides an initial iterable of values to
+    initialize the sorted-key list.
+
+    `key` argument defines a callable that, like the `key`
+    argument to Python's `sorted` function, extracts a comparison key from
+    each value. The default is the identity function.
+
+    Runtime complexity: `O(n*log(n))`
+
+    >>> from operator import neg
+    >>> skl = SortedKeyList(key=neg)
+    >>> skl
+    SortedKeyList([], key=<built-in function neg>)
+    >>> skl = SortedKeyList([3, 1, 2], key=neg)
+    >>> skl
+    SortedKeyList([3, 2, 1], key=<built-in function neg>)
+
+    Args:
+        iterable (Iterable[T] | None): initial values (optional)
+        key (KeyFunc[T, OT]): function used to extract comparison key (optional)
+
     """
 
     def __init__(
@@ -1725,29 +1750,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         iterable: Iterable[T] | None = None,
         key: KeyFunc[T, OT] = identity,  # pyright: ignore[reportArgumentType]
     ) -> None:
-        """Initialize sorted-key list instance.
-
-        Optional `iterable` argument provides an initial iterable of values to
-        initialize the sorted-key list.
-
-        `key` argument defines a callable that, like the `key`
-        argument to Python's `sorted` function, extracts a comparison key from
-        each value. The default is the identity function.
-
-        Runtime complexity: `O(n*log(n))`
-
-        >>> from operator import neg
-        >>> skl = SortedKeyList(key=neg)
-        >>> skl
-        SortedKeyList([], key=<built-in function neg>)
-        >>> skl = SortedKeyList([3, 1, 2], key=neg)
-        >>> skl
-        SortedKeyList([3, 2, 1], key=<built-in function neg>)
-
-        :param iterable: initial values (optional)
-        :param key: function used to extract comparison key (optional)
-
-        """
         self._key: KeyFunc[T, OT] = key
         self._len: int = 0
         self._load: int = self.DEFAULT_LOAD_FACTOR
@@ -2010,10 +2012,12 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
           ...
         ValueError: 0 not in list
 
-        :param value: `value` to remove from sorted-key list
+        Args:
+            value (T): `value` to remove from sorted-key list
 
         Raises:
             ValueError: if `value` is not in sorted-key list
+
 
         """
         maxes = self._maxes
@@ -2156,13 +2160,14 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         >>> list(it)
         [14, 13, 12]
 
-        :param min_key: minimum key to start iterating
-        :param max_key: maximum key to stop iterating
-        :param inclusive: pair of booleans
-        :param bool reverse: yield values in reverse order
+        Args:
+            min_key (OT | None): minimum key to start iterating
+            max_key (OT | None): maximum key to stop iterating
+            inclusive (tuple[bool, bool]): pair of booleans
+            reverse (bool): yield values in reverse order
 
         Returns:
-            `Iterator`
+            Iterator[T]: iterator of values between `min_key` and `max_key`
 
         """
         maxes = self._maxes

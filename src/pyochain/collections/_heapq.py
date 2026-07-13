@@ -22,7 +22,6 @@ class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):  # noqa: PLW1
     _inner: list[T]
 
     def __init__(self, data: list[T]) -> None:
-        """Transform a `list` into a heap, in-place, in O(len(x)) time."""
         self._inner = data
         self._heapify(self._inner)
 
@@ -37,10 +36,9 @@ class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):  # noqa: PLW1
 
         Args:
             data (list[T]): A `list` that already satisfies the corresponding heap invariant.
-            data (list[T]): A `list` that already satisfies the corresponding heap invariant.
 
         Returns:
-            Heap[T]: A new `Heap` instance.
+            Self: A new `Heap` instance.
         """
         instance = cls.__new__(cls)
         instance._inner = data
@@ -105,6 +103,9 @@ class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):  # noqa: PLW1
 
             The smallest item is always popped.
 
+        Args:
+            _index (int): Ignored.
+
         Returns:
             T: The smallest item from the heap.
         """
@@ -131,6 +132,9 @@ class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):  # noqa: PLW1
 
             ```
 
+        Args:
+            item (T): The new item to be added to the heap.
+
         Returns:
             T: The smallest item from the heap.
         """
@@ -138,6 +142,9 @@ class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):  # noqa: PLW1
     @abstractmethod
     def push_pop(self, item: T) -> T:
         """Fast version of a heappush followed by a heappop.
+
+        Args:
+            item (T): The new item to be added to the heap.
 
         Returns:
             T: The smallest item from the `Heap`.
@@ -167,6 +174,11 @@ class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):  # noqa: PLW1
         >>> HeapMin(["dog", "horse"]).merge(others, key=len).collect(list)
         ['dog', 'cat', 'fish', 'horse', 'kangaroo']
 
+        Args:
+            *others (Iterable[S]): Other sorted iterables to merge with *self*.
+            key (Callable[[T | S], SupportsRichComparison] | None): A function that extracts a comparison key from each element. Defaults to `None`.
+            reverse (bool): If `True`, the merged output will be in descending order. Defaults to `False`.
+
         Returns:
             PyoIterator[T | S]: A generator that yields the merged sorted elements from the input iterables.
 
@@ -188,6 +200,10 @@ class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):  # noqa: PLW1
 
         Equivalent to:  `iterator.sort(key=key)[:n]`
 
+        Args:
+            n (int): The number of smallest elements to retrieve.
+            key (Callable[[T], SupportsRichComparison] | None): A function that extracts a comparison key from each element. Defaults to `None`.
+
         Returns:
             Self: A new `Heap` instance containing the *n* smallest elements from the heap.
         """
@@ -203,6 +219,10 @@ class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):  # noqa: PLW1
         """Find the *n* largest elements in a dataset.
 
         Equivalent to:  `iterator.sort(key=key, reverse=True)[:n]`
+
+        Args:
+            n (int): The number of largest elements to retrieve.
+            key (Callable[[T], SupportsRichComparison] | None): A function that extracts a comparison key from each element. Defaults to `None`.
 
         Returns:
             Self: A new `Heap` instance containing the *n* largest elements from the heap.

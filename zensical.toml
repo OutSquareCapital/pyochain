@@ -47,9 +47,7 @@
                 ] },
                 { "Iterators" = [
                     { "Iter" = "reference/iter.md" },
-                ] },
-                { "Miscellaneous" = [
-                    { "Position" = "reference/position.md" },
+                    { "Peekable" = "reference/peekable.md" },
                 ] },
                 { "Mixins" = [
                     { "Checkable" = "reference/checkable.md" },
@@ -68,6 +66,16 @@
             { "Overview" = "api-reference.md" },
             { "collections" = [
                 { "Deque" = "reference/deque.md" },
+                { "Heap" = "reference/heap.md" },
+                { "HeapMax" = "reference/heapmax.md" },
+                { "HeapMin" = "reference/heapmin.md" },
+                { "PyoCounter" = "reference/pyocounter.md" },
+                { "SortedDict" = "reference/sorteddict.md" },
+                { "SortedKeyDict" = "reference/sortedkeydict.md" },
+                { "SortedKeyList" = "reference/sortedkeylist.md" },
+                { "SortedKeySet" = "reference/sortedkeyset.md" },
+                { "SortedList" = "reference/sortedlist.md" },
+                { "SortedSet" = "reference/sortedset.md" },
                 { "StableSet" = "reference/stableset.md" },
             ] },
         ] },

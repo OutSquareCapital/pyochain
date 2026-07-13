@@ -12,10 +12,9 @@ pyochain is a **mixed Python/Rust project**:
 - [src/pyochain/**init**.py](src/pyochain/__init__.py) — public API entrypoint and re-exports.
 - [src/pyochain/abc/](src/pyochain/abc) — abstract collections and iterator ABCs shared across the Python layer.
 - [src/pyochain/collections/](src/pyochain/collections) — non-core collection implementations.
-- [src/pyochain/_iter.py](src/pyochain/_iter.py) — `Iter` implementation.
-- [src/pyochain/_seq.py](src/pyochain/_seq.py) — `Seq` implementation.
+- [src/pyochain/_seq.pyi](src/pyochain/_seq.pyi) — `Seq` stubs.
 - [src/pyochain/_dict.py](src/pyochain/_dict.py) — `Dict` implementation and mapping-specific methods.
-- [src/pyochain/_range.py](src/pyochain/_range.py) — `Range` implementation.
+- [src/pyochain/_range.pyi](src/pyochain/_range.pyi) — `Range` stubs.
 - [src/pyochain/_set.py](src/pyochain/_set.py) — `Set`, `SetMut`, `PyoKeysView`, `PyoValuesView`, and `PyoItemsView` implementations.
 - [src/pyochain/_vec.py](src/pyochain/_vec.py) — `Vec` implementation.
 - [src/pyochain/_utils.py](src/pyochain/_utils.py) — internal utilities used across the Python package.

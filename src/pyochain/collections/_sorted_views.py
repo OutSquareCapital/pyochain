@@ -63,10 +63,12 @@ class SortedKeysView(PyoKeysView[_K_co], PyoSequence[_K_co], Generic[_K_co]):  #
           ...
         IndexError: list index out of range
 
-        :param index: integer or slice for indexing
+        Args:
+            index (int | slice): integer or slice for indexing
 
         Returns:
-            key or list of keys
+            _K_co | list[_K_co]: key or list of keys
+
         :raises IndexError: if index out of range
 
         """
@@ -129,10 +131,11 @@ class SortedItemsView(
           ...
         IndexError: list index out of range
 
-        :param index: integer or slice for indexing
+        Args:
+            index (int | slice): integer or slice for indexing
 
         Returns:
-            item or list of items
+            tuple[_K_co, _V_co] | list[tuple[_K_co, _V_co]]: item or list of items
 
         """
         mapping = self._mapping
@@ -189,10 +192,11 @@ class SortedValuesView(PyoValuesView[_V_co], PyoSequence[_V_co], Generic[_V_co])
           ...
         IndexError: list index out of range
 
-        :param index: integer or slice for indexing
+        Args:
+            index (int | slice): integer or slice for indexing
 
         Returns:
-            value or list of values
+            _V_co | list[_V_co]: value or list of values
         """
         mapping = self._mapping
         mapping_list = mapping._list  # pyright: ignore[reportPrivateUsage]

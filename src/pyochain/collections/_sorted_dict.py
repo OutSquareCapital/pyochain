@@ -101,47 +101,45 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
 
     Sorted dicts may only be compared for equality and inequality.
 
+
+    Optional key-function argument defines a callable that, like the `key`
+    argument to the built-in `sorted` function, extracts a comparison key
+    from each dictionary key. If no function is specified, the default
+    compares the dictionary keys directly. The key-function argument must
+    be provided as a positional argument and must come before all other
+    arguments.
+
+    Optional iterable argument provides an initial sequence of pairs to
+    initialize the sorted dict. Each pair in the sequence defines the key
+    and corresponding value. If a key is seen more than once, the last
+    value associated with it is stored in the new sorted dict.
+
+    Optional mapping argument provides an initial mapping of items to
+    initialize the sorted dict.
+
+    If keyword arguments are given, the keywords themselves, with their
+    associated values, are added as items to the dictionary. If a key is
+    specified both in the positional argument and as a keyword argument,
+    the value associated with the keyword is stored in the
+    sorted dict.
+
+    Sorted dict keys must be hashable, per the requirement for Python's
+    dictionaries. Keys (or the result of the key-function) must also be
+    comparable, per the requirement for sorted lists.
+
+    >>> d = {"alpha": 1, "beta": 2}
+    >>> SortedDict([("alpha", 1), ("beta", 2)]) == d
+    True
+    >>> SortedDict({"alpha": 1, "beta": 2}) == d
+    True
+    >>> SortedDict(alpha=1, beta=2) == d
+    True
+
     """
 
     def __init__(
         self, iterable: Iterable[tuple[K, V]] | Mapping[K, V] = (), **kwargs: V
     ) -> None:
-        """Initialize sorted dict instance.
-
-        Optional key-function argument defines a callable that, like the `key`
-        argument to the built-in `sorted` function, extracts a comparison key
-        from each dictionary key. If no function is specified, the default
-        compares the dictionary keys directly. The key-function argument must
-        be provided as a positional argument and must come before all other
-        arguments.
-
-        Optional iterable argument provides an initial sequence of pairs to
-        initialize the sorted dict. Each pair in the sequence defines the key
-        and corresponding value. If a key is seen more than once, the last
-        value associated with it is stored in the new sorted dict.
-
-        Optional mapping argument provides an initial mapping of items to
-        initialize the sorted dict.
-
-        If keyword arguments are given, the keywords themselves, with their
-        associated values, are added as items to the dictionary. If a key is
-        specified both in the positional argument and as a keyword argument,
-        the value associated with the keyword is stored in the
-        sorted dict.
-
-        Sorted dict keys must be hashable, per the requirement for Python's
-        dictionaries. Keys (or the result of the key-function) must also be
-        comparable, per the requirement for sorted lists.
-
-        >>> d = {"alpha": 1, "beta": 2}
-        >>> SortedDict([("alpha", 1), ("beta", 2)]) == d
-        True
-        >>> SortedDict({"alpha": 1, "beta": 2}) == d
-        True
-        >>> SortedDict(alpha=1, beta=2) == d
-        True
-
-        """
         self._list: SortedList[K] = SortedList()
 
         self.update(iterable, **kwargs)
@@ -391,11 +389,12 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
           ...
         KeyError: 'y'
 
-        :param key: `key` for item
-        :param default: `default` value if key not found (optional)
+        Args:
+            key (K): `key` for item
+            default (T): `default` value if key not found (optional)
 
         Returns:
-            value: value for item
+            V | T: value for item
 
         Raises:
             KeyError: if `key` not found and `default` not given
@@ -431,10 +430,11 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
           ...
         IndexError: list index out of range
 
-        :param int index: `index` of item (default -1)
+        Args:
+            index (int): `index` of item (default -1)
 
         Returns:
-            tuple: key and value pair
+            tuple[K, V]: key and value pair
 
         Raises:
             KeyError: if sorted dict is empty
@@ -574,7 +574,7 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
         :func:`SortedDict.__init__` confuse pickle so customize the reducer.
 
         Returns:
-            tuple: class and arguments for reconstruction
+            tuple[type[Self], tuple[dict[K, V]]]: class and arguments for reconstruction
 
         """
         items = super().copy()
@@ -600,6 +600,42 @@ class SortedKeyDict[
     V,
     OT: SupportsHashableAndRichComparison,
 ](SortedDict[K, V]):
+    """Sorted dict with key-function for sorting keys.
+
+    Optional key-function argument defines a callable that, like the `key`
+    argument to the built-in `sorted` function, extracts a comparison key
+    from each dictionary key. If no function is specified, the default
+    compares the dictionary keys directly. The key-function argument must
+    be provided as a positional argument and must come before all other
+    arguments.
+
+    Optional iterable argument provides an initial sequence of pairs to
+    initialize the sorted dict. Each pair in the sequence defines the key
+    and corresponding value. If a key is seen more than once, the last
+    value associated with it is stored in the new sorted dict.
+
+    Optional mapping argument provides an initial mapping of items to
+    initialize the sorted dict.
+
+    If keyword arguments are given, the keywords themselves, with their
+    associated values, are added as items to the dictionary. If a key is
+    specified both in the positional argument and as a keyword argument,
+    the value associated with the keyword is stored in the
+    sorted dict.
+
+    Sorted dict keys must be hashable, per the requirement for Python's
+    dictionaries. Keys (or the result of the key-function) must also be
+    comparable, per the requirement for sorted lists.
+
+    >>> d = {"alpha": 1, "beta": 2}
+    >>> SortedDict([("alpha", 1), ("beta", 2)]) == d
+    True
+    >>> SortedDict({"alpha": 1, "beta": 2}) == d
+    True
+    >>> SortedDict(alpha=1, beta=2) == d
+    True
+    """
+
     def __init__(
         self,
         iterable: Iterable[tuple[K, V]] | Mapping[K, V] = (),
@@ -607,42 +643,6 @@ class SortedKeyDict[
         key: KeyFunc[K, OT],
         **kwargs: V,
     ) -> None:
-        """Initialize sorted dict instance.
-
-        Optional key-function argument defines a callable that, like the `key`
-        argument to the built-in `sorted` function, extracts a comparison key
-        from each dictionary key. If no function is specified, the default
-        compares the dictionary keys directly. The key-function argument must
-        be provided as a positional argument and must come before all other
-        arguments.
-
-        Optional iterable argument provides an initial sequence of pairs to
-        initialize the sorted dict. Each pair in the sequence defines the key
-        and corresponding value. If a key is seen more than once, the last
-        value associated with it is stored in the new sorted dict.
-
-        Optional mapping argument provides an initial mapping of items to
-        initialize the sorted dict.
-
-        If keyword arguments are given, the keywords themselves, with their
-        associated values, are added as items to the dictionary. If a key is
-        specified both in the positional argument and as a keyword argument,
-        the value associated with the keyword is stored in the
-        sorted dict.
-
-        Sorted dict keys must be hashable, per the requirement for Python's
-        dictionaries. Keys (or the result of the key-function) must also be
-        comparable, per the requirement for sorted lists.
-
-        >>> d = {"alpha": 1, "beta": 2}
-        >>> SortedDict([("alpha", 1), ("beta", 2)]) == d
-        True
-        >>> SortedDict({"alpha": 1, "beta": 2}) == d
-        True
-        >>> SortedDict(alpha=1, beta=2) == d
-        True
-
-        """
         self._key: KeyFunc[K, OT] = key
 
         self._list: SortedKeyList[K, OT] = SortedKeyList(key=self._key)  # pyright: ignore[reportIncompatibleVariableOverride]

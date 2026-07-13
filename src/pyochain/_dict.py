@@ -336,10 +336,10 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):  # noqa: PLW1641
         This is equivalent to `|` on a standard Python `dict`.
 
         Args:
-            other (IntoDict[K, V]): The other mapping to merge with.
+            other (IntoDict[T1, T2]): The other mapping to merge with.
 
         Returns:
-            Dict[K, V]: A new mapping containing the merged key-value pairs.
+            Dict[K | T1, V | T2]: A new mapping containing the merged key-value pairs.
 
         See Also:
             - [`Dict::union_mut`][union_mut]: Merge another mapping into `Self` in-place.

@@ -92,23 +92,21 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # noqa: PLW1641
     greater than another sorted set if and only if the first sorted set is a
     proper superset of the second sorted set (is a superset, but is not equal).
 
+    Optional `iterable` argument provides an initial iterable of values to
+    initialize the sorted set.
+
+    Runtime complexity: `O(n*log(n))`
+
+    >>> ss = SortedSet([3, 1, 2, 5, 4])
+    >>> ss
+    SortedSet([1, 2, 3, 4, 5])
+
+    Args:
+        iterable (Iterable[T] | None): initial values (optional)
+
     """
 
     def __init__(self, iterable: Iterable[T] | None = None) -> None:
-        """Initialize sorted set instance.
-
-        Optional `iterable` argument provides an initial iterable of values to
-        initialize the sorted set.
-
-        Runtime complexity: `O(n*log(n))`
-
-        >>> ss = SortedSet([3, 1, 2, 5, 4])
-        >>> ss
-        SortedSet([1, 2, 3, 4, 5])
-
-        :param iterable: initial values (optional)
-
-        """
         # SortedSet._fromset calls SortedSet.__init__ after initializing the
         # _set attribute. So only create a new set if the _set attribute is not
         # already present.
@@ -171,13 +169,6 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # noqa: PLW1641
         return self._set.issuperset(other)
 
     def _fromset(self, values: set[T]) -> Self:
-        """Initialize sorted set from existing set.
-
-        Used internally by set operations that return a new set.
-
-        Returns:
-            Self
-        """
         sorted_set = self.__new__(self.__class__)
         sorted_set._set = values
         sorted_set.__init__()  # noqa: PLC2801
@@ -223,12 +214,11 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # noqa: PLW1641
         >>> ss[2:5]
         ['c', 'd', 'e']
 
-        :param index: integer or slice for indexing
-        Raises:
-            IndexError: if index out of range
+        Args:
+            index (int | slice): integer or slice for indexing
 
         Returns:
-            value or list of values
+            T | list[T]: value or list of values
 
         """
         return self._list[index]
@@ -456,10 +446,11 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # noqa: PLW1641
         >>> ss
         SortedSet(['a', 'b', 'd'])
 
-        :param int index: index of value (default -1)
+        Args:
+            index (int): index of value (default -1)
 
         Returns:
-            value
+            T: value at `index`
 
         """
         # pylint: disable=arguments-differ
@@ -529,10 +520,11 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # noqa: PLW1641
         >>> ss
         SortedSet([1, 2, 3])
 
-        :param iterables: iterable arguments
+        Args:
+            *iterables (Iterable[T]): iterable arguments
 
         Returns:
-            Self
+            Self: updated sorted set
 
         """
         set_ = self._set
@@ -594,10 +586,11 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # noqa: PLW1641
         >>> ss
         SortedSet([4, 5])
 
-        :param iterables: iterable arguments
+        Args:
+            *iterables (Iterable[Any]): iterable arguments
 
         Returns:
-            Self
+            Self: updated sorted set
 
         """
         set_ = self._set
@@ -655,10 +648,11 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # noqa: PLW1641
         >>> ss
         SortedSet([1, 2, 3, 6, 7])
 
-        :param other: `other` iterable
+        Args:
+            other (Iterable[T]): `other` iterable
 
         Returns:
-            Self
+            Self: updated sorted set
 
         """
         set_ = self._set
@@ -709,10 +703,11 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # noqa: PLW1641
         >>> ss
         SortedSet([1, 2, 3, 4, 5, 6, 7])
 
-        :param iterables: iterable arguments
+        Args:
+            *iterables (Iterable[T]): iterable arguments
 
         Returns:
-            Self
+            Self: updated sorted set
 
         """
         set_ = self._set
@@ -743,7 +738,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # noqa: PLW1641
         confuse pickle so customize the reducer.
 
         Returns:
-            tuple of class and arguments
+            tuple[type[Self], tuple[AbstractSet[T]]]: tuple of class and arguments
 
         """
         return (type(self), (self._set,))

@@ -59,6 +59,14 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # noqa: PLW1641
     >>> c.most_common()  # 'b' is still in, but its count is zero
     [('a', 3), ('c', 1), ('b', 0)]
 
+    If given, count elements from an input iterable.
+
+    Or, initialize the count from another mapping of elements to their counts.
+
+    >>> c = PyoCounter()  # a new, empty counter
+    >>> c = PyoCounter("gallahad")  # a new counter from an iterable
+    >>> c = PyoCounter({"a": 4, "b": 2})  # a new counter from a mapping
+
     """
 
     _inner: dict[T, int]
@@ -72,17 +80,6 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # noqa: PLW1641
     def __init__(
         self, iterable: Iterable[T] | Mapping[T, int] | None = None, /, **kwargs: int
     ) -> None:
-        """Create a new, empty PyoCounter object.
-
-        And if given, count elements from an input iterable.
-
-        Or, initialize the count from another mapping of elements to their counts.
-
-        >>> c = PyoCounter()  # a new, empty counter
-        >>> c = PyoCounter("gallahad")  # a new counter from an iterable
-        >>> c = PyoCounter({"a": 4, "b": 2})  # a new counter from a mapping
-
-        """
         # Needed to emulate the behavior of stdlib PyoCounter.
         if not hasattr(self, "_inner"):
             self._inner = {}
@@ -116,6 +113,9 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # noqa: PLW1641
 
         This is needed so that self[missing_item] does not raise `KeyError`.
 
+        Args:
+            key (T): The missing element to look up.
+
         Returns:
             int: The count of the missing element, which is always zero.
         """
@@ -139,17 +139,18 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # noqa: PLW1641
         """Sum of the counts.
 
         Returns:
-            int
+            int: The sum of all counts in the PyoCounter.
         """
         return sum(self.values())
 
     def most_common(self, n: int | None = None) -> list[tuple[T, int]]:
         """List the n most common elements and their counts from the most common to the least.
 
-        If n is `None`, then list all element counts.
-
         >>> PyoCounter("abracadabra").most_common(3)
         [('a', 5), ('b', 2), ('r', 2)]
+
+        Args:
+            n (int | None): The number of most common elements to return. If `None`, return all elements.
 
         Returns:
             list[tuple[T, int]]: A list of tuples containing the n most common elements and their counts.
@@ -180,7 +181,7 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # noqa: PLW1641
         number, elements() will ignore it.
 
         Returns:
-            Iterator[T]
+            Iterator[T]: An iterator over elements repeating each as many times as its count.
         """
         return itertools.chain.from_iterable(
             itertools.starmap(itertools.repeat, self.items())
@@ -305,6 +306,9 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # noqa: PLW1641
         >>> PyoCounter("abbb") + PyoCounter("bcc")
         PyoCounter({'b': 4, 'c': 2, 'a': 1})
 
+        Args:
+            other (PyoCounter[S]): Another counter to add counts from.
+
         Returns:
             PyoCounter[T | S]: A new counter with the added counts.
         """
@@ -323,6 +327,9 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # noqa: PLW1641
 
         >>> PyoCounter("abbbc") - PyoCounter("bccd")
         PyoCounter({'b': 2, 'a': 1})
+
+        Args:
+            other (PyoCounter[T]): Another counter to subtract counts from.
 
         Returns:
             PyoCounter[T]: A new counter with the subtracted counts, keeping only positive counts.
@@ -343,6 +350,9 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # noqa: PLW1641
         >>> PyoCounter("abbb") | PyoCounter("bcc")
         PyoCounter({'b': 3, 'c': 2, 'a': 1})
 
+        Args:
+            other (PyoCounter[T]): Another counter to take the union with.
+
         Returns:
             PyoCounter[T]: A new counter with the union of counts.
         """
@@ -362,6 +372,9 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # noqa: PLW1641
 
         >>> PyoCounter("abbb") & PyoCounter("bcc")
         PyoCounter({'b': 1})
+
+        Args:
+            other (PyoCounter[T]): Another counter to take the intersection with.
 
         Returns:
             PyoCounter[T]: A new counter with the intersection of counts.
@@ -408,6 +421,9 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # noqa: PLW1641
         >>> c
         PyoCounter({'b': 4, 'c': 2, 'a': 1})
 
+        Args:
+            other (SupportsItems[T, int]): Another counter or mapping to add counts from.
+
         Returns:
             Self: The updated counter with the added counts.
         """
@@ -423,6 +439,9 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # noqa: PLW1641
         >>> c
         PyoCounter({'b': 2, 'a': 1})
 
+        Args:
+            other (SupportsItems[T, int]): Another counter or mapping to subtract counts from.
+
         Returns:
             Self: The updated counter with the subtracted counts.
         """
@@ -437,6 +456,9 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # noqa: PLW1641
         >>> c |= PyoCounter("bcc")
         >>> c
         PyoCounter({'b': 3, 'c': 2, 'a': 1})
+
+        Args:
+            other (SupportsItems[T, int]): Another counter or mapping to take the union with.
 
         Returns:
             Self: The updated counter with the union of counts.
@@ -456,6 +478,9 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # noqa: PLW1641
         >>> c
         PyoCounter({'b': 1})
 
+        Args:
+            other (Mapping[T, int]): Another counter or mapping to take the intersection with.
+
         Returns:
             Self: The updated counter with the intersection of counts.
         """
@@ -469,8 +494,11 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # noqa: PLW1641
     def __eq__(self, other: object) -> bool:
         """True if all counts agree. Missing counts are treated as zero.
 
+        Args:
+            other (object): The object to compare with.
+
         Returns:
-            bool
+            bool: True if all counts agree, False otherwise. If `other` is not a PyoCounter or dict, returns NotImplemented.
         """
         match other:
             case PyoCounter():
@@ -484,8 +512,11 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # noqa: PLW1641
     def __ne__(self, other: object) -> bool:
         """True if any counts disagree. Missing counts are treated as zero.
 
+        Args:
+            other (object): The object to compare with.
+
         Returns:
-            bool
+            bool: True if any counts disagree, False otherwise. If `other` is not a PyoCounter or dict, returns NotImplemented.
         """
         if not isinstance(other, PyoCounter):
             return NotImplemented
@@ -494,32 +525,44 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # noqa: PLW1641
     def __le__(self, other: PyoCounter[Any]) -> bool:
         """True if all counts in self are a subset of those in other.
 
+        Args:
+            other (PyoCounter[Any]): The counter to compare with.
+
         Returns:
-            bool
+            bool: True if all counts in self are a subset of those in other, False otherwise.
         """
         return all(self[e] <= other[e] for c in (self, other) for e in c)
 
     def __lt__(self, other: PyoCounter[Any]) -> bool:
         """True if all counts in self are a proper subset of those in other.
 
+        Args:
+            other (PyoCounter[Any]): The counter to compare with.
+
         Returns:
-            bool
+            bool: True if all counts in self are a proper subset of those in other, False otherwise.
         """
         return self <= other and self != other
 
     def __ge__(self, other: PyoCounter[Any]) -> bool:
         """True if all counts in self are a superset of those in other.
 
+        Args:
+            other (PyoCounter[Any]): The counter to compare with.
+
         Returns:
-            bool
+            bool: True if all counts in self are a superset of those in other, False otherwise.
         """
         return all(self[e] >= other[e] for c in (self, other) for e in c)
 
     def __gt__(self, other: PyoCounter[Any]) -> bool:
         """True if all counts in self are a proper superset of those in other.
 
+        Args:
+            other (PyoCounter[Any]): The counter to compare with.
+
         Returns:
-            bool
+            bool: True if all counts in self are a proper superset of those in other, False otherwise.
         """
         return self >= other and self != other
 
@@ -536,6 +579,9 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # noqa: PLW1641
 
         >>> PyoCounter(a=5, b=3, c=2, d=2) ^ PyoCounter(a=1, b=3, c=5, e=1)
         PyoCounter({'a': 4, 'c': 3, 'd': 2, 'e': 1})
+
+        Args:
+            other (PyoCounter[S]): The counter to compare with.
 
         Returns:
             PyoCounter[T | S]: A new counter with the symmetric difference of counts.
@@ -558,6 +604,9 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # noqa: PLW1641
         >>> c ^= PyoCounter(a=1, b=3, c=5, e=1)
         >>> c
         PyoCounter({'a': 4, 'c': 3, 'd': 2, 'e': 1})
+
+        Args:
+            other (PyoCounter[T]): The counter to compare with.
 
         Returns:
             Self: The updated counter with the symmetric difference of counts.
