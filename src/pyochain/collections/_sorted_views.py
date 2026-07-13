@@ -2,26 +2,22 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
-from collections.abc import (
-    ItemsView,
-    Iterable,
-    KeysView,
-    Sequence,
-    ValuesView,
-)
 from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload, override
 
 from pyochain._types import SupportsHashableAndRichComparison
+from pyochain.abc import PyoItemsView, PyoKeysView, PyoSequence, PyoValuesView
 
 from ._sorted_set import SortedSet
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from pyochain.collections import SortedDict
 _K_co = TypeVar("_K_co", covariant=True, bound=SupportsHashableAndRichComparison)
 _V_co = TypeVar("_V_co", covariant=True)
 
 
-class SortedKeysView(KeysView[_K_co], Sequence[_K_co], Generic[_K_co]):  # noqa: UP046
+class SortedKeysView(PyoKeysView[_K_co], PyoSequence[_K_co], Generic[_K_co]):  # noqa: UP046
     """Sorted keys view is a dynamic view of the sorted dict's keys.
 
     When the sorted dict's keys change, the view reflects those changes.
@@ -30,7 +26,7 @@ class SortedKeysView(KeysView[_K_co], Sequence[_K_co], Generic[_K_co]):  # noqa:
 
     """
 
-    _mapping: SortedDict[_K_co, Any]
+    _mapping: SortedDict[_K_co, Any]  # pyright: ignore[reportIncompatibleVariableOverride]
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
@@ -81,8 +77,8 @@ class SortedKeysView(KeysView[_K_co], Sequence[_K_co], Generic[_K_co]):  # noqa:
 
 
 class SortedItemsView(
-    ItemsView[_K_co, _V_co],
-    Sequence[tuple[_K_co, _V_co]],
+    PyoItemsView[_K_co, _V_co],
+    PyoSequence[tuple[_K_co, _V_co]],
     Generic[_K_co, _V_co],  # noqa: UP046
 ):
     """Sorted items view is a dynamic view of the sorted dict's items.
@@ -93,7 +89,7 @@ class SortedItemsView(
 
     """
 
-    _mapping: SortedDict[_K_co, _V_co]
+    _mapping: SortedDict[_K_co, _V_co]  # pyright: ignore[reportIncompatibleVariableOverride]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
     @classmethod
@@ -153,7 +149,7 @@ class SortedItemsView(
         return _view_delitem(self, index)
 
 
-class SortedValuesView(ValuesView[_V_co], Sequence[_V_co], Generic[_V_co]):  # noqa: UP046
+class SortedValuesView(PyoValuesView[_V_co], PyoSequence[_V_co], Generic[_V_co]):  # noqa: UP046
     """Sorted values view is a dynamic view of the sorted dict's values.
 
     When the sorted dict's values change, the view reflects those changes.
@@ -162,7 +158,7 @@ class SortedValuesView(ValuesView[_V_co], Sequence[_V_co], Generic[_V_co]):  # n
 
     """
 
-    _mapping: SortedDict[Any, _V_co]
+    _mapping: SortedDict[Any, _V_co]  # pyright: ignore[reportIncompatibleVariableOverride]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
     @overload
