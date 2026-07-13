@@ -27,26 +27,30 @@ class SortedCollection[T](ABC):
 
     @abstractmethod
     def bisect_left(self, value: T) -> int:
-        """Return an index to insert `value` in the `SortedCollection`.
+        """Return an index to insert *value* in the `SortedCollection`.
 
-        If the `value` is already present, the insertion point will be before
+        If the *value* is already present, the insertion point will be before
         (to the left of) any existing values.
 
         Similar to the `bisect` module in the standard library.
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> sl = SortedList([10, 11, 12, 13, 14])
-        >>> sl.bisect_left(12)
-        2
+        Parameters:
+            value: insertion index of value in `SortedCollection`
 
-        >>> from operator import neg
-        >>> skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
-        >>> skl.bisect_left(1)
-        4
+        Returns:
+            int
 
-        :param value: insertion index of value in `SortedCollection`
-        :return: index
+        Examples:
+            >>> sl = SortedList([10, 11, 12, 13, 14])
+            >>> sl.bisect_left(12)
+            2
+
+            >>> from operator import neg
+            >>> skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
+            >>> skl.bisect_left(1)
+            4
 
         """
 
@@ -61,6 +65,12 @@ class SortedCollection[T](ABC):
 
         Runtime complexity: `O(log(n))` -- approximate.
 
+        Parameters:
+            value (T): insertion index of value in `SortedCollection`
+
+        Returns:
+            int
+
         >>> sl = SortedList([10, 11, 12, 13, 14])
         >>> sl.bisect_right(12)
         3
@@ -69,9 +79,6 @@ class SortedCollection[T](ABC):
         >>> skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
         >>> skl.bisect_right(1)
         5
-
-        :param value: insertion index of value in `SortedCollection`
-        :return: index
 
         """
 
@@ -195,13 +202,13 @@ class SortedCollection[T](ABC):
 
         The `load` specifies the load-factor of the list. The default load
         factor of 1000 works well for lists from tens to tens-of-millions of
-        values. Good practice is to use a value that is the cube root of the
-        list size. With billions of elements, the best load factor depends on
-        your usage. It's best to leave the load factor at the default until you
-        start benchmarking.
+        values.
 
-        See :doc:`implementation` and :doc:`performance-scale` for more
-        information.
+        Good practice is to use a value that is the cube root of the list size.
+
+        With billions of elements, the best load factor depends on your usage.
+
+        It's best to leave the load factor at the default until you start benchmarking.
 
         Runtime complexity: `O(n)`
 
