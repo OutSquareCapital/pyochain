@@ -1,3 +1,3 @@
 # Some
 
-::: pyochain.rs.Some
+::: pyochain.Some

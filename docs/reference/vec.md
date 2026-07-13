@@ -1,3 +1,3 @@
 # Vec
 
-::: pyochain._vec.Vec
+::: pyochain.Vec

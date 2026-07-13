@@ -1,3 +1,3 @@
 # Null
 
-::: pyochain.rs.Null
+::: pyochain.Null

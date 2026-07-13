@@ -1,3 +1,3 @@
 # PyoValuesView
 
-::: pyochain.abc._mappings.PyoValuesView
+::: pyochain.PyoValuesView

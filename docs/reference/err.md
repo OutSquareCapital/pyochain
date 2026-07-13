@@ -1,3 +1,3 @@
 # Err
 
-::: pyochain.rs.Err
+::: pyochain.Err

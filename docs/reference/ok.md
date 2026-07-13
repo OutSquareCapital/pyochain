@@ -1,3 +1,3 @@
 # Ok
 
-::: pyochain.rs.Ok
+::: pyochain.Ok

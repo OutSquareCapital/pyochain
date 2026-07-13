@@ -63,16 +63,21 @@ def _generate_mds(module: ModuleType, generated_paths: SetMut[str]) -> None:
         .items()
         .iter()
         .filter(_is_public_class)
-        .map_star(
-            lambda name, cls: (
-                Paths.DOCS_REF.value.joinpath(f"{name.lower()}.md"),
-                name,
-                f"{cls.__module__}.{cls.__name__}".replace("builtins", "pyochain.rs"),
-            )
-        )
+        .map_star(lambda name, cls: _fix_name(name, cls, module))
         .filter_star(lambda k, _, _v: k.as_posix() not in generated_paths)
         .for_each_star(_write)
     )
+
+
+def _fix_name(name: str, cls: type, module: ModuleType) -> tuple[Path, str, str]:
+    mod_name = module.__name__
+    cls_path = (
+        f"{mod_name}.{name}"
+        if mod_name == "pyochain"
+        else f"{cls.__module__}.{cls.__name__}".replace("builtins", "pyochain.rs")
+    )
+
+    return Paths.DOCS_REF.value.joinpath(f"{name.lower()}.md"), name, cls_path
 
 
 def _finalize_md(full_path: str, class_name: str) -> str:

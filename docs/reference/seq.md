@@ -1,3 +1,3 @@
 # Seq
 
-::: pyochain.rs.Seq
+::: pyochain.Seq

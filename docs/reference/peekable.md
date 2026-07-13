@@ -1,3 +1,3 @@
 # Peekable
 
-::: pyochain.rs.Peekable
+::: pyochain.Peekable
