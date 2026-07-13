@@ -15,6 +15,8 @@ from itertools import chain
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, Self, overload, override
 
+from pyochain.abc import PyoMutableMapping
+
 from .._types import SupportsHashableAndRichComparison
 from ._sorted_list import SortedCollection, SortedKeyList, SortedList
 from ._sorted_views import SortedItemsView, SortedKeysView, SortedValuesView
@@ -30,7 +32,7 @@ type KeyFunc[K: Hashable, OT: SupportsHashableAndRichComparison] = Callable[[K],
 
 
 class SortedDict[K: SupportsHashableAndRichComparison, V](
-    dict[K, V], SortedCollection[K]
+    dict[K, V], PyoMutableMapping[K, V], SortedCollection[K]
 ):
     """Sorted dict is a sorted mutable mapping.
 
