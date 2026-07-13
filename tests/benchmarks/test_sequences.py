@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from pyochain.rs import Range, Seq
+from pyochain import Range, Seq
 
 from ._utils import SIZES
 

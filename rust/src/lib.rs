@@ -118,90 +118,82 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<mixins::Fluent>()?;
     m.add_class::<mixins::PyoPipe>()?;
     m.add_class::<mixins::PyoTap>()?;
-    m.add_class::<seq::Seq>()?;
-    m.add_class::<seq::Range>()?;
-    m.add_wrapped(pyo3::wrap_pymodule!(tools_mod))?;
-    m.add_wrapped(pyo3::wrap_pymodule!(abc_mod))?;
+
+    let range_mod = PyModule::new(py, "_range")?;
+    m.add_submodule(&range_mod)?;
+    range_mod.add_class::<seq::Range>()?;
+    let seq_mod = PyModule::new(py, "_seq")?;
+    m.add_submodule(&seq_mod)?;
+    seq_mod.add_class::<seq::Seq>()?;
+    let tools_mod = PyModule::new(py, "_tools")?;
+
+    tools_mod.add_function(wrap_pyfunction!(tools::retain, m)?)?;
+    tools_mod.add_class::<tools::UniqueIdentity>()?;
+    tools_mod.add_class::<tools::UniqueKey>()?;
+    tools_mod.add_class::<tools::Intersperse>()?;
+    tools_mod.add_class::<tools::MapWindow>()?;
+    tools_mod.add_class::<tools::MapJuxt>()?;
+    tools_mod.add_class::<tools::FilterMap>()?;
+    tools_mod.add_class::<tools::FilterMapStar>()?;
+    tools_mod.add_class::<tools::Scan>()?;
+    tools_mod.add_class::<tools::MapWhile>()?;
+    tools_mod.add_class::<tools::FromFn>()?;
+    tools_mod.add_class::<tools::Drain>()?;
+    tools_mod.add_class::<tools::ExtractIf>()?;
+    tools_mod.add_class::<tools::Successors>()?;
+    tools_mod.add_class::<tools::FilterStar>()?;
+    tools_mod.add_class::<tools::WithPosition>()?;
+    tools_mod.add_class::<tools::ZipLongest>()?;
+    tools_mod.add_class::<tools::Unzip>()?;
+    tools_mod.add_class::<tools::GroupBy>()?;
+    tools_mod.add_class::<tools::Iter>()?;
+    tools_mod.add_class::<tools::Peekable>()?;
+
+    let abc_mod = PyModule::new(py, "abc")?;
+    let iterable_mod = PyModule::new(py, "_iterable")?;
+    iterable_mod.add_class::<abc::PyoIterable>()?;
+    let iterator_mod = PyModule::new(py, "_iterator")?;
+    iterator_mod.add_class::<abc::PyoIterator>()?;
+    let collection_mod = PyModule::new(py, "_collection")?;
+
+    collection_mod.add_class::<abc::PyoContainer>()?;
+    collection_mod.add_class::<abc::PyoSized>()?;
+    collection_mod.add_class::<abc::PyoCollection>()?;
+    let sequences_mod = PyModule::new(py, "_sequences")?;
+
+    sequences_mod.add_class::<abc::PyoReversible>()?;
+    sequences_mod.add_class::<abc::PyoSequence>()?;
+    sequences_mod.add_class::<abc::PyoMutableSequence>()?;
+    let sets_mod = PyModule::new(py, "_sets")?;
+    sets_mod.add_class::<abc::PyoSet>()?;
+    sets_mod.add_class::<abc::PyoMutableSet>()?;
+    let mappings_mod = PyModule::new(py, "_mappings")?;
+
+    mappings_mod.add_class::<abc::PyoMappingView>()?;
+    mappings_mod.add_class::<abc::PyoMapping>()?;
+    mappings_mod.add_class::<abc::PyoKeysView>()?;
+    mappings_mod.add_class::<abc::PyoValuesView>()?;
+    mappings_mod.add_class::<abc::PyoItemsView>()?;
+    mappings_mod.add_class::<abc::PyoMutableMapping>()?;
+    abc_mod.add_submodule(&iterable_mod)?;
+    abc_mod.add_submodule(&iterator_mod)?;
+    abc_mod.add_submodule(&collection_mod)?;
+    abc_mod.add_submodule(&sequences_mod)?;
+    abc_mod.add_submodule(&sets_mod)?;
+    abc_mod.add_submodule(&mappings_mod)?;
+    m.add_submodule(&abc_mod)?;
     let sys_mods = py.import("sys")?.getattr("modules")?;
-    sys_mods.set_item("pyochain._tools", m.getattr("_tools")?)?;
-    let abc_mod = m.getattr("abc")?;
-    sys_mods.set_item("pyochain.abc._iterable", abc_mod.getattr("_iterable")?)?;
-    sys_mods.set_item("pyochain.abc._iterator", abc_mod.getattr("_iterator")?)?;
-    sys_mods.set_item("pyochain.abc._collection", abc_mod.getattr("_collection")?)?;
-    sys_mods.set_item("pyochain.abc._sequences", abc_mod.getattr("_sequences")?)?;
-    sys_mods.set_item("pyochain.abc._sets", abc_mod.getattr("_sets")?)?;
-    sys_mods.set_item("pyochain.abc._mappings", abc_mod.getattr("_mappings")?)?;
+    sys_mods.set_item("pyochain._range", range_mod)?;
+    sys_mods.set_item("pyochain._tools", tools_mod)?;
+    sys_mods.set_item("pyochain._seq", seq_mod)?;
+    sys_mods.set_item("pyochain.abc._iterable", iterable_mod)?;
+    sys_mods.set_item("pyochain.abc._iterator", iterator_mod)?;
+    sys_mods.set_item("pyochain.abc._collection", collection_mod)?;
+    sys_mods.set_item("pyochain.abc._sequences", sequences_mod)?;
+    sys_mods.set_item("pyochain.abc._sets", sets_mod)?;
+    sys_mods.set_item("pyochain.abc._mappings", mappings_mod)?;
     register_all(py)
 }
-
-#[pymodule(name = "_tools")]
-pub fn tools_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(tools::retain, m)?)?;
-    m.add_class::<tools::UniqueIdentity>()?;
-    m.add_class::<tools::UniqueKey>()?;
-    m.add_class::<tools::Intersperse>()?;
-    m.add_class::<tools::MapWindow>()?;
-    m.add_class::<tools::MapJuxt>()?;
-    m.add_class::<tools::FilterMap>()?;
-    m.add_class::<tools::FilterMapStar>()?;
-    m.add_class::<tools::Scan>()?;
-    m.add_class::<tools::MapWhile>()?;
-    m.add_class::<tools::FromFn>()?;
-    m.add_class::<tools::Drain>()?;
-    m.add_class::<tools::ExtractIf>()?;
-    m.add_class::<tools::Successors>()?;
-    m.add_class::<tools::FilterStar>()?;
-    m.add_class::<tools::WithPosition>()?;
-    m.add_class::<tools::ZipLongest>()?;
-    m.add_class::<tools::Unzip>()?;
-    m.add_class::<tools::GroupBy>()?;
-    m.add_class::<tools::Iter>()?;
-    m.add_class::<tools::Peekable>()
-}
-#[pymodule(name = "abc")]
-fn abc_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_wrapped(pyo3::wrap_pymodule!(iterable_mod))?;
-    m.add_wrapped(pyo3::wrap_pymodule!(iterator_mod))?;
-    m.add_wrapped(pyo3::wrap_pymodule!(collection_mod))?;
-    m.add_wrapped(pyo3::wrap_pymodule!(sequences_mod))?;
-    m.add_wrapped(pyo3::wrap_pymodule!(sets_mod))?;
-    m.add_wrapped(pyo3::wrap_pymodule!(mappings_mod))
-}
-#[pymodule(name = "_iterable")]
-fn iterable_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<abc::PyoIterable>()
-}
-#[pymodule(name = "_iterator")]
-fn iterator_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<abc::PyoIterator>()
-}
-#[pymodule(name = "_collection")]
-fn collection_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<abc::PyoContainer>()?;
-    m.add_class::<abc::PyoSized>()?;
-    m.add_class::<abc::PyoCollection>()
-}
-#[pymodule(name = "_sequences")]
-fn sequences_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<abc::PyoReversible>()?;
-    m.add_class::<abc::PyoSequence>()?;
-    m.add_class::<abc::PyoMutableSequence>()
-}
-#[pymodule(name = "_sets")]
-fn sets_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<abc::PyoSet>()?;
-    m.add_class::<abc::PyoMutableSet>()
-}
-#[pymodule(name = "_mappings")]
-fn mappings_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<abc::PyoMappingView>()?;
-    m.add_class::<abc::PyoMapping>()?;
-    m.add_class::<abc::PyoKeysView>()?;
-    m.add_class::<abc::PyoValuesView>()?;
-    m.add_class::<abc::PyoItemsView>()?;
-    m.add_class::<abc::PyoMutableMapping>()
-}
-
 fn register_all(py: Python<'_>) -> PyResult<()> {
     let abc_mod = py.import("collections.abc")?;
     register(&abc_mod, "Iterable", &abc::PyoIterable::type_object(py))?;
