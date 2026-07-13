@@ -67,12 +67,12 @@ macro_rules! impl_mapping_view {
         Ok(format!(
             "{}({:?})",
             slf.get_type().name()?,
-            slf.get().mapping.bind(slf.py())
+            slf.get()._mapping.bind(slf.py())
         ))
     }
 
     fn __len__(slf: Bound<'_, Self>) -> PyResult<usize> {
-        slf.get().mapping.bind(slf.py()).len()
+        slf.get()._mapping.bind(slf.py()).len()
     }}
     };
     ($first:ty, $($rest:ty),+ $(,)?) => {

@@ -1368,7 +1368,8 @@ impl PyoSized {
 
 #[pyclass(subclass, frozen, generic, extends=PyoSized, module = "pyochain.abc._mappings")]
 pub struct PyoMappingView {
-    pub mapping: Py<PyAny>,
+    #[pyo3(get)]
+    pub _mapping: Py<PyAny>,
 }
 
 #[pymethods]
@@ -1378,7 +1379,7 @@ impl PyoMappingView {
         PyClassInitializer::from(Checkable)
             .add_subclass(PyoSized)
             .add_subclass(Self {
-                mapping: mapping.unbind(),
+                _mapping: mapping.unbind(),
             })
     }
 }
@@ -1977,7 +1978,8 @@ impl PyoSet {
 }
 #[pyclass(subclass, frozen, generic, extends=PyoSet, module = "pyochain.abc._mappings")]
 pub struct PyoValuesView {
-    pub mapping: Py<PyAny>,
+    #[pyo3(get)]
+    pub _mapping: Py<PyAny>,
 }
 #[pymethods]
 impl PyoValuesView {
@@ -1988,12 +1990,12 @@ impl PyoValuesView {
             .add_subclass(PyoCollection)
             .add_subclass(PyoSet)
             .add_subclass(Self {
-                mapping: mapping.unbind(),
+                _mapping: mapping.unbind(),
             })
     }
 
     fn __contains__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
-        let mapping = self.mapping.bind(value.py());
+        let mapping = self._mapping.bind(value.py());
         for item in mapping.try_iter()?.map(|key| mapping.get_item(&key?)) {
             let v = item?;
             if v.is(&value) || v.eq(&value)? {
@@ -2006,7 +2008,7 @@ impl PyoValuesView {
     fn __iter__(slf: Bound<'_, Self>) -> PyResult<tls::ValuesViewIterator> {
         let py = slf.py();
         slf.get()
-            .mapping
+            ._mapping
             .clone_ref(py)
             .into_bound(py)
             .pipe(tls::ValuesViewIterator::new)
@@ -2015,7 +2017,8 @@ impl PyoValuesView {
 
 #[pyclass(subclass, frozen, generic, extends=PyoSet, module = "pyochain.abc._mappings")]
 pub struct PyoKeysView {
-    pub mapping: Py<PyAny>,
+    #[pyo3(get)]
+    pub _mapping: Py<PyAny>,
 }
 #[pymethods]
 impl PyoKeysView {
@@ -2026,7 +2029,7 @@ impl PyoKeysView {
             .add_subclass(PyoCollection)
             .add_subclass(PyoSet)
             .add_subclass(Self {
-                mapping: mapping.unbind(),
+                _mapping: mapping.unbind(),
             })
     }
 
@@ -2043,11 +2046,11 @@ impl PyoKeysView {
     }
 
     fn __contains__(&self, key: Bound<'_, PyAny>) -> PyResult<bool> {
-        self.mapping.bind(key.py()).contains(key)
+        self._mapping.bind(key.py()).contains(key)
     }
 
     fn __iter__(slf: Bound<'_, Self>) -> PyResult<Bound<'_, PyIterator>> {
-        slf.get().mapping.bind(slf.py()).try_iter()
+        slf.get()._mapping.bind(slf.py()).try_iter()
     }
 
     fn intersection<'py>(
@@ -2078,7 +2081,8 @@ impl PyoKeysView {
 
 #[pyclass(subclass, frozen, generic, extends=PyoSet, module = "pyochain.abc._mappings")]
 pub struct PyoItemsView {
-    pub mapping: Py<PyAny>,
+    #[pyo3(get)]
+    pub _mapping: Py<PyAny>,
 }
 #[pymethods]
 impl PyoItemsView {
@@ -2089,7 +2093,7 @@ impl PyoItemsView {
             .add_subclass(PyoCollection)
             .add_subclass(PyoSet)
             .add_subclass(Self {
-                mapping: mapping.unbind(),
+                _mapping: mapping.unbind(),
             })
     }
 
@@ -2110,7 +2114,7 @@ impl PyoItemsView {
         let py = key.py();
 
         let v = self
-            .mapping
+            ._mapping
             .bind(py)
             .get_item(key)
             .and_then(|v| Ok(v.is(&value) || v.eq(&value)?));
@@ -2129,7 +2133,7 @@ impl PyoItemsView {
     fn __iter__(slf: Bound<'_, Self>) -> PyResult<tls::ItemsViewIterator> {
         let py = slf.py();
         slf.get()
-            .mapping
+            ._mapping
             .clone_ref(py)
             .into_bound(py)
             .pipe(tls::ItemsViewIterator::new)
