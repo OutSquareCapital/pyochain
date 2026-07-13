@@ -88,28 +88,81 @@ class Set[T](PyoSet[T]):
         return len(self._inner)
 
     @override
-    def __eq__(self, other: object) -> bool:
-        return _set_eq(self, other)
+    def __and__(self, value: AbstractSet[object], /) -> Self:
+        """Return self&value."""
+        return self.__class__(self._inner.__and__(value))
+
+    @override
+    def __or__[S](self, value: AbstractSet[S], /) -> Set[T | S]:
+        """Return self|value."""
+        return Set(self._inner.__or__(value))
+
+    @override
+    def __sub__(self, value: AbstractSet[object], /) -> Self:
+        """Return self-value."""
+        return self.__class__(self._inner.__sub__(value))
+
+    @override
+    def __xor__[S](self, value: AbstractSet[S], /) -> Set[T | S]:
+        """Return self^value."""
+        return Set(self._inner.__xor__(value))
+
+    @override
+    def __le__(self, value: AbstractSet[object], /) -> bool:
+        """Return self<=value."""
+        return self._inner <= value
+
+    @override
+    def __lt__(self, value: AbstractSet[object], /) -> bool:
+        """Return self<value."""
+        return self._inner < value
+
+    @override
+    def __ge__(self, value: AbstractSet[object], /) -> bool:
+        """Return self>=value."""
+        return self._inner >= value
+
+    @override
+    def __gt__(self, value: AbstractSet[object], /) -> bool:
+        """Return self>value."""
+        return self._inner > value
+
+    @override
+    def __eq__(self, value: object, /) -> bool:
+        return _set_eq(self, value)
 
     @override
     def __hash__(self) -> int:
         return hash(self._inner)
 
     @override
-    def intersection(self, other: AbstractSet[object]) -> Self:
-        return self.__class__(self._inner & other)
+    def isdisjoint(self, s: Iterable[object], /) -> bool:
+        """Return True if two sets have a null intersection."""
+        return self._inner.isdisjoint(s)
 
     @override
-    def union[S](self, other: AbstractSet[S]) -> Set[T | S]:
-        return Set(self._inner | other)
+    def is_subset(self, other: Iterable[object]) -> bool:
+        return self._inner.issubset(other)
 
     @override
-    def difference(self, other: AbstractSet[object]) -> Self:
-        return self.__class__(self._inner - other)
+    def is_superset(self, other: Iterable[object]) -> bool:
+        return self._inner.issuperset(other)
 
     @override
-    def symmetric_difference[S](self, other: AbstractSet[S]) -> Set[T | S]:
-        return Set(self._inner ^ other)
+    def intersection(self, other: Iterable[object]) -> Self:
+        return self.__class__(self._inner.intersection(other))
+
+    @override
+    def union[S](self, *others: Iterable[S]) -> Set[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride]
+        return Set(self._inner.union(*others))
+
+    @override
+    def difference(self, *others: Iterable[object]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
+        return self.__class__(self._inner.difference(*others))
+
+    @override
+    def symmetric_difference[S](self, other: Iterable[S]) -> Set[T | S]:
+        return Set(self._inner.symmetric_difference(other))
 
 
 class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
@@ -153,6 +206,66 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
     @override
     def __eq__(self, other: object) -> bool:
         return _set_eq(self, other)
+
+    @override
+    def __and__(self, value: AbstractSet[object], /) -> SetMut[T]:
+        """Return self&value."""
+        return self.from_ref(self._inner.__and__(value))
+
+    @override
+    def __iand__(self, value: AbstractSet[object], /) -> SetMut[T]:
+        """Return self&=value."""
+        return self.from_ref(self._inner.__iand__(value))
+
+    @override
+    def __or__[S](self, value: AbstractSet[S], /) -> SetMut[T | S]:
+        """Return self|value."""
+        return self.from_ref(self._inner.__or__(value))
+
+    @override
+    def __ior__(self, value: AbstractSet[T], /) -> SetMut[T]:
+        """Return self|=value."""
+        return self.from_ref(self._inner.__ior__(value))
+
+    @override
+    def __sub__(self, value: AbstractSet[object], /) -> SetMut[T]:
+        """Return self-value."""
+        return self.from_ref(self._inner.__sub__(value))
+
+    @override
+    def __isub__(self, value: AbstractSet[object], /) -> SetMut[T]:
+        """Return self-=value."""
+        return self.from_ref(self._inner.__isub__(value))
+
+    @override
+    def __xor__[S](self, value: AbstractSet[S], /) -> SetMut[T | S]:
+        """Return self^value."""
+        return self.from_ref(self._inner.__xor__(value))
+
+    @override
+    def __ixor__(self, value: AbstractSet[T], /) -> SetMut[T]:
+        """Return self^=value."""
+        return self.from_ref(self._inner.__ixor__(value))
+
+    @override
+    def __le__(self, value: AbstractSet[object], /) -> bool:
+        """Return self<=value."""
+        return self._inner <= value
+
+    @override
+    def __lt__(self, value: AbstractSet[object], /) -> bool:
+        """Return self<value."""
+        return self._inner < value
+
+    @override
+    def __ge__(self, value: AbstractSet[object], /) -> bool:
+        """Return self>=value."""
+        return self._inner >= value
+
+    @override
+    def __gt__(self, value: AbstractSet[object], /) -> bool:
+        """Return self>value."""
+        return self._inner > value
 
     @property
     @no_doctest
@@ -261,21 +374,54 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
         """
         self._inner.discard(value)
 
-    @override
-    def intersection(self, other: AbstractSet[object]) -> SetMut[T]:
-        return self.from_ref(self._inner & other)
+    def intersection_update(self, *s: Iterable[object]) -> None:
+        """Update the set, keeping only elements found in it and all others."""
+        return self._inner.intersection_update(*s)
 
     @override
-    def union[S](self, other: AbstractSet[S]) -> SetMut[T | S]:
-        return self.from_ref(self._inner | other)
+    def isdisjoint(self, s: Iterable[object], /) -> bool:
+        """Return True if two sets have a null intersection."""
+        return self._inner.isdisjoint(s)
 
     @override
-    def difference(self, other: AbstractSet[object]) -> SetMut[T]:
-        return self.from_ref(self._inner - other)
+    def is_subset(self, other: Iterable[object]) -> bool:
+        return self._inner.issubset(other)
 
     @override
-    def symmetric_difference[S](self, other: AbstractSet[S]) -> SetMut[T | S]:
-        return self.from_ref(self._inner ^ other)
+    def is_superset(self, other: Iterable[object]) -> bool:
+        return self._inner.issuperset(other)
+
+    @override
+    def remove(self, element: T, /) -> None:
+        """Remove an element from a set; it must be a member.
+
+        If the element is not a member, raise a KeyError.
+        """
+        return self._inner.remove(element)
+
+    def symmetric_difference_update(self, s: Iterable[T], /) -> None:
+        """Update the set, keeping only elements found in either set, but not in both."""
+        return self._inner.symmetric_difference_update(s)
+
+    @override
+    def intersection(self, *others: Iterable[object]) -> SetMut[T]:  # pyright: ignore[reportIncompatibleMethodOverride]
+        return self.from_ref(self._inner.intersection(*others))
+
+    @override
+    def union[S](self, *others: Iterable[S]) -> SetMut[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride]
+        return self.from_ref(self._inner.union(*others))
+
+    def update(self, *s: Iterable[T]) -> None:
+        """Update the set, adding elements from all others."""
+        return self._inner.update(*s)
+
+    @override
+    def difference(self, *others: Iterable[object]) -> SetMut[T]:  # pyright: ignore[reportIncompatibleMethodOverride]
+        return self.from_ref(self._inner.difference(*others))
+
+    @override
+    def symmetric_difference[S](self, other: Iterable[S]) -> SetMut[T | S]:
+        return self.from_ref(self._inner.symmetric_difference(other))
 
 
 def _set_eq[T](left: SetMut[T] | Set[T], right: object) -> bool:
