@@ -2,24 +2,36 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
-from collections.abc import Hashable, Iterable, Iterator, Mapping, MutableMapping
+from collections.abc import (
+    Callable,
+    Hashable,
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+)
 from functools import partial
 from itertools import chain
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, Self, overload, override
 
-from ._sorted_list import KeyFunc, SortedCollection, SortedKeyList, SortedList
+from .._types import SupportsHashableAndRichComparison
+from ._sorted_list import SortedCollection, SortedKeyList, SortedList
 from ._sorted_views import SortedItemsView, SortedKeysView, SortedValuesView
 
 if TYPE_CHECKING:
     from _typeshed import (
         SupportsGetItem,
         SupportsKeysAndGetItem,
-        SupportsRichComparison,
     )
 
 
-class SortedDict[K: Hashable, V](dict[K, V], SortedCollection[K]):
+type KeyFunc[K: Hashable, OT: SupportsHashableAndRichComparison] = Callable[[K], OT]
+
+
+class SortedDict[K: SupportsHashableAndRichComparison, V](
+    dict[K, V], SortedCollection[K]
+):
     """Sorted dict is a sorted mutable mapping.
 
     Sorted dict keys are maintained in sorted order. The design of sorted dict
@@ -150,9 +162,13 @@ class SortedDict[K: Hashable, V](dict[K, V], SortedCollection[K]):
 
     @override
     def islice(
-        self, start: int | None = None, stop: int | None = None, reverse: bool = False
+        self,
+        start: int | None = None,
+        stop: int | None = None,
+        *,
+        reverse: bool = False,
     ) -> Iterator[K]:
-        return self._list.islice(start, stop, reverse)
+        return self._list.islice(start, stop, reverse=reverse)
 
     @override
     def irange(
@@ -160,9 +176,10 @@ class SortedDict[K: Hashable, V](dict[K, V], SortedCollection[K]):
         minimum: K | None = None,
         maximum: K | None = None,
         inclusive: tuple[bool, bool] = (True, True),
+        *,
         reverse: bool = False,
     ) -> Iterator[K]:
-        return self._list.irange(minimum, maximum, inclusive, reverse)
+        return self._list.irange(minimum, maximum, inclusive, reverse=reverse)
 
     @override
     def clear(self) -> None:
@@ -246,12 +263,12 @@ class SortedDict[K: Hashable, V](dict[K, V], SortedCollection[K]):
         super().__setitem__(key, value)
 
     @override
-    def __or__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]:
+    def __or__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]:  # pyright: ignore[reportIncompatibleMethodOverride]
         items = chain(self.items(), value.items())
         return SortedDict(items)
 
     @override
-    def __ror__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]:
+    def __ror__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]:  # pyright: ignore[reportIncompatibleMethodOverride]
         items = chain(value.items(), self.items())
         return SortedDict(items)
 
@@ -278,20 +295,20 @@ class SortedDict[K: Hashable, V](dict[K, V], SortedCollection[K]):
 
     @classmethod
     @overload
-    def fromkeys[OT: SupportsRichComparison](
+    def fromkeys[OT: SupportsHashableAndRichComparison](
         cls, iterable: Iterable[OT], value: None = None, /
     ) -> SortedDict[OT, Any | None]: ...
 
     @classmethod
     @overload
-    def fromkeys[OT: SupportsRichComparison, S](
+    def fromkeys[OT: SupportsHashableAndRichComparison, S](
         cls, iterable: Iterable[OT], value: S, /
     ) -> SortedDict[OT, S]: ...
     @classmethod
     @override
-    def fromkeys[OT: SupportsRichComparison, S](
+    def fromkeys[OT: SupportsHashableAndRichComparison, S](  # pyright: ignore[reportIncompatibleMethodOverride]
         cls, iterable: Iterable[OT], value: S | None = None, /
-    ) -> SortedDict[OT, Any | S | None]:
+    ) -> SortedDict[OT, S | Any | None]:
         """Return a new sorted dict initailized from `iterable` and `value`.
 
         Items in the sorted dict have keys from `iterable` and values equal to
@@ -305,7 +322,7 @@ class SortedDict[K: Hashable, V](dict[K, V], SortedCollection[K]):
         return SortedDict((key, value) for key in iterable)
 
     @override
-    def keys(self) -> SortedKeysView[K]:
+    def keys(self) -> SortedKeysView[K]:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return new sorted keys view of the sorted dict's keys.
 
         See :class:`SortedKeysView` for details.
@@ -316,7 +333,7 @@ class SortedDict[K: Hashable, V](dict[K, V], SortedCollection[K]):
         return SortedKeysView(self)
 
     @override
-    def items(self) -> SortedItemsView[K, V]:
+    def items(self) -> SortedItemsView[K, V]:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return new sorted items view of the sorted dict's items.
 
         See :class:`SortedItemsView` for details.
@@ -327,7 +344,7 @@ class SortedDict[K: Hashable, V](dict[K, V], SortedCollection[K]):
         return SortedItemsView(self)
 
     @override
-    def values(self) -> SortedValuesView[V]:
+    def values(self) -> SortedValuesView[V]:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return new sorted values view of the sorted dict's values.
 
         Note that the values view is sorted by key.
@@ -375,11 +392,11 @@ class SortedDict[K: Hashable, V](dict[K, V], SortedCollection[K]):
         :param key: `key` for item
         :param default: `default` value if key not found (optional)
 
-        Raises:
-            KeyError: if `key` not found and `default` not given
-
         Returns:
             value: value for item
+
+        Raises:
+            KeyError: if `key` not found and `default` not given
 
         """
         if key in self:
@@ -466,7 +483,7 @@ class SortedDict[K: Hashable, V](dict[K, V], SortedCollection[K]):
     @overload
     def setdefault(self, key: K, default: V) -> V: ...
     @override
-    def setdefault[T](self, key: K, default: V | T = None) -> V | T:
+    def setdefault[T](self, key: K, default: V | T | None = None) -> V | T | None:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return value for item identified by `key` in sorted dict.
 
         If `key` is in the sorted dict then return its value. If `key` is not
@@ -492,7 +509,7 @@ class SortedDict[K: Hashable, V](dict[K, V], SortedCollection[K]):
         """
         if key in self:
             return self[key]
-        super().__setitem__(key, default)
+        super().__setitem__(key, default)  # pyright: ignore[reportArgumentType]
         self._list.add(key)
         return default
 
@@ -500,10 +517,7 @@ class SortedDict[K: Hashable, V](dict[K, V], SortedCollection[K]):
     def update(self, m: SupportsKeysAndGetItem[K, V], /) -> None: ...
     @overload
     def update(
-        self: SupportsGetItem[str, V],
-        m: SupportsKeysAndGetItem[str, V],
-        /,
-        **kwargs: V,
+        self: SupportsGetItem[str, V], m: SupportsKeysAndGetItem[str, V], /, **kwargs: V
     ) -> None: ...
     @overload
     def update(self, m: Iterable[tuple[K, V]], /) -> None: ...
@@ -513,9 +527,8 @@ class SortedDict[K: Hashable, V](dict[K, V], SortedCollection[K]):
     ) -> None: ...
     @overload
     def update(self: SupportsGetItem[str, V], /, **kwargs: V) -> None: ...
-
     @override
-    def update(
+    def update(  # pyright: ignore[reportIncompatibleMethodOverride, reportInconsistentOverload]
         self,
         m: SupportsKeysAndGetItem[K, V] | Iterable[tuple[K, V]] = (),
         /,
@@ -539,9 +552,9 @@ class SortedDict[K: Hashable, V](dict[K, V], SortedCollection[K]):
             return
 
         if not kwargs and isinstance(m, dict):
-            pairs: dict[K, V] = m
+            pairs: dict[K, V] = m  # pyright: ignore[reportUnknownVariableType, reportRedeclaration, reportAssignmentType]
         else:
-            pairs = dict(m, **kwargs)
+            pairs: dict[K, V] = dict(m, **kwargs)
 
         if (10 * len(pairs)) > len(self):
             super().update(pairs)
@@ -580,7 +593,11 @@ class SortedDict[K: Hashable, V](dict[K, V], SortedCollection[K]):
         return f"{type_name}({{{items}}})"
 
 
-class SortedKeyDict[K: Hashable, V, OT: SupportsRichComparison](SortedDict[K, V]):
+class SortedKeyDict[
+    K: SupportsHashableAndRichComparison,
+    V,
+    OT: SupportsHashableAndRichComparison,
+](SortedDict[K, V]):
     def __init__(
         self,
         iterable: Iterable[tuple[K, V]] | Mapping[K, V] = (),
@@ -626,7 +643,7 @@ class SortedKeyDict[K: Hashable, V, OT: SupportsRichComparison](SortedDict[K, V]
         """
         self._key: KeyFunc[K, OT] = key
 
-        self._list: SortedKeyList[K, OT] = SortedKeyList(key=self._key)
+        self._list: SortedKeyList[K, OT] = SortedKeyList(key=self._key)  # pyright: ignore[reportIncompatibleVariableOverride]
 
         self.update(iterable, **kwargs)
 
@@ -648,9 +665,10 @@ class SortedKeyDict[K: Hashable, V, OT: SupportsRichComparison](SortedDict[K, V]
         min_key: OT | None = None,
         max_key: OT | None = None,
         inclusive: tuple[bool, bool] = (True, True),
+        *,
         reverse: bool = False,
     ) -> Iterator[K]:
-        return self._list.irange_key(min_key, max_key, inclusive, reverse)
+        return self._list.irange_key(min_key, max_key, inclusive, reverse=reverse)
 
     def bisect_key_left(self, key: OT) -> int:
         return self._list.bisect_key_left(key)
@@ -669,7 +687,7 @@ class SortedKeyDict[K: Hashable, V, OT: SupportsRichComparison](SortedDict[K, V]
         return SortedKeyDict(items, key=self._key)
 
     @override
-    def __reduce__(self) -> tuple[partial[Self], tuple[dict[K, V]]]:
+    def __reduce__(self) -> tuple[partial[Self], tuple[dict[K, V]]]:  # pyright: ignore[reportIncompatibleMethodOverride]
         items = dict[K, V].copy(self)
         return (partial(type(self), key=self._key), (items,))
 

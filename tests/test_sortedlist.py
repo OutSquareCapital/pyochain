@@ -4,13 +4,19 @@ Original source:
 https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_coverage_sortedlist.py
 """
 
+from __future__ import annotations
+
 import random
 from itertools import chain
+from typing import TYPE_CHECKING
 
 import pytest
 
 from pyochain.collections import SortedList
 from tests._utils import check_sorted_list
+
+if TYPE_CHECKING:
+    from _typeshed import SupportsRichComparison
 
 
 def test_init() -> None:
@@ -633,12 +639,12 @@ def test_repr() -> None:
 
 def test_repr_recursion() -> None:
     this = SortedList([[1], [2], [3], [4]])
-    this._lists[-1].append(this)  # pyright: ignore[reportPrivateUsage]
+    this._lists[-1].append(this)  # pyright: ignore[reportPrivateUsage, reportArgumentType]
     assert repr(this) == "SortedList([[1], [2], [3], [4], ...])"
 
 
 def test_repr_subclass() -> None:
-    class CustomSortedList[T](SortedList[T]):
+    class CustomSortedList[T: SupportsRichComparison](SortedList[T]):
         pass
 
     this = CustomSortedList([1, 2, 3, 4])
@@ -650,10 +656,10 @@ def test_pickle() -> None:
 
     alpha = SortedList(range(10000))
     alpha.reset(500)
-    beta = pickle.loads(pickle.dumps(alpha))
+    beta: SortedList[int] = pickle.loads(pickle.dumps(alpha))  # pyright: ignore[reportAny]
     assert alpha == beta
     assert alpha._load == 500  # pyright: ignore[reportPrivateUsage]
-    assert beta._load == 1000
+    assert beta._load == 1000  # pyright: ignore[reportPrivateUsage]
 
 
 def test_build_index() -> None:

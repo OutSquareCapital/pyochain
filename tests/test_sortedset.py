@@ -4,9 +4,12 @@ Original source:
 https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_coverage_sortedset.py
 """
 
+from __future__ import annotations
+
 import operator
 from typing import override
 
+from pyochain._types import SupportsHashableAndRichComparison
 from pyochain.collections import SortedKeySet, SortedSet
 from tests._utils import check_sorted_set
 
@@ -518,13 +521,13 @@ def test_repr() -> None:
 
 
 def test_repr_recursion() -> None:
-    class HashableSortedSet[T](SortedSet[T]):
+    class HashableSortedSet[T: SupportsHashableAndRichComparison](SortedSet[T]):
         @override
         def __hash__(self) -> int:
             return hash(tuple(self))
 
     temp = HashableSortedSet([HashableSortedSet([1]), HashableSortedSet([1, 2])])
-    temp.add(temp)
+    temp.add(temp)  # pyright: ignore[reportArgumentType]
     assert (
         repr(temp)
         == "HashableSortedSet([HashableSortedSet([1]), HashableSortedSet([1, 2]), ...])"

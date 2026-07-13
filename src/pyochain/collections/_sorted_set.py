@@ -5,20 +5,20 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable, Iterator, MutableSet, Sequence
 from collections.abc import Set as AbstractSet
 from itertools import chain
-from operator import eq, ge, gt, le, lt, ne
 from reprlib import recursive_repr
-from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Self, overload, override
+
+from pyochain._types import SupportsHashableAndRichComparison
 
 from ._sorted_list import KeyFunc, SortedCollection, SortedKeyList, SortedList, identity
 
 if TYPE_CHECKING:
     from types import NotImplementedType
 
-    from _typeshed import SupportsRichComparison
+type SetKeyFunc[T, OT: SupportsHashableAndRichComparison] = KeyFunc[T, OT]
 
 
-class SortedSet[T: SupportsRichComparison](  # noqa: PLW1641
+class SortedSet[T: SupportsHashableAndRichComparison](  # noqa: PLW1641
     MutableSet[T], Sequence[T], SortedCollection[T]
 ):
     """Sorted set is a sorted mutable set.
@@ -138,9 +138,13 @@ class SortedSet[T: SupportsRichComparison](  # noqa: PLW1641
 
     @override
     def islice(
-        self, start: int | None = None, stop: int | None = None, reverse: bool = False
+        self,
+        start: int | None = None,
+        stop: int | None = None,
+        *,
+        reverse: bool = False,
     ) -> Iterator[T]:
-        return self._list.islice(start, stop, reverse)
+        return self._list.islice(start, stop, reverse=reverse)
 
     @override
     def irange(
@@ -148,9 +152,10 @@ class SortedSet[T: SupportsRichComparison](  # noqa: PLW1641
         minimum: T | None = None,
         maximum: T | None = None,
         inclusive: tuple[bool, bool] = (True, True),
+        *,
         reverse: bool = False,
     ) -> Iterator[T]:
-        return self._list.irange(minimum, maximum, inclusive, reverse)
+        return self._list.irange(minimum, maximum, inclusive, reverse=reverse)
 
     def is_disjoint(self, other: Iterable[object]) -> bool:
         return self._set.isdisjoint(other)
@@ -161,8 +166,7 @@ class SortedSet[T: SupportsRichComparison](  # noqa: PLW1641
     def is_superset(self, other: Iterable[object]) -> bool:
         return self._set.issuperset(other)
 
-    @classmethod
-    def _fromset(cls, values: set[T]) -> Self:
+    def _fromset(self, values: set[T]) -> Self:
         """Initialize sorted set from existing set.
 
         Used internally by set operations that return a new set.
@@ -170,7 +174,7 @@ class SortedSet[T: SupportsRichComparison](  # noqa: PLW1641
         Returns:
             Self
         """
-        sorted_set = object.__new__(cls)
+        sorted_set = self.__new__(self.__class__)
         sorted_set._set = values
         sorted_set.__init__()  # noqa: PLC2801
         return sorted_set
@@ -256,39 +260,61 @@ class SortedSet[T: SupportsRichComparison](  # noqa: PLW1641
             set_.remove(value)
         del list_[index]
 
-    @staticmethod
-    def __make_cmp(set_op: Callable[[object, object], bool], symbol: str, doc: str):
+    @override
+    def __eq__(self, other: object) -> bool | NotImplementedType:
+        if isinstance(other, SortedSet):
+            return self._set == other._set  # pyright: ignore[reportUnknownMemberType]
+        if isinstance(other, AbstractSet):
+            return self._set == other
+        return NotImplemented
 
-        def comparer(self: Self, other: object) -> bool | NotImplementedType:
-            if isinstance(other, SortedSet):
-                return set_op(self._set, other._set)
-            if isinstance(other, AbstractSet):
-                return set_op(self._set, other)
-            return NotImplemented
+    @override
+    def __ne__(self, other: object) -> bool | NotImplementedType:
+        if isinstance(other, SortedSet):
+            return self._set != other._set  # pyright: ignore[reportUnknownMemberType]
+        if isinstance(other, AbstractSet):
+            return self._set != other
+        return NotImplemented
 
-        set_op_name = set_op.__name__
-        comparer.__name__ = f"__{set_op_name}__"
-        doc_str = """Return true if and only if sorted set is {0} `other`.
+    @override
+    def __lt__(
+        self, other: AbstractSet[object] | SortedSet[T] | object
+    ) -> bool | NotImplementedType:
+        if isinstance(other, SortedSet):
+            return self._set < other._set  # pyright: ignore[reportUnknownMemberType]
+        if isinstance(other, AbstractSet):
+            return self._set < other
+        return NotImplemented
 
-        ``ss.__{1}__(other)`` <==> ``ss {2} other``
+    @override
+    def __gt__(
+        self, other: AbstractSet[object] | SortedSet[T] | object
+    ) -> bool | NotImplementedType:
+        if isinstance(other, SortedSet):
+            return self._set > other._set  # pyright: ignore[reportUnknownMemberType]
+        if isinstance(other, AbstractSet):
+            return self._set > other
+        return NotImplemented
 
-        Comparisons use subset and superset semantics as with sets.
+    @override
+    def __le__(
+        self, other: AbstractSet[object] | SortedSet[T] | object
+    ) -> bool | NotImplementedType:
+        if isinstance(other, SortedSet):
+            return self._set <= other._set  # pyright: ignore[reportUnknownMemberType]
+        if isinstance(other, AbstractSet):
+            return self._set <= other
+        return NotImplemented
 
-        Runtime complexity: `O(n)`
-
-        :param other: `other` set
-        :return: true if sorted set is {0} `other`
-
-        """
-        comparer.__doc__ = dedent(doc_str.format(doc, set_op_name, symbol))
-        return comparer
-
-    __eq__ = __make_cmp(eq, "==", "equal to")
-    __ne__ = __make_cmp(ne, "!=", "not equal to")
-    __lt__ = __make_cmp(lt, "<", "a proper subset of")
-    __gt__ = __make_cmp(gt, ">", "a proper superset of")
-    __le__ = __make_cmp(le, "<=", "a subset of")
-    __ge__ = __make_cmp(ge, ">=", "a superset of")
+    @override
+    def __ge__(
+        self, other: AbstractSet[object] | SortedSet[T] | object
+    ) -> bool | NotImplementedType:
+        if isinstance(other, SortedSet):
+            return self._set >= other._set  # pyright: ignore[reportUnknownMemberType]
+        if isinstance(other, AbstractSet):
+            return self._set >= other
+        return NotImplemented
 
     @override
     def __len__(self) -> int:
@@ -486,7 +512,7 @@ class SortedSet[T: SupportsRichComparison](  # noqa: PLW1641
     def __sub__(self, other: Iterable[Any]) -> Self:
         return self.difference(other)
 
-    def difference_update(self, *iterables: Iterable[Any]) -> Self:
+    def difference_update(self, *iterables: Iterable[T]) -> Self:
         """Remove all values of `iterables` from this sorted set.
 
         The `difference_update` method also corresponds to operator ``-=``.
@@ -727,11 +753,16 @@ class SortedSet[T: SupportsRichComparison](  # noqa: PLW1641
         return f"{type_name}({list(self)!r})"
 
 
-class SortedKeySet[T, OT: SupportsRichComparison](SortedSet[T]):  # pyright: ignore[reportInvalidTypeArguments]
+class SortedKeySet[T, OT: SupportsHashableAndRichComparison](SortedSet[T]):  # pyright: ignore[reportInvalidTypeArguments]
+    _set: set[T]
+    _list: SortedKeyList[T, OT]
+
     def __init__(
-        self, iterable: Iterable[T] | None = None, key: KeyFunc[T, OT] = identity
+        self,
+        iterable: Iterable[T] | None = None,
+        key: SetKeyFunc[T, OT] = identity,  # pyright: ignore[reportArgumentType]
     ) -> None:
-        self._key: KeyFunc[T, OT] = key
+        self._key: SetKeyFunc[T, OT] = key
         """Initialize sorted set instance based on a key function.
 
         Optional `iterable` argument provides an initial iterable of values to
@@ -757,23 +788,22 @@ class SortedKeySet[T, OT: SupportsRichComparison](SortedSet[T]):  # pyright: ign
         # already present.
 
         if not hasattr(self, "_set"):
-            self._set = set[T]()
+            self._set = set()
 
-        self._list: SortedKeyList[T, OT] = SortedKeyList(self._set, key=key)
+        self._list = SortedKeyList(self._set, key=key)  # pyright: ignore[reportIncompatibleVariableOverride]
 
         if iterable is not None:
             _ = self.update(iterable)
 
-    @classmethod
     @override
-    def _fromset(cls, values: set[T], key: KeyFunc[T, OT] = identity) -> Self:
-        sorted_set = object.__new__(cls)
+    def _fromset(self, values: set[T]) -> Self:
+        sorted_set = self.__new__(self.__class__)
         sorted_set._set = values
-        sorted_set.__init__(key=key)
+        sorted_set.__init__(key=self._key)
         return sorted_set
 
     @property
-    def key(self) -> KeyFunc[T, OT]:
+    def key(self) -> SetKeyFunc[T, OT]:
         """Function used to extract comparison key from values.
 
         Sorted set compares values directly when the key function is none.
@@ -806,9 +836,10 @@ class SortedKeySet[T, OT: SupportsRichComparison](SortedSet[T]):  # pyright: ign
         min_key: OT | None = None,
         max_key: OT | None = None,
         inclusive: tuple[bool, bool] = (True, True),
+        *,
         reverse: bool = False,
     ) -> Iterator[T]:
-        return self._list.irange_key(min_key, max_key, inclusive, reverse)
+        return self._list.irange_key(min_key, max_key, inclusive, reverse=reverse)
 
     def bisect_key_left(self, key: OT) -> int:
         return self._list.bisect_key_left(key)
@@ -823,18 +854,18 @@ class SortedKeySet[T, OT: SupportsRichComparison](SortedSet[T]):  # pyright: ign
     @override
     def symmetric_difference(self, other: Iterable[T]) -> Self:
         diff = self._set.symmetric_difference(other)
-        return self._fromset(diff, key=self._key)
+        return self._fromset(diff)
 
     @override
     def intersection(self, *iterables: Iterable[Any]) -> Self:
         intersect = self._set.intersection(*iterables)
-        return self._fromset(intersect, key=self._key)
+        return self._fromset(intersect)
 
     @override
     def difference(self, *iterables: Iterable[Any]) -> Self:
         diff = self._set.difference(*iterables)
-        return self._fromset(diff, key=self._key)
+        return self._fromset(diff)
 
     @override
     def copy(self) -> Self:
-        return self._fromset(set(self._set), key=self._key)
+        return self._fromset(set(self._set))

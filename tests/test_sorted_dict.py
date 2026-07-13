@@ -13,6 +13,7 @@ from typing import override
 
 import pytest
 
+from pyochain._types import SupportsHashableAndRichComparison
 from pyochain.collections import SortedDict, SortedKeyDict
 
 from ._utils import check_sorted_dict
@@ -247,7 +248,7 @@ def test_values() -> None:
 
 
 def test_notgiven() -> None:
-    assert repr(SortedDict._SortedDict__not_given) == "<not-given>"
+    assert repr(SortedDict._SortedDict__not_given) == "<not-given>"  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
 
 
 def test_pop() -> None:
@@ -338,7 +339,7 @@ class Identity:
 
 def test_repr_recursion() -> None:
     temp = SortedKeyDict({"alice": 3, "bob": 1, "carol": 2, "dave": 4}, key=Identity())
-    temp["bob"] = temp
+    temp["bob"] = temp  # pyright: ignore[reportArgumentType]
     assert (
         repr(temp)
         == "SortedKeyDict(identity, {'alice': 3, 'bob': ..., 'carol': 2, 'dave': 4})"
@@ -346,7 +347,7 @@ def test_repr_recursion() -> None:
 
 
 def test_repr_subclass() -> None:
-    class CustomSortedDict[K, V](SortedDict[K, V]):
+    class CustomSortedDict[K: SupportsHashableAndRichComparison, V](SortedDict[K, V]):
         pass
 
     temp = CustomSortedDict({"alice": 3, "bob": 1, "carol": 2, "dave": 4})

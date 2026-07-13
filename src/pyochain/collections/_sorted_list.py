@@ -2,16 +2,17 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
+import operator
 from abc import ABC, abstractmethod
 from bisect import bisect_left, bisect_right, insort
-from collections.abc import Callable, Iterable, Iterator, MutableSequence, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from functools import reduce
 from itertools import chain, repeat
 from math import log2
-from operator import add, eq, ge, gt, iadd, le, lt, ne
 from reprlib import recursive_repr
-from textwrap import dedent
 from typing import TYPE_CHECKING, Final, Self, overload, override
+
+from pyochain.abc import PyoMutableSequence
 
 if TYPE_CHECKING:
     from types import NotImplementedType
@@ -121,6 +122,7 @@ class SortedCollection[T](ABC):
         minimum: T | None = None,
         maximum: T | None = None,
         inclusive: tuple[bool, bool] = (True, True),
+        *,
         reverse: bool = False,
     ) -> Iterator[T]:
         """Create an iterator of values between `minimum` and `maximum`.
@@ -158,7 +160,11 @@ class SortedCollection[T](ABC):
 
     @abstractmethod
     def islice(
-        self, start: int | None = None, stop: int | None = None, reverse: bool = False
+        self,
+        start: int | None = None,
+        stop: int | None = None,
+        *,
+        reverse: bool = False,
     ) -> Iterator[T]:
         """Return an iterator that slices sorted list from `start` to `stop`.
 
@@ -204,7 +210,7 @@ class SortedCollection[T](ABC):
         """
 
 
-class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection[T]):  # noqa: PLW1641
+class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollection[T]):  # noqa: PLW1641
     """Sorted list is a sorted mutable sequence.
 
     Sorted list values are maintained in sorted order.
@@ -291,13 +297,9 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
         if iterable is not None:
             self.update(iterable)
 
-    def _collapse_lists(self) -> list[T]:
-        init: list[T] = []
-        return reduce(iadd, self._lists, init)
-
     @override
     def reset(self, load: int) -> None:
-        values = self._collapse_lists()
+        values = _collapse_lists(self._lists)
         self.clear()
         self._load = load
         self.update(values)
@@ -330,23 +332,20 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
         :param value: value to add to sorted list
 
         """
-        lists = self._lists
-        maxes = self._maxes
+        if self._maxes:
+            pos = bisect_right(self._maxes, value)
 
-        if maxes:
-            pos = bisect_right(maxes, value)
-
-            if pos == len(maxes):
+            if pos == len(self._maxes):
                 pos -= 1
-                lists[pos].append(value)
-                maxes[pos] = value
+                self._lists[pos].append(value)
+                self._maxes[pos] = value
             else:
-                insort(lists[pos], value)
+                insort(self._lists[pos], value)
 
             self._expand(pos)
         else:
-            lists.append([value])
-            maxes.append(value)
+            self._lists.append([value])
+            self._maxes.append(value)
 
         self._len += 1
 
@@ -402,7 +401,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
         if maxes:
             if len(values) * 4 >= self._len:
                 lists.append(values)
-                values = reduce(iadd, lists, [])
+                values = _collapse_lists(lists)
                 values.sort()
                 self.clear()
             else:
@@ -714,11 +713,11 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
 
         :param int idx: index in sorted list
 
-        Raises:
-            IndexError: if `idx` is out of range
-
         Returns:
             (lists index, sublist index) pair
+
+        Raises:
+            IndexError: if `idx` is out of range
 
         """
         if idx < 0:
@@ -806,7 +805,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
 
         head = iter(row0)
         tail = iter(head)
-        row1 = list(map(add, head, tail))
+        row1 = list(map(operator.add, head, tail))
 
         if len(row0) & 1:
             row1.append(row0[-1])
@@ -816,17 +815,17 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
             self._offset = 1
             return
 
-        size = 2 ** (int(log2(len(row1) - 1)) + 1)
+        size: int = 2 ** (int(log2(len(row1) - 1)) + 1)  # pyright: ignore[reportAny]
         row1.extend(repeat(0, size - len(row1)))
         tree = [row0, row1]
 
         while len(tree[-1]) > 1:
             head = iter(tree[-1])
             tail = iter(head)
-            row = list(map(add, head, tail))
+            row = list(map(operator.add, head, tail))
             tree.append(row)
 
-        _ = reduce(iadd, reversed(tree), self._index)
+        _ = reduce(operator.iadd, reversed(tree), self._index)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
         self._offset = size * 2 - 1
 
     @override
@@ -874,8 +873,8 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
 
             pos_, delete = self._pos, self._delete
 
-            for index in indices:
-                pos, idx = pos_(index)
+            for idc in indices:
+                pos, idx = pos_(idc)
                 delete(pos, idx)
         else:
             pos, idx = self._pos(index)
@@ -913,8 +912,6 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
             IndexError: if index out of range
 
         """
-        lists = self._lists
-
         if isinstance(index, slice):
             start, stop, step = index.indices(self._len)
 
@@ -923,10 +920,10 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
                 # sorted list.
 
                 if start == 0 and stop == self._len:
-                    return self._collapse_lists()
+                    return _collapse_lists(self._lists)
 
                 start_pos, start_idx = self._pos(start)
-                start_list = lists[start_pos]
+                start_list = self._lists[start_pos]
                 stop_idx = start_idx + stop - start
 
                 # Small slice optimization: start index and stop index are
@@ -936,15 +933,15 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
                     return start_list[start_idx:stop_idx]
 
                 if stop == self._len:
-                    stop_pos = len(lists) - 1
-                    stop_idx = len(lists[stop_pos])
+                    stop_pos = len(self._lists) - 1
+                    stop_idx = len(self._lists[stop_pos])
                 else:
                     stop_pos, stop_idx = self._pos(stop)
 
-                prefix = lists[start_pos][start_idx:]
-                middle = lists[(start_pos + 1) : stop_pos]
-                result = reduce(iadd, middle, prefix)
-                result += lists[stop_pos][:stop_idx]
+                prefix = self._lists[start_pos][start_idx:]
+                middle = self._lists[(start_pos + 1) : stop_pos]
+                result = reduce(operator.iadd, middle, prefix)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+                result += self._lists[stop_pos][:stop_idx]
 
                 return result
 
@@ -961,23 +958,23 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
             return [self.__getitem__(index) for index in indices]
         if self._len:
             if index == 0:
-                return lists[0][0]
+                return self._lists[0][0]
             if index == -1:
-                return lists[-1][-1]
+                return self._lists[-1][-1]
         else:
             msg = "list index out of range"
             raise IndexError(msg)
 
-        if 0 <= index < len(lists[0]):
-            return lists[0][index]
+        if 0 <= index < len(self._lists[0]):
+            return self._lists[0][index]
 
-        len_last = len(lists[-1])
+        len_last = len(self._lists[-1])
 
         if -len_last < index < 0:
-            return lists[-1][len_last + index]
+            return self._lists[-1][len_last + index]
 
         pos, idx = self._pos(index)
-        return lists[pos][idx]
+        return self._lists[pos][idx]
 
     @overload
     def __setitem__(self, index: int, value: T) -> None: ...
@@ -1021,7 +1018,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
         return chain.from_iterable(map(reversed, reversed(self._lists)))
 
     @override
-    def reverse(self):
+    def reverse(self) -> None:
         """Raise not-implemented error.
 
         Sorted list maintains values in ascending sort order. Values may not be
@@ -1041,7 +1038,11 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
 
     @override
     def islice(
-        self, start: int | None = None, stop: int | None = None, reverse: bool = False
+        self,
+        start: int | None = None,
+        stop: int | None = None,
+        *,
+        reverse: bool = False,
     ) -> Iterator[T]:
         len_ = self._len
 
@@ -1063,10 +1064,10 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
         else:
             max_pos, max_idx = pos(stop)
 
-        return self._islice(min_pos, min_idx, max_pos, max_idx, reverse)
+        return self._islice(min_pos, min_idx, max_pos, max_idx, reverse=reverse)
 
-    def _islice(
-        self, min_pos: int, min_idx: int, max_pos: int, max_idx: int, reverse: bool
+    def _islice(  # noqa: PLR0911
+        self, min_pos: int, min_idx: int, max_pos: int, max_idx: int, *, reverse: bool
     ) -> Iterator[T]:
         """Return an iterator that slices sorted list using two index pairs.
 
@@ -1131,11 +1132,12 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
         )
 
     @override
-    def irange(
+    def irange(  # noqa: PLR0912
         self,
         minimum: T | None = None,
         maximum: T | None = None,
         inclusive: tuple[bool, bool] = (True, True),
+        *,
         reverse: bool = False,
     ) -> Iterator[T]:
         maxes = self._maxes
@@ -1189,7 +1191,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
             else:
                 max_idx = bisect_left(lists[max_pos], maximum)
 
-        return self._islice(min_pos, min_idx, max_pos, max_idx, reverse)
+        return self._islice(min_pos, min_idx, max_pos, max_idx, reverse=reverse)
 
     @override
     def __len__(self) -> int:
@@ -1342,11 +1344,11 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
 
         :param int index: index of value (default -1)
 
+        Returns:
+            T
+
         Raises:
             IndexError: if index is out of range
-
-        Returns:
-            value
 
         """
         if not self._len:
@@ -1457,7 +1459,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
         :return: new sorted list
 
         """
-        values = self._collapse_lists()
+        values = _collapse_lists(self._lists)
         values.extend(other)
         return self.__class__(values)
 
@@ -1503,7 +1505,7 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
         :return: new sorted list
 
         """
-        values = self._collapse_lists() * num
+        values = _collapse_lists(self._lists) * num
         return self.__class__(values)
 
     def __rmul__(self, num: int) -> Self:
@@ -1527,62 +1529,146 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
             existing sorted list
 
         """
-        values = self._collapse_lists() * num
+        values = _collapse_lists(self._lists) * num
         self.clear()
         self.update(values)
         return self
 
-    @staticmethod
-    def __make_cmp(seq_op: Callable[[object, object], bool], symbol: str, doc: str):
-        """Make comparator method."""
+    @override
+    def __eq__(self, other: object) -> NotImplementedType | bool:
+        """Return true if and only if sorted list is equal to `other`.
 
-        def comparer(self: Self, other: object) -> NotImplementedType | bool:
-            """Compare method for sorted list and sequence."""
-            if not isinstance(other, Sequence):
-                return NotImplemented
-
-            self_len = self._len
-            len_other = len(other)
-
-            if self_len != len_other:
-                if seq_op is eq:
-                    return False
-                if seq_op is ne:
-                    return True
-
-            for alpha, beta in zip(self, other, strict=False):
-                if alpha != beta:
-                    return seq_op(alpha, beta)
-
-            return seq_op(self_len, len_other)
-
-        seq_op_name = seq_op.__name__
-        comparer.__name__ = f"__{seq_op_name}__"
-        doc_str = """Return true if and only if sorted list is {0} `other`.
-
-        ``sl.__{1}__(other)`` <==> ``sl {2} other``
+        ``sl.__eq__(other)`` <==> ``sl == other``
 
         Comparisons use lexicographical order as with sequences.
 
         Runtime complexity: `O(n)`
 
         :param other: `other` sequence
-        :return: true if sorted list is {0} `other`
+        :return: true if sorted list is equal to `other`
 
         """
-        comparer.__doc__ = dedent(doc_str.format(doc, seq_op_name, symbol))
-        return comparer
+        if not isinstance(other, Sequence):
+            return NotImplemented
 
-    __eq__ = __make_cmp(eq, "==", "equal to")
-    __ne__ = __make_cmp(ne, "!=", "not equal to")
-    __lt__ = __make_cmp(lt, "<", "less than")
-    __gt__ = __make_cmp(gt, ">", "greater than")
-    __le__ = __make_cmp(le, "<=", "less than or equal to")
-    __ge__ = __make_cmp(ge, ">=", "greater than or equal to")
+        if self._len != len(other):
+            return False
+
+        return all(alpha == beta for alpha, beta in zip(self, other, strict=False))
+
+    @override
+    def __ne__(self, other: object) -> NotImplementedType | bool:
+        """Return true if and only if sorted list is not equal to `other`.
+
+        ``sl.__ne__(other)`` <==> ``sl != other``
+
+        Comparisons use lexicographical order as with sequences.
+
+        Runtime complexity: `O(n)`
+
+        :param other: `other` sequence
+        :return: true if sorted list is not equal to `other`
+
+        """
+        if not isinstance(other, Sequence):
+            return NotImplemented
+
+        if self._len != len(other):
+            return True
+
+        return any(alpha != beta for alpha, beta in zip(self, other, strict=False))
+
+    def __lt__(self, other: object) -> NotImplementedType | bool:
+        """Return true if and only if sorted list is less than `other`.
+
+        ``sl.__lt__(other)`` <==> ``sl < other``
+
+        Comparisons use lexicographical order as with sequences.
+
+        Runtime complexity: `O(n)`
+
+        :param other: `other` sequence
+        :return: true if sorted list is less than `other`
+
+        """
+        if not isinstance(other, Sequence):
+            return NotImplemented
+
+        for alpha, beta in zip(self, other, strict=False):
+            if alpha != beta:
+                return alpha < beta  # pyright: ignore[reportOperatorIssue, reportReturnType, reportUnknownVariableType]
+
+        return self._len < len(other)
+
+    def __gt__(self, other: object) -> NotImplementedType | bool:
+        """Return true if and only if sorted list is greater than `other`.
+
+        ``sl.__gt__(other)`` <==> ``sl > other``
+
+        Comparisons use lexicographical order as with sequences.
+
+        Runtime complexity: `O(n)`
+
+        :param other: `other` sequence
+        :return: true if sorted list is greater than `other`
+
+        """
+        if not isinstance(other, Sequence):
+            return NotImplemented
+
+        for alpha, beta in zip(self, other, strict=False):
+            if alpha != beta:
+                return alpha > beta  # pyright: ignore[reportOperatorIssue, reportReturnType, reportUnknownVariableType]
+
+        return self._len > len(other)
+
+    def __le__(self, other: object) -> NotImplementedType | bool:
+        """Return true if and only if sorted list is less than or equal to `other`.
+
+        ``sl.__le__(other)`` <==> ``sl <= other``
+
+        Comparisons use lexicographical order as with sequences.
+
+        Runtime complexity: `O(n)`
+
+        :param other: `other` sequence
+        :return: true if sorted list is less than or equal to `other`
+
+        """
+        if not isinstance(other, Sequence):
+            return NotImplemented
+
+        for alpha, beta in zip(self, other, strict=False):
+            if alpha != beta:
+                return alpha <= beta  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+
+        return self._len <= len(other)
+
+    def __ge__(self, other: object) -> NotImplementedType | bool:
+        """Return true if and only if sorted list is greater than or equal to `other`.
+
+        ``sl.__ge__(other)`` <==> ``sl >= other``
+
+        Comparisons use lexicographical order as with sequences.
+
+        Runtime complexity: `O(n)`
+
+        :param other: `other` sequence
+        :return: true if sorted list is greater than or equal to `other`
+
+        """
+        if not isinstance(other, Sequence):
+            return NotImplemented
+
+        for alpha, beta in zip(self, other, strict=False):
+            if alpha != beta:
+                return alpha >= beta  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+
+        return self._len >= len(other)
 
     @override
     def __reduce__(self) -> tuple[type[Self], tuple[list[T]]]:
-        values = self._collapse_lists()
+        values = _collapse_lists(self._lists)
         return (type(self), (values,))
 
     @recursive_repr()
@@ -1598,7 +1684,6 @@ class SortedList[T: SupportsRichComparison](MutableSequence[T], SortedCollection
 
 
 def identity[T](value: T) -> T:
-    """Identity function."""
     return value
 
 
@@ -1629,14 +1714,16 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
     """
 
     def __init__(
-        self, iterable: Iterable[T] | None = None, key: KeyFunc[T, OT] = identity
+        self,
+        iterable: Iterable[T] | None = None,
+        key: KeyFunc[T, OT] = identity,  # pyright: ignore[reportArgumentType]
     ) -> None:
         """Initialize sorted-key list instance.
 
         Optional `iterable` argument provides an initial iterable of values to
         initialize the sorted-key list.
 
-        Optional `key` argument defines a callable that, like the `key`
+        `key` argument defines a callable that, like the `key`
         argument to Python's `sorted` function, extracts a comparison key from
         each value. The default is the identity function.
 
@@ -1659,7 +1746,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         self._load: int = self.DEFAULT_LOAD_FACTOR
         self._lists: list[list[T]] = []
         self._keys: list[list[OT]] = []
-        self._maxes: list[OT] = []
+        self._maxes: list[OT] = []  # pyright: ignore[reportIncompatibleVariableOverride]
         self._index: list[int] = []
         self._offset: int = 0
 
@@ -1701,30 +1788,26 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         :param value: value to add to sorted-key list
 
         """
-        lists = self._lists
-        keys = self._keys
-        maxes = self._maxes
-
         key = self._key(value)
 
-        if maxes:
-            pos = bisect_right(maxes, key)
+        if self._maxes:
+            pos = bisect_right(self._maxes, key)
 
-            if pos == len(maxes):
+            if pos == len(self._maxes):
                 pos -= 1
-                lists[pos].append(value)
-                keys[pos].append(key)
-                maxes[pos] = key
+                self._lists[pos].append(value)
+                self._keys[pos].append(key)
+                self._maxes[pos] = key
             else:
-                idx = bisect_right(keys[pos], key)
-                lists[pos].insert(idx, value)
-                keys[pos].insert(idx, key)
+                idx = bisect_right(self._keys[pos], key)
+                self._lists[pos].insert(idx, value)
+                self._keys[pos].insert(idx, key)
 
             self._expand(pos)
         else:
-            lists.append([value])
-            keys.append([key])
-            maxes.append(key)
+            self._lists.append([value])
+            self._keys.append([key])
+            self._maxes.append(key)
 
         self._len += 1
 
@@ -1781,15 +1864,12 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         :param iterable: iterable of values to add
 
         """
-        lists = self._lists
-        keys = self._keys
-        maxes = self._maxes
         values = sorted(iterable, key=self._key)
 
-        if maxes:
+        if self._maxes:
             if len(values) * 4 >= self._len:
-                lists.append(values)
-                values: list[T] = reduce(iadd, lists, [])
+                self._lists.append(values)
+                values: list[T] = _collapse_lists(self._lists)
                 values.sort(key=self._key)
                 self.clear()
             else:
@@ -1799,9 +1879,11 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
                 return
 
         load = self._load
-        lists.extend(values[pos : (pos + load)] for pos in range(0, len(values), load))
-        keys.extend(list(map(self._key, list_)) for list_ in lists)
-        maxes.extend(sublist[-1] for sublist in keys)
+        self._lists.extend(
+            values[pos : (pos + load)] for pos in range(0, len(values), load)
+        )
+        self._keys.extend(list(map(self._key, list_)) for list_ in self._lists)
+        self._maxes.extend(sublist[-1] for sublist in self._keys)
         self._len = len(values)
         del self._index[:]
 
@@ -1827,7 +1909,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         if not maxes:
             return False
 
-        key = self._key(value)
+        key = self._key(value)  # pyright: ignore[reportArgumentType]
         pos = bisect_left(maxes, key)
 
         if pos == len(maxes):
@@ -2028,6 +2110,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         minimum: T | None = None,
         maximum: T | None = None,
         inclusive: tuple[bool, bool] = (True, True),
+        *,
         reverse: bool = False,
     ) -> Iterator[T]:
         min_key = self._key(minimum) if minimum is not None else None
@@ -2044,6 +2127,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         min_key: OT | None = None,
         max_key: OT | None = None,
         inclusive: tuple[bool, bool] = (True, True),
+        *,
         reverse: bool = False,
     ) -> Iterator[T]:
         """Create an iterator of values between `min_key` and `max_key`.
@@ -2125,7 +2209,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
             else:
                 max_idx = bisect_left(keys[max_pos], max_key)
 
-        return self._islice(min_pos, min_idx, max_pos, max_idx, reverse)
+        return self._islice(min_pos, min_idx, max_pos, max_idx, reverse=reverse)
 
     @override
     def bisect_left(self, value: T) -> int:
@@ -2339,7 +2423,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         :return: new sorted-key list
 
         """
-        values = self._collapse_lists()
+        values = _collapse_lists(self._lists)
         values.extend(other)
         return self.__class__(values, key=self._key)
 
@@ -2360,12 +2444,12 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         :return: new sorted-key list
 
         """
-        values = self._collapse_lists() * num
+        values = _collapse_lists(self._lists) * num
         return self.__class__(values, key=self._key)
 
     @override
-    def __reduce__(self) -> tuple[type[Self], tuple[list[T], KeyFunc[T, OT]]]:
-        values = self._collapse_lists()
+    def __reduce__(self) -> tuple[type[Self], tuple[list[T], KeyFunc[T, OT]]]:  # pyright: ignore[reportIncompatibleMethodOverride]
+        values = _collapse_lists(self._lists)
         return (type(self), (values, self.key))
 
     @recursive_repr()
@@ -2379,3 +2463,8 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         """
         type_name = type(self).__name__
         return f"{type_name}({list(self)!r}, key={self._key!r})"
+
+
+def _collapse_lists[T](lists: list[list[T]]) -> list[T]:
+    init: list[T] = []
+    return reduce(operator.iadd, lists, init)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]

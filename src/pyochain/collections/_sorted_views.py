@@ -9,17 +9,19 @@ from collections.abc import (
     Sequence,
     ValuesView,
 )
-from typing import TYPE_CHECKING, Any, overload, override
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload, override
+
+from pyochain._types import SupportsHashableAndRichComparison
 
 from ._sorted_set import SortedSet
 
 if TYPE_CHECKING:
-    from _typeshed import SupportsRichComparison
-
     from pyochain.collections import SortedDict
+_K_co = TypeVar("_K_co", covariant=True, bound=SupportsHashableAndRichComparison)
+_V_co = TypeVar("_V_co", covariant=True)
 
 
-class SortedKeysView[K: SupportsRichComparison](KeysView[K], Sequence[K]):
+class SortedKeysView(KeysView[_K_co], Sequence[_K_co], Generic[_K_co]):  # noqa: UP046
     """Sorted keys view is a dynamic view of the sorted dict's keys.
 
     When the sorted dict's keys change, the view reflects those changes.
@@ -28,21 +30,21 @@ class SortedKeysView[K: SupportsRichComparison](KeysView[K], Sequence[K]):
 
     """
 
-    _mapping: SortedDict[K, Any]
+    _mapping: SortedDict[_K_co, Any]
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
     @classmethod
     @override
-    def _from_iterable(cls, it: Iterable[K]) -> SortedSet[K]:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def _from_iterable(cls, it: Iterable[_K_co]) -> SortedSet[_K_co]:  # pyright: ignore[reportIncompatibleMethodOverride]
         return SortedSet(it)
 
     @overload
-    def __getitem__(self, index: int) -> K: ...
+    def __getitem__(self, index: int) -> _K_co: ...
     @overload
-    def __getitem__(self, index: slice) -> list[K]: ...
+    def __getitem__(self, index: slice) -> list[_K_co]: ...
     @override
-    def __getitem__(self, index: int | slice) -> K | list[K]:
+    def __getitem__(self, index: int | slice) -> _K_co | list[_K_co]:
         """Lookup key at `index` in sorted keys views.
 
         ``skv.__getitem__(index)`` <==> ``skv[index]``
@@ -78,7 +80,11 @@ class SortedKeysView[K: SupportsRichComparison](KeysView[K], Sequence[K]):
         return _view_delitem(self, index)
 
 
-class SortedItemsView[K, V](ItemsView[K, V], Sequence[tuple[K, V]]):
+class SortedItemsView(
+    ItemsView[_K_co, _V_co],
+    Sequence[tuple[_K_co, _V_co]],
+    Generic[_K_co, _V_co],  # noqa: UP046
+):
     """Sorted items view is a dynamic view of the sorted dict's items.
 
     When the sorted dict's items change, the view reflects those changes.
@@ -87,20 +93,24 @@ class SortedItemsView[K, V](ItemsView[K, V], Sequence[tuple[K, V]]):
 
     """
 
-    _mapping: SortedDict[K, V]
+    _mapping: SortedDict[_K_co, _V_co]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
     @classmethod
     @override
-    def _from_iterable(cls, it: Iterable[tuple[K, V]]) -> SortedSet[tuple[K, V]]:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def _from_iterable(  # pyright: ignore[reportIncompatibleMethodOverride]
+        cls, it: Iterable[tuple[_K_co, _V_co]]
+    ) -> SortedSet[tuple[_K_co, _V_co]]:
         return SortedSet(it)
 
     @overload
-    def __getitem__(self, index: int) -> tuple[K, V]: ...
+    def __getitem__(self, index: int) -> tuple[_K_co, _V_co]: ...
     @overload
-    def __getitem__(self, index: slice) -> list[tuple[K, V]]: ...
+    def __getitem__(self, index: slice) -> list[tuple[_K_co, _V_co]]: ...
     @override
-    def __getitem__(self, index: int | slice) -> tuple[K, V] | list[tuple[K, V]]:
+    def __getitem__(
+        self, index: int | slice
+    ) -> tuple[_K_co, _V_co] | list[tuple[_K_co, _V_co]]:
         """Lookup item at `index` in sorted items view.
 
         ``siv.__getitem__(index)`` <==> ``siv[index]``
@@ -143,7 +153,7 @@ class SortedItemsView[K, V](ItemsView[K, V], Sequence[tuple[K, V]]):
         return _view_delitem(self, index)
 
 
-class SortedValuesView[V](ValuesView[V], Sequence[V]):
+class SortedValuesView(ValuesView[_V_co], Sequence[_V_co], Generic[_V_co]):  # noqa: UP046
     """Sorted values view is a dynamic view of the sorted dict's values.
 
     When the sorted dict's values change, the view reflects those changes.
@@ -152,15 +162,15 @@ class SortedValuesView[V](ValuesView[V], Sequence[V]):
 
     """
 
-    _mapping: SortedDict[Any, V]
+    _mapping: SortedDict[Any, _V_co]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
     @overload
-    def __getitem__(self, index: int) -> V: ...
+    def __getitem__(self, index: int) -> _V_co: ...
     @overload
-    def __getitem__(self, index: slice) -> list[V]: ...
+    def __getitem__(self, index: slice) -> list[_V_co]: ...
     @override
-    def __getitem__(self, index: int | slice) -> V | list[V]:
+    def __getitem__(self, index: int | slice) -> _V_co | list[_V_co]:
         """Lookup value at `index` in sorted values view.
 
         ``siv.__getitem__(index)`` <==> ``siv[index]``
@@ -200,8 +210,8 @@ class SortedValuesView[V](ValuesView[V], Sequence[V]):
         return _view_delitem(self, index)
 
 
-def _view_delitem[K, V](
-    self: SortedKeysView[K] | SortedValuesView[V] | SortedItemsView[K, V],  # pyright: ignore[reportInvalidTypeArguments]
+def _view_delitem[K: SupportsHashableAndRichComparison, V](
+    self: SortedKeysView[K] | SortedValuesView[V] | SortedItemsView[K, V],
     index: int | slice,
 ) -> None:
     """Remove item at `index` from sorted dict.
