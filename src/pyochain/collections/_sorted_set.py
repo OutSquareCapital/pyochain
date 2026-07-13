@@ -2,13 +2,14 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, Iterator, MutableSet, Sequence
+from collections.abc import Callable, Iterable, Iterator
 from collections.abc import Set as AbstractSet
 from itertools import chain
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, Self, overload, override
 
 from pyochain._types import SupportsHashableAndRichComparison
+from pyochain.abc import PyoMutableSet, PyoSequence
 
 from ._sorted_list import KeyFunc, SortedCollection, SortedKeyList, SortedList, identity
 
@@ -19,7 +20,7 @@ type SetKeyFunc[T, OT: SupportsHashableAndRichComparison] = KeyFunc[T, OT]
 
 
 class SortedSet[T: SupportsHashableAndRichComparison](  # noqa: PLW1641
-    MutableSet[T], Sequence[T], SortedCollection[T]
+    PyoMutableSet[T], PyoSequence[T], SortedCollection[T]
 ):
     """Sorted set is a sorted mutable set.
 
@@ -157,12 +158,15 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # noqa: PLW1641
     ) -> Iterator[T]:
         return self._list.irange(minimum, maximum, inclusive, reverse=reverse)
 
+    @override
     def is_disjoint(self, other: Iterable[object]) -> bool:
         return self._set.isdisjoint(other)
 
+    @override
     def is_subset(self, other: Iterable[object]) -> bool:
         return self._set.issubset(other)
 
+    @override
     def is_superset(self, other: Iterable[object]) -> bool:
         return self._set.issuperset(other)
 
@@ -487,7 +491,8 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # noqa: PLW1641
         self._set.remove(value)
         self._list.remove(value)
 
-    def difference(self, *iterables: Iterable[Any]) -> Self:
+    @override
+    def difference(self, *iterables: Iterable[Any]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return the difference of two or more sets as a new sorted set.
 
         The `difference` method also corresponds to operator ``-``.
@@ -546,7 +551,8 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # noqa: PLW1641
     def __isub__(self, other: Iterable[Any]) -> Self:
         return self.difference_update(other)
 
-    def intersection(self, *iterables: Iterable[Any]) -> Self:
+    @override
+    def intersection(self, *iterables: Iterable[Any]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return the intersection of two or more sets as a new sorted set.
 
         The `intersection` method also corresponds to operator ``&``.
@@ -605,7 +611,8 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # noqa: PLW1641
     def __iand__(self, other: Iterable[Any]) -> Self:
         return self.intersection_update(other)
 
-    def symmetric_difference(self, other: Iterable[T]) -> Self:
+    @override
+    def symmetric_difference(self, other: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return the symmetric difference with `other` as a new sorted set.
 
         The `symmetric_difference` method also corresponds to operator ``^``.
@@ -665,7 +672,8 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # noqa: PLW1641
     def __ixor__(self, other: Iterable[T]) -> Self:
         return self.symmetric_difference_update(other)
 
-    def union(self, *iterables: Iterable[T]) -> Self:
+    @override
+    def union(self, *iterables: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return new sorted set with values from itself and all `iterables`.
 
         The `union` method also corresponds to operator ``|``.
