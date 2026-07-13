@@ -149,6 +149,10 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
             case list():
                 return self._inner <= value
 
+    @override
+    def reverse(self) -> None:
+        return self._inner.reverse()
+
     @property
     @no_doctest
     def inner(self) -> list[T]:
