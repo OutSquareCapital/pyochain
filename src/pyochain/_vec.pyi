@@ -1,19 +1,14 @@
-from __future__ import annotations
+from collections.abc import Callable, Iterable, Iterator
+from typing import Final, Self, SupportsIndex, final, overload, override
 
-from typing import TYPE_CHECKING, Self, SupportsIndex, overload, override
+from _typeshed import SupportsRichComparison
 
-from ._utils import get_repr, no_doctest
 from .abc import PyoMutableSequence
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Iterator
-
-    from _typeshed import SupportsRichComparison
 
 type IntoVec[T] = Vec[T] | list[T]
 
-
-class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
+@final
+class Vec[T](PyoMutableSequence[T]):
     """Represent a mutable sequence of elements.
 
     Implement `collections::abc::MutableSequence`, and pyochain's `PyoMutableSequence` ABC.
@@ -32,31 +27,19 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
         data (Iterable[T]): Any `Iterable` of elements to initialize the `Vec` with.
     """
 
-    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
-    _inner: list[T]
+    inner: Final[list[T]]
 
-    def __init__(self, data: Iterable[T]) -> None:
-        self._inner = list(data)
-
+    def __init__(self, data: Iterable[T]) -> None: ...
     @override
-    def __iter__(self) -> Iterator[T]:
-        return iter(self._inner)
-
-    @override
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({get_repr(self._inner)})"
-
+    def __iter__(self) -> Iterator[T]: ...
     @overload
     def __getitem__(self, i: SupportsIndex, /) -> T: ...
-
     @overload
     def __getitem__(self, s: slice[SupportsIndex | None], /) -> list[T]: ...
     @override
     def __getitem__(
         self, index: SupportsIndex | slice[SupportsIndex | None]
-    ) -> T | list[T]:
-        return self._inner[index]
-
+    ) -> T | list[T]: ...
     @overload
     def __setitem__(self, key: SupportsIndex, value: T) -> None: ...
     @overload
@@ -66,105 +49,33 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
     @override
     def __setitem__(
         self, key: SupportsIndex | slice[SupportsIndex | None], value: T | Iterable[T]
-    ) -> None:
-        # pyrefly: ignore[no-matching-overload]
-        return self._inner.__setitem__(key, value)  # pyright: ignore[reportCallIssue, reportUnknownVariableType, reportArgumentType]
-
+    ) -> None: ...
     @override
-    def __delitem__(self, key: SupportsIndex | slice[SupportsIndex | None]) -> None:
-        del self._inner[key]
-
+    def __delitem__(self, key: SupportsIndex | slice[SupportsIndex | None]) -> None: ...
     @override
-    def __len__(self) -> int:
-        return len(self._inner)
-
+    def __len__(self) -> int: ...
     @override
-    def __eq__(self, other: object) -> bool:
-        match other:
-            case Vec():
-                return self._inner == other._inner  # pyright: ignore[reportUnknownMemberType]
-            case list():
-                return self._inner == other
-            case _:
-                return False
-
+    def __eq__(self, other: object) -> bool: ...
     @overload
     def __add__[V](self: Vec[V], value: IntoVec[V], /) -> Vec[V]: ...
-
     @overload
     def __add__[S](self, value: IntoVec[S], /) -> Vec[S | T]: ...
-
     def __add__[V, S](
         self: Vec[V], value: IntoVec[V] | IntoVec[S], /
-    ) -> Vec[V] | Vec[S | V]:
-        match value:
-            case Vec():
-                return self.from_ref(self._inner + value._inner)  # pyright: ignore[reportArgumentType]
-            case list():
-                return self.from_ref(self._inner + value)  # pyright: ignore[reportArgumentType]
-
+    ) -> Vec[V] | Vec[S | V]: ...
     @override
-    def __iadd__(self, value: Iterable[T], /) -> Vec[T]:
-        return self.from_ref(self._inner.__iadd__(value))
-
-    def __mul__(self, value: SupportsIndex, /) -> Vec[T]:
-        return Vec.from_ref(self._inner * value)
-
-    def __rmul__(self, value: SupportsIndex, /) -> Vec[T]:
-        return Vec.from_ref(value * self._inner)
-
-    def __imul__(self, value: SupportsIndex, /) -> Vec[T]:
-        self._inner *= value
-        return self
-
+    def __iadd__(self, value: Iterable[T], /) -> Vec[T]: ...
+    def __mul__(self, value: SupportsIndex, /) -> Vec[T]: ...
+    def __rmul__(self, value: SupportsIndex, /) -> Vec[T]: ...
+    def __imul__(self, value: SupportsIndex, /) -> Vec[T]: ...
     @override
-    def __contains__(self, key: object, /) -> bool:
-        return key in self._inner
-
-    def __gt__(self, value: IntoVec[T], /) -> bool:
-        match value:
-            case Vec():
-                return self._inner > value._inner
-            case list():
-                return self._inner > value
-
-    def __ge__(self, value: IntoVec[T], /) -> bool:
-        match value:
-            case Vec():
-                return self._inner >= value._inner
-            case list():
-                return self._inner >= value
-
-    def __lt__(self, value: IntoVec[T], /) -> bool:
-        match value:
-            case Vec():
-                return self._inner < value._inner
-            case list():
-                return self._inner < value
-
-    def __le__(self, value: IntoVec[T], /) -> bool:
-        match value:
-            case Vec():
-                return self._inner <= value._inner
-            case list():
-                return self._inner <= value
-
+    def __contains__(self, key: object, /) -> bool: ...
+    def __gt__(self, value: IntoVec[T], /) -> bool: ...
+    def __ge__(self, value: IntoVec[T], /) -> bool: ...
+    def __lt__(self, value: IntoVec[T], /) -> bool: ...
+    def __le__(self, value: IntoVec[T], /) -> bool: ...
     @override
-    def reverse(self) -> None:
-        return self._inner.reverse()
-
-    @property
-    @no_doctest
-    def inner(self) -> list[T]:
-        """The underlying `list` data structure.
-
-        Useful when interoperating with functions that require a standard Python `list`.
-
-        Returns:
-            list[T]: The underlying list.
-        """
-        return self._inner
-
+    def reverse(self) -> None: ...
     @staticmethod
     def from_ref[V](data: list[V]) -> Vec[V]:
         """Create a `Vec` from a reference to an existing `list`.
@@ -195,22 +106,13 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
 
             ```
         """
-        instance: Vec[V] = Vec.__new__(Vec)  # pyright: ignore[reportUnknownVariableType]
-        instance._inner = data
-        return instance
 
     @override
-    def append(self, value: T) -> None:
-        return self._inner.append(value)
-
+    def append(self, value: T) -> None: ...
     @override
-    def extend(self, iterable: Iterable[T]) -> None:
-        return self._inner.extend(iterable)
-
+    def extend(self, iterable: Iterable[T]) -> None: ...
     @override
-    def clear(self) -> None:
-        return self._inner.clear()
-
+    def clear(self) -> None: ...
     def copy(self) -> Self:
         """Return a shallow copy of the `Vec`.
 
@@ -231,7 +133,6 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
 
             ```
         """
-        return self.__class__(self._inner.copy())
 
     def repeat(self, n: int) -> Vec[T]:
         """Repeat the elements of the `Vec` **n** times and return a new `Vec`.
@@ -255,7 +156,6 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
 
             ```
         """
-        return self.from_ref(self._inner * n)
 
     def repeat_mut(self, n: int) -> Self:
         """Repeat the elements of the `Vec` in place.
@@ -285,8 +185,6 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
 
             ```
         """
-        self._inner *= n
-        return self
 
     @override
     def insert(self, index: int, value: T) -> None:
@@ -309,8 +207,6 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
 
             ```
         """
-        self._inner.insert(index, value)
-
     def sort[U: SupportsRichComparison](
         self: Vec[U], *, reverse: bool = False
     ) -> Vec[U]:
@@ -333,8 +229,6 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
 
             ```
         """
-        self._inner.sort(reverse=reverse)
-        return self
 
     def sort_by(
         self, key: Callable[[T], SupportsRichComparison], *, reverse: bool = False
@@ -361,8 +255,6 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
 
             ```
         """
-        self._inner.sort(key=key, reverse=reverse)
-        return self
 
     def concat(self, other: list[T] | Self) -> Vec[T]:
         """Concatenate another `Vec` or `list` to **self** and return a new `Vec`.
@@ -396,12 +288,6 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
 
             ```
         """
-        match other:
-            case Vec():
-                data = self._inner + other._inner
-            case list():
-                data = self._inner + other
-        return Vec.from_ref(data)
 
     def concat_mut(self, other: list[T] | Self) -> Self:
         """Concatenate another `Vec` or `list` to **self** in place.
@@ -433,13 +319,6 @@ class Vec[T](PyoMutableSequence[T]):  # noqa: PLW1641
 
             ```
         """
-        match other:
-            case Vec():
-                self._inner += other._inner
-            case list():
-                self._inner += other
-        return self
 
     @override
-    def __reversed__(self) -> Iterator[T]:
-        return reversed(self._inner)
+    def __reversed__(self) -> Iterator[T]: ...

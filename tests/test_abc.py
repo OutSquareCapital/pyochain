@@ -35,10 +35,12 @@ from pyochain.abc import (
     PyoSized,
 )
 
-# Subclasshook of python ABCs raise error as soon as the class is instantiated.
+# Subclasshook of python ABCs raise error as soon as the class (not the instance!) is instantiated.
+# We unfortunately cannot reciprocate this in Pyo3 ATM. Most access will raise `TypeError` tho, which is the same error as the ABC.
+# For some reason, add, discard and insert are raising `AttributeError` instead of `TypeError`.
+# This is probably due to the fact that they are the only methods who are not called by builtins.
 CATCH_TYPE_ERROR = pytest.raises(TypeError)
-# we can't do that (as far as I know) with Pyo3, so we check on the abstracts methods instead
-CATCH_NOT_IMPLEMENTED = pytest.raises(NotImplementedError)
+CATCH_ATTRIBUTE_ERROR = pytest.raises(AttributeError)
 
 
 class _BaseImpl:
@@ -484,59 +486,59 @@ def _check_abc_init_fail(obj: Callable[[], object]) -> None:
 
 
 def _check_abc_iter_fail(obj: Iterable[int]) -> None:
-    with CATCH_NOT_IMPLEMENTED:
+    with CATCH_TYPE_ERROR:
         _ = iter(obj)
 
 
 def _check_abc_next_fail(obj: Iterator[int]) -> None:
-    with CATCH_NOT_IMPLEMENTED:
+    with CATCH_TYPE_ERROR:
         _ = next(obj)
 
 
 def _check_abc_len_fail(obj: Sized) -> None:
-    with CATCH_NOT_IMPLEMENTED:
+    with CATCH_TYPE_ERROR:
         _ = len(obj)
 
 
 def _check_abc_contains_fail(obj: Container[int]) -> None:
-    with CATCH_NOT_IMPLEMENTED:
+    with CATCH_TYPE_ERROR:
         _ = 1 in obj
 
 
 def _check_abc_reversed_fail(obj: Reversible[int]) -> None:
-    with CATCH_NOT_IMPLEMENTED:
+    with CATCH_TYPE_ERROR:
         _ = reversed(obj)
 
 
 def _check_abc_getitem_fail(obj: Sequence[int] | Mapping[int, int]) -> None:
-    with CATCH_NOT_IMPLEMENTED:
+    with CATCH_TYPE_ERROR:
         _ = obj[0]
 
 
 def _check_abc_setitem_fail(
     obj: MutableSequence[int] | MutableMapping[int, int],
 ) -> None:
-    with CATCH_NOT_IMPLEMENTED:
+    with CATCH_TYPE_ERROR:
         obj[0] = 1
 
 
 def _check_abc_delitem_fail(
     obj: MutableSequence[int] | MutableMapping[int, int],
 ) -> None:
-    with CATCH_NOT_IMPLEMENTED:
+    with CATCH_TYPE_ERROR:
         del obj[0]
 
 
 def _check_abc_insert_fail(obj: MutableSequence[int]) -> None:
-    with CATCH_NOT_IMPLEMENTED:
+    with CATCH_ATTRIBUTE_ERROR:
         obj.insert(0, 1)
 
 
 def _check_abc_add_fail(obj: AbstractMutableSet[int]) -> None:
-    with CATCH_NOT_IMPLEMENTED:
+    with CATCH_ATTRIBUTE_ERROR:
         obj.add(1)
 
 
 def _check_abc_discard_fail(obj: AbstractMutableSet[int]) -> None:
-    with CATCH_NOT_IMPLEMENTED:
+    with CATCH_ATTRIBUTE_ERROR:
         obj.discard(1)

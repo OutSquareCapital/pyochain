@@ -26,10 +26,7 @@ impl PyoIterable {
     #[new]
     #[pyo3(signature = (*_args, **_kwargs))]
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        PyClassInitializer::from(Checkable).add_subclass(PyoIterable {})
-    }
-    fn __iter__<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
-        not_impl_error(slf.as_any(), "PyoIterable", "__iter__")
+        PyClassInitializer::from(Checkable).add_subclass(Self {})
     }
     fn iter<'py>(slf: Bound<'py, Self>) -> PyResult<Py<tls::Iter>> {
         slf.into_any().pipe(tls::Iter::new)
@@ -45,13 +42,10 @@ impl PyoIterator {
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
         PyClassInitializer::from(Checkable)
             .add_subclass(PyoIterable {})
-            .add_subclass(PyoIterator {})
+            .add_subclass(Self {})
     }
     fn __iter__<'py>(slf: Bound<'py, Self>) -> Bound<'py, Self> {
         slf
-    }
-    fn __next__<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
-        not_impl_error(slf.as_any(), "PyoIterator", "__next__")
     }
     #[classmethod]
     fn _from_iterable<'py>(
@@ -1334,9 +1328,6 @@ impl PyoContainer {
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
         PyClassInitializer::from(Checkable).add_subclass(Self {})
     }
-    fn __contains__<'py>(slf: Bound<'py, Self>, _other: &Bound<'py, PyAny>) -> PyResult<bool> {
-        not_impl_error(slf.as_any(), "PyoContainer", "__contains__")
-    }
     #[pyo3(name = "contains")]
     fn pyo_contains(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         slf.contains(value)
@@ -1352,9 +1343,6 @@ impl PyoSized {
     #[new]
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
         PyClassInitializer::from(Checkable).add_subclass(Self {})
-    }
-    fn __len__<'py>(slf: Bound<'py, Self>) -> PyResult<usize> {
-        not_impl_error(slf.as_any(), "PyoSized", "__len__")
     }
     #[pyo3(name = "len")]
     fn pyo_len(slf: Bound<'_, Self>) -> PyResult<usize> {
@@ -1396,12 +1384,6 @@ impl PyoCollection {
             .add_subclass(PyoIterable)
             .add_subclass(Self {})
     }
-    fn __contains__<'py>(slf: Bound<'py, Self>, _other: &Bound<'py, PyAny>) -> PyResult<bool> {
-        not_impl_error(slf.as_any(), "PyoContainer", "__contains__")
-    }
-    fn __len__<'py>(slf: Bound<'py, Self>) -> PyResult<usize> {
-        not_impl_error(slf.as_any(), "PyoSized", "__len__")
-    }
     #[pyo3(name = "contains")]
     fn pyo_contains(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         slf.contains(value)
@@ -1427,19 +1409,17 @@ impl PyoReversible {
             .add_subclass(PyoIterable)
             .add_subclass(Self {})
     }
-    fn __reversed__<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, PyIterator>> {
-        not_impl_error(slf.as_any(), "PyoReversible", "__reversed__")
-    }
     /// We use unsafe code here because calling `reversed` with `PyOnceLock` pattern is 2x slower than pure python for some reason.
     fn rev(slf: Bound<'_, Self>) -> PyResult<Py<tls::Iter>> {
         slf.as_any()
             .pipe(pylibs::builtins::reversed)
+            .into_any()
             .pipe(|x| tls::Iter::new(x))
     }
 }
 
 // TODO: check difference once we had `sequence` to pypub struct macro
-#[pyclass(subclass, frozen, generic, extends=PyoCollection, module = "pyochain.abc._sequences")]
+#[pyclass(subclass,  frozen, generic, sequence, extends=PyoCollection, module = "pyochain.abc._sequences")]
 pub struct PyoSequence;
 #[pymethods]
 impl PyoSequence {
@@ -1451,13 +1431,6 @@ impl PyoSequence {
             .add_subclass(PyoCollection)
             .add_subclass(Self {})
     }
-    fn __getitem__<'py>(
-        slf: &Bound<'py, Self>,
-        _index: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, PyAny>> {
-        not_impl_error(slf.as_any(), "PyoSequence", "__getitem__")
-    }
-
     fn __iter__(slf: Bound<'_, Self>) -> tools::SequenceIterator {
         slf.pipe(|x| unsafe { x.cast_into_unchecked::<PySequence>() })
             .pipe(tools::SequenceIterator::new)
@@ -1542,6 +1515,7 @@ impl PyoSequence {
     fn rev(slf: Bound<'_, Self>) -> PyResult<Py<tls::Iter>> {
         slf.as_any()
             .pipe(pylibs::builtins::reversed)
+            .into_any()
             .pipe(|x| tls::Iter::new(x))
     }
 }
@@ -1560,18 +1534,6 @@ impl PyoMutableSequence {
             .add_subclass(Self {})
     }
 
-    #[allow(unused)]
-    fn __setitem__<'py>(
-        slf: Bound<'py, Self>,
-        index: &Bound<'py, PyAny>,
-        value: &Bound<'py, PyAny>,
-    ) -> PyResult<()> {
-        not_impl_error(slf.as_any(), "PyoMutableSequence", "__setitem__")
-    }
-    #[allow(unused)]
-    fn __delitem__<'py>(slf: Bound<'py, Self>, index: Bound<'py, PyAny>) -> PyResult<()> {
-        not_impl_error(slf.as_any(), "PyoMutableSequence", "__delitem__")
-    }
 
     fn __iadd__(slf: Bound<'_, Self>, values: &Bound<'_, PyAny>) -> PyResult<()> {
         slf.call_method1(intern!(slf.py(), "extend"), (values,))?;
@@ -1634,14 +1596,6 @@ impl PyoMutableSequence {
         Ok(())
     }
 
-    #[allow(unused)]
-    fn insert(
-        slf: Bound<'_, Self>,
-        index: Bound<'_, PyAny>,
-        value: Bound<'_, PyAny>,
-    ) -> PyResult<()> {
-        not_impl_error(slf.as_any(), "PyoMutableSequence", "insert")
-    }
     fn retain(slf: Bound<'_, Self>, predicate: &Bound<'_, PyAny>) -> PyResult<()> {
         let seq = unsafe { slf.cast_into_unchecked::<PySequence>() };
         let mut write_idx = 0;
@@ -1685,15 +1639,6 @@ impl PyoMutableSequence {
             .into_bound_py_any(py)
             .and_then(tls::Iter::new)
     }
-}
-#[inline]
-fn not_impl_error<'py, T>(cls: &Bound<'py, PyAny>, parent: &str, method: &str) -> PyResult<T> {
-    let name = cls.get_type().name()?.to_str()?.to_owned();
-    let txt = format!(
-        "As a subpub struct of '{}', '{}' must be implemented by {}",
-        parent, method, name
-    );
-    Err(PyNotImplementedError::new_err(txt))
 }
 #[pyclass(subclass, frozen, generic, extends=PyoCollection, module = "pyochain.abc._sets")]
 pub struct PyoSet;
@@ -2234,14 +2179,6 @@ impl PyoMutableSet {
         Ok(())
     }
 
-    #[allow(unused)]
-    fn add(slf: Bound<'_, Self>, value: Bound<'_, PyAny>) -> PyResult<()> {
-        not_impl_error(slf.as_any(), "PyoMutableSet", "add")
-    }
-    #[allow(unused)]
-    fn discard(slf: Bound<'_, Self>, value: Bound<'_, PyAny>) -> PyResult<()> {
-        not_impl_error(slf.as_any(), "PyoMutableSet", "discard")
-    }
 
     fn remove(slf: Bound<'_, Self>, value: Bound<'_, PyAny>) -> PyResult<()> {
         if !slf.contains(&value)? {
@@ -2267,7 +2204,7 @@ impl PyoMutableSet {
             .try_for_each(|x| Self::_py_discard(&slf, &x?))
     }
 }
-#[pyclass(subclass, frozen, generic, extends=PyoCollection, module = "pyochain.abc._mappings")]
+#[pyclass(subclass, frozen, generic, mapping, extends=PyoCollection, module = "pyochain.abc._mappings")]
 pub struct PyoMapping;
 #[pymethods]
 impl PyoMapping {
@@ -2279,14 +2216,6 @@ impl PyoMapping {
             .add_subclass(PyoCollection)
             .add_subclass(Self {})
     }
-    #[allow(unused)]
-    fn __getitem__<'py>(
-        slf: Bound<'py, Self>,
-        key: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, PyAny>> {
-        not_impl_error(slf.as_any(), "PyoMapping", "__getitem__")
-    }
-
     fn __contains__(slf: Bound<'_, Self>, key: Bound<'_, PyAny>) -> PyResult<bool> {
         slf.get_item(key).map(|_| true).or_else(|err| {
             if err.is_instance_of::<PyKeyError>(slf.py()) {
@@ -2362,7 +2291,7 @@ impl PyoMapping {
     }
 }
 
-#[pyclass(subclass, frozen, generic, extends=PyoMapping, module = "pyochain.abc._mappings")]
+#[pyclass(subclass, frozen, generic, mapping, extends=PyoMapping, module = "pyochain.abc._mappings")]
 pub struct PyoMutableMapping;
 
 #[pymethods]
@@ -2376,19 +2305,6 @@ impl PyoMutableMapping {
             .add_subclass(PyoMapping)
             .add_subclass(Self {})
     }
-    #[allow(unused)]
-    fn __setitem__(
-        slf: Bound<'_, Self>,
-        key: &Bound<'_, PyAny>,
-        value: &Bound<'_, PyAny>,
-    ) -> PyResult<()> {
-        not_impl_error(slf.as_any(), "PyoMutableMapping", "__setitem__")
-    }
-    #[allow(unused)]
-    fn __delitem__(slf: Bound<'_, Self>, key: &Bound<'_, PyAny>) -> PyResult<()> {
-        not_impl_error(slf.as_any(), "PyoMutableMapping", "__delitem__")
-    }
-
     #[pyo3(signature = (key, default=None))]
     fn pop<'py>(
         slf: Bound<'py, Self>,

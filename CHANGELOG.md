@@ -7,7 +7,7 @@ TODO: check how to setup a "blog" section in the website for major releases, to 
 
 ### 🏆 Highlights
 
-- `abc` classes and `Iter`, `Seq`, `Range` have been fully moved to Rust.
+- `abc` classes, `Iter`, `Peekable`, `Seq`, `Range`, and `Vec` have been fully moved to Rust.
 - `abc::PyoIterator::peekable` has been completely refactored and now aligns with Rust std `Iterator`, with the methods `peek`, `next_if`, `next_if_eq`, and `next_if_map`, all implemented in Rust.
 - **typing**: The variance of generics for immutable classes (abstract and concrete) is now correctly handled and align with python stdlib. For example, `PyoMapping`, `Seq` or `Set` are now covariant, whilst `Dict` or `Vec` stay invariant.
 - `collections::PyoCounter`, pyochain version of python stdlib `collections::Counter`. Herit from `PyoMutableMapping` instead of `dict`, but behaves the same way.
@@ -23,6 +23,11 @@ The classes from the `sortedcontainers` library have been ported to pyochain, wi
 - `bisect` method alias is deleted, use `bisect_right` instead.
 - `update` and `__init__` methods arguments are explicit instead of `*args`.
 - `__or__` and `__ror__` don't return `NotImplemented` if the provided *value* is not a `Mapping`.
+
+#### abc's
+
+- Due to Pyo3 current limitations, no `TypeError` is raised on program launch (i.e when `__subclasshook__` is called). Rely on type checkers to ensure all `abstractmethod`s are implemented.
+- Again, due to current limitations, some subclasses relationship don't work. `PyoSized`, `PyoContainer` and `PyoReversible` are not actual parents of their expected subclasses, thus `isinstance` checks will fail.
 
 ### 💥 Breaking changes
 

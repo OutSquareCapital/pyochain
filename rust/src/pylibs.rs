@@ -118,7 +118,7 @@ pub mod builtins {
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
     }
     #[inline(always)]
-    pub fn reversed<'py>(sequence: &Bound<'py, PyAny>) -> Bound<'py, PyAny> {
+    pub fn reversed<'py>(sequence: &Bound<'py, PyAny>) -> Bound<'py, PyIterator> {
         unsafe {
             ffi::PyObject_CallOneArg(
                 (&raw const ffi::PyReversed_Type)
@@ -127,6 +127,7 @@ pub mod builtins {
                 sequence.as_ptr(),
             )
             .pipe(|x| Bound::from_owned_ptr(sequence.py(), x))
+            .pipe(|x| x.cast_into_unchecked::<PyIterator>())
         }
     }
     #[inline(always)]

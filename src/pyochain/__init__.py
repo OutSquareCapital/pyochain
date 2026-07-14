@@ -6,7 +6,7 @@ from ._seq import Seq  # pyright: ignore[reportMissingModuleSource]
 from ._set import Set, SetMut
 from ._sliceview import SliceView
 from ._tools import Iter, Peekable  # pyright: ignore[reportMissingModuleSource]
-from ._vec import Vec
+from ._vec import Vec  # pyright: ignore[reportMissingModuleSource]
 from .abc import PyoItemsView, PyoKeysView, PyoValuesView
 from .rs import (
     NONE,
