@@ -89,42 +89,191 @@ class Set[T](PyoSet[T]):
 
     @override
     def __and__(self, value: AbstractSet[object], /) -> Self:
-        """Return self&value."""
-        return self.__class__(self._inner.__and__(value))
+        """Return self&value.
+
+        Args:
+            value (AbstractSet[object]): The set to perform the intersection with.
+
+        Returns:
+            Self: A new instance of the same class containing the intersection of the two sets.
+
+        Example:
+            ```python
+            >>> from pyochain import Set
+            >>> s1 = Set((1, 2, 3))
+            >>> s2 = Set((2, 3, 4))
+            >>> s3 = s1 & s2
+            >>> s3
+            Set(2, 3)
+
+            ```
+        """
+        return self.__class__(self._inner & value)
 
     @override
     def __or__[S](self, value: AbstractSet[S], /) -> Set[T | S]:
-        """Return self|value."""
-        return Set(self._inner.__or__(value))
+        """Return self|value.
+
+        Args:
+            value (AbstractSet[S]): The set to perform the union with.
+
+        Returns:
+            Set[T | S]: A new `Set` instance containing the union of the two sets.
+
+        Example:
+            ```python
+            >>> from pyochain import Set
+            >>> s1 = Set((1, 2, 3))
+            >>> s2 = Set((3, 4, 5))
+            >>> s3 = s1 | s2
+            >>> s3
+            Set(1, 2, 3, 4, 5)
+
+            ```
+        """
+        return Set(self._inner | value)
 
     @override
     def __sub__(self, value: AbstractSet[object], /) -> Self:
-        """Return self-value."""
-        return self.__class__(self._inner.__sub__(value))
+        """Return self-value.
+
+        Args:
+            value (AbstractSet[object]): The set to perform the difference with.
+
+        Returns:
+            Self: A new instance of the same class containing the difference of the two sets.
+
+        Example:
+            ```python
+            >>> from pyochain import Set
+            >>> s1 = Set((1, 2, 3))
+            >>> s2 = Set((2, 3, 4))
+            >>> s3 = s1 - s2
+            >>> s3
+            Set(1,)
+
+            ```
+
+        """
+        return self.__class__(self._inner - value)
 
     @override
     def __xor__[S](self, value: AbstractSet[S], /) -> Set[T | S]:
-        """Return self^value."""
-        return Set(self._inner.__xor__(value))
+        """Return self^value.
+
+        Args:
+            value (AbstractSet[S]): The set to perform the symmetric difference with.
+
+        Returns:
+            Set[T | S]: A new `Set` instance containing the symmetric difference of the two sets.
+
+        Example:
+            ```python
+            >>> from pyochain import Set
+            >>> s1 = Set((1, 2, 3))
+            >>> s2 = Set((2, 3, 4))
+            >>> s3 = s1 ^ s2
+            >>> s3
+            Set(1, 4)
+
+            ```
+        """
+        return Set(self._inner ^ value)
 
     @override
     def __le__(self, value: AbstractSet[object], /) -> bool:
-        """Return self<=value."""
+        """Return self<=value.
+
+        Args:
+            value (AbstractSet[object]): The set to compare against.
+
+        Returns:
+            bool: `True` if self is a subset of value, `False` otherwise.
+
+        Example:
+            ```python
+            >>> from pyochain import Set
+            >>> s1 = Set((1, 2))
+            >>> s2 = Set((1, 2, 3))
+            >>> s1 <= s2
+            True
+            >>> s2 <= s1
+            False
+
+            ```
+        """
         return self._inner <= value
 
     @override
     def __lt__(self, value: AbstractSet[object], /) -> bool:
-        """Return self<value."""
+        """Return self<value.
+
+        Args:
+            value (AbstractSet[object]): The set to compare against.
+
+        Returns:
+            bool: `True` if self is a proper subset of value, `False` otherwise.
+
+        Example:
+            ```python
+            >>> from pyochain import Set
+            >>> s1 = Set((1, 2))
+            >>> s2 = Set((1, 2, 3))
+            >>> s1 < s2
+            True
+            >>> s2 < s1
+            False
+
+            ```
+        """
         return self._inner < value
 
     @override
     def __ge__(self, value: AbstractSet[object], /) -> bool:
-        """Return self>=value."""
+        """Return self>=value.
+
+        Args:
+            value (AbstractSet[object]): The set to compare against.
+
+        Returns:
+            bool: `True` if self is a superset of value, `False` otherwise.
+
+        Example:
+            ```python
+            >>> from pyochain import Set
+            >>> s1 = Set((1, 2, 3))
+            >>> s2 = Set((1, 2))
+            >>> s1 >= s2
+            True
+            >>> s2 >= s1
+            False
+
+            ```
+        """
         return self._inner >= value
 
     @override
     def __gt__(self, value: AbstractSet[object], /) -> bool:
-        """Return self>value."""
+        """Return self>value.
+
+        Args:
+            value (AbstractSet[object]): The set to compare against.
+
+        Returns:
+            bool: `True` if self is a proper superset of value, `False` otherwise.
+
+        Example:
+            ```python
+            >>> from pyochain import Set
+            >>> s1 = Set((1, 2, 3))
+            >>> s2 = Set((1, 2))
+            >>> s1 > s2
+            True
+            >>> s2 > s1
+            False
+
+            ```
+        """
         return self._inner > value
 
     @override
@@ -210,61 +359,249 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
     @override
     def __and__(self, value: AbstractSet[object], /) -> SetMut[T]:
         """Return self&value."""
-        return self.from_ref(self._inner.__and__(value))
+        return self.from_ref(self._inner & value)
 
     @override
     def __iand__(self, value: AbstractSet[object], /) -> SetMut[T]:
         """Return self&=value."""
-        return self.from_ref(self._inner.__iand__(value))
+        self._inner &= value
+        return self
 
     @override
     def __or__[S](self, value: AbstractSet[S], /) -> SetMut[T | S]:
-        """Return self|value."""
-        return self.from_ref(self._inner.__or__(value))
+        """Return self|value.
+
+        Args:
+            value (AbstractSet[S]): The set to perform the union with.
+
+        Returns:
+            SetMut[T | S]: A new `SetMut` instance containing the union of the two sets.
+
+        Example:
+            ```python
+            >>> from pyochain import SetMut
+            >>> s1 = SetMut((1, 2, 3))
+            >>> s2 = SetMut((3, 4, 5))
+            >>> s3 = s1 | s2
+            >>> s3
+            SetMut(1, 2, 3, 4, 5)
+
+            ```
+        """
+        return self.from_ref(self._inner | value)
 
     @override
     def __ior__(self, value: AbstractSet[T], /) -> SetMut[T]:
-        """Return self|=value."""
-        return self.from_ref(self._inner.__ior__(value))
+        """Return self|=value.
+
+        Args:
+            value (AbstractSet[T]): The set to perform the union with.
+
+        Returns:
+            SetMut[T]: The current instance after performing the union operation.
+
+        Example:
+            ```python
+            >>> from pyochain import SetMut
+            >>> s1 = SetMut((1, 2, 3))
+            >>> s2 = SetMut((3, 4, 5))
+            >>> s1 |= s2
+            >>> s1
+            SetMut(1, 2, 3, 4, 5)
+
+            ```
+        """
+        self._inner |= value
+        return self
 
     @override
     def __sub__(self, value: AbstractSet[object], /) -> SetMut[T]:
-        """Return self-value."""
-        return self.from_ref(self._inner.__sub__(value))
+        """Return self-value.
+
+        Args:
+            value (AbstractSet[object]): The set to subtract.
+
+        Returns:
+            SetMut[T]: A new `SetMut` instance containing the result of the subtraction.
+
+        Example:
+            ```python
+            >>> from pyochain import SetMut
+            >>> s1 = SetMut((1, 2, 3))
+            >>> s2 = SetMut((2, 3, 4))
+            >>> s3 = s1 - s2
+            >>> s3
+            SetMut(1,)
+
+            ```
+        """
+        return self.from_ref(self._inner - value)
 
     @override
     def __isub__(self, value: AbstractSet[object], /) -> SetMut[T]:
-        """Return self-=value."""
-        return self.from_ref(self._inner.__isub__(value))
+        """Return self-=value.
+
+        Args:
+            value (AbstractSet[object]): The set to subtract.
+
+        Returns:
+            SetMut[T]: The current instance after performing the subtraction operation.
+
+        Example:
+            ```python
+            >>> from pyochain import SetMut
+            >>> s1 = SetMut((1, 2, 3))
+            >>> s2 = SetMut((2, 3, 4))
+            >>> s1 -= s2
+            >>> s1
+            SetMut(1,)
+
+            ```
+        """
+        self._inner -= value
+        return self
 
     @override
     def __xor__[S](self, value: AbstractSet[S], /) -> SetMut[T | S]:
-        """Return self^value."""
-        return self.from_ref(self._inner.__xor__(value))
+        """Return self^value.
+
+        Args:
+            value (AbstractSet[S]): The set to perform the symmetric difference with.
+
+        Returns:
+            SetMut[T | S]: A new `SetMut` instance containing the result of the symmetric difference.
+
+        Example:
+            ```python
+            >>> from pyochain import SetMut
+            >>> s1 = SetMut((1, 2, 3))
+            >>> s2 = SetMut((3, 4, 5))
+            >>> s3 = s1 ^ s2
+            >>> s3
+            SetMut(1, 2, 4, 5)
+
+            ```
+        """
+        return self.from_ref(self._inner ^ value)
 
     @override
     def __ixor__(self, value: AbstractSet[T], /) -> SetMut[T]:
-        """Return self^=value."""
-        return self.from_ref(self._inner.__ixor__(value))
+        """Return self^=value.
+
+        Args:
+            value (AbstractSet[T]): The set to perform the symmetric difference with.
+
+        Returns:
+            SetMut[T]: The current instance after performing the symmetric difference operation.
+
+        Example:
+            ```python
+            >>> from pyochain import SetMut
+            >>> s1 = SetMut((1, 2, 3))
+            >>> s2 = SetMut((3, 4, 5))
+            >>> s1 ^= s2
+            >>> s1
+            SetMut(1, 2, 4, 5)
+
+            ```
+        """
+        self._inner ^= value
+        return self
 
     @override
     def __le__(self, value: AbstractSet[object], /) -> bool:
-        """Return self<=value."""
+        """Return self<=value.
+
+        Args:
+            value (AbstractSet[object]): The set to compare against.
+
+        Returns:
+            bool: `True` if self is a subset of value, `False` otherwise.
+
+        Example:
+            ```python
+            >>> from pyochain import SetMut
+            >>> s1 = SetMut((1, 2))
+            >>> s2 = SetMut((1, 2, 3))
+            >>> s1 <= s2
+            True
+            >>> s2 <= s1
+            False
+
+            ```
+        """
         return self._inner <= value
 
     @override
     def __lt__(self, value: AbstractSet[object], /) -> bool:
-        """Return self<value."""
+        """Return self<value.
+
+        Args:
+            value (AbstractSet[object]): The set to compare against.
+
+        Returns:
+            bool: `True` if self is a proper subset of value, `False` otherwise.
+
+        Example:
+            ```python
+            >>> from pyochain import SetMut
+            >>> s1 = SetMut((1, 2))
+            >>> s2 = SetMut((1, 2, 3))
+            >>> s1 < s2
+            True
+            >>> s2 < s1
+            False
+
+            ```
+        """
         return self._inner < value
 
     @override
     def __ge__(self, value: AbstractSet[object], /) -> bool:
-        """Return self>=value."""
+        """Return self>=value.
+
+        Args:
+            value (AbstractSet[object]): The set to compare against.
+
+        Returns:
+            bool: `True` if self is a superset of value, `False` otherwise.
+
+        Example:
+            ```python
+            >>> from pyochain import SetMut
+            >>> s1 = SetMut((1, 2, 3))
+            >>> s2 = SetMut((1, 2))
+            >>> s1 >= s2
+            True
+            >>> s2 >= s1
+            False
+
+            ```
+        """
         return self._inner >= value
 
     @override
     def __gt__(self, value: AbstractSet[object], /) -> bool:
-        """Return self>value."""
+        """Return self>value.
+
+        Args:
+            value (AbstractSet[object]): The set to compare against.
+
+        Returns:
+            bool: `True` if self is a proper superset of value, `False` otherwise.
+
+        Example:
+            ```python
+            >>> from pyochain import SetMut
+            >>> s1 = SetMut((1, 2, 3))
+            >>> s2 = SetMut((1, 2))
+            >>> s1 > s2
+            True
+            >>> s2 > s1
+            False
+
+            ```
+        """
         return self._inner > value
 
     @property
