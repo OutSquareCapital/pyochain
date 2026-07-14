@@ -15,21 +15,33 @@ from pyochain import Vec
 
 from .test_seq import ALWAYS_EQ, NEVER_EQ
 
+_SKIP_INIT_TEST = pytest.mark.skip(
+    reason="Pyo3 forces us to use `__new__`, making any subsequent `__init__` behavior inefficient."
+)
+"""Adding any overwrite/clear behavior in the `__init__` would force us to create a list, clear it, and then re-populate it, since we are forced to assign the attributes in `new`.\\
+This is a niche behavior anyway, `clear` is what you *should* use."""
 
-def test_init() -> None:
-    # Iterable arg is optional
-    assert Vec([]) == Vec(())
 
-    # Init clears previous values
+@_SKIP_INIT_TEST
+def test_init_clear_previous_values() -> None:
     a = Vec([1, 2, 3])
     a.__init__(())
     assert a == Vec([])
 
-    # Init overwrites previous values
+
+@_SKIP_INIT_TEST
+def test_init_overwrite_previous_values() -> None:
     a = Vec([1, 2, 3])
     a.__init__([4, 5, 6])
     assert a == Vec([4, 5, 6])
 
+
+def test_init_empty() -> None:
+    assert Vec([]) == Vec(())
+
+
+def test_init_copy() -> None:
+    a = Vec([1, 2, 3])
     # Mutables always return a new object
     b = Vec(a)
     assert id(a) != id(b)
