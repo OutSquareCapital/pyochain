@@ -1,7 +1,9 @@
-from collections.abc import Iterable, Iterator, Sequence
-from typing import Final, Self, SupportsIndex, final, overload, override
+from collections.abc import Iterable, Iterator
+from typing import Any, Final, Self, SupportsIndex, final, overload, override
 
 from pyochain.abc import PyoSequence
+
+type IntoSeq[T] = Seq[T] | tuple[T, ...]
 
 @final
 class Seq[T](PyoSequence[T]):
@@ -63,11 +65,30 @@ class Seq[T](PyoSequence[T]):
     @override
     def __getitem__(
         self, index: SupportsIndex | slice[SupportsIndex | None]
-    ) -> T | Sequence[T]: ...
-    @override
-    def __eq__(self, other: object) -> bool: ...
+    ) -> T | tuple[T, ...]: ...
     @override
     def __hash__(self) -> int: ...
+    def __add__[O](self, value: IntoSeq[O], /) -> tuple[T | O, ...]: ...
+    @override
+    def __eq__(self, other: object) -> bool: ...
+    def __lt__[S](self: Seq[S], value: IntoSeq[S], /) -> bool: ...
+    def __le__[S](self: Seq[S], value: IntoSeq[S], /) -> bool: ...
+    def __gt__[S](self: Seq[S], value: IntoSeq[S], /) -> bool: ...
+    def __ge__[S](self: Seq[S], value: IntoSeq[S], /) -> bool: ...
+    def __mul__(self, value: SupportsIndex, /) -> tuple[T, ...]: ...
+    def __rmul__(self, value: SupportsIndex, /) -> tuple[T, ...]: ...
+    @override
+    def __reversed__(self) -> Iterator[T]: ...
+    @override
+    def count(self, value: Any, /) -> int: ...  # pyright: ignore[reportAny]
+    @override
+    def index(
+        self,
+        value: Any,  # pyright: ignore[reportAny]
+        start: SupportsIndex = 0,
+        stop: SupportsIndex = ...,
+        /,
+    ) -> int: ...
     def repeat(self, n: int) -> Self:
         """Repeat the `Seq` **n** times and return a new `Seq`.
 
@@ -88,16 +109,13 @@ class Seq[T](PyoSequence[T]):
 
             ```
         """
-
-    @override
-    def __reversed__(self) -> Iterator[T]: ...
-    def concat[O](self, other: tuple[O, ...] | Seq[O]) -> Seq[T | O]:
+    def concat[O](self, other: IntoSeq[O]) -> Seq[T | O]:
         """Concatenate another `Seq` or `tuple` to **self** and return a new `Seq`.
 
         This is equivalent to `tuple_1 + tuple_2` for standard tuples.
 
         Args:
-            other (tuple[O, ...] | Seq[O]): The other `Seq` to concatenate.
+            other (IntoSeq[O]): The other `Seq` to concatenate.
 
         Returns:
             Seq[T | O]: The new `Seq` after concatenation.
