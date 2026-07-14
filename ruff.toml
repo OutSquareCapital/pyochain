@@ -1,7 +1,7 @@
 [lint]
     external = ["DOC"]
     ignore = [
-        "C413",    # Can be a behavioral change who introduce subtle bugs
+        "C413",             # Can be a behavioral change who introduce subtle bugs
         "C417",
         "COM812",
         "COM812",
@@ -15,10 +15,10 @@
         "PLR2004",
         "PYI021",
         "S101",
-        "S301",    # We don't care about cryptographic security
-        "S307",    # We don't care about eval
-        "S311",    # We don't care about cryptographic security
-        "S403",    # We don't care about insecure modules
+        "S301",             # We don't care about cryptographic security
+        "S307",             # We don't care about eval
+        "S311",             # We don't care about cryptographic security
+        "S403",             # We don't care about insecure modules
         "S608",
         "SLF001",
         "T201",
@@ -26,6 +26,7 @@
         "TD002",
         "TD003",
         "TID252",
+        "subclass-builtin", # We know what we do when subclassing builtins
     ]
 
     preview = true
