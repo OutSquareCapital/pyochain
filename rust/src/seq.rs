@@ -119,6 +119,32 @@ impl Seq {
             .mul(slf.get().inner.bind(py).as_any())
             .map(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
     }
+
+    fn __concat__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.concat(other)
+    }
+    fn __repeat__<'py>(slf: Bound<'py, Self>, count: isize) -> PyResult<Bound<'py, Self>> {
+        slf.get().repeat(&PyInt::new(slf.py(), count))
+    }
+    fn __inplace_concat__<'py>(
+        &self,
+        other: &Bound<'py, PySequence>,
+    ) -> PyResult<Bound<'py, PySequence>> {
+        self.inner
+            .bind(other.py())
+            .as_sequence()
+            .in_place_concat(other)
+    }
+    fn __inplace_repeat__<'py>(
+        slf: Bound<'py, Self>,
+        count: isize,
+    ) -> PyResult<Bound<'py, PySequence>> {
+        slf.get()
+            .inner
+            .bind(slf.py())
+            .as_sequence()
+            .in_place_repeat(count as usize)
+    }
     #[pyo3(signature = (value, /))]
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
         self.inner.bind(value.py()).as_sequence().count(value)
@@ -137,38 +163,29 @@ impl Seq {
         )
     }
 
-    fn repeat(slf: Bound<'_, Self>, n: usize) -> PyResult<Bound<'_, Self>> {
-        let py = slf.py();
-        let cls = slf.get_type();
-        slf.get()
-            .inner
+    fn repeat<'py>(&self, n: &Bound<'py, PyInt>) -> PyResult<Bound<'py, Self>> {
+        let py = n.py();
+        self.inner
             .bind(py)
             .as_sequence()
-            .repeat(n)
-            .and_then(|x| cls.call1((x,)))
-            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+            .repeat(n.extract()?)?
+            .into_any()
+            .pipe(Self::new)
+            .and_then(|x| Bound::new(py, x))
     }
-    fn concat<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+    fn concat<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let cls = slf.get_type();
-        let other_seq = other
-            .cast_exact::<PyTuple>()
-            .map(|x| x.as_unbound().clone_ref(py))
-            .or_else(|_| {
-                other
-                    .cast_exact::<Self>()
-                    .map(|x| x.get().inner.clone_ref(py))
-            })
-            .map_err(PyErr::from)?
-            .into_bound(py)
-            .into_sequence();
-        slf.get()
-            .inner
+        let other_seq = extract_union::<Self, PyTuple>(other)?
+            .map_left(|o| o.get().inner.bind(py))
+            .into_inner()
+            .as_sequence();
+        self.inner
             .bind(py)
             .as_sequence()
-            .concat(&other_seq)
-            .and_then(|x| cls.call1((x,)))
-            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+            .concat(other_seq)?
+            .into_any()
+            .pipe(Self::new)
+            .and_then(|x| Bound::new(py, x))
     }
 }
 
