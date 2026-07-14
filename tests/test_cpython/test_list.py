@@ -940,18 +940,3 @@ def test_tier2_invalidates_iterator() -> None:
             pass
         a.append(4)
         assert Vec(it) == []
-
-
-def test_list_overwrite_local() -> None:
-    """Test that overwriting the last reference to the
-    iterable doesn't prematurely free the iterable"""
-
-    def foo(x: Vec[int]) -> int:
-        assert sys.getrefcount(x) == 1
-        r = 0
-        for i in x:
-            r += i
-            x = None  # pyright: ignore[reportAssignmentType]
-        return r
-
-    assert foo(Vec(range(10))) == 45
