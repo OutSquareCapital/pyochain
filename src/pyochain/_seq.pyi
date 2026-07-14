@@ -44,9 +44,8 @@ class Seq[T](PyoSequence[T]):
         ... )
         >>> is_no_copy
         True
-        >>> # However, creating a new Seq from seq (not using .inner) will be a copy operation.
         >>> Seq(seq).inner is seq.inner
-        False
+        True
 
         ```
     """
@@ -68,15 +67,44 @@ class Seq[T](PyoSequence[T]):
     ) -> T | tuple[T, ...]: ...
     @override
     def __hash__(self) -> int: ...
-    def __add__[O](self, value: IntoSeq[O], /) -> tuple[T | O, ...]: ...
+    def __add__[O](self, value: IntoSeq[O], /) -> Seq[T | O]: ...
     @override
     def __eq__(self, other: object) -> bool: ...
-    def __lt__[S](self: Seq[S], value: IntoSeq[S], /) -> bool: ...
+    def __lt__[S](self: Seq[S], value: IntoSeq[S], /) -> bool:
+        """Return True if *self* is less than value, False otherwise.
+
+        Args:
+            value (IntoSeq[S]): The value to compare against. Can be a `Seq` or a `tuple`.
+
+        Returns:
+            bool: True if *self* is less than value, False otherwise.
+
+        Raises:
+            TypeError: If value is not a `Seq` or a `tuple`.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq, Err, Ok
+            >>> s1 = Seq((1, 2, 3))
+            >>> s2 = Seq((1, 2, 4))
+            >>> s1 < s2
+            True
+            >>> s1 < (1, 2, 3)
+            False
+            >>> try:
+            ...     res = Ok(s1 < [1, 2, 3])
+            ... except TypeError as e:
+            ...     res = Err(e)
+            >>> res
+            Err(TypeError("Input must be a 'Seq'' or a 'tuple', got 'list'"))
+
+            ```
+        """
     def __le__[S](self: Seq[S], value: IntoSeq[S], /) -> bool: ...
     def __gt__[S](self: Seq[S], value: IntoSeq[S], /) -> bool: ...
     def __ge__[S](self: Seq[S], value: IntoSeq[S], /) -> bool: ...
-    def __mul__(self, value: SupportsIndex, /) -> tuple[T, ...]: ...
-    def __rmul__(self, value: SupportsIndex, /) -> tuple[T, ...]: ...
+    def __mul__(self, value: SupportsIndex, /) -> Seq[T]: ...
+    def __rmul__(self, value: SupportsIndex, /) -> Seq[T]: ...
     @override
     def __reversed__(self) -> Iterator[T]: ...
     @override

@@ -18,12 +18,20 @@ def test_getitem_error() -> None:
         t["a"]  # pyright: ignore[reportCallIssue, reportArgumentType]
 
 
+# TODO: Make the behavior identical to tuple, which should make the two `seq is not seq_from_*` fail.
 def test_constructors() -> None:
-    # calling built-in types without argument must return empty
+    """Contrary to `tuple`, the constructor won't return the same object if the argument is already a `Seq`.
+
+    However, the `inner` attribute will be the same, so that the underlying data is not copied.
+    """
     assert Seq[int](()) == ()
-    t0_3 = Seq((0, 1, 2, 3))
-    t0_3_bis = Seq(t0_3)
-    assert t0_3 is t0_3_bis
+    seq = Seq((0, 1, 2, 3))
+    seq_from_seq = Seq(seq)
+    seq_from_tup = Seq(seq.inner)
+    assert seq.inner is seq_from_seq.inner
+    assert seq.inner is seq_from_tup.inner
+    assert seq is not seq_from_seq
+    assert seq is not seq_from_tup
     assert Seq([]) == ()
     assert Seq([0, 1, 2, 3]) == (0, 1, 2, 3)
     assert Seq("") == ()

@@ -256,14 +256,14 @@ class Vec[T](PyoMutableSequence[T]):
             ```
         """
 
-    def concat(self, other: list[T] | Self) -> Vec[T]:
+    def concat(self, other: IntoVec[T]) -> Vec[T]:
         """Concatenate another `Vec` or `list` to **self** and return a new `Vec`.
 
         Note:
             This is equivalent to `list_1 + list_2` for standard lists.
 
         Args:
-            other (list[T] | Self): The other `Vec` to concatenate.
+            other (IntoVec[T]): The other `Vec` to concatenate.
 
         Returns:
             Vec[T]: The new `Vec` after concatenation.
@@ -289,7 +289,7 @@ class Vec[T](PyoMutableSequence[T]):
             ```
         """
 
-    def concat_mut(self, other: list[T] | Self) -> Self:
+    def concat_mut(self, other: IntoVec[T]) -> Self:
         """Concatenate another `Vec` or `list` to **self** in place.
 
         This is equivalent to `list_1 += list_2` for standard lists.
@@ -298,7 +298,7 @@ class Vec[T](PyoMutableSequence[T]):
             This method modifies the `Vec` in place and returns the same instance for chaining.
 
         Args:
-            other (list[T] | Self): The other `Vec` to concatenate.
+            other (IntoVec[T]): The other `Vec` to concatenate.
 
         Returns:
             Self: The modified `Vec` after concatenation (self).

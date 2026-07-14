@@ -716,7 +716,7 @@ def test_truth() -> None:
 
 
 def test_identity() -> None:
-    assert Vec([]) != Vec([])
+    assert Vec([]) is not Vec([])
 
 
 def test_len() -> None:

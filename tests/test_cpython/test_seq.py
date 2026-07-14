@@ -415,7 +415,7 @@ def test_imul(type2test: TestedSeq[int]) -> None:
 @TEST_TYPES
 def test_repeat(type2test: TestedSeq[int]) -> None:
     for m in range(4):
-        s = Seq(range(m))
+        s = tuple(range(m))
         for n in range(-3, 5):
             assert type2test(s * n) == type2test(s) * n
         assert type2test(s) * -4 == type2test([])

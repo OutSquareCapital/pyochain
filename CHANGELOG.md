@@ -42,6 +42,7 @@ The classes from the `sortedcontainers` library have been ported to pyochain, wi
 - **Removal**: Original `PyoIterator::repeat` has been removed, and `PyoIterator::from_repeat` renamed to `repeat`, i.e `from_repeat` replaces the old `repeat`. The original had complex semantics, niche use cases, without a real performance/memory benefit. To get the same behavior, use something like `my_iter.collect(Seq).pipe(lambda it: Iter.repeat(it, n)).map(lambda x: x.iter())`. This also better align with rust `Iterator::repeat` semantics and naming.
 - **Removal**: `Iter::__bool__` has been removed. Use `PyoIterator::peekable::__bool__` instead. This avoid implicit `tee` use.
 - **Removal**: `Iter::{from_ref, cloned}` have been removed. Use `a, b = x.tee()` instead (for `cloned`), or `a, b = Iter(x).tee()` (for `from_ref`), where *a* is the original `Iterator`, and *b* the cloned one.
+- `{Vec, Seq}` dunders (like `__add__`, `__mul__`, etc...) now return new instances of the same class, instead of the underlying data structure, i.e `Vec + Vec` returns a `Vec`, not a `list`. The only exception as of now remain for `__getitem__` when a `slice` is used.
 
 ### 🆕 New features
 
@@ -66,6 +67,7 @@ The classes from the `sortedcontainers` library have been ported to pyochain, wi
 - **typing**: `Result` and `Option` method `transpose` give less false positives now.
 - **typing**: Thanks to covariance, `PyoIterator::flatten` should not give false positives anymore, since it seems there's no need anymore to manually maintain various overloads for nested `PyoIterator` types.
 - **typing**: `PyoIterator::chain` now has overloads to return precise tuple types for up to 5 iterables, and handle covariance in all cases.
+- No-copy behavior for `Seq` when created from an already existing `Seq`, matching Python `tuple` behavior. No more need to use `Seq(seq.inner)` to keep the same object, `Seq(seq)` is enough. Note that this doesn't impact performance much, since the underlying `tuple`, where the data is stored, wasn't copied anyway, and the `Seq` wrapper is very lightweight in itself. This however help to make `Seq` behave more like `tuple`, and avoid confusion when using `is` operator on two `Seq` instances created from the same underlying data.
 
 ### 🐞 Bug fixes
 
