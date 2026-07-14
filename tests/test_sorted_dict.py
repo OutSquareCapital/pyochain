@@ -459,7 +459,7 @@ def test_values_view_index() -> None:
     mapping = [(val, pos) for pos, val in enumerate(string.ascii_lowercase)]
     temp = SortedDict(mapping[:13])
     values = temp.values()
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         _ = values.index(100)
 
 
@@ -508,7 +508,7 @@ def test_items_view_index() -> None:
     mapping = [(val, pos) for pos, val in enumerate(string.ascii_lowercase)]
     temp = SortedDict(mapping[:13])
     items = temp.items()
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         _ = items.index(("f", 100))
 
 

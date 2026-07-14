@@ -127,20 +127,20 @@ def test_remove() -> None:
 
 def test_remove_valueerror1() -> None:
     slt = SortedList[int]()
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         slt.remove(0)
 
 
 def test_remove_valueerror2() -> None:
     slt = SortedList(range(100))
     slt.reset(10)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         slt.remove(100)
 
 
 def test_remove_valueerror3() -> None:
     slt = SortedList([1, 2, 2, 2, 3, 3, 5])
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         slt.remove(4)
 
 
@@ -238,7 +238,7 @@ def test_getitem_slice_big() -> None:
 def test_getitem_slicezero() -> None:
     slt = SortedList(range(100))
     slt.reset(17)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         slt[::0]
 
 
@@ -503,48 +503,48 @@ def test_index() -> None:
 def test_index_valueerror1() -> None:
     slt = SortedList([0] * 10)
     slt.reset(4)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         _ = slt.index(0, 10)
 
 
 def test_index_valueerror2() -> None:
     slt = SortedList([0] * 10)
     slt.reset(4)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         _ = slt.index(0, 0, -10)
 
 
 def test_index_valueerror3() -> None:
     slt = SortedList([0] * 10)
     slt.reset(4)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         _ = slt.index(0, 7, 3)
 
 
 def test_index_valueerror4() -> None:
     slt = SortedList([0] * 10)
     slt.reset(4)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         _ = slt.index(1)
 
 
 def test_index_valueerror5() -> None:
     slt = SortedList[int]()
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         _ = slt.index(1)
 
 
 def test_index_valueerror6() -> None:
     slt = SortedList(range(10))
     slt.reset(4)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         _ = slt.index(3, 5)
 
 
 def test_index_valueerror7() -> None:
     slt = SortedList([0] * 10 + [2] * 10)
     slt.reset(4)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         _ = slt.index(1, 0, 10)
 
 

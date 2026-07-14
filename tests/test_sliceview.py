@@ -149,7 +149,7 @@ def test_setitem_strided() -> None:
 def test_setitem_extended_slice_wrong_size() -> None:
     data = list(range(10))
     sv = SliceView(data)[::2]
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         sv[0:3] = [1, 2]  # 3 slots, 2 values
 
 

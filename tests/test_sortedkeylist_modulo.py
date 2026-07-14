@@ -187,32 +187,32 @@ def test_remove() -> None:
 
 def test_remove_valueerror1() -> None:
     slt = SortedKeyList(key=modulo)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         slt.remove(0)
 
 
 def test_remove_valueerror2() -> None:
     slt = SortedKeyList(range(100), key=modulo)
     slt.reset(10)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         slt.remove(100)
 
 
 def test_remove_valueerror3() -> None:
     slt = SortedKeyList([1, 2, 2, 2, 3, 3, 5], key=modulo)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         slt.remove(4)
 
 
 def test_remove_valueerror4() -> None:
     slt = SortedKeyList([1, 1, 1, 2, 2, 2], key=modulo)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         slt.remove(13)
 
 
 def test_remove_valueerror5() -> None:
     slt = SortedKeyList([1, 1, 1, 2, 2, 2], key=modulo)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         slt.remove(12)
 
 
@@ -310,7 +310,7 @@ def test_getitem_slice_big() -> None:
 def test_getitem_slicezero() -> None:
     slt = SortedKeyList(range(100), key=modulo)
     slt.reset(17)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         slt[::0]
 
 
@@ -636,69 +636,69 @@ def test_index() -> None:
 def test_index_valueerror1() -> None:
     slt = SortedKeyList([0] * 10, key=modulo)
     slt.reset(4)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         _ = slt.index(0, 10)
 
 
 def test_index_valueerror2() -> None:
     slt = SortedKeyList([0] * 10, key=modulo)
     slt.reset(4)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         _ = slt.index(0, 0, -10)
 
 
 def test_index_valueerror3() -> None:
     slt = SortedKeyList([0] * 10, key=modulo)
     slt.reset(4)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         _ = slt.index(0, 7, 3)
 
 
 def test_index_valueerror4() -> None:
     slt = SortedKeyList([0] * 10, key=modulo)
     slt.reset(4)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         _ = slt.index(1)
 
 
 def test_index_valueerror5() -> None:
     slt = SortedKeyList(key=modulo)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         _ = slt.index(1)
 
 
 def test_index_valueerror6() -> None:
     slt = SortedKeyList(range(100), key=modulo)
     slt.reset(4)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         _ = slt.index(91, 0, 15)
 
 
 def test_index_valueerror7() -> None:
     slt = SortedKeyList([0] * 10 + [1] * 10 + [2] * 10, key=modulo)
     slt.reset(4)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         _ = slt.index(1, 0, 10)
 
 
 def test_index_valueerror8() -> None:
     slt = SortedKeyList(range(10), key=modulo)
     slt.reset(4)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         _ = slt.index(4, 5)
 
 
 def test_index_valueerror9() -> None:
     slt = SortedKeyList(key=modulo)
     slt.reset(4)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         _ = slt.index(5)
 
 
 def test_index_valueerror10() -> None:
     slt = SortedKeyList(range(10), key=modulo)
     slt.reset(4)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):
         _ = slt.index(19)
 
 
