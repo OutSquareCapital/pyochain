@@ -12,12 +12,62 @@ use pyo3::types::{
     PyBool, PyDict, PyFunction, PyInt, PyIterator, PyList, PyMapping, PyNone, PySequence, PySet,
     PyString, PyTuple, PyType,
 };
-use pyo3::{BoundObject, IntoPyObjectExt, PyTypeInfo, ffi, intern, prelude::*};
+use pyo3::{BoundObject, IntoPyObjectExt, PyClass, PyTypeInfo, ffi, intern, prelude::*};
 use tap::prelude::*;
+
 
 const ABC: &str = "collections.abc";
 const ABSTRACT_SET: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+pub trait PyoABC: PyTypeInfo + PyClass {
+    fn build_init() -> PyClassInitializer<Self>;
+}
 
+impl PyoABC for PyoIterable {
+    
+    fn build_init() -> PyClassInitializer<Self> {
+        PyClassInitializer::from(Checkable).add_subclass(Self)
+    }
+}
+impl PyoABC for PyoIterator {
+    fn build_init() -> PyClassInitializer<Self> {
+        PyoIterable::build_init().add_subclass(Self)
+    }
+
+}
+impl PyoABC for PyoCollection {
+    fn build_init() -> PyClassInitializer<Self> {
+        PyoIterable::build_init().add_subclass(Self)
+    }}
+impl PyoABC for PyoSequence {
+    fn build_init() -> PyClassInitializer<Self> {
+        PyoCollection::build_init().add_subclass(Self)
+    }
+}
+impl PyoABC for PyoSet {
+    fn build_init() -> PyClassInitializer<Self> {
+        PyoCollection::build_init().add_subclass(Self)
+    }
+}
+impl PyoABC for PyoMutableSet {
+    fn build_init() -> PyClassInitializer<Self> {
+        PyoSet::build_init().add_subclass(Self)
+    }
+}
+impl PyoABC for PyoMutableSequence {
+    fn build_init() -> PyClassInitializer<Self> {
+        PyoSequence::build_init().add_subclass(Self)
+    }
+}
+impl PyoABC for PyoMapping {
+    fn build_init() -> PyClassInitializer<Self> {
+        PyoCollection::build_init().add_subclass(Self)
+    }
+}
+impl PyoABC for PyoMutableMapping {
+    fn build_init() -> PyClassInitializer<Self> {
+        PyoMapping::build_init().add_subclass(Self)
+    }
+}
 #[pyclass(subclass, frozen, generic, extends=Checkable, module = "pyochain.abc._iterable")]
 pub struct PyoIterable;
 
@@ -26,7 +76,7 @@ impl PyoIterable {
     #[new]
     #[pyo3(signature = (*_args, **_kwargs))]
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        PyClassInitializer::from(Checkable).add_subclass(Self {})
+        Self::build_init()
     }
     fn iter<'py>(slf: Bound<'py, Self>) -> PyResult<Py<tls::Iter>> {
         slf.into_any().pipe(tls::Iter::new)
@@ -40,9 +90,7 @@ impl PyoIterator {
     #[new]
     #[pyo3(signature = (*_args, **_kwargs))]
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        PyClassInitializer::from(Checkable)
-            .add_subclass(PyoIterable {})
-            .add_subclass(Self {})
+        Self::build_init()
     }
     fn __iter__<'py>(slf: Bound<'py, Self>) -> Bound<'py, Self> {
         slf
@@ -365,7 +413,7 @@ impl PyoIterator {
         }
         Ok(true)
     }
-
+    #[pyo3(signature = (key=None))]
     fn all_equal(slf: &Bound<'_, Self>, key: Option<Bound<'_, PyAny>>) -> PyResult<bool> {
         let slf = slf.try_iter()?;
         let iterator = pylibs::itertools::group_by(&slf, key)?;
@@ -1326,7 +1374,7 @@ impl PyoContainer {
     #[new]
     #[pyo3(signature = (*_args, **_kwargs))]
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        PyClassInitializer::from(Checkable).add_subclass(Self {})
+        PyClassInitializer::from(Checkable).add_subclass(Self)
     }
     #[pyo3(name = "contains")]
     fn pyo_contains(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<bool> {
@@ -1342,7 +1390,7 @@ impl PyoSized {
     #[pyo3(signature = (*_args, **_kwargs))]
     #[new]
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        PyClassInitializer::from(Checkable).add_subclass(Self {})
+        PyClassInitializer::from(Checkable).add_subclass(Self)
     }
     #[pyo3(name = "len")]
     fn pyo_len(slf: Bound<'_, Self>) -> PyResult<usize> {
@@ -1380,9 +1428,7 @@ impl PyoCollection {
     #[pyo3(signature = (*_args, **_kwargs))]
     #[new]
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        PyClassInitializer::from(Checkable)
-            .add_subclass(PyoIterable)
-            .add_subclass(Self {})
+        Self::build_init()
     }
     #[pyo3(name = "contains")]
     fn pyo_contains(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<bool> {
@@ -1405,9 +1451,7 @@ impl PyoReversible {
     #[pyo3(signature = (*_args, **_kwargs))]
     #[new]
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        PyClassInitializer::from(Checkable)
-            .add_subclass(PyoIterable)
-            .add_subclass(Self {})
+        PyoIterable::build_init().add_subclass(Self)
     }
     /// We use unsafe code here because calling `reversed` with `PyOnceLock` pattern is 2x slower than pure python for some reason.
     fn rev(slf: Bound<'_, Self>) -> PyResult<Py<tls::Iter>> {
@@ -1426,10 +1470,7 @@ impl PyoSequence {
     #[pyo3(signature = (*_args, **_kwargs))]
     #[new]
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        PyClassInitializer::from(Checkable)
-            .add_subclass(PyoIterable)
-            .add_subclass(PyoCollection)
-            .add_subclass(Self {})
+        Self::build_init()
     }
     fn __iter__(slf: Bound<'_, Self>) -> tools::SequenceIterator {
         slf.pipe(|x| unsafe { x.cast_into_unchecked::<PySequence>() })
@@ -1527,11 +1568,7 @@ impl PyoMutableSequence {
     #[pyo3(signature = (*_args, **_kwargs))]
     #[new]
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        PyClassInitializer::from(Checkable)
-            .add_subclass(PyoIterable)
-            .add_subclass(PyoCollection)
-            .add_subclass(PyoSequence)
-            .add_subclass(Self {})
+        Self::build_init()
     }
 
 
@@ -1595,7 +1632,6 @@ impl PyoMutableSequence {
         }
         Ok(())
     }
-
     fn retain(slf: Bound<'_, Self>, predicate: &Bound<'_, PyAny>) -> PyResult<()> {
         let seq = unsafe { slf.cast_into_unchecked::<PySequence>() };
         let mut write_idx = 0;
@@ -1647,10 +1683,7 @@ impl PyoSet {
     #[pyo3(signature = (*_args, **_kwargs))]
     #[new]
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        PyClassInitializer::from(Checkable)
-            .add_subclass(PyoIterable)
-            .add_subclass(PyoCollection)
-            .add_subclass(Self {})
+        Self::build_init()
     }
     #[classmethod]
     fn _from_iterable<'py>(
@@ -1733,18 +1766,6 @@ impl PyoSet {
             })
     }
 
-    fn __rand__<'py>(
-        slf: Bound<'py, Self>,
-        other: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, Self>> {
-        slf.bitand(other)
-            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
-    }
-    fn __ror__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        slf.bitor(other)
-            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
-    }
-
     fn __rsub__<'py>(
         slf: Bound<'py, Self>,
         other: Bound<'py, PyAny>,
@@ -1771,13 +1792,6 @@ impl PyoSet {
             .into_bound_py_any(py)
             .and_then(|x| Self::_py_from_iterable(&cls, &x))
     }
-    fn __rxor__<'py>(
-        slf: Bound<'py, Self>,
-        other: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, Self>> {
-        slf.bitxor(other)
-            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
-    }
 
     fn __xor__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         if other.is_instance(ABSTRACT_SET.import(slf.py(), ABC, "Set")?)? {
@@ -1792,6 +1806,21 @@ impl PyoSet {
         }
     }
 
+    fn __rand__<'py>(
+        slf: Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
+        Self::__and__(slf, other)
+    }
+    fn __ror__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        Self::__or__(slf, other)
+    }
+    fn __rxor__<'py>(
+        slf: Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
+        Self::__xor__(slf, other)
+    }
     fn __eq__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
         if other.is_instance(ABSTRACT_SET.import(slf.py(), ABC, "Set")?)? {
             Ok(slf.len()? == other.len()? && slf.le(other)?)
@@ -1930,10 +1959,7 @@ pub struct PyoValuesView {
 impl PyoValuesView {
     #[new]
     fn new(mapping: Bound<'_, PyAny>) -> PyClassInitializer<Self> {
-        PyClassInitializer::from(Checkable)
-            .add_subclass(PyoIterable)
-            .add_subclass(PyoCollection)
-            .add_subclass(PyoSet)
+        PyoSet::build_init()
             .add_subclass(Self {
                 _mapping: mapping.unbind(),
             })
@@ -1969,10 +1995,7 @@ pub struct PyoKeysView {
 impl PyoKeysView {
     #[new]
     fn new(mapping: Bound<'_, PyAny>) -> PyClassInitializer<Self> {
-        PyClassInitializer::from(Checkable)
-            .add_subclass(PyoIterable)
-            .add_subclass(PyoCollection)
-            .add_subclass(PyoSet)
+        PyoSet::build_init()
             .add_subclass(Self {
                 _mapping: mapping.unbind(),
             })
@@ -2033,10 +2056,7 @@ pub struct PyoItemsView {
 impl PyoItemsView {
     #[new]
     fn new(mapping: Bound<'_, PyAny>) -> PyClassInitializer<Self> {
-        PyClassInitializer::from(Checkable)
-            .add_subclass(PyoIterable)
-            .add_subclass(PyoCollection)
-            .add_subclass(PyoSet)
+        PyoSet::build_init()
             .add_subclass(Self {
                 _mapping: mapping.unbind(),
             })
@@ -2117,11 +2137,7 @@ impl PyoMutableSet {
     #[pyo3(signature = (*_args, **_kwargs))]
     #[new]
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        PyClassInitializer::from(Checkable)
-            .add_subclass(PyoIterable)
-            .add_subclass(PyoCollection)
-            .add_subclass(PyoSet)
-            .add_subclass(Self {})
+        Self::build_init()
     }
     fn _py_add(slf: &Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<()> {
         slf.call_method1(intern!(slf.py(), "add"), (value,))?;
@@ -2211,10 +2227,7 @@ impl PyoMapping {
     #[pyo3(signature = (*_args, **_kwargs))]
     #[new]
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        PyClassInitializer::from(Checkable)
-            .add_subclass(PyoIterable)
-            .add_subclass(PyoCollection)
-            .add_subclass(Self {})
+        Self::build_init()
     }
     fn __contains__(slf: Bound<'_, Self>, key: Bound<'_, PyAny>) -> PyResult<bool> {
         slf.get_item(key).map(|_| true).or_else(|err| {
@@ -2299,11 +2312,7 @@ impl PyoMutableMapping {
     #[pyo3(signature = (*_args, **_kwargs))]
     #[new]
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        PyClassInitializer::from(Checkable)
-            .add_subclass(PyoIterable)
-            .add_subclass(PyoCollection)
-            .add_subclass(PyoMapping)
-            .add_subclass(Self {})
+        Self::build_init()
     }
     #[pyo3(signature = (key, default=None))]
     fn pop<'py>(
