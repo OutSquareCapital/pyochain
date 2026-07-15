@@ -568,9 +568,12 @@ impl Vec {
     }
 
     fn copy(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self>> {
-        slf.get_type()
-            .call1((slf.get().inner.bind(slf.py()),))
-            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+        slf.get()
+            .inner
+            .bind(slf.py())
+            .call_method0(intern!(slf.py(), "copy"))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
+            .and_then(Bound::into_pyochain)
     }
     #[pyo3(signature = (value, /))]
     fn count<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
@@ -942,8 +945,13 @@ impl SetMut {
         self.inner.bind(value.py()).add(value)
     }
 
-    fn copy(slf: Bound<'_, Self>) -> Bound<'_, Self> {
-        slf.clone()
+    fn copy(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self>> {
+        slf.get()
+            .inner
+            .bind(slf.py())
+            .call_method0(intern!(slf.py(), "copy"))
+            .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
+            .and_then(Bound::into_pyochain)
     }
 
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
