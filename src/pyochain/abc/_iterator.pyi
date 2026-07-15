@@ -899,6 +899,8 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             True
             >>> Range(0, 9).iter().all_equal(key=lambda x: x < 10)
             True
+            >>> Range(0, 9).iter().all_equal()
+            False
 
             ```
         """
