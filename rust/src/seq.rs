@@ -4,7 +4,8 @@ use pyo3::exceptions::PyTypeError;
 use pyo3::pyclass_init::PyClassInitializer;
 use pyo3::sync::PyOnceLock;
 use pyo3::types::{
-    PyDict, PyInt, PyIterator, PyList, PyRange, PyRangeMethods, PySequence, PyString, PyTuple,
+    PyBool, PyDict, PyFrozenSet, PyInt, PyIterator, PyList, PyRange, PyRangeMethods, PySequence,
+    PySet, PyString, PyTuple,
 };
 use pyo3::{PyTypeInfo, ffi, intern, prelude::*};
 use tap::Pipe;
@@ -78,7 +79,35 @@ impl<'py> IntoPyoChain<'py, Vec> for Bound<'py, PyList> {
         Bound::new(py, initializer)
     }
 }
-
+impl<'py> IntoPyoChain<'py, Set> for Bound<'py, PyFrozenSet> {
+    #[inline]
+    fn into_pyochain(self) -> PyResult<Bound<'py, Set>> {
+        let py = self.py();
+        let initializer = PyClassInitializer::from(mixins::Checkable)
+            .add_subclass(abc::PyoIterable)
+            .add_subclass(abc::PyoCollection)
+            .add_subclass(abc::PyoSet)
+            .add_subclass(Set {
+                inner: self.unbind(),
+            });
+        Bound::new(py, initializer)
+    }
+}
+impl<'py> IntoPyoChain<'py, SetMut> for Bound<'py, PySet> {
+    #[inline]
+    fn into_pyochain(self) -> PyResult<Bound<'py, SetMut>> {
+        let py = self.py();
+        let initializer = PyClassInitializer::from(mixins::Checkable)
+            .add_subclass(abc::PyoIterable)
+            .add_subclass(abc::PyoCollection)
+            .add_subclass(abc::PyoSet)
+            .add_subclass(abc::PyoMutableSet)
+            .add_subclass(SetMut {
+                inner: self.unbind(),
+            });
+        Bound::new(py, initializer)
+    }
+}
 #[pyclass(frozen, generic, sequence, extends=abc::PyoSequence)]
 pub struct Seq {
     #[pyo3(get)]
@@ -632,6 +661,396 @@ impl Vec {
             .in_place_concat(other)
             .map(|_| slf)
     }
+}
+#[pyclass(frozen, generic, extends=abc::PyoSet)]
+pub struct Set {
+    #[pyo3(get)]
+    inner: Py<PyFrozenSet>,
+}
+#[pymethods]
+impl Set {
+    #[new]
+    fn new(data: Bound<'_, PyAny>) -> PyResult<PyClassInitializer<Self>> {
+        let py = data.py();
+        data.pipe(|x| PyFrozenSet::type_object(py).call1((x,)))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() })
+            .map(Bound::unbind)
+            .map(|inner| {
+                PyClassInitializer::from(mixins::Checkable)
+                    .add_subclass(abc::PyoIterable)
+                    .add_subclass(abc::PyoCollection)
+                    .add_subclass(abc::PyoSet)
+                    .add_subclass(Self { inner })
+            })
+    }
+
+    fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
+        let py = slf.py();
+        let name = slf.get_type().name().unwrap();
+        slf.get()
+            .inner
+            .bind(py)
+            .pipe(|x| PyTuple::new(py, x))?
+            .as_sequence()
+            .pipe(get_repr)
+            .map(|repr| format!("{}({})", name, repr))
+    }
+
+    fn __contains__(&self, item: Bound<'_, PyAny>) -> PyResult<bool> {
+        return self.inner.bind(item.py()).contains(item);
+    }
+
+    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, PyIterator> {
+        return slf.get().inner.bind(slf.py()).try_iter().unwrap();
+    }
+
+    fn __len__(slf: Bound<'_, Self>) -> usize {
+        return slf.get().inner.bind(slf.py()).len();
+    }
+
+    fn __and__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.inner
+            .bind(value.py())
+            .bitand(value)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() })
+            .and_then(Bound::into_pyochain)
+    }
+
+    fn __or__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.inner
+            .bind(value.py())
+            .bitor(value)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() })
+            .and_then(Bound::into_pyochain)
+    }
+
+    fn __sub__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.inner
+            .bind(value.py())
+            .sub(value)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() })
+            .and_then(Bound::into_pyochain)
+    }
+
+    fn __xor__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.inner
+            .bind(value.py())
+            .bitxor(value)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() })
+            .and_then(Bound::into_pyochain)
+    }
+
+    fn __le__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+        self.inner.bind(value.py()).le(value)
+    }
+
+    fn __lt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+        self.inner.bind(value.py()).lt(value)
+    }
+
+    fn __ge__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+        self.inner.bind(value.py()).ge(value)
+    }
+
+    fn __gt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+        self.inner.bind(value.py()).gt(value)
+    }
+
+    fn __eq__(&self, value: Bound<'_, PyAny>) -> bool {
+        todo!()
+    }
+
+    fn __hash__(slf: Bound<'_, Self>) -> PyResult<isize> {
+        slf.get().inner.bind(slf.py()).hash()
+    }
+
+    fn isdisjoint<'py>(&self, s: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
+        self.inner
+            .bind(s.py())
+            .call_method1(intern!(s.py(), "isdisjoint"), (s,))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
+    }
+
+    fn is_subset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
+        self.inner
+            .bind(other.py())
+            .call_method1(intern!(other.py(), "issubset"), (other,))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
+    }
+
+    fn is_superset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
+        self.inner
+            .bind(other.py())
+            .call_method1(intern!(other.py(), "issuperset"), (other,))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
+    }
+
+    fn intersection<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.inner
+            .bind(other.py())
+            .call_method1(intern!(other.py(), "intersection"), (other,))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() })
+            .and_then(Bound::into_pyochain)
+    }
+
+    #[pyo3(signature = (*others))]
+    fn union<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
+        self.inner
+            .bind(others.py())
+            .call_method1(intern!(others.py(), "union"), (others,))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() })
+            .and_then(Bound::into_pyochain)
+    }
+
+    #[pyo3(signature = (*others))]
+    fn difference<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
+        self.inner
+            .bind(others.py())
+            .call_method1(intern!(others.py(), "difference"), (others,))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() })
+            .and_then(Bound::into_pyochain)
+    }
+
+    fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.inner
+            .bind(other.py())
+            .call_method1(intern!(other.py(), "symmetric_difference"), (other,))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() })
+            .and_then(Bound::into_pyochain)
+    }
+}
+#[pyclass(generic, frozen, extends=abc::PyoMutableSet)]
+pub struct SetMut {
+    #[pyo3(get)]
+    inner: Py<PySet>,
+}
+#[pymethods]
+impl SetMut {
+    #[new]
+    fn new(data: Bound<'_, PyAny>) -> PyResult<PyClassInitializer<Self>> {
+        let py = data.py();
+        data.pipe(|x| PySet::type_object(py).call1((x,)))
+            .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
+            .map(Bound::unbind)
+            .map(|inner| {
+                PyClassInitializer::from(mixins::Checkable)
+                    .add_subclass(abc::PyoIterable)
+                    .add_subclass(abc::PyoCollection)
+                    .add_subclass(abc::PyoSet)
+                    .add_subclass(abc::PyoMutableSet)
+                    .add_subclass(SetMut { inner })
+            })
+    }
+
+    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, PyIterator> {
+        slf.get().inner.bind(slf.py()).try_iter().unwrap()
+    }
+
+    fn __len__(slf: Bound<'_, Self>) -> usize {
+        slf.get().inner.bind(slf.py()).len()
+    }
+
+    fn __contains__(&self, item: Bound<'_, PyAny>) -> PyResult<bool> {
+        self.inner.bind(item.py()).contains(item)
+    }
+
+    fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
+        let py = slf.py();
+        let name = slf.get_type().name().unwrap();
+        slf.get()
+            .inner
+            .bind(py)
+            .pipe(|x| PyTuple::new(py, x))?
+            .as_sequence()
+            .pipe(get_repr)
+            .map(|repr| format!("{}({})", name, repr))
+    }
+
+    fn __eq__(&self, other: Bound<'_, PyAny>) -> bool {
+        todo!()
+    }
+
+    fn __and__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.inner
+            .bind(value.py())
+            .bitand(value)
+            .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
+            .and_then(Bound::into_pyochain)
+    }
+
+    fn __iand__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
+        self.inner
+            .bind(value.py())
+            .call_method1(intern!(value.py(), "__iand__"), (value,))?;
+        Ok(())
+    }
+
+    fn __or__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.inner
+            .bind(value.py())
+            .bitor(value)
+            .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
+            .and_then(Bound::into_pyochain)
+    }
+
+    fn __ior__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
+        self.inner
+            .bind(value.py())
+            .call_method1(intern!(value.py(), "__ior__"), (value,))?;
+        Ok(())
+    }
+
+    fn __sub__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.inner
+            .bind(value.py())
+            .sub(value)
+            .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
+            .and_then(Bound::into_pyochain)
+    }
+
+    fn __isub__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
+        self.inner
+            .bind(value.py())
+            .call_method1(intern!(value.py(), "__isub__"), (value,))?;
+        Ok(())
+    }
+
+    fn __xor__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.inner
+            .bind(value.py())
+            .bitxor(value)
+            .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
+            .and_then(Bound::into_pyochain)
+    }
+
+    fn __ixor__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
+        self.inner
+            .bind(value.py())
+            .call_method1(intern!(value.py(), "__ixor__"), (value,))?;
+        Ok(())
+    }
+
+    fn __le__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+        self.inner.bind(value.py()).le(value)
+    }
+
+    fn __lt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+        self.inner.bind(value.py()).lt(value)
+    }
+
+    fn __ge__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+        self.inner.bind(value.py()).ge(value)
+    }
+
+    fn __gt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+        self.inner.bind(value.py()).gt(value)
+    }
+
+    #[staticmethod]
+    fn from_ref(data: Bound<'_, PySet>) -> PyResult<Bound<'_, Self>> {
+        data.into_pyochain()
+    }
+
+    fn add(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        self.inner.bind(value.py()).add(value)
+    }
+
+    fn copy(slf: Bound<'_, Self>) -> Bound<'_, Self> {
+        slf.clone()
+    }
+
+    fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        self.inner.bind(value.py()).discard(value);
+        Ok(())
+    }
+    #[pyo3(signature = (*s))]
+    fn intersection_update(&self, s: Bound<'_, PyTuple>) -> PyResult<()> {
+        self.inner
+            .bind(s.py())
+            .call_method1(intern!(s.py(), "intersection_update"), (s,))?;
+        Ok(())
+    }
+
+    fn isdisjoint<'py>(&self, s: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
+        self.inner
+            .bind(s.py())
+            .call_method1(intern!(s.py(), "isdisjoint"), (s,))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
+    }
+
+    fn is_subset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
+        self.inner
+            .bind(other.py())
+            .call_method1(intern!(other.py(), "issubset"), (other,))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
+    }
+
+    fn is_superset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
+        self.inner
+            .bind(other.py())
+            .call_method1(intern!(other.py(), "issuperset"), (other,))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
+    }
+
+    fn remove(&self, element: Bound<'_, PyAny>) -> PyResult<()> {
+        self.inner
+            .bind(element.py())
+            .call_method1(intern!(element.py(), "remove"), (element,))?;
+        Ok(())
+    }
+
+    fn symmetric_difference_update(&self, s: Bound<'_, PyAny>) -> PyResult<()> {
+        self.inner
+            .bind(s.py())
+            .call_method1(intern!(s.py(), "symmetric_difference_update"), (s,))?;
+        Ok(())
+    }
+
+    #[pyo3(signature = (*others))]
+    fn intersection<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
+        self.inner
+            .bind(others.py())
+            .call_method1(intern!(others.py(), "intersection"), (others,))?
+            .pipe(|x| unsafe { x.cast_into_unchecked::<PySet>() })
+            .into_pyochain()
+    }
+
+    #[pyo3(signature = (*others))]
+    fn union<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
+        self.inner
+            .bind(others.py())
+            .call_method1(intern!(others.py(), "union"), (others,))?
+            .pipe(|x| unsafe { x.cast_into_unchecked::<PySet>() })
+            .into_pyochain()
+    }
+    #[pyo3(signature = (*s))]
+    fn update(&self, s: Bound<'_, PyTuple>) -> PyResult<()> {
+        self.inner
+            .bind(s.py())
+            .call_method1(intern!(s.py(), "update"), (s,))?;
+        Ok(())
+    }
+
+    #[pyo3(signature = (*others))]
+    fn difference<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
+        self.inner
+            .bind(others.py())
+            .call_method1(intern!(others.py(), "difference"), (others,))?
+            .pipe(|x| unsafe { x.cast_into_unchecked::<PySet>() })
+            .into_pyochain()
+    }
+
+    fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.inner
+            .bind(other.py())
+            .call_method1(intern!(other.py(), "symmetric_difference"), (other,))?
+            .pipe(|x| unsafe { x.cast_into_unchecked::<PySet>() })
+            .into_pyochain()
+    }
+}
+
+fn _set_eq(left: Either<SetMut, Set>, right: Bound<'_, PyAny>) -> bool {
+    todo!()
 }
 
 fn get_repr<'py>(obj: &Bound<'py, PySequence>) -> PyResult<Bound<'py, PyString>> {

@@ -1,18 +1,13 @@
-from __future__ import annotations
+from collections.abc import Iterable, Iterator
+from collections.abc import Set as AbstractSet
+from typing import Final, Self, override
 
-from typing import TYPE_CHECKING, Final, Self, override
-
-from ._utils import get_repr, no_doctest
+from ._utils import no_doctest
 from .abc import PyoMutableSet, PyoSet
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
-    from collections.abc import Set as AbstractSet
 
 # TODO: address the following note from official python docs regarding Set performance, with benchmarks:
 # To override the comparisons (presumably for speed, as the semantics are fixed),
 # redefine __le__() and __ge__(), then the other operations will automatically follow suit.
-
 
 class Set[T](PyoSet[T]):
     """`Set` represent an in- memory **unordered**  collection of **unique** elements.
@@ -56,9 +51,7 @@ class Set[T](PyoSet[T]):
     __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
     _inner: Final[frozenset[T]]
 
-    def __init__(self, data: Iterable[T]) -> None:
-        self._inner = frozenset(data)
-
+    def __init__(self, data: Iterable[T]) -> None: ...
     @property
     @no_doctest
     def inner(self) -> frozenset[T]:
@@ -69,24 +62,13 @@ class Set[T](PyoSet[T]):
         Returns:
             frozenset[T]: The underlying frozenset.
         """
-        return self._inner
 
     @override
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({get_repr(self._inner)})"
-
+    def __contains__(self, item: object) -> bool: ...
     @override
-    def __contains__(self, item: object) -> bool:
-        return item in self._inner
-
+    def __iter__(self) -> Iterator[T]: ...
     @override
-    def __iter__(self) -> Iterator[T]:
-        return iter(self._inner)
-
-    @override
-    def __len__(self) -> int:
-        return len(self._inner)
-
+    def __len__(self) -> int: ...
     @override
     def __and__(self, value: AbstractSet[object], /) -> Self:
         """Return self&value.
@@ -108,7 +90,6 @@ class Set[T](PyoSet[T]):
 
             ```
         """
-        return self.__class__(self._inner & value)
 
     @override
     def __or__[S](self, value: AbstractSet[S], /) -> Set[T | S]:
@@ -131,7 +112,6 @@ class Set[T](PyoSet[T]):
 
             ```
         """
-        return Set(self._inner | value)
 
     @override
     def __sub__(self, value: AbstractSet[object], /) -> Self:
@@ -155,7 +135,6 @@ class Set[T](PyoSet[T]):
             ```
 
         """
-        return self.__class__(self._inner - value)
 
     @override
     def __xor__[S](self, value: AbstractSet[S], /) -> Set[T | S]:
@@ -178,7 +157,6 @@ class Set[T](PyoSet[T]):
 
             ```
         """
-        return Set(self._inner ^ value)
 
     @override
     def __le__(self, value: AbstractSet[object], /) -> bool:
@@ -202,8 +180,6 @@ class Set[T](PyoSet[T]):
 
             ```
         """
-        return self._inner <= value
-
     @override
     def __lt__(self, value: AbstractSet[object], /) -> bool:
         """Return self<value.
@@ -226,7 +202,6 @@ class Set[T](PyoSet[T]):
 
             ```
         """
-        return self._inner < value
 
     @override
     def __ge__(self, value: AbstractSet[object], /) -> bool:
@@ -250,7 +225,6 @@ class Set[T](PyoSet[T]):
 
             ```
         """
-        return self._inner >= value
 
     @override
     def __gt__(self, value: AbstractSet[object], /) -> bool:
@@ -274,47 +248,30 @@ class Set[T](PyoSet[T]):
 
             ```
         """
-        return self._inner > value
 
     @override
-    def __eq__(self, value: object, /) -> bool:
-        return _set_eq(self, value)
-
+    def __eq__(self, value: object, /) -> bool: ...
     @override
-    def __hash__(self) -> int:
-        return hash(self._inner)
-
+    def __hash__(self) -> int: ...
     @override
     def isdisjoint(self, s: Iterable[object], /) -> bool:
         """Return True if two sets have a null intersection."""
-        return self._inner.isdisjoint(s)
-
     @override
-    def is_subset(self, other: Iterable[object]) -> bool:
-        return self._inner.issubset(other)
-
+    def is_subset(self, other: Iterable[object]) -> bool: ...
     @override
-    def is_superset(self, other: Iterable[object]) -> bool:
-        return self._inner.issuperset(other)
-
+    def is_superset(self, other: Iterable[object]) -> bool: ...
     @override
-    def intersection(self, other: Iterable[object]) -> Self:
-        return self.__class__(self._inner.intersection(other))
-
+    def intersection(self, other: Iterable[object]) -> Self: ...
     @override
     def union[S](self, *others: Iterable[S]) -> Set[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride]
-        return Set(self._inner.union(*others))
-
+        ...
     @override
     def difference(self, *others: Iterable[object]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
-        return self.__class__(self._inner.difference(*others))
-
+        ...
     @override
-    def symmetric_difference[S](self, other: Iterable[S]) -> Set[T | S]:
-        return Set(self._inner.symmetric_difference(other))
+    def symmetric_difference[S](self, other: Iterable[S]) -> Set[T | S]: ...
 
-
-class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
+class SetMut[T](PyoMutableSet[T]):
     """A mutable, unordered collection of unique elements.
 
     Unlike [`Set`][Set] which is immutable, `SetMut` allows in-place modification of elements.
@@ -333,40 +290,22 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
     __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
     _inner: set[T]
 
-    def __init__(self, data: Iterable[T]) -> None:
-        self._inner = set(data)
-
+    def __init__(self, data: Iterable[T]) -> None: ...
     @override
-    def __iter__(self) -> Iterator[T]:
-        return iter(self._inner)
-
+    def __iter__(self) -> Iterator[T]: ...
     @override
-    def __len__(self) -> int:
-        return len(self._inner)
-
+    def __len__(self) -> int: ...
     @override
-    def __contains__(self, item: object) -> bool:
-        return item in self._inner
-
+    def __contains__(self, item: object) -> bool: ...
     @override
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({get_repr(self._inner)})"
-
-    @override
-    def __eq__(self, other: object) -> bool:
-        return _set_eq(self, other)
-
+    def __eq__(self, other: object) -> bool: ...
     @override
     def __and__(self, value: AbstractSet[object], /) -> SetMut[T]:
         """Return self&value."""
-        return self.from_ref(self._inner & value)
 
     @override
     def __iand__(self, value: AbstractSet[object], /) -> SetMut[T]:
         """Return self&=value."""
-        self._inner &= value
-        return self
-
     @override
     def __or__[S](self, value: AbstractSet[S], /) -> SetMut[T | S]:
         """Return self|value.
@@ -388,8 +327,6 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
 
             ```
         """
-        return self.from_ref(self._inner | value)
-
     @override
     def __ior__(self, value: AbstractSet[T], /) -> SetMut[T]:
         """Return self|=value.
@@ -411,8 +348,6 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
 
             ```
         """
-        self._inner |= value
-        return self
 
     @override
     def __sub__(self, value: AbstractSet[object], /) -> SetMut[T]:
@@ -435,7 +370,6 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
 
             ```
         """
-        return self.from_ref(self._inner - value)
 
     @override
     def __isub__(self, value: AbstractSet[object], /) -> SetMut[T]:
@@ -458,8 +392,6 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
 
             ```
         """
-        self._inner -= value
-        return self
 
     @override
     def __xor__[S](self, value: AbstractSet[S], /) -> SetMut[T | S]:
@@ -482,7 +414,6 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
 
             ```
         """
-        return self.from_ref(self._inner ^ value)
 
     @override
     def __ixor__(self, value: AbstractSet[T], /) -> SetMut[T]:
@@ -505,8 +436,6 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
 
             ```
         """
-        self._inner ^= value
-        return self
 
     @override
     def __le__(self, value: AbstractSet[object], /) -> bool:
@@ -530,7 +459,6 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
 
             ```
         """
-        return self._inner <= value
 
     @override
     def __lt__(self, value: AbstractSet[object], /) -> bool:
@@ -554,7 +482,6 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
 
             ```
         """
-        return self._inner < value
 
     @override
     def __ge__(self, value: AbstractSet[object], /) -> bool:
@@ -578,7 +505,6 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
 
             ```
         """
-        return self._inner >= value
 
     @override
     def __gt__(self, value: AbstractSet[object], /) -> bool:
@@ -602,7 +528,6 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
 
             ```
         """
-        return self._inner > value
 
     @property
     @no_doctest
@@ -614,7 +539,6 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
         Returns:
             set[T]: The underlying set.
         """
-        return self._inner
 
     @staticmethod
     def from_ref[V](data: set[V]) -> SetMut[V]:
@@ -646,9 +570,6 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
 
             ```
         """
-        instance: SetMut[V] = SetMut.__new__(SetMut)  # pyright: ignore[reportUnknownVariableType]
-        instance._inner = data
-        return instance
 
     @override
     def add(self, value: T) -> None:
@@ -667,7 +588,6 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
 
             ```
         """
-        self._inner.add(value)
 
     def copy(self) -> Self:
         """Create a shallow copy of the underlying `set`.
@@ -688,7 +608,6 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
 
             ```
         """
-        return self.__class__(self._inner.copy())
 
     @override
     def discard(self, value: T) -> None:
@@ -709,76 +628,39 @@ class SetMut[T](PyoMutableSet[T]):  # noqa: PLW1641
 
             ```
         """
-        self._inner.discard(value)
 
     def intersection_update(self, *s: Iterable[object]) -> None:
         """Update the set, keeping only elements found in it and all others."""
-        return self._inner.intersection_update(*s)
 
     @override
     def isdisjoint(self, s: Iterable[object], /) -> bool:
         """Return True if two sets have a null intersection."""
-        return self._inner.isdisjoint(s)
 
     @override
-    def is_subset(self, other: Iterable[object]) -> bool:
-        return self._inner.issubset(other)
-
+    def is_subset(self, other: Iterable[object]) -> bool: ...
     @override
-    def is_superset(self, other: Iterable[object]) -> bool:
-        return self._inner.issuperset(other)
-
+    def is_superset(self, other: Iterable[object]) -> bool: ...
     @override
     def remove(self, element: T, /) -> None:
         """Remove an element from a set; it must be a member.
 
         If the element is not a member, raise a KeyError.
         """
-        return self._inner.remove(element)
 
     def symmetric_difference_update(self, s: Iterable[T], /) -> None:
         """Update the set, keeping only elements found in either set, but not in both."""
-        return self._inner.symmetric_difference_update(s)
 
     @override
     def intersection(self, *others: Iterable[object]) -> SetMut[T]:  # pyright: ignore[reportIncompatibleMethodOverride]
-        return self.from_ref(self._inner.intersection(*others))
-
+        ...
     @override
     def union[S](self, *others: Iterable[S]) -> SetMut[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride]
-        return self.from_ref(self._inner.union(*others))
-
+        ...
     def update(self, *s: Iterable[T]) -> None:
         """Update the set, adding elements from all others."""
-        return self._inner.update(*s)
 
     @override
     def difference(self, *others: Iterable[object]) -> SetMut[T]:  # pyright: ignore[reportIncompatibleMethodOverride]
-        return self.from_ref(self._inner.difference(*others))
-
+        ...
     @override
-    def symmetric_difference[S](self, other: Iterable[S]) -> SetMut[T | S]:
-        return self.from_ref(self._inner.symmetric_difference(other))
-
-
-def _set_eq[T](left: SetMut[T] | Set[T], right: object) -> bool:
-    """Helper function to compare `Set` and `SetMut` instances for equality.
-
-    Oddly enough, the official doc says that two objects that compare equal must have the same hash.
-
-    But a `set` can compare equal to a `frozenset`, even though the former is not even hashable??
-
-    Args:
-        left (SetMut[T] | Set[T]): The left-hand side set to compare.
-        right (object): The right-hand side object to compare against.
-
-    Returns:
-        bool: `True` if the sets are equal, `False` otherwise.
-    """
-    match right:
-        case Set() | SetMut():
-            return left.inner == right.inner  # pyright: ignore[reportUnknownMemberType]
-        case frozenset() | set():
-            return left.inner == right
-        case _:
-            return False
+    def symmetric_difference[S](self, other: Iterable[S]) -> SetMut[T | S]: ...

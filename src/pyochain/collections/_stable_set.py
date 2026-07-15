@@ -4,7 +4,8 @@ from collections.abc import Iterable, Iterator
 from collections.abc import Set as AbstractSet
 from typing import Any, override
 
-from .._set import Set, SetMut
+from pyochain import Set, SetMut
+
 from .._utils import get_repr
 from ..abc import PyoMutableSet
 

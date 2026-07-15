@@ -3,7 +3,7 @@
 from ._dict import Dict
 from ._range import Range  # pyright: ignore[reportMissingModuleSource]
 from ._seq import Seq  # pyright: ignore[reportMissingModuleSource]
-from ._set import Set, SetMut
+from ._set import Set, SetMut  # pyright: ignore[reportMissingModuleSource]
 from ._sliceview import SliceView
 from ._tools import Iter, Peekable  # pyright: ignore[reportMissingModuleSource]
 from ._vec import Vec  # pyright: ignore[reportMissingModuleSource]
