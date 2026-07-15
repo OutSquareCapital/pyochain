@@ -2,6 +2,7 @@ use crate::args::{Args, ConcatWith, Concatenate, Kwargs};
 use crate::mixins::Checkable;
 use crate::option::{PyNull, PySome};
 use crate::result::{PyoErr, PyoOk};
+use crate::seq::{SetMut, IntoPyochain, Vec as PyoVec};
 use crate::tools as tls;
 use crate::{pylibs, tools};
 use pyo3::exceptions::{
@@ -766,9 +767,7 @@ impl PyoIterator {
                 },
             }
         }
-        collected
-            .as_any()
-            .pipe_ref(pylibs::pyochain::vec::new)?
+        collected.into_pyochain()?
             .unbind()
             .into_any()
             .pipe(PySome::new)
@@ -1155,7 +1154,7 @@ impl PyoIterator {
     fn partition<'py>(
         slf: &Bound<'py, Self>,
         predicate: &Bound<'py, PyAny>,
-    ) -> PyResult<(Bound<'py, PySequence>, Bound<'py, PySequence>)> {
+    ) -> PyResult<(Bound<'py, PyoVec>, Bound<'py, PyoVec>)> {
         let slf = slf.try_iter()?;
         let py = slf.py();
         let true_list = PyList::empty(py);
@@ -1169,8 +1168,8 @@ impl PyoIterator {
             }
         }
         Ok((
-            pylibs::pyochain::vec::new(&true_list)?,
-            pylibs::pyochain::vec::new(&false_list)?,
+            true_list.into_pyochain()?,
+            false_list.into_pyochain()?
         ))
     }
     #[pyo3(signature = (*others, repeat=1))]
@@ -1222,20 +1221,18 @@ impl PyoIterator {
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
     #[pyo3(signature = (*, reverse=false))]
-    fn sort<'py>(slf: &Bound<'py, Self>, reverse: bool) -> PyResult<Bound<'py, PySequence>> {
+    fn sort<'py>(slf: &Bound<'py, Self>, reverse: bool) -> PyResult<Bound<'py, PyoVec>> {
         slf.try_iter()
-            .and_then(|x| pylibs::builtins::sorted(&x, reverse))
-            .and_then(|x| pylibs::pyochain::vec::new(&x))
+            .and_then(|x| pylibs::builtins::sorted(&x, reverse)?.into_pyochain())
     }
     #[pyo3(signature = (key, *,reverse=false))]
     fn sort_by<'py>(
         slf: &Bound<'py, Self>,
         key: &Bound<'py, PyAny>,
         reverse: bool,
-    ) -> PyResult<Bound<'py, PySequence>> {
+    ) -> PyResult<Bound<'py, PyoVec>> {
         slf.try_iter()
-            .and_then(|x| pylibs::builtins::sorted_by(&x, reverse, key))
-            .and_then(|x| pylibs::pyochain::vec::new(&x))
+            .and_then(|x| pylibs::builtins::sorted_by(&x, reverse, key)?.into_pyochain())
     }
     fn step_by<'py>(
         slf: &Bound<'py, Self>,
@@ -2024,26 +2021,26 @@ impl PyoKeysView {
     fn intersection<'py>(
         slf: Bound<'py, Self>,
         other: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, PyAny>> {
-        pylibs::pyochain::setmut::from_ref(&slf.bitand(other)?)
+    ) -> PyResult<Bound<'py, SetMut>> {
+        slf.bitand(other).and_then(|x| unsafe { x.cast_into_unchecked::<PySet>() }.into_pyochain())
     }
 
-    fn union<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
-        pylibs::pyochain::setmut::from_ref(&slf.bitor(other)?)
+    fn union<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, SetMut>> {
+        slf.bitor(other).and_then(|x| unsafe { x.cast_into_unchecked::<PySet>() }.into_pyochain())
     }
 
     fn difference<'py>(
         slf: Bound<'py, Self>,
         other: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, PyAny>> {
-        pylibs::pyochain::setmut::from_ref(&slf.sub(other)?)
+    ) -> PyResult<Bound<'py, SetMut>> {
+        slf.sub(other).and_then(|x| unsafe { x.cast_into_unchecked::<PySet>() }.into_pyochain())
     }
 
     fn symmetric_difference<'py>(
         slf: Bound<'py, Self>,
         other: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, PyAny>> {
-        pylibs::pyochain::setmut::from_ref(&slf.bitxor(other)?)
+    ) -> PyResult<Bound<'py, SetMut>> {
+        slf.bitxor(other).and_then(|x| unsafe { x.cast_into_unchecked::<PySet>() }.into_pyochain())
     }
 }
 
@@ -2107,26 +2104,26 @@ impl PyoItemsView {
     fn intersection<'py>(
         slf: Bound<'py, Self>,
         other: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, PyAny>> {
-        pylibs::pyochain::setmut::from_ref(&slf.bitand(other)?)
+    ) -> PyResult<Bound<'py, SetMut>> {
+        slf.bitand(other).and_then(|x| unsafe { x.cast_into_unchecked::<PySet>() }.into_pyochain())
     }
 
-    fn union<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
-        pylibs::pyochain::setmut::from_ref(&slf.bitor(other)?)
+    fn union<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, SetMut>> {
+        slf.bitor(other).and_then(|x| unsafe { x.cast_into_unchecked::<PySet>() }.into_pyochain())
     }
 
     fn difference<'py>(
         slf: Bound<'py, Self>,
         other: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, PyAny>> {
-        pylibs::pyochain::setmut::from_ref(&slf.sub(other)?)
+    ) -> PyResult<Bound<'py, SetMut>> {
+        slf.sub(other).and_then(|x| unsafe { x.cast_into_unchecked::<PySet>() }.into_pyochain())
     }
 
     fn symmetric_difference<'py>(
         slf: Bound<'py, Self>,
         other: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, PyAny>> {
-        pylibs::pyochain::setmut::from_ref(&slf.bitxor(other)?)
+    ) -> PyResult<Bound<'py, SetMut>> {
+        slf.bitxor(other).and_then(|x| unsafe { x.cast_into_unchecked::<PySet>() }.into_pyochain())
     }
 }
 

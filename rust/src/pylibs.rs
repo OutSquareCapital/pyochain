@@ -4,7 +4,7 @@ use crate::args::{Args, Concatenate};
 /// This pattern ensure maximum performance by only importing the function or object once, and reusing it for subsequent calls.
 /// We also use unsafe casts to correct types, aggressive inlining, and `&Bound` to maximize performance.
 use pyo3::sync::PyOnceLock;
-use pyo3::types::{PyBool, PyDict, PyInt, PyIterator, PyList, PyNone, PySequence, PyTuple};
+use pyo3::types::{PyBool, PyDict, PyInt, PyIterator, PyList, PyNone, PyTuple};
 use pyo3::{intern, prelude::*};
 use tap::prelude::*;
 
@@ -487,32 +487,5 @@ pub mod functools {
             None => PyTuple::new(py, &[function, iterable])?,
         };
         REDUCE.import(py, FUNCTOOLS, "reduce")?.call1(args)
-    }
-}
-/// pyochain Python objects. This should not exist at the end of the migration.
-pub mod pyochain {
-    use super::*;
-    const PYOCHAIN: &str = "pyochain";
-    pub mod vec {
-        use super::*;
-        const VEC: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-        #[inline(always)]
-        pub fn new<'py>(obj: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PySequence>> {
-            let py = obj.py();
-            VEC.import(py, PYOCHAIN, "Vec")?
-                .call1((obj,))
-                .map(|obj| unsafe { obj.cast_into_unchecked::<PySequence>() })
-        }
-    }
-    pub mod setmut {
-        use super::*;
-        const SETMUT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-        #[inline(always)]
-        pub fn from_ref<'py>(obj: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
-            let py = obj.py();
-            SETMUT
-                .import(py, PYOCHAIN, "SetMut")?
-                .call_method1("from_ref", (obj,))
-        }
     }
 }

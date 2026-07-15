@@ -31,11 +31,11 @@ impl PyWrapper for SetMut {
 /// Trait to convert a `Bound` of a Python type into a `Bound` of a PyoChain type, with the same underlying data.\
 /// Useful for no-copy conversions, when the type is known at compile time.\
 /// For example, this avoid checking the type of a `PyTuple` at runtime to convert it into a `Seq`.
-trait IntoPyoChain<'py, T: PyTypeInfo> {
+pub trait IntoPyochain<'py, T: PyTypeInfo> {
     fn into_pyochain(self) -> PyResult<Bound<'py, T>>;
 }
 
-impl<'py> IntoPyoChain<'py, Seq> for Bound<'py, PyTuple> {
+impl<'py> IntoPyochain<'py, Seq> for Bound<'py, PyTuple> {
     #[inline]
     fn into_pyochain(self) -> PyResult<Bound<'py, Seq>> {
         let py = self.py();
@@ -45,7 +45,7 @@ impl<'py> IntoPyoChain<'py, Seq> for Bound<'py, PyTuple> {
         Bound::new(py, initializer)
     }
 }
-impl<'py> IntoPyoChain<'py, Vec> for Bound<'py, PyList> {
+impl<'py> IntoPyochain<'py, Vec> for Bound<'py, PyList> {
     #[inline]
     fn into_pyochain(self) -> PyResult<Bound<'py, Vec>> {
         let py = self.py();
@@ -55,7 +55,7 @@ impl<'py> IntoPyoChain<'py, Vec> for Bound<'py, PyList> {
         Bound::new(py, initializer)
     }
 }
-impl<'py> IntoPyoChain<'py, Set> for Bound<'py, PyFrozenSet> {
+impl<'py> IntoPyochain<'py, Set> for Bound<'py, PyFrozenSet> {
     #[inline]
     fn into_pyochain(self) -> PyResult<Bound<'py, Set>> {
         let py = self.py();
@@ -65,7 +65,7 @@ impl<'py> IntoPyoChain<'py, Set> for Bound<'py, PyFrozenSet> {
         Bound::new(py, initializer)
     }
 }
-impl<'py> IntoPyoChain<'py, SetMut> for Bound<'py, PySet> {
+impl<'py> IntoPyochain<'py, SetMut> for Bound<'py, PySet> {
     #[inline]
     fn into_pyochain(self) -> PyResult<Bound<'py, SetMut>> {
         let py = self.py();
@@ -339,7 +339,7 @@ pub struct Vec {
 #[pymethods]
 impl Vec {
     #[new]
-    fn new(data: Bound<'_, PyAny>) -> PyResult<PyClassInitializer<Self>> {
+    pub fn new(data: Bound<'_, PyAny>) -> PyResult<PyClassInitializer<Self>> {
         let py = data.py();
         data.pipe(|x| PyList::type_object(py).call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
