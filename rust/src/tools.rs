@@ -1,28 +1,14 @@
 use std::collections::VecDeque;
 
+use crate::abc;
+use crate::abc::PyoABC;
 use crate::args::{Args, Kwargs};
 use crate::option::{PyNull, PySome, option};
 use crate::result::{PyoErr, PyoOk};
-use crate::{abc, mixins};
 use pyo3::exceptions::PyIndexError;
 use pyo3::types::{PyAny, PyDict, PyIterator, PySequence, PySet, PyString, PyTuple};
 use pyo3::{IntoPyObjectExt, ffi, prelude::*};
 use tap::prelude::*;
-#[pyfunction]
-pub fn retain(data: Bound<'_, PySequence>, predicate: &Bound<'_, PyAny>) -> PyResult<()> {
-    let mut write_idx = 0;
-    let length = data.len()?;
-    for read_idx in 0..length {
-        let curr = data.get_item(read_idx)?;
-        if predicate.call1((&curr,))?.is_truthy()? {
-            data.set_item(write_idx, curr)?;
-            write_idx += 1;
-        }
-    }
-    data.del_slice(write_idx, usize::MAX)?;
-    Ok(())
-}
-
 //TODO: the double collect in `Vec` => `PyTuple` is a performance tax on large Vecs of funcs. Need to optimize.
 #[pyclass]
 pub struct MapJuxt {
@@ -963,9 +949,7 @@ impl Iter {
 impl Iter {
     #[new]
     fn py_new(data: Bound<'_, PyAny>) -> PyResult<PyClassInitializer<Self>> {
-        PyClassInitializer::from(mixins::Checkable)
-            .add_subclass(abc::PyoIterable {})
-            .add_subclass(abc::PyoIterator {})
+        abc::PyoIterator::build_init()
             .add_subclass(Self {
                 inner: data.try_iter()?.unbind(),
             })
@@ -1057,13 +1041,10 @@ impl Peekable {
 impl Peekable {
     #[new]
     fn py_new(iterable: Bound<'_, PyIterator>) -> PyClassInitializer<Self> {
-        PyClassInitializer::from(mixins::Checkable)
-            .add_subclass(abc::PyoIterable {})
-            .add_subclass(abc::PyoIterator {})
-            .add_subclass(Self {
-                iterator: iterable.unbind(),
-                peeked: None,
-            })
+        abc::PyoIterator::build_init().add_subclass(Self {
+            iterator: iterable.unbind(),
+            peeked: None,
+        })
     }
 
     fn __next__<'py>(&mut self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {

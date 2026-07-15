@@ -6,9 +6,6 @@ from .abc import PyoIterator
 from .abc._iterator import Position
 from .rs import Option, Result
 
-@no_doctest
-def retain[T](data: MutableSequence[T], predicate: Callable[[T], bool]) -> None: ...
-
 class MapJuxt[R](Iterator[tuple[R, ...]]):
     def __init__(
         self, iterator: Iterator[object], *funcs: Callable[..., R]

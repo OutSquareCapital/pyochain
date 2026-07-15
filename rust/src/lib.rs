@@ -134,7 +134,6 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     set_mod.add_class::<seq::SetMut>()?;
     let tools_mod = PyModule::new(py, "_tools")?;
 
-    tools_mod.add_function(wrap_pyfunction!(tools::retain, m)?)?;
     tools_mod.add_class::<tools::UniqueIdentity>()?;
     tools_mod.add_class::<tools::UniqueKey>()?;
     tools_mod.add_class::<tools::Intersperse>()?;
