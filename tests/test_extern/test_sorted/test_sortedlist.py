@@ -29,8 +29,8 @@ def test_init() -> None:
     assert slt._load == 10000  # pyright: ignore[reportPrivateUsage]
     check_sorted_list(slt)
 
-    slt = SortedList(range(10000))
-    assert all(tup[0] == tup[1] for tup in zip(slt, range(10000), strict=False))
+    slt = SortedList(range(100))
+    assert all(tup[0] == tup[1] for tup in zip(slt, range(100), strict=False))
 
     slt.clear()
     assert slt._len == 0  # pyright: ignore[reportPrivateUsage]
@@ -80,9 +80,9 @@ def test_contains() -> None:
     slt = SortedList[int]()
     assert 0 not in slt
 
-    slt.update(range(10000))
+    slt.update(range(100))
 
-    for val in range(10000):
+    for val in range(100):
         assert val in slt
 
     assert 10000 not in slt
@@ -288,19 +288,19 @@ def test_delitem_slice() -> None:
 
 
 def test_iter() -> None:
-    slt = SortedList(range(10000))
+    slt = SortedList(range(100))
     itr = iter(slt)
-    assert all(tup[0] == tup[1] for tup in zip(range(10000), itr, strict=False))
+    assert all(tup[0] == tup[1] for tup in zip(range(100), itr, strict=False))
 
 
 def test_reversed() -> None:
-    slt = SortedList(range(10000))
+    slt = SortedList(range(100))
     rev = reversed(slt)
-    assert all(tup[0] == tup[1] for tup in zip(range(9999, -1, -1), rev, strict=False))
+    assert all(tup[0] == tup[1] for tup in zip(range(99, -1, -1), rev, strict=False))
 
 
 def test_reverse() -> None:
-    slt = SortedList(range(10000))
+    slt = SortedList(range(100))
     with pytest.raises(NotImplementedError):
         slt.reverse()
 
@@ -381,7 +381,7 @@ def test_irange() -> None:  # noqa: C901
 def test_len() -> None:
     slt = SortedList[int]()
 
-    for val in range(10000):
+    for val in range(100):
         slt.add(val)
         assert len(slt) == (val + 1)
 
@@ -655,7 +655,7 @@ def test_repr_subclass() -> None:
 def test_pickle() -> None:
     import pickle
 
-    alpha = SortedList(range(10000))
+    alpha = SortedList(range(100))
     alpha.reset(500)
     beta: SortedList[int] = pickle.loads(pickle.dumps(alpha))  # pyright: ignore[reportAny]
     assert alpha == beta

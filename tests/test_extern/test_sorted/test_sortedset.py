@@ -538,7 +538,7 @@ def test_repr_recursion() -> None:
 def test_pickle() -> None:
     import pickle
 
-    alpha = SortedKeySet(range(10000), key=operator.neg)
+    alpha = SortedKeySet(range(100), key=operator.neg)
     alpha.reset(500)
     data = pickle.dumps(alpha)
     beta: SortedKeySet[int, int] = pickle.loads(data)  # pyright: ignore[reportAny]

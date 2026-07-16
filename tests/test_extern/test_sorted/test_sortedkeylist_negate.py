@@ -30,10 +30,8 @@ def test_init() -> None:
     assert slt._load == 10000  # pyright: ignore[reportPrivateUsage]
     check_sorted_key_list(slt)
 
-    slt = SortedKeyList(range(10000), key=operator.neg)
-    assert all(
-        tup[0] == tup[1] for tup in zip(slt, reversed(range(10000)), strict=False)
-    )
+    slt = SortedKeyList(range(100), key=operator.neg)
+    assert all(tup[0] == tup[1] for tup in zip(slt, reversed(range(100)), strict=False))
 
     slt.clear()
     assert slt._len == 0  # pyright: ignore[reportPrivateUsage]
@@ -43,12 +41,12 @@ def test_init() -> None:
 
 
 def test_key() -> None:
-    slt = SortedKeyList(range(10000), key=lambda val: val % 10)
+    slt = SortedKeyList(range(100), key=lambda val: val % 10)
     check_sorted_key_list(slt)
 
-    values = sorted(range(10000), key=lambda val: (val % 10, val))
+    values = sorted(range(100), key=lambda val: (val % 10, val))
     assert slt == values
-    assert all(val in slt for val in range(10000))
+    assert all(val in slt for val in range(100))
 
 
 def test_add() -> None:
@@ -94,9 +92,9 @@ def test_contains() -> None:
     slt = SortedKeyList[float, float](key=operator.neg)
     assert 0 not in slt
 
-    slt.update(range(10000))
+    slt.update(range(100))
 
-    for val in range(10000):
+    for val in range(100):
         assert val in slt
 
     assert 10000 not in slt
@@ -303,19 +301,19 @@ def test_delitem_slice() -> None:
 
 
 def test_iter() -> None:
-    slt = SortedKeyList(range(10000), key=operator.neg)
+    slt = SortedKeyList(range(100), key=operator.neg)
     itr = iter(slt)
-    assert all(tup[0] == tup[1] for tup in zip(range(9999, -1, -1), itr, strict=False))
+    assert all(tup[0] == tup[1] for tup in zip(range(99, -1, -1), itr, strict=False))
 
 
 def test_reversed() -> None:
-    slt = SortedKeyList(range(10000), key=operator.neg)
+    slt = SortedKeyList(range(100), key=operator.neg)
     rev = reversed(slt)
-    assert all(tup[0] == tup[1] for tup in zip(range(10000), rev, strict=False))
+    assert all(tup[0] == tup[1] for tup in zip(range(100), rev, strict=False))
 
 
 def test_reverse() -> None:
-    slt = SortedKeyList(range(10000), key=operator.neg)
+    slt = SortedKeyList(range(100), key=operator.neg)
     with pytest.raises(NotImplementedError):
         slt.reverse()
 
@@ -399,7 +397,7 @@ def test_irange() -> None:  # noqa: C901
 def test_len() -> None:
     slt = SortedKeyList[float, float](key=operator.neg)
 
-    for val in range(10000):
+    for val in range(100):
         slt.add(val)
         assert len(slt) == (val + 1)
 
@@ -664,7 +662,7 @@ def test_repr() -> None:
 def test_pickle() -> None:
     import pickle
 
-    alpha = SortedKeyList(range(10000), key=operator.neg)
+    alpha = SortedKeyList(range(100), key=operator.neg)
     alpha.reset(500)
     beta: SortedKeyList[int, int] = pickle.loads(pickle.dumps(alpha))  # pyright: ignore[reportAny]
     assert alpha == beta

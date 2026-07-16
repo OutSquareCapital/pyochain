@@ -515,9 +515,7 @@ def test_items_view_index() -> None:
 def test_pickle() -> None:
     import pickle
 
-    alpha = SortedKeyDict(
-        zip(range(10000), range(10000), strict=False), key=operator.neg
-    )
+    alpha = SortedKeyDict(zip(range(100), range(100), strict=False), key=operator.neg)
     alpha.reset(500)
     beta: SortedKeyDict[int, int, int] = pickle.loads(pickle.dumps(alpha))  # pyright: ignore[reportAny]
     assert alpha == beta

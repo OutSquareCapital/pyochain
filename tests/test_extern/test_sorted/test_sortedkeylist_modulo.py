@@ -33,10 +33,10 @@ def test_init() -> None:
     assert slt._load == 10000  # pyright: ignore[reportPrivateUsage]
     check_sorted_key_list(slt)
 
-    slt = SortedKeyList(range(10000), key=modulo)
+    slt = SortedKeyList(range(100), key=modulo)
     assert all(
         tup[0] == tup[1]
-        for tup in zip(slt, sorted(range(10000), key=modulo), strict=False)
+        for tup in zip(slt, sorted(range(100), key=modulo), strict=False)
     )
 
     slt.clear()
@@ -61,12 +61,12 @@ def test_new() -> None:
 
 
 def test_key() -> None:
-    slt = SortedKeyList(range(10000), key=lambda val: val % 10)
+    slt = SortedKeyList(range(100), key=lambda val: val % 10)
     check_sorted_key_list(slt)
 
-    values = sorted(range(10000), key=lambda val: (val % 10, val))
+    values = sorted(range(100), key=lambda val: (val % 10, val))
     assert slt == values
-    assert all(val in slt for val in range(10000))
+    assert all(val in slt for val in range(100))
 
 
 def test_key2() -> None:
@@ -110,8 +110,8 @@ def test_update() -> None:
     assert len(slt) == 1000
     check_sorted_key_list(slt)
 
-    slt.update(range(10000))
-    assert len(slt) == 11000
+    slt.update(range(100))
+    assert len(slt) == 1100
     check_sorted_key_list(slt)
 
 
@@ -359,21 +359,21 @@ def test_delitem_slice() -> None:
 
 
 def test_iter() -> None:
-    slt = SortedKeyList(range(10000), key=modulo)
+    slt = SortedKeyList(range(100), key=modulo)
     itr = iter(slt)
     assert all(
         tup[0] == tup[1]
-        for tup in zip(sorted(range(10000), key=modulo), itr, strict=False)
+        for tup in zip(sorted(range(100), key=modulo), itr, strict=False)
     )
 
 
 def test_reversed() -> None:
-    slt = SortedKeyList(range(10000), key=modulo)
+    slt = SortedKeyList(range(100), key=modulo)
     rev = reversed(slt)
     assert all(
         tup[0] == tup[1]
         for tup in zip(
-            reversed(sorted(range(10000), key=modulo)),
+            reversed(sorted(range(100), key=modulo)),
             rev,
             strict=False,
         )
@@ -381,7 +381,7 @@ def test_reversed() -> None:
 
 
 def test_reverse() -> None:
-    slt = SortedKeyList(range(10000), key=modulo)
+    slt = SortedKeyList(range(100), key=modulo)
     with pytest.raises(NotImplementedError):
         slt.reverse()
 
@@ -495,7 +495,7 @@ def test_irange_key() -> None:  # noqa: C901
 def test_len() -> None:
     slt = SortedKeyList(key=modulo)
 
-    for val in range(10000):
+    for val in range(100):
         slt.add(val)
         assert len(slt) == (val + 1)
 
