@@ -133,6 +133,9 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_submodule(&set_mod)?;
     set_mod.add_class::<seq::Set>()?;
     set_mod.add_class::<seq::SetMut>()?;
+    let dict_mod = PyModule::new(py, "_dict")?;
+    m.add_submodule(&dict_mod)?;
+    dict_mod.add_class::<seq::Dict>()?;
     let tools_mod = PyModule::new(py, "_tools")?;
 
     tools_mod.add_class::<tools::UniqueIdentity>()?;
@@ -195,6 +198,7 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     sys_mods.set_item("pyochain._seq", seq_mod)?;
     sys_mods.set_item("pyochain._vec", vec_mod)?;
     sys_mods.set_item("pyochain._set", set_mod)?;
+    sys_mods.set_item("pyochain._dict", dict_mod)?;
     sys_mods.set_item("pyochain.abc._iterable", iterable_mod)?;
     sys_mods.set_item("pyochain.abc._iterator", iterator_mod)?;
     sys_mods.set_item("pyochain.abc._collection", collection_mod)?;

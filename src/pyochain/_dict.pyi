@@ -1,21 +1,14 @@
-from __future__ import annotations
+from collections.abc import Iterable, Iterator, MutableMapping
+from typing import Self, overload, override
 
-from typing import TYPE_CHECKING, Self, overload, override
+from _typeshed import SupportsGetItem, SupportsKeysAndGetItem
 
-from ._utils import no_doctest
+from ._types import DictConvertible
 from .abc import PyoMutableMapping, PyoReversible
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator, MutableMapping
-
-    from _typeshed import SupportsGetItem, SupportsKeysAndGetItem
-
-    from ._types import DictConvertible
 
 type IntoDict[K, V] = dict[K, V] | Dict[K, V]
 
-
-class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):  # ruff:ignore[eq-without-hash]
+class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
     """A `Dict` is a key-value store similar to Python's built-in `dict`, but with additional methods inspired by Rust's `HashMap`.
 
     Accept the same input types as the built-in `dict`, including `Mapping`, `Iterable` of key-value pairs, and objects implementing `__getitem__()` and `keys()`.
@@ -57,7 +50,7 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):  # ruff:ignore[eq-w
         ```
         Any object that implements the `Mapping` protocol can also be directly converted to a `Dict`:
         ```python
-        >>> from collections.abc import Mapping
+        >>> from collections.abc import Mapping, Iterator, Iterable
         >>> from dataclasses import dataclass
         >>> @dataclass
         ... class CustomMapping(Mapping[int, str]):
@@ -100,9 +93,7 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):  # ruff:ignore[eq-w
     __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
     _inner: dict[K, V]
 
-    def __init__(self, data: DictConvertible[K, V]) -> None:
-        self._inner = dict(data)
-
+    def __init__(self, data: DictConvertible[K, V]) -> None: ...
     @classmethod
     def from_keys[K1, V1](cls, keys: Iterable[K1], value: V1 = None) -> Dict[K1, V1]:
         """Create a `Dict` from an iterable of keys, all mapped to the same value.
@@ -126,82 +117,28 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):  # ruff:ignore[eq-w
 
             ```
         """
-        return cls.from_ref(dict.fromkeys(keys, value))
 
     @override
-    def __repr__(self) -> str:
-        from pprint import pformat
-
-        return (
-            f"{self.__class__.__name__}({pformat(self._inner, sort_dicts=False)[1:-1]})"
-        )
-
-    @property
-    @no_doctest
-    def inner(self) -> dict[K, V]:
-        """The underlying `dict` data structure.
-
-        Useful when interoperating with functions that require a standard Python `dict`.
-
-        Returns:
-            dict[K, V]: The underlying dictionary.
-        """
-        return self._inner
-
+    def __iter__(self) -> Iterator[K]: ...
     @override
-    def __iter__(self) -> Iterator[K]:
-        return iter(self._inner)
-
+    def __contains__(self, key: object) -> bool: ...
     @override
-    def __contains__(self, key: object) -> bool:
-        return key in self._inner
-
+    def __len__(self) -> int: ...
     @override
-    def __len__(self) -> int:
-        return len(self._inner)
-
+    def __getitem__(self, key: K) -> V: ...
     @override
-    def __getitem__(self, key: K) -> V:
-        return self._inner[key]
-
+    def __setitem__(self, key: K, value: V) -> None: ...
     @override
-    def __setitem__(self, key: K, value: V) -> None:
-        self._inner[key] = value
-
+    def __delitem__(self, key: K) -> None: ...
     @override
-    def __delitem__(self, key: K) -> None:
-        del self._inner[key]
-
-    @override
-    def __eq__(self, other: object) -> bool:
-        match other:
-            case Dict():
-                return self._inner == other._inner  # pyright: ignore[reportUnknownMemberType]
-            case dict():
-                return self._inner == other
-            case _:
-                return False
-
-    def __or__[T1, T2](self, value: IntoDict[T1, T2], /) -> Dict[K | T1, V | T2]:
-        return self.union(value)
-
-    def __ror__[T1, T2](self, value: IntoDict[T1, T2], /) -> Dict[K | T1, V | T2]:
-        match value:
-            case Dict():
-                new = value._inner | self._inner
-            case dict():
-                new = value | self._inner
-        return self.from_ref(new)
-
+    def __eq__(self, other: object) -> bool: ...
+    def __or__[T1, T2](self, value: IntoDict[T1, T2], /) -> Dict[K | T1, V | T2]: ...
+    def __ror__[T1, T2](self, value: IntoDict[T1, T2], /) -> Dict[K | T1, V | T2]: ...
     def __ior__(
         self, value: SupportsKeysAndGetItem[K, V] | Iterable[tuple[K, V]], /
-    ) -> Self:
-        return self.union_mut(value)
-
+    ) -> Self: ...
     @override
-    def __reversed__(self) -> Iterator[K]:
-        return reversed(self._inner)
-
+    def __reversed__(self) -> Iterator[K]: ...
     @staticmethod
     def from_ref[K1, V1](data: dict[K1, V1]) -> Dict[K1, V1]:
         """Wrap an existing Python builtin `dict` without copying.
@@ -233,9 +170,6 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):  # ruff:ignore[eq-w
 
             ```
         """
-        instance: Dict[K1, V1] = Dict.__new__(Dict)  # pyright: ignore[reportUnknownVariableType]
-        instance._inner = data
-        return instance
 
     @staticmethod
     def from_kwargs[U](**kwargs: U) -> Dict[str, U]:
@@ -255,7 +189,6 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):  # ruff:ignore[eq-w
 
             ```
         """
-        return Dict.from_ref(kwargs)
 
     @staticmethod
     def from_object(obj: object) -> Dict[str, object]:
@@ -296,8 +229,6 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):  # ruff:ignore[eq-w
 
             ```
         """
-        return Dict.from_ref(obj.__dict__)
-
     def copy(self) -> Dict[K, V]:
         """Create a shallow copy of the `Dict`.
 
@@ -318,7 +249,6 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):  # ruff:ignore[eq-w
 
             ```
         """
-        return Dict.from_ref(self._inner.copy())
 
     @overload
     def pop(self, key: K, /) -> V: ...
@@ -327,9 +257,7 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):  # ruff:ignore[eq-w
     @overload
     def pop[T](self, key: K, default: T, /) -> V | T: ...
     @override
-    def pop[T](self, key: K, default: T | None = None, /) -> V | T | None:
-        return self._inner.pop(key, default)
-
+    def pop[T](self, key: K, default: T | None = None, /) -> V | T | None: ...
     def union[T1, T2](self, other: IntoDict[T1, T2]) -> Dict[K | T1, V | T2]:
         """Merge another `dict` or `Dict` with this `Dict`, returning a new one with the combined key-value pairs.
 
@@ -359,12 +287,6 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):  # ruff:ignore[eq-w
 
             ```
         """
-        match other:
-            case Dict():
-                new = self._inner | other._inner
-            case dict():
-                new = self._inner | other
-        return self.from_ref(new)
 
     def union_mut(
         self, other: SupportsKeysAndGetItem[K, V] | Iterable[tuple[K, V]]
@@ -402,21 +324,11 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):  # ruff:ignore[eq-w
 
             ```
         """
-        match other:
-            case Dict():
-                self._inner |= other._inner  # pyright: ignore[reportUnknownMemberType]
-            case _:
-                self._inner |= other
-        return self
 
     @override
-    def popitem(self) -> tuple[K, V]:
-        return self._inner.popitem()
-
+    def popitem(self) -> tuple[K, V]: ...
     @override
-    def clear(self) -> None:
-        self._inner.clear()
-
+    def clear(self) -> None: ...
     @overload
     def update(self, m: SupportsKeysAndGetItem[K, V], /) -> None: ...
     @overload
@@ -432,13 +344,7 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):  # ruff:ignore[eq-w
     @overload
     def update(self: SupportsGetItem[str, V], /, **kwargs: V) -> None: ...
     @override
-    def update(self, m: object = None, /, **kwargs: V) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
-        match m:
-            case None:
-                return self._inner.update(**kwargs)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
-            case _:
-                return self._inner.update(m, **kwargs)  # pyright: ignore[reportCallIssue, reportUnknownVariableType, reportArgumentType]
-
+    def update(self, m: object = None, /, **kwargs: V) -> None: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @overload
     def setdefault[T](
         self: MutableMapping[K, T | None], key: K, default: None = None, /
@@ -448,5 +354,4 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):  # ruff:ignore[eq-w
     @overload
     def setdefault[T](self, key: K, default: object = None, /) -> V: ...
     @override
-    def setdefault[T](self, key: K, default: object = None, /) -> V | T | None:
-        return self._inner.setdefault(key, default)  # pyright: ignore[reportArgumentType]
+    def setdefault[T](self, key: K, default: object = None, /) -> V | T | None: ...
