@@ -1,4 +1,5 @@
 use crate::abc::PyoABC;
+use crate::in_place_number_capi::PyAnyInPlaceMethods;
 use crate::{abc, pylibs};
 use either::Either;
 use pyo3::exceptions::PyTypeError;
@@ -228,7 +229,7 @@ impl Seq {
         let py = n.py();
         self.inner
             .bind(py)
-            .call_method1(intern!(py, "__mul__"), (n,))
+            .mul(n)
             .map(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
             .and_then(Bound::into_pyochain)
     }
@@ -400,9 +401,7 @@ impl Vec {
 
     fn __iadd__<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<()> {
         let py = value.py();
-        self.inner
-            .bind(py)
-            .call_method1(intern!(py, "__iadd__"), (value,))?;
+        self.inner.bind(py).iadd(value)?;
         Ok(())
     }
     fn __inplace_concat__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<()> {
@@ -537,16 +536,13 @@ impl Vec {
         let py = n.py();
         self.inner
             .bind(py)
-            .call_method1(intern!(py, "__mul__"), (n,))
+            .mul(n)
             .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
             .and_then(Bound::into_pyochain)
     }
     fn repeat_mut<'py>(slf: Bound<'py, Self>, n: &Bound<'_, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = n.py();
-        slf.get()
-            .inner
-            .bind(py)
-            .call_method1(intern!(py, "__imul__"), (n,))?;
+        slf.get().inner.bind(py).imul(n)?;
         Ok(slf)
     }
 
@@ -852,9 +848,7 @@ impl SetMut {
     }
     fn __iand__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
         let py = value.py();
-        self.inner
-            .bind(py)
-            .call_method1(intern!(py, "__iand__"), (value,))?;
+        self.inner.bind(py).iand(value)?;
         Ok(())
     }
 
@@ -868,9 +862,7 @@ impl SetMut {
 
     fn __ior__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
         let py = value.py();
-        self.inner
-            .bind(py)
-            .call_method1(intern!(py, "__ior__"), (value,))?;
+        self.inner.bind(py).ior(value)?;
         Ok(())
     }
 
@@ -889,9 +881,7 @@ impl SetMut {
     }
 
     fn __isub__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
-        self.inner
-            .bind(value.py())
-            .call_method1(intern!(value.py(), "__isub__"), (value,))?;
+        self.inner.bind(value.py()).isub(value)?;
         Ok(())
     }
 
@@ -914,9 +904,7 @@ impl SetMut {
     }
 
     fn __ixor__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
-        self.inner
-            .bind(value.py())
-            .call_method1(intern!(value.py(), "__ixor__"), (value,))?;
+        self.inner.bind(value.py()).ixor(value)?;
         Ok(())
     }
 

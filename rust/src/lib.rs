@@ -2,6 +2,7 @@ mod abc;
 mod args;
 mod errors;
 mod hasher;
+mod in_place_number_capi;
 mod mixins;
 mod option;
 mod pylibs;
