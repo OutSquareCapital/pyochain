@@ -16,7 +16,7 @@ import pytest
 from pyochain._types import SupportsHashableAndRichComparison
 from pyochain.collections import SortedDict, SortedKeyDict
 
-from ._utils import check_sorted_dict
+from ..._utils import check_sorted_dict
 
 
 def modulo(value: int) -> int:

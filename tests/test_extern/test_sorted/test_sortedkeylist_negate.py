@@ -11,7 +11,8 @@ from itertools import chain
 import pytest
 
 from pyochain.collections import SortedKeyList
-from tests._utils import check_sorted_key_list
+
+from ..._utils import check_sorted_key_list
 
 
 def test_identity() -> None:

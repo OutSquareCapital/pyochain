@@ -1,4 +1,7 @@
-"""Tests for SliceView."""
+"""Tests for SliceView.
+
+Adapted from https://github.com/julianofischer/sliceview/tree/main/tests
+"""
 
 import pytest
 
