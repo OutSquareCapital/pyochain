@@ -6,16 +6,16 @@ from ._utils import no_doctest
 from .abc import PyoMutableMapping, PyoReversible
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Iterable, Iterator, MutableMapping
 
-    from _typeshed import SupportsKeysAndGetItem
+    from _typeshed import SupportsGetItem, SupportsKeysAndGetItem
 
     from ._types import DictConvertible
 
 type IntoDict[K, V] = dict[K, V] | Dict[K, V]
 
 
-class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):  # noqa: PLW1641
+class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):  # ruff:ignore[eq-without-hash]
     """A `Dict` is a key-value store similar to Python's built-in `dict`, but with additional methods inspired by Rust's `HashMap`.
 
     Accept the same input types as the built-in `dict`, including `Mapping`, `Iterable` of key-value pairs, and objects implementing `__getitem__()` and `keys()`.
@@ -313,6 +313,8 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):  # noqa: PLW1641
             Dict(1: 'a', 2: 'b')
             >>> d1 is d2
             False
+            >>> d1.inner is d2.inner
+            False
 
             ```
         """
@@ -387,9 +389,16 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):  # noqa: PLW1641
             ```python
             >>> from pyochain import Dict
             >>> d1 = Dict({1: "a", 2: "b"})
+            >>> d1_inner_id = id(d1.inner)
             >>> d2 = Dict({2: "c", 3: "d"})
             >>> d1.union_mut(d2)
             Dict(1: 'a', 2: 'c', 3: 'd')
+            >>> id(d1.inner) == d1_inner_id
+            True
+            >>> d1.union_mut(((4, "e"), (5, "f")))
+            Dict(1: 'a', 2: 'c', 3: 'd', 4: 'e', 5: 'f')
+            >>> id(d1.inner) == d1_inner_id
+            True
 
             ```
         """
@@ -399,3 +408,45 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):  # noqa: PLW1641
             case _:
                 self._inner |= other
         return self
+
+    @override
+    def popitem(self) -> tuple[K, V]:
+        return self._inner.popitem()
+
+    @override
+    def clear(self) -> None:
+        self._inner.clear()
+
+    @overload
+    def update(self, m: SupportsKeysAndGetItem[K, V], /) -> None: ...
+    @overload
+    def update(
+        self: SupportsGetItem[str, V], m: SupportsKeysAndGetItem[str, V], /, **kwargs: V
+    ) -> None: ...
+    @overload
+    def update(self, m: Iterable[tuple[K, V]], /) -> None: ...
+    @overload
+    def update(
+        self: SupportsGetItem[str, V], m: Iterable[tuple[str, V]], /, **kwargs: V
+    ) -> None: ...
+    @overload
+    def update(self: SupportsGetItem[str, V], /, **kwargs: V) -> None: ...
+    @override
+    def update(self, m: object = None, /, **kwargs: V) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+        match m:
+            case None:
+                return self._inner.update(**kwargs)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+            case _:
+                return self._inner.update(m, **kwargs)  # pyright: ignore[reportCallIssue, reportUnknownVariableType, reportArgumentType]
+
+    @overload
+    def setdefault[T](
+        self: MutableMapping[K, T | None], key: K, default: None = None, /
+    ) -> T | None: ...
+    @overload
+    def setdefault(self, key: K, default: V, /) -> V: ...
+    @overload
+    def setdefault[T](self, key: K, default: object = None, /) -> V: ...
+    @override
+    def setdefault[T](self, key: K, default: object = None, /) -> V | T | None:
+        return self._inner.setdefault(key, default)  # pyright: ignore[reportArgumentType]

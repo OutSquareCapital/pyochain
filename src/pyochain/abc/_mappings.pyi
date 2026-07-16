@@ -254,7 +254,43 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):  # pyrigh
     @override
     def pop[T](self, key: K, default: T = ..., /) -> V | T: ...
     @override
-    def popitem(self) -> tuple[K, V]: ...
+    def popitem(self) -> tuple[K, V]:
+        """Remove and return a (key, value) pair from the `PyoMutableMapping`.
+
+        Pairs are returned in LIFO order in the default implementation.
+
+        It can be useful to destructively iterate over *self*, as often used in set algorithms.
+
+        Raises `KeyError` if the `PyoMutableMapping` is empty.
+
+        Returns:
+            tuple[K, V]: The removed (key, value) pair.
+
+        Example:
+            ```python
+            >>> from pyochain import Dict, Ok, Err
+            >>> d = Dict({1: "a", 2: "b"})
+            >>> d.popitem()
+            (2, 'b')
+            >>> d.popitem()
+            (1, 'a')
+            >>> try:
+            ...     res = Ok(d.popitem())
+            ... except KeyError as e:
+            ...     res = Err(e)
+            >>> res
+            Err(KeyError('popitem(): dictionary is empty'))
+            >>> # LIFO order is preserved
+            >>> d = Dict({1: "a", 2: "b", 3: "c"})
+            >>> d.popitem()
+            (3, 'c')
+            >>> d.popitem()
+            (2, 'b')
+            >>> d.popitem()
+            (1, 'a')
+
+            ```
+        """
     @override
     def clear(self) -> None: ...
     @overload
@@ -270,7 +306,40 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):  # pyrigh
         self: SupportsGetItem[str, V], m: Iterable[tuple[str, V]], /, **kwargs: V
     ) -> None: ...
     @overload
-    def update(self: SupportsGetItem[str, V], /, **kwargs: V) -> None: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def update(self: SupportsGetItem[str, V], /, **kwargs: V) -> None: ...
+    @override
+    def update(self, m: object = ..., /, **kwargs: V) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+        """In-place update of *self*, with key-value pairs from another `Mapping` or `Iterable`.
+
+        Keywords will be applied after the *m* argument, allowing for additional updates.
+
+
+        If a key already exists in *self*, its value will be overwritten.
+
+        Note:
+        If a given key is present in both *m* and *kwargs*, the value from the latter will be the one effectively present in the resulting `Dict`.
+
+        Args:
+            m (SupportsKeysAndGetItem[K, V] | Iterable[tuple[K, V]] | None): The `Mapping` or `Iterable` to update *self* from.
+            **kwargs (V): Additional key-value pairs to update *self* with.
+
+        Example:
+            ```python
+            >>> from pyochain import Dict
+            >>> d = Dict({1: "a", 2: "b"})
+            >>> d.update({2: "c", 3: "d"})
+            >>> d
+            Dict(1: 'a', 2: 'c', 3: 'd')
+            >>> d.update([(3, "e"), (4, "f")])
+            >>> d
+            Dict(1: 'a', 2: 'c', 3: 'e', 4: 'f')
+            >>> d1 = Dict({"John": 30, "Jane": 25})
+            >>> d1.update({"John": 26, "Doe": 22}, John=31, Mary=28)
+            >>> d1
+            Dict('John': 31, 'Jane': 25, 'Doe': 22, 'Mary': 28)
+
+            ```
+        """
     @overload
     def setdefault[T](
         self: MutableMapping[K, T | None], key: K, default: None = None, /
@@ -279,6 +348,32 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):  # pyrigh
     def setdefault(self, key: K, default: V, /) -> V: ...
     @override
     def setdefault[T](self, key: K, default: object = None, /) -> V: ...
+    """Return the value for `key` if it is in *self*, else insert `key` with a value of `default` into *self* and return `default`.
+
+        Args:
+            key (K): The key to look for in *self*.
+            default (object): The value to insert if `key` is not found. Defaults to `None`.
+
+        Returns:
+            V | T | None: The value associated with `key`, or `default` if `key` was not found.
+
+        Example:
+            ```python
+            >>> from pyochain import Dict
+            >>> d = Dict({1: "a", 2: "b"})
+            >>> d.setdefault(2, "c")
+            'b'
+            >>> d.setdefault(3, "d")
+            'd'
+            >>> d
+            Dict(1: 'a', 2: 'b', 3: 'd')
+            >>> d.setdefault(4)
+            None
+            >>> d
+            Dict(1: 'a', 2: 'b', 3: 'd', 4: None)
+
+            ```
+        """
     def insert(self, key: K, value: V) -> Option[V]:
         """Insert a key-value pair into the `MutableMapping`.
 
