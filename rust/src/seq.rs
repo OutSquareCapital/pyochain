@@ -846,11 +846,6 @@ impl SetMut {
             .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
             .and_then(Bound::into_pyochain)
     }
-    fn __iand__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
-        let py = value.py();
-        self.inner.bind(py).iand(value)?;
-        Ok(())
-    }
 
     fn __or__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.inner
@@ -859,10 +854,36 @@ impl SetMut {
             .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
             .and_then(Bound::into_pyochain)
     }
-
+    /// NOTE: We need to use `call_method1` for in-place operators here because Pyo3 doesn't allow returning something else than `PyResult<()>`.\
+    /// And if we use `PySet::__ior__`, it will return `NotImplemented` on object who are NOT subclasses of `set` or `frozenset`.\
+    /// As such, it fallback to `SetMut::__ror__` which will call `SetMut::__or__` and return a new `PySet` instead of updating the current one in-place.\
+    /// Which then just doesn't work since we don't return anything, so we end up creating a new set AND then discarding it.
+    fn __iand__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
+        let py = value.py();
+        self.inner
+            .bind(py)
+            .call_method1(intern!(py, "intersection_update"), (value,))?;
+        Ok(())
+    }
     fn __ior__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
         let py = value.py();
-        self.inner.bind(py).ior(value)?;
+        self.inner
+            .bind(py)
+            .call_method1(intern!(py, "update"), (value,))?;
+        Ok(())
+    }
+    fn __isub__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
+        let py = value.py();
+        self.inner
+            .bind(py)
+            .call_method1(intern!(py, "difference_update"), (value,))?;
+        Ok(())
+    }
+    fn __ixor__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
+        let py = value.py();
+        self.inner
+            .bind(py)
+            .call_method1(intern!(py, "symmetric_difference_update"), (value,))?;
         Ok(())
     }
 
@@ -878,11 +899,6 @@ impl SetMut {
             .sub(self.inner.bind(value.py()))
             .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
             .and_then(Bound::into_pyochain)
-    }
-
-    fn __isub__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
-        self.inner.bind(value.py()).isub(value)?;
-        Ok(())
     }
 
     fn __xor__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
@@ -901,11 +917,6 @@ impl SetMut {
     }
     fn __rxor__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.__xor__(value)
-    }
-
-    fn __ixor__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
-        self.inner.bind(value.py()).ixor(value)?;
-        Ok(())
     }
 
     fn __le__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
@@ -1008,9 +1019,8 @@ impl SetMut {
     }
     #[pyo3(signature = (*s))]
     fn update(&self, s: Bound<'_, PyTuple>) -> PyResult<()> {
-        self.inner
-            .bind(s.py())
-            .call_method1(intern!(s.py(), "update"), s)?;
+        let py = s.py();
+        self.inner.bind(py).call_method1(intern!(py, "update"), s)?;
         Ok(())
     }
 
