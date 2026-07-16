@@ -1690,7 +1690,8 @@ impl PyoSet {
         cls.call1((it,))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
             .map_err(|e| {
-                let msg = format!("hint: As a `PyoSet` subclass, `{}::__init__` must accept a single `Iterable` argument. If you override it, make sure to override `PyoSet::_from_iterable` as well.", cls.name().unwrap());
+                let name = cls.name().unwrap();
+                let msg = format!("hint: As a `PyoSet` subclass, `{}::__init__` must accept a single `Iterable` argument. If you override it, make sure to override `PyoSet::_from_iterable` as well.", name);
                 e.add_note(cls.py(), msg,).unwrap(); 
                 e})
     
@@ -2003,11 +2004,7 @@ impl PyoKeysView {
         cls: Bound<'py, PyType>,
         it: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, PySet>> {
-        let set = PySet::empty(cls.py())?;
-        for item in it.try_iter()? {
-            set.add(item?)?;
-        }
-        Ok(set)
+        PySet::type_object(cls.py()).call1((it,)).map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
     }
 
     fn __contains__(&self, key: Bound<'_, PyAny>) -> PyResult<bool> {
@@ -2064,11 +2061,7 @@ impl PyoItemsView {
         cls: Bound<'py, PyType>,
         it: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, PySet>> {
-        let set = PySet::empty(cls.py())?;
-        for item in it.try_iter()? {
-            set.add(item?)?;
-        }
-        Ok(set)
+        PySet::type_object(cls.py()).call1((it,)).map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
     }
 
     fn __contains__(&self, item: (Bound<'_, PyAny>, Bound<'_, PyAny>)) -> PyResult<bool> {
