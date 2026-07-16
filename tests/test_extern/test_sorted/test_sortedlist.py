@@ -13,7 +13,8 @@ from typing import TYPE_CHECKING
 import pytest
 
 from pyochain.collections import SortedList
-from tests._utils import check_sorted_list
+
+from ._utils import check_sorted_list
 
 if TYPE_CHECKING:
     from _typeshed import SupportsRichComparison

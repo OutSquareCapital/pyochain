@@ -11,7 +11,8 @@ from typing import override
 
 from pyochain._types import SupportsHashableAndRichComparison
 from pyochain.collections import SortedKeySet, SortedSet
-from tests._utils import check_sorted_set
+
+from ._utils import check_sorted_set
 
 
 def modulo(value: int) -> int:
