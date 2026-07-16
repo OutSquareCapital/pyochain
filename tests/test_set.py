@@ -80,4 +80,7 @@ def test_iand_with_set(x_type: IntoSetMutFn, y_type: IntoSetMutFn) -> None:
     assert x == base
     assert y == {2, 3}
     assert id(x) == x_id
-    assert id(y) == y_id
+    # set &= AbstractSet will return NotImplemented and then call AbstractSet.__rand__ which returns a new set, so the id will change.
+    # This means that set &= SetMut won't be in-place (contrary to the opposite operation), UNLESS SetMut becomes itself a subclass of set.
+    if not isinstance(y, set):
+        assert id(y) == y_id
