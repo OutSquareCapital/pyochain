@@ -76,6 +76,12 @@ def test_max_push_pop() -> None:
         HeapMax[int]([]).push()  # pyright: ignore[reportCallIssue]
 
 
+def test_heapify() -> None:
+    for size in [*list(range(30)), 20000]:
+        heap = HeapMin([random.random() for _ in range(size)])
+        check_invariant(heap)
+
+
 def check_invariant(heap: Sequence[float]) -> None:
     # Check the heap invariant.
     for pos, item in enumerate(heap):
@@ -84,22 +90,16 @@ def check_invariant(heap: Sequence[float]) -> None:
             assert heap[parentpos] <= item
 
 
-def check_max_invariant[T: SupportsRichComparison](heap: Sequence[T]) -> None:
-    for pos, item in enumerate(heap[1:], start=1):
-        parentpos = (pos - 1) >> 1
-        assert heap[parentpos] >= item  # pyright: ignore[reportOperatorIssue]
-
-
-def test_heapify() -> None:
-    for size in [*list(range(30)), 20000]:
-        heap = HeapMin([random.random() for _ in range(size)])
-        check_invariant(heap)
-
-
 def test_heapify_max() -> None:
     for size in [*list(range(30)), 20000]:
         heap = HeapMax([random.random() for _ in range(size)])
         check_max_invariant(heap)
+
+
+def check_max_invariant[T: SupportsRichComparison](heap: Sequence[T]) -> None:
+    for pos, item in enumerate(heap[1:], start=1):
+        parentpos = (pos - 1) >> 1
+        assert heap[parentpos] >= item  # pyright: ignore[reportOperatorIssue]
 
 
 def test_naive_nbest() -> None:
@@ -110,15 +110,6 @@ def test_naive_nbest() -> None:
         if len(heap) > 10:
             _ = heap.pop()
     assert heap.iter().sort() == sorted(data)[-10:]
-
-
-def heapiter[T: SupportsRichComparison](heap: HeapMin[T]) -> Iterator[T]:
-    # An iterator returning a heap's elements, smallest-first.
-    try:
-        while 1:
-            yield heap.pop()
-    except IndexError:
-        pass
 
 
 def test_nbest() -> None:
@@ -154,6 +145,15 @@ def test_nbest_with_pushpop() -> None:
     assert HeapMin[str]([]).push_pop("x") == "x"
 
 
+def heapiter[T: SupportsRichComparison](heap: HeapMin[T]) -> Iterator[T]:
+    # An iterator returning a heap's elements, smallest-first.
+    try:
+        while 1:
+            yield heap.pop()
+    except IndexError:
+        pass
+
+
 def test_naive_nworst() -> None:
     # Max-heap variant of "test_naive_nbest"
     data = [random.randrange(2000) for _ in range(1000)]
@@ -163,15 +163,6 @@ def test_naive_nworst() -> None:
         if heap.len() > 10:
             _ = heap.pop()
     assert heap.iter().sort() == sorted(data)[:10]
-
-
-def heapiter_max[T: SupportsRichComparison](heap: HeapMax[T]) -> Iterator[T]:
-    # An iterator returning a max-heap's elements, largest-first.
-    try:
-        while 1:
-            yield heap.pop()
-    except IndexError:
-        pass
 
 
 def test_nworst() -> None:
@@ -206,6 +197,15 @@ def test_nworst_with_pushpop() -> None:
     expected = data.iter().sort(reverse=True)[-10:]
     assert list(heapiter_max(heap)) == expected
     assert HeapMax[str]([]).push_pop("x") == "x"
+
+
+def heapiter_max[T: SupportsRichComparison](heap: HeapMax[T]) -> Iterator[T]:
+    # An iterator returning a max-heap's elements, largest-first.
+    try:
+        while 1:
+            yield heap.pop()
+    except IndexError:
+        pass
 
 
 def test_pushpop() -> None:
@@ -411,11 +411,6 @@ class CmpErr:  # noqa: PLW1641
     __ne__ = __lt__ = __le__ = __gt__ = __ge__ = __eq__
 
 
-def reg_generator(seqn: Heap[int]) -> Iterator[int]:
-    """Regular generator."""
-    yield from seqn
-
-
 class ImplGetItem:
     """Sequence using __getitem__."""
 
@@ -511,6 +506,11 @@ class RaiseImmediateStop:
 def multiple_iterators(seqn: Heap[int]) -> Iterator[int]:
     """Test multiple tiers of iterators."""
     return chain(map(lambda x: x, reg_generator(ImplGenerator(ImplGetItem(seqn)))))  # pyright: ignore[ reportArgumentType]
+
+
+def reg_generator(seqn: Heap[int]) -> Iterator[int]:
+    """Regular generator."""
+    yield from seqn
 
 
 class SideEffectLT[T: SupportsRichComparison]:

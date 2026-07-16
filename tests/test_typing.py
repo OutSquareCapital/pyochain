@@ -71,96 +71,6 @@ class Dog(Animal):
 type AnimalLit = Literal["dog", "cat"]
 
 
-def _get_cat() -> AnimalLit | None:
-    return "cat"
-
-
-def _value(x: Animal) -> Animal:
-    return x
-
-
-def _literal(x: AnimalLit) -> AnimalLit:
-    return x
-
-
-def _iterable(x: Iterable[Animal]) -> Iterable[Animal]:
-    return x
-
-
-def _pyoiterable(x: PyoIterable[Dog]) -> PyoIterable[Dog]:
-    return x
-
-
-def _iterator(x: Iterator[Animal]) -> Iterator[Animal]:
-    return x
-
-
-def _pyoiterator(x: PyoIterator[Dog]) -> PyoIterator[Dog]:
-    return x
-
-
-def _sized(x: Sized) -> Sized:
-    return x
-
-
-def _reversible(x: Reversible[Animal]) -> Reversible[Animal]:
-    return x
-
-
-def _container(x: Container[Animal]) -> Container[Animal]:
-    return x
-
-
-def _collection(x: Collection[Animal]) -> Collection[Animal]:
-    return x
-
-
-def _pyocollection(x: PyoCollection[Dog]) -> PyoCollection[Dog]:
-    return x
-
-
-def _sequence(x: Sequence[Animal]) -> Sequence[Animal]:
-    return x
-
-
-def _pyosequence(x: PyoSequence[Dog]) -> PyoSequence[Dog]:
-    return x
-
-
-def _mutable_sequence(x: MutableSequence[Dog]) -> MutableSequence[Dog]:
-    return x
-
-
-def _mapping(x: Mapping[Animal, Animal]) -> Mapping[Animal, Animal]:
-    return x
-
-
-def _mutable_mapping(
-    x: MutableMapping[Animal, Animal],
-) -> MutableMapping[Animal, Animal]:
-    return x
-
-
-def _mapping_view(x: MappingView) -> MappingView:
-    return x
-
-
-def _items_view(x: ItemsView[Animal, Animal]) -> ItemsView[Animal, Animal]:
-    return x
-
-
-def _keys_view(x: KeysView[Animal]) -> KeysView[Animal]:
-    return x
-
-
-def _values_view(x: ValuesView[Animal]) -> ValuesView[Animal]:
-    return x
-
-
-def _pyoset(x: PyoSet[Dog]) -> PyoSet[Dog]:
-    return x
-
-
 def check_covariance() -> None:
     base = Vec[Dog](())
     opt: Option[Dog] = Some(Dog())
@@ -176,12 +86,36 @@ def check_covariance() -> None:
     _as_res: Result[Animal, str] = res
 
 
+def _pyoiterable(x: PyoIterable[Dog]) -> PyoIterable[Dog]:
+    return x
+
+
+def _pyoiterator(x: PyoIterator[Dog]) -> PyoIterator[Dog]:
+    return x
+
+
+def _pyocollection(x: PyoCollection[Dog]) -> PyoCollection[Dog]:
+    return x
+
+
+def _pyosequence(x: PyoSequence[Dog]) -> PyoSequence[Dog]:
+    return x
+
+
+def _pyoset(x: PyoSet[Dog]) -> PyoSet[Dog]:
+    return x
+
+
 def check_option_basic() -> None:
     base = Some(Dog())
     canary: Dog | None = base.unwrap_or_none()
     _ = base.map(_value)
     if canary is not None:
         _ = _value(canary)
+
+
+def _value(x: Animal) -> Animal:
+    return x
 
 
 def check_option_transpose() -> None:
@@ -237,6 +171,14 @@ def check_option_literal() -> None:  # noqa: C901
             pass
         case Null():
             pass
+
+
+def _get_cat() -> AnimalLit | None:
+    return "cat"
+
+
+def _literal(x: AnimalLit) -> AnimalLit:
+    return x
 
 
 def check_result_basic() -> None:
@@ -528,6 +470,16 @@ def check_mutable_mapping(
     _ = _mapping_view(canary)  # pyright: ignore[reportArgumentType]
 
 
+def _mapping(x: Mapping[Animal, Animal]) -> Mapping[Animal, Animal]:
+    return x
+
+
+def _mutable_mapping(
+    x: MutableMapping[Animal, Animal],
+) -> MutableMapping[Animal, Animal]:
+    return x
+
+
 def check_mapping_view_args(base: PyoMappingView, canary: MappingView) -> None:
     _ = _iterable(base)  # pyright: ignore[reportArgumentType]
     _ = _iterable(canary)  # pyright: ignore[reportArgumentType]
@@ -572,6 +524,10 @@ def check_items_view_args(
     _ = _mapping_view(canary)
     _ = _items_view(base)
     _ = _items_view(canary)
+
+
+def _items_view(x: ItemsView[Animal, Animal]) -> ItemsView[Animal, Animal]:
+    return x
 
 
 def check_values_view_args(
@@ -624,6 +580,50 @@ def check_keys_view_args(base: PyoKeysView[Animal], canary: KeysView[Animal]) ->
     _ = _keys_view(canary)
     _ = _values_view(base)  # pyright: ignore[reportArgumentType]
     _ = _values_view(canary)  # pyright: ignore[reportArgumentType]
+
+
+def _iterable(x: Iterable[Animal]) -> Iterable[Animal]:
+    return x
+
+
+def _iterator(x: Iterator[Animal]) -> Iterator[Animal]:
+    return x
+
+
+def _sized(x: Sized) -> Sized:
+    return x
+
+
+def _container(x: Container[Animal]) -> Container[Animal]:
+    return x
+
+
+def _reversible(x: Reversible[Animal]) -> Reversible[Animal]:
+    return x
+
+
+def _collection(x: Collection[Animal]) -> Collection[Animal]:
+    return x
+
+
+def _sequence(x: Sequence[Animal]) -> Sequence[Animal]:
+    return x
+
+
+def _mutable_sequence(x: MutableSequence[Dog]) -> MutableSequence[Dog]:
+    return x
+
+
+def _mapping_view(x: MappingView) -> MappingView:
+    return x
+
+
+def _keys_view(x: KeysView[Animal]) -> KeysView[Animal]:
+    return x
+
+
+def _values_view(x: ValuesView[Animal]) -> ValuesView[Animal]:
+    return x
 
 
 type EntryData = list[tuple[object, tuple[str, ...]]]

@@ -23,14 +23,6 @@ def modulo(value: int) -> int:
     return value % 10
 
 
-def get_keysview[K, V](dic: Mapping[K, V]) -> KeysView[K]:
-    return dic.keys()
-
-
-def get_itemsview[K, V](dic: Mapping[K, V]) -> ItemsView[K, V]:
-    return dic.items()
-
-
 def test_init() -> None:
     temp = SortedDict[str, int]()
     check_sorted_dict(temp)
@@ -431,6 +423,10 @@ def test_keysview() -> None:
     assert repr(keys) == "SortedKeysView(SortedDict({'a': 0, 'b': 1}))"
 
 
+def get_keysview[K, V](dic: Mapping[K, V]) -> KeysView[K]:
+    return dic.keys()
+
+
 def test_valuesview() -> None:
     mapping = [(val, pos) for pos, val in enumerate(string.ascii_lowercase)]
     temp = SortedDict(mapping[:13])
@@ -502,6 +498,10 @@ def test_itemsview() -> None:
 
     items = SortedDict(mapping[:2]).items()
     assert repr(items) == "SortedItemsView(SortedDict({'a': 0, 'b': 1}))"
+
+
+def get_itemsview[K, V](dic: Mapping[K, V]) -> ItemsView[K, V]:
+    return dic.items()
 
 
 def test_items_view_index() -> None:

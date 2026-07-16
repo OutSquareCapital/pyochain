@@ -62,13 +62,6 @@ class _NeverEq:
 NEVER_EQ = _NeverEq()
 
 
-# Various iterables
-# This is used for checking the constructor (here and in test_deque.py)
-def iterfunc[T](seqn: Iterable[T]) -> Iterator[T]:
-    "Regular generator"
-    yield from seqn
-
-
 class SequenceTest[int, T]:
     "Sequence using __getitem__"
 
@@ -168,6 +161,13 @@ def itermulti[T](seqn: Sequence[T]) -> chain[T]:
         return x
 
     return chain(map(identity, iterfunc(IterGen[T](SequenceTest(seqn)))))  # pyright: ignore[reportArgumentType]
+
+
+# Various iterables
+# This is used for checking the constructor (here and in test_deque.py)
+def iterfunc[T](seqn: Iterable[T]) -> Iterator[T]:
+    "Regular generator"
+    yield from seqn
 
 
 @TEST_TYPES
