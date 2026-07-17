@@ -12,6 +12,26 @@ from typing import (
 
 from pyochain.abc import Pipe, PyoIterator
 
+# Export for typing purposes. the private modules actually don't exist at runtime.
+# That way, we can import from rs in the public __init__
+from ._dict import Dict
+from ._range import Range
+from ._seq import Seq
+from ._set import Set, SetMut
+from ._tools import Iter, Peekable
+from ._vec import Vec
+
+__all__ = [
+    "Dict",
+    "Iter",
+    "Peekable",
+    "Range",
+    "Seq",
+    "Set",
+    "SetMut",
+    "Vec",
+]
+
 # Option types
 class OptionUnwrapError(RuntimeError): ...
 
