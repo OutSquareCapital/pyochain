@@ -1,8 +1,7 @@
 use crate::abc::PyoABC;
 use crate::in_place_number_capi::PyAnyInPlaceMethods;
+use crate::pywrapper::PyWrapper;
 use crate::{abc, pylibs};
-use either::Either;
-use pyo3::exceptions::PyTypeError;
 use pyo3::pyclass_init::PyClassInitializer;
 use pyo3::sync::PyOnceLock;
 use pyo3::types::{
@@ -13,28 +12,6 @@ use pyo3::{PyTypeInfo, ffi, intern, prelude::*};
 use tap::Pipe;
 
 static PFORMAT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-trait PyWrapper: PyTypeInfo {
-    type Inner: PyTypeInfo;
-}
-
-impl PyWrapper for Seq {
-    type Inner = PyTuple;
-}
-impl PyWrapper for Vec {
-    type Inner = PyList;
-}
-impl PyWrapper for Set {
-    type Inner = PyFrozenSet;
-}
-impl PyWrapper for SetMut {
-    type Inner = PySet;
-}
-impl PyWrapper for Range {
-    type Inner = PyRange;
-}
-impl PyWrapper for Dict {
-    type Inner = PyDict;
-}
 
 /// Trait to convert a `Bound` of a Python type into a `Bound` of a PyoChain type, with the same underlying data.\
 /// Useful for no-copy conversions, when the type is known at compile time.\
@@ -170,24 +147,16 @@ impl Seq {
         self.inner.bind(key.py()).contains(key)
     }
     fn __lt__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.inner
-            .bind(value.py())
-            .lt(extract_union::<Self>(value)?)
+        self.inner.bind(value.py()).lt(Self::extract_union(value)?)
     }
     fn __le__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.inner
-            .bind(value.py())
-            .le(extract_union::<Self>(value)?)
+        self.inner.bind(value.py()).le(Self::extract_union(value)?)
     }
     fn __gt__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.inner
-            .bind(value.py())
-            .gt(extract_union::<Self>(value)?)
+        self.inner.bind(value.py()).gt(Self::extract_union(value)?)
     }
     fn __ge__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.inner
-            .bind(value.py())
-            .ge(extract_union::<Self>(value)?)
+        self.inner.bind(value.py()).ge(Self::extract_union(value)?)
     }
     fn __add__<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.concat(value)
@@ -212,7 +181,7 @@ impl Seq {
         other: &Bound<'py, PySequence>,
     ) -> PyResult<Bound<'py, PySequence>> {
         let py = other.py();
-        let tup = extract_union::<Self>(other)?
+        let tup = Self::extract_union(other)?
             .map_left(|o| o.get().inner.bind(py))
             .into_inner()
             .as_sequence();
@@ -252,7 +221,7 @@ impl Seq {
     }
     fn concat<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let other_seq = extract_union::<Self>(other)?
+        let other_seq = Self::extract_union(other)?
             .map_left(|o| o.get().inner.bind(py))
             .into_inner()
             .as_sequence();
@@ -392,7 +361,7 @@ impl Vec {
 
     fn __eq__(&self, other: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = other.py();
-        let o = extract_union::<Self>(&other)?
+        let o = Self::extract_union(&other)?
             .map_left(|o| o.get().inner.bind(py))
             .into_inner();
         self.inner.bind(py).eq(&o).or(Ok(false))
@@ -407,7 +376,7 @@ impl Vec {
 
     fn __add__<'py>(slf: Bound<'py, Self>, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
-        extract_union::<Self>(&value)?
+        Self::extract_union(&value)?
             .map_left(|vec| vec.get().inner.bind(py))
             .into_inner()
             .as_sequence()
@@ -455,7 +424,7 @@ impl Vec {
 
     fn __gt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let other = extract_union::<Self>(&value)?
+        let other = Self::extract_union(&value)?
             .map_left(|vec| vec.get().inner.bind(py))
             .into_inner();
         self.inner.bind(py).gt(other)
@@ -463,7 +432,7 @@ impl Vec {
 
     fn __ge__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let other = extract_union::<Self>(&value)?
+        let other = Self::extract_union(&value)?
             .map_left(|vec| vec.get().inner.bind(py))
             .into_inner();
         self.inner.bind(py).ge(other)
@@ -471,7 +440,7 @@ impl Vec {
 
     fn __lt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let other = extract_union::<Self>(&value)?
+        let other = Self::extract_union(&value)?
             .map_left(|vec| vec.get().inner.bind(py))
             .into_inner();
         self.inner.bind(py).lt(other)
@@ -479,7 +448,7 @@ impl Vec {
 
     fn __le__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let other = extract_union::<Self>(&value)?
+        let other = Self::extract_union(&value)?
             .map_left(|vec| vec.get().inner.bind(py))
             .into_inner();
         self.inner.bind(py).le(other)
@@ -604,7 +573,7 @@ impl Vec {
 
     fn concat<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        extract_union::<Self>(&other)?
+        Self::extract_union(&other)?
             .map_left(|o| o.get().inner.bind(py))
             .into_inner()
             .pipe(|other| {
@@ -622,7 +591,7 @@ impl Vec {
         other: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let other = extract_union::<Self>(&other)?
+        let other = Self::extract_union(&other)?
             .map_left(|o| o.get().inner.bind(py))
             .into_inner()
             .as_sequence();
@@ -812,7 +781,7 @@ impl Set {
 #[pyclass(generic, frozen, extends=abc::PyoMutableSet)]
 pub struct SetMut {
     #[pyo3(get)]
-    inner: Py<PySet>,
+    pub inner: Py<PySet>,
 }
 #[pymethods]
 impl SetMut {
@@ -1133,7 +1102,7 @@ impl Dict {
 
     fn __eq__(&self, other: Bound<'_, PyAny>) -> bool {
         let py = other.py();
-        extract_union::<Self>(&other)
+        Self::extract_union(&other)
             .map(|x| x.map_left(|r| r.get().inner.bind(py)).into_inner())
             .and_then(|r| self.inner.bind(py).eq(r))
             .unwrap_or(false)
@@ -1145,7 +1114,7 @@ impl Dict {
 
     fn __ror__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
-        extract_union::<Self>(&value)
+        Self::extract_union(&value)
             .map(|x| x.map_left(|r| r.get().inner.bind(py)).into_inner())
             .and_then(|r| r.bitor(self.inner.bind(py)))
             .and_then(|new| unsafe { new.cast_into_unchecked::<PyDict>() }.into_pyochain())
@@ -1208,7 +1177,7 @@ impl Dict {
 
     fn union<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let rhs = extract_union::<Self>(&other)?
+        let rhs = Self::extract_union(&other)?
             .map_left(|x| x.get().inner.bind(py))
             .into_inner();
         slf.get()
@@ -1274,7 +1243,7 @@ impl Dict {
 #[inline]
 fn set_eq(left: &Bound<'_, PyAny>, right: Bound<'_, PyAny>) -> PyResult<bool> {
     let py = right.py();
-    extract_union::<Set>(&right)
+    Set::extract_union(&right)
         .map(|either| {
             either
                 .map_left(|s| s.get().inner.bind(py))
@@ -1282,7 +1251,7 @@ fn set_eq(left: &Bound<'_, PyAny>, right: Bound<'_, PyAny>) -> PyResult<bool> {
                 .as_any()
         })
         .or_else(|_| {
-            extract_union::<SetMut>(&right).map(|either| {
+            SetMut::extract_union(&right).map(|either| {
                 either
                     .map_left(|s| s.get().inner.bind(py))
                     .into_inner()
@@ -1292,7 +1261,7 @@ fn set_eq(left: &Bound<'_, PyAny>, right: Bound<'_, PyAny>) -> PyResult<bool> {
         .map_or(Ok(false), |x| left.eq(&x))
 }
 
-fn get_repr<'py>(obj: &Bound<'py, PySequence>) -> PyResult<Bound<'py, PyString>> {
+pub fn get_repr<'py>(obj: &Bound<'py, PySequence>) -> PyResult<Bound<'py, PyString>> {
     let py = obj.py();
     let length = obj.len()?;
 
@@ -1335,31 +1304,4 @@ fn py_count<'py>(
 ) -> PyResult<Bound<'py, PyAny>> {
     let py = value.py();
     obj.call_method1(intern!(py, "count"), (value,))
-}
-
-/// Extract the type of a value and check if it is one of two types, returning an `Either` with the result.\
-/// Returns a `PyErr` if the value is not one of the two types.
-/// For example, if `T` is `Vec`, this function will check if the value is a `Vec` or a `PyList`, and return either a `Ok(Vec)`, `Ok(PyList)`, or a `Err(PyTypeError)`.
-#[inline]
-fn extract_union<'py, 'r, T>(
-    value: &'r Bound<'py, PyAny>,
-) -> PyResult<Either<&'r Bound<'py, T>, &'r Bound<'py, T::Inner>>>
-where
-    T: PyWrapper,
-{
-    value
-        .cast_exact::<T>()
-        .map(Either::Left)
-        .or_else(|_| value.cast_exact::<T::Inner>().map(Either::Right))
-        .map_err(|_| {
-            let py = value.py();
-            let wrapper_name = T::type_object(py).name().unwrap();
-            let inner_name = T::Inner::type_object(py).name().unwrap();
-            let value_name = value.get_type().name().unwrap();
-            let txt = format!(
-                "Input must be a '{}'' or a '{}', got '{}'",
-                wrapper_name, inner_name, value_name
-            );
-            PyTypeError::new_err(txt)
-        })
 }

@@ -1,11 +1,13 @@
 mod abc;
 mod args;
+mod collections;
 mod errors;
 mod hasher;
 mod in_place_number_capi;
 mod mixins;
 mod option;
 mod pylibs;
+mod pywrapper;
 mod result;
 mod seq;
 mod tools;
