@@ -15,7 +15,9 @@ The mixins are simple, implementation-agnostic classes that can be added to any 
 
 """
 
-from ..rs import Checkable, Fluent, Pipe, Tap  # noqa: I001
+from pyochain import rs as __rs  # ruff:ignore[unsorted-imports, unused-import]  # pyright: ignore[reportUnusedImport]
+
+from ._mixins import Checkable, Fluent, Pipe, Tap  # pyright: ignore[reportMissingModuleSource]
 from ._iterable import PyoIterable  # pyright: ignore[reportMissingModuleSource]
 from ._collection import (  # pyright: ignore[reportMissingModuleSource]
     PyoContainer,

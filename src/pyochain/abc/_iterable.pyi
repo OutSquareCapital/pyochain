@@ -2,8 +2,7 @@ from abc import abstractmethod
 from collections.abc import Iterator
 from typing import Protocol, runtime_checkable
 
-from pyochain.abc import PyoIterator
-from pyochain.rs import Checkable, Fluent
+from pyochain.abc import Checkable, Fluent, PyoIterator
 
 @runtime_checkable
 class PyoIterable[T](Checkable, Fluent, Protocol):

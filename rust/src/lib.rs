@@ -117,10 +117,6 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<errors::OptionUnwrapError>()?;
     m.add_class::<errors::ResultUnwrapError>()?;
     m.add_class::<result::PyochainResult>()?;
-    m.add_class::<mixins::Checkable>()?;
-    m.add_class::<mixins::Fluent>()?;
-    m.add_class::<mixins::PyoPipe>()?;
-    m.add_class::<mixins::PyoTap>()?;
 
     let range_mod = PyModule::new(py, "_range")?;
     m.add_submodule(&range_mod)?;
@@ -162,6 +158,12 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     tools_mod.add_class::<tools::Peekable>()?;
 
     let abc_mod = PyModule::new(py, "abc")?;
+
+    let mixins_mod = PyModule::new(py, "_mixins")?;
+    mixins_mod.add_class::<mixins::Checkable>()?;
+    mixins_mod.add_class::<mixins::Fluent>()?;
+    mixins_mod.add_class::<mixins::PyoPipe>()?;
+    mixins_mod.add_class::<mixins::PyoTap>()?;
     let iterable_mod = PyModule::new(py, "_iterable")?;
     iterable_mod.add_class::<abc::PyoIterable>()?;
     let iterator_mod = PyModule::new(py, "_iterator")?;
@@ -193,6 +195,7 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     abc_mod.add_submodule(&sequences_mod)?;
     abc_mod.add_submodule(&sets_mod)?;
     abc_mod.add_submodule(&mappings_mod)?;
+    abc_mod.add_submodule(&mixins_mod)?;
     m.add_submodule(&abc_mod)?;
     let sys_mods = py.import("sys")?.getattr("modules")?;
     sys_mods.set_item("pyochain._range", range_mod)?;
@@ -207,6 +210,7 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     sys_mods.set_item("pyochain.abc._sequences", sequences_mod)?;
     sys_mods.set_item("pyochain.abc._sets", sets_mod)?;
     sys_mods.set_item("pyochain.abc._mappings", mappings_mod)?;
+    sys_mods.set_item("pyochain.abc._mixins", mixins_mod)?;
     register_all(py)
 }
 fn register_all(py: Python<'_>) -> PyResult<()> {
