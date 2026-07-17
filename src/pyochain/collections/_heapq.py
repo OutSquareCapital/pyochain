@@ -3,7 +3,7 @@ from __future__ import annotations
 import heapq as hq
 from abc import ABC, abstractmethod
 from heapq import (
-    _heapify_max as heapify_max,  # pyright: ignore[reportPrivateUsage]  # noqa: PLC2701
+    _heapify_max as heapify_max,  # pyright: ignore[reportPrivateUsage]  # ruff:ignore[import-private-name]
 )
 from typing import TYPE_CHECKING, Self, SupportsIndex, overload, override
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from _typeshed import SupportsRichComparison
 
 
-class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):  # noqa: PLW1641
+class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):  # ruff:ignore[eq-without-hash]
     """Abstract base class for heaps."""
 
     _inner: list[T]

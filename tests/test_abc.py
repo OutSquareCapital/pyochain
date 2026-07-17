@@ -245,7 +245,7 @@ def test_set() -> None:
     assert py_ok <= pyo_ok
     assert py_ok >= pyo_ok
     assert py_ok == pyo_ok
-    assert not (py_ok != pyo_ok)  # noqa: SIM202
+    assert not (py_ok != pyo_ok)  # ruff:ignore[negate-not-equal-op]
     assert not (py_ok < pyo_ok)
     assert not (py_ok > pyo_ok)
     assert pyo_ok & py_ok == {1, 2, 3}
@@ -269,7 +269,7 @@ def test_set_from_iterable_note() -> None:
     assert "PyoSet" in exc_info.value.__notes__[0]
 
 
-def test_mutable_set() -> None:  # noqa: PLR0915
+def test_mutable_set() -> None:  # ruff:ignore[too-many-statements]
     class _PyFail(AbstractMutableSet[int]): ...  # pyright: ignore[reportImplicitAbstractClass]
 
     class _PyOk(_ImplMutableSet, AbstractMutableSet[int]): ...
@@ -294,7 +294,7 @@ def test_mutable_set() -> None:  # noqa: PLR0915
     assert py_ok <= pyo_ok
     assert py_ok >= pyo_ok
     assert py_ok == pyo_ok
-    assert not (py_ok != pyo_ok)  # noqa: SIM202
+    assert not (py_ok != pyo_ok)  # ruff:ignore[negate-not-equal-op]
     assert not (py_ok < pyo_ok)
     assert not (py_ok > pyo_ok)
     assert pyo_ok & py_ok == {1, 2, 3}
@@ -354,7 +354,7 @@ def test_mapping() -> None:
     _assert_iter_eq(py_ok.items(), pyo_ok.items())
     assert py_ok.get(0) == pyo_ok.get(0)
     assert py_ok == pyo_ok
-    assert not (py_ok != pyo_ok)  # noqa: SIM202
+    assert not (py_ok != pyo_ok)  # ruff:ignore[negate-not-equal-op]
 
 
 def test_mutable_mapping() -> None:
@@ -390,7 +390,7 @@ def test_mutable_mapping() -> None:
     _assert_iter_eq(py_ok.values(), pyo_ok.values())
     _assert_iter_eq(py_ok.items(), pyo_ok.items())
     assert py_ok.get(0) == pyo_ok.get(0)
-    assert not (py_ok != pyo_ok)  # noqa: SIM202
+    assert not (py_ok != pyo_ok)  # ruff:ignore[negate-not-equal-op]
     assert py_ok.pop(1) == pyo_ok.pop(1)
     assert py_ok.popitem() == pyo_ok.popitem()
     assert py_ok.setdefault(0, 0) == pyo_ok.setdefault(0, 0)

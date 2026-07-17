@@ -1,31 +1,31 @@
 [lint]
     external = ["DOC"]
     ignore = [
-        "C413",                    # Can be a behavioral change who introduce subtle bugs
-        "C417",
-        "COM812",
-        "COM812",
-        "CPY001",
-        "D401",
-        "E501",
-        "FIX002",
-        "FIX004",
-        "PLC0415",
-        "PLR0904",
-        "PLR2004",
-        "PYI021",
-        "S101",
-        "S301",                    # We don't care about cryptographic security
-        "S307",                    # We don't care about eval
-        "S311",                    # We don't care about cryptographic security
-        "S403",                    # We don't care about insecure modules
-        "S608",
-        "SLF001",
-        "T201",
-        "TC006",
-        "TD002",
-        "TD003",
-        "TID252",
+        "unnecessary-call-around-sorted",                    # Can be a behavioral change who introduce subtle bugs
+        "unnecessary-map",
+        "missing-trailing-comma",
+        "missing-trailing-comma",
+        "missing-copyright-notice",
+        "non-imperative-mood",
+        "line-too-long",
+        "line-contains-todo",
+        "line-contains-hack",
+        "import-outside-top-level",
+        "too-many-public-methods",
+        "magic-value-comparison",
+        "docstring-in-stub",
+        "assert",
+        "suspicious-pickle-usage",                    # We don't care about cryptographic security
+        "suspicious-eval-usage",                    # We don't care about eval
+        "suspicious-non-cryptographic-random-usage",                    # We don't care about cryptographic security
+        "suspicious-pickle-import",                    # We don't care about insecure modules
+        "hardcoded-sql-expression",
+        "private-member-access",
+        "print",
+        "runtime-cast-value",
+        "missing-todo-author",
+        "missing-todo-link",
+        "relative-imports",
         "pytest-raises-too-broad", # We don't care about pytest raises too broad
         "subclass-builtin",        # We know what we do when subclassing builtins
     ]
@@ -38,12 +38,12 @@
     [lint.pydocstyle]
         convention = "google"
     [lint.per-file-ignores]
-        "t.py" = ["ANN201", "D100", "D101", "D102", "D103"]
+        "t.py" = ["missing-return-type-undocumented-public-function", "undocumented-public-module", "undocumented-public-class", "undocumented-public-method", "undocumented-public-function"]
         "tests/*" = [
             "D",       # We don't want to document tests
             "DOC",     # We don't want to document tests
-            "DOC201",
-            "DTZ001",
-            "FBT001",
-            "PLC2801", # Dunders calls are more convenients in tests
+            "docstring-missing-returns",
+            "call-datetime-without-tzinfo",
+            "boolean-type-hint-positional-argument",
+            "unnecessary-dunder-call", # Dunders calls are more convenients in tests
         ]

@@ -333,7 +333,7 @@ def test_islice() -> None:
         assert list(sl.islice(stop=stop, reverse=True)) == values[:stop][::-1]
 
 
-def test_irange() -> None:  # noqa: C901
+def test_irange() -> None:  # ruff:ignore[complex-structure]
     sl = SortedList[int]()
     sl.reset(7)
 

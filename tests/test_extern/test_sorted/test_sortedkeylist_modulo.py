@@ -414,7 +414,7 @@ def test_islice() -> None:
         assert list(sl.islice(stop=stop, reverse=True)) == values[:stop][::-1]
 
 
-def test_irange() -> None:  # noqa: C901
+def test_irange() -> None:  # ruff:ignore[complex-structure]
     values = sorted(range(100), key=modulo)
 
     for load in range(5, 16):
@@ -453,7 +453,7 @@ def test_irange() -> None:  # noqa: C901
             assert temp == values[: (end + 1) * 10]
 
 
-def test_irange_key() -> None:  # noqa: C901
+def test_irange_key() -> None:  # ruff:ignore[complex-structure]
     values = sorted(range(100), key=modulo)
 
     for load in range(5, 16):

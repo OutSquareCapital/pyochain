@@ -10,7 +10,7 @@ from .._utils import get_repr
 from ..abc import PyoMutableSet
 
 
-class StableSet[T](PyoMutableSet[T]):  # noqa: PLW1641
+class StableSet[T](PyoMutableSet[T]):  # ruff:ignore[eq-without-hash]
     """A mutable collection of unique elements which remember their insertion order.
 
     Uses a `dict` as the underlying data structure to maintain insertion order while ensuring uniqueness of elements.

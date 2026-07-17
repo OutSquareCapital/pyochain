@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 type IntoDeque[T] = deque[T] | Deque[T]
 
 
-class Deque[T](PyoMutableSequence[T]):  # noqa: PLW1641
+class Deque[T](PyoMutableSequence[T]):  # ruff:ignore[eq-without-hash]
     """Returns a new `Deque` object initialized left-to-right (using append()) from `data`.
 
     Deques are a generalization of stacks and queues (the name is pronounced “deck” and is short for “double-ended queue”).

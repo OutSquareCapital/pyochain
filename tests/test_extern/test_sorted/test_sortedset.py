@@ -173,7 +173,7 @@ def test_islice() -> None:
         assert list(ss.islice(stop=stop, reverse=True)) == values[:stop][::-1]
 
 
-def test_irange() -> None:  # noqa: C901
+def test_irange() -> None:  # ruff:ignore[complex-structure]
     ss = SortedSet[int]()
     ss.reset(7)
 
@@ -218,7 +218,7 @@ def test_irange() -> None:  # noqa: C901
     assert values == list(ss.irange(None, 53, (True, False)))
 
 
-def test_irange_key() -> None:  # noqa: C901
+def test_irange_key() -> None:  # ruff:ignore[complex-structure]
     values = sorted(range(100), key=modulo)
 
     for load in range(5, 16):

@@ -11,9 +11,6 @@ from pyochain import (
     Null,
     Ok,
     Option,
-    PyoItemsView,
-    PyoKeysView,
-    PyoValuesView,
     Range,
     Result,
     Seq,
@@ -45,8 +42,10 @@ if TYPE_CHECKING:
     from pyochain.abc import (
         PyoCollection,
         PyoContainer,
+        PyoItemsView,
         PyoIterable,
         PyoIterator,
+        PyoKeysView,
         PyoMapping,
         PyoMappingView,
         PyoMutableMapping,
@@ -55,6 +54,7 @@ if TYPE_CHECKING:
         PyoSequence,
         PyoSet,
         PyoSized,
+        PyoValuesView,
     )
 
 
@@ -124,7 +124,7 @@ def check_option_transpose() -> None:
     _c: Result[Option[int], int] = NONE.transpose()
 
 
-def check_option_literal() -> None:  # noqa: C901
+def check_option_literal() -> None:  # ruff:ignore[complex-structure]
     lit = _get_cat()
     # Inferred as Option[str]
     opt_infered = option(lit)

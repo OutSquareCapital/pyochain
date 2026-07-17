@@ -55,7 +55,7 @@ def test_slots() -> None:
 def _check_slots(obj: object) -> bool:
     try:
         _x = obj.__dict__
-        return False  # noqa: TRY300
+        return False  # ruff:ignore[try-consider-else]
     except AttributeError:
         return True
 

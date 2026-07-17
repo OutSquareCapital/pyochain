@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 type SetKeyFunc[T, OT: SupportsHashableAndRichComparison] = KeyFunc[T, OT]
 
 
-class SortedSet[T: SupportsHashableAndRichComparison](  # noqa: PLW1641
+class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without-hash]
     PyoMutableSet[T], PyoSequence[T], SortedCollection[T]
 ):
     """Sorted set is a sorted mutable set.
@@ -171,7 +171,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # noqa: PLW1641
     def _fromset(self, values: set[T]) -> Self:
         sorted_set = self.__new__(self.__class__)
         sorted_set._set = values
-        sorted_set.__init__()  # noqa: PLC2801
+        sorted_set.__init__()  # ruff:ignore[unnecessary-dunder-call]
         return sorted_set
 
     @override

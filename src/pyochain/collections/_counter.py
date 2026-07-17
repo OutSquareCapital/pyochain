@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 # TODO: once in stubs, add overload to new when kwargs is passed to infer PyoCounter[str]
 
 
-class PyoCounter[T](PyoMutableMapping[T, int]):  # noqa: PLW1641
+class PyoCounter[T](PyoMutableMapping[T, int]):  # ruff:ignore[eq-without-hash]
     """Dict subclass for counting hashable items.
 
     Sometimes called a bag or multiset.

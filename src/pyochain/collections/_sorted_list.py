@@ -219,7 +219,7 @@ class SortedCollection[T](ABC):
         """
 
 
-class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollection[T]):  # noqa: PLW1641
+class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollection[T]):  # ruff:ignore[eq-without-hash]
     """Sorted list is a sorted mutable sequence.
 
     Sorted list values are maintained in sorted order.
@@ -893,7 +893,7 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
     @overload
     def __getitem__(self, index: slice) -> list[T]: ...
     @override
-    def __getitem__(self, index: int | slice) -> T | list[T]:  # noqa: C901, PLR0911, PLR0912, PLR0914
+    def __getitem__(self, index: int | slice) -> T | list[T]:  # ruff:ignore[complex-structure, too-many-return-statements, too-many-branches, too-many-locals]
         """Lookup value at `index` in sorted list.
 
         ``sl.__getitem__(index)`` <==> ``sl[index]``
@@ -1074,7 +1074,7 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
 
         return self._islice(min_pos, min_idx, max_pos, max_idx, reverse=reverse)
 
-    def _islice(  # noqa: PLR0911
+    def _islice(  # ruff:ignore[too-many-return-statements]
         self, min_pos: int, min_idx: int, max_pos: int, max_idx: int, *, reverse: bool
     ) -> Iterator[T]:
         """Return an iterator that slices sorted list using two index pairs.
@@ -1140,7 +1140,7 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
         )
 
     @override
-    def irange(  # noqa: PLR0912
+    def irange(  # ruff:ignore[too-many-branches]
         self,
         minimum: T | None = None,
         maximum: T | None = None,
@@ -1398,7 +1398,7 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
         return val
 
     @override
-    def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:  # noqa: C901
+    def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:  # ruff:ignore[complex-structure]
         len_ = self._len
 
         if not len_:
@@ -2133,7 +2133,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
             reverse=reverse,
         )
 
-    def irange_key(  # noqa: PLR0912
+    def irange_key(  # ruff:ignore[too-many-branches]
         self,
         min_key: OT | None = None,
         max_key: OT | None = None,
@@ -2355,7 +2355,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         return self.__class__(self, key=self._key)
 
     @override
-    def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:  # noqa: C901, PLR0912
+    def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:  # ruff:ignore[complex-structure, too-many-branches]
         len_ = self._len
 
         if not len_:

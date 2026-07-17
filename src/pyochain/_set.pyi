@@ -2,7 +2,6 @@ from collections.abc import Iterable, Iterator
 from collections.abc import Set as AbstractSet
 from typing import Final, Self, override
 
-from ._utils import no_doctest
 from .abc import PyoMutableSet, PyoSet
 
 # TODO: address the following note from official python docs regarding Set performance, with benchmarks:
@@ -49,20 +48,9 @@ class Set[T](PyoSet[T]):
     """
 
     __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
-    _inner: Final[frozenset[T]]
+    inner: Final[frozenset[T]]
 
     def __init__(self, data: Iterable[T]) -> None: ...
-    @property
-    @no_doctest
-    def inner(self) -> frozenset[T]:
-        """The underlying `frozenset` data structure.
-
-        Useful when interoperating with functions that require a standard Python `frozenset`.
-
-        Returns:
-            frozenset[T]: The underlying frozenset.
-        """
-
     @override
     def __contains__(self, item: object) -> bool: ...
     @override
@@ -288,7 +276,7 @@ class SetMut[T](PyoMutableSet[T]):
     """
 
     __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
-    _inner: set[T]
+    inner: Final[set[T]]
 
     def __init__(self, data: Iterable[T]) -> None: ...
     @override
@@ -527,17 +515,6 @@ class SetMut[T](PyoMutableSet[T]):
             False
 
             ```
-        """
-
-    @property
-    @no_doctest
-    def inner(self) -> set[T]:
-        """The underlying `set` data structure.
-
-        Useful when interoperating with functions that require a standard Python `set`.
-
-        Returns:
-            set[T]: The underlying set.
         """
 
     @staticmethod

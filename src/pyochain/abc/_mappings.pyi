@@ -45,7 +45,7 @@ _K = TypeVar("_K")
 _K_co = TypeVar("_K_co", covariant=True)
 _V_co = TypeVar("_V_co", covariant=True)
 
-class PyoMapping(PyoCollection[_K], Mapping[_K, _V_co], Generic[_K, _V_co]):  # pyright: ignore[reportImplicitAbstractClass]  # noqa: UP046
+class PyoMapping(PyoCollection[_K], Mapping[_K, _V_co], Generic[_K, _V_co]):  # pyright: ignore[reportImplicitAbstractClass]  # ruff:ignore[non-pep695-generic-class]
     """Extends `PyoCollection[K]` and `collections.abc.Mapping[K, V]`.
 
     Serves as a base class for pyochain mappings, such as `Dict`.
@@ -195,7 +195,7 @@ class PyoItemsView(  # pyright: ignore[reportUnsafeMultipleInheritance]
     PyoMappingView,
     PyoSet[tuple[_K_co, _V_co]],
     ItemsView[_K_co, _V_co],
-    Generic[_K_co, _V_co],  # noqa: UP046
+    Generic[_K_co, _V_co],  # ruff:ignore[non-pep695-generic-class]
 ):
     """A view of the items (key-value pairs) in a pyochain mapping.
 

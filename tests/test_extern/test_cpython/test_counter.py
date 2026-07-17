@@ -73,7 +73,7 @@ class CounterSubclassWithGet(PyoCounter[object]):
         return PyoCounter[object].get(self, key, default)
 
 
-def test_basics() -> None:  # noqa: PLR0915
+def test_basics() -> None:  # ruff:ignore[too-many-statements]
     c = PyoCounter("abcaba")
     assert c == PyoCounter({"a": 3, "b": 2, "c": 1})
     assert c == PyoCounter(a=3, b=2, c=1)
@@ -284,7 +284,7 @@ def test_copying() -> None:
     # have a repr/eval round-trip
     words = PyoCounter(["which", "witch", "had", "which", "witches", "wrist", "watch"])
 
-    def check(dup: Any) -> None:  # noqa: ANN401  # pyright: ignore[reportAny]
+    def check(dup: Any) -> None:  # ruff:ignore[any-type]  # pyright: ignore[reportAny]
         msg = f"\ncopy: {dup}\nwords: {words}"
         assert dup is not words, msg
         assert dup == words

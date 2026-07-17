@@ -365,7 +365,7 @@ def _op_for_n(x: Sequence[int]) -> int:
 def test_comparison_operator() -> None:
     # Issue 3051: Make sure heapq works with both __lt__
     # For python 3.0, __le__ alone is not enough
-    class _HasX:  # noqa: B903
+    class _HasX:  # ruff:ignore[class-as-data-structure]
         def __init__(self, x: float) -> None:
             self.x: float = x
 
@@ -401,7 +401,7 @@ class LenOnly:
 
 
 @final
-class CmpErr:  # noqa: PLW1641
+class CmpErr:  # ruff:ignore[eq-without-hash]
     """Dummy element that always raises an error during comparison."""
 
     @override

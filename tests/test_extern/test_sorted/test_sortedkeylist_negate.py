@@ -346,7 +346,7 @@ def test_islice() -> None:
         assert list(slt.islice(stop=stop, reverse=True)) == values[:stop][::-1]
 
 
-def test_irange() -> None:  # noqa: C901
+def test_irange() -> None:  # ruff:ignore[complex-structure]
     slt = SortedKeyList[float, float](key=operator.neg)
     slt.reset(7)
 
@@ -647,7 +647,7 @@ def test_gte() -> None:
     assert not (this >= that)
 
 
-def negate(val: int) -> int:  # noqa: FURB118
+def negate(val: int) -> int:  # ruff:ignore[reimplemented-operator]
     return -val
 
 

@@ -59,7 +59,7 @@ MAPPING_METHODS: Params[Mapping[int, int]] = Dict({
     "items": lambda a: tuple(a.items()),
 })
 KEYS_VIEW_METHODS: Params[Mapping[int, int]] = Dict({
-    "contains": lambda a: 2 in a.keys(),  # noqa: SIM118
+    "contains": lambda a: 2 in a.keys(),  # ruff:ignore[in-dict-keys]
     "len": lambda a: len(a.keys()),
     "iter": lambda a: tuple(iter(a.keys())),
 })
@@ -77,13 +77,13 @@ ITEMS_VIEW_METHODS: Params[Mapping[int, int]] = Dict({
 SEQUENCE_METHODS: Params[Sequence[object]] = Dict({
     "count": lambda a: a.count(2),
     "index": lambda a: a.index(2),
-    "get_item_1": lambda a: a[1],  # noqa: FURB118
-    "get_item_neg_1": lambda a: a[-1],  # noqa: FURB118
+    "get_item_1": lambda a: a[1],  # ruff:ignore[reimplemented-operator]
+    "get_item_neg_1": lambda a: a[-1],  # ruff:ignore[reimplemented-operator]
     "reversed": lambda x: tuple(reversed(x)),
 })
 
 TUP_METHODS: Params[tuple[int, ...]] = Dict({
-    "add": lambda a: a + (4, 5),  # noqa: RUF005
+    "add": lambda a: a + (4, 5),  # ruff:ignore[collection-literal-concatenation]
     "mul": lambda a: a * 2,
     "lt": lambda a: a < (1, 2, 4),
     "le": lambda a: a <= PY_TUP,
@@ -93,7 +93,7 @@ TUP_METHODS: Params[tuple[int, ...]] = Dict({
     "ne": lambda a: a != PY_TUP,
 })
 LIST_METHODS: Params[list[int]] = Dict({
-    "add": lambda a: a + [4, 5],  # noqa: RUF005
+    "add": lambda a: a + [4, 5],  # ruff:ignore[collection-literal-concatenation]
     "mul": lambda a: a * 2,
     "lt": lambda a: a < [1, 2, 4],
     "le": lambda a: a <= PY_LIST,

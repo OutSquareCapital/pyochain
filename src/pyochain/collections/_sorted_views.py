@@ -17,7 +17,7 @@ _K_co = TypeVar("_K_co", covariant=True, bound=SupportsHashableAndRichComparison
 _V_co = TypeVar("_V_co", covariant=True)
 
 
-class SortedKeysView(PyoKeysView[_K_co], PyoSequence[_K_co], Generic[_K_co]):  # noqa: UP046
+class SortedKeysView(PyoKeysView[_K_co], PyoSequence[_K_co], Generic[_K_co]):  # ruff:ignore[non-pep695-generic-class]
     """Sorted keys view is a dynamic view of the sorted dict's keys.
 
     When the sorted dict's keys change, the view reflects those changes.
@@ -81,7 +81,7 @@ class SortedKeysView(PyoKeysView[_K_co], PyoSequence[_K_co], Generic[_K_co]):  #
 class SortedItemsView(
     PyoItemsView[_K_co, _V_co],
     PyoSequence[tuple[_K_co, _V_co]],
-    Generic[_K_co, _V_co],  # noqa: UP046
+    Generic[_K_co, _V_co],  # ruff:ignore[non-pep695-generic-class]
 ):
     """Sorted items view is a dynamic view of the sorted dict's items.
 
@@ -152,7 +152,7 @@ class SortedItemsView(
         return _view_delitem(self, index)
 
 
-class SortedValuesView(PyoValuesView[_V_co], PyoSequence[_V_co], Generic[_V_co]):  # noqa: UP046
+class SortedValuesView(PyoValuesView[_V_co], PyoSequence[_V_co], Generic[_V_co]):  # ruff:ignore[non-pep695-generic-class]
     """Sorted values view is a dynamic view of the sorted dict's values.
 
     When the sorted dict's values change, the view reflects those changes.

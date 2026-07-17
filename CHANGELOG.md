@@ -43,6 +43,7 @@ The classes from the `sortedcontainers` library have been ported to pyochain, wi
 - **Removal**: `Iter::__bool__` has been removed. Use `PyoIterator::peekable::__bool__` instead. This avoid implicit `tee` use.
 - **Removal**: `Iter::{from_ref, cloned}` have been removed. Use `a, b = x.tee()` instead (for `cloned`), or `a, b = Iter(x).tee()` (for `from_ref`), where *a* is the original `Iterator`, and *b* the cloned one.
 - `{Vec, Seq}` dunders (like `__add__`, `__mul__`, etc...) now return new instances of the same class, instead of the underlying data structure, i.e `Vec + Vec` returns a `Vec`, not a `list`. The only exception as of now remain for `__getitem__` when a `slice` is used.
+- **imports**: views-like classes are now back to being only imported from `abc` module, to stay consistent with python stdlib.
 
 ### 🆕 New features
 

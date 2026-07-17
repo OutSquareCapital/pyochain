@@ -5,13 +5,13 @@ from typing import Any
 from pyochain.collections import SortedDict, SortedKeyList, SortedList, SortedSet
 
 
-def check_sorted_key_list(data: SortedKeyList[Any, Any]) -> None:  # noqa: C901, PLR0912
+def check_sorted_key_list(data: SortedKeyList[Any, Any]) -> None:  # ruff:ignore[complex-structure, too-many-branches]
     """Check invariants of sorted-key list.
 
     Runtime complexity: `O(n)`
 
     """
-    try:  # noqa: PLW0717
+    try:  # ruff:ignore[too-many-statements-in-try-clause]
         assert data._load >= 4  # pyright: ignore[reportPrivateUsage]
         assert len(data._maxes) == len(data._lists) == len(data._keys)  # pyright: ignore[reportPrivateUsage]
         assert data._len == sum(len(sublist) for sublist in data._lists)  # pyright: ignore[reportPrivateUsage]
@@ -103,8 +103,8 @@ def check_sorted_dict(data: SortedDict[Any, Any]) -> None:
     assert all(key in data for key in list_)  # pyright: ignore[reportAny]
 
 
-def check_sorted_list(data: SortedList[Any]) -> None:  # noqa: C901
-    try:  # noqa: PLW0717
+def check_sorted_list(data: SortedList[Any]) -> None:  # ruff:ignore[complex-structure]
+    try:  # ruff:ignore[too-many-statements-in-try-clause]
         assert data._load >= 4  # pyright: ignore[reportPrivateUsage]
         assert len(data._maxes) == len(data._lists)  # pyright: ignore[reportPrivateUsage]
         assert data._len == sum(len(sublist) for sublist in data._lists)  # pyright: ignore[reportPrivateUsage]

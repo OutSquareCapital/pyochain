@@ -31,7 +31,7 @@ class _OpenRange:
 # TODO: See if collections should have dedicated slice views methods
 
 
-class SliceView[T](PyoSequence[T]):  # noqa: PLW1641
+class SliceView[T](PyoSequence[T]):  # ruff:ignore[eq-without-hash]
     """A zero-copy, composable slice view over any `collections::abc::Sequence`.
 
     A `SliceView` presents a live window into an existing sequence:
