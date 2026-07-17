@@ -489,3 +489,18 @@ pub mod functools {
         REDUCE.import(py, FUNCTOOLS, "reduce")?.call1(args)
     }
 }
+pub mod collections {
+    use super::*;
+    pub mod abc {
+
+        use super::*;
+
+        const ABC: &str = "collections.abc";
+        const SET: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+        #[inline(always)]
+        #[allow(non_snake_case)]
+        pub fn Set(py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
+            SET.import(py, ABC, "Set").map(|x| x.to_owned())
+        }
+    }
+}
