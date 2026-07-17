@@ -1,33 +1,36 @@
 [lint]
     external = ["DOC"]
     ignore = [
-        "unnecessary-call-around-sorted",                    # Can be a behavioral change who introduce subtle bugs
-        "unnecessary-map",
-        "missing-trailing-comma",
-        "missing-trailing-comma",
-        "missing-copyright-notice",
-        "non-imperative-mood",
-        "line-too-long",
-        "line-contains-todo",
-        "line-contains-hack",
-        "import-outside-top-level",
-        "too-many-public-methods",
-        "magic-value-comparison",
-        "docstring-in-stub",
         "assert",
-        "suspicious-pickle-usage",                    # We don't care about cryptographic security
-        "suspicious-eval-usage",                    # We don't care about eval
-        "suspicious-non-cryptographic-random-usage",                    # We don't care about cryptographic security
-        "suspicious-pickle-import",                    # We don't care about insecure modules
+        "docstring-in-stub",
         "hardcoded-sql-expression",
-        "private-member-access",
-        "print",
-        "runtime-cast-value",
+        "import-outside-top-level",
+        "line-contains-hack",
+        "line-contains-todo",
+        "line-too-long",
+        "magic-value-comparison",
+        "missing-copyright-notice",
         "missing-todo-author",
         "missing-todo-link",
+        "missing-trailing-comma",
+        "missing-trailing-comma",
+        "non-imperative-mood",
+        "print",
+        "private-member-access",
+        "pytest-raises-too-broad",                   # We don't care about pytest raises too broad
         "relative-imports",
-        "pytest-raises-too-broad", # We don't care about pytest raises too broad
-        "subclass-builtin",        # We know what we do when subclassing builtins
+        "runtime-cast-value",
+        "subclass-builtin",                          # We know what we do when subclassing builtins
+        "subprocess-popen-with-shell-equals-true",
+        "subprocess-without-shell-equals-true",
+        "suspicious-eval-usage",                     # We don't care about eval
+        "suspicious-non-cryptographic-random-usage", # We don't care about cryptographic security
+        "suspicious-pickle-import",                  # We don't care about insecure modules
+        "suspicious-pickle-usage",                   # We don't care about cryptographic security
+        "suspicious-subprocess-import",
+        "too-many-public-methods",
+        "unnecessary-call-around-sorted",            # Can be a behavioral change who introduce subtle bugs
+        "unnecessary-map",
     ]
 
     preview = true
@@ -38,12 +41,18 @@
     [lint.pydocstyle]
         convention = "google"
     [lint.per-file-ignores]
-        "t.py" = ["missing-return-type-undocumented-public-function", "undocumented-public-module", "undocumented-public-class", "undocumented-public-method", "undocumented-public-function"]
+        "t.py" = [
+            "missing-return-type-undocumented-public-function",
+            "undocumented-public-class",
+            "undocumented-public-function",
+            "undocumented-public-method",
+            "undocumented-public-module",
+        ]
         "tests/*" = [
-            "D",       # We don't want to document tests
-            "DOC",     # We don't want to document tests
-            "docstring-missing-returns",
-            "call-datetime-without-tzinfo",
+            "D",                                     # We don't want to document tests
+            "DOC",                                   # We don't want to document tests
             "boolean-type-hint-positional-argument",
-            "unnecessary-dunder-call", # Dunders calls are more convenients in tests
+            "call-datetime-without-tzinfo",
+            "docstring-missing-returns",
+            "unnecessary-dunder-call",               # Dunders calls are more convenients in tests
         ]
