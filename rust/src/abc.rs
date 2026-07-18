@@ -2,7 +2,7 @@ use crate::mixins::Checkable;
 use crate::option::{PyNull, PySome};
 use crate::result::{PyoErr, PyoOk};
 use crate::seq::{SetMut, IntoPyochain, Vec as PyoVec};
-use crate::pyo3_ext::{prelude::*, pylibs };
+use crate::pyo3_ext::{prelude::*, pylibs, types::PyAbstractSet };
 use crate::tools;
 use pyo3::exceptions::{
     PyIndexError, PyKeyError, PyNotImplementedError, PyStopIteration, PyValueError,
@@ -1705,7 +1705,7 @@ impl PyoSet {
 
     fn __and__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = slf.py();
-        if !other.is_instance(&pylibs::collections::abc::Set(py)?)? {
+        if !other.is_instance_of::<PyAbstractSet>() {
             return Err(PyNotImplementedError::new_err(""));
         }
         slf.try_iter()?
@@ -1722,7 +1722,7 @@ impl PyoSet {
     }
     fn __or__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = slf.py();
-        if !other.is_instance(&pylibs::collections::abc::Set(py)?)? {
+        if !other.is_instance_of::<PyAbstractSet>() {
             return Err(PyNotImplementedError::new_err(""));
         }
         slf.try_iter()?
@@ -1738,7 +1738,7 @@ impl PyoSet {
 
     fn __sub__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = slf.py();
-        if !other.is_instance(&pylibs::collections::abc::Set(py)?)? {
+        if !other.is_instance_of::<PyAbstractSet>() {
             return Err(PyNotImplementedError::new_err(""));
         }
         other
@@ -1770,7 +1770,7 @@ impl PyoSet {
             .try_iter()
             .map_err(|_| PyNotImplementedError::new_err(""))
             .and_then(|x| {
-                if !other.is_instance(&pylibs::collections::abc::Set(py)?)? {
+                if !other.is_instance_of::<PyAbstractSet>() {
                     Self::_py_from_iterable(&cls, x.as_any())?.try_iter()
                 } else {
                     Ok(x)
@@ -1788,8 +1788,7 @@ impl PyoSet {
     }
 
     fn __xor__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        let py = slf.py();
-        if other.is_instance(&pylibs::collections::abc::Set(py)?)? {
+        if other.is_instance_of::<PyAbstractSet>() {
             other
                 .try_iter()
                 .map_err(|_| PyNotImplementedError::new_err(""))
@@ -1817,16 +1816,14 @@ impl PyoSet {
         Self::__xor__(slf, other)
     }
     fn __eq__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
-        let py = slf.py();
-        if other.is_instance(&pylibs::collections::abc::Set(py)?)? {
+        if other.is_instance_of::<PyAbstractSet>() {
             Ok(slf.len()? == other.len()? && slf.le(other)?)
         } else {
             Err(PyNotImplementedError::new_err(""))
         }
     }
     fn __le__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
-        let py = slf.py();
-        if !other.is_instance(&pylibs::collections::abc::Set(py)?)? {
+        if !other.is_instance_of::<PyAbstractSet>() {
             return Err(PyNotImplementedError::new_err(""));
         }
         if slf.len()? > other.len()? {
@@ -1841,8 +1838,7 @@ impl PyoSet {
     }
 
     fn __ge__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
-        let py = slf.py();
-        if !other.is_instance(&pylibs::collections::abc::Set(py)?)? {
+        if !other.is_instance_of::<PyAbstractSet>() {
             return Err(PyNotImplementedError::new_err(""));
         }
         if slf.len()? < other.len()? {
@@ -1857,8 +1853,7 @@ impl PyoSet {
     }
 
     fn __lt__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
-        let py = slf.py();
-        if other.is_instance(&pylibs::collections::abc::Set(py)?)? {
+        if other.is_instance_of::<PyAbstractSet>() {
             Ok(slf.len()? < other.len()? && slf.le(other)?)
         } else {
             Err(PyNotImplementedError::new_err(""))
@@ -1866,8 +1861,7 @@ impl PyoSet {
     }
 
     fn __gt__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
-        let py = slf.py();
-        if other.is_instance(&pylibs::collections::abc::Set(py)?)? {
+        if other.is_instance_of::<PyAbstractSet>() {
             Ok(slf.len()? > other.len()? && slf.ge(other)?)
         } else {
             Err(PyNotImplementedError::new_err(""))
@@ -2168,7 +2162,7 @@ impl PyoMutableSet {
         if it.is(&slf) {
             slf.call_method0(intern!(py, "clear"))?;
         } else {
-            let pyset = if !it.is_instance(&pylibs::collections::abc::Set(py)?)? {
+            let pyset = if !it.is_instance_of::<PyAbstractSet>() {
                 PyoSet::_py_from_iterable(&cls, &it)?.into_any()
             } else {
                 it

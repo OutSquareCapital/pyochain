@@ -10,14 +10,16 @@ mod seq;
 mod sliceview;
 mod tools;
 
+use crate::pyo3_ext::{
+    prelude::*,
+    types::{PyAbstractSet, PyMutableSequence},
+};
 use pyo3::{
     PyTypeInfo, intern,
     prelude::*,
     types::{PyMapping, PySequence, PyType},
 };
 use tap::prelude::*;
-
-use crate::pyo3_ext::pylibs::PyMutableSequence;
 
 macro_rules! impl_py_pipe {
     ($type:ty) => {
@@ -188,7 +190,7 @@ fn register_all(py: Python<'_>) -> PyResult<()> {
         &abc::PyoMappingView::type_object(py),
     )?;
     PyMutableSequence::register::<abc::PyoMutableSequence>(py)?;
-    register(&abc_mod, "Set", &abc::PyoSet::type_object(py))?;
+    PyAbstractSet::register::<abc::PyoSet>(py)?;
     register(&abc_mod, "MutableSet", &abc::PyoMutableSet::type_object(py))?;
     PySequence::register::<abc::PyoSequence>(py)?;
     register(&abc_mod, "KeysView", &abc::PyoKeysView::type_object(py))?;

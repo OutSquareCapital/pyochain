@@ -1,6 +1,6 @@
 use crate::{
     abc::{self, PyoABC},
-    pyo3_ext::{prelude::*, pylibs},
+    pyo3_ext::{prelude::*, types::PyAbstractSet},
     seq::{IntoPyochain, SetMut, get_repr},
 };
 
@@ -57,7 +57,7 @@ impl StableSet {
 
     fn __eq__(&self, other: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = other.py();
-        if other.is_instance(&pylibs::collections::abc::Set(py)?)? {
+        if other.is_instance_of::<PyAbstractSet>() {
             self.py_keys(py)?.eq(other)
         } else if let Ok(either) = Self::extract_union(&other) {
             either
