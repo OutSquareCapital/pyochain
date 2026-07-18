@@ -857,35 +857,36 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
         :raises IndexError: if index out of range
 
         """
-        if isinstance(index, slice):
-            start, stop, step = index.indices(self._len)
+        match index:
+            case slice():
+                start, stop, step = index.indices(self._len)
 
-            if step == 1 and start < stop:
-                if start == 0 and stop == self._len:
-                    return self.clear()
-                if self._len <= 8 * (stop - start):
-                    values = self.__getitem__(slice(None, start))
-                    if stop < self._len:
-                        values += self.__getitem__(slice(stop, None))
-                    self.clear()
-                    return self.update(values)
+                if step == 1 and start < stop:
+                    if start == 0 and stop == self._len:
+                        return self.clear()
+                    if self._len <= 8 * (stop - start):
+                        values = self.__getitem__(slice(None, start))
+                        if stop < self._len:
+                            values += self.__getitem__(slice(stop, None))
+                        self.clear()
+                        return self.update(values)
 
-            indices = range(start, stop, step)
+                indices = range(start, stop, step)
 
-            # Delete items from greatest index to least so
-            # that the indices remain valid throughout iteration.
+                # Delete items from greatest index to least so
+                # that the indices remain valid throughout iteration.
 
-            if step > 0:
-                indices = reversed(indices)
+                if step > 0:
+                    indices = reversed(indices)
 
-            pos_, delete = self._pos, self._delete
+                pos_, delete = self._pos, self._delete
 
-            for idc in indices:
-                pos, idx = pos_(idc)
-                delete(pos, idx)
-        else:
-            pos, idx = self._pos(index)
-            self._delete(pos, idx)
+                for idc in indices:
+                    pos, idx = pos_(idc)
+                    delete(pos, idx)
+            case _:
+                pos, idx = self._pos(index)
+                self._delete(pos, idx)
         return None
 
     @overload
@@ -920,69 +921,71 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
             IndexError: if index out of range
 
         """
-        if isinstance(index, slice):
-            start, stop, step = index.indices(self._len)
+        match index:
+            case slice():
+                start, stop, step = index.indices(self._len)
 
-            if step == 1 and start < stop:
-                # Whole slice optimization: start to stop slices the whole
-                # sorted list.
+                if step == 1 and start < stop:
+                    # Whole slice optimization: start to stop slices the whole
+                    # sorted list.
 
-                if start == 0 and stop == self._len:
-                    return _collapse_lists(self._lists)
+                    if start == 0 and stop == self._len:
+                        return _collapse_lists(self._lists)
 
-                start_pos, start_idx = self._pos(start)
-                start_list = self._lists[start_pos]
-                stop_idx = start_idx + stop - start
+                    start_pos, start_idx = self._pos(start)
+                    start_list = self._lists[start_pos]
+                    stop_idx = start_idx + stop - start
 
-                # Small slice optimization: start index and stop index are
-                # within the start list.
+                    # Small slice optimization: start index and stop index are
+                    # within the start list.
 
-                if len(start_list) >= stop_idx:
-                    return start_list[start_idx:stop_idx]
+                    if len(start_list) >= stop_idx:
+                        return start_list[start_idx:stop_idx]
 
-                if stop == self._len:
-                    stop_pos = len(self._lists) - 1
-                    stop_idx = len(self._lists[stop_pos])
+                    if stop == self._len:
+                        stop_pos = len(self._lists) - 1
+                        stop_idx = len(self._lists[stop_pos])
+                    else:
+                        stop_pos, stop_idx = self._pos(stop)
+
+                    prefix = self._lists[start_pos][start_idx:]
+                    middle = self._lists[(start_pos + 1) : stop_pos]
+                    result = reduce(operator.iadd, middle, prefix)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+                    result += self._lists[stop_pos][:stop_idx]
+
+                    return result
+
+                if step == -1 and start > stop:
+                    result = self.__getitem__(slice(stop + 1, start + 1))
+                    result.reverse()
+                    return result
+
+                # Return a list because a negative step could
+                # reverse the order of the items and this could
+                # be the desired behavior.
+
+                indices = range(start, stop, step)
+                return [self.__getitem__(index) for index in indices]
+            case _:
+                if self._len:
+                    if index == 0:
+                        return self._lists[0][0]
+                    if index == -1:
+                        return self._lists[-1][-1]
                 else:
-                    stop_pos, stop_idx = self._pos(stop)
+                    msg = "list index out of range"
+                    raise IndexError(msg)
 
-                prefix = self._lists[start_pos][start_idx:]
-                middle = self._lists[(start_pos + 1) : stop_pos]
-                result = reduce(operator.iadd, middle, prefix)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
-                result += self._lists[stop_pos][:stop_idx]
+                if 0 <= index < len(self._lists[0]):
+                    return self._lists[0][index]
 
-                return result
+                len_last = len(self._lists[-1])
 
-            if step == -1 and start > stop:
-                result = self.__getitem__(slice(stop + 1, start + 1))
-                result.reverse()
-                return result
+                if -len_last < index < 0:
+                    return self._lists[-1][len_last + index]
 
-            # Return a list because a negative step could
-            # reverse the order of the items and this could
-            # be the desired behavior.
-
-            indices = range(start, stop, step)
-            return [self.__getitem__(index) for index in indices]
-        if self._len:
-            if index == 0:
-                return self._lists[0][0]
-            if index == -1:
-                return self._lists[-1][-1]
-        else:
-            msg = "list index out of range"
-            raise IndexError(msg)
-
-        if 0 <= index < len(self._lists[0]):
-            return self._lists[0][index]
-
-        len_last = len(self._lists[-1])
-
-        if -len_last < index < 0:
-            return self._lists[-1][len_last + index]
-
-        pos, idx = self._pos(index)
-        return self._lists[pos][idx]
+                pos, idx = self._pos(index)
+                return self._lists[pos][idx]
 
     @overload
     def __setitem__(self, index: int, value: T) -> None: ...
@@ -1559,13 +1562,17 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
         :return: true if sorted list is equal to `other`
 
         """
-        if not isinstance(other, Sequence):
-            return NotImplemented
+        match other:
+            case Sequence():
+                if self._len != len(other):
+                    return False
 
-        if self._len != len(other):
-            return False
+                return all(
+                    alpha == beta for alpha, beta in zip(self, other, strict=False)
+                )
 
-        return all(alpha == beta for alpha, beta in zip(self, other, strict=False))
+            case _:
+                return NotImplemented
 
     @override
     def __ne__(self, other: object) -> NotImplementedType | bool:
@@ -1581,13 +1588,16 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
         :return: true if sorted list is not equal to `other`
 
         """
-        if not isinstance(other, Sequence):
-            return NotImplemented
+        match other:
+            case Sequence():
+                if self._len != len(other):
+                    return True
 
-        if self._len != len(other):
-            return True
-
-        return any(alpha != beta for alpha, beta in zip(self, other, strict=False))
+                return any(
+                    alpha != beta for alpha, beta in zip(self, other, strict=False)
+                )
+            case _:
+                return NotImplemented
 
     def __lt__(self, other: object) -> NotImplementedType | bool:
         """Return true if and only if sorted list is less than `other`.
@@ -1602,14 +1612,16 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
         :return: true if sorted list is less than `other`
 
         """
-        if not isinstance(other, Sequence):
-            return NotImplemented
+        match other:
+            case Sequence():
+                for alpha, beta in zip(self, other, strict=False):
+                    if alpha != beta:
+                        return alpha < beta  # pyright: ignore[reportOperatorIssue, reportReturnType, reportUnknownVariableType]
 
-        for alpha, beta in zip(self, other, strict=False):
-            if alpha != beta:
-                return alpha < beta  # pyright: ignore[reportOperatorIssue, reportReturnType, reportUnknownVariableType]
+                return self._len < len(other)
 
-        return self._len < len(other)
+            case _:
+                return NotImplemented
 
     def __gt__(self, other: object) -> NotImplementedType | bool:
         """Return true if and only if sorted list is greater than `other`.
@@ -1624,14 +1636,16 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
         :return: true if sorted list is greater than `other`
 
         """
-        if not isinstance(other, Sequence):
-            return NotImplemented
+        match other:
+            case Sequence():
+                for alpha, beta in zip(self, other, strict=False):
+                    if alpha != beta:
+                        return alpha > beta  # pyright: ignore[reportOperatorIssue, reportReturnType, reportUnknownVariableType]
 
-        for alpha, beta in zip(self, other, strict=False):
-            if alpha != beta:
-                return alpha > beta  # pyright: ignore[reportOperatorIssue, reportReturnType, reportUnknownVariableType]
+                return self._len > len(other)
 
-        return self._len > len(other)
+            case _:
+                return NotImplemented
 
     def __le__(self, other: object) -> NotImplementedType | bool:
         """Return true if and only if sorted list is less than or equal to `other`.
@@ -1646,14 +1660,16 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
         :return: true if sorted list is less than or equal to `other`
 
         """
-        if not isinstance(other, Sequence):
-            return NotImplemented
+        match other:
+            case Sequence():
+                for alpha, beta in zip(self, other, strict=False):
+                    if alpha != beta:
+                        return alpha <= beta  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
-        for alpha, beta in zip(self, other, strict=False):
-            if alpha != beta:
-                return alpha <= beta  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+                return self._len <= len(other)
 
-        return self._len <= len(other)
+            case _:
+                return NotImplemented
 
     def __ge__(self, other: object) -> NotImplementedType | bool:
         """Return true if and only if sorted list is greater than or equal to `other`.
@@ -1668,14 +1684,15 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
         :return: true if sorted list is greater than or equal to `other`
 
         """
-        if not isinstance(other, Sequence):
-            return NotImplemented
+        match other:
+            case Sequence():
+                for alpha, beta in zip(self, other, strict=False):
+                    if alpha != beta:
+                        return alpha >= beta  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
-        for alpha, beta in zip(self, other, strict=False):
-            if alpha != beta:
-                return alpha >= beta  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
-
-        return self._len >= len(other)
+                return self._len >= len(other)
+            case _:
+                return NotImplemented
 
     @override
     def __reduce__(self) -> tuple[type[Self], tuple[list[T]]]:

@@ -141,12 +141,13 @@ class SortedItemsView(
         mapping = self._mapping
         mapping_list = mapping._list  # pyright: ignore[reportPrivateUsage]
 
-        if isinstance(index, slice):
-            keys = mapping_list[index]
-            return [(key, mapping[key]) for key in keys]
-
-        key = mapping_list[index]
-        return key, mapping[key]
+        match index:
+            case slice():
+                keys = mapping_list[index]
+                return [(key, mapping[key]) for key in keys]
+            case int():
+                key = mapping_list[index]
+                return key, mapping[key]
 
     def __delitem__(self, index: int | slice) -> None:
         return _view_delitem(self, index)
@@ -201,10 +202,11 @@ class SortedValuesView(PyoValuesView[_V_co], PyoSequence[_V_co], Generic[_V_co])
         mapping = self._mapping
         mapping_list = mapping._list  # pyright: ignore[reportPrivateUsage]
 
-        if isinstance(index, slice):
-            return [mapping[key] for key in mapping_list[index]]  # pyright: ignore[reportAny]
-
-        return mapping[mapping_list[index]]
+        match index:
+            case slice():
+                return [mapping[key] for key in mapping_list[index]]  # pyright: ignore[reportAny]
+            case int():
+                return mapping[mapping_list[index]]
 
     def __delitem__(self, index: int | slice) -> None:
         return _view_delitem(self, index)
@@ -242,11 +244,12 @@ def _view_delitem[K: SupportsHashableAndRichComparison, V](
     mapping = self._mapping  # pyright: ignore[reportPrivateUsage]
     list_ = mapping._list  # pyright: ignore[reportPrivateUsage]
     dict_delitem = dict[K, V].__delitem__
-    if isinstance(index, slice):
-        keys = list_[index]
-        del list_[index]
-        for key in keys:
+    match index:
+        case slice():
+            keys = list_[index]
+            del list_[index]
+            for key in keys:
+                dict_delitem(mapping, key)
+        case int():
+            key = list_.pop(index)
             dict_delitem(mapping, key)
-    else:
-        key = list_.pop(index)
-        dict_delitem(mapping, key)

@@ -552,12 +552,11 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
             super().update(m, **kwargs)
             self._list.update(super().__iter__())
             return
-
-        if not kwargs and isinstance(m, dict):
-            pairs: dict[K, V] = m  # pyright: ignore[reportUnknownVariableType, reportRedeclaration, reportAssignmentType]
-        else:
-            pairs: dict[K, V] = dict(m, **kwargs)
-
+        match m, kwargs:
+            case dict(), {}:
+                pairs: dict[K, V] = m  # pyright: ignore[reportAssignmentType, reportUnknownVariableType]
+            case _:
+                pairs = dict(m, **kwargs)
         if (10 * len(pairs)) > len(self):
             super().update(pairs)
             self._list.clear()

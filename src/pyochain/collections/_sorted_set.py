@@ -246,69 +246,82 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         """
         set_ = self._set
         list_ = self._list
-        if isinstance(index, slice):
-            values = list_[index]
-            set_.difference_update(values)
-        else:
-            value = list_[index]
-            set_.remove(value)
+        match index:
+            case slice():
+                values = list_[index]
+                set_.difference_update(values)
+            case int():
+                value = list_[index]
+                set_.remove(value)
         del list_[index]
 
     @override
     def __eq__(self, other: object) -> bool | NotImplementedType:
-        if isinstance(other, SortedSet):
-            return self._set == other._set  # pyright: ignore[reportUnknownMemberType]
-        if isinstance(other, AbstractSet):
-            return self._set == other
-        return NotImplemented
+        match other:
+            case SortedSet():
+                return self._set == other._set
+            case AbstractSet():
+                return self._set == other
+            case _:
+                return NotImplemented
 
     @override
     def __ne__(self, other: object) -> bool | NotImplementedType:
-        if isinstance(other, SortedSet):
-            return self._set != other._set  # pyright: ignore[reportUnknownMemberType]
-        if isinstance(other, AbstractSet):
-            return self._set != other
-        return NotImplemented
+        match other:
+            case SortedSet():
+                return self._set != other._set
+            case AbstractSet():
+                return self._set != other
+            case _:
+                return NotImplemented
 
     @override
     def __lt__(
         self, other: AbstractSet[object] | SortedSet[T] | object
     ) -> bool | NotImplementedType:
-        if isinstance(other, SortedSet):
-            return self._set < other._set  # pyright: ignore[reportUnknownMemberType]
-        if isinstance(other, AbstractSet):
-            return self._set < other
-        return NotImplemented
+        match other:
+            case SortedSet():
+                return self._set < other._set
+            case AbstractSet():
+                return self._set < other
+            case _:
+                return NotImplemented
 
     @override
     def __gt__(
         self, other: AbstractSet[object] | SortedSet[T] | object
     ) -> bool | NotImplementedType:
-        if isinstance(other, SortedSet):
-            return self._set > other._set  # pyright: ignore[reportUnknownMemberType]
-        if isinstance(other, AbstractSet):
-            return self._set > other
-        return NotImplemented
+        match other:
+            case SortedSet():
+                return self._set > other._set
+            case AbstractSet():
+                return self._set > other
+            case _:
+                return NotImplemented
 
     @override
     def __le__(
         self, other: AbstractSet[object] | SortedSet[T] | object
     ) -> bool | NotImplementedType:
-        if isinstance(other, SortedSet):
-            return self._set <= other._set  # pyright: ignore[reportUnknownMemberType]
-        if isinstance(other, AbstractSet):
-            return self._set <= other
-        return NotImplemented
+        match other:
+            case SortedSet():
+                return self._set <= other._set
+            case AbstractSet():
+                return self._set <= other
+            case _:
+                return NotImplemented
 
     @override
     def __ge__(
         self, other: AbstractSet[object] | SortedSet[T] | object
     ) -> bool | NotImplementedType:
-        if isinstance(other, SortedSet):
-            return self._set >= other._set  # pyright: ignore[reportUnknownMemberType]
-        if isinstance(other, AbstractSet):
-            return self._set >= other
-        return NotImplemented
+        match other:
+            case SortedSet():
+                return self._set >= other._set
+            case AbstractSet():
+                return self._set >= other
+            case _:
+                return NotImplemented
 
     @override
     def __len__(self) -> int:

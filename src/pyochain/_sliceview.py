@@ -137,9 +137,8 @@ class SliceView[T](PyoSequence[T]):  # ruff:ignore[eq-without-hash]
     @override
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Sequence):
-            return len(self) == len(other) and all(
-                a == b for a, b in zip(self, other, strict=False)
-            )
+            elem_eq = all(a == b for a, b in zip(self, other, strict=False))
+            return len(self) == len(other) and elem_eq
         return False
 
     @override
@@ -158,20 +157,21 @@ class SliceView[T](PyoSequence[T]):  # ruff:ignore[eq-without-hash]
     def __getitem__(self, index: slice) -> SliceView[T]: ...
     @override
     def __getitem__(self, index: SupportsIndex | slice) -> SliceView[T] | T:
-        if isinstance(index, slice):
-            # Compose slices using Python's range slicing — O(1), exact.
-            sub = self._current_range()[index]
-            return self.__class__._from_range(self._inner, sub)
-
-        cr = self._current_range()
-        length = len(cr)
-        index = index.__index__()
-        if index < 0:
-            index += length
-        if not (0 <= index < length):
-            msg = "sliceview index out of range"
-            raise IndexError(msg)
-        return self._inner[cr[index]]
+        current_range = self._current_range()
+        match index:
+            case slice():
+                # Compose slices using Python's range slicing — O(1), exact.
+                sub = current_range[index]
+                return self.__class__._from_range(self._inner, sub)
+            case _:
+                length = len(current_range)
+                idx = index.__index__()
+                if idx < 0:
+                    idx += length
+                if not (0 <= idx < length):
+                    msg = "sliceview index out of range"
+                    raise IndexError(msg)
+                return self._inner[current_range[idx]]
 
     @overload
     def __setitem__(self, index: SupportsIndex, value: T) -> None: ...
@@ -208,9 +208,11 @@ class SliceView[T](PyoSequence[T]):  # ruff:ignore[eq-without-hash]
     def _current_range(self) -> range:
         """Return a concrete ``range`` clamped to the current base length."""
         r = self._range
-        if isinstance(r, _OpenRange):
-            return r.resolve(len(self._inner))
-        return r
+        match r:
+            case _OpenRange():
+                return r.resolve(len(self._inner))
+            case range():
+                return r
 
     def advance(self, n: int) -> Self:
         """Shift the view's window forward by *n* index positions in-place.
