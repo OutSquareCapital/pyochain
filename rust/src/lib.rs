@@ -1,15 +1,13 @@
 mod abc;
-mod args;
 mod collections;
 mod errors;
 mod hasher;
-mod in_place_number_capi;
 mod mixins;
 mod option;
-mod pylibs;
-mod pywrapper;
+mod pyo3_ext;
 mod result;
 mod seq;
+mod sliceview;
 mod tools;
 
 use pyo3::{
@@ -19,6 +17,8 @@ use pyo3::{
 };
 use tap::prelude::*;
 
+use crate::pyo3_ext::pylibs::PyMutableSequence;
+
 macro_rules! impl_py_pipe {
     ($type:ty) => {
         #[pymethods]
@@ -27,11 +27,11 @@ macro_rules! impl_py_pipe {
             fn py_pipe(
                 slf: &Bound<'_, Self>,
                 func: &Bound<'_, PyAny>,
-                args: &args::Args<'_>,
-                kwargs: Option<&args::Kwargs<'_>>,
+                args: &pyo3_ext::args::Args<'_>,
+                kwargs: Option<&pyo3_ext::args::Kwargs<'_>>,
             ) -> PyResult<Py<PyAny>> {
                 (
-                    args::Concatenate::concat(func, &slf, args, kwargs)?.unbind().pipe(Ok)
+                    pyo3_ext::args::Concatenate::concat(func, &slf, args, kwargs)?.unbind().pipe(Ok)
                 )
             }
         }
@@ -49,10 +49,10 @@ macro_rules! impl_tap {
     fn tap(
         slf: &Bound<'_, Self>,
         f: &Bound<'_, PyAny>,
-        args: &args::Args<'_>,
-        kwargs: Option<&args::Kwargs<'_>>,
+        args: &pyo3_ext::args::Args<'_>,
+        kwargs: Option<&pyo3_ext::args::Kwargs<'_>>,
     ) -> PyResult<Py<PyAny>> {
-        args::Concatenate::concat(f, &slf, args, kwargs)?;
+        pyo3_ext::args::Concatenate::concat(f, &slf, args, kwargs)?;
         slf.to_owned().into_any().unbind().pipe(Ok)
     }}};
     ($first:ty, $($rest:ty),+ $(,)?) => {
@@ -143,6 +143,7 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<tools::GroupBy>()?;
     m.add_class::<tools::Iter>()?;
     m.add_class::<tools::Peekable>()?;
+    m.add_class::<sliceview::SliceView>()?;
 
     let abc_mod = PyModule::new(py, "abc")?;
     abc_mod.add_class::<mixins::Checkable>()?;
@@ -186,11 +187,7 @@ fn register_all(py: Python<'_>) -> PyResult<()> {
         "MappingView",
         &abc::PyoMappingView::type_object(py),
     )?;
-    register(
-        &abc_mod,
-        "MutableSequence",
-        &abc::PyoMutableSequence::type_object(py),
-    )?;
+    PyMutableSequence::register::<abc::PyoMutableSequence>(py)?;
     register(&abc_mod, "Set", &abc::PyoSet::type_object(py))?;
     register(&abc_mod, "MutableSet", &abc::PyoMutableSet::type_object(py))?;
     PySequence::register::<abc::PyoSequence>(py)?;
