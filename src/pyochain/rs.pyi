@@ -18,6 +18,7 @@ from ._dict import Dict
 from ._range import Range
 from ._seq import Seq
 from ._set import Set, SetMut
+from ._sliceview import SliceView
 from ._tools import Iter, Peekable
 from ._vec import Vec
 
@@ -29,6 +30,7 @@ __all__ = [
     "Seq",
     "Set",
     "SetMut",
+    "SliceView",
     "Vec",
 ]
 

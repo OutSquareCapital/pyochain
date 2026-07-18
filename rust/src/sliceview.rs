@@ -270,9 +270,9 @@ impl SliceView {
         let py = slf.py();
         let b_len = slf.inner.bind(py).len()? as isize;
         let cr = slf._current_range(py)?;
-        let new_start = 0.max(cr.start()? + n.min(b_len));
+        let new_start = (cr.start()? + n).clamp(0, b_len);
         let delta = new_start - cr.start()?;
-        let new_stop = 0.max(cr.stop()? + delta.min(b_len));
+        let new_stop = (cr.stop()? + delta).clamp(0, b_len);
         slf.range = PyRange::new_with_step(py, new_start, new_stop, cr.step()?)
             .map(Bound::unbind)
             .map(Either::Left)?;
