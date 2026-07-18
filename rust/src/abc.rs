@@ -1,10 +1,9 @@
-use crate::args::{Args, ConcatWith, Concatenate, Kwargs};
 use crate::mixins::Checkable;
 use crate::option::{PyNull, PySome};
 use crate::result::{PyoErr, PyoOk};
 use crate::seq::{SetMut, IntoPyochain, Vec as PyoVec};
-use crate::tools as tls;
-use crate::{pylibs, tools };
+use crate::pyo3_ext::{prelude::*, pylibs };
+use crate::tools;
 use pyo3::exceptions::{
     PyIndexError, PyKeyError, PyNotImplementedError, PyStopIteration, PyValueError,
 };
@@ -76,8 +75,8 @@ impl PyoIterable {
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
         Self::build_init()
     }
-    fn iter<'py>(slf: Bound<'py, Self>) -> PyResult<Py<tls::Iter>> {
-        slf.into_any().pipe(tls::Iter::new)
+    fn iter<'py>(slf: Bound<'py, Self>) -> PyResult<Py<tools::Iter>> {
+        slf.into_any().pipe(tools::Iter::new)
     }
 }
 #[pyclass(subclass, frozen, generic, extends=PyoIterable)]
@@ -117,7 +116,7 @@ impl PyoIterator {
         args: Args<'_>,
         kwargs: Option<Kwargs<'_>>,
     ) -> PyResult<Bound<'py, Self>> {
-        cls.call1((tls::OnceWith::new(func, args, kwargs),))
+        cls.call1((tools::OnceWith::new(func, args, kwargs),))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
     #[pyo3(signature = (f, *args, **kwargs))]
@@ -128,7 +127,7 @@ impl PyoIterator {
         args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Bound<'py, Self>> {
-        cls.call1((tls::FromFn::new(f, args, kwargs),))
+        cls.call1((tools::FromFn::new(f, args, kwargs),))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
     #[pyo3(signature = (obj, n=None))]
@@ -147,7 +146,7 @@ impl PyoIterator {
         first: Bound<'py, PyAny>,
         succ: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
-        cls.call1((tls::Successors::new(first, succ),))
+        cls.call1((tools::Successors::new(first, succ),))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
     #[classmethod]
@@ -835,7 +834,7 @@ impl PyoIterator {
         element: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .and_then(|x| tls::Intersperse::new(x, element.unbind()))
+            .and_then(|x| tools::Intersperse::new(x, element.unbind()))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -929,7 +928,7 @@ impl PyoIterator {
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
             .and_then(|x| pylibs::itertools::group_by(&x, key))
-            .map(tls::GroupBy::new)
+            .map(tools::GroupBy::new)
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -969,7 +968,7 @@ impl PyoIterator {
         predicate: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .map(|x| tls::FilterStar::new(x, predicate))
+            .map(|x| tools::FilterStar::new(x, predicate))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -988,7 +987,7 @@ impl PyoIterator {
         func: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .map(|x| tls::FilterMap::new(x, func))
+            .map(|x| tools::FilterMap::new(x, func))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -997,7 +996,7 @@ impl PyoIterator {
         func: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .map(|x| tls::FilterMapStar::new(x, func))
+            .map(|x| tools::FilterMapStar::new(x, func))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -1057,7 +1056,7 @@ impl PyoIterator {
         funcs: &Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .map(|x| tls::MapJuxt::new(x, funcs))
+            .map(|x| tools::MapJuxt::new(x, funcs))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -1066,7 +1065,7 @@ impl PyoIterator {
         func: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .map(|x| tls::MapWhile::new(x, func))
+            .map(|x| tools::MapWhile::new(x, func))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -1078,7 +1077,7 @@ impl PyoIterator {
     ) -> PyResult<Bound<'py, Self>> {
         let py = slf.py();
         slf.try_iter()
-            .and_then(|x| tls::MapWindow::new(x, length))
+            .and_then(|x| tools::MapWindow::new(x, length))
             .and_then(|x| x.into_bound_py_any(py))
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
             .and_then(|x| pylibs::builtins::map(func, &x))
@@ -1092,7 +1091,7 @@ impl PyoIterator {
     ) -> PyResult<Bound<'py, Self>> {
         let py = slf.py();
         slf.try_iter()
-            .and_then(|x| tls::MapWindow::new(x, length))
+            .and_then(|x| tools::MapWindow::new(x, length))
             .and_then(|x| x.into_bound_py_any(py))
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
             .and_then(|x| pylibs::itertools::map_star(func, x))
@@ -1142,10 +1141,10 @@ impl PyoIterator {
             .map(|x| x?.unbind().pipe(PySome::new).into_bound_py_any(py))
             .unwrap_or_else(|| PyNull::get(py).into_bound_py_any(py))
     }
-    fn peekable<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, tls::Peekable>> {
+    fn peekable<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, tools::Peekable>> {
         let py = slf.py();
         slf.try_iter()
-            .and_then(tls::Peekable::new)
+            .and_then(tools::Peekable::new)
             .map(|x| x.into_bound(py))
     }
     fn partition<'py>(
@@ -1195,7 +1194,7 @@ impl PyoIterator {
         func: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .map(|x| tls::Scan::new(x, initial, func))
+            .map(|x| tools::Scan::new(x, initial, func))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -1247,7 +1246,7 @@ impl PyoIterator {
     }
     fn tail<'py>(slf: &Bound<'py, Self>, n: usize) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .and_then(|x| tls::Tail::new(x, n))
+            .and_then(|x| tools::Tail::new(x, n))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -1285,13 +1284,13 @@ impl PyoIterator {
     }
     fn unique<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .and_then(tls::UniqueIdentity::new)
+            .and_then(tools::UniqueIdentity::new)
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
     fn unique_by<'py>(slf: Bound<'py, Self>, key: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .and_then(|iter| tls::UniqueKey::new(iter, key))
+            .and_then(|iter| tools::UniqueKey::new(iter, key))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -1300,8 +1299,8 @@ impl PyoIterator {
             .and_then(|data| pylibs::itertools::tee(data, 2))
             .map(|iterators| {
                 (
-                    tls::Unzip::new(&iterators, 0),
-                    tls::Unzip::new(&iterators, 1),
+                    tools::Unzip::new(&iterators, 0),
+                    tools::Unzip::new(&iterators, 1),
                 )
             })
             .map(|(left, right)| {
@@ -1320,7 +1319,7 @@ impl PyoIterator {
     }
     fn with_position<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .map(|x| tls::WithPosition::new(x))
+            .map(|x| tools::WithPosition::new(x))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -1342,7 +1341,7 @@ impl PyoIterator {
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
             .and_then(|x| pylibs::itertools::zip_longest(&x, others))
-            .map(tls::ZipLongest::new)
+            .map(tools::ZipLongest::new)
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -1448,11 +1447,11 @@ impl PyoReversible {
         PyoIterable::build_init().add_subclass(Self)
     }
     /// We use unsafe code here because calling `reversed` with `PyOnceLock` pattern is 2x slower than pure python for some reason.
-    fn rev(slf: Bound<'_, Self>) -> PyResult<Py<tls::Iter>> {
+    fn rev(slf: Bound<'_, Self>) -> PyResult<Py<tools::Iter>> {
         slf.as_any()
             .pipe(pylibs::builtins::reversed)
             .into_any()
-            .pipe(|x| tls::Iter::new(x))
+            .pipe(|x| tools::Iter::new(x))
     }
 }
 
@@ -1547,11 +1546,11 @@ impl PyoSequence {
             }
         }
     }
-    fn rev(slf: Bound<'_, Self>) -> PyResult<Py<tls::Iter>> {
+    fn rev(slf: Bound<'_, Self>) -> PyResult<Py<tools::Iter>> {
         slf.as_any()
             .pipe(pylibs::builtins::reversed)
             .into_any()
-            .pipe(|x| tls::Iter::new(x))
+            .pipe(|x| tools::Iter::new(x))
     }
 }
 
@@ -1650,24 +1649,24 @@ impl PyoMutableSequence {
         predicate: Bound<'_, PyAny>,
         start: usize,
         end: Option<usize>,
-    ) -> PyResult<Py<tls::Iter>> {
+    ) -> PyResult<Py<tools::Iter>> {
         let py = slf.py();
         unsafe { slf.cast_into_unchecked::<PySequence>() }
-            .pipe(|x| tls::ExtractIf::new(x, predicate, start, end))?
+            .pipe(|x| tools::ExtractIf::new(x, predicate, start, end))?
             .into_bound_py_any(py)
-            .and_then(tls::Iter::new)
+            .and_then(tools::Iter::new)
     }
     #[pyo3(signature = (start=None, end=None))]
     fn drain(
         slf: Bound<'_, Self>,
         start: Option<usize>,
         end: Option<usize>,
-    ) -> PyResult<Py<tls::Iter>> {
+    ) -> PyResult<Py<tools::Iter>> {
         let py = slf.py();
         unsafe { slf.cast_into_unchecked::<PySequence>() }
-            .pipe(|x| tls::Drain::new(x, start, end))?
+            .pipe(|x| tools::Drain::new(x, start, end))?
             .into_bound_py_any(py)
-            .and_then(tls::Iter::new)
+            .and_then(tools::Iter::new)
     }
 }
 #[pyclass(subclass, frozen, generic, extends=PyoCollection)]
@@ -1976,13 +1975,13 @@ impl PyoValuesView {
         Ok(false)
     }
 
-    fn __iter__(slf: Bound<'_, Self>) -> PyResult<tls::ValuesViewIterator> {
+    fn __iter__(slf: Bound<'_, Self>) -> PyResult<tools::ValuesViewIterator> {
         let py = slf.py();
         slf.get()
             ._mapping
             .clone_ref(py)
             .into_bound(py)
-            .pipe(tls::ValuesViewIterator::new)
+            .pipe(tools::ValuesViewIterator::new)
     }
 }
 
@@ -2087,13 +2086,13 @@ impl PyoItemsView {
         }
     }
 
-    fn __iter__(slf: Bound<'_, Self>) -> PyResult<tls::ItemsViewIterator> {
+    fn __iter__(slf: Bound<'_, Self>) -> PyResult<tools::ItemsViewIterator> {
         let py = slf.py();
         slf.get()
             ._mapping
             .clone_ref(py)
             .into_bound(py)
-            .pipe(tls::ItemsViewIterator::new)
+            .pipe(tools::ItemsViewIterator::new)
     }
 
     fn intersection<'py>(
