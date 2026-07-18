@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Collection
-from collections.abc import Set as AbstractSet
-from typing import overload
+from typing import TYPE_CHECKING, overload
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 @overload
@@ -21,21 +22,3 @@ def no_doctest(obj: object, /) -> object:
         object: the same object, unchanged
     """
     return obj
-
-
-@no_doctest
-def get_repr(data: Collection[object]) -> str:
-    from pprint import pformat
-
-    def _repr_inner(data: Collection[object]) -> str:
-        return pformat(data, sort_dicts=False)[1:-1]
-
-    match data:
-        case AbstractSet():
-            return _repr_inner(tuple(data))
-        case _:
-            match len(data):
-                case 0:
-                    return ""
-                case _:
-                    return _repr_inner(data)
