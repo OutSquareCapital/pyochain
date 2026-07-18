@@ -5,7 +5,7 @@ use pyo3::ffi::PyTypeObject;
 /// This pattern ensure maximum performance by only importing the function or object once, and reusing it for subsequent calls.
 /// We also use unsafe casts to correct types, aggressive inlining, and `&Bound` to maximize performance.
 use pyo3::sync::PyOnceLock;
-use pyo3::types::{PyFrozenSet, PyList, PySet, PySlice, PyType};
+use pyo3::types::{PyFrozenSet, PyInt, PyList, PySet, PySlice, PyType};
 use pyo3::{PyTypeInfo, intern, prelude::*};
 
 /// All ABCs have a `register` method that can be used to register a type as a virtual subclass of the ABC.\
@@ -24,9 +24,9 @@ impl ABCRegister<'_> for PyAbstractSet {}
 
 /// Type representing the `typing.SupportsIndex` protocol.
 #[repr(transparent)]
-pub struct SupportsIndex(PyAny);
-pyobject_native_type_named!(SupportsIndex);
-unsafe impl PyTypeInfo for SupportsIndex {
+pub struct PySupportsIndex(PyAny);
+pyobject_native_type_named!(PySupportsIndex);
+unsafe impl PyTypeInfo for PySupportsIndex {
     const NAME: &'static str = "SupportsIndex";
     const MODULE: Option<&'static str> = Some("typing");
 
@@ -53,6 +53,15 @@ unsafe impl PyTypeInfo for SupportsIndex {
                     err.write_unraisable(py, Some(object));
                     false
                 })
+    }
+}
+pub trait PySupportsIndexMethods<'py> {
+    fn index(&self) -> PyResult<Bound<'py, PyInt>>;
+}
+impl<'py> PySupportsIndexMethods<'py> for Bound<'py, PySupportsIndex> {
+    fn index(&self) -> PyResult<Bound<'py, PyInt>> {
+        self.call_method0(intern!(self.py(), "__index__"))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyInt>() })
     }
 }
 /// Type representing the `collections.abc.MutableSequence` abstract base class.
