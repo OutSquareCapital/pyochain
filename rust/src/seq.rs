@@ -1,7 +1,6 @@
+use crate::abc;
 use crate::abc::PyoABC;
-use crate::in_place_number_capi::PyAnyInPlaceMethods;
-use crate::pywrapper::PyWrapper;
-use crate::{abc, pylibs};
+use crate::pyo3_ext::{prelude::*, pylibs};
 use pyo3::pyclass_init::PyClassInitializer;
 use pyo3::sync::PyOnceLock;
 use pyo3::types::{

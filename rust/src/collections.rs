@@ -1,7 +1,6 @@
 use crate::{
     abc::{self, PyoABC},
-    pylibs,
-    pywrapper::PyWrapper,
+    pyo3_ext::{prelude::*, pylibs},
     seq::{IntoPyochain, SetMut, get_repr},
 };
 

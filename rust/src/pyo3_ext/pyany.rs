@@ -4,6 +4,16 @@ use pyo3::{
     ffi,
     prelude::*,
 };
+/// Copy of internal pyo3 macro that works with generic types.
+/// Concretely allows to implement `PyAnyMethods` in one line.
+#[macro_export]
+macro_rules! pyobject_native_type_named (
+    ($name:ty $(;$generics:ident)*) => {
+        impl pyo3::types::DerefToPyAny for $name {}
+    };
+);
+
+/// Inplace binary operations API.
 #[allow(unused)]
 pub trait PyAnyInPlaceMethods<'py> {
     fn iadd<O>(&self, other: O) -> PyResult<Bound<'py, PyAny>>
