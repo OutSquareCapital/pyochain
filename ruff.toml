@@ -43,6 +43,7 @@
     [lint.per-file-ignores]
         "t.py" = [
             "missing-return-type-undocumented-public-function",
+            "undocumented-magic-method",
             "undocumented-public-class",
             "undocumented-public-function",
             "undocumented-public-method",
