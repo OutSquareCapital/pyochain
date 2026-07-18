@@ -1,16 +1,11 @@
-from __future__ import annotations
-
 from collections.abc import Iterable, Iterator
-from collections.abc import Set as AbstractSet
-from typing import Any, override
+from typing import Any, Final, override
 
-from pyochain import Set, SetMut
+from pyochain import SetMut
 
-from .._utils import get_repr
 from ..abc import PyoMutableSet
 
-
-class StableSet[T](PyoMutableSet[T]):  # ruff:ignore[eq-without-hash]
+class StableSet[T](PyoMutableSet[T]):
     """A mutable collection of unique elements which remember their insertion order.
 
     Uses a `dict` as the underlying data structure to maintain insertion order while ensuring uniqueness of elements.
@@ -42,38 +37,17 @@ class StableSet[T](PyoMutableSet[T]):  # ruff:ignore[eq-without-hash]
         ```
     """
 
-    _inner: dict[T, None]
-    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
+    _inner: Final[dict[T, None]]
 
-    def __init__(self, data: Iterable[T]) -> None:
-        self._inner = dict.fromkeys(data)
-
+    def __init__(self, data: Iterable[T]) -> None: ...
     @override
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({get_repr(self._inner.keys())})"
-
+    def __iter__(self) -> Iterator[T]: ...
     @override
-    def __iter__(self) -> Iterator[T]:
-        return iter(self._inner)
-
+    def __len__(self) -> int: ...
     @override
-    def __len__(self) -> int:
-        return len(self._inner)
-
+    def __contains__(self, item: object) -> bool: ...
     @override
-    def __contains__(self, item: object) -> bool:
-        return item in self._inner
-
-    @override
-    def __eq__(self, other: object) -> bool:
-        match other:
-            case Set() | SetMut():
-                return self._inner.keys() == other.inner  # pyright: ignore[reportUnknownMemberType]
-            case AbstractSet():
-                return self._inner.keys() == other
-            case _:
-                return False
-
+    def __eq__(self, other: object) -> bool: ...
     @staticmethod
     def from_ref[V](data: dict[V, Any]) -> StableSet[V]:
         """Create a `StableSet` from a reference to an existing `dict`.
@@ -105,14 +79,8 @@ class StableSet[T](PyoMutableSet[T]):  # ruff:ignore[eq-without-hash]
 
             ```
         """
-        instance: StableSet[V] = StableSet.__new__(StableSet)  # pyright: ignore[reportUnknownVariableType]
-        instance._inner = data
-        return instance
-
     @override
-    def add(self, value: T) -> None:
-        self._inner[value] = None
-
+    def add(self, value: T) -> None: ...
     def copy(self) -> StableSet[T]:
         """Return a shallow copy of the `StableSet`.
 
@@ -129,24 +97,14 @@ class StableSet[T](PyoMutableSet[T]):  # ruff:ignore[eq-without-hash]
 
             ```
         """
-        return StableSet.from_ref(self._inner.copy())
 
     @override
-    def discard(self, value: T) -> None:
-        del self._inner[value]
-
+    def discard(self, value: T) -> None: ...
     @override
-    def intersection(self, other: Iterable[Any]) -> SetMut[T]:
-        return SetMut.from_ref(self._inner.keys() & other)
-
+    def intersection(self, other: Iterable[Any]) -> SetMut[T]: ...
     @override
-    def union[S](self, other: Iterable[S]) -> SetMut[T | S]:
-        return SetMut.from_ref(self._inner.keys() | other)
-
+    def union[S](self, other: Iterable[S]) -> SetMut[T | S]: ...
     @override
-    def difference(self, other: Iterable[Any]) -> SetMut[T]:
-        return SetMut.from_ref(self._inner.keys() - other)
-
+    def difference(self, other: Iterable[Any]) -> SetMut[T]: ...
     @override
-    def symmetric_difference[S](self, other: Iterable[S]) -> SetMut[T | S]:
-        return SetMut.from_ref(self._inner.keys() ^ other)
+    def symmetric_difference[S](self, other: Iterable[S]) -> SetMut[T | S]: ...

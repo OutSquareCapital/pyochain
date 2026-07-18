@@ -169,6 +169,8 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     abc_mod.add_class::<abc::PyoItemsView>()?;
     abc_mod.add_class::<abc::PyoMutableMapping>()?;
     m.add_submodule(&abc_mod)?;
+    //TODO: Don't forget to add `collections` module once the rust migration is complete.
+    m.add_class::<collections::StableSet>()?;
     let sys_mods = py.import("sys")?.getattr("modules")?;
     sys_mods.set_item("pyochain.abc", abc_mod)?;
     register_all(py)

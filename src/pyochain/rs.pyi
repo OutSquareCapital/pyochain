@@ -12,6 +12,8 @@ from typing import (
 
 from pyochain.abc import Pipe, PyoIterator
 
+from ._collections import StableSet
+
 # Export for typing purposes. the private modules actually don't exist at runtime.
 # That way, we can import from rs in the public __init__
 from ._dict import Dict
@@ -31,6 +33,7 @@ __all__ = [
     "Set",
     "SetMut",
     "SliceView",
+    "StableSet",
     "Vec",
 ]
 
