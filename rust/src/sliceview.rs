@@ -49,8 +49,9 @@ impl<'py> PyInit<'py, PySlice, SliceArgs<'py>> for PySlice {
     }
 }
 
-#[pyclass(frozen, generic, extends=abc::PyoSequence)]
+#[pyclass(frozen, generic, sequence, extends=abc::PyoSequence)]
 pub struct SliceView {
+    #[pyo3(get)]
     inner: Py<PySequence>,
     range: Either<Py<PyRange>, OpenRange>,
 }
@@ -65,14 +66,15 @@ impl SliceView {
         step: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyClassInitializer<Self>> {
         let py = base.py();
+        let base_len = base.len()? as isize;
         let indices = match start {
             Some(s) => match s.cast_exact::<PySlice>() {
-                Ok(slice) => slice.indices(base.len()? as isize),
-                Err(_) => PySlice::init(py, (Some(s), stop, step))?.indices(base.len()? as isize),
+                Ok(slice) => slice.indices(base_len),
+                Err(_) => PySlice::init(py, (Some(s), stop, step))?.indices(base_len),
             },
-            None => PySlice::init(py, (start, stop, step))?.indices(base.len()? as isize),
+            None => PySlice::init(py, (start, stop, step))?.indices(base_len),
         }?;
-        let range = if indices.stop == isize::MAX {
+        let range = if indices.stop == base_len {
             OpenRange::new(indices.start, indices.step).pipe(Either::Right)
         } else {
             PyRange::new_with_step(py, indices.start, indices.stop, indices.step)?
@@ -88,7 +90,7 @@ impl SliceView {
             .pipe(Ok)
     }
     fn __iter__(&self, py: Python<'_>) -> PyResult<SliceViewIterator> {
-        SliceViewIterator::new(self._current_range(py)?)
+        SliceViewIterator::new(self._current_range(py)?, self.inner.clone_ref(py))
     }
     #[staticmethod]
     fn _from_range(
@@ -117,7 +119,7 @@ impl SliceView {
     }
 
     fn __reversed__(&self, py: Python<'_>) -> PyResult<SliceViewReverseIterator> {
-        SliceViewReverseIterator::new(&self._current_range(py)?, self.inner.clone_ref(py))
+        SliceViewReverseIterator::new(self._current_range(py)?, self.inner.clone_ref(py))
     }
 
     fn __eq__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
@@ -282,49 +284,20 @@ impl SliceView {
 }
 #[pyclass(generic)]
 struct SliceViewIterator {
-    range: Py<PyRange>,
     current_index: usize,
     length: usize,
+    range: Py<PyRange>,
+    seq: Py<PySequence>,
 }
 #[pymethods]
 impl SliceViewIterator {
     #[new]
-    fn new(range: Bound<'_, PyRange>) -> PyResult<Self> {
+    fn new(range: Bound<'_, PyRange>, seq: Py<PySequence>) -> PyResult<Self> {
         let length = range.len()?;
         Ok(Self {
+            current_index: 0,
+            length,
             range: range.unbind(),
-            current_index: 0,
-            length,
-        })
-    }
-    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
-        slf
-    }
-
-    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
-        if slf.current_index >= slf.length {
-            Ok(None)
-        } else {
-            let item = slf.range.bind(slf.py()).get_item(slf.current_index)?;
-            slf.current_index += 1;
-            Ok(Some(item))
-        }
-    }
-}
-#[pyclass(generic)]
-struct SliceViewReverseIterator {
-    current_index: usize,
-    length: usize,
-    seq: Py<PySequence>,
-}
-#[pymethods]
-impl SliceViewReverseIterator {
-    #[new]
-    fn new(range: &Bound<'_, PyRange>, seq: Py<PySequence>) -> PyResult<Self> {
-        let length = range.len()?;
-        Ok(Self {
-            current_index: 0,
-            length,
             seq,
         })
     }
@@ -336,12 +309,52 @@ impl SliceViewReverseIterator {
         if slf.current_index >= slf.length {
             Ok(None)
         } else {
-            let item = slf
-                .seq
-                .bind(slf.py())
-                .get_item(slf.length - 1 - slf.current_index);
+            let py = slf.py();
+            let base_idx = slf
+                .range
+                .bind(py)
+                .get_item(slf.current_index)?
+                .extract::<usize>()?;
+            let item = slf.seq.bind(py).get_item(base_idx)?;
             slf.current_index += 1;
-            Ok(Some(item?))
+            Ok(Some(item))
+        }
+    }
+}
+
+#[pyclass(generic)]
+struct SliceViewReverseIterator {
+    current_index: usize,
+    length: usize,
+    range: Py<PyRange>,
+    seq: Py<PySequence>,
+}
+#[pymethods]
+impl SliceViewReverseIterator {
+    #[new]
+    fn new(range: Bound<'_, PyRange>, seq: Py<PySequence>) -> PyResult<Self> {
+        let length = range.len()?;
+        Ok(Self {
+            current_index: 0,
+            length,
+            range: range.unbind(),
+            seq,
+        })
+    }
+    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
+        slf
+    }
+
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
+        if slf.current_index >= slf.length {
+            Ok(None)
+        } else {
+            let py = slf.py();
+            let rev_idx = slf.length - 1 - slf.current_index;
+            let base_idx = slf.range.bind(py).get_item(rev_idx)?.extract::<usize>()?;
+            let item = slf.seq.bind(py).get_item(base_idx)?;
+            slf.current_index += 1;
+            Ok(Some(item))
         }
     }
 }
