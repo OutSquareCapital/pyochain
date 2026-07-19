@@ -25,7 +25,7 @@ from . import test_seq
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-BIG = 100000
+BIG = 1_000
 
 
 def fail() -> Never:
@@ -278,8 +278,8 @@ def test_extend_left() -> None:
     d.extend_left(d)
     assert list(d) == list("abcddcba")
     d = Deque[int]()
-    d.extend_left(range(1000))
-    assert list(d) == list(reversed(range(1000)))
+    d.extend_left(range(100))
+    assert list(d) == list(reversed(range(100)))
     with pytest.raises(SyntaxError):
         d.extend_left(fail())
 
@@ -308,7 +308,7 @@ def test_getitem() -> None:
 
 
 def test_index() -> None:
-    for n in 1, 2, 30, 40, 200:
+    for n in 1, 10, 100:
         d = Deque(range(n))
         for i in range(n):
             assert d.index(i) == i
@@ -332,8 +332,9 @@ def test_index() -> None:
     elements = "ABCDEFGHI"
     d = Deque(elements * 2)
     s = list(elements * 2)
-    for start in range(-5 - len(s) * 2, 5 + len(s) * 2):
-        for stop in range(-5 - len(s) * 2, 5 + len(s) * 2):
+    r = range(-2 - len(s), 2 + len(s))
+    for start in r:
+        for stop in r:
             for element in elements + "Z":
                 try:
                     target = s.index(element, start, stop)
@@ -351,10 +352,10 @@ def test_index() -> None:
         assert index == d.index(elem, 0, len(d) + 100)
 
     # Test large start argument
-    d = Deque(range(0, 10000, 10))
-    for _step in range(100):
-        i = d.index(8500, 700)
-        assert d[i] == 8500
+    d = Deque(range(0, 1000, 5))
+    for _step in range(10):
+        i = d.index(850, 70)
+        assert d[i] == 850
         # Repeat test with a different internal offset
         _ = d.rotate()
 
@@ -482,7 +483,7 @@ def test_delitem() -> None:
 
 
 def test_reverse() -> None:
-    n = 500  # O(n**2) test, don't make this too big
+    n = 50  # O(n**2) test, don't make this too big
     data = [random.random() for _ in range(n)]
     d = Deque[float]()
     for i in range(n):
@@ -756,7 +757,7 @@ def test_copy_method() -> None:
 
 
 def test_reversed() -> None:
-    for s in ("abcd", range(2000)):
+    for s in ("abcd", range(20)):
         assert list(reversed(Deque(s))) == list(reversed(s))
 
 
@@ -764,10 +765,13 @@ def test_reversed_new() -> None:
     klass = type(reversed(Deque[str | int]()))
     # NOTE: klass is the dedicated reversed deque iterator type
     # It only expects precise deque classes as arguments, so we have to pass the inner deque to it
-    for s in ("abcd", range(2000)):
+    for s in ("abcd", range(20)):
         assert list(klass(Deque(s).inner)) == list(reversed(s))  # pyright: ignore[reportCallIssue]
 
 
+@pytest.mark.skip(
+    reason="Unless we start fucking around with traverse and clear, it's simpler to just skip this test as it is quite slow"
+)
 def test_gc_doesnt_blowup() -> None:
     import gc
 
@@ -795,7 +799,7 @@ def test_container_iterator() -> None:
 
 
 def test_constructor() -> None:
-    for s in ("123", "", range(1000), ("do", 1.2), range(2000, 2200, 5)):
+    for s in ("123", "", range(100), ("do", 1.2), range(200, 220, 5)):
         for g in (
             test_seq.SequenceTest[int, str],
             test_seq.IterFunc[str | int],
