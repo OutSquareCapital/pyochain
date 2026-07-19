@@ -229,9 +229,8 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # ruff:ignore[eq-without-hash]
                     # fast path when counter is empty
                     self._inner.update(iterable)  # pyright: ignore[reportUnknownArgumentType]
             case _:
-                mapping_get = self._inner.get
                 for elem in iterable:
-                    self._inner[elem] = mapping_get(elem, 0) + 1
+                    self._inner[elem] = self._inner.get(elem, 0) + 1
 
         if kwargs:
             self.update(kwargs)  # pyright: ignore[reportArgumentType, reportCallIssue]
@@ -261,16 +260,15 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # ruff:ignore[eq-without-hash]
         -1
 
         """
-        self_get = self._inner.get
         match iterable:
             case None:
                 pass
             case Mapping():
                 for elem, count in iterable.items():  # pyright: ignore[reportUnknownVariableType]
-                    self[elem] = self_get(elem, 0) - count
+                    self[elem] = self._inner.get(elem, 0) - count
             case _:
                 for elem in iterable:
-                    self[elem] = self_get(elem, 0) - 1
+                    self[elem] = self._inner.get(elem, 0) - 1
         if kwargs:
             self.subtract(kwargs)  # pyright: ignore[reportArgumentType, reportCallIssue]
 

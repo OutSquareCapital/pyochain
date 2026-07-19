@@ -1,5 +1,6 @@
 use crate::mixins::Checkable;
 use crate::option::{PyNull, PySome};
+use crate::pyo3_ext::types::pyitertools;
 use crate::result::{PyoErr, PyoOk};
 use crate::seq::{SetMut, IntoPyochain, Vec as PyoVec};
 use crate::pyo3_ext::{prelude::*, pylibs, types::PyAbstractSet };
@@ -137,7 +138,7 @@ impl PyoIterator {
         obj: &Bound<'py, PyAny>,
         n: Option<&Bound<'py, PyInt>>,
     ) -> PyResult<Bound<'py, Self>> {
-        cls.call1((pylibs::itertools::repeat(obj, n)?,))
+        cls.call1((pyitertools::PyRepeat::new(obj, n)?,))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
     #[classmethod]
