@@ -141,7 +141,7 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # ruff:ignore[eq-without-hash]
         Returns:
             int: The sum of all counts in the PyoCounter.
         """
-        return sum(self.values())
+        return sum(self._inner.values())
 
     def most_common(self, n: int | None = None) -> list[tuple[T, int]]:
         """List the n most common elements and their counts from the most common to the least.
@@ -157,11 +157,11 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # ruff:ignore[eq-without-hash]
         """
         match n:
             case None:
-                return sorted(self.items(), key=itemgetter(1), reverse=True)
+                return sorted(self._inner.items(), key=itemgetter(1), reverse=True)
             case _:
                 import heapq
 
-                return heapq.nlargest(n, self.items(), key=itemgetter(1))
+                return heapq.nlargest(n, self._inner.items(), key=itemgetter(1))
 
     def elements(self) -> Iterator[T]:
         """Iterator over elements repeating each as many times as its count.
@@ -184,7 +184,7 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # ruff:ignore[eq-without-hash]
             Iterator[T]: An iterator over elements repeating each as many times as its count.
         """
         return itertools.chain.from_iterable(
-            itertools.starmap(itertools.repeat, self.items())
+            itertools.starmap(itertools.repeat, self._inner.items())
         )
 
     @overload
@@ -224,7 +224,7 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # ruff:ignore[eq-without-hash]
             case Mapping():
                 if self:
                     for elem, count in iterable.items():  # pyright: ignore[reportUnknownVariableType]
-                        self[elem] = count + self.get(elem, 0)
+                        self[elem] = count + self._inner.get(elem, 0)
                 else:
                     # fast path when counter is empty
                     self._inner.update(iterable)  # pyright: ignore[reportUnknownArgumentType]
@@ -261,7 +261,7 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # ruff:ignore[eq-without-hash]
         -1
 
         """
-        self_get = self.get
+        self_get = self._inner.get
         match iterable:
             case None:
                 pass
@@ -313,11 +313,11 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # ruff:ignore[eq-without-hash]
             PyoCounter[T | S]: A new counter with the added counts.
         """
         result = PyoCounter[T | S]()
-        for elem, count in self.items():
+        for elem, count in self._inner.items():
             newcount = count + other[elem]  # pyright: ignore[reportArgumentType]
             if newcount > 0:
                 result[elem] = newcount
-        for elem, count in other.items():
+        for elem, count in other._inner.items():
             if elem not in self and count > 0:
                 result[elem] = count
         return result
@@ -335,11 +335,11 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # ruff:ignore[eq-without-hash]
             PyoCounter[T]: A new counter with the subtracted counts, keeping only positive counts.
         """
         result = PyoCounter[T]()
-        for elem, count in self.items():
+        for elem, count in self._inner.items():
             newcount = count - other[elem]
             if newcount > 0:
                 result[elem] = newcount
-        for elem, count in other.items():
+        for elem, count in other._inner.items():
             if elem not in self and count < 0:
                 result[elem] = 0 - count
         return result
@@ -357,12 +357,12 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # ruff:ignore[eq-without-hash]
             PyoCounter[T]: A new counter with the union of counts.
         """
         result = PyoCounter[T]()
-        for elem, count in self.items():
+        for elem, count in self._inner.items():
             other_count = other[elem]
             newcount = max(count, other_count)
             if newcount > 0:
                 result[elem] = newcount
-        for elem, count in other.items():
+        for elem, count in other._inner.items():
             if elem not in self and count > 0:
                 result[elem] = count
         return result
@@ -380,7 +380,7 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # ruff:ignore[eq-without-hash]
             PyoCounter[T]: A new counter with the intersection of counts.
         """
         result = PyoCounter[T]()
-        for elem, count in self.items():
+        for elem, count in self._inner.items():
             other_count = other[elem]
             newcount = min(other_count, count)
             if newcount > 0:
@@ -394,7 +394,7 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # ruff:ignore[eq-without-hash]
             PyoCounter[T]: A new counter with only positive counts.
         """
         result = PyoCounter[T]()
-        for elem, count in self.items():
+        for elem, count in self._inner.items():
             if count > 0:
                 result[elem] = count
         return result
@@ -408,7 +408,7 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # ruff:ignore[eq-without-hash]
             PyoCounter[T]: A new counter.
         """
         result = PyoCounter[T]()
-        for elem, count in self.items():
+        for elem, count in self._inner.items():
             if count < 0:
                 result[elem] = 0 - count
         return result
@@ -484,7 +484,7 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # ruff:ignore[eq-without-hash]
         Returns:
             Self: The updated counter with the intersection of counts.
         """
-        for elem, count in self.items():
+        for elem, count in self._inner.items():
             other_count = other[elem]
             if other_count < count:
                 self[elem] = other_count
@@ -588,11 +588,11 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # ruff:ignore[eq-without-hash]
 
         """
         result = PyoCounter[T | S]()
-        for elem, count in self.items():
+        for elem, count in self._inner.items():
             newcount = abs(count - other[elem])  # pyright: ignore[reportArgumentType]
             if newcount:
                 result[elem] = newcount
-        for elem, count in other.items():
+        for elem, count in other._inner.items():
             if elem not in self and count:
                 result[elem] = abs(count)
         return result
@@ -611,9 +611,9 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # ruff:ignore[eq-without-hash]
         Returns:
             Self: The updated counter with the symmetric difference of counts.
         """
-        for elem, count in self.items():
+        for elem, count in self._inner.items():
             self[elem] = abs(count - other[elem])
-        for elem, count in other.items():
+        for elem, count in other._inner.items():
             if elem not in self:
                 self[elem] = abs(count)
         return self._keep_positive()
@@ -624,7 +624,7 @@ class PyoCounter[T](PyoMutableMapping[T, int]):  # ruff:ignore[eq-without-hash]
         Returns:
             Self: The updated counter with only positive counts.
         """
-        nonpositive = [elem for elem, count in self.items() if not count > 0]
+        nonpositive = [elem for elem, count in self._inner.items() if not count > 0]
         for elem in nonpositive:
             del self[elem]
         return self
