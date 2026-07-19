@@ -13,7 +13,7 @@ use pyo3::{
     exceptions::PyTypeError,
     intern,
     prelude::*,
-    types::{PyDict, PyInt, PyIterator, PyNone, PySet},
+    types::{PyDict, PyInt, PyIterator, PyNone, PySet, PyTuple},
 };
 use tap::prelude::*;
 #[pyclass(frozen, generic, extends=abc::PyoMutableSet)]
@@ -155,7 +155,12 @@ impl Deque {
         max_length: Option<Bound<'_, PyInt>>,
     ) -> PyResult<PyClassInitializer<Self>> {
         Ok(abc::PyoMutableSequence::build_init().add_subclass(Self {
-            inner: PyDeque::new(py, data, max_length)?.unbind(),
+            inner: PyDeque::new(
+                py,
+                data.unwrap_or_else(|| PyTuple::empty(py).into_any()),
+                max_length,
+            )?
+            .unbind(),
         }))
     }
 

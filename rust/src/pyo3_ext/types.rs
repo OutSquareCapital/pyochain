@@ -173,7 +173,7 @@ impl PyDeque {
     #[inline]
     pub fn new<'py>(
         py: Python<'py>,
-        iterable: Option<Bound<'py, PyAny>>,
+        iterable: Bound<'py, PyAny>,
         maxlen: Option<Bound<'py, PyInt>>,
     ) -> PyResult<Bound<'py, Self>> {
         Self::type_object(py)
