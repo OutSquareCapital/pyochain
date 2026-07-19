@@ -143,6 +143,7 @@ impl StableSet {
 }
 #[pyclass(frozen, generic, sequence, extends = abc::PyoMutableSequence)]
 pub struct Deque {
+    #[pyo3(get)]
     inner: Py<PyDeque>,
 }
 #[pymethods]
@@ -216,8 +217,11 @@ impl Deque {
         self.inner.bind(key.py()).contains(key)
     }
 
-    fn __iadd__(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner.bind(value.py()).iadd(value)?;
+    fn __iadd__(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<()> {
+        let py = value.py();
+        let inner = slf.get().inner.bind(py);
+        let other = if value.is(&slf) { inner } else { value };
+        inner.iadd(other)?;
         Ok(())
     }
 
@@ -339,6 +343,9 @@ impl Deque {
             }
         })
     }
+    fn __reversed__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyIterator>> {
+        self.inner.bind(py).reversed()
+    }
 
     #[getter]
     fn max_length<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
@@ -353,8 +360,11 @@ impl Deque {
         self.inner.bind(x.py()).append_left(x)
     }
 
-    fn extend(&self, iterable: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner.bind(iterable.py()).extend(iterable)
+    fn extend(slf: Bound<'_, Self>, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
+        let py = iterable.py();
+        let inner = slf.get().inner.bind(py);
+        let other = if iterable.is(&slf) { inner } else { iterable };
+        inner.extend(other)
     }
 
     fn clear(&self, py: Python<'_>) -> PyResult<()> {
@@ -369,8 +379,11 @@ impl Deque {
             .and_then(Self::from_ref)
     }
 
-    fn extend_left(&self, iterable: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner.bind(iterable.py()).extend_left(iterable)
+    fn extend_left(slf: Bound<'_, Self>, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
+        let py = iterable.py();
+        let inner = slf.get().inner.bind(py);
+        let other = if iterable.is(&slf) { inner } else { iterable };
+        inner.extend_left(other)
     }
 
     fn pop_left<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {

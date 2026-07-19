@@ -5,7 +5,7 @@ use pyo3::ffi::PyTypeObject;
 /// This pattern ensure maximum performance by only importing the function or object once, and reusing it for subsequent calls.
 /// We also use unsafe casts to correct types, aggressive inlining, and `&Bound` to maximize performance.
 use pyo3::sync::PyOnceLock;
-use pyo3::types::{PyFrozenSet, PyInt, PyList, PySequence, PySet, PySlice, PyType};
+use pyo3::types::{PyFrozenSet, PyInt, PyIterator, PyList, PySequence, PySet, PySlice, PyType};
 use pyo3::{PyTypeInfo, intern, prelude::*};
 
 /// All ABCs have a `register` method that can be used to register a type as a virtual subclass of the ABC.\
@@ -186,9 +186,9 @@ pub trait PyDequeMethods<'py> {
     fn as_sequence(&self) -> &Bound<'py, PySequence>;
     fn append(&self, x: Bound<'_, PyAny>) -> PyResult<()>;
     fn append_left(&self, x: Bound<'_, PyAny>) -> PyResult<()>;
-    fn extend(&self, iterable: Bound<'_, PyAny>) -> PyResult<()>;
+    fn extend(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
     fn clear(&self) -> PyResult<()>;
-    fn extend_left(&self, iterable: Bound<'_, PyAny>) -> PyResult<()>;
+    fn extend_left(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
     fn rotate(&self, n: isize) -> PyResult<()>;
     fn insert(&self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn count(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
@@ -200,6 +200,7 @@ pub trait PyDequeMethods<'py> {
     ) -> PyResult<Bound<'py, PyInt>>;
     fn pop(&self) -> PyResult<Bound<'py, PyAny>>;
     fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()>;
+    fn reversed(&self) -> PyResult<Bound<'py, PyIterator>>;
 }
 impl<'py> PyDequeMethods<'py> for Bound<'py, PyDeque> {
     /// Returns `self` cast as a `PySequence`.
@@ -217,7 +218,7 @@ impl<'py> PyDequeMethods<'py> for Bound<'py, PyDeque> {
         Ok(())
     }
 
-    fn extend(&self, iterable: Bound<'_, PyAny>) -> PyResult<()> {
+    fn extend(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         self.call_method1(intern!(self.py(), "extend"), (iterable,))?;
         Ok(())
     }
@@ -227,7 +228,7 @@ impl<'py> PyDequeMethods<'py> for Bound<'py, PyDeque> {
         Ok(())
     }
 
-    fn extend_left(&self, iterable: Bound<'_, PyAny>) -> PyResult<()> {
+    fn extend_left(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         self.call_method1(intern!(self.py(), "extendleft"), (iterable,))?;
         Ok(())
     }
@@ -263,5 +264,9 @@ impl<'py> PyDequeMethods<'py> for Bound<'py, PyDeque> {
     fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.call_method1(intern!(value.py(), "remove"), (value,))?;
         Ok(())
+    }
+    fn reversed(&self) -> PyResult<Bound<'py, PyIterator>> {
+        self.call_method0(intern!(self.py(), "__reversed__"))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
     }
 }

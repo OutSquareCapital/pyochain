@@ -90,7 +90,9 @@ def test_max_length() -> None:
     assert list(d) == [7, 8, 9]
     d = Deque(range(200), max_length=10)
     d.append(d)  # pyright: ignore[reportArgumentType]
-    assert repr(d)[-30:] == ", 198, 199, [...]], max_length=10)"
+    # NOTE: In the original CPython test, the slice is [-30:], but since `max_length` is 4 chars longer,
+    # we have to adjust it.
+    assert repr(d)[-34:] == ", 198, 199, [...]], max_length=10)"
     d = Deque(range(10), max_length=None)
     assert repr(d) == "Deque([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])"
 
@@ -760,8 +762,10 @@ def test_reversed() -> None:
 
 def test_reversed_new() -> None:
     klass = type(reversed(Deque[str | int]()))
+    # NOTE: klass is the dedicated reversed deque iterator type
+    # It only expects precise deque classes as arguments, so we have to pass the inner deque to it
     for s in ("abcd", range(2000)):
-        assert list(klass(Deque(s))) == list(reversed(s))  # pyright: ignore[reportCallIssue]
+        assert list(klass(Deque(s).inner)) == list(reversed(s))  # pyright: ignore[reportCallIssue]
 
 
 def test_gc_doesnt_blowup() -> None:
