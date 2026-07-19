@@ -191,6 +191,7 @@ pub trait PyDequeMethods<'py> {
     fn extend_left(&self, iterable: Bound<'_, PyAny>) -> PyResult<()>;
     fn rotate(&self, n: isize) -> PyResult<()>;
     fn insert(&self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()>;
+    fn count(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
 }
 impl<'py> PyDequeMethods<'py> for Bound<'py, PyDeque> {
     /// Returns `self` cast as a `PySequence`.
@@ -231,5 +232,9 @@ impl<'py> PyDequeMethods<'py> for Bound<'py, PyDeque> {
     fn insert(&self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.call_method1(intern!(self.py(), "insert"), (index, value))?;
         Ok(())
+    }
+    fn count(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
+        self.call_method1(intern!(self.py(), "count"), (value,))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyInt>() })
     }
 }

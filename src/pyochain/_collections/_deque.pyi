@@ -123,7 +123,7 @@ class Deque[T](PyoMutableSequence[T]):
         """Return self+value."""
     def __mul__(self, value: int, /) -> Deque[T]:
         """Return self*value."""
-
+    def __rmul__(self, value: int, /) -> Deque[T]: ...
     def __imul__(self, value: int, /) -> Deque[T]:
         """Implement self*=value.
 

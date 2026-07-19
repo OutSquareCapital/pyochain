@@ -252,7 +252,9 @@ impl Deque {
             .map(|x| unsafe { x.cast_into_unchecked::<PyDeque>() })
             .and_then(Self::from_ref)
     }
-
+    fn __rmul__<'py>(&self, py: Python<'py>, value: usize) -> PyResult<Bound<'py, Self>> {
+        self.__mul__(py, value)
+    }
     fn __imul__<'py>(&self, py: Python<'py>, value: usize) -> PyResult<()> {
         self.inner
             .bind(py)
@@ -385,5 +387,8 @@ impl Deque {
 
     fn insert(&self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.inner.bind(value.py()).insert(index, value)
+    }
+    fn count<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
+        self.inner.bind(value.py()).count(value)
     }
 }
