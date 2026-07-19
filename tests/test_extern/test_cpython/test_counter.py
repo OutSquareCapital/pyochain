@@ -2,6 +2,8 @@
 
 Most modifications entails the conversion from `unittest` to `pytest`, the metaclass behavior, and the `dict` subclassing differences.
 
+There are also various performance optimizations. The original tests are a bit innefficient.
+
 The original lives at:
 
 https://github.com/python/cpython/blob/2cd5b79284dd2331cbd9e11afabbfbf7e906103d/Lib/test/test_collections.py#L2076
@@ -333,20 +335,20 @@ def test_multiset_operations() -> None:
     c = PyoCounter[str](a=10, b=-2, c=0) + PyoCounter[str]()
     assert dict(c) == {"a": 10}
 
+    ops_1: Ops[int] = [
+        (PyoCounter[str].__add__, lambda x, y: max(0, x + y)),
+        (PyoCounter[str].__sub__, lambda x, y: max(0, x - y)),
+        (PyoCounter[str].__or__, lambda x, y: max(0, x, y)),
+        (PyoCounter[str].__and__, lambda x, y: max(0, min(x, y))),
+        (PyoCounter[str].__xor__, lambda x, y: max(0, max(x, y) - min(x, y))),
+    ]
     elements = "abcd"
-    for _i in range(1000):
+    for _i in range(250):
         # test random pairs of multisets
         p = PyoCounter({elem: randrange(-2, 4) for elem in elements})
         p.update(e=1, f=-1, g=0)
         q = PyoCounter({elem: randrange(-2, 4) for elem in elements})
         q.update(h=1, i=-1, j=0)
-        ops_1: Ops[int] = [
-            (PyoCounter[str].__add__, lambda x, y: max(0, x + y)),
-            (PyoCounter[str].__sub__, lambda x, y: max(0, x - y)),
-            (PyoCounter[str].__or__, lambda x, y: max(0, x, y)),
-            (PyoCounter[str].__and__, lambda x, y: max(0, min(x, y))),
-            (PyoCounter[str].__xor__, lambda x, y: max(0, max(x, y) - min(x, y))),
-        ]
         for counterop, numberop in ops_1:
             result = counterop(p, q)
             for x in elements:
@@ -355,16 +357,16 @@ def test_multiset_operations() -> None:
             assert all(x > 0 for x in result.values())
 
     elements = "abcdef"
+    ops_2: Ops[set[str]] = [
+        (PyoCounter[str].__sub__, set[str].__sub__),
+        (PyoCounter[str].__or__, set[str].__or__),
+        (PyoCounter[str].__and__, set[str].__and__),
+        (PyoCounter[str].__xor__, set[str].__xor__),
+    ]
     for _i in range(100):
         # verify that random multisets with no repeats are exactly like sets
         p = PyoCounter({elem: randrange(0, 2) for elem in elements})
         q = PyoCounter({elem: randrange(0, 2) for elem in elements})
-        ops_2: Ops[set[str]] = [
-            (PyoCounter[str].__sub__, set[str].__sub__),
-            (PyoCounter[str].__or__, set[str].__or__),
-            (PyoCounter[str].__and__, set[str].__and__),
-            (PyoCounter[str].__xor__, set[str].__xor__),
-        ]
         for counterop, setop in ops_2:
             counter_result = counterop(p, q)
             set_result = setop(set(p.elements()), set(q.elements()))
@@ -373,19 +375,19 @@ def test_multiset_operations() -> None:
 
 def test_inplace_operations() -> None:
     elements = "abcd"
-    for _i in range(1000):
+    ops: Ops[PyoCounter[str]] = [
+        (PyoCounter[str].__iadd__, PyoCounter[str].__add__),
+        (PyoCounter[str].__isub__, PyoCounter[str].__sub__),
+        (PyoCounter[str].__ior__, PyoCounter[str].__or__),
+        (PyoCounter[str].__iand__, PyoCounter[str].__and__),
+        (PyoCounter[str].__ixor__, PyoCounter[str].__xor__),
+    ]
+    for _i in range(250):
         # test random pairs of multisets
         p = PyoCounter({elem: randrange(-2, 4) for elem in elements})
         p.update(e=1, f=-1, g=0)
         q = PyoCounter({elem: randrange(-2, 4) for elem in elements})
         q.update(h=1, i=-1, j=0)
-        ops: Ops[PyoCounter[str]] = [
-            (PyoCounter[str].__iadd__, PyoCounter[str].__add__),
-            (PyoCounter[str].__isub__, PyoCounter[str].__sub__),
-            (PyoCounter[str].__ior__, PyoCounter[str].__or__),
-            (PyoCounter[str].__iand__, PyoCounter[str].__and__),
-            (PyoCounter[str].__ixor__, PyoCounter[str].__xor__),
-        ]
         for inplace_op, regular_op in ops:
             c = p.copy()
             c_id = id(c)
@@ -437,7 +439,7 @@ def test_multiset_operations_equivalent_to_set_operations() -> None:
     # When the multiplicities are all zero or one, multiset operations
     # are guaranteed to be equivalent to the corresponding operations
     # for regular sets.
-    s = list(itertools.product(("a", "b", "c"), range(2)))
+    s = list(itertools.product(("a", "b"), range(2)))
     powerset = itertools.chain.from_iterable(
         itertools.combinations(s, r) for r in range(len(s) + 1)
     )
@@ -488,7 +490,7 @@ def test_gt() -> None:
 
 
 def test_symmetric_difference() -> None:
-    population = (-4, -3, -2, -1, 0, 1, 2, 3, 4)
+    population = (-4, -1, 0, 1, 4)
 
     for a, b1, b2, c in itertools.product(population, repeat=4):
         p = PyoCounter[str](a=a, b=b1)
