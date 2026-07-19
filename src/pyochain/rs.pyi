@@ -12,10 +12,13 @@ from typing import (
 
 from pyochain.abc import Pipe, PyoIterator
 
-from ._collections import Deque, StableSet
+from ._collections import Deque, PyoCounter, StableSet
 
 # Export for typing purposes. the private modules actually don't exist at runtime.
-# That way, we can import from rs in the public __init__
+# That way, we can :
+# - import from rs in the public __init__
+# - Support from pyochain import foo fully typed
+# - Handle partially migrated modules (python -> rust) without breaking the public API
 from ._dict import Dict
 from ._range import Range
 from ._seq import Seq
@@ -29,6 +32,7 @@ __all__ = [
     "Dict",
     "Iter",
     "Peekable",
+    "PyoCounter",
     "Range",
     "Seq",
     "Set",

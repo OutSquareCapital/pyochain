@@ -172,6 +172,7 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     //TODO: Don't forget to add `collections` module once the rust migration is complete.
     m.add_class::<collections::StableSet>()?;
     m.add_class::<collections::Deque>()?;
+    m.add_class::<collections::PyoCounter>()?;
     let sys_mods = py.import("sys")?.getattr("modules")?;
     sys_mods.set_item("pyochain.abc", abc_mod)?;
     register_all(py)
