@@ -1,12 +1,13 @@
 use crate::pyobject_native_type_named;
-use pyo3::ffi::PyTypeObject;
-/// This module contains Python built-in functions and objects, as well as functions and objects from the `itertools` and `functools` modules.
-/// Each submodule declares a const string with the name of the module, and a const `PyOnceLock` + associated fn for each function or object that is imported from that module.
-/// This pattern ensure maximum performance by only importing the function or object once, and reusing it for subsequent calls.
-/// We also use unsafe casts to correct types, aggressive inlining, and `&Bound` to maximize performance.
+use pyo3::exceptions::PyTypeError;
+use pyo3::ffi::{PyDictValues, PyTypeObject};
 use pyo3::sync::PyOnceLock;
-use pyo3::types::{PyFrozenSet, PyInt, PyIterator, PyList, PySequence, PySet, PySlice, PyType};
+use pyo3::types::{
+    PyDict, PyDictItems, PyDictKeys, PyFrozenSet, PyInt, PyIterator, PyList, PySequence, PySet,
+    PySlice, PyType,
+};
 use pyo3::{PyTypeInfo, intern, prelude::*};
+use tap::prelude::*;
 
 /// All ABCs have a `register` method that can be used to register a type as a virtual subclass of the ABC.\
 /// This trait factorize the implementation for all ABCs.\
@@ -272,5 +273,66 @@ impl<'py> PyDequeMethods<'py> for Bound<'py, PyDeque> {
     fn reversed(&self) -> PyResult<Bound<'py, PyIterator>> {
         self.call_method0(intern!(self.py(), "__reversed__"))
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
+    }
+}
+/// Type representing the `collections.abc.Set` abstract base class.
+#[repr(transparent)]
+pub struct PySupportsItems(PyAny);
+pyobject_native_type_named!(PySupportsItems);
+unsafe impl PyTypeInfo for PySupportsItems {
+    const NAME: &'static str = "SupportsItems";
+    const MODULE: Option<&'static str> = Some("");
+
+    #[inline]
+    fn type_object_raw(py: Python<'_>) -> *mut PyTypeObject {
+        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
+        TYPE.import(py, "collections.abc", "SupportsItems")
+            .unwrap()
+            .as_type_ptr()
+    }
+
+    #[inline]
+    fn is_type_of(object: &Bound<'_, PyAny>) -> bool {
+        object
+            .hasattr(intern!(object.py(), "items"))
+            .unwrap_or_else(|err| {
+                err.write_unraisable(object.py(), Some(object));
+                false
+            })
+    }
+}
+
+pub trait PySupportsItemsMethods<'py> {
+    fn items(&self) -> PyResult<Bound<'py, PyAbstractSet>>;
+}
+impl<'py> PySupportsItemsMethods<'py> for Bound<'py, PySupportsItems> {
+    fn items(&self) -> PyResult<Bound<'py, PyAbstractSet>> {
+        self.call_method0(intern!(self.py(), "items"))
+            .and_then(|x| {
+                x.cast_into::<PyAbstractSet>()
+                    .map_err(|_| PyTypeError::new_err(""))
+            })
+    }
+}
+pub trait IntoPyMappingView<'py> {
+    fn items_view(&self) -> Bound<'py, PyDictItems>;
+    fn keys_view(&self) -> Bound<'py, PyDictKeys>;
+    fn values_view(&self) -> Bound<'py, PyDictValues>;
+}
+impl<'py> IntoPyMappingView<'py> for Bound<'py, PyDict> {
+    fn items_view(&self) -> Bound<'py, PyDictItems> {
+        self.call_method0(intern!(self.py(), "items"))
+            .unwrap()
+            .pipe(|x| unsafe { x.cast_into_unchecked::<PyDictItems>() })
+    }
+    fn keys_view(&self) -> Bound<'py, PyDictKeys> {
+        self.call_method0(intern!(self.py(), "keys"))
+            .unwrap()
+            .pipe(|x| unsafe { x.cast_into_unchecked::<PyDictKeys>() })
+    }
+    fn values_view(&self) -> Bound<'py, PyDictValues> {
+        self.call_method0(intern!(self.py(), "values"))
+            .unwrap()
+            .pipe(|x| unsafe { x.cast_into_unchecked::<PyDictValues>() })
     }
 }

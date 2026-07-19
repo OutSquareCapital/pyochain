@@ -172,6 +172,18 @@ pub mod builtins {
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
     }
 }
+pub mod operator {
+    use super::*;
+    const OPERATOR: &str = "operator";
+    const ITEMGETTER: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+
+    #[inline(always)]
+    pub fn itemgetter<'py>(py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
+        ITEMGETTER
+            .import(py, OPERATOR, "itemgetter")?
+            .call1((index,))
+    }
+}
 
 /// Python `itertools` module functions and objects
 pub mod itertools {
