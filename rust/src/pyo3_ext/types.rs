@@ -336,3 +336,47 @@ impl<'py> IntoPyMappingView<'py> for Bound<'py, PyDict> {
             .pipe(|x| unsafe { x.cast_into_unchecked::<PyDictValues>() })
     }
 }
+pub mod pyitertools {
+    use super::*;
+    /// Type representing the `itertools.repeat` iterator.
+    #[repr(transparent)]
+    pub struct PyRepeat(PyAny);
+    pyobject_native_type_named!(PyRepeat);
+    unsafe impl PyTypeInfo for PyRepeat {
+        const NAME: &'static str = "repeat";
+        const MODULE: Option<&'static str> = Some("itertools");
+
+        #[inline]
+        fn type_object_raw(py: Python<'_>) -> *mut PyTypeObject {
+            static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
+            TYPE.import(py, "itertools", "repeat")
+                .unwrap()
+                .as_type_ptr()
+        }
+
+        #[inline]
+        fn is_type_of(object: &Bound<'_, PyAny>) -> bool {
+            object
+                .is_instance(&Self::type_object(object.py()).into_any())
+                .unwrap_or_else(|err| {
+                    err.write_unraisable(object.py(), Some(object));
+                    false
+                })
+        }
+    }
+    impl PyRepeat {
+        #[inline(always)]
+        pub fn new<'py>(
+            obj: &Bound<'py, PyAny>,
+            n: Option<&Bound<'py, PyInt>>,
+        ) -> PyResult<Bound<'py, PyIterator>> {
+            let py = obj.py();
+            Self::type_object(py)
+                .pipe(|func| match n {
+                    Some(n) => func.call1((obj, n)),
+                    None => func.call1((obj,)),
+                })
+                .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
+        }
+    }
+}

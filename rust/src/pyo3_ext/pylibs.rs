@@ -208,7 +208,6 @@ pub mod itertools {
     const PAIRWISE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     const PRODUCT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     const PERMUTATIONS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const REPEAT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     const ISLICE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
 
     /// `itertools::chain` class.
@@ -443,20 +442,6 @@ pub mod itertools {
         ZIP_LONGEST
             .import(py, ITERTOOLS, "zip_longest")?
             .concat1(iterator, others)
-            .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
-    }
-    #[inline(always)]
-    pub fn repeat<'py>(
-        obj: &Bound<'py, PyAny>,
-        n: Option<&Bound<'py, PyInt>>,
-    ) -> PyResult<Bound<'py, PyIterator>> {
-        let py = obj.py();
-        REPEAT
-            .import(py, ITERTOOLS, "repeat")
-            .and_then(|func| match n {
-                Some(n) => func.call1((obj, n)),
-                None => func.call1((obj,)),
-            })
             .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
     }
     #[inline(always)]
