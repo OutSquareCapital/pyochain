@@ -1513,15 +1513,14 @@ impl PyoSequence {
         Ok(i)
     }
     fn count(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<usize> {
-        slf.try_iter().map(|iterator| {
-            iterator
-                .map(|x| x.expect("Unexpected error while iterating over sequence"))
-                .filter(|x| {
-                    x.is(value)
-                        || x.eq(value)
-                            .expect("Unexpected error while comparing values")
-                })
-                .count()
+        slf.try_iter()?.try_fold(0, |count, item| {
+            item.and_then(|item| {
+                if item.is(value) || item.eq(value)? {
+                    Ok(count + 1)
+                } else {
+                    Ok(count)
+                }
+            })
         })
     }
     fn first<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
