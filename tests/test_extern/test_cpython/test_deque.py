@@ -1,6 +1,6 @@
 """This modules contains tests that for the most part have been adapted from the CPython test suite for `collections.Counter`.
 
-Most modifications entails the conversion from `unittest` to `pytest`, and the deletion of subclass/pickle tests.
+Most modifications entails the conversion from `unittest` to `pytest`, the deletion of subclass/pickle tests, and the fact that `__init__` has no special handling for "resetting" the `deque`.
 
 The original lives at:
 
@@ -51,8 +51,7 @@ class MutateCmp:  # ruff:ignore[eq-without-hash]
 
 
 def test_basics() -> None:
-    d = Deque(range(-5125, -5000))
-    d.__init__(range(200))
+    d = Deque(range(200))
     for i in range(200, 400):
         d.append(i)
     for i in reversed(range(-200, 0)):
@@ -70,7 +69,7 @@ def test_basics() -> None:
     assert list(d) == list(range(50, 150))
 
 
-def test_maxlen() -> None:
+def test_max_length() -> None:
     with pytest.raises(ValueError):
         _ = Deque("abc", -1)
     with pytest.raises(ValueError):

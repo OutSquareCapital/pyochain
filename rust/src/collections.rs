@@ -180,6 +180,7 @@ impl Deque {
             .repr()?
             .to_string()
             .replace("deque", &slf.get_type().name()?.to_string())
+            .replace("maxlen", "max_length")
             .pipe(Ok)
     }
 
