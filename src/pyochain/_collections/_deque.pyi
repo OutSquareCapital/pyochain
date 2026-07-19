@@ -1,18 +1,13 @@
-from __future__ import annotations
-
 from collections import deque
-from typing import TYPE_CHECKING, Self, SupportsIndex, overload, override
+from collections.abc import Iterable, Iterator
+from typing import Final, Self, SupportsIndex, final, overload, override
 
-from .._utils import no_doctest
 from ..abc import PyoMutableSequence
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
 
 type IntoDeque[T] = deque[T] | Deque[T]
 
-
-class Deque[T](PyoMutableSequence[T]):  # ruff:ignore[eq-without-hash]
+@final
+class Deque[T](PyoMutableSequence[T]):
     """Returns a new `Deque` object initialized left-to-right (using append()) from `data`.
 
     Deques are a generalization of stacks and queues (the name is pronounced “deck” and is short for “double-ended queue”).
@@ -43,16 +38,16 @@ class Deque[T](PyoMutableSequence[T]):  # ruff:ignore[eq-without-hash]
         See https://docs.python.org/3/library/collections.html#collections.deque for more details.
     """
 
-    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
-    _inner: deque[T]
+    inner: Final[deque[T]]
+    max_length: Final[int | None]
 
     @overload
     def __init__(self, *, max_length: int | None = None) -> None: ...
     @overload
     def __init__(self, data: Iterable[T], max_length: int | None = None) -> None: ...
-    def __init__(self, data: Iterable[T] = (), max_length: int | None = None) -> None:
-        self._inner = deque(data, max_length)
-
+    def __init__(
+        self, data: Iterable[T] = (), max_length: int | None = None
+    ) -> None: ...
     @staticmethod
     def from_ref[T1](data: deque[T1]) -> Deque[T1]:
         """Create a `Deque` from a reference to an existing `deque`.
@@ -73,6 +68,7 @@ class Deque[T](PyoMutableSequence[T]):  # ruff:ignore[eq-without-hash]
         Example:
             ```python
             >>> from pyochain.collections import Deque
+            >>> from collections import deque
             >>>
             >>> original = deque([1, 2, 3])
             >>> deque_obj = Deque.from_ref(original)
@@ -84,47 +80,33 @@ class Deque[T](PyoMutableSequence[T]):  # ruff:ignore[eq-without-hash]
 
             ```
         """
-        instance: Deque[T1] = Deque.__new__(Deque)  # pyright: ignore[reportUnknownVariableType]
-        instance._inner = data
-        return instance
-
-    @override
-    def __repr__(self) -> str:
-        return repr(self._inner).replace("deque", self.__class__.__name__)
 
     @override
     def __iter__(self) -> Iterator[T]:
         """Return an iterator over the elements in the deque."""
-        return iter(self._inner)
 
     def __copy__(self) -> Deque[T]:
         """Return a shallow copy of a deque."""
-        return self.from_ref(self._inner.__copy__())
 
     @override
     def __len__(self) -> int:
         """Return len(self)."""
-        return len(self._inner)
 
     @override
     def __getitem__(self, key: SupportsIndex, /) -> T:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return self[key]."""
-        return self._inner[key]
 
     @override
     def __setitem__(self, key: SupportsIndex, value: T, /) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Set self[key] to value."""
-        return self._inner.__setitem__(key, value)
 
     @override
     def __delitem__(self, key: SupportsIndex, /) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Delete self[key]."""
-        return self._inner.__delitem__(key)
 
     @override
     def __contains__(self, key: object, /) -> bool:
         """Return bool(key in self)."""
-        return key in self._inner
 
     @override
     def __iadd__(self, value: Iterable[T], /) -> Deque[T]:
@@ -136,19 +118,11 @@ class Deque[T](PyoMutableSequence[T]):  # ruff:ignore[eq-without-hash]
         Returns:
             Deque[T]: The modified `Deque` instance after in-place addition.
         """
-        return self.from_ref(self._inner.__iadd__(value))
 
     def __add__(self, value: IntoDeque[T], /) -> Deque[T]:
         """Return self+value."""
-        match value:
-            case Deque():
-                return self.from_ref(self._inner + value._inner)
-            case deque():
-                return self.from_ref(self._inner + value)
-
     def __mul__(self, value: int, /) -> Deque[T]:
         """Return self*value."""
-        return self.from_ref(self._inner * value)
 
     def __imul__(self, value: int, /) -> Deque[T]:
         """Implement self*=value.
@@ -159,79 +133,24 @@ class Deque[T](PyoMutableSequence[T]):  # ruff:ignore[eq-without-hash]
         Returns:
             Deque[T]: The modified `Deque` instance after in-place multiplication.
         """
-        return self.from_ref(self._inner.__imul__(value))
 
     def __lt__(self, value: IntoDeque[T], /) -> bool:
         """Return self<value."""
-        match value:
-            case Deque():
-                return self._inner < value.inner
-            case deque():
-                return self._inner < value
 
     def __le__(self, value: IntoDeque[T], /) -> bool:
         """Return self<=value."""
-        match value:
-            case Deque():
-                return self._inner <= value.inner
-            case deque():
-                return self._inner <= value
 
     def __gt__(self, value: IntoDeque[T], /) -> bool:
         """Return self>value."""
-        match value:
-            case Deque():
-                return self._inner > value.inner
-            case deque():
-                return self._inner > value
-
     def __ge__(self, value: IntoDeque[T], /) -> bool:
         """Return self>=value."""
-        match value:
-            case Deque():
-                return self._inner >= value.inner
-            case deque():
-                return self._inner >= value
 
     @override
     def __eq__(self, value: object, /) -> bool:
         """Return self==value."""
-        match value:
-            case Deque():
-                return self._inner == value.inner  # pyright: ignore[reportUnknownMemberType]
-            case deque():
-                return self._inner == value
-            case _:
-                return False
-
-    @property
-    @no_doctest
-    def inner(self) -> deque[T]:
-        """The underlying `deque` object."""
-        return self._inner
-
-    @property
-    def max_length(self) -> int | None:
-        """Maximum size of a deque.
-
-        Returns:
-            int | None: The maximum size of the `Deque`. If None, the `Deque` is unbounded.
-
-        Example:
-            ```python
-            >>> from pyochain.collections import Deque
-            >>> d = Deque([1, 2, 3], max_length=5)
-            >>> d.max_length
-            5
-
-            ```
-        """
-        return self._inner.maxlen
 
     @override
-    def append(self, x: T, /) -> None:
-        return self._inner.append(x)
-
+    def append(self, x: T, /) -> None: ...
     def append_left(self, x: T, /) -> None:
         """Add an element to the left side of the deque.
 
@@ -248,16 +167,11 @@ class Deque[T](PyoMutableSequence[T]):  # ruff:ignore[eq-without-hash]
 
             ```
         """
-        return self._inner.appendleft(x)
 
     @override
-    def extend(self, iterable: Iterable[T]) -> None:
-        return self._inner.extend(iterable)
-
+    def extend(self, iterable: Iterable[T]) -> None: ...
     @override
-    def clear(self) -> None:
-        return self._inner.clear()
-
+    def clear(self) -> None: ...
     def copy(self) -> Deque[T]:
         """Return a shallow copy of a deque.
 
@@ -279,7 +193,6 @@ class Deque[T](PyoMutableSequence[T]):  # ruff:ignore[eq-without-hash]
 
             ```
         """
-        return self.from_ref(self._inner.copy())
 
     def extend_left(self, iterable: Iterable[T], /) -> None:
         """Extend the left side of the deque with elements from the iterable.
@@ -297,7 +210,6 @@ class Deque[T](PyoMutableSequence[T]):  # ruff:ignore[eq-without-hash]
 
             ```
         """
-        return self._inner.extendleft(iterable)
 
     def pop_left(self) -> T:
         """Remove and return the leftmost element.
@@ -316,8 +228,6 @@ class Deque[T](PyoMutableSequence[T]):  # ruff:ignore[eq-without-hash]
 
             ```
         """
-        return self._inner.popleft()
-
     def rotate(self, n: int = 1, /) -> Self:
         """Rotate the deque n steps.
 
@@ -338,10 +248,7 @@ class Deque[T](PyoMutableSequence[T]):  # ruff:ignore[eq-without-hash]
 
             ```
         """
-        self._inner.rotate(n)
-        return self
 
     @override
     def insert(self, index: int, value: T) -> None:
         """Insert value before index."""
-        return self._inner.insert(index, value)

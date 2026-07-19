@@ -5,7 +5,7 @@ use pyo3::ffi::PyTypeObject;
 /// This pattern ensure maximum performance by only importing the function or object once, and reusing it for subsequent calls.
 /// We also use unsafe casts to correct types, aggressive inlining, and `&Bound` to maximize performance.
 use pyo3::sync::PyOnceLock;
-use pyo3::types::{PyFrozenSet, PyInt, PyList, PySet, PySlice, PyType};
+use pyo3::types::{PyFrozenSet, PyInt, PyList, PySequence, PySet, PySlice, PyType};
 use pyo3::{PyTypeInfo, intern, prelude::*};
 
 /// All ABCs have a `register` method that can be used to register a type as a virtual subclass of the ABC.\
@@ -140,5 +140,96 @@ unsafe impl PyTypeInfo for PyAbstractSet {
                     err.write_unraisable(object.py(), Some(object));
                     false
                 })
+    }
+}
+/// Type representing the `collections.deque` class.
+#[repr(transparent)]
+pub struct PyDeque(PyAny);
+pyobject_native_type_named!(PyDeque);
+unsafe impl PyTypeInfo for PyDeque {
+    const NAME: &'static str = "deque";
+    const MODULE: Option<&'static str> = Some("collections");
+
+    #[inline]
+    fn type_object_raw(py: Python<'_>) -> *mut PyTypeObject {
+        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
+        TYPE.import(py, "collections", "deque")
+            .unwrap()
+            .as_type_ptr()
+    }
+
+    #[inline]
+    fn is_type_of(object: &Bound<'_, PyAny>) -> bool {
+        object
+            .is_instance(&Self::type_object(object.py()).into_any())
+            .unwrap_or_else(|err| {
+                err.write_unraisable(object.py(), Some(object));
+                false
+            })
+    }
+}
+
+impl PyDeque {
+    #[inline]
+    pub fn new<'py>(
+        py: Python<'py>,
+        iterable: Option<Bound<'py, PyAny>>,
+        maxlen: Option<Bound<'py, PyInt>>,
+    ) -> PyResult<Bound<'py, Self>> {
+        Self::type_object(py)
+            .call1((iterable, maxlen))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+    }
+}
+pub trait PyDequeMethods<'py> {
+    /// Returns `self` cast as a `PySequence`.
+    fn as_sequence(&self) -> &Bound<'py, PySequence>;
+    fn append(&self, x: Bound<'_, PyAny>) -> PyResult<()>;
+    fn append_left(&self, x: Bound<'_, PyAny>) -> PyResult<()>;
+    fn extend(&self, iterable: Bound<'_, PyAny>) -> PyResult<()>;
+    fn clear(&self) -> PyResult<()>;
+    fn extend_left(&self, iterable: Bound<'_, PyAny>) -> PyResult<()>;
+    fn rotate(&self, n: isize) -> PyResult<()>;
+    fn insert(&self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()>;
+}
+impl<'py> PyDequeMethods<'py> for Bound<'py, PyDeque> {
+    /// Returns `self` cast as a `PySequence`.
+    fn as_sequence(&self) -> &Bound<'py, PySequence> {
+        unsafe { self.cast_unchecked() }
+    }
+
+    fn append(&self, x: Bound<'_, PyAny>) -> PyResult<()> {
+        self.call_method1(intern!(self.py(), "append"), (x,))?;
+        Ok(())
+    }
+
+    fn append_left(&self, x: Bound<'_, PyAny>) -> PyResult<()> {
+        self.call_method1(intern!(self.py(), "appendleft"), (x,))?;
+        Ok(())
+    }
+
+    fn extend(&self, iterable: Bound<'_, PyAny>) -> PyResult<()> {
+        self.call_method1(intern!(self.py(), "extend"), (iterable,))?;
+        Ok(())
+    }
+
+    fn clear(&self) -> PyResult<()> {
+        self.call_method0(intern!(self.py(), "clear"))?;
+        Ok(())
+    }
+
+    fn extend_left(&self, iterable: Bound<'_, PyAny>) -> PyResult<()> {
+        self.call_method1(intern!(self.py(), "extendleft"), (iterable,))?;
+        Ok(())
+    }
+
+    fn rotate(&self, n: isize) -> PyResult<()> {
+        self.call_method1(intern!(self.py(), "rotate"), (n,))?;
+        Ok(())
+    }
+
+    fn insert(&self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()> {
+        self.call_method1(intern!(self.py(), "insert"), (index, value))?;
+        Ok(())
     }
 }

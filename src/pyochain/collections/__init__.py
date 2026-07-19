@@ -1,8 +1,7 @@
 """Additional collection types."""
 
-from ..rs import StableSet
+from ..rs import Deque, StableSet
 from ._counter import PyoCounter
-from ._deque import Deque
 from ._heapq import Heap, HeapMax, HeapMin
 from ._sorted_dict import SortedDict, SortedKeyDict
 from ._sorted_list import SortedKeyList, SortedList

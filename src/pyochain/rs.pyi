@@ -12,7 +12,7 @@ from typing import (
 
 from pyochain.abc import Pipe, PyoIterator
 
-from ._collections import StableSet
+from ._collections import Deque, StableSet
 
 # Export for typing purposes. the private modules actually don't exist at runtime.
 # That way, we can import from rs in the public __init__
@@ -25,6 +25,7 @@ from ._tools import Iter, Peekable
 from ._vec import Vec
 
 __all__ = [
+    "Deque",
     "Dict",
     "Iter",
     "Peekable",
