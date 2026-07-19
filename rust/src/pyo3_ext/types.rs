@@ -195,7 +195,7 @@ pub trait PyDequeMethods<'py> {
     fn index(
         &self,
         x: Bound<'py, PyAny>,
-        start: isize,
+        start: Option<Bound<'py, PyAny>>,
         stop: Option<Bound<'py, PyInt>>,
     ) -> PyResult<Bound<'py, PyInt>>;
     fn pop(&self) -> PyResult<Bound<'py, PyAny>>;
@@ -249,14 +249,18 @@ impl<'py> PyDequeMethods<'py> for Bound<'py, PyDeque> {
     fn index(
         &self,
         x: Bound<'py, PyAny>,
-        start: isize,
+        start: Option<Bound<'py, PyAny>>,
         stop: Option<Bound<'py, PyInt>>,
     ) -> PyResult<Bound<'py, PyInt>> {
         let py = x.py();
-        let method = intern!(py, "index");
-        stop.map(|stop| self.call_method1(method, (&x, start, stop)))
-            .unwrap_or_else(|| self.call_method1(method, (&x, start)))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyInt>() })
+        let method_name = intern!(py, "index");
+        match (start, stop) {
+            (Some(start), Some(stop)) => self.call_method1(method_name, (x, start, stop)),
+            (Some(start), None) => self.call_method1(method_name, (x, start)),
+            (None, Some(stop)) => self.call_method1(method_name, (x, stop)),
+            (None, None) => self.call_method1(method_name, (x,)),
+        }
+        .map(|x| unsafe { x.cast_into_unchecked::<PyInt>() })
     }
     fn pop(&self) -> PyResult<Bound<'py, PyAny>> {
         self.call_method0(intern!(self.py(), "pop"))

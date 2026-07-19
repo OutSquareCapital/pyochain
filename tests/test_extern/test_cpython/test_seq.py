@@ -12,16 +12,17 @@ from typing import TYPE_CHECKING, Literal, Self, override
 import pytest
 
 from pyochain import Seq, Vec
+from pyochain.collections import Deque
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
 
     from _typeshed import SupportsGetItem
+type VecOrSeq[T] = type[Vec[T] | Seq[T]]
+type TestedSeq[T] = VecOrSeq[T] | type[Deque[T]]
 
-type TestedSeq[T] = type[Seq[T] | Vec[T]]
-
-
-TEST_TYPES = pytest.mark.parametrize("type2test", [Seq, Vec])
+VEC_OR_SEQ_TYPES = pytest.mark.parametrize("type2test", [Seq, Vec])
+TEST_TYPES = pytest.mark.parametrize("type2test", [Seq, Vec, Deque])
 
 
 class _AlwaysEq:  # ruff:ignore[eq-without-hash]
@@ -229,8 +230,10 @@ def test_truth(type2test: TestedSeq[object]) -> None:
     assert type2test([42])
 
 
-@TEST_TYPES
-def test_getitem(type2test: TestedSeq[object]) -> None:
+# NOTE: Skipped for Deque
+# https://github.com/python/cpython/blob/16562f1ce31ba654c42eee644f253bb31cff9f9d/Lib/test/test_deque.py#L922
+@VEC_OR_SEQ_TYPES
+def test_getitem(type2test: VecOrSeq[object]) -> None:
     u = type2test([0, 1, 2, 3, 4])
     for i in range(len(u)):
         assert u[i] == i
@@ -265,8 +268,10 @@ def test_getitem(type2test: TestedSeq[object]) -> None:
         _ = a.__getitem__(3)
 
 
-@TEST_TYPES
-def test_getslice(type2test: TestedSeq[object]) -> None:
+# NOTE: Skipped for Deque
+# https://github.com/python/cpython/blob/16562f1ce31ba654c42eee644f253bb31cff9f9d/Lib/test/test_deque.py#L922
+@VEC_OR_SEQ_TYPES
+def test_getslice(type2test: VecOrSeq[object]) -> None:
     x = [0, 1, 2, 3, 4]
     u = type2test(x)
 
@@ -434,8 +439,10 @@ def test_bigrepeat(type2test: TestedSeq[int]) -> None:
                 _ = x.__imul__(2**16)
 
 
-@TEST_TYPES
-def test_subscript(type2test: TestedSeq[int]) -> None:
+# NOTE: Skipped for Deque
+# https://github.com/python/cpython/blob/16562f1ce31ba654c42eee644f253bb31cff9f9d/Lib/test/test_deque.py#L922
+@VEC_OR_SEQ_TYPES
+def test_subscript(type2test: VecOrSeq[int]) -> None:
     a = type2test([10, 11])
     assert a.__getitem__(0) == 10
     assert a.__getitem__(1) == 11
@@ -459,13 +466,13 @@ def test_subscript(type2test: TestedSeq[int]) -> None:
 @TEST_TYPES
 def test_cmp(type2test: TestedSeq[int]) -> None:
     a = type2test([0, 1])
-    _assert_cmp(a, a, 0)
-    _assert_cmp(a, type2test([0, 1]), 0)
-    _assert_cmp(a, type2test([0]), 1)
-    _assert_cmp(a, type2test([0, 2]), -1)
+    _assert_cmp(a, a, 0)  # pyright: ignore[reportArgumentType]
+    _assert_cmp(a, type2test([0, 1]), 0)  # pyright: ignore[reportArgumentType]
+    _assert_cmp(a, type2test([0]), 1)  # pyright: ignore[reportArgumentType]
+    _assert_cmp(a, type2test([0, 2]), -1)  # pyright: ignore[reportArgumentType]
 
 
-def _assert_cmp[T: Seq[int] | Vec[int]](a: T, b: T, r: int) -> None:
+def _assert_cmp[T](a: TestedSeq[T], b: TestedSeq[T], r: int) -> None:
     assert (a == b) is (r == 0)
     assert (a != b) is (r != 0)
     assert (a > b) is (r > 0)  # pyright: ignore[reportOperatorIssue]

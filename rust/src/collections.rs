@@ -400,11 +400,11 @@ impl Deque {
     fn count<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
         self.inner.bind(value.py()).count(value)
     }
-    #[pyo3(signature = (x, start=0, stop=None, /))]
+    #[pyo3(signature = (x, start=None, stop=None, /))]
     fn index<'py>(
         &self,
         x: Bound<'py, PyAny>,
-        start: isize,
+        start: Option<Bound<'py, PyAny>>,
         stop: Option<Bound<'py, PyInt>>,
     ) -> PyResult<Bound<'py, PyInt>> {
         self.inner.bind(x.py()).index(x, start, stop)
