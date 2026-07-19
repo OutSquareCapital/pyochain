@@ -1,15 +1,14 @@
-use crate::cast_match;
+use crate::try_cast;
 use crate::{
     abc::{self, PyoABC, PyoSequence},
     pyo3_ext::prelude::*,
-    pyo3_ext::types::{PyMutableSequence, SupportsIndex},
+    pyo3_ext::types::{PyMutableSequence, PySupportsIndex},
 };
 use either::Either;
 use pyo3::{
     PyTypeInfo,
     call::PyCallArgs,
     exceptions::{PyIndexError, PyTypeError, PyValueError},
-    intern,
     prelude::*,
     types::{PyInt, PyRange, PyRangeMethods, PySequence, PySlice, PyTuple},
 };
@@ -208,53 +207,51 @@ impl SliceView {
 
         let inner = self.inner.bind(py);
         let cr = self._current_range(py)?;
-        cast_match!((inner, index) {
+        try_cast!(match (inner, index) {
             (PyMutableSequence, PySlice) => {
                 let tr = cr
                     .get_item(index)
                     .map(|r| unsafe { r.cast_into_unchecked::<PyRange>() })?;
                 if tr.step()?.abs() != 1 {
-                    let values = PyTuple::type_object(py).call1((value,)).map(|t| unsafe { t.cast_into_unchecked::<PyTuple>() })?;
+                    let values = PyTuple::type_object(py)
+                        .call1((value,))
+                        .map(|t| unsafe { t.cast_into_unchecked::<PyTuple>() })?;
                     let values_len = values.len();
                     let tr_len = tr.len()?;
                     if values_len != tr_len {
                         let msg = format!(
-                            "attempt to assign sequence of size {} to slice of size {}", values_len, tr_len
+                            "attempt to assign sequence of size {} to slice of size {}",
+                            values_len, tr_len
                         );
                         Err(PyValueError::new_err(msg))
                     } else {
-                        tr.try_iter()?
-                            .zip(values)
-                            .try_for_each(|(i, v)| {
-                                inner.set_item(i?.extract::<usize>()?, v)?;
-                                Ok::<(), PyErr>(())
-                            })
+                        tr.try_iter()?.zip(values).try_for_each(|(i, v)| {
+                            inner.set_item(i?.extract::<usize>()?, v)?;
+                            Ok::<(), PyErr>(())
+                        })
                     }
                 } else {
-
-                inner.set_slice_with_step(tr.start()?, tr.stop()?, tr.step()?, &value)
+                    inner.set_slice_with_step(tr.start()?, tr.stop()?, tr.step()?, &value)
                 }
-            },
-            (PyMutableSequence, SupportsIndex) => {
-                let length = cr.len()?;
+            }
+            (PyMutableSequence, PySupportsIndex) => {
+                let length = cr.len()? as isize;
 
-                let mut idx = index
-                    .call_method0(intern!(py, "__index__"))?
-                    .extract::<isize>()?;
+                let mut idx = index.index()?.extract::<isize>()?;
                 if idx < 0 {
-                    idx += length as isize
+                    idx += length
                 };
-                if !(0 <= idx && idx < length as isize) {
+                if !(0 <= idx && idx < length) {
                     let msg = "SliceView index out of range";
-                    return Err(PyIndexError::new_err(msg));
-                };
-                inner.set_item(
-                    cr.get_item(PyInt::new(py, idx).into_any())?
-                        .extract::<usize>()?,
-                    value,
-                )?;
-                Ok(())
-            },
+                    Err(PyIndexError::new_err(msg))
+                } else {
+                    inner.set_item(
+                        cr.get_item(PyInt::new(py, idx).into_any())?
+                            .extract::<usize>()?,
+                        value,
+                    )
+                }
+            }
             _ => {
                 let name = inner.get_type().name()?;
                 let msg = format!(

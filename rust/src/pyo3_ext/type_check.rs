@@ -7,93 +7,108 @@ use pyo3::{
 };
 
 use crate::{collections, seq};
-/// Ergonomic "flat" match of one or more `Bound<'_, PyAny>`-like values against
-/// concrete pyo3 types, using [`Bound::cast`](https://docs.rs/pyo3/latest/pyo3/struct.Bound.html#method.cast).
+/// Ergonomic "flat" match of one or more `Bound<'_, PyAny>`-like values against concrete pyo3 types, using [`Bound::cast`].\
+/// This avoids awkward nested `match` statements, or verbose `if let` chains.\
+/// ## Current limitations
+/// - Unfortunately, we still have to use `match` keyword systematically, otherwise rustfmt will completely skip the code inside the macro.
+/// - For some reason, rustfmt will delete `,` statements between the match arms, so we need to handle that specially without requiring them, which diverge from regular rust syntax.
 ///
-/// The values are listed once in the header, then each arm lists the target type
-/// for every value. On success, the arm's block runs with each identifier shadowed
-/// as `&Bound<'_, Ty>`. If any cast in an arm fails, matching falls through to the
-/// next arm, exactly like a regular `match`. The final arm must be `_ => { .. }`.
+/// ## Example
+/// ```rust
+/// use pyo3::prelude::*;
+/// use pyo3::types::{PyDict, PyList, PyTuple};
+/// use pyo3_ext::try_cast;
+/// use pyo3::exceptions::PyTypeError;
 ///
-/// # Example
-/// ```ignore
-/// cast_match!((inner, index) {
-///     (PyList, PySlice) => { /* inner: &Bound<'_, PyList>, index: &Bound<'_, PySlice> */ },
-///     (PyList, PyInt) => { /* inner: &Bound<'_, PyList>, index: &Bound<'_, PyInt> */ },
-///     _ => { /* fallback, original bindings untouched */ },
-/// })
+/// fn foo(value: Bound<'_, PyAny>) -> PyResult<isize> {
+///   try_cast!(match value {
+///     PyList | PyTuple => { Ok(0) }
+///     PyDict => { Ok(1) }
+///     _ => { Err(PyTypeError::new_err("Invalid type")) }
+///    })
+///  }
+/// fn foo_no_macro(value: Bound<'_, PyAny>) -> PyResult<()> {
+///   match value.cast::<PyList>() {
+///     Ok(_) => Ok(0),
+///     Err(_) => match value.cast::<PyTuple>() {
+///         Ok(_) => Ok(1),
+///         Err(_) => match value.cast::<PyDict>() {
+///             Ok(_) => Ok(2),
+///             Err(_) => Err(PyTypeError::new_err("Invalid type")),
+///         }
+///     }
+/// }
 /// ```
 #[macro_export]
-macro_rules! cast_match {
-    (($($val:ident),+ $(,)?) { $($arms:tt)* }) => {
-        $crate::cast_match!(@arms ($($val),+) { $($arms)* })
+macro_rules! try_cast {
+    (match ($($value:ident),+ $(,)?) { $($cases:tt)* }) => {
+        $crate::try_cast!(@cases ($($value),+) { $($cases)* })
     };
-    ($val:ident { $($arms:tt)* }) => {
-        $crate::cast_match!(@arms ($val) { $($arms)* })
+    (match $value:ident { $($cases:tt)* }) => {
+        $crate::try_cast!(@cases ($value) { $($cases)* })
     };
-    (@arms ($($val:ident),+) {
-        ($($ty:ty),+) => $body:block,
-        $($rest:tt)*
+    (@cases ($($value:ident),+) {
+        _ => $body:block $(,)?
     }) => {
-        $crate::cast_match!(@build
-            ($($val),+);
-            ($($val),+);
-            ($($ty),+);
-            (); ();
-            $body;
-            { $($rest)* }
+        $body
+    };
+    (@cases ($($value:ident),+) {
+        ($($ty:ty),+) => $body:block $(,)? $($rest:tt)*
+    }) => {
+        $crate::try_cast!(@values
+            ($($value),+)
+            ($($ty),+)
+            $body
+            {
+                $crate::try_cast!(@cases ($($value),+) { $($rest)* })
+            }
         )
     };
-    (@arms ($($val:ident),+) {
-        $ty:ty => $body:block,
-        $($rest:tt)*
+    (@cases ($value:ident) {
+        $($ty:ty)|+ => $body:block $(,)? $($rest:tt)*
     }) => {
-        $crate::cast_match!(@build
-            ($($val),+);
-            ($($val),+);
-            ($ty);
-            (); ();
-            $body;
-            { $($rest)* }
+        $crate::try_cast!(@types
+            $value
+            ($($ty)|+)
+            $body
+            {
+                $crate::try_cast!(@cases ($value) { $($rest)* })
+            }
         )
     };
-    (@arms ($($val:ident),+) {
-        _ => $default:block $(,)?
-    }) => {
-        $default
+    (@values ($value:ident) ($ty:ty) $body:block $fallback:block) => {
+        $crate::try_cast!(@types $value ($ty) $body $fallback)
     };
-    (@build
-        ($original_val:ident $(, $original_rest:ident)*);
-        ($val:ident $(, $rest_val:ident)*);
-        ($ty:ty $(, $rest_ty:ty)*);
-        ($($expr:expr),*);
-        ($($pat:pat),*);
-        $body:block;
-        { $($rest:tt)* }
+    (@values
+        ($value:ident, $($rest_value:ident),+)
+        ($ty:ty, $($rest_ty:ty),+)
+        $body:block
+        $fallback:block
     ) => {
-        $crate::cast_match!(@build
-            ($original_val $(, $original_rest)*);
-            ($($rest_val),*);
-            ($($rest_ty),*);
-            ($($expr,)* $val.cast::<$ty>());
-            ($($pat,)* Ok($val));
-            $body;
-            { $($rest)* }
-        )
+        match $value.cast::<$ty>() {
+            Ok($value) => $crate::try_cast!(@values
+                ($($rest_value),+)
+                ($($rest_ty),+)
+                $body
+                $fallback
+            ),
+            Err(_) => $fallback,
+        }
     };
-    (@build
-        ($($original_val:ident),+);
-        ();
-        ();
-        ($($expr:expr),+);
-        ($($pat:pat),+);
-        $body:block;
-        { $($rest:tt)* }
-    ) => {
-        match ($($expr),*) {
-            ($($pat),*) => $body,
-            _ => $crate::cast_match!(@arms
-                ($($original_val),+) { $($rest)* }
+    (@types $value:ident ($ty:ty) $body:block $fallback:block) => {
+        match $value.cast::<$ty>() {
+            Ok($value) => $body,
+            Err(_) => $fallback,
+        }
+    };
+    (@types $value:ident ($ty:ty | $($rest_ty:ty)|+) $body:block $fallback:block) => {
+        match $value.cast::<$ty>() {
+            Ok($value) => $body,
+            Err(_) => $crate::try_cast!(@types
+                $value
+                ($($rest_ty)|+)
+                $body
+                $fallback
             ),
         }
     };

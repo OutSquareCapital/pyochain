@@ -1,7 +1,8 @@
 use crate::{
     abc::{self, PyoABC},
-    pyo3_ext::{prelude::*, types::PyAbstractSet},
+    pyo3_ext::types::PyAbstractSet,
     seq::{IntoPyochain, SetMut, get_repr},
+    try_cast,
 };
 
 use pyo3::{
@@ -57,16 +58,24 @@ impl StableSet {
 
     fn __eq__(&self, other: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = other.py();
-        if other.is_instance_of::<PyAbstractSet>() {
-            self.py_keys(py)?.eq(other)
-        } else if let Ok(either) = Self::extract_union(&other) {
-            either
-                .map_left(|x| x.get().inner.bind(py))
-                .into_inner()
-                .pipe(|set| self.py_keys(py)?.eq(set))
-        } else {
-            Ok(false)
-        }
+        try_cast!(match other {
+            PyAbstractSet => {
+                self.py_keys(py)?.eq(other)
+            }
+            StableSet => {
+                other
+                    .get()
+                    .inner
+                    .bind(py)
+                    .pipe(|set| self.py_keys(py)?.eq(set))
+            }
+            PySet => {
+                self.py_keys(py)?.eq(other)
+            }
+            _ => {
+                Ok(false)
+            }
+        })
     }
 
     #[staticmethod]

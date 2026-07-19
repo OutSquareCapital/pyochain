@@ -1,6 +1,6 @@
-use crate::abc;
 use crate::abc::PyoABC;
 use crate::pyo3_ext::{prelude::*, pylibs};
+use crate::{abc, try_cast};
 use pyo3::pyclass_init::PyClassInitializer;
 use pyo3::sync::PyOnceLock;
 use pyo3::types::{
@@ -1242,22 +1242,17 @@ impl Dict {
 #[inline]
 fn set_eq(left: &Bound<'_, PyAny>, right: Bound<'_, PyAny>) -> PyResult<bool> {
     let py = right.py();
-    Set::extract_union(&right)
-        .map(|either| {
-            either
-                .map_left(|s| s.get().inner.bind(py))
-                .into_inner()
-                .as_any()
-        })
-        .or_else(|_| {
-            SetMut::extract_union(&right).map(|either| {
-                either
-                    .map_left(|s| s.get().inner.bind(py))
-                    .into_inner()
-                    .as_any()
-            })
-        })
-        .map_or(Ok(false), |x| left.eq(&x))
+    try_cast!(match right {
+        Set | SetMut => {
+            left.eq(right.get().inner.bind(py).as_any())
+        }
+        PySet | PyFrozenSet => {
+            left.eq(right.as_any())
+        }
+        _ => {
+            Ok(false)
+        }
+    })
 }
 
 pub fn get_repr<'py>(obj: &Bound<'py, PySequence>) -> PyResult<Bound<'py, PyString>> {
