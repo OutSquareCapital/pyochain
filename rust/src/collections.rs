@@ -245,23 +245,18 @@ impl Deque {
         })
     }
 
-    fn __mul__<'py>(&self, py: Python<'py>, value: usize) -> PyResult<Bound<'py, Self>> {
+    fn __mul__<'py>(&self, value: Bound<'py, PyInt>) -> PyResult<Bound<'py, Self>> {
         self.inner
-            .bind(py)
-            .as_sequence()
-            .repeat(value)
+            .bind(value.py())
+            .mul(value)
             .map(|x| unsafe { x.cast_into_unchecked::<PyDeque>() })
             .and_then(Self::from_ref)
     }
-    fn __rmul__<'py>(&self, py: Python<'py>, value: usize) -> PyResult<Bound<'py, Self>> {
-        self.__mul__(py, value)
+    fn __rmul__<'py>(&self, value: Bound<'py, PyInt>) -> PyResult<Bound<'py, Self>> {
+        self.__mul__(value)
     }
-    fn __imul__<'py>(&self, py: Python<'py>, value: usize) -> PyResult<()> {
-        self.inner
-            .bind(py)
-            .as_sequence()
-            .in_place_repeat(value)
-            .map(|x| unsafe { x.cast_into_unchecked::<PyDeque>() })?;
+    fn __imul__<'py>(&self, value: Bound<'py, PyInt>) -> PyResult<()> {
+        self.inner.bind(value.py()).imul(value)?;
         Ok(())
     }
 
@@ -391,5 +386,21 @@ impl Deque {
     }
     fn count<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
         self.inner.bind(value.py()).count(value)
+    }
+    #[pyo3(signature = (x, start=0, stop=None, /))]
+    fn index<'py>(
+        &self,
+        x: Bound<'py, PyAny>,
+        start: isize,
+        stop: Option<Bound<'py, PyInt>>,
+    ) -> PyResult<Bound<'py, PyInt>> {
+        self.inner.bind(x.py()).index(x, start, stop)
+    }
+    fn pop<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        self.inner.bind(py).pop()
+    }
+    #[pyo3(signature = (value, /))]
+    fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        self.inner.bind(value.py()).remove(value)
     }
 }

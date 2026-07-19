@@ -143,7 +143,7 @@ def test_count() -> None:
         _ = d.count(2)
     d = Deque([1, 2, 3])
     with pytest.raises(ArithmeticError):
-        _ = d.count(BadCompare())
+        _ = d.count(BadCompare())  # pyright: ignore[reportArgumentType]
 
     class MutatingCompare:  # ruff:ignore[eq-without-hash]
         d: Deque[Self | int]  # pyright: ignore[reportUninitializedInstanceVariable]
@@ -165,7 +165,7 @@ def test_count() -> None:
     for _i in range(len(d)):
         _ = d.rotate(-1)
     _ = d.rotate(1)
-    assert d.count(1) == 0
+    assert d.count(1) == 0  # pyright: ignore[reportArgumentType]
     assert d.count(None) == 16
 
 
@@ -221,11 +221,11 @@ def test_contains_count_index_stop_crashes() -> None:
         _ = 3 in d
     d = Deque([Foo(), Foo()])
     with pytest.raises(RuntimeError):
-        _ = d.count(3)
+        _ = d.count(3)  # pyright: ignore[reportArgumentType]
 
     d = Deque([Foo()])
     with pytest.raises(RuntimeError):
-        _ = d.index(0)
+        _ = d.index(0)  # pyright: ignore[reportArgumentType]
 
 
 def test_extend() -> None:

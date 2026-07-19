@@ -252,3 +252,11 @@ class Deque[T](PyoMutableSequence[T]):
     @override
     def insert(self, index: int, value: T) -> None:
         """Insert value before index."""
+    @override
+    def count(self, x: T, /) -> int: ...
+    @override
+    def index(self, x: T, start: int = 0, stop: int = ..., /) -> int: ...
+    @override
+    def pop(self) -> T: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    def remove(self, value: T, /) -> None: ...

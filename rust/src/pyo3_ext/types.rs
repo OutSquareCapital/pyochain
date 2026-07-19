@@ -192,6 +192,14 @@ pub trait PyDequeMethods<'py> {
     fn rotate(&self, n: isize) -> PyResult<()>;
     fn insert(&self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn count(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
+    fn index(
+        &self,
+        x: Bound<'py, PyAny>,
+        start: isize,
+        stop: Option<Bound<'py, PyInt>>,
+    ) -> PyResult<Bound<'py, PyInt>>;
+    fn pop(&self) -> PyResult<Bound<'py, PyAny>>;
+    fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()>;
 }
 impl<'py> PyDequeMethods<'py> for Bound<'py, PyDeque> {
     /// Returns `self` cast as a `PySequence`.
@@ -236,5 +244,24 @@ impl<'py> PyDequeMethods<'py> for Bound<'py, PyDeque> {
     fn count(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
         self.call_method1(intern!(self.py(), "count"), (value,))
             .map(|x| unsafe { x.cast_into_unchecked::<PyInt>() })
+    }
+    fn index(
+        &self,
+        x: Bound<'py, PyAny>,
+        start: isize,
+        stop: Option<Bound<'py, PyInt>>,
+    ) -> PyResult<Bound<'py, PyInt>> {
+        let py = x.py();
+        let method = intern!(py, "index");
+        stop.map(|stop| self.call_method1(method, (&x, start, stop)))
+            .unwrap_or_else(|| self.call_method1(method, (&x, start)))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyInt>() })
+    }
+    fn pop(&self) -> PyResult<Bound<'py, PyAny>> {
+        self.call_method0(intern!(self.py(), "pop"))
+    }
+    fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        self.call_method1(intern!(value.py(), "remove"), (value,))?;
+        Ok(())
     }
 }
