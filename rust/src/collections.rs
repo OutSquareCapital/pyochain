@@ -6,9 +6,8 @@ use crate::{
         types::{PyAbstractSet, PyDeque, PySupportsIndex, PySupportsItems, pyitertools},
     },
     seq::{IntoPyochain, SetMut, get_repr},
-    try_cast,
 };
-
+use bound_from_any::try_cast;
 use pyo3::{
     PyTypeInfo,
     exceptions::{PyKeyError, PyNotImplementedError, PyTypeError},

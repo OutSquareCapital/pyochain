@@ -1,9 +1,9 @@
-use crate::try_cast;
 use crate::{
     abc::{self, PyoABC, PyoSequence},
     pyo3_ext::prelude::*,
     pyo3_ext::types::{PyMutableSequence, PySupportsIndex},
 };
+use bound_from_any::try_cast;
 use either::Either;
 use pyo3::{
     PyTypeInfo,

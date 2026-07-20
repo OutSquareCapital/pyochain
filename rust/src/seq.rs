@@ -1,6 +1,7 @@
+use crate::abc;
 use crate::abc::PyoABC;
 use crate::pyo3_ext::{prelude::*, pylibs};
-use crate::{abc, try_cast};
+use bound_from_any::try_cast;
 use pyo3::pyclass_init::PyClassInitializer;
 use pyo3::sync::PyOnceLock;
 use pyo3::types::{
@@ -1222,9 +1223,7 @@ fn set_eq(left: &Bound<'_, PyAny>, right: Bound<'_, PyAny>) -> PyResult<bool> {
         PySet | PyFrozenSet => {
             left.eq(right.as_any())
         }
-        _ => {
-            Ok(false)
-        }
+        _ => Ok(false),
     })
 }
 

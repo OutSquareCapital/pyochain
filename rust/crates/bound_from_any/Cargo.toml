@@ -9,5 +9,5 @@
 [dependencies]
     proc-macro2 = "1.0.107"
     quote       = "1.0.47"
-    syn         = "3.0.1"
-tap = "1.0.1"
+    syn         = { version = "3.0.1", features = ["full"] }
+    tap         = "1.0.1"
