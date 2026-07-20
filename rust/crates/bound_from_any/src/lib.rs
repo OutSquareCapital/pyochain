@@ -41,9 +41,11 @@ pub fn derive_bound_from_any(input: TokenStream) -> TokenStream {
 
 /// Ergonomic "flat" match of one or more `Bound<'_, PyAny>`-like values against concrete pyo3 types, using [`Bound::cast`].\
 /// This avoids awkward nested `match` statements, or verbose `if let` chains.\
-/// ## Current limitations
-/// - Unfortunately, we still have to use `match` keyword systematically, otherwise rustfmt will completely skip the code inside the macro.
-/// - For some reason, rustfmt will delete `,` statements between the match arms, so we need to handle that specially without requiring them, which diverge from regular rust syntax.
+/// Unfortunately, we still have to use `match` keyword systematically, otherwise rustfmt will completely skip the code inside the macro.
+///
+/// ## Formatting tips
+/// To make rustfmt fully format the code block, simply delete the macro call, run rustfmt, then re-add the macro call.\
+/// As such, prefer using `{ ... }` instead of `(...)` at call sites, to just have to delete `try_cast!`.
 ///
 /// ## Example
 /// ```rust
@@ -53,11 +55,11 @@ pub fn derive_bound_from_any(input: TokenStream) -> TokenStream {
 /// use pyo3::exceptions::PyTypeError;
 ///
 /// fn foo(value: Bound<'_, PyAny>) -> PyResult<isize> {
-///   try_cast!(match value {
+///   try_cast! {match value {
 ///     PyList | PyTuple => { Ok(0) }
 ///     PyDict => { Ok(1) }
 ///     _ => { Err(PyTypeError::new_err("Invalid type")) }
-///    })
+///    }}
 ///  }
 /// fn foo_no_macro(value: Bound<'_, PyAny>) -> PyResult<()> {
 ///   match value.cast::<PyList>() {

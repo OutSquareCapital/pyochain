@@ -60,22 +60,14 @@ impl StableSet {
         let py = other.py();
         let inner = self.inner.bind(py);
         try_cast!(match other {
-            PyAbstractSet => {
-                inner.keys_view().eq(other)
-            }
-            StableSet => {
-                other
-                    .get()
-                    .inner
-                    .bind(py)
-                    .pipe(|set| inner.keys_view().eq(set))
-            }
-            PySet => {
-                inner.keys_view().eq(other)
-            }
-            _ => {
-                Ok(false)
-            }
+            PyAbstractSet => inner.keys_view().eq(other),
+            StableSet => other
+                .get()
+                .inner
+                .bind(py)
+                .pipe(|set| inner.keys_view().eq(set)),
+            PySet => inner.keys_view().eq(other),
+            _ => Ok(false),
         })
     }
 
@@ -231,25 +223,21 @@ impl Deque {
     fn __add__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
         let inner = self.inner.bind(py);
-        try_cast!(match value {
-            Deque => {
-                inner
+        try_cast! {
+            match value {
+                Deque => inner
                     .as_sequence()
                     .concat(value.get().inner.bind(py).as_sequence())
                     .map(|x| unsafe { x.cast_into_unchecked::<PyDeque>() })
-                    .and_then(Self::from_ref)
-            }
-            PyDeque => {
-                inner
+                    .and_then(Self::from_ref),
+                PyDeque => inner
                     .as_sequence()
                     .concat(value.as_sequence())
                     .map(|x| unsafe { x.cast_into_unchecked::<PyDeque>() })
-                    .and_then(Self::from_ref)
+                    .and_then(Self::from_ref),
+                _ => Err(PyTypeError::new_err("")),
             }
-            _ => {
-                Err(PyTypeError::new_err(""))
-            }
-        })
+        }
     }
 
     fn __mul__<'py>(&self, value: Bound<'py, PyInt>) -> PyResult<Bound<'py, Self>> {
@@ -270,81 +258,61 @@ impl Deque {
     fn __lt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
         let inner = self.inner.bind(py);
-        try_cast!(match value {
-            Deque => {
-                inner.lt(value.get().inner.bind(py))
+        try_cast! {
+            match value {
+                Deque => inner.lt(value.get().inner.bind(py)),
+                PyDeque => inner.lt(value),
+                _ => Err(PyTypeError::new_err("")),
             }
-            PyDeque => {
-                inner.lt(value)
-            }
-            _ => {
-                Err(PyTypeError::new_err(""))
-            }
-        })
+        }
     }
 
     fn __le__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
         let inner = self.inner.bind(py);
-        try_cast!(match value {
-            Deque => {
-                inner.le(value.get().inner.bind(py))
+        try_cast! {
+            match value {
+                Deque => inner.le(value.get().inner.bind(py)),
+                PyDeque => inner.le(value),
+                _ => Err(PyTypeError::new_err("")),
             }
-            PyDeque => {
-                inner.le(value)
-            }
-            _ => {
-                Err(PyTypeError::new_err(""))
-            }
-        })
+        }
     }
 
     fn __gt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
         let inner = self.inner.bind(py);
-        try_cast!(match value {
-            Deque => {
-                inner.gt(value.get().inner.bind(py))
+        try_cast! {
+            match value {
+                Deque => inner.gt(value.get().inner.bind(py)),
+                PyDeque => inner.gt(value),
+                _ => Err(PyTypeError::new_err("")),
             }
-            PyDeque => {
-                inner.gt(value)
-            }
-            _ => {
-                Err(PyTypeError::new_err(""))
-            }
-        })
+        }
     }
 
     fn __ge__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
         let inner = self.inner.bind(py);
-        try_cast!(match value {
-            Deque => {
-                inner.ge(value.get().inner.bind(value.py()))
+        try_cast! {
+            match value {
+                Deque => inner.ge(value.get().inner.bind(value.py())),
+                PyDeque => inner.ge(value),
+                _ => Err(PyTypeError::new_err("")),
             }
-            PyDeque => {
-                inner.ge(value)
-            }
-            _ => {
-                Err(PyTypeError::new_err(""))
-            }
-        })
+        }
     }
 
     fn __eq__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
         let inner = self.inner.bind(py);
-        try_cast!(match value {
-            Deque => {
-                inner.eq(value.get().inner.bind(py))
+        try_cast! {
+            match value {
+                Deque => inner.eq(value.get().inner.bind(py)),
+                PyDeque => inner.eq(value),
+                _ => Ok(false),
             }
-            PyDeque => {
-                inner.eq(value)
-            }
-            _ => {
-                Ok(false)
-            }
-        })
+        }
     }
     fn __reversed__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyIterator>> {
         self.inner.bind(py).reversed()
@@ -778,25 +746,23 @@ impl PyoCounter {
     fn __eq__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
         let py = other.py();
         let inner = self.inner.bind(py).as_any();
-        try_cast!(match other {
-            PyoCounter => {
-                for c in [inner, other.get().inner.bind(py)] {
-                    for e in c.try_iter()? {
-                        let e = e?;
-                        if inner.get_item(&e)?.ne(other.get_item(e)?)? {
-                            return Ok(false);
+        try_cast! {
+            match other {
+                PyoCounter => {
+                    for c in [inner, other.get().inner.bind(py)] {
+                        for e in c.try_iter()? {
+                            let e = e?;
+                            if inner.get_item(&e)?.ne(other.get_item(e)?)? {
+                                return Ok(false);
+                            }
                         }
                     }
+                    Ok(true)
                 }
-                Ok(true)
+                PyDict => inner.eq(other),
+                _ => Err(PyNotImplementedError::new_err("")),
             }
-            PyDict => {
-                inner.eq(other)
-            }
-            _ => {
-                Err(PyNotImplementedError::new_err(""))
-            }
-        })
+        }
     }
 
     fn __ne__(&self, other: &Bound<'_, Self>) -> PyResult<bool> {
@@ -881,40 +847,38 @@ fn maybe_update(
 #[inline]
 fn update_counter(data: &Bound<'_, PyDict>, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
     let py = data.py();
-    try_cast!(match iterable {
-        PyDict => {
-            update_counter_from_dict(data, iterable)
-        }
-        PyMapping => {
-            if data.is_empty() {
-                // fast path when counter is empty
-                data.update(iterable)
-            } else {
-                iterable
-                    .items()?
-                    .iter()
-                    .map(|x| x.cast_into_exact::<PyTuple>())
-                    .try_for_each(|x| {
-                        let res = x?;
-                        let e = res.get_item(0)?;
-                        let count = res.get_item(1)?;
-                        let new_item = count
-                            .add(data.get_item(&e)?.unwrap_or(PyInt::new(py, 0).into_any()))?;
-                        data.set_item(e, new_item)
-                    })
+    try_cast! {
+        match iterable {
+            PyDict => update_counter_from_dict(data, iterable),
+            PyMapping => {
+                if data.is_empty() {
+                    // fast path when counter is empty
+                    data.update(iterable)
+                } else {
+                    iterable
+                        .items()?
+                        .iter()
+                        .map(|x| x.cast_into_exact::<PyTuple>())
+                        .try_for_each(|x| {
+                            let res = x?;
+                            let e = res.get_item(0)?;
+                            let count = res.get_item(1)?;
+                            let new_item = count
+                                .add(data.get_item(&e)?.unwrap_or(PyInt::new(py, 0).into_any()))?;
+                            data.set_item(e, new_item)
+                        })
+                }
             }
-        }
-        _ => {
-            iterable.try_iter()?.try_for_each(|elem| {
+            _ => iterable.try_iter()?.try_for_each(|elem| {
                 let e = elem?;
                 let new_item = data
                     .get_item(&e)?
                     .unwrap_or(PyInt::new(py, 0).into_any())
                     .add(1)?;
                 data.set_item(e, new_item)
-            })
+            }),
         }
-    })
+    }
 }
 
 #[inline]

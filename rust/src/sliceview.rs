@@ -207,60 +207,62 @@ impl SliceView {
 
         let inner = self.inner.bind(py);
         let cr = self._current_range(py)?;
-        try_cast!(match (inner, index) {
-            (PyMutableSequence, PySlice) => {
-                let tr = cr
-                    .get_item(index)
-                    .map(|r| unsafe { r.cast_into_unchecked::<PyRange>() })?;
-                if tr.step()?.abs() != 1 {
-                    let values = PyTuple::type_object(py)
-                        .call1((value,))
-                        .map(|t| unsafe { t.cast_into_unchecked::<PyTuple>() })?;
-                    let values_len = values.len();
-                    let tr_len = tr.len()?;
-                    if values_len != tr_len {
-                        let msg = format!(
-                            "attempt to assign sequence of size {} to slice of size {}",
-                            values_len, tr_len
-                        );
-                        Err(PyValueError::new_err(msg))
+        try_cast! {
+            match (inner, index) {
+                (PyMutableSequence, PySlice) => {
+                    let tr = cr
+                        .get_item(index)
+                        .map(|r| unsafe { r.cast_into_unchecked::<PyRange>() })?;
+                    if tr.step()?.abs() != 1 {
+                        let values = PyTuple::type_object(py)
+                            .call1((value,))
+                            .map(|t| unsafe { t.cast_into_unchecked::<PyTuple>() })?;
+                        let values_len = values.len();
+                        let tr_len = tr.len()?;
+                        if values_len != tr_len {
+                            let msg = format!(
+                                "attempt to assign sequence of size {} to slice of size {}",
+                                values_len, tr_len
+                            );
+                            Err(PyValueError::new_err(msg))
+                        } else {
+                            tr.try_iter()?.zip(values).try_for_each(|(i, v)| {
+                                inner.set_item(i?.extract::<usize>()?, v)?;
+                                Ok::<(), PyErr>(())
+                            })
+                        }
                     } else {
-                        tr.try_iter()?.zip(values).try_for_each(|(i, v)| {
-                            inner.set_item(i?.extract::<usize>()?, v)?;
-                            Ok::<(), PyErr>(())
-                        })
+                        inner.set_slice_with_step(tr.start()?, tr.stop()?, tr.step()?, &value)
                     }
-                } else {
-                    inner.set_slice_with_step(tr.start()?, tr.stop()?, tr.step()?, &value)
                 }
-            }
-            (PyMutableSequence, PySupportsIndex) => {
-                let length = cr.len()? as isize;
+                (PyMutableSequence, PySupportsIndex) => {
+                    let length = cr.len()? as isize;
 
-                let mut idx = index.index()?.extract::<isize>()?;
-                if idx < 0 {
-                    idx += length
-                };
-                if !(0 <= idx && idx < length) {
-                    let msg = "SliceView index out of range";
-                    Err(PyIndexError::new_err(msg))
-                } else {
-                    inner.set_item(
-                        cr.get_item(PyInt::new(py, idx).into_any())?
-                            .extract::<usize>()?,
-                        value,
-                    )
+                    let mut idx = index.index()?.extract::<isize>()?;
+                    if idx < 0 {
+                        idx += length
+                    };
+                    if !(0 <= idx && idx < length) {
+                        let msg = "SliceView index out of range";
+                        Err(PyIndexError::new_err(msg))
+                    } else {
+                        inner.set_item(
+                            cr.get_item(PyInt::new(py, idx).into_any())?
+                                .extract::<usize>()?,
+                            value,
+                        )
+                    }
+                }
+                _ => {
+                    let name = inner.get_type().name()?;
+                    let msg = format!(
+                        "underlying sequence of type '{}' has no '__setitem__'",
+                        name
+                    );
+                    Err(PyTypeError::new_err(msg))
                 }
             }
-            _ => {
-                let name = inner.get_type().name()?;
-                let msg = format!(
-                    "underlying sequence of type '{}' has no '__setitem__'",
-                    name
-                );
-                Err(PyTypeError::new_err(msg))
-            }
-        })
+        }
     }
 
     fn advance<'py>(mut slf: PyRefMut<'py, Self>, n: isize) -> PyResult<PyRefMut<'py, Self>> {

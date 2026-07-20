@@ -1216,15 +1216,13 @@ impl Dict {
 #[inline]
 fn set_eq(left: &Bound<'_, PyAny>, right: Bound<'_, PyAny>) -> PyResult<bool> {
     let py = right.py();
-    try_cast!(match right {
-        Set | SetMut => {
-            left.eq(right.get().inner.bind(py).as_any())
+    try_cast! {
+        match right {
+            Set | SetMut => left.eq(right.get().inner.bind(py).as_any()),
+            PySet | PyFrozenSet => left.eq(right.as_any()),
+            _ => Ok(false),
         }
-        PySet | PyFrozenSet => {
-            left.eq(right.as_any())
-        }
-        _ => Ok(false),
-    })
+    }
 }
 
 pub fn get_repr<'py>(obj: &Bound<'py, PySequence>) -> PyResult<Bound<'py, PyString>> {
