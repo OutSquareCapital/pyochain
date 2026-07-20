@@ -72,7 +72,7 @@ impl<'py> IntoPyochain<'py, Dict> for Bound<'py, PyDict> {
 #[pyclass(frozen, generic, sequence, extends=abc::PyoSequence)]
 pub struct Seq {
     #[pyo3(get)]
-    inner: Py<PyTuple>,
+    pub inner: Py<PyTuple>,
 }
 #[pymethods]
 impl Seq {
@@ -180,10 +180,7 @@ impl Seq {
         other: &Bound<'py, PySequence>,
     ) -> PyResult<Bound<'py, PySequence>> {
         let py = other.py();
-        let tup = Self::extract_union(other)?
-            .map_left(|o| o.get().inner.bind(py))
-            .into_inner()
-            .as_sequence();
+        let tup = Self::extract_union(other)?.as_sequence();
         self.inner.bind(py).as_sequence().in_place_concat(tup)
     }
     fn __inplace_repeat__<'py>(
@@ -220,10 +217,7 @@ impl Seq {
     }
     fn concat<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let other_seq = Self::extract_union(other)?
-            .map_left(|o| o.get().inner.bind(py))
-            .into_inner()
-            .as_sequence();
+        let other_seq = Self::extract_union(other)?.as_sequence();
         self.inner
             .bind(py)
             .as_sequence()
@@ -236,7 +230,7 @@ impl Seq {
 #[pyclass(frozen, sequence, extends=abc::PyoSequence)]
 pub struct Range {
     #[pyo3(get)]
-    inner: Py<PyRange>,
+    pub inner: Py<PyRange>,
 }
 
 #[pymethods]
@@ -320,7 +314,7 @@ impl Range {
 #[pyclass(frozen, generic, sequence, extends=abc::PyoMutableSequence)]
 pub struct Vec {
     #[pyo3(get)]
-    inner: Py<PyList>,
+    pub inner: Py<PyList>,
 }
 #[pymethods]
 impl Vec {
@@ -360,9 +354,7 @@ impl Vec {
 
     fn __eq__(&self, other: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = other.py();
-        let o = Self::extract_union(&other)?
-            .map_left(|o| o.get().inner.bind(py))
-            .into_inner();
+        let o = Self::extract_union(&other)?;
         self.inner.bind(py).eq(&o).or(Ok(false))
     }
     fn __reversed__<'py>(slf: Bound<'py, Self>) -> Bound<'py, PyIterator> {
@@ -376,8 +368,6 @@ impl Vec {
     fn __add__<'py>(slf: Bound<'py, Self>, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
         Self::extract_union(&value)?
-            .map_left(|vec| vec.get().inner.bind(py))
-            .into_inner()
             .as_sequence()
             .pipe(|x| slf.get().inner.bind(py).as_sequence().concat(x))
             .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
@@ -423,33 +413,25 @@ impl Vec {
 
     fn __gt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let other = Self::extract_union(&value)?
-            .map_left(|vec| vec.get().inner.bind(py))
-            .into_inner();
+        let other = Self::extract_union(&value)?;
         self.inner.bind(py).gt(other)
     }
 
     fn __ge__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let other = Self::extract_union(&value)?
-            .map_left(|vec| vec.get().inner.bind(py))
-            .into_inner();
+        let other = Self::extract_union(&value)?;
         self.inner.bind(py).ge(other)
     }
 
     fn __lt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let other = Self::extract_union(&value)?
-            .map_left(|vec| vec.get().inner.bind(py))
-            .into_inner();
+        let other = Self::extract_union(&value)?;
         self.inner.bind(py).lt(other)
     }
 
     fn __le__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let other = Self::extract_union(&value)?
-            .map_left(|vec| vec.get().inner.bind(py))
-            .into_inner();
+        let other = Self::extract_union(&value)?;
         self.inner.bind(py).le(other)
     }
 
@@ -573,8 +555,6 @@ impl Vec {
     fn concat<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
         Self::extract_union(&other)?
-            .map_left(|o| o.get().inner.bind(py))
-            .into_inner()
             .pipe(|other| {
                 self.inner
                     .bind(py)
@@ -590,10 +570,7 @@ impl Vec {
         other: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let other = Self::extract_union(&other)?
-            .map_left(|o| o.get().inner.bind(py))
-            .into_inner()
-            .as_sequence();
+        let other = Self::extract_union(&other)?.as_sequence();
         slf.get()
             .inner
             .bind(py)
@@ -605,7 +582,7 @@ impl Vec {
 #[pyclass(frozen, generic, extends=abc::PyoSet)]
 pub struct Set {
     #[pyo3(get)]
-    inner: Py<PyFrozenSet>,
+    pub inner: Py<PyFrozenSet>,
 }
 #[pymethods]
 impl Set {
@@ -1030,7 +1007,7 @@ impl SetMut {
 #[pyclass(generic, frozen, extends=abc::PyoMutableMapping)]
 pub struct Dict {
     #[pyo3(get)]
-    inner: Py<PyDict>,
+    pub inner: Py<PyDict>,
 }
 #[pymethods]
 impl Dict {
@@ -1102,7 +1079,6 @@ impl Dict {
     fn __eq__(&self, other: Bound<'_, PyAny>) -> bool {
         let py = other.py();
         Self::extract_union(&other)
-            .map(|x| x.map_left(|r| r.get().inner.bind(py)).into_inner())
             .and_then(|r| self.inner.bind(py).eq(r))
             .unwrap_or(false)
     }
@@ -1114,7 +1090,6 @@ impl Dict {
     fn __ror__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
         Self::extract_union(&value)
-            .map(|x| x.map_left(|r| r.get().inner.bind(py)).into_inner())
             .and_then(|r| r.bitor(self.inner.bind(py)))
             .and_then(|new| unsafe { new.cast_into_unchecked::<PyDict>() }.into_pyochain())
     }
@@ -1176,9 +1151,7 @@ impl Dict {
 
     fn union<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let rhs = Self::extract_union(&other)?
-            .map_left(|x| x.get().inner.bind(py))
-            .into_inner();
+        let rhs = Self::extract_union(&other)?;
         slf.get()
             .inner
             .bind(py)

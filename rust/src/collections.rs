@@ -20,7 +20,7 @@ use tap::prelude::*;
 #[pyclass(frozen, generic, extends=abc::PyoMutableSet)]
 pub struct StableSet {
     #[pyo3(get)]
-    inner: Py<PyDict>,
+    pub inner: Py<PyDict>,
 }
 #[pymethods]
 impl StableSet {
@@ -424,7 +424,7 @@ impl Deque {
 
 #[pyclass(frozen, generic, extends=abc::PyoMutableMapping)]
 pub struct PyoCounter {
-    inner: Py<PyDict>,
+    pub inner: Py<PyDict>,
 }
 impl PyoCounter {
     fn iter_items<'py>(

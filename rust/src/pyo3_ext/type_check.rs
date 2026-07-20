@@ -1,6 +1,5 @@
-use either::Either;
 use pyo3::{
-    PyTypeInfo,
+    PyClass, PyTypeInfo,
     exceptions::PyTypeError,
     prelude::*,
     types::{PyDict, PyFrozenSet, PyList, PyRange, PySet, PyTuple},
@@ -113,20 +112,20 @@ macro_rules! try_cast {
         }
     };
 }
-pub trait PyWrapper: PyTypeInfo {
+pub trait PyWrapper: PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync {
     type Inner: PyTypeInfo;
-
-    /// Extract the type of a value and check if it is one of two types, returning an `Either` with the result.\
-    /// Returns a `PyErr` if the value is not one of the two types.
-    /// For example, if `T` is `Vec`, this function will check if the value is a `Vec` or a `PyList`, and return either a `Ok(Vec)`, `Ok(PyList)`, or a `Err(PyTypeError)`.
+    fn as_inner(&self) -> &Py<Self::Inner>;
+    /// Extracts the inner type of `Self` from an arbitrary python object.\
+    /// For example, if `Self` is `seq::Seq`, this will extract the inner `PyTuple` from a `seq::Seq` or a `PyTuple`.
     #[inline]
     fn extract_union<'py, 'r>(
         value: &'r Bound<'py, PyAny>,
-    ) -> PyResult<Either<&'r Bound<'py, Self>, &'r Bound<'py, Self::Inner>>> {
+    ) -> PyResult<&'r Bound<'py, Self::Inner>> {
+        let py = value.py();
         value
             .cast_exact::<Self>()
-            .map(Either::Left)
-            .or_else(|_| value.cast_exact::<Self::Inner>().map(Either::Right))
+            .map(|x| x.get().as_inner().bind(py))
+            .or_else(|_| value.cast_exact::<Self::Inner>())
             .map_err(|_| {
                 let py = value.py();
                 let wrapper_name = Self::type_object(py).name().unwrap();
@@ -140,25 +139,28 @@ pub trait PyWrapper: PyTypeInfo {
             })
     }
 }
+/// Implement `PyWrapper` for pyochain types in one line.
+macro_rules! impl_py_wrapper {
+    ($($wrapper:ty => $inner:ty),* $(,)?) => {
+        $(
+            impl PyWrapper for $wrapper {
+                type Inner = $inner;
 
-impl PyWrapper for seq::Seq {
-    type Inner = PyTuple;
+                #[inline]
+                fn as_inner(&self) -> &Py<Self::Inner> {
+                    &self.inner
+                }
+            }
+        )*
+    };
 }
-impl PyWrapper for seq::Vec {
-    type Inner = PyList;
-}
-impl PyWrapper for seq::Set {
-    type Inner = PyFrozenSet;
-}
-impl PyWrapper for seq::SetMut {
-    type Inner = PySet;
-}
-impl PyWrapper for seq::Range {
-    type Inner = PyRange;
-}
-impl PyWrapper for seq::Dict {
-    type Inner = PyDict;
-}
-impl PyWrapper for collections::StableSet {
-    type Inner = PyDict;
+impl_py_wrapper! {
+    seq::Seq => PyTuple,
+    seq::Vec => PyList,
+    seq::Set => PyFrozenSet,
+    seq::SetMut => PySet,
+    seq::Range => PyRange,
+    seq::Dict => PyDict,
+    collections::StableSet => PyDict,
+    collections::PyoCounter => PyDict,
 }
