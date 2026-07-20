@@ -5,13 +5,12 @@ use syn::{
     Type, parse_macro_input,
 };
 
-///`BoundFromAny` is a derive macro that generates a `FromPyObject` implementation for enums containing `Bound<'py, T>` variants.
-///
-/// It allows matching a Python object against multiple possible PyO3 types using `cast` or `cast_exact`.
-/// The generated extractor tries variants in declaration order.
-/// The benefit vs deriving `FromPyObject` is that the actual type check is much more efficient and lightweight, since the scope is more narrow, and specialized for `Bound<'py, T>`.
-///
-/// (The claims of efficiency are verified by ASM cross-check with Gemini and GPT, I'm not an expert on this, so take it with a grain of salt).
+///`BoundFromAny` is a derive macro that generates a `FromPyObject` implementation for enums containing `Bound<'py, T>` variants.\
+/// It allows matching a Python object against multiple possible PyO3 types using `cast` or `cast_exact`.\
+/// The generated extractor tries variants in declaration order.\
+/// The benefit vs deriving `FromPyObject` is that the actual type check is much more efficient and lightweight, since the scope is more narrow, and specialized for `Bound<'py, T>`.\
+/// On tests, with 3 match arms, 2 success and one PyErr, the output assembly is the same as a hand-written implementation and try_cast! macro calls.\
+/// **Note**: The claims of efficiency are verified by ASM cross-check with Gemini and GPT, I'm not an expert on this, so take it with a grain of salt).
 ///## Example
 ///
 ///```rust
