@@ -1,10 +1,11 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
-    Attribute, Data, DataEnum, DeriveInput, Fields, GenericArgument, Ident, LitStr, PathArguments,
-    Type, parse_macro_input,
+    Attribute, Data, DeriveInput, Fields, GenericArgument, Ident, LitStr, PathArguments, Type,
+    parse_macro_input, punctuated::Punctuated, token,
 };
-
+type SynResult<T> = Result<T, syn::Error>;
+type TokensVec = Vec<proc_macro2::TokenStream>;
 ///`BoundFromAny` is a derive macro that generates a `FromPyObject` implementation for enums containing `Bound<'py, T>` variants.\
 /// It allows matching a Python object against multiple possible PyO3 types using `cast` or `cast_exact`.\
 /// The generated extractor tries variants in declaration order.\
@@ -37,38 +38,21 @@ use syn::{
 #[proc_macro_derive(BoundFromAny, attributes(cast, cast_exact, extract))]
 pub fn derive_bound_from_any(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
+    get_variants(&input)
+        .and_then(get_arms_and_names)
+        .map(|(arms, names)| gen_impl(input, arms, names))
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
+}
 
+fn gen_impl(input: DeriveInput, arms: TokensVec, names: Vec<String>) -> proc_macro2::TokenStream {
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     let ident = input.ident;
-    let generics = input.generics;
-
-    let Data::Enum(DataEnum { variants, .. }) = input.data else {
-        panic!("BoundFromAny only supports enums");
-    };
-
-    let mut arms = Vec::new();
-    let mut names = Vec::new();
-
-    for variant in variants {
-        let vident = variant.ident;
-
-        let field = match variant.fields {
-            Fields::Unnamed(f) if f.unnamed.len() == 1 => f.unnamed.into_iter().next().unwrap(),
-            _ => panic!("variants must contain exactly one field"),
-        };
-
-        let ty = field.ty;
-
-        names.push(display_name(&ty));
-
-        arms.push(gen_arm(&vident, &ty, mode(&field.attrs)));
-    }
 
     let expected = LitStr::new(
         &format!("expected one of: {}", names.join(" | ")),
         proc_macro2::Span::call_site(),
     );
-
-    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
     quote! {
         impl #impl_generics ::pyo3::conversion::FromPyObject<'_, 'py>
@@ -88,77 +72,107 @@ pub fn derive_bound_from_any(input: TokenStream) -> TokenStream {
             }
         }
     }
-    .into()
+}
+
+fn get_arms_and_names(
+    variants: Punctuated<syn::Variant, token::Comma>,
+) -> SynResult<(TokensVec, Vec<String>)> {
+    variants
+        .iter()
+        .map(|variant| {
+            let field = match &variant.fields {
+                Fields::Unnamed(f) if f.unnamed.len() == 1 => Ok(f.unnamed.iter().next().unwrap()),
+                _ => Err(syn::Error::new_spanned(
+                    &variant,
+                    "variants must contain exactly one field",
+                )),
+            }?;
+
+            let ty = &field.ty;
+            let inner = bound_inner(ty)?;
+            let name = match inner {
+                Type::Path(p) => p.path.segments.last().unwrap().ident.to_string(),
+                _ => quote!(#inner).to_string(),
+            };
+            let arm = Mode::new(&field.attrs).gen_arm(&variant.ident, inner);
+
+            Ok((arm, name))
+        })
+        .collect()
 }
 
 #[derive(Copy, Clone)]
 enum Mode {
     Cast,
     CastExact,
+    Extract,
 }
 
-fn has(attrs: &[Attribute], name: &str) -> bool {
-    attrs.iter().any(|a| a.path().is_ident(name))
-}
+impl Mode {
+    fn new(attrs: &[Attribute]) -> Self {
+        let has = |name| attrs.iter().any(|a| a.path().is_ident(name));
 
-fn mode(attrs: &[Attribute]) -> Mode {
-    if has(attrs, "cast") {
-        Mode::Cast
-    } else if has(attrs, "cast_exact") {
-        Mode::CastExact
-    } else {
-        Mode::Cast
+        if has("cast_exact") {
+            Self::CastExact
+        } else if has("extract") {
+            Self::Extract
+        } else {
+            Self::Cast
+        }
     }
-}
-fn gen_arm(ident: &Ident, ty: &Type, mode: Mode) -> proc_macro2::TokenStream {
-    let Some(inner) = bound_inner(ty) else {
-        panic!("BoundFromAny only supports Bound<T>");
-    };
 
-    match mode {
-        Mode::Cast => {
-            quote! {
+    fn gen_arm(&self, ident: &Ident, inner: &Type) -> proc_macro2::TokenStream {
+        match self {
+            Self::Cast => quote! {
                 if let Ok(v) = obj.cast::<#inner>() {
                     return Ok(Self::#ident(v.to_owned()));
                 }
-            }
-        }
-
-        Mode::CastExact => {
-            quote! {
+            },
+            Self::CastExact => quote! {
                 if let Ok(v) = obj.cast_exact::<#inner>() {
                     return Ok(Self::#ident(v.to_owned()));
                 }
-            }
+            },
+            Self::Extract => quote! {
+                if let Ok(v) = obj.extract::<#inner>() {
+                    return Ok(Self::#ident(v));
+                }
+            },
         }
     }
 }
-fn display_name(ty: &Type) -> String {
-    match &bound_inner(ty).expect("expected Bound<T>") {
-        Type::Path(p) => p.path.segments.last().unwrap().ident.to_string(),
-        _ => quote!(#ty).to_string(),
+fn get_variants(input: &DeriveInput) -> SynResult<Punctuated<syn::Variant, token::Comma>> {
+    match &input.data {
+        Data::Enum(data_enum) => Ok(data_enum.variants.clone()),
+        _ => Err(syn::Error::new_spanned(
+            &input.ident,
+            "BoundFromAny only supports enums",
+        )),
     }
 }
-fn bound_inner(ty: &Type) -> Option<Type> {
-    let Type::Path(tp) = ty else {
-        return None;
-    };
 
-    let seg = tp.path.segments.last()?;
-
-    if seg.ident != "Bound" {
-        return None;
+fn bound_inner(ty: &Type) -> SynResult<&Type> {
+    match ty {
+        Type::Path(tp) => tp
+            .path
+            .segments
+            .last()
+            .filter(|seg| seg.ident == "Bound") // Fix: seg.ident == "Bound"
+            .and_then(|seg| match &seg.arguments {
+                PathArguments::AngleBracketed(args) => args
+                    .args
+                    .iter()
+                    .filter_map(|a| match a {
+                        GenericArgument::Type(t) => Some(t),
+                        _ => None,
+                    })
+                    .last(),
+                _ => None,
+            })
+            .ok_or_else(|| expected_bound_err(ty)),
+        _ => Err(expected_bound_err(ty)),
     }
-
-    let PathArguments::AngleBracketed(args) = &seg.arguments else {
-        return None;
-    };
-
-    args.args
-        .iter()
-        .filter_map(|a| match a {
-            GenericArgument::Type(t) => Some(t.clone()),
-            _ => None,
-        })
-        .last()
+}
+fn expected_bound_err(ty: &Type) -> syn::Error {
+    syn::Error::new_spanned(ty, "expected Bound<'py, T>")
 }
