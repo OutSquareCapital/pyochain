@@ -10,7 +10,7 @@ use tap::prelude::*;
 
 /// Python `builtins` functions and objects
 pub mod builtins {
-    use pyo3::ffi;
+    use pyo3::{call::PyCallArgs, ffi};
 
     use super::*;
 
@@ -18,6 +18,7 @@ pub mod builtins {
 
     const OBJECT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     const ALL: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
+    const ABS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     const ANY: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     const MAX: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     const MIN: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
@@ -37,6 +38,10 @@ pub mod builtins {
         ALL.import(iterator.py(), BUILTINS, "all")?
             .call1((iterator,))
             .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
+    }
+    #[inline(always)]
+    pub fn abs<'py>(value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+        ABS.import(value.py(), BUILTINS, "abs")?.call1((value,))
     }
     #[inline(always)]
     pub fn any<'py>(iterator: &Bound<'py, PyIterator>) -> PyResult<Bound<'py, PyBool>> {
@@ -71,6 +76,13 @@ pub mod builtins {
             .call1((iterator,))
     }
     #[inline(always)]
+    pub fn max_of<'py, A: PyCallArgs<'py>>(
+        py: Python<'py>,
+        objs: A,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        MAX.import(py, BUILTINS, "max")?.call1(objs)
+    }
+    #[inline(always)]
     pub fn max_by<'py>(
         iterator: &Bound<'py, PyIterator>,
         key: &Bound<'py, PyAny>,
@@ -84,6 +96,13 @@ pub mod builtins {
     pub fn min<'py>(iterator: &Bound<'py, PyIterator>) -> PyResult<Bound<'py, PyAny>> {
         MIN.import(iterator.py(), BUILTINS, "min")?
             .call1((iterator,))
+    }
+    #[inline(always)]
+    pub fn min_of<'py, A: PyCallArgs<'py>>(
+        py: Python<'py>,
+        objs: A,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        MIN.import(py, BUILTINS, "min")?.call1(objs)
     }
     #[inline(always)]
     pub fn min_by<'py>(
