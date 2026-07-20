@@ -447,10 +447,7 @@ impl PyoCounter {
         kwargs: Option<Kwargs<'_>>,
     ) -> PyResult<PyClassInitializer<Self>> {
         let data = PyDict::new(py);
-        iterable.map(|it| update_counter(&data, &it)).transpose()?;
-        kwargs
-            .map(|kw| update_counter_from_dict(&data, &kw))
-            .transpose()?;
+        maybe_update(&data, iterable, kwargs)?;
         let init = abc::PyoMutableMapping::build_init().add_subclass(Self {
             inner: data.unbind(),
         });
@@ -567,9 +564,7 @@ impl PyoCounter {
         kwargs: Option<Kwargs<'_>>,
     ) -> PyResult<()> {
         let data = self.inner.bind(py);
-        iterable.map(|it| update_counter(&data, &it)).transpose()?;
-        kwargs.map(|kw| update_counter(&data, &kw)).transpose()?;
-        Ok(())
+        maybe_update(&data, iterable, kwargs)
     }
     #[pyo3(signature = (iterable=None, /, **kwargs))]
     fn subtract(
@@ -579,11 +574,7 @@ impl PyoCounter {
         kwargs: Option<Kwargs<'_>>,
     ) -> PyResult<()> {
         let inner = self.inner.bind(py);
-        iterable.map(|it| update_counter(&inner, &it)).transpose()?;
-        kwargs
-            .map(|kw| update_counter_from_dict(&inner, &kw))
-            .transpose()?;
-        Ok(())
+        maybe_update(&inner, iterable, kwargs)
     }
 
     fn copy(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self>> {
@@ -877,22 +868,17 @@ fn keep_positive(data: &Bound<'_, PyDict>) -> PyResult<()> {
     })
 }
 #[inline]
-fn update_counter_from_dict(
+fn maybe_update(
     data: &Bound<'_, PyDict>,
-    iterable: &Bound<'_, PyDict>,
+    iterable: Option<Bound<'_, PyAny>>,
+    kwargs: Option<Kwargs<'_>>,
 ) -> PyResult<()> {
-    let py = data.py();
-    if !data.is_empty() {
-        iterable.iter().try_for_each(|(k, count)| {
-            let new_item = count.add(data.get_item(&k)?.unwrap_or(PyInt::new(py, 0).into_any()))?;
-            data.set_item(k, new_item)
-        })
-    } else {
-        // fast path when counter is empty
-        data.update(iterable.as_mapping())
-    }
+    iterable.map(|it| update_counter(&data, &it)).transpose()?;
+    kwargs
+        .map(|kw| update_counter_from_dict(&data, &kw))
+        .transpose()?;
+    Ok(())
 }
-
 #[inline]
 fn update_counter(data: &Bound<'_, PyDict>, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
     let py = data.py();
@@ -901,7 +887,10 @@ fn update_counter(data: &Bound<'_, PyDict>, iterable: &Bound<'_, PyAny>) -> PyRe
             update_counter_from_dict(data, iterable)
         }
         PyMapping => {
-            if !data.is_empty() {
+            if data.is_empty() {
+                // fast path when counter is empty
+                data.update(iterable)
+            } else {
                 iterable
                     .items()?
                     .iter()
@@ -914,9 +903,6 @@ fn update_counter(data: &Bound<'_, PyDict>, iterable: &Bound<'_, PyAny>) -> PyRe
                             .add(data.get_item(&e)?.unwrap_or(PyInt::new(py, 0).into_any()))?;
                         data.set_item(e, new_item)
                     })
-            } else {
-                // fast path when counter is empty
-                data.update(iterable)
             }
         }
         _ => {
@@ -930,4 +916,21 @@ fn update_counter(data: &Bound<'_, PyDict>, iterable: &Bound<'_, PyAny>) -> PyRe
             })
         }
     })
+}
+
+#[inline]
+fn update_counter_from_dict(
+    data: &Bound<'_, PyDict>,
+    iterable: &Bound<'_, PyDict>,
+) -> PyResult<()> {
+    let py = data.py();
+    if data.is_empty() {
+        // fast path when counter is empty
+        data.update(iterable.as_mapping())
+    } else {
+        iterable.iter().try_for_each(|(k, count)| {
+            let new_item = count.add(data.get_item(&k)?.unwrap_or(PyInt::new(py, 0).into_any()))?;
+            data.set_item(k, new_item)
+        })
+    }
 }
