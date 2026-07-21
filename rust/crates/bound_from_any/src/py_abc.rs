@@ -51,21 +51,13 @@ fn export_method(attrs: &mut Vec<Attribute>) -> Option<Vec<Attribute>> {
             attrs.remove(position);
             None
         })
-        .unwrap_or_else(|| {
-            Some(
-                attrs
-                    .extract_if(.., |attr| {
-                        attr.path().is_ident("pyo3") || attr.path().is_ident("new")
-                    })
-                    .collect(),
-            )
-        })
+        .unwrap_or_else(|| Some(std::mem::take(attrs)))
 }
-
+// TODO: We should use an enum inside instead of boolean flags and raw str matchs
 fn generate_method(
     trait_ident: &Ident,
     method: &syn::TraitItemFn,
-    pyo3_attrs: Vec<Attribute>,
+    attrs: Vec<Attribute>,
 ) -> SynResult<proc_macro2::TokenStream> {
     let original_ident = &method.sig.ident;
     let wrapper_ident = format_ident!("py_{original_ident}");
@@ -87,14 +79,16 @@ fn generate_method(
             }),
         })
         .collect::<SynResult<Vec<_>>>()?;
-    let is_constructor = pyo3_attrs.iter().any(|attr| attr.path().is_ident("new"));
-    let new_attr = is_constructor.then(|| quote! { #[new] });
+    let is_constructor = attrs.iter().any(|attr| attr.path().is_ident("new"));
+    let (pyo3_attrs, attrs): (Vec<Attribute>, Vec<Attribute>) = attrs
+        .into_iter()
+        .partition(|attr| attr.path().is_ident("pyo3"));
     let pyo3_attr = pyo3_attribute(&python_name, pyo3_attrs, is_constructor)?;
     let receiver =
         matches!(method.sig.inputs.first(), Some(FnArg::Receiver(_))).then(|| quote! { self, });
 
     Ok(quote! {
-        #new_attr
+        #(#attrs)*
         #pyo3_attr
         #signature {
             <Self as #trait_ident>::#original_ident(#receiver #(#arguments),*)
