@@ -18,9 +18,14 @@ trait HeapType: Sized + PyWrapper<PyList> {
     fn replace<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>>;
     fn push_pop<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>>;
     fn push<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<()>;
-    fn pop<'py>(&self, py: Python<'py>, _index: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>>;
 
-    #[py_skip]
+    #[pyo3(signature = (_index=None))]
+    fn pop<'py>(
+        &self,
+        py: Python<'py>,
+        _index: Option<Bound<'py, PyAny>>,
+    ) -> PyResult<Bound<'py, PyAny>>;
+    #[staticmethod]
     fn from_ref<'py>(py: Python<'py>, data: Bound<'_, PyList>) -> PyResult<Bound<'py, Self>> {
         Self::new(data).and_then(|init| Bound::new(py, init))
     }
@@ -135,7 +140,11 @@ impl HeapType for HeapMin {
     fn push(&self, item: Bound<'_, PyAny>) -> PyResult<()> {
         pylibs::heapq::heappush(self.inner.bind(item.py()), item)
     }
-    fn pop<'py>(&self, py: Python<'py>, _index: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+    fn pop<'py>(
+        &self,
+        py: Python<'py>,
+        _index: Option<Bound<'py, PyAny>>,
+    ) -> PyResult<Bound<'py, PyAny>> {
         pylibs::heapq::heappop(self.as_inner().bind(py))
     }
     fn replace<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
@@ -168,8 +177,11 @@ impl HeapType for HeapMax {
         inner.append(item)?;
         self._siftdown(py, 0, inner.len() - 1)
     }
-
-    fn pop<'py>(&self, py: Python<'py>, _index: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+    fn pop<'py>(
+        &self,
+        py: Python<'py>,
+        _index: Option<Bound<'py, PyAny>>,
+    ) -> PyResult<Bound<'py, PyAny>> {
         let inner = self.inner.bind(py);
         let lastelt = inner.call_method0(intern!(py, "pop"))?;
         if !(inner.is_empty()) {
