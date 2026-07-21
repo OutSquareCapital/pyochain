@@ -499,18 +499,18 @@ impl PyoCounter {
         &self,
         py: Python<'py>,
         n: Option<Bound<'py, PyInt>>,
-    ) -> PyResult<Either<Bound<'py, PyList>, Bound<'py, PyAny>>> {
+    ) -> PyResult<Bound<'py, PyList>> {
         let items = self.inner.bind(py).items().try_iter().unwrap();
         let getter = pylibs::operator::itemgetter(py, 1)?;
         match n {
-            None => pylibs::builtins::sorted_by(&items, true, &getter).map(Either::Left),
+            None => pylibs::builtins::sorted_by(&items, true, &getter),
             Some(n) => {
                 let kwargs = PyDict::new(py);
                 kwargs.set_item(intern!(py, "key"), getter)?;
                 py.import(intern!(py, "heapq"))?
                     .getattr(intern!(py, "nlargest"))?
                     .call((n, items), Some(&kwargs))
-                    .map(Either::Right)
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
             }
         }
     }
@@ -569,15 +569,13 @@ impl PyoCounter {
         } else {
             let d_repr = slf
                 .get()
-                .most_common(py, None)?
-                .map_left(|x| x.into_any())
-                .into_inner()
+                .most_common(py, None)
                 // dict() preserves the ordering returned by most_common()
-                .pipe_ref(PyDict::from_sequence)
+                .and_then(|x| x.as_any().pipe(PyDict::from_sequence))
                 .or_else(|err| {
                     if err.is_instance_of::<PyTypeError>(py) {
                         // handle case where values are not orderable
-                        PyDict::from_sequence(&slf)
+                        slf.get().inner.clone_ref(py).into_bound(py).pipe(Ok)
                     } else {
                         Err(err)
                     }
