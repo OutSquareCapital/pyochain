@@ -173,6 +173,7 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<collections::StableSet>()?;
     m.add_class::<collections::Deque>()?;
     m.add_class::<collections::PyoCounter>()?;
+    m.add_class::<collections::Heap>()?;
     m.add_class::<collections::HeapMax>()?;
     m.add_class::<collections::HeapMin>()?;
     let sys_mods = py.import("sys")?.getattr("modules")?;

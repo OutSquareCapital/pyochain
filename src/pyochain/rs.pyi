@@ -12,7 +12,7 @@ from typing import (
 
 from pyochain.abc import Pipe, PyoIterator
 
-from ._collections import Deque, HeapMax, HeapMin, PyoCounter, StableSet
+from ._collections import Deque, Heap, HeapMax, HeapMin, PyoCounter, StableSet
 
 # Export for typing purposes. the private modules actually don't exist at runtime.
 # That way, we can :
@@ -30,6 +30,7 @@ from ._vec import Vec
 __all__ = [
     "Deque",
     "Dict",
+    "Heap",
     "HeapMax",
     "HeapMin",
     "Iter",

@@ -106,17 +106,31 @@ trait HeapType: Sized + PyWrapper<PyList> {
             .and_then(|x| Self::from_ref(py, x))
     }
 }
-#[pyclass(frozen, generic, sequence, extends = abc::PyoMutableSequence)]
+/// Present for typing purposes only.
+#[pyclass(frozen, generic, sequence, extends = abc::PyoMutableSequence, subclass)]
+pub struct Heap;
+#[pyclass(frozen, generic, sequence, extends = Heap)]
 pub struct HeapMin {
     pub inner: Py<PyList>,
+}
+#[pymethods]
+impl Heap {
+    #[allow(unused_variables)]
+    #[new]
+    fn new(data: Bound<'_, PyList>) -> PyClassInitializer<Self> {
+        abc::PyoMutableSequence::build_init().add_subclass(Self)
+    }
 }
 impl HeapType for HeapMin {
     fn new(data: Bound<'_, PyList>) -> PyResult<PyClassInitializer<Self>> {
         pylibs::heapq::heapify(&data)?;
-        let init = abc::PyoMutableSequence::build_init().add_subclass(Self {
-            inner: data.unbind(),
-        });
-        Ok(init)
+        data.unbind()
+            .pipe(|inner| {
+                abc::PyoMutableSequence::build_init()
+                    .add_subclass(Heap)
+                    .add_subclass(Self { inner })
+            })
+            .pipe(Ok)
     }
     fn push(&self, item: Bound<'_, PyAny>) -> PyResult<()> {
         pylibs::heapq::heappush(self.inner.bind(item.py()), item)
@@ -133,17 +147,20 @@ impl HeapType for HeapMin {
     }
 }
 
-#[pyclass(frozen, generic, sequence, extends = abc::PyoMutableSequence)]
+#[pyclass(frozen, generic, sequence, extends = Heap)]
 pub struct HeapMax {
     pub inner: Py<PyList>,
 }
 impl HeapType for HeapMax {
     fn new(data: Bound<'_, PyList>) -> PyResult<PyClassInitializer<Self>> {
         pylibs::heapq::heapify_max(&data)?;
-        let init = abc::PyoMutableSequence::build_init().add_subclass(Self {
-            inner: data.unbind(),
-        });
-        Ok(init)
+        data.unbind()
+            .pipe(|inner| {
+                abc::PyoMutableSequence::build_init()
+                    .add_subclass(Heap)
+                    .add_subclass(Self { inner })
+            })
+            .pipe(Ok)
     }
     fn push(&self, item: Bound<'_, PyAny>) -> PyResult<()> {
         let py = item.py();
