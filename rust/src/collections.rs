@@ -16,6 +16,7 @@ use pyo3::{
     prelude::*,
     types::{
         PyDict, PyInt, PyIterator, PyList, PyMapping, PyNone, PyNotImplemented, PySet, PyTuple,
+        PyType,
     },
 };
 use tap::prelude::*;
@@ -649,6 +650,10 @@ impl PyoCounter {
             .call1((slf,))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
+    fn __reduce__(slf: Bound<'_, Self>) -> (Bound<'_, PyType>, (Py<PyDict>,)) {
+        let py = slf.py();
+        return (Self::type_object(py), (slf.get().inner.clone_ref(py),));
+    }
 
     fn __delitem__(&self, elem: Bound<'_, PyAny>) -> PyResult<()> {
         let inner = self.inner.bind(elem.py());
@@ -660,30 +665,28 @@ impl PyoCounter {
 
     fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
         let py = slf.py();
+        let name = slf.get_type().name()?;
+
         if !&slf.is_truthy()? {
-            let name = slf.get_type().name()?;
             Ok(format!("{}()", name))
         } else {
-            let d = match slf
+            let d_repr = slf
                 .get()
                 .most_common(py, None)?
                 .map_left(|x| x.into_any())
                 .into_inner()
-                .pipe_ref(PyDict::from_sequence)
-            {
                 // dict() preserves the ordering returned by most_common()
-                Ok(d) => Ok(d),
-                Err(err) => {
-                    if err.is_instance_of::<PyTypeError>(slf.py()) {
+                .pipe_ref(PyDict::from_sequence)
+                .or_else(|err| {
+                    if err.is_instance_of::<PyTypeError>(py) {
                         // handle case where values are not orderable
                         PyDict::from_sequence(&slf)
                     } else {
                         Err(err)
                     }
-                }
-            };
-            let name = slf.get_type().name()?;
-            Ok(format!("{}({})", name, d?.repr()?))
+                })?
+                .repr()?;
+            Ok(format!("{}({})", name, d_repr))
         }
     }
 
