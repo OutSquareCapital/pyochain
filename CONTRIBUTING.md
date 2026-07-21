@@ -13,11 +13,10 @@ pyochain is a **mixed Python/Rust project**:
 - [src/pyochain/abc/](src/pyochain/abc) — abstract collections and iterator ABCs shared across the Python layer.
 - [src/pyochain/collections/](src/pyochain/collections) — non-core collection implementations.
 - [src/pyochain/_seq.pyi](src/pyochain/_seq.pyi) — `Seq` stubs.
-- [src/pyochain/_dict.py](src/pyochain/_dict.py) — `Dict` implementation and mapping-specific methods.
+- [src/pyochain/_dict.pyi](src/pyochain/_dict.pyi) — `Dict` implementation and mapping-specific methods.
 - [src/pyochain/_range.pyi](src/pyochain/_range.pyi) — `Range` stubs.
-- [src/pyochain/_set.py](src/pyochain/_set.py) — `Set`, `SetMut`, `PyoKeysView`, `PyoValuesView`, and `PyoItemsView` implementations.
-- [src/pyochain/_vec.py](src/pyochain/_vec.py) — `Vec` implementation.
-- [src/pyochain/_utils.py](src/pyochain/_utils.py) — internal utilities used across the Python package.
+- [src/pyochain/_set.pyi](src/pyochain/_set.pyi) — `Set`, `SetMut`, `PyoKeysView`, `PyoValuesView`, and `PyoItemsView` implementations.
+- [src/pyochain/_vec.pyi](src/pyochain/_vec.pyi) — `Vec` implementation.
 - [src/pyochain/rs.pyi](src/pyochain/rs.pyi) — stubs for the Rust-compiled public bindings.
 - [src/pyochain/_tools.pyi](src/pyochain/_tools.pyi) — stubs for the internal Rust helper module exposed as `pyochain._tools`.
 - [src/pyochain/_types.py](src/pyochain/_types.py) — shared typing protocols and support types.
@@ -30,7 +29,8 @@ pyochain is a **mixed Python/Rust project**:
 - [rust/src/errors.rs](rust/src/errors.rs) — unwrap error types exposed to Python.
 - [rust/src/mixins.rs](rust/src/mixins.rs) — mixin types `Checkable`, `Pipe`, `Tap`, and `Fluent`.
 - [rust/src/tools.rs](rust/src/tools.rs) — iteration function and structs exposed through `pyochain._tools`.
-- [rust/src/args.rs](rust/src/args.rs) and [rust/src/hasher.rs](rust/src/hasher.rs) — internal argument parsing and hashing utilities used by the extension.
+- [rust/src/pyo3_ext/](rust/src/pyo3_ext/) - internal utilities for traits, macros and functions extending Pyo3's functionality.
+- [rust/crates/pyochain_macros](rust/crates/pyochain_macros) - procedural macros for type checking helpers.
 
 ## Coding and documentation guidelines
 

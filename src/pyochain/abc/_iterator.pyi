@@ -21,7 +21,6 @@ from typing import (
 from _typeshed import SupportsRichComparison
 
 from pyochain._tools import Peekable
-from pyochain._utils import no_doctest
 from pyochain._vec import Vec
 from pyochain.abc import PyoIterable, PyoMutableSequence
 from pyochain.rs import Option, Result
@@ -116,7 +115,6 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     def __next__(self) -> T: ...
     @override
     def __iter__(self) -> Iterator[T]: ...
-    @no_doctest
     @classmethod
     def _from_iterable[I](cls, iterable: Iterable[I]) -> PyoIterator[I]:
         """Internal constructor.
@@ -135,6 +133,25 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             This is how python standard library handle `collections::abc::Set`, see the first point below `Notes on using Set [...]`:
 
             https://docs.python.org/3/library/collections.abc.html#examples-and-recipes
+
+        Example:
+            ```python
+            >>> from pyochain.abc import PyoIterator
+            >>> from pyochain import Seq
+            >>> from collections.abc import Iterable, Iterator
+            >>>
+            >>> class MyIter(PyoIterator[int]):
+            ...     def __init__(self, iterable: Iterable[int]):
+            ...         self._iterable = iter(iterable)
+            ...     def __next__(self) -> int:
+            ...         return next(self._iterable)
+            ...     def __iter__(self) -> Iterator[int]:
+            ...         return self
+
+            >>> MyIter._from_iterable(Seq((1, 2, 3))).collect(Seq)
+            Seq(1, 2, 3)
+
+            ```
 
         """
 

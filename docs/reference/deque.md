@@ -1,3 +1,3 @@
 # Deque
 
-::: pyochain.collections._deque.Deque
+::: pyochain.rs.Deque

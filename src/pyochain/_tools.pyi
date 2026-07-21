@@ -1,10 +1,16 @@
 from collections.abc import Callable, Iterable, Iterator, MutableSequence
-from typing import Any, Self, final, override
+from typing import Any, Self, final, overload, override
 
-from ._utils import no_doctest
 from .abc import PyoIterator
 from .abc._iterator import Position
 from .rs import Option, Result
+
+@overload
+def no_doctest[T](obj: type[T], /) -> type[T]: ...
+@overload
+def no_doctest[**P, R](obj: Callable[P, R], /) -> Callable[P, R]: ...
+def no_doctest(obj: object, /) -> object:
+    """Dummy decorator to mark classes/functions that should skip doctest checks."""
 
 class MapJuxt[R](Iterator[tuple[R, ...]]):
     def __init__(
