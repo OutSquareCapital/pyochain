@@ -87,13 +87,14 @@ class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):  # ruff:ignor
                 return NotImplemented
 
     @override
-    def insert(self, index: int, value: T) -> None:
+    def insert(self, index: SupportsIndex, value: T) -> None:
         self._inner.insert(index, value)
 
     @abstractmethod
     def push(self, item: T) -> None:
         """Push item onto heap, maintaining the heap invariant."""
 
+    @abstractmethod
     @override
     def pop(self, _index: int = -1, /) -> T:
         """Pop the smallest item off the heap, maintaining the heap invariant.
@@ -109,7 +110,6 @@ class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):  # ruff:ignor
         Returns:
             T: The smallest item from the heap.
         """
-        return hq.heappop(self._inner)
 
     @abstractmethod
     def replace(self, item: T) -> T:
