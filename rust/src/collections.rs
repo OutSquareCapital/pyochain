@@ -489,7 +489,8 @@ impl PyoCounter {
     fn total<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         self.inner
             .bind(py)
-            .values()
+            .values_view()
+            .as_any()
             .try_iter()
             .unwrap()
             .pipe(|vals| pylibs::builtins::sum(&vals, &0))
@@ -500,7 +501,7 @@ impl PyoCounter {
         py: Python<'py>,
         n: Option<Bound<'py, PyInt>>,
     ) -> PyResult<Bound<'py, PyList>> {
-        let items = self.inner.bind(py).items().try_iter().unwrap();
+        let items = self.inner.bind(py).items_view().try_iter().unwrap();
         let getter = pylibs::operator::itemgetter(py, 1)?;
         match n {
             None => pylibs::builtins::sorted_by(&items, true, &getter),
@@ -518,7 +519,7 @@ impl PyoCounter {
     fn elements<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyIterator>> {
         pylibs::itertools::chain::from_iterable(&pylibs::itertools::map_star(
             pyitertools::PyRepeat::type_object(py).into_any(),
-            self.inner.bind(py).items().try_iter().unwrap(),
+            self.inner.bind(py).items_view().try_iter().unwrap(),
         )?)
     }
     #[pyo3(signature = (iterable=None, /, **kwargs))]
@@ -595,10 +596,10 @@ impl PyoCounter {
             if newcount.gt(0)? {
                 result.set_item(elem, newcount)?;
             }
-            for (elem, count) in o.inner.bind(py).iter() {
-                if !inner.contains(&elem)? && count.gt(0)? {
-                    result.set_item(elem, count)?;
-                }
+        }
+        for (elem, count) in o.inner.bind(py).iter() {
+            if !inner.contains(&elem)? && count.gt(0)? {
+                result.set_item(elem, count)?;
             }
         }
         Self::from_ref(result)
@@ -669,7 +670,7 @@ impl PyoCounter {
     fn __neg__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         let result = PyDict::new(py);
         for (elem, count) in self.inner.bind(py).iter() {
-            if count.gt(0)? {
+            if count.lt(0)? {
                 result.set_item(elem, count.neg()?)?;
             }
         }
@@ -684,7 +685,7 @@ impl PyoCounter {
             let new_count = self.__getitem__(&elem)?.add(count)?;
             inner.set_item(elem, new_count)?;
         }
-        self._keep_positive(py)
+        keep_positive(&inner)
     }
 
     fn __isub__(&self, other: Bound<'_, PySupportsItems>) -> PyResult<()> {
@@ -695,7 +696,7 @@ impl PyoCounter {
             let new_count = self.__getitem__(&elem)?.sub(count)?;
             inner.set_item(elem, new_count)?;
         }
-        self._keep_positive(py)
+        keep_positive(&inner)
     }
 
     fn __ior__(&self, other: Bound<'_, PySupportsItems>) -> PyResult<()> {
@@ -708,7 +709,7 @@ impl PyoCounter {
                 inner.set_item(elem, other_count)?;
             }
         }
-        self._keep_positive(py)
+        keep_positive(&inner)
     }
 
     fn __iand__(&self, other: Bound<'_, PyMapping>) -> PyResult<()> {
@@ -720,9 +721,24 @@ impl PyoCounter {
                 inner.set_item(elem, other_count)?;
             }
         }
-        self._keep_positive(py)
+        keep_positive(&inner)
     }
 
+    fn __ixor__<'py>(&self, other: Bound<'py, Self>) -> PyResult<()> {
+        let py = other.py();
+        let o = other.get();
+        let inner = self.inner.bind(py);
+        for (elem, count) in inner.iter() {
+            let new_item = pylibs::builtins::abs(&count.sub(o.__getitem__(&elem)?)?)?;
+            inner.set_item(elem, new_item)?
+        }
+        for (elem, count) in other.get().inner.bind(py).iter() {
+            if !inner.contains(&elem)? {
+                inner.set_item(elem, pylibs::builtins::abs(&count)?)?
+            }
+        }
+        keep_positive(&inner)
+    }
     fn __eq__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<BoolOrNotImpl<'py>> {
         let py = other.py();
         let inner = self.inner.bind(py);
@@ -823,32 +839,6 @@ impl PyoCounter {
             }
         }
         Self::from_ref(result)
-    }
-
-    fn __ixor__<'py>(&self, other: Bound<'py, Self>) -> PyResult<()> {
-        let py = other.py();
-        let o = other.get();
-        let inner = self.inner.bind(py);
-        for (elem, count) in inner.iter() {
-            let new_item = pylibs::builtins::abs(&count.sub(o.__getitem__(&elem)?)?)?;
-            inner.set_item(elem, new_item)?
-        }
-        for (elem, count) in other.get().inner.bind(py).iter() {
-            if !inner.contains(&elem)? {
-                inner.set_item(elem, pylibs::builtins::abs(&count)?)?
-            }
-        }
-        self._keep_positive(py)
-    }
-
-    fn _keep_positive(&self, py: Python<'_>) -> PyResult<()> {
-        let inner = self.inner.bind(py);
-        for (elem, count) in inner.iter() {
-            if !(count.gt(0)?) {
-                inner.del_item(elem)?;
-            }
-        }
-        Ok(())
     }
 }
 #[inline(always)]
@@ -976,4 +966,24 @@ fn subtract_dict(
         inner.set_item(elem, new_item)?
     }
     Ok(())
+}
+fn keep_positive(inner: &Bound<'_, PyDict>) -> PyResult<()> {
+    inner
+        .items_view()
+        .try_iter()
+        .unwrap()
+        .map(|x| x?.extract::<(Bound<'_, PyAny>, isize)>())
+        .filter_map(|kv| match kv {
+            Ok((elem, count)) => {
+                if !(count > 0) {
+                    Some(Ok(elem))
+                } else {
+                    None
+                }
+            }
+            Err(err) => Some(Err(err)),
+        })
+        .collect::<PyResult<Vec<_>>>()?
+        .iter()
+        .try_for_each(|elem| inner.del_item(elem))
 }
