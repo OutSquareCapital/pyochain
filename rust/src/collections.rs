@@ -7,13 +7,16 @@ use crate::{
     },
     seq::{IntoPyochain, SetMut, get_repr},
 };
-use bound_from_any::try_cast;
+use bound_from_any::{BoundFromAny, try_cast};
+use either::Either;
 use pyo3::{
-    PyTypeInfo,
-    exceptions::{PyKeyError, PyNotImplementedError, PyTypeError},
+    BoundObject, PyTypeInfo,
+    exceptions::{PyKeyError, PyTypeError},
     intern,
     prelude::*,
-    types::{PyDict, PyInt, PyIterator, PyList, PyMapping, PyNone, PySet, PyTuple, PyType},
+    types::{
+        PyDict, PyInt, PyIterator, PyList, PyMapping, PyNone, PyNotImplemented, PySet, PyTuple,
+    },
 };
 use tap::prelude::*;
 #[pyclass(frozen, generic, extends=abc::PyoMutableSet)]
@@ -388,21 +391,16 @@ impl Deque {
         self.inner.bind(value.py()).remove(value)
     }
 }
-
-#[pyclass(frozen, generic, extends=abc::PyoMutableMapping)]
+#[derive(BoundFromAny)]
+enum IntoUpdate<'py> {
+    Dict(Bound<'py, PyDict>),
+    Mapping(Bound<'py, PyMapping>),
+    Iterable(Bound<'py, PyAny>),
+}
+type BoolOrNotImpl<'py> = Either<bool, Bound<'py, PyNotImplemented>>;
+#[pyclass(frozen, generic, mapping, extends = abc::PyoMutableMapping)]
 pub struct PyoCounter {
     pub inner: Py<PyDict>,
-}
-impl PyoCounter {
-    fn iter_items<'py>(
-        &self,
-        py: Python<'py>,
-    ) -> impl Iterator<Item = (Bound<'py, PyAny>, Bound<'py, PyInt>)> {
-        self.inner
-            .bind(py)
-            .iter()
-            .map(|(k, v)| unsafe { (k, v.cast_into_unchecked::<PyInt>()) })
-    }
 }
 #[pymethods]
 impl PyoCounter {
@@ -410,61 +408,62 @@ impl PyoCounter {
     #[pyo3(signature = (iterable=None, /, **kwargs))]
     fn new(
         py: Python<'_>,
-        iterable: Option<Bound<'_, PyAny>>,
+        iterable: Option<IntoUpdate<'_>>,
         kwargs: Option<Kwargs<'_>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        let data = PyDict::new(py);
-        maybe_update(&data, iterable, kwargs)?;
-        let init = abc::PyoMutableMapping::build_init().add_subclass(Self {
-            inner: data.unbind(),
-        });
-        Ok(init)
+        let inner = PyDict::new(py);
+
+        update_counter(&inner, iterable, kwargs)?;
+        Ok(abc::PyoMutableMapping::build_init().add_subclass(Self {
+            inner: inner.unbind(),
+        }))
     }
     #[staticmethod]
     fn from_ref(data: Bound<'_, PyDict>) -> PyResult<Bound<'_, Self>> {
         let py = data.py();
-        let init = abc::PyoMutableMapping::build_init().add_subclass(Self {
+        let initializer = abc::PyoMutableMapping::build_init().add_subclass(Self {
             inner: data.unbind(),
         });
-        Bound::new(py, init)
+        Bound::new(py, initializer)
     }
+
     fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
         self.inner.bind(py).try_iter().unwrap()
     }
 
-    fn __len__(&self, py: Python<'_>) -> usize {
+    fn __len__<'py>(&self, py: Python<'py>) -> usize {
         self.inner.bind(py).len()
     }
 
-    fn __getitem__<'py>(&self, key: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
+    fn __getitem__<'py>(&self, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
         let py = key.py();
-        match self.inner.bind(key.py()).as_any().get_item(&key) {
-            Ok(value) => Ok(unsafe { value.cast_into_unchecked::<PyInt>() }),
+        match self.inner.bind(py).as_any().get_item(key) {
+            Ok(value) => Ok(value),
             Err(err) => {
-                if err.is_instance_of::<PyKeyError>(py) {
-                    return Ok(self.__missing__(key));
+                if err.matches(py, PyKeyError::type_object(py))? {
+                    Ok(PyInt::new(py, 0).into_any())
                 } else {
-                    return Err(err);
+                    Err(err)
                 }
             }
         }
     }
 
-    fn __setitem__(&self, key: &Bound<'_, PyAny>, value: Bound<'_, PyInt>) -> PyResult<()> {
+    fn __setitem__(&self, key: Bound<'_, PyAny>, value: Bound<'_, PyInt>) -> PyResult<()> {
         self.inner.bind(key.py()).set_item(key, value)
     }
 
-    fn __contains__(&self, key: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __contains__(&self, key: Bound<'_, PyAny>) -> PyResult<bool> {
         self.inner.bind(key.py()).contains(key)
     }
-
-    fn __missing__<'py>(&self, key: Bound<'py, PyAny>) -> Bound<'py, PyInt> {
-        PyInt::new(key.py(), 0)
+    #[allow(unused)]
+    fn __missing__(&self, key: &Bound<'_, PyAny>) -> isize {
+        0
     }
     #[pyo3(signature = (key, default=None, /))]
     fn get<'py>(
         &self,
-        key: Bound<'py, PyInt>,
+        key: Bound<'py, PyAny>,
         default: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Option<Bound<'py, PyAny>>> {
         self.inner
@@ -473,191 +472,287 @@ impl PyoCounter {
             .or(default)
             .pipe(Ok)
     }
-    #[pyo3(signature = (key, default=None, /))]
+
+    #[pyo3(signature = (key, default, /))]
     fn setdefault<'py>(
         &self,
         key: Bound<'py, PyAny>,
-        default: Option<Bound<'py, PyInt>>,
+        default: Bound<'py, PyInt>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        let py = key.py();
         self.inner
-            .bind(py)
-            .call_method1(intern!(py, "setdefault"), (key, default))
+            .bind(key.py())
+            .call_method1("setdefault", (key, default))
     }
 
     fn total<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         self.inner
             .bind(py)
-            .values_view()
-            .as_any()
+            .values()
             .try_iter()
             .unwrap()
-            .pipe(|x| pylibs::builtins::sum(&x, &0))
+            .pipe(|vals| pylibs::builtins::sum(&vals, &0))
     }
     #[pyo3(signature = (n=None))]
-    fn most_common<'py>(&self, py: Python<'py>, n: Option<isize>) -> PyResult<Bound<'py, PyList>> {
-        let items = self.inner.bind(py).items_view().try_iter().unwrap();
-        let key = pylibs::operator::itemgetter(py, 1)?;
+    fn most_common<'py>(
+        &self,
+        py: Python<'py>,
+        n: Option<Bound<'py, PyInt>>,
+    ) -> PyResult<Either<Bound<'py, PyList>, Bound<'py, PyAny>>> {
+        let items = self.inner.bind(py).items().try_iter().unwrap();
+        let getter = pylibs::operator::itemgetter(py, 1)?;
         match n {
-            None => pylibs::builtins::sorted_by(&items, true, &key),
-
-            _ => {
+            None => pylibs::builtins::sorted_by(&items, true, &getter).map(Either::Left),
+            Some(n) => {
                 let kwargs = PyDict::new(py);
-                kwargs.set_item(intern!(py, "key"), key)?;
+                kwargs.set_item(intern!(py, "key"), getter)?;
                 py.import("heapq")?
                     .getattr("nlargest")?
-                    .call((n, items), Some(&kwargs))
-                    .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
+                    .call(((n, items),), Some(&kwargs))
+                    .map(Either::Right)
             }
         }
     }
 
     fn elements<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyIterator>> {
-        self.inner
-            .bind(py)
-            .items_view()
-            .try_iter()
-            .unwrap()
-            .pipe(|x| {
-                pylibs::itertools::map_star(pyitertools::PyRepeat::type_object(py).into_any(), x)
-            })
-            .and_then(|x| pylibs::itertools::chain::from_iterable(&x))
+        pylibs::itertools::chain::from_iterable(&pylibs::itertools::map_star(
+            pyitertools::PyRepeat::type_object(py).into_any(),
+            self.inner.bind(py).items().try_iter().unwrap(),
+        )?)
     }
     #[pyo3(signature = (iterable=None, /, **kwargs))]
     fn update(
         &self,
         py: Python<'_>,
-        iterable: Option<Bound<'_, PyAny>>,
+        iterable: Option<IntoUpdate<'_>>,
         kwargs: Option<Kwargs<'_>>,
-    ) -> PyResult<()> {
-        let data = self.inner.bind(py);
-        maybe_update(&data, iterable, kwargs)
+    ) -> () {
+        let inner = self.inner.bind(py);
+        let zero = PyInt::new(py, 0).into_any();
+        iterable.map(|iterable| match iterable {
+            IntoUpdate::Dict(dict) => {
+                if !inner.is_empty() {
+                    for (elem, count) in dict.iter() {
+                        let new_item =
+                            count.add(inner.get_item(&elem)?.unwrap_or_else(|| zero.to_owned()))?;
+                        inner.set_item(elem, new_item)?
+                    }
+
+                    Ok(())
+                } else {
+                    // fast path when counter is empty
+                    inner.update(dict.as_mapping())
+                }
+            }
+            IntoUpdate::Mapping(mapping) => {
+                if !inner.is_empty() {
+                    for tup in mapping.items()?.try_iter()?.map(extract_tup_from_item) {
+                        let (elem, count) = tup?;
+                        let new_item =
+                            count.add(inner.get_item(&elem)?.unwrap_or_else(|| zero.to_owned()))?;
+                        inner.set_item(elem, new_item)?
+                    }
+
+                    Ok(())
+                } else {
+                    // fast path when counter is empty
+                    inner.update(&mapping)
+                }
+            }
+            IntoUpdate::Iterable(it) => {
+                for elem in it.try_iter()? {
+                    let e = elem?;
+                    let new_item = inner
+                        .get_item(&e)?
+                        .unwrap_or_else(|| zero.to_owned())
+                        .add(1)?;
+                    inner.set_item(&e, new_item)?
+                }
+
+                Ok(())
+            }
+        });
+
+        kwargs.map(|kw| {
+            if !inner.is_empty() {
+                for (elem, count) in kw.iter() {
+                    let new_item =
+                        count.add(inner.get_item(&elem)?.unwrap_or_else(|| zero.to_owned()))?;
+                    inner.set_item(elem, new_item)?
+                }
+                Ok(())
+            } else {
+                // fast path when counter is empty
+                inner.update(kw.as_mapping())
+            }
+        });
     }
     #[pyo3(signature = (iterable=None, /, **kwargs))]
     fn subtract(
         &self,
         py: Python<'_>,
-        iterable: Option<Bound<'_, PyAny>>,
+        iterable: Option<IntoUpdate<'_>>,
         kwargs: Option<Kwargs<'_>>,
     ) -> PyResult<()> {
         let inner = self.inner.bind(py);
-        maybe_update(&inner, iterable, kwargs)
+        let zero = PyInt::new(py, 0).into_any();
+        iterable.map(|it| match it {
+            IntoUpdate::Dict(dict) => {
+                for (elem, count) in dict.iter() {
+                    let new_item = inner
+                        .get_item(&elem)?
+                        .unwrap_or_else(|| zero.to_owned())
+                        .sub(count)?;
+                    inner.set_item(elem, new_item)?
+                }
+
+                Ok::<(), PyErr>(())
+            }
+            IntoUpdate::Mapping(mapping) => {
+                for tup in mapping.items()?.try_iter()?.map(extract_tup_from_item) {
+                    let (elem, count) = tup?;
+                    let new_item = inner
+                        .get_item(&elem)?
+                        .unwrap_or_else(|| zero.to_owned())
+                        .sub(count)?;
+                    inner.set_item(elem, new_item)?
+                }
+
+                Ok(())
+            }
+            IntoUpdate::Iterable(it) => {
+                for elem in it.try_iter()? {
+                    let e = elem?;
+                    let new_item = inner
+                        .get_item(&e)?
+                        .unwrap_or_else(|| zero.to_owned())
+                        .sub(1)?;
+                    inner.set_item(&e, new_item)?
+                }
+                Ok(())
+            }
+        });
+        kwargs.map(|dict| {
+            for (elem, count) in dict.iter() {
+                let new_item = inner
+                    .get_item(&elem)?
+                    .unwrap_or_else(|| zero.to_owned())
+                    .sub(count)?;
+                inner.set_item(elem, new_item)?
+            }
+            Ok::<(), PyErr>(())
+        });
+        Ok(())
     }
 
     fn copy(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self>> {
-        Self::type_object(slf.py())
+        slf.get_type()
             .call1((slf,))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
 
-    fn __reduce__(slf: Bound<'_, Self>) -> (Bound<'_, PyType>, (Py<PyDict>,)) {
-        let py = slf.py();
-        return (Self::type_object(py), (slf.get().inner.clone_ref(py),));
-    }
-
     fn __delitem__(&self, elem: Bound<'_, PyAny>) -> PyResult<()> {
-        let py = elem.py();
-        let inner = self.inner.bind(py);
+        let inner = self.inner.bind(elem.py());
         if inner.contains(&elem)? {
-            inner.del_item(elem)?
+            inner.del_item(elem)?;
         }
         Ok(())
     }
 
     fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
         let py = slf.py();
-        if !slf.is_truthy()? {
-            slf.get_type().name().map(|name| format!("{}()", name))
+        if !&slf.is_truthy()? {
+            let name = slf.get_type().name()?;
+            Ok(format!("{}()", name))
         } else {
-            // dict() preserves the ordering returned by most_common()
             let d = match slf
                 .get()
                 .most_common(py, None)?
-                .as_any()
-                .pipe(PyDict::from_sequence)
+                .map_left(|x| x.into_any())
+                .into_inner()
+                .pipe_ref(PyDict::from_sequence)
             {
-                Ok(d) => d,
+                // dict() preserves the ordering returned by most_common()
+                Ok(d) => Ok(d),
                 Err(err) => {
-                    if err.is_instance_of::<PyTypeError>(py) {
-                        PyDict::new(py)
+                    if err.is_instance_of::<PyTypeError>(slf.py()) {
+                        // handle case where values are not orderable
+                        PyDict::from_sequence(&slf)
                     } else {
-                        return Err(err);
+                        Err(err)
                     }
                 }
-            }
-            .repr()?
-            .to_string();
-            slf.get_type().name().map(|name| format!("{}({})", name, d))
+            };
+            let name = slf.get_type().name()?;
+            Ok(format!("{}({})", name, d?.repr()?))
         }
     }
 
-    fn __add__<'py>(&self, other: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
+    fn __add__<'py>(&self, other: Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
         let inner = self.inner.bind(py);
+        let o = other.get();
         let result = PyDict::new(py);
-        for (k, count) in self.iter_items(py) {
-            let newcount = count.add(other.get_item(&k)?)?;
+        for (elem, count) in inner.iter() {
+            let newcount = count.add(o.__getitem__(&elem)?)?;
             if newcount.gt(0)? {
-                result.set_item(k, newcount)?;
+                result.set_item(elem, newcount)?;
             }
-        }
-        for (k, count) in other.get().iter_items(py) {
-            if !inner.contains(&k)? && count.gt(0)? {
-                result.set_item(&k, count)?;
+            for (elem, count) in o.inner.bind(py).iter() {
+                if !inner.contains(&elem)? && count.gt(0)? {
+                    result.set_item(elem, count)?;
+                }
             }
         }
         Self::from_ref(result)
     }
 
-    fn __sub__<'py>(&self, other: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
-        let py = other.py();
+    fn __sub__<'py>(&self, py: Python<'py>, other: Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         let inner = self.inner.bind(py);
+        let o = other.get();
         let result = PyDict::new(py);
-        for (k, count) in self.iter_items(other.py()) {
-            let newcount = count.sub(other.get_item(&k)?)?;
+        for (elem, count) in inner.iter() {
+            let newcount = count.sub(o.__getitem__(&elem)?)?;
             if newcount.gt(0)? {
-                result.set_item(k, newcount)?;
+                result.set_item(elem, newcount)?;
             }
         }
-        for (k, count) in other.get().iter_items(py) {
-            if !inner.contains(&k)? && count.lt(0)? {
-                result.set_item(k, count.neg()?)?;
+        for (elem, count) in o.inner.bind(py).iter() {
+            if !inner.contains(&elem)? && count.lt(0)? {
+                result.set_item(elem, PyInt::new(py, 0).sub(count)?)?;
             }
         }
         Self::from_ref(result)
     }
 
-    fn __or__<'py>(&self, other: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
+    fn __or__<'py>(&self, other: Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
+        let result = PyDict::new(py);
+        let o = other.get();
         let inner = self.inner.bind(py);
-        let result = PyDict::new(py);
-        for (k, count) in self.iter_items(other.py()) {
-            let other_count = other.get_item(&k)?;
-            let newcount = count
-                .extract::<usize>()?
-                .max(other_count.extract::<usize>()?);
-            if newcount > 0 {
-                result.set_item(k, newcount)?;
+        for (elem, count) in inner.iter() {
+            let other_count = o.__getitem__(&elem)?;
+            let newcount = pylibs::builtins::max_of(py, (&count, &other_count))?;
+            if newcount.gt(0)? {
+                result.set_item(elem, newcount)?
             }
         }
-        for (k, count) in other.get().iter_items(py) {
-            if !inner.contains(&k)? && count.gt(0)? {
-                result.set_item(k, count)?;
+        for (elem, count) in other.get().inner.bind(other.py()).iter() {
+            if !inner.contains(&elem)? && count.gt(0)? {
+                result.set_item(elem, count)?
             }
         }
         Self::from_ref(result)
     }
 
-    fn __and__<'py>(&self, other: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
+    fn __and__<'py>(&self, other: Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
+        let o = other.get();
         let result = PyDict::new(py);
-        for (k, count) in self.inner.bind(other.py()).iter() {
-            let other_count = other.get_item(&k)?;
-            let newcount = other_count
-                .extract::<usize>()?
-                .min(count.extract::<usize>()?);
-            if newcount > 0 {
-                result.set_item(k, newcount)?;
+        for (elem, count) in self.inner.bind(py).iter() {
+            let other_count = o.__getitem__(&elem)?;
+            let newcount = pylibs::builtins::min_of(py, (&other_count, &count))?;
+            if newcount.gt(0)? {
+                result.set_item(elem, newcount)?;
             }
         }
         Self::from_ref(result)
@@ -665,9 +760,9 @@ impl PyoCounter {
 
     fn __pos__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         let result = PyDict::new(py);
-        for (elem, count) in self.iter_items(py) {
+        for (elem, count) in self.inner.bind(py).iter() {
             if count.gt(0)? {
-                result.set_item(elem, count)?;
+                result.set_item(elem, count)?
             }
         }
         Self::from_ref(result)
@@ -675,107 +770,101 @@ impl PyoCounter {
 
     fn __neg__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         let result = PyDict::new(py);
-        for (k, count) in self.iter_items(py) {
-            if count.lt(0)? {
-                result.set_item(k, count.neg()?)?;
+        for (elem, count) in self.inner.bind(py).iter() {
+            if count.gt(0)? {
+                result.set_item(elem, count.neg()?)?;
             }
         }
         Self::from_ref(result)
     }
 
     fn __iadd__(&self, other: Bound<'_, PySupportsItems>) -> PyResult<()> {
-        let inner = self.inner.bind(other.py());
-        other.items()?.try_iter()?.try_for_each(|t| {
-            let tuple = t?.cast_into_exact::<PyTuple>()?;
-            let (k, count) = { (tuple.get_item(0)?, tuple.get_item(1)?) };
-            inner.as_any().get_item(&k)?.iadd(count).map(|_| ())
-        })?;
-        keep_positive(inner)
+        for tup in other.items()?.try_iter()?.map(extract_tup_from_item) {
+            let (elem, count) = tup?;
+            self.__getitem__(&elem)?.iadd(count)?;
+        }
+        self._keep_positive(other.py())
     }
 
-    fn __isub__<'py>(&self, other: Bound<'py, PySupportsItems>) -> PyResult<()> {
-        let inner = self.inner.bind(other.py());
-        other.items()?.try_iter()?.try_for_each(|t| {
-            let tuple = t?.cast_into_exact::<PyTuple>()?;
-            let (k, count) = { (tuple.get_item(0)?, tuple.get_item(1)?) };
-            inner.as_any().get_item(&k)?.isub(count).map(|_| ())
-        })?;
-        keep_positive(inner)
+    fn __isub__(&self, other: Bound<'_, PySupportsItems>) -> PyResult<()> {
+        for tup in other.items()?.try_iter()?.map(extract_tup_from_item) {
+            let (elem, count) = tup?;
+            self.__getitem__(&elem)?.isub(count)?;
+        }
+        self._keep_positive(other.py())
     }
 
-    fn __ior__<'py>(&self, other: Bound<'py, PySupportsItems>) -> PyResult<()> {
-        let inner = self.inner.bind(other.py());
-        other.items()?.try_iter()?.try_for_each(|t| {
-            let tuple = t?.cast_into_exact::<PyTuple>()?;
-            let (k, other_count) = { (tuple.get_item(0)?, tuple.get_item(1)?) };
-            let count = inner.get_item(&k)?;
-            if other_count.gt(&count)? {
-                inner.set_item(k, other_count)?;
+    fn __ior__(&self, other: Bound<'_, PySupportsItems>) -> PyResult<()> {
+        let py = other.py();
+        let inner = self.inner.bind(py);
+        for tup in other.items()?.try_iter()?.map(extract_tup_from_item) {
+            let (elem, other_count) = tup?;
+            let count = self.__getitem__(&elem)?;
+            if other_count.gt(count)? {
+                inner.set_item(elem, other_count)?;
             }
-            Ok::<(), PyErr>(())
-        })?;
-        keep_positive(inner)
+        }
+        self._keep_positive(py)
     }
 
     fn __iand__(&self, other: Bound<'_, PyMapping>) -> PyResult<()> {
         let py = other.py();
         let inner = self.inner.bind(py);
-        for (k, count) in self.iter_items(py) {
-            let other_count = other.get_item(&k)?.pipe(|x| x.cast_into_exact::<PyInt>())?;
-            if other_count.lt(&count)? {
-                inner.as_any().set_item(k, other_count)?
+        for (elem, count) in inner.iter() {
+            let other_count = other.as_any().get_item(&elem)?;
+            if other_count.lt(count)? {
+                inner.set_item(elem, other_count)?;
             }
         }
-        keep_positive(inner)
+        self._keep_positive(py)
     }
 
-    fn __ixor__(&self, other: &Bound<'_, Self>) -> PyResult<()> {
+    fn __eq__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<BoolOrNotImpl<'py>> {
         let py = other.py();
         let inner = self.inner.bind(py);
-        for (k, v) in self.iter_items(py) {
-            let new = v.sub(other.get_item(&k)?)?.abs()?;
-            inner.set_item(k, new)?;
-        }
-        for (k, count) in other.get().iter_items(py) {
-            if !inner.contains(&k)? {
-                inner.as_any().set_item(k, count.abs()?)?;
-            }
-        }
-        keep_positive(inner)
-    }
-    fn __eq__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
-        let py = other.py();
-        let inner = self.inner.bind(py).as_any();
         try_cast! {
             match other {
                 PyoCounter => {
-                    for c in [inner, other.get().inner.bind(py)] {
-                        for e in c.try_iter()? {
-                            let e = e?;
-                            if inner.get_item(&e)?.ne(other.get_item(e)?)? {
-                                return Ok(false);
+                    let o = other.get();
+                    for c in [self, o] {
+                        for elem in c.inner.bind(py).try_iter().unwrap() {
+                            let e = elem?;
+                            if self.__getitem__(&e)?.eq(o.__getitem__(&e)?)? {
+                                continue;
+                            } else {
+                                return Ok(false).map(Either::Left);
                             }
                         }
                     }
-                    Ok(true)
-                }
-                PyDict => inner.eq(other),
-                _ => Err(PyNotImplementedError::new_err("")),
+                    Ok(true).map(Either::Left)
+
+                },
+                PyDict => inner.eq(other).map(Either::Left),
+                _ => Ok(PyNotImplemented::get(py).into_bound()).map(Either::Right),
             }
         }
     }
 
-    fn __ne__(&self, other: &Bound<'_, Self>) -> PyResult<bool> {
-        Ok(!(self.__eq__(other)?))
+    fn __ne__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<BoolOrNotImpl<'py>> {
+        if !other.is_instance_of::<PyoCounter>() {
+            PyNotImplemented::get(other.py())
+                .into_bound()
+                .pipe(Ok)
+                .map(Either::Right)
+        } else {
+            self.__eq__(other)?.map_left(|x| !x).pipe(Ok)
+        }
     }
 
     fn __le__(&self, other: &Bound<'_, Self>) -> PyResult<bool> {
         let py = other.py();
-        let inner = self.inner.bind(py).as_any();
-        for c in [inner.as_any(), other.get().inner.bind(py).as_any()] {
-            for e in c.try_iter()? {
-                let e = e?;
-                if inner.get_item(&e)?.gt(&other.get_item(e)?)? {
+        let o = other.get();
+        for c in [self, o] {
+            for elem in c.inner.bind(py).try_iter().unwrap() {
+                let e = elem?;
+                if self.__getitem__(&e)?.le(o.__getitem__(&e)?)? {
+                    continue;
+                } else {
                     return Ok(false);
                 }
             }
@@ -783,117 +872,147 @@ impl PyoCounter {
         Ok(true)
     }
 
-    fn __lt__(&self, other: &Bound<'_, Self>) -> PyResult<bool> {
-        Ok(self.__le__(other)? && self.__ne__(other)?)
+    fn __lt__<'py>(&self, other: &Bound<'py, Self>) -> PyResult<BoolOrNotImpl<'py>> {
+        let is_ne = self.__ne__(other)?;
+        let is_le = self.__le__(other)?;
+        is_ne.map_left(|is_ne| is_le && is_ne).pipe(Ok)
     }
 
     fn __ge__(&self, other: &Bound<'_, Self>) -> PyResult<bool> {
         let py = other.py();
-        let inner = self.inner.bind(py).as_any();
-        for c in [inner, other.get().inner.bind(py).as_any()] {
-            for e in c.try_iter()? {
-                let e = e?;
-                if inner.get_item(&e)?.lt(&other.get_item(e)?)? {
+        let o = other.get();
+        for c in [self, o] {
+            for elem in c.inner.bind(py).try_iter().unwrap() {
+                let e = elem?;
+                if self.__getitem__(&e)?.ge(o.__getitem__(&e)?)? {
+                    continue;
+                } else {
                     return Ok(false);
                 }
             }
         }
+
         Ok(true)
     }
 
-    fn __gt__(&self, other: &Bound<'_, Self>) -> PyResult<bool> {
-        Ok(self.__ge__(other)? && self.__ne__(other)?)
+    fn __gt__<'py>(&self, other: &Bound<'py, Self>) -> PyResult<BoolOrNotImpl<'py>> {
+        let is_ge = self.__ge__(other)?;
+        self.__ne__(&other)?
+            .map_left(|is_ne| is_ge && is_ne)
+            .pipe(Ok)
     }
 
-    fn __xor__<'py>(&self, other: &Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
+    fn __xor__<'py>(&self, other: Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
-        let other_inner = other.get().inner.bind(py).as_any();
+        let inner = self.inner.bind(py);
+        let o = other.get();
         let result = PyDict::new(py);
-        for (elem, count) in self.iter_items(py) {
-            let newcount = count.sub(other_inner.get_item(&elem)?)?.abs()?;
+        for (elem, count) in inner.iter() {
+            let newcount = pylibs::builtins::abs(&count.sub(o.__getitem__(&elem)?)?)?;
             if newcount.is_truthy()? {
-                result.set_item(elem, newcount)?;
-            };
+                result.set_item(elem, newcount)?
+            }
         }
-        for (elem, count) in other.get().iter_items(py) {
-            if !self.__contains__(&elem)? && count.is_truthy()? {
-                result.set_item(elem, count.abs()?)?;
+        for (elem, count) in other.get().inner.bind(py).iter() {
+            if !inner.contains(&elem)? && count.is_truthy()? {
+                result.set_item(elem, pylibs::builtins::abs(&count)?)?
             }
         }
         Self::from_ref(result)
     }
-}
 
-fn keep_positive(data: &Bound<'_, PyDict>) -> PyResult<()> {
-    data.iter().try_for_each(|(elem, count)| {
-        if count.lt(0)? {
-            data.del_item(&elem)?;
+    fn __ixor__<'py>(&self, other: Bound<'py, Self>) -> PyResult<()> {
+        let py = other.py();
+        let o = other.get();
+        let inner = self.inner.bind(py);
+        for (elem, count) in inner.iter() {
+            let new_item = pylibs::builtins::abs(&count.sub(o.__getitem__(&elem)?)?)?;
+            inner.set_item(elem, new_item)?
+        }
+        for (elem, count) in other.get().inner.bind(py).iter() {
+            if !inner.contains(&elem)? {
+                inner.set_item(elem, pylibs::builtins::abs(&count)?)?
+            }
+        }
+        self._keep_positive(py)
+    }
+
+    fn _keep_positive(&self, py: Python<'_>) -> PyResult<()> {
+        let inner = self.inner.bind(py);
+        for (elem, count) in inner.iter() {
+            if !(count.gt(0)?) {
+                inner.del_item(elem)?;
+            }
         }
         Ok(())
-    })
-}
-#[inline]
-fn maybe_update(
-    data: &Bound<'_, PyDict>,
-    iterable: Option<Bound<'_, PyAny>>,
-    kwargs: Option<Kwargs<'_>>,
-) -> PyResult<()> {
-    iterable.map(|it| update_counter(&data, &it)).transpose()?;
-    kwargs
-        .map(|kw| update_counter_from_dict(&data, &kw))
-        .transpose()?;
-    Ok(())
-}
-#[inline]
-fn update_counter(data: &Bound<'_, PyDict>, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
-    let py = data.py();
-    try_cast! {
-        match iterable {
-            PyDict => update_counter_from_dict(data, iterable),
-            PyMapping => {
-                if data.is_empty() {
-                    // fast path when counter is empty
-                    data.update(iterable)
-                } else {
-                    iterable
-                        .items()?
-                        .iter()
-                        .map(|x| x.cast_into_exact::<PyTuple>())
-                        .try_for_each(|x| {
-                            let res = x?;
-                            let e = res.get_item(0)?;
-                            let count = res.get_item(1)?;
-                            let new_item = count
-                                .add(data.get_item(&e)?.unwrap_or(PyInt::new(py, 0).into_any()))?;
-                            data.set_item(e, new_item)
-                        })
-                }
-            }
-            _ => iterable.try_iter()?.try_for_each(|elem| {
-                let e = elem?;
-                let new_item = data
-                    .get_item(&e)?
-                    .unwrap_or(PyInt::new(py, 0).into_any())
-                    .add(1)?;
-                data.set_item(e, new_item)
-            }),
-        }
     }
+}
+fn extract_tup_from_item(
+    x: PyResult<Bound<'_, PyAny>>,
+) -> PyResult<(Bound<'_, PyAny>, Bound<'_, PyAny>)> {
+    x?.extract::<(Bound<'_, PyAny>, Bound<'_, PyAny>)>()
 }
 
-#[inline]
-fn update_counter_from_dict(
-    data: &Bound<'_, PyDict>,
-    iterable: &Bound<'_, PyDict>,
+fn update_counter(
+    inner: &Bound<'_, PyDict>,
+    iterable: Option<IntoUpdate<'_>>,
+    kwargs: Option<Kwargs<'_>>,
 ) -> PyResult<()> {
-    let py = data.py();
-    if data.is_empty() {
-        // fast path when counter is empty
-        data.update(iterable.as_mapping())
-    } else {
-        iterable.iter().try_for_each(|(k, count)| {
-            let new_item = count.add(data.get_item(&k)?.unwrap_or(PyInt::new(py, 0).into_any()))?;
-            data.set_item(k, new_item)
-        })
-    }
+    let py = inner.py();
+    let zero = PyInt::new(py, 0).into_any();
+    iterable.map(|iterable| match iterable {
+        IntoUpdate::Dict(dict) => {
+            if !inner.is_empty() {
+                dict.iter().try_for_each(|(elem, count)| {
+                    let new_item =
+                        count.add(inner.get_item(&elem)?.unwrap_or_else(|| zero.to_owned()))?;
+                    inner.set_item(elem, new_item)
+                })
+            } else {
+                // fast path when counter is empty
+                inner.update(dict.as_mapping())
+            }
+        }
+        IntoUpdate::Mapping(mapping) => {
+            if !inner.is_empty() {
+                for tup in mapping.items()?.try_iter()?.map(extract_tup_from_item) {
+                    let (elem, count) = tup?;
+                    let new_item =
+                        count.add(inner.get_item(&elem)?.unwrap_or_else(|| zero.to_owned()))?;
+                    inner.set_item(elem, new_item)?
+                }
+            } else {
+                // fast path when counter is empty
+                inner.update(&mapping)?;
+            }
+
+            Ok(())
+        }
+        IntoUpdate::Iterable(it) => {
+            for elem in it.try_iter()? {
+                let e = elem?;
+                let new_item = inner
+                    .get_item(&e)?
+                    .unwrap_or_else(|| zero.to_owned())
+                    .add(1)?;
+                inner.set_item(&e, new_item)?;
+            }
+
+            Ok(())
+        }
+    });
+
+    kwargs.map(|kw| {
+        if !inner.is_empty() {
+            kw.iter().try_for_each(|(elem, count)| {
+                let new_item =
+                    count.add(inner.get_item(&elem)?.unwrap_or_else(|| zero.to_owned()))?;
+                inner.set_item(elem, new_item)
+            })
+        } else {
+            // fast path when counter is empty
+            inner.update(kw.as_mapping())
+        }
+    });
+    Ok(())
 }

@@ -314,6 +314,7 @@ impl<'py> PySupportsItemsMethods<'py> for Bound<'py, PySupportsItems> {
             })
     }
 }
+#[allow(unused)]
 pub trait IntoPyMappingView<'py> {
     fn items_view(&self) -> Bound<'py, PyDictItems>;
     fn keys_view(&self) -> Bound<'py, PyDictKeys>;
