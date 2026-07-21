@@ -480,9 +480,10 @@ impl PyoCounter {
         key: Bound<'py, PyAny>,
         default: Bound<'py, PyInt>,
     ) -> PyResult<Bound<'py, PyAny>> {
+        let py = key.py();
         self.inner
-            .bind(key.py())
-            .call_method1("setdefault", (key, default))
+            .bind(py)
+            .call_method1(intern!(py, "setdefault"), (key, default))
     }
 
     fn total<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
@@ -506,9 +507,9 @@ impl PyoCounter {
             Some(n) => {
                 let kwargs = PyDict::new(py);
                 kwargs.set_item(intern!(py, "key"), getter)?;
-                py.import("heapq")?
-                    .getattr("nlargest")?
-                    .call(((n, items),), Some(&kwargs))
+                py.import(intern!(py, "heapq"))?
+                    .getattr(intern!(py, "nlargest"))?
+                    .call((n, items), Some(&kwargs))
                     .map(Either::Right)
             }
         }
@@ -526,66 +527,9 @@ impl PyoCounter {
         py: Python<'_>,
         iterable: Option<IntoUpdate<'_>>,
         kwargs: Option<Kwargs<'_>>,
-    ) -> () {
+    ) -> PyResult<()> {
         let inner = self.inner.bind(py);
-        let zero = PyInt::new(py, 0).into_any();
-        iterable.map(|iterable| match iterable {
-            IntoUpdate::Dict(dict) => {
-                if !inner.is_empty() {
-                    for (elem, count) in dict.iter() {
-                        let new_item =
-                            count.add(inner.get_item(&elem)?.unwrap_or_else(|| zero.to_owned()))?;
-                        inner.set_item(elem, new_item)?
-                    }
-
-                    Ok(())
-                } else {
-                    // fast path when counter is empty
-                    inner.update(dict.as_mapping())
-                }
-            }
-            IntoUpdate::Mapping(mapping) => {
-                if !inner.is_empty() {
-                    for tup in mapping.items()?.try_iter()?.map(extract_tup_from_item) {
-                        let (elem, count) = tup?;
-                        let new_item =
-                            count.add(inner.get_item(&elem)?.unwrap_or_else(|| zero.to_owned()))?;
-                        inner.set_item(elem, new_item)?
-                    }
-
-                    Ok(())
-                } else {
-                    // fast path when counter is empty
-                    inner.update(&mapping)
-                }
-            }
-            IntoUpdate::Iterable(it) => {
-                for elem in it.try_iter()? {
-                    let e = elem?;
-                    let new_item = inner
-                        .get_item(&e)?
-                        .unwrap_or_else(|| zero.to_owned())
-                        .add(1)?;
-                    inner.set_item(&e, new_item)?
-                }
-
-                Ok(())
-            }
-        });
-
-        kwargs.map(|kw| {
-            if !inner.is_empty() {
-                for (elem, count) in kw.iter() {
-                    let new_item =
-                        count.add(inner.get_item(&elem)?.unwrap_or_else(|| zero.to_owned()))?;
-                    inner.set_item(elem, new_item)?
-                }
-                Ok(())
-            } else {
-                // fast path when counter is empty
-                inner.update(kw.as_mapping())
-            }
-        });
+        update_counter(&inner, iterable, kwargs)
     }
     #[pyo3(signature = (iterable=None, /, **kwargs))]
     fn subtract(
@@ -595,54 +539,7 @@ impl PyoCounter {
         kwargs: Option<Kwargs<'_>>,
     ) -> PyResult<()> {
         let inner = self.inner.bind(py);
-        let zero = PyInt::new(py, 0).into_any();
-        iterable.map(|it| match it {
-            IntoUpdate::Dict(dict) => {
-                for (elem, count) in dict.iter() {
-                    let new_item = inner
-                        .get_item(&elem)?
-                        .unwrap_or_else(|| zero.to_owned())
-                        .sub(count)?;
-                    inner.set_item(elem, new_item)?
-                }
-
-                Ok::<(), PyErr>(())
-            }
-            IntoUpdate::Mapping(mapping) => {
-                for tup in mapping.items()?.try_iter()?.map(extract_tup_from_item) {
-                    let (elem, count) = tup?;
-                    let new_item = inner
-                        .get_item(&elem)?
-                        .unwrap_or_else(|| zero.to_owned())
-                        .sub(count)?;
-                    inner.set_item(elem, new_item)?
-                }
-
-                Ok(())
-            }
-            IntoUpdate::Iterable(it) => {
-                for elem in it.try_iter()? {
-                    let e = elem?;
-                    let new_item = inner
-                        .get_item(&e)?
-                        .unwrap_or_else(|| zero.to_owned())
-                        .sub(1)?;
-                    inner.set_item(&e, new_item)?
-                }
-                Ok(())
-            }
-        });
-        kwargs.map(|dict| {
-            for (elem, count) in dict.iter() {
-                let new_item = inner
-                    .get_item(&elem)?
-                    .unwrap_or_else(|| zero.to_owned())
-                    .sub(count)?;
-                inner.set_item(elem, new_item)?
-            }
-            Ok::<(), PyErr>(())
-        });
-        Ok(())
+        subtract_counter(inner, iterable, kwargs)
     }
 
     fn copy(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self>> {
@@ -782,19 +679,25 @@ impl PyoCounter {
     }
 
     fn __iadd__(&self, other: Bound<'_, PySupportsItems>) -> PyResult<()> {
+        let py = other.py();
+        let inner = self.inner.bind(py);
         for tup in other.items()?.try_iter()?.map(extract_tup_from_item) {
             let (elem, count) = tup?;
-            self.__getitem__(&elem)?.iadd(count)?;
+            let new_count = self.__getitem__(&elem)?.add(count)?;
+            inner.set_item(elem, new_count)?;
         }
-        self._keep_positive(other.py())
+        self._keep_positive(py)
     }
 
     fn __isub__(&self, other: Bound<'_, PySupportsItems>) -> PyResult<()> {
+        let py = other.py();
+        let inner = self.inner.bind(py);
         for tup in other.items()?.try_iter()?.map(extract_tup_from_item) {
             let (elem, count) = tup?;
-            self.__getitem__(&elem)?.isub(count)?;
+            let new_count = self.__getitem__(&elem)?.sub(count)?;
+            inner.set_item(elem, new_count)?;
         }
-        self._keep_positive(other.py())
+        self._keep_positive(py)
     }
 
     fn __ior__(&self, other: Bound<'_, PySupportsItems>) -> PyResult<()> {
@@ -950,12 +853,13 @@ impl PyoCounter {
         Ok(())
     }
 }
+#[inline(always)]
 fn extract_tup_from_item(
     x: PyResult<Bound<'_, PyAny>>,
 ) -> PyResult<(Bound<'_, PyAny>, Bound<'_, PyAny>)> {
     x?.extract::<(Bound<'_, PyAny>, Bound<'_, PyAny>)>()
 }
-
+#[inline]
 fn update_counter(
     inner: &Bound<'_, PyDict>,
     iterable: Option<IntoUpdate<'_>>,
@@ -963,59 +867,115 @@ fn update_counter(
 ) -> PyResult<()> {
     let py = inner.py();
     let zero = PyInt::new(py, 0).into_any();
-    iterable.map(|iterable| match iterable {
-        IntoUpdate::Dict(dict) => {
-            if !inner.is_empty() {
-                dict.iter().try_for_each(|(elem, count)| {
-                    let new_item =
-                        count.add(inner.get_item(&elem)?.unwrap_or_else(|| zero.to_owned()))?;
-                    inner.set_item(elem, new_item)
-                })
-            } else {
-                // fast path when counter is empty
-                inner.update(dict.as_mapping())
+    iterable
+        .map(|iterable| match iterable {
+            IntoUpdate::Dict(dict) => update_dict(inner, &dict, &zero),
+            IntoUpdate::Mapping(mapping) => {
+                if !inner.is_empty() {
+                    for tup in mapping.items()?.try_iter()?.map(extract_tup_from_item) {
+                        let (elem, count) = tup?;
+                        let new_item =
+                            count.add(inner.get_item(&elem)?.unwrap_or_else(|| zero.to_owned()))?;
+                        inner.set_item(elem, new_item)?
+                    }
+                } else {
+                    // fast path when counter is empty
+                    inner.update(&mapping)?;
+                }
+
+                Ok(())
             }
+            IntoUpdate::Iterable(it) => {
+                for elem in it.try_iter()? {
+                    let e = elem?;
+                    let new_item = inner
+                        .get_item(&e)?
+                        .unwrap_or_else(|| zero.to_owned())
+                        .add(1)?;
+                    inner.set_item(&e, new_item)?;
+                }
+
+                Ok(())
+            }
+        })
+        .transpose()?;
+
+    kwargs
+        .map(|kw| update_dict(inner, &kw, &zero))
+        .transpose()?;
+    Ok(())
+}
+#[inline]
+fn update_dict(
+    inner: &Bound<'_, PyDict>,
+    dict: &Bound<'_, PyDict>,
+    zero: &Bound<'_, PyAny>,
+) -> PyResult<()> {
+    if !inner.is_empty() {
+        for (elem, count) in dict.iter() {
+            let new_item = count.add(inner.get_item(&elem)?.unwrap_or_else(|| zero.to_owned()))?;
+            inner.set_item(elem, new_item)?
         }
-        IntoUpdate::Mapping(mapping) => {
-            if !inner.is_empty() {
+        Ok(())
+    } else {
+        // fast path when counter is empty
+        inner.update(dict.as_mapping())
+    }
+}
+#[inline]
+fn subtract_counter(
+    inner: &Bound<'_, PyDict>,
+    iterable: Option<IntoUpdate<'_>>,
+    kwargs: Option<Kwargs<'_>>,
+) -> PyResult<()> {
+    let py = inner.py();
+    let zero = PyInt::new(py, 0).into_any();
+    iterable
+        .map(|it| match it {
+            IntoUpdate::Dict(dict) => subtract_dict(inner, &dict, &zero),
+            IntoUpdate::Mapping(mapping) => {
                 for tup in mapping.items()?.try_iter()?.map(extract_tup_from_item) {
                     let (elem, count) = tup?;
-                    let new_item =
-                        count.add(inner.get_item(&elem)?.unwrap_or_else(|| zero.to_owned()))?;
+                    let new_item = inner
+                        .get_item(&elem)?
+                        .unwrap_or_else(|| zero.to_owned())
+                        .sub(count)?;
                     inner.set_item(elem, new_item)?
                 }
-            } else {
-                // fast path when counter is empty
-                inner.update(&mapping)?;
+
+                Ok(())
             }
-
-            Ok(())
-        }
-        IntoUpdate::Iterable(it) => {
-            for elem in it.try_iter()? {
-                let e = elem?;
-                let new_item = inner
-                    .get_item(&e)?
-                    .unwrap_or_else(|| zero.to_owned())
-                    .add(1)?;
-                inner.set_item(&e, new_item)?;
+            IntoUpdate::Iterable(it) => {
+                for elem in it.try_iter()? {
+                    let e = elem?;
+                    let new_item = inner
+                        .get_item(&e)?
+                        .unwrap_or_else(|| zero.to_owned())
+                        .sub(1)?;
+                    inner.set_item(&e, new_item)?
+                }
+                Ok(())
             }
+        })
+        .transpose()?;
+    kwargs
+        .map(|dict| subtract_dict(inner, &dict, &zero))
+        .transpose()?;
+    Ok(())
+}
 
-            Ok(())
-        }
-    });
-
-    kwargs.map(|kw| {
-        if !inner.is_empty() {
-            kw.iter().try_for_each(|(elem, count)| {
-                let new_item =
-                    count.add(inner.get_item(&elem)?.unwrap_or_else(|| zero.to_owned()))?;
-                inner.set_item(elem, new_item)
-            })
-        } else {
-            // fast path when counter is empty
-            inner.update(kw.as_mapping())
-        }
-    });
+#[inline]
+fn subtract_dict(
+    inner: &Bound<'_, PyDict>,
+    dict: &Bound<'_, PyDict>,
+    zero: &Bound<'_, PyAny>,
+) -> PyResult<()> {
+    for (elem, count) in dict.iter() {
+        let new_item = inner
+            .get_item(&elem)?
+            .unwrap_or_else(|| zero.to_owned())
+            .sub(count)?;
+        inner.set_item(elem, new_item)?
+    }
     Ok(())
 }
