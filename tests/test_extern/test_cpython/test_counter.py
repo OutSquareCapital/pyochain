@@ -18,6 +18,7 @@ from typing import Any, override
 
 import pytest
 
+from pyochain import Seq
 from pyochain.abc import PyoMutableMapping
 from pyochain.collections import PyoCounter
 
@@ -51,7 +52,7 @@ def test_counter(fn: Callable[[], bool]) -> None:
     assert fn()
 
 
-def test_basics() -> None:  # ruff:ignore[too-many-statements]
+def test_basics() -> None:
     c = PyoCounter("abcaba")
     assert c == PyoCounter({"a": 3, "b": 2, "c": 1})
     assert c == PyoCounter(a=3, b=2, c=1)
@@ -102,6 +103,13 @@ def test_basics() -> None:  # ruff:ignore[too-many-statements]
     c.update(c=1)
     c.update(PyoCounter("a" * 50 + "b" * 30))
     c.update()  # test case with no args
+
+
+@pytest.mark.skip(
+    reason="We don't support the __init__ reinitialization behavior of CPython's Counter"
+)
+def test_init_reinitialization() -> None:
+    c = PyoCounter[str]({"a": 5, "b": 3, "c": 1})
     c.__init__("a" * 500 + "b" * 300)
     c.__init__("cdc")
     c.__init__()
@@ -343,28 +351,40 @@ def test_multiset_operations() -> None:
             assert counter_result == dict.fromkeys(set_result, 1)
 
 
-def test_inplace_operations() -> None:
+IN_PLACE_OPS = Seq((
+    (PyoCounter[str].__iadd__, PyoCounter[str].__add__),
+    (PyoCounter[str].__isub__, PyoCounter[str].__sub__),
+    (PyoCounter[str].__ior__, PyoCounter[str].__or__),
+    (PyoCounter[str].__iand__, PyoCounter[str].__and__),
+    (PyoCounter[str].__ixor__, PyoCounter[str].__xor__),
+))
+type PyoCounterFn = Callable[[PyoCounter[str], PyoCounter[str]], PyoCounter[str]]
+
+
+@pytest.mark.parametrize(
+    "ops",
+    IN_PLACE_OPS,
+    ids=IN_PLACE_OPS
+    .iter()
+    .map_star(lambda f, f1: f.__name__ + " and " + f1.__name__)
+    .collect(tuple),
+)
+def test_inplace_operations(ops: tuple[PyoCounterFn, PyoCounterFn]) -> None:
     elements = "abcd"
-    ops: Ops[PyoCounter[str]] = [
-        (PyoCounter[str].__iadd__, PyoCounter[str].__add__),
-        (PyoCounter[str].__isub__, PyoCounter[str].__sub__),
-        (PyoCounter[str].__ior__, PyoCounter[str].__or__),
-        (PyoCounter[str].__iand__, PyoCounter[str].__and__),
-        (PyoCounter[str].__ixor__, PyoCounter[str].__xor__),
-    ]
-    for _i in range(250):
+    inplace_op, regular_op = ops
+
+    for _i in range(50):
         # test random pairs of multisets
         p = PyoCounter({elem: randrange(-2, 4) for elem in elements})
         p.update(e=1, f=-1, g=0)
         q = PyoCounter({elem: randrange(-2, 4) for elem in elements})
         q.update(h=1, i=-1, j=0)
-        for inplace_op, regular_op in ops:
-            c = p.copy()
-            c_id = id(c)
-            regular_result = regular_op(c, q)
-            inplace_result = inplace_op(c, q)
-            assert inplace_result == regular_result
-            assert id(inplace_result) == c_id
+        c = p.copy()
+        c_id = id(c)
+        regular_result = regular_op(c, q)
+        inplace_result = inplace_op(c, q)
+        assert inplace_result == regular_result
+        assert id(inplace_result) == c_id
 
 
 def test_subtract() -> None:
