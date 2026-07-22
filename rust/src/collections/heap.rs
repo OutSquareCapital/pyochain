@@ -11,6 +11,7 @@ use pyo3::{
 };
 use pyo3::{PyTypeInfo, intern};
 use tap::Pipe;
+/// Enum used to convert various types into a `PyList` for heap operations.
 #[derive(BoundFromAny)]
 enum IntoHeap<'py> {
     #[cast_exact]
@@ -51,6 +52,12 @@ impl IntoHeap<'_> {
 trait HeapType: Sized + PyWrapper<PyList> {
     #[new]
     fn new(data: IntoHeap<'_>) -> PyResult<PyClassInitializer<Self>>;
+
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        let name = Self::type_object(py).name()?;
+        let repr = self.as_inner().bind(py).repr()?.to_string();
+        Ok(format!("{}({})", name, repr))
+    }
     fn replace<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>>;
     fn push_pop<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>>;
     fn push<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<()>;
