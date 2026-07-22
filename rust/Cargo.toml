@@ -1,7 +1,6 @@
 [workspace]
     members = [".", "./crates/bound_from_any"]
 
-    resolver = "2"
 
 [package]
     edition = "2024"
@@ -10,7 +9,7 @@
     version = "0.1.0"
 
 [lib]
-    crate-type = ["cdylib", "rlib"]
+    crate-type = ["cdylib"]
     name       = "rs"
 
 [dependencies]
