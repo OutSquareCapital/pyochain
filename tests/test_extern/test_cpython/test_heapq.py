@@ -582,27 +582,24 @@ def test_len_only_nlargest_nsmallest(
         _ = f(2, LenOnly())  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
 
 
-def test_cmp_err() -> None:
-    data = [CmpErr(), CmpErr(), CmpErr()]
-    heapmin = HeapMin[CmpErr].from_ref(data)
-    heapmax = HeapMax[CmpErr].from_ref(data.copy())
+CMP_DATA = [CmpErr(), CmpErr(), CmpErr()]
+
+
+@pytest.mark.parametrize(
+    "heap",
+    (HeapMin.from_ref(CMP_DATA), HeapMax.from_ref(CMP_DATA.copy())),
+)
+def test_cmp_err(heap: Heap[CmpErr]) -> None:
     with pytest.raises(ZeroDivisionError):
-        HeapMin[CmpErr].__init__(heapmin, heapmin.inner)
+        _ = heap.pop()
     with pytest.raises(ZeroDivisionError):
-        _ = heapmin.pop()
+        _ = heap.push(10)  # pyright: ignore[reportArgumentType]
     with pytest.raises(ZeroDivisionError):
-        _ = heapmin.push(10)  # pyright: ignore[reportArgumentType]
+        _ = heap.replace(10)  # pyright: ignore[reportArgumentType]
     with pytest.raises(ZeroDivisionError):
-        _ = heapmin.replace(10)  # pyright: ignore[reportArgumentType]
+        _ = heap.n_largest(2)
     with pytest.raises(ZeroDivisionError):
-        _ = heapmax.push(10)  # pyright: ignore[reportArgumentType]
-    with pytest.raises(ZeroDivisionError):
-        _ = heapmax.replace(10)  # pyright: ignore[reportArgumentType]
-    for f in (Heap[CmpErr].n_largest, Heap[CmpErr].n_smallest):
-        with pytest.raises(ZeroDivisionError):
-            _ = f(heapmin, 2)
-        with pytest.raises(ZeroDivisionError):
-            _ = f(heapmax, 2)
+        _ = heap.n_smallest(2)
 
 
 @pytest.mark.parametrize(
