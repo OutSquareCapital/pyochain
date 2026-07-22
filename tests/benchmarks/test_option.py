@@ -66,10 +66,10 @@ def test_match_case_some(benchmark: BenchFixture) -> None:
 @pytest.mark.benchmark(group="option_convert")
 @pytest.mark.parametrize(
     "fn",
-    [
+    (
         pytest.param(Some(10).ok_or, id="some"),
         pytest.param(NONE.ok_or, id="none"),
-    ],
+    ),
 )
 def test_ok_or(benchmark: BenchFixture, fn: BenchCallWithInt) -> None:
     def run() -> None:
@@ -91,11 +91,11 @@ def test_flatten_nested_none(benchmark: BenchFixture) -> None:
 @pytest.mark.benchmark(group="option_transpose")
 @pytest.mark.parametrize(
     "fn",
-    [
+    (
         pytest.param(Some(Ok(10)).transpose, id="ok"),
         pytest.param(Some(Err(10)).transpose, id="err"),
         pytest.param(NONE.transpose, id="none"),
-    ],
+    ),
 )
 def test_transpose(benchmark: BenchFixture, fn: BenchCall) -> None:
     def run() -> None:

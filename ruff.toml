@@ -35,6 +35,9 @@
 
     preview = true
     select  = ["ALL"]
+
+    [lint.flake8-pytest-style]
+        parametrize-values-type = "tuple"
 [format]
     docstring-code-format = true
     preview               = true

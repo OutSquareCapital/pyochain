@@ -12,13 +12,13 @@ type Predicate = Callable[[int], bool]
 
 @pytest.mark.parametrize(
     ("start", "stop", "expected_next", "expected_list"),
-    [
+    (
         (1, 4, 2, [1, 5]),
         (None, None, 1, EMPTY),
         (0, 2, 1, [3, 4, 5]),
         (2, None, 3, [1, 2]),
         (None, 3, 1, [4, 5]),
-    ],
+    ),
 )
 def test_drain_partial_consumption(
     start: int | None, stop: int | None, expected_next: int, expected_list: list[int]
@@ -59,7 +59,7 @@ def test_retain(pred: Predicate, expected: list[int]) -> None:
 
 
 @pytest.mark.parametrize(
-    ("n", "expected"), [(1, [1]), (0, []), (10, BASE), (3, [1, 2, 3])]
+    ("n", "expected"), ((1, [1]), (0, []), (10, BASE), (3, [1, 2, 3]))
 )
 def test_truncate(n: int, expected: list[object]) -> None:
     v = Vec(BASE)

@@ -64,13 +64,13 @@ def _raise_lookup_error(_x: Option[int]) -> int:
 
 @pytest.mark.parametrize(
     ("runner", "exception", "message"),
-    [
+    (
         pytest.param(_raise_value_error, ValueError, "map error", id="map"),
         pytest.param(
             _raise_runtime_error, RuntimeError, "and_then error", id="and-then"
         ),
         pytest.param(_raise_lookup_error, LookupError, "into error", id="into"),
-    ],
+    ),
 )
 def test_exceptions_are_forwarded_unchanged(
     runner: Callable[[int], object], exception: type[Exception], message: str

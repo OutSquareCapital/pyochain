@@ -68,8 +68,8 @@ def test_and_dunder() -> None:
 type IntoSetMutFn = Callable[[set[int]], MutableSet[int]]
 
 
-@pytest.mark.parametrize("x_type", [SetMut, set, ConcretePyoSetMut])
-@pytest.mark.parametrize("y_type", [SetMut, set, ConcretePyoSetMut])
+@pytest.mark.parametrize("x_type", (SetMut, set, ConcretePyoSetMut))
+@pytest.mark.parametrize("y_type", (SetMut, set, ConcretePyoSetMut))
 def test_iand_with_set(x_type: IntoSetMutFn, y_type: IntoSetMutFn) -> None:
     base = {1, 2, 3}
     x = x_type(base)

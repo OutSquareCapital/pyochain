@@ -150,7 +150,7 @@ def test_iter(other: type) -> None:
     assert issubclass(pc.Iter, other)
 
 
-@pytest.mark.parametrize("slf", [pc.Seq, pc.Range, pc.SliceView])
+@pytest.mark.parametrize("slf", (pc.Seq, pc.Range, pc.SliceView))
 @check_other([PyoSequence, *SEQUENCE_PARENTS])
 def test_concrete_sequences(slf: type, other: type) -> None:
     match other:
@@ -183,14 +183,14 @@ def test_dict(other: type) -> None:
 
 @pytest.mark.parametrize(
     "classes",
-    [
+    (
         (PyoIterable, Iterable),
         (PyoContainer, Container),
         (PyoSized, Sized),
         (PyoReversible, Reversible),
         (PyoMappingView, MappingView),
         (PyoMappingView, Sized),
-    ],
+    ),
 )
 def test_simple_abcs(classes: tuple[type, type]) -> None:
     assert issubclass(classes[0], classes[1])

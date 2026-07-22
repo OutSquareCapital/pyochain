@@ -41,7 +41,7 @@ def _iter(data: Range) -> Option[int]:
 
 
 @pytest.mark.benchmark(group="filter_map")
-@pytest.mark.parametrize("size", [64, 256, 1024, 4096])
+@pytest.mark.parametrize("size", (64, 256, 1024, 4096))
 def test_filter_map(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size)
     assert benchmark(_filter_map, data) == size - 2
@@ -51,7 +51,7 @@ def _filter_map(data: Range) -> int:
     return data.iter().filter_map(lambda i: Some(i) if i % 2 == 0 else Null()).last()
 
 
-@pytest.mark.parametrize("size", [64, 256, 1024, 4096])
+@pytest.mark.parametrize("size", (64, 256, 1024, 4096))
 def test_filter_map_star(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size).iter().enumerate().collect(Seq)
     assert benchmark(_filter_map_star, data) == size - 2
@@ -184,7 +184,7 @@ def _intersperse(data: Range) -> Seq[int]:
     return data.iter().intersperse(1).collect(Seq)
 
 
-@pytest.mark.parametrize("size", [1, 4, 16, 64])
+@pytest.mark.parametrize("size", (1, 4, 16, 64))
 def test_map_juxt(benchmark: BenchFixture, size: int) -> None:
 
     data = Range(0, 4096)
@@ -250,12 +250,12 @@ def _from_fn_args_and_kwargs() -> int:
 
 @pytest.mark.parametrize(
     "fn",
-    [
+    (
         pytest.param(_from_fn, id="from_fn"),
         pytest.param(_from_fn_args, id="from_fn_args"),
         pytest.param(_from_fn_kwargs, id="from_fn_kwargs"),
         pytest.param(_from_fn_args_and_kwargs, id="from_fn_args_and_kwargs"),
-    ],
+    ),
 )
 def test_from_fn(benchmark: BenchFixture, fn: Callable[[], int]) -> None:
     assert benchmark(fn) is not None
@@ -331,7 +331,7 @@ def _find(data: Range) -> Option[int]:
     return data.iter().find(lambda x: x == data.last())
 
 
-@pytest.mark.parametrize("size", [1, 2, 4096])
+@pytest.mark.parametrize("size", (1, 2, 4096))
 def test_with_position(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size)
     assert benchmark(_with_position, data) is not None
@@ -499,7 +499,7 @@ def _group_by(data: Range) -> tuple[int, PyoIterator[int]]:
     return data.iter().group_by(lambda x: x % 2).last()
 
 
-@pytest.mark.parametrize("size", [2, 8, 32, 128])
+@pytest.mark.parametrize("size", (2, 8, 32, 128))
 def test_map_windows(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, 4096)
     assert benchmark(_map_windows, data, size) is not None

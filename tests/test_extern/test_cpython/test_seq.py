@@ -21,8 +21,8 @@ if TYPE_CHECKING:
 type VecOrSeq[T] = type[Vec[T] | Seq[T]]
 type TestedSeq[T] = VecOrSeq[T] | type[Deque[T]]
 
-VEC_OR_SEQ_TYPES = pytest.mark.parametrize("type2test", [Seq, Vec])
-TEST_TYPES = pytest.mark.parametrize("type2test", [Seq, Vec, Deque])
+VEC_OR_SEQ_TYPES = pytest.mark.parametrize("type2test", (Seq, Vec))
+TEST_TYPES = pytest.mark.parametrize("type2test", (Seq, Vec, Deque))
 
 
 class _AlwaysEq:  # ruff:ignore[eq-without-hash]
