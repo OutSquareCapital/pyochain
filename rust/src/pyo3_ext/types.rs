@@ -8,6 +8,7 @@ use pyo3::types::{
 };
 use pyo3::{PyTypeInfo, intern, prelude::*};
 use tap::prelude::*;
+const COLLECTIONS_ABC: &str = "collections.abc";
 
 /// All ABCs have a `register` method that can be used to register a type as a virtual subclass of the ABC.\
 /// This trait factorize the implementation for all ABCs.\
@@ -22,6 +23,7 @@ pub trait ABCRegister<'py>: PyTypeInfo {
 
 impl ABCRegister<'_> for PyMutableSequence {}
 impl ABCRegister<'_> for PyAbstractSet {}
+impl ABCRegister<'_> for PyIterable {}
 
 /// Type representing the `typing.SupportsIndex` protocol.
 #[repr(transparent)]
@@ -65,18 +67,44 @@ impl<'py> PySupportsIndexMethods<'py> for Bound<'py, PySupportsIndex> {
             .map(|x| unsafe { x.cast_into_unchecked::<PyInt>() })
     }
 }
+/// Type representing the `collections.abc.Iterable` abstract base class.
+#[repr(transparent)]
+pub struct PyIterable(PyAny);
+pyobject_native_type_named!(PyIterable);
+unsafe impl PyTypeInfo for PyIterable {
+    const NAME: &'static str = "Iterable";
+    const MODULE: Option<&'static str> = Some(COLLECTIONS_ABC);
+
+    #[inline]
+    fn type_object_raw(py: Python<'_>) -> *mut PyTypeObject {
+        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
+        TYPE.import(py, COLLECTIONS_ABC, "Iterable")
+            .unwrap()
+            .as_type_ptr()
+    }
+    #[inline]
+    fn is_type_of(object: &Bound<'_, PyAny>) -> bool {
+        unsafe { (*(*object.as_ptr()).ob_type).tp_iter }.is_some()
+            || object
+                .is_instance(&Self::type_object(object.py()).into_any())
+                .unwrap_or_else(|err| {
+                    err.write_unraisable(object.py(), Some(object));
+                    false
+                })
+    }
+}
 /// Type representing the `collections.abc.MutableSequence` abstract base class.
 #[repr(transparent)]
 pub struct PyMutableSequence(PyAny);
 pyobject_native_type_named!(PyMutableSequence);
 unsafe impl PyTypeInfo for PyMutableSequence {
     const NAME: &'static str = "MutableSequence";
-    const MODULE: Option<&'static str> = Some("collections.abc");
+    const MODULE: Option<&'static str> = Some(COLLECTIONS_ABC);
 
     #[inline]
     fn type_object_raw(py: Python<'_>) -> *mut PyTypeObject {
         static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
-        TYPE.import(py, "collections.abc", "MutableSequence")
+        TYPE.import(py, COLLECTIONS_ABC, "MutableSequence")
             .unwrap()
             .as_type_ptr()
     }
@@ -121,12 +149,12 @@ pub struct PyAbstractSet(PyAny);
 pyobject_native_type_named!(PyAbstractSet);
 unsafe impl PyTypeInfo for PyAbstractSet {
     const NAME: &'static str = "Set";
-    const MODULE: Option<&'static str> = Some("collections.abc");
+    const MODULE: Option<&'static str> = Some(COLLECTIONS_ABC);
 
     #[inline]
     fn type_object_raw(py: Python<'_>) -> *mut PyTypeObject {
         static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
-        TYPE.import(py, "collections.abc", "Set")
+        TYPE.import(py, COLLECTIONS_ABC, "Set")
             .unwrap()
             .as_type_ptr()
     }
@@ -286,7 +314,7 @@ unsafe impl PyTypeInfo for PySupportsItems {
     #[inline]
     fn type_object_raw(py: Python<'_>) -> *mut PyTypeObject {
         static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
-        TYPE.import(py, "collections.abc", "SupportsItems")
+        TYPE.import(py, COLLECTIONS_ABC, "SupportsItems")
             .unwrap()
             .as_type_ptr()
     }

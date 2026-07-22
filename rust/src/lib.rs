@@ -12,7 +12,7 @@ mod tools;
 
 use crate::pyo3_ext::{
     prelude::*,
-    types::{PyAbstractSet, PyMutableSequence},
+    types::{PyAbstractSet, PyIterable, PyMutableSequence},
 };
 use pyo3::{
     PyTypeInfo, intern,
@@ -182,7 +182,7 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
 }
 fn register_all(py: Python<'_>) -> PyResult<()> {
     let abc_mod = py.import("collections.abc")?;
-    register(&abc_mod, "Iterable", &abc::PyoIterable::type_object(py))?;
+    PyIterable::register::<abc::PyoIterable>(py)?;
     register(&abc_mod, "Iterator", &abc::PyoIterator::type_object(py))?;
     register(&abc_mod, "Container", &abc::PyoContainer::type_object(py))?;
     register(&abc_mod, "Sized", &abc::PyoSized::type_object(py))?;
