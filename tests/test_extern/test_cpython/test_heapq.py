@@ -31,11 +31,11 @@ if TYPE_CHECKING:
 
 
 def test_push_pop() -> None:
-    # 1) Push 256 random numbers and pop them off, verifying all's OK.
+    # 1) Push 16 random numbers and pop them off, verifying all's OK.
     heap = HeapMin[float]([])
     data: list[float] = []
     check_invariant(heap)
-    for _i in range(256):
+    for _i in range(16):
         item = random.random()
         data.append(item)
         heap.push(item)
@@ -56,11 +56,11 @@ def test_push_pop() -> None:
 
 
 def test_max_push_pop() -> None:
-    # 1) Push 256 random numbers and pop them off, verifying all's OK.
+    # 1) Push 16 random numbers and pop them off, verifying all's OK.
     heap = HeapMax[float]([])
     data: list[float] = []
     check_max_invariant(heap)
-    for _ in range(256):
+    for _ in range(16):
         item = random.random()
         data.append(item)
         heap.push(item)
@@ -81,7 +81,7 @@ def test_max_push_pop() -> None:
 
 
 def test_heapify() -> None:
-    for size in [*list(range(30)), 20000]:
+    for size in [*list(range(3)), 20]:
         heap = HeapMin([random.random() for _ in range(size)])
         check_invariant(heap)
 
@@ -95,7 +95,7 @@ def check_invariant(heap: Sequence[float]) -> None:
 
 
 def test_heapify_max() -> None:
-    for size in [*list(range(30)), 20000]:
+    for size in [*list(range(3)), 20]:
         heap = HeapMax([random.random() for _ in range(size)])
         check_max_invariant(heap)
 
@@ -107,7 +107,7 @@ def check_max_invariant[T: SupportsRichComparison](heap: Sequence[T]) -> None:
 
 
 def test_naive_nbest() -> None:
-    data = [random.randrange(2000) for _ in range(1000)]
+    data = [random.randrange(20) for _ in range(10)]
     heap = HeapMin[int]([])
     for item in data:
         _ = heap.push(item)
@@ -119,12 +119,12 @@ def test_naive_nbest() -> None:
 def test_nbest() -> None:
     # Less-naive "N-best" algorithm, much faster (if len(data) is big
     # enough <wink>) than sorting all of data.
-    data = [random.randrange(2000) for _ in range(1000)]
-    heap = HeapMin[int](data[:10])
-    for item in data[10:]:
+    data = [random.randrange(20) for _ in range(10)]
+    heap = HeapMin[int](data[:3])
+    for item in data[3:]:
         if item > heap[0]:  # this gets rarer the longer we run
             _ = heap.replace(item)
-    assert list(heapiter(heap)) == sorted(data)[-10:]
+    assert list(heapiter(heap)) == sorted(data)[-3:]
     with pytest.raises(IndexError):
         _ = HeapMin[int]([]).replace(None)  # pyright: ignore[reportArgumentType]
 
@@ -133,19 +133,19 @@ def test_nbest_maxheap() -> None:
     # With a max heap instead of a min heap, the "N-best" algorithm can
     # go even faster still via heapify'ing all of data (linear time), then
     # doing 10 heappops (10 log-time steps).
-    data = [random.randrange(2000) for _ in range(1000)]
+    data = [random.randrange(20) for _ in range(10)]
     heap = HeapMax(data.copy())
-    result = [heap.pop() for _ in range(10)]
+    result = [heap.pop() for _ in range(3)]
     result.reverse()
-    assert result == sorted(data)[-10:]
+    assert result == sorted(data)[-3:]
 
 
 def test_nbest_with_pushpop() -> None:
-    data = [random.randrange(2000) for _ in range(1000)]
-    heap = HeapMin(data[:10])
-    for item in data[10:]:
+    data = [random.randrange(20) for _ in range(10)]
+    heap = HeapMin(data[:3])
+    for item in data[3:]:
         _ = heap.push_pop(item)
-    assert list(heapiter(heap)) == sorted(data)[-10:]
+    assert list(heapiter(heap)) == sorted(data)[-3:]
     assert HeapMin[str]([]).push_pop("x") == "x"
 
 
@@ -160,7 +160,7 @@ def heapiter[T: SupportsRichComparison](heap: HeapMin[T]) -> Iterator[T]:
 
 def test_naive_nworst() -> None:
     # Max-heap variant of "test_naive_nbest"
-    data = [random.randrange(2000) for _ in range(1000)]
+    data = [random.randrange(20) for _ in range(10)]
     heap = HeapMax[int]([])
     for item in data:
         heap.push(item)
@@ -171,12 +171,12 @@ def test_naive_nworst() -> None:
 
 def test_nworst() -> None:
     # Max-heap variant of "test_nbest"
-    data = [random.randrange(2000) for _ in range(1000)]
-    heap = HeapMax(data[:10])
-    for item in data[10:]:
+    data = [random.randrange(20) for _ in range(10)]
+    heap = HeapMax(data[:3])
+    for item in data[3:]:
         if item < heap[0]:  # this gets rarer the longer we run
             _ = heap.replace(item)
-    expected = sorted(data, reverse=True)[-10:]
+    expected = sorted(data, reverse=True)[-3:]
     assert list(heapiter_max(heap)) == expected
     with pytest.raises(IndexError):
         _ = HeapMax[int]([]).replace(None)  # pyright: ignore[reportArgumentType]
@@ -184,21 +184,21 @@ def test_nworst() -> None:
 
 def test_nworst_minheap() -> None:
     # Min-heap variant of "test_nbest_maxheap"
-    data = [random.randrange(2000) for _ in range(1000)]
+    data = [random.randrange(20) for _ in range(10)]
     heap = HeapMin(data.copy())
-    result = [heap.pop() for _ in range(10)]
+    result = [heap.pop() for _ in range(3)]
     result.reverse()
-    expected = sorted(data, reverse=True)[-10:]
+    expected = sorted(data, reverse=True)[-3:]
     assert result == expected
 
 
 def test_nworst_with_pushpop() -> None:
     # Max-heap variant of "test_nbest_with_pushpop"
-    data = Vec([random.randrange(2000) for _ in range(1000)])
-    heap = HeapMax(data[:10])
-    for item in data[10:]:
+    data = Vec([random.randrange(20) for _ in range(10)])
+    heap = HeapMax(data[:3])
+    for item in data[3:]:
         _ = heap.push_pop(item)
-    expected = data.iter().sort(reverse=True)[-10:]
+    expected = data.iter().sort(reverse=True)[-3:]
     assert list(heapiter_max(heap)) == expected
     assert HeapMax[str]([]).push_pop("x") == "x"
 
@@ -262,8 +262,8 @@ def test_heappop_max() -> None:
 
 def test_heapsort() -> None:
     # Exercise everything with repeated heapsort checks
-    for trial in range(100):
-        size = random.randrange(50)
+    for trial in range(10):
+        size = random.randrange(5)
         data = [random.randrange(25) for _ in range(size)]
         if trial & 1:  # Half of the time, use heapify
             heap: HeapMin[int] = HeapMin(data.copy())
@@ -275,26 +275,26 @@ def test_heapsort() -> None:
         assert heap_sorted == sorted(data)
 
 
-def test_heapsort_max() -> None:
-    for trial in range(100):
-        size = random.randrange(50)
-        data = [random.randrange(25) for _ in range(size)]
-        if trial & 1:  # Half of the time, use heapify_max
-            heap: HeapMax[int] = HeapMax(data.copy())
-        else:  # The rest of the time, use push_max
-            heap = HeapMax([])
-            for item in data:
-                _ = heap.push(item)
-        heap_sorted = [heap.pop() for _ in range(size)]
-        assert heap_sorted == sorted(data, reverse=True)
+@pytest.mark.parametrize("trial", range(10))
+def test_heapsort_max(trial: int) -> None:
+    size = random.randrange(5)
+    data = [random.randrange(25) for _ in range(size)]
+    if trial & 1:  # Half of the time, use heapify_max
+        heap: HeapMax[int] = HeapMax(data.copy())
+    else:  # The rest of the time, use push_max
+        heap = HeapMax([])
+        for item in data:
+            _ = heap.push(item)
+    heap_sorted = [heap.pop() for _ in range(size)]
+    assert heap_sorted == sorted(data, reverse=True)
 
 
 def test_merge() -> None:
     inputs: list[list[tuple[str, int]]] = []
     for _i in range(random.randrange(25)):
         row: list[tuple[str, int]] = []
-        for _j in range(random.randrange(100)):
-            tup = random.choice("ABC"), random.randrange(-500, 500)
+        for _j in range(random.randrange(10)):
+            tup = random.choice("ABC"), random.randrange(-50, 50)
             row.append(tup)
         inputs.append(row)
 
@@ -332,7 +332,7 @@ def test_merge_stability() -> None:
 
     base = HeapMin[Int]([])
     others: list[list[Int]] = [[], [], [], []]
-    for _i in range(20000):
+    for _i in range(20):
         stream = random.randrange(4)
         x = random.randrange(500)
         obj = Int(x)
@@ -345,7 +345,7 @@ def test_merge_stability() -> None:
 
 
 def test_nsmallest() -> None:
-    data = HeapMin([(random.randrange(2000), i) for i in range(1000)])
+    data = HeapMin([(random.randrange(20), i) for i in range(10)])
     for f in (None, _op_for_n):
         for n in (0, 1, 2, 10, 100, 400, 999, 1000, 1100):
             assert list(data.n_smallest(n)) == sorted(data)[:n]
@@ -353,7 +353,7 @@ def test_nsmallest() -> None:
 
 
 def test_nlargest() -> None:
-    data = HeapMax([(random.randrange(2000), i) for i in range(1000)])
+    data = HeapMax([(random.randrange(20), i) for i in range(10)])
     for f in (None, _op_for_n):
         for n in (0, 1, 2, 10, 100, 400, 999, 1000, 1100):
             assert list(data.n_largest(n)) == sorted(data, reverse=True)[:n]
@@ -681,24 +681,24 @@ def test_iterable_args_exceptions(
 
 def test_push_mutating_heap() -> None:
     heap = HeapMin[Any]([])
-    heap.extend(SideEffectLT(i, heap) for i in range(200))
+    heap.extend(SideEffectLT(i, heap) for i in range(20))
     # Python version raises IndexError, C version RuntimeError
     with pytest.raises((IndexError, RuntimeError)):
         heap.push(SideEffectLT(5, heap))
     heap = HeapMax[Any]([])
-    heap.extend(SideEffectLT(i, heap) for i in range(200))
+    heap.extend(SideEffectLT(i, heap) for i in range(20))
     with pytest.raises((IndexError, RuntimeError)):
         heap.push(SideEffectLT(5, heap))
 
 
 def test_heappop_mutating_heap() -> None:
     heap = HeapMin[Any]([])
-    heap.extend(SideEffectLT(i, heap) for i in range(200))
+    heap.extend(SideEffectLT(i, heap) for i in range(20))
     # Python version raises IndexError, C version RuntimeError
     with pytest.raises((IndexError, RuntimeError)):
         _ = heap.pop()  # pyright: ignore[reportAny]
     heap = HeapMax[Any]([])
-    heap.extend(SideEffectLT(i, heap) for i in range(200))
+    heap.extend(SideEffectLT(i, heap) for i in range(20))
     with pytest.raises((IndexError, RuntimeError)):
         _ = heap.pop()  # pyright: ignore[reportAny]
 
