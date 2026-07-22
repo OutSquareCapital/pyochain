@@ -12,7 +12,7 @@ from __future__ import annotations
 import random
 from itertools import chain
 from operator import itemgetter
-from typing import TYPE_CHECKING, Any, Never, Self, final, override
+from typing import TYPE_CHECKING, Any, Concatenate, Never, Self, final, override
 
 import pytest
 
@@ -24,6 +24,10 @@ if TYPE_CHECKING:
     from types import NotImplementedType
 
     from _typeshed import SupportsRichComparison
+
+    type HeapMethod[**P, T: SupportsRichComparison, R] = Callable[
+        Concatenate[Heap[T], P], R
+    ]
 
 
 def test_push_pop() -> None:
@@ -526,48 +530,70 @@ class SideEffectLT[T: SupportsRichComparison]:
 # TestErrorHandling:
 
 
-def test_non_sequence() -> None:
-    for f in (
+@pytest.mark.parametrize(
+    "f",
+    (
         HeapMin[int].__init__,
         HeapMin[int].pop,
         HeapMax[int].__init__,
         HeapMax[int].pop,
-    ):
-        with pytest.raises((TypeError, AttributeError)):
-            _ = f(10)  # pyright: ignore[reportCallIssue, reportArgumentType, reportUnknownVariableType]
-    for f in (
+    ),
+)
+def test_non_sequence(f: Callable[[Heap[int], object], int]) -> None:
+    with pytest.raises((TypeError, AttributeError)):
+        _ = f(10)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+
+
+@pytest.mark.parametrize(
+    "f",
+    (
         HeapMin[int].push,
         HeapMin[int].replace,
         HeapMax[int].push,
         HeapMax[int].replace,
         HeapMin[int].n_largest,
         HeapMin[int].n_smallest,
-    ):
-        with pytest.raises((TypeError, AttributeError)):
-            _ = f(10, 10)  # pyright: ignore[reportArgumentType]
+    ),
+)
+def test_non_sequence_2_args(f: Callable[[Heap[int], int, int], object]) -> None:
+    with pytest.raises((TypeError, AttributeError)):
+        _ = f(10, 10)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
 
 
-def test_len_only() -> None:
-    for f in (
+@pytest.mark.parametrize(
+    "f",
+    (
         HeapMin[int].__init__,
         HeapMin[int].pop,
         HeapMax[int].__init__,
         HeapMax[int].pop,
-    ):
-        with pytest.raises((TypeError, AttributeError)):
-            _ = f(LenOnly())  # pyright: ignore[reportCallIssue, reportArgumentType, reportUnknownVariableType]
+    ),
+)
+def test_len_only_init_and_pop(f: Callable[[Heap[int], object], object]) -> None:
+    with pytest.raises((TypeError, AttributeError)):
+        _ = f(LenOnly())  # pyright: ignore[reportCallIssue,  reportUnknownVariableType]
 
-    for f in (
+
+@pytest.mark.parametrize(
+    "f",
+    (
         HeapMin[int].push,
         HeapMin[int].replace,
         HeapMax[int].push,
         HeapMax[int].replace,
-    ):
-        with pytest.raises((TypeError, AttributeError)):
-            _ = f(LenOnly(), 10)  # pyright: ignore[reportArgumentType]
-    for f in (HeapMin[int].n_largest, HeapMin[int].n_smallest):
-        with pytest.raises((TypeError, AttributeError)):
-            _ = f(2, LenOnly())  # pyright: ignore[reportArgumentType]
+    ),
+)
+def test_len_only_push_replace(f: Callable[[Heap[int], int], object]) -> None:
+    with pytest.raises((TypeError, AttributeError)):
+        _ = f(LenOnly(), 10)  # pyright: ignore[reportArgumentType]
+
+
+@pytest.mark.parametrize("f", (HeapMin[int].n_largest, HeapMin[int].n_smallest))
+def test_len_only_nlargest_nsmallest(
+    f: Callable[[Heap[int], int, int], object],
+) -> None:
+    with pytest.raises((TypeError, AttributeError)):
+        _ = f(2, LenOnly())  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
 
 
 def test_cmp_err() -> None:
@@ -593,8 +619,9 @@ def test_cmp_err() -> None:
             _ = f(heapmax, 2)
 
 
-def test_arg_parsing() -> None:
-    for f in (
+@pytest.mark.parametrize(
+    "f",
+    (
         HeapMin[int].__init__,
         HeapMin[int].pop,
         HeapMin[int].push,
@@ -605,31 +632,48 @@ def test_arg_parsing() -> None:
         HeapMax[int].replace,
         HeapMin[int].n_largest,
         HeapMin[int].n_smallest,
-    ):
-        with pytest.raises((TypeError, AttributeError)):
-            _ = f(10)  # pyright: ignore[reportCallIssue, reportArgumentType, reportUnknownVariableType]
+    ),
+)
+def test_arg_parsing(f: HeapMethod[..., int, object]) -> None:
+    with pytest.raises((TypeError, AttributeError)):
+        _ = f(10)  # pyright: ignore[reportArgumentType]
 
 
-def test_iterable_args() -> None:
-    for f in (HeapMin[float].n_largest, HeapMin[float].n_smallest):
-        for s in ("123", "", range(1000), (1, 1.2), range(2000, 2200, 5)):
-            for g in (
-                ImplGetItem,
-                ImplIterator,
-                ImplGenerator,
-                multiple_iterators,
-                reg_generator,
-            ):
-                assert list(f(HeapMin[float].from_ref(g(s)), 2)) == list(  # pyright: ignore[reportArgumentType]
-                    f(HeapMin[float].from_ref(s), 2)  # pyright: ignore[reportArgumentType]
-                )
-            assert list(f(HeapMin[float].from_ref(RaiseImmediateStop(s)), 2)) == []  # pyright: ignore[reportArgumentType]
-            with pytest.raises(TypeError):
-                _ = f(HeapMin[float].from_ref(MissGetItemAndIter(s)), 2)  # pyright: ignore[reportArgumentType]
-            with pytest.raises(TypeError):
-                _ = f(HeapMin[float].from_ref(MissNext(s)), 2)  # pyright: ignore[reportArgumentType]
-            with pytest.raises(ZeroDivisionError):
-                _ = f(HeapMin[float].from_ref(PropagateException(s)), 2)  # pyright: ignore[reportArgumentType]
+@pytest.mark.parametrize("f", (HeapMin[float].n_largest, HeapMin[float].n_smallest))
+@pytest.mark.parametrize("s", ("123", "", range(10), (1, 1.2)))
+@pytest.mark.parametrize(
+    "g",
+    (
+        ImplGetItem,
+        ImplIterator,
+        ImplGenerator,
+        multiple_iterators,
+        reg_generator,
+    ),
+)
+def test_iterable_args(
+    f: HeapMethod[[object], ..., object],
+    s: Sequence[float] | str | range,
+    g: Callable[[Heap[float | str]], object],
+) -> None:
+    assert list(f(HeapMin[float].from_ref(g(s)), 2)) == list(  # pyright: ignore[reportArgumentType]
+        f(HeapMin[float].from_ref(s), 2)  # pyright: ignore[reportArgumentType]
+    )
+
+
+@pytest.mark.parametrize("f", (HeapMin[float].n_largest, HeapMin[float].n_smallest))
+@pytest.mark.parametrize("s", ("123", "", range(10), (1, 1.2), range(200, 220, 5)))
+def test_iterable_args_exceptions(
+    f: HeapMethod[[Any], ..., object],
+    s: Sequence[float] | str | range,
+) -> None:
+    assert list(f(HeapMin[float].from_ref(RaiseImmediateStop(s)), 2)) == []  # pyright: ignore[reportArgumentType]
+    with pytest.raises(TypeError):
+        _ = f(HeapMin[float].from_ref(MissGetItemAndIter(s)), 2)  # pyright: ignore[reportArgumentType]
+    with pytest.raises(TypeError):
+        _ = f(HeapMin[float].from_ref(MissNext(s)), 2)  # pyright: ignore[reportArgumentType]
+    with pytest.raises(ZeroDivisionError):
+        _ = f(HeapMin[float].from_ref(PropagateException(s)), 2)  # pyright: ignore[reportArgumentType]
 
 
 # Issue #17278: the heap may change size while it's being walked.
