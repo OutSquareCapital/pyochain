@@ -1,6 +1,6 @@
 use crate::pyobject_native_type_named;
 use pyo3::exceptions::PyTypeError;
-use pyo3::ffi::{PyDictValues, PyTypeObject};
+use pyo3::ffi::{self, PyDictValues, PyTypeObject};
 use pyo3::sync::PyOnceLock;
 use pyo3::types::{
     PyDict, PyDictItems, PyDictKeys, PyFrozenSet, PyInt, PyIterator, PyList, PySequence, PySet,
@@ -82,9 +82,12 @@ unsafe impl PyTypeInfo for PyIterable {
             .unwrap()
             .as_type_ptr()
     }
+    // NOTE: Even if `PySequence_Check` won't return always return `True` on `isinstance(x, Iterable)` (e.g for `__getitem__`-only objects),\
+    // not using it here would mean runtime errors on objects that are perfectly valid when calling `try_iter()` on them.
     #[inline]
     fn is_type_of(object: &Bound<'_, PyAny>) -> bool {
         unsafe { (*(*object.as_ptr()).ob_type).tp_iter }.is_some()
+            || unsafe { ffi::PySequence_Check(object.as_ptr()) != 0 }
             || object
                 .is_instance(&Self::type_object(object.py()).into_any())
                 .unwrap_or_else(|err| {
