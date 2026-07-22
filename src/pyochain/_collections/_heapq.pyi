@@ -12,8 +12,8 @@ class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):
     inner: Final[list[T]]
 
     def __init__(self, data: Iterable[T]) -> None: ...
-    @classmethod
-    def from_ref(cls, data: list[T]) -> Self:
+    @staticmethod
+    def from_ref[S: SupportsRichComparison](data: list[S]) -> Heap[S]:
         """Create a `Heap` instance from an existing `list` without copying.
 
         Assumes that the provided list already satisfies the corresponding heap invariant.
@@ -188,6 +188,9 @@ class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):
 class HeapMin[T: SupportsRichComparison](Heap[T]):
     """Heap implementation that maintains the smallest element at the top."""
     @override
+    @staticmethod
+    def from_ref[S: SupportsRichComparison](data: list[S]) -> HeapMin[S]: ...
+    @override
     def push(self, item: T) -> None: ...
     @override
     def pop(self, _index: int = -1, /) -> T: ...
@@ -198,6 +201,9 @@ class HeapMin[T: SupportsRichComparison](Heap[T]):
 
 class HeapMax[T: SupportsRichComparison](Heap[T]):
     """Heap implementation that maintains the largest element at the top."""
+    @override
+    @staticmethod
+    def from_ref[S: SupportsRichComparison](data: list[S]) -> HeapMax[S]: ...
     @override
     def push(self, item: T) -> None: ...
     @override
