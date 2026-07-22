@@ -150,6 +150,7 @@ trait HeapType: Sized + PyWrapper<PyList> {
 pub struct Heap;
 #[pyclass(frozen, generic, sequence, extends = Heap)]
 pub struct HeapMin {
+    #[pyo3(get)]
     pub inner: Py<PyList>,
 }
 #[pymethods]
@@ -192,6 +193,7 @@ impl HeapType for HeapMin {
 
 #[pyclass(frozen, generic, sequence, extends = Heap)]
 pub struct HeapMax {
+    #[pyo3(get)]
     pub inner: Py<PyList>,
 }
 impl HeapType for HeapMax {
@@ -252,13 +254,13 @@ impl HeapType for HeapMax {
 impl HeapMax {
     fn _siftdown(&self, py: Python<'_>, startpos: usize, mut pos: usize) -> PyResult<()> {
         let inner = self.inner.bind(py);
-        let newitem = inner.get_item(pos)?.extract::<usize>()?;
+        let newitem = inner.get_item(pos)?;
         // Follow the path to the root, moving parents down until finding a place
         // newitem fits.
         while pos > startpos {
             let parentpos = (pos - 1) >> 1;
-            let parent = inner.get_item(parentpos)?.extract::<usize>()?;
-            if parent < newitem {
+            let parent = inner.get_item(parentpos)?;
+            if parent.lt(&newitem)? {
                 inner.set_item(pos, parent)?;
                 pos = parentpos;
                 continue;
