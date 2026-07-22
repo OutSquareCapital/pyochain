@@ -66,6 +66,11 @@ impl PyoABC for PyoMutableMapping {
         PyoMapping::build_init().add_subclass(Self)
     }
 }
+impl PyoABC for crate::collections::Heap {
+    fn build_init() -> PyClassInitializer<Self> {
+        PyoMutableSequence::build_init().add_subclass(Self)
+    }
+}
 #[pyclass(subclass, frozen, generic, extends=Checkable)]
 pub struct PyoIterable;
 

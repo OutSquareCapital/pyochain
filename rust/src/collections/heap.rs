@@ -1,20 +1,56 @@
 use crate::abc::PyoABC;
+use crate::pyo3_ext::types::PyIterable;
 use crate::pyo3_ext::{prelude::*, pylibs};
 use crate::{abc, seq, tools};
-use bound_from_any::{py_abc, try_cast};
+use bound_from_any::{BoundFromAny, py_abc, try_cast};
 use either::Either;
-use pyo3::intern;
 use pyo3::{
     BoundObject,
     prelude::*,
     types::{PyList, PyNotImplemented, PyTuple},
 };
+use pyo3::{PyTypeInfo, intern};
 use tap::Pipe;
-
+#[derive(BoundFromAny)]
+enum IntoHeap<'py> {
+    #[cast_exact]
+    List(Bound<'py, PyList>),
+    #[cast_exact]
+    Vec(Bound<'py, seq::Vec>),
+    Iterable(Bound<'py, PyIterable>),
+}
+impl IntoHeap<'_> {
+    fn convert<F: FnOnce(&Bound<'_, PyList>) -> PyResult<()>>(
+        self,
+        func: F,
+    ) -> PyResult<Py<PyList>> {
+        match self {
+            Self::List(list) => {
+                func(&list)?;
+                Ok(list)
+            }
+            Self::Vec(vec) => {
+                let py = vec.py();
+                let inner = vec.get().inner.clone_ref(py).into_bound(py);
+                func(&inner)?;
+                Ok(inner)
+            }
+            Self::Iterable(iterable) => {
+                let py = iterable.py();
+                let list = PyList::type_object(py)
+                    .call1((iterable,))
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?;
+                func(&list)?;
+                Ok(list)
+            }
+        }
+        .map(Bound::unbind)
+    }
+}
 #[py_abc(HeapMin, HeapMax)]
 trait HeapType: Sized + PyWrapper<PyList> {
     #[new]
-    fn new(data: Bound<'_, PyList>) -> PyResult<PyClassInitializer<Self>>;
+    fn new(data: IntoHeap<'_>) -> PyResult<PyClassInitializer<Self>>;
     fn replace<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>>;
     fn push_pop<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>>;
     fn push<'py>(&self, item: Bound<'py, PyAny>) -> PyResult<()>;
@@ -26,9 +62,7 @@ trait HeapType: Sized + PyWrapper<PyList> {
         _index: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>>;
     #[staticmethod]
-    fn from_ref<'py>(py: Python<'py>, data: Bound<'_, PyList>) -> PyResult<Bound<'py, Self>> {
-        Self::new(data).and_then(|init| Bound::new(py, init))
-    }
+    fn from_ref<'py>(py: Python<'py>, data: Bound<'_, PyList>) -> PyResult<Bound<'py, Self>>;
     fn __len__(&self, py: Python<'_>) -> usize {
         self.as_inner().bind(py).len()
     }
@@ -123,19 +157,19 @@ impl Heap {
     #[allow(unused_variables)]
     #[new]
     fn new(data: Bound<'_, PyList>) -> PyClassInitializer<Self> {
-        abc::PyoMutableSequence::build_init().add_subclass(Self)
+        Self::build_init()
     }
 }
 impl HeapType for HeapMin {
-    fn new(data: Bound<'_, PyList>) -> PyResult<PyClassInitializer<Self>> {
-        pylibs::heapq::heapify(&data)?;
-        data.unbind()
-            .pipe(|inner| {
-                abc::PyoMutableSequence::build_init()
-                    .add_subclass(Heap)
-                    .add_subclass(Self { inner })
-            })
-            .pipe(Ok)
+    fn new(data: IntoHeap<'_>) -> PyResult<PyClassInitializer<Self>> {
+        data.convert(pylibs::heapq::heapify)
+            .map(|inner| Heap::build_init().add_subclass(Self { inner }))
+    }
+    fn from_ref<'py>(py: Python<'py>, data: Bound<'_, PyList>) -> PyResult<Bound<'py, Self>> {
+        let initializer = Heap::build_init().add_subclass(Self {
+            inner: data.unbind(),
+        });
+        Bound::new(py, initializer)
     }
     fn push(&self, item: Bound<'_, PyAny>) -> PyResult<()> {
         pylibs::heapq::heappush(self.inner.bind(item.py()), item)
@@ -161,15 +195,15 @@ pub struct HeapMax {
     pub inner: Py<PyList>,
 }
 impl HeapType for HeapMax {
-    fn new(data: Bound<'_, PyList>) -> PyResult<PyClassInitializer<Self>> {
-        pylibs::heapq::heapify_max(&data)?;
-        data.unbind()
-            .pipe(|inner| {
-                abc::PyoMutableSequence::build_init()
-                    .add_subclass(Heap)
-                    .add_subclass(Self { inner })
-            })
-            .pipe(Ok)
+    fn new(data: IntoHeap<'_>) -> PyResult<PyClassInitializer<Self>> {
+        data.convert(pylibs::heapq::heapify_max)
+            .map(|inner| Heap::build_init().add_subclass(Self { inner }))
+    }
+    fn from_ref<'py>(py: Python<'py>, data: Bound<'_, PyList>) -> PyResult<Bound<'py, Self>> {
+        let initializer = Heap::build_init().add_subclass(Self {
+            inner: data.unbind(),
+        });
+        Bound::new(py, initializer)
     }
     fn push(&self, item: Bound<'_, PyAny>) -> PyResult<()> {
         let py = item.py();

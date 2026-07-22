@@ -11,7 +11,7 @@ class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):
 
     inner: Final[list[T]]
 
-    def __init__(self, data: list[T]) -> None: ...
+    def __init__(self, data: Iterable[T]) -> None: ...
     @classmethod
     def from_ref(cls, data: list[T]) -> Self:
         """Create a `Heap` instance from an existing `list` without copying.

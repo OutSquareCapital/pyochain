@@ -20,7 +20,7 @@ from pyochain import Vec
 from pyochain.collections import Heap, HeapMax, HeapMin
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator, Sequence
+    from collections.abc import Callable, Iterable, Iterator, Sequence
     from types import NotImplementedType
 
     from _typeshed import SupportsRichComparison
@@ -446,8 +446,8 @@ class ImplIterator:
 class ImplGenerator:
     """Sequence using iterator protocol defined with a generator."""
 
-    def __init__(self, seqn: Heap[int]) -> None:
-        self.seqn: Heap[int] = seqn
+    def __init__(self, seqn: Iterable[int]) -> None:
+        self.seqn: Iterable[int] = seqn
         self.i: int = 0
 
     def __iter__(self) -> Iterator[int]:
@@ -656,8 +656,8 @@ def test_iterable_args(
     s: Sequence[float] | str | range,
     g: Callable[[Heap[float | str]], object],
 ) -> None:
-    assert list(f(HeapMin[float].from_ref(g(s)), 2)) == list(  # pyright: ignore[reportArgumentType]
-        f(HeapMin[float].from_ref(s), 2)  # pyright: ignore[reportArgumentType]
+    assert list(f(HeapMin[float](g(s)), 2)) == list(  # pyright: ignore[reportArgumentType]
+        f(HeapMin[float](s), 2)  # pyright: ignore[reportArgumentType]
     )
 
 
@@ -667,13 +667,13 @@ def test_iterable_args_exceptions(
     f: HeapMethod[[Any], ..., object],
     s: Sequence[float] | str | range,
 ) -> None:
-    assert list(f(HeapMin[float].from_ref(RaiseImmediateStop(s)), 2)) == []  # pyright: ignore[reportArgumentType]
+    assert list(f(HeapMin[float](RaiseImmediateStop(s)), 2)) == []  # pyright: ignore[reportArgumentType]
     with pytest.raises(TypeError):
-        _ = f(HeapMin[float].from_ref(MissGetItemAndIter(s)), 2)  # pyright: ignore[reportArgumentType]
+        _ = f(HeapMin[float](MissGetItemAndIter(s)), 2)  # pyright: ignore[reportArgumentType]
     with pytest.raises(TypeError):
-        _ = f(HeapMin[float].from_ref(MissNext(s)), 2)  # pyright: ignore[reportArgumentType]
+        _ = f(HeapMin[float](MissNext(s)), 2)  # pyright: ignore[reportArgumentType]
     with pytest.raises(ZeroDivisionError):
-        _ = f(HeapMin[float].from_ref(PropagateException(s)), 2)  # pyright: ignore[reportArgumentType]
+        _ = f(HeapMin[float](PropagateException(s)), 2)  # pyright: ignore[reportArgumentType]
 
 
 # Issue #17278: the heap may change size while it's being walked.
