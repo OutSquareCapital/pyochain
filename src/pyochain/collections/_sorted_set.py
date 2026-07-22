@@ -8,7 +8,6 @@ from itertools import chain
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, Self, overload, override
 
-from pyochain._types import SupportsHashableAndRichComparison
 from pyochain.abc import PyoMutableSet, PyoSequence
 
 from ._sorted_list import KeyFunc, SortedCollection, SortedKeyList, SortedList, identity
@@ -16,7 +15,9 @@ from ._sorted_list import KeyFunc, SortedCollection, SortedKeyList, SortedList, 
 if TYPE_CHECKING:
     from types import NotImplementedType
 
-type SetKeyFunc[T, OT: SupportsHashableAndRichComparison] = KeyFunc[T, OT]
+    from pyochain._types import SupportsHashableAndRichComparison
+
+    type SetKeyFunc[T, OT: SupportsHashableAndRichComparison] = KeyFunc[T, OT]
 
 
 class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without-hash]

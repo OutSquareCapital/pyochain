@@ -2,14 +2,6 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-    Hashable,
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-)
 from functools import partial
 from itertools import chain
 from reprlib import recursive_repr
@@ -17,18 +9,27 @@ from typing import TYPE_CHECKING, Any, Self, overload, override
 
 from pyochain.abc import PyoMutableMapping
 
-from .._types import SupportsHashableAndRichComparison
 from ._sorted_list import SortedCollection, SortedKeyList, SortedList
 from ._sorted_views import SortedItemsView, SortedKeysView, SortedValuesView
 
 if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+        Hashable,
+        Iterable,
+        Iterator,
+        Mapping,
+        MutableMapping,
+    )
+
     from _typeshed import (
         SupportsGetItem,
         SupportsKeysAndGetItem,
     )
 
+    from pyochain._types import SupportsHashableAndRichComparison
 
-type KeyFunc[K: Hashable, OT: SupportsHashableAndRichComparison] = Callable[[K], OT]
+    type KeyFunc[K: Hashable, OT: SupportsHashableAndRichComparison] = Callable[[K], OT]
 
 
 class SortedDict[K: SupportsHashableAndRichComparison, V](

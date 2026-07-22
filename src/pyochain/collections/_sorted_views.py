@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from pyochain.collections import SortedDict
+
 _K_co = TypeVar("_K_co", covariant=True, bound=SupportsHashableAndRichComparison)
 _V_co = TypeVar("_V_co", covariant=True)
 
