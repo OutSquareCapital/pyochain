@@ -529,16 +529,10 @@ class SideEffectLT[T: SupportsRichComparison]:
 
 # TestErrorHandling:
 
+CLS_AND_POP = (HeapMin[int], HeapMin[int].pop, HeapMax[int], HeapMax[int].pop)
 
-@pytest.mark.parametrize(
-    "f",
-    (
-        HeapMin[int].__init__,
-        HeapMin[int].pop,
-        HeapMax[int].__init__,
-        HeapMax[int].pop,
-    ),
-)
+
+@pytest.mark.parametrize("f", CLS_AND_POP)
 def test_non_sequence(f: Callable[[Heap[int], object], int]) -> None:
     with pytest.raises((TypeError, AttributeError)):
         _ = f(10)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
@@ -560,15 +554,7 @@ def test_non_sequence_2_args(f: Callable[[Heap[int], int, int], object]) -> None
         _ = f(10, 10)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
 
 
-@pytest.mark.parametrize(
-    "f",
-    (
-        HeapMin[int].__init__,
-        HeapMin[int].pop,
-        HeapMax[int].__init__,
-        HeapMax[int].pop,
-    ),
-)
+@pytest.mark.parametrize("f", CLS_AND_POP)
 def test_len_only_init_and_pop(f: Callable[[Heap[int], object], object]) -> None:
     with pytest.raises((TypeError, AttributeError)):
         _ = f(LenOnly())  # pyright: ignore[reportCallIssue,  reportUnknownVariableType]
@@ -622,12 +608,9 @@ def test_cmp_err() -> None:
 @pytest.mark.parametrize(
     "f",
     (
-        HeapMin[int].__init__,
-        HeapMin[int].pop,
+        *CLS_AND_POP,
         HeapMin[int].push,
         HeapMin[int].replace,
-        HeapMax[int].__init__,
-        HeapMax[int].pop,
         HeapMax[int].push,
         HeapMax[int].replace,
         HeapMin[int].n_largest,
@@ -642,14 +625,7 @@ def test_arg_parsing(f: HeapMethod[..., int, object]) -> None:
 @pytest.mark.parametrize("f", (HeapMin[float].n_largest, HeapMin[float].n_smallest))
 @pytest.mark.parametrize("s", ("123", "", range(10), (1, 1.2)))
 @pytest.mark.parametrize(
-    "g",
-    (
-        ImplGetItem,
-        ImplIterator,
-        ImplGenerator,
-        multiple_iterators,
-        reg_generator,
-    ),
+    "g", (ImplGetItem, ImplIterator, ImplGenerator, multiple_iterators, reg_generator)
 )
 def test_iterable_args(
     f: HeapMethod[[object], ..., object],
