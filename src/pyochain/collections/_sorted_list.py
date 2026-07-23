@@ -2,12 +2,12 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
+import functools
+import itertools
 import operator
 from abc import ABC, abstractmethod
 from bisect import bisect_left, bisect_right, insort
 from collections.abc import Callable, Iterable, Iterator, Sequence
-from functools import reduce
-from itertools import chain, repeat
 from math import log2
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Final, Self, overload, override
@@ -823,7 +823,7 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
             return
 
         size: int = 2 ** (int(log2(len(row1) - 1)) + 1)  # pyright: ignore[reportAny]
-        row1.extend(repeat(0, size - len(row1)))
+        row1.extend(itertools.repeat(0, size - len(row1)))
         tree = [row0, row1]
 
         while len(tree[-1]) > 1:
@@ -832,7 +832,7 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
             row = list(map(operator.add, head, tail))
             tree.append(row)
 
-        _ = reduce(operator.iadd, reversed(tree), self._index)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+        _ = functools.reduce(operator.iadd, reversed(tree), self._index)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
         self._offset = size * 2 - 1
 
     @override
@@ -950,7 +950,7 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
 
                     prefix = self._lists[start_pos][start_idx:]
                     middle = self._lists[(start_pos + 1) : stop_pos]
-                    result = reduce(operator.iadd, middle, prefix)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+                    result = functools.reduce(operator.iadd, middle, prefix)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
                     result += self._lists[stop_pos][:stop_idx]
 
                     return result
@@ -1014,7 +1014,7 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
         :exc:`RuntimeError` or fail to iterate over all values.
 
         """
-        return chain.from_iterable(self._lists)
+        return itertools.chain.from_iterable(self._lists)
 
     @override
     def __reversed__(self) -> Iterator[T]:
@@ -1026,7 +1026,7 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
         :exc:`RuntimeError` or fail to iterate over all values.
 
         """
-        return chain.from_iterable(map(reversed, reversed(self._lists)))
+        return itertools.chain.from_iterable(map(reversed, reversed(self._lists)))
 
     @override
     def reverse(self) -> None:
@@ -1109,14 +1109,14 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
             if reverse:
                 min_indices = range(min_idx, len(lists[min_pos]))
                 max_indices = range(max_idx)
-                return chain(
+                return itertools.chain(
                     map(lists[max_pos].__getitem__, reversed(max_indices)),
                     map(lists[min_pos].__getitem__, reversed(min_indices)),
                 )
 
             min_indices = range(min_idx, len(lists[min_pos]))
             max_indices = range(max_idx)
-            return chain(
+            return itertools.chain(
                 map(lists[min_pos].__getitem__, min_indices),
                 map(lists[max_pos].__getitem__, max_indices),
             )
@@ -1126,9 +1126,9 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
             sublist_indices = range(next_pos, max_pos)
             sublists = map(lists.__getitem__, reversed(sublist_indices))
             max_indices = range(max_idx)
-            return chain(
+            return itertools.chain(
                 map(lists[max_pos].__getitem__, reversed(max_indices)),
-                chain.from_iterable(map(reversed, sublists)),
+                itertools.chain.from_iterable(map(reversed, sublists)),
                 map(lists[min_pos].__getitem__, reversed(min_indices)),
             )
 
@@ -1136,9 +1136,9 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
         sublist_indices = range(next_pos, max_pos)
         sublists = map(lists.__getitem__, sublist_indices)
         max_indices = range(max_idx)
-        return chain(
+        return itertools.chain(
             map(lists[min_pos].__getitem__, min_indices),
-            chain.from_iterable(sublists),
+            itertools.chain.from_iterable(sublists),
             map(lists[max_pos].__getitem__, max_indices),
         )
 
@@ -2496,4 +2496,4 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
 def _collapse_lists[T](lists: list[list[T]]) -> list[T]:
     init: list[T] = []
-    return reduce(operator.iadd, lists, init)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+    return functools.reduce(operator.iadd, lists, init)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
