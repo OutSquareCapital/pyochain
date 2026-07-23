@@ -33,6 +33,13 @@ class InnerLists[T, U]:
     load: int = DEFAULT_LOAD_FACTOR
     offset: int = 0
 
+    def clear(self) -> None:
+        self.len = 0
+        del self.lists[:]
+        del self.maxes[:]
+        del self.idx[:]
+        self.offset = 0
+
 
 @dataclass(slots=True)
 class InnerKeyLists[T, U, OT: SupportsRichComparison]:
@@ -44,6 +51,13 @@ class InnerKeyLists[T, U, OT: SupportsRichComparison]:
     len: int = 0
     load: int = DEFAULT_LOAD_FACTOR
     offset: int = 0
+
+    def clear(self) -> None:
+        self.len = 0
+        del self.lists[:]
+        del self.keys[:]
+        del self.maxes[:]
+        del self.idx[:]
 
 
 class SortedCollection[T](ABC):
@@ -487,11 +501,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
 
     @override
     def clear(self) -> None:
-        self._inner.len = 0
-        del self._inner.lists[:]
-        del self._inner.maxes[:]
-        del self._inner.idx[:]
-        self._inner.offset = 0
+        self._inner.clear()
 
     @override
     def add(self, value: T) -> None:
@@ -1854,11 +1864,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
     @override
     def clear(self) -> None:
-        self._inner.len = 0
-        del self._inner.lists[:]
-        del self._inner.keys[:]
-        del self._inner.maxes[:]
-        del self._inner.idx[:]
+        self._inner.clear()
 
     @override
     def add(self, value: T) -> None:
