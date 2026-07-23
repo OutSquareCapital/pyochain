@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from functools import partial
-from itertools import chain
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, Self, overload, override
 
-from pyochain.abc import PyoMutableMapping
+from pyochain import Iter
+from pyochain.abc import PyoIterator, PyoMutableMapping
 
 from ._sorted_list import SortedCollection, SortedKeyList, SortedList
 from ._sorted_views import SortedItemsView, SortedKeysView, SortedValuesView
@@ -17,7 +17,6 @@ if TYPE_CHECKING:
         Callable,
         Hashable,
         Iterable,
-        Iterator,
         Mapping,
         MutableMapping,
     )
@@ -168,7 +167,7 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
         stop: int | None = None,
         *,
         reverse: bool = False,
-    ) -> Iterator[K]:
+    ) -> PyoIterator[K]:
         return self._list.islice(start, stop, reverse=reverse)
 
     @override
@@ -179,7 +178,7 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
         inclusive: tuple[bool, bool] = (True, True),
         *,
         reverse: bool = False,
-    ) -> Iterator[K]:
+    ) -> PyoIterator[K]:
         return self._list.irange(minimum, maximum, inclusive, reverse=reverse)
 
     @override
@@ -217,7 +216,7 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
         self._list.remove(key)
 
     @override
-    def __iter__(self) -> Iterator[K]:
+    def __iter__(self) -> PyoIterator[K]:
         """Return an iterator over the keys of the sorted dict.
 
         ``sd.__iter__()`` <==> ``iter(sd)``
@@ -226,10 +225,10 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
         :exc:`RuntimeError` or fail to iterate over all keys.
 
         """
-        return iter(self._list)
+        return self._list.iter()
 
     @override
-    def __reversed__(self) -> Iterator[K]:
+    def __reversed__(self) -> PyoIterator[K]:
         """Return a reverse iterator over the keys of the sorted dict.
 
         ``sd.__reversed__()`` <==> ``reversed(sd)``
@@ -238,7 +237,7 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
         :exc:`RuntimeError` or fail to iterate over all keys.
 
         """
-        return reversed(self._list)
+        return self._list.rev()
 
     @override
     def __setitem__(self, key: K, value: V) -> None:
@@ -265,12 +264,12 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
 
     @override
     def __or__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]:  # pyright: ignore[reportIncompatibleMethodOverride]
-        items = chain(self.items(), value.items())
+        items = self.items().iter().chain(value.items())
         return SortedDict(items)
 
     @override
     def __ror__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]:  # pyright: ignore[reportIncompatibleMethodOverride]
-        items = chain(value.items(), self.items())
+        items = Iter(value.items()).chain(self.items())
         return SortedDict(items)
 
     @override
@@ -578,7 +577,7 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
 
         """
         items = super().copy()
-        return (type(self), (items,))
+        return (self.__class__, (items,))
 
     @recursive_repr()
     def __repr__(self) -> str:
@@ -589,7 +588,7 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
         :return: string representation
 
         """
-        type_name = type(self).__name__
+        type_name = self.__class__.__name__
         item_format = "{!r}: {!r}".format
         items = ", ".join(item_format(key, self[key]) for key in self._list)
         return f"{type_name}({{{items}}})"
@@ -669,7 +668,7 @@ class SortedKeyDict[
         inclusive: tuple[bool, bool] = (True, True),
         *,
         reverse: bool = False,
-    ) -> Iterator[K]:
+    ) -> PyoIterator[K]:
         return self._list.irange_key(min_key, max_key, inclusive, reverse=reverse)
 
     def bisect_key_left(self, key: OT) -> int:
@@ -680,18 +679,18 @@ class SortedKeyDict[
 
     @override
     def __ror__[T1, T2](self, value: Mapping[K, T2], /) -> SortedKeyDict[K, V | T2, OT]:
-        items = chain(value.items(), self.items())
+        items = Iter(value.items()).chain(self.items())
         return SortedKeyDict(items, key=self._key)
 
     @override
     def __or__[T1, T2](self, value: Mapping[K, T2], /) -> SortedKeyDict[K, V | T2, OT]:
-        items = chain(self.items(), value.items())
+        items = Iter(self.items()).chain(value.items())
         return SortedKeyDict(items, key=self._key)
 
     @override
     def __reduce__(self) -> tuple[partial[Self], tuple[dict[K, V]]]:  # pyright: ignore[reportIncompatibleMethodOverride]
         items = dict[K, V].copy(self)
-        return (partial(type(self), key=self._key), (items,))
+        return (partial(self.__class__, key=self._key), (items,))
 
     @recursive_repr()
     def __repr__(self) -> str:
@@ -703,7 +702,7 @@ class SortedKeyDict[
 
         """
         key = self._key
-        type_name = type(self).__name__
+        type_name = self.__class__.__name__
         key_arg = "" if key is None else f"{key!r}, "
         item_format = "{!r}: {!r}".format
         items = ", ".join(item_format(key, self[key]) for key in self._list)

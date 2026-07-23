@@ -2,13 +2,13 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Callable, Iterable
 from collections.abc import Set as AbstractSet
-from itertools import chain
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, Self, overload, override
 
-from pyochain.abc import PyoMutableSet, PyoSequence
+from pyochain import Iter, Set
+from pyochain.abc import PyoIterator, PyoMutableSet, PyoSequence
 
 from ._sorted_list import (
     BaseSortedListSet,
@@ -151,7 +151,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         stop: int | None = None,
         *,
         reverse: bool = False,
-    ) -> Iterator[T]:
+    ) -> PyoIterator[T]:
         return self._list.islice(start, stop, reverse=reverse)
 
     @override
@@ -162,7 +162,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         inclusive: tuple[bool, bool] = (True, True),
         *,
         reverse: bool = False,
-    ) -> Iterator[T]:
+    ) -> PyoIterator[T]:
         return self._list.irange(minimum, maximum, inclusive, reverse=reverse)
 
     @override
@@ -344,7 +344,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         return len(self._set)
 
     @override
-    def __iter__(self) -> Iterator[T]:
+    def __iter__(self) -> PyoIterator[T]:
         """Return an iterator over the sorted set.
 
         ``ss.__iter__()`` <==> ``iter(ss)``
@@ -353,10 +353,10 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         :exc:`RuntimeError` or fail to iterate over all values.
 
         """
-        return iter(self._list)
+        return self._list.iter()
 
     @override
-    def __reversed__(self) -> Iterator[T]:
+    def __reversed__(self) -> PyoIterator[T]:
         """Return a reverse iterator over the sorted set.
 
         ``ss.__reversed__()`` <==> ``reversed(ss)``
@@ -365,7 +365,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         :exc:`RuntimeError` or fail to iterate over all values.
 
         """
-        return reversed(self._list)
+        return self._list.rev()
 
     @override
     def add(self, value: T) -> None:
@@ -552,8 +552,8 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         """
         set_ = self._set
         list_ = self._list
-        values = set(chain(*iterables))
-        if (4 * len(values)) > len(set_):
+        values = Iter(iterables).flatten().collect(Set)
+        if (4 * values.len()) > len(set_):
             set_.difference_update(values)
             list_.clear()
             list_.update(set_)
@@ -705,7 +705,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         :return: new sorted set
 
         """
-        return self.__class__(chain(iter(self), *iterables))
+        return self.__class__(self.iter().chain(*iterables))
 
     @override
     def __or__(self, other: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -735,8 +735,8 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         """
         set_ = self._set
         list_ = self._list
-        values = set(chain(*iterables))
-        if (4 * len(values)) > len(set_):
+        values = Iter(iterables).flatten().collect(Set)
+        if (4 * values.len()) > len(set_):
             list_ = self._list
             set_.update(values)
             list_.clear()
@@ -764,7 +764,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
             tuple[type[Self], tuple[AbstractSet[T]]]: tuple of class and arguments
 
         """
-        return (type(self), (self._set,))
+        return (self.__class__, (self._set,))
 
     @recursive_repr()
     def __repr__(self) -> str:
@@ -775,7 +775,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         :return: string representation
 
         """
-        type_name = type(self).__name__
+        type_name = self.__class__.__name__
         return f"{type_name}({list(self)!r})"
 
 
@@ -848,14 +848,14 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](SortedSet[T]):  # p
         """
         key_ = self._key
         key = f", key={key_!r}"
-        type_name = type(self).__name__
+        type_name = self.__class__.__name__
         return f"{type_name}({list(self)!r}{key})"
 
     @override
     def __reduce__(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
     ) -> tuple[type[Self], tuple[AbstractSet[T], Callable[[T], Any]]]:
-        return (type(self), (self._set, self._key))
+        return (self.__class__, (self._set, self._key))
 
     def irange_key(
         self,
@@ -864,7 +864,7 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](SortedSet[T]):  # p
         inclusive: tuple[bool, bool] = (True, True),
         *,
         reverse: bool = False,
-    ) -> Iterator[T]:
+    ) -> PyoIterator[T]:
         return self._list.irange_key(min_key, max_key, inclusive, reverse=reverse)
 
     def bisect_key_left(self, key: OT) -> int:
@@ -875,7 +875,7 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](SortedSet[T]):  # p
 
     @override
     def union(self, *iterables: Iterable[T]) -> Self:
-        return self.__class__(chain(iter(self), *iterables), key=self._key)
+        return self.__class__(self.iter().chain(*iterables), key=self._key)
 
     @override
     def symmetric_difference(self, other: Iterable[T]) -> Self:

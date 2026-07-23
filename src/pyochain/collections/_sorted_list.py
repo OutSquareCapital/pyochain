@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import functools
-import itertools
 import operator
 from abc import ABC, abstractmethod
 from bisect import bisect_left, bisect_right, insort
-from collections.abc import Callable, Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
 from math import log2
 from reprlib import recursive_repr
@@ -181,7 +180,7 @@ class SortedCollection[T](ABC):
         inclusive: tuple[bool, bool] = (True, True),
         *,
         reverse: bool = False,
-    ) -> Iterator[T]:
+    ) -> PyoIterator[T]:
         """Create an iterator of values between `minimum` and `maximum`.
 
         Both `minimum` and `maximum` default to `None` which is automatically
@@ -223,7 +222,7 @@ class SortedCollection[T](ABC):
         stop: int | None = None,
         *,
         reverse: bool = False,
-    ) -> Iterator[T]:
+    ) -> PyoIterator[T]:
         """Return an iterator that slices sorted list from `start` to `stop`.
 
         The `start` and `stop` index are treated inclusive and exclusive,
@@ -1090,7 +1089,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         raise NotImplementedError(message)
 
     @override
-    def __iter__(self) -> Iterator[T]:
+    def __iter__(self) -> PyoIterator[T]:
         """Return an iterator over the sorted list.
 
         ``sl.__iter__()`` <==> ``iter(sl)``
@@ -1099,10 +1098,10 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         :exc:`RuntimeError` or fail to iterate over all values.
 
         """
-        return itertools.chain.from_iterable(self._inner.lists)
+        return self._inner.lists.iter().flatten()
 
     @override
-    def __reversed__(self) -> Iterator[T]:
+    def __reversed__(self) -> PyoIterator[T]:
         """Return a reverse iterator over the sorted list.
 
         ``sl.__reversed__()`` <==> ``reversed(sl)``
@@ -1111,7 +1110,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         :exc:`RuntimeError` or fail to iterate over all values.
 
         """
-        return itertools.chain.from_iterable(map(reversed, reversed(self._inner.lists)))
+        return self._inner.lists.rev().flat_map(lambda x: x.rev())
 
     @override
     def reverse(self) -> None:
@@ -1139,16 +1138,16 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         stop: int | None = None,
         *,
         reverse: bool = False,
-    ) -> Iterator[T]:
+    ) -> PyoIterator[T]:
         len_ = self._inner.len
 
         if len_ == 0:
-            return iter(())
+            return Iter(())
 
         start, stop, _ = slice(start, stop).indices(self._inner.len)
 
         if start >= stop:
-            return iter(())
+            return Iter(())
 
         min_pos, min_idx = self._pos(start)
 
@@ -1790,7 +1789,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
     @override
     def __reduce__(self) -> tuple[type[Self], tuple[Vec[T]]]:
         values = _collapse_lists(self._inner.lists)
-        return (type(self), (values,))
+        return (self.__class__, (values,))
 
     @recursive_repr()
     def __repr__(self) -> str:
@@ -1801,7 +1800,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         :return: string representation
 
         """
-        return f"{type(self).__name__}({list(self)!r})"
+        return f"{self.__class__.__name__}({list(self)!r})"
 
 
 def identity[T](value: T) -> T:
@@ -2456,7 +2455,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         :return: string representation
 
         """
-        type_name = type(self).__name__
+        type_name = self.__class__.__name__
         return f"{type_name}({list(self)!r}, key={self._inner.key!r})"
 
 
