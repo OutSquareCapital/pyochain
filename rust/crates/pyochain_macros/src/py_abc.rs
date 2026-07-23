@@ -43,9 +43,16 @@ pub(crate) fn generate(
     })
 }
 enum AttrKind {
+    /// no #[pyo3(...)] or #[new(...)] attributes
     Empty,
+    /// #[skip]
     Skipped,
+    /// #[pyo3(...)]
+    /// #[new(...)]
     New(Vec<proc_macro2::TokenStream>),
+    /// just #[new]
+    NewNoSignature,
+    /// #[pyo3(...)] and other attributes
     Other(Vec<proc_macro2::TokenStream>),
 }
 fn generate_method(
@@ -59,7 +66,8 @@ fn generate_method(
             let python_name = LitStr::new(&original_ident.to_string(), original_ident.span());
             let tokens = match kind {
                 AttrKind::Skipped => None,
-                AttrKind::Empty => Some(quote! {}),
+                AttrKind::Empty => Some(quote! { #[pyo3(name = #python_name)] }),
+                AttrKind::NewNoSignature => Some(quote! {}),
                 AttrKind::New(ref tokens) => Some(quote! { #[pyo3(#(#tokens),*)] }),
                 AttrKind::Other(ref tokens) => {
                     Some(quote! { #[pyo3(name = #python_name, #(#tokens),*)] })
@@ -131,7 +139,8 @@ fn classify_attrs(attrs: Vec<Attribute>) -> SynResult<(AttrKind, Vec<Attribute>)
         }
     }
     let pyo3_attrs = match (has_new, pyo3.is_empty()) {
-        (_, true) => AttrKind::Empty,
+        (true, true) => AttrKind::NewNoSignature,
+        (false, true) => AttrKind::Empty,
         (true, false) => AttrKind::New(pyo3),
         (false, false) => AttrKind::Other(pyo3),
     };
