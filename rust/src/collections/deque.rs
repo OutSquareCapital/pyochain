@@ -5,7 +5,7 @@ use crate::{
         types::{PyDeque, PySupportsIndex},
     },
 };
-use bound_from_any::try_cast;
+use pyochain_macros::try_cast;
 use pyo3::{
     exceptions::PyTypeError,
     intern,

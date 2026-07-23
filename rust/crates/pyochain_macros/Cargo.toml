@@ -1,6 +1,6 @@
 [package]
     edition = "2024"
-    name    = "bound_from_any"
+    name    = "pyochain_macros"
     version = "0.1.0"
 
 [lib]

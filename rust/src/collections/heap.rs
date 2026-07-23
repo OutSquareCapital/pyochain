@@ -2,7 +2,7 @@ use crate::abc::PyoABC;
 use crate::pyo3_ext::types::PyIterable;
 use crate::pyo3_ext::{prelude::*, pylibs};
 use crate::{abc, seq, tools};
-use bound_from_any::{BoundFromAny, py_abc, try_cast};
+use pyochain_macros::{BoundFromAny, py_abc, try_cast};
 use either::Either;
 use pyo3::{
     BoundObject,

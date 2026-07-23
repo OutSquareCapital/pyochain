@@ -3,7 +3,7 @@ use crate::{
     pyo3_ext::{prelude::*, types::PyAbstractSet},
     seq::{IntoPyochain, SetMut, get_repr},
 };
-use bound_from_any::try_cast;
+use pyochain_macros::try_cast;
 use pyo3::{
     PyTypeInfo, intern,
     prelude::*,

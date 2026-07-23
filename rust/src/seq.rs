@@ -1,7 +1,6 @@
 use crate::abc;
 use crate::abc::PyoABC;
 use crate::pyo3_ext::{prelude::*, pylibs};
-use bound_from_any::try_cast;
 use pyo3::pyclass_init::PyClassInitializer;
 use pyo3::sync::PyOnceLock;
 use pyo3::types::{
@@ -9,6 +8,7 @@ use pyo3::types::{
     PySet, PyString, PyTuple, PyType,
 };
 use pyo3::{PyTypeInfo, ffi, intern, prelude::*};
+use pyochain_macros::try_cast;
 use tap::Pipe;
 
 static PFORMAT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();

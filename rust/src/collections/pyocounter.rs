@@ -6,7 +6,7 @@ use crate::{
         types::{PySupportsItems, pyitertools},
     },
 };
-use bound_from_any::{BoundFromAny, try_cast};
+use pyochain_macros::{BoundFromAny, try_cast};
 use either::Either;
 use pyo3::{
     BoundObject, PyTypeInfo,

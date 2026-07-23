@@ -3,7 +3,6 @@ use crate::{
     pyo3_ext::prelude::*,
     pyo3_ext::types::{PyMutableSequence, PySupportsIndex},
 };
-use bound_from_any::try_cast;
 use either::Either;
 use pyo3::{
     PyTypeInfo,
@@ -12,6 +11,7 @@ use pyo3::{
     prelude::*,
     types::{PyInt, PyRange, PyRangeMethods, PySequence, PySlice, PyTuple},
 };
+use pyochain_macros::try_cast;
 use tap::prelude::*;
 
 struct OpenRange {
