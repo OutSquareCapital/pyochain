@@ -5,6 +5,9 @@ use syn::{
 };
 
 use crate::types::SynResult;
+const PYO3: &str = "pyo3";
+const NEW: &str = "new";
+const SKIP: &str = "skip";
 
 pub(crate) fn parse_types(input: ParseStream<'_>) -> SynResult<Punctuated<Type, Comma>> {
     Punctuated::<Type, Comma>::parse_terminated(input)
@@ -46,14 +49,13 @@ fn get_methods(
 fn export_method(attrs: &mut Vec<Attribute>) -> Option<Vec<Attribute>> {
     attrs
         .iter()
-        .position(|attr| attr.path().is_ident("py_skip"))
+        .position(|attr| attr.path().is_ident(SKIP))
         .map(|position| {
             attrs.remove(position);
             None
         })
         .unwrap_or_else(|| Some(std::mem::take(attrs)))
 }
-// TODO: We should use an enum inside instead of boolean flags and raw str matchs
 fn generate_method(
     trait_ident: &Ident,
     method: &syn::TraitItemFn,
@@ -79,11 +81,30 @@ fn generate_method(
             }),
         })
         .collect::<SynResult<Vec<_>>>()?;
-    let is_constructor = attrs.iter().any(|attr| attr.path().is_ident("new"));
-    let (pyo3_attrs, attrs): (Vec<Attribute>, Vec<Attribute>) = attrs
-        .into_iter()
-        .partition(|attr| attr.path().is_ident("pyo3"));
-    let pyo3_attr = pyo3_attribute(&python_name, pyo3_attrs, is_constructor)?;
+    let is_constructor = attrs.iter().any(|attr| attr.path().is_ident(NEW));
+    let (pyo3_args, attrs) =
+        attrs
+            .into_iter()
+            .try_fold((Vec::new(), Vec::new()), |(mut pyo3, mut other), attr| {
+                if attr.path().is_ident(PYO3) {
+                    let arg = match attr.meta {
+                        Meta::List(list) => Ok(list.tokens),
+                        _ => Err(syn::Error::new_spanned(
+                            attr,
+                            "expected #[pyo3(...)] on a #[py_methods] trait method",
+                        )),
+                    }?;
+                    pyo3.push(arg);
+                } else {
+                    other.push(attr);
+                }
+                Ok::<(Vec<proc_macro2::TokenStream>, Vec<Attribute>), syn::Error>((pyo3, other))
+            })?;
+    let pyo3_attr = match (is_constructor, pyo3_args.is_empty()) {
+        (true, true) => quote! {},
+        (true, false) => quote! { #[pyo3(#(#pyo3_args),*)] },
+        (false, _) => quote! { #[pyo3(name = #python_name, #(#pyo3_args),*)] },
+    };
     let receiver =
         matches!(method.sig.inputs.first(), Some(FnArg::Receiver(_))).then(|| quote! { self, });
 
@@ -94,28 +115,4 @@ fn generate_method(
             <Self as #trait_ident>::#original_ident(#receiver #(#arguments),*)
         }
     })
-}
-
-fn pyo3_attribute(
-    name: &LitStr,
-    attrs: Vec<Attribute>,
-    is_constructor: bool,
-) -> SynResult<proc_macro2::TokenStream> {
-    let arguments = attrs
-        .into_iter()
-        .filter(|attr| attr.path().is_ident("pyo3"))
-        .map(|attr| match attr.meta {
-            Meta::List(list) => Ok(list.tokens),
-            _ => Err(syn::Error::new_spanned(
-                attr,
-                "expected #[pyo3(...)] on a #[py_methods] trait method",
-            )),
-        })
-        .collect::<SynResult<Vec<_>>>()?;
-
-    match (is_constructor, arguments.is_empty()) {
-        (true, true) => Ok(quote! {}),
-        (true, false) => Ok(quote! { #[pyo3(#(#arguments),*)] }),
-        (false, _) => Ok(quote! { #[pyo3(name = #name, #(#arguments),*)] }),
-    }
 }

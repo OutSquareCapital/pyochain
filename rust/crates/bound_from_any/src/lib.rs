@@ -46,7 +46,7 @@ pub fn derive_bound_from_any(input: TokenStream) -> TokenStream {
 /// ## Usage
 /// Use `#[py_abc(<pyclass types>)]` on a trait definition.\
 /// The attribute arguments are the concrete `#[pyclass]` types which implement the trait.\
-/// Use `#[py_skip]` on Rust-only helper methods.\
+/// Use `#[skip]` on Rust-only helper methods.\
 /// PyO3 method attributes such as `#[new]` and `#[pyo3(signature = (...))]` are forwarded.\
 /// A generated Rust method is named `py_<trait method>` while its Python name remains the original trait method name.
 /// ## Example
@@ -55,7 +55,7 @@ pub fn derive_bound_from_any(input: TokenStream) -> TokenStream {
 /// trait HeapType: Sized + PyWrapper<PyList> {
 ///   #[new]
 /// fn new(data: Bound<'_, PyList>) -> PyResult<PyClassInitializer<Self>>;
-/// #[py_skip]
+/// #[skip]
 /// fn from_ref<'py>(py: Python<'py>, data: Bound<'_, PyList>) -> PyResult<Bound<'py, Self>> {
 ///   Self::new(data).and_then(|init| Bound::new(py, init))
 /// }
