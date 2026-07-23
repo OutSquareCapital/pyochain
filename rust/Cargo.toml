@@ -21,6 +21,7 @@
         "extension-module",
         "multiple-pymethods",
     ] }
+    smallvec = "1.15.2"
     tap = "1.0.1"
 [profile.release]
     codegen-units = 1
