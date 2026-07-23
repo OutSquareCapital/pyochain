@@ -317,6 +317,12 @@ pub struct PyoVec {
     #[pyo3(get)]
     pub inner: Py<PyList>,
 }
+impl PyoVec {
+    pub fn new_bound(py: Python<'_>) -> PyResult<Bound<'_, Self>> {
+        let init = Self::new(PyTuple::empty(py).into_any())?;
+        Bound::new(py, init)
+    }
+}
 #[pymethods]
 impl PyoVec {
     #[new]
@@ -518,12 +524,8 @@ impl PyoVec {
         self.inner.bind(value.py()).insert(index, value)
     }
 
-    fn clear(slf: Bound<'_, Self>) -> PyResult<()> {
-        let py = slf.py();
-        slf.get()
-            .inner
-            .bind(py)
-            .call_method0(intern!(py, "clear"))?;
+    pub fn clear(&self, py: Python<'_>) -> PyResult<()> {
+        self.inner.bind(py).call_method0(intern!(py, "clear"))?;
         Ok(())
     }
 

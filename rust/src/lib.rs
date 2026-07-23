@@ -176,6 +176,9 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<collections::Heap>()?;
     m.add_class::<collections::HeapMax>()?;
     m.add_class::<collections::HeapMin>()?;
+    // NOTE: Temp utils
+    m.add_class::<collections::InnerLists>()?;
+    m.add_class::<collections::InnerKeyLists>()?;
     let sys_mods = py.import("sys")?.getattr("modules")?;
     sys_mods.set_item("pyochain.abc", abc_mod)?;
     register_all(py)

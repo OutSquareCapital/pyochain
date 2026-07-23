@@ -1,9 +1,11 @@
+from _typeshed import SupportsRichComparison
 from collections.abc import Callable, Iterable
 from typing import (
     Any,
     Concatenate,
     Final,
     Protocol,
+    Self,
     final,
     overload,
     override,
@@ -27,6 +29,32 @@ from ._sliceview import SliceView
 from ._tools import Iter, Peekable
 from ._vec import Vec
 
+type KeyFunc[T, OT: SupportsRichComparison] = Callable[[T], OT]
+
+class InnerLists[T, U]:
+    lists: Vec[Vec[T]]
+    maxes: Vec[U]
+    idx: Vec[int]
+    len: int
+    load: int
+    offset: int
+    def __new__(cls) -> Self: ...
+
+    def clear(self) -> None:...
+
+class InnerKeyLists[T, U, OT: SupportsRichComparison]:
+    key: KeyFunc[T, OT]
+    keys: Vec[Vec[OT]]
+    lists: Vec[Vec[T]]
+    maxes: Vec[U]
+    idx: Vec[int]
+    len: int
+    load: int
+    offset: int
+    def __new__(cls, key: KeyFunc[T, OT]) -> Self: ...
+
+    def clear(self) -> None:...
+
 __all__ = [
     "Deque",
     "Dict",
@@ -43,7 +71,10 @@ __all__ = [
     "SliceView",
     "StableSet",
     "Vec",
+    "InnerLists",
+    "InnerKeyLists",
 ]
+
 
 # Option types
 class OptionUnwrapError(RuntimeError): ...

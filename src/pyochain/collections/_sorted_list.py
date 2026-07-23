@@ -7,11 +7,10 @@ import operator
 from abc import ABC, abstractmethod
 from bisect import bisect_left, bisect_right, insort
 from collections.abc import Callable, Iterable, Sequence
-from dataclasses import dataclass, field
 from math import log2
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, Final, Self, overload, override
-
+from pyochain.rs import InnerKeyLists, InnerLists
 from pyochain import Iter, Range, Vec
 from pyochain.abc import PyoIterator, PyoMutableSequence
 
@@ -23,41 +22,6 @@ if TYPE_CHECKING:
 type KeyFunc[T, OT: SupportsRichComparison] = Callable[[T], OT]
 DEFAULT_LOAD_FACTOR: Final[int] = 1000
 
-
-@dataclass(slots=True)
-class InnerLists[T, U]:
-    lists: Vec[Vec[T]] = field(default_factory=lambda: Vec(()))
-    maxes: Vec[U] = field(default_factory=lambda: Vec(()))
-    idx: Vec[int] = field(default_factory=lambda: Vec(()))
-    len: int = 0
-    load: int = DEFAULT_LOAD_FACTOR
-    offset: int = 0
-
-    def clear(self) -> None:
-        self.len = 0
-        del self.lists[:]
-        del self.maxes[:]
-        del self.idx[:]
-        self.offset = 0
-
-
-@dataclass(slots=True)
-class InnerKeyLists[T, U, OT: SupportsRichComparison]:
-    key: KeyFunc[T, OT]
-    keys: Vec[Vec[OT]] = field(default_factory=lambda: Vec(()))
-    lists: Vec[Vec[T]] = field(default_factory=lambda: Vec(()))
-    maxes: Vec[U] = field(default_factory=lambda: Vec(()))
-    idx: Vec[int] = field(default_factory=lambda: Vec(()))
-    len: int = 0
-    load: int = DEFAULT_LOAD_FACTOR
-    offset: int = 0
-
-    def clear(self) -> None:
-        self.len = 0
-        del self.lists[:]
-        del self.keys[:]
-        del self.maxes[:]
-        del self.idx[:]
 
 
 class SortedCollection[T](ABC):
