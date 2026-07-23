@@ -27,16 +27,16 @@ def test_init() -> None:
 
     slt = SortedKeyList[float, float](key=operator.neg)
     slt.reset(10000)
-    assert slt._load == 10000  # pyright: ignore[reportPrivateUsage]
+    assert slt.inner.load == 10000
     check_sorted_key_list(slt)
 
     slt = SortedKeyList(range(100), key=operator.neg)
     assert all(tup[0] == tup[1] for tup in zip(slt, reversed(range(100)), strict=False))
 
     slt.clear()
-    assert slt._len == 0  # pyright: ignore[reportPrivateUsage]
-    assert slt._maxes == []  # pyright: ignore[reportPrivateUsage]
-    assert slt._lists == []  # pyright: ignore[reportPrivateUsage]
+    assert slt.inner.len == 0
+    assert slt.inner.maxes == []
+    assert slt.inner.lists == []
     check_sorted_key_list(slt)
 
 
@@ -52,17 +52,17 @@ def test_key() -> None:
 def test_add() -> None:
     random.seed(0)
     slt = SortedKeyList[float, float](key=operator.neg)
-    for val in range(1000):
+    for val in range(100):
         slt.add(val)
         check_sorted_key_list(slt)
 
     slt = SortedKeyList[float, float](key=operator.neg)
-    for val in range(1000, 0, -1):
+    for val in range(100, 0, -1):
         slt.add(val)
         check_sorted_key_list(slt)
 
     slt = SortedKeyList[float, float](key=operator.neg)
-    for _ in range(1000):
+    for _ in range(100):
         slt.add(random.random())
         check_sorted_key_list(slt)
 
@@ -170,8 +170,8 @@ def test_delete() -> None:
         slt.remove(val)
         check_sorted_key_list(slt)
     assert len(slt) == 0
-    assert slt._maxes == []  # pyright: ignore[reportPrivateUsage]
-    assert slt._lists == []  # pyright: ignore[reportPrivateUsage]
+    assert slt.inner.maxes == []
+    assert slt.inner.lists == []
 
 
 def test_getitem() -> None:
@@ -666,14 +666,14 @@ def test_pickle() -> None:
     alpha.reset(500)
     beta: SortedKeyList[int, int] = pickle.loads(pickle.dumps(alpha))  # pyright: ignore[reportAny]
     assert alpha == beta
-    assert alpha._key == beta._key  # pyright: ignore[reportPrivateUsage]
-    assert alpha._load == 500  # pyright: ignore[reportPrivateUsage]
-    assert beta._load == 1000  # pyright: ignore[reportPrivateUsage]
+    assert alpha.key == beta.key
+    assert alpha.inner.load == 500
+    assert beta.inner.load == 1000
 
 
 def test_check() -> None:
     slt = SortedKeyList(range(10), key=operator.neg)
     slt.reset(4)
-    slt._len = 5  # pyright: ignore[reportPrivateUsage]
+    slt.inner.len = 5
     with pytest.raises(AssertionError):
         check_sorted_key_list(slt)

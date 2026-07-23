@@ -30,7 +30,7 @@ def test_init() -> None:
 
     slt = SortedKeyList(key=modulo)
     slt.reset(10000)
-    assert slt._load == 10000  # pyright: ignore[reportPrivateUsage]
+    assert slt.inner.load == 10000
     check_sorted_key_list(slt)
 
     slt = SortedKeyList(range(100), key=modulo)
@@ -40,9 +40,9 @@ def test_init() -> None:
     )
 
     slt.clear()
-    assert slt._len == 0  # pyright: ignore[reportPrivateUsage]
-    assert slt._maxes == []  # pyright: ignore[reportPrivateUsage]
-    assert slt._lists == []  # pyright: ignore[reportPrivateUsage]
+    assert slt.inner.len == 0
+    assert slt.inner.maxes == []
+    assert slt.inner.lists == []
 
     assert isinstance(slt, SortedList)
     assert isinstance(slt, SortedKeyList)
@@ -225,8 +225,8 @@ def test_delete() -> None:
         slt.remove(val)
         check_sorted_key_list(slt)
     assert len(slt) == 0
-    assert slt._maxes == []  # pyright: ignore[reportPrivateUsage]
-    assert slt._lists == []  # pyright: ignore[reportPrivateUsage]
+    assert slt.inner.maxes == []
+    assert slt.inner.lists == []
 
 
 def test_getitem() -> None:
@@ -798,7 +798,7 @@ def test_repr_recursion() -> None:
     this: SortedKeyList[list[int], list[int]] = SortedKeyList(
         [[1], [2], [3], [4]], key=lambda val: val
     )
-    this._lists[-1].append(this)  # pyright: ignore[reportArgumentType, reportPrivateUsage]
+    this.inner.lists[-1].append(this)  # pyright: ignore[reportArgumentType]
     assert repr(this).startswith(
         "SortedKeyList([[1], [2], [3], [4], ...], key=<function "
     )
@@ -818,6 +818,6 @@ def test_repr_subclass() -> None:
 def test_check() -> None:
     slt = SortedKeyList(range(10), key=modulo)
     slt.reset(4)
-    slt._len = 5  # pyright: ignore[reportPrivateUsage]
+    slt.inner.len = 5
     with pytest.raises(AssertionError):
         check_sorted_key_list(slt)

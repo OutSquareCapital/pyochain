@@ -26,16 +26,16 @@ def test_init() -> None:
 
     slt = SortedList[int]()
     slt.reset(10000)
-    assert slt._load == 10000  # pyright: ignore[reportPrivateUsage]
+    assert slt.inner.load == 10000
     check_sorted_list(slt)
 
     slt = SortedList(range(100))
     assert all(tup[0] == tup[1] for tup in zip(slt, range(100), strict=False))
 
     slt.clear()
-    assert slt._len == 0  # pyright: ignore[reportPrivateUsage]
-    assert slt._maxes == []  # pyright: ignore[reportPrivateUsage]
-    assert slt._lists == []  # pyright: ignore[reportPrivateUsage]
+    assert slt.inner.len == 0
+    assert slt.inner.maxes == []
+    assert slt.inner.lists == []
     check_sorted_list(slt)
 
 
@@ -153,8 +153,8 @@ def test_delete() -> None:
         slt.remove(val)
         check_sorted_list(slt)
     assert len(slt) == 0
-    assert slt._maxes == []  # pyright: ignore[reportPrivateUsage]
-    assert slt._lists == []  # pyright: ignore[reportPrivateUsage]
+    assert slt.inner.maxes == []
+    assert slt.inner.lists == []
 
 
 def test_getitem() -> None:
@@ -640,7 +640,7 @@ def test_repr() -> None:
 
 def test_repr_recursion() -> None:
     this = SortedList([[1], [2], [3], [4]])
-    this._lists[-1].append(this)  # pyright: ignore[reportPrivateUsage, reportArgumentType]
+    this.inner.lists[-1].append(this)  # pyright: ignore[reportArgumentType]
     assert repr(this) == "SortedList([[1], [2], [3], [4], ...])"
 
 
@@ -659,8 +659,8 @@ def test_pickle() -> None:
     alpha.reset(500)
     beta: SortedList[int] = pickle.loads(pickle.dumps(alpha))  # pyright: ignore[reportAny]
     assert alpha == beta
-    assert alpha._load == 500  # pyright: ignore[reportPrivateUsage]
-    assert beta._load == 1000  # pyright: ignore[reportPrivateUsage]
+    assert alpha.inner.load == 500
+    assert beta.inner.load == 1000
 
 
 def test_build_index() -> None:
@@ -673,6 +673,6 @@ def test_build_index() -> None:
 def test_check() -> None:
     slt = SortedList(range(10))
     slt.reset(4)
-    slt._len = 5  # pyright: ignore[reportPrivateUsage]
+    slt.inner.len = 5
     with pytest.raises(AssertionError):
         check_sorted_list(slt)
