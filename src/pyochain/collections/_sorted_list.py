@@ -13,7 +13,8 @@ from math import log2
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, Final, Self, overload, override
 
-from pyochain.abc import PyoMutableSequence
+from pyochain import Iter, Range, Vec
+from pyochain.abc import PyoIterator, PyoMutableSequence
 
 if TYPE_CHECKING:
     from types import NotImplementedType
@@ -26,9 +27,9 @@ DEFAULT_LOAD_FACTOR: Final[int] = 1000
 
 @dataclass(slots=True)
 class InnerLists[T, U]:
-    lists: list[list[T]] = field(default_factory=list)
-    maxes: list[U] = field(default_factory=list)
-    idx: list[int] = field(default_factory=list)
+    lists: Vec[Vec[T]] = field(default_factory=lambda: Vec(()))
+    maxes: Vec[U] = field(default_factory=lambda: Vec(()))
+    idx: Vec[int] = field(default_factory=lambda: Vec(()))
     len: int = 0
     load: int = DEFAULT_LOAD_FACTOR
     offset: int = 0
@@ -44,10 +45,10 @@ class InnerLists[T, U]:
 @dataclass(slots=True)
 class InnerKeyLists[T, U, OT: SupportsRichComparison]:
     key: KeyFunc[T, OT]
-    keys: list[list[OT]] = field(default_factory=list)
-    lists: list[list[T]] = field(default_factory=list)
-    maxes: list[U] = field(default_factory=list)
-    idx: list[int] = field(default_factory=list)
+    keys: Vec[Vec[OT]] = field(default_factory=lambda: Vec(()))
+    lists: Vec[Vec[T]] = field(default_factory=lambda: Vec(()))
+    maxes: Vec[U] = field(default_factory=lambda: Vec(()))
+    idx: Vec[int] = field(default_factory=lambda: Vec(()))
     len: int = 0
     load: int = DEFAULT_LOAD_FACTOR
     offset: int = 0
@@ -517,7 +518,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
 
             self._expand(pos)
         else:
-            self._inner.lists.append([value])
+            self._inner.lists.append(Vec([value]))
             self._inner.maxes.append(value)
 
         self._inner.len += 1
@@ -528,12 +529,12 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         lists = self._inner.lists
         index = self._inner.idx
 
-        if len(lists[pos]) > (load << 1):
+        if lists[pos].len() > (load << 1):
             maxes = self._inner.maxes
 
             lists_pos = lists[pos]
-            half = lists_pos[load:]
-            del lists_pos[load:]
+            half = Vec.from_ref(lists_pos[load:])
+            lists_pos.truncate(load)
             maxes[pos] = lists_pos[-1]
 
             lists.insert(pos + 1, half)
@@ -569,12 +570,12 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         """
         maxes = self._inner.maxes
 
-        if not maxes:
+        if maxes.is_empty():
             return False
 
         pos = bisect_left(maxes, value)  # pyright: ignore[reportArgumentType]
 
-        if pos == len(maxes):
+        if pos == maxes.len():
             return False
 
         lists = self._inner.lists
@@ -586,12 +587,12 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
     def discard(self, value: T) -> None:
         maxes = self._inner.maxes
 
-        if not maxes:
+        if maxes.is_empty():
             return
 
         pos = bisect_left(maxes, value)
 
-        if pos == len(maxes):
+        if pos == maxes.len():
             return
 
         lists = self._inner.lists
@@ -604,13 +605,13 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
     def remove(self, value: T) -> None:
         maxes = self._inner.maxes
 
-        if not maxes:
+        if maxes.is_empty():
             msg = f"{value!r} not in list"
             raise ValueError(msg)
 
         pos = bisect_left(maxes, value)
 
-        if pos == len(maxes):
+        if pos == maxes.len():
             msg = f"{value!r} not in list"
             raise ValueError(msg)
 
@@ -645,8 +646,8 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
                     index[child] -= 1
                     child = (child - 1) >> 1
                 index[0] -= 1
-        elif len(lists) > 1:
-            if not pos:
+        elif lists.len() > 1:
+            if pos == 0:
                 pos += 1
 
             prev = pos - 1
@@ -719,12 +720,12 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
             int: index in sorted list
 
         """
-        if not pos:
+        if pos == 0:
             return idx
 
         index = self._inner.idx
 
-        if not index:
+        if index.is_empty():
             self._build_index()
 
         total = 0
@@ -736,10 +737,10 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         # Iterate until reaching the root of the index tree at pos = 0.
 
         while pos:
-            # Right-child nodes are at odd indices. At such indices
+            # Right-child nodes are at even indices. At such indices
             # account the total below the left child node.
 
-            if not pos & 1:
+            if pos % 2 == 0:
                 total += index[pos - 1]
 
             # Advance pos to the parent node.
@@ -811,10 +812,10 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
 
         """
         if idx < 0:
-            last_len = len(self._inner.lists[-1])
+            last_len = self._inner.lists[-1].len()
 
             if (-idx) <= last_len:
-                return len(self._inner.lists) - 1, last_len + idx
+                return self._inner.lists.len() - 1, last_len + idx
 
             idx += self._inner.len
 
@@ -825,12 +826,12 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
             msg = "list index out of range"
             raise IndexError(msg)
 
-        if idx < len(self._inner.lists[0]):
+        if idx < self._inner.lists[0].len():
             return 0, idx
 
         index = self._inner.idx
 
-        if not index:
+        if index.is_empty():
             self._build_index()
 
         pos = 0
@@ -886,36 +887,36 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         See the comment and notes on ``SortedList._pos`` for details.
 
         """
-        row0 = list(map(len, self._inner.lists))
+        row0 = self._inner.lists.iter().map(len).collect(Vec)
 
-        if len(row0) == 1:
+        if row0.len() == 1:
             self._inner.idx[:] = row0
             self._inner.offset = 0
             return
 
-        head = iter(row0)
-        tail = iter(head)
-        row1 = list(map(operator.add, head, tail))
+        head = row0.iter()
+        tail = head.iter()
+        row1 = Vec(map(operator.add, head, tail))
 
-        if len(row0) & 1:
+        if row0.len() & 1:
             row1.append(row0[-1])
 
-        if len(row1) == 1:
+        if row1.len() == 1:
             self._inner.idx[:] = row1 + row0
             self._inner.offset = 1
             return
 
-        size: int = 2 ** (int(log2(len(row1) - 1)) + 1)  # pyright: ignore[reportAny]
-        row1.extend(itertools.repeat(0, size - len(row1)))
-        tree = [row0, row1]
+        size: int = 2 ** (int(log2(row1.len() - 1)) + 1)  # pyright: ignore[reportAny]
+        row1.extend(Iter.repeat(0, size - row1.len()))
+        tree = Vec([row0, row1])
 
-        while len(tree[-1]) > 1:
-            head = iter(tree[-1])
-            tail = iter(head)
-            row = list(map(operator.add, head, tail))
+        while tree[-1].len() > 1:
+            head = tree[-1].iter()
+            tail = head.iter()
+            row = Vec(map(operator.add, head, tail))
             tree.append(row)
 
-        _ = functools.reduce(operator.iadd, reversed(tree), self._inner.idx)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+        _ = tree.rev().fold(self._inner.idx, operator.iadd)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
         self._inner.offset = size * 2 - 1
 
     @override
@@ -954,13 +955,13 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
                         self.clear()
                         return self.update(values)
 
-                indices = range(start, stop, step)
+                indices = Range(start, stop, step)
 
                 # Delete items from greatest index to least so
                 # that the indices remain valid throughout iteration.
 
                 if step > 0:
-                    indices = reversed(indices)
+                    indices = indices.rev()
 
                 pos_, delete = self._pos, self._delete
 
@@ -975,9 +976,9 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
     @overload
     def __getitem__(self, index: int) -> T: ...
     @overload
-    def __getitem__(self, index: slice) -> list[T]: ...
+    def __getitem__(self, index: slice) -> Vec[T]: ...
     @override
-    def __getitem__(self, index: int | slice) -> T | list[T]:  # ruff:ignore[complex-structure, too-many-return-statements, too-many-branches, too-many-locals]
+    def __getitem__(self, index: int | slice) -> T | Vec[T]:  # ruff:ignore[complex-structure, too-many-return-statements, too-many-branches]
         """Lookup value at `index` in sorted list.
 
         ``sl.__getitem__(index)`` <==> ``sl[index]``
@@ -992,13 +993,13 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         >>> sl[-1]
         'e'
         >>> sl[2:5]
-        ['c', 'd', 'e']
+        Vec('c', 'd', 'e')
 
         Args:
             index (int | slice): integer or slice for indexing
 
         Returns:
-            T | list[T]: value or list of values
+            T | Vec[T]: value or list of values
 
         Raises:
             IndexError: if index out of range
@@ -1022,18 +1023,18 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
                     # Small slice optimization: start index and stop index are
                     # within the start list.
 
-                    if len(start_list) >= stop_idx:
-                        return start_list[start_idx:stop_idx]
+                    if start_list.len() >= stop_idx:
+                        return Vec.from_ref(start_list[start_idx:stop_idx])
 
                     if stop == self._inner.len:
-                        stop_pos = len(self._inner.lists) - 1
-                        stop_idx = len(self._inner.lists[stop_pos])
+                        stop_pos = self._inner.lists.len() - 1
+                        stop_idx = self._inner.lists[stop_pos].len()
                     else:
                         stop_pos, stop_idx = self._pos(stop)
 
-                    prefix = self._inner.lists[start_pos][start_idx:]
-                    middle = self._inner.lists[(start_pos + 1) : stop_pos]
-                    result = functools.reduce(operator.iadd, middle, prefix)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+                    prefix = Vec.from_ref(self._inner.lists[start_pos][start_idx:])
+                    middle = Vec.from_ref(self._inner.lists[(start_pos + 1) : stop_pos])
+                    result = middle.iter().fold(prefix, operator.iadd)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
                     result += self._inner.lists[stop_pos][:stop_idx]
 
                     return result
@@ -1047,8 +1048,9 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
                 # reverse the order of the items and this could
                 # be the desired behavior.
 
-                indices = range(start, stop, step)
-                return [self.__getitem__(index) for index in indices]
+                return (
+                    Range(start, stop, step).iter().map(self.__getitem__).collect(Vec)
+                )
             case _:
                 if self._inner.len:
                     if index == 0:
@@ -1059,10 +1061,10 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
                     msg = "list index out of range"
                     raise IndexError(msg)
 
-                if 0 <= index < len(self._inner.lists[0]):
+                if 0 <= index < self._inner.lists[0].len():
                     return self._inner.lists[0][index]
 
-                len_last = len(self._inner.lists[-1])
+                len_last = self._inner.lists[-1].len()
 
                 if -len_last < index < 0:
                     return self._inner.lists[-1][len_last + index]
@@ -1140,7 +1142,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
     ) -> Iterator[T]:
         len_ = self._inner.len
 
-        if not len_:
+        if len_ == 0:
             return iter(())
 
         start, stop, _ = slice(start, stop).indices(self._inner.len)
@@ -1148,21 +1150,19 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         if start >= stop:
             return iter(())
 
-        pos = self._pos
-
-        min_pos, min_idx = pos(start)
+        min_pos, min_idx = self._pos(start)
 
         if stop == len_:
-            max_pos = len(self._inner.lists) - 1
-            max_idx = len(self._inner.lists[-1])
+            max_pos = self._inner.lists.len() - 1
+            max_idx = self._inner.lists[-1].len()
         else:
-            max_pos, max_idx = pos(stop)
+            max_pos, max_idx = self._pos(stop)
 
         return self._islice(min_pos, min_idx, max_pos, max_idx, reverse=reverse)
 
     def _islice(  # ruff:ignore[too-many-return-statements]
         self, min_pos: int, min_idx: int, max_pos: int, max_idx: int, *, reverse: bool
-    ) -> Iterator[T]:
+    ) -> PyoIterator[T]:
         """Return an iterator that slices sorted list using two index pairs.
 
         The index pairs are (min_pos, min_idx) and (max_pos, max_idx), the
@@ -1176,53 +1176,67 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         lists = self._inner.lists
 
         if min_pos > max_pos:
-            return iter(())
+            return Iter(())
 
         if min_pos == max_pos:
             if reverse:
-                indices = reversed(range(min_idx, max_idx))
-                return map(lists[min_pos].__getitem__, indices)
+                return Range(min_idx, max_idx).rev().map(lists[min_pos].__getitem__)
 
-            indices = range(min_idx, max_idx)
-            return map(lists[min_pos].__getitem__, indices)
+            return Range(min_idx, max_idx).iter().map(lists[min_pos].__getitem__)
 
         next_pos = min_pos + 1
 
         if next_pos == max_pos:
             if reverse:
-                min_indices = range(min_idx, len(lists[min_pos]))
-                max_indices = range(max_idx)
-                return itertools.chain(
-                    map(lists[max_pos].__getitem__, reversed(max_indices)),
-                    map(lists[min_pos].__getitem__, reversed(min_indices)),
+                min_indices = (
+                    Range(min_idx, lists[min_pos].len())
+                    .rev()
+                    .map(lists[min_pos].__getitem__)
+                )
+                return (
+                    Range(0, max_idx)
+                    .rev()
+                    .map(lists[max_pos].__getitem__)
+                    .chain(min_indices)
                 )
 
-            min_indices = range(min_idx, len(lists[min_pos]))
-            max_indices = range(max_idx)
-            return itertools.chain(
-                map(lists[min_pos].__getitem__, min_indices),
-                map(lists[max_pos].__getitem__, max_indices),
+            max_indices = Range(0, max_idx).iter().map(lists[max_pos].__getitem__)
+            return (
+                Range(min_idx, lists[min_pos].len())
+                .iter()
+                .map(lists[min_pos].__getitem__)
+                .chain(
+                    max_indices,
+                )
             )
 
         if reverse:
-            min_indices = range(min_idx, len(lists[min_pos]))
-            sublist_indices = range(next_pos, max_pos)
-            sublists = map(lists.__getitem__, reversed(sublist_indices))
-            max_indices = range(max_idx)
-            return itertools.chain(
-                map(lists[max_pos].__getitem__, reversed(max_indices)),
-                itertools.chain.from_iterable(map(reversed, sublists)),
-                map(lists[min_pos].__getitem__, reversed(min_indices)),
+            sublists = (
+                Range(next_pos, max_pos)
+                .rev()
+                .map(lists.__getitem__)
+                .flat_map(lambda x: x.rev())
+            )
+            return (
+                Range(0, max_idx)
+                .rev()
+                .map(lists[max_pos].__getitem__)
+                .chain(
+                    sublists,
+                    Range(min_idx, lists[min_pos].len())
+                    .rev()
+                    .map(lists[min_pos].__getitem__),
+                )
             )
 
-        min_indices = range(min_idx, len(lists[min_pos]))
-        sublist_indices = range(next_pos, max_pos)
-        sublists = map(lists.__getitem__, sublist_indices)
-        max_indices = range(max_idx)
-        return itertools.chain(
-            map(lists[min_pos].__getitem__, min_indices),
-            itertools.chain.from_iterable(sublists),
-            map(lists[max_pos].__getitem__, max_indices),
+        return (
+            Range(min_idx, lists[min_pos].len())
+            .iter()
+            .map(lists[min_pos].__getitem__)
+            .chain(
+                Range(next_pos, max_pos).iter().flat_map(lists.__getitem__),
+                Range(0, max_idx).iter().map(lists[max_pos].__getitem__),
+            )
         )
 
     @override
@@ -1233,11 +1247,11 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         inclusive: tuple[bool, bool] = (True, True),
         *,
         reverse: bool = False,
-    ) -> Iterator[T]:
+    ) -> PyoIterator[T]:
         maxes = self._inner.maxes
 
-        if not maxes:
-            return iter(())
+        if maxes.is_empty():
+            return Iter(())
 
         lists = self._inner.lists
 
@@ -1250,15 +1264,15 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         elif inclusive[0]:
             min_pos = bisect_left(maxes, minimum)
 
-            if min_pos == len(maxes):
-                return iter(())
+            if min_pos == maxes.len():
+                return Iter(())
 
             min_idx = bisect_left(lists[min_pos], minimum)
         else:
             min_pos = bisect_right(maxes, minimum)
 
-            if min_pos == len(maxes):
-                return iter(())
+            if min_pos == maxes.len():
+                return Iter(())
 
             min_idx = bisect_right(lists[min_pos], minimum)
 
@@ -1266,22 +1280,22 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         # will be exclusive in our calculation.
 
         if maximum is None:
-            max_pos = len(maxes) - 1
-            max_idx = len(lists[max_pos])
+            max_pos = maxes.len() - 1
+            max_idx = lists[max_pos].len()
         elif inclusive[1]:
             max_pos = bisect_right(maxes, maximum)
 
-            if max_pos == len(maxes):
+            if max_pos == maxes.len():
                 max_pos -= 1
-                max_idx = len(lists[max_pos])
+                max_idx = lists[max_pos].len()
             else:
                 max_idx = bisect_right(lists[max_pos], maximum)
         else:
             max_pos = bisect_left(maxes, maximum)
 
-            if max_pos == len(maxes):
+            if max_pos == maxes.len():
                 max_pos -= 1
-                max_idx = len(lists[max_pos])
+                max_idx = lists[max_pos].len()
             else:
                 max_idx = bisect_left(lists[max_pos], maximum)
 
@@ -1302,7 +1316,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
     def bisect_left(self, value: T) -> int:
         maxes = self._inner.maxes
 
-        if not maxes:
+        if maxes.is_empty():
             return 0
 
         pos = bisect_left(maxes, value)
@@ -1317,7 +1331,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
     def bisect_right(self, value: T) -> int:
         maxes = self._inner.maxes
 
-        if not maxes:
+        if maxes.is_empty():
             return 0
 
         pos = bisect_right(maxes, value)
@@ -1344,7 +1358,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         """
         maxes = self._inner.maxes
 
-        if not maxes:
+        if maxes.is_empty():
             return 0
 
         pos_left = bisect_left(maxes, value)
@@ -1440,7 +1454,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
             IndexError: if index is out of range
 
         """
-        if not self._inner.len:
+        if self._inner.len == 0:
             msg = "pop index out of range"
             raise IndexError(msg)
 
@@ -1481,7 +1495,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
     def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:  # ruff:ignore[complex-structure]
         len_ = self._inner.len
 
-        if not len_:
+        if len_ == 0:
             msg = f"{value!r} is not in list"
             raise ValueError(msg)
 
@@ -1597,7 +1611,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         :return: new sorted list
 
         """
-        values = _collapse_lists(self._inner.lists) * num
+        values = _collapse_lists(self._inner.lists).repeat(num)
         return self.__class__(values)
 
     def __rmul__(self, num: int) -> Self:
@@ -1622,7 +1636,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
             Self: existing sorted list
 
         """
-        values = _collapse_lists(self._inner.lists) * num
+        values = _collapse_lists(self._inner.lists).repeat(num)
         self.clear()
         self.update(values)
         return self
@@ -1774,7 +1788,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
                 return NotImplemented
 
     @override
-    def __reduce__(self) -> tuple[type[Self], tuple[list[T]]]:
+    def __reduce__(self) -> tuple[type[Self], tuple[Vec[T]]]:
         values = _collapse_lists(self._inner.lists)
         return (type(self), (values,))
 
@@ -1885,8 +1899,8 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
             self._expand(pos)
         else:
-            self._inner.lists.append([value])
-            self._inner.keys.append([key])
+            self._inner.lists.append(Vec([value]))
+            self._inner.keys.append(Vec([key]))
             self._inner.maxes.append(key)
 
         self._inner.len += 1
@@ -1903,10 +1917,10 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
             lists_pos = lists[pos]
             keys_pos = keys[pos]
-            half = lists_pos[load:]
-            half_keys = keys_pos[load:]
-            del lists_pos[load:]
-            del keys_pos[load:]
+            half = Vec.from_ref(lists_pos[load:])
+            half_keys = Vec.from_ref(keys_pos[load:])
+            lists_pos.truncate(load)
+            keys_pos.truncate(load)
             maxes[pos] = keys_pos[-1]
 
             lists.insert(pos + 1, half)
@@ -1944,7 +1958,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         """
         maxes = self._inner.maxes
 
-        if not maxes:
+        if maxes.is_empty():
             return False
 
         key = self._inner.key(value)  # pyright: ignore[reportArgumentType]
@@ -1978,7 +1992,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
     def discard(self, value: T) -> None:
         maxes = self._inner.maxes
 
-        if not maxes:
+        if maxes.is_empty():
             return
 
         key = self._inner.key(value)
@@ -2011,14 +2025,14 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
     def remove(self, value: T) -> None:
         maxes = self._inner.maxes
 
-        if not maxes:
+        if maxes.is_empty():
             msg = f"{value!r} not in list"
             raise ValueError(msg)
 
         key = self._inner.key(value)
         pos = bisect_left(maxes, key)
 
-        if pos == len(maxes):
+        if pos == maxes.len():
             msg = f"{value!r} not in list"
             raise ValueError(msg)
 
@@ -2069,7 +2083,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
                     child = (child - 1) >> 1
                 index[0] -= 1
         elif len(keys) > 1:
-            if not pos:
+            if pos == 0:
                 pos += 1
 
             prev = pos - 1
@@ -2099,7 +2113,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         inclusive: tuple[bool, bool] = (True, True),
         *,
         reverse: bool = False,
-    ) -> Iterator[T]:
+    ) -> PyoIterator[T]:
         min_key = self._inner.key(minimum) if minimum is not None else None
         max_key = self._inner.key(maximum) if maximum is not None else None
         return self.irange_key(
@@ -2116,7 +2130,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         inclusive: tuple[bool, bool] = (True, True),
         *,
         reverse: bool = False,
-    ) -> Iterator[T]:
+    ) -> PyoIterator[T]:
         """Create an iterator of values between `min_key` and `max_key`.
 
         Both `min_key` and `max_key` default to `None` which is automatically
@@ -2148,8 +2162,8 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         """
         maxes = self._inner.maxes
 
-        if not maxes:
-            return iter(())
+        if maxes.is_empty():
+            return Iter(())
 
         keys = self._inner.keys
 
@@ -2162,15 +2176,15 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         elif inclusive[0]:
             min_pos = bisect_left(maxes, min_key)
 
-            if min_pos == len(maxes):
-                return iter(())
+            if min_pos == maxes.len():
+                return Iter(())
 
             min_idx = bisect_left(keys[min_pos], min_key)
         else:
             min_pos = bisect_right(maxes, min_key)
 
-            if min_pos == len(maxes):
-                return iter(())
+            if min_pos == maxes.len():
+                return Iter(())
 
             min_idx = bisect_right(keys[min_pos], min_key)
 
@@ -2178,22 +2192,22 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         # will be exclusive in our calculation.
 
         if max_key is None:
-            max_pos = len(maxes) - 1
-            max_idx = len(keys[max_pos])
+            max_pos = maxes.len() - 1
+            max_idx = keys[max_pos].len()
         elif inclusive[1]:
             max_pos = bisect_right(maxes, max_key)
 
-            if max_pos == len(maxes):
+            if max_pos == maxes.len():
                 max_pos -= 1
-                max_idx = len(keys[max_pos])
+                max_idx = keys[max_pos].len()
             else:
                 max_idx = bisect_right(keys[max_pos], max_key)
         else:
             max_pos = bisect_left(maxes, max_key)
 
-            if max_pos == len(maxes):
+            if max_pos == maxes.len():
                 max_pos -= 1
-                max_idx = len(keys[max_pos])
+                max_idx = keys[max_pos].len()
             else:
                 max_idx = bisect_left(keys[max_pos], max_key)
 
@@ -2228,12 +2242,12 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         """
         maxes = self._inner.maxes
 
-        if not maxes:
+        if maxes.is_empty():
             return 0
 
         pos = bisect_left(maxes, key)
 
-        if pos == len(maxes):
+        if pos == maxes.len():
             return self._inner.len
 
         idx = bisect_left(self._inner.keys[pos], key)
@@ -2261,12 +2275,12 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         """
         maxes = self._inner.maxes
 
-        if not maxes:
+        if maxes.is_empty():
             return 0
 
         pos = bisect_right(maxes, key)
 
-        if pos == len(maxes):
+        if pos == maxes.len():
             return self._inner.len
 
         idx = bisect_right(self._inner.keys[pos], key)
@@ -2290,21 +2304,21 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         """
         maxes = self._inner.maxes
 
-        if not maxes:
+        if maxes.is_empty():
             return 0
 
         key = self._inner.key(value)
         pos = bisect_left(maxes, key)
 
-        if pos == len(maxes):
+        if pos == maxes.len():
             return 0
 
         lists = self._inner.lists
         keys = self._inner.keys
         idx = bisect_left(keys[pos], key)
         total = 0
-        len_keys = len(keys)
-        len_sublist = len(keys[pos])
+        len_keys = keys.len()
+        len_sublist = keys[pos].len()
 
         while True:
             if keys[pos][idx] != key:
@@ -2316,7 +2330,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
                 pos += 1
                 if pos == len_keys:
                     return total
-                len_sublist = len(keys[pos])
+                len_sublist = keys[pos].len()
                 idx = 0
 
     @override
@@ -2327,7 +2341,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
     def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:  # ruff:ignore[complex-structure, too-many-branches]
         len_ = self._inner.len
 
-        if not len_:
+        if len_ == 0:
             msg = f"{value!r} is not in list"
             raise ValueError(msg)
 
@@ -2351,7 +2365,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         key = self._inner.key(value)
         pos = bisect_left(maxes, key)
 
-        if pos == len(maxes):
+        if pos == maxes.len():
             msg = f"{value!r} is not in list"
             raise ValueError(msg)
 
@@ -2378,7 +2392,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
                 if pos == len_keys:
                     msg = f"{value!r} is not in list"
                     raise ValueError(msg)
-                len_sublist = len(keys[pos])
+                len_sublist = keys[pos].len()
                 idx = 0
 
         msg = f"{value!r} is not in list"
@@ -2425,13 +2439,13 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         :return: new sorted-key list
 
         """
-        values = _collapse_lists(self._inner.lists) * num
+        values = _collapse_lists(self._inner.lists).repeat(num)
         return self.__class__(values, key=self._inner.key)
 
     @override
-    def __reduce__(self) -> tuple[type[Self], tuple[list[T], KeyFunc[T, OT]]]:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __reduce__(self) -> tuple[type[Self], tuple[Vec[T], KeyFunc[T, OT]]]:  # pyright: ignore[reportIncompatibleMethodOverride]
         values = _collapse_lists(self._inner.lists)
-        return (type(self), (values, self.key))
+        return (self.__class__, (values, self.key))
 
     @recursive_repr()
     def __repr__(self) -> str:
@@ -2446,8 +2460,8 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         return f"{type_name}({list(self)!r}, key={self._inner.key!r})"
 
 
-def _collapse_lists[T](lists: list[list[T]]) -> list[T]:
-    init: list[T] = []
+def _collapse_lists[T](lists: Vec[Vec[T]]) -> Vec[T]:
+    init: Vec[T] = Vec(())
     return functools.reduce(operator.iadd, lists, init)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
 
 
@@ -2456,49 +2470,54 @@ def _update_lists[T: SupportsRichComparison](
 ) -> None:
     lists = self.inner.lists
     maxes = self.inner.maxes
-    values: list[T] = sorted(iterable)
+    values = Iter(iterable).sort()
 
     if maxes:
-        if len(values) * 4 >= self.inner.len:
+        if values.len() * 4 >= self.inner.len:
             lists.append(values)
-            values = _collapse_lists(lists)
-            values.sort()
+            values = _collapse_lists(lists).sort()
             self.clear()
         else:
-            add_ = self.add
             for val in values:
-                add_(val)
+                self.add(val)
             return
 
     load = self.inner.load
-    lists.extend(values[pos : (pos + load)] for pos in range(0, len(values), load))
-    maxes.extend(sublist[-1] for sublist in lists)
-    self.inner.len = len(values)
+    lists.extend(
+        Range(0, values.len(), load)
+        .iter()
+        .map(lambda pos: Vec.from_ref(values[pos : (pos + load)]))
+    )
+    maxes.extend(lists.iter().map(operator.itemgetter(-1)))
+    self.inner.len = values.len()
     del self.inner.idx[:]
 
 
 def _update_key_lists[T, OT: SupportsRichComparison](
     slf: SortedKeyList[T, OT], iterable: Iterable[T]
 ) -> None:
-    values = sorted(iterable, key=slf.inner.key)
+    values = Iter(iterable).sort_by(key=slf.inner.key)
 
     if slf.inner.maxes:
-        if len(values) * 4 >= slf.inner.len:
+        if values.len() * 4 >= slf.inner.len:
             slf.inner.lists.append(values)
-            values: list[T] = _collapse_lists(slf.inner.lists)
-            values.sort(key=slf.inner.key)
+            values = _collapse_lists(slf.inner.lists).sort_by(key=slf.inner.key)
             slf.clear()
         else:
-            add_ = slf.add
             for val in values:
-                add_(val)
+                slf.add(val)
             return
 
     load = slf.inner.load
     slf.inner.lists.extend(
-        values[pos : (pos + load)] for pos in range(0, len(values), load)
+        Range(0, values.len(), load)
+        .iter()
+        .map(lambda pos: Vec.from_ref(values[pos : (pos + load)]))
     )
-    slf.inner.keys.extend(list(map(slf.inner.key, list_)) for list_ in slf.inner.lists)
-    slf.inner.maxes.extend(sublist[-1] for sublist in slf.inner.keys)
-    slf.inner.len = len(values)
+    x = slf.inner.lists.iter().map(
+        lambda list_: list_.iter().map(slf.inner.key).collect(Vec)
+    )
+    slf.inner.keys.extend(x)
+    slf.inner.maxes.extend(slf.inner.keys.iter().map(operator.itemgetter(-1)))
+    slf.inner.len = values.len()
     del slf.inner.idx[:]

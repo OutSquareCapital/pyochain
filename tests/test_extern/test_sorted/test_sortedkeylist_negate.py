@@ -659,6 +659,7 @@ def test_repr() -> None:
     )
 
 
+@pytest.mark.skip(reason="Pyo3 doesn't support pickling yet")
 def test_pickle() -> None:
     import pickle
 

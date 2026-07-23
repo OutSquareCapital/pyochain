@@ -22,6 +22,7 @@ from ._sorted_list import (
 if TYPE_CHECKING:
     from types import NotImplementedType
 
+    from pyochain import Vec
     from pyochain._types import SupportsHashableAndRichComparison
 
     type SetKeyFunc[T, OT: SupportsHashableAndRichComparison] = KeyFunc[T, OT]
@@ -203,9 +204,9 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
     @overload
     def __getitem__(self, index: int) -> T: ...
     @overload
-    def __getitem__(self, index: slice) -> list[T]: ...
+    def __getitem__(self, index: slice) -> Vec[T]: ...
     @override
-    def __getitem__(self, index: int | slice) -> T | list[T]:
+    def __getitem__(self, index: int | slice) -> T | Vec[T]:
         """Lookup value at `index` in sorted set.
 
         ``ss.__getitem__(index)`` <==> ``ss[index]``
@@ -220,13 +221,13 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         >>> ss[-1]
         'e'
         >>> ss[2:5]
-        ['c', 'd', 'e']
+        Vec('c', 'd', 'e')
 
         Args:
             index (int | slice): integer or slice for indexing
 
         Returns:
-            T | list[T]: value or list of values
+            T | Vec[T]: value or list of values
 
         """
         return self._list[index]

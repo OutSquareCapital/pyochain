@@ -12,6 +12,7 @@ from ._sorted_set import SortedSet
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from pyochain import Vec
     from pyochain.collections import SortedDict
 
 _K_co = TypeVar("_K_co", covariant=True, bound=SupportsHashableAndRichComparison)
@@ -39,9 +40,9 @@ class SortedKeysView(PyoKeysView[_K_co], PyoSequence[_K_co], Generic[_K_co]):  #
     @overload
     def __getitem__(self, index: int) -> _K_co: ...
     @overload
-    def __getitem__(self, index: slice) -> list[_K_co]: ...
+    def __getitem__(self, index: slice) -> Vec[_K_co]: ...
     @override
-    def __getitem__(self, index: int | slice) -> _K_co | list[_K_co]:
+    def __getitem__(self, index: int | slice) -> _K_co | Vec[_K_co]:
         """Lookup key at `index` in sorted keys views.
 
         ``skv.__getitem__(index)`` <==> ``skv[index]``
@@ -58,7 +59,7 @@ class SortedKeysView(PyoKeysView[_K_co], PyoSequence[_K_co], Generic[_K_co]):  #
         >>> skv[-1]
         'c'
         >>> skv[:]
-        ['a', 'b', 'c']
+        Vec('a', 'b', 'c')
         >>> skv[100]
         Traceback (most recent call last):
           ...
@@ -68,7 +69,7 @@ class SortedKeysView(PyoKeysView[_K_co], PyoSequence[_K_co], Generic[_K_co]):  #
             index (int | slice): integer or slice for indexing
 
         Returns:
-            _K_co | list[_K_co]: key or list of keys
+            _K_co | Vec[_K_co]: key or list of keys
 
         :raises IndexError: if index out of range
 
