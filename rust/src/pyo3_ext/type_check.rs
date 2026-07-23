@@ -48,7 +48,7 @@ macro_rules! impl_py_wrapper {
 }
 impl_py_wrapper! {
     seq::Seq => PyTuple,
-    seq::Vec => PyList,
+    seq::PyoVec => PyList,
     seq::Set => PyFrozenSet,
     seq::SetMut => PySet,
     seq::Range => PyRange,

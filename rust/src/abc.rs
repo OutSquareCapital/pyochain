@@ -2,7 +2,7 @@ use crate::mixins::Checkable;
 use crate::option::{PyNull, PySome};
 use crate::pyo3_ext::types::pyitertools;
 use crate::result::{PyoErr, PyoOk};
-use crate::seq::{SetMut, IntoPyochain, Vec as PyoVec};
+use crate::seq::{SetMut, IntoPyochain, PyoVec};
 use crate::pyo3_ext::{prelude::*, pylibs, types::PyAbstractSet };
 use crate::tools;
 use pyo3::exceptions::{

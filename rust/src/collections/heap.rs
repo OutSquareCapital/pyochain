@@ -1,8 +1,7 @@
 use crate::abc::PyoABC;
 use crate::pyo3_ext::types::PyIterable;
 use crate::pyo3_ext::{prelude::*, pylibs};
-use crate::{abc, seq, tools};
-use pyochain_macros::{BoundFromAny, py_abc, try_cast};
+use crate::{abc, seq::PyoVec, tools};
 use either::Either;
 use pyo3::{
     BoundObject,
@@ -10,6 +9,7 @@ use pyo3::{
     types::{PyList, PyNotImplemented, PyTuple},
 };
 use pyo3::{PyTypeInfo, intern};
+use pyochain_macros::{BoundFromAny, py_abc, try_cast};
 use tap::Pipe;
 /// Enum used to convert various types into a `PyList` for heap operations.
 #[derive(BoundFromAny)]
@@ -17,7 +17,7 @@ enum IntoHeap<'py> {
     #[cast_exact]
     List(Bound<'py, PyList>),
     #[cast_exact]
-    Vec(Bound<'py, seq::Vec>),
+    Vec(Bound<'py, PyoVec>),
     Iterable(Bound<'py, PyIterable>),
 }
 impl IntoHeap<'_> {
@@ -97,7 +97,7 @@ trait HeapType: Sized + PyWrapper<PyList> {
         let inner = self.as_inner().bind(py);
         try_cast! {
             match other {
-                HeapMax | HeapMin | seq::Vec => inner.eq(other.get().inner.clone_ref(py)).map(Either::Left),
+                HeapMax | HeapMin | PyoVec => inner.eq(other.get().inner.clone_ref(py)).map(Either::Left),
                 PyList => inner.eq(other).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()

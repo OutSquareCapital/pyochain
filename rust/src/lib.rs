@@ -121,7 +121,7 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<result::PyochainResult>()?;
     m.add_class::<seq::Range>()?;
     m.add_class::<seq::Seq>()?;
-    m.add_class::<seq::Vec>()?;
+    m.add_class::<seq::PyoVec>()?;
     m.add_class::<seq::Set>()?;
     m.add_class::<seq::SetMut>()?;
     m.add_class::<seq::Dict>()?;

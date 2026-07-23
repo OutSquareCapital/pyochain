@@ -30,11 +30,11 @@ impl<'py> IntoPyochain<'py, Seq> for Bound<'py, PyTuple> {
         Bound::new(py, initializer)
     }
 }
-impl<'py> IntoPyochain<'py, Vec> for Bound<'py, PyList> {
+impl<'py> IntoPyochain<'py, PyoVec> for Bound<'py, PyList> {
     #[inline]
-    fn into_pyochain(self) -> PyResult<Bound<'py, Vec>> {
+    fn into_pyochain(self) -> PyResult<Bound<'py, PyoVec>> {
         let py = self.py();
-        let initializer = abc::PyoMutableSequence::build_init().add_subclass(Vec {
+        let initializer = abc::PyoMutableSequence::build_init().add_subclass(PyoVec {
             inner: self.unbind(),
         });
         Bound::new(py, initializer)
@@ -312,13 +312,13 @@ impl Range {
             .call_method1(intern!(py, "index"), (&value,))
     }
 }
-#[pyclass(frozen, generic, sequence, extends=abc::PyoMutableSequence)]
-pub struct Vec {
+#[pyclass(frozen, generic, sequence, extends=abc::PyoMutableSequence, name="Vec")]
+pub struct PyoVec {
     #[pyo3(get)]
     pub inner: Py<PyList>,
 }
 #[pymethods]
-impl Vec {
+impl PyoVec {
     #[new]
     pub fn new(data: Bound<'_, PyAny>) -> PyResult<PyClassInitializer<Self>> {
         let py = data.py();
