@@ -11,7 +11,7 @@ from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
 from math import log2
 from reprlib import recursive_repr
-from typing import TYPE_CHECKING, Final, Self, overload, override
+from typing import TYPE_CHECKING, Any, Final, Self, overload, override
 
 from pyochain.abc import PyoMutableSequence
 
@@ -48,6 +48,16 @@ class InnerKeyLists[T, U, OT: SupportsRichComparison]:
 
 class SortedCollection[T](ABC):
     """Base class for sorted collections."""
+
+    @abstractmethod
+    @override
+    def __reduce__(self) -> tuple[type[Self], tuple[Any, ...]]: ...
+    @abstractmethod
+    @override
+    def __repr__(self) -> str: ...
+
+    @abstractmethod
+    def __contains__(self, value: object) -> bool: ...
 
     @abstractmethod
     def bisect_left(self, value: T) -> int:
@@ -242,8 +252,154 @@ class SortedCollection[T](ABC):
 
         """
 
+    @abstractmethod
+    def clear(self) -> None:
+        """Remove all values from the `SortedCollection`.
 
-class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollection[T]):  # ruff:ignore[eq-without-hash]
+        Runtime complexity: `O(n)`
+
+        """
+
+
+class BaseSortedListSet[T](ABC):
+    @abstractmethod
+    def add(self, value: T) -> None:
+        """Add `value` to the `SortedCollection`.
+
+        Runtime complexity: `O(log(n))` -- approximate.
+
+        >>> sl = SortedList()
+        >>> sl.add(3)
+        >>> sl.add(1)
+        >>> sl.add(2)
+        >>> sl
+        SortedList([1, 2, 3])
+        >>> from operator import neg
+        >>> skl = SortedKeyList(key=neg)
+        >>> skl.add(3)
+        >>> skl.add(1)
+        >>> skl.add(2)
+        >>> skl
+        SortedKeyList([3, 2, 1], key=<built-in function neg>)
+
+        Args:
+            value (T): value to add to the `SortedCollection`
+
+        """
+
+    @abstractmethod
+    def discard(self, value: T) -> None:
+        """Remove `value` from sorted-key list if it is a member.
+
+        If `value` is not a member, do nothing.
+
+        Runtime complexity: `O(log(n))` -- approximate.
+
+        >>> sl = SortedList([1, 2, 3, 4, 5])
+        >>> sl.discard(5)
+        >>> sl.discard(0)
+        >>> sl == [1, 2, 3, 4]
+        True
+
+        >>> from operator import neg
+        >>> skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
+        >>> skl.discard(1)
+        >>> skl.discard(0)
+        >>> skl == [5, 4, 3, 2]
+        True
+
+        :param value: `value` to discard from sorted-key list
+
+        """
+
+    @abstractmethod
+    def remove(self, value: T) -> None:
+        """Remove `value` from the `SortedCollection`.
+
+        `value` must be a member.
+
+        If `value` is not a member, raise ValueError.
+
+        Runtime complexity: `O(log(n))` -- approximate.
+
+        >>> sl = SortedList([1, 2, 3, 4, 5])
+        >>> sl.remove(5)
+        >>> sl == [1, 2, 3, 4]
+        True
+        >>> sl.remove(0)
+        Traceback (most recent call last):
+          ...
+        ValueError: 0 not in list
+        >>> from operator import neg
+        >>> skl = SortedKeyList([1, 2, 3, 4, 5], key=neg)
+        >>> skl.remove(5)
+        >>> skl == [4, 3, 2, 1]
+        True
+        >>> skl.remove(0)
+        Traceback (most recent call last):
+          ...
+        ValueError: 0 not in list
+
+        Args:
+            value (T): `value` to remove from the `SortedCollection`
+
+        Raises:
+            ValueError: if `value` is not in the `SortedCollection`
+
+
+        """
+
+    @abstractmethod
+    def copy(self) -> Self:
+        """Return a shallow copy of the `SortedCollection`.
+
+        Runtime complexity: `O(n)`
+
+        :return: new sorted-key list
+
+        """
+
+
+class BaseSortedList[T](BaseSortedListSet[T], ABC):
+    @abstractmethod
+    def __add__(self, other: Iterable[T]) -> Self: ...
+
+    @abstractmethod
+    def __mul__(self, num: int) -> Self: ...
+
+    @abstractmethod
+    def _delete(self, pos: int, idx: int) -> None: ...
+    @abstractmethod
+    def _expand(self, pos: int) -> None: ...
+
+    @abstractmethod
+    def count(self, value: T) -> int: ...
+
+    @abstractmethod
+    def update(self, iterable: Iterable[T]) -> None:
+        """Add all the values from *iterable* to the `SortedCollection`.
+
+        Runtime complexity: `O(k*log(n))` -- approximate.
+
+        >>> sl = SortedList()
+        >>> sl.update([3, 1, 2])
+        >>> sl
+        SortedList([1, 2, 3])
+
+        >>> from operator import neg
+        >>> skl = SortedKeyList(key=neg)
+        >>> skl.update([3, 1, 2])
+        >>> skl
+        SortedKeyList([3, 2, 1], key=<built-in function neg>)
+
+        :param iterable: iterable of values to add
+
+        """
+
+
+class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
+    PyoMutableSequence[T], SortedCollection[T], BaseSortedList[T]
+):
     """Sorted list is a sorted mutable sequence.
 
     Sorted list values are maintained in sorted order.
@@ -331,32 +487,14 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
 
     @override
     def clear(self) -> None:
-        """Remove all values from sorted list.
-
-        Runtime complexity: `O(n)`
-
-        """
         self._inner.len = 0
         del self._inner.lists[:]
         del self._inner.maxes[:]
         del self._inner.idx[:]
         self._inner.offset = 0
 
+    @override
     def add(self, value: T) -> None:
-        """Add `value` to sorted list.
-
-        Runtime complexity: `O(log(n))` -- approximate.
-
-        >>> sl = SortedList()
-        >>> sl.add(3)
-        >>> sl.add(1)
-        >>> sl.add(2)
-        >>> sl
-        SortedList([1, 2, 3])
-
-        :param value: value to add to sorted list
-
-        """
         if self._inner.maxes:
             pos = bisect_right(self._inner.maxes, value)
 
@@ -374,15 +512,8 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
 
         self._inner.len += 1
 
+    @override
     def _expand(self, pos: int) -> None:
-        """Split sublists with length greater than double the load-factor.
-
-        Updates the index when the sublist length is less than double the load
-        level. This requires incrementing the nodes in a traversal from the
-        leaf node to the root. For an example traversal see
-        ``SortedList._loc``.
-
-        """
         load = self._inner.load
         lists = self._inner.lists
         index = self._inner.idx
@@ -406,19 +537,8 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
                 child = (child - 1) >> 1
             index[0] += 1
 
+    @override
     def update(self, iterable: Iterable[T]) -> None:
-        """Update sorted list by adding all values from `iterable`.
-
-        Runtime complexity: `O(k*log(n))` -- approximate.
-
-        >>> sl = SortedList()
-        >>> sl.update([3, 1, 2])
-        >>> sl
-        SortedList([1, 2, 3])
-
-        :param iterable: iterable of values to add
-
-        """
         return _update_lists(self, iterable)
 
     @override
@@ -452,22 +572,8 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
 
         return lists[pos][idx] == value
 
+    @override
     def discard(self, value: T) -> None:
-        """Remove `value` from sorted list if it is a member.
-
-        If `value` is not a member, do nothing.
-
-        Runtime complexity: `O(log(n))` -- approximate.
-
-        >>> sl = SortedList([1, 2, 3, 4, 5])
-        >>> sl.discard(5)
-        >>> sl.discard(0)
-        >>> sl == [1, 2, 3, 4]
-        True
-
-        :param value: `value` to discard from sorted list
-
-        """
         maxes = self._inner.maxes
 
         if not maxes:
@@ -486,28 +592,6 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
 
     @override
     def remove(self, value: T) -> None:
-        """Remove `value` from sorted list; `value` must be a member.
-
-        If `value` is not a member, raise ValueError.
-
-        Runtime complexity: `O(log(n))` -- approximate.
-
-        >>> sl = SortedList([1, 2, 3, 4, 5])
-        >>> sl.remove(5)
-        >>> sl == [1, 2, 3, 4]
-        True
-        >>> sl.remove(0)
-        Traceback (most recent call last):
-          ...
-        ValueError: 0 not in list
-
-        Args:
-            value (T): `value` to remove from sorted list
-
-        Raises:
-            ValueError: if `value` is not in sorted list
-
-        """
         maxes = self._inner.maxes
 
         if not maxes:
@@ -529,20 +613,8 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
             msg = f"{value!r} not in list"
             raise ValueError(msg)
 
+    @override
     def _delete(self, pos: int, idx: int) -> None:
-        """Delete value at the given `(pos, idx)`.
-
-        Combines lists that are less than half the load level.
-
-        Updates the index when the sublist length is more than half the load
-        level. This requires decrementing the nodes in a traversal from the
-        leaf node to the root. For an example traversal see
-        ``SortedList._loc``.
-
-        :param int pos: lists index
-        :param int idx: sublist index
-
-        """
         lists = self._inner.lists
         maxes = self._inner.maxes
         index = self._inner.idx
@@ -1286,14 +1358,8 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
         left = self._loc(pos_left, idx_left)
         return right - left
 
+    @override
     def copy(self) -> Self:
-        """Return a shallow copy of the sorted list.
-
-        Runtime complexity: `O(n)`
-
-        :return: new sorted list
-
-        """
         return self.__class__(self)
 
     def __copy__(self) -> Self:
@@ -1454,6 +1520,7 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
         msg = f"{value!r} is not in list"
         raise ValueError(msg)
 
+    @override
     def __add__(self, other: Iterable[T]) -> Self:
         """Return new sorted list containing all values in both sequences.
 
@@ -1504,6 +1571,7 @@ class SortedList[T: SupportsRichComparison](PyoMutableSequence[T], SortedCollect
         self.update(other)
         return self
 
+    @override
     def __mul__(self, num: int) -> Self:
         """Return new sorted list with `num` shallow copies of values.
 
@@ -1786,11 +1854,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
     @override
     def clear(self) -> None:
-        """Remove all values from sorted-key list.
-
-        Runtime complexity: `O(n)`
-
-        """
         self._inner.len = 0
         del self._inner.lists[:]
         del self._inner.keys[:]
@@ -1799,21 +1862,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
     @override
     def add(self, value: T) -> None:
-        """Add `value` to sorted-key list.
-
-        Runtime complexity: `O(log(n))` -- approximate.
-
-        >>> from operator import neg
-        >>> skl = SortedKeyList(key=neg)
-        >>> skl.add(3)
-        >>> skl.add(1)
-        >>> skl.add(2)
-        >>> skl
-        SortedKeyList([3, 2, 1], key=<built-in function neg>)
-
-        :param value: value to add to sorted-key list
-
-        """
         key = self._inner.key(value)
 
         if self._inner.maxes:
@@ -1839,14 +1887,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
     @override
     def _expand(self, pos: int) -> None:
-        """Split sublists with length greater than double the load-factor.
-
-        Updates the index when the sublist length is less than double the load
-        level. This requires incrementing the nodes in a traversal from the
-        leaf node to the root. For an example traversal see
-        ``SortedList._loc``.
-
-        """
         lists = self._inner.lists
         keys = self._inner.keys
         index = self._inner.idx
@@ -1877,43 +1917,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
     @override
     def update(self, iterable: Iterable[T]) -> None:
-        """Update sorted-key list by adding all values from `iterable`.
-
-        Runtime complexity: `O(k*log(n))` -- approximate.
-
-        >>> from operator import neg
-        >>> skl = SortedKeyList(key=neg)
-        >>> skl.update([3, 1, 2])
-        >>> skl
-        SortedKeyList([3, 2, 1], key=<built-in function neg>)
-
-        :param iterable: iterable of values to add
-
-        """
-        values = sorted(iterable, key=self._inner.key)
-
-        if self._inner.maxes:
-            if len(values) * 4 >= self._inner.len:
-                self._inner.lists.append(values)
-                values: list[T] = _collapse_lists(self._inner.lists)
-                values.sort(key=self._inner.key)
-                self.clear()
-            else:
-                add_ = self.add
-                for val in values:
-                    add_(val)
-                return
-
-        load = self._inner.load
-        self._inner.lists.extend(
-            values[pos : (pos + load)] for pos in range(0, len(values), load)
-        )
-        self._inner.keys.extend(
-            list(map(self._inner.key, list_)) for list_ in self._inner.lists
-        )
-        self._inner.maxes.extend(sublist[-1] for sublist in self._inner.keys)
-        self._inner.len = len(values)
-        del self._inner.idx[:]
+        return _update_key_lists(self, iterable)
 
     @override
     def __contains__(self, value: object) -> bool:
@@ -1966,22 +1970,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
     @override
     def discard(self, value: T) -> None:
-        """Remove `value` from sorted-key list if it is a member.
-
-        If `value` is not a member, do nothing.
-
-        Runtime complexity: `O(log(n))` -- approximate.
-
-        >>> from operator import neg
-        >>> skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
-        >>> skl.discard(1)
-        >>> skl.discard(0)
-        >>> skl == [5, 4, 3, 2]
-        True
-
-        :param value: `value` to discard from sorted-key list
-
-        """
         maxes = self._inner.maxes
 
         if not maxes:
@@ -2015,30 +2003,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
     @override
     def remove(self, value: T) -> None:
-        """Remove `value` from sorted-key list; `value` must be a member.
-
-        If `value` is not a member, raise ValueError.
-
-        Runtime complexity: `O(log(n))` -- approximate.
-
-        >>> from operator import neg
-        >>> skl = SortedKeyList([1, 2, 3, 4, 5], key=neg)
-        >>> skl.remove(5)
-        >>> skl == [4, 3, 2, 1]
-        True
-        >>> skl.remove(0)
-        Traceback (most recent call last):
-          ...
-        ValueError: 0 not in list
-
-        Args:
-            value (T): `value` to remove from sorted-key list
-
-        Raises:
-            ValueError: if `value` is not in sorted-key list
-
-
-        """
         maxes = self._inner.maxes
 
         if not maxes:
@@ -2076,19 +2040,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
     @override
     def _delete(self, pos: int, idx: int) -> None:
-        """Delete value at the given `(pos, idx)`.
-
-        Combines lists that are less than half the load level.
-
-        Updates the index when the sublist length is more than half the load
-        level. This requires decrementing the nodes in a traversal from the
-        leaf node to the root. For an example traversal see
-        ``SortedList._loc``.
-
-        :param int pos: lists index
-        :param int idx: sublist index
-
-        """
         lists = self._inner.lists
         keys = self._inner.keys
         maxes = self._inner.maxes
@@ -2364,13 +2315,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
     @override
     def copy(self) -> Self:
-        """Return a shallow copy of the sorted-key list.
-
-        Runtime complexity: `O(n)`
-
-        :return: new sorted-key list
-
-        """
         return self.__class__(self, key=self._inner.key)
 
     @override
@@ -2525,3 +2469,30 @@ def _update_lists[T: SupportsRichComparison](
     maxes.extend(sublist[-1] for sublist in lists)
     self.inner.len = len(values)
     del self.inner.idx[:]
+
+
+def _update_key_lists[T, OT: SupportsRichComparison](
+    slf: SortedKeyList[T, OT], iterable: Iterable[T]
+) -> None:
+    values = sorted(iterable, key=slf.inner.key)
+
+    if slf.inner.maxes:
+        if len(values) * 4 >= slf.inner.len:
+            slf.inner.lists.append(values)
+            values: list[T] = _collapse_lists(slf.inner.lists)
+            values.sort(key=slf.inner.key)
+            slf.clear()
+        else:
+            add_ = slf.add
+            for val in values:
+                add_(val)
+            return
+
+    load = slf.inner.load
+    slf.inner.lists.extend(
+        values[pos : (pos + load)] for pos in range(0, len(values), load)
+    )
+    slf.inner.keys.extend(list(map(slf.inner.key, list_)) for list_ in slf.inner.lists)
+    slf.inner.maxes.extend(sublist[-1] for sublist in slf.inner.keys)
+    slf.inner.len = len(values)
+    del slf.inner.idx[:]

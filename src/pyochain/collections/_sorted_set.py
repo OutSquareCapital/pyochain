@@ -10,7 +10,14 @@ from typing import TYPE_CHECKING, Any, Self, overload, override
 
 from pyochain.abc import PyoMutableSet, PyoSequence
 
-from ._sorted_list import KeyFunc, SortedCollection, SortedKeyList, SortedList, identity
+from ._sorted_list import (
+    BaseSortedListSet,
+    KeyFunc,
+    SortedCollection,
+    SortedKeyList,
+    SortedList,
+    identity,
+)
 
 if TYPE_CHECKING:
     from types import NotImplementedType
@@ -21,7 +28,7 @@ if TYPE_CHECKING:
 
 
 class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without-hash]
-    PyoMutableSet[T], PyoSequence[T], SortedCollection[T]
+    PyoMutableSet[T], PyoSequence[T], SortedCollection[T], BaseSortedListSet[T]
 ):
     """Sorted set is a sorted mutable set.
 
@@ -390,6 +397,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         self._set.clear()
         self._list.clear()
 
+    @override
     def copy(self) -> Self:
         """Return a shallow copy of the sorted set.
 
