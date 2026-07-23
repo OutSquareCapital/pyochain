@@ -130,8 +130,10 @@ pub mod builtins {
     }
     /// first arg is a function, the rest is a variable number of iterables.
     #[inline(always)]
-    pub fn map_with<'py>(args: &Args<'py>) -> PyResult<Bound<'py, PyIterator>> {
-        let py = args.py();
+    pub fn map_with<'py, A: PyCallArgs<'py>>(
+        py: Python<'py>,
+        args: A,
+    ) -> PyResult<Bound<'py, PyIterator>> {
         MAP.import(py, BUILTINS, "map")?
             .call1(args)
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
@@ -225,36 +227,9 @@ pub mod itertools {
     const COMPRESS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     const CYCLE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     const PAIRWISE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-    const PRODUCT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     const PERMUTATIONS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     const ISLICE: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
 
-    /// `itertools::chain` class.
-    pub mod chain {
-        use super::*;
-        const CHAIN: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
-
-        #[inline(always)]
-        pub fn new<'py>(iterables: &Args<'py>) -> PyResult<Bound<'py, PyIterator>> {
-            let py = iterables.py();
-            CHAIN
-                .import(py, ITERTOOLS, "chain")?
-                .call1(iterables)
-                .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
-        }
-
-        #[inline(always)]
-        pub fn from_iterable<'py>(
-            iterable: &Bound<'py, PyIterator>,
-        ) -> PyResult<Bound<'py, PyIterator>> {
-            let py = iterable.py();
-            CHAIN
-                .import(py, ITERTOOLS, "chain")?
-                .getattr(intern!(py, "from_iterable"))?
-                .call1((iterable,))
-                .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
-        }
-    }
     #[inline(always)]
     pub fn count<'py>(
         py: Python<'py>,
@@ -396,15 +371,6 @@ pub mod itertools {
             .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
     }
     #[inline(always)]
-    pub fn product<'py>(iterables: &Args<'py>, repeat: usize) -> PyResult<Bound<'py, PyIterator>> {
-        let kwargs = PyDict::new(iterables.py());
-        kwargs.set_item(intern!(iterables.py(), "repeat"), repeat)?;
-        PRODUCT
-            .import(iterables.py(), ITERTOOLS, "product")?
-            .call(iterables, Some(&kwargs))
-            .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
-    }
-    #[inline(always)]
     pub fn map_star<'py>(
         func: Bound<'py, PyAny>,
         iterable: Bound<'py, PyIterator>,
@@ -460,7 +426,7 @@ pub mod itertools {
         let py = iterator.py();
         ZIP_LONGEST
             .import(py, ITERTOOLS, "zip_longest")?
-            .concat1(iterator, others)
+            .concat1((iterator.as_any(), others))
             .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
     }
     #[inline(always)]

@@ -1,7 +1,9 @@
 use pyo3::ffi;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyTuple};
-use tap::prelude::*;
+use smallvec::SmallVec;
+type ArgsBuf = SmallVec<[*mut ffi::PyObject; 8]>;
+
 /// Type alias representing the `*args` parameter in Python functions (or any argument that is expected to be a tuple)
 pub type Args<'py> = Bound<'py, PyTuple>;
 /// Type alias representing the `**kwargs` parameter in Python functions
@@ -32,7 +34,8 @@ pub trait Concatenate<'py> {
         kwargs: Option<&Kwargs<'py>>,
     ) -> PyResult<Bound<'py, PyAny>>;
     /// Same as concat star, but does not handle `**kwargs`. Use this whenever possible as it is faster.
-    fn concat1(self, value: &Bound<'py, PyAny>, args: &Args<'py>) -> PyResult<Bound<'py, PyAny>>;
+
+    fn concat1<S: ArgSource<'py>>(self, sources: S) -> PyResult<Bound<'py, PyAny>>;
     /// Akin to `itertools::map_starmap`, where *value* is expected to be a tuple of arguments.\
     /// Unpack each item in *value* and concatenate it with the given `*args`, then call the function with the resulting arguments and `**kwargs`
     fn concat_star(
@@ -41,9 +44,6 @@ pub trait Concatenate<'py> {
         args: &Args<'py>,
         kwargs: Option<&Kwargs<'py>>,
     ) -> PyResult<Bound<'py, PyAny>>;
-    /// same as `concat_star`, but does not handle `**kwargs`. Use this whenever possible as it is faster.
-    fn concat_star1(self, value: &Args<'py>, args: &Args<'py>) -> PyResult<Bound<'py, PyAny>>;
-
     /// Prepend `acc` to `item` and concatenate with `args`, then call the function with `**kwargs`
     fn fold_concat_star(
         self,
@@ -52,15 +52,33 @@ pub trait Concatenate<'py> {
         args: &Args<'py>,
         kwargs: Option<&Kwargs<'py>>,
     ) -> PyResult<Bound<'py, PyAny>>;
-    /// same as `fold_concat_star`, but does not handle `**kwargs`
-    fn fold_concat_star1(
+    fn call_sources_kw<S: ArgSource<'py>>(
         self,
-        acc: &Bound<'py, PyAny>,
-        item: &Args<'py>,
-        args: &Args<'py>,
+        args: S,
+        kwargs: Option<&Kwargs<'py>>,
     ) -> PyResult<Bound<'py, PyAny>>;
 }
 impl<'py> Concatenate<'py> for &Bound<'py, PyAny> {
+    #[inline(always)]
+    fn call_sources_kw<S: ArgSource<'py>>(
+        self,
+        args: S,
+        kwargs: Option<&Kwargs<'py>>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let py = self.py();
+        let (args, total) = build_args_buf(&args);
+        unsafe {
+            let ret = ffi::PyObject_Vectorcall(
+                self.as_ptr(),
+                args.as_ptr().add(1),
+                (total as usize) | ffi::PY_VECTORCALL_ARGUMENTS_OFFSET,
+                kwargs
+                    .map(|k| k.as_ptr())
+                    .unwrap_or_else(core::ptr::null_mut),
+            );
+            Bound::from_owned_ptr_or_err(py, ret)
+        }
+    }
     #[inline]
     fn concat(
         self,
@@ -78,8 +96,18 @@ impl<'py> Concatenate<'py> for &Bound<'py, PyAny> {
         }
     }
     #[inline]
-    fn concat1(self, value: &Bound<'py, PyAny>, args: &Args<'py>) -> PyResult<Bound<'py, PyAny>> {
-        self.call1(unsafe { concat_val_with_args(&value, args, args.len()) })
+    fn concat1<S: ArgSource<'py>>(self, args: S) -> PyResult<Bound<'py, PyAny>> {
+        let py = self.py();
+        let (args, total) = build_args_buf(&args);
+        unsafe {
+            let ret = ffi::PyObject_Vectorcall(
+                self.as_ptr(),
+                args.as_ptr().add(1),
+                (total as usize) | ffi::PY_VECTORCALL_ARGUMENTS_OFFSET,
+                core::ptr::null_mut(),
+            );
+            Bound::from_owned_ptr_or_err(py, ret)
+        }
     }
     #[inline]
     fn concat_star(
@@ -98,10 +126,6 @@ impl<'py> Concatenate<'py> for &Bound<'py, PyAny> {
         }
     }
     #[inline]
-    fn concat_star1(self, value: &Args<'py>, args: &Args<'py>) -> PyResult<Bound<'py, PyAny>> {
-        self.call1(unsafe { concat_tup_with_args(value, args, args.len()) })
-    }
-    #[inline]
     fn fold_concat_star(
         self,
         acc: &Bound<'py, PyAny>,
@@ -114,132 +138,82 @@ impl<'py> Concatenate<'py> for &Bound<'py, PyAny> {
             kwargs,
         )
     }
+}
+pub trait ArgSource<'py> {
+    fn arg_len(&self) -> usize;
+    fn write_borrowed_ptrs(&self, dst: &mut [*mut ffi::PyObject]);
+}
 
-    #[inline]
-    fn fold_concat_star1(
-        self,
-        acc: &Bound<'py, PyAny>,
-        item: &Args<'py>,
-        args: &Args<'py>,
-    ) -> PyResult<Bound<'py, PyAny>> {
-        self.call1(unsafe { concat_acc_tup_with_args(acc, item, args, args.len()) })
-    }
-}
-pub trait ConcatWith<'py> {
-    fn concat_with(self, others: &Args<'py>) -> PyResult<Bound<'py, PyTuple>>;
-    fn concat_with_2(self, b: &Bound<'py, PyAny>, others: &Args<'py>) -> Bound<'py, PyTuple>;
-}
-impl<'py> ConcatWith<'py> for Bound<'py, PyAny> {
+impl<'py, 'a, T: ArgSource<'py> + ?Sized> ArgSource<'py> for &'a T {
     #[inline(always)]
-    fn concat_with(self, others: &Args<'py>) -> PyResult<Bound<'py, PyTuple>> {
-        let py = self.py();
-        self.pipe(std::iter::once)
-            .chain(others.iter())
-            .collect::<Vec<Bound<'py, PyAny>>>()
-            .pipe_ref(|x| PyTuple::new(py, x))
+    fn arg_len(&self) -> usize {
+        (**self).arg_len()
     }
-
-    #[inline]
-    fn concat_with_2(
-        self: Bound<'py, PyAny>,
-        b: &Bound<'py, PyAny>,
-        args: &Args<'py>,
-    ) -> Bound<'py, PyTuple> {
-        unsafe {
-            let args_len = args.len();
-            let new_args_ptr = ffi::PyTuple_New((args_len + 2) as ffi::Py_ssize_t);
-            let a_ptr = self.as_ptr();
-            ffi::Py_INCREF(a_ptr);
-            ffi::PyTuple_SetItem(new_args_ptr, 0, a_ptr);
-            let b_ptr = b.as_ptr();
-            ffi::Py_INCREF(b_ptr);
-            ffi::PyTuple_SetItem(new_args_ptr, 1, b_ptr);
-            let args_ptr = args.as_ptr();
-            for i in 0..args_len {
-                let item = ffi::PyTuple_GET_ITEM(args_ptr, i as ffi::Py_ssize_t);
-                ffi::Py_INCREF(item);
-                ffi::PyTuple_SetItem(new_args_ptr, (i + 2) as ffi::Py_ssize_t, item);
-            }
-            Bound::from_owned_ptr(self.py(), new_args_ptr).cast_into_unchecked::<PyTuple>()
+    #[inline(always)]
+    fn write_borrowed_ptrs(&self, dst: &mut [*mut ffi::PyObject]) {
+        (**self).write_borrowed_ptrs(dst)
+    }
+}
+impl<'py> ArgSource<'py> for Bound<'py, PyAny> {
+    #[inline(always)]
+    fn arg_len(&self) -> usize {
+        1
+    }
+    #[inline(always)]
+    fn write_borrowed_ptrs(&self, dst: &mut [*mut ffi::PyObject]) {
+        dst[0] = self.as_ptr();
+    }
+}
+impl<'py> ArgSource<'py> for Bound<'py, PyTuple> {
+    #[inline(always)]
+    fn arg_len(&self) -> usize {
+        self.len()
+    }
+    #[inline(always)]
+    fn write_borrowed_ptrs(&self, dst: &mut [*mut ffi::PyObject]) {
+        let ptr = self.as_ptr();
+        for (i, slot) in dst.iter_mut().enumerate() {
+            *slot = unsafe { ffi::PyTuple_GET_ITEM(ptr, i as ffi::Py_ssize_t) };
         }
     }
 }
-#[inline]
-unsafe fn concat_val_with_args<'py>(
-    value: &Bound<'py, PyAny>,
-    args: &Args<'py>,
-    args_len: usize,
-) -> Bound<'py, PyTuple> {
-    unsafe {
-        let ptr = value.as_ptr();
-        let new_argc = args_len + 1;
-        let new_args_ptr = ffi::PyTuple_New(new_argc as ffi::Py_ssize_t);
-        ffi::Py_INCREF(ptr);
-        ffi::PyTuple_SetItem(new_args_ptr, 0, ptr);
 
-        let args_ptr = args.as_ptr();
-        for i in 0..args_len {
-            let item = ffi::PyTuple_GET_ITEM(args_ptr, i as ffi::Py_ssize_t);
-            ffi::Py_INCREF(item);
-            ffi::PyTuple_SetItem(new_args_ptr, (i + 1) as ffi::Py_ssize_t, item);
-        }
-        Bound::from_owned_ptr(value.py(), new_args_ptr).cast_into_unchecked::<PyTuple>()
+macro_rules! impl_concat_sources {
+        ($( ($($T:ident : $idx:tt),+) ),+ $(,)?) => {
+            $(
+                impl<'py, $($T: ArgSource<'py>),+> ArgSource<'py> for ($($T,)+) {
+                    #[inline(always)]
+                    fn arg_len(&self) -> usize {
+                        0 $(+ self.$idx.arg_len())+
+                    }
+                    #[inline(always)]
+                    fn write_borrowed_ptrs(&self, dst: &mut [*mut ffi::PyObject]) {
+                        #[allow(unused_mut, unused_variables)]
+                        let mut offset = 0;
+                        $(
+                            let len = self.$idx.arg_len();
+                            self.$idx.write_borrowed_ptrs(&mut dst[offset..offset + len]);
+                            #[allow(unused_assignments)]
+                            {
+                                offset += len;
+                            }
+                        )+
+                    }
+                }
+            )+
+        };
     }
-}
-#[inline]
-unsafe fn concat_tup_with_args<'py>(
-    value: &Args<'py>,
-    args: &Args<'py>,
-    args_len: usize,
-) -> Bound<'py, PyTuple> {
-    unsafe {
-        let tuple_len = value.len();
-        let total_len = tuple_len + args_len;
-        let new_args_ptr = ffi::PyTuple_New(total_len as ffi::Py_ssize_t);
-        let tuple_ptr = value.as_ptr();
-        for i in 0..tuple_len {
-            let item = ffi::PyTuple_GET_ITEM(tuple_ptr, i as ffi::Py_ssize_t);
-            ffi::Py_INCREF(item);
-            ffi::PyTuple_SetItem(new_args_ptr, i as ffi::Py_ssize_t, item);
-        }
-        let args_ptr = args.as_ptr();
-        for i in 0..args_len {
-            let item = ffi::PyTuple_GET_ITEM(args_ptr, i as ffi::Py_ssize_t);
-            ffi::Py_INCREF(item);
-            ffi::PyTuple_SetItem(new_args_ptr, (tuple_len + i) as ffi::Py_ssize_t, item);
-        }
 
-        Bound::from_owned_ptr(value.py(), new_args_ptr).cast_into_unchecked::<PyTuple>()
-    }
-}
-#[inline]
-unsafe fn concat_acc_tup_with_args<'py>(
-    acc: &Bound<'py, PyAny>,
-    value: &Args<'py>,
-    args: &Args<'py>,
-    args_len: usize,
-) -> Bound<'py, PyTuple> {
-    unsafe {
-        let tuple_len = value.len();
-        let total_len = 1 + tuple_len + args_len;
-        let new_args_ptr = ffi::PyTuple_New(total_len as ffi::Py_ssize_t);
+impl_concat_sources!(
+    (A:0, B:1),
+    (A:0, B:1, C:2),
+    (A:0, B:1, C:2, D:3),
+);
 
-        ffi::Py_INCREF(acc.as_ptr());
-        ffi::PyTuple_SetItem(new_args_ptr, 0, acc.as_ptr());
-
-        let tuple_ptr = value.as_ptr();
-        for i in 0..tuple_len {
-            let item = ffi::PyTuple_GET_ITEM(tuple_ptr, i as ffi::Py_ssize_t);
-            ffi::Py_INCREF(item);
-            ffi::PyTuple_SetItem(new_args_ptr, (1 + i) as ffi::Py_ssize_t, item);
-        }
-        let args_ptr = args.as_ptr();
-        for i in 0..args_len {
-            let item = ffi::PyTuple_GET_ITEM(args_ptr, i as ffi::Py_ssize_t);
-            ffi::Py_INCREF(item);
-            ffi::PyTuple_SetItem(new_args_ptr, (1 + tuple_len + i) as ffi::Py_ssize_t, item);
-        }
-
-        Bound::from_owned_ptr(acc.py(), new_args_ptr).cast_into_unchecked::<PyTuple>()
-    }
+#[inline(always)]
+fn build_args_buf<'py, S: ArgSource<'py>>(sources: &S) -> (ArgsBuf, usize) {
+    let total = sources.arg_len();
+    let mut buf: ArgsBuf = SmallVec::from_elem(core::ptr::null_mut(), 1 + total);
+    sources.write_borrowed_ptrs(&mut buf[1..]);
+    (buf, total)
 }

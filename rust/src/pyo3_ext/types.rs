@@ -6,9 +6,12 @@ use pyo3::types::{
     PyDict, PyDictItems, PyDictKeys, PyFrozenSet, PyInt, PyIterator, PyList, PySequence, PySet,
     PySlice, PyType,
 };
+
+use pyo3::call::PyCallArgs;
 use pyo3::{PyTypeInfo, intern, prelude::*};
 use tap::prelude::*;
 const COLLECTIONS_ABC: &str = "collections.abc";
+const ITERTOOLS: &str = "itertools";
 
 /// All ABCs have a `register` method that can be used to register a type as a virtual subclass of the ABC.\
 /// This trait factorize the implementation for all ABCs.\
@@ -369,6 +372,7 @@ impl<'py> IntoPyMappingView<'py> for Bound<'py, PyDict> {
     }
 }
 pub mod pyitertools {
+
     use super::*;
     /// Type representing the `itertools.repeat` iterator.
     #[repr(transparent)]
@@ -408,6 +412,87 @@ pub mod pyitertools {
                     Some(n) => func.call1((obj, n)),
                     None => func.call1((obj,)),
                 })
+                .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
+        }
+    }
+
+    /// `itertools::chain` class.
+    #[repr(transparent)]
+    pub struct PyChain(PyAny);
+    unsafe impl PyTypeInfo for PyChain {
+        const NAME: &'static str = "chain";
+        const MODULE: Option<&'static str> = Some(ITERTOOLS);
+
+        #[inline]
+        fn type_object_raw(py: Python<'_>) -> *mut PyTypeObject {
+            static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
+            TYPE.import(py, ITERTOOLS, "chain").unwrap().as_type_ptr()
+        }
+
+        #[inline]
+        fn is_type_of(object: &Bound<'_, PyAny>) -> bool {
+            object
+                .is_instance(&Self::type_object(object.py()).into_any())
+                .unwrap_or_else(|err| {
+                    err.write_unraisable(object.py(), Some(object));
+                    false
+                })
+        }
+    }
+
+    impl PyChain {
+        pub fn new<'py, A: PyCallArgs<'py>>(
+            py: Python<'py>,
+            iterables: A,
+        ) -> PyResult<Bound<'py, PyIterator>> {
+            Self::type_object(py)
+                .call1(iterables)
+                .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
+        }
+
+        #[inline(always)]
+        pub fn from_iterable<'py>(
+            iterable: &Bound<'py, PyIterator>,
+        ) -> PyResult<Bound<'py, PyIterator>> {
+            let py = iterable.py();
+            Self::type_object(py)
+                .call_method1(intern!(py, "from_iterable"), (iterable,))
+                .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
+        }
+    }
+    #[repr(transparent)]
+    pub struct PyProduct(PyAny);
+
+    unsafe impl PyTypeInfo for PyProduct {
+        const NAME: &'static str = "product";
+        const MODULE: Option<&'static str> = Some(ITERTOOLS);
+
+        #[inline]
+        fn type_object_raw(py: Python<'_>) -> *mut PyTypeObject {
+            static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
+            TYPE.import(py, ITERTOOLS, "product").unwrap().as_type_ptr()
+        }
+
+        #[inline]
+        fn is_type_of(object: &Bound<'_, PyAny>) -> bool {
+            object
+                .is_instance(&Self::type_object(object.py()).into_any())
+                .unwrap_or_else(|err| {
+                    err.write_unraisable(object.py(), Some(object));
+                    false
+                })
+        }
+    }
+    impl PyProduct {
+        pub fn new<'py, A: PyCallArgs<'py>>(
+            py: Python<'py>,
+            iterables: A,
+            repeat: usize,
+        ) -> PyResult<Bound<'py, PyIterator>> {
+            let kwargs = PyDict::new(py);
+            kwargs.set_item(intern!(py, "repeat"), repeat)?;
+            Self::type_object(py)
+                .call(iterables, Some(&kwargs))
                 .map(|obj| unsafe { obj.cast_into_unchecked::<PyIterator>() })
         }
     }

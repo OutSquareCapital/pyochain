@@ -141,7 +141,7 @@ impl PyoCounter {
     }
 
     fn elements<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyIterator>> {
-        pylibs::itertools::chain::from_iterable(&pylibs::itertools::map_star(
+        pyitertools::PyChain::from_iterable(&pylibs::itertools::map_star(
             pyitertools::PyRepeat::type_object(py).into_any(),
             self.inner.bind(py).items_view().try_iter().unwrap(),
         )?)
