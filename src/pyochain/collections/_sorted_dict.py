@@ -319,7 +319,7 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
         :return: new sorted dict
 
         """
-        return SortedDict((key, value) for key in iterable)
+        return Iter(iterable).map(lambda key: (key, value)).collect(SortedDict)
 
     @override
     def keys(self) -> SortedKeysView[K]:  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -400,7 +400,7 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
             KeyError: if `key` not found and `default` not given
 
         """
-        if key in self:
+        if self.contains(key):
             self._list.remove(key)
             return super().pop(key)
         if default is self.__not_given:
@@ -509,7 +509,7 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
         :return: value for item identified by `key`
 
         """
-        if key in self:
+        if self.contains(key):
             return self[key]
         super().__setitem__(key, default)  # pyright: ignore[reportArgumentType]
         self._list.add(key)
@@ -548,7 +548,7 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
         :param kwargs: keyword arguments mapping
 
         """
-        if not self:
+        if self.is_empty():
             super().update(m, **kwargs)
             self._list.update(super().__iter__())
             return
@@ -557,7 +557,7 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
                 pairs: dict[K, V] = m  # pyright: ignore[reportAssignmentType, reportUnknownVariableType]
             case _:
                 pairs = dict(m, **kwargs)
-        if (10 * len(pairs)) > len(self):
+        if (10 * len(pairs)) > self.len():
             super().update(pairs)
             self._list.clear()
             self._list.update(super().__iter__())
@@ -590,7 +590,7 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
         """
         type_name = self.__class__.__name__
         item_format = "{!r}: {!r}".format
-        items = ", ".join(item_format(key, self[key]) for key in self._list)
+        items = self._list.iter().map(lambda key: item_format(key, self[key])).join(", ")
         return f"{type_name}({{{items}}})"
 
 
@@ -705,5 +705,5 @@ class SortedKeyDict[
         type_name = self.__class__.__name__
         key_arg = "" if key is None else f"{key!r}, "
         item_format = "{!r}: {!r}".format
-        items = ", ".join(item_format(key, self[key]) for key in self._list)
+        items = self._list.iter().map(lambda key: item_format(key, self[key])).join(", ")
         return f"{type_name}({key_arg}{{{items}}})"

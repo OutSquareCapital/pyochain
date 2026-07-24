@@ -616,11 +616,9 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
             Self: updated sorted set
 
         """
-        set_ = self._set
-        list_ = self._list
-        set_.intersection_update(*iterables)
-        list_.clear()
-        list_.update(set_)
+        self._set.intersection_update(*iterables)
+        self._list.clear()
+        self._list.update(self._set)
         return self
 
     @override
@@ -733,18 +731,16 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
             Self: updated sorted set
 
         """
-        set_ = self._set
         list_ = self._list
         values = Iter(iterables).flatten().collect(Set)
-        if (4 * values.len()) > len(set_):
+        if (4 * values.len()) > len(self._set):
             list_ = self._list
-            set_.update(values)
+            self._set.update(values)
             list_.clear()
-            list_.update(set_)
+            list_.update(self._set)
         else:
-            add = self.add
             for value in values:
-                add(value)
+                self.add(value)
         return self
 
     @override

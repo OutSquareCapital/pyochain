@@ -9,10 +9,10 @@ from pyochain.abc import PyoItemsView, PyoKeysView, PyoSequence, PyoValuesView
 
 from ._sorted_set import SortedSet
 
+from pyochain import Vec
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from pyochain import Vec
     from pyochain.collections import SortedDict
 
 _K_co = TypeVar("_K_co", covariant=True, bound=SupportsHashableAndRichComparison)
@@ -106,11 +106,11 @@ class SortedItemsView(
     @overload
     def __getitem__(self, index: int) -> tuple[_K_co, _V_co]: ...
     @overload
-    def __getitem__(self, index: slice) -> list[tuple[_K_co, _V_co]]: ...
+    def __getitem__(self, index: slice) -> Vec[tuple[_K_co, _V_co]]: ...
     @override
     def __getitem__(
         self, index: int | slice
-    ) -> tuple[_K_co, _V_co] | list[tuple[_K_co, _V_co]]:
+    ) -> tuple[_K_co, _V_co] | Vec[tuple[_K_co, _V_co]]:
         """Lookup item at `index` in sorted items view.
 
         ``siv.__getitem__(index)`` <==> ``siv[index]``
@@ -127,7 +127,7 @@ class SortedItemsView(
         >>> siv[-1]
         ('c', 3)
         >>> siv[:]
-        [('a', 1), ('b', 2), ('c', 3)]
+        Vec(('a', 1), ('b', 2), ('c', 3))
         >>> siv[100]
         Traceback (most recent call last):
           ...
@@ -146,7 +146,7 @@ class SortedItemsView(
         match index:
             case slice():
                 keys = mapping_list[index]
-                return [(key, mapping[key]) for key in keys]
+                return keys.iter().map(lambda key: (key, mapping[key])).collect(Vec)
             case int():
                 key = mapping_list[index]
                 return key, mapping[key]
@@ -170,9 +170,9 @@ class SortedValuesView(PyoValuesView[_V_co], PyoSequence[_V_co], Generic[_V_co])
     @overload
     def __getitem__(self, index: int) -> _V_co: ...
     @overload
-    def __getitem__(self, index: slice) -> list[_V_co]: ...
+    def __getitem__(self, index: slice) -> Vec[_V_co]: ...
     @override
-    def __getitem__(self, index: int | slice) -> _V_co | list[_V_co]:
+    def __getitem__(self, index: int | slice) -> _V_co | Vec[_V_co]:
         """Lookup value at `index` in sorted values view.
 
         ``siv.__getitem__(index)`` <==> ``siv[index]``
@@ -189,7 +189,7 @@ class SortedValuesView(PyoValuesView[_V_co], PyoSequence[_V_co], Generic[_V_co])
         >>> svv[-1]
         3
         >>> svv[:]
-        [2, 1, 3]
+        Vec(2, 1, 3)
         >>> svv[100]
         Traceback (most recent call last):
           ...
@@ -199,14 +199,14 @@ class SortedValuesView(PyoValuesView[_V_co], PyoSequence[_V_co], Generic[_V_co])
             index (int | slice): integer or slice for indexing
 
         Returns:
-            _V_co | list[_V_co]: value or list of values
+            _V_co | Vec[_V_co]: value or list of values
         """
         mapping = self._mapping
         mapping_list = mapping._list  # pyright: ignore[reportPrivateUsage]
 
         match index:
             case slice():
-                return [mapping[key] for key in mapping_list[index]]  # pyright: ignore[reportAny]
+                return mapping_list[index].iter().map(lambda key:mapping[key]).collect(Vec)  # pyright: ignore[reportAny]
             case int():
                 return mapping[mapping_list[index]]
 
