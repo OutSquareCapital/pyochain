@@ -2,17 +2,22 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
-import functools
 import operator
 from abc import ABC, abstractmethod
-from bisect import bisect_left, bisect_right, insort
 from collections.abc import Callable, Iterable, Sequence
 from math import log2
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, Final, Self, overload, override
-from pyochain.rs import InnerKeyLists, InnerLists
+
 from pyochain import Iter, Range, Vec
 from pyochain.abc import PyoIterator, PyoMutableSequence
+from pyochain.rs import (
+    InnerKeyLists,
+    InnerLists,
+    bisect_left,
+    bisect_right,
+    insort_right,
+)
 
 if TYPE_CHECKING:
     from types import NotImplementedType
@@ -21,7 +26,6 @@ if TYPE_CHECKING:
 
 type KeyFunc[T, OT: SupportsRichComparison] = Callable[[T], OT]
 DEFAULT_LOAD_FACTOR: Final[int] = 1000
-
 
 
 class SortedCollection[T](ABC):
@@ -472,12 +476,12 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         if self._inner.maxes:
             pos = bisect_right(self._inner.maxes, value)
 
-            if pos == len(self._inner.maxes):
+            if pos == self._inner.maxes.len():
                 pos -= 1
                 self._inner.lists[pos].append(value)
                 self._inner.maxes[pos] = value
             else:
-                insort(self._inner.lists[pos], value)
+                insort_right(self._inner.lists[pos], value)
 
             self._expand(pos)
         else:
@@ -617,15 +621,15 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
             lists[prev].extend(lists[pos])
             maxes[prev] = lists[prev][-1]
 
-            del lists[pos]
+            lists[pos].clear()
             del maxes[pos]
             index.clear()
 
             self._expand(prev)
-        elif len_lists_pos:
+        elif len_lists_pos != 0:
             maxes[pos] = lists_pos[-1]
         else:
-            del lists[pos]
+            lists[pos].clear()
             del maxes[pos]
             index.clear()
 
@@ -799,7 +803,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
 
         pos = 0
         child = 1
-        len_index = len(index)
+        len_index = index.len()
 
         while child < len_index:
             index_child = index[child]
@@ -925,7 +929,6 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
 
                 if step > 0:
                     indices = indices.rev()
-
 
                 for pos, idx in indices.iter().map(self._pos):
                     self._delete(pos, idx)
@@ -1621,9 +1624,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
                 if self._inner.len != len(other):
                     return False
 
-                return (
-                    self.iter().zip(other, strict=False).map_star(lambda alpha, beta: alpha == beta).all()
-                )
+                return self.iter().zip(other, strict=False).map_star(operator.eq).all()
 
             case _:
                 return NotImplemented
@@ -1647,9 +1648,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
                 if self._inner.len != len(other):
                     return True
 
-                return (
-                    self.iter().zip(other, strict=False).map_star(lambda alpha, beta: alpha != beta).any()
-                )
+                return self.iter().zip(other, strict=False).map_star(operator.ne).any()
             case _:
                 return NotImplemented
 
@@ -1716,7 +1715,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         """
         match other:
             case Sequence():
-                for alpha, beta in self.iter().zip( other, strict=False):
+                for alpha, beta in self.iter().zip(other, strict=False):
                     if alpha != beta:
                         return alpha <= beta  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
@@ -1740,7 +1739,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         """
         match other:
             case Sequence():
-                for alpha, beta in self.iter().zip( other, strict=False):
+                for alpha, beta in self.iter().zip(other, strict=False):
                     if alpha != beta:
                         return alpha >= beta  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
@@ -1872,7 +1871,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         keys = self._inner.keys
         index = self._inner.idx
 
-        if len(keys[pos]) > (self._inner.load << 1):
+        if keys[pos].len() > (self._inner.load << 1):
             maxes = self._inner.maxes
             load = self._inner.load
 
@@ -2052,17 +2051,17 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
             lists[prev].extend(lists[pos])
             maxes[prev] = keys[prev][-1]
 
-            del lists[pos]
-            del keys[pos]
+            lists[pos].clear()
+            keys[pos].clear()
             del maxes[pos]
             index.clear()
 
             self._expand(prev)
-        elif len_keys_pos:
+        elif len_keys_pos != 0:
             maxes[pos] = keys_pos[-1]
         else:
-            del lists[pos]
-            del keys[pos]
+            lists[pos].clear()
+            keys[pos].clear()
             del maxes[pos]
             index.clear()
 
@@ -2077,12 +2076,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
     ) -> PyoIterator[T]:
         min_key = self._inner.key(minimum) if minimum is not None else None
         max_key = self._inner.key(maximum) if maximum is not None else None
-        return self.irange_key(
-            min_key,
-            max_key,
-            inclusive,
-            reverse=reverse
-        )
+        return self.irange_key(min_key, max_key, inclusive, reverse=reverse)
 
     def irange_key(  # ruff:ignore[too-many-branches]
         self,
@@ -2423,7 +2417,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
 def _collapse_lists[T](lists: Vec[Vec[T]]) -> Vec[T]:
     init: Vec[T] = Vec(())
-    return functools.reduce(operator.iadd, lists, init)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+    return lists.iter().fold(init, operator.iadd)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
 
 
 def _update_lists[T: SupportsRichComparison](

@@ -179,6 +179,9 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // NOTE: Temp utils
     m.add_class::<collections::InnerLists>()?;
     m.add_class::<collections::InnerKeyLists>()?;
+    m.add_function(wrap_pyfunction!(collections::bisect::bisect_left, m)?)?;
+    m.add_function(wrap_pyfunction!(collections::bisect::bisect_right, m)?)?;
+    m.add_function(wrap_pyfunction!(collections::bisect::insort_right, m)?)?;
     let sys_mods = py.import("sys")?.getattr("modules")?;
     sys_mods.set_item("pyochain.abc", abc_mod)?;
     register_all(py)

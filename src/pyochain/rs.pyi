@@ -1,4 +1,3 @@
-from _typeshed import SupportsRichComparison
 from collections.abc import Callable, Iterable
 from typing import (
     Any,
@@ -11,6 +10,8 @@ from typing import (
     override,
     type_check_only,
 )
+
+from _typeshed import SupportsRichComparison
 
 from pyochain.abc import Pipe, PyoIterator
 
@@ -39,8 +40,7 @@ class InnerLists[T, U]:
     load: int
     offset: int
     def __new__(cls) -> Self: ...
-
-    def clear(self) -> None:...
+    def clear(self) -> None: ...
 
 class InnerKeyLists[T, U, OT: SupportsRichComparison]:
     key: KeyFunc[T, OT]
@@ -52,8 +52,21 @@ class InnerKeyLists[T, U, OT: SupportsRichComparison]:
     load: int
     offset: int
     def __new__(cls, key: KeyFunc[T, OT]) -> Self: ...
+    def clear(self) -> None: ...
 
-    def clear(self) -> None:...
+def insort_right[T](
+    a: Vec[T],
+    x: T,
+    lo: int = 0,
+    hi: int | None = None,
+    key: object | None = None,
+) -> None: ...
+def bisect_right[T](
+    a: Vec[T], x: T, lo: int = 0, hi: int | None = None, key: object | None = None
+) -> int: ...
+def bisect_left[T](
+    a: Vec[T], x: T, lo: int = 0, hi: int | None = None, key: object | None = None
+) -> int: ...
 
 __all__ = [
     "Deque",
@@ -61,6 +74,8 @@ __all__ = [
     "Heap",
     "HeapMax",
     "HeapMin",
+    "InnerKeyLists",
+    "InnerLists",
     "Iter",
     "Peekable",
     "PyoCounter",
@@ -71,10 +86,10 @@ __all__ = [
     "SliceView",
     "StableSet",
     "Vec",
-    "InnerLists",
-    "InnerKeyLists",
+    "bisect_left",
+    "bisect_right",
+    "insort_right",
 ]
-
 
 # Option types
 class OptionUnwrapError(RuntimeError): ...
