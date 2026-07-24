@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload, override
 
+from pyochain import Vec
 from pyochain._types import SupportsHashableAndRichComparison
 from pyochain.abc import PyoItemsView, PyoKeysView, PyoSequence, PyoValuesView
 
 from ._sorted_set import SortedSet
 
-from pyochain import Vec
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
@@ -206,7 +206,12 @@ class SortedValuesView(PyoValuesView[_V_co], PyoSequence[_V_co], Generic[_V_co])
 
         match index:
             case slice():
-                return mapping_list[index].iter().map(lambda key:mapping[key]).collect(Vec)  # pyright: ignore[reportAny]
+                return (
+                    mapping_list[index]
+                    .iter()
+                    .map(lambda key: mapping[key])  # pyright: ignore[reportAny]
+                    .collect(Vec)
+                )
             case int():
                 return mapping[mapping_list[index]]
 

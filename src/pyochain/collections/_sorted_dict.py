@@ -590,7 +590,9 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
         """
         type_name = self.__class__.__name__
         item_format = "{!r}: {!r}".format
-        items = self._list.iter().map(lambda key: item_format(key, self[key])).join(", ")
+        items = (
+            self._list.iter().map(lambda key: item_format(key, self[key])).join(", ")
+        )
         return f"{type_name}({{{items}}})"
 
 
@@ -705,5 +707,7 @@ class SortedKeyDict[
         type_name = self.__class__.__name__
         key_arg = "" if key is None else f"{key!r}, "
         item_format = "{!r}: {!r}".format
-        items = self._list.iter().map(lambda key: item_format(key, self[key])).join(", ")
+        items = (
+            self._list.iter().map(lambda key: item_format(key, self[key])).join(", ")
+        )
         return f"{type_name}({key_arg}{{{items}}})"
