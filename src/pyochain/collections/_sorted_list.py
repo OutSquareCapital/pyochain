@@ -621,7 +621,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
             lists[prev].extend(lists[pos])
             maxes[prev] = lists[prev][-1]
 
-            lists[pos].clear()
+            del lists[pos]
             del maxes[pos]
             index.clear()
 
@@ -629,7 +629,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         elif len_lists_pos != 0:
             maxes[pos] = lists_pos[-1]
         else:
-            lists[pos].clear()
+            del lists[pos]
             del maxes[pos]
             index.clear()
 
@@ -2051,8 +2051,8 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
             lists[prev].extend(lists[pos])
             maxes[prev] = keys[prev][-1]
 
-            lists[pos].clear()
-            keys[pos].clear()
+            del lists[pos]
+            del keys[pos]
             del maxes[pos]
             index.clear()
 
@@ -2060,8 +2060,8 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         elif len_keys_pos != 0:
             maxes[pos] = keys_pos[-1]
         else:
-            lists[pos].clear()
-            keys[pos].clear()
+            del lists[pos]
+            del keys[pos]
             del maxes[pos]
             index.clear()
 
