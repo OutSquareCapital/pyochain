@@ -347,6 +347,30 @@ class BaseSortedListSet[T](ABC):
 class BaseSortedList[T](BaseSortedListSet[T], ABC):
     _inner: InnerSorted[Any]
 
+    def __contains__(self, value: object) -> bool:
+        """Return true if `value` is an element of the sorted list.
+
+        ``sl.__contains__(value)`` <==> ``value in sl``
+
+        Runtime complexity: `O(log(n))`
+
+        >>> sl = SortedList([1, 2, 3, 4, 5])
+        >>> 3 in sl
+        True
+        >>> from operator import neg
+        >>> skl = SortedKeyList([1, 2, 3, 4, 5], key=neg)
+        >>> 3 in skl
+        True
+
+        Args:
+            value (object): search for value in sorted list
+        Returns:
+            (bool): `True` if `value` in sorted list.
+
+
+        """
+        return self._inner.contains(value)
+
     @abstractmethod
     def __add__(self, other: Iterable[T]) -> Self: ...
 
@@ -492,24 +516,6 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
     @override
     def update(self, iterable: Iterable[T]) -> None:
         return _update_lists(self, iterable)
-
-    @override
-    def __contains__(self, value: object) -> bool:
-        """Return true if `value` is an element of the sorted list.
-
-        ``sl.__contains__(value)`` <==> ``value in sl``
-
-        Runtime complexity: `O(log(n))`
-
-        >>> sl = SortedList([1, 2, 3, 4, 5])
-        >>> 3 in sl
-        True
-
-        :param value: search for value in sorted list
-        :return: true if `value` in sorted list
-
-        """
-        return self._inner.contains(value)
 
     @override
     def discard(self, value: T) -> None:
@@ -1787,25 +1793,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
     @override
     def update(self, iterable: Iterable[T]) -> None:
         return _update_key_lists(self, iterable)
-
-    @override
-    def __contains__(self, value: object) -> bool:
-        """Return true if `value` is an element of the sorted-key list.
-
-        ``skl.__contains__(value)`` <==> ``value in skl``
-
-        Runtime complexity: `O(log(n))`
-
-        >>> from operator import neg
-        >>> skl = SortedKeyList([1, 2, 3, 4, 5], key=neg)
-        >>> 3 in skl
-        True
-
-        :param value: search for value in sorted-key list
-        :return: true if `value` in sorted-key list
-
-        """
-        return self._inner.contains(value)
 
     @override
     def discard(self, value: T) -> None:
