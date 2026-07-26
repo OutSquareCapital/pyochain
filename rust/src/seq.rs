@@ -7,7 +7,7 @@ use pyo3::types::{
     PyBool, PyDict, PyFrozenSet, PyInt, PyIterator, PyList, PyRange, PyRangeMethods, PySequence,
     PySet, PyString, PyTuple, PyType,
 };
-use pyo3::{PyTypeInfo, ffi, intern, prelude::*};
+use pyo3::{PyTypeInfo, intern, prelude::*};
 use pyochain_macros::try_cast;
 use tap::Pipe;
 
@@ -497,18 +497,8 @@ impl PyoVec {
         self.inner.bind(value.py()).append(value)
     }
 
-    fn extend(&self, iterable: Bound<'_, PyAny>) -> PyResult<()> {
-        let py = iterable.py();
-        iterable
-            .try_iter()
-            .map(|_| unsafe { ffi::PyList_Extend(self.inner.as_ptr(), iterable.as_ptr()) })
-            .and_then(|x| {
-                if x == 0 {
-                    Ok(())
-                } else {
-                    Err(PyErr::fetch(py))
-                }
-            })
+    pub fn extend(&self, iterable: Bound<'_, PyAny>) -> PyResult<()> {
+        self.inner.bind(iterable.py()).extend(iterable)
     }
 
     fn repeat<'py>(&self, n: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
@@ -529,9 +519,8 @@ impl PyoVec {
         self.inner.bind(value.py()).insert(index, value)
     }
 
-    pub fn clear(&self, py: Python<'_>) -> PyResult<()> {
-        self.inner.bind(py).call_method0(intern!(py, "clear"))?;
-        Ok(())
+    pub fn clear(&self, py: Python<'_>) -> () {
+        self.inner.bind(py).clear()
     }
 
     fn reverse(slf: Bound<'_, Self>) -> PyResult<()> {

@@ -26,21 +26,19 @@ impl ABCRegister<'_> for PyAbstractSet {}
 impl ABCRegister<'_> for PyIterable {}
 
 pub trait PyListExtMethods<'py> {
-    fn as_mutable_sequence(&self) -> &Bound<'py, PyMutableSequence>;
-    fn clear(&self) -> PyResult<()>;
+    fn clear(&self) -> ();
+    fn extend(&self, iterable: Bound<'_, PyAny>) -> PyResult<()>;
 }
 impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
-    fn as_mutable_sequence(&self) -> &Bound<'py, PyMutableSequence> {
-        unsafe { self.cast_unchecked() }
+    fn clear(&self) -> () {
+        unsafe { ffi::PyList_Clear(self.as_ptr()) };
     }
 
-    fn clear(&self) -> PyResult<()> {
-        let out = unsafe { ffi::PyList_Clear(self.as_ptr()) };
-        if out == 0 {
-            Ok(())
-        } else {
-            Err(PyErr::fetch(self.py()))
-        }
+    fn extend(&self, iterable: Bound<'_, PyAny>) -> PyResult<()> {
+        iterable
+            .try_iter()
+            .map(|_| unsafe { ffi::PyList_Extend(self.as_ptr(), iterable.as_ptr()) })?;
+        Ok(())
     }
 }
 
