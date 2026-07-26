@@ -535,20 +535,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         :return: true if `value` in sorted list
 
         """
-        maxes = self._inner.maxes
-
-        if maxes.is_empty():
-            return False
-
-        pos = bisect_left(maxes, value)  # pyright: ignore[reportArgumentType]
-
-        if pos == maxes.len():
-            return False
-
-        lists = self._inner.lists
-        idx = bisect_left(lists[pos], value)  # pyright: ignore[reportArgumentType]
-
-        return lists[pos][idx] == value
+        return self._inner.contains(value)
 
     @override
     def discard(self, value: T) -> None:
@@ -1916,37 +1903,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         :return: true if `value` in sorted-key list
 
         """
-        maxes = self._inner.maxes
-
-        if maxes.is_empty():
-            return False
-
-        key = self._inner.key(value)  # pyright: ignore[reportArgumentType]
-        pos = bisect_left(maxes, key)
-
-        if pos == maxes.len():
-            return False
-
-        lists = self._inner.lists
-        keys = self._inner.keys
-
-        idx = bisect_left(keys[pos], key)
-
-        len_keys = keys.len()
-        len_sublist = keys[pos].len()
-
-        while True:
-            if keys[pos][idx] != key:
-                return False
-            if lists[pos][idx] == value:
-                return True
-            idx += 1
-            if idx == len_sublist:
-                pos += 1
-                if pos == len_keys:
-                    return False
-                len_sublist = keys[pos].len()
-                idx = 0
+        return self._inner.contains(value)
 
     @override
     def discard(self, value: T) -> None:

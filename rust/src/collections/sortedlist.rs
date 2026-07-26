@@ -1,6 +1,14 @@
 use crate::seq::PyoVec;
 use pyo3::prelude::*;
+use pyochain_macros::py_abc;
 const DEFAULT_LOAD_FACTOR: usize = 1000;
+
+#[py_abc(InnerLists, InnerKeyLists)]
+trait InnerSorted {
+    fn clear(&mut self, py: Python<'_>) -> PyResult<()>;
+    fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool>;
+}
+
 #[pyclass(generic)]
 pub struct InnerLists {
     #[pyo3(get, set)]
@@ -29,7 +37,9 @@ impl InnerLists {
             offset: 0,
         })
     }
+}
 
+impl InnerSorted for InnerLists {
     fn clear(&mut self, py: Python<'_>) -> PyResult<()> {
         self.len = 0;
         self.lists.get().clear(py)?;
@@ -37,6 +47,33 @@ impl InnerLists {
         self.idx.get().clear(py)?;
         self.offset = 0;
         Ok(())
+    }
+
+    fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+        let maxes = self.maxes.bind(value.py());
+
+        if maxes.is_empty()? {
+            return Ok(false);
+        }
+
+        let pos = bisect::bisect_left(maxes, &value, 0, None, None)?;
+
+        if maxes.len()?.eq(&pos) {
+            return Ok(false);
+        }
+
+        let lists = self.lists.bind(value.py());
+        let idx = bisect::bisect_left(
+            &lists
+                .get_item(pos)
+                .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
+            &value,
+            0,
+            None,
+            None,
+        )?;
+
+        lists.get_item(pos)?.get_item(idx)?.eq(value)
     }
 }
 
@@ -75,7 +112,8 @@ impl InnerKeyLists {
             offset: 0,
         })
     }
-
+}
+impl InnerSorted for InnerKeyLists {
     fn clear(&mut self, py: Python<'_>) -> PyResult<()> {
         self.len = 0;
         self.lists.get().clear(py)?;
@@ -83,6 +121,55 @@ impl InnerKeyLists {
         self.maxes.get().clear(py)?;
         self.idx.get().clear(py)?;
         Ok(())
+    }
+    fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+        let py = value.py();
+        let maxes = self.maxes.bind(py);
+
+        if maxes.is_empty()? {
+            return Ok(false);
+        }
+
+        let key = self.key.bind(py).call1((&value,))?;
+        let mut pos = bisect::bisect_left(maxes, &key, 0, None, None)?;
+
+        if pos == maxes.len()? {
+            return Ok(false);
+        }
+
+        let lists = self.lists.bind(py);
+        let keys = self.keys.bind(py);
+
+        let mut idx = bisect::bisect_left(
+            &keys
+                .get_item(&pos)
+                .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
+            &key,
+            0,
+            None,
+            None,
+        )?;
+
+        let len_keys = keys.len()?;
+        let mut len_sublist = keys.get_item(&pos)?.len()?;
+
+        loop {
+            if keys.get_item(&pos)?.get_item(&idx)?.ne(&key)? {
+                return Ok(false);
+            }
+            if lists.get_item(&pos)?.get_item(&idx)?.eq(&value)? {
+                return Ok(true);
+            }
+            idx += 1;
+            if idx == len_sublist {
+                pos += 1;
+                if pos == len_keys {
+                    return Ok(false);
+                }
+                len_sublist = keys.get_item(&pos)?.len()?;
+                idx = 0;
+            }
+        }
     }
 }
 /// Module for bisect functions, adapted from the Python standard library's bisect module.\
