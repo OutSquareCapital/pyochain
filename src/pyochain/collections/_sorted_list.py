@@ -24,6 +24,8 @@ if TYPE_CHECKING:
 
     from _typeshed import SupportsRichComparison
 
+    from ..rs import InnerSorted
+
 type KeyFunc[T, OT: SupportsRichComparison] = Callable[[T], OT]
 DEFAULT_LOAD_FACTOR: Final[int] = 1000
 
@@ -343,16 +345,19 @@ class BaseSortedListSet[T](ABC):
 
 
 class BaseSortedList[T](BaseSortedListSet[T], ABC):
+    _inner: InnerSorted[Any]
+
     @abstractmethod
     def __add__(self, other: Iterable[T]) -> Self: ...
 
     @abstractmethod
     def __mul__(self, num: int) -> Self: ...
 
-    @abstractmethod
-    def _delete(self, pos: int, idx: int) -> None: ...
-    @abstractmethod
-    def _expand(self, pos: int) -> None: ...
+    def _delete(self, pos: int, idx: int) -> None:
+        return self._inner.delete(pos, idx)
+
+    def _expand(self, pos: int) -> None:
+        return self._inner.expand(pos)
 
     @abstractmethod
     def count(self, value: T) -> int: ...
@@ -451,7 +456,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
     """
 
     def __init__(self, iterable: Iterable[T] | None = None) -> None:
-        self._inner: InnerLists[T, T] = InnerLists[T, T]()
+        self._inner: InnerLists[T, T] = InnerLists[T, T]()  # pyright: ignore[reportIncompatibleVariableOverride]
 
         if iterable is not None:
             _update_lists(self, iterable)
@@ -489,31 +494,6 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
             self._inner.maxes.append(value)
 
         self._inner.len += 1
-
-    @override
-    def _expand(self, pos: int) -> None:
-        load = self._inner.load
-        lists = self._inner.lists
-        index = self._inner.idx
-
-        if lists[pos].len() > (load << 1):
-            maxes = self._inner.maxes
-
-            lists_pos = lists[pos]
-            half = Vec.from_ref(lists_pos[load:])
-            lists_pos.truncate(load)
-            maxes[pos] = lists_pos[-1]
-
-            lists.insert(pos + 1, half)
-            maxes.insert(pos + 1, half[-1])
-
-            index.clear()
-        elif index:
-            child = self._inner.offset + pos
-            while child:
-                index[child] += 1
-                child = (child - 1) >> 1
-            index[0] += 1
 
     @override
     def update(self, iterable: Iterable[T]) -> None:
@@ -577,48 +557,6 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         else:
             msg = f"{value!r} not in list"
             raise ValueError(msg)
-
-    @override
-    def _delete(self, pos: int, idx: int) -> None:
-        lists = self._inner.lists
-        maxes = self._inner.maxes
-        index = self._inner.idx
-
-        lists_pos = lists[pos]
-
-        del lists_pos[idx]
-        self._inner.len -= 1
-
-        len_lists_pos = lists_pos.len()
-
-        if len_lists_pos > (self._inner.load >> 1):
-            maxes[pos] = lists_pos[-1]
-
-            if index:
-                child = self._inner.offset + pos
-                while child > 0:
-                    index[child] -= 1
-                    child = (child - 1) >> 1
-                index[0] -= 1
-        elif lists.len() > 1:
-            if pos == 0:
-                pos += 1
-
-            prev = pos - 1
-            lists[prev].extend(lists[pos])
-            maxes[prev] = lists[prev][-1]
-
-            del lists[pos]
-            del maxes[pos]
-            index.clear()
-
-            self._expand(prev)
-        elif len_lists_pos != 0:
-            maxes[pos] = lists_pos[-1]
-        else:
-            del lists[pos]
-            del maxes[pos]
-            index.clear()
 
     def _loc(self, pos: int, idx: int) -> int:
         """Convert an index pair (lists index, sublist index) into a single index number.
@@ -1853,36 +1791,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         self._inner.len += 1
 
     @override
-    def _expand(self, pos: int) -> None:
-        lists = self._inner.lists
-        keys = self._inner.keys
-        index = self._inner.idx
-
-        if keys[pos].len() > (self._inner.load << 1):
-            maxes = self._inner.maxes
-            load = self._inner.load
-
-            lists_pos = lists[pos]
-            keys_pos = keys[pos]
-            half = Vec.from_ref(lists_pos[load:])
-            half_keys = Vec.from_ref(keys_pos[load:])
-            lists_pos.truncate(load)
-            keys_pos.truncate(load)
-            maxes[pos] = keys_pos[-1]
-
-            lists.insert(pos + 1, half)
-            keys.insert(pos + 1, half_keys)
-            maxes.insert(pos + 1, half_keys[-1])
-
-            index.clear()
-        elif index:
-            child = self._inner.offset + pos
-            while child:
-                index[child] += 1
-                child = (child - 1) >> 1
-            index[0] += 1
-
-    @override
     def update(self, iterable: Iterable[T]) -> None:
         return _update_key_lists(self, iterable)
 
@@ -1974,53 +1882,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
                     raise ValueError(msg)
                 len_sublist = keys[pos].len()
                 idx = 0
-
-    @override
-    def _delete(self, pos: int, idx: int) -> None:
-        lists = self._inner.lists
-        keys = self._inner.keys
-        maxes = self._inner.maxes
-        index = self._inner.idx
-        keys_pos = keys[pos]
-        lists_pos = lists[pos]
-
-        del keys_pos[idx]
-        del lists_pos[idx]
-        self._inner.len -= 1
-
-        len_keys_pos = keys_pos.len()
-
-        if len_keys_pos > (self._inner.load >> 1):
-            maxes[pos] = keys_pos[-1]
-
-            if index:
-                child = self._inner.offset + pos
-                while child > 0:
-                    index[child] -= 1
-                    child = (child - 1) >> 1
-                index[0] -= 1
-        elif keys.len() > 1:
-            if pos == 0:
-                pos += 1
-
-            prev = pos - 1
-            keys[prev].extend(keys[pos])
-            lists[prev].extend(lists[pos])
-            maxes[prev] = keys[prev][-1]
-
-            del lists[pos]
-            del keys[pos]
-            del maxes[pos]
-            index.clear()
-
-            self._expand(prev)
-        elif len_keys_pos != 0:
-            maxes[pos] = keys_pos[-1]
-        else:
-            del lists[pos]
-            del keys[pos]
-            del maxes[pos]
-            index.clear()
 
     @override
     def irange(

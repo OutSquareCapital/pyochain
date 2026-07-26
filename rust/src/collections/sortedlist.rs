@@ -1,3 +1,4 @@
+use crate::pyo3_ext::prelude::*;
 use crate::seq::{IntoPyochain, PyoVec};
 use pyo3::{prelude::*, types::PyList};
 use pyochain_macros::py_abc;
@@ -7,8 +8,10 @@ const DEFAULT_LOAD_FACTOR: usize = 1000;
 #[py_abc(InnerLists, InnerKeyLists)]
 trait InnerSorted {
     fn get_lists(&self, py: Python<'_>) -> Py<PyoVec>;
-    fn clear(&mut self, py: Python<'_>) -> PyResult<()>;
+    fn clear(&mut self, py: Python<'_>) -> ();
     fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool>;
+    fn delete(&mut self, py: Python<'_>, pos: usize, idx: usize) -> PyResult<()>;
+    fn expand(&self, py: Python<'_>, pos: usize) -> PyResult<()>;
     fn collapse_lists<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyoVec>> {
         let init = PyList::empty(py).into_sequence();
         self.get_lists(py)
@@ -64,13 +67,12 @@ impl InnerSorted for InnerLists {
     fn get_lists(&self, py: Python<'_>) -> Py<PyoVec> {
         self.lists.clone_ref(py)
     }
-    fn clear(&mut self, py: Python<'_>) -> PyResult<()> {
+    fn clear(&mut self, py: Python<'_>) -> () {
         self.len = 0;
-        self.lists.get().clear(py)?;
-        self.maxes.get().clear(py)?;
-        self.idx.get().clear(py)?;
+        self.lists.get().clear(py);
+        self.maxes.get().clear(py);
+        self.idx.get().clear(py);
         self.offset = 0;
-        Ok(())
     }
 
     fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
@@ -98,6 +100,101 @@ impl InnerSorted for InnerLists {
         )?;
 
         lists.get_item(pos)?.get_item(idx)?.eq(value)
+    }
+    fn expand(&self, py: Python<'_>, pos: usize) -> PyResult<()> {
+        let load = self.load;
+        let lists = self.lists.get().inner.clone_ref(py).into_bound(py);
+        let index = self.idx.get().inner.bind(py);
+
+        if lists.get_item(pos)?.len()?.gt(&(load << 1)) {
+            let maxes = self.maxes.get().inner.bind(py);
+
+            let lists_pos = lists
+                .get_item(pos)?
+                .pipe(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })
+                .get()
+                .inner
+                .clone_ref(py)
+                .into_bound(py);
+            let half = lists_pos.get_slice(load, usize::MAX);
+            lists_pos.del_slice(load, usize::MAX)?;
+            maxes.set_item(pos, lists_pos.last()?)?;
+            let last = half.last()?;
+            lists.insert(pos + 1, &half.into_pyochain()?)?;
+            maxes.insert(pos + 1, last)?;
+
+            index.clear();
+            Ok(())
+        } else if !index.is_empty() {
+            let mut child = self.offset + pos;
+            while child != 0 {
+                index.set_item(child, index.get_item(child)?.iadd(1)?)?;
+                child = (child - 1) >> 1;
+            }
+            index.set_item(0, index.get_item(0)?.iadd(1)?)?;
+            Ok(())
+        } else {
+            Ok(())
+        }
+    }
+
+    fn delete(&mut self, py: Python<'_>, mut pos: usize, idx: usize) -> PyResult<()> {
+        let lists = self.lists.bind(py).get().inner.bind(py);
+        let maxes = self.maxes.bind(py);
+        let index = self.idx.bind(py).get().inner.bind(py);
+
+        let lists_pos = lists
+            .get_item(pos)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
+            .get()
+            .inner
+            .clone_ref(py)
+            .into_bound(py);
+
+        lists_pos.del_item(idx)?;
+        self.len -= 1;
+
+        let len_lists_pos = lists_pos.len();
+
+        if len_lists_pos > (self.load >> 1) {
+            maxes.set_item(pos, lists_pos.last()?)?;
+
+            if !index.is_empty() {
+                let mut child = self.offset + pos;
+                while child > 0 {
+                    index.set_item(child, index.get_item(child)?.isub(1)?)?;
+                    child = (child - 1) >> 1
+                }
+                index.set_item(0, index.get_item(0)?.isub(1)?)?;
+            }
+            Ok(())
+        } else if lists.len() > 1 {
+            if pos == 0 {
+                pos += 1;
+            }
+
+            let prev = (pos - 1) as usize;
+            lists
+                .get_item(prev)
+                .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
+                .get()
+                .extend(lists.get_item(pos)?)?;
+            maxes.set_item(prev, lists.get_item(prev)?.get_item(-1)?)?;
+
+            lists.del_item(pos)?;
+            maxes.del_item(pos)?;
+            index.clear();
+
+            self.expand(py, prev)
+        } else if len_lists_pos != 0 {
+            maxes.set_item(pos, lists_pos.last()?)?;
+            Ok(())
+        } else {
+            lists.del_item(pos)?;
+            maxes.del_item(&pos)?;
+            index.clear();
+            Ok(())
+        }
     }
 }
 
@@ -141,13 +238,12 @@ impl InnerSorted for InnerKeyLists {
     fn get_lists(&self, py: Python<'_>) -> Py<PyoVec> {
         self.lists.clone_ref(py)
     }
-    fn clear(&mut self, py: Python<'_>) -> PyResult<()> {
+    fn clear(&mut self, py: Python<'_>) -> () {
         self.len = 0;
-        self.lists.get().clear(py)?;
-        self.keys.get().clear(py)?;
-        self.maxes.get().clear(py)?;
-        self.idx.get().clear(py)?;
-        Ok(())
+        self.lists.get().clear(py);
+        self.keys.get().clear(py);
+        self.maxes.get().clear(py);
+        self.idx.get().clear(py);
     }
     fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
@@ -196,6 +292,123 @@ impl InnerSorted for InnerKeyLists {
                 len_sublist = keys.get_item(&pos)?.len()?;
                 idx = 0;
             }
+        }
+    }
+    fn delete(&mut self, py: Python<'_>, mut pos: usize, idx: usize) -> PyResult<()> {
+        let lists = self.lists.get().inner.bind(py);
+        let keys = self.keys.get().inner.bind(py);
+        let maxes = self.maxes.get().inner.bind(py);
+        let index = self.idx.get().inner.bind(py);
+        let keys_pos = keys
+            .get_item(pos)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
+            .get()
+            .inner
+            .clone_ref(py)
+            .into_bound(py);
+        let lists_pos = lists
+            .get_item(pos)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
+            .get()
+            .inner
+            .clone_ref(py)
+            .into_bound(py);
+
+        keys_pos.del_item(idx)?;
+        lists_pos.del_item(idx)?;
+        self.len -= 1;
+
+        let len_keys_pos = keys_pos.len();
+
+        if len_keys_pos > (self.load >> 1) {
+            maxes.set_item(pos, keys_pos.last()?)?;
+
+            if !index.is_empty() {
+                let mut child = self.offset + pos;
+                while child > 0 {
+                    index.set_item(child, index.get_item(child)?.isub(1)?)?;
+                    child = (child - 1) >> 1;
+                }
+                index.set_item(0, index.get_item(0)?.isub(1)?)?;
+            }
+            Ok(())
+        } else if keys.len() > 1 {
+            if pos == 0 {
+                pos += 1
+            }
+
+            let prev = pos - 1;
+            keys.get_item(prev)
+                .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
+                .get()
+                .extend(keys.get_item(pos)?)?;
+            lists
+                .get_item(prev)
+                .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
+                .get()
+                .extend(lists.get_item(pos)?)?;
+            maxes.set_item(prev, keys.get_item(prev)?.get_item(-1)?)?;
+
+            lists.del_item(pos)?;
+            keys.del_item(pos)?;
+            maxes.del_item(pos)?;
+            index.clear();
+
+            self.expand(py, prev)
+        } else if len_keys_pos != 0 {
+            maxes.set_item(pos, keys_pos.last()?)
+        } else {
+            lists.del_item(pos)?;
+            keys.del_item(pos)?;
+            maxes.del_item(pos)?;
+            index.clear();
+            Ok(())
+        }
+    }
+    fn expand(&self, py: Python<'_>, pos: usize) -> PyResult<()> {
+        let lists = self.lists.get().inner.bind(py);
+        let keys = self.keys.get().inner.clone_ref(py).into_bound(py);
+        let index = self.idx.get().inner.clone_ref(py).into_bound(py);
+
+        if keys.get_item(pos)?.len()? > self.load << 1 {
+            let maxes = self.maxes.get().inner.bind(py);
+            let load = self.load;
+
+            let lists_pos = lists
+                .get_item(pos)
+                .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
+                .get()
+                .inner
+                .clone_ref(py)
+                .into_bound(py);
+            let keys_pos = keys
+                .get_item(pos)
+                .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
+                .get()
+                .inner
+                .clone_ref(py)
+                .into_bound(py);
+            let half = lists_pos.get_slice(load, lists_pos.len()).into_pyochain()?;
+            let half_keys = keys_pos.get_slice(load, keys_pos.len()).into_pyochain()?;
+            lists_pos.del_slice(load, usize::MAX)?;
+            keys_pos.del_slice(load, usize::MAX)?;
+            maxes.set_item(pos, keys_pos.last()?)?;
+
+            lists.insert(pos + 1, half)?;
+            keys.insert(pos + 1, &half_keys)?;
+            maxes.insert(pos + 1, half_keys.get_item(half_keys.len()? - 1)?)?;
+            index.clear();
+            Ok(())
+        } else if !index.is_empty() {
+            let mut child = self.offset + pos;
+            while child != 0 {
+                index.set_item(child, index.get_item(child)?.iadd(1)?)?;
+                child = (child - 1) >> 1;
+            }
+            index.set_item(0, index.get_item(0)?.iadd(1)?)?;
+            Ok(())
+        } else {
+            Ok(())
         }
     }
 }
