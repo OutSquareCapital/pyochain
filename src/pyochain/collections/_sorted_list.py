@@ -462,7 +462,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
 
     @override
     def reset(self, load: int) -> None:
-        values = _collapse_lists(self._inner.lists)
+        values = self._inner.collapse_lists()
         self.clear()
         self._inner.load = load
         self.update(values)
@@ -965,7 +965,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
                     # sorted list.
 
                     if start == 0 and stop == self._inner.len:
-                        return _collapse_lists(self._inner.lists)
+                        return self._inner.collapse_lists()
 
                     start_pos, start_idx = self._pos(start)
                     start_list = self._inner.lists[start_pos]
@@ -1514,7 +1514,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         :return: new sorted list
 
         """
-        values = _collapse_lists(self._inner.lists)
+        values = self._inner.collapse_lists()
         values.extend(other)
         return self.__class__(values)
 
@@ -1562,7 +1562,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         :return: new sorted list
 
         """
-        values = _collapse_lists(self._inner.lists).repeat(num)
+        values = self._inner.collapse_lists().repeat(num)
         return self.__class__(values)
 
     def __rmul__(self, num: int) -> Self:
@@ -1587,7 +1587,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
             Self: existing sorted list
 
         """
-        values = _collapse_lists(self._inner.lists).repeat(num)
+        values = self._inner.collapse_lists().repeat(num)
         self.clear()
         self.update(values)
         return self
@@ -1736,7 +1736,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
 
     @override
     def __reduce__(self) -> tuple[type[Self], tuple[Vec[T]]]:
-        values = _collapse_lists(self._inner.lists)
+        values = self._inner.collapse_lists()
         return (self.__class__, (values,))
 
     @recursive_repr()
@@ -2330,7 +2330,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         :return: new sorted-key list
 
         """
-        values = _collapse_lists(self._inner.lists)
+        values = self._inner.collapse_lists()
         values.extend(other)
         return self.__class__(values, key=self._inner.key)
 
@@ -2351,12 +2351,12 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         :return: new sorted-key list
 
         """
-        values = _collapse_lists(self._inner.lists).repeat(num)
+        values = self._inner.collapse_lists().repeat(num)
         return self.__class__(values, key=self._inner.key)
 
     @override
     def __reduce__(self) -> tuple[type[Self], tuple[Vec[T], KeyFunc[T, OT]]]:  # pyright: ignore[reportIncompatibleMethodOverride]
-        values = _collapse_lists(self._inner.lists)
+        values = self._inner.collapse_lists()
         return (self.__class__, (values, self.key))
 
     @recursive_repr()
@@ -2372,22 +2372,16 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         return f"{type_name}({list(self)!r}, key={self._inner.key!r})"
 
 
-def _collapse_lists[T](lists: Vec[Vec[T]]) -> Vec[T]:
-    init: Vec[T] = Vec(())
-    return lists.iter().fold(init, operator.iadd)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
-
-
 def _update_lists[T: SupportsRichComparison](
     self: SortedList[T], iterable: Iterable[T]
 ) -> None:
-    lists = self.inner.lists
     maxes = self.inner.maxes
     values = Iter(iterable).sort()
 
     if maxes:
         if values.len() * 4 >= self.inner.len:
-            lists.append(values)
-            values = _collapse_lists(lists).sort()
+            self.inner.lists.append(values)
+            values = self.inner.collapse_lists().sort()
             self.clear()
         else:
             for val in values:
@@ -2396,12 +2390,12 @@ def _update_lists[T: SupportsRichComparison](
 
     load = self.inner.load
     values_len = values.len()
-    lists.extend(
+    self.inner.lists.extend(
         Range(0, values_len, load)
         .iter()
         .map(lambda pos: Vec.from_ref(values[pos : (pos + load)]))
     )
-    maxes.extend(lists.iter().map(operator.itemgetter(-1)))
+    self.inner.maxes.extend(self.inner.lists.iter().map(operator.itemgetter(-1)))
     self.inner.len = values_len
     self.inner.idx.clear()
 
@@ -2414,7 +2408,7 @@ def _update_key_lists[T, OT: SupportsRichComparison](
     if slf.inner.maxes:
         if values.len() * 4 >= slf.inner.len:
             slf.inner.lists.append(values)
-            values = _collapse_lists(slf.inner.lists).sort_by(key=slf.inner.key)
+            values = slf.inner.collapse_lists().sort_by(key=slf.inner.key)
             slf.clear()
         else:
             for val in values:

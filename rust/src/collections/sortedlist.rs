@@ -1,12 +1,33 @@
-use crate::seq::PyoVec;
-use pyo3::prelude::*;
+use crate::seq::{IntoPyochain, PyoVec};
+use pyo3::{prelude::*, types::PyList};
 use pyochain_macros::py_abc;
+use tap::Pipe;
 const DEFAULT_LOAD_FACTOR: usize = 1000;
 
 #[py_abc(InnerLists, InnerKeyLists)]
 trait InnerSorted {
+    fn get_lists(&self, py: Python<'_>) -> Py<PyoVec>;
     fn clear(&mut self, py: Python<'_>) -> PyResult<()>;
     fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool>;
+    fn collapse_lists<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyoVec>> {
+        let init = PyList::empty(py).into_sequence();
+        self.get_lists(py)
+            .get()
+            .inner
+            .bind(py)
+            .iter()
+            .try_fold(init, |acc, x| {
+                unsafe { x.cast_into_unchecked::<PyoVec>() }
+                    .get()
+                    .inner
+                    .bind(py)
+                    .as_sequence()
+                    .pipe(|x| acc.in_place_concat(x))?;
+                Ok::<_, PyErr>(acc)
+            })
+            .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?
+            .into_pyochain()
+    }
 }
 
 #[pyclass(generic)]
@@ -40,6 +61,9 @@ impl InnerLists {
 }
 
 impl InnerSorted for InnerLists {
+    fn get_lists(&self, py: Python<'_>) -> Py<PyoVec> {
+        self.lists.clone_ref(py)
+    }
     fn clear(&mut self, py: Python<'_>) -> PyResult<()> {
         self.len = 0;
         self.lists.get().clear(py)?;
@@ -114,6 +138,9 @@ impl InnerKeyLists {
     }
 }
 impl InnerSorted for InnerKeyLists {
+    fn get_lists(&self, py: Python<'_>) -> Py<PyoVec> {
+        self.lists.clone_ref(py)
+    }
     fn clear(&mut self, py: Python<'_>) -> PyResult<()> {
         self.len = 0;
         self.lists.get().clear(py)?;

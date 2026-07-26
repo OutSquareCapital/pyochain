@@ -32,7 +32,12 @@ from ._vec import Vec
 
 type KeyFunc[T, OT: SupportsRichComparison] = Callable[[T], OT]
 
-class InnerLists[T, U]:
+class InnerSorted[T](Protocol):
+    def clear(self) -> None: ...
+    def contains(self, value: object) -> bool: ...
+    def collapse_lists(self) -> Vec[Any]: ...
+
+class InnerLists[T, U](InnerSorted[T]):
     lists: Vec[Vec[T]]
     maxes: Vec[U]
     idx: Vec[int]
@@ -40,10 +45,8 @@ class InnerLists[T, U]:
     load: int
     offset: int
     def __new__(cls) -> Self: ...
-    def clear(self) -> None: ...
-    def contains(self, value: object) -> bool: ...
 
-class InnerKeyLists[T, U, OT: SupportsRichComparison]:
+class InnerKeyLists[T, U, OT: SupportsRichComparison](InnerSorted[T]):
     key: KeyFunc[T, OT]
     keys: Vec[Vec[OT]]
     lists: Vec[Vec[T]]
@@ -53,8 +56,6 @@ class InnerKeyLists[T, U, OT: SupportsRichComparison]:
     load: int
     offset: int
     def __new__(cls, key: KeyFunc[T, OT]) -> Self: ...
-    def clear(self) -> None: ...
-    def contains(self, value: object) -> bool: ...
 
 def insort_right[T](
     a: Vec[T],
