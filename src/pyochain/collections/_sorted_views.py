@@ -250,13 +250,12 @@ def _view_delitem[K: SupportsHashableAndRichComparison, V](
     """
     mapping = self._mapping  # pyright: ignore[reportPrivateUsage]
     list_ = mapping._list  # pyright: ignore[reportPrivateUsage]
-    dict_delitem = dict[K, V].__delitem__
     match index:
         case slice():
             keys = list_[index]
             del list_[index]
             for key in keys:
-                dict_delitem(mapping, key)
+                del mapping.inner[key]
         case int():
             key = list_.pop(index)
-            dict_delitem(mapping, key)
+            del mapping.inner[key]
