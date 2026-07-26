@@ -28,6 +28,7 @@ impl ABCRegister<'_> for PyIterable {}
 pub trait PyListExtMethods<'py> {
     fn clear(&self) -> ();
     fn extend(&self, iterable: Bound<'_, PyAny>) -> PyResult<()>;
+    fn last(&self) -> PyResult<Bound<'py, PyAny>>;
 }
 impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
     fn clear(&self) -> () {
@@ -39,6 +40,10 @@ impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
             .try_iter()
             .map(|_| unsafe { ffi::PyList_Extend(self.as_ptr(), iterable.as_ptr()) })?;
         Ok(())
+    }
+    fn last(&self) -> PyResult<Bound<'py, PyAny>> {
+        let length = self.len();
+        self.get_item(length - 1)
     }
 }
 
