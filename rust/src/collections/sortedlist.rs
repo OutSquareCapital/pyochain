@@ -4,10 +4,31 @@ use pyo3::{prelude::*, types::PyList};
 use pyochain_macros::py_abc;
 use tap::Pipe;
 const DEFAULT_LOAD_FACTOR: usize = 1000;
+trait InnerSortedRs {
+    fn get_lists(&self, py: Python<'_>) -> Py<PyoVec>;
+    fn get_idx(&self, py: Python<'_>) -> Py<PyoVec>;
+    fn set_offset(&mut self, offset: usize);
+}
+macro_rules! impl_inner_sorted_rs {
+    ($t:ty) => {
+        impl InnerSortedRs for $t {
+            fn get_lists(&self, py: Python<'_>) -> Py<PyoVec> {
+                self.lists.clone_ref(py)
+            }
+            fn get_idx(&self, py: Python<'_>) -> Py<PyoVec> {
+                self.idx.clone_ref(py)
+            }
+            fn set_offset(&mut self, offset: usize) {
+                self.offset = offset;
+            }
+        }
+    };
+}
+impl_inner_sorted_rs!(InnerLists);
+impl_inner_sorted_rs!(InnerKeyLists);
 
 #[py_abc(InnerLists, InnerKeyLists)]
-trait InnerSorted {
-    fn get_lists(&self, py: Python<'_>) -> Py<PyoVec>;
+trait InnerSorted: Sized + InnerSortedRs {
     fn clear(&mut self, py: Python<'_>) -> ();
     fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool>;
     fn delete(&mut self, py: Python<'_>, pos: usize, idx: usize) -> PyResult<()>;
@@ -30,6 +51,94 @@ trait InnerSorted {
             })
             .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?
             .into_pyochain()
+    }
+    /// Build a positional index for indexing the sorted list.
+    /// Indexes are represented as binary trees in a dense array notation similar to a binary heap.
+
+    /// For example, given a lists representation storing integers:
+
+    ///     0: [1, 2, 3]
+    ///     1: [4, 5]
+    ///     2: [6, 7, 8, 9]
+    ///     3: [10, 11, 12, 13, 14]
+
+    /// The first transformation maps the sub-lists by their length.\
+    /// The first row of the index is the length of the sub-lists::
+
+    ///     0: [3, 2, 4, 5]
+
+    /// Each row after that is the sum of consecutive pairs of the previous row:
+
+    ///     1: [5, 9]
+    ///     2: [14]
+
+    /// Finally, the index is built by concatenating these lists together:
+
+    ///     _index = [14, 5, 9, 3, 2, 4, 5]
+
+    /// An offset storing the start of the first row is also stored:
+
+    ///     _offset = 3
+    /// When built, the index can be used for efficient indexing into the list.
+    fn build_index(&mut self, py: Python<'_>) -> PyResult<()> {
+        let idx = self.get_idx(py).get().inner.clone_ref(py).into_bound(py);
+        let lists = self.get_lists(py).get().inner.clone_ref(py).into_bound(py);
+
+        let row0 = lists
+            .iter()
+            .map(|x| x.len())
+            .collect::<PyResult<Vec<usize>>>()?;
+
+        if row0.len() == 1 {
+            idx.set_slice(0, idx.len(), PyList::new(py, row0)?.as_any())?;
+            self.set_offset(0);
+            return Ok(());
+        }
+
+        let mut row1 = row0
+            .chunks(2)
+            .map(|pair| pair.iter().sum())
+            .collect::<Vec<usize>>();
+
+        if row1.len() == 1 {
+            let combined = row1
+                .into_iter()
+                .chain(row0)
+                .try_fold(PyList::empty(py), |acc, x| {
+                    acc.append(x)?;
+                    Ok::<_, PyErr>(acc)
+                })?;
+            idx.set_slice(0, idx.len(), combined.as_any())?;
+            self.set_offset(1);
+            return Ok(());
+        }
+
+        let size = 1usize << ((row1.len() - 1).ilog2() + 1);
+        row1.resize(size, 0);
+
+        let mut tree = vec![row0, row1];
+        while tree.last().unwrap().len() > 1 {
+            let row = tree
+                .last()
+                .unwrap()
+                .chunks(2)
+                .map(|pair| pair.iter().sum())
+                .collect();
+            tree.push(row);
+        }
+
+        let flat = tree
+            .into_iter()
+            .rev()
+            .flatten()
+            .try_fold(PyList::empty(py), |acc, x| {
+                acc.append(x)?;
+                Ok::<_, PyErr>(acc)
+            })?
+            .into_any();
+        idx.set_slice(0, idx.len(), &flat)?;
+        self.set_offset(size * 2 - 1);
+        Ok(())
     }
 }
 
@@ -62,11 +171,7 @@ impl InnerLists {
         })
     }
 }
-
 impl InnerSorted for InnerLists {
-    fn get_lists(&self, py: Python<'_>) -> Py<PyoVec> {
-        self.lists.clone_ref(py)
-    }
     fn clear(&mut self, py: Python<'_>) -> () {
         self.len = 0;
         self.lists.get().clear(py);
@@ -235,9 +340,6 @@ impl InnerKeyLists {
     }
 }
 impl InnerSorted for InnerKeyLists {
-    fn get_lists(&self, py: Python<'_>) -> Py<PyoVec> {
-        self.lists.clone_ref(py)
-    }
     fn clear(&mut self, py: Python<'_>) -> () {
         self.len = 0;
         self.lists.get().clear(py);

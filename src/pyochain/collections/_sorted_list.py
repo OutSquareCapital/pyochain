@@ -5,7 +5,6 @@ from __future__ import annotations
 import operator
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Sequence
-from math import log2
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, Final, Self, overload, override
 
@@ -744,72 +743,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         return (pos - self._inner.offset, idx)
 
     def _build_index(self) -> None:
-        """Build a positional index for indexing the sorted list.
-
-        Indexes are represented as binary trees in a dense array notation
-        similar to a binary heap.
-
-        For example, given a lists representation storing integers::
-
-            0: [1, 2, 3]
-            1: [4, 5]
-            2: [6, 7, 8, 9]
-            3: [10, 11, 12, 13, 14]
-
-        The first transformation maps the sub-lists by their length. The
-        first row of the index is the length of the sub-lists::
-
-            0: [3, 2, 4, 5]
-
-        Each row after that is the sum of consecutive pairs of the previous
-        row::
-
-            1: [5, 9]
-            2: [14]
-
-        Finally, the index is built by concatenating these lists together::
-
-            _index = [14, 5, 9, 3, 2, 4, 5]
-
-        An offset storing the start of the first row is also stored::
-
-            _offset = 3
-
-        When built, the index can be used for efficient indexing into the list.
-        See the comment and notes on ``SortedList._pos`` for details.
-
-        """
-        row0 = self._inner.lists.iter().map(len).collect(Vec)
-
-        if row0.len() == 1:
-            self._inner.idx[:] = row0
-            self._inner.offset = 0
-            return
-
-        head = row0.iter()
-        tail = head.iter()
-        row1 = head.map_with(operator.add, tail).collect(Vec)
-
-        if row0.len() & 1:
-            row1.append(row0[-1])
-
-        if row1.len() == 1:
-            self._inner.idx[:] = row1 + row0
-            self._inner.offset = 1
-            return
-
-        size: int = 2 ** (int(log2(row1.len() - 1)) + 1)  # pyright: ignore[reportAny]
-        row1.extend(Iter.repeat(0, size - row1.len()))
-        tree = Vec([row0, row1])
-
-        while tree[-1].len() > 1:
-            head = tree[-1].iter()
-            tail = head.iter()
-            row = head.map_with(operator.add, tail).collect(Vec)
-            tree.append(row)
-
-        _ = tree.rev().fold(self._inner.idx, operator.iadd)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
-        self._inner.offset = size * 2 - 1
+        return self._inner.build_index()
 
     @override
     def __delitem__(self, index: int | slice) -> None:
