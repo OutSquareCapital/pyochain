@@ -233,28 +233,37 @@ pub struct Range {
     #[pyo3(get)]
     pub inner: Py<PyRange>,
 }
-
+impl Range {
+    pub fn new(py: Python<'_>, start: isize, stop: isize) -> PyResult<Self> {
+        PyRange::new(py, start, stop)
+            .map(Bound::unbind)
+            .map(|inner| Self { inner })
+    }
+    pub fn new_with_step(py: Python<'_>, start: isize, stop: isize, step: isize) -> PyResult<Self> {
+        PyRange::new_with_step(py, start, stop, step)
+            .map(Bound::unbind)
+            .map(|inner| Self { inner })
+    }
+}
 #[pymethods]
 impl Range {
     #[pyo3(signature = (start, stop, step = 1))]
     #[new]
-    fn new(
-        start: Bound<'_, PyInt>,
-        stop: Bound<'_, PyInt>,
+    fn py_new(
+        py: Python<'_>,
+        start: isize,
+        stop: isize,
         step: isize,
     ) -> PyResult<PyClassInitializer<Self>> {
-        PyRange::type_object(start.py())
-            .call1((start, stop, step))?
-            .pipe(|x| unsafe { x.cast_into_unchecked::<PyRange>() })
-            .unbind()
-            .pipe(|inner| abc::PyoSequence::build_init().add_subclass(Self { inner }))
-            .pipe(Ok)
+        PyRange::new_with_step(py, start, stop, step)
+            .map(Bound::unbind)
+            .map(|inner| abc::PyoSequence::build_init().add_subclass(Self { inner }))
     }
-    fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
-        self.inner.clone_ref(py).bind(py).try_iter().unwrap()
+    pub fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
+        self.inner.bind(py).try_iter().unwrap()
     }
 
-    fn __len__(&self, py: Python) -> usize {
+    fn __len__(&self, py: Python<'_>) -> usize {
         self.inner
             .bind(py)
             .pipe(|x| unsafe { x.cast_unchecked::<PySequence>() })
@@ -290,12 +299,8 @@ impl Range {
     fn __contains__(&self, key: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.inner.bind(key.py()).contains(key)
     }
-    fn __reversed__<'py>(slf: Bound<'py, Self>) -> Bound<'py, PyIterator> {
-        let py = slf.py();
-        slf.get()
-            .inner
-            .bind(py)
-            .pipe_as_ref(pylibs::builtins::reversed)
+    pub fn __reversed__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
+        self.inner.bind(py).pipe_as_ref(pylibs::builtins::reversed)
     }
     #[pyo3(signature = (value, /))]
     fn count<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
