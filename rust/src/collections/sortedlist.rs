@@ -33,6 +33,7 @@ trait InnerSorted: Sized + InnerSortedRs {
     fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool>;
     fn delete(&mut self, py: Python<'_>, pos: usize, idx: usize) -> PyResult<()>;
     fn expand(&self, py: Python<'_>, pos: usize) -> PyResult<()>;
+    fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn collapse_lists<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyoVec>> {
         let init = PyList::empty(py).into_sequence();
         self.get_lists(py)
@@ -301,6 +302,39 @@ impl InnerSorted for InnerLists {
             Ok(())
         }
     }
+    fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        let py = value.py();
+        let lists = self.lists.get().inner.bind(py);
+        let maxes = self.maxes.get().inner.bind(py);
+        if !maxes.is_empty() {
+            let mut pos = bisect::bisect_right(self.maxes.bind(py), &value, 0, None, None)?;
+
+            if pos == maxes.len() {
+                pos -= 1;
+                lists
+                    .get_item(pos)
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
+                    .get()
+                    .append(&value)?;
+                maxes.set_item(pos, &value)?;
+            } else {
+                let vector = &lists
+                    .get_item(pos)
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
+
+                let res = bisect::bisect_right(&vector, &value, 0, None, None)?;
+                vector.get().insert(res, &value)?;
+            }
+
+            self.expand(py, pos)?;
+        } else {
+            lists.append(PyList::new(py, [&value])?.into_pyochain()?)?;
+            maxes.append(&value)?;
+        }
+
+        self.len += 1;
+        Ok(())
+    }
 }
 
 #[pyclass(generic)]
@@ -513,34 +547,64 @@ impl InnerSorted for InnerKeyLists {
             Ok(())
         }
     }
+    fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        let py = value.py();
+        let key = self.key.bind(py).call1((&value,))?;
+        let lists = self.lists.get().inner.bind(py);
+        let maxes = self.maxes.get().inner.bind(py);
+        let keys = self.keys.get().inner.bind(py);
+
+        if !maxes.is_empty() {
+            let mut pos = bisect::bisect_right(self.maxes.bind(py), &key, 0, None, None)?;
+
+            if pos == maxes.len() {
+                pos -= 1;
+                lists
+                    .get_item(pos)
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
+                    .get()
+                    .append(&value)?;
+                keys.get_item(pos)
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
+                    .get()
+                    .append(&key)?;
+                maxes.set_item(pos, &key)?;
+            } else {
+                let idx = bisect::bisect_right(
+                    &keys
+                        .get_item(pos)
+                        .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
+                    &key,
+                    0,
+                    None,
+                    None,
+                )?;
+                lists
+                    .get_item(pos)
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
+                    .get()
+                    .insert(idx, &value)?;
+                keys.get_item(pos)
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
+                    .get()
+                    .insert(idx, &key)?;
+            }
+
+            self.expand(py, pos)?;
+        } else {
+            lists.append(PyList::new(py, [value])?.into_pyochain()?)?;
+            keys.append(PyList::new(py, [&key])?.into_pyochain()?)?;
+            maxes.append(key)?;
+        }
+
+        self.len += 1;
+        Ok(())
+    }
 }
 /// Module for bisect functions, adapted from the Python standard library's bisect module.\
 /// Adapted to only handle `pyochain::PyoVec` for both simplicity and performance.
 pub mod bisect {
     use super::*;
-    /// The following documentation and code is adapted from the Python standard library's bisect module.
-    ///
-    /// Insert item x in list a, and keep it sorted assuming a is sorted.
-
-    /// If x is already in a, insert it to the right of the rightmost x.
-
-    /// Optional args lo (default 0) and hi (default len(a)) bound the slice of a to be searched.
-
-    /// A custom key function can be supplied to customize the sort order.
-    #[pyfunction(signature = (vec, item, lo=0, hi=None, key=None))]
-    pub fn insort_right(
-        vec: &Bound<'_, PyoVec>,
-        item: &Bound<'_, PyAny>,
-        lo: usize,
-        hi: Option<usize>,
-        key: Option<Bound<'_, PyAny>>,
-    ) -> PyResult<()> {
-        let res = match key {
-            None => bisect_right(&vec, &item, lo, hi, None),
-            Some(key) => bisect_right(&vec, &key.call1((&item,))?, lo, hi, Some(key)),
-        }?;
-        vec.get().inner.bind(vec.py()).insert(res, item)
-    }
 
     /// The following documentation and code is adapted from the Python standard library's bisect module.
     ///Return the index where to insert item x in list a, assuming a is sorted.

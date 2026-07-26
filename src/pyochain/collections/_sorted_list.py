@@ -4,21 +4,16 @@ from __future__ import annotations
 
 import operator
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Sequence
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, Final, Self, overload, override
 
 from pyochain import Iter, Range, Vec
 from pyochain.abc import PyoIterator, PyoMutableSequence
-from pyochain.rs import (
-    InnerKeyLists,
-    InnerLists,
-    bisect_left,
-    bisect_right,
-    insort_right,
-)
+from pyochain.rs import InnerKeyLists, InnerLists, bisect_left, bisect_right
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
     from types import NotImplementedType
 
     from _typeshed import SupportsRichComparison
@@ -375,6 +370,9 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):
 
     @abstractmethod
     def __mul__(self, num: int) -> Self: ...
+    @override
+    def add(self, value: T) -> None:
+        return self._inner.add(value)
 
     @abstractmethod
     def count(self, value: T) -> int: ...
@@ -492,25 +490,6 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
     @override
     def clear(self) -> None:
         self._inner.clear()
-
-    @override
-    def add(self, value: T) -> None:
-        if self._inner.maxes:
-            pos = bisect_right(self._inner.maxes, value)
-
-            if pos == self._inner.maxes.len():
-                pos -= 1
-                self._inner.lists[pos].append(value)
-                self._inner.maxes[pos] = value
-            else:
-                insort_right(self._inner.lists[pos], value)
-
-            self._inner.expand(pos)
-        else:
-            self._inner.lists.append(Vec([value]))
-            self._inner.maxes.append(value)
-
-        self._inner.len += 1
 
     @override
     def update(self, iterable: Iterable[T]) -> None:
@@ -1698,31 +1677,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
     @override
     def clear(self) -> None:
         self._inner.clear()
-
-    @override
-    def add(self, value: T) -> None:
-        key = self._inner.key(value)
-
-        if self._inner.maxes:
-            pos = bisect_right(self._inner.maxes, key)
-
-            if pos == self._inner.maxes.len():
-                pos -= 1
-                self._inner.lists[pos].append(value)
-                self._inner.keys[pos].append(key)
-                self._inner.maxes[pos] = key
-            else:
-                idx = bisect_right(self._inner.keys[pos], key)
-                self._inner.lists[pos].insert(idx, value)
-                self._inner.keys[pos].insert(idx, key)
-
-            self._inner.expand(pos)
-        else:
-            self._inner.lists.append(Vec([value]))
-            self._inner.keys.append(Vec([key]))
-            self._inner.maxes.append(key)
-
-        self._inner.len += 1
 
     @override
     def update(self, iterable: Iterable[T]) -> None:

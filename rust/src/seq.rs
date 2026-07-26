@@ -493,7 +493,7 @@ impl PyoVec {
         Ok(slf)
     }
 
-    fn append(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn append(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         self.inner.bind(value.py()).append(value)
     }
 
@@ -515,7 +515,7 @@ impl PyoVec {
         Ok(slf)
     }
 
-    fn insert(&self, index: usize, value: Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn insert(&self, index: usize, value: &Bound<'_, PyAny>) -> PyResult<()> {
         self.inner.bind(value.py()).insert(index, value)
     }
 

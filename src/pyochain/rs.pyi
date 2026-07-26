@@ -39,6 +39,7 @@ class InnerSorted[T](Protocol):
     def delete(self, pos: int, idx: int) -> None: ...
     def expand(self, pos: int) -> None: ...
     def build_index(self) -> None: ...
+    def add(self, value: T) -> None: ...
 
 class InnerLists[T, U](InnerSorted[T]):
     lists: Vec[Vec[T]]
@@ -60,13 +61,6 @@ class InnerKeyLists[T, U, OT: SupportsRichComparison](InnerSorted[T]):
     offset: int
     def __new__(cls, key: KeyFunc[T, OT]) -> Self: ...
 
-def insort_right[T](
-    a: Vec[T],
-    x: T,
-    lo: int = 0,
-    hi: int | None = None,
-    key: object | None = None,
-) -> None: ...
 def bisect_right[T](
     a: Vec[T], x: T, lo: int = 0, hi: int | None = None, key: object | None = None
 ) -> int: ...
@@ -94,7 +88,6 @@ __all__ = [
     "Vec",
     "bisect_left",
     "bisect_right",
-    "insort_right",
 ]
 
 # Option types
