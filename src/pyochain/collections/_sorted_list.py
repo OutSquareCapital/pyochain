@@ -353,12 +353,6 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):
     @abstractmethod
     def __mul__(self, num: int) -> Self: ...
 
-    def _delete(self, pos: int, idx: int) -> None:
-        return self._inner.delete(pos, idx)
-
-    def _expand(self, pos: int) -> None:
-        return self._inner.expand(pos)
-
     @abstractmethod
     def count(self, value: T) -> int: ...
 
@@ -488,7 +482,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
             else:
                 insort_right(self._inner.lists[pos], value)
 
-            self._expand(pos)
+            self._inner.expand(pos)
         else:
             self._inner.lists.append(Vec([value]))
             self._inner.maxes.append(value)
@@ -533,7 +527,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         idx = bisect_left(lists[pos], value)
 
         if lists[pos][idx] == value:
-            self._delete(pos, idx)
+            self._inner.delete(pos, idx)
 
     @override
     def remove(self, value: T) -> None:
@@ -553,7 +547,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         idx = bisect_left(lists[pos], value)
 
         if lists[pos][idx] == value:
-            self._delete(pos, idx)
+            self._inner.delete(pos, idx)
         else:
             msg = f"{value!r} not in list"
             raise ValueError(msg)
@@ -856,10 +850,10 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
                     indices = indices.rev()
 
                 for pos, idx in indices.iter().map(self._pos):
-                    self._delete(pos, idx)
+                    self._inner.delete(pos, idx)
             case _:
                 pos, idx = self._pos(index)
-                self._delete(pos, idx)
+                self._inner.delete(pos, idx)
         return None
 
     @overload
@@ -1351,19 +1345,19 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
 
         if index == 0:
             val = lists[0][0]
-            self._delete(0, 0)
+            self._inner.delete(0, 0)
             return val
 
         if index == -1:
             pos = lists.len() - 1
             loc = lists[pos].len() - 1
             val = lists[pos][loc]
-            self._delete(pos, loc)
+            self._inner.delete(pos, loc)
             return val
 
         if 0 <= index < lists[0].len():
             val = lists[0][index]
-            self._delete(0, index)
+            self._inner.delete(0, index)
             return val
 
         len_last = lists[-1].len()
@@ -1372,12 +1366,12 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
             pos = lists.len() - 1
             loc = len_last + index
             val = lists[pos][loc]
-            self._delete(pos, loc)
+            self._inner.delete(pos, loc)
             return val
 
         pos, idx = self._pos(index)
         val = lists[pos][idx]
-        self._delete(pos, idx)
+        self._inner.delete(pos, idx)
         return val
 
     @override
@@ -1782,7 +1776,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
                 self._inner.lists[pos].insert(idx, value)
                 self._inner.keys[pos].insert(idx, key)
 
-            self._expand(pos)
+            self._inner.expand(pos)
         else:
             self._inner.lists.append(Vec([value]))
             self._inner.keys.append(Vec([key]))
@@ -1836,7 +1830,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
             if keys[pos][idx] != key:
                 return
             if lists[pos][idx] == value:
-                self._delete(pos, idx)
+                self._inner.delete(pos, idx)
                 return
             idx += 1
             if idx == len_sublist:
@@ -1872,7 +1866,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
                 msg_0 = f"{value!r} not in list"
                 raise ValueError(msg_0)
             if lists[pos][idx] == value:
-                self._delete(pos, idx)
+                self._inner.delete(pos, idx)
                 return
             idx += 1
             if idx == len_sublist:
