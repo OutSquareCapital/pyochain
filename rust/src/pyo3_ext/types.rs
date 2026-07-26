@@ -25,6 +25,25 @@ impl ABCRegister<'_> for PyMutableSequence {}
 impl ABCRegister<'_> for PyAbstractSet {}
 impl ABCRegister<'_> for PyIterable {}
 
+pub trait PyListExtMethods<'py> {
+    fn as_mutable_sequence(&self) -> &Bound<'py, PyMutableSequence>;
+    fn clear(&self) -> PyResult<()>;
+}
+impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
+    fn as_mutable_sequence(&self) -> &Bound<'py, PyMutableSequence> {
+        unsafe { self.cast_unchecked() }
+    }
+
+    fn clear(&self) -> PyResult<()> {
+        let out = unsafe { ffi::PyList_Clear(self.as_ptr()) };
+        if out == 0 {
+            Ok(())
+        } else {
+            Err(PyErr::fetch(self.py()))
+        }
+    }
+}
+
 /// Type representing the `typing.SupportsIndex` protocol.
 #[repr(transparent)]
 pub struct PySupportsIndex(PyAny);
