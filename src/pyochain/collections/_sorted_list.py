@@ -140,32 +140,34 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         """
         match index:
             case slice():
-                start, stop, step = index.indices(self._inner.len)
-
-                if step == 1 and start < stop:
-                    if start == 0 and stop == self._inner.len:
+                length = self._inner.len
+                start, stop, step = index.indices(length)
+                match (start, stop, step, start < stop):
+                    case 0, _, 1, True if stop == length:
                         return self.clear()
-                    if self._inner.len <= 8 * (stop - start):
+                    case _, _, 1, True if length <= 8 * (stop - start):
                         values = self.__getitem__(slice(None, start))
-                        if stop < self._inner.len:
+                        if stop < length:
                             values += self.__getitem__(slice(stop, None))
                         self.clear()
                         return self.update(values)
-
-                indices = Range(start, stop, step)
-
-                # Delete items from greatest index to least so
-                # that the indices remain valid throughout iteration.
-
-                if step > 0:
-                    indices = indices.rev()
-
-                for pos, idx in indices.iter().map(self._pos):
-                    self._inner.delete(pos, idx)
+                    case _, _, _, _ if step > 0:
+                        return (
+                            Range(start, stop, step)
+                            .rev()
+                            .map(self._pos)
+                            .for_each_star(self._inner.delete)
+                        )
+                    case _:
+                        return (
+                            Range(start, stop, step)
+                            .iter()
+                            .map(self._pos)
+                            .for_each_star(self._inner.delete)
+                        )
             case _:
                 pos, idx = self._pos(index)
-                self._inner.delete(pos, idx)
-        return None
+                return self._inner.delete(pos, idx)
 
     @overload
     def __getitem__(self, index: int) -> T: ...
