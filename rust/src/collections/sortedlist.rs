@@ -39,7 +39,7 @@ impl_inner_sorted_rs!(InnerKeyLists);
 #[py_abc(InnerLists, InnerKeyLists)]
 trait InnerSorted: Sized + InnerSortedRs {
     fn bisect_left(&mut self, value: Bound<'_, PyAny>) -> PyResult<isize>;
-    fn bisect_right(&mut self, value: Bound<'_, PyAny>) -> PyResult<isize>;
+    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<isize>;
     fn clear(&mut self, py: Python<'_>) -> ();
     fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool>;
     fn delete(&mut self, py: Python<'_>, pos: usize, idx: usize) -> PyResult<()>;
@@ -48,6 +48,13 @@ trait InnerSorted: Sized + InnerSortedRs {
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn remove(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn count(&mut self, value: Bound<'_, PyAny>) -> PyResult<usize>;
+    #[pyo3(signature = (value, start = None, stop = None))]
+    fn index(
+        &mut self,
+        value: Bound<'_, PyAny>,
+        start: Option<isize>,
+        stop: Option<isize>,
+    ) -> PyResult<isize>;
     fn collapse_lists<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyoVec>> {
         let init = PyList::empty(py).into_sequence();
         self.get_lists(py)
@@ -287,12 +294,10 @@ trait InnerSorted: Sized + InnerSortedRs {
             idx += self.get_len() as isize;
 
             if idx < 0 {
-                let msg = "list index out of range";
-                return Err(PyIndexError::new_err(msg));
+                return out_of_range_err();
             }
         } else if idx >= self.get_len() as isize {
-            let msg = "list index out of range";
-            return Err(PyIndexError::new_err(msg));
+            return out_of_range_err();
         }
 
         if idx < lists.get_item(0)?.len()? as isize {
@@ -601,7 +606,7 @@ impl InnerSorted for InnerLists {
         self.loc(py, pos, idx as isize)
     }
 
-    fn bisect_right(&mut self, value: Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
         let py = value.py();
         let maxes = self.maxes.get().inner.bind(py);
 
@@ -660,6 +665,70 @@ impl InnerSorted for InnerLists {
         let right = self.loc(py, pos_right, idx_right as isize)?;
         let left = self.loc(py, pos_left, idx_left as isize)?;
         Ok((right - left) as usize)
+    }
+
+    fn index(
+        &mut self,
+        value: Bound<'_, PyAny>,
+        start: Option<isize>,
+        stop: Option<isize>,
+    ) -> PyResult<isize> {
+        let py = value.py();
+        let len_ = self.len as isize;
+
+        if len_ == 0 {
+            return is_not_in_list_err(value);
+        }
+
+        let mut start = start.unwrap_or(0);
+        if start < 0 {
+            start += len_;
+        }
+        start = start.max(0);
+
+        let mut stop = stop.unwrap_or(len_);
+        if stop < 0 {
+            stop += len_;
+        }
+        stop = stop.min(len_);
+
+        if stop <= start {
+            return is_not_in_list_err(value);
+        }
+
+        let maxes = self.maxes.get().inner.bind(py);
+        let pos_left = bisect::bisect_left(self.maxes.bind(py), &value, 0, None, None)?;
+
+        if pos_left == maxes.len() {
+            return is_not_in_list_err(value);
+        }
+
+        let lists = self.lists.get().inner.bind(py);
+        let v_left = lists
+            .get_item(pos_left)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
+        let idx_left = bisect::bisect_left(&v_left, &value, 0, None, None)?;
+
+        if lists.get_item(pos_left)?.get_item(idx_left)?.ne(&value)? {
+            return is_not_in_list_err(value);
+        }
+
+        stop -= 1;
+        let left = self.loc(py, pos_left, idx_left as isize)?;
+
+        if start <= left {
+            if left <= stop {
+                return Ok(left);
+            }
+        } else {
+            let right = self.bisect_right(&value)? - 1;
+
+            if start <= right {
+                return Ok(start);
+            }
+        }
+
+        is_not_in_list_err(value)
     }
 }
 
@@ -1032,7 +1101,7 @@ impl InnerSorted for InnerKeyLists {
             .and_then(|x| self.bisect_key_left(x))
     }
 
-    fn bisect_right(&mut self, value: Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
         self.key
             .bind(value.py())
             .call1((value,))
@@ -1081,6 +1150,78 @@ impl InnerSorted for InnerKeyLists {
                 idx = 0;
             }
         }
+    }
+    fn index(
+        &mut self,
+        value: Bound<'_, PyAny>,
+        start: Option<isize>,
+        stop: Option<isize>,
+    ) -> PyResult<isize> {
+        let py = value.py();
+        let len_ = self.len as isize;
+
+        if len_ == 0 {
+            return is_not_in_list_err(value);
+        }
+
+        let mut start = start.unwrap_or(0);
+        if start < 0 {
+            start += len_;
+        }
+        start = start.max(0);
+
+        let mut stop = stop.unwrap_or(len_);
+        if stop < 0 {
+            stop += len_;
+        }
+        stop = stop.min(len_);
+
+        if stop <= start {
+            return is_not_in_list_err(value);
+        }
+
+        let maxes = self.maxes.get().inner.bind(py);
+        let key = self.key.bind(py).call1((&value,))?;
+        let mut pos = bisect::bisect_left(self.maxes.bind(py), &key, 0, None, None)?;
+
+        if pos == maxes.len() {
+            return is_not_in_list_err(value);
+        }
+
+        stop -= 1;
+        let lists = self.lists.get().inner.clone_ref(py).into_bound(py);
+        let keys = self.keys.get().inner.clone_ref(py).into_bound(py);
+        let v_left = keys
+            .get_item(pos)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
+        let mut idx = bisect::bisect_left(&v_left, &key, 0, None, None)?;
+        let len_keys = keys.len();
+        let mut len_sublist = v_left.len()?;
+
+        loop {
+            if keys.get_item(pos)?.get_item(idx)?.ne(&key)? {
+                return is_not_in_list_err(value);
+            }
+            if lists.get_item(pos)?.get_item(idx)?.eq(&value)? {
+                let loc = self.loc(py, pos, idx as isize)?;
+                if start <= loc && loc <= stop {
+                    return Ok(loc);
+                } else if loc > stop {
+                    break;
+                }
+            }
+            idx += 1;
+            if idx == len_sublist {
+                pos += 1;
+                if pos == len_keys {
+                    return is_not_in_list_err(value);
+                }
+                len_sublist = keys.get_item(pos)?.len()?;
+                idx = 0;
+            }
+        }
+
+        is_not_in_list_err(value)
     }
 }
 
@@ -1229,7 +1370,17 @@ pub mod bisect {
     }
 }
 #[inline]
-fn not_in_list_err(value: Bound<'_, PyAny>) -> PyResult<()> {
+fn not_in_list_err<T>(value: Bound<'_, PyAny>) -> PyResult<T> {
     let msg = format!("{} not in list", value.repr()?);
     Err(PyValueError::new_err(msg))
+}
+#[inline]
+fn is_not_in_list_err<T>(value: Bound<'_, PyAny>) -> PyResult<T> {
+    let msg = format!("{} is not in list", value.repr()?);
+    Err(PyValueError::new_err(msg))
+}
+#[inline]
+fn out_of_range_err<T>() -> PyResult<T> {
+    let msg = "list index out of range";
+    Err(PyIndexError::new_err(msg))
 }

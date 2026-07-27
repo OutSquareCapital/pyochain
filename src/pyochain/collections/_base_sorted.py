@@ -237,7 +237,7 @@ class SortedCollection[T](ABC):
         """
 
 
-class BaseSortedListSet[T](ABC):
+class BaseSortedListSet[T](SortedCollection[T], ABC):
     @abstractmethod
     def add(self, value: T) -> None:
         """Add `value` to the `SortedCollection`.
@@ -342,6 +342,7 @@ class BaseSortedListSet[T](ABC):
 class BaseSortedList[T](BaseSortedListSet[T], ABC):
     _inner: InnerSorted[Any]
 
+    @override
     def __contains__(self, value: object) -> bool:
         """Return true if `value` is an element of the sorted list.
 
@@ -414,11 +415,17 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):
     def _pos(self, idx: int) -> tuple[int, int]:
         return self._inner.pos(idx)
 
+    @override
     def bisect_left(self, value: T) -> int:
         return self._inner.bisect_left(value)
 
+    @override
     def bisect_right(self, value: T) -> int:
         return self._inner.bisect_right(value)
+
+    @override
+    def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:
+        return self._inner.index(value, start, stop)
 
     @abstractmethod
     def update(self, iterable: Iterable[T]) -> None:

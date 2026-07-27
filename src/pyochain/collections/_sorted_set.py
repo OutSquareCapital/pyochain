@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, Self, overload, override
 from pyochain import Iter, Set
 from pyochain.abc import PyoIterator, PyoMutableSet, PyoSequence
 
-from ._base_sorted import BaseSortedListSet, KeyFunc, SortedCollection
+from ._base_sorted import BaseSortedListSet, KeyFunc
 from ._sorted_list import SortedKeyList, SortedList, identity
 
 if TYPE_CHECKING:
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 
 class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without-hash]
-    PyoMutableSet[T], PyoSequence[T], SortedCollection[T], BaseSortedListSet[T]
+    PyoMutableSet[T], PyoSequence[T], BaseSortedListSet[T]
 ):
     """Sorted set is a sorted mutable set.
 

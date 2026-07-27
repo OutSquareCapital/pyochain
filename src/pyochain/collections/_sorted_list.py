@@ -616,59 +616,6 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         return val
 
     @override
-    def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:  # ruff:ignore[complex-structure]
-        len_ = self._inner.len
-
-        if len_ == 0:
-            msg = f"{value!r} is not in list"
-            raise ValueError(msg)
-
-        if start is None:
-            start = 0
-        if start < 0:
-            start += len_
-        start = max(start, 0)
-
-        if stop is None:
-            stop = len_
-        if stop < 0:
-            stop += len_
-        stop = min(stop, len_)
-
-        if stop <= start:
-            msg = f"{value!r} is not in list"
-            raise ValueError(msg)
-
-        maxes = self._inner.maxes
-        pos_left = bisect_left(maxes, value)
-
-        if pos_left == maxes.len():
-            msg = f"{value!r} is not in list"
-            raise ValueError(msg)
-
-        lists = self._inner.lists
-        idx_left = bisect_left(lists[pos_left], value)
-
-        if lists[pos_left][idx_left] != value:
-            msg = f"{value!r} is not in list"
-            raise ValueError(msg)
-
-        stop -= 1
-        left = self._loc(pos_left, idx_left)
-
-        if start <= left:
-            if left <= stop:
-                return left
-        else:
-            right = self.bisect_right(value) - 1
-
-            if start <= right:
-                return start
-
-        msg = f"{value!r} is not in list"
-        raise ValueError(msg)
-
-    @override
     def __add__(self, other: Iterable[T]) -> Self:
         """Return new sorted list containing all values in both sequences.
 
@@ -1152,67 +1099,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
     @override
     def copy(self) -> Self:
         return self.__class__(self, key=self._inner.key)
-
-    @override
-    def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:  # ruff:ignore[complex-structure, too-many-branches]
-        len_ = self._inner.len
-
-        if len_ == 0:
-            msg = f"{value!r} is not in list"
-            raise ValueError(msg)
-
-        if start is None:
-            start = 0
-        if start < 0:
-            start += len_
-        start = max(start, 0)
-
-        if stop is None:
-            stop = len_
-        if stop < 0:
-            stop += len_
-        stop = min(stop, len_)
-
-        if stop <= start:
-            msg = f"{value!r} is not in list"
-            raise ValueError(msg)
-
-        maxes = self._inner.maxes
-        key = self._inner.key(value)
-        pos = bisect_left(maxes, key)
-
-        if pos == maxes.len():
-            msg = f"{value!r} is not in list"
-            raise ValueError(msg)
-
-        stop -= 1
-        lists = self._inner.lists
-        keys = self._inner.keys
-        idx = bisect_left(keys[pos], key)
-        len_keys = keys.len()
-        len_sublist = keys[pos].len()
-
-        while True:
-            if keys[pos][idx] != key:
-                msg_0 = f"{value!r} is not in list"
-                raise ValueError(msg_0)
-            if lists[pos][idx] == value:
-                loc = self._loc(pos, idx)
-                if start <= loc <= stop:
-                    return loc
-                if loc > stop:
-                    break
-            idx += 1
-            if idx == len_sublist:
-                pos += 1
-                if pos == len_keys:
-                    msg = f"{value!r} is not in list"
-                    raise ValueError(msg)
-                len_sublist = keys[pos].len()
-                idx = 0
-
-        msg = f"{value!r} is not in list"
-        raise ValueError(msg)
 
     @override
     def __add__(self, other: Iterable[T]) -> Self:
