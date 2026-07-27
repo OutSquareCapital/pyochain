@@ -19,6 +19,7 @@
         "either",
         "extension-module",
         "multiple-pymethods",
+        "smallvec",
     ] }
     pyochain_macros = { path = "crates/pyochain_macros" }
     smallvec = "1.15.2"
