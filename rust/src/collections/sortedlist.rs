@@ -8,6 +8,7 @@ const DEFAULT_LOAD_FACTOR: usize = 1000;
 trait InnerSortedRs {
     fn get_lists(&self, py: Python<'_>) -> Py<PyoVec>;
     fn get_idx(&self, py: Python<'_>) -> Py<PyoVec>;
+    fn get_offset(&self) -> usize;
     fn set_offset(&mut self, offset: usize);
 }
 macro_rules! impl_inner_sorted_rs {
@@ -18,6 +19,9 @@ macro_rules! impl_inner_sorted_rs {
             }
             fn get_idx(&self, py: Python<'_>) -> Py<PyoVec> {
                 self.idx.clone_ref(py)
+            }
+            fn get_offset(&self) -> usize {
+                self.offset
             }
             fn set_offset(&mut self, offset: usize) {
                 self.offset = offset;
@@ -143,6 +147,75 @@ trait InnerSorted: Sized + InnerSortedRs {
         idx.set_slice(0, idx.len(), &flat)?;
         self.set_offset(size * 2 - 1);
         Ok(())
+    }
+    ///Convert an index pair (lists index, sublist index) into a single index number.
+
+    ///This number corresponds to the position of the value in the sorted list.
+
+    ///Many queries require the index be built.
+    /// Details of the index are described in ``SortedList._build_index``.
+
+    ///Indexing requires traversing the tree from a leaf node to the root.
+    ///The parent of each node is easily computable at ``(pos - 1) // 2``.
+
+    ///Left-child nodes are always at odd indices and right-child nodes are always at even indices.
+
+    ///When traversing up from a right-child node, increment the total by the left-child node.
+
+    ///The final index is the sum from traversal and the index in the sublist.
+
+    ///For example, using the index from `SortedList._build_index`:
+
+    ///    _index = 14 5 9 3 2 4 5
+    ///    _offset = 3
+
+    ///Tree::
+
+    ///            14
+    ///        5      9
+    ///    3   2  4   5
+
+    ///Converting an index pair (2, 3) into a single index involves iterating like so:
+
+    ///1. Starting at the leaf node: offset + alpha = 3 + 2 = 5. We identify
+    ///    the node as a left-child node. At such nodes, we simply traverse to
+    ///    the parent.
+
+    ///2. At node 9, position 2, we recognize the node as a right-child node
+    ///    and accumulate the left-child in our total. Total is now 5 and we
+    ///    traverse to the parent at position 0.
+
+    ///3. Iteration ends at the root.
+
+    ///The index is then the sum of the total and sublist index: 5 + 3 = 8.
+    fn loc(&mut self, py: Python<'_>, mut pos: usize, idx: isize) -> PyResult<isize> {
+        if pos == 0 {
+            Ok(idx)
+        } else {
+            let index = self.get_idx(py).get().inner.clone_ref(py).into_bound(py);
+
+            if index.is_empty() {
+                self.build_index(py)?;
+            }
+            let mut total = 0;
+            // Increment pos to point in the index to len(self.lists[pos]).
+            pos += self.get_offset();
+            // Iterate until reaching the root of the index tree at pos = 0.
+            while pos != 0 {
+                // Right-child nodes are at even indices. At such indices
+                // account the total below the left child node.
+
+                if pos % 2 == 0 {
+                    total += index.get_item(pos - 1)?.extract::<isize>()?;
+                }
+
+                // Advance pos to the parent node.
+
+                pos = (pos - 1) >> 1;
+            }
+
+            Ok(total + idx)
+        }
     }
 }
 

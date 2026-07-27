@@ -386,6 +386,8 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):
 
     @abstractmethod
     def count(self, value: T) -> int: ...
+    def _loc(self, pos: int, idx: int) -> int:
+        return self._inner.loc(pos, idx)
 
     @abstractmethod
     def update(self, iterable: Iterable[T]) -> None:
