@@ -29,6 +29,7 @@ pub trait PyListExtMethods<'py> {
     fn clear(&self) -> ();
     fn extend(&self, iterable: Bound<'_, PyAny>) -> PyResult<()>;
     fn last(&self) -> PyResult<Bound<'py, PyAny>>;
+    fn sort_by(&self, key: &Bound<'_, PyAny>, reverse: bool) -> PyResult<()>;
 }
 impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
     fn clear(&self) -> () {
@@ -44,6 +45,15 @@ impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
     fn last(&self) -> PyResult<Bound<'py, PyAny>> {
         let length = self.len();
         self.get_item(length - 1)
+    }
+
+    fn sort_by(&self, key: &Bound<'_, PyAny>, reverse: bool) -> PyResult<()> {
+        let py = self.py();
+        let kwargs = PyDict::new(py);
+        kwargs.set_item(intern!(py, "key"), key)?;
+        kwargs.set_item(intern!(py, "reverse"), reverse)?;
+        self.call_method(intern!(py, "sort"), (), Some(&kwargs))?;
+        Ok(())
     }
 }
 

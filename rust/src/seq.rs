@@ -479,17 +479,10 @@ impl PyoVec {
     #[pyo3(signature = (key, *, reverse=false))]
     fn sort_by<'py>(
         slf: Bound<'py, Self>,
-        key: Bound<'py, PyAny>,
+        key: &Bound<'py, PyAny>,
         reverse: bool,
     ) -> PyResult<Bound<'py, Self>> {
-        let py = key.py();
-        let kwargs = PyDict::new(py);
-        kwargs.set_item(intern!(py, "key"), key)?;
-        kwargs.set_item(intern!(py, "reverse"), reverse)?;
-        slf.get()
-            .inner
-            .bind(py)
-            .call_method(intern!(py, "sort"), (), Some(&kwargs))?;
+        slf.get().inner.bind(slf.py()).sort_by(key, reverse)?;
         Ok(slf)
     }
 
