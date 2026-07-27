@@ -34,6 +34,7 @@ trait InnerSorted: Sized + InnerSortedRs {
     fn delete(&mut self, py: Python<'_>, pos: usize, idx: usize) -> PyResult<()>;
     fn expand(&self, py: Python<'_>, pos: usize) -> PyResult<()>;
     fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
+    fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn collapse_lists<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyoVec>> {
         let init = PyList::empty(py).into_sequence();
         self.get_lists(py)
@@ -335,6 +336,38 @@ impl InnerSorted for InnerLists {
         self.len += 1;
         Ok(())
     }
+
+    fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        let py = value.py();
+        let maxes = self.maxes.get().inner.bind(py);
+
+        if maxes.is_empty() {
+            return Ok(());
+        }
+
+        let pos = bisect::bisect_left(self.maxes.bind(py), &value, 0, None, None)?;
+
+        if pos == maxes.len() {
+            return Ok(());
+        }
+
+        let lists = self.lists.get().inner.bind(value.py());
+        let idx = bisect::bisect_left(
+            &lists
+                .get_item(pos)
+                .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
+            &value,
+            0,
+            None,
+            None,
+        )?;
+
+        if lists.get_item(pos)?.get_item(idx)?.eq(value)? {
+            self.delete(py, pos, idx)
+        } else {
+            Ok(())
+        }
+    }
 }
 
 #[pyclass(generic)]
@@ -598,6 +631,59 @@ impl InnerSorted for InnerKeyLists {
         }
 
         self.len += 1;
+        Ok(())
+    }
+
+    fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        let py = value.py();
+        let maxes = self.maxes.get().inner.bind(py);
+
+        if maxes.is_empty() {
+            return Ok(());
+        }
+
+        let key = self.key.bind(py).call1((&value,))?;
+        let mut pos = bisect::bisect_left(self.maxes.bind(py), &key, 0, None, None)?;
+
+        if pos == maxes.len() {
+            return Ok(());
+        }
+
+        let lists = self.lists.get().inner.bind(py);
+        let keys = self.keys.get().inner.bind(py);
+        let mut idx = bisect::bisect_left(
+            &keys
+                .get_item(pos)
+                .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
+            &key,
+            0,
+            None,
+            None,
+        )?;
+        let len_keys = keys.len();
+        let mut len_sublist = keys.get_item(pos)?.len()?;
+
+        loop {
+            if keys.get_item(pos)?.get_item(idx)?.ne(&key)? {
+                break;
+            }
+            if lists.get_item(pos)?.get_item(idx)?.eq(&value)? {
+                self.delete(py, pos, idx)?;
+                break;
+            } else {
+                idx += 1;
+                if idx == len_sublist {
+                    pos += 1;
+                    if pos == len_keys {
+                        break;
+                    } else {
+                        len_sublist = keys.get_item(pos)?.len()?;
+                        idx = 0;
+                        continue;
+                    }
+                }
+            }
+        }
         Ok(())
     }
 }

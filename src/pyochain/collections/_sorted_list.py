@@ -374,6 +374,10 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):
     def add(self, value: T) -> None:
         return self._inner.add(value)
 
+    @override
+    def discard(self, value: T) -> None:
+        return self._inner.discard(value)
+
     @abstractmethod
     def count(self, value: T) -> int: ...
 
@@ -494,24 +498,6 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
     @override
     def update(self, iterable: Iterable[T]) -> None:
         return _update_lists(self, iterable)
-
-    @override
-    def discard(self, value: T) -> None:
-        maxes = self._inner.maxes
-
-        if maxes.is_empty():
-            return
-
-        pos = bisect_left(maxes, value)
-
-        if pos == maxes.len():
-            return
-
-        lists = self._inner.lists
-        idx = bisect_left(lists[pos], value)
-
-        if lists[pos][idx] == value:
-            self._inner.delete(pos, idx)
 
     @override
     def remove(self, value: T) -> None:
@@ -1681,39 +1667,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
     @override
     def update(self, iterable: Iterable[T]) -> None:
         return _update_key_lists(self, iterable)
-
-    @override
-    def discard(self, value: T) -> None:
-        maxes = self._inner.maxes
-
-        if maxes.is_empty():
-            return
-
-        key = self._inner.key(value)
-        pos = bisect_left(maxes, key)
-
-        if pos == maxes.len():
-            return
-
-        lists = self._inner.lists
-        keys = self._inner.keys
-        idx = bisect_left(keys[pos], key)
-        len_keys = keys.len()
-        len_sublist = keys[pos].len()
-
-        while True:
-            if keys[pos][idx] != key:
-                return
-            if lists[pos][idx] == value:
-                self._inner.delete(pos, idx)
-                return
-            idx += 1
-            if idx == len_sublist:
-                pos += 1
-                if pos == len_keys:
-                    return
-                len_sublist = keys[pos].len()
-                idx = 0
 
     @override
     def remove(self, value: T) -> None:
