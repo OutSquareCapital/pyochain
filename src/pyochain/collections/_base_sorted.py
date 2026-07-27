@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Final, Self, override
+from typing import TYPE_CHECKING, Any, Final, Self, overload, override
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
     from _typeshed import SupportsRichComparison
 
+    from pyochain import Vec
     from pyochain.abc import PyoIterator
 
     from ..rs import InnerSorted
@@ -373,6 +374,61 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):
 
     @abstractmethod
     def __mul__(self, num: int) -> Self: ...
+
+    def __delitem__(self, index: int | slice) -> None:
+        """Remove value at `index` from sorted list.
+
+        ``sl.__delitem__(index)`` <==> ``del sl[index]``
+
+        Supports slicing.
+
+        Runtime complexity: `O(log(n))` -- approximate.
+
+        >>> from pyochain.collections import SortedList
+        >>> sl = SortedList("abcde")
+        >>> del sl[2]
+        >>> sl
+        SortedList(['a', 'b', 'd', 'e'])
+        >>> del sl[:2]
+        >>> sl
+        SortedList(['d', 'e'])
+
+        :param index: integer or slice for indexing
+        :raises IndexError: if index out of range
+
+        """
+        return self._inner.delitem(index)
+
+    @overload
+    def __getitem__(self, index: int) -> T: ...
+    @overload
+    def __getitem__(self, index: slice) -> Vec[T]: ...
+    def __getitem__(self, index: int | slice) -> T | Vec[T]:
+        """Lookup value at `index` in sorted list.
+
+        ``sl.__getitem__(index)`` <==> ``sl[index]``
+
+        Supports slicing.
+
+        Runtime complexity: `O(log(n))` -- approximate.
+
+        >>> from pyochain.collections import SortedList
+        >>> sl = SortedList("abcde")
+        >>> sl[1]
+        'b'
+        >>> sl[-1]
+        'e'
+        >>> sl[2:5]
+        Vec('c', 'd', 'e')
+
+        Args:
+            index (int | slice): integer or slice for indexing
+
+        Returns:
+            T | Vec[T]: value or list of values
+        """
+        return self._inner.getitem(index)
+
     @override
     def add(self, value: T) -> None:
         return self._inner.add(value)
@@ -454,7 +510,6 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):
     def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:
         return self._inner.index(value, start, stop)
 
-    @abstractmethod
     def update(self, iterable: Iterable[T]) -> None:
         """Add all the values from *iterable* to the `SortedCollection`.
 
@@ -475,3 +530,4 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):
         :param iterable: iterable of values to add
 
         """
+        return self._inner.update(iterable)

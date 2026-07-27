@@ -1,13 +1,17 @@
-use crate::pyo3_ext::prelude::*;
+use crate::pyo3_ext::{prelude::*, pylibs};
 use crate::seq::{IntoPyochain, PyoVec};
+use either::Either;
 use pyo3::exceptions::{PyIndexError, PyValueError};
+use pyo3::types::{PySequence, PySlice, PySliceIndices};
 use pyo3::{prelude::*, types::PyList};
 use pyochain_macros::py_abc;
+use std::cmp::Ordering;
 use tap::Pipe;
 const DEFAULT_LOAD_FACTOR: usize = 1000;
 trait InnerSortedRs {
     fn get_lists(&self, py: Python<'_>) -> Py<PyoVec>;
     fn get_idx(&self, py: Python<'_>) -> Py<PyoVec>;
+    fn get_maxes(&self, py: Python<'_>) -> Py<PyoVec>;
     fn get_offset(&self) -> usize;
     fn set_offset(&mut self, offset: usize);
     fn get_len(&self) -> usize;
@@ -30,6 +34,9 @@ macro_rules! impl_inner_sorted_rs {
             fn get_len(&self) -> usize {
                 self.len
             }
+            fn get_maxes(&self, py: Python<'_>) -> Py<PyoVec> {
+                self.maxes.clone_ref(py)
+            }
         }
     };
 }
@@ -48,6 +55,7 @@ trait InnerSorted: Sized + InnerSortedRs {
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn remove(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn count(&mut self, value: Bound<'_, PyAny>) -> PyResult<usize>;
+    fn update(&mut self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
     #[pyo3(signature = (value, start = None, stop = None))]
     fn index(
         &mut self,
@@ -126,10 +134,7 @@ trait InnerSorted: Sized + InnerSortedRs {
             let combined = row1
                 .into_iter()
                 .chain(row0)
-                .try_fold(PyList::empty(py), |acc, x| {
-                    acc.append(x)?;
-                    Ok::<_, PyErr>(acc)
-                })?;
+                .try_fold(PyList::empty(py), iterator_into_list)?;
             idx.set_slice(0, idx.len(), combined.as_any())?;
             self.set_offset(1);
             return Ok(());
@@ -153,10 +158,7 @@ trait InnerSorted: Sized + InnerSortedRs {
             .into_iter()
             .rev()
             .flatten()
-            .try_fold(PyList::empty(py), |acc, x| {
-                acc.append(x)?;
-                Ok::<_, PyErr>(acc)
-            })?
+            .try_fold(PyList::empty(py), iterator_into_list)?
             .into_any();
         idx.set_slice(0, idx.len(), &flat)?;
         self.set_offset(size * 2 - 1);
@@ -285,10 +287,8 @@ trait InnerSorted: Sized + InnerSortedRs {
     fn pos(&mut self, py: Python<'_>, mut idx: isize) -> PyResult<(usize, isize)> {
         let lists = self.get_lists(py).get().inner.clone_ref(py).into_bound(py);
         if idx < 0 {
-            let last_len = lists.last()?.len()?;
-
-            if (-idx) <= last_len as isize {
-                return Ok((lists.len() - 1, last_len as isize + idx));
+            if (-idx) <= lists.last()?.len()? as isize {
+                return Ok((lists.len() - 1, lists.last()?.len()? as isize + idx));
             }
 
             idx += self.get_len() as isize;
@@ -373,6 +373,206 @@ trait InnerSorted: Sized + InnerSortedRs {
                 }
             };
             Ok(val)
+        }
+    }
+
+    fn getitem<'py>(
+        &mut self,
+        py: Python<'py>,
+        index: Either<isize, Bound<'py, PySlice>>,
+    ) -> PyResult<Either<Bound<'py, PyAny>, Bound<'py, PyoVec>>> {
+        let lists = self.get_lists(py).get().inner.clone_ref(py).into_bound(py);
+
+        match index {
+            Either::Right(slice) => self
+                .getitem_from_slice(py, &lists, slice)
+                .map(Either::Right),
+            Either::Left(index) => self.getitem_from_int(py, &lists, index).map(Either::Left),
+        }
+    }
+    fn getitem_from_int<'py>(
+        &mut self,
+        py: Python<'py>,
+        lists: &Bound<'py, PyList>,
+        index: isize,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let slf_len = self.get_len();
+        let len_last = lists.last()?.len()? as isize;
+        match (index, slf_len != 0) {
+            (0, true) => {
+                return lists.get_item(0)?.get_item(0);
+            }
+            (-1, true) => {
+                return lists.last()?.get_item(-1);
+            }
+            (_, false) => {
+                let msg = "list index out of range";
+                Err(PyIndexError::new_err(msg))
+            }
+            (_, true) if 0 <= index && index < lists.get_item(0)?.len()? as isize => {
+                return lists.get_item(0)?.get_item(index);
+            }
+            (_, true) if -len_last < index && index < 0 => {
+                return lists.last()?.get_item(len_last + index);
+            }
+            _ => {
+                let (pos, idx) = self.pos(py, index)?;
+                return lists.get_item(pos)?.get_item(idx);
+            }
+        }
+    }
+    fn getitem_from_slice<'py>(
+        &mut self,
+        py: Python<'py>,
+        lists: &Bound<'py, PyList>,
+        slice: Bound<'py, PySlice>,
+    ) -> PyResult<Bound<'py, PyoVec>> {
+        let slice_result =
+            |start_pos: usize, stop_pos: usize, start_idx: usize, stop_idx: usize| {
+                let prefix = lists
+                    .get_item(start_pos)
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
+                    .get()
+                    .inner
+                    .clone_ref(py)
+                    .into_bound(py)
+                    .get_slice(start_idx, usize::MAX)
+                    .into_sequence();
+                lists
+                    .get_slice(start_pos + 1, stop_pos)
+                    .into_iter()
+                    .map(|x| unsafe { x.cast_into_unchecked::<PySequence>() })
+                    .try_fold(prefix, |acc, item| {
+                        acc.in_place_concat(&item)?;
+                        Ok::<_, PyErr>(acc)
+                    })?
+                    .iadd(
+                        lists
+                            .get_item(stop_pos)
+                            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
+                            .get()
+                            .inner
+                            .bind(py)
+                            .get_slice(0, stop_idx)
+                            .into_pyochain()?,
+                    )
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?
+                    .into_pyochain()
+            };
+
+        let PySliceIndices {
+            start, stop, step, ..
+        } = slice.indices(self.get_len() as isize)?;
+        let stop_eq_len = stop == self.get_len() as isize;
+        match (step, start.cmp(&stop)) {
+            // Whole slice optimization: start to stop slices the whole sorted list.
+            (1, Ordering::Less) if start == 0 && stop_eq_len => self.collapse_lists(py),
+            (1, Ordering::Less) => {
+                let (start_pos, start_idx) = self.pos(py, start)?;
+                let start_list = lists
+                    .get_item(start_pos)
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
+                    .get()
+                    .inner
+                    .clone_ref(py)
+                    .into_bound(py);
+                let stop_idx = start_idx + stop - start;
+                match (start_list.len() as isize >= stop_idx, stop_eq_len) {
+                    // Small slice optimization: start index and stop index are
+                    // within the start list.
+                    (true, _) => start_list
+                        .get_slice(start_idx as usize, stop_idx as usize)
+                        .into_pyochain(),
+                    (false, true) => {
+                        let stop_pos = lists.len() - 1;
+                        let stop_idx = lists.get_item(stop_pos)?.len()?;
+                        slice_result(start_pos, stop_pos, start_idx as usize, stop_idx)
+                    }
+                    (false, false) => {
+                        let (stop_pos, stop_idx) = self.pos(py, stop)?;
+                        slice_result(start_pos, stop_pos, start_idx as usize, stop_idx as usize)
+                    }
+                }
+            }
+            (-1, Ordering::Greater) => {
+                let result =
+                    self.getitem_from_slice(py, lists, PySlice::new(py, stop + 1, start + 1, 1))?;
+                result.get().inner.bind(py).reverse()?;
+                Ok(result)
+            }
+            // Return a list because a negative step could reverse the order
+            // of the items and this could be the desired behavior.
+            _ if step > 0 => (start..stop)
+                .step_by(step as usize)
+                .map(|i| self.getitem_from_int(py, lists, i))
+                .try_fold(PyList::empty(py), try_iterator_into_list)?
+                .into_pyochain(),
+            // Negative step with nothing to iterate (mirrors Python's `range`,
+            // which is empty when `start <= stop` for a negative step).
+            (_, Ordering::Less | Ordering::Equal) => PyList::empty(py).into_pyochain(),
+            _ => {
+                // Negative step, `start > stop` guaranteed by the arm above.
+                std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
+                    .map(|i| self.getitem_from_int(py, lists, i))
+                    .try_fold(PyList::empty(py), try_iterator_into_list)?
+                    .into_pyochain()
+            }
+        }
+    }
+
+    fn delitem(
+        &mut self,
+        py: Python<'_>,
+        index: Either<isize, Bound<'_, PySlice>>,
+    ) -> PyResult<()> {
+        match index {
+            Either::Right(slice) => self.delitem_from_slice(py, slice),
+            Either::Left(index) => {
+                let (pos, idx) = self.pos(py, index)?;
+                self.delete(py, pos, idx as usize)
+            }
+        }
+    }
+    fn delitem_from_slice(&mut self, py: Python<'_>, slice: Bound<'_, PySlice>) -> PyResult<()> {
+        let length = self.get_len() as isize;
+        let PySliceIndices {
+            start, stop, step, ..
+        } = slice.indices(length)?;
+        match (step, start.cmp(&stop)) {
+            (1, Ordering::Less) if start == 0 && stop == length => {
+                self.clear(py);
+                Ok(())
+            }
+            (1, Ordering::Less) if length <= 8 * (stop - start) => {
+                let lists = self.get_lists(py).get().inner.clone_ref(py).into_bound(py);
+                let values = self.getitem_from_slice(py, &lists, PySlice::new(py, 0, start, 1))?;
+                if stop < length {
+                    let new_slice =
+                        self.getitem_from_slice(py, &lists, PySlice::new(py, stop, length, 1))?;
+                    values.iadd(new_slice)?;
+                }
+                self.clear(py);
+                self.update(values.as_any())?;
+                Ok(())
+            }
+            _ if step > 0 => (start..stop)
+                .step_by(step as usize)
+                .rev()
+                .try_for_each(|idx| {
+                    let (pos, idx) = self.pos(py, idx)?;
+                    self.delete(py, pos, idx as usize)
+                }),
+            // Negative step with nothing to delete (mirrors Python's
+            // `range`, which is empty when `start <= stop`).
+            (_, Ordering::Less | Ordering::Equal) => Ok(()),
+            _ => {
+                // Negative step, `start > stop` guaranteed by the arm above.
+                std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
+                    .try_for_each(|idx| {
+                        let (pos, idx) = self.pos(py, idx)?;
+                        self.delete(py, pos, idx as usize)
+                    })
+            }
         }
     }
 }
@@ -765,6 +965,54 @@ impl InnerSorted for InnerLists {
         }
 
         is_not_in_list_err(value)
+    }
+
+    fn update(&mut self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
+        let py = iterable.py();
+        let maxes = self.get_maxes(py).get().inner.clone_ref(py).into_bound(py);
+        let lists = self.get_lists(py).get().inner.clone_ref(py).into_bound(py);
+        let mut values = iterable
+            .try_iter()
+            .and_then(|iterator| pylibs::builtins::sorted(&iterator, false))?;
+
+        if !maxes.is_empty() {
+            if values.len() * 4 >= self.len {
+                lists.append(values.into_pyochain()?)?;
+                values = self
+                    .collapse_lists(py)?
+                    .get()
+                    .inner
+                    .clone_ref(py)
+                    .into_bound(py);
+                values.sort()?;
+                self.clear(py);
+            } else {
+                for val in values {
+                    self.add(val)?;
+                }
+                return Ok(());
+            }
+        }
+
+        let load = self.load;
+        let values_len = values.len();
+
+        (0..values_len)
+            .step_by(load)
+            .map(|pos| values.get_slice(pos, pos + load).into_pyochain())
+            .try_fold(lists, try_iterator_into_list)?
+            .iter()
+            .map(|x| {
+                unsafe { x.cast_into_unchecked::<PyoVec>() }
+                    .get()
+                    .inner
+                    .bind(py)
+                    .last()
+            })
+            .try_fold(maxes, try_iterator_into_list)?;
+        self.len = values_len;
+        self.idx.get().clear(py);
+        Ok(())
     }
 }
 
@@ -1243,6 +1491,69 @@ impl InnerSorted for InnerKeyLists {
 
         is_not_in_list_err(value)
     }
+    fn update(&mut self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
+        let py = iterable.py();
+        let lists = self.lists.get().inner.clone_ref(py).into_bound(py);
+        let maxes = self.maxes.get().inner.clone_ref(py).into_bound(py);
+        let key_fn = &self.key.clone_ref(py).into_bound(py);
+        let keys = self.keys.get().inner.clone_ref(py).into_bound(py);
+        let mut values = iterable
+            .try_iter()
+            .and_then(|x| pylibs::builtins::sorted_by(&x, false, key_fn))?;
+
+        if !maxes.is_empty() {
+            if values.len() * 4 >= self.len {
+                lists.append(values.into_pyochain()?)?;
+                values = self
+                    .collapse_lists(py)?
+                    .get()
+                    .inner
+                    .clone_ref(py)
+                    .into_bound(py);
+                values.sort_by(key_fn, false)?;
+                self.clear(py);
+            } else {
+                for val in values {
+                    self.add(val)?;
+                }
+                return Ok(());
+            }
+        }
+
+        let load = self.load;
+        let new_maxes = (0..values.len())
+            .step_by(load)
+            .map(|pos| values.get_slice(pos, pos + load).into_pyochain())
+            .try_fold(lists, try_iterator_into_list)?
+            .iter()
+            .map(|list_| {
+                unsafe { list_.cast_into_unchecked::<PyoVec>() }
+                    .get()
+                    .inner
+                    .bind(py)
+                    .iter()
+                    .map(|x| key_fn.call1((x,)))
+                    .try_fold(PyList::empty(py), |acc, x| {
+                        acc.append(x?)?;
+                        Ok::<_, PyErr>(acc)
+                    })?
+                    .into_pyochain()
+            })
+            .try_fold(keys, try_iterator_into_list)?
+            .iter()
+            .map(|x| {
+                unsafe { x.cast_into_unchecked::<PyoVec>() }
+                    .get()
+                    .inner
+                    .bind(py)
+                    .last()
+            })
+            .try_fold(PyList::empty(py), try_iterator_into_list)?;
+        maxes.iadd(&new_maxes)?;
+        self.len = values.len();
+        self.idx.get().clear(py);
+        Ok(())
+    }
 }
 
 #[pymethods]
@@ -1362,4 +1673,20 @@ fn is_not_in_list_err<T>(value: Bound<'_, PyAny>) -> PyResult<T> {
 fn out_of_range_err<T>() -> PyResult<T> {
     let msg = "list index out of range";
     Err(PyIndexError::new_err(msg))
+}
+#[inline(always)]
+fn iterator_into_list<'py, T: Sized + IntoPyObject<'py>>(
+    acc: Bound<'py, PyList>,
+    x: T,
+) -> PyResult<Bound<'py, PyList>> {
+    acc.append(x)?;
+    Ok(acc)
+}
+#[inline(always)]
+fn try_iterator_into_list<'py, T: Sized + IntoPyObject<'py>>(
+    acc: Bound<'py, PyList>,
+    x: PyResult<T>,
+) -> PyResult<Bound<'py, PyList>> {
+    acc.append(x?)?;
+    Ok(acc)
 }

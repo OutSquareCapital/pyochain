@@ -95,7 +95,7 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         self._inner: InnerLists[T, T] = InnerLists[T, T]()  # pyright: ignore[reportIncompatibleVariableOverride]
 
         if iterable is not None:
-            _update_lists(self, iterable)
+            self._inner.update(iterable)
 
     @property
     def inner(self) -> InnerLists[T, T]:
@@ -111,166 +111,6 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
     @override
     def clear(self) -> None:
         self._inner.clear()
-
-    @override
-    def update(self, iterable: Iterable[T]) -> None:
-        return _update_lists(self, iterable)
-
-    @override
-    def __delitem__(self, index: int | slice) -> None:
-        """Remove value at `index` from sorted list.
-
-        ``sl.__delitem__(index)`` <==> ``del sl[index]``
-
-        Supports slicing.
-
-        Runtime complexity: `O(log(n))` -- approximate.
-
-        >>> sl = SortedList("abcde")
-        >>> del sl[2]
-        >>> sl
-        SortedList(['a', 'b', 'd', 'e'])
-        >>> del sl[:2]
-        >>> sl
-        SortedList(['d', 'e'])
-
-        :param index: integer or slice for indexing
-        :raises IndexError: if index out of range
-
-        """
-        match index:
-            case slice():
-                length = self._inner.len
-                start, stop, step = index.indices(length)
-                match (start, stop, step, start < stop):
-                    case 0, _, 1, True if stop == length:
-                        return self.clear()
-                    case _, _, 1, True if length <= 8 * (stop - start):
-                        values = self.__getitem__(slice(None, start))
-                        if stop < length:
-                            values += self.__getitem__(slice(stop, None))
-                        self.clear()
-                        return self.update(values)
-                    case _, _, _, _ if step > 0:
-                        return (
-                            Range(start, stop, step)
-                            .rev()
-                            .map(self._pos)
-                            .for_each_star(self._inner.delete)
-                        )
-                    case _:
-                        return (
-                            Range(start, stop, step)
-                            .iter()
-                            .map(self._pos)
-                            .for_each_star(self._inner.delete)
-                        )
-            case _:
-                pos, idx = self._pos(index)
-                return self._inner.delete(pos, idx)
-
-    @overload
-    def __getitem__(self, index: int) -> T: ...
-    @overload
-    def __getitem__(self, index: slice) -> Vec[T]: ...
-    @override
-    def __getitem__(self, index: int | slice) -> T | Vec[T]:  # ruff:ignore[complex-structure, too-many-return-statements, too-many-branches]
-        """Lookup value at `index` in sorted list.
-
-        ``sl.__getitem__(index)`` <==> ``sl[index]``
-
-        Supports slicing.
-
-        Runtime complexity: `O(log(n))` -- approximate.
-
-        >>> sl = SortedList("abcde")
-        >>> sl[1]
-        'b'
-        >>> sl[-1]
-        'e'
-        >>> sl[2:5]
-        Vec('c', 'd', 'e')
-
-        Args:
-            index (int | slice): integer or slice for indexing
-
-        Returns:
-            T | Vec[T]: value or list of values
-
-        Raises:
-            IndexError: if index out of range
-
-        """
-
-        def slice_result(
-            start_pos: int, stop_pos: int, start_idx: int, stop_idx: int
-        ) -> Vec[T]:
-            prefix = Vec.from_ref(self._inner.lists[start_pos][start_idx:])
-            middle = Vec.from_ref(self._inner.lists[(start_pos + 1) : stop_pos])
-            result = middle.iter().fold(prefix, operator.iadd)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
-            result += self._inner.lists[stop_pos][:stop_idx]
-            return result
-
-        match index:
-            case slice():
-                start, stop, step = index.indices(self._inner.len)
-                stop_eq_len = stop == self._inner.len
-                match (step, start < stop):
-                    case (1, True) if start == 0 and stop_eq_len:
-                        # Whole slice optimization: start to stop slices the whole
-                        # sorted list.
-                        return self._inner.collapse_lists()
-                    case (1, True):
-                        start_pos, start_idx = self._pos(start)
-                        start_list = self._inner.lists[start_pos]
-                        stop_idx = start_idx + stop - start
-                        match (start_list.len() >= stop_idx, stop_eq_len):
-                            # Small slice optimization: start index and stop index are
-                            # within the start list.
-                            case (True, _):
-                                return Vec.from_ref(start_list[start_idx:stop_idx])
-                            case (False, True):
-                                stop_pos = self._inner.lists.len() - 1
-                                stop_idx = self._inner.lists[stop_pos].len()
-                                return slice_result(
-                                    start_pos, stop_pos, start_idx, stop_idx
-                                )
-                            case (False, False):
-                                stop_pos, stop_idx = self._pos(stop)
-                                return slice_result(
-                                    start_pos, stop_pos, start_idx, stop_idx
-                                )
-                    case (-1, False) if start > stop:
-                        result = self.__getitem__(slice(stop + 1, start + 1))
-                        result.reverse()
-                        return result
-                    case _:
-                        # Return a list because a negative step could
-                        # reverse the order of the items and this could
-                        # be the desired behavior.
-                        return (
-                            Range(start, stop, step)
-                            .iter()
-                            .map(self.__getitem__)
-                            .collect(Vec)
-                        )
-            case int():
-                len_last = self._inner.lists[-1].len()
-                match (index, self._inner.len != 0):
-                    case (0, True):
-                        return self._inner.lists[0][0]
-                    case (-1, True) if self._inner.len != 0:
-                        return self._inner.lists[-1][-1]
-                    case (_, False):
-                        msg = "list index out of range"
-                        raise IndexError(msg)
-                    case (_, True) if 0 <= index < self._inner.lists[0].len():
-                        return self._inner.lists[0][index]
-                    case (_, True) if -len_last < index < 0:
-                        return self._inner.lists[-1][len_last + index]
-                    case _:
-                        pos, idx = self._pos(index)
-                        return self._inner.lists[pos][idx]
 
     @overload
     def __setitem__(self, index: int, value: T) -> None: ...
@@ -888,10 +728,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         self._inner.clear()
 
     @override
-    def update(self, iterable: Iterable[T]) -> None:
-        return _update_key_lists(self, iterable)
-
-    @override
     def irange(
         self,
         minimum: T | None = None,
@@ -1100,61 +936,3 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         """
         type_name = self.__class__.__name__
         return f"{type_name}({list(self)!r}, key={self._inner.key!r})"
-
-
-def _update_lists[T: SupportsRichComparison](
-    self: SortedList[T], iterable: Iterable[T]
-) -> None:
-    maxes = self.inner.maxes
-    values = Iter(iterable).sort()
-
-    if maxes:
-        if values.len() * 4 >= self.inner.len:
-            self.inner.lists.append(values)
-            values = self.inner.collapse_lists().sort()
-            self.clear()
-        else:
-            for val in values:
-                self.add(val)
-            return
-
-    load = self.inner.load
-    values_len = values.len()
-    self.inner.lists.extend(
-        Range(0, values_len, load)
-        .iter()
-        .map(lambda pos: Vec.from_ref(values[pos : (pos + load)]))
-    )
-    self.inner.maxes.extend(self.inner.lists.iter().map(operator.itemgetter(-1)))
-    self.inner.len = values_len
-    self.inner.idx.clear()
-
-
-def _update_key_lists[T, OT: SupportsRichComparison](
-    slf: SortedKeyList[T, OT], iterable: Iterable[T]
-) -> None:
-    values = Iter(iterable).sort_by(key=slf.inner.key)
-
-    if slf.inner.maxes:
-        if values.len() * 4 >= slf.inner.len:
-            slf.inner.lists.append(values)
-            values = slf.inner.collapse_lists().sort_by(key=slf.inner.key)
-            slf.clear()
-        else:
-            for val in values:
-                slf.add(val)
-            return
-
-    load = slf.inner.load
-    slf.inner.lists.extend(
-        Range(0, values.len(), load)
-        .iter()
-        .map(lambda pos: Vec.from_ref(values[pos : (pos + load)]))
-    )
-    x = slf.inner.lists.iter().map(
-        lambda list_: list_.iter().map(slf.inner.key).collect(Vec)
-    )
-    slf.inner.keys.extend(x)
-    slf.inner.maxes.extend(slf.inner.keys.iter().map(operator.itemgetter(-1)))
-    slf.inner.len = values.len()
-    slf.inner.idx.clear()
