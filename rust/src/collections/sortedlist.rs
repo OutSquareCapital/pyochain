@@ -376,22 +376,17 @@ impl InnerSorted for InnerLists {
             return Ok(false);
         }
 
-        let pos = bisect::bisect_left(maxes, &value, 0, None, None)?;
+        let pos = bisect::bisect_left(maxes, &value)?;
 
         if maxes.len()?.eq(&pos) {
             return Ok(false);
         }
 
         let lists = self.lists.bind(value.py());
-        let idx = bisect::bisect_left(
-            &lists
-                .get_item(pos)
-                .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
-            &value,
-            0,
-            None,
-            None,
-        )?;
+        let v = &lists
+            .get_item(pos)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
+        let idx = bisect::bisect_left(&v, &value)?;
 
         lists.get_item(pos)?.get_item(idx)?.eq(value)
     }
@@ -495,7 +490,7 @@ impl InnerSorted for InnerLists {
         let lists = self.lists.get().inner.bind(py);
         let maxes = self.maxes.get().inner.bind(py);
         if !maxes.is_empty() {
-            let mut pos = bisect::bisect_right(self.maxes.bind(py), &value, 0, None, None)?;
+            let mut pos = bisect::bisect_right(self.maxes.bind(py), &value)?;
 
             if pos == maxes.len() {
                 pos -= 1;
@@ -510,7 +505,7 @@ impl InnerSorted for InnerLists {
                     .get_item(pos)
                     .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
 
-                let res = bisect::bisect_right(&vector, &value, 0, None, None)?;
+                let res = bisect::bisect_right(&vector, &value)?;
                 vector.get().insert(res, &value)?;
             }
 
@@ -532,22 +527,17 @@ impl InnerSorted for InnerLists {
             return Ok(());
         }
 
-        let pos = bisect::bisect_left(self.maxes.bind(py), &value, 0, None, None)?;
+        let pos = bisect::bisect_left(self.maxes.bind(py), &value)?;
 
         if pos == maxes.len() {
             return Ok(());
         }
 
         let lists = self.lists.get().inner.bind(value.py());
-        let idx = bisect::bisect_left(
-            &lists
-                .get_item(pos)
-                .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
-            &value,
-            0,
-            None,
-            None,
-        )?;
+        let v = lists
+            .get_item(pos)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
+        let idx = bisect::bisect_left(&v, &value)?;
 
         if lists.get_item(pos)?.get_item(idx)?.eq(value)? {
             self.delete(py, pos, idx)
@@ -563,7 +553,7 @@ impl InnerSorted for InnerLists {
         if maxes.is_empty() {
             not_in_list_err(value)
         } else {
-            let pos = bisect::bisect_left(self.maxes.bind(py), &value, 0, None, None)?;
+            let pos = bisect::bisect_left(self.maxes.bind(py), &value)?;
 
             if pos == maxes.len() {
                 not_in_list_err(value)
@@ -573,7 +563,7 @@ impl InnerSorted for InnerLists {
                     .get_item(pos)
                     .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
 
-                let idx = bisect::bisect_left(&v, &value, 0, None, None)?;
+                let idx = bisect::bisect_left(&v, &value)?;
 
                 if lists.get_item(pos)?.get_item(idx)?.eq(&value)? {
                     self.delete(py, pos, idx)
@@ -592,7 +582,7 @@ impl InnerSorted for InnerLists {
             return Ok(0);
         }
 
-        let pos = bisect::bisect_left(self.maxes.bind(py), &value, 0, None, None)?;
+        let pos = bisect::bisect_left(self.maxes.bind(py), &value)?;
 
         if pos == maxes.len() {
             return Ok(self.len as isize);
@@ -602,7 +592,7 @@ impl InnerSorted for InnerLists {
             .bind(py)
             .get_item(pos)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-        let idx = bisect::bisect_left(&v, &value, 0, None, None)?;
+        let idx = bisect::bisect_left(&v, &value)?;
         self.loc(py, pos, idx as isize)
     }
 
@@ -614,7 +604,7 @@ impl InnerSorted for InnerLists {
             return Ok(0);
         }
 
-        let pos = bisect::bisect_right(self.maxes.bind(py), &value, 0, None, None)?;
+        let pos = bisect::bisect_right(self.maxes.bind(py), &value)?;
 
         if pos == maxes.len() {
             return Ok(self.len as isize);
@@ -625,7 +615,7 @@ impl InnerSorted for InnerLists {
             .get_item(pos)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
 
-        let idx = bisect::bisect_right(&v, &value, 0, None, None)?;
+        let idx = bisect::bisect_right(&v, &value)?;
         self.loc(py, pos, idx as isize)
     }
 
@@ -637,7 +627,7 @@ impl InnerSorted for InnerLists {
             return Ok(0);
         }
 
-        let pos_left = bisect::bisect_left(self.maxes.bind(py), &value, 0, None, None)?;
+        let pos_left = bisect::bisect_left(self.maxes.bind(py), &value)?;
 
         if pos_left == maxes.len() {
             return Ok(0);
@@ -647,8 +637,8 @@ impl InnerSorted for InnerLists {
         let v_left = lists
             .get_item(pos_left)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-        let idx_left = bisect::bisect_left(&v_left, &value, 0, None, None)?;
-        let pos_right = bisect::bisect_right(self.maxes.bind(py), &value, 0, None, None)?;
+        let idx_left = bisect::bisect_left(&v_left, &value)?;
+        let pos_right = bisect::bisect_right(self.maxes.bind(py), &value)?;
 
         if pos_right == maxes.len() {
             return Ok(self.len - self.loc(py, pos_left, idx_left as isize)? as usize);
@@ -656,7 +646,7 @@ impl InnerSorted for InnerLists {
         let v_right = lists
             .get_item(pos_right)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-        let idx_right = bisect::bisect_right(&v_right, &value, 0, None, None)?;
+        let idx_right = bisect::bisect_right(&v_right, &value)?;
 
         if pos_left == pos_right {
             return Ok(idx_right - idx_left);
@@ -697,7 +687,7 @@ impl InnerSorted for InnerLists {
         }
 
         let maxes = self.maxes.get().inner.bind(py);
-        let pos_left = bisect::bisect_left(self.maxes.bind(py), &value, 0, None, None)?;
+        let pos_left = bisect::bisect_left(self.maxes.bind(py), &value)?;
 
         if pos_left == maxes.len() {
             return is_not_in_list_err(value);
@@ -707,7 +697,7 @@ impl InnerSorted for InnerLists {
         let v_left = lists
             .get_item(pos_left)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-        let idx_left = bisect::bisect_left(&v_left, &value, 0, None, None)?;
+        let idx_left = bisect::bisect_left(&v_left, &value)?;
 
         if lists.get_item(pos_left)?.get_item(idx_left)?.ne(&value)? {
             return is_not_in_list_err(value);
@@ -785,7 +775,7 @@ impl InnerSorted for InnerKeyLists {
         }
 
         let key = self.key.bind(py).call1((&value,))?;
-        let mut pos = bisect::bisect_left(maxes, &key, 0, None, None)?;
+        let mut pos = bisect::bisect_left(maxes, &key)?;
 
         if pos == maxes.len()? {
             return Ok(false);
@@ -793,16 +783,10 @@ impl InnerSorted for InnerKeyLists {
 
         let lists = self.lists.bind(py);
         let keys = self.keys.bind(py);
-
-        let mut idx = bisect::bisect_left(
-            &keys
-                .get_item(&pos)
-                .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
-            &key,
-            0,
-            None,
-            None,
-        )?;
+        let v = &keys
+            .get_item(&pos)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
+        let mut idx = bisect::bisect_left(&v, &key)?;
 
         let len_keys = keys.len()?;
         let mut len_sublist = keys.get_item(&pos)?.len()?;
@@ -950,7 +934,7 @@ impl InnerSorted for InnerKeyLists {
         let keys = self.keys.get().inner.bind(py);
 
         if !maxes.is_empty() {
-            let mut pos = bisect::bisect_right(self.maxes.bind(py), &key, 0, None, None)?;
+            let mut pos = bisect::bisect_right(self.maxes.bind(py), &key)?;
 
             if pos == maxes.len() {
                 pos -= 1;
@@ -965,15 +949,10 @@ impl InnerSorted for InnerKeyLists {
                     .append(&key)?;
                 maxes.set_item(pos, &key)?;
             } else {
-                let idx = bisect::bisect_right(
-                    &keys
-                        .get_item(pos)
-                        .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
-                    &key,
-                    0,
-                    None,
-                    None,
-                )?;
+                let v = &keys
+                    .get_item(pos)
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
+                let idx = bisect::bisect_right(&v, &key)?;
                 lists
                     .get_item(pos)
                     .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
@@ -1005,7 +984,7 @@ impl InnerSorted for InnerKeyLists {
         }
 
         let key = self.key.bind(py).call1((&value,))?;
-        let mut pos = bisect::bisect_left(self.maxes.bind(py), &key, 0, None, None)?;
+        let mut pos = bisect::bisect_left(self.maxes.bind(py), &key)?;
 
         if pos == maxes.len() {
             return Ok(());
@@ -1013,15 +992,10 @@ impl InnerSorted for InnerKeyLists {
 
         let lists = self.lists.get().inner.bind(py);
         let keys = self.keys.get().inner.bind(py);
-        let mut idx = bisect::bisect_left(
-            &keys
-                .get_item(pos)
-                .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
-            &key,
-            0,
-            None,
-            None,
-        )?;
+        let v = &keys
+            .get_item(pos)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
+        let mut idx = bisect::bisect_left(&v, &key)?;
         let len_keys = keys.len();
         let mut len_sublist = keys.get_item(pos)?.len()?;
 
@@ -1058,7 +1032,7 @@ impl InnerSorted for InnerKeyLists {
         }
 
         let key = self.key.bind(py).call1((&value,))?;
-        let mut pos = bisect::bisect_left(self.maxes.bind(py), &key, 0, None, None)?;
+        let mut pos = bisect::bisect_left(self.maxes.bind(py), &key)?;
 
         if pos == maxes.len() {
             return not_in_list_err(value);
@@ -1070,7 +1044,7 @@ impl InnerSorted for InnerKeyLists {
             .get_item(pos)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
 
-        let mut idx = bisect::bisect_left(&v, &key, 0, None, None)?;
+        let mut idx = bisect::bisect_left(&v, &key)?;
         let len_keys = keys.len();
         let mut len_sublist = keys.get_item(pos)?.len()?;
 
@@ -1117,7 +1091,7 @@ impl InnerSorted for InnerKeyLists {
         }
 
         let key = self.key.bind(py).call1((&value,))?;
-        let mut pos = bisect::bisect_left(self.maxes.bind(py), &key, 0, None, None)?;
+        let mut pos = bisect::bisect_left(self.maxes.bind(py), &key)?;
 
         if pos == maxes.len() {
             return Ok(0);
@@ -1128,7 +1102,7 @@ impl InnerSorted for InnerKeyLists {
         let v_left = keys
             .get_item(pos)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-        let mut idx = bisect::bisect_left(&v_left, &key, 0, None, None)?;
+        let mut idx = bisect::bisect_left(&v_left, &key)?;
         let mut total = 0;
         let len_keys = keys.len();
         let mut len_sublist = keys.get_item(pos)?.len()?;
@@ -1182,7 +1156,7 @@ impl InnerSorted for InnerKeyLists {
 
         let maxes = self.maxes.get().inner.bind(py);
         let key = self.key.bind(py).call1((&value,))?;
-        let mut pos = bisect::bisect_left(self.maxes.bind(py), &key, 0, None, None)?;
+        let mut pos = bisect::bisect_left(self.maxes.bind(py), &key)?;
 
         if pos == maxes.len() {
             return is_not_in_list_err(value);
@@ -1194,7 +1168,7 @@ impl InnerSorted for InnerKeyLists {
         let v_left = keys
             .get_item(pos)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-        let mut idx = bisect::bisect_left(&v_left, &key, 0, None, None)?;
+        let mut idx = bisect::bisect_left(&v_left, &key)?;
         let len_keys = keys.len();
         let mut len_sublist = v_left.len()?;
 
@@ -1235,7 +1209,7 @@ impl InnerKeyLists {
             return Ok(0);
         }
 
-        let pos = bisect::bisect_left(self.maxes.bind(py), &key, 0, None, None)?;
+        let pos = bisect::bisect_left(self.maxes.bind(py), &key)?;
 
         if pos == maxes.len() {
             Ok(self.len as isize)
@@ -1245,7 +1219,7 @@ impl InnerKeyLists {
                 .bind(py)
                 .get_item(pos)
                 .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-            let idx = bisect::bisect_left(&v, &key, 0, None, None)?;
+            let idx = bisect::bisect_left(&v, &key)?;
 
             self.loc(py, pos, idx as isize)
         }
@@ -1258,7 +1232,7 @@ impl InnerKeyLists {
             return Ok(0);
         }
 
-        let pos = bisect::bisect_right(self.maxes.bind(py), &key, 0, None, None)?;
+        let pos = bisect::bisect_right(self.maxes.bind(py), &key)?;
 
         if pos == maxes.len() {
             return Ok(self.len as isize);
@@ -1270,7 +1244,7 @@ impl InnerKeyLists {
             .bind(py)
             .get_item(pos)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-        let idx = bisect::bisect_right(&v, &key, 0, None, None)?;
+        let idx = bisect::bisect_right(&v, &key)?;
 
         return self.loc(py, pos, idx as isize);
     }
@@ -1288,42 +1262,21 @@ pub mod bisect {
     ///insert just after the rightmost x already there.
 
     ///Optional args lo (default 0) and hi (default len(a)) bound the slice of a to be searched.
-
-    ///A custom key function can be supplied to customize the sort order.
-    #[pyfunction(signature = (vec, item, lo=0, hi=None, key=None))]
-    pub fn bisect_right(
-        vec: &Bound<'_, PyoVec>,
-        item: &Bound<'_, PyAny>,
-        mut lo: usize,
-        hi: Option<usize>,
-        key: Option<Bound<'_, PyAny>>,
-    ) -> PyResult<usize> {
+    #[pyfunction]
+    pub fn bisect_right(vec: &Bound<'_, PyoVec>, item: &Bound<'_, PyAny>) -> PyResult<usize> {
         let lst = vec.get().inner.bind(vec.py());
-        let mut high = hi.unwrap_or_else(|| lst.len());
+        let mut high = lst.len();
+        let mut lo = 0;
         // Note, the comparison uses "<" to match the
         // __lt__() logic in list.sort() and in heapq.
-        match key {
-            None => {
-                while lo < high {
-                    let mid = (lo + high) / 2;
-                    if item.lt(lst.get_item(mid)?)? {
-                        high = mid;
-                    } else {
-                        lo = mid + 1;
-                    }
-                }
+        while lo < high {
+            let mid = (lo + high) / 2;
+            if item.lt(lst.get_item(mid)?)? {
+                high = mid;
+            } else {
+                lo = mid + 1;
             }
-            Some(key) => {
-                while lo < high {
-                    let mid = (lo + high) / 2;
-                    if item.lt(key.call1((lst.get_item(mid)?,))?)? {
-                        high = mid;
-                    } else {
-                        lo = mid + 1;
-                    }
-                }
-            }
-        };
+        }
         Ok(lo)
     }
     /// The following documentation and code is adapted from the Python standard library's bisect module.\
@@ -1331,41 +1284,21 @@ pub mod bisect {
     /// The return value i is such that all e in a[:i] have e < x, and all e in a[i:] have e >= x.\
     /// So if x already appears in the list, a.insert(i, x) will insert just before the leftmost x already there.\
     /// Optional args lo (default 0) and hi (default len(a)) bound the slice of a to be searched.\
-    /// A custom key function can be supplied to customize the sort order.
-    #[pyfunction(signature = (vec, item, lo=0, hi=None, key=None))]
-    pub fn bisect_left(
-        vec: &Bound<'_, PyoVec>,
-        item: &Bound<'_, PyAny>,
-        mut lo: usize,
-        hi: Option<usize>,
-        key: Option<Bound<'_, PyAny>>,
-    ) -> PyResult<usize> {
+    #[pyfunction]
+    pub fn bisect_left(vec: &Bound<'_, PyoVec>, item: &Bound<'_, PyAny>) -> PyResult<usize> {
         let lst = vec.get().inner.bind(vec.py());
-        let mut hi = hi.unwrap_or_else(|| lst.len());
+        let mut hi = lst.len();
+        let mut lo = 0;
         // Note, the comparison uses "<" to match the
         // __lt__() logic in list.sort() and in heapq.
-        match key {
-            None => {
-                while lo < hi {
-                    let mid = (lo + hi) / 2;
-                    if lst.get_item(mid)?.lt(item)? {
-                        lo = mid + 1;
-                    } else {
-                        hi = mid
-                    }
-                }
+        while lo < hi {
+            let mid = (lo + hi) / 2;
+            if lst.get_item(mid)?.lt(item)? {
+                lo = mid + 1;
+            } else {
+                hi = mid
             }
-            Some(key) => {
-                while lo < hi {
-                    let mid = (lo + hi) / 2;
-                    if key.call1((lst.get_item(mid)?,))?.lt(item)? {
-                        lo = mid + 1;
-                    } else {
-                        hi = mid;
-                    }
-                }
-            }
-        };
+        }
         Ok(lo)
     }
 }
