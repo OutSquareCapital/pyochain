@@ -9,6 +9,13 @@ use crate::types::SynResult;
 const PYO3: &str = "pyo3";
 const NEW: &str = "new";
 const SKIP: &str = "skip";
+const SETTER: &str = "setter";
+const GETTER: &str = "getter";
+const DELETER: &str = "deleter";
+
+// TODO: this code is frankly speaking ugly as fuck, but it works.
+// Time-sink to make it pretty but also time-sink when I have issues with it.
+// But very useful for many reasons. Will have to be refactored at some point.
 
 pub(crate) fn parse_types(input: ParseStream<'_>) -> SynResult<Punctuated<Type, Comma>> {
     Punctuated::<Type, Comma>::parse_terminated(input)
@@ -44,7 +51,7 @@ pub(crate) fn generate(
 }
 enum AttrKind {
     /// no #[pyo3(...)] or #[new(...)] attributes
-    Empty,
+    BasicMethod,
     /// #[skip]
     Skipped,
     /// #[pyo3(...)]
@@ -53,7 +60,7 @@ enum AttrKind {
     /// just #[new]
     NewNoSignature,
     /// #[pyo3(...)] and other attributes
-    Other(Vec<proc_macro2::TokenStream>),
+    Signed(Vec<proc_macro2::TokenStream>),
 }
 fn generate_method(
     trait_ident: &Ident,
@@ -62,32 +69,41 @@ fn generate_method(
 ) -> SynResult<Option<proc_macro2::TokenStream>> {
     let original_ident = &method.sig.ident;
     classify_attrs(attrs)
-        .map(|(kind, other_attrs)| {
+        .map(|(kind, other_attrs, property_kind)| {
             let python_name = LitStr::new(&original_ident.to_string(), original_ident.span());
+            let property = property_kind
+                .as_ref()
+                .map(|prop| (prop, property_python_name(original_ident, prop)));
             let tokens = match kind {
                 AttrKind::Skipped => None,
-                AttrKind::Empty => Some(quote! { #[pyo3(name = #python_name)] }),
+                AttrKind::BasicMethod => Some(match &property {
+                    Some((prop, name)) => quote! { #[#prop(#name)] },
+                    None => quote! { #[pyo3(name = #python_name)] },
+                }),
                 AttrKind::NewNoSignature => Some(quote! {}),
                 AttrKind::New(ref tokens) => Some(quote! { #[pyo3(#(#tokens),*)] }),
-                AttrKind::Other(ref tokens) => {
-                    Some(quote! { #[pyo3(name = #python_name, #(#tokens),*)] })
-                }
+                AttrKind::Signed(ref tokens) => Some(match &property {
+                    Some((prop, name)) => quote! { #[#prop(#name)] #[pyo3(#(#tokens),*)] },
+                    None => quote! { #[pyo3(name = #python_name, #(#tokens),*)] },
+                }),
             };
             (tokens, other_attrs)
         })
-        .and_then(|(tokens, other_attrs)| {
-            tokens
-                .map(|pyo3_tokens| {
-                    get_quote(
-                        method,
-                        trait_ident,
-                        other_attrs,
-                        pyo3_tokens,
-                        original_ident,
-                    )
-                })
-                .transpose()
-        })
+        .and_then(
+            |(tokens, other_attrs): (Option<proc_macro2::TokenStream>, Vec<Attribute>)| {
+                tokens
+                    .map(|pyo3_tokens| {
+                        get_quote(
+                            method,
+                            trait_ident,
+                            other_attrs,
+                            pyo3_tokens,
+                            original_ident,
+                        )
+                    })
+                    .transpose()
+            },
+        )
 }
 fn get_quote(
     method: &syn::TraitItemFn,
@@ -139,8 +155,9 @@ fn drop_mut_and_ref_from_pattern(inputs: &mut Punctuated<FnArg, Comma>) {
             pattern.by_ref = None;
         })
 }
-fn classify_attrs(attrs: Vec<Attribute>) -> SynResult<(AttrKind, Vec<Attribute>)> {
+fn classify_attrs(attrs: Vec<Attribute>) -> SynResult<(AttrKind, Vec<Attribute>, Option<Ident>)> {
     let mut has_new = false;
+    let mut property_kind = None;
     let mut pyo3 = Vec::new();
     let mut other = Vec::new();
     for attr in attrs {
@@ -148,7 +165,7 @@ fn classify_attrs(attrs: Vec<Attribute>) -> SynResult<(AttrKind, Vec<Attribute>)
 
         if path.is_ident(SKIP) {
             other.clear();
-            return Ok((AttrKind::Skipped, other));
+            return Ok((AttrKind::Skipped, other, None));
         } else {
             if path.is_ident(NEW) {
                 has_new = true;
@@ -162,6 +179,8 @@ fn classify_attrs(attrs: Vec<Attribute>) -> SynResult<(AttrKind, Vec<Attribute>)
                     )),
                 }?;
                 pyo3.push(arg);
+            } else if path.is_ident(GETTER) || path.is_ident(SETTER) || path.is_ident(DELETER) {
+                property_kind = Some(path.get_ident().expect("checked above").clone());
             } else {
                 other.push(attr);
             }
@@ -169,11 +188,23 @@ fn classify_attrs(attrs: Vec<Attribute>) -> SynResult<(AttrKind, Vec<Attribute>)
     }
     let pyo3_attrs = match (has_new, pyo3.is_empty()) {
         (true, true) => AttrKind::NewNoSignature,
-        (false, true) => AttrKind::Empty,
+        (false, true) => AttrKind::BasicMethod,
         (true, false) => AttrKind::New(pyo3),
-        (false, false) => AttrKind::Other(pyo3),
+        (false, false) => AttrKind::Signed(pyo3),
     };
-    Ok((pyo3_attrs, other))
+    Ok((pyo3_attrs, other, property_kind))
+}
+fn property_python_name(original_ident: &Ident, prop: &Ident) -> LitStr {
+    let name = original_ident.to_string();
+    let prefix = if prop.eq(GETTER) {
+        "get_"
+    } else if prop.eq(SETTER) {
+        "set_"
+    } else {
+        "del_"
+    };
+    let stripped = name.strip_prefix(prefix).unwrap_or(&name);
+    LitStr::new(stripped, original_ident.span())
 }
 
 fn get_method_args(method: &syn::TraitItemFn) -> SynResult<Vec<syn::Ident>> {
