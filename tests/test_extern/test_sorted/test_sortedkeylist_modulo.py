@@ -612,7 +612,7 @@ def test_pop_indexerror2() -> None:
         _ = slt.pop(10)
 
 
-def test_index() -> None:
+def test_index_enumerate() -> None:
     slt = SortedKeyList(range(100), key=modulo)
     slt.reset(7)
 
@@ -621,6 +621,8 @@ def test_index() -> None:
 
     assert slt.index(9, 0, 1000) == 90
 
+
+def test_index_range() -> None:
     slt = SortedKeyList((0 for _ in range(100)), key=modulo)
     slt.reset(7)
 
