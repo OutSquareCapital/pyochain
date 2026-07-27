@@ -6,34 +6,64 @@ use pyo3::types::{PySequence, PySlice, PySliceIndices};
 use pyo3::{prelude::*, types::PyList};
 use pyochain_macros::py_abc;
 use std::cmp::Ordering;
+use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
 use tap::Pipe;
 const DEFAULT_LOAD_FACTOR: usize = 1000;
+#[py_abc(InnerLists, InnerKeyLists)]
 trait InnerSortedRs {
+    #[getter]
     fn get_lists(&self, py: Python<'_>) -> Py<PyoVec>;
+    #[getter]
     fn get_idx(&self, py: Python<'_>) -> Py<PyoVec>;
+    #[getter]
     fn get_maxes(&self, py: Python<'_>) -> Py<PyoVec>;
+    #[getter]
+    fn get_load(&self) -> usize;
+    #[getter]
     fn get_offset(&self) -> usize;
-    fn set_offset(&mut self, offset: usize);
+    #[getter]
     fn get_len(&self) -> usize;
+    fn set_offset(&self, offset: usize);
+    #[setter]
+    fn set_len(&self, len: usize);
+    fn set_load(&self, load: usize);
 }
 macro_rules! impl_inner_sorted_rs {
     ($t:ty) => {
         impl InnerSortedRs for $t {
+            #[inline(always)]
             fn get_lists(&self, py: Python<'_>) -> Py<PyoVec> {
                 self.lists.clone_ref(py)
             }
+            #[inline(always)]
             fn get_idx(&self, py: Python<'_>) -> Py<PyoVec> {
                 self.idx.clone_ref(py)
             }
+            #[inline(always)]
             fn get_offset(&self) -> usize {
-                self.offset
+                self.offset.load(AtomicOrdering::Relaxed)
             }
-            fn set_offset(&mut self, offset: usize) {
-                self.offset = offset;
+            #[inline(always)]
+            fn set_offset(&self, offset: usize) {
+                self.offset.store(offset, AtomicOrdering::Relaxed);
             }
+            #[inline(always)]
             fn get_len(&self) -> usize {
-                self.len
+                self.len.load(AtomicOrdering::Relaxed)
             }
+            #[inline(always)]
+            fn set_len(&self, len: usize) {
+                self.len.store(len, AtomicOrdering::Relaxed);
+            }
+            #[inline(always)]
+            fn get_load(&self) -> usize {
+                self.load.load(AtomicOrdering::Relaxed)
+            }
+            #[inline(always)]
+            fn set_load(&self, load: usize) {
+                self.load.store(load, AtomicOrdering::Relaxed);
+            }
+            #[inline(always)]
             fn get_maxes(&self, py: Python<'_>) -> Py<PyoVec> {
                 self.maxes.clone_ref(py)
             }
@@ -45,20 +75,27 @@ impl_inner_sorted_rs!(InnerKeyLists);
 
 #[py_abc(InnerLists, InnerKeyLists)]
 trait InnerSorted: Sized + InnerSortedRs {
-    fn bisect_left(&mut self, value: Bound<'_, PyAny>) -> PyResult<isize>;
-    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<isize>;
-    fn clear(&mut self, py: Python<'_>) -> ();
+    fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize>;
+    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize>;
+    fn clear(&self, py: Python<'_>) -> ();
     fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool>;
-    fn delete(&mut self, py: Python<'_>, pos: usize, idx: usize) -> PyResult<()>;
+    fn delete(&self, py: Python<'_>, pos: usize, idx: usize) -> PyResult<()>;
     fn expand(&self, py: Python<'_>, pos: usize) -> PyResult<()>;
-    fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
-    fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
-    fn remove(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
-    fn count(&mut self, value: Bound<'_, PyAny>) -> PyResult<usize>;
-    fn update(&mut self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
+    fn add(&self, value: Bound<'_, PyAny>) -> PyResult<()>;
+    fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()>;
+    fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()>;
+    fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize>;
+    fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
+
+    fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
+        let values = self.collapse_lists(py)?.into_any();
+        self.clear(py);
+        self.set_load(load);
+        self.update(&values)
+    }
     #[pyo3(signature = (value, start = None, stop = None))]
     fn index(
-        &mut self,
+        &self,
         value: Bound<'_, PyAny>,
         start: Option<isize>,
         stop: Option<isize>,
@@ -110,7 +147,7 @@ trait InnerSorted: Sized + InnerSortedRs {
 
     ///     _offset = 3
     /// When built, the index can be used for efficient indexing into the list.
-    fn build_index(&mut self, py: Python<'_>) -> PyResult<()> {
+    fn build_index(&self, py: Python<'_>) -> PyResult<()> {
         let idx = self.get_idx(py).get().inner.clone_ref(py).into_bound(py);
         let lists = self.get_lists(py).get().inner.clone_ref(py).into_bound(py);
 
@@ -204,7 +241,7 @@ trait InnerSorted: Sized + InnerSortedRs {
     ///3. Iteration ends at the root.
 
     ///The index is then the sum of the total and sublist index: 5 + 3 = 8.
-    fn loc(&mut self, py: Python<'_>, mut pos: usize, idx: isize) -> PyResult<isize> {
+    fn loc(&self, py: Python<'_>, mut pos: usize, idx: isize) -> PyResult<isize> {
         if pos == 0 {
             Ok(idx)
         } else {
@@ -284,7 +321,7 @@ trait InnerSorted: Sized + InnerSortedRs {
 
     /// The final index pair from our example is (2, 3) which corresponds to
     /// index 8 in the sorted list.
-    fn pos(&mut self, py: Python<'_>, mut idx: isize) -> PyResult<(usize, isize)> {
+    fn pos(&self, py: Python<'_>, mut idx: isize) -> PyResult<(usize, isize)> {
         let lists = self.get_lists(py).get().inner.clone_ref(py).into_bound(py);
         if idx < 0 {
             if (-idx) <= lists.last()?.len()? as isize {
@@ -330,7 +367,7 @@ trait InnerSorted: Sized + InnerSortedRs {
         return Ok((pos - self.get_offset(), idx));
     }
     #[pyo3(signature = (index = -1))]
-    fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
+    fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         if self.get_len() == 0 {
             let msg = "pop index out of range";
             return Err(PyIndexError::new_err(msg));
@@ -377,7 +414,7 @@ trait InnerSorted: Sized + InnerSortedRs {
     }
 
     fn getitem<'py>(
-        &mut self,
+        &self,
         py: Python<'py>,
         index: Either<isize, Bound<'py, PySlice>>,
     ) -> PyResult<Either<Bound<'py, PyAny>, Bound<'py, PyoVec>>> {
@@ -391,7 +428,7 @@ trait InnerSorted: Sized + InnerSortedRs {
         }
     }
     fn getitem_from_int<'py>(
-        &mut self,
+        &self,
         py: Python<'py>,
         lists: &Bound<'py, PyList>,
         index: isize,
@@ -422,7 +459,7 @@ trait InnerSorted: Sized + InnerSortedRs {
         }
     }
     fn getitem_from_slice<'py>(
-        &mut self,
+        &self,
         py: Python<'py>,
         lists: &Bound<'py, PyList>,
         slice: Bound<'py, PySlice>,
@@ -520,11 +557,7 @@ trait InnerSorted: Sized + InnerSortedRs {
         }
     }
 
-    fn delitem(
-        &mut self,
-        py: Python<'_>,
-        index: Either<isize, Bound<'_, PySlice>>,
-    ) -> PyResult<()> {
+    fn delitem(&self, py: Python<'_>, index: Either<isize, Bound<'_, PySlice>>) -> PyResult<()> {
         match index {
             Either::Right(slice) => self.delitem_from_slice(py, slice),
             Either::Left(index) => {
@@ -533,7 +566,7 @@ trait InnerSorted: Sized + InnerSortedRs {
             }
         }
     }
-    fn delitem_from_slice(&mut self, py: Python<'_>, slice: Bound<'_, PySlice>) -> PyResult<()> {
+    fn delitem_from_slice(&self, py: Python<'_>, slice: Bound<'_, PySlice>) -> PyResult<()> {
         let length = self.get_len() as isize;
         let PySliceIndices {
             start, stop, step, ..
@@ -577,20 +610,17 @@ trait InnerSorted: Sized + InnerSortedRs {
     }
 }
 
-#[pyclass(generic)]
+#[pyclass(generic, frozen)]
 pub struct InnerLists {
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     lists: Py<PyoVec>,
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     maxes: Py<PyoVec>,
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     idx: Py<PyoVec>,
-    #[pyo3(get, set)]
-    len: usize,
-    #[pyo3(get, set)]
-    load: usize,
-    #[pyo3(get, set)]
-    offset: usize,
+    len: AtomicUsize,
+    load: AtomicUsize,
+    offset: AtomicUsize,
 }
 #[pymethods]
 impl InnerLists {
@@ -600,19 +630,19 @@ impl InnerLists {
             lists: PyoVec::new_bound(py)?.unbind(),
             maxes: PyoVec::new_bound(py)?.unbind(),
             idx: PyoVec::new_bound(py)?.unbind(),
-            len: 0,
-            load: DEFAULT_LOAD_FACTOR,
-            offset: 0,
+            len: AtomicUsize::new(0),
+            load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
+            offset: AtomicUsize::new(0),
         })
     }
 }
 impl InnerSorted for InnerLists {
-    fn clear(&mut self, py: Python<'_>) -> () {
-        self.len = 0;
+    fn clear(&self, py: Python<'_>) -> () {
+        self.set_len(0);
         self.lists.get().clear(py);
         self.maxes.get().clear(py);
         self.idx.get().clear(py);
-        self.offset = 0;
+        self.set_offset(0);
     }
 
     fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
@@ -637,7 +667,7 @@ impl InnerSorted for InnerLists {
         lists.get_item(pos)?.get_item(idx)?.eq(value)
     }
     fn expand(&self, py: Python<'_>, pos: usize) -> PyResult<()> {
-        let load = self.load;
+        let load = self.get_load();
         let lists = self.lists.get().inner.clone_ref(py).into_bound(py);
         let index = self.idx.get().inner.bind(py);
 
@@ -661,7 +691,7 @@ impl InnerSorted for InnerLists {
             index.clear();
             Ok(())
         } else if !index.is_empty() {
-            let mut child = self.offset + pos;
+            let mut child = self.get_offset() + pos;
             while child != 0 {
                 index.set_item(child, index.get_item(child)?.iadd(1)?)?;
                 child = (child - 1) >> 1;
@@ -673,7 +703,7 @@ impl InnerSorted for InnerLists {
         }
     }
 
-    fn delete(&mut self, py: Python<'_>, mut pos: usize, idx: usize) -> PyResult<()> {
+    fn delete(&self, py: Python<'_>, mut pos: usize, idx: usize) -> PyResult<()> {
         let lists = self.lists.bind(py).get().inner.bind(py);
         let maxes = self.maxes.bind(py);
         let index = self.idx.bind(py).get().inner.bind(py);
@@ -687,15 +717,15 @@ impl InnerSorted for InnerLists {
             .into_bound(py);
 
         lists_pos.del_item(idx)?;
-        self.len -= 1;
+        self.set_len(self.get_len() - 1);
 
         let len_lists_pos = lists_pos.len();
 
-        if len_lists_pos > (self.load >> 1) {
+        if len_lists_pos > (self.get_load() >> 1) {
             maxes.set_item(pos, lists_pos.last()?)?;
 
             if !index.is_empty() {
-                let mut child = self.offset + pos;
+                let mut child = self.get_offset() + pos;
                 while child > 0 {
                     index.set_item(child, index.get_item(child)?.isub(1)?)?;
                     child = (child - 1) >> 1
@@ -731,7 +761,7 @@ impl InnerSorted for InnerLists {
             Ok(())
         }
     }
-    fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+    fn add(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
         let lists = self.lists.get().inner.bind(py);
         let maxes = self.maxes.get().inner.bind(py);
@@ -761,11 +791,11 @@ impl InnerSorted for InnerLists {
             maxes.append(&value)?;
         }
 
-        self.len += 1;
+        self.set_len(self.get_len() + 1);
         Ok(())
     }
 
-    fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+    fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
         let maxes = self.maxes.get().inner.bind(py);
 
@@ -792,7 +822,7 @@ impl InnerSorted for InnerLists {
         }
     }
 
-    fn remove(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+    fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
         let maxes = self.maxes.get().inner.bind(py);
 
@@ -820,7 +850,7 @@ impl InnerSorted for InnerLists {
         }
     }
 
-    fn bisect_left(&mut self, value: Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
         let py = value.py();
         let maxes = self.maxes.get().inner.bind(py);
 
@@ -831,7 +861,7 @@ impl InnerSorted for InnerLists {
         let pos = bisect::bisect_left(self.maxes.bind(py), &value)?;
 
         if pos == maxes.len() {
-            return Ok(self.len as isize);
+            return Ok(self.get_len() as isize);
         }
         let v = self
             .lists
@@ -842,7 +872,7 @@ impl InnerSorted for InnerLists {
         self.loc(py, pos, idx as isize)
     }
 
-    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
         let py = value.py();
         let maxes = self.maxes.get().inner.bind(py);
 
@@ -853,7 +883,7 @@ impl InnerSorted for InnerLists {
         let pos = bisect::bisect_right(self.maxes.bind(py), &value)?;
 
         if pos == maxes.len() {
-            return Ok(self.len as isize);
+            return Ok(self.get_len() as isize);
         }
         let v = self
             .lists
@@ -865,7 +895,7 @@ impl InnerSorted for InnerLists {
         self.loc(py, pos, idx as isize)
     }
 
-    fn count(&mut self, value: Bound<'_, PyAny>) -> PyResult<usize> {
+    fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
         let py = value.py();
         let maxes = self.maxes.get().inner.bind(py);
 
@@ -887,7 +917,7 @@ impl InnerSorted for InnerLists {
         let pos_right = bisect::bisect_right(self.maxes.bind(py), &value)?;
 
         if pos_right == maxes.len() {
-            return Ok(self.len - self.loc(py, pos_left, idx_left as isize)? as usize);
+            return Ok(self.get_len() - self.loc(py, pos_left, idx_left as isize)? as usize);
         }
         let v_right = lists
             .get_item(pos_right)
@@ -904,13 +934,13 @@ impl InnerSorted for InnerLists {
     }
 
     fn index(
-        &mut self,
+        &self,
         value: Bound<'_, PyAny>,
         start: Option<isize>,
         stop: Option<isize>,
     ) -> PyResult<isize> {
         let py = value.py();
-        let len_ = self.len as isize;
+        let len_ = self.get_len() as isize;
 
         if len_ == 0 {
             return is_not_in_list_err(value);
@@ -967,7 +997,7 @@ impl InnerSorted for InnerLists {
         is_not_in_list_err(value)
     }
 
-    fn update(&mut self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
+    fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
         let maxes = self.get_maxes(py).get().inner.clone_ref(py).into_bound(py);
         let lists = self.get_lists(py).get().inner.clone_ref(py).into_bound(py);
@@ -976,7 +1006,7 @@ impl InnerSorted for InnerLists {
             .and_then(|iterator| pylibs::builtins::sorted(&iterator, false))?;
 
         if !maxes.is_empty() {
-            if values.len() * 4 >= self.len {
+            if values.len() * 4 >= self.get_len() {
                 lists.append(values.into_pyochain()?)?;
                 values = self
                     .collapse_lists(py)?
@@ -994,7 +1024,7 @@ impl InnerSorted for InnerLists {
             }
         }
 
-        let load = self.load;
+        let load = self.get_load();
         let values_len = values.len();
 
         (0..values_len)
@@ -1010,30 +1040,27 @@ impl InnerSorted for InnerLists {
                     .last()
             })
             .try_fold(maxes, try_iterator_into_list)?;
-        self.len = values_len;
+        self.set_len(values_len);
         self.idx.get().clear(py);
         Ok(())
     }
 }
 
-#[pyclass(generic)]
+#[pyclass(generic, frozen)]
 pub struct InnerKeyLists {
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     key: Py<PyAny>,
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     keys: Py<PyoVec>,
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     lists: Py<PyoVec>,
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     maxes: Py<PyoVec>,
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     idx: Py<PyoVec>,
-    #[pyo3(get, set)]
-    len: usize,
-    #[pyo3(get, set)]
-    load: usize,
-    #[pyo3(get, set)]
-    offset: usize,
+    len: AtomicUsize,
+    load: AtomicUsize,
+    offset: AtomicUsize,
 }
 #[pymethods]
 impl InnerKeyLists {
@@ -1046,15 +1073,15 @@ impl InnerKeyLists {
             lists: PyoVec::new_bound(py)?.unbind(),
             maxes: PyoVec::new_bound(py)?.unbind(),
             idx: PyoVec::new_bound(py)?.unbind(),
-            len: 0,
-            load: DEFAULT_LOAD_FACTOR,
-            offset: 0,
+            len: AtomicUsize::new(0),
+            load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
+            offset: AtomicUsize::new(0),
         })
     }
 }
 impl InnerSorted for InnerKeyLists {
-    fn clear(&mut self, py: Python<'_>) -> () {
-        self.len = 0;
+    fn clear(&self, py: Python<'_>) -> () {
+        self.set_len(0);
         self.lists.get().clear(py);
         self.keys.get().clear(py);
         self.maxes.get().clear(py);
@@ -1103,7 +1130,7 @@ impl InnerSorted for InnerKeyLists {
             }
         }
     }
-    fn delete(&mut self, py: Python<'_>, mut pos: usize, idx: usize) -> PyResult<()> {
+    fn delete(&self, py: Python<'_>, mut pos: usize, idx: usize) -> PyResult<()> {
         let lists = self.lists.get().inner.bind(py);
         let keys = self.keys.get().inner.bind(py);
         let maxes = self.maxes.get().inner.bind(py);
@@ -1125,15 +1152,15 @@ impl InnerSorted for InnerKeyLists {
 
         keys_pos.del_item(idx)?;
         lists_pos.del_item(idx)?;
-        self.len -= 1;
+        self.set_len(self.get_len() - 1);
 
         let len_keys_pos = keys_pos.len();
 
-        if len_keys_pos > (self.load >> 1) {
+        if len_keys_pos > (self.get_load() >> 1) {
             maxes.set_item(pos, keys_pos.last()?)?;
 
             if !index.is_empty() {
-                let mut child = self.offset + pos;
+                let mut child = self.get_offset() + pos;
                 while child > 0 {
                     index.set_item(child, index.get_item(child)?.isub(1)?)?;
                     child = (child - 1) >> 1;
@@ -1179,9 +1206,9 @@ impl InnerSorted for InnerKeyLists {
         let keys = self.keys.get().inner.clone_ref(py).into_bound(py);
         let index = self.idx.get().inner.clone_ref(py).into_bound(py);
 
-        if keys.get_item(pos)?.len()? > self.load << 1 {
+        if keys.get_item(pos)?.len()? > self.get_load() << 1 {
             let maxes = self.maxes.get().inner.bind(py);
-            let load = self.load;
+            let load = self.get_load();
 
             let lists_pos = lists
                 .get_item(pos)
@@ -1209,7 +1236,7 @@ impl InnerSorted for InnerKeyLists {
             index.clear();
             Ok(())
         } else if !index.is_empty() {
-            let mut child = self.offset + pos;
+            let mut child = self.get_offset() + pos;
             while child != 0 {
                 index.set_item(child, index.get_item(child)?.iadd(1)?)?;
                 child = (child - 1) >> 1;
@@ -1220,7 +1247,7 @@ impl InnerSorted for InnerKeyLists {
             Ok(())
         }
     }
-    fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+    fn add(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
         let key = self.key.bind(py).call1((&value,))?;
         let lists = self.lists.get().inner.bind(py);
@@ -1265,11 +1292,11 @@ impl InnerSorted for InnerKeyLists {
             maxes.append(key)?;
         }
 
-        self.len += 1;
+        self.set_len(self.get_len() + 1);
         Ok(())
     }
 
-    fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+    fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
         let maxes = self.maxes.get().inner.bind(py);
 
@@ -1317,7 +1344,7 @@ impl InnerSorted for InnerKeyLists {
         Ok(())
     }
 
-    fn remove(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+    fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
         let maxes = self.maxes.get().inner.bind(py);
 
@@ -1362,21 +1389,21 @@ impl InnerSorted for InnerKeyLists {
         }
         Ok(())
     }
-    fn bisect_left(&mut self, value: Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
         self.key
             .bind(value.py())
             .call1((value,))
             .and_then(|x| self.bisect_key_left(x))
     }
 
-    fn bisect_right(&mut self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
         self.key
             .bind(value.py())
             .call1((value,))
             .and_then(|x| self.bisect_key_right(x))
     }
 
-    fn count(&mut self, value: Bound<'_, PyAny>) -> PyResult<usize> {
+    fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
         let py = value.py();
         let maxes = self.maxes.get().inner.bind(py);
 
@@ -1420,13 +1447,13 @@ impl InnerSorted for InnerKeyLists {
         }
     }
     fn index(
-        &mut self,
+        &self,
         value: Bound<'_, PyAny>,
         start: Option<isize>,
         stop: Option<isize>,
     ) -> PyResult<isize> {
         let py = value.py();
-        let len_ = self.len as isize;
+        let len_ = self.get_len() as isize;
 
         if len_ == 0 {
             return is_not_in_list_err(value);
@@ -1491,7 +1518,7 @@ impl InnerSorted for InnerKeyLists {
 
         is_not_in_list_err(value)
     }
-    fn update(&mut self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
+    fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
         let lists = self.lists.get().inner.clone_ref(py).into_bound(py);
         let maxes = self.maxes.get().inner.clone_ref(py).into_bound(py);
@@ -1502,7 +1529,7 @@ impl InnerSorted for InnerKeyLists {
             .and_then(|x| pylibs::builtins::sorted_by(&x, false, key_fn))?;
 
         if !maxes.is_empty() {
-            if values.len() * 4 >= self.len {
+            if values.len() * 4 >= self.get_len() {
                 lists.append(values.into_pyochain()?)?;
                 values = self
                     .collapse_lists(py)?
@@ -1520,7 +1547,7 @@ impl InnerSorted for InnerKeyLists {
             }
         }
 
-        let load = self.load;
+        let load = self.get_load();
         let new_maxes = (0..values.len())
             .step_by(load)
             .map(|pos| values.get_slice(pos, pos + load).into_pyochain())
@@ -1550,7 +1577,7 @@ impl InnerSorted for InnerKeyLists {
             })
             .try_fold(PyList::empty(py), try_iterator_into_list)?;
         maxes.iadd(&new_maxes)?;
-        self.len = values.len();
+        self.set_len(values.len());
         self.idx.get().clear(py);
         Ok(())
     }
@@ -1558,7 +1585,7 @@ impl InnerSorted for InnerKeyLists {
 
 #[pymethods]
 impl InnerKeyLists {
-    fn bisect_key_left(&mut self, key: Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_key_left(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
         let py = key.py();
         let maxes = self.maxes.get().inner.bind(py);
 
@@ -1569,7 +1596,7 @@ impl InnerKeyLists {
         let pos = bisect::bisect_left(self.maxes.bind(py), &key)?;
 
         if pos == maxes.len() {
-            Ok(self.len as isize)
+            Ok(self.get_len() as isize)
         } else {
             let v = self
                 .keys
@@ -1581,7 +1608,7 @@ impl InnerKeyLists {
             self.loc(py, pos, idx as isize)
         }
     }
-    fn bisect_key_right(&mut self, key: Bound<'_, PyAny>) -> PyResult<isize> {
+    fn bisect_key_right(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
         let py = key.py();
         let maxes = self.maxes.get().inner.bind(py);
 
@@ -1592,7 +1619,7 @@ impl InnerKeyLists {
         let pos = bisect::bisect_right(self.maxes.bind(py), &key)?;
 
         if pos == maxes.len() {
-            return Ok(self.len as isize);
+            return Ok(self.get_len() as isize);
         }
         let v = &self
             .keys
