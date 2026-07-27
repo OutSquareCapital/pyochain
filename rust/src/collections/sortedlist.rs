@@ -1,6 +1,6 @@
 use crate::pyo3_ext::prelude::*;
 use crate::seq::{IntoPyochain, PyoVec};
-use pyo3::exceptions::PyValueError;
+use pyo3::exceptions::{PyIndexError, PyValueError};
 use pyo3::{prelude::*, types::PyList};
 use pyochain_macros::py_abc;
 use tap::Pipe;
@@ -10,6 +10,7 @@ trait InnerSortedRs {
     fn get_idx(&self, py: Python<'_>) -> Py<PyoVec>;
     fn get_offset(&self) -> usize;
     fn set_offset(&mut self, offset: usize);
+    fn get_len(&self) -> usize;
 }
 macro_rules! impl_inner_sorted_rs {
     ($t:ty) => {
@@ -25,6 +26,9 @@ macro_rules! impl_inner_sorted_rs {
             }
             fn set_offset(&mut self, offset: usize) {
                 self.offset = offset;
+            }
+            fn get_len(&self) -> usize {
+                self.len
             }
         }
     };
@@ -216,6 +220,106 @@ trait InnerSorted: Sized + InnerSortedRs {
 
             Ok(total + idx)
         }
+    }
+
+    /// Convert an index into an index pair (lists index, sublist index).
+
+    /// This pair can be used to access the corresponding lists position.
+
+    /// Many queries require the index be built. Details of the index are
+    /// described in ``SortedList._build_index``.
+
+    /// Indexing requires traversing the tree to a leaf node. Each node has two
+    /// children which are easily computable. Given an index, pos, the
+    /// left-child is at ``pos * 2 + 1`` and the right-child is at ``pos * 2 +
+    /// 2``.
+
+    /// When the index is less than the left-child, traversal moves to the
+    /// left sub-tree. Otherwise, the index is decremented by the left-child
+    /// and traversal moves to the right sub-tree.
+
+    /// At a child node, the indexing pair is computed from the relative
+    /// position of the child node as compared with the offset and the remaining
+    /// index.
+
+    /// For example, using the index from ``SortedList._build_index``::
+
+    ///            _index = 14 5 9 3 2 4 5
+    ///            _offset = 3
+
+    /// Tree::
+
+    ///                 14
+    ///              5      9
+    ///            3   2  4   5
+
+    /// Indexing position 8 involves iterating like so:
+
+    /// 1. Starting at the root, position 0, 8 is compared with the left-child
+    ///    node (5) which it is greater than. When greater the index is
+    ///    decremented and the position is updated to the right child node.
+
+    /// 2. At node 9 with index 3, we again compare the index to the left-child
+    ///    node with value 4. Because the index is the less than the left-child
+    ///    node, we simply traverse to the left.
+
+    /// 3. At node 4 with index 3, we recognize that we are at a leaf node and
+    ///    stop iterating.
+
+    /// 4. To compute the sublist index, we subtract the offset from the index
+    ///    of the leaf node: 5 - 3 = 2. To compute the index in the sublist, we
+    ///    simply use the index remaining from iteration. In this case, 3.
+
+    /// The final index pair from our example is (2, 3) which corresponds to
+    /// index 8 in the sorted list.
+    fn pos(&mut self, py: Python<'_>, mut idx: isize) -> PyResult<(usize, isize)> {
+        let lists = self.get_lists(py).get().inner.clone_ref(py).into_bound(py);
+        if idx < 0 {
+            let last_len = lists.last()?.len()?;
+
+            if (-idx) <= last_len as isize {
+                return Ok((lists.len() - 1, last_len as isize + idx));
+            }
+
+            idx += self.get_len() as isize;
+
+            if idx < 0 {
+                let msg = "list index out of range";
+                return Err(PyIndexError::new_err(msg));
+            }
+        } else if idx >= self.get_len() as isize {
+            let msg = "list index out of range";
+            return Err(PyIndexError::new_err(msg));
+        }
+
+        if idx < lists.get_item(0)?.len()? as isize {
+            return Ok((0, idx));
+        }
+
+        let index = self.get_idx(py).get().inner.clone_ref(py).into_bound(py);
+
+        if index.is_empty() {
+            self.build_index(py)?;
+        }
+
+        let mut pos = 0;
+        let mut child = 1;
+        let len_index = index.len();
+
+        while child < len_index {
+            let index_child = index.get_item(child)?.extract::<isize>()?;
+
+            if idx < index_child {
+                pos = child;
+            } else {
+                idx -= index_child;
+                pos = child + 1;
+            }
+
+            child = (pos << 1) + 1
+        }
+
+        return Ok((pos - self.get_offset(), idx));
     }
 }
 
