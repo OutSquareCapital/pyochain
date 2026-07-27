@@ -2,6 +2,9 @@
 
 `pyochain` is a python library that provides various classes with a **fluent API**, to work with **iterations**, **collections**, **handle optional values**, **manage errors**, and more!
 
+Note:
+    This document is up to date with the branch dev and may contains features not yet released in the latest stable version.
+
 ## Table of Contents
 
 - [Key Features](#key-features)
