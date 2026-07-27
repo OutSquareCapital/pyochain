@@ -47,6 +47,7 @@ class SortedCollection[T](ABC):
             int: insertion index of value in `SortedCollection`.
 
         Examples:
+            >>> from pyochain.collections import SortedList, SortedKeyList
             >>> sl = SortedList([10, 11, 12, 13, 14])
             >>> sl.bisect_left(12)
             2
@@ -75,6 +76,7 @@ class SortedCollection[T](ABC):
         Returns:
             int: insertion index of value in `SortedCollection`.
 
+        >>> from pyochain.collections import SortedList, SortedKeyList
         >>> sl = SortedList([10, 11, 12, 13, 14])
         >>> sl.bisect_right(12)
         3
@@ -100,6 +102,7 @@ class SortedCollection[T](ABC):
 
         Runtime complexity: `O(log(n))` -- approximate.
 
+        >>> from pyochain.collections import SortedList, SortedKeyList
         >>> sl = SortedList("abcde")
         >>> sl.index("d")
         3
@@ -150,6 +153,8 @@ class SortedCollection[T](ABC):
         When `reverse` is `True` the values are yielded from the iterator in
         reverse order; `reverse` defaults to `False`.
 
+
+        >>> from pyochain.collections import SortedList, SortedKeyList
         >>> sl = SortedList("abcdefghij")
         >>> it = sl.irange("c", "f")
         >>> list(it)
@@ -190,6 +195,7 @@ class SortedCollection[T](ABC):
         When `reverse` is `True` the values are yielded from the iterator in
         reverse order; `reverse` defaults to `False`.
 
+        >>> from pyochain.collections import SortedList
         >>> sl = SortedList("abcdefghij")
         >>> it = sl.islice(2, 6)
         >>> list(it)
@@ -238,6 +244,7 @@ class BaseSortedListSet[T](ABC):
 
         Runtime complexity: `O(log(n))` -- approximate.
 
+        >>> from pyochain.collections import SortedList, SortedKeyList
         >>> sl = SortedList()
         >>> sl.add(3)
         >>> sl.add(1)
@@ -265,6 +272,7 @@ class BaseSortedListSet[T](ABC):
 
         Runtime complexity: `O(log(n))` -- approximate.
 
+        >>> from pyochain.collections import SortedList, SortedKeyList
         >>> sl = SortedList([1, 2, 3, 4, 5])
         >>> sl.discard(5)
         >>> sl.discard(0)
@@ -292,6 +300,7 @@ class BaseSortedListSet[T](ABC):
 
         Runtime complexity: `O(log(n))` -- approximate.
 
+        >>> from pyochain.collections import SortedList, SortedKeyList
         >>> sl = SortedList([1, 2, 3, 4, 5])
         >>> sl.remove(5)
         >>> sl == [1, 2, 3, 4]
@@ -340,6 +349,7 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):
 
         Runtime complexity: `O(log(n))`
 
+        >>> from pyochain.collections import SortedList, SortedKeyList
         >>> sl = SortedList([1, 2, 3, 4, 5])
         >>> 3 in sl
         True
@@ -383,6 +393,7 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):
 
         Runtime complexity: `O(k*log(n))` -- approximate.
 
+        >>> from pyochain.collections import SortedList, SortedKeyList
         >>> sl = SortedList()
         >>> sl.update([3, 1, 2])
         >>> sl
