@@ -102,13 +102,6 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         return self._inner
 
     @override
-    def reset(self, load: int) -> None:
-        values = self._inner.collapse_lists()
-        self.clear()
-        self._inner.load = load
-        self.update(values)
-
-    @override
     def clear(self) -> None:
         self._inner.clear()
 

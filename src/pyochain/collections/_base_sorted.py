@@ -510,6 +510,10 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):
     def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:
         return self._inner.index(value, start, stop)
 
+    @override
+    def reset(self, load: int) -> None:
+        return self._inner.reset(load)
+
     def update(self, iterable: Iterable[T]) -> None:
         """Add all the values from *iterable* to the `SortedCollection`.
 
