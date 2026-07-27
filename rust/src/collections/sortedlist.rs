@@ -329,6 +329,52 @@ trait InnerSorted: Sized + InnerSortedRs {
 
         return Ok((pos - self.get_offset(), idx));
     }
+    #[pyo3(signature = (index = -1))]
+    fn pop<'py>(&mut self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
+        if self.get_len() == 0 {
+            let msg = "pop index out of range";
+            return Err(PyIndexError::new_err(msg));
+        } else {
+            let lists = self.get_lists(py).get().inner.clone_ref(py).into_bound(py);
+
+            let len_last = lists.last()?.len()? as isize;
+            let val = match index {
+                0 => {
+                    let val = lists.get_item(0)?.get_item(0)?;
+                    self.delete(py, 0, 0)?;
+                    val
+                }
+
+                -1 => {
+                    let pos = lists.len() - 1;
+                    let loc = lists.get_item(pos)?.len()? - 1;
+                    let val = lists.get_item(pos)?.get_item(loc)?;
+                    self.delete(py, pos, loc)?;
+                    val
+                }
+
+                _ if 0 <= index && index < lists.get_item(0)?.len()? as isize => {
+                    let val = lists.get_item(0)?.get_item(index)?;
+                    self.delete(py, 0, index as usize)?;
+                    val
+                }
+                _ if -len_last < index && index < 0 => {
+                    let pos = lists.len() - 1;
+                    let loc = len_last + index;
+                    let val = lists.get_item(pos)?.get_item(loc)?;
+                    self.delete(py, pos, loc as usize)?;
+                    val
+                }
+                _ => {
+                    let (pos, idx) = self.pos(py, index)?;
+                    let val = lists.get_item(pos)?.get_item(idx)?;
+                    self.delete(py, pos, idx as usize)?;
+                    val
+                }
+            };
+            Ok(val)
+        }
+    }
 }
 
 #[pyclass(generic)]

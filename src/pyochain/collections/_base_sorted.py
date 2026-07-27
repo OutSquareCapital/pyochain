@@ -415,6 +415,33 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):
     def _pos(self, idx: int) -> tuple[int, int]:
         return self._inner.pos(idx)
 
+    def pop(self, index: int = -1) -> T:
+        """Remove and return value at `index` in sorted list.
+
+        Raise :exc:`IndexError` if the sorted list is empty or index is out of
+        range.
+
+        Negative indices are supported.
+
+        Runtime complexity: `O(log(n))` -- approximate.
+
+        >>> from pyochain.collections import SortedList, SortedKeyList
+        >>> sl = SortedList("abcde")
+        >>> sl.pop()
+        'e'
+        >>> sl.pop(2)
+        'c'
+        >>> sl
+        SortedList(['a', 'b', 'd'])
+
+        Args:
+            index (int): index of value (default -1)
+
+        Returns:
+            T: value at `index` in sorted list
+        """
+        return self._inner.pop(index)  # pyright: ignore[reportAny]
+
     @override
     def bisect_left(self, value: T) -> int:
         return self._inner.bisect_left(value)

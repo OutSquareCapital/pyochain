@@ -50,6 +50,7 @@ class InnerSorted[T](Protocol):
     def index(
         self, value: T, start: int | None = None, stop: int | None = None
     ) -> int: ...
+    def pop(self, index: int = -1) -> T: ...
 
 class InnerLists[T, U](InnerSorted[T]):
     lists: Vec[Vec[T]]
