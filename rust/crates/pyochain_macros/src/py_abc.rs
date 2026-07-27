@@ -98,6 +98,9 @@ fn get_quote(
 ) -> SynResult<proc_macro2::TokenStream> {
     let mut signature = method.sig.clone();
     signature.ident = format_ident!("py_{original_ident}");
+
+    signature.inputs.pipe_ref_mut(drop_mut_and_ref_from_pattern);
+
     let arguments = get_method_args(method)?;
     let receiver =
         matches!(method.sig.inputs.first(), Some(FnArg::Receiver(_))).then(|| quote! { self, });
@@ -109,6 +112,32 @@ fn get_quote(
         }
     };
     Ok(quote)
+}
+/// Clean-up `mut` and `ref` from wrapper callers.\
+/// The generated wrapper only forwards its arguments to the trait method:
+///
+///     fn py_loc(..., mut pos: usize) {
+///         <Self as Trait>::loc(..., pos)
+///     }
+///
+/// Since the wrapper never mutates its parameters,\
+/// keeping `mut` (or `ref`) from the original trait signature triggers `unused_mut` warnings after macro expansion.\
+/// Strip these qualifiers from the generated signature only.
+fn drop_mut_and_ref_from_pattern(inputs: &mut Punctuated<FnArg, Comma>) {
+    inputs
+        .iter_mut()
+        .filter_map(|arg| match arg {
+            FnArg::Typed(arg) => Some(arg),
+            _ => None,
+        })
+        .filter_map(|arg| match arg.pat.as_mut() {
+            Pat::Ident(pattern) => Some(pattern),
+            _ => None,
+        })
+        .for_each(|pattern| {
+            pattern.mutability = None;
+            pattern.by_ref = None;
+        })
 }
 fn classify_attrs(attrs: Vec<Attribute>) -> SynResult<(AttrKind, Vec<Attribute>)> {
     let mut has_new = false;
