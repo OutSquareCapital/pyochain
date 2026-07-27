@@ -10,14 +10,8 @@ from typing import TYPE_CHECKING, Any, Self, overload, override
 from pyochain import Iter, Set
 from pyochain.abc import PyoIterator, PyoMutableSet, PyoSequence
 
-from ._sorted_list import (
-    BaseSortedListSet,
-    KeyFunc,
-    SortedCollection,
-    SortedKeyList,
-    SortedList,
-    identity,
-)
+from ._base_sorted import BaseSortedListSet, KeyFunc, SortedCollection
+from ._sorted_list import SortedKeyList, SortedList, identity
 
 if TYPE_CHECKING:
     from types import NotImplementedType
