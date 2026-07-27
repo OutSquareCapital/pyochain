@@ -389,6 +389,9 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):
     def _loc(self, pos: int, idx: int) -> int:
         return self._inner.loc(pos, idx)
 
+    def _build_index(self) -> None:
+        return self._inner.build_index()
+
     @abstractmethod
     def update(self, iterable: Iterable[T]) -> None:
         """Add all the values from *iterable* to the `SortedCollection`.

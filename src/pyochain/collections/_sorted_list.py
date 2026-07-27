@@ -218,9 +218,6 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
 
         return (pos - self._inner.offset, idx)
 
-    def _build_index(self) -> None:
-        return self._inner.build_index()
-
     @override
     def __delitem__(self, index: int | slice) -> None:
         """Remove value at `index` from sorted list.
