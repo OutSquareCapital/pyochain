@@ -238,19 +238,22 @@ def test_getitem() -> None:
     slt._build_index()  # pyright: ignore[reportPrivateUsage]
     check_sorted_key_list(slt)
     slt.clear()
+    r = range(100)
 
-    lst = [random.random() for _ in range(100)]
+    lst = [random.random() for _ in r]
     slt.update(lst)
     lst.sort(key=modulo)
 
-    assert all(slt[idx] == lst[idx] for idx in range(100))
-    assert all(slt[idx - 99] == lst[idx - 99] for idx in range(100))
+    assert all(slt[idx] == lst[idx] for idx in r)
+    assert all(slt[idx - 99] == lst[idx - 99] for idx in r)
 
 
 def test_getitem_slice() -> None:
     random.seed(0)
     slt = SortedKeyList(key=modulo)
     slt.reset(17)
+    vals = [-75, -25, 0, 25, 75]
+    vals_small = [-5, -1, 1, 5]
 
     lst: list[float] = []
 
@@ -261,46 +264,39 @@ def test_getitem_slice() -> None:
 
     lst.sort(key=modulo)
 
-    assert all(slt[start:] == lst[start:] for start in [-75, -25, 0, 25, 75])
+    assert all(slt[start:] == lst[start:] for start in vals)
 
-    assert all(slt[:stop] == lst[:stop] for stop in [-75, -25, 0, 25, 75])
+    assert all(slt[:stop] == lst[:stop] for stop in vals)
 
-    assert all(slt[::step] == lst[::step] for step in [-5, -1, 1, 5])
+    assert all(slt[::step] == lst[::step] for step in vals_small)
+
+    assert all(slt[start:stop] == lst[start:stop] for start in vals for stop in vals)
 
     assert all(
-        slt[start:stop] == lst[start:stop]
-        for start in [-75, -25, 0, 25, 75]
-        for stop in [-75, -25, 0, 25, 75]
+        slt[:stop:step] == lst[:stop:step] for stop in vals for step in vals_small
     )
 
     assert all(
-        slt[:stop:step] == lst[:stop:step]
-        for stop in [-75, -25, 0, 25, 75]
-        for step in [-5, -1, 1, 5]
-    )
-
-    assert all(
-        slt[start::step] == lst[start::step]
-        for start in [-75, -25, 0, 25, 75]
-        for step in [-5, -1, 1, 5]
+        slt[start::step] == lst[start::step] for start in vals for step in vals_small
     )
 
     assert all(
         slt[start:stop:step] == lst[start:stop:step]
-        for start in [-75, -25, 0, 25, 75]
-        for stop in [-75, -25, 0, 25, 75]
-        for step in [-5, -1, 1, 5]
+        for start in vals
+        for stop in vals
+        for step in vals_small
     )
 
 
 def test_getitem_slice_big() -> None:
     slt = SortedKeyList(range(4), key=modulo)
     lst = sorted(range(4), key=modulo)
+    vals = [-6, -4, -2, 0, 2, 4, 6]
 
     itr = (
         (start, stop, step)
-        for start in [-6, -4, -2, 0, 2, 4, 6]
-        for stop in [-6, -4, -2, 0, 2, 4, 6]
+        for start in vals
+        for stop in vals
         for step in [-3, -2, -1, 1, 2, 3]
     )
 
@@ -414,82 +410,84 @@ def test_islice() -> None:
         assert list(sl.islice(stop=stop, reverse=True)) == values[:stop][::-1]
 
 
-def test_irange() -> None:  # ruff:ignore[complex-structure]
-    values = sorted(range(100), key=modulo)
-
-    for load in range(5, 16):
-        slt = SortedKeyList(range(100), key=modulo)
-        slt.reset(load)
-
-        for start in range(10):
-            for end in range(start, 10):
-                temp = list(slt.irange(start, end))
-                assert temp == values[(start * 10) : ((end + 1) * 10)]
-
-                temp = list(slt.irange(start, end, reverse=True))
-                assert temp == values[(start * 10) : ((end + 1) * 10)][::-1]
-
-        for start in range(10):
-            for end in range(start, 10):
-                temp = list(slt.irange(start, end, inclusive=(True, False)))
-                assert temp == values[(start * 10) : (end * 10)]
-
-        for start in range(10):
-            for end in range(start, 10):
-                temp = list(slt.irange(start, end, (False, True)))
-                assert temp == values[((start + 1) * 10) : ((end + 1) * 10)]
-
-        for start in range(10):
-            for end in range(start, 10):
-                temp = list(slt.irange(start, end, inclusive=(False, False)))
-                assert temp == values[((start + 1) * 10) : (end * 10)]
-
-        for start in range(10):
-            temp = list(slt.irange(minimum=start))
-            assert temp == values[(start * 10) :]
-
-        for end in range(10):
-            temp = list(slt.irange(maximum=end))
-            assert temp == values[: (end + 1) * 10]
+IRANGE_TST_VALUES = sorted(range(100), key=modulo)
 
 
-def test_irange_key() -> None:  # ruff:ignore[complex-structure]
-    values = sorted(range(100), key=modulo)
+@pytest.mark.parametrize("load", range(5, 16))
+def test_irange(load: int) -> None:  # ruff:ignore[complex-structure]
 
-    for load in range(5, 16):
-        slt = SortedKeyList(range(100), key=modulo)
-        slt.reset(load)
+    slt = SortedKeyList(range(100), key=modulo)
+    slt.reset(load)
 
-        for start in range(10):
-            for end in range(start, 10):
-                temp = list(slt.irange_key(start, end))
-                assert temp == values[(start * 10) : ((end + 1) * 10)]
+    for start in range(10):
+        for end in range(start, 10):
+            temp = list(slt.irange(start, end))
+            assert temp == IRANGE_TST_VALUES[(start * 10) : ((end + 1) * 10)]
 
-                temp = list(slt.irange_key(start, end, reverse=True))
-                assert temp == values[(start * 10) : ((end + 1) * 10)][::-1]
+            temp = list(slt.irange(start, end, reverse=True))
+            assert temp == IRANGE_TST_VALUES[(start * 10) : ((end + 1) * 10)][::-1]
 
-        for start in range(10):
-            for end in range(start, 10):
-                temp = list(slt.irange_key(start, end, inclusive=(True, False)))
-                assert temp == values[(start * 10) : (end * 10)]
+    for start in range(10):
+        for end in range(start, 10):
+            temp = list(slt.irange(start, end, inclusive=(True, False)))
+            assert temp == IRANGE_TST_VALUES[(start * 10) : (end * 10)]
 
-        for start in range(10):
-            for end in range(start, 10):
-                temp = list(slt.irange_key(start, end, (False, True)))
-                assert temp == values[((start + 1) * 10) : ((end + 1) * 10)]
+    for start in range(10):
+        for end in range(start, 10):
+            temp = list(slt.irange(start, end, (False, True)))
+            assert temp == IRANGE_TST_VALUES[((start + 1) * 10) : ((end + 1) * 10)]
 
-        for start in range(10):
-            for end in range(start, 10):
-                temp = list(slt.irange_key(start, end, inclusive=(False, False)))
-                assert temp == values[((start + 1) * 10) : (end * 10)]
+    for start in range(10):
+        for end in range(start, 10):
+            temp = list(slt.irange(start, end, inclusive=(False, False)))
+            assert temp == IRANGE_TST_VALUES[((start + 1) * 10) : (end * 10)]
 
-        for start in range(10):
-            temp = list(slt.irange_key(min_key=start))
-            assert temp == values[(start * 10) :]
+    for start in range(10):
+        temp = list(slt.irange(minimum=start))
+        assert temp == IRANGE_TST_VALUES[(start * 10) :]
 
-        for end in range(10):
-            temp = list(slt.irange_key(max_key=end))
-            assert temp == values[: (end + 1) * 10]
+    for end in range(10):
+        temp = list(slt.irange(maximum=end))
+        assert temp == IRANGE_TST_VALUES[: (end + 1) * 10]
+
+
+@pytest.mark.parametrize("load", range(5, 16))
+def test_irange_key(load: int) -> None:  # ruff:ignore[complex-structure]
+
+    slt = SortedKeyList(range(100), key=modulo)
+    slt.reset(load)
+    r = range(10)
+
+    for start in r:
+        for end in range(start, 10):
+            temp = list(slt.irange_key(start, end))
+            assert temp == IRANGE_TST_VALUES[(start * 10) : ((end + 1) * 10)]
+
+            temp = list(slt.irange_key(start, end, reverse=True))
+            assert temp == IRANGE_TST_VALUES[(start * 10) : ((end + 1) * 10)][::-1]
+
+    for start in r:
+        for end in range(start, 10):
+            temp = list(slt.irange_key(start, end, inclusive=(True, False)))
+            assert temp == IRANGE_TST_VALUES[(start * 10) : (end * 10)]
+
+    for start in r:
+        for end in range(start, 10):
+            temp = list(slt.irange_key(start, end, (False, True)))
+            assert temp == IRANGE_TST_VALUES[((start + 1) * 10) : ((end + 1) * 10)]
+
+    for start in r:
+        for end in range(start, 10):
+            temp = list(slt.irange_key(start, end, inclusive=(False, False)))
+            assert temp == IRANGE_TST_VALUES[((start + 1) * 10) : (end * 10)]
+
+    for start in r:
+        temp = list(slt.irange_key(min_key=start))
+        assert temp == IRANGE_TST_VALUES[(start * 10) :]
+
+    for end in r:
+        temp = list(slt.irange_key(max_key=end))
+        assert temp == IRANGE_TST_VALUES[: (end + 1) * 10]
 
 
 def test_len() -> None:
