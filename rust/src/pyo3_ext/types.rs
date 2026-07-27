@@ -43,8 +43,7 @@ impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
         Ok(())
     }
     fn last(&self) -> PyResult<Bound<'py, PyAny>> {
-        let length = self.len();
-        self.get_item(length - 1)
+        self.as_any().get_item(-1)
     }
 
     fn sort_by(&self, key: &Bound<'_, PyAny>, reverse: bool) -> PyResult<()> {
