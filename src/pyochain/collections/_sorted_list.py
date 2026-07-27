@@ -507,46 +507,6 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         return self._inner.len
 
     @override
-    def count(self, value: T) -> int:
-        """Return number of occurrences of `value` in the sorted list.
-
-        Runtime complexity: `O(log(n))` -- approximate.
-
-        >>> sl = SortedList([1, 2, 2, 3, 3, 3, 4, 4, 4, 4])
-        >>> sl.count(3)
-        3
-
-        :param value: value to count in sorted list
-        :return: count
-
-        """
-        maxes = self._inner.maxes
-
-        if maxes.is_empty():
-            return 0
-
-        pos_left = bisect_left(maxes, value)
-
-        if pos_left == maxes.len():
-            return 0
-
-        lists = self._inner.lists
-        idx_left = bisect_left(lists[pos_left], value)
-        pos_right = bisect_right(maxes, value)
-
-        if pos_right == maxes.len():
-            return self._inner.len - self._loc(pos_left, idx_left)
-
-        idx_right = bisect_right(lists[pos_right], value)
-
-        if pos_left == pos_right:
-            return idx_right - idx_left
-
-        right = self._loc(pos_right, idx_right)
-        left = self._loc(pos_left, idx_left)
-        return right - left
-
-    @override
     def copy(self) -> Self:
         return self.__class__(self)
 
@@ -1188,52 +1148,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
         """
         return self._inner.bisect_key_right(key)
-
-    @override
-    def count(self, value: T) -> int:
-        """Return number of occurrences of `value` in the sorted-key list.
-
-        Runtime complexity: `O(log(n))` -- approximate.
-
-        >>> from operator import neg
-        >>> skl = SortedKeyList([4, 4, 4, 4, 3, 3, 3, 2, 2, 1], key=neg)
-        >>> skl.count(2)
-        2
-
-        :param value: value to count in sorted-key list
-        :return: count
-
-        """
-        maxes = self._inner.maxes
-
-        if maxes.is_empty():
-            return 0
-
-        key = self._inner.key(value)
-        pos = bisect_left(maxes, key)
-
-        if pos == maxes.len():
-            return 0
-
-        lists = self._inner.lists
-        keys = self._inner.keys
-        idx = bisect_left(keys[pos], key)
-        total = 0
-        len_keys = keys.len()
-        len_sublist = keys[pos].len()
-
-        while True:
-            if keys[pos][idx] != key:
-                return total
-            if lists[pos][idx] == value:
-                total += 1
-            idx += 1
-            if idx == len_sublist:
-                pos += 1
-                if pos == len_keys:
-                    return total
-                len_sublist = keys[pos].len()
-                idx = 0
 
     @override
     def copy(self) -> Self:

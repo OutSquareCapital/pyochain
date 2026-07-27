@@ -384,8 +384,27 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):
     def remove(self, value: T, /) -> None:
         return self._inner.remove(value)
 
-    @abstractmethod
-    def count(self, value: T) -> int: ...
+    def count(self, value: T) -> int:
+        """Return number of occurrences of `value` in the sorted list.
+
+        Runtime complexity: `O(log(n))` -- approximate.
+
+        >>> from pyochain.collections import SortedList, SortedKeyList
+        >>> sl = SortedList([1, 2, 2, 3, 3, 3, 4, 4, 4, 4])
+        >>> sl.count(3)
+        3
+        >>> from operator import neg
+        >>> skl = SortedKeyList([4, 4, 4, 4, 3, 3, 3, 2, 2, 1], key=neg)
+        >>> skl.count(2)
+        2
+
+        Args:
+            value (T): value to count in sorted list
+        Returns:
+            count
+        """
+        return self._inner.count(value)
+
     def _loc(self, pos: int, idx: int) -> int:
         return self._inner.loc(pos, idx)
 

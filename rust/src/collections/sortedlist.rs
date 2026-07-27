@@ -47,6 +47,7 @@ trait InnerSorted: Sized + InnerSortedRs {
     fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn remove(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
+    fn count(&mut self, value: Bound<'_, PyAny>) -> PyResult<usize>;
     fn collapse_lists<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyoVec>> {
         let init = PyList::empty(py).into_sequence();
         self.get_lists(py)
@@ -622,6 +623,44 @@ impl InnerSorted for InnerLists {
         let idx = bisect::bisect_right(&v, &value, 0, None, None)?;
         self.loc(py, pos, idx as isize)
     }
+
+    fn count(&mut self, value: Bound<'_, PyAny>) -> PyResult<usize> {
+        let py = value.py();
+        let maxes = self.maxes.get().inner.bind(py);
+
+        if maxes.is_empty() {
+            return Ok(0);
+        }
+
+        let pos_left = bisect::bisect_left(self.maxes.bind(py), &value, 0, None, None)?;
+
+        if pos_left == maxes.len() {
+            return Ok(0);
+        }
+
+        let lists = self.lists.get().inner.bind(py);
+        let v_left = lists
+            .get_item(pos_left)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
+        let idx_left = bisect::bisect_left(&v_left, &value, 0, None, None)?;
+        let pos_right = bisect::bisect_right(self.maxes.bind(py), &value, 0, None, None)?;
+
+        if pos_right == maxes.len() {
+            return Ok(self.len - self.loc(py, pos_left, idx_left as isize)? as usize);
+        }
+        let v_right = lists
+            .get_item(pos_right)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
+        let idx_right = bisect::bisect_right(&v_right, &value, 0, None, None)?;
+
+        if pos_left == pos_right {
+            return Ok(idx_right - idx_left);
+        }
+
+        let right = self.loc(py, pos_right, idx_right as isize)?;
+        let left = self.loc(py, pos_left, idx_left as isize)?;
+        Ok((right - left) as usize)
+    }
 }
 
 #[pyclass(generic)]
@@ -998,6 +1037,50 @@ impl InnerSorted for InnerKeyLists {
             .bind(value.py())
             .call1((value,))
             .and_then(|x| self.bisect_key_right(x))
+    }
+
+    fn count(&mut self, value: Bound<'_, PyAny>) -> PyResult<usize> {
+        let py = value.py();
+        let maxes = self.maxes.get().inner.bind(py);
+
+        if maxes.is_empty() {
+            return Ok(0);
+        }
+
+        let key = self.key.bind(py).call1((&value,))?;
+        let mut pos = bisect::bisect_left(self.maxes.bind(py), &key, 0, None, None)?;
+
+        if pos == maxes.len() {
+            return Ok(0);
+        }
+
+        let lists = self.lists.get().inner.bind(py);
+        let keys = self.keys.get().inner.bind(py);
+        let v_left = keys
+            .get_item(pos)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
+        let mut idx = bisect::bisect_left(&v_left, &key, 0, None, None)?;
+        let mut total = 0;
+        let len_keys = keys.len();
+        let mut len_sublist = keys.get_item(pos)?.len()?;
+
+        loop {
+            if keys.get_item(pos)?.get_item(idx)?.ne(&key)? {
+                return Ok(total);
+            }
+            if lists.get_item(pos)?.get_item(idx)?.eq(&value)? {
+                total += 1;
+            }
+            idx += 1;
+            if idx == len_sublist {
+                pos += 1;
+                if pos == len_keys {
+                    return Ok(total);
+                }
+                len_sublist = keys.get_item(pos)?.len()?;
+                idx = 0;
+            }
+        }
     }
 }
 
