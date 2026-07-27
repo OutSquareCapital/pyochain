@@ -395,6 +395,12 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):
     def _pos(self, idx: int) -> tuple[int, int]:
         return self._inner.pos(idx)
 
+    def bisect_left(self, value: T) -> int:
+        return self._inner.bisect_left(value)
+
+    def bisect_right(self, value: T) -> int:
+        return self._inner.bisect_right(value)
+
     @abstractmethod
     def update(self, iterable: Iterable[T]) -> None:
         """Add all the values from *iterable* to the `SortedCollection`.

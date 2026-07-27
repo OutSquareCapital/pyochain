@@ -38,6 +38,8 @@ impl_inner_sorted_rs!(InnerKeyLists);
 
 #[py_abc(InnerLists, InnerKeyLists)]
 trait InnerSorted: Sized + InnerSortedRs {
+    fn bisect_left(&mut self, value: Bound<'_, PyAny>) -> PyResult<isize>;
+    fn bisect_right(&mut self, value: Bound<'_, PyAny>) -> PyResult<isize>;
     fn clear(&mut self, py: Python<'_>) -> ();
     fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool>;
     fn delete(&mut self, py: Python<'_>, pos: usize, idx: usize) -> PyResult<()>;
@@ -575,6 +577,51 @@ impl InnerSorted for InnerLists {
             }
         }
     }
+
+    fn bisect_left(&mut self, value: Bound<'_, PyAny>) -> PyResult<isize> {
+        let py = value.py();
+        let maxes = self.maxes.get().inner.bind(py);
+
+        if maxes.is_empty() {
+            return Ok(0);
+        }
+
+        let pos = bisect::bisect_left(self.maxes.bind(py), &value, 0, None, None)?;
+
+        if pos == maxes.len() {
+            return Ok(self.len as isize);
+        }
+        let v = self
+            .lists
+            .bind(py)
+            .get_item(pos)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
+        let idx = bisect::bisect_left(&v, &value, 0, None, None)?;
+        self.loc(py, pos, idx as isize)
+    }
+
+    fn bisect_right(&mut self, value: Bound<'_, PyAny>) -> PyResult<isize> {
+        let py = value.py();
+        let maxes = self.maxes.get().inner.bind(py);
+
+        if maxes.is_empty() {
+            return Ok(0);
+        }
+
+        let pos = bisect::bisect_right(self.maxes.bind(py), &value, 0, None, None)?;
+
+        if pos == maxes.len() {
+            return Ok(self.len as isize);
+        }
+        let v = self
+            .lists
+            .bind(py)
+            .get_item(pos)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
+
+        let idx = bisect::bisect_right(&v, &value, 0, None, None)?;
+        self.loc(py, pos, idx as isize)
+    }
 }
 
 #[pyclass(generic)]
@@ -938,6 +985,70 @@ impl InnerSorted for InnerKeyLists {
             }
         }
         Ok(())
+    }
+    fn bisect_left(&mut self, value: Bound<'_, PyAny>) -> PyResult<isize> {
+        self.key
+            .bind(value.py())
+            .call1((value,))
+            .and_then(|x| self.bisect_key_left(x))
+    }
+
+    fn bisect_right(&mut self, value: Bound<'_, PyAny>) -> PyResult<isize> {
+        self.key
+            .bind(value.py())
+            .call1((value,))
+            .and_then(|x| self.bisect_key_right(x))
+    }
+}
+
+#[pymethods]
+impl InnerKeyLists {
+    fn bisect_key_left(&mut self, key: Bound<'_, PyAny>) -> PyResult<isize> {
+        let py = key.py();
+        let maxes = self.maxes.get().inner.bind(py);
+
+        if maxes.is_empty() {
+            return Ok(0);
+        }
+
+        let pos = bisect::bisect_left(self.maxes.bind(py), &key, 0, None, None)?;
+
+        if pos == maxes.len() {
+            Ok(self.len as isize)
+        } else {
+            let v = self
+                .keys
+                .bind(py)
+                .get_item(pos)
+                .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
+            let idx = bisect::bisect_left(&v, &key, 0, None, None)?;
+
+            self.loc(py, pos, idx as isize)
+        }
+    }
+    fn bisect_key_right(&mut self, key: Bound<'_, PyAny>) -> PyResult<isize> {
+        let py = key.py();
+        let maxes = self.maxes.get().inner.bind(py);
+
+        if maxes.is_empty() {
+            return Ok(0);
+        }
+
+        let pos = bisect::bisect_right(self.maxes.bind(py), &key, 0, None, None)?;
+
+        if pos == maxes.len() {
+            return Ok(self.len as isize);
+        }
+        let v = &self
+            .keys
+            .get()
+            .inner
+            .bind(py)
+            .get_item(pos)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
+        let idx = bisect::bisect_right(&v, &key, 0, None, None)?;
+
+        return self.loc(py, pos, idx as isize);
     }
 }
 /// Module for bisect functions, adapted from the Python standard library's bisect module.\

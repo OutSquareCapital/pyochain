@@ -507,36 +507,6 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         return self._inner.len
 
     @override
-    def bisect_left(self, value: T) -> int:
-        maxes = self._inner.maxes
-
-        if maxes.is_empty():
-            return 0
-
-        pos = bisect_left(maxes, value)
-
-        if pos == maxes.len():
-            return self._inner.len
-
-        idx = bisect_left(self._inner.lists[pos], value)
-        return self._loc(pos, idx)
-
-    @override
-    def bisect_right(self, value: T) -> int:
-        maxes = self._inner.maxes
-
-        if maxes.is_empty():
-            return 0
-
-        pos = bisect_right(maxes, value)
-
-        if pos == maxes.len():
-            return self._inner.len
-
-        idx = bisect_right(self._inner.lists[pos], value)
-        return self._loc(pos, idx)
-
-    @override
     def count(self, value: T) -> int:
         """Return number of occurrences of `value` in the sorted list.
 
@@ -1177,14 +1147,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
         return self._islice(min_pos, min_idx, max_pos, max_idx, reverse=reverse)
 
-    @override
-    def bisect_left(self, value: T) -> int:
-        return self.bisect_key_left(self._inner.key(value))
-
-    @override
-    def bisect_right(self, value: T) -> int:
-        return self.bisect_key_right(self._inner.key(value))
-
     def bisect_key_left(self, key: OT) -> int:
         """Return an index to insert `key` in the sorted-key list.
 
@@ -1204,19 +1166,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         :return: index
 
         """
-        maxes = self._inner.maxes
-
-        if maxes.is_empty():
-            return 0
-
-        pos = bisect_left(maxes, key)
-
-        if pos == maxes.len():
-            return self._inner.len
-
-        idx = bisect_left(self._inner.keys[pos], key)
-
-        return self._loc(pos, idx)
+        return self._inner.bisect_key_left(key)
 
     def bisect_key_right(self, key: OT) -> int:
         """Return an index to insert `key` in the sorted-key list.
@@ -1237,19 +1187,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         :return: index
 
         """
-        maxes = self._inner.maxes
-
-        if maxes.is_empty():
-            return 0
-
-        pos = bisect_right(maxes, key)
-
-        if pos == maxes.len():
-            return self._inner.len
-
-        idx = bisect_right(self._inner.keys[pos], key)
-
-        return self._loc(pos, idx)
+        return self._inner.bisect_key_right(key)
 
     @override
     def count(self, value: T) -> int:
