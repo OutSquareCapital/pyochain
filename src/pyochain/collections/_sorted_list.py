@@ -291,7 +291,7 @@ class BaseSortedListSet[T](ABC):
         """
 
     @abstractmethod
-    def remove(self, value: T) -> None:
+    def remove(self, value: T, /) -> None:
         """Remove `value` from the `SortedCollection`.
 
         `value` must be a member.
@@ -378,6 +378,10 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):
     def discard(self, value: T) -> None:
         return self._inner.discard(value)
 
+    @override
+    def remove(self, value: T, /) -> None:
+        return self._inner.remove(value)
+
     @abstractmethod
     def count(self, value: T) -> int: ...
 
@@ -404,7 +408,7 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):
 
 
 class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
-    PyoMutableSequence[T], SortedCollection[T], BaseSortedList[T]
+    BaseSortedList[T], SortedCollection[T], PyoMutableSequence[T]
 ):
     """Sorted list is a sorted mutable sequence.
 
@@ -498,29 +502,6 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
     @override
     def update(self, iterable: Iterable[T]) -> None:
         return _update_lists(self, iterable)
-
-    @override
-    def remove(self, value: T) -> None:
-        maxes = self._inner.maxes
-
-        if maxes.is_empty():
-            msg = f"{value!r} not in list"
-            raise ValueError(msg)
-
-        pos = bisect_left(maxes, value)
-
-        if pos == maxes.len():
-            msg = f"{value!r} not in list"
-            raise ValueError(msg)
-
-        lists = self._inner.lists
-        idx = bisect_left(lists[pos], value)
-
-        if lists[pos][idx] == value:
-            self._inner.delete(pos, idx)
-        else:
-            msg = f"{value!r} not in list"
-            raise ValueError(msg)
 
     def _loc(self, pos: int, idx: int) -> int:
         """Convert an index pair (lists index, sublist index) into a single index number.
@@ -1667,43 +1648,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
     @override
     def update(self, iterable: Iterable[T]) -> None:
         return _update_key_lists(self, iterable)
-
-    @override
-    def remove(self, value: T) -> None:
-        maxes = self._inner.maxes
-
-        if maxes.is_empty():
-            msg = f"{value!r} not in list"
-            raise ValueError(msg)
-
-        key = self._inner.key(value)
-        pos = bisect_left(maxes, key)
-
-        if pos == maxes.len():
-            msg = f"{value!r} not in list"
-            raise ValueError(msg)
-
-        lists = self._inner.lists
-        keys = self._inner.keys
-        idx = bisect_left(keys[pos], key)
-        len_keys = keys.len()
-        len_sublist = keys[pos].len()
-
-        while True:
-            if keys[pos][idx] != key:
-                msg_0 = f"{value!r} not in list"
-                raise ValueError(msg_0)
-            if lists[pos][idx] == value:
-                self._inner.delete(pos, idx)
-                return
-            idx += 1
-            if idx == len_sublist:
-                pos += 1
-                if pos == len_keys:
-                    msg = f"{value!r} not in list"
-                    raise ValueError(msg)
-                len_sublist = keys[pos].len()
-                idx = 0
 
     @override
     def irange(

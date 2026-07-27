@@ -1,5 +1,6 @@
 use crate::pyo3_ext::prelude::*;
 use crate::seq::{IntoPyochain, PyoVec};
+use pyo3::exceptions::PyValueError;
 use pyo3::{prelude::*, types::PyList};
 use pyochain_macros::py_abc;
 use tap::Pipe;
@@ -35,6 +36,7 @@ trait InnerSorted: Sized + InnerSortedRs {
     fn expand(&self, py: Python<'_>, pos: usize) -> PyResult<()>;
     fn add(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn discard(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
+    fn remove(&mut self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn collapse_lists<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyoVec>> {
         let init = PyList::empty(py).into_sequence();
         self.get_lists(py)
@@ -368,6 +370,34 @@ impl InnerSorted for InnerLists {
             Ok(())
         }
     }
+
+    fn remove(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        let py = value.py();
+        let maxes = self.maxes.get().inner.bind(py);
+
+        if maxes.is_empty() {
+            not_in_list_err(value)
+        } else {
+            let pos = bisect::bisect_left(self.maxes.bind(py), &value, 0, None, None)?;
+
+            if pos == maxes.len() {
+                not_in_list_err(value)
+            } else {
+                let lists = self.lists.get().inner.bind(py);
+                let v = &lists
+                    .get_item(pos)
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
+
+                let idx = bisect::bisect_left(&v, &value, 0, None, None)?;
+
+                if lists.get_item(pos)?.get_item(idx)?.eq(&value)? {
+                    self.delete(py, pos, idx)
+                } else {
+                    not_in_list_err(value)
+                }
+            }
+        }
+    }
 }
 
 #[pyclass(generic)]
@@ -686,6 +716,52 @@ impl InnerSorted for InnerKeyLists {
         }
         Ok(())
     }
+
+    fn remove(&mut self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        let py = value.py();
+        let maxes = self.maxes.get().inner.bind(py);
+
+        if maxes.is_empty() {
+            return not_in_list_err(value);
+        }
+
+        let key = self.key.bind(py).call1((&value,))?;
+        let mut pos = bisect::bisect_left(self.maxes.bind(py), &key, 0, None, None)?;
+
+        if pos == maxes.len() {
+            return not_in_list_err(value);
+        }
+
+        let lists = self.lists.get().inner.bind(py);
+        let keys = self.keys.get().inner.bind(py);
+        let v = &keys
+            .get_item(pos)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
+
+        let mut idx = bisect::bisect_left(&v, &key, 0, None, None)?;
+        let len_keys = keys.len();
+        let mut len_sublist = keys.get_item(pos)?.len()?;
+
+        loop {
+            if keys.get_item(pos)?.get_item(idx)?.ne(&key)? {
+                return not_in_list_err(value);
+            }
+            if lists.get_item(pos)?.get_item(idx)?.eq(&value)? {
+                self.delete(py, pos, idx)?;
+                break;
+            }
+            idx += 1;
+            if idx == len_sublist {
+                pos += 1;
+                if pos == len_keys {
+                    return not_in_list_err(value);
+                }
+                len_sublist = keys.get_item(pos)?.len()?;
+                idx = 0
+            }
+        }
+        Ok(())
+    }
 }
 /// Module for bisect functions, adapted from the Python standard library's bisect module.\
 /// Adapted to only handle `pyochain::PyoVec` for both simplicity and performance.
@@ -780,4 +856,9 @@ pub mod bisect {
         };
         Ok(lo)
     }
+}
+#[inline]
+fn not_in_list_err(value: Bound<'_, PyAny>) -> PyResult<()> {
+    let msg = format!("{} not in list", value.repr()?);
+    Err(PyValueError::new_err(msg))
 }
