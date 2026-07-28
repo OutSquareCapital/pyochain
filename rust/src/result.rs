@@ -144,11 +144,12 @@ impl PyoOk {
         self.value.clone_ref(py)
     }
 
-    fn iter(&self, py: Python<'_>) -> PyResult<Py<tools::Iter>> {
+    fn iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, tools::Iter>> {
         self.value
             .clone_ref(py)
             .pipe(|x| PyTuple::new(py, &[x]))?
-            .into_any()
+            .try_iter()
+            .unwrap()
             .pipe(tools::Iter::new)
     }
 
@@ -318,8 +319,8 @@ impl PyoErr {
         self.error.clone_ref(py)
     }
 
-    fn iter<'py>(slf: &Bound<'py, Self>) -> PyResult<Py<tools::Iter>> {
-        PyTuple::empty(slf.py()).into_any().pipe(tools::Iter::new)
+    fn iter<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, tools::Iter>> {
+        tools::Iter::empty(slf.py())
     }
 
     fn unwrap_or(&self, default: Py<PyAny>) -> Py<PyAny> {

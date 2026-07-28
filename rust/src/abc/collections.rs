@@ -80,10 +80,9 @@ impl PyoReversible {
         PyoIterable::build_init().add_subclass(Self)
     }
     /// We use unsafe code here because calling `reversed` with `PyOnceLock` pattern is 2x slower than pure python for some reason.
-    fn rev(slf: Bound<'_, Self>) -> PyResult<Py<tools::Iter>> {
+    fn rev(slf: Bound<'_, Self>) -> PyResult<Bound<'_, tools::Iter>> {
         slf.as_any()
             .pipe(pylibs::builtins::reversed)
-            .into_any()
-            .pipe(|x| tools::Iter::new(x))
+            .pipe(tools::Iter::new)
     }
 }

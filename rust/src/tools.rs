@@ -826,14 +826,14 @@ impl GroupBy {
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
         slf
     }
-    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<(Bound<'_, PyAny>, Py<Iter>)>> {
+    fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<(Bound<'_, PyAny>, Bound<'_, Iter>)>> {
         let py = slf.py();
         match slf.iterator.clone_ref(py).into_bound(py).next() {
             Some(item) => unsafe {
                 let tup = item?.cast_into_unchecked::<PyTuple>();
                 let (key, group) = (tup.get_item_unchecked(0), tup.get_item_unchecked(1));
 
-                Ok(Some((key, Iter::new(group)?)))
+                Ok(Some((key, Iter::new(group.try_iter().unwrap())?)))
             },
             None => Ok(None),
         }
@@ -939,10 +939,15 @@ pub struct Iter {
 impl Iter {
     /// New constructor for `Iter` in rust.
     /// We do this because `PyClassInitializer` can't be converted to pyobject directly, so we need to wrap it in a `Py` first.
-    pub fn new(data: Bound<'_, PyAny>) -> PyResult<Py<Self>> {
+    pub fn new(data: Bound<'_, PyIterator>) -> PyResult<Bound<'_, Self>> {
         let py = data.py();
-        let initializer = Self::py_new(data)?;
-        Py::new(py, initializer)
+        let initializer = abc::PyoIterator::build_init().add_subclass(Self {
+            inner: data.unbind(),
+        });
+        Bound::new(py, initializer)
+    }
+    pub fn empty(py: Python<'_>) -> PyResult<Bound<'_, Self>> {
+        PyTuple::empty(py).try_iter().unwrap().pipe(Self::new)
     }
 }
 #[pymethods]

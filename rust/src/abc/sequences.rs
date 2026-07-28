@@ -106,11 +106,10 @@ impl PyoSequence {
             }
         }
     }
-    fn rev(slf: Bound<'_, Self>) -> PyResult<Py<tools::Iter>> {
+    fn rev<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'_, tools::Iter>> {
         slf.as_any()
             .pipe(pylibs::builtins::reversed)
-            .into_any()
-            .pipe(|x| tools::Iter::new(x))
+            .pipe(tools::Iter::new)
     }
 }
 
@@ -203,28 +202,30 @@ impl PyoMutableSequence {
         unsafe { slf.cast_into_unchecked::<PySequence>() }.del_slice(length, usize::MAX)
     }
     #[pyo3(signature = (predicate, start=0, end=None))]
-    fn extract_if(
-        slf: Bound<'_, Self>,
-        predicate: Bound<'_, PyAny>,
+    fn extract_if<'py>(
+        slf: Bound<'py, Self>,
+        predicate: Bound<'py, PyAny>,
         start: usize,
         end: Option<usize>,
-    ) -> PyResult<Py<tools::Iter>> {
+    ) -> PyResult<Bound<'py, tools::Iter>> {
         let py = slf.py();
         unsafe { slf.cast_into_unchecked::<PySequence>() }
             .pipe(|x| tools::ExtractIf::new(x, predicate, start, end))?
-            .into_bound_py_any(py)
+            .into_bound_py_any(py)?
+            .try_iter()
             .and_then(tools::Iter::new)
     }
     #[pyo3(signature = (start=None, end=None))]
-    fn drain(
-        slf: Bound<'_, Self>,
+    fn drain<'py>(
+        slf: Bound<'py, Self>,
         start: Option<usize>,
         end: Option<usize>,
-    ) -> PyResult<Py<tools::Iter>> {
+    ) -> PyResult<Bound<'py, tools::Iter>> {
         let py = slf.py();
         unsafe { slf.cast_into_unchecked::<PySequence>() }
             .pipe(|x| tools::Drain::new(x, start, end))?
-            .into_bound_py_any(py)
+            .into_bound_py_any(py)?
+            .try_iter()
             .and_then(tools::Iter::new)
     }
 }

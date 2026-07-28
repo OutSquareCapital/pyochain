@@ -115,12 +115,12 @@ trait HeapType: Sized + PyWrapper<PyList> {
     }
 
     #[pyo3(signature = (*others, key=None, reverse=false))]
-    fn merge(
+    fn merge<'py>(
         &self,
-        others: Bound<'_, PyTuple>,
-        key: Option<Bound<'_, PyAny>>,
+        others: Bound<'py, PyTuple>,
+        key: Option<Bound<'py, PyAny>>,
         reverse: bool,
-    ) -> PyResult<Py<tools::Iter>> {
+    ) -> PyResult<Bound<'py, tools::Iter>> {
         let py = others.py();
         let args = self
             .as_inner()
@@ -131,9 +131,7 @@ trait HeapType: Sized + PyWrapper<PyList> {
             .chain(others.iter())
             .collect::<Vec<_>>()
             .pipe(|x| PyTuple::new(py, x))?;
-        pylibs::heapq::merge(py, args, key, reverse)?
-            .into_any()
-            .pipe(tools::Iter::new)
+        pylibs::heapq::merge(py, args, key, reverse).and_then(tools::Iter::new)
     }
     #[pyo3(signature = (n, key=None))]
     fn n_smallest<'py>(

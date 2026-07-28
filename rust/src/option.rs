@@ -558,8 +558,8 @@ impl PyNull {
         }
     }
 
-    fn iter<'py>(slf: &Bound<'py, Self>) -> PyResult<Py<tools::Iter>> {
-        PyTuple::empty(slf.py()).into_any().pipe(tools::Iter::new)
+    fn iter<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, tools::Iter>> {
+        tools::Iter::empty(slf.py())
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {

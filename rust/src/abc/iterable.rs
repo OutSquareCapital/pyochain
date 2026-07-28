@@ -6,7 +6,6 @@ use crate::mixins::Checkable;
 use crate::pyo3_ext::prelude::*;
 use crate::tools;
 use pyo3::{PyClass, PyTypeInfo, prelude::*};
-use tap::prelude::*;
 
 pub trait PyoABC: PyTypeInfo + PyClass {
     fn build_init() -> PyClassInitializer<Self>;
@@ -72,7 +71,7 @@ impl PyoIterable {
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
         Self::build_init()
     }
-    fn iter<'py>(slf: Bound<'py, Self>) -> PyResult<Py<tools::Iter>> {
-        slf.into_any().pipe(tools::Iter::new)
+    fn iter<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, tools::Iter>> {
+        slf.try_iter().and_then(tools::Iter::new)
     }
 }
