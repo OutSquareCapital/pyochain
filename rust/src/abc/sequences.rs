@@ -106,7 +106,7 @@ impl PyoSequence {
             }
         }
     }
-    fn rev<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'_, tools::Iter>> {
+    fn rev<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, tools::Iter>> {
         slf.as_any()
             .pipe(pylibs::builtins::reversed)
             .pipe(tools::Iter::new)
