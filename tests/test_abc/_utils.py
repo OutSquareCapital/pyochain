@@ -33,17 +33,6 @@ class ImplCollection(ImplSized, ImplContainer, ImplIter):
         self._data: list[int] = [1, 2, 3] if it is None else list(dict.fromkeys(it))
 
 
-class ImplMutableSet(ImplCollection):
-    def __init__(self, it: Iterable[int] | None = None) -> None:
-        self._data: set[int] = {1, 2, 3} if it is None else set(it)  # pyright: ignore[reportIncompatibleVariableOverride]
-
-    def add(self, item: int) -> None:
-        self._data.add(item)
-
-    def discard(self, item: int) -> None:
-        self._data.discard(item)
-
-
 class ImplSequence(ImplSized):
     def __getitem__(self, index: int) -> int:
         return self._data[index]
