@@ -1,5 +1,5 @@
-use pyo3::{IntoPyObjectExt, exceptions::{PyKeyError, PyNotImplementedError}, intern, prelude::*, types::{PyList, PyType}};
-use crate::{abc::PyoABC, pyo3_ext::args::Args};
+use pyo3::{IntoPyObjectExt,  exceptions::{PyKeyError, PyNotImplementedError}, intern, prelude::*, types::{PyList, PyType}};
+use crate::{abc::PyoABC, pyo3_ext::{args::Args, types::{PyMutableSet, PyMutableSetMethods}}};
 use crate::{abc::PyoCollection, pyo3_ext::{args::Kwargs, types::PyAbstractSet}};
 #[pyclass(subclass, frozen, generic, extends=PyoCollection)]
 pub struct PyoSet;
@@ -278,6 +278,7 @@ impl PyoSet {
 
 #[pyclass(subclass, frozen, generic, extends=PyoSet)]
 pub struct PyoMutableSet;
+
 #[pymethods]
 impl PyoMutableSet {
     #[pyo3(signature = (*_args, **_kwargs))]
@@ -285,24 +286,25 @@ impl PyoMutableSet {
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
         Self::build_init()
     }
-    fn _py_add(slf: &Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        slf.call_method1(intern!(slf.py(), "add"), (value,))?;
-        Ok(())
+    fn into_mutable_set(slf: Bound<'_, Self>) -> Bound<'_, PyMutableSet> {
+        unsafe { slf.cast_into_unchecked::<PyMutableSet>() }
     }
-    fn _py_discard(slf: &Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        slf.call_method1(intern!(slf.py(), "discard"), (value,))?;
-        Ok(())
+
+    fn as_mutable_set<'a , 'py>(slf: &'a Bound<'py, Self>) -> &'a Bound<'py, PyMutableSet> {
+        unsafe { slf.cast_unchecked::<PyMutableSet>() }
     }
 
     fn __ior__<'py>(slf: Bound<'py, Self>, it: Bound<'py, PyAny>) -> PyResult<()> {
+        let slf = Self::into_mutable_set(slf);
         it.try_iter()?
-            .try_for_each(|value| Self::_py_add(&slf, &value?))
+            .try_for_each(|value| slf.add(&value?))
     }
 
     fn __iand__<'py>(slf: Bound<'py, Self>, it: Bound<'py, PyAny>) -> PyResult<()> {
+        let slf = Self::into_mutable_set(slf);
         slf.sub(&it)?
             .try_iter()?
-            .try_for_each(|value| Self::_py_discard(&slf, &value?))
+            .try_for_each(|value| slf.discard(&value?))
     }
 
     fn __isub__<'py>(slf: Bound<'py, Self>, it: Bound<'py, PyAny>) -> PyResult<()> {
@@ -310,8 +312,9 @@ impl PyoMutableSet {
         if it.is(&slf) {
             slf.call_method0(intern!(py, "clear"))?;
         } else {
+            let slf = Self::into_mutable_set(slf);
             for value in it.try_iter()? {
-                Self::_py_discard(&slf, &value?)?;
+                slf.discard( &value?)?;
             }
         }
         Ok(())
@@ -328,12 +331,13 @@ impl PyoMutableSet {
             } else {
                 it
             };
+            let slf = Self::into_mutable_set(slf);
             for value in pyset.try_iter()? {
                 let v = value?;
                 if slf.contains(&v)? {
-                    Self::_py_discard(&slf, &v)?;
+                    slf.discard(&v)?;
                 } else {
-                    Self::_py_add(&slf, &v)?;
+                    slf.add(&v)?;
                 }
             }
         }
@@ -346,23 +350,51 @@ impl PyoMutableSet {
         if !slf.contains(&value)? {
             Err(PyKeyError::new_err(format!("{}", value)))
         } else {
-            Self::_py_discard(&slf, &value)?;
+            Self::into_mutable_set(slf).discard(&value)?;
             Ok(())
         }
     }
 
     fn pop(slf: Bound<'_, Self>) -> PyResult<Bound<'_, PyAny>> {
-        match slf.try_iter()?.next() {
-            None => Err(PyKeyError::new_err("")),
-            Some(value) => value.and_then(|x| {
-                Self::_py_discard(&slf, &x)?;
-                Ok(x)
-            }),
+        match PopResult::new(slf.as_any()) {
+            PopResult::KeyStop => Err(PyKeyError::new_err("")),
+            PopResult::Value(value) => {
+                Self::into_mutable_set(slf).discard(&value)?;
+                Ok(value)
+            },
+            PopResult::Error(e) => Err(e),
         }
     }
 
     fn clear(slf: Bound<'_, Self>) -> PyResult<()> {
-        slf.try_iter()?
-            .try_for_each(|x| Self::_py_discard(&slf, &x?))
+        let any = slf.as_any();
+        let slf = Self::as_mutable_set(&slf);
+        loop {
+            match PopResult::new(any) {
+                PopResult::Error(e) => {
+                    return Err(e);
+                },
+                PopResult::KeyStop => {
+                    break Ok(())
+                },
+                PopResult::Value(v) => {slf.discard( &v)?;
+                    continue}
+            }
+        }
     }
+}
+enum PopResult<'py> {
+    Value(Bound<'py, PyAny>),
+    KeyStop,
+    Error(PyErr),
+}
+impl<'py> PopResult<'py> {
+    fn new(slf: &Bound<'py, PyAny>) -> Self {
+        slf.try_iter().map(|mut x| match x.next() {
+            None => PopResult::KeyStop,
+            Some(Ok(v)) => PopResult::Value(v),
+            Some(Err(e)) => PopResult::Error(e),
+        }).unwrap_or_else(|e| PopResult::Error(e))
+    }
+    
 }
