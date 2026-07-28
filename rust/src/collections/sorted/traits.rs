@@ -242,7 +242,9 @@ impl_inner_sorted_rs!(InnerLists);
 impl_inner_sorted_rs!(InnerKeyLists);
 
 #[py_abc(InnerLists, InnerKeyLists)]
-pub(super) trait InnerSorted: Sized + InnerSortedGetters + PyClass {
+pub(super) trait InnerSorted:
+    Sized + InnerSortedGetters + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
+{
     fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize>;
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize>;
     fn clear(&self, py: Python<'_>) -> ();
