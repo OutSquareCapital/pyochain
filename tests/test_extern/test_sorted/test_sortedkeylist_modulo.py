@@ -12,8 +12,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from pyochain.collections import SortedKeyList, SortedList
-
-from ._utils import check_sorted_key_list
+from pyochain.rs import check_sorted_key_list
 
 if TYPE_CHECKING:
     from _typeshed import SupportsRichComparison
@@ -26,12 +25,12 @@ def modulo(val: float) -> float:
 def test_init() -> None:
     slt = SortedKeyList(key=modulo)
     assert slt.key == modulo
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
 
     slt = SortedKeyList(key=modulo)
     slt.reset(10000)
     assert slt.inner.load == 10000
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
 
     slt = SortedKeyList(range(100), key=modulo)
     assert all(
@@ -47,13 +46,13 @@ def test_init() -> None:
     assert isinstance(slt, SortedList)
     assert isinstance(slt, SortedKeyList)
 
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
 
 
 def test_new() -> None:
     slt = SortedKeyList(iter(range(1000)), key=modulo)
     assert slt == sorted(range(1000), key=modulo)
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
 
     assert isinstance(slt, SortedList)
     assert isinstance(slt, SortedKeyList)
@@ -62,7 +61,7 @@ def test_new() -> None:
 
 def test_key() -> None:
     slt = SortedKeyList(range(100), key=lambda val: val % 10)
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
 
     values = sorted(range(100), key=lambda val: (val % 10, val))
     assert slt == values
@@ -86,17 +85,17 @@ def test_add() -> None:
     slt = SortedKeyList(key=modulo)
     for val in range(1000):
         slt.add(val)
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
 
     slt = SortedKeyList(key=modulo)
     for val in range(1000, 0, -1):
         slt.add(val)
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
 
     slt = SortedKeyList(key=modulo)
     for _ in range(1000):
         slt.add(random.random())
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
 
 
 def test_update() -> None:
@@ -108,11 +107,11 @@ def test_update() -> None:
         for tup in zip(slt, sorted(range(1000), key=modulo), strict=False)
     )
     assert len(slt) == 1000
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
 
     slt.update(range(100))
     assert len(slt) == 1100
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
 
 
 def test_update_order_consistency() -> None:
@@ -139,7 +138,7 @@ def test_contains() -> None:
 
     assert 100 not in slt
 
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
 
     slt = SortedKeyList(range(100), key=modulo)
     slt.reset(4)
@@ -151,17 +150,17 @@ def test_discard() -> None:
 
     assert slt.discard(0) is None
     assert len(slt) == 0
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
 
     slt = SortedKeyList([1, 2, 2, 2, 3, 3, 5], key=modulo)
     slt.reset(4)
 
     slt.discard(6)
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
     slt.discard(4)
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
     slt.discard(2)
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
     slt.discard(11)
     slt.discard(12)
     slt.discard(13)
@@ -175,13 +174,13 @@ def test_remove() -> None:
 
     assert slt.discard(0) is None
     assert len(slt) == 0
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
 
     slt = SortedKeyList([1, 2, 2, 2, 3, 3, 5], key=modulo)
     slt.reset(4)
 
     slt.remove(2)
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
 
     assert all(tup[0] == tup[1] for tup in zip(slt, [1, 2, 2, 3, 3, 5], strict=False))
 
@@ -220,10 +219,10 @@ def test_remove_valueerror5() -> None:
 def test_delete() -> None:
     slt = SortedKeyList(range(20), key=modulo)
     slt.reset(4)
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
     for val in range(20):
         slt.remove(val)
-        check_sorted_key_list(slt)
+        check_sorted_key_list(slt.inner)
     assert len(slt) == 0
     assert slt.inner.maxes == []
     assert slt.inner.lists == []
@@ -236,7 +235,7 @@ def test_getitem() -> None:
 
     slt.add(5)
     slt._build_index()  # pyright: ignore[reportPrivateUsage]
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
     slt.clear()
     r = range(100)
 
@@ -336,13 +335,13 @@ def test_delitem() -> None:
     slt.reset(17)
     while len(slt) > 0:
         del slt[random.randrange(len(slt))]
-        check_sorted_key_list(slt)
+        check_sorted_key_list(slt.inner)
 
     slt = SortedKeyList(range(100), key=modulo)
     slt.reset(17)
     del slt[:]
     assert len(slt) == 0
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
 
 
 def test_delitem_slice() -> None:
@@ -504,7 +503,7 @@ def test_bisect_left() -> None:
     slt = SortedKeyList(range(100), key=modulo)
     slt.reset(17)
     slt.update(range(100))
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
     assert slt.bisect_left(50) == 0
     assert slt.bisect_left(0) == 0
 
@@ -515,7 +514,7 @@ def test_bisect_right() -> None:
     slt = SortedKeyList(range(100), key=modulo)
     slt.reset(17)
     slt.update(range(100))
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
     assert slt.bisect_right(10) == 20
     assert slt.bisect_right(0) == 20
 
@@ -526,7 +525,7 @@ def test_bisect_key_left() -> None:
     slt = SortedKeyList(range(100), key=modulo)
     slt.reset(17)
     slt.update(range(100))
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
     assert slt.bisect_key_left(0) == 0
     assert slt.bisect_key_left(5) == 100
     assert slt.bisect_key_left(10) == 200
@@ -538,7 +537,7 @@ def test_bisect_key_right() -> None:
     slt = SortedKeyList(range(100), key=modulo)
     slt.reset(17)
     slt.update(range(100))
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
     assert slt.bisect_key_right(0) == 20
     assert slt.bisect_key_right(5) == 120
     assert slt.bisect_key_right(10) == 200
@@ -573,7 +572,7 @@ def test_count() -> None:
     for iii in range(100):
         for _jjj in range(iii):
             slt.add(iii)
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
 
     for iii in range(100):
         assert slt.count(iii) == iii
@@ -585,15 +584,15 @@ def test_count() -> None:
 def test_pop() -> None:
     slt = SortedKeyList(range(10), key=modulo)
     slt.reset(4)
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
     assert slt.pop() == 9
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
     assert slt.pop(0) == 0
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
     assert slt.pop(-2) == 7
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
     assert slt.pop(4) == 5
-    check_sorted_key_list(slt)
+    check_sorted_key_list(slt.inner)
 
 
 def test_pop_indexerror1() -> None:
@@ -707,8 +706,8 @@ def test_mul() -> None:
     this = SortedKeyList(range(10), key=modulo)
     this.reset(4)
     that = this * 5
-    check_sorted_key_list(this)
-    check_sorted_key_list(that)
+    check_sorted_key_list(this.inner)
+    check_sorted_key_list(that.inner)
     assert this == sorted(range(10), key=modulo)
     assert that == sorted(list(range(10)) * 5, key=modulo)
     assert this != that
@@ -718,7 +717,7 @@ def test_imul() -> None:
     this = SortedKeyList(range(10), key=modulo)
     this.reset(4)
     this *= 5
-    check_sorted_key_list(this)
+    check_sorted_key_list(this.inner)
     assert this == sorted(list(range(10)) * 5, key=modulo)
 
 
@@ -820,4 +819,4 @@ def test_check() -> None:
     slt.reset(4)
     slt.inner.len = 5
     with pytest.raises(AssertionError):
-        check_sorted_key_list(slt)
+        check_sorted_key_list(slt.inner)

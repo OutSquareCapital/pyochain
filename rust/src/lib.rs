@@ -192,6 +192,10 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
         collections::sorted::debug::check_sorted_list,
         m
     )?)?;
+    m.add_function(wrap_pyfunction!(
+        collections::sorted::debug::check_sorted_key_list,
+        m
+    )?)?;
     let sys_mods = py.import("sys")?.getattr("modules")?;
     sys_mods.set_item("pyochain.abc", abc_mod)?;
     register_all(py)

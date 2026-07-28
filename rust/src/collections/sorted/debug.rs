@@ -15,6 +15,18 @@ pub fn check_sorted_list(
     )
     .into_inner()
 }
+#[pyfunction]
+pub fn check_sorted_key_list(py: Python<'_>, data: Py<InnerKeyLists>) -> PyResult<()> {
+    run_key_checks(py, data.get()).inspect_err(move |e| show_key_list(py, &e, data.get()))
+}
+
+macro_rules! pyassert {
+    ($cond:expr) => {
+        if !$cond {
+            return Err(PyAssertionError::new_err(""));
+        }
+    };
+}
 
 fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
     let lists = data.get_lists(py).get().inner.clone_ref(py).into_bound(py);
@@ -122,14 +134,121 @@ fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
                     .ok_or(err("Index branch node length mismatch"))?;
             } else {
                 let child_sum = idx.get_item(child)?.add(idx.get_item(child + 1)?)?;
-                (child_sum.eq(idx.get_item(pos)?)?)
-                    .then_some(())
-                    .ok_or(err("Index branch node length mismatch"))?;
+                pyassert!(child_sum.eq(idx.get_item(pos)?)?);
             }
         }
     }
 
     Ok(())
+}
+
+fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
+    let lists = data.lists.get().inner.bind(py);
+    let keys = data.keys.get().inner.bind(py);
+    let maxes = data.maxes.get().inner.bind(py);
+    let idx = data.idx.bind(py);
+    let load = data.get_load();
+    let length = data.get_len();
+    let offset = data.get_offset();
+    let key_fn = data.key.bind(py);
+    pyassert!(load >= 4);
+    pyassert!(maxes.len() == lists.len() && lists.len() == keys.len());
+    pyassert!(
+        length
+            == lists
+                .iter()
+                .map(|sublist| sublist.len().unwrap())
+                .sum::<usize>()
+    );
+
+    // Check all sublists are sorted.
+
+    for sublist in keys {
+        for pos in 1..sublist.len()? {
+            pyassert!(sublist.get_item(pos - 1)?.le(sublist.get_item(pos)?)?);
+        }
+    }
+
+    // Check beginning/end of sublists are sorted.
+
+    for pos in 1..keys.len() {
+        pyassert!(
+            keys.get_item(pos - 1)?
+                .get_item(-1)?
+                .le(keys.get_item(pos)?.get_item(0)?)?
+        );
+    }
+
+    // Check _keys matches _key mapped to _lists.
+
+    for (val_sublist, key_sublist) in lists.iter().zip(keys) {
+        pyassert!(val_sublist.len()? == key_sublist.len()?);
+        for (val, key) in val_sublist.try_iter()?.zip(key_sublist.try_iter()?) {
+            {
+                pyassert!(key_fn.call1((&val?,))?.eq(&key?)?);
+            }
+        }
+    }
+
+    // Check _maxes index is the last value of each sublist.
+
+    for pos in 0..maxes.len() {
+        pyassert!(maxes.get_item(pos)?.eq(keys.get_item(pos)?.get_item(-1)?)?);
+    }
+
+    // Check sublist lengths are less than double load-factor.
+
+    let double = load << 1;
+    pyassert!(lists.iter().all(|sublist| sublist.len().unwrap() <= double));
+
+    // Check sublist lengths are greater than half load-factor for all
+    // but the last sublist.
+
+    let half = load >> 1;
+    for pos in 0..lists.len().saturating_sub(1) {
+        pyassert!(lists.get_item(pos)?.len()? >= half);
+    }
+
+    if !idx.is_empty() {
+        pyassert!(length == idx.get_item(0)?.extract::<usize>()?);
+        pyassert!(idx.len() == offset + lists.len());
+
+        // Check index leaf nodes equal length of sublists.
+
+        for pos in 0..lists.len() {
+            let leaf = idx.get_item(offset + pos)?.extract::<usize>()?;
+            pyassert!(leaf == lists.get_item(pos)?.len()?);
+        }
+
+        // Check index branch nodes are the sum of their children.
+
+        for pos in 0..offset {
+            let child = (pos << 1) + 1;
+            if child >= idx.len() {
+                pyassert!(idx.get_item(pos)?.extract::<usize>()? == 0);
+            } else if child + 1 == idx.len() {
+                pyassert!(
+                    idx.get_item(pos)?.extract::<usize>()?
+                        == idx.get_item(child)?.extract::<usize>()?
+                );
+            } else {
+                let child_sum = idx.get_item(child)?.extract::<usize>()?
+                    + idx.get_item(child + 1)?.extract::<usize>()?;
+                pyassert!(child_sum == idx.get_item(pos)?.extract::<usize>()?);
+            }
+        }
+    };
+    Ok(())
+}
+
+fn show_key_list(py: Python<'_>, err: &PyErr, data: &InnerKeyLists) -> () {
+    show_list(py, err, data);
+    let keys = data.keys.bind(py);
+    let infos = [
+        format!("len_keys: {}", keys.len().unwrap()),
+        format!("keys: {}", keys.repr().unwrap()),
+    ];
+    err.add_note(py, infos.join("\n")).unwrap()
 }
 fn show_list(py: Python<'_>, err: &PyErr, data: &impl InnerSortedGetters) -> () {
     let infos = [
