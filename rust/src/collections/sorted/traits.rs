@@ -1,5 +1,5 @@
 use crate::collections::sorted::errors;
-use crate::collections::sorted::iter::{iterator_into_list, try_iterator_into_list};
+use crate::collections::sorted::iter::try_iterator_into_list;
 use crate::collections::{InnerKeyLists, InnerLists};
 use crate::pyo3_ext::prelude::*;
 use crate::seq::{IntoPyochain, PyoVec};
@@ -17,12 +17,27 @@ pub const DEFAULT_LOAD_FACTOR: usize = 1000;
 pub type BoolOrNotImpl<'py> = PyResult<Either<bool, Bound<'py, PyNotImplemented>>>;
 pub type SeqOrAny<'py> = Either<Bound<'py, PySequence>, Bound<'py, PyAny>>;
 
+pub trait RustGetters:
+    Sized + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
+{
+    fn get_idx(&self) -> std::sync::MutexGuard<'_, Vec<usize>>;
+}
+macro_rules! impl_rs_getters {
+    ($t:ty) => {
+        impl RustGetters for $t {
+            #[inline(always)]
+            fn get_idx(&self) -> std::sync::MutexGuard<'_, Vec<usize>> {
+                self.idx.lock().unwrap()
+            }
+        }
+    };
+}
+impl_rs_getters!(InnerLists);
+impl_rs_getters!(InnerKeyLists);
 #[py_abc(InnerLists, InnerKeyLists)]
-pub(super) trait InnerSortedGetters: Sized + PyClass {
+pub(super) trait InnerSortedGetters: RustGetters {
     #[getter]
     fn get_lists(&self, py: Python<'_>) -> Py<PyoVec>;
-    #[getter]
-    fn get_idx(&self, py: Python<'_>) -> Py<PyList>;
     #[getter]
     fn get_maxes(&self, py: Python<'_>) -> Py<PyoVec>;
     #[getter]
@@ -48,10 +63,6 @@ macro_rules! impl_inner_sorted_rs {
             #[inline(always)]
             fn get_lists(&self, py: Python<'_>) -> Py<PyoVec> {
                 self.lists.clone_ref(py)
-            }
-            #[inline(always)]
-            fn get_idx(&self, py: Python<'_>) -> Py<PyList> {
-                self.idx.clone_ref(py)
             }
             #[inline(always)]
             fn get_offset(&self) -> usize {
@@ -242,9 +253,7 @@ impl_inner_sorted_rs!(InnerLists);
 impl_inner_sorted_rs!(InnerKeyLists);
 
 #[py_abc(InnerLists, InnerKeyLists)]
-pub(super) trait InnerSorted:
-    Sized + InnerSortedGetters + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
-{
+pub(super) trait InnerSorted: InnerSortedGetters {
     fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize>;
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize>;
     fn clear(&self, py: Python<'_>) -> ();
@@ -318,7 +327,7 @@ pub(super) trait InnerSorted:
     ///     _offset = 3
     /// When built, the index can be used for efficient indexing into the list.
     fn build_index(&self, py: Python<'_>) -> PyResult<()> {
-        let idx = self.get_idx(py).into_bound(py);
+        let mut idx = self.get_idx();
         let lists = self.get_lists(py).get().inner.clone_ref(py).into_bound(py);
 
         let row0 = lists
@@ -327,7 +336,7 @@ pub(super) trait InnerSorted:
             .collect::<PyResult<Vec<usize>>>()?;
 
         if row0.len() == 1 {
-            idx.set_slice(0, idx.len(), PyList::new(py, row0)?.as_any())?;
+            idx.extend(row0);
             self.set_offset(0);
             return Ok(());
         }
@@ -338,11 +347,9 @@ pub(super) trait InnerSorted:
             .collect::<Vec<usize>>();
 
         if row1.len() == 1 {
-            let combined = row1
-                .into_iter()
-                .chain(row0)
-                .try_fold(PyList::empty(py), iterator_into_list)?;
-            idx.set_slice(0, idx.len(), combined.as_any())?;
+            let combined = row1.into_iter().chain(row0);
+            idx.clear();
+            idx.extend(combined);
             self.set_offset(1);
             return Ok(());
         }
@@ -361,13 +368,8 @@ pub(super) trait InnerSorted:
             tree.push(row);
         }
 
-        let flat = tree
-            .into_iter()
-            .rev()
-            .flatten()
-            .try_fold(PyList::empty(py), iterator_into_list)?
-            .into_any();
-        idx.set_slice(0, idx.len(), &flat)?;
+        let flat = tree.into_iter().rev().flatten();
+        idx.extend(flat);
         self.set_offset(size * 2 - 1);
         Ok(())
     }
@@ -415,27 +417,28 @@ pub(super) trait InnerSorted:
         if pos == 0 {
             Ok(idx)
         } else {
-            let index = self.get_idx(py).into_bound(py);
-
-            if index.is_empty() {
+            if self.get_idx().is_empty() {
                 self.build_index(py)?;
             }
-            let mut total = 0;
             // Increment pos to point in the index to len(self.lists[pos]).
             pos += self.get_offset();
             // Iterate until reaching the root of the index tree at pos = 0.
-            while pos != 0 {
-                // Right-child nodes are at even indices. At such indices
-                // account the total below the left child node.
+            let total = self.get_idx().pipe_ref_mut(|idx| {
+                let mut total = 0;
+                while pos != 0 {
+                    // Right-child nodes are at even indices. At such indices
+                    // account the total below the left child node.
 
-                if pos % 2 == 0 {
-                    total += index.get_item(pos - 1)?.extract::<isize>()?;
+                    if pos % 2 == 0 {
+                        total += idx[pos - 1] as isize;
+                    }
+
+                    // Advance pos to the parent node.
+
+                    pos = (pos - 1) >> 1;
                 }
-
-                // Advance pos to the parent node.
-
-                pos = (pos - 1) >> 1;
-            }
+                total
+            });
 
             Ok(total + idx)
         }
@@ -511,28 +514,28 @@ pub(super) trait InnerSorted:
             return Ok((0, idx));
         }
 
-        let index = self.get_idx(py).into_bound(py);
-
-        if index.is_empty() {
+        if self.get_idx().is_empty() {
             self.build_index(py)?;
         }
+        let pos = self.get_idx().pipe_ref_mut(|index| {
+            let mut pos = 0;
+            let mut child = 1;
+            let len_index = index.len();
 
-        let mut pos = 0;
-        let mut child = 1;
-        let len_index = index.len();
+            while child < len_index {
+                let index_child = index[child] as isize;
 
-        while child < len_index {
-            let index_child = index.get_item(child)?.extract::<isize>()?;
+                if idx < index_child {
+                    pos = child;
+                } else {
+                    idx -= index_child;
+                    pos = child + 1;
+                }
 
-            if idx < index_child {
-                pos = child;
-            } else {
-                idx -= index_child;
-                pos = child + 1;
+                child = (pos << 1) + 1
             }
-
-            child = (pos << 1) + 1
-        }
+            pos
+        });
 
         return Ok((pos - self.get_offset(), idx));
     }

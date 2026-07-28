@@ -1,10 +1,13 @@
 use crate::collections::sorted::iter::try_iterator_into_list;
-use crate::collections::sorted::traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters};
+use crate::collections::sorted::traits::{
+    DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters,
+};
 use crate::collections::sorted::{bisect, errors};
 use crate::pyo3_ext::{prelude::*, pylibs};
 use crate::seq::{IntoPyochain, PyoVec};
 use pyo3::{prelude::*, types::PyList};
-use std::sync::atomic::AtomicUsize;
+use std::sync::{Mutex, atomic::AtomicUsize};
+
 use tap::prelude::*;
 #[pyclass(generic, frozen)]
 pub struct InnerLists {
@@ -12,8 +15,7 @@ pub struct InnerLists {
     pub(super) lists: Py<PyoVec>,
     #[pyo3(get)]
     pub(super) maxes: Py<PyoVec>,
-    #[pyo3(get)]
-    pub(super) idx: Py<PyList>,
+    pub(super) idx: Mutex<Vec<usize>>,
     pub(super) len: AtomicUsize,
     pub(super) load: AtomicUsize,
     pub(super) offset: AtomicUsize,
@@ -25,7 +27,7 @@ impl InnerLists {
         Ok(Self {
             lists: PyoVec::new_bound(py)?.unbind(),
             maxes: PyoVec::new_bound(py)?.unbind(),
-            idx: PyList::empty(py).into(),
+            idx: Mutex::new(Vec::new()),
             len: AtomicUsize::new(0),
             load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
             offset: AtomicUsize::new(0),
@@ -37,7 +39,7 @@ impl InnerSorted for InnerLists {
         self.set_len(0);
         self.lists.get().clear(py);
         self.maxes.get().clear(py);
-        self.idx.bind(py).clear();
+        self.get_idx().clear();
         self.set_offset(0);
     }
 
@@ -65,7 +67,6 @@ impl InnerSorted for InnerLists {
     fn expand(&self, py: Python<'_>, pos: usize) -> PyResult<()> {
         let load = self.get_load();
         let lists = self.lists.get().inner.clone_ref(py).into_bound(py);
-        let index = self.idx.bind(py);
 
         if lists.get_item(pos)?.len()?.gt(&(load << 1)) {
             let maxes = self.maxes.get().inner.bind(py);
@@ -84,15 +85,17 @@ impl InnerSorted for InnerLists {
             lists.insert(pos + 1, &half.into_pyochain()?)?;
             maxes.insert(pos + 1, last)?;
 
-            index.clear();
+            self.get_idx().clear();
             Ok(())
-        } else if !index.is_empty() {
-            let mut child = self.get_offset() + pos;
-            while child != 0 {
-                index.set_item(child, index.get_item(child)?.iadd(1)?)?;
-                child = (child - 1) >> 1;
-            }
-            index.set_item(0, index.get_item(0)?.iadd(1)?)?;
+        } else if !self.get_idx().is_empty() {
+            self.get_idx().pipe_ref_mut(|index| {
+                let mut child = self.get_offset() + pos;
+                while child != 0 {
+                    index[child] = index[child] + 1;
+                    child = (child - 1) >> 1;
+                }
+                index[0] = index[0] + 1;
+            });
             Ok(())
         } else {
             Ok(())
@@ -102,7 +105,6 @@ impl InnerSorted for InnerLists {
     fn delete(&self, py: Python<'_>, mut pos: usize, idx: usize) -> PyResult<()> {
         let lists = self.lists.bind(py).get().inner.bind(py);
         let maxes = self.maxes.bind(py);
-        let index = self.idx.bind(py);
 
         let lists_pos = lists
             .get_item(pos)
@@ -120,14 +122,16 @@ impl InnerSorted for InnerLists {
         if len_lists_pos > (self.get_load() >> 1) {
             maxes.set_item(pos, lists_pos.last()?)?;
 
-            if !index.is_empty() {
-                let mut child = self.get_offset() + pos;
-                while child > 0 {
-                    index.set_item(child, index.get_item(child)?.isub(1)?)?;
-                    child = (child - 1) >> 1
+            self.get_idx().pipe_ref_mut(|index| {
+                if !index.is_empty() {
+                    let mut child = self.get_offset() + pos;
+                    while child > 0 {
+                        index[child] = index[child] - &1;
+                        child = (child - 1) >> 1
+                    }
+                    index[0] = index[0] - &1;
                 }
-                index.set_item(0, index.get_item(0)?.isub(1)?)?;
-            }
+            });
             Ok(())
         } else if lists.len() > 1 {
             if pos == 0 {
@@ -144,7 +148,7 @@ impl InnerSorted for InnerLists {
 
             lists.del_item(pos)?;
             maxes.del_item(pos)?;
-            index.clear();
+            self.get_idx().clear();
 
             self.expand(py, prev)
         } else if len_lists_pos != 0 {
@@ -153,7 +157,7 @@ impl InnerSorted for InnerLists {
         } else {
             lists.del_item(pos)?;
             maxes.del_item(&pos)?;
-            index.clear();
+            self.get_idx().clear();
             Ok(())
         }
     }
@@ -437,7 +441,7 @@ impl InnerSorted for InnerLists {
             })
             .try_fold(maxes, try_iterator_into_list)?;
         self.set_len(values_len);
-        self.idx.bind(py).clear();
+        self.get_idx().clear();
         Ok(())
     }
 }
