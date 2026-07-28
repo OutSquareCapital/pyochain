@@ -9,6 +9,8 @@ from __future__ import annotations
 import operator
 from typing import override
 
+import pytest
+
 from pyochain._types import SupportsHashableAndRichComparison
 from pyochain.collections import SortedKeySet, SortedSet
 
@@ -535,6 +537,7 @@ def test_repr_recursion() -> None:
     )
 
 
+@pytest.mark.skip(reason="Pickle not supported by Pyo3")
 def test_pickle() -> None:
     import pickle
 

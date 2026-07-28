@@ -428,7 +428,19 @@ class PyoMutableSet[T](PyoSet[T], MutableSet[T]):  # pyright: ignore[reportImpli
     def discard(self, value: T, /) -> None: ...
     # Mixin methods
     @override
-    def clear(self) -> None: ...
+    def clear(self) -> None:
+        """Remove all elements from this set.
+
+        Example:
+            ```python
+            >>> from pyochain import SetMut
+            >>> s = SetMut((1, 2, 3))
+            >>> s.clear()
+            >>> s.len()
+            0
+
+            ```
+        """
     @override
     def pop(self) -> T: ...
     @override
