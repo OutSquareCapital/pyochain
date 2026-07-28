@@ -7,7 +7,7 @@ from collections.abc import Set as AbstractSet
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, Self, overload, override
 
-from pyochain import Iter, Set
+from pyochain import Iter, Set, SetMut
 from pyochain.abc import PyoIterator, PyoMutableSet, PyoSequence
 
 from ._base_sorted import BaseSortedListSet, KeyFunc
@@ -116,7 +116,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         # already present.
 
         if not hasattr(self, "_set"):
-            self._set: set[T] = set[T]()
+            self._set: SetMut[T] = SetMut[T](())
 
         self._list: SortedList[T] = SortedList(self._set)
 
@@ -166,13 +166,13 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
 
     @override
     def is_subset(self, other: Iterable[object]) -> bool:
-        return self._set.issubset(other)
+        return self._set.is_subset(other)
 
     @override
     def is_superset(self, other: Iterable[object]) -> bool:
-        return self._set.issuperset(other)
+        return self._set.is_superset(other)
 
-    def _fromset(self, values: set[T]) -> Self:
+    def _fromset(self, values: SetMut[T]) -> Self:
         sorted_set = self.__new__(self.__class__)
         sorted_set._set = values
         sorted_set.__init__()  # ruff:ignore[unnecessary-dunder-call]
@@ -194,7 +194,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         :return: true if `value` in sorted set
 
         """
-        return value in self._set
+        return self._set.contains(value)
 
     @overload
     def __getitem__(self, index: int) -> T: ...
@@ -336,7 +336,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         :return: size of sorted set
 
         """
-        return len(self._set)
+        return self._set.len()
 
     @override
     def __iter__(self) -> PyoIterator[T]:
@@ -379,7 +379,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
 
         """
         set_ = self._set
-        if value not in set_:
+        if not set_.contains(value):
             set_.add(value)
             self._list.add(value)
 
@@ -402,7 +402,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         :return: new sorted set
 
         """
-        return self._fromset(set(self._set))
+        return self._fromset(SetMut(self._set))
 
     def __copy__(self) -> Self:
         return self.copy()
@@ -421,7 +421,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         :return: count
 
         """
-        return 1 if value in self._set else 0
+        return 1 if self._set.contains(value) else 0
 
     @override
     def discard(self, value: T) -> None:
@@ -441,7 +441,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
 
         """
         set_ = self._set
-        if value in set_:
+        if set_.contains(value):
             set_.remove(value)
             self._list.remove(value)
 
@@ -548,7 +548,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         set_ = self._set
         list_ = self._list
         values = Iter(iterables).flatten().collect(Set)
-        if (4 * values.len()) > len(set_):
+        if (4 * values.len()) > set_.len():
             set_.difference_update(values)
             list_.clear()
             list_.update(set_)
@@ -728,7 +728,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         """
         list_ = self._list
         values = Iter(iterables).flatten().collect(Set)
-        if (4 * values.len()) > len(self._set):
+        if (4 * values.len()) > self._set.len():
             list_ = self._list
             self._set.update(values)
             list_.clear()
@@ -771,7 +771,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
 
 
 class SortedKeySet[T, OT: SupportsHashableAndRichComparison](SortedSet[T]):  # pyright: ignore[reportInvalidTypeArguments]
-    _set: set[T]
+    _set: SetMut[T]
     _list: SortedKeyList[T, OT]
 
     def __init__(
@@ -805,7 +805,7 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](SortedSet[T]):  # p
         # already present.
 
         if not hasattr(self, "_set"):
-            self._set = set()
+            self._set = SetMut[T](())
 
         self._list = SortedKeyList(self._set, key=key)  # pyright: ignore[reportIncompatibleVariableOverride]
 
@@ -813,7 +813,7 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](SortedSet[T]):  # p
             _ = self.update(iterable)
 
     @override
-    def _fromset(self, values: set[T]) -> Self:
+    def _fromset(self, values: SetMut[T]) -> Self:
         sorted_set = self.__new__(self.__class__)
         sorted_set._set = values
         sorted_set.__init__(key=self._key)
@@ -885,4 +885,4 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](SortedSet[T]):  # p
 
     @override
     def copy(self) -> Self:
-        return self._fromset(set(self._set))
+        return self._fromset(SetMut(self._set))

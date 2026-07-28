@@ -168,8 +168,8 @@ def check_sorted_set(data: SortedSet[Any]) -> None:
     set_ = data._set  # pyright: ignore[reportPrivateUsage]
     list_ = data._list  # pyright: ignore[reportPrivateUsage]
     check_sorted_list(list_)
-    assert len(set_) == list_.len()
-    assert list_.iter().all(lambda value: value in set_)  # pyright: ignore[reportAny]
+    assert set_.len() == list_.len()
+    assert list_.iter().all(set_.contains)
 
 
 def check_sorted_dict(data: SortedDict[Any, Any]) -> None:
