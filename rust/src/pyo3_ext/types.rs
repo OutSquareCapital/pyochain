@@ -24,6 +24,8 @@ pub trait ABCRegister<'py>: PyTypeInfo {
 impl ABCRegister<'_> for PyMutableSequence {}
 impl ABCRegister<'_> for PyAbstractSet {}
 impl ABCRegister<'_> for PyIterable {}
+impl ABCRegister<'_> for PyMutableSet {}
+impl ABCRegister<'_> for PyIterator {}
 
 pub trait PyListExtMethods<'py> {
     fn clear(&self) -> ();
@@ -203,6 +205,48 @@ unsafe impl PyTypeInfo for PyAbstractSet {
                     err.write_unraisable(object.py(), Some(object));
                     false
                 })
+    }
+}
+/// Type representing the `collections.abc.Set` abstract base class.
+#[repr(transparent)]
+pub struct PyMutableSet(PyAny);
+pyobject_native_type_named!(PyMutableSet);
+unsafe impl PyTypeInfo for PyMutableSet {
+    const NAME: &'static str = "MutableSet";
+    const MODULE: Option<&'static str> = Some(COLLECTIONS_ABC);
+
+    #[inline]
+    fn type_object_raw(py: Python<'_>) -> *mut PyTypeObject {
+        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
+        TYPE.import(py, COLLECTIONS_ABC, "MutableSet")
+            .unwrap()
+            .as_type_ptr()
+    }
+
+    #[inline]
+    fn is_type_of(object: &Bound<'_, PyAny>) -> bool {
+        PySet::is_type_of(object)
+            || object
+                .is_instance(&Self::type_object(object.py()).into_any())
+                .unwrap_or_else(|err| {
+                    err.write_unraisable(object.py(), Some(object));
+                    false
+                })
+    }
+}
+
+pub trait PyMutableSetMethods<'py> {
+    fn add(&self, value: &Bound<'_, PyAny>) -> PyResult<()>;
+    fn discard(&self, value: &Bound<'_, PyAny>) -> PyResult<()>;
+}
+impl PyMutableSetMethods<'_> for Bound<'_, PyMutableSet> {
+    fn add(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
+        self.call_method1(intern!(self.py(), "add"), (value,))?;
+        Ok(())
+    }
+    fn discard(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
+        self.call_method1(intern!(self.py(), "discard"), (value,))?;
+        Ok(())
     }
 }
 /// Type representing the `collections.deque` class.

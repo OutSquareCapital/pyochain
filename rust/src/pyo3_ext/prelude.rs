@@ -3,5 +3,5 @@ pub use super::pyany::PyAnyInPlaceMethods;
 pub use super::type_check::PyWrapper;
 pub use super::types::{
     ABCRegister, IntoPyMappingView, PyDequeMethods, PyListExtMethods, PyMutableSequenceMethods,
-    PySupportsIndexMethods, PySupportsItemsMethods,
+    PyMutableSetMethods, PySupportsIndexMethods, PySupportsItemsMethods,
 };

@@ -12,12 +12,12 @@ mod tools;
 
 use crate::pyo3_ext::{
     prelude::*,
-    types::{PyAbstractSet, PyIterable, PyMutableSequence},
+    types::{PyAbstractSet, PyIterable, PyMutableSequence, PyMutableSet},
 };
 use pyo3::{
     PyTypeInfo, intern,
     prelude::*,
-    types::{PyMapping, PySequence, PyType},
+    types::{PyIterator, PyMapping, PySequence, PyType},
 };
 use tap::prelude::*;
 
@@ -194,7 +194,7 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
 fn register_all(py: Python<'_>) -> PyResult<()> {
     let abc_mod = py.import("collections.abc")?;
     PyIterable::register::<abc::PyoIterable>(py)?;
-    register(&abc_mod, "Iterator", &abc::PyoIterator::type_object(py))?;
+    PyIterator::register::<abc::PyoIterator>(py)?;
     register(&abc_mod, "Container", &abc::PyoContainer::type_object(py))?;
     register(&abc_mod, "Sized", &abc::PyoSized::type_object(py))?;
     register(&abc_mod, "Container", &abc::PyoCollection::type_object(py))?;
@@ -209,7 +209,7 @@ fn register_all(py: Python<'_>) -> PyResult<()> {
     )?;
     PyMutableSequence::register::<abc::PyoMutableSequence>(py)?;
     PyAbstractSet::register::<abc::PyoSet>(py)?;
-    register(&abc_mod, "MutableSet", &abc::PyoMutableSet::type_object(py))?;
+    PyMutableSet::register::<abc::PyoMutableSet>(py)?;
     PySequence::register::<abc::PyoSequence>(py)?;
     register(&abc_mod, "KeysView", &abc::PyoKeysView::type_object(py))?;
     register(&abc_mod, "ValuesView", &abc::PyoValuesView::type_object(py))?;
