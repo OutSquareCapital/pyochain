@@ -33,6 +33,103 @@ impl InnerLists {
             offset: AtomicUsize::new(0),
         })
     }
+    #[pyo3(signature = (minimum=None, maximum=None, inclusive=(true, true)))]
+    fn irange(
+        &self,
+        py: Python<'_>,
+        minimum: Option<Bound<'_, PyAny>>,
+        maximum: Option<Bound<'_, PyAny>>,
+        inclusive: (bool, bool),
+    ) -> PyResult<Option<(usize, usize, usize, usize)>> {
+        let maxes = self.maxes.bind(py);
+
+        if maxes.is_empty()? {
+            return Ok(None);
+        }
+
+        let lists = self.lists.bind(py);
+
+        // Calculate the minimum (pos, idx) pair. By default this location
+        // will be inclusive in our calculation.
+        let (min_pos, min_idx) = match minimum {
+            None => (0, 0),
+            Some(minimum) => {
+                if inclusive.0 {
+                    let min_pos = bisect::bisect_left(maxes, &minimum)?;
+
+                    if min_pos == maxes.len()? {
+                        return Ok(None);
+                    }
+
+                    let min_idx = bisect::bisect_left(
+                        &lists
+                            .get_item(min_pos)
+                            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
+                        &minimum,
+                    )?;
+                    (min_pos, min_idx)
+                } else {
+                    let min_pos = bisect::bisect_right(maxes, &minimum)?;
+
+                    if min_pos == maxes.len()? {
+                        return Ok(None);
+                    }
+
+                    let min_idx = bisect::bisect_right(
+                        &lists
+                            .get_item(min_pos)
+                            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
+                        &minimum,
+                    )?;
+                    (min_pos, min_idx)
+                }
+            }
+        };
+
+        // Calculate the maximum (pos, idx) pair. By default this location
+        // will be exclusive in our calculation.
+        let (max_pos, max_idx) = maximum
+            .map(|m| {
+                if inclusive.1 {
+                    let mut pos = bisect::bisect_right(maxes, &m)?;
+
+                    let idx = if pos == maxes.len()? {
+                        pos -= 1;
+                        lists.get_item(pos)?.len()?
+                    } else {
+                        bisect::bisect_right(
+                            &lists
+                                .get_item(pos)
+                                .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
+                            &m,
+                        )?
+                    };
+                    Ok::<_, PyErr>((pos, idx))
+                } else {
+                    let mut pos = bisect::bisect_left(maxes, &m)?;
+
+                    let idx = if pos == maxes.len()? {
+                        pos -= 1;
+                        lists.get_item(pos)?.len()?
+                    } else {
+                        bisect::bisect_left(
+                            &lists
+                                .get_item(pos)
+                                .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
+                            &m,
+                        )?
+                    };
+                    Ok((pos, idx))
+                }
+            })
+            .unwrap_or_else(|| {
+                let pos = maxes.len()? - 1;
+                let idx = lists.get_item(pos)?.len()?;
+                Ok((pos, idx))
+            })?;
+
+        Ok(Some((min_pos, min_idx, max_pos, max_idx)))
+    }
 }
 impl InnerSorted for InnerLists {
     fn clear(&self, py: Python<'_>) -> () {

@@ -76,16 +76,26 @@ class InnerSorted[T, U]:
 
 class InnerLists[T, U](InnerSorted[T, U]):
     def __new__(cls) -> Self: ...
+    def irange(
+        self,
+        minimum: T | None = None,
+        maximum: T | None = None,
+        inclusive: tuple[bool, bool] = (True, True),
+    ) -> tuple[int, int, int, int] | None: ...
 
 class InnerKeyLists[T, U, OT: SupportsRichComparison](InnerSorted[T, U]):
     key: KeyFunc[T, OT]
     keys: Vec[Vec[OT]]
     def __new__(cls, key: KeyFunc[T, OT]) -> Self: ...
+    def irange_key(
+        self,
+        min_key: OT | None = None,
+        max_key: OT | None = None,
+        inclusive: tuple[bool, bool] = (True, True),
+    ) -> tuple[int, int, int, int] | None: ...
     def bisect_key_left(self, key: OT) -> int: ...
     def bisect_key_right(self, key: OT) -> int: ...
 
-def bisect_right[T](a: Vec[T], x: T) -> int: ...
-def bisect_left[T](a: Vec[T], x: T) -> int: ...
 def check_sorted_list(data: InnerSorted[Any, Any]) -> None: ...
 def check_sorted_key_list(data: InnerKeyLists[Any, Any, Any]) -> None: ...
 
@@ -107,8 +117,6 @@ __all__ = [
     "SliceView",
     "StableSet",
     "Vec",
-    "bisect_left",
-    "bisect_right",
 ]
 
 # Option types

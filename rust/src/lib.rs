@@ -181,14 +181,6 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<collections::InnerLists>()?;
     m.add_class::<collections::InnerKeyLists>()?;
     m.add_function(wrap_pyfunction!(
-        collections::sorted::bisect::bisect_left,
-        m
-    )?)?;
-    m.add_function(wrap_pyfunction!(
-        collections::sorted::bisect::bisect_right,
-        m
-    )?)?;
-    m.add_function(wrap_pyfunction!(
         collections::sorted::debug::check_sorted_list,
         m
     )?)?;

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Self, overload, override
 
 from pyochain import Iter, Range, Vec
 from pyochain.abc import PyoIterator, PyoMutableSequence
-from pyochain.rs import InnerLists, bisect_left, bisect_right
+from pyochain.rs import InnerLists
 
 from ._base_sorted import BaseSortedList, SortedCollection
 
@@ -267,7 +267,7 @@ class SortedList[T: SupportsRichComparison](
                 )
 
     @override
-    def irange(  # ruff:ignore[too-many-branches]
+    def irange(
         self,
         minimum: T | None = None,
         maximum: T | None = None,
@@ -275,58 +275,11 @@ class SortedList[T: SupportsRichComparison](
         *,
         reverse: bool = False,
     ) -> PyoIterator[T]:
-        maxes = self._inner.maxes
-
-        if maxes.is_empty():
-            return Iter(())
-
-        lists = self._inner.lists
-
-        # Calculate the minimum (pos, idx) pair. By default this location
-        # will be inclusive in our calculation.
-
-        if minimum is None:
-            min_pos = 0
-            min_idx = 0
-        elif inclusive[0]:
-            min_pos = bisect_left(maxes, minimum)
-
-            if min_pos == maxes.len():
+        match self._inner.irange(minimum, maximum, inclusive=inclusive):
+            case None:
                 return Iter(())
-
-            min_idx = bisect_left(lists[min_pos], minimum)
-        else:
-            min_pos = bisect_right(maxes, minimum)
-
-            if min_pos == maxes.len():
-                return Iter(())
-
-            min_idx = bisect_right(lists[min_pos], minimum)
-
-        # Calculate the maximum (pos, idx) pair. By default this location
-        # will be exclusive in our calculation.
-
-        if maximum is None:
-            max_pos = maxes.len() - 1
-            max_idx = lists[max_pos].len()
-        elif inclusive[1]:
-            max_pos = bisect_right(maxes, maximum)
-
-            if max_pos == maxes.len():
-                max_pos -= 1
-                max_idx = lists[max_pos].len()
-            else:
-                max_idx = bisect_right(lists[max_pos], maximum)
-        else:
-            max_pos = bisect_left(maxes, maximum)
-
-            if max_pos == maxes.len():
-                max_pos -= 1
-                max_idx = lists[max_pos].len()
-            else:
-                max_idx = bisect_left(lists[max_pos], maximum)
-
-        return self._islice(min_pos, min_idx, max_pos, max_idx, reverse=reverse)
+            case (min_pos, min_idx, max_pos, max_idx):
+                return self._islice(min_pos, min_idx, max_pos, max_idx, reverse=reverse)
 
     @override
     def __len__(self) -> int:

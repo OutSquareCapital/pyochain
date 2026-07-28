@@ -1,4 +1,4 @@
-pub mod bisect;
+pub(super) mod bisect;
 mod errors;
 mod keylist;
 mod list;

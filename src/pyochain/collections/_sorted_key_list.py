@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from bisect import bisect_left, bisect_right
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Self, override
 
@@ -107,7 +106,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         max_key = self._inner.key(maximum) if maximum is not None else None
         return self.irange_key(min_key, max_key, inclusive, reverse=reverse)
 
-    def irange_key(  # ruff:ignore[too-many-branches]
+    def irange_key(
         self,
         min_key: OT | None = None,
         max_key: OT | None = None,
@@ -144,58 +143,11 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
             Iterator[T]: iterator of values between `min_key` and `max_key`
 
         """
-        maxes = self._inner.maxes
-
-        if maxes.is_empty():
-            return Iter(())
-
-        keys = self._inner.keys
-
-        # Calculate the minimum (pos, idx) pair. By default this location
-        # will be inclusive in our calculation.
-
-        if min_key is None:
-            min_pos = 0
-            min_idx = 0
-        elif inclusive[0]:
-            min_pos = bisect_left(maxes, min_key)
-
-            if min_pos == maxes.len():
+        match self._inner.irange_key(min_key, max_key, inclusive):
+            case None:
                 return Iter(())
-
-            min_idx = bisect_left(keys[min_pos], min_key)
-        else:
-            min_pos = bisect_right(maxes, min_key)
-
-            if min_pos == maxes.len():
-                return Iter(())
-
-            min_idx = bisect_right(keys[min_pos], min_key)
-
-        # Calculate the maximum (pos, idx) pair. By default this location
-        # will be exclusive in our calculation.
-
-        if max_key is None:
-            max_pos = maxes.len() - 1
-            max_idx = keys[max_pos].len()
-        elif inclusive[1]:
-            max_pos = bisect_right(maxes, max_key)
-
-            if max_pos == maxes.len():
-                max_pos -= 1
-                max_idx = keys[max_pos].len()
-            else:
-                max_idx = bisect_right(keys[max_pos], max_key)
-        else:
-            max_pos = bisect_left(maxes, max_key)
-
-            if max_pos == maxes.len():
-                max_pos -= 1
-                max_idx = keys[max_pos].len()
-            else:
-                max_idx = bisect_left(keys[max_pos], max_key)
-
-        return self._islice(min_pos, min_idx, max_pos, max_idx, reverse=reverse)
+            case (min_pos, min_idx, max_pos, max_idx):
+                return self._islice(min_pos, min_idx, max_pos, max_idx, reverse=reverse)
 
     def bisect_key_left(self, key: OT) -> int:
         """Return an index to insert `key` in the sorted-key list.

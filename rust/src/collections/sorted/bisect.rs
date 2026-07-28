@@ -10,8 +10,8 @@ use pyo3::prelude::*;
 ///insert just after the rightmost x already there.
 
 ///Optional args lo (default 0) and hi (default len(a)) bound the slice of a to be searched.
-#[pyfunction]
-pub fn bisect_right(vec: &Bound<'_, PyoVec>, item: &Bound<'_, PyAny>) -> PyResult<usize> {
+#[inline]
+pub(super) fn bisect_right(vec: &Bound<'_, PyoVec>, item: &Bound<'_, PyAny>) -> PyResult<usize> {
     let lst = vec.get().inner.bind(vec.py());
     let mut high = lst.len();
     let mut lo = 0;
@@ -32,8 +32,8 @@ pub fn bisect_right(vec: &Bound<'_, PyoVec>, item: &Bound<'_, PyAny>) -> PyResul
 /// The return value i is such that all e in a[:i] have e < x, and all e in a[i:] have e >= x.\
 /// So if x already appears in the list, a.insert(i, x) will insert just before the leftmost x already there.\
 /// Optional args lo (default 0) and hi (default len(a)) bound the slice of a to be searched.\
-#[pyfunction]
-pub fn bisect_left(vec: &Bound<'_, PyoVec>, item: &Bound<'_, PyAny>) -> PyResult<usize> {
+#[inline]
+pub(super) fn bisect_left(vec: &Bound<'_, PyoVec>, item: &Bound<'_, PyAny>) -> PyResult<usize> {
     let lst = vec.get().inner.bind(vec.py());
     let mut hi = lst.len();
     let mut lo = 0;

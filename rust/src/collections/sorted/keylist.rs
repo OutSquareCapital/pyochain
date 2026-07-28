@@ -41,6 +41,104 @@ impl InnerKeyLists {
             offset: AtomicUsize::new(0),
         })
     }
+    #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true)))]
+    fn irange_key(
+        &self,
+        py: Python<'_>,
+        min_key: Option<Bound<'_, PyAny>>,
+        max_key: Option<Bound<'_, PyAny>>,
+        inclusive: (bool, bool),
+    ) -> PyResult<Option<(usize, usize, usize, usize)>> {
+        let maxes = self.maxes.bind(py);
+
+        if maxes.is_empty()? {
+            return Ok(None);
+        }
+
+        let keys = self.keys.bind(py);
+
+        // Calculate the minimum (pos, idx) pair. By default this location
+        // will be inclusive in our calculation.
+        let (min_pos, min_idx) = match min_key {
+            None => (0, 0),
+            Some(min_key) => {
+                if inclusive.0 {
+                    let min_pos = bisect::bisect_left(maxes, &min_key)?;
+
+                    if min_pos == maxes.len()? {
+                        return Ok(None);
+                    }
+
+                    let min_idx = bisect::bisect_left(
+                        &keys
+                            .get_item(min_pos)
+                            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
+                        &min_key,
+                    )?;
+                    (min_pos, min_idx)
+                } else {
+                    let min_pos = bisect::bisect_right(maxes, &min_key)?;
+
+                    if min_pos == maxes.len()? {
+                        return Ok(None);
+                    }
+
+                    let min_idx = bisect::bisect_right(
+                        &keys
+                            .get_item(min_pos)
+                            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
+                        &min_key,
+                    )?;
+                    (min_pos, min_idx)
+                }
+            }
+        };
+
+        // Calculate the maximum (pos, idx) pair. By default this location
+        // will be exclusive in our calculation.
+        let (max_pos, max_idx) = match max_key {
+            None => {
+                let max_pos = maxes.len()? - 1;
+                let max_idx = keys.get_item(max_pos)?.len()?;
+                (max_pos, max_idx)
+            }
+
+            Some(max_key) => {
+                if inclusive.1 {
+                    let mut max_pos = bisect::bisect_right(maxes, &max_key)?;
+
+                    let max_idx = if max_pos == maxes.len()? {
+                        max_pos -= 1;
+                        keys.get_item(max_pos)?.len()?
+                    } else {
+                        bisect::bisect_right(
+                            &keys
+                                .get_item(max_pos)
+                                .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
+                            &max_key,
+                        )?
+                    };
+                    (max_pos, max_idx)
+                } else {
+                    let mut max_pos = bisect::bisect_left(maxes, &max_key)?;
+
+                    let max_idx = if max_pos == maxes.len()? {
+                        max_pos -= 1;
+                        keys.get_item(max_pos)?.len()?
+                    } else {
+                        bisect::bisect_left(
+                            &keys
+                                .get_item(max_pos)
+                                .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
+                            &max_key,
+                        )?
+                    };
+                    (max_pos, max_idx)
+                }
+            }
+        };
+        Ok(Some((min_pos, min_idx, max_pos, max_idx)))
+    }
 }
 impl InnerSorted for InnerKeyLists {
     fn clear(&self, py: Python<'_>) -> () {
