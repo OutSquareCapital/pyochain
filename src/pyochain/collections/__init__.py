@@ -2,7 +2,8 @@
 
 from ..rs import Deque, Heap, HeapMax, HeapMin, PyoCounter, StableSet
 from ._sorted_dict import SortedDict, SortedKeyDict
-from ._sorted_list import SortedKeyList, SortedList
+from ._sorted_key_list import SortedKeyList
+from ._sorted_list import SortedList
 from ._sorted_set import SortedKeySet, SortedSet
 
 __all__ = [

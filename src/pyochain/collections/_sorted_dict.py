@@ -10,7 +10,8 @@ from pyochain import Dict, Iter
 from pyochain.abc import PyoIterator, PyoMutableMapping
 
 from ._base_sorted import SortedCollection
-from ._sorted_list import SortedKeyList, SortedList
+from ._sorted_key_list import SortedKeyList
+from ._sorted_list import SortedList
 from ._sorted_views import SortedItemsView, SortedKeysView, SortedValuesView
 
 if TYPE_CHECKING:

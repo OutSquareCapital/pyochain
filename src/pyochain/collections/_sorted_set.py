@@ -11,7 +11,8 @@ from pyochain import Iter, Set
 from pyochain.abc import PyoIterator, PyoMutableSet, PyoSequence
 
 from ._base_sorted import BaseSortedListSet, KeyFunc
-from ._sorted_list import SortedKeyList, SortedList, identity
+from ._sorted_key_list import SortedKeyList, identity
+from ._sorted_list import SortedList
 
 if TYPE_CHECKING:
     from types import NotImplementedType
