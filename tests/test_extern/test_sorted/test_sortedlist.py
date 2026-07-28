@@ -15,6 +15,8 @@ import pytest
 from pyochain.collections import SortedList
 from pyochain.rs import check_sorted_list
 
+from ._utils import assert_sorted_list_empty
+
 if TYPE_CHECKING:
     from _typeshed import SupportsRichComparison
 
@@ -32,9 +34,7 @@ def test_init() -> None:
     assert all(tup[0] == tup[1] for tup in zip(slt, range(100), strict=False))
 
     slt.clear()
-    assert slt.inner.len == 0
-    assert slt.inner.maxes == []
-    assert slt.inner.lists == []
+    assert_sorted_list_empty(slt.inner)
     check_sorted_list(slt.inner)
 
 
@@ -151,9 +151,7 @@ def test_delete() -> None:
     for val in range(20):
         slt.remove(val)
         check_sorted_list(slt.inner)
-    assert len(slt) == 0
-    assert slt.inner.maxes == []
-    assert slt.inner.lists == []
+    assert_sorted_list_empty(slt.inner)
 
 
 def test_getitem() -> None:
