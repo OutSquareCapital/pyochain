@@ -12,9 +12,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from pyochain.collections import SortedKeyList, SortedList
-from pyochain.rs import check_sorted_key_list
-
-from ._utils import assert_sorted_list_empty
+from pyochain.rs import assert_sorted_list_empty, check_sorted_key_list
 
 if TYPE_CHECKING:
     from _typeshed import SupportsRichComparison

@@ -6,7 +6,6 @@ from pyochain.rs import check_sorted_list
 
 if TYPE_CHECKING:
     from pyochain.collections import SortedDict, SortedSet
-    from pyochain.rs import InnerSorted
 
 
 def check_sorted_set(data: SortedSet[Any]) -> None:
@@ -22,9 +21,3 @@ def check_sorted_dict(data: SortedDict[Any, Any]) -> None:
     check_sorted_list(list_.inner)
     assert data.len() == list_.len()
     assert list_.iter().all(data.contains)
-
-
-def assert_sorted_list_empty(lst: InnerSorted[Any, Any]) -> None:
-    assert lst.len == 0
-    assert lst.maxes == []
-    assert lst.lists == []

@@ -36,7 +36,6 @@ type KeyFunc[T, OT: SupportsRichComparison] = Callable[[T], OT]
 @type_check_only
 class InnerSorted[T, U]:
     lists: Vec[Vec[T]]
-    maxes: Vec[U]
     len: int
     load: int
     offset: int
@@ -98,6 +97,7 @@ class InnerKeyLists[T, U, OT: SupportsRichComparison](InnerSorted[T, U]):
 
 def check_sorted_list(data: InnerSorted[Any, Any]) -> None: ...
 def check_sorted_key_list(data: InnerKeyLists[Any, Any, Any]) -> None: ...
+def assert_sorted_list_empty(lst: InnerSorted[Any, Any]) -> None: ...
 
 __all__ = [
     "Deque",

@@ -13,7 +13,6 @@ use tap::prelude::*;
 pub struct InnerLists {
     #[pyo3(get)]
     pub(super) lists: Py<PyoVec>,
-    #[pyo3(get)]
     pub(super) maxes: Py<PyoVec>,
     pub(super) idx: Mutex<Vec<usize>>,
     pub(super) len: AtomicUsize,

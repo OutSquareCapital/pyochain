@@ -18,7 +18,6 @@ pub struct InnerKeyLists {
     pub(super) keys: Py<PyoVec>,
     #[pyo3(get)]
     pub(super) lists: Py<PyoVec>,
-    #[pyo3(get)]
     pub(super) maxes: Py<PyoVec>,
     pub(super) idx: Mutex<Vec<usize>>,
     pub(super) len: AtomicUsize,

@@ -5,21 +5,8 @@ use either::Either;
 use pyo3::exceptions::PyAssertionError;
 use pyo3::prelude::*;
 use std::ops::Index;
-#[pyfunction]
-pub fn check_sorted_list(
-    py: Python<'_>,
-    data: Either<Py<InnerLists>, Py<InnerKeyLists>>,
-) -> PyResult<()> {
-    data.map_either(
-        |x| run_checks(py, x.get()).inspect_err(move |e| show_list(py, &e, x.get())),
-        |x| run_checks(py, x.get()).inspect_err(move |e| show_list(py, &e, x.get())),
-    )
-    .into_inner()
-}
-#[pyfunction]
-pub fn check_sorted_key_list(py: Python<'_>, data: Py<InnerKeyLists>) -> PyResult<()> {
-    run_key_checks(py, data.get()).inspect_err(move |e| show_key_list(py, &e, data.get()))
-}
+
+type InnerSorted = Either<Py<InnerLists>, Py<InnerKeyLists>>;
 
 macro_rules! pyassert {
     ($cond:expr) => {
@@ -27,6 +14,32 @@ macro_rules! pyassert {
             return Err(PyAssertionError::new_err(""));
         }
     };
+}
+#[pyfunction]
+pub fn assert_sorted_list_empty(py: Python<'_>, lst: InnerSorted) -> PyResult<()> {
+    fn check_empty(x: &impl InnerSortedGetters, py: Python<'_>) -> PyResult<()> {
+        pyassert!(x.get_len() == 0);
+        pyassert!(x.get_maxes(py).bind(py).is_empty()?);
+        pyassert!(x.get_lists(py).bind(py).is_empty()?);
+        Ok(())
+    }
+    lst.map_either(|x| check_empty(x.get(), py), |x| check_empty(x.get(), py))
+        .into_inner()
+}
+#[pyfunction]
+pub fn check_sorted_list(
+    py: Python<'_>,
+    data: Either<Py<InnerLists>, Py<InnerKeyLists>>,
+) -> PyResult<()> {
+    fn check_list(x: &impl InnerSortedGetters, py: Python<'_>) -> PyResult<()> {
+        run_checks(py, x).inspect_err(move |e| show_list(py, &e, x))
+    }
+    data.map_either(|x| check_list(x.get(), py), |x| check_list(x.get(), py))
+        .into_inner()
+}
+#[pyfunction]
+pub fn check_sorted_key_list(py: Python<'_>, data: Py<InnerKeyLists>) -> PyResult<()> {
+    run_key_checks(py, data.get()).inspect_err(move |e| show_key_list(py, &e, data.get()))
 }
 
 fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
