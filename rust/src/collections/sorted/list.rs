@@ -55,13 +55,13 @@ impl InnerLists {
             None => (0, 0),
             Some(minimum) => {
                 if inclusive.0 {
-                    let min_pos = bisect::bisect_left(maxes, &minimum)?;
+                    let min_pos = bisect::left(maxes, &minimum)?;
 
                     if min_pos == maxes.len()? {
                         return Ok(None);
                     }
 
-                    let min_idx = bisect::bisect_left(
+                    let min_idx = bisect::left(
                         &lists
                             .get_item(min_pos)
                             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
@@ -69,13 +69,13 @@ impl InnerLists {
                     )?;
                     (min_pos, min_idx)
                 } else {
-                    let min_pos = bisect::bisect_right(maxes, &minimum)?;
+                    let min_pos = bisect::right(maxes, &minimum)?;
 
                     if min_pos == maxes.len()? {
                         return Ok(None);
                     }
 
-                    let min_idx = bisect::bisect_right(
+                    let min_idx = bisect::right(
                         &lists
                             .get_item(min_pos)
                             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
@@ -91,13 +91,13 @@ impl InnerLists {
         let (max_pos, max_idx) = maximum
             .map(|m| {
                 if inclusive.1 {
-                    let mut pos = bisect::bisect_right(maxes, &m)?;
+                    let mut pos = bisect::right(maxes, &m)?;
 
                     let idx = if pos == maxes.len()? {
                         pos -= 1;
                         lists.get_item(pos)?.len()?
                     } else {
-                        bisect::bisect_right(
+                        bisect::right(
                             &lists
                                 .get_item(pos)
                                 .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
@@ -106,13 +106,13 @@ impl InnerLists {
                     };
                     Ok::<_, PyErr>((pos, idx))
                 } else {
-                    let mut pos = bisect::bisect_left(maxes, &m)?;
+                    let mut pos = bisect::left(maxes, &m)?;
 
                     let idx = if pos == maxes.len()? {
                         pos -= 1;
                         lists.get_item(pos)?.len()?
                     } else {
-                        bisect::bisect_left(
+                        bisect::left(
                             &lists
                                 .get_item(pos)
                                 .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
@@ -147,7 +147,7 @@ impl InnerSorted for InnerLists {
             return Ok(false);
         }
 
-        let pos = bisect::bisect_left(maxes, &value)?;
+        let pos = bisect::left(maxes, &value)?;
 
         if maxes.len()?.eq(&pos) {
             return Ok(false);
@@ -157,7 +157,7 @@ impl InnerSorted for InnerLists {
         let v = &lists
             .get_item(pos)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-        let idx = bisect::bisect_left(&v, &value)?;
+        let idx = bisect::left(&v, &value)?;
 
         lists.get_item(pos)?.get_item(idx)?.eq(value)
     }
@@ -263,7 +263,7 @@ impl InnerSorted for InnerLists {
         let lists = self.lists.get().inner.bind(py);
         let maxes = self.maxes.get().inner.bind(py);
         if !maxes.is_empty() {
-            let mut pos = bisect::bisect_right(self.maxes.bind(py), &value)?;
+            let mut pos = bisect::right(self.maxes.bind(py), &value)?;
 
             if pos == maxes.len() {
                 pos -= 1;
@@ -278,7 +278,7 @@ impl InnerSorted for InnerLists {
                     .get_item(pos)
                     .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
 
-                let res = bisect::bisect_right(&vector, &value)?;
+                let res = bisect::right(&vector, &value)?;
                 vector.get().insert(res, &value)?;
             }
 
@@ -300,7 +300,7 @@ impl InnerSorted for InnerLists {
             return Ok(());
         }
 
-        let pos = bisect::bisect_left(self.maxes.bind(py), &value)?;
+        let pos = bisect::left(self.maxes.bind(py), &value)?;
 
         if pos == maxes.len() {
             return Ok(());
@@ -310,7 +310,7 @@ impl InnerSorted for InnerLists {
         let v = lists
             .get_item(pos)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-        let idx = bisect::bisect_left(&v, &value)?;
+        let idx = bisect::left(&v, &value)?;
 
         if lists.get_item(pos)?.get_item(idx)?.eq(value)? {
             self.delete(py, pos, idx)
@@ -326,7 +326,7 @@ impl InnerSorted for InnerLists {
         if maxes.is_empty() {
             errors::not_in_list_err(value)
         } else {
-            let pos = bisect::bisect_left(self.maxes.bind(py), &value)?;
+            let pos = bisect::left(self.maxes.bind(py), &value)?;
 
             if pos == maxes.len() {
                 errors::not_in_list_err(value)
@@ -336,7 +336,7 @@ impl InnerSorted for InnerLists {
                     .get_item(pos)
                     .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
 
-                let idx = bisect::bisect_left(&v, &value)?;
+                let idx = bisect::left(&v, &value)?;
 
                 if lists.get_item(pos)?.get_item(idx)?.eq(&value)? {
                     self.delete(py, pos, idx)
@@ -355,7 +355,7 @@ impl InnerSorted for InnerLists {
             return Ok(0);
         }
 
-        let pos = bisect::bisect_left(self.maxes.bind(py), &value)?;
+        let pos = bisect::left(self.maxes.bind(py), &value)?;
 
         if pos == maxes.len() {
             return Ok(self.get_len() as isize);
@@ -365,7 +365,7 @@ impl InnerSorted for InnerLists {
             .bind(py)
             .get_item(pos)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-        let idx = bisect::bisect_left(&v, &value)?;
+        let idx = bisect::left(&v, &value)?;
         self.loc(py, pos, idx as isize)
     }
 
@@ -377,7 +377,7 @@ impl InnerSorted for InnerLists {
             return Ok(0);
         }
 
-        let pos = bisect::bisect_right(self.maxes.bind(py), &value)?;
+        let pos = bisect::right(self.maxes.bind(py), &value)?;
 
         if pos == maxes.len() {
             return Ok(self.get_len() as isize);
@@ -388,7 +388,7 @@ impl InnerSorted for InnerLists {
             .get_item(pos)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
 
-        let idx = bisect::bisect_right(&v, &value)?;
+        let idx = bisect::right(&v, &value)?;
         self.loc(py, pos, idx as isize)
     }
 
@@ -400,7 +400,7 @@ impl InnerSorted for InnerLists {
             return Ok(0);
         }
 
-        let pos_left = bisect::bisect_left(self.maxes.bind(py), &value)?;
+        let pos_left = bisect::left(self.maxes.bind(py), &value)?;
 
         if pos_left == maxes.len() {
             return Ok(0);
@@ -410,8 +410,8 @@ impl InnerSorted for InnerLists {
         let v_left = lists
             .get_item(pos_left)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-        let idx_left = bisect::bisect_left(&v_left, &value)?;
-        let pos_right = bisect::bisect_right(self.maxes.bind(py), &value)?;
+        let idx_left = bisect::left(&v_left, &value)?;
+        let pos_right = bisect::right(self.maxes.bind(py), &value)?;
 
         if pos_right == maxes.len() {
             return Ok(self.get_len() - self.loc(py, pos_left, idx_left as isize)? as usize);
@@ -419,7 +419,7 @@ impl InnerSorted for InnerLists {
         let v_right = lists
             .get_item(pos_right)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-        let idx_right = bisect::bisect_right(&v_right, &value)?;
+        let idx_right = bisect::right(&v_right, &value)?;
 
         if pos_left == pos_right {
             return Ok(idx_right - idx_left);
@@ -460,7 +460,7 @@ impl InnerSorted for InnerLists {
         }
 
         let maxes = self.maxes.get().inner.bind(py);
-        let pos_left = bisect::bisect_left(self.maxes.bind(py), &value)?;
+        let pos_left = bisect::left(self.maxes.bind(py), &value)?;
 
         if pos_left == maxes.len() {
             return errors::is_not_in_list_err(value);
@@ -470,7 +470,7 @@ impl InnerSorted for InnerLists {
         let v_left = lists
             .get_item(pos_left)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-        let idx_left = bisect::bisect_left(&v_left, &value)?;
+        let idx_left = bisect::left(&v_left, &value)?;
 
         if lists.get_item(pos_left)?.get_item(idx_left)?.ne(&value)? {
             return errors::is_not_in_list_err(value);

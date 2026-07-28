@@ -63,13 +63,13 @@ impl InnerKeyLists {
             None => (0, 0),
             Some(min_key) => {
                 if inclusive.0 {
-                    let min_pos = bisect::bisect_left(maxes, &min_key)?;
+                    let min_pos = bisect::left(maxes, &min_key)?;
 
                     if min_pos == maxes.len()? {
                         return Ok(None);
                     }
 
-                    let min_idx = bisect::bisect_left(
+                    let min_idx = bisect::left(
                         &keys
                             .get_item(min_pos)
                             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
@@ -77,13 +77,13 @@ impl InnerKeyLists {
                     )?;
                     (min_pos, min_idx)
                 } else {
-                    let min_pos = bisect::bisect_right(maxes, &min_key)?;
+                    let min_pos = bisect::right(maxes, &min_key)?;
 
                     if min_pos == maxes.len()? {
                         return Ok(None);
                     }
 
-                    let min_idx = bisect::bisect_right(
+                    let min_idx = bisect::right(
                         &keys
                             .get_item(min_pos)
                             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
@@ -105,13 +105,13 @@ impl InnerKeyLists {
 
             Some(max_key) => {
                 if inclusive.1 {
-                    let mut max_pos = bisect::bisect_right(maxes, &max_key)?;
+                    let mut max_pos = bisect::right(maxes, &max_key)?;
 
                     let max_idx = if max_pos == maxes.len()? {
                         max_pos -= 1;
                         keys.get_item(max_pos)?.len()?
                     } else {
-                        bisect::bisect_right(
+                        bisect::right(
                             &keys
                                 .get_item(max_pos)
                                 .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
@@ -120,13 +120,13 @@ impl InnerKeyLists {
                     };
                     (max_pos, max_idx)
                 } else {
-                    let mut max_pos = bisect::bisect_left(maxes, &max_key)?;
+                    let mut max_pos = bisect::left(maxes, &max_key)?;
 
                     let max_idx = if max_pos == maxes.len()? {
                         max_pos -= 1;
                         keys.get_item(max_pos)?.len()?
                     } else {
-                        bisect::bisect_left(
+                        bisect::left(
                             &keys
                                 .get_item(max_pos)
                                 .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?,
@@ -157,7 +157,7 @@ impl InnerSorted for InnerKeyLists {
         }
 
         let key = self.key.bind(py).call1((&value,))?;
-        let mut pos = bisect::bisect_left(maxes, &key)?;
+        let mut pos = bisect::left(maxes, &key)?;
 
         if pos == maxes.len()? {
             return Ok(false);
@@ -168,7 +168,7 @@ impl InnerSorted for InnerKeyLists {
         let v = &keys
             .get_item(&pos)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-        let mut idx = bisect::bisect_left(&v, &key)?;
+        let mut idx = bisect::left(&v, &key)?;
 
         let len_keys = keys.len()?;
         let mut len_sublist = keys.get_item(&pos)?.len()?;
@@ -318,7 +318,7 @@ impl InnerSorted for InnerKeyLists {
         let keys = self.keys.get().inner.bind(py);
 
         if !maxes.is_empty() {
-            let mut pos = bisect::bisect_right(self.maxes.bind(py), &key)?;
+            let mut pos = bisect::right(self.maxes.bind(py), &key)?;
 
             if pos == maxes.len() {
                 pos -= 1;
@@ -336,7 +336,7 @@ impl InnerSorted for InnerKeyLists {
                 let v = &keys
                     .get_item(pos)
                     .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-                let idx = bisect::bisect_right(&v, &key)?;
+                let idx = bisect::right(&v, &key)?;
                 lists
                     .get_item(pos)
                     .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
@@ -368,7 +368,7 @@ impl InnerSorted for InnerKeyLists {
         }
 
         let key = self.key.bind(py).call1((&value,))?;
-        let mut pos = bisect::bisect_left(self.maxes.bind(py), &key)?;
+        let mut pos = bisect::left(self.maxes.bind(py), &key)?;
 
         if pos == maxes.len() {
             return Ok(());
@@ -379,7 +379,7 @@ impl InnerSorted for InnerKeyLists {
         let v = &keys
             .get_item(pos)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-        let mut idx = bisect::bisect_left(&v, &key)?;
+        let mut idx = bisect::left(&v, &key)?;
         let len_keys = keys.len();
         let mut len_sublist = keys.get_item(pos)?.len()?;
 
@@ -416,7 +416,7 @@ impl InnerSorted for InnerKeyLists {
         }
 
         let key = self.key.bind(py).call1((&value,))?;
-        let mut pos = bisect::bisect_left(self.maxes.bind(py), &key)?;
+        let mut pos = bisect::left(self.maxes.bind(py), &key)?;
 
         if pos == maxes.len() {
             return errors::not_in_list_err(value);
@@ -428,7 +428,7 @@ impl InnerSorted for InnerKeyLists {
             .get_item(pos)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
 
-        let mut idx = bisect::bisect_left(&v, &key)?;
+        let mut idx = bisect::left(&v, &key)?;
         let len_keys = keys.len();
         let mut len_sublist = keys.get_item(pos)?.len()?;
 
@@ -475,7 +475,7 @@ impl InnerSorted for InnerKeyLists {
         }
 
         let key = self.key.bind(py).call1((&value,))?;
-        let mut pos = bisect::bisect_left(self.maxes.bind(py), &key)?;
+        let mut pos = bisect::left(self.maxes.bind(py), &key)?;
 
         if pos == maxes.len() {
             return Ok(0);
@@ -486,7 +486,7 @@ impl InnerSorted for InnerKeyLists {
         let v_left = keys
             .get_item(pos)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-        let mut idx = bisect::bisect_left(&v_left, &key)?;
+        let mut idx = bisect::left(&v_left, &key)?;
         let mut total = 0;
         let len_keys = keys.len();
         let mut len_sublist = keys.get_item(pos)?.len()?;
@@ -540,7 +540,7 @@ impl InnerSorted for InnerKeyLists {
 
         let maxes = self.maxes.get().inner.bind(py);
         let key = self.key.bind(py).call1((&value,))?;
-        let mut pos = bisect::bisect_left(self.maxes.bind(py), &key)?;
+        let mut pos = bisect::left(self.maxes.bind(py), &key)?;
 
         if pos == maxes.len() {
             return errors::is_not_in_list_err(value);
@@ -552,7 +552,7 @@ impl InnerSorted for InnerKeyLists {
         let v_left = keys
             .get_item(pos)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-        let mut idx = bisect::bisect_left(&v_left, &key)?;
+        let mut idx = bisect::left(&v_left, &key)?;
         let len_keys = keys.len();
         let mut len_sublist = v_left.len()?;
 
@@ -656,7 +656,7 @@ impl InnerKeyLists {
             return Ok(0);
         }
 
-        let pos = bisect::bisect_left(self.maxes.bind(py), &key)?;
+        let pos = bisect::left(self.maxes.bind(py), &key)?;
 
         if pos == maxes.len() {
             Ok(self.get_len() as isize)
@@ -666,7 +666,7 @@ impl InnerKeyLists {
                 .bind(py)
                 .get_item(pos)
                 .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-            let idx = bisect::bisect_left(&v, &key)?;
+            let idx = bisect::left(&v, &key)?;
 
             self.loc(py, pos, idx as isize)
         }
@@ -679,7 +679,7 @@ impl InnerKeyLists {
             return Ok(0);
         }
 
-        let pos = bisect::bisect_right(self.maxes.bind(py), &key)?;
+        let pos = bisect::right(self.maxes.bind(py), &key)?;
 
         if pos == maxes.len() {
             return Ok(self.get_len() as isize);
@@ -691,7 +691,7 @@ impl InnerKeyLists {
             .bind(py)
             .get_item(pos)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?;
-        let idx = bisect::bisect_right(&v, &key)?;
+        let idx = bisect::right(&v, &key)?;
 
         return self.loc(py, pos, idx as isize);
     }
