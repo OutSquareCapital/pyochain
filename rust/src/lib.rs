@@ -105,6 +105,7 @@ impl_mapping_view!(
 
 #[pymodule]
 fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    debug_backtrace();
     let py = m.py();
     option::PyNull::init(py)?;
     m.add_class::<option::PyochainOption>()?;
@@ -187,6 +188,10 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
         collections::sorted::bisect::bisect_right,
         m
     )?)?;
+    m.add_function(wrap_pyfunction!(
+        collections::sorted::debug::check_sorted_list,
+        m
+    )?)?;
     let sys_mods = py.import("sys")?.getattr("modules")?;
     sys_mods.set_item("pyochain.abc", abc_mod)?;
     register_all(py)
@@ -226,3 +231,13 @@ fn register(abc: &Bound<'_, PyModule>, name: &str, cls: &Bound<'_, PyType>) -> P
         .call_method1(intern!(abc.py(), "register"), (cls,))?;
     Ok(())
 }
+#[cfg(debug_assertions)]
+fn debug_backtrace() {
+    unsafe {
+        std::env::set_var("RUST_BACKTRACE", "full");
+    }
+    color_eyre::install().unwrap();
+}
+
+#[cfg(not(debug_assertions))]
+fn debug_backtrace() {}
