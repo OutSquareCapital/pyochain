@@ -2,6 +2,7 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
+from enum import Enum
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Self, overload, override
 
@@ -204,20 +205,27 @@ class SortedList[T: SupportsRichComparison](
 
         """
         lists = self._inner.lists
-
-        if min_pos > max_pos:
-            return Iter(())
-
-        if min_pos == max_pos:
-            if reverse:
-                return Range(min_idx, max_idx).rev().map(lists[min_pos].__getitem__)
-
-            return Range(min_idx, max_idx).iter().map(lists[min_pos].__getitem__)
+        kind = SliceKind.new(min_pos, max_pos, reverse=reverse)
 
         next_pos = min_pos + 1
-
-        if next_pos == max_pos:
-            if reverse:
+        match kind:
+            case SliceKind.Empty:
+                return Iter(())
+            case SliceKind.MinEqMax:
+                return Range(min_idx, max_idx).iter().map(lists[min_pos].__getitem__)
+            case SliceKind.MinEqMaxRev:
+                return Range(min_idx, max_idx).rev().map(lists[min_pos].__getitem__)
+            case SliceKind.NextEqMax:
+                max_indices = Range(0, max_idx).iter().map(lists[max_pos].__getitem__)
+                return (
+                    Range(min_idx, lists[min_pos].len())
+                    .iter()
+                    .map(lists[min_pos].__getitem__)
+                    .chain(
+                        max_indices,
+                    )
+                )
+            case SliceKind.NextEqMaxRev:
                 min_indices = (
                     Range(min_idx, lists[min_pos].len())
                     .rev()
@@ -229,45 +237,34 @@ class SortedList[T: SupportsRichComparison](
                     .map(lists[max_pos].__getitem__)
                     .chain(min_indices)
                 )
-
-            max_indices = Range(0, max_idx).iter().map(lists[max_pos].__getitem__)
-            return (
-                Range(min_idx, lists[min_pos].len())
-                .iter()
-                .map(lists[min_pos].__getitem__)
-                .chain(
-                    max_indices,
-                )
-            )
-
-        if reverse:
-            sublists = (
-                Range(next_pos, max_pos)
-                .rev()
-                .map(lists.__getitem__)
-                .flat_map(lambda x: x.rev())
-            )
-            return (
-                Range(0, max_idx)
-                .rev()
-                .map(lists[max_pos].__getitem__)
-                .chain(
-                    sublists,
+            case SliceKind.MinLtMax:
+                return (
                     Range(min_idx, lists[min_pos].len())
-                    .rev()
-                    .map(lists[min_pos].__getitem__),
+                    .iter()
+                    .map(lists[min_pos].__getitem__)
+                    .chain(
+                        Range(next_pos, max_pos).iter().flat_map(lists.__getitem__),
+                        Range(0, max_idx).iter().map(lists[max_pos].__getitem__),
+                    )
                 )
-            )
-
-        return (
-            Range(min_idx, lists[min_pos].len())
-            .iter()
-            .map(lists[min_pos].__getitem__)
-            .chain(
-                Range(next_pos, max_pos).iter().flat_map(lists.__getitem__),
-                Range(0, max_idx).iter().map(lists[max_pos].__getitem__),
-            )
-        )
+            case SliceKind.MinLtMaxRev:
+                sublists = (
+                    Range(next_pos, max_pos)
+                    .rev()
+                    .map(lists.__getitem__)
+                    .flat_map(lambda x: x.rev())
+                )
+                return (
+                    Range(0, max_idx)
+                    .rev()
+                    .map(lists[max_pos].__getitem__)
+                    .chain(
+                        sublists,
+                        Range(min_idx, lists[min_pos].len())
+                        .rev()
+                        .map(lists[min_pos].__getitem__),
+                    )
+                )
 
     @override
     def irange(  # ruff:ignore[too-many-branches]
@@ -497,3 +494,34 @@ class SortedList[T: SupportsRichComparison](
 
         """
         return f"{self.__class__.__name__}({list(self)!r})"
+
+
+class SliceKind(Enum):
+    Empty = 1
+    MinEqMax = 2
+    MinEqMaxRev = 3
+    NextEqMax = 4
+    NextEqMaxRev = 5
+    MinLtMax = 6
+    MinLtMaxRev = 7
+
+    @classmethod
+    def new(cls, min_pos: int, max_pos: int, *, reverse: bool) -> SliceKind:  # ruff:ignore[too-many-return-statements]
+        next_pos = min_pos + 1
+        if min_pos > max_pos:
+            return cls.Empty
+
+        if min_pos == max_pos:
+            if reverse:
+                return cls.MinEqMaxRev
+            return cls.MinEqMax
+
+        if next_pos == max_pos:
+            if reverse:
+                return cls.NextEqMaxRev
+            return cls.NextEqMax
+
+        if reverse:
+            return cls.MinLtMaxRev
+
+        return cls.MinLtMax
