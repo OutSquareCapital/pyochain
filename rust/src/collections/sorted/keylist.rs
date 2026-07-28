@@ -14,7 +14,6 @@ use tap::Pipe;
 pub struct InnerKeyLists {
     #[pyo3(get)]
     pub(super) key: Py<PyAny>,
-    #[pyo3(get)]
     pub(super) keys: Py<PyoVec>,
     #[pyo3(get)]
     pub(super) lists: Py<PyoVec>,

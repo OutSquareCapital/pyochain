@@ -84,7 +84,6 @@ class InnerLists[T, U](InnerSorted[T, U]):
 
 class InnerKeyLists[T, U, OT: SupportsRichComparison](InnerSorted[T, U]):
     key: KeyFunc[T, OT]
-    keys: Vec[Vec[OT]]
     def __new__(cls, key: KeyFunc[T, OT]) -> Self: ...
     def irange_key(
         self,
