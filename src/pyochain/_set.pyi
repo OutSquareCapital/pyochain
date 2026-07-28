@@ -639,5 +639,7 @@ class SetMut[T](PyoMutableSet[T]):
     @override
     def difference(self, *others: Iterable[object]) -> SetMut[T]:  # pyright: ignore[reportIncompatibleMethodOverride]
         ...
+    def difference_update(self, *s: Iterable[object]) -> None:
+        """Update the set, removing elements found in others."""
     @override
     def symmetric_difference[S](self, other: Iterable[S]) -> SetMut[T | S]: ...

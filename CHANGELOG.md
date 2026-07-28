@@ -51,6 +51,7 @@ The classes from the `sortedcontainers` library have been ported to pyochain, wi
 - `PyoSized`, `PyoReversible`, and `PyoContainer` now inerhit from `Checkable`, instead of relying on mixins heritance.
 - `get_item` is now a `PyoMapping` method instead of a `PyoMutableMapping` one.
 - `Dict`, `Set` and `SetMut` are now fully compliant with their underlying data structure regarding the methods available.
+- `SetMut::difference_update`.
 
 ### ✨ Enhancements
 

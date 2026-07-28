@@ -984,7 +984,13 @@ impl SetMut {
             .pipe(|x| unsafe { x.cast_into_unchecked::<PySet>() })
             .into_pyochain()
     }
-
+    #[pyo3(signature = (*s))]
+    fn difference_update<'py>(&self, s: Bound<'py, PyTuple>) -> PyResult<()> {
+        self.inner
+            .bind(s.py())
+            .call_method1(intern!(s.py(), "difference_update"), s)?;
+        Ok(())
+    }
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.inner
             .bind(other.py())
