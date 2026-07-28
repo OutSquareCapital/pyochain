@@ -33,7 +33,16 @@ from ._vec import Vec
 
 type KeyFunc[T, OT: SupportsRichComparison] = Callable[[T], OT]
 
-class InnerSorted[T](Protocol):
+@type_check_only
+class InnerSorted[T, U]:
+    lists: Vec[Vec[T]]
+    maxes: Vec[U]
+    idx: list[int]
+    len: int
+    load: int
+    offset: int
+
+    def __new__(cls) -> Self: ...
     def clear(self) -> None: ...
     def contains(self, value: object) -> bool: ...
     def collapse_lists(self) -> Vec[Any]: ...
@@ -67,24 +76,12 @@ class InnerSorted[T](Protocol):
     def le(self, other: object) -> NotImplementedType | bool: ...
     def ge(self, other: object) -> NotImplementedType | bool: ...
 
-class InnerLists[T, U](InnerSorted[T]):
-    lists: Vec[Vec[T]]
-    maxes: Vec[U]
-    idx: list[int]
-    len: int
-    load: int
-    offset: int
+class InnerLists[T, U](InnerSorted[T, U]):
     def __new__(cls) -> Self: ...
 
-class InnerKeyLists[T, U, OT: SupportsRichComparison](InnerSorted[T]):
+class InnerKeyLists[T, U, OT: SupportsRichComparison](InnerSorted[T, U]):
     key: KeyFunc[T, OT]
     keys: Vec[Vec[OT]]
-    lists: Vec[Vec[T]]
-    maxes: Vec[U]
-    idx: list[int]
-    len: int
-    load: int
-    offset: int
     def __new__(cls, key: KeyFunc[T, OT]) -> Self: ...
     def bisect_key_left(self, key: OT) -> int: ...
     def bisect_key_right(self, key: OT) -> int: ...

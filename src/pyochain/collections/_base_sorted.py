@@ -342,7 +342,7 @@ class BaseSortedListSet[T](SortedCollection[T], ABC):
 
 
 class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-hash]
-    _inner: InnerSorted[Any]
+    _inner: InnerSorted[T, Any]
 
     @override
     def __contains__(self, value: object) -> bool:
@@ -589,7 +589,7 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
         Returns:
             T: value at `index` in sorted list
         """
-        return self._inner.pop(index)  # pyright: ignore[reportAny]
+        return self._inner.pop(index)
 
     @override
     def bisect_left(self, value: T) -> int:
