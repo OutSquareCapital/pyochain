@@ -2,8 +2,6 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
-import operator
-from collections.abc import Sequence
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Self, overload, override
 
@@ -15,12 +13,11 @@ from ._base_sorted import BaseSortedList, KeyFunc, SortedCollection
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from types import NotImplementedType
 
     from _typeshed import SupportsRichComparison
 
 
-class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
+class SortedList[T: SupportsRichComparison](
     BaseSortedList[T], SortedCollection[T], PyoMutableSequence[T]
 ):
     """Sorted list is a sorted mutable sequence.
@@ -484,148 +481,6 @@ class SortedList[T: SupportsRichComparison](  # ruff:ignore[eq-without-hash]
         self.clear()
         self.update(values)
         return self
-
-    @override
-    def __eq__(self, other: object) -> NotImplementedType | bool:
-        """Return true if and only if sorted list is equal to `other`.
-
-        ``sl.__eq__(other)`` <==> ``sl == other``
-
-        Comparisons use lexicographical order as with sequences.
-
-        Runtime complexity: `O(n)`
-
-        :param other: `other` sequence
-        :return: true if sorted list is equal to `other`
-
-        """
-        match other:
-            case Sequence():
-                if self._inner.len != len(other):
-                    return False
-
-                return self.iter().zip(other, strict=False).map_star(operator.eq).all()
-
-            case _:
-                return NotImplemented
-
-    @override
-    def __ne__(self, other: object) -> NotImplementedType | bool:
-        """Return true if and only if sorted list is not equal to `other`.
-
-        ``sl.__ne__(other)`` <==> ``sl != other``
-
-        Comparisons use lexicographical order as with sequences.
-
-        Runtime complexity: `O(n)`
-
-        :param other: `other` sequence
-        :return: true if sorted list is not equal to `other`
-
-        """
-        match other:
-            case Sequence():
-                if self._inner.len != len(other):
-                    return True
-
-                return self.iter().zip(other, strict=False).map_star(operator.ne).any()
-            case _:
-                return NotImplemented
-
-    def __lt__(self, other: object) -> NotImplementedType | bool:
-        """Return true if and only if sorted list is less than `other`.
-
-        ``sl.__lt__(other)`` <==> ``sl < other``
-
-        Comparisons use lexicographical order as with sequences.
-
-        Runtime complexity: `O(n)`
-
-        :param other: `other` sequence
-        :return: true if sorted list is less than `other`
-
-        """
-        match other:
-            case Sequence():
-                for alpha, beta in self.iter().zip(other, strict=False):
-                    if alpha != beta:
-                        return alpha < beta  # pyright: ignore[reportOperatorIssue, reportReturnType, reportUnknownVariableType]
-
-                return self._inner.len < len(other)
-
-            case _:
-                return NotImplemented
-
-    def __gt__(self, other: object) -> NotImplementedType | bool:
-        """Return true if and only if sorted list is greater than `other`.
-
-        ``sl.__gt__(other)`` <==> ``sl > other``
-
-        Comparisons use lexicographical order as with sequences.
-
-        Runtime complexity: `O(n)`
-
-        :param other: `other` sequence
-        :return: true if sorted list is greater than `other`
-
-        """
-        match other:
-            case Sequence():
-                for alpha, beta in self.iter().zip(other, strict=False):
-                    if alpha != beta:
-                        return alpha > beta  # pyright: ignore[reportOperatorIssue, reportReturnType, reportUnknownVariableType]
-
-                return self._inner.len > len(other)
-
-            case _:
-                return NotImplemented
-
-    def __le__(self, other: object) -> NotImplementedType | bool:
-        """Return true if and only if sorted list is less than or equal to `other`.
-
-        ``sl.__le__(other)`` <==> ``sl <= other``
-
-        Comparisons use lexicographical order as with sequences.
-
-        Runtime complexity: `O(n)`
-
-        :param other: `other` sequence
-        :return: true if sorted list is less than or equal to `other`
-
-        """
-        match other:
-            case Sequence():
-                for alpha, beta in self.iter().zip(other, strict=False):
-                    if alpha != beta:
-                        return alpha <= beta  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
-
-                return self._inner.len <= len(other)
-
-            case _:
-                return NotImplemented
-
-    def __ge__(self, other: object) -> NotImplementedType | bool:
-        """Return true if and only if sorted list is greater than or equal to `other`.
-
-        ``sl.__ge__(other)`` <==> ``sl >= other``
-
-        Comparisons use lexicographical order as with sequences.
-
-        Runtime complexity: `O(n)`
-
-        :param other: `other` sequence
-        :return: true if sorted list is greater than or equal to `other`
-
-        """
-        match other:
-            case Sequence():
-                for alpha, beta in self.iter().zip(other, strict=False):
-                    if alpha != beta:
-                        return alpha >= beta  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
-
-                return self._inner.len >= len(other)
-            case _:
-                return NotImplemented
 
     @override
     def __reduce__(self) -> tuple[type[Self], tuple[Vec[T]]]:

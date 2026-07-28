@@ -2,15 +2,19 @@ use crate::pyo3_ext::{prelude::*, pylibs};
 use crate::seq::{IntoPyochain, PyoVec};
 use either::Either;
 use pyo3::exceptions::{PyIndexError, PyValueError};
-use pyo3::types::{PySequence, PySlice, PySliceIndices};
+use pyo3::types::{PyNotImplemented, PySequence, PySlice, PySliceIndices};
+use pyo3::{BoundObject, PyClass};
 use pyo3::{prelude::*, types::PyList};
 use pyochain_macros::py_abc;
 use std::cmp::Ordering;
 use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
-use tap::Pipe;
+use tap::prelude::*;
 const DEFAULT_LOAD_FACTOR: usize = 1000;
+type BoolOrNotImpl<'py> = PyResult<Either<bool, Bound<'py, PyNotImplemented>>>;
+type SeqOrAny<'py> = Either<Bound<'py, PySequence>, Bound<'py, PyAny>>;
+
 #[py_abc(InnerLists, InnerKeyLists)]
-trait InnerSortedRs {
+trait InnerSortedGetters: Sized + PyClass {
     #[getter]
     fn get_lists(&self, py: Python<'_>) -> Py<PyoVec>;
     #[getter]
@@ -27,10 +31,16 @@ trait InnerSortedRs {
     #[setter]
     fn set_len(&self, len: usize);
     fn set_load(&self, load: usize);
+    fn eq<'py>(slf: Bound<'py, Self>, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py>;
+    fn ne<'py>(slf: Bound<'py, Self>, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py>;
+    fn lt<'py>(slf: Bound<'py, Self>, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py>;
+    fn gt<'py>(slf: Bound<'py, Self>, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py>;
+    fn le<'py>(slf: Bound<'py, Self>, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py>;
+    fn ge<'py>(slf: Bound<'py, Self>, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py>;
 }
 macro_rules! impl_inner_sorted_rs {
     ($t:ty) => {
-        impl InnerSortedRs for $t {
+        impl InnerSortedGetters for $t {
             #[inline(always)]
             fn get_lists(&self, py: Python<'_>) -> Py<PyoVec> {
                 self.lists.clone_ref(py)
@@ -67,6 +77,160 @@ macro_rules! impl_inner_sorted_rs {
             fn get_maxes(&self, py: Python<'_>) -> Py<PyoVec> {
                 self.maxes.clone_ref(py)
             }
+
+            fn eq<'py>(slf: Bound<'py, Self>, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+                match other {
+                    Either::Left(seq) => {
+                        if slf.get().get_len().ne(&seq.len()?) {
+                            Either::Left(false).pipe(Ok)
+                        } else {
+                            slf.iter()
+                                .zip(seq.try_iter()?)
+                                .map(|(a, b)| a.eq(b?))
+                                .find_map(|x| match x {
+                                    Ok(true) => None,
+                                    Ok(false) => Some(Ok(false)),
+                                    Err(e) => Some(Err(e)),
+                                })
+                                .unwrap_or(Ok(true))
+                                .map(Either::Left)
+                        }
+                    }
+
+                    Either::Right(any) => not_impl(any.py()),
+                }
+            }
+            fn ne<'py>(slf: Bound<'py, Self>, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+                match other {
+                    Either::Left(seq) => {
+                        if slf.get().get_len().ne(&seq.len()?) {
+                            Either::Left(true).pipe(Ok)
+                        } else {
+                            slf.iter()
+                                .zip(seq.try_iter()?)
+                                .map(|(a, b)| a.eq(b?))
+                                .find_map(|x| match x {
+                                    Ok(true) => None,
+                                    Ok(false) => Some(Ok(true)),
+                                    Err(e) => Some(Err(e)),
+                                })
+                                .unwrap_or(Ok(false))
+                                .map(Either::Left)
+                        }
+                    }
+                    Either::Right(any) => not_impl(any.py()),
+                }
+            }
+
+            fn lt<'py>(slf: Bound<'py, Self>, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+                match other {
+                    Either::Left(seq) => {
+                        for (alpha, beta) in slf.iter().zip(seq.try_iter()?) {
+                            let b = beta?;
+                            if alpha.ne(&b)? {
+                                return alpha.lt(&b).map(Either::Left);
+                            }
+                        }
+
+                        return slf
+                            .get()
+                            .get_len()
+                            .lt(&seq.len()?)
+                            .pipe(Either::Left)
+                            .pipe(Ok);
+                    }
+
+                    Either::Right(any) => not_impl(any.py()),
+                }
+            }
+
+            fn gt<'py>(slf: Bound<'py, Self>, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+                match other {
+                    Either::Left(seq) => {
+                        for (alpha, beta) in slf.iter().zip(seq.try_iter()?) {
+                            let b = beta?;
+                            if alpha.ne(&b)? {
+                                return Either::Left(alpha.gt(b)?).pipe(Ok);
+                            }
+                        }
+                        slf.get()
+                            .get_len()
+                            .gt(&seq.len()?)
+                            .pipe(Either::Left)
+                            .pipe(Ok)
+                    }
+
+                    Either::Right(any) => not_impl(any.py()),
+                }
+            }
+
+            fn le<'py>(slf: Bound<'py, Self>, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+                match other {
+                    Either::Left(seq) => {
+                        for (alpha, beta) in slf.iter().zip(seq.try_iter()?) {
+                            let b = beta?;
+                            if alpha.ne(&b)? {
+                                return alpha.le(b).map(Either::Left);
+                            }
+                        }
+
+                        slf.get()
+                            .get_len()
+                            .le(&seq.len()?)
+                            .pipe(Either::Left)
+                            .pipe(Ok)
+                    }
+
+                    Either::Right(any) => not_impl(any.py()),
+                }
+            }
+
+            fn ge<'py>(slf: Bound<'py, Self>, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+                match other {
+                    Either::Left(seq) => {
+                        for (alpha, beta) in slf.iter().zip(seq.try_iter()?) {
+                            let b = beta?;
+                            if alpha.ne(&b)? {
+                                return alpha.ge(b).map(Either::Left);
+                            }
+                        }
+
+                        slf.get()
+                            .get_len()
+                            .ge(&seq.len()?)
+                            .pipe(Either::Left)
+                            .pipe(Ok)
+                    }
+                    Either::Right(any) => not_impl(any.py()),
+                }
+            }
+        }
+    };
+}
+impl_inner_sorted_rs!(InnerLists);
+impl_inner_sorted_rs!(InnerKeyLists);
+trait InnerSortedIter<'py>: Sized {
+    fn iter(&self) -> impl Iterator<Item = Bound<'py, PyAny>>;
+}
+macro_rules! impl_inner_sorted_rs {
+    ($t:ty) => {
+        impl<'py> InnerSortedIter<'py> for Bound<'py, $t> {
+            fn iter(&self) -> impl Iterator<Item = Bound<'py, PyAny>> {
+                let py = self.py();
+                self.get()
+                    .get_lists(py)
+                    .get()
+                    .inner
+                    .bind(py)
+                    .iter()
+                    .flat_map(move |x| {
+                        unsafe { x.cast_unchecked::<PyoVec>() }
+                            .get()
+                            .inner
+                            .bind(py)
+                            .iter()
+                    })
+            }
         }
     };
 }
@@ -74,7 +238,7 @@ impl_inner_sorted_rs!(InnerLists);
 impl_inner_sorted_rs!(InnerKeyLists);
 
 #[py_abc(InnerLists, InnerKeyLists)]
-trait InnerSorted: Sized + InnerSortedRs {
+trait InnerSorted: Sized + InnerSortedGetters + PyClass {
     fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize>;
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize>;
     fn clear(&self, py: Python<'_>) -> ();
@@ -1716,4 +1880,8 @@ fn try_iterator_into_list<'py, T: Sized + IntoPyObject<'py>>(
 ) -> PyResult<Bound<'py, PyList>> {
     acc.append(x?)?;
     Ok(acc)
+}
+fn not_impl<'py, T>(py: Python<'py>) -> PyResult<Either<T, Bound<'py, PyNotImplemented>>> {
+    let py_not_impl = PyNotImplemented::get(py).into_bound();
+    Ok(Either::Right(py_not_impl))
 }

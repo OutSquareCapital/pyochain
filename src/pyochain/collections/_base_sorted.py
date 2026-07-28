@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Final, Self, overload, override
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
+    from types import NotImplementedType
 
     from _typeshed import SupportsRichComparison
 
@@ -340,7 +341,7 @@ class BaseSortedListSet[T](SortedCollection[T], ABC):
         """
 
 
-class BaseSortedList[T](BaseSortedListSet[T], ABC):
+class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-hash]
     _inner: InnerSorted[Any]
 
     @override
@@ -374,6 +375,98 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):
 
     @abstractmethod
     def __mul__(self, num: int) -> Self: ...
+
+    @override
+    def __eq__(self, other: object) -> NotImplementedType | bool:
+        """Return true if and only if sorted list is equal to `other`.
+
+        ``sl.__eq__(other)`` <==> ``sl == other``
+
+        Comparisons use lexicographical order as with sequences.
+
+        Runtime complexity: `O(n)`
+
+        :param other: `other` sequence
+        :return: true if sorted list is equal to `other`
+
+        """
+        return self._inner.eq(other)
+
+    @override
+    def __ne__(self, other: object) -> NotImplementedType | bool:
+        """Return true if and only if sorted list is not equal to `other`.
+
+        ``sl.__ne__(other)`` <==> ``sl != other``
+
+        Comparisons use lexicographical order as with sequences.
+
+        Runtime complexity: `O(n)`
+
+        :param other: `other` sequence
+        :return: true if sorted list is not equal to `other`
+
+        """
+        return self._inner.ne(other)
+
+    def __lt__(self, other: object) -> NotImplementedType | bool:
+        """Return true if and only if sorted list is less than `other`.
+
+        ``sl.__lt__(other)`` <==> ``sl < other``
+
+        Comparisons use lexicographical order as with sequences.
+
+        Runtime complexity: `O(n)`
+
+        :param other: `other` sequence
+        :return: true if sorted list is less than `other`
+
+        """
+        return self._inner.lt(other)
+
+    def __gt__(self, other: object) -> NotImplementedType | bool:
+        """Return true if and only if sorted list is greater than `other`.
+
+        ``sl.__gt__(other)`` <==> ``sl > other``
+
+        Comparisons use lexicographical order as with sequences.
+
+        Runtime complexity: `O(n)`
+
+        :param other: `other` sequence
+        :return: true if sorted list is greater than `other`
+
+        """
+        return self._inner.gt(other)
+
+    def __le__(self, other: object) -> NotImplementedType | bool:
+        """Return true if and only if sorted list is less than or equal to `other`.
+
+        ``sl.__le__(other)`` <==> ``sl <= other``
+
+        Comparisons use lexicographical order as with sequences.
+
+        Runtime complexity: `O(n)`
+
+        :param other: `other` sequence
+        :return: true if sorted list is less than or equal to `other`
+
+        """
+        return self._inner.le(other)
+
+    def __ge__(self, other: object) -> NotImplementedType | bool:
+        """Return true if and only if sorted list is greater than or equal to `other`.
+
+        ``sl.__ge__(other)`` <==> ``sl >= other``
+
+        Comparisons use lexicographical order as with sequences.
+
+        Runtime complexity: `O(n)`
+
+        :param other: `other` sequence
+        :return: true if sorted list is greater than or equal to `other`
+
+        """
+        return self._inner.ge(other)
 
     def __delitem__(self, index: int | slice) -> None:
         """Remove value at `index` from sorted list.
