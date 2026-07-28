@@ -18,7 +18,7 @@ trait InnerSortedGetters: Sized + PyClass {
     #[getter]
     fn get_lists(&self, py: Python<'_>) -> Py<PyoVec>;
     #[getter]
-    fn get_idx(&self, py: Python<'_>) -> Py<PyoVec>;
+    fn get_idx(&self, py: Python<'_>) -> Py<PyList>;
     #[getter]
     fn get_maxes(&self, py: Python<'_>) -> Py<PyoVec>;
     #[getter]
@@ -46,7 +46,7 @@ macro_rules! impl_inner_sorted_rs {
                 self.lists.clone_ref(py)
             }
             #[inline(always)]
-            fn get_idx(&self, py: Python<'_>) -> Py<PyoVec> {
+            fn get_idx(&self, py: Python<'_>) -> Py<PyList> {
                 self.idx.clone_ref(py)
             }
             #[inline(always)]
@@ -312,7 +312,7 @@ trait InnerSorted: Sized + InnerSortedGetters + PyClass {
     ///     _offset = 3
     /// When built, the index can be used for efficient indexing into the list.
     fn build_index(&self, py: Python<'_>) -> PyResult<()> {
-        let idx = self.get_idx(py).get().inner.clone_ref(py).into_bound(py);
+        let idx = self.get_idx(py).into_bound(py);
         let lists = self.get_lists(py).get().inner.clone_ref(py).into_bound(py);
 
         let row0 = lists
@@ -409,7 +409,7 @@ trait InnerSorted: Sized + InnerSortedGetters + PyClass {
         if pos == 0 {
             Ok(idx)
         } else {
-            let index = self.get_idx(py).get().inner.clone_ref(py).into_bound(py);
+            let index = self.get_idx(py).into_bound(py);
 
             if index.is_empty() {
                 self.build_index(py)?;
@@ -505,7 +505,7 @@ trait InnerSorted: Sized + InnerSortedGetters + PyClass {
             return Ok((0, idx));
         }
 
-        let index = self.get_idx(py).get().inner.clone_ref(py).into_bound(py);
+        let index = self.get_idx(py).into_bound(py);
 
         if index.is_empty() {
             self.build_index(py)?;
@@ -781,7 +781,7 @@ pub struct InnerLists {
     #[pyo3(get)]
     maxes: Py<PyoVec>,
     #[pyo3(get)]
-    idx: Py<PyoVec>,
+    idx: Py<PyList>,
     len: AtomicUsize,
     load: AtomicUsize,
     offset: AtomicUsize,
@@ -793,7 +793,7 @@ impl InnerLists {
         Ok(Self {
             lists: PyoVec::new_bound(py)?.unbind(),
             maxes: PyoVec::new_bound(py)?.unbind(),
-            idx: PyoVec::new_bound(py)?.unbind(),
+            idx: PyList::empty(py).into(),
             len: AtomicUsize::new(0),
             load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
             offset: AtomicUsize::new(0),
@@ -805,7 +805,7 @@ impl InnerSorted for InnerLists {
         self.set_len(0);
         self.lists.get().clear(py);
         self.maxes.get().clear(py);
-        self.idx.get().clear(py);
+        self.idx.bind(py).clear();
         self.set_offset(0);
     }
 
@@ -833,7 +833,7 @@ impl InnerSorted for InnerLists {
     fn expand(&self, py: Python<'_>, pos: usize) -> PyResult<()> {
         let load = self.get_load();
         let lists = self.lists.get().inner.clone_ref(py).into_bound(py);
-        let index = self.idx.get().inner.bind(py);
+        let index = self.idx.bind(py);
 
         if lists.get_item(pos)?.len()?.gt(&(load << 1)) {
             let maxes = self.maxes.get().inner.bind(py);
@@ -870,7 +870,7 @@ impl InnerSorted for InnerLists {
     fn delete(&self, py: Python<'_>, mut pos: usize, idx: usize) -> PyResult<()> {
         let lists = self.lists.bind(py).get().inner.bind(py);
         let maxes = self.maxes.bind(py);
-        let index = self.idx.bind(py).get().inner.bind(py);
+        let index = self.idx.bind(py);
 
         let lists_pos = lists
             .get_item(pos)
@@ -1205,7 +1205,7 @@ impl InnerSorted for InnerLists {
             })
             .try_fold(maxes, try_iterator_into_list)?;
         self.set_len(values_len);
-        self.idx.get().clear(py);
+        self.idx.bind(py).clear();
         Ok(())
     }
 }
@@ -1221,7 +1221,7 @@ pub struct InnerKeyLists {
     #[pyo3(get)]
     maxes: Py<PyoVec>,
     #[pyo3(get)]
-    idx: Py<PyoVec>,
+    idx: Py<PyList>,
     len: AtomicUsize,
     load: AtomicUsize,
     offset: AtomicUsize,
@@ -1236,7 +1236,7 @@ impl InnerKeyLists {
             keys: PyoVec::new_bound(py)?.unbind(),
             lists: PyoVec::new_bound(py)?.unbind(),
             maxes: PyoVec::new_bound(py)?.unbind(),
-            idx: PyoVec::new_bound(py)?.unbind(),
+            idx: PyList::empty(py).into(),
             len: AtomicUsize::new(0),
             load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
             offset: AtomicUsize::new(0),
@@ -1249,7 +1249,7 @@ impl InnerSorted for InnerKeyLists {
         self.lists.get().clear(py);
         self.keys.get().clear(py);
         self.maxes.get().clear(py);
-        self.idx.get().clear(py);
+        self.idx.bind(py).clear();
     }
     fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
@@ -1298,7 +1298,7 @@ impl InnerSorted for InnerKeyLists {
         let lists = self.lists.get().inner.bind(py);
         let keys = self.keys.get().inner.bind(py);
         let maxes = self.maxes.get().inner.bind(py);
-        let index = self.idx.get().inner.bind(py);
+        let index = self.idx.bind(py);
         let keys_pos = keys
             .get_item(pos)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
@@ -1368,7 +1368,7 @@ impl InnerSorted for InnerKeyLists {
     fn expand(&self, py: Python<'_>, pos: usize) -> PyResult<()> {
         let lists = self.lists.get().inner.bind(py);
         let keys = self.keys.get().inner.clone_ref(py).into_bound(py);
-        let index = self.idx.get().inner.clone_ref(py).into_bound(py);
+        let index = self.idx.bind(py);
 
         if keys.get_item(pos)?.len()? > self.get_load() << 1 {
             let maxes = self.maxes.get().inner.bind(py);
@@ -1742,7 +1742,7 @@ impl InnerSorted for InnerKeyLists {
             .try_fold(PyList::empty(py), try_iterator_into_list)?;
         maxes.iadd(&new_maxes)?;
         self.set_len(values.len());
-        self.idx.get().clear(py);
+        self.idx.bind(py).clear();
         Ok(())
     }
 }

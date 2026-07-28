@@ -70,7 +70,7 @@ class InnerSorted[T](Protocol):
 class InnerLists[T, U](InnerSorted[T]):
     lists: Vec[Vec[T]]
     maxes: Vec[U]
-    idx: Vec[int]
+    idx: list[int]
     len: int
     load: int
     offset: int
@@ -81,7 +81,7 @@ class InnerKeyLists[T, U, OT: SupportsRichComparison](InnerSorted[T]):
     keys: Vec[Vec[OT]]
     lists: Vec[Vec[T]]
     maxes: Vec[U]
-    idx: Vec[int]
+    idx: list[int]
     len: int
     load: int
     offset: int
