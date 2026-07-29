@@ -44,34 +44,39 @@ impl PyoSequence {
             .pipe(tools::SequenceReverseIterator::new)
     }
 
-    #[pyo3(signature = (value, start=None, stop=None))]
+    #[pyo3(signature = (value, start=0, stop=None))]
     fn index(
         slf: Bound<'_, Self>,
         value: &Bound<'_, PyAny>,
-        start: Option<usize>,
-        stop: Option<usize>,
-    ) -> PyResult<usize> {
+        start: isize,
+        stop: Option<isize>,
+    ) -> PyResult<isize> {
         let py = slf.py();
-        let start = start.map(|x| slf.len().map(|len| len + x)).transpose()?;
-        let stop = stop.map(|x| slf.len().map(|len| len + x)).transpose()?;
+        let length = slf.len()? as isize;
 
-        let mut i = start.unwrap_or_default();
-        while stop.map(|x| i < x).unwrap_or(true) {
-            let v = slf.get_item(i).map_err(|x| {
-                if x.is_instance_of::<PyIndexError>(py) {
-                    PyValueError::new_err("")
-                } else {
-                    x
-                }
-            })?;
-            if v.is(value) || v.eq(value)? {
+        let mut i = {
+            if start < 0 {
+                length + start.max(0)
+            } else {
+                start
+            }
+        };
+        let stop = stop.map(|s| if s < 0 { s + length } else { s });
+
+        loop {
+            if stop.is_some_and(|stop| i >= stop) {
                 break;
             } else {
-                i += 1;
-                continue;
-            }
+                match slf.get_item(i) {
+                    Ok(v) if v.is(value) || v.eq(value)? => return Ok(i),
+                    Ok(_) => i += 1,
+                    Err(err) if err.is_instance_of::<PyIndexError>(py) => break,
+                    Err(err) => return Err(err),
+                }
+            };
         }
-        Ok(i)
+
+        Err(PyValueError::new_err(""))
     }
     fn count(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<usize> {
         slf.try_iter()?.try_fold(0, |count, item| {
