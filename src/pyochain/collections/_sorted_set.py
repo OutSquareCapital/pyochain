@@ -175,7 +175,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
     def _fromset(self, values: SetMut[T]) -> Self:
         sorted_set = self.__new__(self.__class__)
         sorted_set._set = values
-        sorted_set.__init__()  # ruff:ignore[unnecessary-dunder-call]
+        sorted_set.__init__()
         return sorted_set
 
     @override

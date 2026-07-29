@@ -204,16 +204,14 @@ class SortedList[T: SupportsRichComparison](
             case SliceKind.NextEqMax:
                 max_indices = Range(0, max_idx).iter().map(lists[max_pos].__getitem__)
                 return (
-                    Range(min_idx, lists[min_pos].len())
+                    Range(min_idx, lists[min_pos].__len__())
                     .iter()
                     .map(lists[min_pos].__getitem__)
-                    .chain(
-                        max_indices,
-                    )
+                    .chain(max_indices)
                 )
             case SliceKind.NextEqMaxRev:
                 min_indices = (
-                    Range(min_idx, lists[min_pos].len())
+                    Range(min_idx, lists[min_pos].__len__())
                     .rev()
                     .map(lists[min_pos].__getitem__)
                 )
@@ -225,13 +223,11 @@ class SortedList[T: SupportsRichComparison](
                 )
             case SliceKind.MinLtMax:
                 return (
-                    Range(min_idx, lists[min_pos].len())
+                    Range(min_idx, lists[min_pos].__len__())
                     .iter()
                     .map(lists[min_pos].__getitem__)
-                    .chain(
-                        Range(next_pos, max_pos).iter().flat_map(lists.__getitem__),
-                        Range(0, max_idx).iter().map(lists[max_pos].__getitem__),
-                    )
+                    .chain(Range(next_pos, max_pos).iter().flat_map(lists.__getitem__))
+                    .chain(Range(0, max_idx).iter().map(lists[max_pos].__getitem__))
                 )
             case SliceKind.MinLtMaxRev:
                 sublists = (
@@ -244,11 +240,11 @@ class SortedList[T: SupportsRichComparison](
                     Range(0, max_idx)
                     .rev()
                     .map(lists[max_pos].__getitem__)
+                    .chain(sublists)
                     .chain(
-                        sublists,
-                        Range(min_idx, lists[min_pos].len())
+                        Range(min_idx, lists[min_pos].__len__())
                         .rev()
-                        .map(lists[min_pos].__getitem__),
+                        .map(lists[min_pos].__getitem__)
                     )
                 )
 
