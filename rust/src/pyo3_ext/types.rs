@@ -1,15 +1,17 @@
 use crate::pyobject_native_type_named;
+use either::Either;
 use pyo3::exceptions::PyTypeError;
 use pyo3::ffi::{self, PyDictValues, PyTypeObject};
 use pyo3::sync::PyOnceLock;
 use pyo3::types::{
-    PyDict, PyDictItems, PyDictKeys, PyFrozenSet, PyInt, PyIterator, PyList, PySequence, PySet,
-    PySlice, PyType,
+    PyDict, PyDictItems, PyDictKeys, PyFrozenSet, PyInt, PyIterator, PyList, PyNotImplemented,
+    PySequence, PySet, PySlice, PyType,
 };
 use pyo3::{PyTypeInfo, intern, prelude::*};
 use tap::prelude::*;
 const COLLECTIONS_ABC: &str = "collections.abc";
-
+/// Return type from python comparison dunders, returning either a `bool` or `NotImplemented`.
+pub type PyCmpOut<'py, T> = Either<T, Bound<'py, PyNotImplemented>>;
 /// All ABCs have a `register` method that can be used to register a type as a virtual subclass of the ABC.\
 /// This trait factorize the implementation for all ABCs.\
 /// The code is strictly identical from what's already available for `pyo3::types::PySequence` for example.

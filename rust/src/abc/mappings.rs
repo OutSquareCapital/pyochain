@@ -1,9 +1,10 @@
+use either::Either;
 use pyo3::{
-    IntoPyObjectExt, PyTypeInfo,
-    exceptions::{PyKeyError, PyNotImplementedError},
+    BoundObject, IntoPyObjectExt, PyTypeInfo,
+    exceptions::PyKeyError,
     intern,
     prelude::*,
-    types::{PyDict, PyIterator, PyMapping, PyNone, PySet, PyTuple, PyType},
+    types::{PyDict, PyIterator, PyMapping, PyNone, PyNotImplemented, PySet, PyTuple, PyType},
 };
 use tap::Pipe;
 
@@ -11,7 +12,10 @@ use crate::{
     abc::{PyoABC, PyoCollection, PyoSet, PyoSized},
     mixins::Checkable,
     option::{PyNull, PySome},
-    pyo3_ext::args::{Args, Kwargs},
+    pyo3_ext::{
+        args::{Args, Kwargs},
+        types::PyCmpOut,
+    },
     result::{PyoErr, PyoOk},
     seq::{IntoPyochain, SetMut},
     tools,
@@ -35,18 +39,24 @@ impl PyoMapping {
         })
     }
 
-    fn __eq__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __eq__<'py>(
+        slf: Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<PyCmpOut<bool, 'py>> {
         let py = slf.py();
-        other
-            .cast::<PyMapping>()
-            .map_err(|_| PyNotImplementedError::new_err(""))
-            .and_then(|other| {
-                slf.call_method0(intern!(py, "items"))?
-                    .pipe_ref(PyDict::from_sequence)?
-                    .eq(other
-                        .call_method0(intern!(py, "items"))?
-                        .pipe_ref(PyDict::from_sequence)?)
-            })
+        match other.cast::<PyMapping>() {
+            Ok(other) => slf
+                .call_method0(intern!(py, "items"))?
+                .pipe_ref(PyDict::from_sequence)?
+                .eq(other
+                    .call_method0(intern!(py, "items"))?
+                    .pipe_ref(PyDict::from_sequence)?)
+                .map(Either::Left),
+            Err(_) => PyNotImplemented::get(py)
+                .into_bound()
+                .pipe(Ok)
+                .map(Either::Right),
+        }
     }
 
     fn keys(slf: Bound<'_, Self>) -> PyResult<Bound<'_, PyoKeysView>> {

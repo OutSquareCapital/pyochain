@@ -3,7 +3,7 @@ use crate::{
     pyo3_ext::{
         prelude::*,
         pylibs,
-        types::{PySupportsItems, pyitertools},
+        types::{PyCmpOut, PySupportsItems, pyitertools},
     },
     tools,
 };
@@ -23,7 +23,6 @@ enum IntoUpdate<'py> {
     Mapping(Bound<'py, PyMapping>),
     Iterable(Bound<'py, PyAny>),
 }
-type BoolOrNotImpl<'py> = Either<bool, Bound<'py, PyNotImplemented>>;
 #[pyclass(frozen, generic, mapping, extends = abc::PyoMutableMapping)]
 pub struct PyoCounter {
     pub inner: Py<PyDict>,
@@ -364,7 +363,7 @@ impl PyoCounter {
         }
         keep_positive(&inner)
     }
-    fn __eq__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<BoolOrNotImpl<'py>> {
+    fn __eq__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<PyCmpOut<bool, 'py>> {
         let py = other.py();
         let inner = self.inner.bind(py);
         try_cast! {
@@ -390,7 +389,7 @@ impl PyoCounter {
         }
     }
 
-    fn __ne__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<BoolOrNotImpl<'py>> {
+    fn __ne__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<PyCmpOut<bool, 'py>> {
         if !other.is_instance_of::<PyoCounter>() {
             PyNotImplemented::get(other.py())
                 .into_bound()
@@ -417,7 +416,7 @@ impl PyoCounter {
         Ok(true)
     }
 
-    fn __lt__<'py>(&self, other: &Bound<'py, Self>) -> PyResult<BoolOrNotImpl<'py>> {
+    fn __lt__<'py>(&self, other: &Bound<'py, Self>) -> PyResult<PyCmpOut<bool, 'py>> {
         let is_ne = self.__ne__(other)?;
         let is_le = self.__le__(other)?;
         is_ne.map_left(|is_ne| is_le && is_ne).pipe(Ok)
@@ -440,7 +439,7 @@ impl PyoCounter {
         Ok(true)
     }
 
-    fn __gt__<'py>(&self, other: &Bound<'py, Self>) -> PyResult<BoolOrNotImpl<'py>> {
+    fn __gt__<'py>(&self, other: &Bound<'py, Self>) -> PyResult<PyCmpOut<bool, 'py>> {
         let is_ge = self.__ge__(other)?;
         self.__ne__(&other)?
             .map_left(|is_ne| is_ge && is_ne)
