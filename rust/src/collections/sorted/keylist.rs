@@ -1,11 +1,10 @@
 use super::errors;
 use crate::collections::sorted::bisect;
-use crate::collections::sorted::iter::try_iterator_into_list;
+use crate::collections::sorted::iter::iterator_into_list;
 use crate::collections::sorted::traits::{
     DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters,
 };
 use crate::pyo3_ext::{prelude::*, pylibs};
-use crate::seq::{IntoPyochain, PyoVec};
 use pyo3::{prelude::*, types::PyList};
 use std::ops::Index;
 use std::sync::{Mutex, atomic::AtomicUsize};
@@ -179,11 +178,7 @@ impl InnerSorted for InnerKeyLists {
         let mut maxes = self.get_maxes();
         let lists_pos = lists
             .get_item(pos)
-            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
-            .get()
-            .inner
-            .clone_ref(py)
-            .into_bound(py);
+            .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?;
 
         keys[pos].remove(idx);
         lists_pos.del_item(idx)?;
@@ -215,8 +210,7 @@ impl InnerSorted for InnerKeyLists {
             left[prev].extend(right[0].drain(..));
             lists
                 .get_item(prev)
-                .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
-                .get()
+                .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?
                 .extend(lists.get_item(pos)?)?;
             maxes[prev] = keys[prev][keys[prev].len() - 1].clone_ref(py);
 
@@ -249,13 +243,9 @@ impl InnerSorted for InnerKeyLists {
 
             let lists_pos = lists
                 .get_item(pos)
-                .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
-                .get()
-                .inner
-                .clone_ref(py)
-                .into_bound(py);
+                .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?;
             let keys_pos = &mut keys[pos];
-            let half = lists_pos.get_slice(load, lists_pos.len()).into_pyochain()?;
+            let half = lists_pos.get_slice(load, lists_pos.len());
             let half_keys = keys_pos.split_off(load);
             lists_pos.del_slice(load, usize::MAX)?;
             maxes[pos] = keys_pos[keys_pos.len() - 1].clone_ref(py);
@@ -294,8 +284,7 @@ impl InnerSorted for InnerKeyLists {
                 pos -= 1;
                 lists
                     .get_item(pos)
-                    .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
-                    .get()
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?
                     .append(&value)?;
                 keys[pos].push(key.clone_ref(py));
                 maxes[pos] = key;
@@ -304,8 +293,7 @@ impl InnerSorted for InnerKeyLists {
                 let idx = bisect::right_vec(&v, &key_binded)?;
                 lists
                     .get_item(pos)
-                    .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
-                    .get()
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?
                     .insert(idx, &value)?;
                 keys[pos].insert(idx, key);
             }
@@ -313,7 +301,7 @@ impl InnerSorted for InnerKeyLists {
             drop(keys);
             self.expand(py, pos)?;
         } else {
-            lists.append(PyList::new(py, [value])?.into_pyochain()?)?;
+            lists.append(PyList::new(py, [value])?)?;
             keys.push(vec![key.clone_ref(py)]);
             maxes.push(key);
         }
@@ -550,7 +538,7 @@ impl InnerSorted for InnerKeyLists {
 
         if !self.get_maxes().is_empty() {
             if values.len() * 4 >= self.get_len() {
-                lists.append(values.into_pyochain()?)?;
+                lists.append(values)?;
                 values = self
                     .collapse_lists(py)?
                     .get()
@@ -570,14 +558,11 @@ impl InnerSorted for InnerKeyLists {
         let load = self.get_load();
         let new_keys = (0..values.len())
             .step_by(load)
-            .map(|pos| values.get_slice(pos, pos + load).into_pyochain())
-            .try_fold(lists, try_iterator_into_list)?
+            .map(|pos| values.get_slice(pos, pos + load))
+            .try_fold(lists, iterator_into_list)?
             .iter()
             .map(|list_| {
-                unsafe { list_.cast_into_unchecked::<PyoVec>() }
-                    .get()
-                    .inner
-                    .bind(py)
+                unsafe { list_.cast_into_unchecked::<PyList>() }
                     .iter()
                     .map(|x| key_fn.call1((x,)).map(Bound::unbind))
                     .collect::<PyResult<Vec<_>>>()

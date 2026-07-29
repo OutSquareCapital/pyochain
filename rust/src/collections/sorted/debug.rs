@@ -1,9 +1,9 @@
 use crate::collections::sorted::traits::{InnerSortedGetters, RustGetters};
 use crate::collections::{InnerKeyLists, InnerLists};
-use crate::seq::PyoVec;
 use either::Either;
 use pyo3::exceptions::PyAssertionError;
 use pyo3::prelude::*;
+use pyo3::types::PyList;
 use std::ops::Index;
 
 type InnerSorted = Either<Py<InnerLists>, Py<InnerKeyLists>>;
@@ -65,13 +65,10 @@ fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
 
     // Check all sublists are sorted.
 
-    for sublist in lists.iter().map(|x| {
-        unsafe { x.cast_into_unchecked::<PyoVec>() }
-            .get()
-            .inner
-            .clone_ref(py)
-            .into_bound(py)
-    }) {
+    for sublist in lists
+        .iter()
+        .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
+    {
         for pos in 1..sublist.len() {
             (sublist.get_item(pos - 1)?.le(sublist.get_item(pos)?)?)
                 .then_some(())

@@ -236,13 +236,11 @@ macro_rules! impl_inner_sorted_rs {
         impl<'py> InnerSortedIter<'py> for Bound<'py, $t> {
             fn iter(&self) -> impl Iterator<Item = Bound<'py, PyAny>> {
                 let py = self.py();
-                self.get().get_lists(py).bind(py).iter().flat_map(move |x| {
-                    unsafe { x.cast_unchecked::<PyoVec>() }
-                        .get()
-                        .inner
-                        .bind(py)
-                        .iter()
-                })
+                self.get()
+                    .get_lists(py)
+                    .bind(py)
+                    .iter()
+                    .flat_map(move |x| unsafe { x.cast_unchecked::<PyList>() }.iter())
             }
         }
     };
@@ -283,10 +281,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             .bind(py)
             .iter()
             .try_fold(init, |acc, x| {
-                unsafe { x.cast_into_unchecked::<PyoVec>() }
-                    .get()
-                    .inner
-                    .bind(py)
+                unsafe { x.cast_into_unchecked::<PyList>() }
                     .as_sequence()
                     .pipe(|x| acc.in_place_concat(x))?;
                 Ok::<_, PyErr>(acc)
@@ -637,11 +632,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             |start_pos: usize, stop_pos: usize, start_idx: usize, stop_idx: usize| {
                 let prefix = lists
                     .get_item(start_pos)
-                    .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
-                    .get()
-                    .inner
-                    .clone_ref(py)
-                    .into_bound(py)
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?
                     .get_slice(start_idx, usize::MAX)
                     .into_sequence();
                 lists
@@ -655,12 +646,8 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                     .iadd(
                         lists
                             .get_item(stop_pos)
-                            .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
-                            .get()
-                            .inner
-                            .bind(py)
-                            .get_slice(0, stop_idx)
-                            .into_pyochain()?,
+                            .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?
+                            .get_slice(0, stop_idx),
                     )
                     .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?
                     .into_pyochain()
@@ -677,11 +664,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                 let (start_pos, start_idx) = self.pos(py, start)?;
                 let start_list = lists
                     .get_item(start_pos)
-                    .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
-                    .get()
-                    .inner
-                    .clone_ref(py)
-                    .into_bound(py);
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?;
                 let stop_idx = start_idx + stop - start;
                 match (start_list.len() as isize >= stop_idx, stop_eq_len) {
                     // Small slice optimization: start index and stop index are
