@@ -58,6 +58,7 @@
             "DOC",                                   # We don't want to document tests
             "boolean-type-hint-positional-argument",
             "call-datetime-without-tzinfo",
+            "comparison-with-itself",
             "docstring-missing-returns",
             "unnecessary-dunder-call",               # Dunders calls are more convenients in tests
         ]
