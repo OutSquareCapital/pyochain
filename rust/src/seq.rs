@@ -5,8 +5,8 @@ use crate::{abc, tools};
 use pyo3::pyclass_init::PyClassInitializer;
 use pyo3::sync::PyOnceLock;
 use pyo3::types::{
-    PyBool, PyDict, PyFrozenSet, PyInt, PyIterator, PyList, PyRange, PyRangeMethods, PySequence,
-    PySet, PyString, PyTuple, PyType,
+    DerefToPyAny, PyBool, PyDict, PyFrozenSet, PyInt, PyIterator, PyList, PyRange, PyRangeMethods,
+    PySequence, PySet, PyString, PyTuple, PyType,
 };
 use pyo3::{PyTypeInfo, intern, prelude::*};
 use pyochain_macros::try_cast;
@@ -95,15 +95,13 @@ impl Seq {
 
     fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
         let py = slf.py();
-        let name = slf.get_type().name().unwrap();
-        let repr = slf
-            .get()
+        let name = slf.get_type().name()?;
+        slf.get()
             .inner
             .clone_ref(py)
             .into_bound(py)
-            .into_sequence()
-            .pipe_ref(get_repr)?;
-        format!("{}({})", name, repr).pipe(Ok)
+            .pipe(get_repr)
+            .map(|repr| format!("{}({})", name, repr))
     }
 
     fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
@@ -345,11 +343,13 @@ impl PyoVec {
     fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
         let py = slf.py();
         let name = slf.get_type().name()?;
-        Ok(format!(
-            "{}({})",
-            name,
-            slf.get().inner.bind(py).as_sequence().pipe(get_repr)?
-        ))
+
+        slf.get()
+            .inner
+            .clone_ref(py)
+            .into_bound(py)
+            .pipe(get_repr)
+            .map(|repr| format!("{}({})", name, repr))
     }
 
     fn __len__(slf: Bound<'_, Self>) -> usize {
@@ -579,13 +579,12 @@ impl Set {
 
     fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
         let py = slf.py();
-        let name = slf.get_type().name().unwrap();
+        let name = slf.get_type().name()?;
         slf.get()
             .inner
             .bind(py)
-            .pipe(|x| PyTuple::new(py, x))?
-            .as_sequence()
-            .pipe(get_repr)
+            .pipe(|x| PyTuple::new(py, x))
+            .and_then(get_repr)
             .map(|repr| format!("{}({})", name, repr))
     }
 
@@ -766,13 +765,12 @@ impl SetMut {
 
     fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
         let py = slf.py();
-        let name = slf.get_type().name().unwrap();
+        let name = slf.get_type().name()?;
         slf.get()
             .inner
             .bind(py)
-            .pipe(|x| PyTuple::new(py, x))?
-            .as_sequence()
-            .pipe(get_repr)
+            .pipe(|x| PyTuple::new(py, x))
+            .and_then(get_repr)
             .map(|repr| format!("{}({})", name, repr))
     }
 
@@ -1212,7 +1210,9 @@ fn set_eq(left: &Bound<'_, PyAny>, right: Bound<'_, PyAny>) -> PyResult<bool> {
     }
 }
 
-pub fn get_repr<'py>(obj: &Bound<'py, PySequence>) -> PyResult<Bound<'py, PyString>> {
+pub fn get_repr<'py, T: Sized + PyTypeInfo + DerefToPyAny>(
+    obj: Bound<'py, T>,
+) -> PyResult<Bound<'py, PyString>> {
     let py = obj.py();
     let length = obj.len()?;
 

@@ -3,12 +3,12 @@ use crate::{
     pyo3_ext::{prelude::*, types::PyAbstractSet},
     seq::{IntoPyochain, SetMut, get_repr},
 };
-use pyochain_macros::try_cast;
 use pyo3::{
     PyTypeInfo, intern,
     prelude::*,
     types::{PyDict, PyIterator, PyNone, PySet},
 };
+use pyochain_macros::try_cast;
 use tap::prelude::*;
 #[pyclass(frozen, generic, extends=abc::PyoMutableSet)]
 pub struct StableSet {
@@ -33,7 +33,6 @@ impl StableSet {
             .inner
             .bind(slf.py())
             .keys()
-            .as_sequence()
             .pipe(get_repr)
             .map(|repr| format!("{}({})", name, repr))
     }
