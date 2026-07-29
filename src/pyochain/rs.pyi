@@ -39,7 +39,6 @@ class InnerSorted[T, U]:
     lists: list[list[T]]
     len: int
     load: int
-    offset: int
 
     def __new__(cls) -> Self: ...
     def clear(self) -> None: ...

@@ -22,6 +22,9 @@ pub trait RustGetters:
 {
     fn get_idx(&self) -> std::sync::MutexGuard<'_, Vec<usize>>;
     fn get_maxes(&self) -> std::sync::MutexGuard<'_, Vec<Py<PyAny>>>;
+    fn get_offset(&self) -> usize;
+    fn set_offset(&self, offset: usize);
+    fn set_load(&self, load: usize);
 }
 macro_rules! impl_rs_getters {
     ($t:ty) => {
@@ -39,6 +42,18 @@ macro_rules! impl_rs_getters {
                     .try_lock()
                     .expect("maxes already locked - reentrant bug")
             }
+            #[inline(always)]
+            fn get_offset(&self) -> usize {
+                self.offset.load(AtomicOrdering::Relaxed)
+            }
+            #[inline(always)]
+            fn set_offset(&self, offset: usize) {
+                self.offset.store(offset, AtomicOrdering::Relaxed);
+            }
+            #[inline(always)]
+            fn set_load(&self, load: usize) {
+                self.load.store(load, AtomicOrdering::Relaxed);
+            }
         }
     };
 }
@@ -51,13 +66,9 @@ pub(super) trait InnerSortedGetters: RustGetters {
     #[getter]
     fn get_load(&self) -> usize;
     #[getter]
-    fn get_offset(&self) -> usize;
-    #[getter]
     fn get_len(&self) -> usize;
-    fn set_offset(&self, offset: usize);
     #[setter]
     fn set_len(&self, len: usize);
-    fn set_load(&self, load: usize);
     fn eq<'py>(slf: Bound<'py, Self>, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py>;
     fn ne<'py>(slf: Bound<'py, Self>, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py>;
     fn lt<'py>(slf: Bound<'py, Self>, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py>;
@@ -73,14 +84,6 @@ macro_rules! impl_inner_sorted_rs {
                 self.lists.clone_ref(py)
             }
             #[inline(always)]
-            fn get_offset(&self) -> usize {
-                self.offset.load(AtomicOrdering::Relaxed)
-            }
-            #[inline(always)]
-            fn set_offset(&self, offset: usize) {
-                self.offset.store(offset, AtomicOrdering::Relaxed);
-            }
-            #[inline(always)]
             fn get_len(&self) -> usize {
                 self.len.load(AtomicOrdering::Relaxed)
             }
@@ -91,10 +94,6 @@ macro_rules! impl_inner_sorted_rs {
             #[inline(always)]
             fn get_load(&self) -> usize {
                 self.load.load(AtomicOrdering::Relaxed)
-            }
-            #[inline(always)]
-            fn set_load(&self, load: usize) {
-                self.load.store(load, AtomicOrdering::Relaxed);
             }
 
             fn eq<'py>(slf: Bound<'py, Self>, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
