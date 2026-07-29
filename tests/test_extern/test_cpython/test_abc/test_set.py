@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any, override
+from typing import TYPE_CHECKING, Any, NamedTuple, override
 
 import pytest
 
@@ -193,71 +193,95 @@ def test_issue16373() -> None:
     assert ncs >= cs
 
 
-def test_pyoset_interoperability_with_real_sets() -> None:  # ruff:ignore[too-many-statements]
+class ListSet(PyoSet[object]):
+    def __init__(self, elements: Iterable[object] = ()) -> None:
+        self.data: list[object] = []
+        for elem in elements:
+            if elem not in self.data:
+                self.data.append(elem)
+
+    @override
+    def __contains__(self, elem: object) -> bool:
+        return elem in self.data
+
+    @override
+    def __iter__(self) -> Iterator[object]:
+        return iter(self.data)
+
+    @override
+    def __len__(self) -> int:
+        return len(self.data)
+
+    @override
+    def __repr__(self) -> str:
+        return f"PyoSet({self.data!r})"
+
+
+class InteropData(NamedTuple):
     """Issue: 8743."""
 
-    class ListSet(PyoSet[object]):
-        def __init__(self, elements: Iterable[object] = ()) -> None:
-            self.data: list[object] = []
-            for elem in elements:
-                if elem not in self.data:
-                    self.data.append(elem)
+    r1: Set[str]
+    r2: Set[str]
+    r3: Set[str]
+    f1: ListSet
+    f2: ListSet
+    f3: ListSet
+    l1: Vec[str]
+    l2: Vec[str]
+    l3: Vec[str]
 
-        @override
-        def __contains__(self, elem: object) -> bool:
-            return elem in self.data
 
-        @override
-        def __iter__(self) -> Iterator[object]:
-            return iter(self.data)
+OP = InteropData(
+    Set("abc"),
+    Set("bcd"),
+    Set("abcde"),
+    ListSet("abc"),
+    ListSet("bcd"),
+    ListSet("abcde"),
+    Vec("abccba"),
+    Vec("bcddcb"),
+    Vec("abcdeedcba"),
+)
 
-        @override
-        def __len__(self) -> int:
-            return len(self.data)
 
-        @override
-        def __repr__(self) -> str:
-            return f"PyoSet({self.data!r})"
+def test_interop_and() -> None:
+    target = OP.r1 & OP.r2
+    assert OP.f1 & OP.f2 == target
+    assert OP.f1 & OP.r2 == target
+    assert OP.r2 & OP.f1 == target
+    assert OP.f1 & OP.l2 == target  # pyright: ignore[reportOperatorIssue]
 
-    r1 = Set("abc")
-    r2 = Set("bcd")
-    r3 = Set("abcde")
-    f1 = ListSet("abc")
-    f2 = ListSet("bcd")
-    f3 = ListSet("abcde")
-    l1 = Vec("abccba")
-    l2 = Vec("bcddcb")
-    l3 = Vec("abcdeedcba")
 
-    target = r1 & r2
-    assert f1 & f2 == target
-    assert f1 & r2 == target
-    assert r2 & f1 == target
-    assert f1 & l2 == target  # pyright: ignore[reportOperatorIssue]
+def test_interop_or() -> None:
+    target = OP.r1 | OP.r2
+    assert OP.f1 | OP.f2 == target
+    assert OP.f1 | OP.r2 == target
+    assert OP.r2 | OP.f1 == target
+    assert OP.f1 | OP.l2 == target  # pyright: ignore[reportOperatorIssue]
 
-    target = r1 | r2
-    assert f1 | f2 == target
-    assert f1 | r2 == target
-    assert r2 | f1 == target
-    assert f1 | l2 == target  # pyright: ignore[reportOperatorIssue]
 
-    fwd_target = r1 - r2
-    rev_target = r2 - r1
-    assert f1 - f2 == fwd_target
-    assert f2 - f1 == rev_target
-    assert f1 - r2 == fwd_target
-    assert f2 - r1 == rev_target
-    assert r1 - f2 == fwd_target
-    assert r2 - f1 == rev_target
-    assert f1 - l2 == fwd_target  # pyright: ignore[reportOperatorIssue]
-    assert f2 - l1 == rev_target  # pyright: ignore[reportOperatorIssue]
+def test_interop_sub() -> None:
+    fwd_target = OP.r1 - OP.r2
+    rev_target = OP.r2 - OP.r1
+    assert OP.f1 - OP.f2 == fwd_target
+    assert OP.f2 - OP.f1 == rev_target
+    assert OP.f1 - OP.r2 == fwd_target
+    assert OP.f2 - OP.r1 == rev_target
+    assert OP.r1 - OP.f2 == fwd_target
+    assert OP.r2 - OP.f1 == rev_target
+    assert OP.f1 - OP.l2 == fwd_target  # pyright: ignore[reportOperatorIssue]
+    assert OP.f2 - OP.l1 == rev_target  # pyright: ignore[reportOperatorIssue]
 
-    target = r1 ^ r2
-    assert f1 ^ f2 == target
-    assert f1 ^ r2 == target
-    assert r2 ^ f1 == target
-    assert f1 ^ l2 == target  # pyright: ignore[reportOperatorIssue]
 
+def test_interop_xor() -> None:
+    target = OP.r1 ^ OP.r2
+    assert OP.f1 ^ OP.f2 == target
+    assert OP.f1 ^ OP.r2 == target
+    assert OP.r2 ^ OP.f1 == target
+    assert OP.f1 ^ OP.l2 == target  # pyright: ignore[reportOperatorIssue]
+
+
+def test_interop_lt() -> None:
     # Don't change the following to use assertLess or other
     # "more specific" unittest assertions.  The current
     # assertTrue/assertFalse style makes the pattern of test
@@ -265,94 +289,104 @@ def test_pyoset_interoperability_with_real_sets() -> None:  # ruff:ignore[too-ma
     # the exact operator being invoked.
 
     # proper subset
-    assert f1 < f3
-    assert not f1 < f1
-    assert not f1 < f2
-    assert r1 < f3
-    assert not r1 < f1
-    assert not r1 < f2
-    assert r1 < r3
-    assert not r1 < r1
-    assert not r1 < r2
+    assert OP.f1 < OP.f3
+    assert not OP.f1 < OP.f1
+    assert not OP.f1 < OP.f2
+    assert OP.r1 < OP.f3
+    assert not OP.r1 < OP.f1
+    assert not OP.r1 < OP.f2
+    assert OP.r1 < OP.r3
+    assert not OP.r1 < OP.r1
+    assert not OP.r1 < OP.r2
     with pytest.raises(TypeError):
-        _ = f1 < l3  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 < OP.l3  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     with pytest.raises(TypeError):
-        _ = f1 < l1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 < OP.l1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     with pytest.raises(TypeError):
-        _ = f1 < l2  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 < OP.l2  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
+
+def test_interop_le() -> None:
     # any subset
-    assert f1 <= f3
-    assert f1 <= f1
-    assert not f1 <= f2
-    assert r1 <= f3
-    assert r1 <= f1
-    assert not r1 <= f2
-    assert r1 <= r3
-    assert r1 <= r1
-    assert not r1 <= r2
+    assert OP.f1 <= OP.f3
+    assert OP.f1 <= OP.f1
+    assert not OP.f1 <= OP.f2
+    assert OP.r1 <= OP.f3
+    assert OP.r1 <= OP.f1
+    assert not OP.r1 <= OP.f2
+    assert OP.r1 <= OP.r3
+    assert OP.r1 <= OP.r1
+    assert not OP.r1 <= OP.r2
     with pytest.raises(TypeError):
-        _ = f1 <= l3  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 <= OP.l3  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     with pytest.raises(TypeError):
-        _ = f1 <= l1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 <= OP.l1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     with pytest.raises(TypeError):
-        _ = f1 <= l2  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 <= OP.l2  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
+
+def test_interop_gt() -> None:
     # proper superset
-    assert f3 > f1
-    assert not f1 > f1
-    assert not f2 > f1
-    assert r3 > r1
-    assert not f1 > r1
-    assert not f2 > r1
-    assert r3 > r1
-    assert not r1 > r1
-    assert not r2 > r1
+    assert OP.f3 > OP.f1
+    assert not OP.f1 > OP.f1
+    assert not OP.f2 > OP.f1
+    assert OP.r3 > OP.r1
+    assert not OP.f1 > OP.r1
+    assert not OP.f2 > OP.r1
+    assert OP.r3 > OP.r1
+    assert not OP.r1 > OP.r1
+    assert not OP.r2 > OP.r1
     with pytest.raises(TypeError):
-        _ = f1 > l3  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 > OP.l3  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     with pytest.raises(TypeError):
-        _ = f1 > l1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 > OP.l1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     with pytest.raises(TypeError):
-        _ = f1 > l2  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 > OP.l2  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
+
+def test_interop_ge() -> None:
     # any superset
-    assert f3 >= f1
-    assert f1 >= f1
-    assert not f2 >= f1
-    assert r3 >= r1
-    assert f1 >= r1
-    assert not f2 >= r1
-    assert r3 >= r1
-    assert r1 >= r1
-    assert not r2 >= r1
+    assert OP.f3 >= OP.f1
+    assert OP.f1 >= OP.f1
+    assert not OP.f2 >= OP.f1
+    assert OP.r3 >= OP.r1
+    assert OP.f1 >= OP.r1
+    assert not OP.f2 >= OP.r1
+    assert OP.r3 >= OP.r1
+    assert OP.r1 >= OP.r1
+    assert not OP.r2 >= OP.r1
     with pytest.raises(TypeError):
-        _ = f1 >= l3  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 >= OP.l3  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     with pytest.raises(TypeError):
-        _ = f1 >= l1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 >= OP.l1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     with pytest.raises(TypeError):
-        _ = f1 >= l2  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+        _ = OP.f1 >= OP.l2  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
+
+def test_interop_eq() -> None:
     # equality
-    assert f1 == f1
-    assert r1 == f1
-    assert f1 == r1
-    assert f1 != f3
-    assert r1 != f3
-    assert f1 != r3
-    assert f1 != l3
-    assert f1 != l1
-    assert f1 != l2
+    assert OP.f1 == OP.f1
+    assert OP.r1 == OP.f1
+    assert OP.f1 == OP.r1
+    assert OP.f1 != OP.f3
+    assert OP.r1 != OP.f3
+    assert OP.f1 != OP.r3
+    assert OP.f1 != OP.l3
+    assert OP.f1 != OP.l1
+    assert OP.f1 != OP.l2
 
+
+def test_interop_ne() -> None:
     # inequality
-    assert f1 == f1
-    assert r1 == f1
-    assert f1 == r1
-    assert f1 != f3
-    assert r1 != f3
-    assert f1 != r3
-    assert f1 != l3
-    assert f1 != l1
-    assert f1 != l2
+    assert OP.f1 == OP.f1
+    assert OP.r1 == OP.f1
+    assert OP.f1 == OP.r1
+    assert OP.f1 != OP.f3
+    assert OP.r1 != OP.f3
+    assert OP.f1 != OP.r3
+    assert OP.f1 != OP.l3
+    assert OP.f1 != OP.l1
+    assert OP.f1 != OP.l2
 
 
 SETS = Dict[str, Iterable[object]]({
