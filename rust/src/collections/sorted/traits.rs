@@ -1,8 +1,9 @@
 use crate::collections::sorted::errors;
 use crate::collections::sorted::iter::try_iterator_into_list;
 use crate::collections::{InnerKeyLists, InnerLists};
-use crate::pyo3_ext::prelude::*;
+use crate::pyo3_ext::{prelude::*, pylibs};
 use crate::seq::{IntoPyochain, PyoVec};
+use crate::tools;
 use either::Either;
 use pyo3::PyClass;
 use pyo3::exceptions::PyIndexError;
@@ -789,5 +790,14 @@ pub(super) trait InnerSorted: InnerSortedGetters {
 
             Ok(Some((min_pos, min_idx, max_pos, max_idx)))
         }
+    }
+    /// ref: `self.lists.iter().flatten()`
+    fn iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, tools::Iter>> {
+        self.get_lists(py)
+            .bind(py)
+            .try_iter()
+            .unwrap()
+            .pipe_ref(pylibs::itertools::chain::from_iterable)
+            .and_then(tools::Iter::new)
     }
 }

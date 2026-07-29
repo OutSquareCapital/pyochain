@@ -121,18 +121,6 @@ class SortedList[T: SupportsRichComparison](
         raise NotImplementedError(message)
 
     @override
-    def __iter__(self) -> PyoIterator[T]:
-        """Return an iterator over the sorted list.
-
-        ``sl.__iter__()`` <==> ``iter(sl)``
-
-        Iterating the sorted list while adding or deleting values may raise a
-        :exc:`RuntimeError` or fail to iterate over all values.
-
-        """
-        return Iter(self._inner.lists).flatten()
-
-    @override
     def __reversed__(self) -> PyoIterator[T]:
         """Return a reverse iterator over the sorted list.
 

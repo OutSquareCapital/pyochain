@@ -344,6 +344,17 @@ class BaseSortedListSet[T](SortedCollection[T], ABC):
 class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-hash]
     _inner: InnerSorted[T, Any]
 
+    def __iter__(self) -> PyoIterator[T]:
+        """Return an iterator over the sorted list.
+
+        ``sl.__iter__()`` <==> ``iter(sl)``
+
+        Iterating the sorted list while adding or deleting values may raise a
+        :exc:`RuntimeError` or fail to iterate over all values.
+
+        """
+        return self._inner.iter()
+
     @override
     def __contains__(self, value: object) -> bool:
         """Return true if `value` is an element of the sorted list.
