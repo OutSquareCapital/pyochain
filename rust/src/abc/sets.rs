@@ -208,27 +208,23 @@ impl PyoSet {
         }
         Ok(true)
     }
+    /// Mirrors `_collections_abc.Set._hash`.\
+    /// Python masks with `MASK = 2 * sys.maxsize + 1` (i.e. the full 64-bit range) after every step.\
+    /// This is equivalent to doing the whole computation with wrapping u64 arithmetic,\
+    /// and reinterpreting the final bit pattern as a signed 64-bit hash.
     fn _hash(slf: Bound<'_, Self>) -> PyResult<isize> {
-        let max = isize::MAX / 2;
-        let mask = 2 * max + 1;
-        let n = slf.len()? as isize;
-        let mut h = 1927868237 * (n + 1);
-        h &= mask;
+
+        let n = slf.len()? as u64;
+        let mut h = 1927868237u64.wrapping_mul(n.wrapping_add(1));
         for x in slf.try_iter()? {
-            let hx = x?.hash()?;
-            h ^= (hx ^ (hx << 16) ^ 89869747) * 3644798167;
-            h &= mask;
+            let hx = x?.hash()? as u64;
+            let mixed = hx ^ (hx << 16) ^ 89869747;
+            h ^= mixed.wrapping_mul(3644798167);
         }
         h ^= (h >> 11) ^ (h >> 25);
-        h = h * 69069 + 907133923;
-        h &= mask;
-        if h > max {
-            h -= mask + 1;
-        }
-        if h == -1 {
-            h = 590923713;
-        }
-        Ok(h)
+        h = h.wrapping_mul(69069).wrapping_add(907133923);
+        let h = h as isize;
+        Ok(if h == -1 { 590923713 } else { h })
     }
 
     fn is_subset(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<bool> {
