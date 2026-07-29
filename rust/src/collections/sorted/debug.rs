@@ -20,7 +20,7 @@ macro_rules! pyassert {
 pub fn assert_sorted_list_empty(py: Python<'_>, lst: InnerSorted) -> PyResult<()> {
     fn check_empty(x: &impl InnerSortedGetters, py: Python<'_>) -> PyResult<()> {
         pyassert!(x.get_len() == 0);
-        pyassert!(x.get_maxes(py).bind(py).is_empty());
+        pyassert!(x.get_maxes().is_empty());
         pyassert!(x.get_lists(py).bind(py).is_empty()?);
         Ok(())
     }
@@ -45,7 +45,7 @@ pub fn check_sorted_key_list(py: Python<'_>, data: Py<InnerKeyLists>) -> PyResul
 
 fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
     let lists = data.get_lists(py).get().inner.clone_ref(py).into_bound(py);
-    let maxes = data.get_maxes(py).clone_ref(py).into_bound(py);
+    let maxes = data.get_maxes();
     let idx = data.get_idx();
     let offset = data.get_offset();
     let err = |x| PyAssertionError::new_err(x);
@@ -94,11 +94,9 @@ fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
     // Check _maxes index is the last value of each sublist.
 
     for pos in 0..maxes.len() {
-        (maxes
-            .get_item(pos)?
-            .eq(lists.get_item(pos)?.get_item(-1)?)?)
-        .then_some(())
-        .ok_or(err("Maxes must match last element of sublists"))?;
+        (maxes[pos].bind(py).eq(lists.get_item(pos)?.get_item(-1)?)?)
+            .then_some(())
+            .ok_or(err("Maxes must match last element of sublists"))?;
     }
 
     // Check sublist lengths are less than double load-factor.
@@ -160,7 +158,7 @@ fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
 fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
     let lists = data.lists.get().inner.bind(py);
     let keys = data.get_keys();
-    let maxes = data.maxes.bind(py);
+    let maxes = data.get_maxes();
     let idx = data.get_idx();
     let load = data.get_load();
     let length = data.get_len();
@@ -210,7 +208,7 @@ fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
     // Check _maxes index is the last value of each sublist.
 
     for pos in 0..maxes.len() {
-        pyassert!(maxes.get_item(pos)?.eq(keys[pos].bind(py).last()?)?);
+        pyassert!(maxes[pos].bind(py).eq(keys[pos].bind(py).last()?)?);
     }
 
     // Check sublist lengths are less than double load-factor.
@@ -265,14 +263,15 @@ fn show_key_list(py: Python<'_>, err: &PyErr, data: &InnerKeyLists) -> () {
 }
 fn show_list(py: Python<'_>, err: &PyErr, data: &impl InnerSortedGetters) -> () {
     let idx = data.get_idx();
+    let maxes = data.get_maxes();
     let infos = [
         format!("len: {}", data.get_len()),
         format!("load: {}", data.get_load()),
         format!("offset: {}", data.get_offset()),
         format!("len_index: {}", idx.len()),
         format!("index: {:?}", idx),
-        format!("len_maxes: {}", data.get_maxes(py).bind(py).len()),
-        format!("maxes: {}", data.get_maxes(py).bind(py).repr().unwrap()),
+        format!("len_maxes: {}", maxes.len()),
+        format!("maxes: {:?}", maxes),
         format!("len_lists: {}", data.get_lists(py).bind(py).len().unwrap()),
         format!("lists: {}", data.get_lists(py).bind(py).repr().unwrap()),
     ]

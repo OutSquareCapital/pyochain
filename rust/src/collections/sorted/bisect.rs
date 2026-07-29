@@ -46,3 +46,37 @@ pub(super) fn left(lst: &Bound<'_, PyList>, item: &Bound<'_, PyAny>) -> PyResult
     }
     Ok(lo)
 }
+#[inline]
+pub(super) fn right_vec(lst: &Vec<Py<PyAny>>, item: &Bound<'_, PyAny>) -> PyResult<usize> {
+    let py = item.py();
+    let mut high = lst.len();
+    let mut lo = 0;
+    // Note, the comparison uses "<" to match the
+    // __lt__() logic in list.sort() and in heapq.
+    while lo < high {
+        let mid = (lo + high) / 2;
+        if item.lt(lst[mid].bind(py))? {
+            high = mid;
+        } else {
+            lo = mid + 1;
+        }
+    }
+    Ok(lo)
+}
+#[inline]
+pub(super) fn left_vec(lst: &Vec<Py<PyAny>>, item: &Bound<'_, PyAny>) -> PyResult<usize> {
+    let py = item.py();
+    let mut hi = lst.len();
+    let mut lo = 0;
+    // Note, the comparison uses "<" to match the
+    // __lt__() logic in list.sort() and in heapq.
+    while lo < hi {
+        let mid = (lo + hi) / 2;
+        if lst[mid].bind(py).lt(item)? {
+            lo = mid + 1;
+        } else {
+            hi = mid
+        }
+    }
+    Ok(lo)
+}

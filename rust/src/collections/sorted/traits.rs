@@ -21,6 +21,7 @@ pub trait RustGetters:
     Sized + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {
     fn get_idx(&self) -> std::sync::MutexGuard<'_, Vec<usize>>;
+    fn get_maxes(&self) -> std::sync::MutexGuard<'_, Vec<Py<PyAny>>>;
 }
 macro_rules! impl_rs_getters {
     ($t:ty) => {
@@ -31,6 +32,13 @@ macro_rules! impl_rs_getters {
                     .try_lock()
                     .expect("idx already locked - reentrant bug")
             }
+
+            #[inline(always)]
+            fn get_maxes(&self) -> std::sync::MutexGuard<'_, Vec<Py<PyAny>>> {
+                self.maxes
+                    .try_lock()
+                    .expect("maxes already locked - reentrant bug")
+            }
         }
     };
 }
@@ -40,8 +48,6 @@ impl_rs_getters!(InnerKeyLists);
 pub(super) trait InnerSortedGetters: RustGetters {
     #[getter]
     fn get_lists(&self, py: Python<'_>) -> Py<PyoVec>;
-    #[getter]
-    fn get_maxes(&self, py: Python<'_>) -> Py<PyList>;
     #[getter]
     fn get_load(&self) -> usize;
     #[getter]
@@ -89,10 +95,6 @@ macro_rules! impl_inner_sorted_rs {
             #[inline(always)]
             fn set_load(&self, load: usize) {
                 self.load.store(load, AtomicOrdering::Relaxed);
-            }
-            #[inline(always)]
-            fn get_maxes(&self, py: Python<'_>) -> Py<PyList> {
-                self.maxes.clone_ref(py)
             }
 
             fn eq<'py>(slf: Bound<'py, Self>, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
