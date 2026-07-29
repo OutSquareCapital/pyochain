@@ -1,18 +1,19 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any, override
 
 import pytest
 
-from pyochain import Set, SetMut, Vec
+from pyochain import Dict, Set, SetMut, Vec
 from pyochain.abc import PyoSet
 from pyochain.collections import SortedSet
 
 from ._utils import validate_abstract_methods, validate_comparison
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Iterator
 
 type ConcreteSet[T] = Set[T] | SetMut[T] | SortedSet[Any]
 
@@ -354,26 +355,27 @@ def test_pyoset_interoperability_with_real_sets() -> None:  # ruff:ignore[too-ma
     assert f1 != l2
 
 
-SETS: list[Iterable[object]] = [
-    {},
-    {1},
-    {None},
-    {-1},
-    {0.0},
-    {"abc"},
-    {1, 2, 3},
-    {10**100, 10**101},
-    {"a", "b", "ab", ""},
-    {False, True},
-    {object(), object(), object()},
-    {float("nan")},
-    {frozenset()},
-    {*range(1000)},
-    {*range(1000)} - {100, 200, 300},
-    {*range(sys.maxsize - 10, sys.maxsize + 10)},
-]
+SETS = Dict[str, Iterable[object]]({
+    "empty dict": {},
+    "set with 1": {1},
+    "set with None": {None},
+    "set with -1": {-1},
+    "set with 0.0": {0.0},
+    "set with 'abc'": {"abc"},
+    "set with 1, 2, 3": {1, 2, 3},
+    "set with large numbers": {10**100, 10**101},
+    "set with strings": {"a", "b", "ab", ""},
+    "set with booleans": {False, True},
+    "set with objects": {object(), object(), object()},
+    "set with nan": {float("nan")},
+    "empty frozenset": {frozenset[object]()},
+    "range 0-999": {*range(1000)},
+    "range 0-999 excluding 100, 200, 300": {*range(1000)} - {100, 200, 300},
+    "range near sys.maxsize": {*range(sys.maxsize - 10, sys.maxsize + 10)},
+})
 
 
+@pytest.mark.parametrize("s", SETS.values(), ids=SETS.keys())
 def test_set_hash_matches_frozenset(s: Iterable[object]) -> None:
     fs = Set(s)
     assert hash(fs) == PyoSet._hash(fs), s  # pyright: ignore[reportUnknownMemberType]
