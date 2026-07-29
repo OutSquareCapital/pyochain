@@ -1,6 +1,5 @@
 use crate::collections::sorted::traits::{InnerSortedGetters, RustGetters};
 use crate::collections::{InnerKeyLists, InnerLists};
-use crate::pyo3_ext::types::PyListExtMethods;
 use crate::seq::PyoVec;
 use either::Either;
 use pyo3::exceptions::PyAssertionError;
@@ -176,9 +175,9 @@ fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
 
     // Check all sublists are sorted.
 
-    for sublist in keys.iter().map(|x| x.bind(py)) {
+    for sublist in keys.iter() {
         for pos in 1..sublist.len() {
-            pyassert!(sublist.get_item(pos - 1)?.le(sublist.get_item(pos)?)?);
+            pyassert!(sublist[pos - 1].bind(py).le(sublist[pos].bind(py))?);
         }
     }
 
@@ -187,16 +186,16 @@ fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
     for pos in 1..keys.len() {
         pyassert!(
             keys[pos - 1]
+                .last()
+                .unwrap()
                 .bind(py)
-                .as_any()
-                .get_item(-1)?
-                .le(keys[pos].bind(py).get_item(0)?)?
+                .le(keys[pos][0].bind(py))?
         );
     }
 
     // Check _keys matches _key mapped to _lists.
 
-    for (val_sublist, key_sublist) in lists.iter().zip(keys.iter().map(|x| x.bind(py))) {
+    for (val_sublist, key_sublist) in lists.iter().zip(keys.iter()) {
         pyassert!(val_sublist.len()? == key_sublist.len());
         for (val, key) in val_sublist.try_iter()?.zip(key_sublist.iter()) {
             {
@@ -208,7 +207,7 @@ fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
     // Check _maxes index is the last value of each sublist.
 
     for pos in 0..maxes.len() {
-        pyassert!(maxes[pos].bind(py).eq(keys[pos].bind(py).last()?)?);
+        pyassert!(maxes[pos].bind(py).eq(keys[pos].last().unwrap().bind(py))?);
     }
 
     // Check sublist lengths are less than double load-factor.

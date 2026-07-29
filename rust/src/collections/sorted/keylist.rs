@@ -14,7 +14,7 @@ use tap::Pipe;
 pub struct InnerKeyLists {
     #[pyo3(get)]
     pub(super) key: Py<PyAny>,
-    pub(super) keys: Mutex<Vec<Py<PyList>>>,
+    pub(super) keys: Mutex<Vec<Vec<Py<PyAny>>>>,
     #[pyo3(get)]
     pub(super) lists: Py<PyoVec>,
     pub(super) maxes: Mutex<Vec<Py<PyAny>>>,
@@ -24,7 +24,7 @@ pub struct InnerKeyLists {
     pub(super) offset: AtomicUsize,
 }
 impl InnerKeyLists {
-    pub(super) fn get_keys(&self) -> std::sync::MutexGuard<'_, Vec<Py<PyList>>> {
+    pub(super) fn get_keys(&self) -> std::sync::MutexGuard<'_, Vec<Vec<Py<PyAny>>>> {
         self.keys
             .try_lock()
             .expect("keys already locked - reentrant bug")
@@ -49,7 +49,6 @@ impl InnerKeyLists {
     #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true)))]
     fn irange_key(
         &self,
-        py: Python<'_>,
         min_key: Option<Bound<'_, PyAny>>,
         max_key: Option<Bound<'_, PyAny>>,
         inclusive: (bool, bool),
@@ -74,7 +73,7 @@ impl InnerKeyLists {
                         return Ok(None);
                     }
 
-                    let min_idx = bisect::left(&keys[min_pos].bind(py), &min_key)?;
+                    let min_idx = bisect::left_vec(&keys[min_pos], &min_key)?;
                     (min_pos, min_idx)
                 } else {
                     let min_pos = bisect::right_vec(&maxes, &min_key)?;
@@ -83,7 +82,7 @@ impl InnerKeyLists {
                         return Ok(None);
                     }
 
-                    let min_idx = bisect::right(&keys[min_pos].bind(py), &min_key)?;
+                    let min_idx = bisect::right_vec(&keys[min_pos], &min_key)?;
                     (min_pos, min_idx)
                 }
             }
@@ -94,7 +93,7 @@ impl InnerKeyLists {
         let (max_pos, max_idx) = match max_key {
             None => {
                 let max_pos = maxes.len() - 1;
-                let max_idx = keys[max_pos].bind(py).len();
+                let max_idx = keys[max_pos].len();
                 (max_pos, max_idx)
             }
 
@@ -104,9 +103,9 @@ impl InnerKeyLists {
 
                     let max_idx = if max_pos == maxes.len() {
                         max_pos -= 1;
-                        keys[max_pos].bind(py).len()
+                        keys[max_pos].len()
                     } else {
-                        bisect::right(&keys[max_pos].bind(py), &max_key)?
+                        bisect::right_vec(&keys[max_pos], &max_key)?
                     };
                     (max_pos, max_idx)
                 } else {
@@ -114,9 +113,9 @@ impl InnerKeyLists {
 
                     let max_idx = if max_pos == maxes.len() {
                         max_pos -= 1;
-                        keys[max_pos].bind(py).len()
+                        keys[max_pos].len()
                     } else {
-                        bisect::left(&keys[max_pos].bind(py), &max_key)?
+                        bisect::left_vec(&keys[max_pos], &max_key)?
                     };
                     (max_pos, max_idx)
                 }
@@ -150,14 +149,14 @@ impl InnerSorted for InnerKeyLists {
 
         let lists = self.lists.bind(py);
         let keys = self.get_keys();
-        let v = &keys[pos].bind(py);
-        let mut idx = bisect::left(&v, &key)?;
+        let v = &keys[pos];
+        let mut idx = bisect::left_vec(&v, &key)?;
 
         let len_keys = keys.len();
-        let mut len_sublist = keys[pos].bind(py).len();
+        let mut len_sublist = keys[pos].len();
 
         loop {
-            if keys[pos].bind(py).get_item(idx)?.ne(&key)? {
+            if keys[pos][idx].bind(py).ne(&key)? {
                 return Ok(false);
             }
             if lists.get_item(&pos)?.get_item(&idx)?.eq(&value)? {
@@ -169,7 +168,7 @@ impl InnerSorted for InnerKeyLists {
                 if pos == len_keys {
                     return Ok(false);
                 }
-                len_sublist = keys[pos].bind(py).len();
+                len_sublist = keys[pos].len();
                 idx = 0;
             }
         }
@@ -178,7 +177,6 @@ impl InnerSorted for InnerKeyLists {
         let lists = self.lists.get().inner.bind(py);
         let mut keys = self.get_keys();
         let mut maxes = self.get_maxes();
-        let keys_pos = keys[pos].bind(py);
         let lists_pos = lists
             .get_item(pos)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
@@ -187,14 +185,14 @@ impl InnerSorted for InnerKeyLists {
             .clone_ref(py)
             .into_bound(py);
 
-        keys_pos.del_item(idx)?;
+        keys[pos].remove(idx);
         lists_pos.del_item(idx)?;
         self.set_len(self.get_len() - 1);
 
-        let len_keys_pos = keys_pos.len();
+        let len_keys_pos = keys[pos].len();
 
         if len_keys_pos > (self.get_load() >> 1) {
-            maxes[pos] = keys_pos.last()?.unbind();
+            maxes[pos] = keys[pos][len_keys_pos - 1].clone_ref(py);
 
             self.get_idx().pipe_ref_mut(|index| {
                 if !index.is_empty() {
@@ -213,16 +211,14 @@ impl InnerSorted for InnerKeyLists {
             }
 
             let prev = pos - 1;
-            keys[prev]
-                .bind(py)
-                .as_sequence()
-                .in_place_concat(keys[pos].bind(py).as_sequence())?;
+            let (left, right) = keys.split_at_mut(pos);
+            left[prev].extend(right[0].drain(..));
             lists
                 .get_item(prev)
                 .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
                 .get()
                 .extend(lists.get_item(pos)?)?;
-            maxes[prev] = keys[prev].bind(py).as_any().get_item(-1)?.unbind();
+            maxes[prev] = keys[prev][keys[prev].len() - 1].clone_ref(py);
 
             lists.del_item(pos)?;
             keys.remove(pos);
@@ -233,7 +229,7 @@ impl InnerSorted for InnerKeyLists {
 
             self.expand(py, prev)
         } else if len_keys_pos != 0 {
-            maxes[pos] = keys_pos.last()?.unbind();
+            maxes[pos] = keys[pos][len_keys_pos - 1].clone_ref(py);
             Ok(())
         } else {
             lists.del_item(pos)?;
@@ -247,7 +243,7 @@ impl InnerSorted for InnerKeyLists {
         let lists = self.lists.get().inner.bind(py);
         let mut keys = self.get_keys();
 
-        if keys[pos].bind(py).len() > self.get_load() << 1 {
+        if keys[pos].len() > self.get_load() << 1 {
             let mut maxes = self.get_maxes();
             let load = self.get_load();
 
@@ -258,16 +254,15 @@ impl InnerSorted for InnerKeyLists {
                 .inner
                 .clone_ref(py)
                 .into_bound(py);
-            let keys_pos = keys[pos].bind(py);
+            let keys_pos = &mut keys[pos];
             let half = lists_pos.get_slice(load, lists_pos.len()).into_pyochain()?;
-            let half_keys = keys_pos.get_slice(load, keys_pos.len());
+            let half_keys = keys_pos.split_off(load);
             lists_pos.del_slice(load, usize::MAX)?;
-            keys_pos.del_slice(load, usize::MAX)?;
-            maxes[pos] = keys_pos.last()?.unbind();
+            maxes[pos] = keys_pos[keys_pos.len() - 1].clone_ref(py);
 
             lists.insert(pos + 1, half)?;
-            maxes.insert(pos + 1, half_keys.get_item(half_keys.len() - 1)?.unbind());
-            keys.insert(pos + 1, half_keys.unbind());
+            maxes.insert(pos + 1, half_keys[half_keys.len() - 1].clone_ref(py));
+            keys.insert(pos + 1, half_keys);
             self.get_idx().clear();
             Ok(())
         } else if !self.get_idx().is_empty() {
@@ -286,13 +281,14 @@ impl InnerSorted for InnerKeyLists {
     }
     fn add(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
-        let key = self.key.bind(py).call1((&value,))?;
+        let key = self.key.bind(py).call1((&value,))?.unbind();
+        let key_binded = key.bind(py);
         let lists = self.lists.get().inner.bind(py);
         let mut maxes = self.get_maxes();
         let mut keys = self.get_keys();
 
         if !maxes.is_empty() {
-            let mut pos = bisect::right_vec(&maxes, &key)?;
+            let mut pos = bisect::right_vec(&maxes, &key_binded)?;
 
             if pos == maxes.len() {
                 pos -= 1;
@@ -301,25 +297,25 @@ impl InnerSorted for InnerKeyLists {
                     .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
                     .get()
                     .append(&value)?;
-                keys[pos].bind(py).append(&key)?;
-                maxes[pos] = key.unbind();
+                keys[pos].push(key.clone_ref(py));
+                maxes[pos] = key;
             } else {
-                let v = &keys[pos].bind(py);
-                let idx = bisect::right(&v, &key)?;
+                let v = &keys[pos];
+                let idx = bisect::right_vec(&v, &key_binded)?;
                 lists
                     .get_item(pos)
                     .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
                     .get()
                     .insert(idx, &value)?;
-                keys[pos].bind(py).insert(idx, &key)?;
+                keys[pos].insert(idx, key);
             }
             drop(maxes);
             drop(keys);
             self.expand(py, pos)?;
         } else {
             lists.append(PyList::new(py, [value])?.into_pyochain()?)?;
-            keys.push(PyList::new(py, [&key])?.unbind());
-            maxes.push(key.unbind());
+            keys.push(vec![key.clone_ref(py)]);
+            maxes.push(key);
         }
 
         self.set_len(self.get_len() + 1);
@@ -343,13 +339,13 @@ impl InnerSorted for InnerKeyLists {
             drop(maxes);
             let lists = self.lists.get().inner.bind(py);
             let keys = self.get_keys();
-            let v = keys[pos].bind(py);
-            let mut idx = bisect::left(&v, &key)?;
+
+            let mut idx = bisect::left_vec(&keys[pos], &key)?;
             let len_keys = keys.len();
-            let mut len_sublist = keys[pos].bind(py).len();
+            let mut len_sublist = keys[pos].len();
 
             loop {
-                if keys[pos].bind(py).get_item(idx)?.ne(&key)? {
+                if keys[pos][idx].bind(py).ne(&key)? {
                     break;
                 }
                 if lists.get_item(pos)?.get_item(idx)?.eq(&value)? {
@@ -363,7 +359,7 @@ impl InnerSorted for InnerKeyLists {
                         if pos == len_keys {
                             break;
                         } else {
-                            len_sublist = keys[pos].bind(py).len();
+                            len_sublist = keys[pos].len();
                             idx = 0;
                             continue;
                         }
@@ -391,14 +387,14 @@ impl InnerSorted for InnerKeyLists {
             drop(maxes);
             let lists = self.lists.get().inner.bind(py);
             let keys = self.get_keys();
-            let v = keys[pos].bind(py);
+            let v = &keys[pos];
 
-            let mut idx = bisect::left(&v, &key)?;
+            let mut idx = bisect::left_vec(&v, &key)?;
             let len_keys = keys.len();
-            let mut len_sublist = keys[pos].bind(py).len();
+            let mut len_sublist = keys[pos].len();
 
             loop {
-                if keys[pos].bind(py).get_item(idx)?.ne(&key)? {
+                if keys[pos][idx].bind(py).ne(&key)? {
                     return errors::not_in_list_err(value);
                 }
                 if lists.get_item(pos)?.get_item(idx)?.eq(&value)? {
@@ -412,7 +408,7 @@ impl InnerSorted for InnerKeyLists {
                     if pos == len_keys {
                         return errors::not_in_list_err(value);
                     }
-                    len_sublist = keys[pos].bind(py).len();
+                    len_sublist = keys[pos].len();
                     idx = 0
                 }
             }
@@ -450,14 +446,14 @@ impl InnerSorted for InnerKeyLists {
 
         let lists = self.lists.get().inner.bind(py);
         let keys = self.get_keys();
-        let v_left = keys[pos].bind(py);
-        let mut idx = bisect::left(&v_left, &key)?;
+        let v_left = &keys[pos];
+        let mut idx = bisect::left_vec(&v_left, &key)?;
         let mut total = 0;
         let len_keys = keys.len();
-        let mut len_sublist = keys[pos].bind(py).len();
+        let mut len_sublist = keys[pos].len();
 
         loop {
-            if keys[pos].bind(py).get_item(idx)?.ne(&key)? {
+            if keys[pos][idx].bind(py).ne(&key)? {
                 return Ok(total);
             }
             if lists.get_item(pos)?.get_item(idx)?.eq(&value)? {
@@ -469,7 +465,7 @@ impl InnerSorted for InnerKeyLists {
                 if pos == len_keys {
                     return Ok(total);
                 }
-                len_sublist = keys[pos].bind(py).len();
+                len_sublist = keys[pos].len();
                 idx = 0;
             }
         }
@@ -514,13 +510,13 @@ impl InnerSorted for InnerKeyLists {
         stop -= 1;
         let lists = self.lists.get().inner.clone_ref(py).into_bound(py);
         let keys = self.get_keys();
-        let v_left = keys[pos].bind(py);
-        let mut idx = bisect::left(&v_left, &key)?;
+        let v_left = &keys[pos];
+        let mut idx = bisect::left_vec(&v_left, &key)?;
         let len_keys = keys.len();
         let mut len_sublist = v_left.len();
 
         loop {
-            if keys[pos].bind(py).get_item(idx)?.ne(&key)? {
+            if keys[pos][idx].bind(py).ne(&key)? {
                 return errors::is_not_in_list_err(&value);
             }
             if lists.get_item(pos)?.get_item(idx)?.eq(&value)? {
@@ -537,7 +533,7 @@ impl InnerSorted for InnerKeyLists {
                 if pos == len_keys {
                     return errors::is_not_in_list_err(&value);
                 }
-                len_sublist = keys[pos].bind(py).len();
+                len_sublist = keys[pos].len();
                 idx = 0;
             }
         }
@@ -572,7 +568,7 @@ impl InnerSorted for InnerKeyLists {
         }
 
         let load = self.get_load();
-        let mut new_maxes = (0..values.len())
+        let new_keys = (0..values.len())
             .step_by(load)
             .map(|pos| values.get_slice(pos, pos + load).into_pyochain())
             .try_fold(lists, try_iterator_into_list)?
@@ -583,20 +579,15 @@ impl InnerSorted for InnerKeyLists {
                     .inner
                     .bind(py)
                     .iter()
-                    .map(|x| key_fn.call1((x,)))
-                    .try_fold(PyList::empty(py), |acc, x| {
-                        acc.append(x?)?;
-                        Ok::<_, PyErr>(acc)
-                    })
+                    .map(|x| key_fn.call1((x,)).map(Bound::unbind))
+                    .collect::<PyResult<Vec<_>>>()
             })
-            .try_fold(self.get_keys(), |mut acc, x| {
-                acc.push(x?.unbind());
-                Ok::<_, PyErr>(acc)
-            })?
-            .iter()
-            .map(|x| x.bind(py).last().map(Bound::unbind))
             .collect::<PyResult<Vec<_>>>()?;
-        self.get_maxes().append(new_maxes.as_mut());
+
+        let mut keys = self.get_keys();
+        keys.extend(new_keys);
+        let new_maxes = keys.iter().map(|x| x[x.len() - 1].clone_ref(py));
+        self.get_maxes().extend(new_maxes);
         self.set_len(values.len());
         self.get_idx().clear();
         Ok(())
@@ -618,8 +609,7 @@ impl InnerKeyLists {
         if pos == maxes.len() {
             Ok(self.get_len() as isize)
         } else {
-            let v = self.get_keys()[pos].clone_ref(py).into_bound(py);
-            let idx = bisect::left(&v, &key)?;
+            let idx = bisect::left_vec(&self.get_keys()[pos], &key)?;
 
             self.loc(py, pos, idx as isize)
         }
@@ -637,8 +627,7 @@ impl InnerKeyLists {
         if pos == maxes.len() {
             return Ok(self.get_len() as isize);
         }
-        let v = self.get_keys()[pos].clone_ref(py).into_bound(py);
-        let idx = bisect::right(&v, &key)?;
+        let idx = bisect::right_vec(&self.get_keys()[pos], &key)?;
 
         return self.loc(py, pos, idx as isize);
     }
