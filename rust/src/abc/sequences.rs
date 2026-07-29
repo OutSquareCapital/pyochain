@@ -56,7 +56,7 @@ impl PyoSequence {
 
         let mut i = {
             if start < 0 {
-                length + start.max(0)
+                (length + start).max(0)
             } else {
                 start
             }

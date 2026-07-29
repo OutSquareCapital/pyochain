@@ -12,6 +12,13 @@ enum IntoSetComp<'py> {
     Other(Bound<'py, PyAny>),
 
 }
+fn py_from_iterable<'py>(
+    slf: &Bound<'py, PyAny>,
+    it: &Bound<'py, PyAny>,
+) -> PyResult<Bound<'py, PyoSet>> {
+    slf.call_method1(intern!(slf.py(), "_from_iterable"), (it,))
+        .map(|x| unsafe { x.cast_into_unchecked::<PyoSet>() })
+}
 #[pyclass(subclass, frozen, generic, extends=PyoCollection)]
 pub struct PyoSet;
 #[pymethods]
@@ -36,16 +43,6 @@ impl PyoSet {
     
 }
     
-    #[inline]
-    #[classmethod]
-    fn _py_from_iterable<'py>(
-        cls: &Bound<'py, PyType>,
-        it: &Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, Self>> {
-        cls.call_method1(intern!(cls.py(), "_from_iterable"), (it,))
-            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
-    }
-
     fn __and__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<PyCmpOut<'py, Bound<'py, Self>>> {
         let py = slf.py();
         if !other.is_instance_of::<PyAbstractSet>() {
@@ -60,7 +57,7 @@ impl PyoSet {
                 Ok::<_, PyErr>(init)
             })?
             .into_bound_py_any(py)
-            .and_then(|x| Self::_py_from_iterable(&slf.get_type(), &x))
+            .and_then(|x| py_from_iterable(slf.as_any(), &x))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
             .map(Either::Left)
     }
@@ -77,17 +74,15 @@ impl PyoSet {
                 Ok::<_, PyErr>(init)
             })?
             .into_bound_py_any(py)
-            .and_then(|x| Self::_py_from_iterable(&slf.get_type(), &x))
+                .and_then(|x| py_from_iterable(slf.as_any(), &x))
             .map(Either::Left)
     }
 
     fn __sub__<'py>(slf: Bound<'py, Self>, other: IntoSetComp<'py>) -> PyResult<PyCmpOut<'py, Bound<'py, Self>>> {
         let py = slf.py();
-        
-                let cls = slf.get_type();
         let other_set = match other {
             IntoSetComp::Set(other) => {other.into_any()},
-            IntoSetComp::Iterable(iterable) => { Self::_py_from_iterable(&cls, iterable.as_any())?.into_any()},
+            IntoSetComp::Iterable(iterable) => { py_from_iterable(slf.as_any(), iterable.as_any())?.into_any()},
             _ => return PyNotImplemented::get(py).into_bound().pipe(Ok).map(Either::Right),
         };
         slf
@@ -100,7 +95,7 @@ impl PyoSet {
                         Ok::<_, PyErr>(init)
                     })?
                     .as_any()
-                    .pipe(|x| Self::_py_from_iterable(&cls, x))
+                        .pipe(|x| py_from_iterable(slf.as_any(), x))
             .map(Either::Left)
     }
 
@@ -109,10 +104,9 @@ impl PyoSet {
         other: IntoSetComp<'py>,
     ) -> PyResult<PyCmpOut<'py, Bound<'py, Self>>> {
         let py = slf.py();
-        let cls = slf.get_type();
         let other_set = match other {
             IntoSetComp::Set(other) => {other.into_any()},
-            IntoSetComp::Iterable(iterable) => { Self::_py_from_iterable(&cls, iterable.as_any())?.into_any()},
+            IntoSetComp::Iterable(iterable) => { py_from_iterable(slf.as_any(), iterable.as_any())?.into_any()},
             _ => return PyNotImplemented::get(py).into_bound().pipe(Ok).map(Either::Right),
         };
         other_set
@@ -124,17 +118,17 @@ impl PyoSet {
                 }
                 Ok::<_, PyErr>(init)
             })?
-            .pipe(|x| Self::_py_from_iterable(&cls, &x))
+            .pipe(|x| py_from_iterable(slf.as_any(), &x))
             .map(Either::Left)
     }
 
     fn __xor__<'py>(slf: Bound<'py, Self>, other: IntoSetComp<'py>) -> PyResult<PyCmpOut<'py, Bound<'py, PyAny>>> {
         let other_set = match other {
             IntoSetComp::Set(other) => {other},
-            IntoSetComp::Iterable(iterable) => { Self::_py_from_iterable(&slf.get_type(), iterable.as_any())?.pipe(|x|unsafe{x.cast_into_unchecked::<PyAbstractSet>()})},
+            IntoSetComp::Iterable(iterable) => { py_from_iterable(slf.as_any(), iterable.as_any())?.pipe(|x|unsafe{x.cast_into_unchecked::<PyAbstractSet>()})},
             _ => return PyNotImplemented::get(slf.py()).into_bound().pipe(Ok).map(Either::Right),
         };
-        slf.sub(&other_set)?.bitand(&other_set.sub(slf)?).map(Either::Left)
+        slf.sub(&other_set)?.bitor(&other_set.sub(slf)?).map(Either::Left)
     }
 
     fn __rand__<'py>(
@@ -325,12 +319,11 @@ impl PyoMutableSet {
 
     fn __ixor__<'py>(slf: Bound<'py, Self>, it: Bound<'py, PyAny>) -> PyResult<()> {
         let py = slf.py();
-        let cls = slf.get_type();
         if it.is(&slf) {
             slf.call_method0(intern!(py, "clear"))?;
         } else {
             let pyset = if !it.is_instance_of::<PyAbstractSet>() {
-                PyoSet::_py_from_iterable(&cls, &it)?.into_any()
+                py_from_iterable(slf.as_any(), &it)?.into_any()
             } else {
                 it
             };
