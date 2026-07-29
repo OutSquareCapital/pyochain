@@ -785,4 +785,35 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             }
         }
     }
+    #[pyo3(signature = (start = None, stop = None))]
+    fn islice(
+        &self,
+        py: Python<'_>,
+        start: Option<isize>,
+        stop: Option<isize>,
+    ) -> PyResult<Option<(usize, isize, usize, isize)>> {
+        let length = self.get_len() as isize;
+        let lists = self.get_lists(py).get().inner.clone_ref(py).into_bound(py);
+
+        if length == 0 {
+            return Ok(None);
+        }
+        //NOTE: Need to investiguate why we need to use PySlice at all. Same pattern in SliceView original code.
+        let indices =
+            PySlice::new(py, start.unwrap_or(0), stop.unwrap_or(length), 1).indices(length)?;
+
+        if indices.start >= indices.stop {
+            Ok(None)
+        } else {
+            let (min_pos, min_idx) = self.pos(py, indices.start)?;
+
+            let (max_pos, max_idx) = if indices.stop == length {
+                (lists.len() - 1, lists.last()?.len()? as isize)
+            } else {
+                self.pos(py, indices.stop)?
+            };
+
+            Ok(Some((min_pos, min_idx, max_pos, max_idx)))
+        }
+    }
 }

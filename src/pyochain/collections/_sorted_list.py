@@ -171,25 +171,11 @@ class SortedList[T: SupportsRichComparison](
         *,
         reverse: bool = False,
     ) -> PyoIterator[T]:
-        len_ = self._inner.len
-
-        if len_ == 0:
-            return Iter(())
-
-        start, stop, _ = slice(start, stop).indices(self._inner.len)
-
-        if start >= stop:
-            return Iter(())
-
-        min_pos, min_idx = self._pos(start)
-
-        if stop == len_:
-            max_pos = self._inner.lists.len() - 1
-            max_idx = self._inner.lists[-1].len()
-        else:
-            max_pos, max_idx = self._pos(stop)
-
-        return self._islice(min_pos, min_idx, max_pos, max_idx, reverse=reverse)
+        match self._inner.islice(start, stop):
+            case None:
+                return Iter(())
+            case (min_pos, min_idx, max_pos, max_idx):
+                return self._islice(min_pos, min_idx, max_pos, max_idx, reverse=reverse)
 
     def _islice(  # ruff:ignore[too-many-return-statements]
         self, min_pos: int, min_idx: int, max_pos: int, max_idx: int, *, reverse: bool
