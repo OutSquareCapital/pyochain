@@ -7,7 +7,7 @@ from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, Self, overload, override
 
 from pyochain import Dict, Iter
-from pyochain.abc import PyoIterator, PyoMutableMapping
+from pyochain.abc import PyoIterator, PyoMutableMapping, PyoReversible
 
 from ._base_sorted import SortedCollection
 from ._sorted_key_list import SortedKeyList
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 
 class SortedDict[K: SupportsHashableAndRichComparison, V](
-    PyoMutableMapping[K, V], SortedCollection[K]
+    PyoMutableMapping[K, V], SortedCollection[K], PyoReversible[K]
 ):
     """Sorted dict is a sorted mutable mapping.
 
@@ -233,6 +233,7 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
         """
         return self._list.iter()
 
+    @override
     def __reversed__(self) -> PyoIterator[K]:
         """Return a reverse iterator over the keys of the sorted dict.
 

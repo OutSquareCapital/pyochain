@@ -3,12 +3,12 @@ from typing import Any, Final, Self, final, overload, override
 
 from _typeshed import SupportsItems, SupportsKeysAndGetItem
 
-from ..abc import PyoMutableMapping
+from ..abc import PyoMutableMapping, PyoReversible
 
 # TODO: once in stubs, add overload to new when kwargs is passed to infer PyoCounter[str]
 
 @final
-class PyoCounter[T](PyoMutableMapping[T, int]):
+class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
     """Dict subclass for counting hashable items.
 
     Sometimes called a bag or multiset.
@@ -96,6 +96,8 @@ class PyoCounter[T](PyoMutableMapping[T, int]):
         Returns:
             int: The count of the missing element, which is always zero.
         """
+    @override
+    def __reversed__(self) -> Iterator[T]: ...
     @overload
     def get(self, key: T, /) -> int | None: ...
     @overload

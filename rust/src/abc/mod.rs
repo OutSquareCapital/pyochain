@@ -12,3 +12,4 @@ pub use mappings::{
 };
 pub use sequences::{PyoMutableSequence, PyoSequence};
 pub use sets::{PyoMutableSet, PyoSet};
+pub mod traits;

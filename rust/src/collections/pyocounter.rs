@@ -1,12 +1,12 @@
 use crate::{
-    abc::{self, PyoABC},
+    abc::{self, PyoABC, traits::ImplPyoReversible},
     pyo3_ext::{
         prelude::*,
         pylibs,
         types::{PySupportsItems, pyitertools},
     },
+    tools,
 };
-use pyochain_macros::{BoundFromAny, try_cast};
 use either::Either;
 use pyo3::{
     BoundObject, PyTypeInfo,
@@ -15,6 +15,7 @@ use pyo3::{
     prelude::*,
     types::{PyDict, PyInt, PyIterator, PyList, PyMapping, PyNotImplemented, PyType},
 };
+use pyochain_macros::{BoundFromAny, try_cast};
 use tap::prelude::*;
 #[derive(BoundFromAny)]
 enum IntoUpdate<'py> {
@@ -463,6 +464,15 @@ impl PyoCounter {
             }
         }
         Self::from_ref(result)
+    }
+}
+impl ImplPyoReversible for PyoCounter {
+    fn rev<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, tools::Iter>> {
+        self.inner
+            .bind(py)
+            .as_any()
+            .pipe(pylibs::builtins::reversed)
+            .pipe(tools::Iter::new)
     }
 }
 #[inline(always)]

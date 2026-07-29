@@ -1,6 +1,7 @@
-use crate::abc;
 use crate::abc::PyoABC;
+use crate::abc::traits::ImplPyoReversible;
 use crate::pyo3_ext::{prelude::*, pylibs};
+use crate::{abc, tools};
 use pyo3::pyclass_init::PyClassInitializer;
 use pyo3::sync::PyOnceLock;
 use pyo3::types::{
@@ -133,15 +134,6 @@ impl Seq {
     fn __hash__(slf: Bound<'_, Self>) -> isize {
         let py = slf.py();
         slf.get().inner.clone_ref(py).bind(py).hash().unwrap()
-    }
-
-    fn __reversed__(slf: Bound<'_, Self>) -> Bound<'_, PyIterator> {
-        let py = slf.py();
-        slf.get()
-            .inner
-            .clone_ref(py)
-            .bind(py)
-            .pipe_as_ref(pylibs::builtins::reversed)
     }
     fn __contains__(&self, key: &Bound<'_, PyAny>) -> PyResult<bool> {
         self.inner.bind(key.py()).contains(key)
@@ -1094,15 +1086,6 @@ impl Dict {
         Self::union_mut(slf, value)?;
         Ok(())
     }
-
-    fn __reversed__(slf: Bound<'_, Self>) -> Bound<'_, PyIterator> {
-        slf.get()
-            .inner
-            .bind(slf.py())
-            .as_any()
-            .pipe(pylibs::builtins::reversed)
-    }
-
     #[staticmethod]
     fn from_ref<'py>(data: Bound<'py, PyDict>) -> PyResult<Bound<'py, Self>> {
         data.into_pyochain()
@@ -1206,6 +1189,15 @@ impl Dict {
         self.inner
             .bind(py)
             .call_method1(intern!(py, "setdefault"), (key, default))
+    }
+}
+impl ImplPyoReversible for Dict {
+    fn rev<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, tools::Iter>> {
+        self.inner
+            .bind(py)
+            .as_any()
+            .pipe(pylibs::builtins::reversed)
+            .pipe(tools::Iter::new)
     }
 }
 #[inline]
