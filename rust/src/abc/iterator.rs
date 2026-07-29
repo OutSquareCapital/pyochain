@@ -5,15 +5,21 @@ use pyo3::types::{
 use pyo3::{BoundObject, IntoPyObjectExt, ffi, intern, prelude::*};
 use tap::Pipe;
 
-use crate::ConcatWith;
-use crate::abc::{PyoABC, PyoIterable};
-use crate::option::{PyNull, PySome};
-use crate::pyo3_ext::args::{Args, Concatenate, Kwargs};
-use crate::pyo3_ext::pylibs;
-use crate::pyo3_ext::types::pyitertools;
-use crate::result::{PyoErr, PyoOk};
-use crate::seq::{IntoPyochain, PyoVec};
-use crate::tools;
+use crate::{
+    ConcatWith,
+    abc::PyoIterable,
+    option::{PyNull, PySome},
+    pyo3_ext::{
+        args::{Args, Concatenate, Kwargs},
+        pylibs,
+        types::pyitertools,
+    },
+    pyovec::PyoVec,
+    result::{PyoErr, PyoOk},
+    tools,
+    traits::{IntoPyochain, PyoABC},
+};
+
 #[pyclass(subclass, frozen, generic, extends=PyoIterable)]
 pub struct PyoIterator;
 

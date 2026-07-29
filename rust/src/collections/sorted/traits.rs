@@ -1,17 +1,23 @@
-use crate::collections::sorted::errors;
-use crate::collections::sorted::iter::try_iterator_into_list;
-use crate::collections::{InnerKeyLists, InnerLists};
-use crate::pyo3_ext::{prelude::*, pylibs};
-use crate::seq::{IntoPyochain, PyoVec};
-use crate::tools;
+use crate::{
+    collections::{
+        sorted::{errors, iter::try_iterator_into_list},
+        {InnerKeyLists, InnerLists},
+    },
+    pyo3_ext::{prelude::*, pylibs},
+    pyovec::PyoVec,
+    tools,
+    traits::IntoPyochain,
+};
 use either::Either;
-use pyo3::PyClass;
-use pyo3::exceptions::PyIndexError;
-use pyo3::types::{PyNotImplemented, PySequence, PySlice, PySliceIndices};
-use pyo3::{prelude::*, types::PyList};
+use pyo3::{
+    PyClass,
+    exceptions::PyIndexError,
+    prelude::*,
+    types::PyList,
+    types::{PyNotImplemented, PySequence, PySlice, PySliceIndices},
+};
 use pyochain_macros::py_abc;
-use std::cmp::Ordering;
-use std::sync::atomic::Ordering as AtomicOrdering;
+use std::{cmp::Ordering, sync::atomic::Ordering as AtomicOrdering};
 use tap::prelude::*;
 
 pub const DEFAULT_LOAD_FACTOR: usize = 1000;

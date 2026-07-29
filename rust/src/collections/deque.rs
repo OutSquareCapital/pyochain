@@ -1,17 +1,18 @@
 use crate::{
-    abc::{self, PyoABC},
+    abc::{self},
     pyo3_ext::{
         prelude::*,
         types::{PyDeque, PySupportsIndex},
     },
+    traits::PyoABC,
 };
-use pyochain_macros::try_cast;
 use pyo3::{
     exceptions::PyTypeError,
     intern,
     prelude::*,
     types::{PyInt, PyIterator, PyTuple},
 };
+use pyochain_macros::try_cast;
 use tap::prelude::*;
 #[pyclass(frozen, generic, sequence, extends = abc::PyoMutableSequence)]
 pub struct Deque {
@@ -245,16 +246,16 @@ impl Deque {
     fn insert(&self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.inner.bind(value.py()).insert(index, value)
     }
-    fn count<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
+    fn count<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
         self.inner.bind(value.py()).count(value)
     }
     #[pyo3(signature = (x, start=None, stop=None, /))]
     fn index<'py>(
         &self,
-        x: Bound<'py, PyAny>,
-        start: Option<Bound<'py, PyAny>>,
-        stop: Option<Bound<'py, PyInt>>,
-    ) -> PyResult<Bound<'py, PyInt>> {
+        x: &Bound<'py, PyAny>,
+        start: Option<&Bound<'py, PyAny>>,
+        stop: Option<&Bound<'py, PyAny>>,
+    ) -> PyResult<Bound<'py, PyAny>> {
         self.inner.bind(x.py()).index(x, start, stop)
     }
     fn pop<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {

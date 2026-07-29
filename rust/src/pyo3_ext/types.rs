@@ -5,7 +5,7 @@ use pyo3::ffi::{self, PyDictValues, PyTypeObject};
 use pyo3::sync::PyOnceLock;
 use pyo3::types::{
     PyDict, PyDictItems, PyDictKeys, PyFrozenSet, PyInt, PyIterator, PyList, PyNotImplemented,
-    PySequence, PySet, PySlice, PyType,
+    PyRange, PySequence, PySet, PySlice, PyTuple, PyType,
 };
 use pyo3::{PyTypeInfo, intern, prelude::*};
 use tap::prelude::*;
@@ -28,6 +28,61 @@ impl ABCRegister<'_> for PyAbstractSet {}
 impl ABCRegister<'_> for PyIterable {}
 impl ABCRegister<'_> for PyMutableSet {}
 impl ABCRegister<'_> for PyIterator {}
+pub trait PySequenceExtMethods<'py> {
+    fn count(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
+
+    fn index(
+        &self,
+        value: &Bound<'py, PyAny>,
+        start: Option<&Bound<'py, PyAny>>,
+        stop: Option<&Bound<'py, PyAny>>,
+    ) -> PyResult<Bound<'py, PyAny>>;
+}
+macro_rules! impl_sequence_ext_methods {
+    ($($t:ty),*) => {
+        $(
+            impl<'py> PySequenceExtMethods<'py> for Bound<'py, $t> {
+                fn count(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
+                    self.call_method1(intern!(self.py(), "count"), (value,))
+                        .map(|x| unsafe { x.cast_into_unchecked::<PyInt>() })
+                }
+
+                fn index(
+                    &self,
+                    value: &Bound<'py, PyAny>,
+                    start: Option<&Bound<'py, PyAny>>,
+                    stop: Option<&Bound<'py, PyAny>>,
+                ) -> PyResult<Bound<'py, PyAny>> {
+                    let method_name = intern!(self.py(), "index");
+                    match (start, stop) {
+                        (Some(start), Some(stop)) => self.call_method1(method_name, (value, start, stop)),
+                        (Some(start), None) => self.call_method1(method_name, (value, start)),
+                        (None, Some(stop)) => self.call_method1(method_name, (value, stop)),
+                        (None, None) => self.call_method1(method_name, (value,)),
+                    }
+                }
+            }
+        )*
+    };
+}
+
+impl_sequence_ext_methods!(PyList, PyTuple, PyDeque);
+/// The `index` method is different on `range`, so we need to implement it separately.
+pub trait PyRangeExtMethods<'py> {
+    fn count(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
+
+    fn index(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
+}
+impl<'py> PyRangeExtMethods<'py> for Bound<'py, PyRange> {
+    fn count(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
+        self.call_method1(intern!(self.py(), "count"), (value,))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyInt>() })
+    }
+    fn index(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
+        self.call_method1(intern!(self.py(), "index"), (value,))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyInt>() })
+    }
+}
 
 pub trait PyListExtMethods<'py> {
     fn clear(&self) -> ();
@@ -300,13 +355,6 @@ pub trait PyDequeMethods<'py> {
     fn extend_left(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
     fn rotate(&self, n: isize) -> PyResult<()>;
     fn insert(&self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()>;
-    fn count(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
-    fn index(
-        &self,
-        x: Bound<'py, PyAny>,
-        start: Option<Bound<'py, PyAny>>,
-        stop: Option<Bound<'py, PyInt>>,
-    ) -> PyResult<Bound<'py, PyInt>>;
     fn pop(&self) -> PyResult<Bound<'py, PyAny>>;
     fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn reversed(&self) -> PyResult<Bound<'py, PyIterator>>;
@@ -350,26 +398,6 @@ impl<'py> PyDequeMethods<'py> for Bound<'py, PyDeque> {
     fn insert(&self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.call_method1(intern!(self.py(), "insert"), (index, value))?;
         Ok(())
-    }
-    fn count(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
-        self.call_method1(intern!(self.py(), "count"), (value,))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyInt>() })
-    }
-    fn index(
-        &self,
-        x: Bound<'py, PyAny>,
-        start: Option<Bound<'py, PyAny>>,
-        stop: Option<Bound<'py, PyInt>>,
-    ) -> PyResult<Bound<'py, PyInt>> {
-        let py = x.py();
-        let method_name = intern!(py, "index");
-        match (start, stop) {
-            (Some(start), Some(stop)) => self.call_method1(method_name, (x, start, stop)),
-            (Some(start), None) => self.call_method1(method_name, (x, start)),
-            (None, Some(stop)) => self.call_method1(method_name, (x, stop)),
-            (None, None) => self.call_method1(method_name, (x,)),
-        }
-        .map(|x| unsafe { x.cast_into_unchecked::<PyInt>() })
     }
     fn pop(&self) -> PyResult<Bound<'py, PyAny>> {
         self.call_method0(intern!(self.py(), "pop"))

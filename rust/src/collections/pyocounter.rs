@@ -1,11 +1,12 @@
 use crate::{
-    abc::{self, PyoABC, traits::ImplPyoReversible},
+    abc::{self, traits::ImplPyoReversible},
     pyo3_ext::{
         prelude::*,
         pylibs,
         types::{PyCmpOut, PySupportsItems, pyitertools},
     },
     tools,
+    traits::PyoABC,
 };
 use either::Either;
 use pyo3::{

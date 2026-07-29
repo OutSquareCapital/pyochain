@@ -1,7 +1,8 @@
 use crate::{
-    abc::{self, PyoABC, PyoSequence},
+    abc::{self, PyoSequence},
     pyo3_ext::prelude::*,
     pyo3_ext::types::{PyMutableSequence, PySupportsIndex},
+    traits::PyoABC,
 };
 use either::Either;
 use pyo3::{

@@ -1,15 +1,16 @@
-use pyo3::prelude::*;
-use tap::Pipe;
-
 use crate::{
-    abc::{PyoABC, PyoIterable},
+    abc::PyoIterable,
     mixins::Checkable,
     pyo3_ext::{
         args::{Args, Kwargs},
         pylibs,
     },
     tools,
+    traits::PyoABC,
 };
+use pyo3::prelude::*;
+use tap::Pipe;
+
 #[pyclass(subclass, frozen, generic, extends=Checkable)]
 pub struct PyoContainer;
 

@@ -1,10 +1,12 @@
 use std::collections::VecDeque;
 
-use crate::abc;
-use crate::abc::PyoABC;
-use crate::option::{PyNull, PySome, option};
-use crate::pyo3_ext::prelude::*;
-use crate::result::{PyoErr, PyoOk};
+use crate::{
+    abc,
+    option::{PyNull, PySome, option},
+    pyo3_ext::prelude::*,
+    result::{PyoErr, PyoOk},
+    traits::PyoABC,
+};
 use pyo3::exceptions::PyIndexError;
 use pyo3::types::{PyAny, PyDict, PyIterator, PySequence, PySet, PyString, PyTuple};
 use pyo3::{IntoPyObjectExt, ffi, prelude::*};

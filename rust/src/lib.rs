@@ -1,15 +1,20 @@
 mod abc;
 mod collections;
+mod dict;
+mod display;
 mod errors;
 mod hasher;
 mod mixins;
 mod option;
 mod pyo3_ext;
+mod pyovec;
+mod range;
 mod result;
 mod seq;
+mod sets;
 mod sliceview;
 mod tools;
-
+mod traits;
 use crate::pyo3_ext::{
     prelude::*,
     types::{PyAbstractSet, PyIterable, PyMutableSequence, PyMutableSet},
@@ -120,12 +125,12 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<errors::OptionUnwrapError>()?;
     m.add_class::<errors::ResultUnwrapError>()?;
     m.add_class::<result::PyochainResult>()?;
-    m.add_class::<seq::Range>()?;
+    m.add_class::<range::Range>()?;
     m.add_class::<seq::Seq>()?;
-    m.add_class::<seq::PyoVec>()?;
-    m.add_class::<seq::Set>()?;
-    m.add_class::<seq::SetMut>()?;
-    m.add_class::<seq::Dict>()?;
+    m.add_class::<pyovec::PyoVec>()?;
+    m.add_class::<sets::Set>()?;
+    m.add_class::<sets::SetMut>()?;
+    m.add_class::<dict::Dict>()?;
     m.add_class::<tools::UniqueIdentity>()?;
     m.add_class::<tools::UniqueKey>()?;
     m.add_class::<tools::Intersperse>()?;

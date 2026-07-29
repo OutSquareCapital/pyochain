@@ -1,0 +1,267 @@
+use crate::{
+    abc,
+    display::get_repr,
+    pyo3_ext::{prelude::*, pylibs},
+    traits::{IntoPyochain, PyWrapper, PyoABC},
+};
+use pyo3::{
+    PyTypeInfo, intern,
+    prelude::*,
+    pyclass_init::PyClassInitializer,
+    types::{PyDict, PyInt, PyIterator, PyList, PyTuple},
+};
+use tap::Pipe;
+#[pyclass(frozen, generic, sequence, extends=abc::PyoMutableSequence, name="Vec")]
+pub struct PyoVec {
+    #[pyo3(get)]
+    pub inner: Py<PyList>,
+}
+impl PyoVec {
+    pub fn new_bound(py: Python<'_>) -> PyResult<Bound<'_, Self>> {
+        let init = Self::new(PyTuple::empty(py).into_any())?;
+        Bound::new(py, init)
+    }
+}
+#[pymethods]
+impl PyoVec {
+    #[new]
+    pub fn new(data: Bound<'_, PyAny>) -> PyResult<PyClassInitializer<Self>> {
+        let py = data.py();
+        data.pipe(|x| PyList::type_object(py).call1((x,)))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
+            .map(Bound::unbind)
+            .map(|inner| abc::PyoMutableSequence::build_init().add_subclass(Self { inner }))
+    }
+    #[staticmethod]
+    fn from_ref<'py>(data: Bound<'py, PyList>) -> PyResult<Bound<'py, Self>> {
+        data.into_pyochain()
+    }
+
+    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, PyIterator> {
+        slf.get().inner.bind(slf.py()).try_iter().unwrap()
+    }
+
+    fn __contains__(&self, key: Bound<'_, PyAny>) -> PyResult<bool> {
+        self.inner.bind(key.py()).contains(key)
+    }
+    fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
+        let py = slf.py();
+        let name = slf.get_type().name()?;
+
+        slf.get()
+            .inner
+            .clone_ref(py)
+            .into_bound(py)
+            .pipe(get_repr)
+            .map(|repr| format!("{}({})", name, repr))
+    }
+
+    fn __len__(slf: Bound<'_, Self>) -> usize {
+        slf.get().inner.bind(slf.py()).len()
+    }
+
+    fn __eq__(&self, other: Bound<'_, PyAny>) -> PyResult<bool> {
+        let py = other.py();
+        let o = Self::extract_union(&other)?;
+        self.inner.bind(py).eq(&o).or(Ok(false))
+    }
+    fn __reversed__<'py>(slf: Bound<'py, Self>) -> Bound<'py, PyIterator> {
+        let py = slf.py();
+        slf.get()
+            .inner
+            .bind(py)
+            .pipe_as_ref(pylibs::builtins::reversed)
+    }
+
+    fn __add__<'py>(slf: Bound<'py, Self>, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        let py = value.py();
+        Self::extract_union(&value)?
+            .as_sequence()
+            .pipe(|x| slf.get().inner.bind(py).as_sequence().concat(x))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
+            .and_then(Bound::into_pyochain)
+    }
+
+    fn __iadd__<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<()> {
+        let py = value.py();
+        self.inner.bind(py).iadd(value)?;
+        Ok(())
+    }
+    fn __inplace_concat__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<()> {
+        self.__iadd__(other)
+    }
+
+    fn __concat__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.concat(other)
+    }
+    fn __mul__<'py>(slf: Bound<'_, Self>, value: Bound<'py, PyInt>) -> PyResult<Bound<'py, Self>> {
+        slf.get().repeat(&value)
+    }
+    fn __rmul__<'py>(
+        slf: Bound<'py, Self>,
+        value: Bound<'py, PyInt>,
+    ) -> PyResult<Bound<'py, Self>> {
+        slf.get().repeat(&value)
+    }
+    fn __repeat__<'py>(slf: Bound<'py, Self>, count: isize) -> PyResult<Bound<'py, Self>> {
+        slf.get().repeat(&PyInt::new(slf.py(), count))
+    }
+    fn __inplace_repeat__<'py>(slf: Bound<'py, Self>, count: isize) -> PyResult<Bound<'py, Self>> {
+        let py = slf.py();
+        Self::repeat_mut(slf, &PyInt::new(py, count))
+    }
+    fn __imul__(slf: Bound<'_, Self>, value: usize) -> PyResult<()> {
+        slf.get()
+            .inner
+            .bind(slf.py())
+            .as_sequence()
+            .in_place_repeat(value)?;
+        Ok(())
+    }
+
+    fn __gt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+        let py = value.py();
+        let other = Self::extract_union(&value)?;
+        self.inner.bind(py).gt(other)
+    }
+
+    fn __ge__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+        let py = value.py();
+        let other = Self::extract_union(&value)?;
+        self.inner.bind(py).ge(other)
+    }
+
+    fn __lt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+        let py = value.py();
+        let other = Self::extract_union(&value)?;
+        self.inner.bind(py).lt(other)
+    }
+
+    fn __le__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+        let py = value.py();
+        let other = Self::extract_union(&value)?;
+        self.inner.bind(py).le(other)
+    }
+
+    fn __getitem__<'py>(
+        slf: Bound<'py, Self>,
+        index: &Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        slf.get().inner.bind(slf.py()).as_any().get_item(index)
+    }
+    fn __setitem__(
+        slf: Bound<'_, Self>,
+        key: &Bound<'_, PyAny>,
+        value: &Bound<'_, PyAny>,
+    ) -> PyResult<()> {
+        slf.get().inner.bind(key.py()).as_any().set_item(key, value)
+    }
+
+    fn __delitem__(slf: Bound<'_, Self>, key: &Bound<'_, PyAny>) -> PyResult<()> {
+        slf.get().inner.bind(key.py()).as_any().del_item(key)
+    }
+
+    #[pyo3(signature = (*, reverse=false))]
+    fn sort(slf: Bound<'_, Self>, reverse: bool) -> PyResult<Bound<'_, Self>> {
+        let py = slf.py();
+        let kwargs = PyDict::new(py);
+        kwargs.set_item(intern!(py, "reverse"), reverse)?;
+        slf.get()
+            .inner
+            .bind(py)
+            .call_method(intern!(py, "sort"), (), Some(&kwargs))?;
+        Ok(slf)
+    }
+    #[pyo3(signature = (key, *, reverse=false))]
+    fn sort_by<'py>(
+        slf: Bound<'py, Self>,
+        key: &Bound<'py, PyAny>,
+        reverse: bool,
+    ) -> PyResult<Bound<'py, Self>> {
+        slf.get().inner.bind(slf.py()).sort_by(key, reverse)?;
+        Ok(slf)
+    }
+
+    pub fn append(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
+        self.inner.bind(value.py()).append(value)
+    }
+
+    pub fn extend(&self, iterable: Bound<'_, PyAny>) -> PyResult<()> {
+        self.inner.bind(iterable.py()).extend(iterable)
+    }
+
+    fn repeat<'py>(&self, n: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        let py = n.py();
+        self.inner
+            .bind(py)
+            .mul(n)
+            .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
+            .and_then(Bound::into_pyochain)
+    }
+    fn repeat_mut<'py>(slf: Bound<'py, Self>, n: &Bound<'_, PyAny>) -> PyResult<Bound<'py, Self>> {
+        let py = n.py();
+        slf.get().inner.bind(py).imul(n)?;
+        Ok(slf)
+    }
+
+    pub fn insert(&self, index: usize, value: &Bound<'_, PyAny>) -> PyResult<()> {
+        self.inner.bind(value.py()).insert(index, value)
+    }
+
+    pub fn clear(&self, py: Python<'_>) -> () {
+        self.inner.bind(py).clear()
+    }
+
+    fn reverse(slf: Bound<'_, Self>) -> PyResult<()> {
+        slf.get().inner.bind(slf.py()).reverse()
+    }
+
+    fn copy(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self>> {
+        slf.get()
+            .inner
+            .bind(slf.py())
+            .call_method0(intern!(slf.py(), "copy"))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
+            .and_then(Bound::into_pyochain)
+    }
+    #[pyo3(signature = (value, /))]
+    fn count<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
+        self.inner.bind(value.py()).count(&value)
+    }
+    #[pyo3(signature = (value, start = None, stop = None, /))]
+    fn index<'py>(
+        &self,
+        value: &Bound<'py, PyAny>,
+        start: Option<&Bound<'py, PyAny>>,
+        stop: Option<&Bound<'py, PyAny>>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        PySequenceExtMethods::index(self.inner.bind(value.py()), value, start, stop)
+    }
+
+    fn concat<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        let py = other.py();
+        Self::extract_union(&other)?
+            .pipe(|other| {
+                self.inner
+                    .bind(py)
+                    .as_sequence()
+                    .concat(other.as_sequence())
+            })
+            .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
+            .and_then(Bound::into_pyochain)
+    }
+
+    fn concat_mut<'py>(
+        slf: Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
+        let py = other.py();
+        let other = Self::extract_union(&other)?.as_sequence();
+        slf.get()
+            .inner
+            .bind(py)
+            .as_sequence()
+            .in_place_concat(other)
+            .map(|_| slf)
+    }
+}

@@ -5,7 +5,7 @@ mod mappings;
 mod sequences;
 mod sets;
 pub use collections::{PyoCollection, PyoContainer, PyoReversible, PyoSized};
-pub use iterable::{PyoABC, PyoIterable};
+pub use iterable::PyoIterable;
 pub use iterator::PyoIterator;
 pub use mappings::{
     PyoItemsView, PyoKeysView, PyoMapping, PyoMappingView, PyoMutableMapping, PyoValuesView,

@@ -8,13 +8,14 @@ use pyo3::{
 use tap::Pipe;
 
 use crate::{
-    abc::{PyoABC, PyoCollection},
+    abc::PyoCollection,
     option::{PyNull, PySome},
     pyo3_ext::{
         args::{Args, Kwargs},
         pylibs,
     },
     tools,
+    traits::PyoABC,
 };
 // TODO: check difference once we had `sequence` to pypub struct macro
 #[pyclass(subclass,  frozen, generic, sequence, extends=PyoCollection)]

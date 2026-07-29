@@ -9,7 +9,7 @@ use pyo3::{
 use tap::Pipe;
 
 use crate::{
-    abc::{PyoABC, PyoCollection, PyoSet, PyoSized},
+    abc::{PyoCollection, PyoSet, PyoSized},
     mixins::Checkable,
     option::{PyNull, PySome},
     pyo3_ext::{
@@ -17,8 +17,9 @@ use crate::{
         types::PyCmpOut,
     },
     result::{PyoErr, PyoOk},
-    seq::{IntoPyochain, SetMut},
+    sets::SetMut,
     tools,
+    traits::{IntoPyochain, PyoABC},
 };
 #[pyclass(subclass, frozen, generic, mapping, extends=PyoCollection)]
 pub struct PyoMapping;

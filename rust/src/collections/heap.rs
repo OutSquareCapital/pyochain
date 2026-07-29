@@ -1,14 +1,16 @@
-use crate::abc::PyoABC;
-use crate::pyo3_ext::types::PyIterable;
-use crate::pyo3_ext::{prelude::*, pylibs};
-use crate::{abc, seq::PyoVec, tools};
+use crate::{
+    abc,
+    pyo3_ext::{pylibs, types::PyIterable},
+    pyovec::PyoVec,
+    tools,
+    traits::{PyWrapper, PyoABC},
+};
 use either::Either;
 use pyo3::{
-    BoundObject,
+    BoundObject, PyTypeInfo, intern,
     prelude::*,
     types::{PyList, PyNotImplemented, PyTuple},
 };
-use pyo3::{PyTypeInfo, intern};
 use pyochain_macros::{BoundFromAny, py_abc, try_cast};
 use tap::Pipe;
 /// Enum used to convert various types into a `PyList` for heap operations.

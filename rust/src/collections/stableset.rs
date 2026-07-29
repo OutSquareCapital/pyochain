@@ -1,7 +1,9 @@
 use crate::{
-    abc::{self, PyoABC},
+    abc::{self},
+    display::get_repr,
     pyo3_ext::{prelude::*, types::PyAbstractSet},
-    seq::{IntoPyochain, SetMut, get_repr},
+    sets::SetMut,
+    traits::{IntoPyochain, PyoABC},
 };
 use pyo3::{
     PyTypeInfo, intern,
