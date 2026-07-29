@@ -25,7 +25,9 @@ pub struct InnerKeyLists {
 }
 impl InnerKeyLists {
     pub(super) fn get_keys(&self) -> std::sync::MutexGuard<'_, Vec<Py<PyList>>> {
-        self.keys.lock().unwrap()
+        self.keys
+            .try_lock()
+            .expect("keys already locked - reentrant bug")
     }
 }
 #[pymethods]
@@ -226,7 +228,7 @@ impl InnerSorted for InnerKeyLists {
             keys.remove(pos);
             maxes.del_item(pos)?;
             self.get_idx().clear();
-            drop(keys);
+            //drop(keys);
 
             self.expand(py, prev)
         } else if len_keys_pos != 0 {

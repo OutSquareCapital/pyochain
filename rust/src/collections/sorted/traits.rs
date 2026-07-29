@@ -27,7 +27,9 @@ macro_rules! impl_rs_getters {
         impl RustGetters for $t {
             #[inline(always)]
             fn get_idx(&self) -> std::sync::MutexGuard<'_, Vec<usize>> {
-                self.idx.lock().unwrap()
+                self.idx
+                    .try_lock()
+                    .expect("idx already locked - reentrant bug")
             }
         }
     };
