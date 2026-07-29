@@ -12,7 +12,7 @@ use tap::prelude::*;
 #[pyclass(generic, frozen)]
 pub struct InnerLists {
     #[pyo3(get)]
-    pub(super) lists: Py<PyoVec>,
+    pub(super) lists: Py<PyList>,
     pub(super) maxes: Mutex<Vec<Py<PyAny>>>,
     pub(super) idx: Mutex<Vec<usize>>,
     pub(super) len: AtomicUsize,
@@ -24,7 +24,7 @@ impl InnerLists {
     #[new]
     fn new(py: Python<'_>) -> PyResult<Self> {
         Ok(Self {
-            lists: PyoVec::new_bound(py)?.unbind(),
+            lists: PyList::empty(py).into(),
             maxes: Mutex::new(Vec::new()),
             idx: Mutex::new(Vec::new()),
             len: AtomicUsize::new(0),
@@ -145,7 +145,7 @@ impl InnerLists {
 impl InnerSorted for InnerLists {
     fn clear(&self, py: Python<'_>) -> () {
         self.set_len(0);
-        self.lists.get().clear(py);
+        self.lists.bind(py).clear();
         self.get_maxes().clear();
         self.get_idx().clear();
         self.set_offset(0);
@@ -179,7 +179,7 @@ impl InnerSorted for InnerLists {
     }
     fn expand(&self, py: Python<'_>, pos: usize) -> PyResult<()> {
         let load = self.get_load();
-        let lists = self.lists.get().inner.clone_ref(py).into_bound(py);
+        let lists = self.lists.clone_ref(py).into_bound(py);
 
         if lists.get_item(pos)?.len()?.gt(&(load << 1)) {
             let mut maxes = self.get_maxes();
@@ -216,7 +216,7 @@ impl InnerSorted for InnerLists {
     }
 
     fn delete(&self, py: Python<'_>, mut pos: usize, idx: usize) -> PyResult<()> {
-        let lists = self.lists.bind(py).get().inner.bind(py);
+        let lists = self.lists.bind(py);
         let mut maxes = self.get_maxes();
 
         let lists_pos = lists
@@ -276,7 +276,7 @@ impl InnerSorted for InnerLists {
     }
     fn add(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
-        let lists = self.lists.get().inner.bind(py);
+        let lists = self.lists.bind(py);
         let mut maxes = self.get_maxes();
         if !maxes.is_empty() {
             let mut pos = bisect::right_vec(&maxes, &value)?;
@@ -326,7 +326,7 @@ impl InnerSorted for InnerLists {
             Ok(())
         } else {
             drop(maxes);
-            let lists = self.lists.get().inner.bind(value.py());
+            let lists = self.lists.bind(value.py());
             let v = lists
                 .get_item(pos)
                 .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
@@ -357,7 +357,7 @@ impl InnerSorted for InnerLists {
                 errors::not_in_list_err(value)
             } else {
                 drop(maxes);
-                let lists = self.lists.get().inner.bind(py);
+                let lists = self.lists.bind(py);
                 let v = lists
                     .get_item(pos)
                     .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
@@ -444,7 +444,7 @@ impl InnerSorted for InnerLists {
             return Ok(0);
         }
 
-        let lists = self.lists.get().inner.bind(py);
+        let lists = self.lists.bind(py);
         let v_left = lists
             .get_item(pos_left)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
@@ -515,7 +515,7 @@ impl InnerSorted for InnerLists {
             }
         })?;
 
-        let lists = self.lists.get().inner.bind(py);
+        let lists = self.lists.bind(py);
         let v_left = lists
             .get_item(pos_left)
             .map(|x| unsafe { x.cast_into_unchecked::<PyoVec>() })?
@@ -549,7 +549,7 @@ impl InnerSorted for InnerLists {
 
     fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
-        let lists = self.get_lists(py).get().inner.clone_ref(py).into_bound(py);
+        let lists = self.get_lists(py).clone_ref(py).into_bound(py);
         let mut values = iterable
             .try_iter()
             .and_then(|iterator| pylibs::builtins::sorted(&iterator, false))?;

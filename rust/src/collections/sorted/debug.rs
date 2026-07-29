@@ -20,7 +20,7 @@ pub fn assert_sorted_list_empty(py: Python<'_>, lst: InnerSorted) -> PyResult<()
     fn check_empty(x: &impl InnerSortedGetters, py: Python<'_>) -> PyResult<()> {
         pyassert!(x.get_len() == 0);
         pyassert!(x.get_maxes().is_empty());
-        pyassert!(x.get_lists(py).bind(py).is_empty()?);
+        pyassert!(x.get_lists(py).bind(py).is_empty());
         Ok(())
     }
     lst.map_either(|x| check_empty(x.get(), py), |x| check_empty(x.get(), py))
@@ -43,7 +43,7 @@ pub fn check_sorted_key_list(py: Python<'_>, data: Py<InnerKeyLists>) -> PyResul
 }
 
 fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
-    let lists = data.get_lists(py).get().inner.clone_ref(py).into_bound(py);
+    let lists = data.get_lists(py).clone_ref(py).into_bound(py);
     let maxes = data.get_maxes();
     let idx = data.get_idx();
     let offset = data.get_offset();
@@ -155,7 +155,7 @@ fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
 }
 
 fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
-    let lists = data.lists.get().inner.bind(py);
+    let lists = data.lists.bind(py);
     let keys = data.get_keys();
     let maxes = data.get_maxes();
     let idx = data.get_idx();
@@ -271,7 +271,7 @@ fn show_list(py: Python<'_>, err: &PyErr, data: &impl InnerSortedGetters) -> () 
         format!("index: {:?}", idx),
         format!("len_maxes: {}", maxes.len()),
         format!("maxes: {:?}", maxes),
-        format!("len_lists: {}", data.get_lists(py).bind(py).len().unwrap()),
+        format!("len_lists: {}", data.get_lists(py).bind(py).len()),
         format!("lists: {}", data.get_lists(py).bind(py).repr().unwrap()),
     ]
     .join("\n");

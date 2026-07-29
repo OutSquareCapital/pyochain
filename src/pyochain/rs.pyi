@@ -36,7 +36,7 @@ type SliceBounds = tuple[int, int, int, int]
 
 @type_check_only
 class InnerSorted[T, U]:
-    lists: Vec[Vec[T]]
+    lists: list[Vec[T]]
     len: int
     load: int
     offset: int

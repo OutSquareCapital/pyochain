@@ -16,7 +16,7 @@ pub struct InnerKeyLists {
     pub(super) key: Py<PyAny>,
     pub(super) keys: Mutex<Vec<Vec<Py<PyAny>>>>,
     #[pyo3(get)]
-    pub(super) lists: Py<PyoVec>,
+    pub(super) lists: Py<PyList>,
     pub(super) maxes: Mutex<Vec<Py<PyAny>>>,
     pub(super) idx: Mutex<Vec<usize>>,
     pub(super) len: AtomicUsize,
@@ -38,7 +38,7 @@ impl InnerKeyLists {
         Ok(Self {
             key: key.unbind(),
             keys: Mutex::new(Vec::new()),
-            lists: PyoVec::new_bound(py)?.unbind(),
+            lists: PyList::empty(py).into(),
             maxes: Mutex::new(Vec::new()),
             idx: Mutex::new(Vec::new()),
             len: AtomicUsize::new(0),
@@ -127,7 +127,7 @@ impl InnerKeyLists {
 impl InnerSorted for InnerKeyLists {
     fn clear(&self, py: Python<'_>) -> () {
         self.set_len(0);
-        self.lists.get().clear(py);
+        self.lists.bind(py).clear();
         self.get_keys().clear();
         self.get_maxes().clear();
         self.get_idx().clear();
@@ -159,7 +159,7 @@ impl InnerSorted for InnerKeyLists {
             if keys[pos][idx].bind(py).ne(&key)? {
                 return Ok(false);
             }
-            if lists.get_item(&pos)?.get_item(&idx)?.eq(&value)? {
+            if lists.get_item(pos)?.get_item(&idx)?.eq(&value)? {
                 return Ok(true);
             }
             idx += 1;
@@ -174,7 +174,7 @@ impl InnerSorted for InnerKeyLists {
         }
     }
     fn delete(&self, py: Python<'_>, mut pos: usize, idx: usize) -> PyResult<()> {
-        let lists = self.lists.get().inner.bind(py);
+        let lists = self.lists.bind(py);
         let mut keys = self.get_keys();
         let mut maxes = self.get_maxes();
         let lists_pos = lists
@@ -240,7 +240,7 @@ impl InnerSorted for InnerKeyLists {
         }
     }
     fn expand(&self, py: Python<'_>, pos: usize) -> PyResult<()> {
-        let lists = self.lists.get().inner.bind(py);
+        let lists = self.lists.bind(py);
         let mut keys = self.get_keys();
 
         if keys[pos].len() > self.get_load() << 1 {
@@ -283,7 +283,7 @@ impl InnerSorted for InnerKeyLists {
         let py = value.py();
         let key = self.key.bind(py).call1((&value,))?.unbind();
         let key_binded = key.bind(py);
-        let lists = self.lists.get().inner.bind(py);
+        let lists = self.lists.bind(py);
         let mut maxes = self.get_maxes();
         let mut keys = self.get_keys();
 
@@ -337,7 +337,7 @@ impl InnerSorted for InnerKeyLists {
             Ok(())
         } else {
             drop(maxes);
-            let lists = self.lists.get().inner.bind(py);
+            let lists = self.lists.bind(py);
             let keys = self.get_keys();
 
             let mut idx = bisect::left_vec(&keys[pos], &key)?;
@@ -385,7 +385,7 @@ impl InnerSorted for InnerKeyLists {
             errors::not_in_list_err(value)
         } else {
             drop(maxes);
-            let lists = self.lists.get().inner.bind(py);
+            let lists = self.lists.bind(py);
             let keys = self.get_keys();
             let v = &keys[pos];
 
@@ -444,7 +444,7 @@ impl InnerSorted for InnerKeyLists {
             return Ok(0);
         }
 
-        let lists = self.lists.get().inner.bind(py);
+        let lists = self.lists.bind(py);
         let keys = self.get_keys();
         let v_left = &keys[pos];
         let mut idx = bisect::left_vec(&v_left, &key)?;
@@ -508,7 +508,7 @@ impl InnerSorted for InnerKeyLists {
         }
 
         stop -= 1;
-        let lists = self.lists.get().inner.clone_ref(py).into_bound(py);
+        let lists = self.lists.clone_ref(py).into_bound(py);
         let keys = self.get_keys();
         let v_left = &keys[pos];
         let mut idx = bisect::left_vec(&v_left, &key)?;
@@ -542,7 +542,7 @@ impl InnerSorted for InnerKeyLists {
     }
     fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
-        let lists = self.lists.get().inner.clone_ref(py).into_bound(py);
+        let lists = self.lists.clone_ref(py).into_bound(py);
         let key_fn = &self.key.clone_ref(py).into_bound(py);
         let mut values = iterable
             .try_iter()

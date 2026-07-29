@@ -47,7 +47,7 @@ impl_rs_getters!(InnerKeyLists);
 #[py_abc(InnerLists, InnerKeyLists)]
 pub(super) trait InnerSortedGetters: RustGetters {
     #[getter]
-    fn get_lists(&self, py: Python<'_>) -> Py<PyoVec>;
+    fn get_lists(&self, py: Python<'_>) -> Py<PyList>;
     #[getter]
     fn get_load(&self) -> usize;
     #[getter]
@@ -69,7 +69,7 @@ macro_rules! impl_inner_sorted_rs {
     ($t:ty) => {
         impl InnerSortedGetters for $t {
             #[inline(always)]
-            fn get_lists(&self, py: Python<'_>) -> Py<PyoVec> {
+            fn get_lists(&self, py: Python<'_>) -> Py<PyList> {
                 self.lists.clone_ref(py)
             }
             #[inline(always)]
@@ -236,19 +236,13 @@ macro_rules! impl_inner_sorted_rs {
         impl<'py> InnerSortedIter<'py> for Bound<'py, $t> {
             fn iter(&self) -> impl Iterator<Item = Bound<'py, PyAny>> {
                 let py = self.py();
-                self.get()
-                    .get_lists(py)
-                    .get()
-                    .inner
-                    .bind(py)
-                    .iter()
-                    .flat_map(move |x| {
-                        unsafe { x.cast_unchecked::<PyoVec>() }
-                            .get()
-                            .inner
-                            .bind(py)
-                            .iter()
-                    })
+                self.get().get_lists(py).bind(py).iter().flat_map(move |x| {
+                    unsafe { x.cast_unchecked::<PyoVec>() }
+                        .get()
+                        .inner
+                        .bind(py)
+                        .iter()
+                })
             }
         }
     };
@@ -286,8 +280,6 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     fn collapse_lists<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyoVec>> {
         let init = PyList::empty(py).into_sequence();
         self.get_lists(py)
-            .get()
-            .inner
             .bind(py)
             .iter()
             .try_fold(init, |acc, x| {
@@ -332,7 +324,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     /// When built, the index can be used for efficient indexing into the list.
     fn build_index(&self, py: Python<'_>) -> PyResult<()> {
         let mut idx = self.get_idx();
-        let lists = self.get_lists(py).get().inner.clone_ref(py).into_bound(py);
+        let lists = self.get_lists(py).clone_ref(py).into_bound(py);
 
         let row0 = lists
             .iter()
@@ -499,7 +491,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     /// The final index pair from our example is (2, 3) which corresponds to
     /// index 8 in the sorted list.
     fn pos(&self, py: Python<'_>, mut idx: isize) -> PyResult<(usize, isize)> {
-        let lists = self.get_lists(py).get().inner.clone_ref(py).into_bound(py);
+        let lists = self.get_lists(py).clone_ref(py).into_bound(py);
         if idx < 0 {
             if (-idx) <= lists.last()?.len()? as isize {
                 return Ok((lists.len() - 1, lists.last()?.len()? as isize + idx));
@@ -549,7 +541,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             let msg = "pop index out of range";
             return Err(PyIndexError::new_err(msg));
         } else {
-            let lists = self.get_lists(py).get().inner.clone_ref(py).into_bound(py);
+            let lists = self.get_lists(py).clone_ref(py).into_bound(py);
 
             let len_last = lists.last()?.len()? as isize;
             let val = match index {
@@ -595,7 +587,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         py: Python<'py>,
         index: Either<isize, Bound<'py, PySlice>>,
     ) -> PyResult<Either<Bound<'py, PyAny>, Bound<'py, PyoVec>>> {
-        let lists = self.get_lists(py).get().inner.clone_ref(py).into_bound(py);
+        let lists = self.get_lists(py).clone_ref(py).into_bound(py);
 
         match index {
             Either::Right(slice) => self
@@ -754,7 +746,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                 Ok(())
             }
             (1, Ordering::Less) if length <= 8 * (stop - start) => {
-                let lists = self.get_lists(py).get().inner.clone_ref(py).into_bound(py);
+                let lists = self.get_lists(py).clone_ref(py).into_bound(py);
                 let values = self.getitem_from_slice(py, &lists, PySlice::new(py, 0, start, 1))?;
                 if stop < length {
                     let new_slice =
@@ -793,7 +785,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         stop: Option<isize>,
     ) -> PyResult<Option<(usize, isize, usize, isize)>> {
         let length = self.get_len() as isize;
-        let lists = self.get_lists(py).get().inner.clone_ref(py).into_bound(py);
+        let lists = self.get_lists(py).clone_ref(py).into_bound(py);
 
         if length == 0 {
             return Ok(None);

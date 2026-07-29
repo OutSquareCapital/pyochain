@@ -130,7 +130,7 @@ class SortedList[T: SupportsRichComparison](
         :exc:`RuntimeError` or fail to iterate over all values.
 
         """
-        return self._inner.lists.iter().flatten()
+        return Iter(self._inner.lists).flatten()
 
     @override
     def __reversed__(self) -> PyoIterator[T]:
@@ -142,7 +142,7 @@ class SortedList[T: SupportsRichComparison](
         :exc:`RuntimeError` or fail to iterate over all values.
 
         """
-        return self._inner.lists.rev().flat_map(lambda x: x.rev())
+        return Iter(reversed(self._inner.lists)).flat_map(reversed)
 
     @override
     def reverse(self) -> None:
@@ -238,7 +238,7 @@ class SortedList[T: SupportsRichComparison](
                     Range(next_pos, max_pos)
                     .rev()
                     .map(lists.__getitem__)
-                    .flat_map(lambda x: x.rev())
+                    .flat_map(reversed)
                 )
                 return (
                     Range(0, max_idx)
