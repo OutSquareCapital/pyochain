@@ -1,7 +1,6 @@
 /// Module for bisect functions, adapted from the Python standard library's bisect module.\
 /// Adapted to only handle `pyochain::PyoVec` for both simplicity and performance.
-use crate::seq::PyoVec;
-use pyo3::prelude::*;
+use pyo3::{prelude::*, types::PyList};
 /// The following documentation and code is adapted from the Python standard library's bisect module.
 ///Return the index where to insert item x in list a, assuming a is sorted.
 
@@ -11,8 +10,7 @@ use pyo3::prelude::*;
 
 ///Optional args lo (default 0) and hi (default len(a)) bound the slice of a to be searched.
 #[inline]
-pub(super) fn right(vec: &Bound<'_, PyoVec>, item: &Bound<'_, PyAny>) -> PyResult<usize> {
-    let lst = vec.get().inner.bind(vec.py());
+pub(super) fn right(lst: &Bound<'_, PyList>, item: &Bound<'_, PyAny>) -> PyResult<usize> {
     let mut high = lst.len();
     let mut lo = 0;
     // Note, the comparison uses "<" to match the
@@ -33,8 +31,7 @@ pub(super) fn right(vec: &Bound<'_, PyoVec>, item: &Bound<'_, PyAny>) -> PyResul
 /// So if x already appears in the list, a.insert(i, x) will insert just before the leftmost x already there.\
 /// Optional args lo (default 0) and hi (default len(a)) bound the slice of a to be searched.\
 #[inline]
-pub(super) fn left(vec: &Bound<'_, PyoVec>, item: &Bound<'_, PyAny>) -> PyResult<usize> {
-    let lst = vec.get().inner.bind(vec.py());
+pub(super) fn left(lst: &Bound<'_, PyList>, item: &Bound<'_, PyAny>) -> PyResult<usize> {
     let mut hi = lst.len();
     let mut lo = 0;
     // Note, the comparison uses "<" to match the

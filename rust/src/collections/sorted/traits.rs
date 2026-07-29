@@ -39,7 +39,7 @@ pub(super) trait InnerSortedGetters: RustGetters {
     #[getter]
     fn get_lists(&self, py: Python<'_>) -> Py<PyoVec>;
     #[getter]
-    fn get_maxes(&self, py: Python<'_>) -> Py<PyoVec>;
+    fn get_maxes(&self, py: Python<'_>) -> Py<PyList>;
     #[getter]
     fn get_load(&self) -> usize;
     #[getter]
@@ -89,7 +89,7 @@ macro_rules! impl_inner_sorted_rs {
                 self.load.store(load, AtomicOrdering::Relaxed);
             }
             #[inline(always)]
-            fn get_maxes(&self, py: Python<'_>) -> Py<PyoVec> {
+            fn get_maxes(&self, py: Python<'_>) -> Py<PyList> {
                 self.maxes.clone_ref(py)
             }
 

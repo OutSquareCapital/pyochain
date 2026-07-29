@@ -1,5 +1,6 @@
 use crate::collections::sorted::traits::{InnerSortedGetters, RustGetters};
 use crate::collections::{InnerKeyLists, InnerLists};
+use crate::pyo3_ext::types::PyListExtMethods;
 use crate::seq::PyoVec;
 use either::Either;
 use pyo3::exceptions::PyAssertionError;
@@ -19,7 +20,7 @@ macro_rules! pyassert {
 pub fn assert_sorted_list_empty(py: Python<'_>, lst: InnerSorted) -> PyResult<()> {
     fn check_empty(x: &impl InnerSortedGetters, py: Python<'_>) -> PyResult<()> {
         pyassert!(x.get_len() == 0);
-        pyassert!(x.get_maxes(py).bind(py).is_empty()?);
+        pyassert!(x.get_maxes(py).bind(py).is_empty());
         pyassert!(x.get_lists(py).bind(py).is_empty()?);
         Ok(())
     }
@@ -44,7 +45,7 @@ pub fn check_sorted_key_list(py: Python<'_>, data: Py<InnerKeyLists>) -> PyResul
 
 fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
     let lists = data.get_lists(py).get().inner.clone_ref(py).into_bound(py);
-    let maxes = data.get_maxes(py).get().inner.clone_ref(py).into_bound(py);
+    let maxes = data.get_maxes(py).clone_ref(py).into_bound(py);
     let idx = data.get_idx();
     let offset = data.get_offset();
     let err = |x| PyAssertionError::new_err(x);
@@ -158,8 +159,8 @@ fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
 
 fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
     let lists = data.lists.get().inner.bind(py);
-    let keys = data.keys.get().inner.bind(py);
-    let maxes = data.maxes.get().inner.bind(py);
+    let keys = data.get_keys();
+    let maxes = data.maxes.bind(py);
     let idx = data.get_idx();
     let load = data.get_load();
     let length = data.get_len();
@@ -177,8 +178,8 @@ fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
 
     // Check all sublists are sorted.
 
-    for sublist in keys {
-        for pos in 1..sublist.len()? {
+    for sublist in keys.iter().map(|x| x.bind(py)) {
+        for pos in 1..sublist.len() {
             pyassert!(sublist.get_item(pos - 1)?.le(sublist.get_item(pos)?)?);
         }
     }
@@ -187,19 +188,21 @@ fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
 
     for pos in 1..keys.len() {
         pyassert!(
-            keys.get_item(pos - 1)?
+            keys[pos - 1]
+                .bind(py)
+                .as_any()
                 .get_item(-1)?
-                .le(keys.get_item(pos)?.get_item(0)?)?
+                .le(keys[pos].bind(py).get_item(0)?)?
         );
     }
 
     // Check _keys matches _key mapped to _lists.
 
-    for (val_sublist, key_sublist) in lists.iter().zip(keys) {
-        pyassert!(val_sublist.len()? == key_sublist.len()?);
-        for (val, key) in val_sublist.try_iter()?.zip(key_sublist.try_iter()?) {
+    for (val_sublist, key_sublist) in lists.iter().zip(keys.iter().map(|x| x.bind(py))) {
+        pyassert!(val_sublist.len()? == key_sublist.len());
+        for (val, key) in val_sublist.try_iter()?.zip(key_sublist.iter()) {
             {
-                pyassert!(key_fn.call1((&val?,))?.eq(&key?)?);
+                pyassert!(key_fn.call1((&val?,))?.eq(&key)?);
             }
         }
     }
@@ -207,7 +210,7 @@ fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
     // Check _maxes index is the last value of each sublist.
 
     for pos in 0..maxes.len() {
-        pyassert!(maxes.get_item(pos)?.eq(keys.get_item(pos)?.get_item(-1)?)?);
+        pyassert!(maxes.get_item(pos)?.eq(keys[pos].bind(py).last()?)?);
     }
 
     // Check sublist lengths are less than double load-factor.
@@ -253,10 +256,10 @@ fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
 
 fn show_key_list(py: Python<'_>, err: &PyErr, data: &InnerKeyLists) -> () {
     show_list(py, err, data);
-    let keys = data.keys.bind(py);
+    let keys = data.get_keys();
     let infos = [
-        format!("len_keys: {}", keys.len().unwrap()),
-        format!("keys: {}", keys.repr().unwrap()),
+        format!("len_keys: {}", keys.len()),
+        format!("keys: {:?}", keys),
     ];
     err.add_note(py, infos.join("\n")).unwrap()
 }
@@ -268,7 +271,7 @@ fn show_list(py: Python<'_>, err: &PyErr, data: &impl InnerSortedGetters) -> () 
         format!("offset: {}", data.get_offset()),
         format!("len_index: {}", idx.len()),
         format!("index: {:?}", idx),
-        format!("len_maxes: {}", data.get_maxes(py).bind(py).len().unwrap()),
+        format!("len_maxes: {}", data.get_maxes(py).bind(py).len()),
         format!("maxes: {}", data.get_maxes(py).bind(py).repr().unwrap()),
         format!("len_lists: {}", data.get_lists(py).bind(py).len().unwrap()),
         format!("lists: {}", data.get_lists(py).bind(py).repr().unwrap()),
