@@ -1,15 +1,27 @@
+use crate::{
+    abc::PyoCollection,
+    pyo3_ext::{
+        prelude::*,
+        types::{PyAbstractSet, PyCmpOut, PyIterable, PyMutableSet},
+    },
+    traits::PyoABC,
+};
 use either::Either;
-use pyo3::{BoundObject, IntoPyObjectExt, exceptions::PyKeyError, intern, prelude::*, types::{PyList, PyNotImplemented, PyType}};
+use pyo3::{
+    BoundObject, IntoPyObjectExt,
+    exceptions::PyKeyError,
+    intern,
+    prelude::*,
+    types::{PyList, PyNotImplemented, PyType},
+};
 use pyochain_macros::BoundFromAny;
 use tap::Pipe;
-use crate::{abc::PyoCollection, pyo3_ext::{prelude::*, types::{PyAbstractSet, PyCmpOut, PyIterable, PyMutableSet}}, traits::PyoABC};
 #[allow(unused)]
 #[derive(BoundFromAny)]
 enum IntoSetComp<'py> {
     Set(Bound<'py, PyAbstractSet>),
     Iterable(Bound<'py, PyIterable>),
     Other(Bound<'py, PyAny>),
-
 }
 fn py_from_iterable<'py>(
     slf: &Bound<'py, PyAny>,
@@ -36,34 +48,45 @@ impl PyoSet {
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
             .map_err(|e| {
                 let name = cls.name().unwrap();
-                let msg = format!("hint: As a `PyoSet` subclass, `{}::__init__` must accept a single `Iterable` argument. If you override it, make sure to override `PyoSet::_from_iterable` as well.", name);
-                e.add_note(cls.py(), msg,).unwrap(); 
-                e})
-    
-}
-    
-    fn __and__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<'py, Bound<'py, Self>> {
-        let py = slf.py();
-        if !other.is_instance_of::<PyAbstractSet>() {
-            return PyNotImplemented::get(py).into_bound().pipe(Ok).map(Either::Right);
-        }
-        slf.try_iter()?
-            .try_fold(PyList::empty(py), |init, x| {
-                let item = x?;
-                if other.contains(&item)? {
-                    init.append(item)?;
-                }
-                Ok::<_, PyErr>(init)
-            })?
-            .into_bound_py_any(py)
-            .and_then(|x| py_from_iterable(slf.as_any(), &x))
-            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
-            .map(Either::Left)
+                let msg = format!("hint: As a `PyoSet` subclass, `{}::__init__` must accept a single `Iterable` argument.\n
+                If you override it, make sure to override `PyoSet::_from_iterable` as well.", name);
+                e.add_note(cls.py(), msg).unwrap();
+                e
+            })
     }
-    fn __or__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<'py, Bound<'py, PyAbstractSet>> {
+
+    fn __and__<'py>(
+        slf: Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyCmpOut<'py, Bound<'py, PyAbstractSet>> {
+        let py = other.py();
+        match other.try_iter() {
+            Ok(mut iterator) => iterator
+                .try_fold(PyList::empty(py), |acc, value| {
+                    let v = value?;
+                    if slf.contains(&v)? {
+                        acc.append(v)?;
+                    }
+                    Ok(acc)
+                })
+                .and_then(|x| py_from_iterable(slf.as_any(), &x))
+                .map(Either::Left),
+            Err(_) => PyNotImplemented::get(slf.py())
+                .into_bound()
+                .pipe(Ok)
+                .map(Either::Right),
+        }
+    }
+    fn __or__<'py>(
+        slf: Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyCmpOut<'py, Bound<'py, PyAbstractSet>> {
         let py = slf.py();
         if !other.is_instance_of::<PyAbstractSet>() {
-            return PyNotImplemented::get(py).into_bound().pipe(Ok).map(Either::Right);
+            return PyNotImplemented::get(py)
+                .into_bound()
+                .pipe(Ok)
+                .map(Either::Right);
         }
         slf.try_iter()?
             .chain(other.try_iter()?)
@@ -73,28 +96,37 @@ impl PyoSet {
                 Ok::<_, PyErr>(init)
             })?
             .into_bound_py_any(py)
-                .and_then(|x| py_from_iterable(slf.as_any(), &x))
+            .and_then(|x| py_from_iterable(slf.as_any(), &x))
             .map(Either::Left)
     }
 
-    fn __sub__<'py>(slf: Bound<'py, Self>, other: IntoSetComp<'py>) -> PyCmpOut<'py, Bound<'py, PyAbstractSet>> {
+    fn __sub__<'py>(
+        slf: Bound<'py, Self>,
+        other: IntoSetComp<'py>,
+    ) -> PyCmpOut<'py, Bound<'py, PyAbstractSet>> {
         let py = slf.py();
         let other_set = match other {
-            IntoSetComp::Set(other) => {other.into_any()},
-            IntoSetComp::Iterable(iterable) => { py_from_iterable(slf.as_any(), iterable.as_any())?.into_any()},
-            _ => return PyNotImplemented::get(py).into_bound().pipe(Ok).map(Either::Right),
+            IntoSetComp::Set(other) => other.into_any(),
+            IntoSetComp::Iterable(iterable) => {
+                py_from_iterable(slf.as_any(), iterable.as_any())?.into_any()
+            }
+            _ => {
+                return PyNotImplemented::get(py)
+                    .into_bound()
+                    .pipe(Ok)
+                    .map(Either::Right);
+            }
         };
-        slf
-            .try_iter()?
-                    .try_fold(PyList::empty(py), |init, x| {
-                        let item = x?;
-                        if !other_set.contains(&item)? {
-                            init.append(item)?;
-                        }
-                        Ok::<_, PyErr>(init)
-                    })?
-                    .as_any()
-                        .pipe(|x| py_from_iterable(slf.as_any(), x))
+        slf.try_iter()?
+            .try_fold(PyList::empty(py), |init, x| {
+                let item = x?;
+                if !other_set.contains(&item)? {
+                    init.append(item)?;
+                }
+                Ok::<_, PyErr>(init)
+            })?
+            .as_any()
+            .pipe(|x| py_from_iterable(slf.as_any(), x))
             .map(Either::Left)
     }
 
@@ -104,9 +136,16 @@ impl PyoSet {
     ) -> PyCmpOut<'py, Bound<'py, PyAbstractSet>> {
         let py = slf.py();
         let other_set = match other {
-            IntoSetComp::Set(other) => {other.into_any()},
-            IntoSetComp::Iterable(iterable) => { py_from_iterable(slf.as_any(), iterable.as_any())?.into_any()},
-            _ => return PyNotImplemented::get(py).into_bound().pipe(Ok).map(Either::Right),
+            IntoSetComp::Set(other) => other.into_any(),
+            IntoSetComp::Iterable(iterable) => {
+                py_from_iterable(slf.as_any(), iterable.as_any())?.into_any()
+            }
+            _ => {
+                return PyNotImplemented::get(py)
+                    .into_bound()
+                    .pipe(Ok)
+                    .map(Either::Right);
+            }
         };
         other_set
             .try_iter()?
@@ -121,22 +160,36 @@ impl PyoSet {
             .map(Either::Left)
     }
 
-    fn __xor__<'py>(slf: Bound<'py, Self>, other: IntoSetComp<'py>) -> PyCmpOut<'py, Bound<'py, PyAny>> {
+    fn __xor__<'py>(
+        slf: Bound<'py, Self>,
+        other: IntoSetComp<'py>,
+    ) -> PyCmpOut<'py, Bound<'py, PyAny>> {
         let other_set = match other {
-            IntoSetComp::Set(other) => {other},
-            IntoSetComp::Iterable(iterable) => { py_from_iterable(slf.as_any(), iterable.as_any())?.pipe(|x|unsafe{x.cast_into_unchecked::<PyAbstractSet>()})},
-            _ => return PyNotImplemented::get(slf.py()).into_bound().pipe(Ok).map(Either::Right),
+            IntoSetComp::Set(other) => other,
+            IntoSetComp::Iterable(iterable) => py_from_iterable(slf.as_any(), iterable.as_any())?
+                .pipe(|x| unsafe { x.cast_into_unchecked::<PyAbstractSet>() }),
+            _ => {
+                return PyNotImplemented::get(slf.py())
+                    .into_bound()
+                    .pipe(Ok)
+                    .map(Either::Right);
+            }
         };
-        slf.sub(&other_set)?.bitor(&other_set.sub(slf)?).map(Either::Left)
+        slf.sub(&other_set)?
+            .bitor(&other_set.sub(slf)?)
+            .map(Either::Left)
     }
 
     fn __rand__<'py>(
         slf: Bound<'py, Self>,
         other: Bound<'py, PyAny>,
-    ) -> PyCmpOut<'py, Bound<'py, Self>> {
+    ) -> PyCmpOut<'py, Bound<'py, PyAbstractSet>> {
         Self::__and__(slf, other)
     }
-    fn __ror__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<'py, Bound<'py, PyAbstractSet>> {
+    fn __ror__<'py>(
+        slf: Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyCmpOut<'py, Bound<'py, PyAbstractSet>> {
         Self::__or__(slf, other)
     }
     fn __rxor__<'py>(
@@ -147,16 +200,22 @@ impl PyoSet {
     }
     fn __eq__<'py>(slf: Bound<'py, Self>, other: IntoSetComp<'py>) -> PyCmpOut<bool, 'py> {
         match other {
-            IntoSetComp::Set(other_set ) => {
+            IntoSetComp::Set(other_set) => {
                 let out = slf.len()? == other_set.len()? && slf.le(&other_set)?;
-            Ok(out).map(Either::Left)
-            },
-            _ =>  PyNotImplemented::get(slf.py()).into_bound().pipe(Ok).map(Either::Right),
+                Ok(out).map(Either::Left)
+            }
+            _ => PyNotImplemented::get(slf.py())
+                .into_bound()
+                .pipe(Ok)
+                .map(Either::Right),
         }
     }
     fn __le__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         if !other.is_instance_of::<PyAbstractSet>() {
-            return PyNotImplemented::get(slf.py()).into_bound().pipe(Ok).map(Either::Right);
+            return PyNotImplemented::get(slf.py())
+                .into_bound()
+                .pipe(Ok)
+                .map(Either::Right);
         }
         if slf.len()? > other.len()? {
             return Ok(false).map(Either::Left);
@@ -171,7 +230,10 @@ impl PyoSet {
 
     fn __ge__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         if !other.is_instance_of::<PyAbstractSet>() {
-            return PyNotImplemented::get(slf.py()).into_bound().pipe(Ok).map(Either::Right);
+            return PyNotImplemented::get(slf.py())
+                .into_bound()
+                .pipe(Ok)
+                .map(Either::Right);
         }
         if slf.len()? < other.len()? {
             return Ok(false).map(Either::Left);
@@ -188,7 +250,10 @@ impl PyoSet {
         if other.is_instance_of::<PyAbstractSet>() {
             Ok(slf.len()? < other.len()? && slf.le(other)?).map(Either::Left)
         } else {
-            PyNotImplemented::get(slf.py()).into_bound().pipe(Ok).map(Either::Right)
+            PyNotImplemented::get(slf.py())
+                .into_bound()
+                .pipe(Ok)
+                .map(Either::Right)
         }
     }
 
@@ -196,7 +261,10 @@ impl PyoSet {
         if other.is_instance_of::<PyAbstractSet>() {
             Ok(slf.len()? > other.len()? && slf.ge(other)?).map(Either::Left)
         } else {
-            PyNotImplemented::get(slf.py()).into_bound().pipe(Ok).map(Either::Right)
+            PyNotImplemented::get(slf.py())
+                .into_bound()
+                .pipe(Ok)
+                .map(Either::Right)
         }
     }
 
@@ -213,7 +281,6 @@ impl PyoSet {
     /// This is equivalent to doing the whole computation with wrapping u64 arithmetic,\
     /// and reinterpreting the final bit pattern as a signed 64-bit hash.
     fn _hash(slf: Bound<'_, Self>) -> PyResult<isize> {
-
         let n = slf.len()? as u64;
         let mut h = 1927868237u64.wrapping_mul(n.wrapping_add(1));
         for x in slf.try_iter()? {
@@ -286,14 +353,13 @@ impl PyoMutableSet {
         unsafe { slf.cast_into_unchecked::<PyMutableSet>() }
     }
 
-    fn as_mutable_set<'a , 'py>(slf: &'a Bound<'py, Self>) -> &'a Bound<'py, PyMutableSet> {
+    fn as_mutable_set<'a, 'py>(slf: &'a Bound<'py, Self>) -> &'a Bound<'py, PyMutableSet> {
         unsafe { slf.cast_unchecked::<PyMutableSet>() }
     }
 
     fn __ior__<'py>(slf: Bound<'py, Self>, it: Bound<'py, PyAny>) -> PyResult<()> {
         let slf = Self::into_mutable_set(slf);
-        it.try_iter()?
-            .try_for_each(|value| slf.add(&value?))
+        it.try_iter()?.try_for_each(|value| slf.add(&value?))
     }
 
     fn __iand__<'py>(slf: Bound<'py, Self>, it: Bound<'py, PyAny>) -> PyResult<()> {
@@ -310,7 +376,7 @@ impl PyoMutableSet {
         } else {
             let slf = Self::into_mutable_set(slf);
             for value in it.try_iter()? {
-                slf.discard( &value?)?;
+                slf.discard(&value?)?;
             }
         }
         Ok(())
@@ -340,7 +406,6 @@ impl PyoMutableSet {
         Ok(())
     }
 
-
     fn remove(slf: Bound<'_, Self>, value: Bound<'_, PyAny>) -> PyResult<()> {
         if !slf.contains(&value)? {
             Err(PyKeyError::new_err(format!("{}", value)))
@@ -356,7 +421,7 @@ impl PyoMutableSet {
             PopResult::Value(value) => {
                 Self::into_mutable_set(slf).discard(&value)?;
                 Ok(value)
-            },
+            }
             PopResult::Error(e) => Err(e),
         }
     }
@@ -368,12 +433,12 @@ impl PyoMutableSet {
             match PopResult::new(any) {
                 PopResult::Error(e) => {
                     return Err(e);
-                },
-                PopResult::KeyStop => {
-                    break Ok(())
-                },
-                PopResult::Value(v) => {slf.discard( &v)?;
-                    continue}
+                }
+                PopResult::KeyStop => break Ok(()),
+                PopResult::Value(v) => {
+                    slf.discard(&v)?;
+                    continue;
+                }
             }
         }
     }
@@ -385,11 +450,12 @@ enum PopResult<'py> {
 }
 impl<'py> PopResult<'py> {
     fn new(slf: &Bound<'py, PyAny>) -> Self {
-        slf.try_iter().map(|mut x| match x.next() {
-            None => PopResult::KeyStop,
-            Some(Ok(v)) => PopResult::Value(v),
-            Some(Err(e)) => PopResult::Error(e),
-        }).unwrap_or_else(|e| PopResult::Error(e))
+        slf.try_iter()
+            .map(|mut x| match x.next() {
+                None => PopResult::KeyStop,
+                Some(Ok(v)) => PopResult::Value(v),
+                Some(Err(e)) => PopResult::Error(e),
+            })
+            .unwrap_or_else(|e| PopResult::Error(e))
     }
-    
 }
