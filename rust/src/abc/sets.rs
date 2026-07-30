@@ -14,9 +14,9 @@ enum IntoSetComp<'py> {
 fn py_from_iterable<'py>(
     slf: &Bound<'py, PyAny>,
     it: &Bound<'py, PyAny>,
-) -> PyResult<Bound<'py, PyoSet>> {
+) -> PyResult<Bound<'py, PyAbstractSet>> {
     slf.call_method1(intern!(slf.py(), "_from_iterable"), (it,))
-        .map(|x| unsafe { x.cast_into_unchecked::<PyoSet>() })
+        .map(|x| unsafe { x.cast_into_unchecked::<PyAbstractSet>() })
 }
 #[pyclass(subclass, frozen, generic, extends=PyoCollection)]
 pub struct PyoSet;
@@ -60,7 +60,7 @@ impl PyoSet {
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
             .map(Either::Left)
     }
-    fn __or__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<'py, Bound<'py, Self>> {
+    fn __or__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<'py, Bound<'py, PyAbstractSet>> {
         let py = slf.py();
         if !other.is_instance_of::<PyAbstractSet>() {
             return PyNotImplemented::get(py).into_bound().pipe(Ok).map(Either::Right);
@@ -77,7 +77,7 @@ impl PyoSet {
             .map(Either::Left)
     }
 
-    fn __sub__<'py>(slf: Bound<'py, Self>, other: IntoSetComp<'py>) -> PyCmpOut<'py, Bound<'py, Self>> {
+    fn __sub__<'py>(slf: Bound<'py, Self>, other: IntoSetComp<'py>) -> PyCmpOut<'py, Bound<'py, PyAbstractSet>> {
         let py = slf.py();
         let other_set = match other {
             IntoSetComp::Set(other) => {other.into_any()},
@@ -101,7 +101,7 @@ impl PyoSet {
     fn __rsub__<'py>(
         slf: Bound<'py, Self>,
         other: IntoSetComp<'py>,
-    ) -> PyCmpOut<'py, Bound<'py, Self>> {
+    ) -> PyCmpOut<'py, Bound<'py, PyAbstractSet>> {
         let py = slf.py();
         let other_set = match other {
             IntoSetComp::Set(other) => {other.into_any()},
@@ -136,7 +136,7 @@ impl PyoSet {
     ) -> PyCmpOut<'py, Bound<'py, Self>> {
         Self::__and__(slf, other)
     }
-    fn __ror__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<'py, Bound<'py, Self>> {
+    fn __ror__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<'py, Bound<'py, PyAbstractSet>> {
         Self::__or__(slf, other)
     }
     fn __rxor__<'py>(
