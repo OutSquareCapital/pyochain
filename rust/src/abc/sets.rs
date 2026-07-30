@@ -82,18 +82,19 @@ impl PyoSet {
         other: Bound<'py, PyAny>,
     ) -> PyCmpOut<'py, Bound<'py, PyAbstractSet>> {
         let py = slf.py();
-        if !other.is_instance_of::<PyAbstractSet>() {
-            return PyNotImplemented::get(py)
+        match other.try_iter() {
+            Ok(iterator) => slf
+                .try_iter()?
+                .chain(iterator)
+                .collect_bound::<PyList>(py)?
+                .into_bound_py_any(py)
+                .and_then(|x| py_from_iterable(slf.as_any(), &x))
+                .map(Either::Left),
+            Err(_) => PyNotImplemented::get(py)
                 .into_bound()
                 .pipe(Ok)
-                .map(Either::Right);
+                .map(Either::Right),
         }
-        slf.try_iter()?
-            .chain(other.try_iter()?)
-            .collect_bound::<PyList>(py)?
-            .into_bound_py_any(py)
-            .and_then(|x| py_from_iterable(slf.as_any(), &x))
-            .map(Either::Left)
     }
 
     fn __sub__<'py>(

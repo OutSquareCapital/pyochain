@@ -157,8 +157,7 @@ def test_set_from_iterable() -> None:
 
     # NOTE: ixor'ing with a list is important here: internally, __ixor__
     # only calls _from_iterable if the other value isn't already a PyoSet.
-    # pyrefly: ignore [unsupported-operation]
-    impl ^= [3, 4]  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+    impl ^= [3, 4]
     assert isinstance(impl, SetUsingInstanceFromPyoIterable)
     assert impl.created_by == "test"
     assert {1, 2, 4} == impl
