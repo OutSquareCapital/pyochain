@@ -109,17 +109,14 @@ def test_dict_repr() -> None:
     assert r in {"dict_values(['ABC', 10])", "dict_values([10, 'ABC'])"}
 
 
-def test_keys_set_operations() -> None:
-    d1 = Dict({"a": 1, "b": 2})
-    d2 = Dict({"b": 3, "c": 2})
-    d3 = Dict({"d": 4, "e": 5})
-    d4 = Dict({"d": 4})
+class CustomSetMut(SetMut[object]):
+    @override
+    def intersection(self, *others: abc.Iterable[object]) -> SetMut[object]:
+        return CustomSetMut(super().intersection(*others))
 
-    class CustomSetMut(SetMut[object]):
-        @override
-        def intersection(self, *others: abc.Iterable[object]) -> SetMut[object]:
-            return CustomSetMut(super().intersection(*others))
 
+def test_keys_and_set_operations() -> None:
+    d1, d2, d3, d4 = _data_for_keys_set_operations()
     assert d1.keys() & d1.keys() == {"a", "b"}
     assert d1.keys() & d2.keys() == {"b"}
     assert d1.keys() & d3.keys() == SetMut(())
@@ -136,6 +133,9 @@ def test_keys_set_operations() -> None:
     assert type(d1.keys() & []) is SetMut
     assert type(Vec(()) & d1.keys()) is SetMut
 
+
+def test_keys_and_set_operations_or() -> None:
+    d1, d2, d3, _ = _data_for_keys_set_operations()
     assert d1.keys() | d1.keys() == {"a", "b"}
     assert d1.keys() | d2.keys() == {"a", "b", "c"}
     assert d1.keys() | d3.keys() == {"a", "b", "d", "e"}
@@ -144,6 +144,9 @@ def test_keys_set_operations() -> None:
     assert d1.keys() | SetMut(d3.keys()) == {"a", "b", "d", "e"}
     assert d1.keys() | (1, 2) == {"a", "b", 1, 2}
 
+
+def test_keys_and_set_operations_xor() -> None:
+    d1, d2, d3, _ = _data_for_keys_set_operations()
     assert d1.keys() ^ d1.keys() == SetMut(())
     assert d1.keys() ^ d2.keys() == {"a", "c"}
     assert d1.keys() ^ d3.keys() == {"a", "b", "d", "e"}
@@ -152,6 +155,9 @@ def test_keys_set_operations() -> None:
     assert d1.keys() ^ SetMut(d3.keys()) == {"a", "b", "d", "e"}
     assert d1.keys() ^ tuple(d2.keys()) == {"a", "c"}
 
+
+def test_keys_and_set_operations_sub() -> None:
+    d1, d2, d3, _ = _data_for_keys_set_operations()
     assert d1.keys() - d1.keys() == SetMut(())
     assert d1.keys() - d2.keys() == {"a"}
     assert d1.keys() - d3.keys() == {"a", "b"}
@@ -160,6 +166,9 @@ def test_keys_set_operations() -> None:
     assert d1.keys() - SetMut(d3.keys()) == {"a", "b"}
     assert d1.keys() - (0, 1) == {"a", "b"}
 
+
+def test_keys_and_set_operations_isdisjoint() -> None:
+    d1, d2, d3, _ = _data_for_keys_set_operations()
     assert not d1.keys().isdisjoint(d1.keys())
     assert not d1.keys().isdisjoint(d2.keys())
     assert not d1.keys().isdisjoint(list(d2.keys()))
@@ -179,10 +188,18 @@ def test_keys_set_operations() -> None:
     assert de.keys().isdisjoint([1])
 
 
-def test_items_set_operations() -> None:
+def _data_for_keys_set_operations() -> tuple[
+    Dict[str, int], Dict[str, int], Dict[str, int], Dict[str, int]
+]:
     d1 = Dict({"a": 1, "b": 2})
-    d2 = Dict({"a": 2, "b": 2})
+    d2 = Dict({"b": 3, "c": 2})
     d3 = Dict({"d": 4, "e": 5})
+    d4 = Dict({"d": 4})
+    return d1, d2, d3, d4
+
+
+def test_items_and_set_and() -> None:
+    d1, d2, d3 = _data_for_set_operations()
     assert d1.items() & d1.items() == {("a", 1), ("b", 2)}
     assert d1.items() & d2.items() == {("b", 2)}
     assert d1.items() & d3.items() == SetMut(())
@@ -192,6 +209,10 @@ def test_items_set_operations() -> None:
     assert d1.items() & (("a", 1), ("b", 2)) == {("a", 1), ("b", 2)}
     assert d1.items() & (("a", 2), ("b", 2)) == {("b", 2)}
     assert d1.items() & (("d", 4), ("e", 5)) == SetMut(())
+
+
+def test_items_and_set_operations_or() -> None:
+    d1, d2, d3 = _data_for_set_operations()
 
     assert d1.items() | d1.items() == {("a", 1), ("b", 2)}
     assert d1.items() | d2.items() == {("a", 1), ("a", 2), ("b", 2)}
@@ -203,6 +224,9 @@ def test_items_set_operations() -> None:
     assert d1.items() | (("a", 2), ("b", 2)) == {("a", 1), ("a", 2), ("b", 2)}
     assert d1.items() | (("d", 4), ("e", 5)) == {("a", 1), ("b", 2), ("d", 4), ("e", 5)}
 
+
+def test_items_and_set_operations_xor() -> None:
+    d1, d2, d3 = _data_for_set_operations()
     assert d1.items() ^ d1.items() == SetMut(())
     assert d1.items() ^ d2.items() == {("a", 1), ("a", 2)}
     assert d1.items() ^ d3.items() == {("a", 1), ("b", 2), ("d", 4), ("e", 5)}
@@ -210,6 +234,9 @@ def test_items_set_operations() -> None:
     assert d1.items() ^ (("a", 2), ("b", 2)) == {("a", 1), ("a", 2)}
     assert d1.items() ^ (("d", 4), ("e", 5)) == {("a", 1), ("b", 2), ("d", 4), ("e", 5)}
 
+
+def test_items_and_set_operations_sub() -> None:
+    d1, d2, d3 = _data_for_set_operations()
     assert d1.items() - d1.items() == SetMut(())
     assert d1.items() - d2.items() == {("a", 1)}
     assert d1.items() - d3.items() == {("a", 1), ("b", 2)}
@@ -220,6 +247,9 @@ def test_items_set_operations() -> None:
     assert d1.items() - (("a", 2), ("b", 2)) == {("a", 1)}
     assert d1.items() - (("d", 4), ("e", 5)) == {("a", 1), ("b", 2)}
 
+
+def test_items_and_set_operations_isdisjoint() -> None:
+    d1, d2, d3 = _data_for_set_operations()
     assert not d1.items().isdisjoint(d1.items())
     assert not d1.items().isdisjoint(d2.items())
     assert not d1.items().isdisjoint(list(d2.items()))
@@ -238,13 +268,23 @@ def test_items_set_operations() -> None:
     assert de.items().isdisjoint([1])
 
 
-def test_set_operations_with_iterator() -> None:
+def _data_for_set_operations() -> tuple[Dict[str, int], Dict[str, int], Dict[str, int]]:
+    d1 = Dict({"a": 1, "b": 2})
+    d2 = Dict({"b": 3, "c": 2})
+    d3 = Dict({"d": 4, "e": 5})
+    return d1, d2, d3
+
+
+def test_keys_set_operations_with_iterator() -> None:
     origin = Dict({1: 2, 3: 4})
     assert origin.keys() & iter([1, 2]) == {1}
     assert origin.keys() | iter([1, 2]) == {1, 2, 3}
     assert origin.keys() ^ iter([1, 2]) == {2, 3}
     assert origin.keys() - iter([1, 2]) == {3}
 
+
+def test_items_set_operations_with_iterator() -> None:
+    origin = Dict({1: 2, 3: 4})
     items = origin.items()
     assert items & iter([(1, 2)]) == {(1, 2)}
     assert items ^ iter([(1, 2)]) == {(3, 4)}
@@ -341,7 +381,7 @@ def test_pickle() -> None:
             _ = pickle.dumps(d.items(), proto)
 
 
-def test_abc_registry() -> None:
+def test_abc_registry_keys() -> None:
     d = Dict({"a": 1})
 
     assert isinstance(d.keys(), abc.KeysView)
@@ -351,6 +391,9 @@ def test_abc_registry() -> None:
     assert isinstance(d.keys(), abc.Iterable)
     assert isinstance(d.keys(), abc.Container)
 
+
+def test_abc_registry_values() -> None:
+    d = Dict({"a": 1})
     assert isinstance(d.values(), abc.ValuesView)
     assert isinstance(d.values(), abc.MappingView)
     assert isinstance(d.values(), abc.Sized)
@@ -358,6 +401,9 @@ def test_abc_registry() -> None:
     assert isinstance(d.values(), abc.Iterable)
     assert isinstance(d.values(), abc.Container)
 
+
+def test_abc_registry_items() -> None:
+    d = Dict({"a": 1})
     assert isinstance(d.items(), abc.ItemsView)
     assert isinstance(d.items(), abc.MappingView)
     assert isinstance(d.items(), abc.Set)
