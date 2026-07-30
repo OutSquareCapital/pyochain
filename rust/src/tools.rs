@@ -5,7 +5,7 @@ use crate::{
     option::{PyNull, PySome, option},
     pyo3_ext::prelude::*,
     result::{PyoErr, PyoOk},
-    traits::PyoABC,
+    traits::{PyWrapper, PyoABC},
 };
 use pyo3::exceptions::PyIndexError;
 use pyo3::types::{PyAny, PyDict, PyIterator, PySequence, PySet, PyString, PyTuple};
@@ -935,17 +935,13 @@ impl Tail {
 }
 
 #[pyclass(frozen, generic, extends=abc::PyoIterator)]
-pub struct Iter {
-    inner: Py<PyIterator>,
-}
+pub struct Iter(pub Py<PyIterator>);
 impl Iter {
     /// New constructor for `Iter` in rust.
     /// We do this because `PyClassInitializer` can't be converted to pyobject directly, so we need to wrap it in a `Py` first.
     pub fn new(data: Bound<'_, PyIterator>) -> PyResult<Bound<'_, Self>> {
         let py = data.py();
-        let initializer = abc::PyoIterator::build_init().add_subclass(Self {
-            inner: data.unbind(),
-        });
+        let initializer = abc::PyoIterator::build_init().add_subclass(Self(data.unbind()));
         Bound::new(py, initializer)
     }
     pub fn empty(py: Python<'_>) -> PyResult<Bound<'_, Self>> {
@@ -957,30 +953,22 @@ impl Iter {
     #[new]
     fn py_new(data: Bound<'_, PyAny>) -> PyResult<PyClassInitializer<Self>> {
         abc::PyoIterator::build_init()
-            .add_subclass(Self {
-                inner: data.try_iter()?.unbind(),
-            })
+            .add_subclass(Self(data.try_iter()?.unbind()))
             .pipe(Ok)
     }
 
-    fn __iter__<'py>(slf: &Bound<'py, Self>) -> Py<PyIterator> {
-        slf.get().inner.clone_ref(slf.py())
+    fn __iter__<'py>(&self, py: Python<'_>) -> Py<PyIterator> {
+        self.inner().clone_ref(py)
     }
 
     fn __next__<'py>(slf: &Bound<'py, Self>) -> PyResult<Option<Bound<'py, PyAny>>> {
-        let py = slf.py();
-        slf.get()
-            .inner
-            .clone_ref(py)
-            .into_bound(py)
-            .next()
-            .transpose()
+        slf.get().into_inner_bound(slf.py()).next().transpose()
     }
 
     fn __repr__(slf: &Bound<'_, Self>) -> PyResult<String> {
         let py = slf.py();
         let name = slf.get_type().name();
-        let inner_repr = slf.get().inner.clone_ref(py).into_bound(py).repr()?;
+        let inner_repr = slf.get().into_inner_bound(py).repr()?;
         Ok(format!("{:?}({:?})", name, inner_repr))
     }
 }

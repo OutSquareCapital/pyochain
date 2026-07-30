@@ -14,10 +14,7 @@ use pyo3::{
 use pyochain_macros::try_cast;
 use tap::Pipe;
 #[pyclass(frozen, generic, sequence, extends=abc::PyoMutableSequence, name="Vec")]
-pub struct PyoVec {
-    #[pyo3(get)]
-    pub inner: Py<PyList>,
-}
+pub struct PyoVec(pub Py<PyList>);
 impl PyoVec {
     pub fn new_bound(py: Python<'_>) -> PyResult<Bound<'_, Self>> {
         let init = Self::new(PyTuple::empty(py).into_any())?;
@@ -32,7 +29,7 @@ impl PyoVec {
         data.pipe(|x| PyList::type_object(py).call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
             .map(Bound::unbind)
-            .map(|inner| abc::PyoMutableSequence::build_init().add_subclass(Self { inner }))
+            .map(|inner| abc::PyoMutableSequence::build_init().add_subclass(Self(inner)))
     }
     #[staticmethod]
     fn from_ref<'py>(data: Bound<'py, PyList>) -> PyResult<Bound<'py, Self>> {
@@ -40,35 +37,33 @@ impl PyoVec {
     }
 
     fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, PyIterator> {
-        slf.get().inner.bind(slf.py()).try_iter().unwrap()
+        slf.get().inner_bind(slf.py()).try_iter().unwrap()
     }
 
     fn __contains__(&self, key: Bound<'_, PyAny>) -> PyResult<bool> {
-        self.inner.bind(key.py()).contains(key)
+        self.inner_bind(key.py()).contains(key)
     }
     fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
         let py = slf.py();
         let name = slf.get_type().name()?;
 
         slf.get()
-            .inner
-            .clone_ref(py)
-            .into_bound(py)
+            .into_inner_bound(py)
             .pipe(get_repr)
             .map(|repr| format!("{}({})", name, repr))
     }
 
     fn __len__(slf: Bound<'_, Self>) -> usize {
-        slf.get().inner.bind(slf.py()).len()
+        slf.get().inner_bind(slf.py()).len()
     }
 
     fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<'py, bool> {
         let py = other.py();
-        let inner = self.inner.bind(py);
+        let inner = self.inner_bind(py);
         try_cast! {
             match other {
                 PyList => inner.eq(&other).map(Either::Left),
-                PyoVec => inner.eq(&other.get().inner.bind(py)).map(Either::Left),
+                PyoVec => inner.eq(&other.get().inner_bind(py)).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)
@@ -79,8 +74,7 @@ impl PyoVec {
     fn __reversed__<'py>(slf: Bound<'py, Self>) -> Bound<'py, PyIterator> {
         let py = slf.py();
         slf.get()
-            .inner
-            .bind(py)
+            .inner_bind(py)
             .pipe_as_ref(pylibs::builtins::reversed)
     }
 
@@ -88,14 +82,14 @@ impl PyoVec {
         let py = value.py();
         Self::extract_union(&value)?
             .as_sequence()
-            .pipe(|x| slf.get().inner.bind(py).as_sequence().concat(x))
+            .pipe(|x| slf.get().inner_bind(py).as_sequence().concat(x))
             .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
             .and_then(Bound::into_pyochain)
     }
 
     fn __iadd__<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<()> {
         let py = value.py();
-        self.inner.bind(py).iadd(value)?;
+        self.inner_bind(py).iadd(value)?;
         Ok(())
     }
     fn __inplace_concat__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<()> {
@@ -123,8 +117,7 @@ impl PyoVec {
     }
     fn __imul__(slf: Bound<'_, Self>, value: usize) -> PyResult<()> {
         slf.get()
-            .inner
-            .bind(slf.py())
+            .inner_bind(slf.py())
             .as_sequence()
             .in_place_repeat(value)?;
         Ok(())
@@ -133,43 +126,43 @@ impl PyoVec {
     fn __gt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
         let other = Self::extract_union(&value)?;
-        self.inner.bind(py).gt(other)
+        self.inner_bind(py).gt(other)
     }
 
     fn __ge__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
         let other = Self::extract_union(&value)?;
-        self.inner.bind(py).ge(other)
+        self.inner_bind(py).ge(other)
     }
 
     fn __lt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
         let other = Self::extract_union(&value)?;
-        self.inner.bind(py).lt(other)
+        self.inner_bind(py).lt(other)
     }
 
     fn __le__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
         let other = Self::extract_union(&value)?;
-        self.inner.bind(py).le(other)
+        self.inner_bind(py).le(other)
     }
 
     fn __getitem__<'py>(
         slf: Bound<'py, Self>,
         index: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        slf.get().inner.bind(slf.py()).as_any().get_item(index)
+        slf.get().inner_bind(slf.py()).as_any().get_item(index)
     }
     fn __setitem__(
         slf: Bound<'_, Self>,
         key: &Bound<'_, PyAny>,
         value: &Bound<'_, PyAny>,
     ) -> PyResult<()> {
-        slf.get().inner.bind(key.py()).as_any().set_item(key, value)
+        slf.get().inner_bind(key.py()).as_any().set_item(key, value)
     }
 
     fn __delitem__(slf: Bound<'_, Self>, key: &Bound<'_, PyAny>) -> PyResult<()> {
-        slf.get().inner.bind(key.py()).as_any().del_item(key)
+        slf.get().inner_bind(key.py()).as_any().del_item(key)
     }
 
     #[pyo3(signature = (*, reverse=false))]
@@ -178,8 +171,7 @@ impl PyoVec {
         let kwargs = PyDict::new(py);
         kwargs.set_item(intern!(py, "reverse"), reverse)?;
         slf.get()
-            .inner
-            .bind(py)
+            .inner_bind(py)
             .call_method(intern!(py, "sort"), (), Some(&kwargs))?;
         Ok(slf)
     }
@@ -189,55 +181,53 @@ impl PyoVec {
         key: &Bound<'py, PyAny>,
         reverse: bool,
     ) -> PyResult<Bound<'py, Self>> {
-        slf.get().inner.bind(slf.py()).sort_by(key, reverse)?;
+        slf.get().inner_bind(slf.py()).sort_by(key, reverse)?;
         Ok(slf)
     }
 
     pub fn append(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner.bind(value.py()).append(value)
+        self.inner_bind(value.py()).append(value)
     }
 
     pub fn extend(&self, iterable: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner.bind(iterable.py()).extend(iterable)
+        self.inner_bind(iterable.py()).extend(iterable)
     }
 
     fn repeat<'py>(&self, n: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = n.py();
-        self.inner
-            .bind(py)
+        self.inner_bind(py)
             .mul(n)
             .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
             .and_then(Bound::into_pyochain)
     }
     fn repeat_mut<'py>(slf: Bound<'py, Self>, n: &Bound<'_, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = n.py();
-        slf.get().inner.bind(py).imul(n)?;
+        slf.get().inner_bind(py).imul(n)?;
         Ok(slf)
     }
 
     pub fn insert(&self, index: usize, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner.bind(value.py()).insert(index, value)
+        self.inner_bind(value.py()).insert(index, value)
     }
 
     pub fn clear(&self, py: Python<'_>) -> () {
-        self.inner.bind(py).clear()
+        self.inner_bind(py).clear()
     }
 
     fn reverse(slf: Bound<'_, Self>) -> PyResult<()> {
-        slf.get().inner.bind(slf.py()).reverse()
+        slf.get().inner_bind(slf.py()).reverse()
     }
 
     fn copy(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self>> {
         slf.get()
-            .inner
-            .bind(slf.py())
+            .inner_bind(slf.py())
             .call_method0(intern!(slf.py(), "copy"))
             .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
             .and_then(Bound::into_pyochain)
     }
     #[pyo3(signature = (value, /))]
     fn count<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
-        self.inner.bind(value.py()).count(&value)
+        self.inner_bind(value.py()).count(&value)
     }
     #[pyo3(signature = (value, start = None, stop = None, /))]
     fn index<'py>(
@@ -246,15 +236,14 @@ impl PyoVec {
         start: Option<&Bound<'py, PyAny>>,
         stop: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        PySequenceExtMethods::index(self.inner.bind(value.py()), value, start, stop)
+        PySequenceExtMethods::index(self.inner_bind(value.py()), value, start, stop)
     }
 
     fn concat<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
         Self::extract_union(&other)?
             .pipe(|other| {
-                self.inner
-                    .bind(py)
+                self.inner_bind(py)
                     .as_sequence()
                     .concat(other.as_sequence())
             })
@@ -269,8 +258,7 @@ impl PyoVec {
         let py = other.py();
         let other = Self::extract_union(&other)?.as_sequence();
         slf.get()
-            .inner
-            .bind(py)
+            .inner_bind(py)
             .as_sequence()
             .in_place_concat(other)
             .map(|_| slf)

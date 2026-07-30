@@ -29,10 +29,7 @@ enum SetCmp<'py> {
     PyAbstract(Bound<'py, PyAbstractSet>),
 }
 #[pyclass(frozen, generic, extends=abc::PyoSet)]
-pub struct Set {
-    #[pyo3(get)]
-    pub inner: Py<PyFrozenSet>,
-}
+pub struct Set(pub Py<PyFrozenSet>);
 #[pymethods]
 impl Set {
     #[new]
@@ -41,15 +38,14 @@ impl Set {
         data.pipe(|x| PyFrozenSet::type_object(py).call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() })
             .map(Bound::unbind)
-            .map(|inner| abc::PyoSet::build_init().add_subclass(Self { inner }))
+            .map(|inner| abc::PyoSet::build_init().add_subclass(Self(inner)))
     }
 
     fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
         let py = slf.py();
         let name = slf.get_type().name()?;
         slf.get()
-            .inner
-            .bind(py)
+            .inner_bind(py)
             .pipe(|x| PyTuple::new(py, x))
             .and_then(get_repr)
             .map(|repr| format!("{}({})", name, repr))
@@ -68,7 +64,7 @@ impl Set {
     }
 
     fn __and__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        let inner = &self.inner;
+        let inner = &self.inner();
         match &value {
             SetCmp::Set(x) => inner.bind(x.py()).bitand(x.get().inner_bind(x.py())),
             SetCmp::SetMut(x) => inner.bind(x.py()).bitand(x.get().inner_bind(x.py())),
@@ -81,7 +77,7 @@ impl Set {
         .and_then(Bound::into_pyochain)
     }
     fn __or__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        let inner = &self.inner;
+        let inner = &self.inner();
         match &value {
             SetCmp::Set(x) => inner.bind(x.py()).bitor(x.get().inner_bind(x.py())),
             SetCmp::SetMut(x) => inner.bind(x.py()).bitor(x.get().inner_bind(x.py())),
@@ -94,7 +90,7 @@ impl Set {
     }
 
     fn __sub__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        let inner = &self.inner;
+        let inner = &self.inner();
         let sub_into_set = |x: Bound<'py, PyAny>| {
             inner
                 .bind(x.py())
@@ -119,7 +115,7 @@ impl Set {
     }
 
     fn __xor__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        let inner = &self.inner;
+        let inner = &self.inner();
         match &value {
             SetCmp::Set(x) => inner.bind(x.py()).bitxor(x.get().inner_bind(x.py())),
             SetCmp::SetMut(x) => inner.bind(x.py()).bitxor(x.get().inner_bind(x.py())),
@@ -148,8 +144,7 @@ impl Set {
     }
 
     fn __eq__<'py>(&self, value: Bound<'py, PyAny>) -> PyCmpOut<'py, bool> {
-        self.inner
-            .bind(value.py())
+        self.inner_bind(value.py())
             .as_any()
             .pipe_ref(|x| set_eq(x, value))
     }
@@ -184,40 +179,33 @@ impl Set {
     }
     #[pyo3(signature = (*others))]
     fn intersection<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        self.inner
-            .bind(others.py())
+        self.inner_bind(others.py())
             .intersection(others)
             .and_then(Bound::into_pyochain)
     }
 
     #[pyo3(signature = (*others))]
     fn union<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        self.inner
-            .bind(others.py())
+        self.inner_bind(others.py())
             .union(others)
             .and_then(Bound::into_pyochain)
     }
 
     #[pyo3(signature = (*others))]
     fn difference<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        self.inner
-            .bind(others.py())
+        self.inner_bind(others.py())
             .difference(others)
             .and_then(Bound::into_pyochain)
     }
 
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        self.inner
-            .bind(other.py())
+        self.inner_bind(other.py())
             .symmetric_difference(other)
             .and_then(Bound::into_pyochain)
     }
 }
 #[pyclass(generic, frozen, extends=abc::PyoMutableSet)]
-pub struct SetMut {
-    #[pyo3(get)]
-    pub inner: Py<PySet>,
-}
+pub struct SetMut(pub Py<PySet>);
 #[pymethods]
 impl SetMut {
     #[new]
@@ -226,7 +214,7 @@ impl SetMut {
         data.pipe(|x| PySet::type_object(py).call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
             .map(Bound::unbind)
-            .map(|inner| abc::PyoMutableSet::build_init().add_subclass(SetMut { inner }))
+            .map(|inner| abc::PyoMutableSet::build_init().add_subclass(SetMut(inner)))
     }
 
     fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, PyIterator> {
@@ -245,22 +233,20 @@ impl SetMut {
         let py = slf.py();
         let name = slf.get_type().name()?;
         slf.get()
-            .inner
-            .bind(py)
+            .inner_bind(py)
             .pipe(|x| PyTuple::new(py, x))
             .and_then(get_repr)
             .map(|repr| format!("{}({})", name, repr))
     }
 
     fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<'py, bool> {
-        self.inner
-            .bind(other.py())
+        self.inner_bind(other.py())
             .as_any()
             .pipe_ref(|x| set_eq(x, other))
     }
 
     fn __and__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        let inner = &self.inner;
+        let inner = &self.inner();
 
         match &value {
             SetCmp::Set(x) => inner.bind(x.py()).bitand(x.get().inner_bind(x.py())),
@@ -274,7 +260,7 @@ impl SetMut {
     }
 
     fn __or__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        let inner = &self.inner;
+        let inner = &self.inner();
         match &value {
             SetCmp::Set(x) => inner.bind(x.py()).bitor(x.get().inner_bind(x.py())),
             SetCmp::SetMut(x) => inner.bind(x.py()).bitor(x.get().inner_bind(x.py())),
@@ -299,13 +285,12 @@ impl SetMut {
         self.inner_bind(value.py()).difference_update((value,))
     }
     fn __ixor__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
-        self.inner
-            .bind(value.py())
+        self.inner_bind(value.py())
             .symmetric_difference_update(value)
     }
 
     fn __sub__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        let inner = &self.inner;
+        let inner = &self.inner();
         match &value {
             SetCmp::Set(x) => inner
                 .bind(x.py())
@@ -336,7 +321,7 @@ impl SetMut {
     }
 
     fn __xor__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        let inner = &self.inner;
+        let inner = &self.inner();
         match &value {
             SetCmp::Set(x) => inner.bind(x.py()).bitxor(x.get().inner_bind(x.py())),
             SetCmp::SetMut(x) => inner.bind(x.py()).bitxor(x.get().inner_bind(x.py())),
@@ -387,8 +372,7 @@ impl SetMut {
 
     fn copy(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self>> {
         slf.get()
-            .inner
-            .bind(slf.py())
+            .inner_bind(slf.py())
             .call_method0(intern!(slf.py(), "copy"))
             .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
             .and_then(Bound::into_pyochain)
@@ -422,16 +406,14 @@ impl SetMut {
     }
     #[pyo3(signature = (*others))]
     fn intersection<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        self.inner
-            .bind(others.py())
+        self.inner_bind(others.py())
             .intersection(others)
             .and_then(Bound::into_pyochain)
     }
 
     #[pyo3(signature = (*others))]
     fn union<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        self.inner
-            .bind(others.py())
+        self.inner_bind(others.py())
             .union(others)
             .and_then(Bound::into_pyochain)
     }
@@ -442,8 +424,7 @@ impl SetMut {
 
     #[pyo3(signature = (*others))]
     fn difference<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        self.inner
-            .bind(others.py())
+        self.inner_bind(others.py())
             .difference(others)
             .and_then(Bound::into_pyochain)
     }
@@ -452,8 +433,7 @@ impl SetMut {
         self.inner_bind(s.py()).difference_update(s)
     }
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        self.inner
-            .bind(other.py())
+        self.inner_bind(other.py())
             .symmetric_difference(other)
             .and_then(Bound::into_pyochain)
     }

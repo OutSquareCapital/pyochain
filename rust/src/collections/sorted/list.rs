@@ -4,6 +4,7 @@ use crate::collections::sorted::traits::{
 };
 use crate::collections::sorted::{bisect, errors};
 use crate::pyo3_ext::{prelude::*, pylibs};
+use crate::traits::PyWrapper;
 use pyo3::{prelude::*, types::PyList};
 use std::sync::{Mutex, atomic::AtomicUsize};
 
@@ -498,12 +499,7 @@ impl InnerSorted for InnerLists {
         if !self.get_maxes().is_empty() {
             if values.len() * 4 >= self.get_len() {
                 lists.append(values)?;
-                values = self
-                    .collapse_lists(py)?
-                    .get()
-                    .inner
-                    .clone_ref(py)
-                    .into_bound(py);
+                values = self.collapse_lists(py)?.get().into_inner_bound(py);
                 values.sort()?;
                 self.clear(py);
             } else {

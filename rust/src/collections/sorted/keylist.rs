@@ -5,6 +5,7 @@ use crate::collections::sorted::traits::{
     DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters,
 };
 use crate::pyo3_ext::{prelude::*, pylibs};
+use crate::traits::PyWrapper;
 use pyo3::{prelude::*, types::PyList};
 use std::ops::Index;
 use std::sync::{Mutex, atomic::AtomicUsize};
@@ -539,12 +540,7 @@ impl InnerSorted for InnerKeyLists {
         if !self.get_maxes().is_empty() {
             if values.len() * 4 >= self.get_len() {
                 lists.append(values)?;
-                values = self
-                    .collapse_lists(py)?
-                    .get()
-                    .inner
-                    .clone_ref(py)
-                    .into_bound(py);
+                values = self.collapse_lists(py)?.get().into_inner_bound(py);
                 values.sort_by(key_fn, false)?;
                 self.clear(py);
             } else {

@@ -2,14 +2,25 @@ use pyo3::{
     PyClass, PyTypeInfo,
     exceptions::PyTypeError,
     prelude::*,
-    types::{PyDict, PyFrozenSet, PyList, PyRange, PySet, PyTuple},
+    types::{PyDict, PyFrozenSet, PyIterator, PyList, PyRange, PySequence, PySet, PyTuple},
 };
 
-use crate::{abc, collections, dict, mixins::Checkable, pyovec, range, seq, sets};
+use crate::{
+    abc, collections, dict, mixins::Checkable, pyo3_ext::types::PyDeque, pyovec, range, seq, sets,
+    sliceview::SliceView, tools,
+};
 pub trait PyWrapper<T: PyTypeInfo>:
     PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {
-    fn as_inner(&self) -> &Py<T>;
+    fn inner(&self) -> &Py<T>;
+    fn inner_bind<'py>(&self, py: Python<'py>) -> &Bound<'py, T> {
+        self.inner().bind(py)
+    }
+    #[inline(always)]
+    fn into_inner_bound<'py>(&self, py: Python<'py>) -> Bound<'py, T> {
+        self.inner().clone_ref(py).into_bound(py)
+    }
+
     /// Extracts the inner type of `Self` from an arbitrary python object.\
     /// For example, if `Self` is `seq::Seq`, this will extract the inner `PyTuple` from a `seq::Seq` or a `PyTuple`.
     #[inline]
@@ -17,7 +28,7 @@ pub trait PyWrapper<T: PyTypeInfo>:
         let py = value.py();
         value
             .cast_exact::<Self>()
-            .map(|x| x.get().as_inner().bind(py))
+            .map(|x| x.get().inner_bind(py))
             .or_else(|_| value.cast_exact::<T>())
             .map_err(|_| {
                 let py = value.py();
@@ -38,9 +49,9 @@ macro_rules! impl_py_wrapper {
         $(
             impl PyWrapper<$T> for $wrapper {
 
-                #[inline]
-                fn as_inner(&self) -> &Py<$T> {
-                    &self.inner
+                #[inline(always)]
+                fn inner(&self) -> &Py<$T> {
+                    &self.0
                 }
             }
         )*
@@ -53,12 +64,20 @@ impl_py_wrapper! {
     sets::SetMut => PySet,
     range::Range => PyRange,
     dict::Dict => PyDict,
+    tools::Iter => PyIterator,
     collections::StableSet => PyDict,
     collections::PyoCounter => PyDict,
     collections::HeapMin => PyList,
     collections::HeapMax => PyList,
+    collections::Deque => PyDeque,
 }
-
+/// Named struct so need to implement `PyWrapper` manually.
+impl PyWrapper<PySequence> for SliceView {
+    #[inline(always)]
+    fn inner(&self) -> &Py<PySequence> {
+        &self.inner
+    }
+}
 /// Trait to convert a `Bound` of a Python type into a `Bound` of a PyoChain type, with the same underlying data.\
 /// Useful for no-copy conversions, when the type is known at compile time.\
 /// For example, this avoid checking the type of a `PyTuple` at runtime to convert it into a `Seq`.
@@ -70,9 +89,7 @@ impl<'py> IntoPyochain<'py, seq::Seq> for Bound<'py, PyTuple> {
     #[inline]
     fn into_pyochain(self) -> PyResult<Bound<'py, seq::Seq>> {
         let py = self.py();
-        let initializer = abc::PyoSequence::build_init().add_subclass(seq::Seq {
-            inner: self.unbind(),
-        });
+        let initializer = abc::PyoSequence::build_init().add_subclass(seq::Seq(self.unbind()));
         Bound::new(py, initializer)
     }
 }
@@ -80,9 +97,8 @@ impl<'py> IntoPyochain<'py, pyovec::PyoVec> for Bound<'py, PyList> {
     #[inline]
     fn into_pyochain(self) -> PyResult<Bound<'py, pyovec::PyoVec>> {
         let py = self.py();
-        let initializer = abc::PyoMutableSequence::build_init().add_subclass(pyovec::PyoVec {
-            inner: self.unbind(),
-        });
+        let initializer =
+            abc::PyoMutableSequence::build_init().add_subclass(pyovec::PyoVec(self.unbind()));
         Bound::new(py, initializer)
     }
 }
@@ -90,9 +106,7 @@ impl<'py> IntoPyochain<'py, sets::Set> for Bound<'py, PyFrozenSet> {
     #[inline]
     fn into_pyochain(self) -> PyResult<Bound<'py, sets::Set>> {
         let py = self.py();
-        let initializer = abc::PyoSet::build_init().add_subclass(sets::Set {
-            inner: self.unbind(),
-        });
+        let initializer = abc::PyoSet::build_init().add_subclass(sets::Set(self.unbind()));
         Bound::new(py, initializer)
     }
 }
@@ -100,9 +114,8 @@ impl<'py> IntoPyochain<'py, sets::SetMut> for Bound<'py, PySet> {
     #[inline]
     fn into_pyochain(self) -> PyResult<Bound<'py, sets::SetMut>> {
         let py = self.py();
-        let initializer = abc::PyoMutableSet::build_init().add_subclass(sets::SetMut {
-            inner: self.unbind(),
-        });
+        let initializer =
+            abc::PyoMutableSet::build_init().add_subclass(sets::SetMut(self.unbind()));
         Bound::new(py, initializer)
     }
 }
@@ -110,9 +123,8 @@ impl<'py> IntoPyochain<'py, dict::Dict> for Bound<'py, PyDict> {
     #[inline]
     fn into_pyochain(self) -> PyResult<Bound<'py, dict::Dict>> {
         let py = self.py();
-        let initializer = abc::PyoMutableMapping::build_init().add_subclass(dict::Dict {
-            inner: self.unbind(),
-        });
+        let initializer =
+            abc::PyoMutableMapping::build_init().add_subclass(dict::Dict(self.unbind()));
         Bound::new(py, initializer)
     }
 }

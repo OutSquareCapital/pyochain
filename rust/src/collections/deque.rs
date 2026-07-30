@@ -4,7 +4,7 @@ use crate::{
         prelude::*,
         types::{PyCmpOut, PyDeque, PySupportsIndex},
     },
-    traits::PyoABC,
+    traits::{PyWrapper, PyoABC},
 };
 use either::Either;
 use pyo3::{
@@ -17,10 +17,7 @@ use pyo3::{
 use pyochain_macros::try_cast;
 use tap::prelude::*;
 #[pyclass(frozen, generic, sequence, extends = abc::PyoMutableSequence)]
-pub struct Deque {
-    #[pyo3(get)]
-    inner: Py<PyDeque>,
-}
+pub struct Deque(pub Py<PyDeque>);
 #[pymethods]
 impl Deque {
     #[new]
@@ -30,29 +27,26 @@ impl Deque {
         data: Option<Bound<'_, PyAny>>,
         max_length: Option<Bound<'_, PyInt>>,
     ) -> PyResult<PyClassInitializer<Self>> {
-        Ok(abc::PyoMutableSequence::build_init().add_subclass(Self {
-            inner: PyDeque::new(
+        Ok(abc::PyoMutableSequence::build_init().add_subclass(Self(
+            PyDeque::new(
                 py,
                 data.unwrap_or_else(|| PyTuple::empty(py).into_any()),
                 max_length,
             )?
             .unbind(),
-        }))
+        )))
     }
 
     #[staticmethod]
     fn from_ref(data: Bound<'_, PyDeque>) -> PyResult<Bound<'_, Self>> {
         let py = data.py();
-        let initializer = abc::PyoMutableSequence::build_init().add_subclass(Self {
-            inner: data.unbind(),
-        });
+        let initializer = abc::PyoMutableSequence::build_init().add_subclass(Self(data.unbind()));
         Bound::new(py, initializer)
     }
 
     fn __repr__(slf: Bound<'_, Self>, py: Python<'_>) -> PyResult<String> {
         slf.get()
-            .inner
-            .bind(py)
+            .inner_bind(py)
             .repr()?
             .to_string()
             .replace("deque", &slf.get_type().name()?.to_string())
@@ -61,7 +55,7 @@ impl Deque {
     }
 
     fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
-        self.inner.bind(py).try_iter().unwrap()
+        self.inner_bind(py).try_iter().unwrap()
     }
 
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
@@ -69,11 +63,11 @@ impl Deque {
     }
 
     fn __len__(&self, py: Python<'_>) -> PyResult<usize> {
-        self.inner.bind(py).len()
+        self.inner_bind(py).len()
     }
 
     fn __getitem__<'py>(&self, key: Bound<'py, PySupportsIndex>) -> PyResult<Bound<'py, PyAny>> {
-        self.inner.bind(key.py()).as_any().get_item(key)
+        self.inner_bind(key.py()).as_any().get_item(key)
     }
 
     fn __setitem__(
@@ -81,20 +75,20 @@ impl Deque {
         key: Bound<'_, PySupportsIndex>,
         value: Bound<'_, PyAny>,
     ) -> PyResult<()> {
-        self.inner.bind(key.py()).set_item(key, value)
+        self.inner_bind(key.py()).set_item(key, value)
     }
 
     fn __delitem__(&self, key: Bound<'_, PySupportsIndex>) -> PyResult<()> {
-        self.inner.bind(key.py()).del_item(key)
+        self.inner_bind(key.py()).del_item(key)
     }
 
     fn __contains__(&self, key: Bound<'_, PyAny>) -> PyResult<bool> {
-        self.inner.bind(key.py()).contains(key)
+        self.inner_bind(key.py()).contains(key)
     }
 
     fn __iadd__(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
-        let inner = slf.get().inner.bind(py);
+        let inner = slf.get().inner_bind(py);
         let other = if value.is(&slf) { inner } else { value };
         inner.iadd(other)?;
         Ok(())
@@ -102,12 +96,12 @@ impl Deque {
 
     fn __add__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
-        let inner = self.inner.bind(py);
+        let inner = self.inner_bind(py);
         try_cast! {
             match value {
                 Deque => inner
                     .as_sequence()
-                    .concat(value.get().inner.bind(py).as_sequence())
+                    .concat(value.get().inner_bind(py).as_sequence())
                     .map(|x| unsafe { x.cast_into_unchecked::<PyDeque>() })
                     .and_then(Self::from_ref),
                 PyDeque => inner
@@ -121,8 +115,7 @@ impl Deque {
     }
 
     fn __mul__<'py>(&self, value: Bound<'py, PyInt>) -> PyResult<Bound<'py, Self>> {
-        self.inner
-            .bind(value.py())
+        self.inner_bind(value.py())
             .mul(value)
             .map(|x| unsafe { x.cast_into_unchecked::<PyDeque>() })
             .and_then(Self::from_ref)
@@ -131,16 +124,16 @@ impl Deque {
         self.__mul__(value)
     }
     fn __imul__<'py>(&self, value: Bound<'py, PyInt>) -> PyResult<()> {
-        self.inner.bind(value.py()).imul(value)?;
+        self.inner_bind(value.py()).imul(value)?;
         Ok(())
     }
 
     fn __lt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let inner = self.inner.bind(py);
+        let inner = self.inner_bind(py);
         try_cast! {
             match value {
-                Deque => inner.lt(value.get().inner.bind(py)),
+                Deque => inner.lt(value.get().inner_bind(py)),
                 PyDeque => inner.lt(value),
                 _ => Err(PyTypeError::new_err("")),
             }
@@ -149,10 +142,10 @@ impl Deque {
 
     fn __le__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let inner = self.inner.bind(py);
+        let inner = self.inner_bind(py);
         try_cast! {
             match value {
-                Deque => inner.le(value.get().inner.bind(py)),
+                Deque => inner.le(value.get().inner_bind(py)),
                 PyDeque => inner.le(value),
                 _ => Err(PyTypeError::new_err("")),
             }
@@ -161,10 +154,10 @@ impl Deque {
 
     fn __gt__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let inner = self.inner.bind(py);
+        let inner = self.inner_bind(py);
         try_cast! {
             match value {
-                Deque => inner.gt(value.get().inner.bind(py)),
+                Deque => inner.gt(value.get().inner_bind(py)),
                 PyDeque => inner.gt(value),
                 _ => Err(PyTypeError::new_err("")),
             }
@@ -173,10 +166,10 @@ impl Deque {
 
     fn __ge__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let inner = self.inner.bind(py);
+        let inner = self.inner_bind(py);
         try_cast! {
             match value {
-                Deque => inner.ge(value.get().inner.bind(value.py())),
+                Deque => inner.ge(value.get().inner_bind(value.py())),
                 PyDeque => inner.ge(value),
                 _ => Err(PyTypeError::new_err("")),
             }
@@ -185,46 +178,45 @@ impl Deque {
 
     fn __eq__<'py>(&self, value: Bound<'py, PyAny>) -> PyCmpOut<'py, bool> {
         let py = value.py();
-        let inner = self.inner.bind(py);
+        let inner = self.inner_bind(py);
         try_cast! {
             match value {
-                Deque => inner.eq(value.get().inner.bind(py)).map(Either::Left),
+                Deque => inner.eq(value.get().inner_bind(py)).map(Either::Left),
                 PyDeque => inner.eq(value).map(Either::Left),
                 _ => PyNotImplemented::get(py).into_bound().pipe(Ok).map(Either::Right),
             }
         }
     }
     fn __reversed__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyIterator>> {
-        self.inner.bind(py).reversed()
+        self.inner_bind(py).reversed()
     }
 
     #[getter]
     fn max_length<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
-        self.inner.bind(py).getattr(intern!(py, "maxlen"))
+        self.inner_bind(py).getattr(intern!(py, "maxlen"))
     }
 
     fn append(&self, x: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner.bind(x.py()).append(x)
+        self.inner_bind(x.py()).append(x)
     }
 
     fn append_left(&self, x: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner.bind(x.py()).append_left(x)
+        self.inner_bind(x.py()).append_left(x)
     }
 
     fn extend(slf: Bound<'_, Self>, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
-        let inner = slf.get().inner.bind(py);
+        let inner = slf.get().inner_bind(py);
         let other = if iterable.is(&slf) { inner } else { iterable };
         inner.extend(other)
     }
 
     fn clear(&self, py: Python<'_>) -> PyResult<()> {
-        self.inner.bind(py).clear()
+        self.inner_bind(py).clear()
     }
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        self.inner
-            .bind(py)
+        self.inner_bind(py)
             .call_method0(intern!(py, "copy"))
             .map(|x| unsafe { x.cast_into_unchecked::<PyDeque>() })
             .and_then(Self::from_ref)
@@ -232,24 +224,24 @@ impl Deque {
 
     fn extend_left(slf: Bound<'_, Self>, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
-        let inner = slf.get().inner.bind(py);
+        let inner = slf.get().inner_bind(py);
         let other = if iterable.is(&slf) { inner } else { iterable };
         inner.extend_left(other)
     }
 
     fn pop_left<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
-        self.inner.bind(py).call_method0(intern!(py, "popleft"))
+        self.inner_bind(py).call_method0(intern!(py, "popleft"))
     }
     #[pyo3(signature = (n=1))]
     fn rotate(slf: Bound<'_, Self>, n: isize) -> PyResult<Bound<'_, Self>> {
-        slf.get().inner.bind(slf.py()).rotate(n).map(|_| slf)
+        slf.get().inner_bind(slf.py()).rotate(n).map(|_| slf)
     }
 
     fn insert(&self, index: isize, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner.bind(value.py()).insert(index, value)
+        self.inner_bind(value.py()).insert(index, value)
     }
     fn count<'py>(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
-        self.inner.bind(value.py()).count(value)
+        self.inner_bind(value.py()).count(value)
     }
     #[pyo3(signature = (x, start=None, stop=None, /))]
     fn index<'py>(
@@ -258,13 +250,13 @@ impl Deque {
         start: Option<&Bound<'py, PyAny>>,
         stop: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        self.inner.bind(x.py()).index(x, start, stop)
+        self.inner_bind(x.py()).index(x, start, stop)
     }
     fn pop<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
-        self.inner.bind(py).pop()
+        self.inner_bind(py).pop()
     }
     #[pyo3(signature = (value, /))]
     fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner.bind(value.py()).remove(value)
+        self.inner_bind(value.py()).remove(value)
     }
 }

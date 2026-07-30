@@ -1,12 +1,9 @@
 use crate::{
-    collections::{
-        sorted::errors,
-        {InnerKeyLists, InnerLists},
-    },
+    collections::{InnerKeyLists, InnerLists, sorted::errors},
     pyo3_ext::{prelude::*, pylibs},
     pyovec::PyoVec,
     tools,
-    traits::IntoPyochain,
+    traits::{IntoPyochain, PyWrapper},
 };
 use either::Either;
 use pyo3::{
@@ -692,7 +689,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             (-1, Ordering::Greater) => {
                 let result =
                     self.getitem_from_slice(py, lists, PySlice::new(py, stop + 1, start + 1, 1))?;
-                result.get().inner.bind(py).reverse()?;
+                result.get().inner_bind(py).reverse()?;
                 Ok(result)
             }
             // Return a list because a negative step could reverse the order
