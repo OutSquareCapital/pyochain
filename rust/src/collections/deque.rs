@@ -183,7 +183,7 @@ impl Deque {
         }
     }
 
-    fn __eq__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<PyCmpOut<'py, bool>> {
+    fn __eq__<'py>(&self, value: Bound<'py, PyAny>) -> PyCmpOut<'py, bool> {
         let py = value.py();
         let inner = self.inner.bind(py);
         try_cast! {

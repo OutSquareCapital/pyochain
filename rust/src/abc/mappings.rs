@@ -40,10 +40,7 @@ impl PyoMapping {
         })
     }
 
-    fn __eq__<'py>(
-        slf: Bound<'py, Self>,
-        other: Bound<'py, PyAny>,
-    ) -> PyResult<PyCmpOut<bool, 'py>> {
+    fn __eq__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         let py = slf.py();
         match other.cast::<PyMapping>() {
             Ok(other) => slf

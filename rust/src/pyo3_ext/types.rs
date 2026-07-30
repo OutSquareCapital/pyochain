@@ -10,8 +10,8 @@ use pyo3::types::{
 use pyo3::{PyTypeInfo, intern, prelude::*};
 use tap::prelude::*;
 const COLLECTIONS_ABC: &str = "collections.abc";
-/// Return type from python comparison dunders, returning either a `bool` or `NotImplemented`.
-pub type PyCmpOut<'py, T> = Either<T, Bound<'py, PyNotImplemented>>;
+/// Return type from python comparison dunders, returning either `T` in case of success, or `NotImplemented`.
+pub type PyCmpOut<'py, T> = PyResult<Either<T, Bound<'py, PyNotImplemented>>>;
 /// All ABCs have a `register` method that can be used to register a type as a virtual subclass of the ABC.\
 /// This trait factorize the implementation for all ABCs.\
 /// The code is strictly identical from what's already available for `pyo3::types::PySequence` for example.

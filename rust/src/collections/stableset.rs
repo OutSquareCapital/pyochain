@@ -55,7 +55,7 @@ impl StableSet {
         self.inner.bind(item.py()).contains(item)
     }
 
-    fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<PyCmpOut<'py, bool>> {
+    fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<'py, bool> {
         let py = other.py();
         let inner = self.inner.bind(py);
         try_cast! {

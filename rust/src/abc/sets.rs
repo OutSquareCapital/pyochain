@@ -42,7 +42,7 @@ impl PyoSet {
     
 }
     
-    fn __and__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<PyCmpOut<'py, Bound<'py, Self>>> {
+    fn __and__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<'py, Bound<'py, Self>> {
         let py = slf.py();
         if !other.is_instance_of::<PyAbstractSet>() {
             return PyNotImplemented::get(py).into_bound().pipe(Ok).map(Either::Right);
@@ -60,7 +60,7 @@ impl PyoSet {
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
             .map(Either::Left)
     }
-    fn __or__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<PyCmpOut<'py, Bound<'py, Self>>> {
+    fn __or__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<'py, Bound<'py, Self>> {
         let py = slf.py();
         if !other.is_instance_of::<PyAbstractSet>() {
             return PyNotImplemented::get(py).into_bound().pipe(Ok).map(Either::Right);
@@ -77,7 +77,7 @@ impl PyoSet {
             .map(Either::Left)
     }
 
-    fn __sub__<'py>(slf: Bound<'py, Self>, other: IntoSetComp<'py>) -> PyResult<PyCmpOut<'py, Bound<'py, Self>>> {
+    fn __sub__<'py>(slf: Bound<'py, Self>, other: IntoSetComp<'py>) -> PyCmpOut<'py, Bound<'py, Self>> {
         let py = slf.py();
         let other_set = match other {
             IntoSetComp::Set(other) => {other.into_any()},
@@ -101,7 +101,7 @@ impl PyoSet {
     fn __rsub__<'py>(
         slf: Bound<'py, Self>,
         other: IntoSetComp<'py>,
-    ) -> PyResult<PyCmpOut<'py, Bound<'py, Self>>> {
+    ) -> PyCmpOut<'py, Bound<'py, Self>> {
         let py = slf.py();
         let other_set = match other {
             IntoSetComp::Set(other) => {other.into_any()},
@@ -121,7 +121,7 @@ impl PyoSet {
             .map(Either::Left)
     }
 
-    fn __xor__<'py>(slf: Bound<'py, Self>, other: IntoSetComp<'py>) -> PyResult<PyCmpOut<'py, Bound<'py, PyAny>>> {
+    fn __xor__<'py>(slf: Bound<'py, Self>, other: IntoSetComp<'py>) -> PyCmpOut<'py, Bound<'py, PyAny>> {
         let other_set = match other {
             IntoSetComp::Set(other) => {other},
             IntoSetComp::Iterable(iterable) => { py_from_iterable(slf.as_any(), iterable.as_any())?.pipe(|x|unsafe{x.cast_into_unchecked::<PyAbstractSet>()})},
@@ -133,19 +133,19 @@ impl PyoSet {
     fn __rand__<'py>(
         slf: Bound<'py, Self>,
         other: Bound<'py, PyAny>,
-    ) -> PyResult<PyCmpOut<'py, Bound<'py, Self>>> {
+    ) -> PyCmpOut<'py, Bound<'py, Self>> {
         Self::__and__(slf, other)
     }
-    fn __ror__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<PyCmpOut<'py, Bound<'py, Self>>> {
+    fn __ror__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<'py, Bound<'py, Self>> {
         Self::__or__(slf, other)
     }
     fn __rxor__<'py>(
         slf: Bound<'py, Self>,
         other: IntoSetComp<'py>,
-    ) -> PyResult<PyCmpOut<'py, Bound<'py, PyAny>>> {
+    ) -> PyCmpOut<'py, Bound<'py, PyAny>> {
         Self::__xor__(slf, other)
     }
-    fn __eq__<'py>(slf: Bound<'py, Self>, other: IntoSetComp<'py>) -> PyResult<PyCmpOut<bool, 'py>> {
+    fn __eq__<'py>(slf: Bound<'py, Self>, other: IntoSetComp<'py>) -> PyCmpOut<bool, 'py> {
         match other {
             IntoSetComp::Set(other_set ) => {
                 let out = slf.len()? == other_set.len()? && slf.le(&other_set)?;
@@ -154,7 +154,7 @@ impl PyoSet {
             _ =>  PyNotImplemented::get(slf.py()).into_bound().pipe(Ok).map(Either::Right),
         }
     }
-    fn __le__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<PyCmpOut<bool, 'py>> {
+    fn __le__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         if !other.is_instance_of::<PyAbstractSet>() {
             return PyNotImplemented::get(slf.py()).into_bound().pipe(Ok).map(Either::Right);
         }
@@ -169,7 +169,7 @@ impl PyoSet {
         return Ok(true).map(Either::Left);
     }
 
-    fn __ge__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<PyCmpOut<bool, 'py>> {
+    fn __ge__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         if !other.is_instance_of::<PyAbstractSet>() {
             return PyNotImplemented::get(slf.py()).into_bound().pipe(Ok).map(Either::Right);
         }
@@ -184,7 +184,7 @@ impl PyoSet {
         return Ok(true).map(Either::Left);
     }
 
-    fn __lt__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<PyCmpOut<bool, 'py>> {
+    fn __lt__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         if other.is_instance_of::<PyAbstractSet>() {
             Ok(slf.len()? < other.len()? && slf.le(other)?).map(Either::Left)
         } else {
@@ -192,7 +192,7 @@ impl PyoSet {
         }
     }
 
-    fn __gt__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<PyCmpOut<bool, 'py>> {
+    fn __gt__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         if other.is_instance_of::<PyAbstractSet>() {
             Ok(slf.len()? > other.len()? && slf.ge(other)?).map(Either::Left)
         } else {

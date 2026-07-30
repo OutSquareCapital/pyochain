@@ -106,7 +106,7 @@ impl Set {
         self.inner.bind(value.py()).gt(value)
     }
 
-    fn __eq__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<PyCmpOut<'py, bool>> {
+    fn __eq__<'py>(&self, value: Bound<'py, PyAny>) -> PyCmpOut<'py, bool> {
         self.inner
             .bind(value.py())
             .as_any()
@@ -227,7 +227,7 @@ impl SetMut {
             .map(|repr| format!("{}({})", name, repr))
     }
 
-    fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<PyCmpOut<'py, bool>> {
+    fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<'py, bool> {
         self.inner
             .bind(other.py())
             .as_any()
@@ -444,10 +444,7 @@ impl SetMut {
 }
 
 #[inline]
-fn set_eq<'py>(
-    left: &Bound<'py, PyAny>,
-    right: Bound<'py, PyAny>,
-) -> PyResult<PyCmpOut<'py, bool>> {
+fn set_eq<'py>(left: &Bound<'py, PyAny>, right: Bound<'py, PyAny>) -> PyCmpOut<'py, bool> {
     let py = right.py();
     try_cast! {
         match right {
