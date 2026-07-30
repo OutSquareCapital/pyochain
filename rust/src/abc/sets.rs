@@ -90,11 +90,7 @@ impl PyoSet {
         }
         slf.try_iter()?
             .chain(other.try_iter()?)
-            .try_fold(PyList::empty(py), |init, x| {
-                let item = x?;
-                init.append(item)?;
-                Ok::<_, PyErr>(init)
-            })?
+            .collect_bound::<PyList>(py)?
             .into_bound_py_any(py)
             .and_then(|x| py_from_iterable(slf.as_any(), &x))
             .map(Either::Left)
@@ -130,6 +126,33 @@ impl PyoSet {
             .map(Either::Left)
     }
 
+    fn __xor__<'py>(
+        slf: Bound<'py, Self>,
+        other: IntoSetComp<'py>,
+    ) -> PyCmpOut<'py, Bound<'py, PyAny>> {
+        let other_set = match other {
+            IntoSetComp::Set(other) => other,
+            IntoSetComp::Iterable(iterable) => py_from_iterable(slf.as_any(), iterable.as_any())?
+                .pipe(|x| unsafe { x.cast_into_unchecked::<PyAbstractSet>() }),
+            _ => {
+                return PyNotImplemented::get(slf.py())
+                    .into_bound()
+                    .pipe(Ok)
+                    .map(Either::Right);
+            }
+        };
+        slf.sub(&other_set)?
+            .bitor(&other_set.sub(slf)?)
+            .map(Either::Left)
+    }
+
+    fn __rand__<'py>(
+        slf: Bound<'py, Self>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        slf.bitand(other)
+    }
+
     fn __rsub__<'py>(
         slf: Bound<'py, Self>,
         other: IntoSetComp<'py>,
@@ -160,43 +183,17 @@ impl PyoSet {
             .map(Either::Left)
     }
 
-    fn __xor__<'py>(
-        slf: Bound<'py, Self>,
-        other: IntoSetComp<'py>,
-    ) -> PyCmpOut<'py, Bound<'py, PyAny>> {
-        let other_set = match other {
-            IntoSetComp::Set(other) => other,
-            IntoSetComp::Iterable(iterable) => py_from_iterable(slf.as_any(), iterable.as_any())?
-                .pipe(|x| unsafe { x.cast_into_unchecked::<PyAbstractSet>() }),
-            _ => {
-                return PyNotImplemented::get(slf.py())
-                    .into_bound()
-                    .pipe(Ok)
-                    .map(Either::Right);
-            }
-        };
-        slf.sub(&other_set)?
-            .bitor(&other_set.sub(slf)?)
-            .map(Either::Left)
-    }
-
-    fn __rand__<'py>(
-        slf: Bound<'py, Self>,
-        other: Bound<'py, PyAny>,
-    ) -> PyCmpOut<'py, Bound<'py, PyAbstractSet>> {
-        Self::__and__(slf, other)
-    }
     fn __ror__<'py>(
         slf: Bound<'py, Self>,
         other: Bound<'py, PyAny>,
-    ) -> PyCmpOut<'py, Bound<'py, PyAbstractSet>> {
-        Self::__or__(slf, other)
+    ) -> PyResult<Bound<'py, PyAny>> {
+        slf.bitor(other)
     }
     fn __rxor__<'py>(
         slf: Bound<'py, Self>,
-        other: IntoSetComp<'py>,
-    ) -> PyCmpOut<'py, Bound<'py, PyAny>> {
-        Self::__xor__(slf, other)
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        slf.bitxor(other)
     }
     fn __eq__<'py>(slf: Bound<'py, Self>, other: IntoSetComp<'py>) -> PyCmpOut<bool, 'py> {
         match other {
