@@ -204,7 +204,7 @@ impl Set {
             .and_then(Bound::into_pyochain)
     }
 }
-#[pyclass(generic, frozen, extends=abc::PyoMutableSet)]
+#[pyclass(frozen, generic, extends=abc::PyoMutableSet)]
 pub struct SetMut(pub Py<PySet>);
 #[pymethods]
 impl SetMut {
