@@ -1,7 +1,7 @@
 use crate::{
     abc,
     display::get_repr,
-    pyo3_ext::types::PyCmpOut,
+    pyo3_ext::{prelude::*, types::PyCmpOut},
     traits::{IntoPyochain, PyoABC},
 };
 use either::Either;
@@ -127,64 +127,44 @@ impl Set {
         self.__xor__(value)
     }
     fn isdisjoint<'py>(&self, s: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        let py = s.py();
-        self.inner
-            .bind(py)
-            .call_method1(intern!(py, "isdisjoint"), (s,))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
+        self.inner.bind(s.py()).isdisjoint(s)
     }
 
     fn is_subset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        let py = other.py();
-        self.inner
-            .bind(py)
-            .call_method1(intern!(py, "issubset"), (other,))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
+        self.inner.bind(other.py()).issubset(other)
     }
 
     fn is_superset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        let py = other.py();
-        self.inner
-            .bind(py)
-            .call_method1(intern!(py, "issuperset"), (other,))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
+        self.inner.bind(other.py()).issuperset(other)
     }
-
-    fn intersection<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        let py = other.py();
+    #[pyo3(signature = (*others))]
+    fn intersection<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
         self.inner
-            .bind(py)
-            .call_method1(intern!(py, "intersection"), (other,))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() })
+            .bind(others.py())
+            .intersection(others)
             .and_then(Bound::into_pyochain)
     }
 
     #[pyo3(signature = (*others))]
     fn union<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        let py = others.py();
         self.inner
-            .bind(py)
-            .call_method1(intern!(py, "union"), others)
-            .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() })
+            .bind(others.py())
+            .union(others)
             .and_then(Bound::into_pyochain)
     }
 
     #[pyo3(signature = (*others))]
     fn difference<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        let py = others.py();
         self.inner
-            .bind(py)
-            .call_method1(intern!(py, "difference"), others)
-            .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() })
+            .bind(others.py())
+            .difference(others)
             .and_then(Bound::into_pyochain)
     }
 
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        let py = other.py();
         self.inner
-            .bind(py)
-            .call_method1(intern!(py, "symmetric_difference"), (other,))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() })
+            .bind(other.py())
+            .symmetric_difference(other)
             .and_then(Bound::into_pyochain)
     }
 }
@@ -354,92 +334,62 @@ impl SetMut {
     }
     #[pyo3(signature = (*s))]
     fn intersection_update(&self, s: Bound<'_, PyTuple>) -> PyResult<()> {
-        self.inner
-            .bind(s.py())
-            .call_method1(intern!(s.py(), "intersection_update"), s)?;
-        Ok(())
+        self.inner.bind(s.py()).intersection_update(s)
     }
-
     fn isdisjoint<'py>(&self, s: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.inner
-            .bind(s.py())
-            .call_method1(intern!(s.py(), "isdisjoint"), (s,))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
+        self.inner.bind(s.py()).isdisjoint(s)
     }
 
     fn is_subset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.inner
-            .bind(other.py())
-            .call_method1(intern!(other.py(), "issubset"), (other,))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
+        self.inner.bind(other.py()).issubset(other)
     }
-
     fn is_superset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self.inner
-            .bind(other.py())
-            .call_method1(intern!(other.py(), "issuperset"), (other,))
-            .map(|x| unsafe { x.cast_into_unchecked::<PyBool>() })
+        self.inner.bind(other.py()).issuperset(other)
     }
 
     fn remove(&self, element: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner
-            .bind(element.py())
-            .call_method1(intern!(element.py(), "remove"), (element,))?;
-        Ok(())
+        self.inner.bind(element.py()).remove(element)
     }
 
     fn symmetric_difference_update(&self, s: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner
-            .bind(s.py())
-            .call_method1(intern!(s.py(), "symmetric_difference_update"), (s,))?;
-        Ok(())
+        self.inner.bind(s.py()).symmetric_difference_update(s)
     }
-
     #[pyo3(signature = (*others))]
     fn intersection<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
         self.inner
             .bind(others.py())
-            .call_method1(intern!(others.py(), "intersection"), others)?
-            .pipe(|x| unsafe { x.cast_into_unchecked::<PySet>() })
-            .into_pyochain()
+            .intersection(others)
+            .and_then(Bound::into_pyochain)
     }
 
     #[pyo3(signature = (*others))]
     fn union<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
         self.inner
             .bind(others.py())
-            .call_method1(intern!(others.py(), "union"), others)?
-            .pipe(|x| unsafe { x.cast_into_unchecked::<PySet>() })
-            .into_pyochain()
+            .union(others)
+            .and_then(Bound::into_pyochain)
     }
     #[pyo3(signature = (*s))]
     fn update(&self, s: Bound<'_, PyTuple>) -> PyResult<()> {
-        let py = s.py();
-        self.inner.bind(py).call_method1(intern!(py, "update"), s)?;
-        Ok(())
+        self.inner.bind(s.py()).update(s)
     }
 
     #[pyo3(signature = (*others))]
     fn difference<'py>(&self, others: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
         self.inner
             .bind(others.py())
-            .call_method1(intern!(others.py(), "difference"), others)?
-            .pipe(|x| unsafe { x.cast_into_unchecked::<PySet>() })
-            .into_pyochain()
+            .difference(others)
+            .and_then(Bound::into_pyochain)
     }
     #[pyo3(signature = (*s))]
     fn difference_update<'py>(&self, s: Bound<'py, PyTuple>) -> PyResult<()> {
-        self.inner
-            .bind(s.py())
-            .call_method1(intern!(s.py(), "difference_update"), s)?;
-        Ok(())
+        self.inner.bind(s.py()).difference_update(s)
     }
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.inner
             .bind(other.py())
-            .call_method1(intern!(other.py(), "symmetric_difference"), (other,))?
-            .pipe(|x| unsafe { x.cast_into_unchecked::<PySet>() })
-            .into_pyochain()
+            .symmetric_difference(other)
+            .and_then(Bound::into_pyochain)
     }
 }
 
@@ -448,8 +398,8 @@ fn set_eq<'py>(left: &Bound<'py, PyAny>, right: Bound<'py, PyAny>) -> PyCmpOut<'
     let py = right.py();
     try_cast! {
         match right {
-            Set | SetMut => left.eq(right.get().inner.bind(py).as_any()).map(Either::Left),
-            PySet | PyFrozenSet => left.eq(right.as_any()).map(Either::Left),
+            Set | SetMut => left.eq(right.get().inner.bind(py)).map(Either::Left),
+            PySet | PyFrozenSet => left.eq(right).map(Either::Left),
             _ => PyNotImplemented::get(py).into_bound().pipe(Ok).map(Either::Right),
         }
     }
