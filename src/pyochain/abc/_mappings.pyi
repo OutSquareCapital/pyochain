@@ -237,8 +237,6 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):  # pyrigh
 
     """
 
-    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute]
-
     @abstractmethod
     @override
     def __setitem__(self, key: K, value: V, /) -> None: ...

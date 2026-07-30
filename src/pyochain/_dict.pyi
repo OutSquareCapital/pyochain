@@ -90,9 +90,6 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
         ```
     """
 
-    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
-    _inner: dict[K, V]
-
     def __init__(self, data: DictConvertible[K, V]) -> None: ...
     @classmethod
     def from_keys[K1, V1](cls, keys: Iterable[K1], value: V1 = None) -> Dict[K1, V1]:

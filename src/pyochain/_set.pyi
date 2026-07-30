@@ -45,8 +45,6 @@ class Set[T](PyoSet[T]):
         ```
     """
 
-    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
-
     def __init__(self, data: Iterable[T]) -> None: ...
     @override
     def __contains__(self, item: object) -> bool: ...
