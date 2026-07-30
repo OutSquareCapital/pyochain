@@ -1,13 +1,15 @@
 use crate::{
     abc,
     display::get_repr,
+    pyo3_ext::types::PyCmpOut,
     traits::{IntoPyochain, PyoABC},
 };
+use either::Either;
 use pyo3::{
-    PyTypeInfo, intern,
+    BoundObject, PyTypeInfo, intern,
     prelude::*,
     pyclass_init::PyClassInitializer,
-    types::{PyBool, PyFrozenSet, PyIterator, PySet, PyTuple},
+    types::{PyBool, PyFrozenSet, PyIterator, PyNotImplemented, PySet, PyTuple},
 };
 use pyochain_macros::try_cast;
 use tap::Pipe;
@@ -104,7 +106,7 @@ impl Set {
         self.inner.bind(value.py()).gt(value)
     }
 
-    fn __eq__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __eq__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<PyCmpOut<'py, bool>> {
         self.inner
             .bind(value.py())
             .as_any()
@@ -225,7 +227,7 @@ impl SetMut {
             .map(|repr| format!("{}({})", name, repr))
     }
 
-    fn __eq__(&self, other: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<PyCmpOut<'py, bool>> {
         self.inner
             .bind(other.py())
             .as_any()
@@ -442,13 +444,16 @@ impl SetMut {
 }
 
 #[inline]
-fn set_eq(left: &Bound<'_, PyAny>, right: Bound<'_, PyAny>) -> PyResult<bool> {
+fn set_eq<'py>(
+    left: &Bound<'py, PyAny>,
+    right: Bound<'py, PyAny>,
+) -> PyResult<PyCmpOut<'py, bool>> {
     let py = right.py();
     try_cast! {
         match right {
-            Set | SetMut => left.eq(right.get().inner.bind(py).as_any()),
-            PySet | PyFrozenSet => left.eq(right.as_any()),
-            _ => Ok(false),
+            Set | SetMut => left.eq(right.get().inner.bind(py).as_any()).map(Either::Left),
+            PySet | PyFrozenSet => left.eq(right.as_any()).map(Either::Left),
+            _ => PyNotImplemented::get(py).into_bound().pipe(Ok).map(Either::Right),
         }
     }
 }

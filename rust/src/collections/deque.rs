@@ -2,15 +2,17 @@ use crate::{
     abc::{self},
     pyo3_ext::{
         prelude::*,
-        types::{PyDeque, PySupportsIndex},
+        types::{PyCmpOut, PyDeque, PySupportsIndex},
     },
     traits::PyoABC,
 };
+use either::Either;
 use pyo3::{
+    BoundObject,
     exceptions::PyTypeError,
     intern,
     prelude::*,
-    types::{PyInt, PyIterator, PyTuple},
+    types::{PyInt, PyIterator, PyNotImplemented, PyTuple},
 };
 use pyochain_macros::try_cast;
 use tap::prelude::*;
@@ -181,14 +183,14 @@ impl Deque {
         }
     }
 
-    fn __eq__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __eq__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<PyCmpOut<'py, bool>> {
         let py = value.py();
         let inner = self.inner.bind(py);
         try_cast! {
             match value {
-                Deque => inner.eq(value.get().inner.bind(py)),
-                PyDeque => inner.eq(value),
-                _ => Ok(false),
+                Deque => inner.eq(value.get().inner.bind(py)).map(Either::Left),
+                PyDeque => inner.eq(value).map(Either::Left),
+                _ => PyNotImplemented::get(py).into_bound().pipe(Ok).map(Either::Right),
             }
         }
     }

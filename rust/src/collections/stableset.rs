@@ -1,14 +1,18 @@
 use crate::{
     abc::{self},
     display::get_repr,
-    pyo3_ext::{prelude::*, types::PyAbstractSet},
+    pyo3_ext::{
+        prelude::*,
+        types::{PyAbstractSet, PyCmpOut},
+    },
     sets::SetMut,
     traits::{IntoPyochain, PyoABC},
 };
+use either::Either;
 use pyo3::{
-    PyTypeInfo, intern,
+    BoundObject, PyTypeInfo, intern,
     prelude::*,
-    types::{PyDict, PyIterator, PyNone, PySet},
+    types::{PyDict, PyIterator, PyNone, PyNotImplemented, PySet},
 };
 use pyochain_macros::try_cast;
 use tap::prelude::*;
@@ -51,19 +55,25 @@ impl StableSet {
         self.inner.bind(item.py()).contains(item)
     }
 
-    fn __eq__(&self, other: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<PyCmpOut<'py, bool>> {
         let py = other.py();
         let inner = self.inner.bind(py);
-        try_cast!(match other {
-            PyAbstractSet => inner.keys_view().eq(other),
-            StableSet => other
-                .get()
-                .inner
-                .bind(py)
-                .pipe(|set| inner.keys_view().eq(set)),
-            PySet => inner.keys_view().eq(other),
-            _ => Ok(false),
-        })
+        try_cast! {
+            match other {
+                PyAbstractSet => inner.keys_view().eq(other).map(Either::Left),
+                StableSet => other
+                    .get()
+                    .inner
+                    .bind(py)
+                    .pipe(|set| inner.keys_view().eq(set))
+                    .map(Either::Left),
+                PySet => inner.keys_view().eq(other).map(Either::Left),
+                _ => PyNotImplemented::get(py)
+                    .into_bound()
+                    .pipe(Ok)
+                    .map(Either::Right),
+            }
+        }
     }
 
     #[staticmethod]
