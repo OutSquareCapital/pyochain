@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable
-from typing import Final, Self, SupportsIndex, overload, override
+from typing import Self, SupportsIndex, overload, override
 
 from _typeshed import SupportsRichComparison
 
@@ -8,8 +8,6 @@ from pyochain.abc import PyoIterator, PyoMutableSequence
 
 class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):
     """Abstract base class for heaps."""
-
-    inner: Final[list[T]]
 
     def __init__(self, data: Iterable[T]) -> None: ...
     @staticmethod

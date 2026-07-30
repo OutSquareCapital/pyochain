@@ -27,9 +27,9 @@ def test_constructors() -> None:
     assert Seq[int](()) == ()
     seq = Seq((0, 1, 2, 3))
     seq_from_seq = Seq(seq)
-    seq_from_tup = Seq(seq.inner)
-    assert seq.inner is seq_from_seq.inner
-    assert seq.inner is seq_from_tup.inner
+    seq_from_tup = Seq((0, 1, 2, 3))
+    assert seq.first() is seq_from_seq.first()
+    assert seq.last() is seq_from_tup.last()
     assert seq is not seq_from_seq
     assert seq is not seq_from_tup
     assert Seq([]) == ()

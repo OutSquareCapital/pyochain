@@ -1,6 +1,6 @@
 from collections.abc import Iterable, Iterator
 from collections.abc import Set as AbstractSet
-from typing import Final, Self, override
+from typing import Self, override
 
 from .abc import PyoMutableSet, PyoSet
 
@@ -24,31 +24,28 @@ class Set[T](PyoSet[T]):
 
     Example:
         ```python
-        >>> from pyochain import Set
+        >>> from pyochain import Set, Iter
         >>> Set(())
         Set()
         >>> s = Set((1, 2, 2, 3))
         >>> s
         Set(1, 2, 3)
-        >>> s_2 = Set(s.inner)
-        >>> # No copy is made when creating s_2 from s.inner, they reference the same underlying frozenset.
-        >>> is_no_copy = (
-        ...     s.inner is s_2.inner
-        ...     and s.inner is s.inner
-        ...     and s_2.inner is s.inner
-        ...     and frozenset(s.inner) is s.inner
+        >>> # If you already have a `frozenset`, you can use it directly without copying:
+        >>> fs = frozenset((1, 2, 3))
+        >>> s2 = Set(fs)
+        >>> s2
+        Set(1, 2, 3)
+        >>> is_same = (
+        ...     s2.iter().find(lambda x: x == 1).unwrap()
+        ...     is Iter(fs).find(lambda x: x == 1).unwrap()
         ... )
-        >>> is_no_copy
+        >>> is_same
         True
-        >>> # However, creating a new Set from s (not using .inner) will be a copy operation.
-        >>> Set(s).inner is s.inner
-        False
 
         ```
     """
 
     __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
-    inner: Final[frozenset[T]]
 
     def __init__(self, data: Iterable[T]) -> None: ...
     @override
@@ -274,10 +271,6 @@ class SetMut[T](PyoMutableSet[T]):
     Args:
         data (Iterable[T]): Any `Iterable` of elements to initialize the set with.
     """
-
-    __slots__ = ("_inner",)  # pyright: ignore[reportUnannotatedClassAttribute]
-    inner: Final[set[T]]
-
     def __init__(self, data: Iterable[T]) -> None: ...
     @override
     def __iter__(self) -> Iterator[T]: ...

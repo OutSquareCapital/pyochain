@@ -14,10 +14,12 @@ import gc
 import random
 import string
 import weakref
+from collections import deque
 from typing import TYPE_CHECKING, Never, Self, override
 
 import pytest
 
+from pyochain import Vec
 from pyochain.collections import Deque
 
 from . import test_seq
@@ -764,9 +766,8 @@ def test_reversed() -> None:
 def test_reversed_new() -> None:
     klass = type(reversed(Deque[str | int]()))
     # NOTE: klass is the dedicated reversed deque iterator type
-    # It only expects precise deque classes as arguments, so we have to pass the inner deque to it
     for s in ("abcd", range(20)):
-        assert list(klass(Deque(s).inner)) == list(reversed(s))  # pyright: ignore[reportCallIssue]
+        assert Vec(klass(deque(s))) == Vec(reversed(s))  # pyright: ignore[reportCallIssue]
 
 
 @pytest.mark.skip(

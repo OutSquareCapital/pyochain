@@ -44,6 +44,7 @@ The classes from the `sortedcontainers` library have been ported to pyochain, wi
 - **Removal**: `Iter::{from_ref, cloned}` have been removed. Use `a, b = x.tee()` instead (for `cloned`), or `a, b = Iter(x).tee()` (for `from_ref`), where *a* is the original `Iterator`, and *b* the cloned one.
 - `{Vec, Seq}` dunders (like `__add__`, `__mul__`, etc...) now return new instances of the same class, instead of the underlying data structure, i.e `Vec + Vec` returns a `Vec`, not a `list`. The only exception as of now remain for `__getitem__` when a `slice` is used.
 - **imports**: views-like classes are now back to being only imported from `abc` module, to stay consistent with python stdlib.
+- **Removal**: `inner` attribute is now a private implementation detail of pyochain, rather than something accessible from the public API. If you are confronted by code that refuses to handle, say, a `MutableSequence` instead of a `list`, 99% of the time, it's a good time to change it (or raise an issue to the author of the code). Python is meant to use duck typing, and `def foo(x: list):` is, again, not a valid pattern, at runtime or for static typing, 99% of the time. In any case, you can simply do `x.pipe(list)` if needed, for example.
 
 ### 🆕 New features
 

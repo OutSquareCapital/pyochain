@@ -38,7 +38,6 @@ class Deque[T](PyoMutableSequence[T]):
         See https://docs.python.org/3/library/collections.html#collections.deque for more details.
     """
 
-    inner: Final[deque[T]]
     max_length: Final[int | None]
 
     @overload

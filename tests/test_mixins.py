@@ -30,7 +30,7 @@ PARAMS_THEN_SOME: Vec[PyoSized] = Vec.from_ref([
 
 
 @pytest.mark.parametrize(
-    "data", PARAMS_THEN_SOME.inner, ids=PARAMS_THEN_SOME.iter().map(repr).collect(tuple)
+    "data", PARAMS_THEN_SOME, ids=PARAMS_THEN_SOME.iter().map(repr).collect(tuple)
 )
 def test_then_some(data: PyoSized) -> None:
     assert data.then_some().is_some() if data.len() > 0 else data.then_some().is_none()

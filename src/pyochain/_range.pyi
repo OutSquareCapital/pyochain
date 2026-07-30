@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from typing import Final, SupportsIndex, final, overload, override
+from typing import SupportsIndex, final, overload, override
 
 from pyochain.abc import PyoSequence
 
@@ -38,8 +38,6 @@ class Range(PyoSequence[int]):
 
         ```
     """
-
-    inner: Final[range]
 
     def __init__(self, start: int, stop: int, step: int = 1) -> None: ...
     @override

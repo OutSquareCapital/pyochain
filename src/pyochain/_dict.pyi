@@ -165,8 +165,6 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
             Some('a')
             >>> original_dict
             {1: 'z', 2: 'b', 3: 'c'}
-            >>> ref_dict.inner is original_dict
-            True
 
             ```
         """
@@ -220,8 +218,6 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
             >>> pyo_dict = Dict.from_object(person)
             >>> pyo_dict
             Dict('name': 'Alice', 'age': 30)
-            >>> pyo_dict.inner is person.__dict__
-            True
             >>> pyo_dict.insert("name", "Bob")
             Some('Alice')
             >>> person
@@ -243,8 +239,6 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
             >>> d2
             Dict(1: 'a', 2: 'b')
             >>> d1 is d2
-            False
-            >>> d1.inner is d2.inner
             False
 
             ```
@@ -311,16 +305,17 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
             ```python
             >>> from pyochain import Dict
             >>> d1 = Dict({1: "a", 2: "b"})
-            >>> d1_inner_id = id(d1.inner)
             >>> d2 = Dict({2: "c", 3: "d"})
             >>> d1.union_mut(d2)
             Dict(1: 'a', 2: 'c', 3: 'd')
-            >>> id(d1.inner) == d1_inner_id
-            True
             >>> d1.union_mut(((4, "e"), (5, "f")))
             Dict(1: 'a', 2: 'c', 3: 'd', 4: 'e', 5: 'f')
-            >>> id(d1.inner) == d1_inner_id
-            True
+            >>> d1.insert(2, "z")
+            Some('c')
+            >>> d1
+            Dict(1: 'a', 2: 'z', 3: 'd', 4: 'e', 5: 'f')
+            >>> d2
+            Dict(2: 'c', 3: 'd')
 
             ```
         """

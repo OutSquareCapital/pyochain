@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Iterator, Mapping
-from typing import Any, Final, Self, final, overload, override
+from typing import Any, Self, final, overload, override
 
 from _typeshed import SupportsItems, SupportsKeysAndGetItem
 
@@ -62,9 +62,6 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
     >>> c = PyoCounter({"a": 4, "b": 2})  # a new counter from a mapping
 
     """
-
-    inner: Final[dict[T, int]]
-
     @overload
     def __init__(self, iterable: None = None, /) -> None: ...
     @overload

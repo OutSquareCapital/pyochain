@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Iterator
-from typing import Any, Final, override
+from typing import Any, override
 
 from pyochain import SetMut
 
@@ -36,9 +36,6 @@ class StableSet[T](PyoMutableSet[T]):
 
         ```
     """
-
-    _inner: Final[dict[T, None]]
-
     def __init__(self, data: Iterable[T]) -> None: ...
     @override
     def __iter__(self) -> Iterator[T]: ...

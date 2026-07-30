@@ -1,5 +1,5 @@
 from collections.abc import Callable, Iterable, Iterator
-from typing import Final, Self, SupportsIndex, final, overload, override
+from typing import Self, SupportsIndex, final, overload, override
 
 from _typeshed import SupportsRichComparison
 
@@ -26,9 +26,6 @@ class Vec[T](PyoMutableSequence[T]):
     Args:
         data (Iterable[T]): Any `Iterable` of elements to initialize the `Vec` with.
     """
-
-    inner: Final[list[T]]
-
     def __init__(self, data: Iterable[T]) -> None: ...
     @override
     def __iter__(self) -> Iterator[T]: ...

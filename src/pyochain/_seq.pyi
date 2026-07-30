@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Iterator
-from typing import Any, Final, Self, SupportsIndex, final, overload, override
+from typing import Any, Self, SupportsIndex, final, overload, override
 
 from pyochain.abc import PyoSequence
 
@@ -26,7 +26,6 @@ class Seq[T](PyoSequence[T]):
         data (Iterable[T]): The data to initialize the Seq with.
 
     Example:
-        ```python
         >>> from pyochain import Seq
         >>> Seq(())
         Seq()
@@ -34,23 +33,14 @@ class Seq[T](PyoSequence[T]):
         >>> seq = Seq(t)
         >>> seq
         Seq(1, 2, 3)
-        >>> seq_2 = Seq(seq.inner)
-        >>> # No copy is made when creating seq_2 from seq.inner, they reference the same underlying tuple.
-        >>> is_no_copy = (
-        ...     seq.inner is seq_2.inner
-        ...     and seq.inner is t
-        ...     and seq_2.inner is t
-        ...     and tuple(seq.inner) is t
-        ... )
-        >>> is_no_copy
-        True
-        >>> Seq(seq).inner is seq.inner
+        >>> # If you already have a `tuple`, you can use it directly without copying:
+        >>> t = ([1], [2], [3])
+        >>> seq2 = Seq(t)
+        >>> id(seq2.first()) == id(t[0])
         True
 
         ```
     """
-
-    inner: Final[tuple[T, ...]]
 
     def __init__(self, data: Iterable[T]) -> None: ...
     @override
