@@ -249,8 +249,7 @@ def test_interop_and() -> None:
     assert OP.f1 & OP.f2 == target
     assert OP.f1 & OP.r2 == target
     assert OP.r2 & OP.f1 == target
-    # pyrefly: ignore [unsupported-operation]
-    assert OP.f1 & OP.l2 == target  # pyright: ignore[reportOperatorIssue]
+    assert OP.f1 & OP.l2 == target
 
 
 def test_interop_or() -> None:
@@ -258,8 +257,7 @@ def test_interop_or() -> None:
     assert OP.f1 | OP.f2 == target
     assert OP.f1 | OP.r2 == target
     assert OP.r2 | OP.f1 == target
-    # pyrefly: ignore [unsupported-operation]
-    assert OP.f1 | OP.l2 == target  # pyright: ignore[reportOperatorIssue]
+    assert OP.f1 | OP.l2 == target
 
 
 def test_interop_sub() -> None:
@@ -271,10 +269,8 @@ def test_interop_sub() -> None:
     assert OP.f2 - OP.r1 == rev_target
     assert OP.r1 - OP.f2 == fwd_target
     assert OP.r2 - OP.f1 == rev_target
-    # pyrefly: ignore [unsupported-operation]
-    assert OP.f1 - OP.l2 == fwd_target  # pyright: ignore[reportOperatorIssue]
-    # pyrefly: ignore [unsupported-operation]
-    assert OP.f2 - OP.l1 == rev_target  # pyright: ignore[reportOperatorIssue]
+    assert OP.f1 - OP.l2 == fwd_target
+    assert OP.f2 - OP.l1 == rev_target
 
 
 def test_interop_xor() -> None:
@@ -282,8 +278,7 @@ def test_interop_xor() -> None:
     assert OP.f1 ^ OP.f2 == target
     assert OP.f1 ^ OP.r2 == target
     assert OP.r2 ^ OP.f1 == target
-    # pyrefly: ignore [unsupported-operation]
-    assert OP.f1 ^ OP.l2 == target  # pyright: ignore[reportOperatorIssue]
+    assert OP.f1 ^ OP.l2 == target
 
 
 def test_interop_lt() -> None:

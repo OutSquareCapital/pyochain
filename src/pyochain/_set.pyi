@@ -53,7 +53,7 @@ class Set[T](PyoSet[T]):
     @override
     def __len__(self) -> int: ...
     @override
-    def __and__(self, value: AbstractSet[object], /) -> Self:
+    def __and__(self, value: AbstractSet[object], /) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return self&value.
 
         Args:
@@ -75,7 +75,7 @@ class Set[T](PyoSet[T]):
         """
 
     @override
-    def __or__[S](self, value: AbstractSet[S], /) -> Set[T | S]:
+    def __or__[S](self, value: AbstractSet[S], /) -> Set[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return self|value.
 
         Args:
@@ -97,7 +97,7 @@ class Set[T](PyoSet[T]):
         """
 
     @override
-    def __sub__(self, value: AbstractSet[object], /) -> Self:
+    def __sub__(self, value: AbstractSet[object], /) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return self-value.
 
         Args:
@@ -120,7 +120,7 @@ class Set[T](PyoSet[T]):
         """
 
     @override
-    def __xor__[S](self, value: AbstractSet[S], /) -> Set[T | S]:
+    def __xor__[S](self, value: AbstractSet[S], /) -> Set[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return self^value.
 
         Args:
@@ -282,14 +282,14 @@ class SetMut[T](PyoMutableSet[T]):
     @override
     def __eq__(self, other: object) -> bool: ...
     @override
-    def __and__(self, value: AbstractSet[object], /) -> SetMut[T]:
+    def __and__(self, value: AbstractSet[object], /) -> SetMut[T]:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return self&value."""
 
     @override
     def __iand__(self, value: AbstractSet[object], /) -> SetMut[T]:
         """Return self&=value."""
     @override
-    def __or__[S](self, value: AbstractSet[S], /) -> SetMut[T | S]:
+    def __or__[S](self, value: AbstractSet[S], /) -> SetMut[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return self|value.
 
         Args:
@@ -332,7 +332,7 @@ class SetMut[T](PyoMutableSet[T]):
         """
 
     @override
-    def __sub__(self, value: AbstractSet[object], /) -> SetMut[T]:
+    def __sub__(self, value: AbstractSet[object], /) -> SetMut[T]:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return self-value.
 
         Args:
@@ -376,7 +376,7 @@ class SetMut[T](PyoMutableSet[T]):
         """
 
     @override
-    def __xor__[S](self, value: AbstractSet[S], /) -> SetMut[T | S]:
+    def __xor__[S](self, value: AbstractSet[S], /) -> SetMut[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return self^value.
 
         Args:
