@@ -1,6 +1,6 @@
 use crate::{
     collections::{
-        sorted::{errors, iter::try_iterator_into_list},
+        sorted::errors,
         {InnerKeyLists, InnerLists},
     },
     pyo3_ext::{prelude::*, pylibs},
@@ -700,7 +700,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             _ if step > 0 => (start..stop)
                 .step_by(step as usize)
                 .map(|i| self.getitem_from_int(py, lists, i))
-                .try_fold(PyList::empty(py), try_iterator_into_list)?
+                .collect_bound::<PyList>(py)?
                 .into_pyochain(),
             // Negative step with nothing to iterate (mirrors Python's `range`,
             // which is empty when `start <= stop` for a negative step).
@@ -709,7 +709,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                 // Negative step, `start > stop` guaranteed by the arm above.
                 std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
                     .map(|i| self.getitem_from_int(py, lists, i))
-                    .try_fold(PyList::empty(py), try_iterator_into_list)?
+                    .collect_bound::<PyList>(py)?
                     .into_pyochain()
             }
         }
