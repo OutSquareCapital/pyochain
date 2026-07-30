@@ -501,6 +501,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         self._list.remove(value)
 
     @override
+    # pyrefly: ignore [bad-override]
     def difference(self, *iterables: Iterable[Any]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return the difference of two or more sets as a new sorted set.
 
@@ -562,6 +563,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         return self.difference_update(other)
 
     @override
+    # pyrefly: ignore [bad-override]
     def intersection(self, *iterables: Iterable[Any]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return the intersection of two or more sets as a new sorted set.
 
@@ -621,6 +623,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         return self.intersection_update(other)
 
     @override
+    # pyrefly: ignore [bad-override]
     def symmetric_difference(self, other: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return the symmetric difference with `other` as a new sorted set.
 
@@ -643,6 +646,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         return self._fromset(diff)
 
     @override
+    # pyrefly: ignore [bad-override]
     def __xor__(self, other: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
         return self.symmetric_difference(other)
 
@@ -683,6 +687,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         return self.symmetric_difference_update(other)
 
     @override
+    # pyrefly: ignore [bad-override]
     def union(self, *iterables: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return new sorted set with values from itself and all `iterables`.
 
@@ -701,6 +706,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         return self.__class__(self.iter().chain(*iterables))
 
     @override
+    # pyrefly: ignore [bad-override]
     def __or__(self, other: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
         return self.union(other)
 

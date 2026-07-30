@@ -5,6 +5,7 @@ from typing import Any, Self, override
 
 from pyochain.abc import PyoCollection
 
+# pyrefly: ignore [implicit-abstract-class]
 class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImplicitAbstractClass]
     """Extends `PyoCollection[T]` and `collections.abc.Set[T]`.
 

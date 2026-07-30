@@ -52,6 +52,7 @@ def test_getitem_error() -> None:
     a = Vec[str]([])
     msg = "list indices must be integers or slices"
     with pytest.raises(TypeError, match=msg):
+        # pyrefly: ignore [bad-index]
         a["a"]  # pyright: ignore[reportCallIssue, reportArgumentType]
 
 
@@ -59,6 +60,7 @@ def test_setitem_error() -> None:
     a = Vec[str]([])
     msg = "list indices must be integers or slices"
     with pytest.raises(TypeError, match=msg):
+        # pyrefly: ignore [unsupported-operation]
         a["a"] = "python"  # pyright: ignore[reportCallIssue, reportArgumentType]
 
 
@@ -75,6 +77,7 @@ def test_repr() -> None:
     assert str(a2) == "Vec(0, 1, 2)"
     assert repr(a2) == "Vec(0, 1, 2)"
 
+    # pyrefly: ignore [bad-argument-type]
     a2.append(a2)  # pyright: ignore[reportArgumentType]
     a2.append(3)
     assert str(a2) == "Vec(0, 1, 2, [...], 3)"
@@ -86,10 +89,12 @@ def test_set_subscript() -> None:
     with pytest.raises(ValueError):
         a.__setitem__(slice(0, 10, 0), [1, 2, 3])
     with pytest.raises(TypeError):
+        # pyrefly: ignore [no-matching-overload]
         a.__setitem__(slice(0, 10), 1)  # pyright: ignore[reportCallIssue, reportArgumentType]
     with pytest.raises(ValueError):
         a.__setitem__(slice(0, 10, 2), [1, 2])
     with pytest.raises(TypeError):
+        # pyrefly: ignore [no-matching-overload]
         a.__getitem__("x", 1)  # pyright: ignore[reportCallIssue]
     a[slice(2, 10, 3)] = [1, 2, 3]
     assert a == Vec([
@@ -148,6 +153,7 @@ def test_setitem() -> None:
     with pytest.raises(IndexError):
         a.__setitem__(-1, 200)
     with pytest.raises(TypeError):
+        # pyrefly: ignore [no-matching-overload]
         a.__setitem__()  # pyright: ignore[reportCallIssue]
 
     a = Vec([0, 1, 2, 3, 4])
@@ -241,6 +247,7 @@ def test_setslice() -> None:
     assert a == Vec(range(10))
 
     with pytest.raises(TypeError):
+        # pyrefly: ignore [no-matching-overload]
         a.__setitem__(slice(0, 1, 5))  # pyright: ignore[reportCallIssue]
 
     with pytest.raises(TypeError):
@@ -327,8 +334,10 @@ def test_extend() -> None:
     assert a == Vec("spameggs")
 
     with pytest.raises(TypeError):
+        # pyrefly: ignore [bad-argument-type]
         a.extend(None)  # pyright: ignore[reportArgumentType]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [missing-argument]
         a.extend()  # pyright: ignore[reportCallIssue]
 
     # overflow test. issue1621
@@ -393,6 +402,7 @@ def test_remove() -> None:
         a.remove(0)
 
     with pytest.raises(TypeError):
+        # pyrefly: ignore [bad-argument-count]
         a.remove()  # pyright: ignore[reportCallIssue]
 
     a = Vec[object]([1, 2])
@@ -501,6 +511,7 @@ def test_clear() -> None:
     assert u == [2]
 
     with pytest.raises(TypeError):
+        # pyrefly: ignore [bad-argument-count]
         u.clear(None)  # pyright: ignore[reportCallIssue]
 
 
@@ -641,8 +652,11 @@ def test_extendedslicing() -> None:
     a = Vec(range(10))
     b = a[:]
     c = a[:]
+    # pyrefly: ignore [unsupported-operation]
     a[2:3] = Vec(["two", "elements"])  # pyright: ignore[reportCallIssue, reportArgumentType]
+    # pyrefly: ignore [unsupported-operation]
     b[slice(2, 3)] = Vec(["two", "elements"])  # pyright: ignore[reportCallIssue, reportArgumentType]
+    # pyrefly: ignore [unsupported-operation]
     c[2:3:] = Vec(["two", "elements"])  # pyright: ignore[reportCallIssue, reportArgumentType]
     assert a == b
     assert a == c
@@ -924,6 +938,7 @@ def test_lt_operator_modifying_operand() -> None:
 
     a = Vec([Evil()])
     with pytest.raises(TypeError):
+        # pyrefly: ignore [unsupported-operation]
         _ = a[0] < a  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
 

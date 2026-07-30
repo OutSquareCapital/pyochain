@@ -161,6 +161,7 @@ def itermulti[T](seqn: Sequence[T]) -> chain[T]:
     def identity(x: T) -> T:
         return x
 
+    # pyrefly: ignore [bad-argument-type]
     return chain(map(identity, iterfunc(IterGen[T](SequenceTest(seqn)))))  # pyright: ignore[reportArgumentType]
 
 
@@ -200,6 +201,7 @@ def test_constructors(type2test: TestedSeq[object]) -> None:
             return self.__data[i]
 
     s = OtherSeq(u0)
+    # pyrefly: ignore [bad-argument-type]
     v0 = type2test(s)  # pyright: ignore[reportArgumentType]
     assert len(v0) == len(s)
 
@@ -210,17 +212,21 @@ def test_constructors(type2test: TestedSeq[object]) -> None:
     # Create from various iterables
     for s in ("123", "", range(1000), ("do", 1.2), range(2000, 2200, 5)):
         for g in (SequenceTest, IterFunc, IterGen, itermulti, iterfunc):
+            # pyrefly: ignore [bad-argument-type]
             assert type2test(g(s)) == type2test(s)  # pyright: ignore[reportArgumentType]
         assert type2test(IterFuncStop(s)) == type2test(())
         assert type2test(c for c in "123") == type2test("123")
         with pytest.raises(TypeError):
+            # pyrefly: ignore [bad-argument-type]
             _ = type2test(IterNextOnly(s))  # pyright: ignore[reportArgumentType]
         with pytest.raises(TypeError):
+            # pyrefly: ignore [bad-argument-type]
             _ = type2test(IterNoNext(s))  # pyright: ignore[reportArgumentType]
         with pytest.raises(ZeroDivisionError):
             _ = type2test(IterGenExc(s))
 
     with pytest.raises(TypeError):
+        # pyrefly: ignore [missing-argument, no-matching-overload, unexpected-keyword]
         _ = type2test(unsupported_arg=[])  # pyright: ignore[reportCallIssue]
 
 
@@ -374,9 +380,13 @@ def test_minmax(type2test: TestedSeq[int]) -> None:
 def test_add[T](type2test: TestedSeq[int]) -> None:
     u1 = type2test([0])
     u2 = type2test([0, 1])
+    # pyrefly: ignore [unsupported-operation]
     assert u1 == u1 + type2test(())  # pyright: ignore[reportOperatorIssue]
+    # pyrefly: ignore [unsupported-operation]
     assert u1 == type2test(()) + u1  # pyright: ignore[reportOperatorIssue]
+    # pyrefly: ignore [unsupported-operation]
     assert u1 + type2test([1]) == u2  # pyright: ignore[reportOperatorIssue]
+    # pyrefly: ignore [unsupported-operation]
     assert type2test([-1]) + u1 == type2test([-1, 0])  # pyright: ignore[reportOperatorIssue]
 
 
@@ -387,23 +397,32 @@ def test_mul(type2test: TestedSeq[int]) -> None:
     assert type2test(()) == 0 * u2
     assert u2 == u2 * 1
     assert u2 == 1 * u2
+    # pyrefly: ignore [unsupported-operation]
     assert u2 + u2 == u2 * 2  # pyright: ignore[reportOperatorIssue]
+    # pyrefly: ignore [unsupported-operation]
     assert u2 + u2 == 2 * u2  # pyright: ignore[reportOperatorIssue]
+    # pyrefly: ignore [unsupported-operation]
     assert u2 + u2 + u2 == u2 * 3  # pyright: ignore[reportOperatorIssue]
+    # pyrefly: ignore [unsupported-operation]
     assert u2 + u2 + u2 == 3 * u2  # pyright: ignore[reportOperatorIssue]
 
 
 @TEST_TYPES
 def test_iadd(type2test: TestedSeq[object]) -> None:
     u = type2test([0, 1])
+    # pyrefly: ignore [unsupported-operation]
     u += type2test(())  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     assert u == type2test([0, 1])
+    # pyrefly: ignore [unsupported-operation]
+    # pyrefly: ignore [unsupported-operation]
     u += type2test([2, 3])  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     assert u == type2test([0, 1, 2, 3])
+    # pyrefly: ignore [unsupported-operation]
     u += type2test([4, 5])  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     assert u == type2test([0, 1, 2, 3, 4, 5])
 
     u = type2test("spam")
+    # pyrefly: ignore [unsupported-operation]
     u += type2test("eggs")  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     assert u == type2test("spameggs")
 
@@ -466,18 +485,28 @@ def test_subscript(type2test: VecOrSeq[int]) -> None:
 @TEST_TYPES
 def test_cmp(type2test: TestedSeq[int]) -> None:
     a = type2test([0, 1])
+    # pyrefly: ignore [bad-argument-type]
     _assert_cmp(a, a, 0)  # pyright: ignore[reportArgumentType]
+    # pyrefly: ignore [bad-argument-type]
     _assert_cmp(a, type2test([0, 1]), 0)  # pyright: ignore[reportArgumentType]
+    # pyrefly: ignore [bad-argument-type]
     _assert_cmp(a, type2test([0]), 1)  # pyright: ignore[reportArgumentType]
+    # pyrefly: ignore [bad-argument-type]
+    # pyrefly: ignore [bad-argument-type]
     _assert_cmp(a, type2test([0, 2]), -1)  # pyright: ignore[reportArgumentType]
 
 
 def _assert_cmp[T](a: TestedSeq[T], b: TestedSeq[T], r: int) -> None:
     assert (a == b) is (r == 0)
     assert (a != b) is (r != 0)
+    # pyrefly: ignore [unsupported-operation]
     assert (a > b) is (r > 0)  # pyright: ignore[reportOperatorIssue]
+    # pyrefly: ignore [unsupported-operation]
+    # pyrefly: ignore [unsupported-operation]
     assert (a <= b) is (r <= 0)  # pyright: ignore[reportOperatorIssue]
+    # pyrefly: ignore [unsupported-operation]
     assert (a < b) is (r < 0)  # pyright: ignore[reportOperatorIssue]
+    # pyrefly: ignore [unsupported-operation]
     assert (a >= b) is (r >= 0)  # pyright: ignore[reportOperatorIssue]
 
 

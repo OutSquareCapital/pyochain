@@ -52,6 +52,7 @@ def test_push_pop() -> None:
     check_invariant(results)
 
     with pytest.raises(TypeError):
+        # pyrefly: ignore [missing-argument]
         HeapMin[int]([]).push()  # pyright: ignore[reportCallIssue]
 
 
@@ -77,6 +78,7 @@ def test_max_push_pop() -> None:
     # 2) Check that the invariant holds for a sorted array
     check_max_invariant(results)
     with pytest.raises(TypeError):
+        # pyrefly: ignore [missing-argument]
         HeapMax[int]([]).push()  # pyright: ignore[reportCallIssue]
 
 
@@ -103,6 +105,7 @@ def test_heapify_max() -> None:
 def check_max_invariant[T: SupportsRichComparison](heap: Sequence[T]) -> None:
     for pos, item in enumerate(heap[1:], start=1):
         parentpos = (pos - 1) >> 1
+        # pyrefly: ignore [unsupported-operation]
         assert heap[parentpos] >= item  # pyright: ignore[reportOperatorIssue]
 
 
@@ -179,6 +182,7 @@ def test_nworst() -> None:
     expected = sorted(data, reverse=True)[-3:]
     assert list(heapiter_max(heap)) == expected
     with pytest.raises(IndexError):
+        # pyrefly: ignore [bad-argument-type]
         _ = HeapMax[int]([]).replace(None)  # pyright: ignore[reportArgumentType]
 
 
@@ -336,10 +340,12 @@ def test_merge_stability() -> None:
         stream = random.randrange(4)
         x = random.randrange(500)
         obj = Int(x)
+        # pyrefly: ignore [missing-attribute]
         obj.pair = (x, stream)  # pyright: ignore[reportAttributeAccessIssue]
         others[stream].append(obj)
     for stream in others:
         stream.sort()
+    # pyrefly: ignore [missing-attribute]
     result: list[tuple[int, int]] = [i.pair for i in base.merge(*others)]  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
     assert result == sorted(result)
 
@@ -384,6 +390,7 @@ def test_comparison_operator() -> None:
     def hsort[T: SupportsRichComparison](
         data: list[float], comp: Callable[[float], _HasX]
     ) -> list[float]:
+        # pyrefly: ignore [bad-specialization]
         heap = HeapMin[_HasX]([comp(x) for x in data])  # pyright: ignore[reportInvalidTypeArguments]
         return [heap.pop().x for _ in range(len(data))]
 
@@ -509,6 +516,7 @@ class RaiseImmediateStop:
 
 def multiple_iterators(seqn: Heap[int]) -> Iterator[int]:
     """Test multiple tiers of iterators."""
+    # pyrefly: ignore [bad-argument-type]
     return chain(map(lambda x: x, reg_generator(ImplGenerator(ImplGetItem(seqn)))))  # pyright: ignore[ reportArgumentType]
 
 
@@ -535,6 +543,7 @@ CLS_AND_POP = (HeapMin[int], HeapMin[int].pop, HeapMax[int], HeapMax[int].pop)
 @pytest.mark.parametrize("f", CLS_AND_POP)
 def test_non_sequence(f: Callable[[Heap[int], object], int]) -> None:
     with pytest.raises((TypeError, AttributeError)):
+        # pyrefly: ignore [bad-argument-count]
         _ = f(10)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
 
 
@@ -551,12 +560,14 @@ def test_non_sequence(f: Callable[[Heap[int], object], int]) -> None:
 )
 def test_non_sequence_2_args(f: Callable[[Heap[int], int, int], object]) -> None:
     with pytest.raises((TypeError, AttributeError)):
+        # pyrefly: ignore [bad-argument-count, bad-argument-type]
         _ = f(10, 10)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
 
 
 @pytest.mark.parametrize("f", CLS_AND_POP)
 def test_len_only_init_and_pop(f: Callable[[Heap[int], object], object]) -> None:
     with pytest.raises((TypeError, AttributeError)):
+        # pyrefly: ignore [bad-argument-count, bad-argument-type]
         _ = f(LenOnly())  # pyright: ignore[reportCallIssue,  reportUnknownVariableType]
 
 
@@ -571,6 +582,7 @@ def test_len_only_init_and_pop(f: Callable[[Heap[int], object], object]) -> None
 )
 def test_len_only_push_replace(f: Callable[[Heap[int], int], object]) -> None:
     with pytest.raises((TypeError, AttributeError)):
+        # pyrefly: ignore [bad-argument-type]
         _ = f(LenOnly(), 10)  # pyright: ignore[reportArgumentType]
 
 
@@ -579,6 +591,7 @@ def test_len_only_nlargest_nsmallest(
     f: Callable[[Heap[int], int, int], object],
 ) -> None:
     with pytest.raises((TypeError, AttributeError)):
+        # pyrefly: ignore [bad-argument-count, bad-argument-type]
         _ = f(2, LenOnly())  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
 
 
@@ -593,8 +606,10 @@ def test_cmp_err(heap: Heap[CmpErr]) -> None:
     with pytest.raises(ZeroDivisionError):
         _ = heap.pop()
     with pytest.raises(ZeroDivisionError):
+        # pyrefly: ignore [bad-argument-type]
         _ = heap.push(10)  # pyright: ignore[reportArgumentType]
     with pytest.raises(ZeroDivisionError):
+        # pyrefly: ignore [bad-argument-type]
         _ = heap.replace(10)  # pyright: ignore[reportArgumentType]
     with pytest.raises(ZeroDivisionError):
         _ = heap.n_largest(2)
@@ -629,7 +644,9 @@ def test_iterable_args(
     s: Sequence[float] | str | range,
     g: Callable[[Heap[float | str]], object],
 ) -> None:
+    # pyrefly: ignore [bad-argument-type]
     assert list(f(HeapMin[float](g(s)), 2)) == list(  # pyright: ignore[reportArgumentType]
+        # pyrefly: ignore [bad-argument-type]
         f(HeapMin[float](s), 2)  # pyright: ignore[reportArgumentType]
     )
 
@@ -640,12 +657,16 @@ def test_iterable_args_exceptions(
     f: HeapMethod[[Any], ..., object],
     s: Sequence[float] | str | range,
 ) -> None:
+    # pyrefly: ignore [bad-argument-type]
     assert list(f(HeapMin[float](RaiseImmediateStop(s)), 2)) == []  # pyright: ignore[reportArgumentType]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [bad-argument-type]
         _ = f(HeapMin[float](MissGetItemAndIter(s)), 2)  # pyright: ignore[reportArgumentType]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [bad-argument-type]
         _ = f(HeapMin[float](MissNext(s)), 2)  # pyright: ignore[reportArgumentType]
     with pytest.raises(ZeroDivisionError):
+        # pyrefly: ignore [bad-argument-type]
         _ = f(HeapMin[float](PropagateException(s)), 2)  # pyright: ignore[reportArgumentType]
 
 

@@ -249,6 +249,7 @@ def test_interop_and() -> None:
     assert OP.f1 & OP.f2 == target
     assert OP.f1 & OP.r2 == target
     assert OP.r2 & OP.f1 == target
+    # pyrefly: ignore [unsupported-operation]
     assert OP.f1 & OP.l2 == target  # pyright: ignore[reportOperatorIssue]
 
 
@@ -257,6 +258,7 @@ def test_interop_or() -> None:
     assert OP.f1 | OP.f2 == target
     assert OP.f1 | OP.r2 == target
     assert OP.r2 | OP.f1 == target
+    # pyrefly: ignore [unsupported-operation]
     assert OP.f1 | OP.l2 == target  # pyright: ignore[reportOperatorIssue]
 
 
@@ -269,7 +271,9 @@ def test_interop_sub() -> None:
     assert OP.f2 - OP.r1 == rev_target
     assert OP.r1 - OP.f2 == fwd_target
     assert OP.r2 - OP.f1 == rev_target
+    # pyrefly: ignore [unsupported-operation]
     assert OP.f1 - OP.l2 == fwd_target  # pyright: ignore[reportOperatorIssue]
+    # pyrefly: ignore [unsupported-operation]
     assert OP.f2 - OP.l1 == rev_target  # pyright: ignore[reportOperatorIssue]
 
 
@@ -278,6 +282,7 @@ def test_interop_xor() -> None:
     assert OP.f1 ^ OP.f2 == target
     assert OP.f1 ^ OP.r2 == target
     assert OP.r2 ^ OP.f1 == target
+    # pyrefly: ignore [unsupported-operation]
     assert OP.f1 ^ OP.l2 == target  # pyright: ignore[reportOperatorIssue]
 
 
@@ -299,10 +304,13 @@ def test_interop_lt() -> None:
     assert not OP.r1 < OP.r1
     assert not OP.r1 < OP.r2
     with pytest.raises(TypeError):
+        # pyrefly: ignore [unsupported-operation]
         _ = OP.f1 < OP.l3  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [unsupported-operation]
         _ = OP.f1 < OP.l1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [unsupported-operation]
         _ = OP.f1 < OP.l2  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
 
@@ -318,10 +326,13 @@ def test_interop_le() -> None:
     assert OP.r1 <= OP.r1
     assert not OP.r1 <= OP.r2
     with pytest.raises(TypeError):
+        # pyrefly: ignore [unsupported-operation]
         _ = OP.f1 <= OP.l3  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [unsupported-operation]
         _ = OP.f1 <= OP.l1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [unsupported-operation]
         _ = OP.f1 <= OP.l2  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
 
@@ -337,10 +348,13 @@ def test_interop_gt() -> None:
     assert not OP.r1 > OP.r1
     assert not OP.r2 > OP.r1
     with pytest.raises(TypeError):
+        # pyrefly: ignore [unsupported-operation]
         _ = OP.f1 > OP.l3  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [unsupported-operation]
         _ = OP.f1 > OP.l1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [unsupported-operation]
         _ = OP.f1 > OP.l2  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
 
@@ -356,10 +370,13 @@ def test_interop_ge() -> None:
     assert OP.r1 >= OP.r1
     assert not OP.r2 >= OP.r1
     with pytest.raises(TypeError):
+        # pyrefly: ignore [unsupported-operation]
         _ = OP.f1 >= OP.l3  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [unsupported-operation]
         _ = OP.f1 >= OP.l1  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [unsupported-operation]
         _ = OP.f1 >= OP.l2  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
 

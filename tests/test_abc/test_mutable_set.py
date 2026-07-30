@@ -15,6 +15,7 @@ from ._utils import ImplCollection, assert_iter_eq
 
 class ImplMutableSet(ImplCollection):
     def __init__(self, it: Iterable[int] | None = None) -> None:
+        # pyrefly: ignore [bad-override-mutable-attribute]
         self._data: set[int] = {1, 2, 3} if it is None else set(it)  # pyright: ignore[reportIncompatibleVariableOverride]
 
     def add(self, item: int) -> None:

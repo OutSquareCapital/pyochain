@@ -14,12 +14,14 @@ class Impl:
         return next(self._iter)
 
 
+# pyrefly: ignore [implicit-abstract-class]
 class _PyFail(Iterator[int]): ...  # pyright: ignore[reportImplicitAbstractClass]
 
 
 class _PyOk(Impl, Iterator[int]): ...
 
 
+# pyrefly: ignore [implicit-abstract-class]
 class _PyoFail(PyoIterator[int]): ...  # pyright: ignore[reportImplicitAbstractClass]
 
 
@@ -29,6 +31,7 @@ class _PyoOk(Impl, PyoIterator[int]): ...
 def test_iterator() -> None:
 
     checks.init_fail(_PyFail)
+    # pyrefly: ignore [bad-instantiation]
     checks.next_fail(_PyoFail())  # pyright: ignore[reportAbstractUsage]
     py_ok = _PyOk()
     pyo_ok = _PyoOk()

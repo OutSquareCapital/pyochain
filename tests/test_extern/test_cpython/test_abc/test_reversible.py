@@ -33,6 +33,7 @@ def test_non_reversible_iterables(x: object) -> None:
 
 type Reversibles = Seq[PyoReversible[object]]
 
+# pyrefly: ignore [bad-assignment]
 REVERSIBLES: Reversibles = Seq((  # pyright: ignore[reportAssignmentType]
     Seq[object](()),
     Vec[object]([]),
@@ -125,10 +126,12 @@ class Rev:
 
 
 class RevItBlocked(Rev):
+    # pyrefly: ignore [bad-override-mutable-attribute, implicit-any-attribute]
     __iter__ = None  # pyright: ignore[reportUnannotatedClassAttribute, reportAssignmentType]
 
 
 class RevRevBlocked(Rev):
+    # pyrefly: ignore [bad-override-mutable-attribute, implicit-any-attribute]
     __reversed__ = None  # pyright: ignore[reportUnannotatedClassAttribute, reportAssignmentType]
 
 

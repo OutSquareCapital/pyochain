@@ -138,10 +138,13 @@ def test_update_reentrant_add_clears_counter() -> None:
 def test_init() -> None:
     assert list(PyoCounter[str](self=42).items()) == [("self", 42)]
     assert list(PyoCounter[str](iterable=42).items()) == [("iterable", 42)]
+    # pyrefly: ignore [bad-argument-type]
     assert list(PyoCounter[str](iterable=None).items()) == [("iterable", None)]  # pyright: ignore[reportArgumentType]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [no-matching-overload]
         _ = PyoCounter[object](42)  # pyright: ignore[reportCallIssue, reportArgumentType]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [no-matching-overload]
         _ = PyoCounter[object]((), ())  # pyright: ignore[reportCallIssue]
     with pytest.raises(TypeError):
         _ = PyoCounter[object].__init__()  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
@@ -258,8 +261,10 @@ def test_update() -> None:
     c.update(iterable=None)  # pyright: ignore[reportArgumentType]
     assert list(c.items()) == [("iterable", None)]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [no-matching-overload]
         c.update(42)  # pyright: ignore[reportCallIssue, reportArgumentType]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [no-matching-overload]
         c.update({}, {})  # pyright: ignore[reportCallIssue]
     with pytest.raises(TypeError):
         PyoCounter.update()  # pyright: ignore[reportCallIssue, reportUnknownMemberType]
@@ -405,8 +410,10 @@ def test_subtract() -> None:
     c.subtract(iterable=42)
     assert list(c.items()) == [("iterable", -42)]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [no-matching-overload]
         c.subtract(42)  # pyright: ignore[reportCallIssue, reportArgumentType]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [no-matching-overload]
         c.subtract({}, {})  # pyright: ignore[reportCallIssue]
     with pytest.raises(TypeError):
         PyoCounter[str].subtract()  # pyright: ignore[reportCallIssue]

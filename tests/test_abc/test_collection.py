@@ -6,12 +6,14 @@ from . import checks
 from ._utils import ImplCollection, assert_iter_eq
 
 
+# pyrefly: ignore [implicit-abstract-class]
 class _PyFail(Collection[int]): ...  # pyright: ignore[reportImplicitAbstractClass]
 
 
 class _PyOk(ImplCollection, Collection[int]): ...
 
 
+# pyrefly: ignore [implicit-abstract-class]
 class _PyoFail(PyoCollection[int]): ...  # pyright: ignore[reportImplicitAbstractClass]
 
 
@@ -21,6 +23,7 @@ class _PyoOk(ImplCollection, PyoCollection[int]): ...
 def test_collection() -> None:
 
     checks.init_fail(_PyFail)
+    # pyrefly: ignore [bad-instantiation]
     fail = _PyoFail()  # pyright: ignore[reportAbstractUsage]
     checks.len_fail(fail)
     checks.contains_fail(fail)

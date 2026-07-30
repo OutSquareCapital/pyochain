@@ -70,6 +70,7 @@ def test_none_blocking() -> None:
             return iter([])
 
     class ItBlocked(It):
+        # pyrefly: ignore [bad-override-mutable-attribute, implicit-any-attribute]
         __iter__ = None  # pyright: ignore[reportAssignmentType, reportUnannotatedClassAttribute]
 
     assert issubclass(It, PyoIterable)

@@ -27,6 +27,7 @@ class PyoReversible[T](PyoIterable[T], Protocol):
         """
 
 # For some reason, `Sequence` is not a Protocol, so we have to "fake" heritance from it to make typing work.
+# pyrefly: ignore [implicit-abstract-class]
 class PyoSequence[T](PyoReversible[T], PyoCollection[T], Sequence[T]):  # pyright: ignore[reportImplicitAbstractClass]
     """Extends `PyoCollection[T]` and `collections.abc.Sequence[T]`.
 

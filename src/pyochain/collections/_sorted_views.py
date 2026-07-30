@@ -28,12 +28,14 @@ class SortedKeysView(PyoKeysView[_K_co], PyoSequence[_K_co], Generic[_K_co]):  #
 
     """
 
+    # pyrefly: ignore [bad-override-mutable-attribute]
     _mapping: SortedDict[_K_co, Any]  # pyright: ignore[reportIncompatibleVariableOverride]
 
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
     @classmethod
     @override
+    # pyrefly: ignore [bad-override]
     def _from_iterable(cls, it: Iterable[_K_co]) -> SortedSet[_K_co]:  # pyright: ignore[reportIncompatibleMethodOverride]
         return SortedSet(it)
 
@@ -98,6 +100,7 @@ class SortedItemsView(
 
     @classmethod
     @override
+    # pyrefly: ignore [bad-override]
     def _from_iterable(  # pyright: ignore[reportIncompatibleMethodOverride]
         cls, it: Iterable[tuple[_K_co, _V_co]]
     ) -> SortedSet[tuple[_K_co, _V_co]]:
@@ -164,6 +167,7 @@ class SortedValuesView(PyoValuesView[_V_co], PyoSequence[_V_co], Generic[_V_co])
 
     """
 
+    # pyrefly: ignore [bad-override-mutable-attribute]
     _mapping: SortedDict[Any, _V_co]  # pyright: ignore[reportIncompatibleVariableOverride]
     __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 

@@ -513,6 +513,7 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
         """
         if self.contains(key):
             return self[key]
+        # pyrefly: ignore [unsupported-operation]
         self._inner[key] = default  # pyright: ignore[reportArgumentType]
         self._list.add(key)
         return default
@@ -693,6 +694,7 @@ class SortedKeyDict[
         return SortedKeyDict(items, key=self._key)
 
     @override
+    # pyrefly: ignore [bad-override]
     def __reduce__(self) -> tuple[partial[Self], tuple[Dict[K, V]]]:  # pyright: ignore[reportIncompatibleMethodOverride]
         items = self._inner.copy()
         return (partial(self.__class__, key=self._key), (items,))

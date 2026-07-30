@@ -57,12 +57,14 @@ def test_issue_4920() -> None:
             return len(self.__s)
 
         @override
+        # pyrefly: ignore [bad-override]
         def add(self, v: object) -> bool:  # pyright: ignore[reportIncompatibleMethodOverride]
             result = v not in self.__s
             self.__s.add(v)
             return result
 
         @override
+        # pyrefly: ignore [bad-override]
         def discard(self, v: object) -> bool:  # pyright: ignore[reportIncompatibleMethodOverride]
             result = v in self.__s
             self.__s.discard(v)
@@ -155,6 +157,7 @@ def test_set_from_iterable() -> None:
 
     # NOTE: ixor'ing with a list is important here: internally, __ixor__
     # only calls _from_iterable if the other value isn't already a PyoSet.
+    # pyrefly: ignore [unsupported-operation]
     impl ^= [3, 4]  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
     assert isinstance(impl, SetUsingInstanceFromPyoIterable)
     assert impl.created_by == "test"

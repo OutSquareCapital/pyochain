@@ -6,12 +6,14 @@ from . import checks
 from ._utils import ImplRev, assert_iter_eq
 
 
+# pyrefly: ignore [implicit-abstract-class]
 class _PyFail(Reversible[int]): ...  # pyright: ignore[reportImplicitAbstractClass]
 
 
 class _PyOk(ImplRev, Reversible[int]): ...
 
 
+# pyrefly: ignore [implicit-abstract-class]
 class _PyoFail(PyoReversible[int]): ...  # pyright: ignore[reportImplicitAbstractClass]
 
 

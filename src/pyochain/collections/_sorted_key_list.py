@@ -80,6 +80,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
     @property
     @override
+    # pyrefly: ignore [bad-override]
     def inner(self) -> InnerKeyLists[T, OT, OT]:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Inner data structure for sorted-key list."""
         return self._inner
@@ -240,6 +241,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         return self.__class__(values, key=self._inner.key)
 
     @override
+    # pyrefly: ignore [bad-override]
     def __reduce__(self) -> tuple[type[Self], tuple[Vec[T], KeyFunc[T, OT]]]:  # pyright: ignore[reportIncompatibleMethodOverride]
         values = self._inner.collapse_lists()
         return (self.__class__, (values, self.key))

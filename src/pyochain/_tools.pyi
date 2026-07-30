@@ -17,6 +17,7 @@ class MapJuxt[R](Iterator[tuple[R, ...]]):
         self, iterator: Iterator[object], *funcs: Callable[..., R]
     ) -> None: ...
     @no_doctest
+    @override
     def __next__(self) -> tuple[R, ...]: ...
 
 class UniqueIdentity[T](Iterator[T]):

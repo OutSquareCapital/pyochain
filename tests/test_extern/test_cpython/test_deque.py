@@ -91,6 +91,7 @@ def test_max_length() -> None:
     d.extend_left([8, 7])
     assert list(d) == [7, 8, 9]
     d = Deque(range(200), max_length=10)
+    # pyrefly: ignore [bad-argument-type]
     d.append(d)  # pyright: ignore[reportArgumentType]
     # NOTE: In the original CPython test, the slice is [-30:], but since `max_length` is 4 chars longer,
     # we have to adjust it.
@@ -123,6 +124,7 @@ def test_maxlen_attribute() -> None:
     assert Deque("abc", max_length=0).max_length == 0
     with pytest.raises(AttributeError):  # ruff:ignore[pytest-raises-with-multiple-statements]
         d = Deque("abc")
+        # pyrefly: ignore [read-only]
         d.max_length = 10  # pyright: ignore[reportAttributeAccessIssue]
 
 
@@ -133,8 +135,10 @@ def test_count() -> None:
         for letter in string.ascii_lowercase:
             assert inner_s.count(letter) == d.count(letter), (inner_s, d, letter)
     with pytest.raises(TypeError):
+        # pyrefly: ignore [bad-argument-count]
         d.count()  # too few args  # pyright: ignore[reportCallIssue]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [bad-argument-count, bad-argument-type]
         d.count(1, 2)  # too many args  # pyright: ignore[reportCallIssue]
 
     class BadCompare:  # ruff:ignore[eq-without-hash]
@@ -147,6 +151,7 @@ def test_count() -> None:
         _ = d.count(2)
     d = Deque([1, 2, 3])
     with pytest.raises(ArithmeticError):
+        # pyrefly: ignore [bad-argument-type]
         _ = d.count(BadCompare())  # pyright: ignore[reportArgumentType]
 
     class MutatingCompare:  # ruff:ignore[eq-without-hash]
@@ -169,6 +174,7 @@ def test_count() -> None:
     for _i in range(len(d)):
         _ = d.rotate(-1)
     _ = d.rotate(1)
+    # pyrefly: ignore [bad-argument-type]
     assert d.count(1) == 0  # pyright: ignore[reportArgumentType]
     assert d.count(None) == 16
 
@@ -202,12 +208,16 @@ def test_contains() -> None:
 
     # Test detection of mutation during iteration
     d = Deque(range(n))
+    # pyrefly: ignore [unsupported-operation]
+    # pyrefly: ignore [bad-argument-type]
     d[n // 2] = MutateCmp(d, result=False)  # pyright: ignore[reportArgumentType]
     with pytest.raises(RuntimeError):
         _ = n in d
 
     # Test detection of comparison exceptions
     d = Deque(range(n))
+    # pyrefly: ignore [unsupported-operation]
+    # pyrefly: ignore [bad-argument-type]
     d[n // 2] = BadCmp()  # pyright: ignore[reportArgumentType]
     with pytest.raises(RuntimeError):
         _ = n in d
@@ -225,16 +235,20 @@ def test_contains_count_index_stop_crashes() -> None:
         _ = 3 in d
     d = Deque([Foo(), Foo()])
     with pytest.raises(RuntimeError):
+        # pyrefly: ignore [bad-argument-type]
         _ = d.count(3)  # pyright: ignore[reportArgumentType]
 
     d = Deque([Foo()])
     with pytest.raises(RuntimeError):
+        # pyrefly: ignore [bad-argument-type]
+        # pyrefly: ignore [bad-argument-type]
         _ = d.index(0)  # pyright: ignore[reportArgumentType]
 
 
 def test_extend() -> None:
     d = Deque("a")
     with pytest.raises(TypeError):
+        # pyrefly: ignore [bad-argument-type]
         d.extend(1)  # pyright: ignore[reportArgumentType]
     d.extend("bcd")
     assert list(d) == list("abcd")
@@ -260,6 +274,7 @@ def test_add() -> None:
     assert g + h == Deque("efgh")
 
     with pytest.raises(TypeError):
+        # pyrefly: ignore [unsupported-operation]
         _ = Deque("abc") + "def"  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
 
@@ -274,6 +289,8 @@ def test_iadd() -> None:
 def test_extend_left() -> None:
     d = Deque("a")
     with pytest.raises(TypeError):
+        # pyrefly: ignore [bad-argument-type]
+        # pyrefly: ignore [bad-argument-type]
         d.extend_left(1)  # pyright: ignore[reportArgumentType]
     d.extend_left("bcd")
     assert list(d) == list(reversed("abcd"))
@@ -320,12 +337,16 @@ def test_index() -> None:
 
         # Test detection of mutation during iteration
         d = Deque(range(n))
+        # pyrefly: ignore [unsupported-operation]
+        # pyrefly: ignore [bad-argument-type]
         d[n // 2] = MutateCmp(d, result=False)  # pyright: ignore[reportArgumentType]
         with pytest.raises(RuntimeError):
             _ = d.index(n)
 
         # Test detection of comparison exceptions
         d = Deque(range(n))
+        # pyrefly: ignore [unsupported-operation]
+        # pyrefly: ignore [bad-argument-type]
         d[n // 2] = BadCmp()  # pyright: ignore[reportArgumentType]
         with pytest.raises(RuntimeError):
             _ = d.index(n)
@@ -383,6 +404,7 @@ def test_insert_bug_26194() -> None:
     data = "ABC"
     d = Deque(data, max_length=len(data))
     with pytest.raises(IndexError):
+        # pyrefly: ignore [bad-argument-type]
         d.insert(2, None)  # pyright: ignore[reportArgumentType]
 
     elements = "ABCDEFGHI"
@@ -496,6 +518,7 @@ def test_reverse() -> None:
         d.reverse()
         assert list(d) == data[:i]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [bad-argument-count]
         d.reverse(1)  # Arity is zero  # pyright: ignore[reportCallIssue]
 
 
@@ -546,8 +569,10 @@ def test_rotate() -> None:
     assert tuple(d) == tuple(e)
 
     with pytest.raises(TypeError):
+        # pyrefly: ignore [bad-argument-type]
         _ = d.rotate("x")  # Wrong arg type  # pyright: ignore[reportArgumentType]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [bad-argument-count]
         d.rotate(1, 10)  # Too many args  # pyright: ignore[reportCallIssue]
 
     d = Deque[int]()
@@ -613,6 +638,8 @@ def test_remove() -> None:
     # Handle evil mutator
     for match in (True, False):
         d = Deque(["ab"])
+        # pyrefly: ignore [bad-argument-type]
+        # pyrefly: ignore [bad-argument-type]
         d.extend([MutateCmp(d, result=match), "c"])  # pyright: ignore[reportArgumentType]
         with pytest.raises(IndexError):
             d.remove("c")
@@ -623,14 +650,19 @@ def test_repr() -> None:
     d = Deque(range(200))
     e = eval(repr(d))  # pyright: ignore[reportAny]
     assert list(d) == list(e)  # pyright: ignore[reportAny]
+    # pyrefly: ignore [bad-argument-type]
+    # pyrefly: ignore [bad-argument-type]
     d.append(d)  # pyright: ignore[reportArgumentType]
     assert repr(d)[-20:] == "7, 198, 199, [...]])"
 
 
 def test_init() -> None:
     with pytest.raises(TypeError):
+        # pyrefly: ignore [bad-argument-count, no-matching-overload]
         _ = Deque[int | str]("abc", 2, 3)  # pyright: ignore[reportCallIssue]
     with pytest.raises(TypeError):
+        # pyrefly: ignore [bad-argument-type]
+        # pyrefly: ignore [bad-argument-type]
         _ = Deque[int](1)  # pyright: ignore[reportArgumentType]
 
 
@@ -767,6 +799,7 @@ def test_reversed_new() -> None:
     klass = type(reversed(Deque[str | int]()))
     # NOTE: klass is the dedicated reversed deque iterator type
     for s in ("abcd", range(20)):
+        # pyrefly: ignore [bad-argument-count, bad-instantiation]
         assert Vec(klass(deque(s))) == Vec(reversed(s))  # pyright: ignore[reportCallIssue]
 
 
@@ -809,10 +842,14 @@ def test_constructor() -> None:
             test_seq.itermulti,
             test_seq.iterfunc,
         ):
+            # pyrefly: ignore [bad-argument-type]
+            # pyrefly: ignore [bad-argument-type]
             assert list(Deque(g(s))) == list(g(s))  # pyright: ignore[reportArgumentType]
         with pytest.raises(TypeError):
+            # pyrefly: ignore [bad-argument-type]
             _ = Deque(test_seq.IterNextOnly(s))  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
         with pytest.raises(TypeError):
+            # pyrefly: ignore [bad-argument-type]
             _ = Deque(test_seq.IterNoNext(s))  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
         with pytest.raises(ZeroDivisionError):
             _ = Deque(test_seq.IterGenExc(s))

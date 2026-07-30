@@ -92,14 +92,17 @@ class Deque[T](PyoMutableSequence[T]):
         """Return len(self)."""
 
     @override
+    # pyrefly: ignore [bad-override]
     def __getitem__(self, key: SupportsIndex, /) -> T:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return self[key]."""
 
     @override
+    # pyrefly: ignore [bad-override]
     def __setitem__(self, key: SupportsIndex, value: T, /) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Set self[key] to value."""
 
     @override
+    # pyrefly: ignore [bad-override]
     def __delitem__(self, key: SupportsIndex, /) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Delete self[key]."""
 
@@ -256,6 +259,7 @@ class Deque[T](PyoMutableSequence[T]):
     @override
     def index(self, x: T, start: int = 0, stop: int = ..., /) -> int: ...
     @override
+    # pyrefly: ignore [bad-override]
     def pop(self) -> T: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
     def remove(self, value: T, /) -> None: ...

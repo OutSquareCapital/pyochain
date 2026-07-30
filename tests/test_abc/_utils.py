@@ -40,6 +40,7 @@ class ImplSequence(ImplSized):
 
 class ImplMapping(ImplSequence, ImplIter):
     def __init__(self) -> None:
+        # pyrefly: ignore [bad-override-mutable-attribute]
         self._data: dict[int, int] = {i: i * 10 for i in [0, 1, 2]}  # pyright: ignore[reportIncompatibleVariableOverride]
 
 

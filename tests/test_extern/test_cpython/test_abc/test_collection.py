@@ -66,12 +66,13 @@ def test_collections(x: PyoCollection[object]) -> None:
 
 def test_collections_is_subclasses() -> None:
     # Check also PyoMapping, PyoMutableMapping, etc.
-    assert issubclass(PyoSequence, PyoCollection)
-    assert issubclass(PyoMapping, PyoCollection)
-    assert issubclass(PyoMutableMapping, PyoCollection)
-    assert issubclass(PyoSet, PyoCollection)
-    assert issubclass(PyoMutableSet, PyoCollection)
-    assert issubclass(PyoSequence, PyoCollection)
+    pyo = PyoCollection
+    assert issubclass(PyoSequence, pyo)
+    assert issubclass(PyoMapping, pyo)
+    assert issubclass(PyoMutableMapping, pyo)
+    assert issubclass(PyoSet, pyo)
+    assert issubclass(PyoMutableSet, pyo)
+    assert issubclass(PyoSequence, pyo)
 
 
 def test_direct_subclassing() -> None:
@@ -150,6 +151,7 @@ def test_none_blocking() -> None:
         def __contains__(self) -> bool:  # ruff:ignore[unexpected-special-method-signature]
             return False
 
+        # pyrefly: ignore [implicit-any-attribute]
         __len__ = None  # pyright: ignore[reportUnannotatedClassAttribute]
 
     class IterBlock:
@@ -159,6 +161,7 @@ def test_none_blocking() -> None:
         def __contains__(self) -> bool:  # ruff:ignore[unexpected-special-method-signature]
             return True
 
+        # pyrefly: ignore [implicit-any-attribute]
         __iter__ = None  # pyright: ignore[reportUnannotatedClassAttribute]
 
     assert not issubclass(SizeBlock, PyoCollection)

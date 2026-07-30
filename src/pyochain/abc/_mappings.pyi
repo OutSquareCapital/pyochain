@@ -45,6 +45,7 @@ _K = TypeVar("_K")
 _K_co = TypeVar("_K_co", covariant=True)
 _V_co = TypeVar("_V_co", covariant=True)
 
+# pyrefly: ignore [implicit-abstract-class]
 class PyoMapping(PyoCollection[_K], Mapping[_K, _V_co], Generic[_K, _V_co]):  # pyright: ignore[reportImplicitAbstractClass]  # ruff:ignore[non-pep695-generic-class]
     """Extends `PyoCollection[K]` and `collections.abc.Mapping[K, V]`.
 
@@ -208,6 +209,7 @@ class PyoItemsView(  # pyright: ignore[reportUnsafeMultipleInheritance]
     @override
     def _from_iterable[S](cls, it: Iterable[S], /) -> set[S]: ...
     @override
+    # pyrefly: ignore [bad-override]
     def __contains__(self, item: tuple[object, object], /) -> bool: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
     def __iter__(self) -> Iterator[tuple[_K_co, _V_co]]: ...

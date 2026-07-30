@@ -244,11 +244,14 @@ class Set[T](PyoSet[T]):
     @override
     def is_superset(self, other: Iterable[object]) -> bool: ...
     @override
+    # pyrefly: ignore [bad-override]
     def intersection(self, *others: Iterable[object]) -> Self: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
+    # pyrefly: ignore [bad-override]
     def union[S](self, *others: Iterable[S]) -> Set[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride]
         ...
     @override
+    # pyrefly: ignore [bad-override]
     def difference(self, *others: Iterable[object]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
         ...
     @override
@@ -619,15 +622,18 @@ class SetMut[T](PyoMutableSet[T]):
         """Update the set, keeping only elements found in either set, but not in both."""
 
     @override
+    # pyrefly: ignore [bad-override]
     def intersection(self, *others: Iterable[object]) -> SetMut[T]:  # pyright: ignore[reportIncompatibleMethodOverride]
         ...
     @override
+    # pyrefly: ignore [bad-override]
     def union[S](self, *others: Iterable[S]) -> SetMut[T | S]:  # pyright: ignore[reportIncompatibleMethodOverride]
         ...
     def update(self, *s: Iterable[T]) -> None:
         """Update the set, adding elements from all others."""
 
     @override
+    # pyrefly: ignore [bad-override]
     def difference(self, *others: Iterable[object]) -> SetMut[T]:  # pyright: ignore[reportIncompatibleMethodOverride]
         ...
     def difference_update(self, *s: Iterable[object]) -> None:

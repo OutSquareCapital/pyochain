@@ -19,15 +19,15 @@ def test_iterators_errs(x: object) -> None:
 
 
 OKS: tuple[PyoIterator[object], ...] = (
-    Seq(()).iter(),
-    Vec(()).iter(),
+    Seq[object](()).iter(),
+    Vec[object](()).iter(),
     Dict[object, object](()).iter(),
-    Set(()).iter(),
-    SetMut(()).iter(),
+    Set[object](()).iter(),
+    SetMut[object](()).iter(),
     Dict[object, object](()).keys().iter(),
     Dict[object, object](()).items().iter(),
     Dict[object, object](()).values().iter(),
-    Iter(x for x in list[object]()),
+    Iter[object](x for x in list[object]()),
 )
 
 
@@ -45,6 +45,7 @@ def test_abstract_methods() -> None:
 def test_issue_10565() -> None:
     # Issue 10565
     class NextOnly:
+        # pyrefly: ignore [bad-return]
         def __next__(self) -> object:
             yield 1
 
