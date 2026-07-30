@@ -1,14 +1,18 @@
 use crate::pyobject_native_type_named;
 use either::Either;
-use pyo3::call::PyCallArgs;
-use pyo3::exceptions::PyTypeError;
-use pyo3::ffi::{self, PyDictValues, PyTypeObject};
-use pyo3::sync::PyOnceLock;
-use pyo3::types::{
-    PyBool, PyDict, PyDictItems, PyDictKeys, PyFrozenSet, PyInt, PyIterator, PyList,
-    PyNotImplemented, PyRange, PySequence, PySet, PySlice, PyTuple, PyType,
+use pyo3::{
+    PyTypeInfo,
+    call::PyCallArgs,
+    exceptions::PyTypeError,
+    ffi::{self, PyDictValues, PyTypeObject},
+    intern,
+    prelude::*,
+    sync::PyOnceLock,
+    types::{
+        PyBool, PyDict, PyDictItems, PyDictKeys, PyFrozenSet, PyInt, PyIterator, PyList,
+        PyNotImplemented, PyRange, PySequence, PySet, PySlice, PyTuple, PyType,
+    },
 };
-use pyo3::{PyTypeInfo, intern, prelude::*};
 use tap::prelude::*;
 const COLLECTIONS_ABC: &str = "collections.abc";
 /// Return type from python comparison dunders, returning either `T` in case of success, or `NotImplemented`.

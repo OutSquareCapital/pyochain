@@ -1,6 +1,8 @@
-use pyo3::ffi;
-use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyTuple};
+use pyo3::{
+    ffi,
+    prelude::*,
+    types::{PyDict, PyTuple},
+};
 use tap::prelude::*;
 /// Type alias representing the `*args` parameter in Python functions (or any argument that is expected to be a tuple)
 pub type Args<'py> = Bound<'py, PyTuple>;
