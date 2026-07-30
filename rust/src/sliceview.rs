@@ -1,8 +1,12 @@
+use std::sync::{Mutex, MutexGuard};
+
 use crate::{
     abc::{self, PyoSequence},
-    pyo3_ext::prelude::*,
-    pyo3_ext::types::{PyMutableSequence, PySupportsIndex},
-    traits::PyoABC,
+    pyo3_ext::{
+        prelude::*,
+        types::{PyMutableSequence, PySupportsIndex},
+    },
+    traits::{PyWrapper, PyoABC},
 };
 use either::Either;
 use pyo3::{
@@ -50,11 +54,34 @@ impl<'py> PyInit<'py, PySlice, SliceArgs<'py>> for PySlice {
     }
 }
 
-#[pyclass(generic, sequence, extends=abc::PyoSequence)]
+#[pyclass(frozen, generic, sequence, extends=abc::PyoSequence)]
 pub struct SliceView {
     #[pyo3(get)]
-    inner: Py<PySequence>,
-    range: Either<Py<PyRange>, OpenRange>,
+    pub inner: Py<PySequence>,
+    range: Mutex<Either<Py<PyRange>, OpenRange>>,
+}
+impl SliceView {
+    fn get_range(&self) -> MutexGuard<'_, Either<Py<PyRange>, OpenRange>> {
+        self.range
+            .lock()
+            .expect("Re-entrant error: SliceView::range is already used")
+    }
+    fn set_range(&self, range: Either<Py<PyRange>, OpenRange>) -> () {
+        *self.get_range() = range;
+    }
+
+    fn current_range<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyRange>> {
+        self.get_range()
+            .as_ref()
+            .map_right(|r| {
+                r.resolve(
+                    py,
+                    self.inner().clone_ref(py).into_bound(py).len()? as isize,
+                )
+            })
+            .map_left(|r| Ok(r.clone_ref(py).into_bound(py)))
+            .into_inner()
+    }
 }
 #[pymethods]
 impl SliceView {
@@ -86,12 +113,12 @@ impl SliceView {
         PyoSequence::build_init()
             .add_subclass(Self {
                 inner: base.unbind(),
-                range: range,
+                range: Mutex::new(range),
             })
             .pipe(Ok)
     }
     fn __iter__(&self, py: Python<'_>) -> PyResult<SliceViewIterator> {
-        SliceViewIterator::new(self._current_range(py)?, self.inner.clone_ref(py))
+        SliceViewIterator::new(self.current_range(py)?, self.inner().clone_ref(py))
     }
     #[staticmethod]
     fn _from_range(
@@ -102,7 +129,7 @@ impl SliceView {
         PyoSequence::build_init()
             .add_subclass(Self {
                 inner,
-                range: Either::Left(range),
+                range: Mutex::new(Either::Left(range)),
             })
             .pipe(|initializer| Bound::new(py, initializer))
     }
@@ -120,17 +147,17 @@ impl SliceView {
     }
 
     fn __reversed__(&self, py: Python<'_>) -> PyResult<SliceViewReverseIterator> {
-        SliceViewReverseIterator::new(self._current_range(py)?, self.inner.clone_ref(py))
+        SliceViewReverseIterator::new(self.current_range(py)?, self.inner().clone_ref(py))
     }
 
     fn __eq__(&self, other: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = other.py();
-        let seq = self.inner.bind(py);
+        let seq = self.inner_bind(py);
         other
             .cast_into::<PySequence>()
             .map(|o| {
                 let elem_eq = self
-                    ._current_range(py)?
+                    .current_range(py)?
                     .try_iter()
                     .unwrap()
                     .map(|x| seq.get_item(x?.extract::<usize>()?))
@@ -149,8 +176,8 @@ impl SliceView {
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let name = Self::type_object(py).name()?;
-        let repr = self.inner.bind(py).repr()?;
-        let cr = self._current_range(py)?;
+        let repr = self.inner_bind(py).repr()?;
+        let cr = self.current_range(py)?;
         Ok(format!(
             "{}({})[{}:{}:{}]",
             name,
@@ -162,7 +189,7 @@ impl SliceView {
     }
 
     fn __len__(&self, py: Python<'_>) -> PyResult<usize> {
-        self._current_range(py)?.len()
+        self.current_range(py)?.len()
     }
 
     fn __getitem__<'py>(
@@ -170,8 +197,8 @@ impl SliceView {
         index: Bound<'py, PyAny>,
     ) -> PyResult<Either<Bound<'py, Self>, Bound<'py, PyAny>>> {
         let py = index.py();
-        let inner = self.inner.clone_ref(py);
-        let current_range = self._current_range(py)?;
+        let inner = self.inner().clone_ref(py);
+        let current_range = self.current_range(py)?;
         match index.cast_exact::<PySlice>() {
             Ok(slice) => {
                 // Compose slices using Python's range slicing — O(1), exact.
@@ -181,7 +208,10 @@ impl SliceView {
                     .unbind()
                     .pipe(Either::Left);
                 PyoSequence::build_init()
-                    .add_subclass(Self { inner, range })
+                    .add_subclass(Self {
+                        inner,
+                        range: Mutex::new(range),
+                    })
                     .pipe(|initializer| Bound::new(py, initializer))
                     .map(Either::Left)
             }
@@ -206,8 +236,8 @@ impl SliceView {
     fn __setitem__(&self, index: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = index.py();
 
-        let inner = self.inner.bind(py);
-        let cr = self._current_range(py)?;
+        let inner = self.inner_bind(py);
+        let cr = self.current_range(py)?;
         try_cast! {
             match (inner, index) {
                 (PyMutableSequence, PySlice) => {
@@ -266,24 +296,20 @@ impl SliceView {
         }
     }
 
-    fn advance<'py>(mut slf: PyRefMut<'py, Self>, n: isize) -> PyResult<PyRefMut<'py, Self>> {
+    fn advance<'py>(slf: Bound<'py, Self>, n: isize) -> PyResult<Bound<'py, Self>> {
         let py = slf.py();
-        let b_len = slf.inner.bind(py).len()? as isize;
-        let cr = slf._current_range(py)?;
+        let slf_get = slf.get();
+        let b_len = slf_get.inner_bind(py).len()? as isize;
+        let cr = slf_get.current_range(py)?;
         let new_start = (cr.start()? + n).clamp(0, b_len);
         let delta = new_start - cr.start()?;
         let new_stop = (cr.stop()? + delta).clamp(0, b_len);
-        slf.range = PyRange::new_with_step(py, new_start, new_stop, cr.step()?)
-            .map(Bound::unbind)
-            .map(Either::Left)?;
+        slf_get.set_range(
+            PyRange::new_with_step(py, new_start, new_stop, cr.step()?)
+                .map(Bound::unbind)
+                .map(Either::Left)?,
+        );
         Ok(slf)
-    }
-    fn _current_range<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyRange>> {
-        self.range
-            .as_ref()
-            .map_right(|r| r.resolve(py, self.inner.clone_ref(py).bind(py).len()? as isize))
-            .map_left(|r| Ok(r.clone_ref(py).into_bound(py)))
-            .into_inner()
     }
 }
 #[pyclass(generic)]
