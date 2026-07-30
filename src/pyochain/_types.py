@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Hashable, Iterable, Mapping
+from collections.abc import Callable, Hashable, Iterable
 from typing import Any, Literal, Protocol
 
 # TODO: Theses types are manually extracted from typeshed and rewritten in modern python style
@@ -52,9 +52,6 @@ type SupportsComparison[T] = (
     | SupportsDunderLT[T]
 )
 type SupportsRichComparison[T] = SupportsDunderLT[T] | SupportsDunderGT[T]
-type DictConvertible[K, V] = (
-    Mapping[K, V] | Iterable[tuple[K, V]] | SupportsKeysAndGetItem[K, V]
-)
 
 type PositiveInteger = Literal[
     1,

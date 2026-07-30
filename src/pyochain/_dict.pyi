@@ -1,11 +1,13 @@
-from collections.abc import Iterable, Iterator, MutableMapping
+from collections.abc import Iterable, Iterator, Mapping, MutableMapping
 from typing import Self, overload, override
 
 from _typeshed import SupportsGetItem, SupportsKeysAndGetItem
 
-from ._types import DictConvertible
 from .abc import PyoMutableMapping, PyoReversible
 
+type DictConvertible[K, V] = (
+    Mapping[K, V] | Iterable[tuple[K, V]] | SupportsKeysAndGetItem[K, V]
+)
 type IntoDict[K, V] = dict[K, V] | Dict[K, V]
 
 class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
