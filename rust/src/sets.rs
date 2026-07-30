@@ -234,32 +234,18 @@ impl SetMut {
     /// As such, it fallback to `SetMut::__ror__` which will call `SetMut::__or__` and return a new `PySet` instead of updating the current one in-place.\
     /// Which then just doesn't work since we don't return anything, so we end up creating a new set AND then discarding it.
     fn __iand__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
-        let py = value.py();
-        self.inner
-            .bind(py)
-            .call_method1(intern!(py, "intersection_update"), (value,))?;
-        Ok(())
+        self.inner.bind(value.py()).intersection_update((value,))
     }
     fn __ior__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
-        let py = value.py();
-        self.inner
-            .bind(py)
-            .call_method1(intern!(py, "update"), (value,))?;
-        Ok(())
+        self.inner.bind(value.py()).update((value,))
     }
     fn __isub__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
-        let py = value.py();
-        self.inner
-            .bind(py)
-            .call_method1(intern!(py, "difference_update"), (value,))?;
-        Ok(())
+        self.inner.bind(value.py()).difference_update((value,))
     }
     fn __ixor__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<()> {
-        let py = value.py();
         self.inner
-            .bind(py)
-            .call_method1(intern!(py, "symmetric_difference_update"), (value,))?;
-        Ok(())
+            .bind(value.py())
+            .symmetric_difference_update(value)
     }
 
     fn __sub__<'py>(&self, value: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
