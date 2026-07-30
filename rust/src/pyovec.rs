@@ -1,15 +1,17 @@
 use crate::{
     abc,
     display::get_repr,
-    pyo3_ext::{prelude::*, pylibs},
+    pyo3_ext::{prelude::*, pylibs, types::PyCmpOut},
     traits::{IntoPyochain, PyWrapper, PyoABC},
 };
+use either::Either;
 use pyo3::{
-    PyTypeInfo, intern,
+    BoundObject, PyTypeInfo, intern,
     prelude::*,
     pyclass_init::PyClassInitializer,
-    types::{PyDict, PyInt, PyIterator, PyList, PyTuple},
+    types::{PyDict, PyInt, PyIterator, PyList, PyNotImplemented, PyTuple},
 };
+use pyochain_macros::try_cast;
 use tap::Pipe;
 #[pyclass(frozen, generic, sequence, extends=abc::PyoMutableSequence, name="Vec")]
 pub struct PyoVec {
@@ -60,10 +62,19 @@ impl PyoVec {
         slf.get().inner.bind(slf.py()).len()
     }
 
-    fn __eq__(&self, other: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<'py, bool> {
         let py = other.py();
-        let o = Self::extract_union(&other)?;
-        self.inner.bind(py).eq(&o).or(Ok(false))
+        let inner = self.inner.bind(py);
+        try_cast! {
+            match other {
+                PyList => inner.eq(&other).map(Either::Left),
+                PyoVec => inner.eq(&other.get().inner.bind(py)).map(Either::Left),
+                _ => PyNotImplemented::get(py)
+                    .into_bound()
+                    .pipe(Ok)
+                    .map(Either::Right),
+            }
+        }
     }
     fn __reversed__<'py>(slf: Bound<'py, Self>) -> Bound<'py, PyIterator> {
         let py = slf.py();
