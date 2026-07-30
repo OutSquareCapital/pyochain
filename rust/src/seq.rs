@@ -24,12 +24,11 @@ impl Seq {
         let py = data.py();
         data.cast_exact::<Self>()
             .map(|x| x.get().inner.clone_ref(py))
-            .or_else(|_| unsafe {
+            .or_else(|_| {
                 PyTuple::type_object(py)
-                    .call1((&data,))?
-                    .cast_into_unchecked::<PyTuple>()
-                    .unbind()
-                    .pipe(Ok)
+                    .call1((&data,))
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })
+                    .map(Bound::unbind)
             })
             .map(|inner| abc::PyoSequence::build_init().add_subclass(Self { inner }))
     }
