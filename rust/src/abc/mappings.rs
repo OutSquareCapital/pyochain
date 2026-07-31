@@ -121,19 +121,18 @@ impl PyoMutableMapping {
         key: &Bound<'py, PyAny>,
         default: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        match slf.get_item(key) {
-            Ok(value) => {
-                slf.del_item(key)?;
-                Ok(value)
-            }
-            Err(err) => {
+        slf.get_item(key)
+            .or_else(|err| {
                 if err.is_instance_of::<PyKeyError>(slf.py()) {
                     default.ok_or(err)
                 } else {
                     Err(err)
                 }
-            }
-        }
+            })
+            .and_then(|value| {
+                slf.del_item(key)?;
+                Ok(value)
+            })
     }
 
     fn popitem(slf: Bound<'_, Self>) -> PyResult<(Bound<'_, PyAny>, Bound<'_, PyAny>)> {
@@ -236,15 +235,12 @@ impl PyoMutableMapping {
     ) -> PyResult<Bound<'py, PyAny>> {
         let py = slf.py();
         if slf.contains(&key)? {
-            PyoErr::new(
-                PyKeyError::new_err(format!(
-                    "Key {} already exists with value {}.",
-                    key,
-                    slf.get_item(&key)?
-                ))
-                .into_py_any(py)?,
-            )
-            .into_bound_py_any(py)
+            let msg = format!(
+                "Key {} already exists with value {}.",
+                key,
+                slf.get_item(&key)?
+            );
+            PyoErr::new(PyKeyError::new_err(msg).into_py_any(py)?).into_bound_py_any(py)
         } else {
             slf.set_item(&key, &value)?;
             value.unbind().pipe(PyoOk::new).into_bound_py_any(py)
@@ -272,22 +268,21 @@ impl PyoMutableMapping {
         key: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, PyAny>> {
         let py = slf.py();
-        match slf.get_item(key) {
-            Ok(value) => {
+        slf.get_item(key)
+            .or_else(|err| {
+                if err.is_instance_of::<PyKeyError>(slf.py()) {
+                    PyNull::get(py).into_bound_py_any(py)
+                } else {
+                    Err(err)
+                }
+            })
+            .and_then(|value| {
                 slf.del_item(key)?;
                 PyTuple::new(py, [key, &value])?
                     .into_any()
                     .unbind()
                     .pipe(PySome::new)
                     .into_bound_py_any(py)
-            }
-            Err(err) => {
-                if err.is_instance_of::<PyKeyError>(slf.py()) {
-                    PyNull::get(py).into_bound_py_any(py)
-                } else {
-                    Err(err)
-                }
-            }
-        }
+            })
     }
 }
