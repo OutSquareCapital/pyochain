@@ -7,7 +7,7 @@ from collections.abc import (
     Sized,
     ValuesView,
 )
-from typing import Any, Generic, TypeVar, override
+from typing import Any, Generic, Self, TypeVar, override
 
 from _typeshed import SupportsGetItemViewable, Viewable
 
@@ -99,6 +99,7 @@ class PyoItemsView(  # pyright: ignore[reportUnsafeMultipleInheritance]
     See Also:
         `PyoMapping::items`: Method that returns this view.
     """
+    def __new__(cls, mapping: SupportsGetItemViewable[_K_co, _V_co]) -> Self: ...  # pyright: ignore[reportInconsistentConstructor]
     @classmethod
     @override
     def _from_iterable[S](cls, it: Iterable[S], /) -> set[S]: ...
