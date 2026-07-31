@@ -1,10 +1,13 @@
+"""Adapted from Cpython at https://github.com/python/cpython/blob/adf836ebddd89793afb6d43a79d0a0739ee5514b/Lib/test/test_collections.py"""
+
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from typing import override
 
 import pytest
 
-from pyochain import Dict, SetMut, Vec
+from pyochain import Dict, SetMut
 from pyochain.abc import (
     PyoCollection,
     PyoItemsView,
@@ -22,7 +25,29 @@ def name(cls: type) -> str:
     return cls.__name__
 
 
-Sorted = SortedDict[str, int]
+class MyDict(PyoMutableMapping[str, int]):
+    def __init__(self) -> None:
+        self._data: dict[str, int] = {}
+
+    @override
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._data)
+
+    @override
+    def __getitem__(self, key: str) -> int:
+        return self._data[key]
+
+    @override
+    def __setitem__(self, key: str, value: int) -> None:
+        self._data[key] = value
+
+    @override
+    def __delitem__(self, key: str) -> None:
+        del self._data[key]
+
+    @override
+    def __len__(self) -> int:
+        return len(self._data)
 
 
 @pytest.mark.parametrize("cls", (Dict, SortedDict), ids=name)
@@ -45,7 +70,7 @@ def test_abstract_methods() -> None:
 
 def test_mutable_mapping_subclass() -> None:
     # Test issue 9214
-    mymap = Sorted()
+    mymap = MyDict()
     mymap["red"] = 5
     assert isinstance(mymap.keys(), PyoSet)
     assert isinstance(mymap.keys(), PyoKeysView)
@@ -58,32 +83,24 @@ def test_mutable_mapping_subclass() -> None:
 type UnionFn[T] = Callable[[set[T]], SetMut[T]]
 
 
-@pytest.mark.parametrize(
-    "union_fn", (Sorted().keys().union, Sorted().keys().__or__), ids=name
-)
-def test_mutable_mapping_subclass_union(union_fn: UnionFn[str]) -> None:
+def test_mutable_mapping_subclass_union() -> None:
     # Test issue 9214
-    mymap = Sorted()
+    mymap = MyDict()
     mymap["red"] = 5
-    z = union_fn({"orange"})
+    z = mymap.keys() | {"orange"}
     assert isinstance(z, SetMut)
-    _ = Vec(z)
+    _ = list(z)
     mymap["blue"] = 7  # Shouldn't affect 'z'
     assert z.iter().sort() == ["orange", "red"]
 
 
-@pytest.mark.parametrize(
-    "union_fn", (Sorted().items().union, Sorted().items().__or__), ids=name
-)
-def test_mutable_mapping_subclass_union_items(
-    union_fn: UnionFn[tuple[str, int]],
-) -> None:
+def test_mutable_mapping_subclass_union_items() -> None:
     # Test issue 9214
-    mymap = Sorted()
+
+    mymap = MyDict()
     mymap["red"] = 5
-    oranges = ("orange", 3)
-    x = union_fn({oranges})
-    assert isinstance(x, SetMut)
-    _ = Vec(x)
-    mymap["blue"] = 7  # Shouldn't affect 'x'
-    assert x == {oranges, ("red", 5)}
+    z = mymap.items() | {("orange", 3)}
+    assert isinstance(z, SetMut)
+    _ = list(z)
+    mymap["blue"] = 7  # Shouldn't affect 'z'
+    assert z == {("orange", 3), ("red", 5)}
