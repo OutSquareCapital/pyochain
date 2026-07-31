@@ -126,7 +126,13 @@ def test_keys_and_set_operations() -> None:
     assert d4.keys() & d3.keys() == {"d"}
     assert d4.keys() & SetMut(d3.keys()) == {"d"}
     assert isinstance(d4.keys() & Set(d3.keys()), SetMut)
-    assert isinstance(Set(d3.keys()) & d4.keys(), SetMut)
+    set_and_keys = Set(d3.keys()) & d4.keys()
+    # NOTE: Here we diverge from CPython -> frozenset & dict_keys will in fact call `dict_keys.__and__(frozenset)`, thus returning a `set`
+    # This is NOT what's expected if one read the stubs from typeshed.
+    # Thus, I took the decision to be consistent with typing and return a `Set` instead of a `SetMut`.
+    # Basically, given `T.__and__(U)`, we always return T (unless T is not an AbstractSet, which is a TypeError).
+    assert isinstance(set_and_keys, Set)
+    assert not isinstance(set_and_keys, SetMut)
     assert type(d4.keys() & SetMut(d3.keys())) is SetMut
     assert type(d1.keys() & []) is SetMut
     assert type(Vec(()) & d1.keys()) is SetMut
