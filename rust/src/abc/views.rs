@@ -155,24 +155,32 @@ impl PyoItemsView {
             .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
             .and_then(Bound::into_pyochain)
     }
-
-    fn __contains__(&self, item: (Bound<'_, PyAny>, Bound<'_, PyAny>)) -> PyResult<bool> {
-        let (key, value) = item;
-        let py = key.py();
-
-        self._mapping
-            .bind(py)
-            .get_item(key)
-            .and_then(|v| Ok(v.is(&value) || v.eq(&value)?))
-            .or_else(|err| {
-                if err.is_instance_of::<PyKeyError>(py) {
-                    Ok(false)
-                } else {
-                    Err(err)
-                }
-            })
+    /// NOTE: There's a fundamental incoherence between Python dict_items and `collections.abc.ItemsView` regarding the `__contains__` method.\
+    /// dict_items will return `False` if the argument is not a tuple of length 2,\
+    /// while `ItemsView` will try to unpack `item` as an `Iterable` of 2 elements.\
+    /// Thus, the latter will work on ANY Iterable for truthyness, BUT will raise a `ValueError` on length issues,\
+    /// while the former will return `False` on ANY non-tuple argument, and will NOT raise anything regarding length issues.\
+    /// At the same time, the `typeshed` signature clearly stipulate that a `ItemsView` expect a `tuple` of 2 elements, and since `dict_items` is a virtual subclass of `ItemsView`, it should follow the same signature.\
+    /// Thus, I choose to follow dict_items behavior.
+    fn __contains__(&self, item: Bound<'_, PyAny>) -> PyResult<bool> {
+        match item.extract::<(Bound<'_, PyAny>, Bound<'_, PyAny>)>() {
+            Ok((key, value)) => {
+                let py = key.py();
+                self._mapping
+                    .bind(py)
+                    .get_item(&key)
+                    .and_then(|v| Ok(v.is(&value) || v.eq(&value)?))
+                    .or_else(|err| {
+                        if err.is_instance_of::<PyKeyError>(py) {
+                            Ok(false)
+                        } else {
+                            Err(err)
+                        }
+                    })
+            }
+            Err(_) => Ok(false),
+        }
     }
-
     fn __iter__(slf: Bound<'_, Self>) -> PyResult<iterators::ItemsViewIterator> {
         let py = slf.py();
         slf.get()
