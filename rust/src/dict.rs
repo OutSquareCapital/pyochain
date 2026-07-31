@@ -1,8 +1,8 @@
 use crate::{
     abc::{self, traits::ImplPyoReversible},
     display::pformat,
-    pyo3_ext::{prelude::*, pylibs},
     iterators,
+    pyo3_ext::{prelude::*, pylibs},
     traits::{IntoPyochain, PyWrapper, PyoABC},
 };
 use pyo3::{

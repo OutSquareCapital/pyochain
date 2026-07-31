@@ -10,6 +10,7 @@ use tap::Pipe;
 
 use crate::{
     abc::{PyoCollection, PyoSet, PyoSized},
+    iterators,
     mixins::Checkable,
     option::{PyNull, PySome},
     pyo3_ext::{
@@ -18,7 +19,6 @@ use crate::{
     },
     result::{PyoErr, PyoOk},
     sets::SetMut,
-    iterators,
     traits::{IntoPyochain, PyoABC},
 };
 #[pyclass(subclass, frozen, generic, mapping, extends=PyoCollection)]
@@ -328,13 +328,16 @@ impl PyoValuesView {
 
     fn __contains__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let mapping = self._mapping.bind(value.py());
-        for item in mapping.try_iter()?.map(|key| mapping.get_item(&key?)) {
-            let v = item?;
-            if v.is(&value) || v.eq(&value)? {
-                return Ok(true);
-            }
-        }
-        Ok(false)
+        mapping
+            .try_iter()?
+            .map(|key| mapping.get_item(&key?))
+            .map(|item| item.and_then(|v| Ok(v.is(&value) || v.eq(&value)?)))
+            .find_map(|item| match item {
+                Ok(true) => Some(Ok(true)),
+                Ok(false) => None,
+                Err(err) => Some(Err(err)),
+            })
+            .unwrap_or_else(|| Ok(false))
     }
 
     fn __iter__(slf: Bound<'_, Self>) -> PyResult<iterators::ValuesViewIterator> {
@@ -365,10 +368,11 @@ impl PyoKeysView {
     fn _from_iterable<'py>(
         cls: Bound<'py, PyType>,
         it: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, PySet>> {
+    ) -> PyResult<Bound<'py, SetMut>> {
         PySet::type_object(cls.py())
             .call1((it,))
             .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
+            .and_then(Bound::into_pyochain)
     }
 
     fn __contains__(&self, key: Bound<'_, PyAny>) -> PyResult<bool> {
@@ -427,31 +431,28 @@ impl PyoItemsView {
     fn _from_iterable<'py>(
         cls: Bound<'py, PyType>,
         it: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, PySet>> {
+    ) -> PyResult<Bound<'py, SetMut>> {
         PySet::type_object(cls.py())
             .call1((it,))
             .map(|x| unsafe { x.cast_into_unchecked::<PySet>() })
+            .and_then(Bound::into_pyochain)
     }
 
     fn __contains__(&self, item: (Bound<'_, PyAny>, Bound<'_, PyAny>)) -> PyResult<bool> {
         let (key, value) = item;
         let py = key.py();
 
-        let v = self
-            ._mapping
+        self._mapping
             .bind(py)
             .get_item(key)
-            .and_then(|v| Ok(v.is(&value) || v.eq(&value)?));
-        match v {
-            Ok(v) => Ok(v),
-            Err(err) => {
+            .and_then(|v| Ok(v.is(&value) || v.eq(&value)?))
+            .or_else(|err| {
                 if err.is_instance_of::<PyKeyError>(py) {
                     Ok(false)
                 } else {
                     Err(err)
                 }
-            }
-        }
+            })
     }
 
     fn __iter__(slf: Bound<'_, Self>) -> PyResult<iterators::ItemsViewIterator> {

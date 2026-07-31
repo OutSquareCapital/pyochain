@@ -1,8 +1,8 @@
 use crate::{
     collections::{InnerKeyLists, InnerLists, sorted::errors},
+    iterators,
     pyo3_ext::{prelude::*, pylibs},
     pyovec::PyoVec,
-    iterators,
     traits::{IntoPyochain, PyWrapper},
 };
 use either::Either;
