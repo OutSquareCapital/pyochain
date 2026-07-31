@@ -4,6 +4,7 @@ mod dict;
 mod display;
 mod errors;
 mod hasher;
+mod iterators;
 mod mixins;
 mod option;
 mod pyo3_ext;
@@ -13,7 +14,6 @@ mod result;
 mod seq;
 mod sets;
 mod sliceview;
-mod iterators;
 mod traits;
 use crate::pyo3_ext::{
     prelude::*,

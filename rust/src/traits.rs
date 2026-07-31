@@ -10,6 +10,7 @@ use pyo3::{
 use crate::{
     abc, collections,
     dict::Dict,
+    iterators::Iter,
     mixins::Checkable,
     pyo3_ext::types::PyDeque,
     pyovec::PyoVec,
@@ -17,7 +18,6 @@ use crate::{
     seq::Seq,
     sets::{Set, SetMut},
     sliceview::SliceView,
-    iterators::Iter,
 };
 pub trait PyWrapper<T: PyTypeInfo + DerefToPyAny>:
     PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
@@ -145,6 +145,12 @@ impl PyoABC for abc::PyoIterable {
         PyClassInitializer::from(Checkable).add_subclass(Self)
     }
 }
+
+impl PyoABC for abc::PyoSized {
+    fn build_init() -> PyClassInitializer<Self> {
+        PyClassInitializer::from(Checkable).add_subclass(Self)
+    }
+}
 impl PyoABC for abc::PyoIterator {
     fn build_init() -> PyClassInitializer<Self> {
         abc::PyoIterable::build_init().add_subclass(Self)
@@ -185,7 +191,7 @@ impl PyoABC for abc::PyoMutableMapping {
         abc::PyoMapping::build_init().add_subclass(Self)
     }
 }
-impl PyoABC for crate::collections::Heap {
+impl PyoABC for collections::Heap {
     fn build_init() -> PyClassInitializer<Self> {
         abc::PyoMutableSequence::build_init().add_subclass(Self)
     }
