@@ -485,8 +485,8 @@ wheels = [
 
 [[package]]
 name = "pytest-stubtester"
-version = "0.8.0"
-source = { git = "https://github.com/OutSquareCapital/pytest-stubtester.git#a6246ec8ddb781fc1107b33f35139a52beec65b9" }
+version = "0.8.1"
+source = { git = "https://github.com/OutSquareCapital/pytest-stubtester.git#b3839098be0032aea47e5ed3028d084bc270e6ab" }
 dependencies = [
     { name = "pyochain" },
     { name = "pytest" },
