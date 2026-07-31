@@ -96,21 +96,38 @@ def test_dict_values() -> None:
     assert len(values) == 2
 
 
-def test_dict_repr() -> None:
+def test_item_views_repr() -> None:
     d = Dict({1: 10, "a": "ABC"})
     assert isinstance(repr(d), str)
     r = repr(d.items())
     assert isinstance(r, str)
     assert r in {
-        "dict_items([('a', 'ABC'), (1, 10)])",
-        "dict_items([(1, 10), ('a', 'ABC')])",
+        "PyoItemsView(Dict(1: 10, 'a': 'ABC'))",
+        "PyoItemsView(Dict('a': 'ABC', 1: 10))",
     }
+
+
+# NOTE: Our repr diverge from CPython's dict view, and is more closer to corresponding ABC's reprs.
+
+
+def test_keys_view_repr() -> None:
+    d = Dict({1: 10, "a": "ABC"})
     r = repr(d.keys())
     assert isinstance(r, str)
-    assert r in {"dict_keys(['a', 1])", "dict_keys([1, 'a'])"}
+    assert r in {
+        "PyoKeysView(Dict('a': 'ABC', 1: 10))",
+        "PyoKeysView(Dict(1: 10, 'a': 'ABC'))",
+    }
+
+
+def test_values_view_repr() -> None:
+    d = Dict({1: 10, "a": "ABC"})
     r = repr(d.values())
     assert isinstance(r, str)
-    assert r in {"dict_values(['ABC', 10])", "dict_values([10, 'ABC'])"}
+    assert r in {
+        "PyoValuesView(Dict(1: 10, 'a': 'ABC'))",
+        "PyoValuesView(Dict('a': 'ABC', 1: 10))",
+    }
 
 
 def test_keys_and_set_operations() -> None:
