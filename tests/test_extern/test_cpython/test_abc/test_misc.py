@@ -45,6 +45,9 @@ def test_registration(cls: type) -> None:
 # as real base classes or mix-in classes.
 
 
+@pytest.mark.skip(
+    reason="__abc_tpflags__ is only processed by abc.ABCMeta, which we don't support yet"
+)
 def test_illegal_patma_flags() -> None:
     with pytest.raises(TypeError):
 

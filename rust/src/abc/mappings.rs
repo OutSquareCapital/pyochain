@@ -103,6 +103,12 @@ impl PyoMapping {
                 }
             })
     }
+
+    /// Blocks reversed() fallback to the sequence protocol, matching `collections.abc.Mapping.__reversed__ = None`.
+    #[classattr]
+    fn __reversed__(py: Python<'_>) -> Py<PyAny> {
+        py.None()
+    }
 }
 
 #[pyclass(subclass, frozen, generic, mapping, extends=PyoMapping)]
