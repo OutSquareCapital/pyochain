@@ -3,7 +3,7 @@ use crate::{
     display::get_repr,
     pyo3_ext::{
         prelude::*,
-        types::{PyAbstractSet, PyCmpOut},
+        types::{FromBoundIterator, PyAbstractSet, PyCmpOut},
     },
     traits::{IntoPyochain, PyWrapper, PyoABC},
 };
@@ -12,11 +12,19 @@ use pyo3::{
     BoundObject, PyTypeInfo, intern,
     prelude::*,
     pyclass_init::PyClassInitializer,
-    types::{PyBool, PyFrozenSet, PyIterator, PyNotImplemented, PySet, PyTuple},
+    types::{DerefToPyAny, PyBool, PyFrozenSet, PyIterator, PyNotImplemented, PySet, PyTuple},
 };
 use pyochain_macros::{BoundFromAny, try_cast};
 use tap::Pipe;
-/// TODO: factorize set comparisons in methods of this enum instead of duplicating code in `Set` and `SetMut`.
+/// Accepted types for set operations.
+/// In the case of pyochain types, we extract the inner sets.
+/// For python builtins, we directly work with them and call the corresponding numeric operators
+/// For abstract sets, it depends on the operation.\
+/// Python builtins (e.g `frozenset`) will immediately return `NotImplemented`, thus delegating to the `AbstractSet`'s corresponding operator.\
+/// The issue with this is that this will cause issues and performance problems since the `AbstractSet` will himself work with another `AbstractSet` (`self` in this case).
+/// Hence, we can't guarantee that the return type will be the corresponding `pyochain` type, thus leaving us with two choices:
+/// 1. Runtime check, no `cast_into_unchecked`, thus performance impact, and we still need to handle the return type.
+/// 2. (What we do) -> We call the `AbstractSet`'s corresponding operator, and then we try to iterate over the result and collect it into the corresponding `pyochain` type.\
 #[derive(BoundFromAny)]
 enum SetCmp<'py> {
     #[cast_exact]
@@ -29,6 +37,128 @@ enum SetCmp<'py> {
     SetMut(Bound<'py, SetMut>),
     PyAbstract(Bound<'py, PyAbstractSet>),
 }
+trait SetCmpMethods<'py, T: PyTypeInfo + DerefToPyAny + FromBoundIterator<'py>>:
+    Sized + PyWrapper<T> + PyTypeInfo
+{
+    #[inline(always)]
+    fn handle_pyabstract_set(pyset: Bound<'py, PyAny>) -> PyResult<Bound<'py, T>> {
+        let py = pyset.py();
+        match pyset.cast_exact::<T>() {
+            Err(_) => pyset.try_iter()?.collect_bound::<T>(py),
+            Ok(target) => Ok(target.into()),
+        }
+    }
+    #[inline]
+    fn cmp_eq(&self, right: Bound<'py, PyAny>) -> PyCmpOut<'py, bool> {
+        let py = right.py();
+        let inner = self.inner().bind(py);
+        try_cast! {
+            match right {
+                Set | SetMut => inner.eq(right.get().inner_bind(py)).map(Either::Left),
+                PySet | PyFrozenSet => inner.eq(right).map(Either::Left),
+                _ => PyNotImplemented::get(py).into_bound().pipe(Ok).map(Either::Right),
+            }
+        }
+    }
+
+    #[inline]
+    fn cmp_and(&self, other: SetCmp<'py>) -> PyResult<Bound<'py, T>> {
+        let inner = self.inner();
+        match &other {
+            SetCmp::Set(x) => inner
+                .bind(x.py())
+                .bitor(x.get().inner_bind(x.py()))
+                .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
+            SetCmp::SetMut(x) => inner
+                .bind(x.py())
+                .bitor(x.get().inner_bind(x.py()))
+                .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
+            SetCmp::PySet(x) => inner
+                .bind(x.py())
+                .bitor(x)
+                .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
+            SetCmp::PyFrozen(x) => inner
+                .bind(x.py())
+                .bitor(x)
+                .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
+            SetCmp::PyAbstract(x) => Self::handle_pyabstract_set(x.bitor(inner)?),
+        }
+    }
+
+    #[inline]
+    fn cmp_or(&self, other: SetCmp<'py>) -> PyResult<Bound<'py, T>> {
+        let inner = self.inner();
+        match &other {
+            SetCmp::Set(x) => inner
+                .bind(x.py())
+                .bitor(x.get().inner_bind(x.py()))
+                .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
+            SetCmp::SetMut(x) => inner
+                .bind(x.py())
+                .bitor(x.get().inner_bind(x.py()))
+                .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
+            SetCmp::PySet(x) => inner
+                .bind(x.py())
+                .bitor(x)
+                .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
+            SetCmp::PyFrozen(x) => inner
+                .bind(x.py())
+                .bitor(x)
+                .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
+            SetCmp::PyAbstract(x) => Self::handle_pyabstract_set(x.bitor(inner)?),
+        }
+    }
+
+    #[inline]
+    fn cmp_xor(&self, other: SetCmp<'py>) -> PyResult<Bound<'py, T>> {
+        let inner = self.inner();
+        match &other {
+            SetCmp::Set(x) => inner
+                .bind(x.py())
+                .bitxor(x.get().inner_bind(x.py()))
+                .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
+            SetCmp::SetMut(x) => inner
+                .bind(x.py())
+                .bitxor(x.get().inner_bind(x.py()))
+                .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
+            SetCmp::PySet(x) => inner
+                .bind(x.py())
+                .bitxor(x)
+                .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
+            SetCmp::PyFrozen(x) => inner
+                .bind(x.py())
+                .bitxor(x)
+                .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
+            SetCmp::PyAbstract(x) => Self::handle_pyabstract_set(x.bitxor(inner)?),
+        }
+    }
+
+    #[inline]
+    fn cmp_sub(&self, other: SetCmp<'py>) -> PyResult<Bound<'py, T>> {
+        let inner = self.inner();
+        match &other {
+            SetCmp::Set(x) => inner
+                .bind(x.py())
+                .sub(x.get().inner_bind(x.py()))
+                .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
+            SetCmp::SetMut(x) => inner
+                .bind(x.py())
+                .sub(x.get().inner_bind(x.py()))
+                .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
+            SetCmp::PySet(x) => inner
+                .bind(x.py())
+                .sub(x)
+                .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
+            SetCmp::PyFrozen(x) => inner
+                .bind(x.py())
+                .sub(x)
+                .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
+            SetCmp::PyAbstract(x) => Self::handle_pyabstract_set(x.sub(inner)?),
+        }
+    }
+}
+impl<'py> SetCmpMethods<'py, PyFrozenSet> for Set {}
+impl<'py> SetCmpMethods<'py, PySet> for SetMut {}
 #[pyclass(frozen, generic, extends=abc::PyoSet)]
 pub struct Set(pub Py<PyFrozenSet>);
 #[pymethods]
@@ -65,112 +195,18 @@ impl Set {
     }
 
     fn __and__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        let inner = &self.inner();
-        match &value {
-            SetCmp::Set(x) => inner
-                .bind(x.py())
-                .bitand(x.get().inner_bind(x.py()))
-                .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() }),
-            SetCmp::SetMut(x) => inner
-                .bind(x.py())
-                .bitand(x.get().inner_bind(x.py()))
-                .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() }),
-            SetCmp::PySet(x) => inner
-                .bind(x.py())
-                .bitand(x)
-                .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() }),
-            SetCmp::PyFrozen(x) => inner
-                .bind(x.py())
-                .bitand(x)
-                .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() }),
-
-            SetCmp::PyAbstract(x) => inner
-                .bind(x.py())
-                .bitand(x)?
-                .try_iter()?
-                .collect_bound::<PyFrozenSet>(x.py()),
-        }
-        .and_then(Bound::into_pyochain)
+        self.cmp_and(value).and_then(Bound::into_pyochain)
     }
     fn __or__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        let inner = &self.inner();
-        match &value {
-            SetCmp::Set(x) => inner
-                .bind(x.py())
-                .bitor(x.get().inner_bind(x.py()))
-                .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() }),
-            SetCmp::SetMut(x) => inner
-                .bind(x.py())
-                .bitor(x.get().inner_bind(x.py()))
-                .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() }),
-            SetCmp::PySet(x) => inner
-                .bind(x.py())
-                .bitor(x)
-                .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() }),
-            SetCmp::PyFrozen(x) => inner
-                .bind(x.py())
-                .bitor(x)
-                .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() }),
-            SetCmp::PyAbstract(x) => inner
-                .bind(x.py())
-                .bitor(x)?
-                .try_iter()?
-                .collect_bound::<PyFrozenSet>(x.py()),
-        }
-        .and_then(Bound::into_pyochain)
+        self.cmp_or(value).and_then(Bound::into_pyochain)
     }
 
     fn __sub__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        let inner = &self.inner();
-        let sub_into_set = |x: Bound<'py, PyAny>| {
-            inner
-                .bind(x.py())
-                .sub(x)
-                .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() })
-        };
-        match value {
-            SetCmp::Set(x) => sub_into_set(x.get().into_inner_bound(x.py()).into_any()),
-            SetCmp::SetMut(x) => sub_into_set(x.get().into_inner_bound(x.py()).into_any()),
-            SetCmp::PySet(x) => sub_into_set(x.into_any()),
-            SetCmp::PyFrozen(x) => sub_into_set(x.into_any()),
-            SetCmp::PyAbstract(x) => {
-                let py = x.py();
-                inner
-                    .bind(py)
-                    .sub(x)?
-                    .try_iter()?
-                    .collect_bound::<PyFrozenSet>(py)
-            }
-        }
-        .and_then(Bound::into_pyochain)
+        self.cmp_sub(value).and_then(Bound::into_pyochain)
     }
 
     fn __xor__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        let inner = &self.inner();
-        match &value {
-            SetCmp::Set(x) => inner
-                .bind(x.py())
-                .bitxor(x.get().inner_bind(x.py()))
-                .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() }),
-            SetCmp::SetMut(x) => inner
-                .bind(x.py())
-                .bitxor(x.get().inner_bind(x.py()))
-                .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() }),
-            SetCmp::PySet(x) => inner
-                .bind(x.py())
-                .bitxor(x)
-                .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() }),
-            SetCmp::PyFrozen(x) => inner
-                .bind(x.py())
-                .bitxor(x)
-                .map(|x| unsafe { x.cast_into_unchecked::<PyFrozenSet>() }),
-            SetCmp::PyAbstract(x) => inner
-                .bind(x.py())
-                .bitxor(x)?
-                .try_iter()?
-                .collect_bound::<PyFrozenSet>(x.py()),
-        }
-        .and_then(Bound::into_pyochain)
+        self.cmp_xor(value).and_then(Bound::into_pyochain)
     }
 
     fn __le__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
@@ -190,9 +226,7 @@ impl Set {
     }
 
     fn __eq__<'py>(&self, value: Bound<'py, PyAny>) -> PyCmpOut<'py, bool> {
-        self.inner_bind(value.py())
-            .as_any()
-            .pipe_ref(|x| set_eq(x, value))
+        self.cmp_eq(value)
     }
 
     fn __hash__(slf: Bound<'_, Self>) -> PyResult<isize> {
@@ -286,67 +320,15 @@ impl SetMut {
     }
 
     fn __eq__<'py>(&self, other: Bound<'py, PyAny>) -> PyCmpOut<'py, bool> {
-        self.inner_bind(other.py())
-            .as_any()
-            .pipe_ref(|x| set_eq(x, other))
+        self.cmp_eq(other)
     }
 
     fn __and__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        let inner = &self.inner();
-
-        match &value {
-            SetCmp::Set(x) => inner
-                .bind(x.py())
-                .bitand(x.get().inner_bind(x.py()))
-                .map(|x| unsafe { x.cast_into_unchecked::<PySet>() }),
-            SetCmp::SetMut(x) => inner
-                .bind(x.py())
-                .bitand(x.get().inner_bind(x.py()))
-                .map(|x| unsafe { x.cast_into_unchecked::<PySet>() }),
-            SetCmp::PySet(x) => inner
-                .bind(x.py())
-                .bitand(x)
-                .map(|x| unsafe { x.cast_into_unchecked::<PySet>() }),
-            SetCmp::PyFrozen(x) => inner
-                .bind(x.py())
-                .bitand(x)
-                .map(|x| unsafe { x.cast_into_unchecked::<PySet>() }),
-
-            SetCmp::PyAbstract(x) => inner
-                .bind(x.py())
-                .bitand(x)?
-                .try_iter()?
-                .collect_bound::<PySet>(x.py()),
-        }
-        .and_then(Bound::into_pyochain)
+        self.cmp_and(value).and_then(Bound::into_pyochain)
     }
 
     fn __or__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        let inner = &self.inner();
-        match &value {
-            SetCmp::Set(x) => inner
-                .bind(x.py())
-                .bitor(x.get().inner_bind(x.py()))
-                .map(|x| unsafe { x.cast_into_unchecked::<PySet>() }),
-            SetCmp::SetMut(x) => inner
-                .bind(x.py())
-                .bitor(x.get().inner_bind(x.py()))
-                .map(|x| unsafe { x.cast_into_unchecked::<PySet>() }),
-            SetCmp::PySet(x) => inner
-                .bind(x.py())
-                .bitor(x)
-                .map(|x| unsafe { x.cast_into_unchecked::<PySet>() }),
-            SetCmp::PyFrozen(x) => inner
-                .bind(x.py())
-                .bitor(x)
-                .map(|x| unsafe { x.cast_into_unchecked::<PySet>() }),
-            SetCmp::PyAbstract(x) => inner
-                .bind(x.py())
-                .bitor(x)?
-                .try_iter()?
-                .collect_bound::<PySet>(x.py()),
-        }
-        .and_then(Bound::into_pyochain)
+        self.cmp_or(value).and_then(Bound::into_pyochain)
     }
     /// NOTE: We need to use `call_method1` for in-place operators here because Pyo3 doesn't allow returning something else than `PyResult<()>`.\
     /// And if we use `PySet::__ior__`, it will return `NotImplemented` on object who are NOT subclasses of `set` or `frozenset`.\
@@ -367,62 +349,11 @@ impl SetMut {
     }
 
     fn __sub__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        let inner = &self.inner();
-        match &value {
-            SetCmp::Set(x) => inner
-                .bind(x.py())
-                .sub(x.get().inner_bind(x.py()))
-                .map(|x| unsafe { x.cast_into_unchecked::<PySet>() }),
-            SetCmp::SetMut(x) => inner
-                .bind(x.py())
-                .sub(x.get().inner_bind(x.py()))
-                .map(|x| unsafe { x.cast_into_unchecked::<PySet>() }),
-            SetCmp::PySet(x) => inner
-                .bind(x.py())
-                .sub(x)
-                .map(|x| unsafe { x.cast_into_unchecked::<PySet>() }),
-            SetCmp::PyFrozen(x) => inner
-                .bind(x.py())
-                .sub(x)
-                .map(|x| unsafe { x.cast_into_unchecked::<PySet>() }),
-            SetCmp::PyAbstract(x) => {
-                let py = x.py();
-                inner
-                    .bind(py)
-                    .sub(x)?
-                    .try_iter()?
-                    .collect_bound::<PySet>(py)
-            }
-        }
-        .and_then(Bound::into_pyochain)
+        self.cmp_sub(value).and_then(Bound::into_pyochain)
     }
 
     fn __xor__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
-        let inner = &self.inner();
-        match &value {
-            SetCmp::Set(x) => inner
-                .bind(x.py())
-                .bitxor(x.get().inner_bind(x.py()))
-                .map(|x| unsafe { x.cast_into_unchecked::<PySet>() }),
-            SetCmp::SetMut(x) => inner
-                .bind(x.py())
-                .bitxor(x.get().inner_bind(x.py()))
-                .map(|x| unsafe { x.cast_into_unchecked::<PySet>() }),
-            SetCmp::PySet(x) => inner
-                .bind(x.py())
-                .bitxor(x)
-                .map(|x| unsafe { x.cast_into_unchecked::<PySet>() }),
-            SetCmp::PyFrozen(x) => inner
-                .bind(x.py())
-                .bitxor(x)
-                .map(|x| unsafe { x.cast_into_unchecked::<PySet>() }),
-            SetCmp::PyAbstract(x) => inner
-                .bind(x.py())
-                .bitxor(x)?
-                .try_iter()?
-                .collect_bound::<PySet>(x.py()),
-        }
-        .and_then(Bound::into_pyochain)
+        self.cmp_xor(value).and_then(Bound::into_pyochain)
     }
 
     fn __rand__<'py>(&self, value: SetCmp<'py>) -> PyResult<Bound<'py, Self>> {
@@ -528,17 +459,5 @@ impl SetMut {
         self.inner_bind(other.py())
             .symmetric_difference(other)
             .and_then(Bound::into_pyochain)
-    }
-}
-
-#[inline]
-fn set_eq<'py>(left: &Bound<'py, PyAny>, right: Bound<'py, PyAny>) -> PyCmpOut<'py, bool> {
-    let py = right.py();
-    try_cast! {
-        match right {
-            Set | SetMut => left.eq(right.get().inner_bind(py)).map(Either::Left),
-            PySet | PyFrozenSet => left.eq(right).map(Either::Left),
-            _ => PyNotImplemented::get(py).into_bound().pipe(Ok).map(Either::Right),
-        }
     }
 }
