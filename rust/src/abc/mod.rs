@@ -4,12 +4,12 @@ mod iterator;
 mod mappings;
 mod sequences;
 mod sets;
+pub mod traits;
+mod views;
 pub use collections::{PyoCollection, PyoContainer, PyoReversible, PyoSized};
 pub use iterable::PyoIterable;
 pub use iterator::PyoIterator;
-pub use mappings::{
-    PyoItemsView, PyoKeysView, PyoMapping, PyoMappingView, PyoMutableMapping, PyoValuesView,
-};
+pub use mappings::{PyoMapping, PyoMutableMapping};
 pub use sequences::{PyoMutableSequence, PyoSequence};
 pub use sets::{PyoMutableSet, PyoSet};
-pub mod traits;
+pub use views::{PyoItemsView, PyoKeysView, PyoMappingView, PyoValuesView};
