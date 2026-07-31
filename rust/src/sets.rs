@@ -67,21 +67,21 @@ trait SetCmpMethods<'py, T: PyTypeInfo + DerefToPyAny + FromBoundIterator<'py>>:
         match &other {
             SetCmp::Set(x) => inner
                 .bind(x.py())
-                .bitor(x.get().inner_bind(x.py()))
+                .bitand(x.get().inner_bind(x.py()))
                 .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
             SetCmp::SetMut(x) => inner
                 .bind(x.py())
-                .bitor(x.get().inner_bind(x.py()))
+                .bitand(x.get().inner_bind(x.py()))
                 .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
             SetCmp::PySet(x) => inner
                 .bind(x.py())
-                .bitor(x)
+                .bitand(x)
                 .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
             SetCmp::PyFrozen(x) => inner
                 .bind(x.py())
-                .bitor(x)
+                .bitand(x)
                 .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
-            SetCmp::PyAbstract(x) => Self::handle_pyabstract_set(x.bitor(inner)?),
+            SetCmp::PyAbstract(x) => Self::handle_pyabstract_set(x.bitand(inner)?),
         }
     }
 
@@ -153,7 +153,7 @@ trait SetCmpMethods<'py, T: PyTypeInfo + DerefToPyAny + FromBoundIterator<'py>>:
                 .bind(x.py())
                 .sub(x)
                 .map(|x| unsafe { x.cast_into_unchecked::<T>() }),
-            SetCmp::PyAbstract(x) => Self::handle_pyabstract_set(x.sub(inner)?),
+            SetCmp::PyAbstract(x) => Self::handle_pyabstract_set(inner.bind(x.py()).sub(x)?),
         }
     }
 }

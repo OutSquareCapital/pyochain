@@ -132,10 +132,9 @@ impl PyoSet {
         other: IntoSetComp<'py>,
     ) -> PyCmpOut<'py, Bound<'py, PyAny>> {
         let other_set = match other {
-            IntoSetComp::Set(other) => other,
-            IntoSetComp::Iterable(iterable) => py_from_iterable(slf.as_any(), iterable.as_any())?
-                .pipe(|x| unsafe { x.cast_into_unchecked::<PyAbstractSet>() }),
-            _ => {
+            IntoSetComp::Set(set) => set,
+            IntoSetComp::Iterable(iterable) => py_from_iterable(slf.as_any(), iterable.as_any())?,
+            IntoSetComp::Other(_) => {
                 return PyNotImplemented::get(slf.py())
                     .into_bound()
                     .pipe(Ok)

@@ -106,12 +106,12 @@ impl PyoKeysView {
         other: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, SetMut>> {
         slf.bitand(other)
-            .and_then(|x| unsafe { x.cast_into_unchecked::<PySet>() }.into_pyochain())
+            .map(|x| unsafe { x.cast_into_unchecked::<SetMut>() })
     }
 
     fn union<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, SetMut>> {
         slf.bitor(other)
-            .and_then(|x| unsafe { x.cast_into_unchecked::<PySet>() }.into_pyochain())
+            .map(|x| unsafe { x.cast_into_unchecked::<SetMut>() })
     }
 
     fn difference<'py>(
@@ -119,7 +119,7 @@ impl PyoKeysView {
         other: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, SetMut>> {
         slf.sub(other)
-            .and_then(|x| unsafe { x.cast_into_unchecked::<PySet>() }.into_pyochain())
+            .map(|x| unsafe { x.cast_into_unchecked::<SetMut>() })
     }
 
     fn symmetric_difference<'py>(
@@ -127,7 +127,7 @@ impl PyoKeysView {
         other: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, SetMut>> {
         slf.bitxor(other)
-            .and_then(|x| unsafe { x.cast_into_unchecked::<PySet>() }.into_pyochain())
+            .map(|x| unsafe { x.cast_into_unchecked::<SetMut>() })
     }
 }
 
@@ -187,12 +187,12 @@ impl PyoItemsView {
         other: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, SetMut>> {
         slf.bitand(other)
-            .and_then(|x| unsafe { x.cast_into_unchecked::<PySet>() }.into_pyochain())
+            .map(|x| unsafe { x.cast_into_unchecked::<SetMut>() })
     }
 
     fn union<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, SetMut>> {
         slf.bitor(other)
-            .and_then(|x| unsafe { x.cast_into_unchecked::<PySet>() }.into_pyochain())
+            .map(|x| unsafe { x.cast_into_unchecked::<SetMut>() })
     }
 
     fn difference<'py>(
@@ -200,7 +200,7 @@ impl PyoItemsView {
         other: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, SetMut>> {
         slf.sub(other)
-            .and_then(|x| unsafe { x.cast_into_unchecked::<PySet>() }.into_pyochain())
+            .map(|x| unsafe { x.cast_into_unchecked::<SetMut>() })
     }
 
     fn symmetric_difference<'py>(
@@ -208,6 +208,6 @@ impl PyoItemsView {
         other: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, SetMut>> {
         slf.bitxor(other)
-            .and_then(|x| unsafe { x.cast_into_unchecked::<PySet>() }.into_pyochain())
+            .map(|x| unsafe { x.cast_into_unchecked::<SetMut>() })
     }
 }
