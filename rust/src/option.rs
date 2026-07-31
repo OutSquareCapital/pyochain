@@ -2,7 +2,7 @@ use crate::errors::OptionUnwrapError;
 use crate::hasher::hash_fn;
 use crate::pyo3_ext::prelude::*;
 use crate::result::{PyoErr, PyoOk};
-use crate::{abc, tools};
+use crate::{abc, iterators};
 use pyo3::exceptions::PyTypeError;
 use pyo3::{IntoPyObjectExt, PyTypeInfo};
 use pyo3::{
@@ -310,7 +310,7 @@ impl PySome {
             .value
             .clone_ref(py)
             .into_bound(py)
-            .pipe(|x| abc::PyoIterator::once(&tools::Iter::type_object(py), x))
+            .pipe(|x| abc::PyoIterator::once(&iterators::Iter::type_object(py), x))
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
@@ -558,8 +558,8 @@ impl PyNull {
         }
     }
 
-    fn iter<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, tools::Iter>> {
-        tools::Iter::empty(slf.py())
+    fn iter<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, iterators::Iter>> {
+        iterators::Iter::empty(slf.py())
     }
 
     fn transpose(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {

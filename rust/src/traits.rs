@@ -17,7 +17,7 @@ use crate::{
     seq::Seq,
     sets::{Set, SetMut},
     sliceview::SliceView,
-    tools::Iter,
+    iterators::Iter,
 };
 pub trait PyWrapper<T: PyTypeInfo + DerefToPyAny>:
     PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync

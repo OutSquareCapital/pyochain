@@ -2,7 +2,7 @@ use crate::{
     abc::{self, traits::ImplPyoReversible},
     display::pformat,
     pyo3_ext::{prelude::*, pylibs},
-    tools,
+    iterators,
     traits::{IntoPyochain, PyWrapper, PyoABC},
 };
 use pyo3::{
@@ -200,10 +200,10 @@ impl Dict {
     }
 }
 impl ImplPyoReversible for Dict {
-    fn rev<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, tools::Iter>> {
+    fn rev<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, iterators::Iter>> {
         self.inner_bind(py)
             .as_any()
             .pipe(pylibs::builtins::reversed)
-            .pipe(tools::Iter::new)
+            .pipe(iterators::Iter::new)
     }
 }

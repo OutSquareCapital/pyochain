@@ -18,7 +18,7 @@ use crate::{
     },
     result::{PyoErr, PyoOk},
     sets::SetMut,
-    tools,
+    iterators,
     traits::{IntoPyochain, PyoABC},
 };
 #[pyclass(subclass, frozen, generic, mapping, extends=PyoCollection)]
@@ -337,13 +337,13 @@ impl PyoValuesView {
         Ok(false)
     }
 
-    fn __iter__(slf: Bound<'_, Self>) -> PyResult<tools::ValuesViewIterator> {
+    fn __iter__(slf: Bound<'_, Self>) -> PyResult<iterators::ValuesViewIterator> {
         let py = slf.py();
         slf.get()
             ._mapping
             .clone_ref(py)
             .into_bound(py)
-            .pipe(tools::ValuesViewIterator::new)
+            .pipe(iterators::ValuesViewIterator::new)
     }
 }
 
@@ -454,13 +454,13 @@ impl PyoItemsView {
         }
     }
 
-    fn __iter__(slf: Bound<'_, Self>) -> PyResult<tools::ItemsViewIterator> {
+    fn __iter__(slf: Bound<'_, Self>) -> PyResult<iterators::ItemsViewIterator> {
         let py = slf.py();
         slf.get()
             ._mapping
             .clone_ref(py)
             .into_bound(py)
-            .pipe(tools::ItemsViewIterator::new)
+            .pipe(iterators::ItemsViewIterator::new)
     }
 
     fn intersection<'py>(

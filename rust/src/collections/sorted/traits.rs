@@ -2,7 +2,7 @@ use crate::{
     collections::{InnerKeyLists, InnerLists, sorted::errors},
     pyo3_ext::{prelude::*, pylibs},
     pyovec::PyoVec,
-    tools,
+    iterators,
     traits::{IntoPyochain, PyWrapper},
 };
 use either::Either;
@@ -795,12 +795,12 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         }
     }
     /// ref: `self.lists.iter().flatten()`
-    fn iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, tools::Iter>> {
+    fn iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, iterators::Iter>> {
         self.get_lists(py)
             .bind(py)
             .try_iter()
             .unwrap()
             .pipe_ref(pylibs::itertools::chain::from_iterable)
-            .and_then(tools::Iter::new)
+            .and_then(iterators::Iter::new)
     }
 }

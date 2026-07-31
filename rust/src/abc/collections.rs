@@ -5,7 +5,7 @@ use crate::{
         args::{Args, Kwargs},
         pylibs,
     },
-    tools,
+    iterators,
     traits::PyoABC,
 };
 use pyo3::prelude::*;
@@ -81,9 +81,9 @@ impl PyoReversible {
         PyoIterable::build_init().add_subclass(Self)
     }
     /// We use unsafe code here because calling `reversed` with `PyOnceLock` pattern is 2x slower than pure python for some reason.
-    fn rev(slf: Bound<'_, Self>) -> PyResult<Bound<'_, tools::Iter>> {
+    fn rev(slf: Bound<'_, Self>) -> PyResult<Bound<'_, iterators::Iter>> {
         slf.as_any()
             .pipe(pylibs::builtins::reversed)
-            .pipe(tools::Iter::new)
+            .pipe(iterators::Iter::new)
     }
 }

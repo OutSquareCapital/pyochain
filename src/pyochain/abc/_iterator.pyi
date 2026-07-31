@@ -20,7 +20,7 @@ from typing import (
 
 from _typeshed import SupportsRichComparison
 
-from pyochain._tools import Peekable
+from pyochain._iterators import Peekable
 from pyochain._vec import Vec
 from pyochain.abc import PyoIterable, PyoMutableSequence
 from pyochain.rs import Option, Result

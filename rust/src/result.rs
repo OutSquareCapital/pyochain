@@ -2,7 +2,7 @@ use crate::errors::ResultUnwrapError;
 use crate::hasher::hash_fn;
 use crate::option::{PyNull, PySome};
 use crate::pyo3_ext::prelude::*;
-use crate::tools;
+use crate::iterators;
 use pyderive::*;
 use pyo3::IntoPyObjectExt;
 use pyo3::exceptions::PyBaseException;
@@ -144,13 +144,13 @@ impl PyoOk {
         self.value.clone_ref(py)
     }
 
-    fn iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, tools::Iter>> {
+    fn iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, iterators::Iter>> {
         self.value
             .clone_ref(py)
             .pipe(|x| PyTuple::new(py, &[x]))?
             .try_iter()
             .unwrap()
-            .pipe(tools::Iter::new)
+            .pipe(iterators::Iter::new)
     }
 
     fn map_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Self> {
@@ -319,8 +319,8 @@ impl PyoErr {
         self.error.clone_ref(py)
     }
 
-    fn iter<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, tools::Iter>> {
-        tools::Iter::empty(slf.py())
+    fn iter<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, iterators::Iter>> {
+        iterators::Iter::empty(slf.py())
     }
 
     fn unwrap_or(&self, default: Py<PyAny>) -> Py<PyAny> {

@@ -16,7 +16,7 @@ use crate::{
     },
     pyovec::PyoVec,
     result::{PyoErr, PyoOk},
-    tools,
+    iterators,
     traits::{IntoPyochain, PyoABC},
 };
 
@@ -57,7 +57,7 @@ impl PyoIterator {
         args: Args<'_>,
         kwargs: Option<Kwargs<'_>>,
     ) -> PyResult<Bound<'py, Self>> {
-        cls.call1((tools::OnceWith::new(func, args, kwargs),))
+        cls.call1((iterators::OnceWith::new(func, args, kwargs),))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
     #[pyo3(signature = (f, *args, **kwargs))]
@@ -68,7 +68,7 @@ impl PyoIterator {
         args: &Args<'_>,
         kwargs: Option<&Kwargs<'_>>,
     ) -> PyResult<Bound<'py, Self>> {
-        cls.call1((tools::FromFn::new(f, args, kwargs),))
+        cls.call1((iterators::FromFn::new(f, args, kwargs),))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
     #[pyo3(signature = (obj, n=None))]
@@ -87,7 +87,7 @@ impl PyoIterator {
         first: Bound<'py, PyAny>,
         succ: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
-        cls.call1((tools::Successors::new(first, succ),))
+        cls.call1((iterators::Successors::new(first, succ),))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
     #[classmethod]
@@ -776,7 +776,7 @@ impl PyoIterator {
         element: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .and_then(|x| tools::Intersperse::new(x, element.unbind()))
+            .and_then(|x| iterators::Intersperse::new(x, element.unbind()))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -870,7 +870,7 @@ impl PyoIterator {
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
             .and_then(|x| pylibs::itertools::group_by(&x, key))
-            .map(tools::GroupBy::new)
+            .map(iterators::GroupBy::new)
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -910,7 +910,7 @@ impl PyoIterator {
         predicate: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .map(|x| tools::FilterStar::new(x, predicate))
+            .map(|x| iterators::FilterStar::new(x, predicate))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -929,7 +929,7 @@ impl PyoIterator {
         func: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .map(|x| tools::FilterMap::new(x, func))
+            .map(|x| iterators::FilterMap::new(x, func))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -938,7 +938,7 @@ impl PyoIterator {
         func: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .map(|x| tools::FilterMapStar::new(x, func))
+            .map(|x| iterators::FilterMapStar::new(x, func))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -998,7 +998,7 @@ impl PyoIterator {
         funcs: &Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .map(|x| tools::MapJuxt::new(x, funcs))
+            .map(|x| iterators::MapJuxt::new(x, funcs))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -1007,7 +1007,7 @@ impl PyoIterator {
         func: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .map(|x| tools::MapWhile::new(x, func))
+            .map(|x| iterators::MapWhile::new(x, func))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -1019,7 +1019,7 @@ impl PyoIterator {
     ) -> PyResult<Bound<'py, Self>> {
         let py = slf.py();
         slf.try_iter()
-            .and_then(|x| tools::MapWindow::new(x, length))
+            .and_then(|x| iterators::MapWindow::new(x, length))
             .and_then(|x| x.into_bound_py_any(py))
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
             .and_then(|x| pylibs::builtins::map(func, &x))
@@ -1033,7 +1033,7 @@ impl PyoIterator {
     ) -> PyResult<Bound<'py, Self>> {
         let py = slf.py();
         slf.try_iter()
-            .and_then(|x| tools::MapWindow::new(x, length))
+            .and_then(|x| iterators::MapWindow::new(x, length))
             .and_then(|x| x.into_bound_py_any(py))
             .map(|x| unsafe { x.cast_into_unchecked::<PyIterator>() })
             .and_then(|x| pylibs::itertools::map_star(func, x))
@@ -1083,10 +1083,10 @@ impl PyoIterator {
             .map(|x| x?.unbind().pipe(PySome::new).into_bound_py_any(py))
             .unwrap_or_else(|| PyNull::get(py).into_bound_py_any(py))
     }
-    fn peekable<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, tools::Peekable>> {
+    fn peekable<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, iterators::Peekable>> {
         let py = slf.py();
         slf.try_iter()
-            .and_then(tools::Peekable::new)
+            .and_then(iterators::Peekable::new)
             .map(|x| x.into_bound(py))
     }
     fn partition<'py>(
@@ -1133,7 +1133,7 @@ impl PyoIterator {
         func: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .map(|x| tools::Scan::new(x, initial, func))
+            .map(|x| iterators::Scan::new(x, initial, func))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -1185,7 +1185,7 @@ impl PyoIterator {
     }
     fn tail<'py>(slf: &Bound<'py, Self>, n: usize) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .and_then(|x| tools::Tail::new(x, n))
+            .and_then(|x| iterators::Tail::new(x, n))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -1223,13 +1223,13 @@ impl PyoIterator {
     }
     fn unique<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .and_then(tools::UniqueIdentity::new)
+            .and_then(iterators::UniqueIdentity::new)
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
     fn unique_by<'py>(slf: Bound<'py, Self>, key: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .and_then(|iter| tools::UniqueKey::new(iter, key))
+            .and_then(|iter| iterators::UniqueKey::new(iter, key))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -1238,8 +1238,8 @@ impl PyoIterator {
             .and_then(|data| pylibs::itertools::tee(data, 2))
             .map(|iterators| {
                 (
-                    tools::Unzip::new(&iterators, 0),
-                    tools::Unzip::new(&iterators, 1),
+                    iterators::Unzip::new(&iterators, 0),
+                    iterators::Unzip::new(&iterators, 1),
                 )
             })
             .map(|(left, right)| {
@@ -1258,7 +1258,7 @@ impl PyoIterator {
     }
     fn with_position<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .map(|x| tools::WithPosition::new(x))
+            .map(|x| iterators::WithPosition::new(x))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
@@ -1280,7 +1280,7 @@ impl PyoIterator {
     ) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
             .and_then(|x| pylibs::itertools::zip_longest(&x, others))
-            .map(tools::ZipLongest::new)
+            .map(iterators::ZipLongest::new)
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }

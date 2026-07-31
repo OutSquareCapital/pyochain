@@ -14,7 +14,7 @@ use crate::{
         args::{Args, Kwargs},
         pylibs,
     },
-    tools,
+    iterators,
     traits::PyoABC,
 };
 // TODO: check difference once we had `sequence` to pypub struct macro
@@ -27,9 +27,9 @@ impl PyoSequence {
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
         Self::build_init()
     }
-    fn __iter__(slf: Bound<'_, Self>) -> tools::SequenceIterator {
+    fn __iter__(slf: Bound<'_, Self>) -> iterators::SequenceIterator {
         slf.pipe(|x| unsafe { x.cast_into_unchecked::<PySequence>() })
-            .pipe(tools::SequenceIterator::new)
+            .pipe(iterators::SequenceIterator::new)
     }
     fn __contains__(slf: Bound<'_, Self>, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         for v in slf.try_iter()? {
@@ -40,9 +40,9 @@ impl PyoSequence {
         }
         Ok(false)
     }
-    fn __reversed__(slf: Bound<'_, Self>) -> PyResult<tools::SequenceReverseIterator> {
+    fn __reversed__(slf: Bound<'_, Self>) -> PyResult<iterators::SequenceReverseIterator> {
         slf.pipe(|x| unsafe { x.cast_into_unchecked::<PySequence>() })
-            .pipe(tools::SequenceReverseIterator::new)
+            .pipe(iterators::SequenceReverseIterator::new)
     }
 
     #[pyo3(signature = (value, start=0, stop=None))]
@@ -112,10 +112,10 @@ impl PyoSequence {
             }
         }
     }
-    fn rev<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, tools::Iter>> {
+    fn rev<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, iterators::Iter>> {
         slf.as_any()
             .pipe(pylibs::builtins::reversed)
-            .pipe(tools::Iter::new)
+            .pipe(iterators::Iter::new)
     }
 }
 
@@ -213,25 +213,25 @@ impl PyoMutableSequence {
         predicate: Bound<'py, PyAny>,
         start: usize,
         end: Option<usize>,
-    ) -> PyResult<Bound<'py, tools::Iter>> {
+    ) -> PyResult<Bound<'py, iterators::Iter>> {
         let py = slf.py();
         unsafe { slf.cast_into_unchecked::<PySequence>() }
-            .pipe(|x| tools::ExtractIf::new(x, predicate, start, end))?
+            .pipe(|x| iterators::ExtractIf::new(x, predicate, start, end))?
             .into_bound_py_any(py)?
             .try_iter()
-            .and_then(tools::Iter::new)
+            .and_then(iterators::Iter::new)
     }
     #[pyo3(signature = (start=None, end=None))]
     fn drain<'py>(
         slf: Bound<'py, Self>,
         start: Option<usize>,
         end: Option<usize>,
-    ) -> PyResult<Bound<'py, tools::Iter>> {
+    ) -> PyResult<Bound<'py, iterators::Iter>> {
         let py = slf.py();
         unsafe { slf.cast_into_unchecked::<PySequence>() }
-            .pipe(|x| tools::Drain::new(x, start, end))?
+            .pipe(|x| iterators::Drain::new(x, start, end))?
             .into_bound_py_any(py)?
             .try_iter()
-            .and_then(tools::Iter::new)
+            .and_then(iterators::Iter::new)
     }
 }

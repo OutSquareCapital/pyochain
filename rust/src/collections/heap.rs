@@ -1,8 +1,7 @@
 use crate::{
-    abc,
+    abc, iterators,
     pyo3_ext::{pylibs, types::PyIterable},
     pyovec::PyoVec,
-    tools,
     traits::{PyWrapper, PyoABC},
 };
 use either::Either;
@@ -121,7 +120,7 @@ trait HeapType: Sized + PyWrapper<PyList> {
         others: Bound<'py, PyTuple>,
         key: Option<Bound<'py, PyAny>>,
         reverse: bool,
-    ) -> PyResult<Bound<'py, tools::Iter>> {
+    ) -> PyResult<Bound<'py, iterators::Iter>> {
         let py = others.py();
         let args = self
             .into_inner_bound(py)
@@ -130,7 +129,7 @@ trait HeapType: Sized + PyWrapper<PyList> {
             .chain(others.iter())
             .collect::<Vec<_>>()
             .pipe(|x| PyTuple::new(py, x))?;
-        pylibs::heapq::merge(py, args, key, reverse).and_then(tools::Iter::new)
+        pylibs::heapq::merge(py, args, key, reverse).and_then(iterators::Iter::new)
     }
     #[pyo3(signature = (n, key=None))]
     fn n_smallest<'py>(

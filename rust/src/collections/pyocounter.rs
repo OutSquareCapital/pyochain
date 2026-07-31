@@ -1,11 +1,11 @@
 use crate::{
     abc::{self, traits::ImplPyoReversible},
+    iterators,
     pyo3_ext::{
         prelude::*,
         pylibs,
         types::{PyCmpOut, PySupportsItems, pyitertools},
     },
-    tools,
     traits::{PyWrapper, PyoABC},
 };
 use either::Either;
@@ -458,11 +458,11 @@ impl PyoCounter {
     }
 }
 impl ImplPyoReversible for PyoCounter {
-    fn rev<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, tools::Iter>> {
+    fn rev<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, iterators::Iter>> {
         self.inner_bind(py)
             .as_any()
             .pipe(pylibs::builtins::reversed)
-            .pipe(tools::Iter::new)
+            .pipe(iterators::Iter::new)
     }
 }
 #[inline(always)]
