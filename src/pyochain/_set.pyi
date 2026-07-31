@@ -24,24 +24,20 @@ class Set[T](PyoSet[T]):
 
     Example:
         ```python
-        >>> from pyochain import Set, Iter
-        >>> Set(())
-        Set()
-        >>> s = Set((1, 2, 2, 3))
-        >>> s
-        Set(1, 2, 3)
-        >>> # If you already have a `frozenset`, you can use it directly without copying:
-        >>> fs = frozenset((1, 2, 3))
-        >>> s2 = Set(fs)
-        >>> s2
-        Set(1, 2, 3)
-        >>> is_same = (
-        ...     s2.iter().find(lambda x: x == 1).unwrap()
-        ...     is Iter(fs).find(lambda x: x == 1).unwrap()
-        ... )
-        >>> is_same
-        True
+        from pyochain import Set, Iter
 
+        assert repr(Set(())) == "Set()"
+        s = Set((1, 2, 2, 3))
+        assert s == Set((1, 2, 3))
+        # If you already have a `frozenset`, you can use it directly without copying:
+        fs = frozenset((1, 2, 3))
+        s2 = Set(fs)
+        assert s2 == Set((1, 2, 3))
+        is_same = (
+            s2.iter().find(lambda x: x == 1).unwrap()
+            is Iter(fs).find(lambda x: x == 1).unwrap()
+        )
+        assert is_same
         ```
     """
 
@@ -64,13 +60,12 @@ class Set[T](PyoSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import Set
-            >>> s1 = Set((1, 2, 3))
-            >>> s2 = Set((2, 3, 4))
-            >>> s3 = s1 & s2
-            >>> s3
-            Set(2, 3)
+            from pyochain import Set
 
+            s1 = Set((1, 2, 3))
+            s2 = Set((2, 3, 4))
+            s3 = s1 & s2
+            assert s3 == Set((2, 3))
             ```
         """
 
@@ -86,13 +81,12 @@ class Set[T](PyoSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import Set
-            >>> s1 = Set((1, 2, 3))
-            >>> s2 = Set((3, 4, 5))
-            >>> s3 = s1 | s2
-            >>> s3
-            Set(1, 2, 3, 4, 5)
+            from pyochain import Set
 
+            s1 = Set((1, 2, 3))
+            s2 = Set((3, 4, 5))
+            s3 = s1 | s2
+            assert s3 == Set((1, 2, 3, 4, 5))
             ```
         """
 
@@ -108,13 +102,12 @@ class Set[T](PyoSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import Set
-            >>> s1 = Set((1, 2, 3))
-            >>> s2 = Set((2, 3, 4))
-            >>> s3 = s1 - s2
-            >>> s3
-            Set(1,)
+            from pyochain import Set
 
+            s1 = Set((1, 2, 3))
+            s2 = Set((2, 3, 4))
+            s3 = s1 - s2
+            assert s3 == Set([1])
             ```
 
         """
@@ -131,13 +124,12 @@ class Set[T](PyoSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import Set
-            >>> s1 = Set((1, 2, 3))
-            >>> s2 = Set((2, 3, 4))
-            >>> s3 = s1 ^ s2
-            >>> s3
-            Set(1, 4)
+            from pyochain import Set
 
+            s1 = Set((1, 2, 3))
+            s2 = Set((2, 3, 4))
+            s3 = s1 ^ s2
+            assert s3 == Set((1, 4))
             ```
         """
 
@@ -153,14 +145,12 @@ class Set[T](PyoSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import Set
-            >>> s1 = Set((1, 2))
-            >>> s2 = Set((1, 2, 3))
-            >>> s1 <= s2
-            True
-            >>> s2 <= s1
-            False
+            from pyochain import Set
 
+            s1 = Set((1, 2))
+            s2 = Set((1, 2, 3))
+            assert s1 <= s2
+            assert not s2 <= s1
             ```
         """
     @override
@@ -175,14 +165,12 @@ class Set[T](PyoSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import Set
-            >>> s1 = Set((1, 2))
-            >>> s2 = Set((1, 2, 3))
-            >>> s1 < s2
-            True
-            >>> s2 < s1
-            False
+            from pyochain import Set
 
+            s1 = Set((1, 2))
+            s2 = Set((1, 2, 3))
+            assert s1 < s2
+            assert not s2 < s1
             ```
         """
 
@@ -198,14 +186,12 @@ class Set[T](PyoSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import Set
-            >>> s1 = Set((1, 2, 3))
-            >>> s2 = Set((1, 2))
-            >>> s1 >= s2
-            True
-            >>> s2 >= s1
-            False
+            from pyochain import Set
 
+            s1 = Set((1, 2, 3))
+            s2 = Set((1, 2))
+            assert s1 >= s2
+            assert not s2 >= s1
             ```
         """
 
@@ -221,14 +207,12 @@ class Set[T](PyoSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import Set
-            >>> s1 = Set((1, 2, 3))
-            >>> s2 = Set((1, 2))
-            >>> s1 > s2
-            True
-            >>> s2 > s1
-            False
+            from pyochain import Set
 
+            s1 = Set((1, 2, 3))
+            s2 = Set((1, 2))
+            assert s1 > s2
+            assert not s2 > s1
             ```
         """
 
@@ -300,13 +284,12 @@ class SetMut[T](PyoMutableSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import SetMut
-            >>> s1 = SetMut((1, 2, 3))
-            >>> s2 = SetMut((3, 4, 5))
-            >>> s3 = s1 | s2
-            >>> s3
-            SetMut(1, 2, 3, 4, 5)
+            from pyochain import SetMut
 
+            s1 = SetMut((1, 2, 3))
+            s2 = SetMut((3, 4, 5))
+            s3 = s1 | s2
+            assert s3 == SetMut((1, 2, 3, 4, 5))
             ```
         """
     @override
@@ -321,13 +304,12 @@ class SetMut[T](PyoMutableSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import SetMut
-            >>> s1 = SetMut((1, 2, 3))
-            >>> s2 = SetMut((3, 4, 5))
-            >>> s1 |= s2
-            >>> s1
-            SetMut(1, 2, 3, 4, 5)
+            from pyochain import SetMut
 
+            s1 = SetMut((1, 2, 3))
+            s2 = SetMut((3, 4, 5))
+            s1 |= s2
+            assert s1 == SetMut((1, 2, 3, 4, 5))
             ```
         """
 
@@ -343,13 +325,12 @@ class SetMut[T](PyoMutableSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import SetMut
-            >>> s1 = SetMut((1, 2, 3))
-            >>> s2 = SetMut((2, 3, 4))
-            >>> s3 = s1 - s2
-            >>> s3
-            SetMut(1,)
+            from pyochain import SetMut
 
+            s1 = SetMut((1, 2, 3))
+            s2 = SetMut((2, 3, 4))
+            s3 = s1 - s2
+            assert s3 == SetMut([1])
             ```
         """
 
@@ -365,13 +346,12 @@ class SetMut[T](PyoMutableSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import SetMut
-            >>> s1 = SetMut((1, 2, 3))
-            >>> s2 = SetMut((2, 3, 4))
-            >>> s1 -= s2
-            >>> s1
-            SetMut(1,)
+            from pyochain import SetMut
 
+            s1 = SetMut((1, 2, 3))
+            s2 = SetMut((2, 3, 4))
+            s1 -= s2
+            assert s1 == SetMut([1])
             ```
         """
 
@@ -387,13 +367,12 @@ class SetMut[T](PyoMutableSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import SetMut
-            >>> s1 = SetMut((1, 2, 3))
-            >>> s2 = SetMut((3, 4, 5))
-            >>> s3 = s1 ^ s2
-            >>> s3
-            SetMut(1, 2, 4, 5)
+            from pyochain import SetMut
 
+            s1 = SetMut((1, 2, 3))
+            s2 = SetMut((3, 4, 5))
+            s3 = s1 ^ s2
+            assert s3 == SetMut((1, 2, 4, 5))
             ```
         """
 
@@ -409,13 +388,12 @@ class SetMut[T](PyoMutableSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import SetMut
-            >>> s1 = SetMut((1, 2, 3))
-            >>> s2 = SetMut((3, 4, 5))
-            >>> s1 ^= s2
-            >>> s1
-            SetMut(1, 2, 4, 5)
+            from pyochain import SetMut
 
+            s1 = SetMut((1, 2, 3))
+            s2 = SetMut((3, 4, 5))
+            s1 ^= s2
+            assert s1 == SetMut((1, 2, 4, 5))
             ```
         """
 
@@ -431,14 +409,12 @@ class SetMut[T](PyoMutableSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import SetMut
-            >>> s1 = SetMut((1, 2))
-            >>> s2 = SetMut((1, 2, 3))
-            >>> s1 <= s2
-            True
-            >>> s2 <= s1
-            False
+            from pyochain import SetMut
 
+            s1 = SetMut((1, 2))
+            s2 = SetMut((1, 2, 3))
+            assert s1 <= s2
+            assert not s2 <= s1
             ```
         """
 
@@ -454,14 +430,12 @@ class SetMut[T](PyoMutableSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import SetMut
-            >>> s1 = SetMut((1, 2))
-            >>> s2 = SetMut((1, 2, 3))
-            >>> s1 < s2
-            True
-            >>> s2 < s1
-            False
+            from pyochain import SetMut
 
+            s1 = SetMut((1, 2))
+            s2 = SetMut((1, 2, 3))
+            assert s1 < s2
+            assert not s2 < s1
             ```
         """
 
@@ -477,14 +451,12 @@ class SetMut[T](PyoMutableSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import SetMut
-            >>> s1 = SetMut((1, 2, 3))
-            >>> s2 = SetMut((1, 2))
-            >>> s1 >= s2
-            True
-            >>> s2 >= s1
-            False
+            from pyochain import SetMut
 
+            s1 = SetMut((1, 2, 3))
+            s2 = SetMut((1, 2))
+            assert s1 >= s2
+            assert not s2 >= s1
             ```
         """
 
@@ -500,14 +472,12 @@ class SetMut[T](PyoMutableSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import SetMut
-            >>> s1 = SetMut((1, 2, 3))
-            >>> s2 = SetMut((1, 2))
-            >>> s1 > s2
-            True
-            >>> s2 > s1
-            False
+            from pyochain import SetMut
 
+            s1 = SetMut((1, 2, 3))
+            s2 = SetMut((1, 2))
+            assert s1 > s2
+            assert not s2 > s1
             ```
         """
 
@@ -530,15 +500,13 @@ class SetMut[T](PyoMutableSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import SetMut
-            >>> original_set = {1, 2, 3}
-            >>> set_obj = SetMut.from_ref(original_set)
-            >>> set_obj
-            SetMut(1, 2, 3)
-            >>> original_set.add(4)
-            >>> set_obj
-            SetMut(1, 2, 3, 4)
+            from pyochain import SetMut
 
+            original_set = {1, 2, 3}
+            set_obj = SetMut.from_ref(original_set)
+            assert set_obj == SetMut((1, 2, 3))
+            original_set.add(4)
+            assert set_obj == SetMut((1, 2, 3, 4))
             ```
         """
 
@@ -551,12 +519,11 @@ class SetMut[T](PyoMutableSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import SetMut
-            >>> s = SetMut(("a", "b"))
-            >>> s.add("c")
-            >>> s.iter().sort()
-            Vec('a', 'b', 'c')
+            from pyochain import SetMut, Vec
 
+            s = SetMut(("a", "b"))
+            s.add("c")
+            assert s.iter().sort() == Vec(("a", "b", "c"))
             ```
         """
 
@@ -568,15 +535,13 @@ class SetMut[T](PyoMutableSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import SetMut
-            >>> s = SetMut(("a", "b"))
-            >>> s_copy = s.copy()
-            >>> s_copy.add("c")
-            >>> "c" in s
-            False
-            >>> "c" in s_copy
-            True
+            from pyochain import SetMut
 
+            s = SetMut(("a", "b"))
+            s_copy = s.copy()
+            s_copy.add("c")
+            assert not "c" in s
+            assert "c" in s_copy
             ```
         """
 

@@ -30,65 +30,64 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
 
         This will copy the data, just like the built-in `dict` constructor.
         ```python
-        >>> from pyochain import Dict
-        >>> py_dict = {1: "a", 2: "b"}
-        >>> pyochain_dict = Dict(py_dict)
-        >>> pyochain_dict
-        Dict(1: 'a', 2: 'b')
+        from pyochain import Dict
 
+        py_dict = {1: "a", 2: "b"}
+        pyochain_dict = Dict(py_dict)
+        assert pyochain_dict == Dict({1: "a", 2: "b"})
         ```
         Another common case is when you have an iterable of key-value pairs, such as the one returned by `dict::items`, or an `Iterator` of tuples.
         ```python
-        >>> from pyochain import Dict, Iter, Seq
-        >>>
-        >>> names = ("alice", "bob", "charlie", "dave")
-        >>> ages = (30, 25, 35, 40)
-        >>> records = Iter(names).zip(ages).collect(Dict)
-        >>> records
-        Dict('alice': 30, 'bob': 25, 'charlie': 35, 'dave': 40)
-        >>> records.items().iter().collect(Seq)
-        Seq(('alice', 30), ('bob', 25), ('charlie', 35), ('dave', 40))
+        from pyochain import Dict, Iter, Seq
 
+        names = Seq(("alice", "bob", "charlie", "dave"))
+        ages = (30, 25, 35, 40)
+        records = names.iter().zip(ages).collect(Dict)
+        assert records == Dict({"alice": 30, "bob": 25, "charlie": 35, "dave": 40})
+        assert records.items().iter().collect(Seq) == (
+            ("alice", 30),
+            ("bob", 25),
+            ("charlie", 35),
+            ("dave", 40),
+        )
         ```
         Any object that implements the `Mapping` protocol can also be directly converted to a `Dict`:
         ```python
-        >>> from collections.abc import Mapping, Iterator, Iterable
-        >>> from dataclasses import dataclass
-        >>> @dataclass
-        ... class CustomMapping(Mapping[int, str]):
-        ...     data: dict[int, str]
-        ...
-        ...     def __getitem__(self, key: int) -> str:
-        ...         return self.data[key]
-        ...
-        ...     def __iter__(self) -> Iterator[int]:
-        ...         return iter(self.data)
-        ...
-        ...     def __len__(self) -> int:
-        ...         return len(self.data)
-        >>> custom_mapping = CustomMapping({1: "a", 2: "b"})
-        >>> Dict(custom_mapping)
-        Dict(1: 'a', 2: 'b')
+        from collections.abc import Mapping, Iterator, Iterable
+        from dataclasses import dataclass
 
+        @dataclass
+        class CustomMapping(Mapping[int, str]):
+            data: dict[int, str]
+
+            def __getitem__(self, key: int) -> str:
+                return self.data[key]
+
+            def __iter__(self) -> Iterator[int]:
+                return iter(self.data)
+
+            def __len__(self) -> int:
+                return len(self.data)
+
+        custom_mapping = CustomMapping({1: "a", 2: "b"})
+        assert Dict(custom_mapping) == Dict({1: "a", 2: "b"})
         ```
         But it can also be as minimal as an object that implements `__getitem__` and `keys`:
         ```python
-        >>> from pyochain import Dict
-        >>>
-        >>> class MinimalDictLike:
-        ...     def __init__(self, data: dict[int, str]) -> None:
-        ...         self._data = data
-        ...
-        ...     def keys(self) -> Iterable[int]:
-        ...         return iter(self._data)
-        ...
-        ...     def __getitem__(self, key: int) -> str:
-        ...         return self._data[key]
-        >>>
-        >>> minimal_dict_like = MinimalDictLike({1: "a", 2: "b"})
-        >>> Dict(minimal_dict_like)
-        Dict(1: 'a', 2: 'b')
+        from pyochain import Dict
 
+        class MinimalDictLike:
+            def __init__(self, data: dict[int, str]) -> None:
+                self._data = data
+
+            def keys(self) -> Iterable[int]:
+                return iter(self._data)
+
+            def __getitem__(self, key: int) -> str:
+                return self._data[key]
+
+        minimal_dict_like = MinimalDictLike({1: "a", 2: "b"})
+        assert Dict(minimal_dict_like) == Dict({1: "a", 2: "b"})
         ```
     """
 
@@ -108,12 +107,12 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
 
         Example:
             ```python
-            >>> from pyochain import Dict
-            >>> Dict.from_keys([1, 2, 3], "a")
-            Dict(1: 'a', 2: 'a', 3: 'a')
-            >>> Dict.from_keys("abc")
-            Dict('a': None, 'b': None, 'c': None)
+            from pyochain import Dict
 
+            d = Dict.from_keys([1, 2, 3], "a")
+            assert d == Dict({1: "a", 2: "a", 3: "a"})
+            d2 = Dict.from_keys("abc")
+            assert d2 == Dict({"a": None, "b": None, "c": None})
             ```
         """
 
@@ -155,16 +154,14 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
 
         Example:
             ```python
-            >>> from pyochain import Dict
-            >>> original_dict = {1: "a", 2: "b", 3: "c"}
-            >>> ref_dict = Dict.from_ref(original_dict)
-            >>> ref_dict
-            Dict(1: 'a', 2: 'b', 3: 'c')
-            >>> ref_dict.insert(1, "z")
-            Some('a')
-            >>> original_dict
-            {1: 'z', 2: 'b', 3: 'c'}
+            from pyochain import Dict, Some
 
+            original_dict = {1: "a", 2: "b", 3: "c"}
+            ref_dict = Dict.from_ref(original_dict)
+
+            assert ref_dict == Dict({1: "a", 2: "b", 3: "c"})
+            assert ref_dict.insert(1, "z") == Some("a")
+            assert original_dict == {1: "z", 2: "b", 3: "c"}
             ```
         """
 
@@ -180,10 +177,10 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
 
         Example:
             ```python
-            >>> from pyochain import Dict
-            >>> Dict.from_kwargs(a=1, b=2)
-            Dict('a': 1, 'b': 2)
+            from pyochain import Dict
 
+            d = Dict.from_kwargs(a=1, b=2)
+            assert d == Dict({"a": 1, "b": 2})
             ```
         """
 
@@ -206,22 +203,19 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
 
         Example:
             ```python
-            >>> from pyochain import Dict
-            >>> from dataclasses import dataclass
-            >>> @dataclass
-            ... class Person:
-            ...     name: str
-            ...     age: int
-            >>>
-            >>> person = Person("Alice", 30)
-            >>> pyo_dict = Dict.from_object(person)
-            >>> pyo_dict
-            Dict('name': 'Alice', 'age': 30)
-            >>> pyo_dict.insert("name", "Bob")
-            Some('Alice')
-            >>> person
-            Person(name='Bob', age=30)
+            from pyochain import Dict, Some
+            from dataclasses import dataclass
 
+            @dataclass
+            class Person:
+                name: str
+                age: int
+
+            person = Person("Alice", 30)
+            pyo_dict = Dict.from_object(person)
+            assert pyo_dict == Dict({"name": "Alice", "age": 30})
+            assert pyo_dict.insert("name", "Bob") == Some("Alice")
+            assert person == Person(name="Bob", age=30)
             ```
         """
     def copy(self) -> Dict[K, V]:
@@ -232,14 +226,12 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
 
         Example:
             ```python
-            >>> from pyochain import Dict
-            >>> d1 = Dict({1: "a", 2: "b"})
-            >>> d2 = d1.copy()
-            >>> d2
-            Dict(1: 'a', 2: 'b')
-            >>> d1 is d2
-            False
+            from pyochain import Dict
 
+            d1 = Dict({1: "a", 2: "b"})
+            d2 = d1.copy()
+            assert d2 == Dict({1: "a", 2: "b"})
+            assert d1 is not d2
             ```
         """
 
@@ -269,15 +261,13 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
 
         Example:
             ```python
-            >>> from pyochain import Dict
-            >>> d1 = Dict({1: "a", 2: "b"})
-            >>> d2 = Dict({2: "c", 3: "d"})
-            >>> d3 = d1.union(d2)
-            >>> d3
-            Dict(1: 'a', 2: 'c', 3: 'd')
-            >>> d1 is d3 or d2 is d3
-            False
+            from pyochain import Dict
 
+            d1 = Dict({1: "a", 2: "b"})
+            d2 = Dict({2: "c", 3: "d"})
+            d3 = d1.union(d2)
+            assert d3 == Dict({1: "a", 2: "c", 3: "d"})
+            assert d1 is not d3 and d2 is not d3
             ```
         """
 
@@ -302,20 +292,17 @@ class Dict[K, V](PyoMutableMapping[K, V], PyoReversible[K]):
 
         Example:
             ```python
-            >>> from pyochain import Dict
-            >>> d1 = Dict({1: "a", 2: "b"})
-            >>> d2 = Dict({2: "c", 3: "d"})
-            >>> d1.union_mut(d2)
-            Dict(1: 'a', 2: 'c', 3: 'd')
-            >>> d1.union_mut(((4, "e"), (5, "f")))
-            Dict(1: 'a', 2: 'c', 3: 'd', 4: 'e', 5: 'f')
-            >>> d1.insert(2, "z")
-            Some('c')
-            >>> d1
-            Dict(1: 'a', 2: 'z', 3: 'd', 4: 'e', 5: 'f')
-            >>> d2
-            Dict(2: 'c', 3: 'd')
+            from pyochain import Dict, Some
 
+            d1 = Dict({1: "a", 2: "b"})
+            d2 = Dict({2: "c", 3: "d"})
+            d1.union_mut(d2)
+            assert d1 == Dict({1: "a", 2: "c", 3: "d"})
+            d1.union_mut(((4, "e"), (5, "f")))
+            assert d1 == Dict({1: "a", 2: "c", 3: "d", 4: "e", 5: "f"})
+            assert d1.insert(2, "z") == Some("c")
+            assert d1 == Dict({1: "a", 2: "z", 3: "d", 4: "e", 5: "f"})
+            assert d2 == Dict({2: "c", 3: "d"})
             ```
         """
 

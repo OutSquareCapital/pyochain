@@ -101,8 +101,7 @@ def my_function(param1: int, param2: str) -> bool:
 
     Examples:
         ```python
-        >>> my_function(5, "test")
-        True
+        assert my_function(5, "test")
 
         ```
     """

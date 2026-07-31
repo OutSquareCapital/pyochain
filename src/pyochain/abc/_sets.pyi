@@ -36,30 +36,28 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
 
     Example:
         ```python
-        >>> from pyochain.abc import PyoSet
-        >>> from collections.abc import Iterator
-        >>>
-        >>> class MySet(PyoSet[int]):
-        ...     def __init__(self, data: set[int]):
-        ...         self._data = data
-        ...
-        ...     def __contains__(self, item: int) -> bool:
-        ...         return item in self._data
-        ...
-        ...     def __iter__(self) -> Iterator[int]:
-        ...         return iter(self._data)
-        ...
-        ...     def __len__(self) -> int:
-        ...         return len(self._data)
-        >>>
-        >>> my_set = MySet({10, 20, 30})
-        >>> my_set.is_subset({10, 20, 30, 40})
-        True
-        >>> my_set.is_superset({10})
-        True
-        >>> my_set.iter().sort()
-        Vec(10, 20, 30)
+        from pyochain.abc import PyoSet
+        from collections.abc import Iterator
+        from pyochain import Vec
 
+        class MySet(PyoSet[int]):
+            def __init__(self, data: set[int]):
+                self._data = data
+
+            def __contains__(self, item: int) -> bool:
+                return item in self._data
+
+            def __iter__(self) -> Iterator[int]:
+                return iter(self._data)
+
+            def __len__(self) -> int:
+                return len(self._data)
+
+        my_set = MySet({10, 20, 30})
+        assert my_set.is_subset({10, 20, 30, 40})
+        assert my_set.is_superset({10})
+        x = my_set.iter().sort()
+        assert x == Vec((10, 20, 30))
         ```
     """
 
@@ -119,14 +117,12 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
 
         Example:
             ```python
-            >>> from pyochain import Set
-            >>> Set((1, 2)).is_subset({1, 2, 3})  # All elements present
-            True
-            >>> Set((1, 2)).is_subset({1, 2})  # Also True: they're equal
-            True
-            >>> Set((1, 4)).is_subset({1, 2, 3})  # 4 is not in the other set
-            False
+            from pyochain import Set
 
+            assert Set((1, 2)).is_subset({1, 2, 3})  # All elements present
+
+            assert Set((1, 2)).is_subset({1, 2})  # Also True: they're equal
+            assert not Set((1, 4)).is_subset({1, 2, 3})  # 4 is not in the other set
             ```
         """
 
@@ -149,14 +145,11 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
 
         Example:
             ```python
-            >>> from pyochain import Set
-            >>> Set((1, 2)).is_subset_strict({1, 2, 3})  # Proper subset
-            True
-            >>> Set((1, 2)).is_subset_strict({1, 2})  # Equal, not proper
-            False
-            >>> Set((1, 4)).is_subset_strict({1, 2, 3})  # 4 not contained
-            False
+            from pyochain import Set
 
+            assert Set((1, 2)).is_subset_strict({1, 2, 3})  # Proper subset
+            assert not Set((1, 2)).is_subset_strict({1, 2})  # Equal, not proper
+            assert not Set((1, 4)).is_subset_strict({1, 2, 3})  # 4 not contained
             ```
         """
 
@@ -175,14 +168,11 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
 
         Example:
             ```python
-            >>> from pyochain import Set
-            >>> Set((1, 2)).eq({2, 1})  # Same elements, different order
-            True
-            >>> Set((1, 2)).eq({1, 2, 3})  # Different number of elements
-            False
-            >>> Set((1, 2)).eq({1, 2})  # Identical
-            True
+            from pyochain import Set
 
+            assert Set((1, 2)).eq({2, 1})  # Same elements, different order
+            assert not Set((1, 2)).eq({1, 2, 3})  # Different number of elements
+            assert Set((1, 2)).eq({1, 2})  # Identical
             ```
         """
     def is_superset(self, other: AbstractSet[Any]) -> bool:
@@ -206,14 +196,11 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
 
         Example:
             ```python
-            >>> from pyochain import Set
-            >>> Set((1, 2, 3)).is_superset({1, 2})  # Contains all
-            True
-            >>> Set((1, 2)).is_superset({1, 2})  # Also True: they're equal
-            True
-            >>> Set((1, 2)).is_superset({1, 2, 3})  # Missing element 3
-            False
+            from pyochain import Set
 
+            assert Set((1, 2, 3)).is_superset({1, 2})  # Contains all
+            assert Set((1, 2)).is_superset({1, 2})  # Also True: they're equal
+            assert not Set((1, 2)).is_superset({1, 2, 3})  # Missing element 3
             ```
         """
 
@@ -236,14 +223,11 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
 
         Example:
             ```python
-            >>> from pyochain import Set
-            >>> Set((1, 2, 3)).is_superset_strict({1, 2})  # Proper superset
-            True
-            >>> Set((1, 2)).is_superset_strict({1, 2})  # Equal, not proper
-            False
-            >>> Set((1, 2)).is_superset_strict({1, 2, 3})  # Missing element 3
-            False
+            from pyochain import Set
 
+            assert Set((1, 2, 3)).is_superset_strict({1, 2})  # Proper superset
+            assert not Set((1, 2)).is_superset_strict({1, 2})  # Equal, not proper
+            assert not Set((1, 2)).is_superset_strict({1, 2, 3})  # Missing element 3
             ```
         """
 
@@ -263,14 +247,10 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
             bool: `True` if no common elements exist, `False` otherwise.
 
         Example:
-            ```python
-            >>> from pyochain import Set
-            >>> Set((1, 2)).is_disjoint((3, 4))  # No overlap
-            True
-            >>> Set((1, 2)).is_disjoint((2, 3))  # Share element 2
-            False
-            >>> Set((1, 2)).is_disjoint((1, 2))  # Identical sets
-            False
+            from pyochain import Set
+            assert Set((1, 2)).is_disjoint((3, 4))  # No overlap
+            assert not Set((1, 2)).is_disjoint((2, 3))  # Share element 2
+            assert not Set((1, 2)).is_disjoint((1, 2))  # Identical sets
 
             ```
         """
@@ -292,26 +272,18 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
 
         Example:
             ```python
-            >>> from pyochain import Set, Dict
-            >>> from_set = Set((1, 2))
-            >>> from_set.intersection({2, 3})
-            Set(2,)
-            >>> from_set.intersection({3, 4})
-            Set()
-            >>> dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
-            >>> from_keys = dct.keys().intersection({"b", "c", "d"}).iter().sort()
-            >>> from_keys
-            Vec('b', 'c')
-            >>> from_items = (
-            ...     dct
-            ...     .items()
-            ...     .intersection({("b", 2), ("c", 3), ("d", 4)})
-            ...     .iter()
-            ...     .sort()
-            ... )
-            >>> from_items
-            Vec(('b', 2), ('c', 3))
+            from pyochain import Set, Dict, Vec
 
+            from_set = Set((1, 2))
+            assert from_set.intersection({2, 3}) == Set((2,))
+            assert from_set.intersection({3, 4}) == Set(())
+            dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
+            from_keys = dct.keys().intersection({"b", "c", "d"}).iter().sort()
+            assert from_keys == Vec(("b", "c"))
+            from_items = (
+                dct.items().intersection({("b", 2), ("c", 3), ("d", 4)}).iter().sort()
+            )
+            assert from_items == Vec([("b", 2), ("c", 3)])
             ```
         """
 
@@ -330,19 +302,15 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
 
         Example:
             ```python
-            >>> from pyochain import Set, Dict
-            >>> Set((1, 2)).union({2, 3}).union({4}).iter().sort()
-            Vec(1, 2, 3, 4)
-            >>> dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
-            >>> from_keys = dct.keys().union({"b", "c", "d"}).iter().sort()
-            >>> from_keys
-            Vec('a', 'b', 'c', 'd')
-            >>> from_items = (
-            ...     dct.items().union({("b", 2), ("c", 3), ("d", 4)}).iter().sort()
-            ... )
-            >>> from_items
-            Vec(('a', 1), ('b', 2), ('c', 3), ('d', 4))
+            from pyochain import Set, Dict, Vec
 
+            x = Set((1, 2)).union({2, 3}).union({4}).iter().sort()
+            assert x == Vec((1, 2, 3, 4))
+            dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
+            from_keys = dct.keys().union({"b", "c", "d"}).iter().sort()
+            assert from_keys == Vec(("a", "b", "c", "d"))
+            from_items = dct.items().union({("b", 2), ("c", 3), ("d", 4)}).iter().sort()
+            assert from_items == Vec([("a", 1), ("b", 2), ("c", 3), ("d", 4)])
             ```
         """
 
@@ -361,21 +329,19 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
 
         Example:
             ```python
-            >>> from pyochain import Set, Dict
-            >>> Set((1, 2)).difference({2, 3})
-            Set(1,)
-            >>> Set((1, 2)).difference({3, 4}).iter().sort()
-            Vec(1, 2)
-            >>> dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
-            >>> from_keys = dct.keys().difference({"b", "c", "d"}).iter().sort()
-            >>> from_keys
-            Vec('a')
-            >>> from_items = (
-            ...     dct.items().difference({("b", 2), ("c", 3), ("d", 4)}).iter().sort()
-            ... )
-            >>> from_items
-            Vec(('a', 1))
+            from pyochain import Set, Dict, Vec
 
+            x = Set((1, 2)).difference({2, 3})
+            assert x == Set([1])
+            y = Set((1, 2)).difference({3, 4}).iter().sort()
+            assert y == Vec((1, 2))
+            dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
+            from_keys = dct.keys().difference({"b", "c", "d"}).iter().sort()
+            assert from_keys == Vec(["a"])
+            from_items = (
+                dct.items().difference({("b", 2), ("c", 3), ("d", 4)}).iter().sort()
+            )
+            assert from_items == Vec([("a", 1)])
             ```
         """
 
@@ -398,27 +364,23 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
 
         Example:
             ```python
-            >>> from pyochain import Set, Dict
-            >>> Set((1, 2)).symmetric_difference({2, 3}).iter().sort()
-            Vec(1, 3)
-            >>> Set((1, 2, 3)).symmetric_difference({3, 4, 5}).iter().sort()
-            Vec(1, 2, 4, 5)
-            >>> dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
-            >>> from_keys = (
-            ...     dct.keys().symmetric_difference({"b", "c", "d"}).iter().sort()
-            ... )
-            >>> from_keys
-            Vec('a', 'd')
-            >>> from_items = (
-            ...     dct
-            ...     .items()
-            ...     .symmetric_difference({("b", 2), ("c", 3), ("d", 4)})
-            ...     .iter()
-            ...     .sort()
-            ... )
-            >>> from_items
-            Vec(('a', 1), ('d', 4))
+            from pyochain import Set, Dict, Vec
 
+            x = Set((1, 2)).symmetric_difference({2, 3}).iter().sort()
+            assert x == Vec((1, 3))
+            y = Set((1, 2, 3)).symmetric_difference({3, 4, 5}).iter().sort()
+            assert y == Vec((1, 2, 4, 5))
+            dct = Dict.from_ref({"a": 1, "b": 2, "c": 3})
+            from_keys = dct.keys().symmetric_difference({"b", "c", "d"}).iter().sort()
+            assert from_keys == Vec(("a", "d"))
+            from_items = (
+                dct
+                .items()
+                .symmetric_difference({("b", 2), ("c", 3), ("d", 4)})
+                .iter()
+                .sort()
+            )
+            assert from_items == Vec([("a", 1), ("d", 4)])
             ```
         """
 
@@ -437,12 +399,11 @@ class PyoMutableSet[T](PyoSet[T], MutableSet[T]):  # pyright: ignore[reportImpli
 
         Example:
             ```python
-            >>> from pyochain import SetMut
-            >>> s = SetMut((1, 2, 3))
-            >>> s.clear()
-            >>> s.len()
-            0
+            from pyochain import SetMut
 
+            s = SetMut((1, 2, 3))
+            s.clear()
+            assert s.len() == 0
             ```
         """
     @override
