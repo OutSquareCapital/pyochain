@@ -2,14 +2,24 @@ use pyo3::{
     PyClass, PyTypeInfo,
     exceptions::PyTypeError,
     prelude::*,
-    types::{PyDict, PyFrozenSet, PyIterator, PyList, PyRange, PySequence, PySet, PyTuple},
+    types::{
+        DerefToPyAny, PyDict, PyFrozenSet, PyIterator, PyList, PyRange, PySequence, PySet, PyTuple,
+    },
 };
 
 use crate::{
-    abc, collections, dict, mixins::Checkable, pyo3_ext::types::PyDeque, pyovec, range, seq, sets,
-    sliceview::SliceView, tools,
+    abc, collections,
+    dict::Dict,
+    mixins::Checkable,
+    pyo3_ext::types::PyDeque,
+    pyovec::PyoVec,
+    range::Range,
+    seq::Seq,
+    sets::{Set, SetMut},
+    sliceview::SliceView,
+    tools::Iter,
 };
-pub trait PyWrapper<T: PyTypeInfo>:
+pub trait PyWrapper<T: PyTypeInfo + DerefToPyAny>:
     PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {
     fn inner(&self) -> &Py<T>;
@@ -32,12 +42,12 @@ pub trait PyWrapper<T: PyTypeInfo>:
             .or_else(|_| value.cast_exact::<T>())
             .map_err(|_| {
                 let py = value.py();
-                let wrapper_name = Self::type_object(py).name().unwrap();
-                let inner_name = T::type_object(py).name().unwrap();
-                let value_name = value.get_type().name().unwrap();
+                let wrapper = Self::type_object(py).name().unwrap();
+                let inner = T::type_object(py).name().unwrap();
+                let incorrect = value.get_type().name().unwrap();
                 let txt = format!(
                     "Input must be a '{}'' or a '{}', got '{}'",
-                    wrapper_name, inner_name, value_name
+                    wrapper, inner, incorrect
                 );
                 PyTypeError::new_err(txt)
             })
@@ -58,13 +68,13 @@ macro_rules! impl_py_wrapper {
     };
 }
 impl_py_wrapper! {
-    seq::Seq => PyTuple,
-    pyovec::PyoVec => PyList,
-    sets::Set => PyFrozenSet,
-    sets::SetMut => PySet,
-    range::Range => PyRange,
-    dict::Dict => PyDict,
-    tools::Iter => PyIterator,
+    Seq => PyTuple,
+    PyoVec => PyList,
+    Set => PyFrozenSet,
+    SetMut => PySet,
+    Range => PyRange,
+    Dict => PyDict,
+    Iter => PyIterator,
     collections::StableSet => PyDict,
     collections::PyoCounter => PyDict,
     collections::HeapMin => PyList,
@@ -85,46 +95,43 @@ pub trait IntoPyochain<'py, T: PyTypeInfo> {
     fn into_pyochain(self) -> PyResult<Bound<'py, T>>;
 }
 
-impl<'py> IntoPyochain<'py, seq::Seq> for Bound<'py, PyTuple> {
+impl<'py> IntoPyochain<'py, Seq> for Bound<'py, PyTuple> {
     #[inline]
-    fn into_pyochain(self) -> PyResult<Bound<'py, seq::Seq>> {
+    fn into_pyochain(self) -> PyResult<Bound<'py, Seq>> {
         let py = self.py();
-        let initializer = abc::PyoSequence::build_init().add_subclass(seq::Seq(self.unbind()));
+        let initializer = abc::PyoSequence::build_init().add_subclass(Seq(self.unbind()));
         Bound::new(py, initializer)
     }
 }
-impl<'py> IntoPyochain<'py, pyovec::PyoVec> for Bound<'py, PyList> {
+impl<'py> IntoPyochain<'py, PyoVec> for Bound<'py, PyList> {
     #[inline]
-    fn into_pyochain(self) -> PyResult<Bound<'py, pyovec::PyoVec>> {
+    fn into_pyochain(self) -> PyResult<Bound<'py, PyoVec>> {
         let py = self.py();
-        let initializer =
-            abc::PyoMutableSequence::build_init().add_subclass(pyovec::PyoVec(self.unbind()));
+        let initializer = abc::PyoMutableSequence::build_init().add_subclass(PyoVec(self.unbind()));
         Bound::new(py, initializer)
     }
 }
-impl<'py> IntoPyochain<'py, sets::Set> for Bound<'py, PyFrozenSet> {
+impl<'py> IntoPyochain<'py, Set> for Bound<'py, PyFrozenSet> {
     #[inline]
-    fn into_pyochain(self) -> PyResult<Bound<'py, sets::Set>> {
+    fn into_pyochain(self) -> PyResult<Bound<'py, Set>> {
         let py = self.py();
-        let initializer = abc::PyoSet::build_init().add_subclass(sets::Set(self.unbind()));
+        let initializer = abc::PyoSet::build_init().add_subclass(Set(self.unbind()));
         Bound::new(py, initializer)
     }
 }
-impl<'py> IntoPyochain<'py, sets::SetMut> for Bound<'py, PySet> {
+impl<'py> IntoPyochain<'py, SetMut> for Bound<'py, PySet> {
     #[inline]
-    fn into_pyochain(self) -> PyResult<Bound<'py, sets::SetMut>> {
+    fn into_pyochain(self) -> PyResult<Bound<'py, SetMut>> {
         let py = self.py();
-        let initializer =
-            abc::PyoMutableSet::build_init().add_subclass(sets::SetMut(self.unbind()));
+        let initializer = abc::PyoMutableSet::build_init().add_subclass(SetMut(self.unbind()));
         Bound::new(py, initializer)
     }
 }
-impl<'py> IntoPyochain<'py, dict::Dict> for Bound<'py, PyDict> {
+impl<'py> IntoPyochain<'py, Dict> for Bound<'py, PyDict> {
     #[inline]
-    fn into_pyochain(self) -> PyResult<Bound<'py, dict::Dict>> {
+    fn into_pyochain(self) -> PyResult<Bound<'py, Dict>> {
         let py = self.py();
-        let initializer =
-            abc::PyoMutableMapping::build_init().add_subclass(dict::Dict(self.unbind()));
+        let initializer = abc::PyoMutableMapping::build_init().add_subclass(Dict(self.unbind()));
         Bound::new(py, initializer)
     }
 }
