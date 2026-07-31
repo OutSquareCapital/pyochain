@@ -12,7 +12,7 @@ from typing import Literal, Never, override
 
 import pytest
 
-from pyochain import Dict, Set, SetMut, Vec
+from pyochain import Dict, Seq, Set, SetMut, Vec
 
 
 def test_constructors_not_callable() -> None:
@@ -271,19 +271,21 @@ def _data_for_set_operations() -> tuple[Dict[str, int], Dict[str, int], Dict[str
 
 def test_keys_set_operations_with_iterator() -> None:
     origin = Dict({1: 2, 3: 4})
-    assert origin.keys() & iter([1, 2]) == {1}
-    assert origin.keys() | iter([1, 2]) == {1, 2, 3}
-    assert origin.keys() ^ iter([1, 2]) == {2, 3}
-    assert origin.keys() - iter([1, 2]) == {3}
+    other = Seq((1, 2))
+    assert origin.keys() & other.iter() == {1}
+    assert origin.keys() | other.iter() == {1, 2, 3}
+    assert origin.keys() ^ other.iter() == {2, 3}
+    assert origin.keys() - other.iter() == {3}
 
 
 def test_items_set_operations_with_iterator() -> None:
     origin = Dict({1: 2, 3: 4})
     items = origin.items()
-    assert items & iter([(1, 2)]) == {(1, 2)}
-    assert items ^ iter([(1, 2)]) == {(3, 4)}
-    assert items | iter([(1, 2)]) == {(1, 2), (3, 4)}
-    assert items - iter([(1, 2)]) == {(3, 4)}
+    other = Seq([(1, 2)])
+    assert items & other.iter() == {(1, 2)}
+    assert items ^ other.iter() == {(3, 4)}
+    assert items | other.iter() == {(1, 2), (3, 4)}
+    assert items - other.iter() == {(3, 4)}
 
 
 def test_set_operations_with_noniterable() -> None:
