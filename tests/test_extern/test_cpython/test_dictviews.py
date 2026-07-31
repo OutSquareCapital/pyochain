@@ -193,7 +193,7 @@ def _data_for_keys_set_operations() -> tuple[
 
 
 def test_items_and_set_and() -> None:
-    d1, d2, d3 = _data_for_set_operations()
+    d1, d2, d3 = _data_for_items_set_operations()
     assert d1.items() & d1.items() == {("a", 1), ("b", 2)}
     assert d1.items() & d2.items() == {("b", 2)}
     assert d1.items() & d3.items() == SetMut(())
@@ -206,7 +206,7 @@ def test_items_and_set_and() -> None:
 
 
 def test_items_and_set_operations_or() -> None:
-    d1, d2, d3 = _data_for_set_operations()
+    d1, d2, d3 = _data_for_items_set_operations()
 
     assert d1.items() | d1.items() == {("a", 1), ("b", 2)}
     assert d1.items() | d2.items() == {("a", 1), ("a", 2), ("b", 2)}
@@ -220,7 +220,7 @@ def test_items_and_set_operations_or() -> None:
 
 
 def test_items_and_set_operations_xor() -> None:
-    d1, d2, d3 = _data_for_set_operations()
+    d1, d2, d3 = _data_for_items_set_operations()
     assert d1.items() ^ d1.items() == SetMut(())
     assert d1.items() ^ d2.items() == {("a", 1), ("a", 2)}
     assert d1.items() ^ d3.items() == {("a", 1), ("b", 2), ("d", 4), ("e", 5)}
@@ -230,7 +230,7 @@ def test_items_and_set_operations_xor() -> None:
 
 
 def test_items_and_set_operations_sub() -> None:
-    d1, d2, d3 = _data_for_set_operations()
+    d1, d2, d3 = _data_for_items_set_operations()
     assert d1.items() - d1.items() == SetMut(())
     assert d1.items() - d2.items() == {("a", 1)}
     assert d1.items() - d3.items() == {("a", 1), ("b", 2)}
@@ -243,7 +243,7 @@ def test_items_and_set_operations_sub() -> None:
 
 
 def test_items_and_set_operations_isdisjoint() -> None:
-    d1, d2, d3 = _data_for_set_operations()
+    d1, d2, d3 = _data_for_items_set_operations()
     assert not d1.items().isdisjoint(d1.items())
     assert not d1.items().isdisjoint(d2.items())
     assert not d1.items().isdisjoint(list(d2.items()))
@@ -262,9 +262,11 @@ def test_items_and_set_operations_isdisjoint() -> None:
     assert de.items().isdisjoint([1])
 
 
-def _data_for_set_operations() -> tuple[Dict[str, int], Dict[str, int], Dict[str, int]]:
+def _data_for_items_set_operations() -> tuple[
+    Dict[str, int], Dict[str, int], Dict[str, int]
+]:
     d1 = Dict({"a": 1, "b": 2})
-    d2 = Dict({"b": 3, "c": 2})
+    d2 = Dict({"a": 2, "b": 2})
     d3 = Dict({"d": 4, "e": 5})
     return d1, d2, d3
 
