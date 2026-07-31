@@ -576,7 +576,7 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
         :func:`SortedDict.__init__` confuse pickle so customize the reducer.
 
         Returns:
-            tuple[type[Self], tuple[dict[K, V]]]: class and arguments for reconstruction
+            tuple[type[Self], tuple[Dict[K, V]]]: class and arguments for reconstruction
 
         """
         items = self._inner.copy()

@@ -140,7 +140,7 @@ class SortedItemsView(
             index (int | slice): integer or slice for indexing
 
         Returns:
-            tuple[_K_co, _V_co] | list[tuple[_K_co, _V_co]]: item or list of items
+            tuple[_K_co, _V_co] | Vec[tuple[_K_co, _V_co]]: item or list of items
 
         """
         mapping = self._mapping

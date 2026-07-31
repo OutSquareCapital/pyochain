@@ -174,7 +174,7 @@ class SortedCollection[T](ABC):
             reverse (bool): yield values in reverse order
 
         Returns:
-            Iterator[T]: an iterator of values between `minimum` and `maximum`
+            PyoIterator[T]: an iterator of values between `minimum` and `maximum`
 
         """
 
@@ -375,10 +375,8 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
         Args:
             value (object): search for value in sorted list
         Returns:
-            (bool): `True` if `value` in sorted list.
-
-
-        """
+            bool: `True` if `value` in sorted list.
+        """  # ruff: ignore[docstring-extraneous-parameter]
         return self._inner.contains(value)
 
     @abstractmethod
@@ -562,8 +560,8 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
         Args:
             value (T): value to count in sorted list
         Returns:
-            count
-        """
+            int: count of occurrences of `value` in sorted list
+        """  # ruff: ignore[docstring-extraneous-parameter]
         return self._inner.count(value)
 
     def _loc(self, pos: int, idx: int) -> int:

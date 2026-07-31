@@ -1,0 +1,3 @@
+# FromFn
+
+::: pyochain.rs.FromFn

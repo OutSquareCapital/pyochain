@@ -141,7 +141,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
             reverse (bool): yield values in reverse order
 
         Returns:
-            Iterator[T]: iterator of values between `min_key` and `max_key`
+            PyoIterator[T]: iterator of values between `min_key` and `max_key`
 
         """
         match self._inner.irange_key(min_key, max_key, inclusive):

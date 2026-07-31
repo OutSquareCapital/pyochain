@@ -18,7 +18,7 @@ pyochain is a **mixed Python/Rust project**:
 - [src/pyochain/_set.pyi](src/pyochain/_set.pyi) — `Set`, `SetMut`, `PyoKeysView`, `PyoValuesView`, and `PyoItemsView` implementations.
 - [src/pyochain/_vec.pyi](src/pyochain/_vec.pyi) — `Vec` implementation.
 - [src/pyochain/rs.pyi](src/pyochain/rs.pyi) — stubs for the Rust-compiled public bindings.
-- [src/pyochain/_tools.pyi](src/pyochain/_tools.pyi) — stubs for the internal Rust helper module exposed as `pyochain._tools`.
+- [src/pyochain/_iterators.pyi](src/pyochain/_iterators.pyi) — `Iter` and other internal iterators.
 - [src/pyochain/_types.py](src/pyochain/_types.py) — shared typing protocols and support types.
 
 ### Rust structure ([rust/src/](rust/src))
@@ -28,7 +28,7 @@ pyochain is a **mixed Python/Rust project**:
 - [rust/src/result.rs](rust/src/result.rs) — `Result[T, E]`, `Ok`, and `Err` implementations.
 - [rust/src/errors.rs](rust/src/errors.rs) — unwrap error types exposed to Python.
 - [rust/src/mixins.rs](rust/src/mixins.rs) — mixin types `Checkable`, `Pipe`, `Tap`, and `Fluent`.
-- [rust/src/tools.rs](rust/src/tools.rs) — iteration function and structs exposed through `pyochain._tools`.
+- [rust/src/iterators.rs](rust/src/iterators.rs) — iteration function and structs exposed through `pyochain._iterators`.
 - [rust/src/pyo3_ext/](rust/src/pyo3_ext/) - internal utilities for traits, macros and functions extending Pyo3's functionality.
 - [rust/crates/pyochain_macros](rust/crates/pyochain_macros) - procedural macros for type checking helpers.
 

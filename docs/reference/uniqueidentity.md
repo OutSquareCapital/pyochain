@@ -1,0 +1,3 @@
+# UniqueIdentity
+
+::: pyochain.rs.UniqueIdentity
