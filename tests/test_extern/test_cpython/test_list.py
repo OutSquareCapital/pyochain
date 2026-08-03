@@ -393,7 +393,7 @@ def test_pop() -> None:
         _ = a.pop()
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count]
-        _ = a.pop(42, 42)  # pyright: ignore[reportCallIssue]
+        _ = a.pop(42, 42)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
     a = Vec([0, 10, 20, 30, 40])
 
 
@@ -548,7 +548,7 @@ def test_copy() -> None:
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count]
-        _ = u.copy(None)  # pyright: ignore[reportCallIssue]
+        _ = u.copy(None)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
 
 
 def test_sort() -> None:
@@ -562,7 +562,7 @@ def test_sort() -> None:
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count]
-        _ = u.sort(42, 42)  # pyright: ignore[reportCallIssue]
+        _ = u.sort(42, 42)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
 
     def revcmp(a: int, b: int) -> int:
         if a == b:
@@ -590,7 +590,7 @@ def test_sort() -> None:
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count]
-        _ = z.sort(2)  # pyright: ignore[reportCallIssue]
+        _ = z.sort(2)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
 
     def self_modifying_comp(x: int, y: int) -> int:
         z.append(1)
@@ -606,7 +606,7 @@ def test_sort() -> None:
 
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-count]
-        _ = z.sort(42, 42, 42, 42)  # pyright: ignore[reportCallIssue]
+        _ = z.sort(42, 42, 42, 42)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
 
 
 def test_slice() -> None:
