@@ -27,7 +27,7 @@ pyochain is a **mixed Python/Rust project**:
 - [rust/src/option.rs](rust/src/option.rs) — `Option[T]`, `Some`, `Null`, `NONE`, and helper constructors.
 - [rust/src/result.rs](rust/src/result.rs) — `Result[T, E]`, `Ok`, and `Err` implementations.
 - [rust/src/errors.rs](rust/src/errors.rs) — unwrap error types exposed to Python.
-- [rust/src/mixins.rs](rust/src/mixins.rs) — mixin types `Checkable`, `Pipe`, `Tap`, and `Fluent`.
+- [rust/src/abc/mixins.rs](rust/src/abc/mixins.rs) — mixin types `Checkable`, `Pipe`, `Tap`, and `Fluent`.
 - [rust/src/iterators.rs](rust/src/iterators.rs) — iteration function and structs exposed through `pyochain._iterators`.
 - [rust/src/pyo3_ext/](rust/src/pyo3_ext/) - internal utilities for traits, macros and functions extending Pyo3's functionality.
 - [rust/crates/pyochain_macros](rust/crates/pyochain_macros) - procedural macros for type checking helpers.
