@@ -1,3 +1,3 @@
 # OptionType
 
-::: pyochain.rs.OptionType
+::: pyochain._option.OptionType

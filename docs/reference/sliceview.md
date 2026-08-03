@@ -1,3 +1,3 @@
 # SliceView
 
-::: pyochain.SliceView
+::: pyochain._sliceview.SliceView

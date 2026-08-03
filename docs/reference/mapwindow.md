@@ -1,3 +1,0 @@
-# MapWindow
-
-::: pyochain.rs.MapWindow

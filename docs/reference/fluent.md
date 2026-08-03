@@ -1,3 +1,3 @@
 # Fluent
 
-::: pyochain.abc._mixins.Fluent
+::: pyochain.abc.Fluent

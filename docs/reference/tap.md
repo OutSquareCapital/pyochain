@@ -1,3 +1,3 @@
 # Tap
 
-::: pyochain.abc._mixins.Tap
+::: pyochain.abc.Tap

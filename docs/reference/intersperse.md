@@ -1,3 +1,0 @@
-# Intersperse
-
-::: pyochain.rs.Intersperse

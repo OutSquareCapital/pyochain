@@ -1,3 +1,0 @@
-# Drain
-
-::: pyochain.rs.Drain

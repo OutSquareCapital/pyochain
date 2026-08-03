@@ -1,3 +1,0 @@
-# Successors
-
-::: pyochain.rs.Successors

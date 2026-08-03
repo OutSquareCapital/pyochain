@@ -1,3 +1,0 @@
-# MapWhile
-
-::: pyochain.rs.MapWhile

@@ -1,3 +1,0 @@
-# ExtractIf
-
-::: pyochain.rs.ExtractIf

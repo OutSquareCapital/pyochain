@@ -1,3 +1,0 @@
-# FilterStar
-
-::: pyochain.rs.FilterStar

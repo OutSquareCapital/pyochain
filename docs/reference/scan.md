@@ -1,3 +1,0 @@
-# Scan
-
-::: pyochain.rs.Scan

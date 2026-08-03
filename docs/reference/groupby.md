@@ -1,3 +1,0 @@
-# GroupBy
-
-::: pyochain.rs.GroupBy

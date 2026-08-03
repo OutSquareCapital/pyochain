@@ -1,3 +1,0 @@
-# MapJuxt
-
-::: pyochain.rs.MapJuxt

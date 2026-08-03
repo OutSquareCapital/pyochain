@@ -1,3 +1,3 @@
 # Iter
 
-::: pyochain.Iter
+::: pyochain._iterators.Iter

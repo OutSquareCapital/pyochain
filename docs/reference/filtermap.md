@@ -1,3 +1,0 @@
-# FilterMap
-
-::: pyochain.rs.FilterMap

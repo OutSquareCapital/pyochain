@@ -1,3 +1,3 @@
 # Range
 
-::: pyochain.Range
+::: pyochain._range.Range

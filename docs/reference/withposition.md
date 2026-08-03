@@ -1,3 +1,0 @@
-# WithPosition
-
-::: pyochain.rs.WithPosition
