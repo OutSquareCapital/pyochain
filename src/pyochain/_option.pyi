@@ -449,18 +449,14 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some
-            >>> Some("car").unwrap()
-            'car'
+            from pyochain import Some, NONE, OptionUnwrapError
 
-            ```
-            ```python
-            >>> from pyochain import NONE
-            >>> NONE.unwrap()
-            Traceback (most recent call last):
-            ...
-            OptionUnwrapError: called `unwrap` on a `None`
+            assert Some("car").unwrap() == "car"
 
+            try:
+                NONE.unwrap()
+            except OptionUnwrapError as e:
+                assert str(e) == "called `unwrap` on a `None`"
             ```
         """
 
@@ -480,14 +476,14 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> Some("value").expect("fruits are healthy")
-            'value'
-            >>> NONE.expect("fruits are healthy")
-            Traceback (most recent call last):
-            ...
-            OptionUnwrapError: fruits are healthy (called `expect` on a `None`)
+            from pyochain import Some, NONE, OptionUnwrapError
 
+            assert Some("value").expect("fruits are healthy") == "value"
+
+            try:
+                NONE.expect("fruits are healthy")
+            except OptionUnwrapError as e:
+                assert str(e) == "fruits are healthy (called `expect` on a `None`)"
             ```
         """
 

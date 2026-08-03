@@ -375,18 +375,14 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok
-            >>> Ok(2).unwrap()
-            2
+            from pyochain import Ok, Err, ResultUnwrapError
 
-            ```
-            ```python
-            >>> from pyochain import Err
-            >>> Err("emergency failure").unwrap()
-            Traceback (most recent call last):
-            ...
-            ResultUnwrapError: called `unwrap` on an `Err`: 'emergency failure'
+            assert Ok(2).unwrap() == 2
 
+            try:
+                _ = Err(1).unwrap()
+            except ResultUnwrapError as e:
+                assert str(e) == "called `unwrap` on an `Err`: 1"
             ```
         """
 
@@ -407,12 +403,12 @@ class ResultType[T, E](Pipe, Protocol):
 
             ```
             ```python
-            >>> from pyochain import Ok
-            >>> Ok(2).unwrap_err()
-            Traceback (most recent call last):
-            ...
-            ResultUnwrapError: called `unwrap_err` on Ok
+            from pyochain import Ok, ResultUnwrapError
 
+            try:
+                _ = Ok(2).unwrap_err()
+            except ResultUnwrapError as e:
+                assert str(e) == "called `unwrap_err` on Ok"
             ```
         """
 
@@ -431,13 +427,11 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Err
-            >>> k = 21
-            >>> Ok("foo").map_or_else(len, lambda e: k * 2)
-            3
-            >>> Err("bar").map_or_else(len, lambda e: k * 2)
-            42
+            from pyochain import Ok, Err
 
+            k = 21
+            assert Ok("foo").map_or_else(len, lambda e: k * 2) == 3
+            assert Err("bar").map_or_else(len, lambda e: k * 2) == 42
             ```
         """
 
@@ -457,14 +451,13 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Err
-            >>> Ok(2).expect("No error")
-            2
-            >>> Err("emergency failure").expect("Testing expect")
-            Traceback (most recent call last):
-            ...
-            ResultUnwrapError: Testing expect: 'emergency failure'
+            from pyochain import Err, Ok, ResultUnwrapError
 
+            assert Ok(2).expect("No error") == 2
+            try:
+                _ = Err(1).expect("Unexpected error")
+            except ResultUnwrapError as e:
+                assert str(e) == "Unexpected error: 1"
             ```
         """
 
@@ -484,14 +477,14 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Err, Ok
-            >>> Err("emergency failure").expect_err("Testing expect_err")
-            'emergency failure'
-            >>> Ok(10).expect_err("Testing expect_err")
-            Traceback (most recent call last):
-            ...
-            ResultUnwrapError: Testing expect_err: expected Err, got Ok(10)
+            from pyochain import Err, Ok, ResultUnwrapError
 
+            e = Err("emergency failure").expect_err("Testing expect_err")
+            assert str(e) == "emergency failure"
+            try:
+                _ = Ok(10).expect_err("Testing expect_err")
+            except ResultUnwrapError as e:
+                assert str(e) == "Testing expect_err: expected Err, got Ok(10)"
             ```
         """
 
@@ -506,12 +499,10 @@ class ResultType[T, E](Pipe, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Ok, Err
-            >>> Ok(2).unwrap_or(10)
-            2
-            >>> Err("error").unwrap_or(10)
-            10
+            from pyochain import Ok, Err
 
+            assert Ok(2).unwrap_or(10) == 2
+            assert Err("error").unwrap_or(10) == 10
             ```
         """
 
