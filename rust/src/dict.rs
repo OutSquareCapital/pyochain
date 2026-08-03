@@ -13,7 +13,7 @@ use pyo3::{
 };
 use tap::Pipe;
 
-#[pyclass(module = "pyochain.rs",frozen, generic, extends=abc::PyoMutableMapping)]
+#[pyclass(module = "pyochain._dict",frozen, generic, extends=abc::PyoMutableMapping)]
 pub struct Dict(pub Py<PyDict>);
 #[pymethods]
 impl Dict {

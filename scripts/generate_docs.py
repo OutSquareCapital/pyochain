@@ -11,11 +11,6 @@ from ._utils import Color, Paths
 if TYPE_CHECKING:
     from pathlib import Path
     from types import ModuleType
-SPECIAL_CASES = Set({
-    "OptionType",
-    "ResultType",
-})
-"""Those twos types need to be manually handled since they don't exist anywhere else than in the stubs."""
 
 
 def main() -> None:
@@ -45,9 +40,7 @@ def _generate_mds(module: ModuleType, generated_paths: SetMut[str]) -> None:
 
     def _is_public_class(obj: tuple[str, object]) -> TypeIs[tuple[str, type]]:
         name, cls = obj
-        return (
-            name in public_api and isinstance(cls, type) and name not in SPECIAL_CASES
-        )
+        return name in public_api and isinstance(cls, type)
 
     return (
         Dict

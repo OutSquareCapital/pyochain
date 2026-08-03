@@ -9,7 +9,7 @@ use pyo3::{prelude::*, types::PyList};
 use std::sync::{Mutex, atomic::AtomicUsize};
 
 use tap::prelude::*;
-#[pyclass(module = "pyochain.collections", frozen, generic)]
+#[pyclass(module = "pyochain._collections", frozen, generic)]
 pub struct InnerLists {
     #[pyo3(get)]
     pub(super) lists: Py<PyList>,

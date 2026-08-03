@@ -32,11 +32,13 @@ fn format_err_value(error: &Bound<'_, PyAny>) -> PyResult<String> {
 }
 
 /// Result[T, E] - Generic Result type with Ok and Err variants for Python typing
-#[pyclass(module = "pyochain.rs", frozen, name = "Result", generic)]
+#[pyclass(module = "pyochain._result", frozen, name = "Result", generic)]
 pub struct PyochainResult;
+#[pyclass(module = "pyochain._result", frozen, name = "ResultType", generic)]
+pub struct PyochainResultType;
 
 #[derive(PyMatchArgs)]
-#[pyclass(module = "pyochain.rs", frozen, name = "Ok", generic)]
+#[pyclass(module = "pyochain._result", frozen, name = "Ok", generic)]
 pub struct PyoOk {
     #[pyo3(get)]
     pub value: Py<PyAny>,
@@ -262,7 +264,7 @@ impl PyoOk {
 
 /// Err(error) - Result variant containing an error value
 #[derive(PyMatchArgs)]
-#[pyclass(module = "pyochain.rs", frozen, name = "Err", generic)]
+#[pyclass(module = "pyochain._result", frozen, name = "Err", generic)]
 pub struct PyoErr {
     #[pyo3(get)]
     pub error: Py<PyAny>,

@@ -24,7 +24,7 @@ enum IntoUpdate<'py> {
     Mapping(Bound<'py, PyMapping>),
     Iterable(Bound<'py, PyAny>),
 }
-#[pyclass(module = "pyochain.collections",frozen, generic, mapping, extends = abc::PyoMutableMapping)]
+#[pyclass(module = "pyochain._collections",frozen, generic, mapping, extends = abc::PyoMutableMapping)]
 pub struct PyoCounter(pub Py<PyDict>);
 #[pymethods]
 impl PyoCounter {
@@ -132,11 +132,13 @@ impl PyoCounter {
         }
     }
 
-    fn elements<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyIterator>> {
-        pylibs::itertools::chain::from_iterable(&pylibs::itertools::map_star(
+    fn elements<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, iterators::Iter>> {
+        pylibs::itertools::map_star(
             pyitertools::PyRepeat::type_object(py).into_any(),
             self.inner_bind(py).items_view().try_iter().unwrap(),
-        )?)
+        )?
+        .pipe_ref(pylibs::itertools::chain::from_iterable)
+        .and_then(iterators::Iter::new)
     }
     #[pyo3(signature = (iterable=None, /, **kwargs))]
     fn update(

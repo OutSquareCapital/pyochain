@@ -13,7 +13,7 @@ use pyo3::{
 };
 use pyochain_macros::try_cast;
 use tap::Pipe;
-#[pyclass(module = "pyochain.rs",frozen, generic, sequence, extends=abc::PyoMutableSequence, name="Vec")]
+#[pyclass(module = "pyochain._vec",frozen, generic, sequence, extends=abc::PyoMutableSequence, name="Vec")]
 pub struct PyoVec(pub Py<PyList>);
 impl PyoVec {
     pub fn new_bound(py: Python<'_>) -> PyResult<Bound<'_, Self>> {

@@ -12,7 +12,7 @@ use pyo3::types::{PyAny, PyDict, PyIterator, PySequence, PySet, PyString, PyTupl
 use pyo3::{IntoPyObjectExt, ffi, prelude::*};
 use tap::prelude::*;
 //TODO: the double collect in `Vec` => `PyTuple` is a performance tax on large Vecs of funcs. Need to optimize.
-#[pyclass]
+#[pyclass(module = "pyochain._iterators")]
 pub struct MapJuxt {
     iterator: Py<PyIterator>,
     funcs: Vec<Py<PyAny>>,
@@ -53,7 +53,7 @@ impl MapJuxt {
 }
 /// TODO: speed is 0.76x compared to the Cython implementation.
 /// Saved in `.benchmarks/unique_cy`
-#[pyclass(module = "pyochain.rs",frozen)]
+#[pyclass(module = "pyochain._iterators", frozen)]
 pub struct UniqueIdentity {
     iter: Py<PyIterator>,
     seen: Py<PySet>,
@@ -97,7 +97,7 @@ impl UniqueIdentity {
 }
 /// TODO: speed is 0.95x compared to the Cython implementation.
 /// Saved in `.benchmarks/unique_cy`
-#[pyclass(module = "pyochain.rs",frozen)]
+#[pyclass(module = "pyochain._iterators", frozen)]
 pub struct UniqueKey {
     iter: Py<PyIterator>,
     key: Py<PyAny>,
@@ -149,7 +149,7 @@ impl UniqueKey {
 /// 256 elements: 10.6
 /// 1024 elements: 37.3
 /// 4096 elements: 127.7
-#[pyclass]
+#[pyclass(module = "pyochain._iterators")]
 pub struct Intersperse {
     data: Py<PyIterator>,
     element: Py<PyAny>,
@@ -201,7 +201,7 @@ impl Intersperse {
 /// **0.93x** -> `n=8`\
 /// **1.17x** -> `n=32`\
 /// **1.40x** -> `n=128`\
-#[pyclass]
+#[pyclass(module = "pyochain._iterators")]
 pub struct MapWindow {
     iter: Py<PyIterator>,
     prev: Vec<Py<PyAny>>,
@@ -244,7 +244,7 @@ impl MapWindow {
         Ok(Some(PyTuple::new(py, slf.prev.iter())?.into()))
     }
 }
-#[pyclass]
+#[pyclass(module = "pyochain._iterators")]
 pub struct FilterMap {
     iter: Py<PyIterator>,
     func: Py<PyAny>,
@@ -280,7 +280,7 @@ impl FilterMap {
         }
     }
 }
-#[pyclass]
+#[pyclass(module = "pyochain._iterators")]
 pub struct FilterMapStar {
     iter: Py<PyIterator>,
     func: Py<PyAny>,
@@ -317,7 +317,7 @@ impl FilterMapStar {
     }
 }
 
-#[pyclass]
+#[pyclass(module = "pyochain._iterators")]
 pub struct Scan {
     iter: Py<PyIterator>,
     initial: Py<PyAny>,
@@ -365,7 +365,7 @@ impl Scan {
     }
 }
 
-#[pyclass]
+#[pyclass(module = "pyochain._iterators")]
 pub struct MapWhile {
     iter: Py<PyIterator>,
     func: Py<PyAny>,
@@ -414,7 +414,7 @@ impl FromFnStrategy {
         }
     }
 }
-#[pyclass]
+#[pyclass(module = "pyochain._iterators")]
 pub struct FromFn {
     func: Py<PyAny>,
     strategy: FromFnStrategy,
@@ -451,7 +451,7 @@ impl FromFn {
         }
     }
 }
-#[pyclass]
+#[pyclass(module = "pyochain._iterators")]
 pub struct Drain {
     vec: Py<PySequence>,
     start: usize,
@@ -518,7 +518,7 @@ impl Drop for Drain {
         });
     }
 }
-#[pyclass]
+#[pyclass(module = "pyochain._iterators")]
 pub struct ExtractIf {
     data: Py<PySequence>,
     pred: Py<PyAny>,
@@ -609,7 +609,7 @@ impl Drop for ExtractIf {
         });
     }
 }
-#[pyclass]
+#[pyclass(module = "pyochain._iterators")]
 pub struct Successors {
     succ: Py<PyAny>,
     current: Py<PyAny>,
@@ -639,7 +639,7 @@ impl Successors {
         }
     }
 }
-#[pyclass]
+#[pyclass(module = "pyochain._iterators")]
 pub struct FilterStar {
     iter: Py<PyIterator>,
     predicate: Py<PyAny>,
@@ -700,7 +700,7 @@ mod position {
     }
 }
 
-#[pyclass]
+#[pyclass(module = "pyochain._iterators")]
 pub struct WithPosition {
     iter: Py<PyIterator>,
     did_iter: bool,
@@ -746,7 +746,7 @@ impl WithPosition {
         Ok(Some((position, current)))
     }
 }
-#[pyclass]
+#[pyclass(module = "pyochain._iterators")]
 pub struct ZipLongest {
     iterator: Py<PyIterator>,
 }
@@ -780,7 +780,7 @@ impl ZipLongest {
         }
     }
 }
-#[pyclass]
+#[pyclass(module = "pyochain._iterators")]
 pub struct Unzip {
     iterator: Py<PyIterator>,
     n: usize,
@@ -813,7 +813,7 @@ impl Unzip {
         }
     }
 }
-#[pyclass]
+#[pyclass(module = "pyochain._iterators")]
 pub struct GroupBy {
     iterator: Py<PyIterator>,
 }
@@ -841,7 +841,7 @@ impl GroupBy {
         }
     }
 }
-#[pyclass]
+#[pyclass(module = "pyochain._iterators")]
 pub struct OnceWith {
     func: Py<PyAny>,
     args: Py<PyTuple>,
@@ -876,7 +876,7 @@ impl OnceWith {
         }
     }
 }
-#[pyclass]
+#[pyclass(module = "pyochain._iterators")]
 pub struct Tail {
     data: VecDeque<PyResult<Py<PyAny>>>,
 }
@@ -934,7 +934,7 @@ impl Tail {
     }
 }
 
-#[pyclass(module = "pyochain.rs",frozen, generic, extends=abc::PyoIterator)]
+#[pyclass(module = "pyochain._iterators",frozen, generic, extends=abc::PyoIterator)]
 pub struct Iter(pub Py<PyIterator>);
 impl Iter {
     /// New constructor for `Iter` in rust.
@@ -1018,7 +1018,7 @@ impl<'py> Iterator for PyUnsafeIterator<'py> {
         }
     }
 }
-#[pyclass(module = "pyochain.rs",generic, extends=abc::PyoIterator)]
+#[pyclass(module = "pyochain._iterators",generic, extends=abc::PyoIterator)]
 pub struct Peekable {
     iterator: Py<PyIterator>,
     peeked: Option<Py<PyAny>>,
@@ -1143,7 +1143,7 @@ impl Peekable {
         PyNull::get_any_ok(py)
     }
 }
-#[pyclass(module = "pyochain.rs",generic)]
+#[pyclass(module = "pyochain._iterators", generic)]
 pub struct SequenceIterator {
     i: usize,
     sequence: Py<PySequence>,
@@ -1178,7 +1178,7 @@ impl SequenceIterator {
         }
     }
 }
-#[pyclass(module = "pyochain.rs",generic)]
+#[pyclass(module = "pyochain._iterators", generic)]
 pub struct SequenceReverseIterator {
     iterator: std::iter::Rev<std::ops::Range<usize>>,
     sequence: Py<PySequence>,
@@ -1204,7 +1204,7 @@ impl SequenceReverseIterator {
             .transpose()
     }
 }
-#[pyclass(module = "pyochain.rs",generic)]
+#[pyclass(module = "pyochain._iterators", generic)]
 pub struct ValuesViewIterator {
     iterator: Py<PyIterator>,
     mapping: Py<PyAny>,
@@ -1231,7 +1231,7 @@ impl ValuesViewIterator {
             .transpose()
     }
 }
-#[pyclass(module = "pyochain.rs",generic)]
+#[pyclass(module = "pyochain._iterators", generic)]
 pub struct ItemsViewIterator {
     iterator: Py<PyIterator>,
     mapping: Py<PyAny>,
