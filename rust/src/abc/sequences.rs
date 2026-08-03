@@ -9,16 +9,16 @@ use tap::Pipe;
 
 use crate::{
     abc::PyoCollection,
+    iterators,
     option::{PyNull, PySome},
     pyo3_ext::{
         args::{Args, Kwargs},
         pylibs,
     },
-    iterators,
     traits::PyoABC,
 };
 // TODO: check difference once we had `sequence` to pypub struct macro
-#[pyclass(subclass,  frozen, generic, sequence, extends=PyoCollection)]
+#[pyclass(module = "pyochain.abc",subclass,  frozen, generic, sequence, extends=PyoCollection)]
 pub struct PyoSequence;
 #[pymethods]
 impl PyoSequence {
@@ -119,7 +119,7 @@ impl PyoSequence {
     }
 }
 
-#[pyclass(subclass, frozen, generic, extends=PyoSequence)]
+#[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSequence)]
 pub struct PyoMutableSequence;
 #[pymethods]
 impl PyoMutableSequence {

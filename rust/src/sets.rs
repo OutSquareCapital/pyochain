@@ -159,7 +159,7 @@ trait SetCmpMethods<'py, T: PyTypeInfo + DerefToPyAny + FromBoundIterator<'py>>:
 }
 impl<'py> SetCmpMethods<'py, PyFrozenSet> for Set {}
 impl<'py> SetCmpMethods<'py, PySet> for SetMut {}
-#[pyclass(frozen, generic, extends=abc::PyoSet)]
+#[pyclass(module = "pyochain.rs",frozen, generic, extends=abc::PyoSet)]
 pub struct Set(pub Py<PyFrozenSet>);
 #[pymethods]
 impl Set {
@@ -284,7 +284,7 @@ impl Set {
             .and_then(Bound::into_pyochain)
     }
 }
-#[pyclass(frozen, generic, extends=abc::PyoMutableSet)]
+#[pyclass(module = "pyochain.rs",frozen, generic, extends=abc::PyoMutableSet)]
 pub struct SetMut(pub Py<PySet>);
 #[pymethods]
 impl SetMut {

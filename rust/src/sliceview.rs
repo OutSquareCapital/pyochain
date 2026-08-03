@@ -54,7 +54,7 @@ impl<'py> PyInit<'py, PySlice, SliceArgs<'py>> for PySlice {
     }
 }
 
-#[pyclass(frozen, generic, sequence, extends=abc::PyoSequence)]
+#[pyclass(module = "pyochain.rs",frozen, generic, sequence, extends=abc::PyoSequence)]
 pub struct SliceView {
     #[pyo3(get)]
     pub inner: Py<PySequence>,
@@ -312,7 +312,7 @@ impl SliceView {
         Ok(slf)
     }
 }
-#[pyclass(generic)]
+#[pyclass(module = "pyochain.rs",generic)]
 struct SliceViewIterator {
     current_index: usize,
     length: usize,
@@ -352,7 +352,7 @@ impl SliceViewIterator {
     }
 }
 
-#[pyclass(generic)]
+#[pyclass(module = "pyochain.rs",generic)]
 struct SliceViewReverseIterator {
     current_index: usize,
     length: usize,

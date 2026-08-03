@@ -12,7 +12,7 @@ use crate::{
     sets::SetMut,
     traits::{IntoPyochain, PyoABC},
 };
-#[pyclass(subclass, frozen, generic, extends=PyoSized)]
+#[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSized)]
 pub struct PyoMappingView {
     #[pyo3(get)]
     pub _mapping: Py<PyAny>,
@@ -29,7 +29,7 @@ impl PyoMappingView {
     }
 }
 
-#[pyclass(subclass, frozen, generic, extends=PyoSet)]
+#[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSet)]
 pub struct PyoValuesView {
     #[pyo3(get)]
     pub _mapping: Py<PyAny>,
@@ -67,7 +67,7 @@ impl PyoValuesView {
     }
 }
 
-#[pyclass(subclass, frozen, generic, extends=PyoSet)]
+#[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSet)]
 pub struct PyoKeysView {
     #[pyo3(get)]
     pub _mapping: Py<PyAny>,
@@ -130,7 +130,7 @@ impl PyoKeysView {
     }
 }
 
-#[pyclass(subclass, frozen, generic, extends=PyoSet)]
+#[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSet)]
 pub struct PyoItemsView {
     #[pyo3(get)]
     pub _mapping: Py<PyAny>,

@@ -29,7 +29,7 @@ impl IsNull<'_> for &Bound<'_, PyAny> {
     }
 }
 /// Option[T] - Generic Option type with Some and None variants for Python typing
-#[pyclass(frozen, name = "Option", generic)]
+#[pyclass(module = "pyochain.rs",frozen, name = "Option", generic)]
 pub struct PyochainOption;
 #[pyfunction]
 pub fn option(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
@@ -61,7 +61,7 @@ pub fn then_if_true(value: &Bound<'_, PyAny>, predicate: &Bound<'_, PyAny>) -> P
     }
 }
 
-#[pyclass(frozen, name = "Some", generic)]
+#[pyclass(module = "pyochain.rs",frozen, name = "Some", generic)]
 pub struct PySome {
     #[pyo3(get)]
     pub value: Py<PyAny>,
@@ -353,7 +353,7 @@ impl PySome {
     }
 }
 
-#[pyclass(frozen, name = "Null")]
+#[pyclass(module = "pyochain.rs",frozen, name = "Null")]
 pub struct PyNull;
 
 impl PyNull {

@@ -30,7 +30,7 @@ fn py_from_iterable<'py>(
     slf.call_method1(intern!(slf.py(), "_from_iterable"), (it,))
         .map(|x| unsafe { x.cast_into_unchecked::<PyAbstractSet>() })
 }
-#[pyclass(subclass, frozen, generic, extends=PyoCollection)]
+#[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoCollection)]
 pub struct PyoSet;
 #[pymethods]
 impl PyoSet {
@@ -336,7 +336,7 @@ impl PyoSet {
     }
 }
 
-#[pyclass(subclass, frozen, generic, extends=PyoSet)]
+#[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSet)]
 pub struct PyoMutableSet;
 
 #[pymethods]

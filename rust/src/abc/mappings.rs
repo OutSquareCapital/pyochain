@@ -18,7 +18,7 @@ use crate::{
     result::{PyoErr, PyoOk},
     traits::PyoABC,
 };
-#[pyclass(subclass, frozen, generic, mapping, extends=PyoCollection)]
+#[pyclass(module = "pyochain.abc",subclass, frozen, generic, mapping, extends=PyoCollection)]
 pub struct PyoMapping;
 #[pymethods]
 impl PyoMapping {
@@ -111,7 +111,7 @@ impl PyoMapping {
     }
 }
 
-#[pyclass(subclass, frozen, generic, mapping, extends=PyoMapping)]
+#[pyclass(module = "pyochain.abc",subclass, frozen, generic, mapping, extends=PyoMapping)]
 pub struct PyoMutableMapping;
 
 #[pymethods]

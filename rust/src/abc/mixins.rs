@@ -4,7 +4,7 @@ use crate::result::{PyoErr, PyoOk};
 use pyo3::{IntoPyObjectExt, prelude::*};
 use tap::prelude::*;
 
-#[pyclass(frozen, subclass, name = "Pipe")]
+#[pyclass(module = "pyochain.abc", frozen, subclass, name = "Pipe")]
 pub struct PyoPipe;
 
 #[pymethods]
@@ -16,7 +16,7 @@ impl PyoPipe {
     }
 }
 
-#[pyclass(frozen, subclass, name = "Tap")]
+#[pyclass(module = "pyochain.abc", frozen, subclass, name = "Tap")]
 pub struct PyoTap;
 #[pymethods]
 impl PyoTap {
@@ -26,7 +26,7 @@ impl PyoTap {
         PyoTap {}
     }
 }
-#[pyclass(frozen, subclass)]
+#[pyclass(module = "pyochain.abc", frozen, subclass)]
 pub struct Fluent;
 
 #[pymethods]
@@ -37,7 +37,7 @@ impl Fluent {
         Fluent {}
     }
 }
-#[pyclass(frozen, subclass)]
+#[pyclass(module = "pyochain.abc", frozen, subclass)]
 pub struct Checkable;
 #[pymethods]
 impl Checkable {

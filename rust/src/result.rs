@@ -1,8 +1,8 @@
 use crate::errors::ResultUnwrapError;
 use crate::hasher::hash_fn;
+use crate::iterators;
 use crate::option::{PyNull, PySome};
 use crate::pyo3_ext::prelude::*;
-use crate::iterators;
 use pyderive::*;
 use pyo3::IntoPyObjectExt;
 use pyo3::exceptions::PyBaseException;
@@ -32,11 +32,11 @@ fn format_err_value(error: &Bound<'_, PyAny>) -> PyResult<String> {
 }
 
 /// Result[T, E] - Generic Result type with Ok and Err variants for Python typing
-#[pyclass(frozen, name = "Result", generic)]
+#[pyclass(module = "pyochain.rs", frozen, name = "Result", generic)]
 pub struct PyochainResult;
 
 #[derive(PyMatchArgs)]
-#[pyclass(frozen, name = "Ok", generic)]
+#[pyclass(module = "pyochain.rs", frozen, name = "Ok", generic)]
 pub struct PyoOk {
     #[pyo3(get)]
     pub value: Py<PyAny>,
@@ -262,7 +262,7 @@ impl PyoOk {
 
 /// Err(error) - Result variant containing an error value
 #[derive(PyMatchArgs)]
-#[pyclass(frozen, name = "Err", generic)]
+#[pyclass(module = "pyochain.rs", frozen, name = "Err", generic)]
 pub struct PyoErr {
     #[pyo3(get)]
     pub error: Py<PyAny>,

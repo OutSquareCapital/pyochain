@@ -3,7 +3,7 @@ use crate::iterators;
 use crate::pyo3_ext::prelude::*;
 use crate::traits::PyoABC;
 use pyo3::prelude::*;
-#[pyclass(subclass, frozen, generic, extends=Checkable)]
+#[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=Checkable)]
 pub struct PyoIterable;
 
 #[pymethods]

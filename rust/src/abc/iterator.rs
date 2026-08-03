@@ -8,6 +8,7 @@ use tap::Pipe;
 use crate::{
     ConcatWith,
     abc::PyoIterable,
+    iterators,
     option::{PyNull, PySome},
     pyo3_ext::{
         args::{Args, Concatenate, Kwargs},
@@ -16,11 +17,10 @@ use crate::{
     },
     pyovec::PyoVec,
     result::{PyoErr, PyoOk},
-    iterators,
     traits::{IntoPyochain, PyoABC},
 };
 
-#[pyclass(subclass, frozen, generic, extends=PyoIterable)]
+#[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoIterable)]
 pub struct PyoIterator;
 
 #[pymethods]

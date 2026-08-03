@@ -10,7 +10,7 @@ use crate::{
 use pyo3::prelude::*;
 use tap::Pipe;
 
-#[pyclass(subclass, frozen, generic, extends=Checkable)]
+#[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=Checkable)]
 pub struct PyoContainer;
 
 #[pymethods]
@@ -26,7 +26,7 @@ impl PyoContainer {
     }
 }
 
-#[pyclass(subclass, frozen, generic, extends=Checkable)]
+#[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=Checkable)]
 pub struct PyoSized;
 
 #[pymethods]
@@ -46,7 +46,7 @@ impl PyoSized {
     }
 }
 
-#[pyclass(subclass, frozen, generic, extends=PyoIterable)]
+#[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoIterable)]
 pub struct PyoCollection;
 
 #[pymethods]
@@ -69,7 +69,7 @@ impl PyoCollection {
         slf.is_empty()
     }
 }
-#[pyclass(subclass, frozen, generic, extends=PyoIterable)]
+#[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoIterable)]
 pub struct PyoReversible;
 
 #[pymethods]

@@ -53,7 +53,7 @@ impl MapJuxt {
 }
 /// TODO: speed is 0.76x compared to the Cython implementation.
 /// Saved in `.benchmarks/unique_cy`
-#[pyclass(frozen)]
+#[pyclass(module = "pyochain.rs",frozen)]
 pub struct UniqueIdentity {
     iter: Py<PyIterator>,
     seen: Py<PySet>,
@@ -97,7 +97,7 @@ impl UniqueIdentity {
 }
 /// TODO: speed is 0.95x compared to the Cython implementation.
 /// Saved in `.benchmarks/unique_cy`
-#[pyclass(frozen)]
+#[pyclass(module = "pyochain.rs",frozen)]
 pub struct UniqueKey {
     iter: Py<PyIterator>,
     key: Py<PyAny>,
@@ -934,7 +934,7 @@ impl Tail {
     }
 }
 
-#[pyclass(frozen, generic, extends=abc::PyoIterator)]
+#[pyclass(module = "pyochain.rs",frozen, generic, extends=abc::PyoIterator)]
 pub struct Iter(pub Py<PyIterator>);
 impl Iter {
     /// New constructor for `Iter` in rust.
@@ -1018,7 +1018,7 @@ impl<'py> Iterator for PyUnsafeIterator<'py> {
         }
     }
 }
-#[pyclass(generic, extends=abc::PyoIterator)]
+#[pyclass(module = "pyochain.rs",generic, extends=abc::PyoIterator)]
 pub struct Peekable {
     iterator: Py<PyIterator>,
     peeked: Option<Py<PyAny>>,
@@ -1143,7 +1143,7 @@ impl Peekable {
         PyNull::get_any_ok(py)
     }
 }
-#[pyclass(generic)]
+#[pyclass(module = "pyochain.rs",generic)]
 pub struct SequenceIterator {
     i: usize,
     sequence: Py<PySequence>,
@@ -1178,7 +1178,7 @@ impl SequenceIterator {
         }
     }
 }
-#[pyclass(generic)]
+#[pyclass(module = "pyochain.rs",generic)]
 pub struct SequenceReverseIterator {
     iterator: std::iter::Rev<std::ops::Range<usize>>,
     sequence: Py<PySequence>,
@@ -1204,7 +1204,7 @@ impl SequenceReverseIterator {
             .transpose()
     }
 }
-#[pyclass(generic)]
+#[pyclass(module = "pyochain.rs",generic)]
 pub struct ValuesViewIterator {
     iterator: Py<PyIterator>,
     mapping: Py<PyAny>,
@@ -1231,7 +1231,7 @@ impl ValuesViewIterator {
             .transpose()
     }
 }
-#[pyclass(generic)]
+#[pyclass(module = "pyochain.rs",generic)]
 pub struct ItemsViewIterator {
     iterator: Py<PyIterator>,
     mapping: Py<PyAny>,

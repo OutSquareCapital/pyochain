@@ -2,7 +2,7 @@ use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
 /// Exception raised when unwrapping fails on Result types
-#[pyclass(frozen, extends = PyValueError)]
+#[pyclass(module = "pyochain.rs",frozen, extends = PyValueError)]
 pub struct ResultUnwrapError;
 #[pymethods]
 impl ResultUnwrapError {
@@ -13,7 +13,7 @@ impl ResultUnwrapError {
 }
 
 /// Exception raised when unwrapping fails on Option types
-#[pyclass(frozen, extends = PyValueError)]
+#[pyclass(module = "pyochain.rs",frozen, extends = PyValueError)]
 pub struct OptionUnwrapError;
 
 #[pymethods]
