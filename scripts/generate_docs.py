@@ -2,44 +2,29 @@
 
 from __future__ import annotations
 
-from types import ModuleType
 from typing import TYPE_CHECKING, TypeIs
 
-from pyochain import Dict, Iter, Set, SetMut
+from pyochain import Dict, Set, SetMut
 
 from ._utils import Color, Paths
 
 if TYPE_CHECKING:
     from pathlib import Path
+    from types import ModuleType
 
 
 def main() -> None:
     """Main function to generate documentation and check navigation completeness."""
     import pyochain
-    from pyochain import collections
+    from pyochain import abc, collections
 
     Color.INFO.show("Generating pyochain documentation...")
-    _generate_all_for_module(pyochain)
-    _generate_all_for_module(collections)
-    return Color.SUCCESS.show("✅ All files generated!")
 
-
-def _generate_all_for_module(module: ModuleType) -> None:
     generated_paths = SetMut[str](())
-
-    return (
-        Iter
-        .once(module)
-        .chain(
-            Dict
-            .from_object(module)
-            .values()
-            .iter()
-            .filter(_is_module)
-            .filter(lambda m: m.__name__.startswith(module.__name__))
-        )
-        .for_each(_generate_mds, generated_paths)
-    )
+    _generate_mds(pyochain, generated_paths)
+    _generate_mds(collections, generated_paths)
+    _generate_mds(abc, generated_paths)
+    return Color.SUCCESS.show("✅ All files generated!")
 
 
 def _generate_mds(module: ModuleType, generated_paths: SetMut[str]) -> None:
@@ -63,19 +48,14 @@ def _generate_mds(module: ModuleType, generated_paths: SetMut[str]) -> None:
         .items()
         .iter()
         .filter(_is_public_class)
-        .map_star(lambda name, cls: _fix_name(name, cls, module))
+        .map_star(_fix_name)
         .filter_star(lambda k, _, _v: k.as_posix() not in generated_paths)
         .for_each_star(_write)
     )
 
 
-def _fix_name(name: str, cls: type, module: ModuleType) -> tuple[Path, str, str]:
-    mod_name = module.__name__
-    cls_path = (
-        f"{mod_name}.{name}"
-        if mod_name == "pyochain"
-        else f"{cls.__module__}.{cls.__name__}".replace("builtins", "pyochain.rs")
-    )
+def _fix_name(name: str, cls: type) -> tuple[Path, str, str]:
+    cls_path = f"{cls.__module__}.{cls.__name__}"
 
     return Paths.DOCS_REF.value.joinpath(f"{name.lower()}.md"), name, cls_path
 
@@ -85,10 +65,6 @@ def _finalize_md(full_path: str, class_name: str) -> str:
 
 ::: {full_path}
 """
-
-
-def _is_module(obj: object) -> TypeIs[ModuleType]:
-    return isinstance(obj, ModuleType)
 
 
 if __name__ == "__main__":
