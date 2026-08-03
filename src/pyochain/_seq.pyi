@@ -26,19 +26,18 @@ class Seq[T](PyoSequence[T]):
         data (Iterable[T]): The data to initialize the Seq with.
 
     Example:
-        >>> from pyochain import Seq
-        >>> Seq(())
-        Seq()
-        >>> t = (1, 2, 3)
-        >>> seq = Seq(t)
-        >>> seq
-        Seq(1, 2, 3)
-        >>> # If you already have a `tuple`, you can use it directly without copying:
-        >>> t = ([1], [2], [3])
-        >>> seq2 = Seq(t)
-        >>> id(seq2.first()) == id(t[0])
-        True
+        ```python
+        from pyochain import Seq
 
+        empty = Seq(())
+        assert repr(empty) == "Seq()"
+        t = (1, 2, 3)
+        seq = Seq(t)
+        assert seq == Seq((1, 2, 3))
+        # If you already have a `tuple`, you can use it directly without copying:
+        t = ([1], [2], [3])
+        seq2 = Seq(t)
+        assert id(seq2.first()) == id(t[0])
         ```
     """
 
