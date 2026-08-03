@@ -78,13 +78,12 @@ class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):
 
         Example:
             ```python
-            >>> from pyochain.collections import HeapMin
-            >>> heap = HeapMin([1, 2, 3])
-            >>> item = 4
-            >>> item = heap.replace(item) if item > heap[0] else item
-            >>> heap
-            HeapMin([2, 4, 3])
+            from pyochain.collections import HeapMin
 
+            heap = HeapMin([1, 2, 3])
+            item = 4
+            item = heap.replace(item) if item > heap[0] else item
+            assert heap == HeapMin([2, 4, 3])
             ```
 
         Args:
@@ -119,16 +118,21 @@ class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):
         - does not pull the data into memory all at once
         - assumes that each of the input streams is already sorted (smallest to largest).
 
-        >>> from pyochain.collections import HeapMin
-        >>> base = [1, 3, 5, 7]
-        >>> HeapMin(base).merge([0, 2, 4, 8], [5, 10, 15, 20], [], [25]).collect(list)
-        [0, 1, 2, 3, 4, 5, 5, 7, 8, 10, 15, 20, 25]
+        ```python
+        from pyochain.collections import HeapMin
+
+        base = [1, 3, 5, 7]
+        x = HeapMin(base).merge([0, 2, 4, 8], [5, 10, 15, 20], [], [25]).collect(list)
+        assert x == [0, 1, 2, 3, 4, 5, 5, 7, 8, 10, 15, 20, 25]
+        ```
 
         If *key* is not `None`, applies a key function to each element to determine its sort order.
 
-        >>> others = ["cat", "fish", "kangaroo"]
-        >>> HeapMin(["dog", "horse"]).merge(others, key=len).collect(list)
-        ['dog', 'cat', 'fish', 'horse', 'kangaroo']
+        ```python
+        others = ["cat", "fish", "kangaroo"]
+        x = HeapMin(["dog", "horse"]).merge(others, key=len).collect(list)
+        assert x == ["dog", "cat", "fish", "horse", "kangaroo"]
+        ```
 
         Args:
             *others (Iterable[S]): Other sorted iterables to merge with *self*.
