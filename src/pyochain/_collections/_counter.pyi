@@ -3,7 +3,7 @@ from typing import Any, Self, final, overload, override
 
 from _typeshed import SupportsItems, SupportsKeysAndGetItem
 
-from ..abc import PyoMutableMapping, PyoReversible
+from pyochain.abc import PyoIterator, PyoMutableMapping, PyoReversible
 
 # TODO: once in stubs, add overload to new when kwargs is passed to infer PyoCounter[str]
 
@@ -15,51 +15,67 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
     Elements are stored as dictionary keys and their counts
     are stored as dictionary values.
 
-    >>> from pyochain.collections import PyoCounter
-    >>> c = PyoCounter("abcdeabcdabcaba")  # count elements from a string
-    >>> c.most_common(3)  # three most common elements
-    [('a', 5), ('b', 4), ('c', 3)]
-    >>> sorted(c)  # list all unique elements
-    ['a', 'b', 'c', 'd', 'e']
-    >>> "".join(sorted(c.elements()))  # list elements with repetitions
-    'aaaaabbbbcccdde'
-    >>> sum(c.values())  # total of all counts
-    15
+    ```python
+    from pyochain.collections import PyoCounter
 
-    >>> c["a"]  # count of letter 'a'
-    5
-    >>> for elem in "shazam":  # update counts from an iterable
-    ...     c[elem] += 1  # by adding 1 to each element's count
-    >>> c["a"]  # now there are seven 'a'
-    7
-    >>> del c["b"]  # remove all 'b'
-    >>> c["b"]  # now there are zero 'b'
-    0
+    c = PyoCounter("abcdeabcdabcaba")  # count elements from a string
 
-    >>> d = PyoCounter("simsalabim")  # make another counter
-    >>> c.update(d)  # add in the second counter
-    >>> c["a"]  # now there are nine 'a'
-    9
+    # three most common elements
+    assert c.most_common(3) == [("a", 5), ("b", 4), ("c", 3)]
 
-    >>> c.clear()  # empty the counter
-    >>> c
-    PyoCounter()
+    # list all unique elements
+    assert sorted(c.iter()) == ["a", "b", "c", "d", "e"]
+
+    # list elements with repetitions
+    joined = c.elements().iter().sort().iter().join("")
+    assert joined == "aaaaabbbbcccdde"
+
+    # total of all counts
+    assert c.values().iter().sum() == 15
+    # count of letter 'a'
+    assert c["a"] == 5
+    # update counts from an iterable
+    for elem in "shazam":
+        # by adding 1 to each element's count
+        c[elem] += 1
+    # now there are seven 'a'
+    assert c["a"] == 7
+
+    # remove all 'b'
+    del c["b"]
+    # now there are zero 'b'
+    assert c["b"] == 0
+
+    # make another counter
+    d = PyoCounter("simsalabim")
+    # add in the second counter
+    c.update(d)
+    # now there are nine 'a'
+    assert c["a"] == 9
+
+    c.clear()  # empty the counter
+    assert c == PyoCounter()
+    ```
 
     Note:  If a count is set to zero or reduced to zero, it will remain
     in the counter until the entry is deleted or the counter is cleared:
-
-    >>> c = PyoCounter("aaabbc")
-    >>> c["b"] -= 2  # reduce the count of 'b' by two
-    >>> c.most_common()  # 'b' is still in, but its count is zero
-    [('a', 3), ('c', 1), ('b', 0)]
-
+    ```python
+    c = PyoCounter("aaabbc")
+    c["b"] -= 2  # reduce the count of 'b' by two
+    # 'b' is still in, but its count is zero
+    assert c.most_common() == [("a", 3), ("c", 1), ("b", 0)]
+    ```
     If given, count elements from an input iterable.
 
     Or, initialize the count from another mapping of elements to their counts.
-
-    >>> c = PyoCounter()  # a new, empty counter
-    >>> c = PyoCounter("gallahad")  # a new counter from an iterable
-    >>> c = PyoCounter({"a": 4, "b": 2})  # a new counter from a mapping
+    ```python
+    c = PyoCounter()  # a new, empty counter
+    assert c.is_empty()
+    c = PyoCounter("gallahad")  # a new counter from an iterable
+    assert c["a"] == 3
+    c = PyoCounter({"a": 4, "b": 2})  # a new counter from a mapping
+    assert c["b"] == 2
+    ```
 
     """
     @overload
@@ -115,9 +131,12 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
     def most_common(self, n: int | None = None) -> list[tuple[T, int]]:
         """List the n most common elements and their counts from the most common to the least.
 
-        >>> from pyochain.collections import PyoCounter
-        >>> PyoCounter("abracadabra").most_common(3)
-        [('a', 5), ('b', 2), ('r', 2)]
+        ```python
+        from pyochain.collections import PyoCounter
+
+        most_commons = PyoCounter("abracadabra").most_common(3)
+        assert most_commons == [("a", 5), ("b", 2), ("r", 2)]
+        ```
 
         Args:
             n (int | None): The number of most common elements to return. If `None`, return all elements.
@@ -125,21 +144,25 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
         Returns:
             list[tuple[T, int]]: A list of tuples containing the n most common elements and their counts.
         """
-    def elements(self) -> Iterator[T]:
+    def elements(self) -> PyoIterator[T]:
         """Iterator over elements repeating each as many times as its count.
 
-        >>> from pyochain.collections import PyoCounter
-        >>> c = PyoCounter("ABCABC")
-        >>> sorted(c.elements())
-        ['A', 'A', 'B', 'B', 'C', 'C']
+        ```python
+        from pyochain.collections import PyoCounter
+
+        c = PyoCounter("ABCABC")
+        assert sorted(c.elements()) == ["A", "A", "B", "B", "C", "C"]
+        ```
 
         Knuth's example for prime factors of 1836:  2**2 * 3**3 * 17**1
 
-        >>> from pyochain.collections import PyoCounter
-        >>> import math
-        >>> prime_factors = PyoCounter({2: 2, 3: 3, 17: 1})
-        >>> math.prod(prime_factors.elements())
-        1836
+        ```python
+        from pyochain.collections import PyoCounter
+        import math
+
+        prime_factors = PyoCounter({2: 2, 3: 3, 17: 1})
+        assert math.prod(prime_factors.elements()) == 1836
+        ```
 
         Note, if an element's count has been set to zero or is a negative
         number, elements() will ignore it.
@@ -170,14 +193,16 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
             contexts.
             Instead, we implement straight-addition.
             Both the inputs and outputs are allowed to contain zero and negative counts.
+        ```python
+        from pyochain.collections import PyoCounter
 
-        >>> from pyochain.collections import PyoCounter
-        >>> c = PyoCounter("which")
-        >>> c.update("witch")  # add elements from another iterable
-        >>> d = PyoCounter("watch")
-        >>> c.update(d)  # add elements from another counter
-        >>> c["h"]  # four 'h' in which, witch, and watch
-        4
+        c = PyoCounter("which")
+        c.update("witch")  # add elements from another iterable
+        d = PyoCounter("watch")
+        c.update(d)  # add elements from another counter
+        # four 'h' in which, witch, and watch
+        assert c["h"] == 4
+        ```
 
         """
     @overload
@@ -196,14 +221,18 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
 
         Source can be an iterable, a dictionary, or another PyoCounter instance.
 
-        >>> from pyochain.collections import PyoCounter
-        >>> c = PyoCounter("which")
-        >>> c.subtract("witch")  # subtract elements from another iterable
-        >>> c.subtract(PyoCounter("watch"))  # subtract elements from another counter
-        >>> c["h"]  # 2 in which, minus 1 in witch, minus 1 in watch
-        0
-        >>> c["w"]  # 1 in which, minus 1 in witch, minus 1 in watch
-        -1
+
+        ```python
+        from pyochain.collections import PyoCounter
+
+        c = PyoCounter("which")
+        c.subtract("witch")  # subtract elements from another iterable
+        c.subtract(PyoCounter("watch"))  # subtract elements from another counter
+        # 2 in which, minus 1 in witch, minus 1 in watch
+        assert c["h"] == 0
+        # 1 in which, minus 1 in witch, minus 1 in watch
+        assert c["w"] == -1
+        ```
 
         """
     def copy(self) -> Self:
@@ -217,9 +246,12 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
     def __add__[S](self, other: PyoCounter[S]) -> PyoCounter[T | S]:
         """Add counts from two counters.
 
-        >>> from pyochain.collections import PyoCounter
-        >>> PyoCounter("abbb") + PyoCounter("bcc")
-        PyoCounter({'b': 4, 'c': 2, 'a': 1})
+        ```python
+        from pyochain.collections import PyoCounter
+
+        added = PyoCounter("abbb") + PyoCounter("bcc")
+        assert added == PyoCounter({"b": 4, "c": 2, "a": 1})
+        ```
 
         Args:
             other (PyoCounter[S]): Another counter to add counts from.
@@ -231,9 +263,12 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
     def __sub__(self, other: PyoCounter[T]) -> PyoCounter[T]:
         """Subtract count, but keep only results with positive counts.
 
-        >>> from pyochain.collections import PyoCounter
-        >>> PyoCounter("abbbc") - PyoCounter("bccd")
-        PyoCounter({'b': 2, 'a': 1})
+        ```python
+        from pyochain.collections import PyoCounter
+
+        subtracted = PyoCounter("abbbc") - PyoCounter("bccd")
+        assert subtracted == PyoCounter({"b": 2, "a": 1})
+        ```
 
         Args:
             other (PyoCounter[T]): Another counter to subtract counts from.
@@ -245,9 +280,13 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
     def __or__[S](self, other: PyoCounter[T]) -> PyoCounter[T]:
         """Union is the maximum of value in either of the input counters.
 
-        >>> from pyochain.collections import PyoCounter
-        >>> PyoCounter("abbb") | PyoCounter("bcc")
-        PyoCounter({'b': 3, 'c': 2, 'a': 1})
+        ```python
+        from pyochain.collections import PyoCounter
+
+        union = PyoCounter("abbb") | PyoCounter("bcc")
+        assert union == PyoCounter({"b": 3, "c": 2, "a": 1})
+        ```
+
 
         Args:
             other (PyoCounter[T]): Another counter to take the union with.
@@ -258,9 +297,12 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
     def __and__(self, other: PyoCounter[T]) -> PyoCounter[T]:
         """Intersection is the minimum of corresponding counts.
 
-        >>> from pyochain.collections import PyoCounter
-        >>> PyoCounter("abbb") & PyoCounter("bcc")
-        PyoCounter({'b': 1})
+        ```python
+        from pyochain.collections import PyoCounter
+
+        union = PyoCounter("abbb") & PyoCounter("bcc")
+        assert union == PyoCounter({"b": 1})
+        ```
 
         Args:
             other (PyoCounter[T]): Another counter to take the intersection with.
@@ -288,11 +330,13 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
     def __iadd__(self, other: SupportsItems[T, int]) -> Self:
         """Inplace add from another counter, keeping only positive counts.
 
-        >>> from pyochain.collections import PyoCounter
-        >>> c = PyoCounter("abbb")
-        >>> c += PyoCounter("bcc")
-        >>> c
-        PyoCounter({'b': 4, 'c': 2, 'a': 1})
+        ```python
+        from pyochain.collections import PyoCounter
+
+        c = PyoCounter("abbb")
+        c += PyoCounter("bcc")
+        assert c == PyoCounter({"b": 4, "c": 2, "a": 1})
+        ```
 
         Args:
             other (SupportsItems[T, int]): Another counter or mapping to add counts from.
@@ -304,11 +348,13 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
     def __isub__(self, other: SupportsItems[T, int]) -> Self:
         """Inplace subtract counter, but keep only results with positive counts.
 
-        >>> from pyochain.collections import PyoCounter
-        >>> c = PyoCounter("abbbc")
-        >>> c -= PyoCounter("bccd")
-        >>> c
-        PyoCounter({'b': 2, 'a': 1})
+        ```python
+        from pyochain.collections import PyoCounter
+
+        c = PyoCounter("abbbc")
+        c -= PyoCounter("bccd")
+        assert c == PyoCounter({"b": 2, "a": 1})
+        ```
 
         Args:
             other (SupportsItems[T, int]): Another counter or mapping to subtract counts from.
@@ -320,11 +366,13 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
     def __ior__(self, other: SupportsItems[T, int]) -> Self:
         """Inplace union is the maximum of value from either counter.
 
-        >>> from pyochain.collections import PyoCounter
-        >>> c = PyoCounter("abbb")
-        >>> c |= PyoCounter("bcc")
-        >>> c
-        PyoCounter({'b': 3, 'c': 2, 'a': 1})
+        ```python
+        from pyochain.collections import PyoCounter
+
+        c = PyoCounter("abbb")
+        c |= PyoCounter("bcc")
+        assert c == PyoCounter({"b": 3, "c": 2, "a": 1})
+        ```
 
         Args:
             other (SupportsItems[T, int]): Another counter or mapping to take the union with.
@@ -337,11 +385,13 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
     def __iand__(self, other: Mapping[T, int]) -> Self:
         """Inplace intersection is the minimum of corresponding counts.
 
-        >>> from pyochain.collections import PyoCounter
-        >>> c = PyoCounter("abbb")
-        >>> c &= PyoCounter("bcc")
-        >>> c
-        PyoCounter({'b': 1})
+        ```python
+        from pyochain.collections import PyoCounter
+
+        c = PyoCounter("abbb")
+        c &= PyoCounter("bcc")
+        assert c == PyoCounter({"b": 1})
+        ```
 
         Args:
             other (Mapping[T, int]): Another counter or mapping to take the intersection with.
@@ -431,10 +481,12 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
 
         Example:
             ```python
-            >>> from pyochain.collections import PyoCounter
-            >>> PyoCounter(a=5, b=3, c=2, d=2) ^ PyoCounter(a=1, b=3, c=5, e=1)
-            PyoCounter({'a': 4, 'c': 3, 'd': 2, 'e': 1})
+            from pyochain.collections import PyoCounter
 
+            symmetric_diff = PyoCounter(a=5, b=3, c=2, d=2) ^ PyoCounter(
+                a=1, b=3, c=5, e=1
+            )
+            assert symmetric_diff == PyoCounter({"a": 4, "c": 3, "d": 2, "e": 1})
             ```
         """
 
@@ -449,11 +501,10 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
 
         Example:
             ```python
-            >>> from pyochain.collections import PyoCounter
-            >>> c = PyoCounter(a=5, b=3, c=2, d=2)
-            >>> c ^= PyoCounter(a=1, b=3, c=5, e=1)
-            >>> c
-            PyoCounter({'a': 4, 'c': 3, 'd': 2, 'e': 1})
+            from pyochain.collections import PyoCounter
 
+            c = PyoCounter(a=5, b=3, c=2, d=2)
+            c ^= PyoCounter(a=1, b=3, c=5, e=1)
+            assert c == PyoCounter({"a": 4, "c": 3, "d": 2, "e": 1})
             ```
         """
