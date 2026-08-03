@@ -11,6 +11,12 @@
     nav = [
         { "API Reference" = [
             { "ABCs" = [
+                { "Mixins" = [
+                    { "Checkable" = "reference/checkable.md" },
+                    { "Fluent" = "reference/fluent.md" },
+                    { "Pipe" = "reference/pipe.md" },
+                    { "Tap" = "reference/tap.md" },
+                ] },
                 { "PyoCollection" = "reference/pyocollection.md" },
                 { "PyoContainer" = "reference/pyocontainer.md" },
                 { "PyoIterable" = "reference/pyoiterable.md" },
@@ -48,34 +54,6 @@
                 { "Iterators" = [
                     { "Iter" = "reference/iter.md" },
                     { "Peekable" = "reference/peekable.md" },
-                    { "non-public" = [
-                        { "Drain" = "reference/drain.md" },
-                        { "ExtractIf" = "reference/extractif.md" },
-                        { "FilterMap" = "reference/filtermap.md" },
-                        { "FilterMapStar" = "reference/filtermapstar.md" },
-                        { "FilterStar" = "reference/filterstar.md" },
-                        { "FromFn" = "reference/fromfn.md" },
-                        { "GroupBy" = "reference/groupby.md" },
-                        { "InnerKeyLists" = "reference/innerkeylists.md" },
-                        { "InnerLists" = "reference/innerlists.md" },
-                        { "Intersperse" = "reference/intersperse.md" },
-                        { "MapJuxt" = "reference/mapjuxt.md" },
-                        { "MapWhile" = "reference/mapwhile.md" },
-                        { "MapWindow" = "reference/mapwindow.md" },
-                        { "Scan" = "reference/scan.md" },
-                        { "Successors" = "reference/successors.md" },
-                        { "UniqueIdentity" = "reference/uniqueidentity.md" },
-                        { "UniqueKey" = "reference/uniquekey.md" },
-                        { "Unzip" = "reference/unzip.md" },
-                        { "WithPosition" = "reference/withposition.md" },
-                        { "ZipLongest" = "reference/ziplongest.md" },
-                    ] },
-                ] },
-                { "Mixins" = [
-                    { "Checkable" = "reference/checkable.md" },
-                    { "Fluent" = "reference/fluent.md" },
-                    { "Pipe" = "reference/pipe.md" },
-                    { "Tap" = "reference/tap.md" },
                 ] },
                 { "Optional Values" = [
                     { "None" = "reference/null.md" },

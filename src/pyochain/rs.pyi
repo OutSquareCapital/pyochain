@@ -22,9 +22,17 @@ from pyochain.abc import PyoIterator
 from ._collections import Deque, Heap, HeapMax, HeapMin, PyoCounter, StableSet
 from ._dict import Dict
 from ._iterators import Iter, Peekable
-from ._option import NONE, Null, Option, OptionUnwrapError, Some, option
+from ._option import NONE, Null, Option, OptionType, OptionUnwrapError, Some, option
 from ._range import Range
-from ._result import Err, Ok, Result, ResultUnwrapError, then_if_some, then_if_true
+from ._result import (
+    Err,
+    Ok,
+    Result,
+    ResultType,
+    ResultUnwrapError,
+    then_if_some,
+    then_if_true,
+)
 from ._seq import Seq
 from ._set import Set, SetMut
 from ._sliceview import SliceView
@@ -115,11 +123,13 @@ __all__ = [
     "Null",
     "Ok",
     "Option",
+    "OptionType",
     "OptionUnwrapError",
     "Peekable",
     "PyoCounter",
     "Range",
     "Result",
+    "ResultType",
     "ResultUnwrapError",
     "Seq",
     "Set",
