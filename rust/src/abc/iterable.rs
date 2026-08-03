@@ -1,6 +1,6 @@
-use crate::mixins::Checkable;
-use crate::pyo3_ext::prelude::*;
+use crate::abc::Checkable;
 use crate::iterators;
+use crate::pyo3_ext::prelude::*;
 use crate::traits::PyoABC;
 use pyo3::prelude::*;
 #[pyclass(subclass, frozen, generic, extends=Checkable)]

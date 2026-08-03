@@ -7,9 +7,8 @@ use pyo3::{
 use tap::Pipe;
 
 use crate::{
-    abc::{PyoSet, PyoSized},
+    abc::{Checkable, PyoSet, PyoSized},
     iterators,
-    mixins::Checkable,
     sets::SetMut,
     traits::{IntoPyochain, PyoABC},
 };

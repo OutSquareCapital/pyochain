@@ -11,7 +11,6 @@ use crate::{
     abc, collections,
     dict::Dict,
     iterators::Iter,
-    mixins::Checkable,
     pyo3_ext::types::PyDeque,
     pyovec::PyoVec,
     range::Range,
@@ -142,13 +141,13 @@ pub trait PyoABC: PyTypeInfo + PyClass {
 
 impl PyoABC for abc::PyoIterable {
     fn build_init() -> PyClassInitializer<Self> {
-        PyClassInitializer::from(Checkable).add_subclass(Self)
+        PyClassInitializer::from(abc::Checkable).add_subclass(Self)
     }
 }
 
 impl PyoABC for abc::PyoSized {
     fn build_init() -> PyClassInitializer<Self> {
-        PyClassInitializer::from(Checkable).add_subclass(Self)
+        PyClassInitializer::from(abc::Checkable).add_subclass(Self)
     }
 }
 impl PyoABC for abc::PyoIterator {

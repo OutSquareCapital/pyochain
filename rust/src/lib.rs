@@ -5,7 +5,6 @@ mod display;
 mod errors;
 mod hasher;
 mod iterators;
-mod mixins;
 mod option;
 mod pyo3_ext;
 mod pyovec;
@@ -24,89 +23,6 @@ use pyo3::{
     prelude::*,
     types::{PyIterator, PyMapping, PySequence, PyType},
 };
-use tap::prelude::*;
-
-macro_rules! impl_py_pipe {
-    ($type:ty) => {
-        #[pymethods]
-        impl $type {
-            #[pyo3(name = "pipe", signature = (func, *args, **kwargs))]
-            fn py_pipe(
-                slf: &Bound<'_, Self>,
-                func: &Bound<'_, PyAny>,
-                args: &pyo3_ext::args::Args<'_>,
-                kwargs: Option<&pyo3_ext::args::Kwargs<'_>>,
-            ) -> PyResult<Py<PyAny>> {
-                (
-                    pyo3_ext::args::Concatenate::concat(func, &slf, args, kwargs)?.unbind().pipe(Ok)
-                )
-            }
-        }
-    };
-    ($first:ty, $($rest:ty),+ $(,)?) => {
-        impl_py_pipe!($first);
-        impl_py_pipe!($($rest),+);
-    };
-}
-macro_rules! impl_tap {
-    ($type:ty) => {
-    #[pymethods]
-            impl $type {
-    #[pyo3(signature = (f, *args, **kwargs))]
-    fn tap(
-        slf: &Bound<'_, Self>,
-        f: &Bound<'_, PyAny>,
-        args: &pyo3_ext::args::Args<'_>,
-        kwargs: Option<&pyo3_ext::args::Kwargs<'_>>,
-    ) -> PyResult<Py<PyAny>> {
-        pyo3_ext::args::Concatenate::concat(f, &slf, args, kwargs)?;
-        slf.to_owned().into_any().unbind().pipe(Ok)
-    }}};
-    ($first:ty, $($rest:ty),+ $(,)?) => {
-        impl_tap!($first);
-        impl_tap!($($rest),+);
-    };
-}
-
-macro_rules! impl_mapping_view {
-    ($type:ty) => {
-        #[pymethods]
-        impl $type {
-
-    fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
-        Ok(format!(
-            "{}({:?})",
-            slf.get_type().name()?,
-            slf.get()._mapping.bind(slf.py())
-        ))
-    }
-
-    fn __len__(slf: Bound<'_, Self>) -> PyResult<usize> {
-        slf.get()._mapping.bind(slf.py()).len()
-    }}
-    };
-    ($first:ty, $($rest:ty),+ $(,)?) => {
-        impl_mapping_view!($first);
-        impl_mapping_view!($($rest),+);
-    };
-}
-impl_tap!(mixins::Fluent, mixins::PyoTap, abc::PyoIterable);
-impl_py_pipe!(
-    option::PySome,
-    option::PyNull,
-    result::PyoOk,
-    result::PyoErr,
-    mixins::Fluent,
-    mixins::PyoPipe,
-    abc::PyoIterable,
-    abc::PyoIterator
-);
-impl_mapping_view!(
-    abc::PyoMappingView,
-    abc::PyoKeysView,
-    abc::PyoValuesView,
-    abc::PyoItemsView
-);
 
 #[pymodule]
 fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -154,10 +70,10 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<sliceview::SliceView>()?;
 
     let abc_mod = PyModule::new(py, "abc")?;
-    abc_mod.add_class::<mixins::Checkable>()?;
-    abc_mod.add_class::<mixins::Fluent>()?;
-    abc_mod.add_class::<mixins::PyoPipe>()?;
-    abc_mod.add_class::<mixins::PyoTap>()?;
+    abc_mod.add_class::<abc::Checkable>()?;
+    abc_mod.add_class::<abc::Fluent>()?;
+    abc_mod.add_class::<abc::PyoPipe>()?;
+    abc_mod.add_class::<abc::PyoTap>()?;
     abc_mod.add_class::<abc::PyoIterable>()?;
     abc_mod.add_class::<abc::PyoIterator>()?;
     abc_mod.add_class::<abc::PyoContainer>()?;

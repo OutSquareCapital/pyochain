@@ -1,11 +1,10 @@
 use crate::{
-    abc::PyoIterable,
-    mixins::Checkable,
+    abc::{Checkable, PyoIterable},
+    iterators,
     pyo3_ext::{
         args::{Args, Kwargs},
         pylibs,
     },
-    iterators,
     traits::PyoABC,
 };
 use pyo3::prelude::*;

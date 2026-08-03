@@ -13,7 +13,7 @@ use pyo3::{
 };
 use tap::Pipe;
 
-#[pyclass(generic, frozen, extends=abc::PyoMutableMapping)]
+#[pyclass(frozen, generic, extends=abc::PyoMutableMapping)]
 pub struct Dict(pub Py<PyDict>);
 #[pymethods]
 impl Dict {
