@@ -247,11 +247,12 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
             bool: `True` if no common elements exist, `False` otherwise.
 
         Example:
+            ```python
             from pyochain import Set
+
             assert Set((1, 2)).is_disjoint((3, 4))  # No overlap
             assert not Set((1, 2)).is_disjoint((2, 3))  # Share element 2
             assert not Set((1, 2)).is_disjoint((1, 2))  # Identical sets
-
             ```
         """
 
