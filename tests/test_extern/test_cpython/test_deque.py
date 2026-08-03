@@ -217,7 +217,6 @@ def test_contains() -> None:
     # Test detection of comparison exceptions
     d = Deque(range(n))
     # pyrefly: ignore [unsupported-operation]
-    # pyrefly: ignore [bad-argument-type]
     d[n // 2] = BadCmp()  # pyright: ignore[reportArgumentType]
     with pytest.raises(RuntimeError):
         _ = n in d
@@ -346,7 +345,6 @@ def test_index() -> None:
         # Test detection of comparison exceptions
         d = Deque(range(n))
         # pyrefly: ignore [unsupported-operation]
-        # pyrefly: ignore [bad-argument-type]
         d[n // 2] = BadCmp()  # pyright: ignore[reportArgumentType]
         with pytest.raises(RuntimeError):
             _ = d.index(n)
@@ -572,7 +570,7 @@ def test_rotate() -> None:
         # pyrefly: ignore [bad-argument-type]
         _ = d.rotate("x")  # Wrong arg type  # pyright: ignore[reportArgumentType]
     with pytest.raises(TypeError):
-        # pyrefly: ignore [bad-argument-count]
+        # pyrefly: ignore [bad-argument-count, unused-call-result]
         d.rotate(1, 10)  # Too many args  # pyright: ignore[reportCallIssue]
 
     d = Deque[int]()
@@ -658,7 +656,7 @@ def test_repr() -> None:
 
 def test_init() -> None:
     with pytest.raises(TypeError):
-        # pyrefly: ignore [bad-argument-count, no-matching-overload]
+        # pyrefly: ignore [no-matching-overload]
         _ = Deque[int | str]("abc", 2, 3)  # pyright: ignore[reportCallIssue]
     with pytest.raises(TypeError):
         # pyrefly: ignore [bad-argument-type]
@@ -826,6 +824,7 @@ def test_container_iterator() -> None:
         obj = C()
         ref = weakref.ref(obj)
         container = Deque([obj, 1]) if i == 0 else reversed(Deque([obj, 1]))
+        # pyrefly: ignore [missing-attribute]
         obj.x = iter(container)  # pyright: ignore[reportAttributeAccessIssue]
         del obj, container
         _ = gc.collect()

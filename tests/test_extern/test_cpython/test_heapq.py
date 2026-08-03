@@ -129,6 +129,7 @@ def test_nbest() -> None:
             _ = heap.replace(item)
     assert list(heapiter(heap)) == sorted(data)[-3:]
     with pytest.raises(IndexError):
+        # pyrefly: ignore [bad-argument-type]
         _ = HeapMin[int]([]).replace(None)  # pyright: ignore[reportArgumentType]
 
 
@@ -516,7 +517,7 @@ class RaiseImmediateStop:
 
 def multiple_iterators(seqn: Heap[int]) -> Iterator[int]:
     """Test multiple tiers of iterators."""
-    # pyrefly: ignore [bad-argument-type]
+    # pyrefly: ignore [bad-argument-type, implicit-any-lambda]
     return chain(map(lambda x: x, reg_generator(ImplGenerator(ImplGetItem(seqn)))))  # pyright: ignore[ reportArgumentType]
 
 
@@ -543,7 +544,7 @@ CLS_AND_POP = (HeapMin[int], HeapMin[int].pop, HeapMax[int], HeapMax[int].pop)
 @pytest.mark.parametrize("f", CLS_AND_POP)
 def test_non_sequence(f: Callable[[Heap[int], object], int]) -> None:
     with pytest.raises((TypeError, AttributeError)):
-        # pyrefly: ignore [bad-argument-count]
+        # pyrefly: ignore [bad-argument-count, bad-argument-type]
         _ = f(10)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
 
 
@@ -640,6 +641,7 @@ def test_arg_parsing(f: HeapMethod[..., int, object]) -> None:
     "g", (ImplGetItem, ImplIterator, ImplGenerator, multiple_iterators, reg_generator)
 )
 def test_iterable_args(
+    # pyrefly: ignore [invalid-annotation]
     f: HeapMethod[[object], ..., object],
     s: Sequence[float] | str | range,
     g: Callable[[Heap[float | str]], object],
@@ -654,6 +656,7 @@ def test_iterable_args(
 @pytest.mark.parametrize("f", (HeapMin[float].n_largest, HeapMin[float].n_smallest))
 @pytest.mark.parametrize("s", ("123", "", range(10), (1, 1.2), range(200, 220, 5)))
 def test_iterable_args_exceptions(
+    # pyrefly: ignore [invalid-annotation]
     f: HeapMethod[[Any], ..., object],
     s: Sequence[float] | str | range,
 ) -> None:

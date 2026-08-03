@@ -15,6 +15,7 @@ def test_getitem_error() -> None:
     t = Seq(())
     msg = "tuple indices must be integers or slices"
     with pytest.raises(TypeError, match=msg):
+        # pyrefly: ignore [bad-index]
         t["a"]  # pyright: ignore[reportCallIssue, reportArgumentType]
 
 
@@ -41,6 +42,7 @@ def test_constructors() -> None:
 
 def test_keyword_args() -> None:
     with pytest.raises(TypeError, match="keyword argument"):
+        # pyrefly: ignore [missing-argument]
         _ = Seq(sequence=())  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
 
 

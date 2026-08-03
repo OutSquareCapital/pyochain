@@ -324,6 +324,7 @@ def test_contains(type2test: TestedSeq[int]) -> None:
         assert i not in u
 
     with pytest.raises(TypeError):
+        # pyrefly: ignore [bad-argument-count]
         _ = u.__contains__()  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
 
 
@@ -479,6 +480,7 @@ def test_subscript(type2test: VecOrSeq[int]) -> None:
     with pytest.raises(ValueError):
         _ = a.__getitem__(slice(0, 10, 0))
     with pytest.raises(TypeError):
+        # pyrefly: ignore [no-matching-overload]
         _ = a.__getitem__("x")  # pyright: ignore[reportCallIssue, reportArgumentType, reportUnknownVariableType]
 
 
@@ -522,6 +524,7 @@ def test_count(type2test: TestedSeq[object]) -> None:
     assert type2test([ALWAYS_EQ, ALWAYS_EQ]).count(NEVER_EQ) == 2
     assert type2test([NEVER_EQ, NEVER_EQ]).count(ALWAYS_EQ) == 0
     with pytest.raises(TypeError):
+        # pyrefly: ignore [bad-argument-count]
         _ = a.count()  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
 
     class BadExcError(Exception):
@@ -563,6 +566,7 @@ def test_index(type2test: TestedSeq[object]) -> None:
         _ = type2test([NEVER_EQ, NEVER_EQ]).index(ALWAYS_EQ)
 
     with pytest.raises(TypeError):
+        # pyrefly: ignore [bad-argument-count]
         _ = u.index()  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
 
     class BadExcError(Exception):

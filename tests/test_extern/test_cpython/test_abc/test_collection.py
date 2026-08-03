@@ -181,6 +181,7 @@ def test_none_blocking() -> None:
             return False
 
     class NonCol(ColImpl):
+        # pyrefly: ignore [bad-override-mutable-attribute, implicit-any-attribute]
         __contains__ = None  # pyright: ignore[reportUnannotatedClassAttribute, reportAssignmentType]
 
     assert not issubclass(NonCol, PyoCollection)

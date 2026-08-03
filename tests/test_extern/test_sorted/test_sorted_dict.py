@@ -240,6 +240,7 @@ def test_values() -> None:
 
 
 def test_notgiven() -> None:
+    # pyrefly: ignore [missing-attribute]
     assert repr(SortedDict._SortedDict__not_given) == "<not-given>"  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
 
 
@@ -331,6 +332,7 @@ class Identity:
 
 def test_repr_recursion() -> None:
     temp = SortedKeyDict({"alice": 3, "bob": 1, "carol": 2, "dave": 4}, key=Identity())
+    # pyrefly: ignore [unsupported-operation]
     temp["bob"] = temp  # pyright: ignore[reportArgumentType]
     assert (
         repr(temp)

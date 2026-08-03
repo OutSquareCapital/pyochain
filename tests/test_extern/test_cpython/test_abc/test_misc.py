@@ -32,6 +32,7 @@ def test_direct_subclassing(cls: type) -> None:
 @pytest.mark.parametrize("cls", REGISTERABLES)
 def test_registration(cls: type) -> None:
     class C:
+        # pyrefly: ignore [implicit-any-attribute]
         __hash__ = None  # Make sure it isn't hashable by default  # pyright: ignore[reportAssignmentType, reportUnannotatedClassAttribute]
 
     assert not issubclass(C, cls)
@@ -50,6 +51,6 @@ def test_registration(cls: type) -> None:
 )
 def test_illegal_patma_flags() -> None:
     with pytest.raises(TypeError):
-
+        # pyrefly: ignore [implicit-abstract-class]
         class Both(PyoCollection[object]):  # pyright: ignore[reportImplicitAbstractClass, reportUnusedClass]
             __abc_tpflags__ = PyoSequence.__flags__ | PyoMapping.__flags__  # pyright: ignore[reportUnannotatedClassAttribute]

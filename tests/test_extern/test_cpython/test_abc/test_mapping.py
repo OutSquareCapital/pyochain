@@ -18,6 +18,7 @@ OKS = Seq((Dict, SortedDict))
 
 @pytest.mark.parametrize("x", OKS, ids=OKS.iter().map(lambda x: x.__name__))
 def test_mapping_ok(x: type[PyoMapping[object, object]]) -> None:
+    # pyrefly: ignore [bad-argument-count]
     assert isinstance(x(()), PyoMapping)  # pyright: ignore[reportCallIssue]
     assert issubclass(x, PyoMapping)
 

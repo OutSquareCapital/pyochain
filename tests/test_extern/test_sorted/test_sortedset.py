@@ -530,6 +530,7 @@ def test_repr_recursion() -> None:
             return hash(tuple(self))
 
     temp = HashableSortedSet([HashableSortedSet([1]), HashableSortedSet([1, 2])])
+    # pyrefly: ignore [bad-argument-type]
     temp.add(temp)  # pyright: ignore[reportArgumentType]
     assert (
         repr(temp)

@@ -130,6 +130,7 @@ def test_reversed() -> None:
     assert Vec(reversed(Vec[int](()))) == Vec[int](())
     # Bug 3689: make sure list-reversed-iterator doesn't have __len__
     with pytest.raises(TypeError):
+        # pyrefly: ignore [bad-argument-type]
         _ = len(reversed([1, 2, 3]))  # pyright: ignore[reportArgumentType]
 
 
@@ -174,6 +175,7 @@ def test_setitem() -> None:
 
     msg = "list indices must be integers or slices"
     with pytest.raises(TypeError, match=msg):
+        # pyrefly: ignore [unsupported-operation]
         a["a"] = "python"  # pyright: ignore[reportCallIssue, reportArgumentType]
 
 
@@ -201,6 +203,7 @@ def test_delitem() -> None:
         a.__delitem__(0)
 
     with pytest.raises(TypeError):
+        # pyrefly: ignore [missing-argument]
         a.__delitem__()  # pyright: ignore[reportCallIssue]
 
 
@@ -226,6 +229,7 @@ def test_setslice() -> None:
             a2[i:j] = a[i:j]
             assert a2 == a
 
+    # pyrefly: ignore [unbound-name]
     aa2: list[int] = a2[:]  # pyright: ignore[reportPossiblyUnboundVariable, reportUnknownVariableType]
     aa2[:0] = [-2, -1]
     assert aa2 == [-2, -1, 0, 1]
@@ -251,6 +255,7 @@ def test_setslice() -> None:
         a.__setitem__(slice(0, 1, 5))  # pyright: ignore[reportCallIssue]
 
     with pytest.raises(TypeError):
+        # pyrefly: ignore [no-matching-overload]
         a.__setitem__()  # pyright: ignore[reportCallIssue]
 
 
@@ -313,6 +318,7 @@ def test_append() -> None:
     assert a == Vec([0, 1, 2])
 
     with pytest.raises(TypeError):
+        # pyrefly: ignore [missing-argument]
         a.append()  # pyright: ignore[reportCallIssue]
 
 
@@ -369,6 +375,7 @@ def test_insert() -> None:
     b.insert(200, "right")
     assert b == Vec(["left", -2, -1, 0, 0, "foo", 1, 2, "right"])
     with pytest.raises(TypeError):
+        # pyrefly: ignore [missing-argument]
         a.insert()  # pyright: ignore[reportCallIssue]
 
 
@@ -385,7 +392,8 @@ def test_pop() -> None:
     with pytest.raises(IndexError):
         _ = a.pop()
     with pytest.raises(TypeError):
-        a.pop(42, 42)  # pyright: ignore[reportCallIssue]
+        # pyrefly: ignore [bad-argument-count]
+        _ = a.pop(42, 42)  # pyright: ignore[reportCallIssue]
     a = Vec([0, 10, 20, 30, 40])
 
 
@@ -492,6 +500,7 @@ def test_reverse() -> None:
     assert u == u2
 
     with pytest.raises(TypeError):
+        # pyrefly: ignore [bad-argument-count]
         u.reverse(42)  # pyright: ignore[reportCallIssue]
 
 
@@ -538,7 +547,8 @@ def test_copy() -> None:
     assert v[3] is u[3]
 
     with pytest.raises(TypeError):
-        u.copy(None)  # pyright: ignore[reportCallIssue]
+        # pyrefly: ignore [bad-argument-count]
+        _ = u.copy(None)  # pyright: ignore[reportCallIssue]
 
 
 def test_sort() -> None:
@@ -551,7 +561,8 @@ def test_sort() -> None:
     assert u == Vec([-2, -1, 0, 1, 2])
 
     with pytest.raises(TypeError):
-        u.sort(42, 42)  # pyright: ignore[reportCallIssue]
+        # pyrefly: ignore [bad-argument-count]
+        _ = u.sort(42, 42)  # pyright: ignore[reportCallIssue]
 
     def revcmp(a: int, b: int) -> int:
         if a == b:
@@ -578,7 +589,8 @@ def test_sort() -> None:
     _ = z.sort_by(key=cmp_to_key(my_comp))
 
     with pytest.raises(TypeError):
-        z.sort(2)  # pyright: ignore[reportCallIssue]
+        # pyrefly: ignore [bad-argument-count]
+        _ = z.sort(2)  # pyright: ignore[reportCallIssue]
 
     def self_modifying_comp(x: int, y: int) -> int:
         z.append(1)
@@ -593,7 +605,8 @@ def test_sort() -> None:
         _ = z.sort_by(key=cmp_to_key(self_modifying_comp))
 
     with pytest.raises(TypeError):
-        z.sort(42, 42, 42, 42)  # pyright: ignore[reportCallIssue]
+        # pyrefly: ignore [bad-argument-count]
+        _ = z.sort(42, 42, 42, 42)  # pyright: ignore[reportCallIssue]
 
 
 def test_slice() -> None:
@@ -613,6 +626,7 @@ def test_iadd() -> None:
     assert u == Vec("spameggs")
 
     with pytest.raises(TypeError):
+        # pyrefly: ignore [bad-argument-type]
         _ = u.__iadd__(None)  # pyright: ignore[reportArgumentType]
 
 
@@ -675,6 +689,7 @@ def test_constructor_exception_handling() -> None:
             raise KeyboardInterrupt
 
     with pytest.raises(KeyboardInterrupt):
+        # pyrefly: ignore [bad-argument-type]
         _ = Vec(F())  # pyright: ignore[reportArgumentType, reportUnknownVariableType]
 
 
@@ -733,6 +748,7 @@ def test_basic() -> None:
 
 def test_keyword_args() -> None:
     with pytest.raises(TypeError, match="keyword argument"):
+        # pyrefly: ignore [missing-argument, unexpected-keyword]
         _ = Vec(sequence=[])  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
 
 

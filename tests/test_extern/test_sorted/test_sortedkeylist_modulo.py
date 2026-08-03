@@ -794,6 +794,7 @@ def test_repr_recursion() -> None:
     this: SortedKeyList[list[int], list[int]] = SortedKeyList(
         [[1], [2], [3], [4]], key=lambda val: val
     )
+    # pyrefly: ignore [bad-argument-type]
     this.inner.lists[-1].append(this)  # pyright: ignore[reportArgumentType]
     assert repr(this).startswith(
         "SortedKeyList([[1], [2], [3], [4], ...], key=<function "
