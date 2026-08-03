@@ -1262,11 +1262,11 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Range
-            >>> Range(1, 5).iter().batched(2).for_each_star(lambda x, y: print(x + y))
-            3
-            7
+            from pyochain import Range, Vec
 
+            vec = Vec(())
+            Range(1, 5).iter().batched(2).for_each_star(lambda x, y: vec.append(x + y))
+            assert vec == Vec((3, 7))
             ```
         """
     def try_for_each[E](self, f: Callable[[T], Result[Any, E]]) -> Result[tuple[()], E]:
