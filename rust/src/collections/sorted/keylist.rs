@@ -10,7 +10,7 @@ use pyo3::{prelude::*, types::PyList};
 use std::ops::Index;
 use std::sync::{Mutex, atomic::AtomicUsize};
 use tap::Pipe;
-#[pyclass(frozen, generic)]
+#[pyclass(module = "pyochain.collections", frozen, generic)]
 pub struct InnerKeyLists {
     #[pyo3(get)]
     pub(super) key: Py<PyAny>,
