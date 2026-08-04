@@ -195,7 +195,11 @@ impl InnerSorted for InnerLists {
             }
 
             let prev = (pos - 1) as usize;
-            lists[prev].extend(lists[pos].iter().map(|x| x.clone_ref(py)));
+            let mut removed = lists[pos]
+                .iter()
+                .map(|x| x.clone_ref(py))
+                .collect::<Vec<_>>();
+            lists[prev].append(removed.as_mut());
             maxes[prev] = lists[prev].last().unwrap().clone_ref(py);
 
             lists.remove(pos);

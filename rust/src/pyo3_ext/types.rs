@@ -245,7 +245,9 @@ macro_rules! impl_sequence_ext_methods {
         )*
     };
 }
+
 impl_sequence_ext_methods!(PySet, PyFrozenSet);
+#[allow(unused)]
 pub trait PyListExtMethods<'py> {
     fn clear(&self) -> ();
     fn extend(&self, iterable: Bound<'_, PyAny>) -> PyResult<()>;
