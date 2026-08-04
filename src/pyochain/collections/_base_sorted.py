@@ -49,16 +49,17 @@ class SortedCollection[T](ABC):
             int: insertion index of value in `SortedCollection`.
 
         Examples:
-            >>> from pyochain.collections import SortedList, SortedKeyList
-            >>> sl = SortedList([10, 11, 12, 13, 14])
-            >>> sl.bisect_left(12)
-            2
+        ```python
+        from pyochain.collections import SortedList, SortedKeyList
+        from operator import neg
 
-            >>> from operator import neg
-            >>> skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
-            >>> skl.bisect_left(1)
-            4
 
+        sl = SortedList([10, 11, 12, 13, 14])
+        assert sl.bisect_left(12) == 2
+
+        skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
+        assert skl.bisect_left(1) == 4
+        ```
         """
 
     @abstractmethod
@@ -78,16 +79,17 @@ class SortedCollection[T](ABC):
         Returns:
             int: insertion index of value in `SortedCollection`.
 
-        >>> from pyochain.collections import SortedList, SortedKeyList
-        >>> sl = SortedList([10, 11, 12, 13, 14])
-        >>> sl.bisect_right(12)
-        3
+        Examples:
+        ```python
+        from pyochain.collections import SortedList, SortedKeyList
+        from operator import neg
 
-        >>> from operator import neg
-        >>> skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
-        >>> skl.bisect_right(1)
-        5
+        sl = SortedList([10, 11, 12, 13, 14])
+        assert sl.bisect_right(12) == 3
 
+        skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
+        assert skl.bisect_right(1) == 5
+        ```
         """
 
     @abstractmethod
@@ -104,23 +106,6 @@ class SortedCollection[T](ABC):
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> from pyochain.collections import SortedList, SortedKeyList
-        >>> sl = SortedList("abcde")
-        >>> sl.index("d")
-        3
-        >>> sl.index("z")
-        Traceback (most recent call last):
-          ...
-        ValueError: 'z' is not in list
-        >>> from operator import neg
-        >>> skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
-        >>> skl.index(2)
-        3
-        >>> skl.index(0)
-        Traceback (most recent call last):
-          ...
-        ValueError: 0 is not in list
-
         Args:
             value (T): value in sorted list
             start (int | None): start index (default None, start of sorted list)
@@ -130,7 +115,25 @@ class SortedCollection[T](ABC):
             ValueError: if value is not present
         Returns:
             int: index of value
+        Examples:
+        ```python
+        from pyochain.collections import SortedList, SortedKeyList
+        from operator import neg
 
+        sl = SortedList("abcde")
+        assert sl.index("d") == 3
+        try:
+            sl.index("z")
+        except ValueError as e:
+            assert str(e) == "'z' is not in list"
+
+        skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
+        assert skl.index(2) == 3
+        try:
+            skl.index(0)
+        except ValueError as e:
+            assert str(e) == "0 is not in list"
+        ```
         """
 
     @abstractmethod
@@ -156,17 +159,6 @@ class SortedCollection[T](ABC):
         reverse order; `reverse` defaults to `False`.
 
 
-        >>> from pyochain.collections import SortedList, SortedKeyList
-        >>> sl = SortedList("abcdefghij")
-        >>> it = sl.irange("c", "f")
-        >>> list(it)
-        ['c', 'd', 'e', 'f']
-        >>> from operator import neg
-        >>> skl = SortedKeyList([11, 12, 13, 14, 15], key=neg)
-        >>> it = skl.irange(14.5, 11.5)
-        >>> list(it)
-        [14, 13, 12]
-
         Args:
             minimum (T | None): minimum value to start iterating
             maximum (T | None): maximum value to stop iterating
@@ -175,7 +167,19 @@ class SortedCollection[T](ABC):
 
         Returns:
             PyoIterator[T]: an iterator of values between `minimum` and `maximum`
+        Examples:
+        ```python
+        from pyochain.collections import SortedList, SortedKeyList
+        from operator import neg
 
+        sl = SortedList("abcdefghij")
+        it = sl.irange("c", "f")
+        assert list(it) == ["c", "d", "e", "f"]
+
+        skl = SortedKeyList([11, 12, 13, 14, 15], key=neg)
+        it = skl.irange(14.5, 11.5)
+        assert list(it) == [14, 13, 12]
+        ```
         """
 
     @abstractmethod
@@ -197,17 +201,21 @@ class SortedCollection[T](ABC):
         When `reverse` is `True` the values are yielded from the iterator in
         reverse order; `reverse` defaults to `False`.
 
-        >>> from pyochain.collections import SortedList
-        >>> sl = SortedList("abcdefghij")
-        >>> it = sl.islice(2, 6)
-        >>> list(it)
-        ['c', 'd', 'e', 'f']
+        Args:
+            start (int | None): start index (inclusive)
+            stop (int | None): stop index (exclusive)
+            reverse (bool): yield values in reverse order
+        Returns:
+            PyoIterator[T]: iterator
 
-        :param int start: start index (inclusive)
-        :param int stop: stop index (exclusive)
-        :param bool reverse: yield values in reverse order
-        :return: iterator
+        Examples:
+        ```python
+        from pyochain.collections import SortedList
 
+        sl = SortedList("abcdefghij")
+        it = sl.islice(2, 6)
+        assert list(it) == ["c", "d", "e", "f"]
+        ```
         """
 
     @abstractmethod
@@ -226,7 +234,8 @@ class SortedCollection[T](ABC):
 
         Runtime complexity: `O(n)`
 
-        :param int load: load-factor for sorted list sublists
+        Args:
+            load (int): load-factor for sorted list sublists
 
         """
 
@@ -246,24 +255,26 @@ class BaseSortedListSet[T](SortedCollection[T], ABC):
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> from pyochain.collections import SortedList, SortedKeyList
-        >>> sl = SortedList()
-        >>> sl.add(3)
-        >>> sl.add(1)
-        >>> sl.add(2)
-        >>> sl
-        SortedList([1, 2, 3])
-        >>> from operator import neg
-        >>> skl = SortedKeyList(key=neg)
-        >>> skl.add(3)
-        >>> skl.add(1)
-        >>> skl.add(2)
-        >>> skl
-        SortedKeyList([3, 2, 1], key=<built-in function neg>)
-
         Args:
             value (T): value to add to the `SortedCollection`
 
+        Examples:
+        ```python
+        from pyochain.collections import SortedList, SortedKeyList
+        from operator import neg
+
+        sl = SortedList()
+        sl.add(3)
+        sl.add(1)
+        sl.add(2)
+        assert sl == [1, 2, 3]
+
+        skl = SortedKeyList(key=neg)
+        skl.add(3)
+        skl.add(1)
+        skl.add(2)
+        assert skl == [3, 2, 1]
+        ```
         """
 
     @abstractmethod
@@ -274,22 +285,24 @@ class BaseSortedListSet[T](SortedCollection[T], ABC):
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> from pyochain.collections import SortedList, SortedKeyList
-        >>> sl = SortedList([1, 2, 3, 4, 5])
-        >>> sl.discard(5)
-        >>> sl.discard(0)
-        >>> sl == [1, 2, 3, 4]
-        True
+        Args:
+            value (T): `value` to discard from sorted-key list
 
-        >>> from operator import neg
-        >>> skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
-        >>> skl.discard(1)
-        >>> skl.discard(0)
-        >>> skl == [5, 4, 3, 2]
-        True
+        Examples:
+        ```python
+        from pyochain.collections import SortedList, SortedKeyList
+        from operator import neg
 
-        :param value: `value` to discard from sorted-key list
+        sl = SortedList([1, 2, 3, 4, 5])
+        sl.discard(5)
+        sl.discard(0)
+        assert sl == [1, 2, 3, 4]
 
+        skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
+        skl.discard(1)
+        skl.discard(0)
+        assert skl == [5, 4, 3, 2]
+        ```
         """
 
     @abstractmethod
@@ -302,32 +315,32 @@ class BaseSortedListSet[T](SortedCollection[T], ABC):
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> from pyochain.collections import SortedList, SortedKeyList
-        >>> sl = SortedList([1, 2, 3, 4, 5])
-        >>> sl.remove(5)
-        >>> sl == [1, 2, 3, 4]
-        True
-        >>> sl.remove(0)
-        Traceback (most recent call last):
-          ...
-        ValueError: 0 not in list
-        >>> from operator import neg
-        >>> skl = SortedKeyList([1, 2, 3, 4, 5], key=neg)
-        >>> skl.remove(5)
-        >>> skl == [4, 3, 2, 1]
-        True
-        >>> skl.remove(0)
-        Traceback (most recent call last):
-          ...
-        ValueError: 0 not in list
-
         Args:
             value (T): `value` to remove from the `SortedCollection`
 
         Raises:
             ValueError: if `value` is not in the `SortedCollection`
+        Examples:
+        ```python
+        from pyochain.collections import SortedList, SortedKeyList
+        from operator import neg
 
+        sl = SortedList([1, 2, 3, 4, 5])
+        sl.remove(5)
+        assert sl == [1, 2, 3, 4]
+        try:
+            sl.remove(0)
+        except ValueError as e:
+            assert str(e) == "0 not in list"
+        skl = SortedKeyList([1, 2, 3, 4, 5], key=neg)
+        skl.remove(5)
+        assert skl == [4, 3, 2, 1]
 
+        try:
+            skl.remove(0)
+        except ValueError as e:
+            assert str(e) == "0 not in list"
+        ```
         """
 
     @abstractmethod
@@ -336,7 +349,8 @@ class BaseSortedListSet[T](SortedCollection[T], ABC):
 
         Runtime complexity: `O(n)`
 
-        :return: new sorted-key list
+        Returns:
+            (Self): new sorted-key list
 
         """
 
@@ -363,19 +377,23 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
 
         Runtime complexity: `O(log(n))`
 
-        >>> from pyochain.collections import SortedList, SortedKeyList
-        >>> sl = SortedList([1, 2, 3, 4, 5])
-        >>> 3 in sl
-        True
-        >>> from operator import neg
-        >>> skl = SortedKeyList([1, 2, 3, 4, 5], key=neg)
-        >>> 3 in skl
-        True
-
         Args:
             value (object): search for value in sorted list
         Returns:
             bool: `True` if `value` in sorted list.
+
+        Examples:
+        ```python
+        from pyochain.collections import SortedList, SortedKeyList
+        from operator import neg
+
+        sl = SortedList([1, 2, 3, 4, 5])
+        assert 3 in sl
+
+        skl = SortedKeyList([1, 2, 3, 4, 5], key=neg)
+        assert 3 in skl
+        ```
+
         """  # ruff: ignore[docstring-extraneous-parameter]
         return self._inner.contains(value)
 
@@ -395,8 +413,10 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
 
         Runtime complexity: `O(n)`
 
-        :param other: `other` sequence
-        :return: true if sorted list is equal to `other`
+        Args:
+            other (object): `other` sequence
+        Returns:
+            (NotImplementedType | bool): true if sorted list is equal to `other`
 
         """
         return self._inner.eq(other)
@@ -411,8 +431,10 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
 
         Runtime complexity: `O(n)`
 
-        :param other: `other` sequence
-        :return: true if sorted list is not equal to `other`
+        Args:
+            other (object): `other` sequence
+        Returns:
+            (NotImplementedType | bool): true if sorted list is not equal to `other`
 
         """
         return self._inner.ne(other)
@@ -426,8 +448,10 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
 
         Runtime complexity: `O(n)`
 
-        :param other: `other` sequence
-        :return: true if sorted list is less than `other`
+        Args:
+            other (object): `other` sequence
+        Returns:
+            (NotImplementedType | bool): true if sorted list is less than `other`
 
         """
         return self._inner.lt(other)
@@ -441,8 +465,10 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
 
         Runtime complexity: `O(n)`
 
-        :param other: `other` sequence
-        :return: true if sorted list is greater than `other`
+        Args:
+            other (object): `other` sequence
+        Returns:
+            (NotImplementedType | bool): true if sorted list is greater than `other`
 
         """
         return self._inner.gt(other)
@@ -456,8 +482,10 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
 
         Runtime complexity: `O(n)`
 
-        :param other: `other` sequence
-        :return: true if sorted list is less than or equal to `other`
+        Args:
+            other (object): `other` sequence
+        Returns:
+            (NotImplementedType | bool): true if sorted list is less than or equal to `other`
 
         """
         return self._inner.le(other)
@@ -471,8 +499,10 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
 
         Runtime complexity: `O(n)`
 
-        :param other: `other` sequence
-        :return: true if sorted list is greater than or equal to `other`
+        Args:
+            other (object): `other` sequence
+        Returns:
+            (NotImplementedType | bool): true if sorted list is greater than or equal to `other`
 
         """
         return self._inner.ge(other)
@@ -486,18 +516,22 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> from pyochain.collections import SortedList
-        >>> sl = SortedList("abcde")
-        >>> del sl[2]
-        >>> sl
-        SortedList(['a', 'b', 'd', 'e'])
-        >>> del sl[:2]
-        >>> sl
-        SortedList(['d', 'e'])
 
-        :param index: integer or slice for indexing
-        :raises IndexError: if index out of range
+        Args:
+            index: integer or slice for indexing
 
+        Examples:
+        ```python
+        from pyochain.collections import SortedList
+
+        sl = SortedList("abcde")
+
+        del sl[2]
+        assert sl == ["a", "b", "d", "e"]
+
+        del sl[:2]
+        assert sl == ["d", "e"]
+        ```
         """
         return self._inner.delitem(index)
 
@@ -514,20 +548,23 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> from pyochain.collections import SortedList
-        >>> sl = SortedList("abcde")
-        >>> sl[1]
-        'b'
-        >>> sl[-1]
-        'e'
-        >>> sl[2:5]
-        Vec('c', 'd', 'e')
-
         Args:
             index (int | slice): integer or slice for indexing
 
         Returns:
             T | Vec[T]: value or list of values
+
+        Examples:
+        ```python
+        from pyochain.collections import SortedList
+        from pyochain import Vec
+
+        sl = SortedList("abcde")
+
+        assert sl[1] == "b"
+        assert sl[-1] == "e"
+        assert sl[2:5] == Vec(("c", "d", "e"))
+        ```
         """
         return self._inner.getitem(index)
 
@@ -548,19 +585,22 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> from pyochain.collections import SortedList, SortedKeyList
-        >>> sl = SortedList([1, 2, 2, 3, 3, 3, 4, 4, 4, 4])
-        >>> sl.count(3)
-        3
-        >>> from operator import neg
-        >>> skl = SortedKeyList([4, 4, 4, 4, 3, 3, 3, 2, 2, 1], key=neg)
-        >>> skl.count(2)
-        2
-
         Args:
             value (T): value to count in sorted list
         Returns:
             int: count of occurrences of `value` in sorted list
+
+        Examples:
+        ```python
+        from pyochain.collections import SortedList, SortedKeyList
+        from operator import neg
+
+        sl = SortedList([1, 2, 2, 3, 3, 3, 4, 4, 4, 4])
+        assert sl.count(3) == 3
+
+        skl = SortedKeyList([4, 4, 4, 4, 3, 3, 3, 2, 2, 1], key=neg)
+        assert skl.count(2) == 2
+        ```
         """  # ruff: ignore[docstring-extraneous-parameter]
         return self._inner.count(value)
 
@@ -583,20 +623,22 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> from pyochain.collections import SortedList, SortedKeyList
-        >>> sl = SortedList("abcde")
-        >>> sl.pop()
-        'e'
-        >>> sl.pop(2)
-        'c'
-        >>> sl
-        SortedList(['a', 'b', 'd'])
 
         Args:
             index (int): index of value (default -1)
 
         Returns:
             T: value at `index` in sorted list
+
+        Examples:
+        ```python
+        from pyochain.collections import SortedList, SortedKeyList
+
+        sl = SortedList("abcde")
+        assert sl.pop() == "e"
+        assert sl.pop(2) == "c"
+        assert sl == SortedList(["a", "b", "d"])
+        ```
         """
         return self._inner.pop(index)
 
@@ -621,19 +663,22 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
 
         Runtime complexity: `O(k*log(n))` -- approximate.
 
-        >>> from pyochain.collections import SortedList, SortedKeyList
-        >>> sl = SortedList()
-        >>> sl.update([3, 1, 2])
-        >>> sl
-        SortedList([1, 2, 3])
+        Args:
+            iterable (Iterable[T]): iterable of values to add
 
-        >>> from operator import neg
-        >>> skl = SortedKeyList(key=neg)
-        >>> skl.update([3, 1, 2])
-        >>> skl
-        SortedKeyList([3, 2, 1], key=<built-in function neg>)
+        Examples:
+        ```python
+        from pyochain.collections import SortedList, SortedKeyList
 
-        :param iterable: iterable of values to add
+        sl = SortedList()
+        sl.update([3, 1, 2])
+        assert sl == SortedList([1, 2, 3])
 
+        from operator import neg
+
+        skl = SortedKeyList(key=neg)
+        skl.update([3, 1, 2])
+        assert skl == [3, 2, 1]
+        ```
         """
         return self._inner.update(iterable)
