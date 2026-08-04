@@ -111,10 +111,13 @@ class SortedCollection[T](ABC):
             start (int | None): start index (default None, start of sorted list)
             stop (int | None): stop index (default None, end of sorted list)
 
-        Raises:
-            ValueError: if value is not present
+
         Returns:
             int: index of value
+
+        Raises:
+            ValueError: if value is not present
+
         Examples:
         ```python
         from pyochain.collections import SortedList, SortedKeyList
@@ -167,6 +170,7 @@ class SortedCollection[T](ABC):
 
         Returns:
             PyoIterator[T]: an iterator of values between `minimum` and `maximum`
+
         Examples:
         ```python
         from pyochain.collections import SortedList, SortedKeyList
@@ -205,6 +209,7 @@ class SortedCollection[T](ABC):
             start (int | None): start index (inclusive)
             stop (int | None): stop index (exclusive)
             reverse (bool): yield values in reverse order
+
         Returns:
             PyoIterator[T]: iterator
 
@@ -320,6 +325,7 @@ class BaseSortedListSet[T](SortedCollection[T], ABC):
 
         Raises:
             ValueError: if `value` is not in the `SortedCollection`
+
         Examples:
         ```python
         from pyochain.collections import SortedList, SortedKeyList
@@ -379,6 +385,7 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
 
         Args:
             value (object): search for value in sorted list
+
         Returns:
             bool: `True` if `value` in sorted list.
 
@@ -394,7 +401,7 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
         assert 3 in skl
         ```
 
-        """  # ruff: ignore[docstring-extraneous-parameter]
+        """
         return self._inner.contains(value)
 
     @abstractmethod
@@ -415,6 +422,7 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
 
         Args:
             other (object): `other` sequence
+
         Returns:
             (NotImplementedType | bool): true if sorted list is equal to `other`
 
@@ -433,6 +441,7 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
 
         Args:
             other (object): `other` sequence
+
         Returns:
             (NotImplementedType | bool): true if sorted list is not equal to `other`
 
@@ -467,6 +476,7 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
 
         Args:
             other (object): `other` sequence
+
         Returns:
             (NotImplementedType | bool): true if sorted list is greater than `other`
 
@@ -484,6 +494,7 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
 
         Args:
             other (object): `other` sequence
+
         Returns:
             (NotImplementedType | bool): true if sorted list is less than or equal to `other`
 
@@ -501,6 +512,7 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
 
         Args:
             other (object): `other` sequence
+
         Returns:
             (NotImplementedType | bool): true if sorted list is greater than or equal to `other`
 
@@ -587,6 +599,7 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
 
         Args:
             value (T): value to count in sorted list
+
         Returns:
             int: count of occurrences of `value` in sorted list
 
@@ -601,7 +614,7 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
         skl = SortedKeyList([4, 4, 4, 4, 3, 3, 3, 2, 2, 1], key=neg)
         assert skl.count(2) == 2
         ```
-        """  # ruff: ignore[docstring-extraneous-parameter]
+        """
         return self._inner.count(value)
 
     def _loc(self, pos: int, idx: int) -> int:

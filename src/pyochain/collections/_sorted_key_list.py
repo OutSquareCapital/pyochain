@@ -129,6 +129,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
         Returns:
             PyoIterator[T]: iterator of values between `min_key` and `max_key`
+
         Examples:
         ```python
         from pyochain.collections import SortedKeyList
@@ -159,6 +160,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
         Args:
             key (OT): insertion index of key in sorted-key list
+
         Returns:
             (int): index
 
@@ -186,6 +188,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
         Args:
             key (OT): insertion index of key in sorted-key list
+
         Returns:
             (int): index
 
@@ -244,6 +247,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
         Args:
             num (int): count of shallow copies
+
         Returns:
             (Self): new sorted-key list
 

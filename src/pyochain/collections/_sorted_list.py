@@ -324,6 +324,7 @@ class SortedList[T: SupportsRichComparison](
 
         Args:
             other (Iterable[T]): other iterable
+
         Returns:
             (Self): new sorted list
 
@@ -360,6 +361,7 @@ class SortedList[T: SupportsRichComparison](
 
         Returns:
             Self: existing sorted list
+
         Examples:
         ```python
         from pyochain.collections import SortedList
@@ -413,6 +415,7 @@ class SortedList[T: SupportsRichComparison](
 
         Returns:
             Self: existing sorted list
+
         Examples:
         ```python
         from pyochain.collections import SortedList
