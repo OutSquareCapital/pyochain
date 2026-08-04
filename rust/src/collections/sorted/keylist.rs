@@ -175,7 +175,7 @@ impl InnerSorted for InnerKeyLists {
         let mut maxes = self.get_maxes();
 
         keys[pos].remove(idx);
-        &lists[pos].remove(idx);
+        lists[pos].remove(idx);
         self.set_len(self.get_len() - 1);
 
         let len_keys_pos = keys[pos].len();
@@ -202,12 +202,11 @@ impl InnerSorted for InnerKeyLists {
             let prev = pos - 1;
             let (left, right) = keys.split_at_mut(pos);
             left[prev].extend(right[0].drain(..));
-            lists[prev].extend(
-                lists[pos]
-                    .iter()
-                    .map(|x| x.clone_ref(py))
-                    .collect::<Vec<_>>(),
-            );
+            let mut removed = lists[pos]
+                .iter()
+                .map(|x| x.clone_ref(py))
+                .collect::<Vec<_>>();
+            lists[prev].append(removed.as_mut());
             maxes[prev] = keys[prev][keys[prev].len() - 1].clone_ref(py);
 
             lists.remove(pos);
@@ -237,12 +236,11 @@ impl InnerSorted for InnerKeyLists {
             let mut maxes = self.get_maxes();
             let load = self.get_load();
             let keys_pos = &mut keys[pos];
-            let half = &lists[pos][load..lists[pos].len()];
             let half_keys = keys_pos.split_off(load);
-            lists[pos].truncate(load);
+            let half = lists[pos].split_off(load);
             maxes[pos] = keys_pos[keys_pos.len() - 1].clone_ref(py);
 
-            lists.insert(pos + 1, half.iter().map(|x| x.clone_ref(py)).collect());
+            lists.insert(pos + 1, half);
             maxes.insert(pos + 1, half_keys[half_keys.len() - 1].clone_ref(py));
             keys.insert(pos + 1, half_keys);
             self.get_idx().clear();
