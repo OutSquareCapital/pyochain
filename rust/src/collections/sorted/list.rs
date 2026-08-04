@@ -433,13 +433,7 @@ impl InnerSorted for InnerLists {
             if values.len() * 4 >= self.get_len() {
                 lists.push(values);
                 values = self.collapse_lists(py);
-                values.sort_by(|a, b| {
-                    a.bind(py)
-                        .lt(b.bind(py))
-                        .unwrap()
-                        .then(|| std::cmp::Ordering::Equal)
-                        .unwrap()
-                });
+                values.sort();
                 self.clear();
             } else {
                 for val in values {
@@ -471,25 +465,13 @@ impl InnerSorted for InnerLists {
 
     fn update_from_vec(&self, py: Python<'_>, mut iterable: Vec<Py<PyAny>>) -> PyResult<()> {
         let mut lists = self.get_lists();
-        iterable.sort_by(|a, b| {
-            a.bind(py)
-                .lt(b.bind(py))
-                .unwrap()
-                .then(|| std::cmp::Ordering::Equal)
-                .unwrap()
-        });
+        iterable.sort();
 
         if !self.get_maxes().is_empty() {
             if iterable.len() * 4 >= self.get_len() {
                 lists.push(iterable);
                 iterable = self.collapse_lists(py);
-                iterable.sort_by(|a, b| {
-                    a.bind(py)
-                        .lt(b.bind(py))
-                        .unwrap()
-                        .then(|| std::cmp::Ordering::Equal)
-                        .unwrap()
-                });
+                iterable.sort();
                 self.clear();
             } else {
                 for val in iterable {
