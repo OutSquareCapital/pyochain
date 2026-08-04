@@ -6,4 +6,3 @@ mod traits;
 pub use keylist::InnerKeyLists;
 pub use list::InnerLists;
 pub mod debug;
-mod iter;

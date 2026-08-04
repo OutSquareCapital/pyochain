@@ -3,7 +3,6 @@ use crate::collections::{InnerKeyLists, InnerLists};
 use either::Either;
 use pyo3::exceptions::PyAssertionError;
 use pyo3::prelude::*;
-use pyo3::types::PyList;
 use std::ops::Index;
 
 type InnerSorted = Either<Py<InnerLists>, Py<InnerKeyLists>>;
@@ -16,14 +15,14 @@ macro_rules! pyassert {
     };
 }
 #[pyfunction]
-pub fn assert_sorted_list_empty(py: Python<'_>, lst: InnerSorted) -> PyResult<()> {
-    fn check_empty(x: &impl InnerSortedGetters, py: Python<'_>) -> PyResult<()> {
+pub fn assert_sorted_list_empty(lst: InnerSorted) -> PyResult<()> {
+    fn check_empty(x: &impl InnerSortedGetters) -> PyResult<()> {
         pyassert!(x.get_len() == 0);
         pyassert!(x.get_maxes().is_empty());
-        pyassert!(x.get_lists(py).bind(py).is_empty());
+        pyassert!(x.get_lists().is_empty());
         Ok(())
     }
-    lst.map_either(|x| check_empty(x.get(), py), |x| check_empty(x.get(), py))
+    lst.map_either(|x| check_empty(x.get()), |x| check_empty(x.get()))
         .into_inner()
 }
 #[pyfunction]
@@ -43,7 +42,7 @@ pub fn check_sorted_key_list(py: Python<'_>, data: Py<InnerKeyLists>) -> PyResul
 }
 
 fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
-    let lists = data.get_lists(py).clone_ref(py).into_bound(py);
+    let lists = data.get_lists();
     let maxes = data.get_maxes();
     let idx = data.get_idx();
     let offset = data.get_offset();
@@ -55,22 +54,15 @@ fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
     (maxes.len() == lists.len())
         .then_some(())
         .ok_or(err("Maxes and lists must have the same length"))?;
-    (data.get_len()
-        == lists
-            .iter()
-            .map(|sublist| sublist.len().unwrap())
-            .sum::<usize>())
-    .then_some(())
-    .ok_or(err("Data length mismatch"))?;
+    (data.get_len() == lists.iter().map(|sublist| sublist.len()).sum::<usize>())
+        .then_some(())
+        .ok_or(err("Data length mismatch"))?;
 
     // Check all sublists are sorted.
 
-    for sublist in lists
-        .iter()
-        .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
-    {
+    for sublist in lists.iter().map(|x| x) {
         for pos in 1..sublist.len() {
-            (sublist.get_item(pos - 1)?.le(sublist.get_item(pos)?)?)
+            (sublist[pos - 1].bind(py).le(sublist[pos].bind(py))?)
                 .then_some(())
                 .ok_or(err("Sublists must be sorted"))?;
         }
@@ -79,10 +71,11 @@ fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
     // Check beginning/end of sublists are sorted.
 
     for pos in 1..lists.len() {
-        (lists
-            .get_item(pos - 1)?
-            .get_item(-1)?
-            .le(lists.get_item(pos)?.get_item(0)?)?)
+        (lists[pos - 1]
+            .last()
+            .unwrap()
+            .bind(py)
+            .le(lists[pos][0].bind(py))?)
         .then_some(())
         .ok_or(err("Sublists must be sorted at boundaries"))?;
     }
@@ -90,15 +83,17 @@ fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
     // Check _maxes index is the last value of each sublist.
 
     for pos in 0..maxes.len() {
-        (maxes[pos].bind(py).eq(lists.get_item(pos)?.get_item(-1)?)?)
-            .then_some(())
-            .ok_or(err("Maxes must match last element of sublists"))?;
+        (maxes[pos]
+            .bind(py)
+            .eq(lists[pos].last().unwrap().bind(py))?)
+        .then_some(())
+        .ok_or(err("Maxes must match last element of sublists"))?;
     }
 
     // Check sublist lengths are less than double load-factor.
 
     let double = data.get_load() << 1;
-    (lists.iter().all(|sublist| sublist.len().unwrap() <= double))
+    (lists.iter().all(|sublist| sublist.len() <= double))
         .then_some(())
         .ok_or(err("Sublists must not exceed double load factor"))?;
 
@@ -107,7 +102,7 @@ fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
 
     let half = data.get_load() >> 1;
     for pos in 0..lists.len().saturating_sub(1) {
-        (lists.get_item(pos)?.len()? >= half)
+        (lists[pos].len() >= half)
             .then_some(())
             .ok_or(err("Sublists must be at least half load factor"))?;
     }
@@ -124,7 +119,7 @@ fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
 
         for pos in 0..lists.len() {
             let leaf = idx.index(offset + pos);
-            (leaf.eq(&lists.get_item(pos)?.len()?))
+            (leaf.eq(&lists[pos].len()))
                 .then_some(())
                 .ok_or(err("Index leaf node length mismatch"))?;
         }
@@ -152,7 +147,7 @@ fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
 }
 
 fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
-    let lists = data.lists.bind(py);
+    let lists = data.get_lists();
     let keys = data.get_keys();
     let maxes = data.get_maxes();
     let idx = data.get_idx();
@@ -162,13 +157,7 @@ fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
     let key_fn = data.key.bind(py);
     pyassert!(load >= 4);
     pyassert!(maxes.len() == lists.len() && lists.len() == keys.len());
-    pyassert!(
-        length
-            == lists
-                .iter()
-                .map(|sublist| sublist.len().unwrap())
-                .sum::<usize>()
-    );
+    pyassert!(length == lists.iter().map(|sublist| sublist.len()).sum::<usize>());
 
     // Check all sublists are sorted.
 
@@ -193,10 +182,10 @@ fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
     // Check _keys matches _key mapped to _lists.
 
     for (val_sublist, key_sublist) in lists.iter().zip(keys.iter()) {
-        pyassert!(val_sublist.len()? == key_sublist.len());
-        for (val, key) in val_sublist.try_iter()?.zip(key_sublist.iter()) {
+        pyassert!(val_sublist.len() == key_sublist.len());
+        for (val, key) in val_sublist.iter().zip(key_sublist.iter()) {
             {
-                pyassert!(key_fn.call1((&val?,))?.eq(&key)?);
+                pyassert!(key_fn.call1((&val,))?.eq(&key)?);
             }
         }
     }
@@ -210,14 +199,14 @@ fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
     // Check sublist lengths are less than double load-factor.
 
     let double = load << 1;
-    pyassert!(lists.iter().all(|sublist| sublist.len().unwrap() <= double));
+    pyassert!(lists.iter().all(|sublist| sublist.len() <= double));
 
     // Check sublist lengths are greater than half load-factor for all
     // but the last sublist.
 
     let half = load >> 1;
     for pos in 0..lists.len().saturating_sub(1) {
-        pyassert!(lists.get_item(pos)?.len()? >= half);
+        pyassert!(lists[pos].len() >= half);
     }
 
     if !idx.is_empty() {
@@ -228,7 +217,7 @@ fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
 
         for pos in 0..lists.len() {
             let leaf = idx.index(offset + pos);
-            pyassert!(leaf == &lists.get_item(pos)?.len()?);
+            pyassert!(leaf == &lists[pos].len());
         }
 
         // Check index branch nodes are the sum of their children.
@@ -260,6 +249,7 @@ fn show_key_list(py: Python<'_>, err: &PyErr, data: &InnerKeyLists) -> () {
 fn show_list(py: Python<'_>, err: &PyErr, data: &impl InnerSortedGetters) -> () {
     let idx = data.get_idx();
     let maxes = data.get_maxes();
+    let lists = data.get_lists();
     let infos = [
         format!("len: {}", data.get_len()),
         format!("load: {}", data.get_load()),
@@ -268,8 +258,8 @@ fn show_list(py: Python<'_>, err: &PyErr, data: &impl InnerSortedGetters) -> () 
         format!("index: {:?}", idx),
         format!("len_maxes: {}", maxes.len()),
         format!("maxes: {:?}", maxes),
-        format!("len_lists: {}", data.get_lists(py).bind(py).len()),
-        format!("lists: {}", data.get_lists(py).bind(py).repr().unwrap()),
+        format!("len_lists: {}", lists.len()),
+        format!("lists: {:?}", lists),
     ]
     .join("\n");
 
