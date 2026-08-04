@@ -37,14 +37,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
     * :func:`SortedKeyList.bisect_key_right`
     * :func:`SortedKeyList.irange_key`
 
-    Some examples below use:
-
-    >>> from operator import neg
-    >>> neg
-    <built-in function neg>
-    >>> neg(1)
-    -1
-
     Optional `iterable` argument provides an initial iterable of values to
     initialize the sorted-key list.
 
@@ -54,18 +46,19 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
     Runtime complexity: `O(n*log(n))`
 
-    >>> from operator import neg
-    >>> skl = SortedKeyList(key=neg)
-    >>> skl
-    SortedKeyList([], key=<built-in function neg>)
-    >>> skl = SortedKeyList([3, 1, 2], key=neg)
-    >>> skl
-    SortedKeyList([3, 2, 1], key=<built-in function neg>)
-
     Args:
         iterable (Iterable[T] | None): initial values (optional)
         key (KeyFunc[T, OT]): function used to extract comparison key (optional)
 
+    ```python
+    from pyochain.collections import SortedKeyList
+    from operator import neg
+
+    skl = SortedKeyList(key=neg)
+    assert repr(skl) == "SortedKeyList([], key=<built-in function neg>)"
+    skl = SortedKeyList([3, 1, 2], key=neg)
+    assert repr(skl) == "SortedKeyList([3, 2, 1], key=<built-in function neg>)"
+    ```
     """
 
     def __init__(
@@ -128,12 +121,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         When `reverse` is `True` the values are yielded from the iterator in
         reverse order; `reverse` defaults to `False`.
 
-        >>> from operator import neg
-        >>> skl = SortedKeyList([11, 12, 13, 14, 15], key=neg)
-        >>> it = skl.irange_key(-14, -12)
-        >>> list(it)
-        [14, 13, 12]
-
         Args:
             min_key (OT | None): minimum key to start iterating
             max_key (OT | None): maximum key to stop iterating
@@ -142,6 +129,15 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
         Returns:
             PyoIterator[T]: iterator of values between `min_key` and `max_key`
+        Examples:
+        ```python
+        from pyochain.collections import SortedKeyList
+        from operator import neg
+
+        skl = SortedKeyList([11, 12, 13, 14, 15], key=neg)
+        it = skl.irange_key(-14, -12)
+        assert list(it) == [14, 13, 12]
+        ```
 
         """
         match self._inner.irange_key(min_key, max_key, inclusive):
@@ -160,14 +156,20 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> from operator import neg
-        >>> skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
-        >>> skl.bisect_key_left(-1)
-        4
 
-        :param key: insertion index of key in sorted-key list
-        :return: index
+        Args:
+            key (OT): insertion index of key in sorted-key list
+        Returns:
+            (int): index
 
+        Examples:
+        ```python
+        from pyochain.collections import SortedKeyList
+        from operator import neg
+
+        skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
+        assert skl.bisect_key_left(-1) == 4
+        ```
         """
         return self._inner.bisect_key_left(key)
 
@@ -181,14 +183,20 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> from operator import neg
-        >>> skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
-        >>> skl.bisect_key_right(-1)
-        5
 
-        :param key: insertion index of key in sorted-key list
-        :return: index
+        Args:
+            key (OT): insertion index of key in sorted-key list
+        Returns:
+            (int): index
 
+        Examples:
+        ```python
+        from pyochain.collections import SortedKeyList
+        from operator import neg
+
+        skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
+        assert skl.bisect_key_right(-1) == 5
+        ```
         """
         return self._inner.bisect_key_right(key)
 
@@ -206,15 +214,21 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
         Runtime complexity: `O(n*log(n))`
 
-        >>> from operator import neg
-        >>> skl1 = SortedKeyList([5, 4, 3], key=neg)
-        >>> skl2 = SortedKeyList([2, 1, 0], key=neg)
-        >>> skl1 + skl2
-        SortedKeyList([5, 4, 3, 2, 1, 0], key=<built-in function neg>)
+        Args:
+            other (Iterable[T]): other iterable
+        Returns:
+            (Self): new sorted-key list
 
-        :param other: other iterable
-        :return: new sorted-key list
+        Examples:
+        ```python
+        from pyochain.collections import SortedKeyList
+        from operator import neg
 
+        skl1 = SortedKeyList([5, 4, 3], key=neg)
+        skl2 = SortedKeyList([2, 1, 0], key=neg)
+        new = skl1 + skl2
+        assert new == [5, 4, 3, 2, 1, 0]
+        ```
         """
         values = self._inner.collapse_lists()
         values.extend(other)
@@ -228,14 +242,20 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
         Runtime complexity: `O(n*log(n))`
 
-        >>> from operator import neg
-        >>> skl = SortedKeyList([3, 2, 1], key=neg)
-        >>> skl * 2
-        SortedKeyList([3, 3, 2, 2, 1, 1], key=<built-in function neg>)
+        Args:
+            num (int): count of shallow copies
+        Returns:
+            (Self): new sorted-key list
 
-        :param int num: count of shallow copies
-        :return: new sorted-key list
+        Examples:
+        ```python
+        from pyochain.collections import SortedKeyList
+        from operator import neg
 
+        skl = SortedKeyList([3, 2, 1], key=neg)
+        new = skl * 2
+        assert new == [3, 3, 2, 2, 1, 1]
+        ```
         """
         values = self._inner.collapse_lists().repeat(num)
         return self.__class__(values, key=self._inner.key)
@@ -252,7 +272,8 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
         ``skl.__repr__()`` <==> ``repr(skl)``
 
-        :return: string representation
+        Returns:
+            (str): string representation
 
         """
         type_name = self.__class__.__name__

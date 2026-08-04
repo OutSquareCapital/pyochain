@@ -80,12 +80,14 @@ class SortedList[T: SupportsRichComparison](
 
     Runtime complexity: `O(n*log(n))`
 
-    >>> sl = SortedList()
-    >>> sl
-    SortedList([])
-    >>> sl = SortedList([3, 1, 2, 5, 4])
-    >>> sl
-    SortedList([1, 2, 3, 4, 5])
+    ```python
+    from pyochain.collections import SortedList
+
+    sl = SortedList()
+    assert repr(sl) == "SortedList([])"
+    sl = SortedList([3, 1, 2, 5, 4])
+    assert repr(sl) == "SortedList([1, 2, 3, 4, 5])"
+    ```
 
     """
 
@@ -113,8 +115,8 @@ class SortedList[T: SupportsRichComparison](
 
         ``sl.__setitem__(index, value)`` <==> ``sl[index] = value``
 
-        :raises NotImplementedError: use ``del sl[index]`` and
-            ``sl.add(value)`` instead
+        Raises:
+            NotImplementedError: use ``del sl[index]`` and ``sl.add(value)`` instead
 
         """
         message = "use ``del sl[index]`` and ``sl.add(value)`` instead"
@@ -145,7 +147,8 @@ class SortedList[T: SupportsRichComparison](
         Implemented to override `MutableSequence.reverse` which provides an
         erroneous default implementation.
 
-        :raises NotImplementedError: use ``reversed(sl)`` instead
+        Raises:
+            NotImplementedError: use ``reversed(sl)`` instead
 
         """
         msg = "use ``reversed(sl)`` instead"
@@ -257,7 +260,8 @@ class SortedList[T: SupportsRichComparison](
 
         ``sl.__len__()`` <==> ``len(sl)``
 
-        :return: size of sorted list
+        Returns:
+            (int): size of sorted list
 
         """
         return self._inner.len
@@ -276,7 +280,8 @@ class SortedList[T: SupportsRichComparison](
         Implemented to override `MutableSequence.append` which provides an
         erroneous default implementation.
 
-        :raises NotImplementedError: use ``sl.add(value)`` instead
+        Raises:
+            NotImplementedError: use ``sl.add(value)`` instead
 
         """
         msg = "use ``sl.add(value)`` instead"
@@ -289,7 +294,8 @@ class SortedList[T: SupportsRichComparison](
         Implemented to override `MutableSequence.extend` which provides an
         erroneous default implementation.
 
-        :raises NotImplementedError: use ``sl.update(values)`` instead
+        Raises:
+            NotImplementedError: use ``sl.update(values)`` instead
 
         """
         msg = "use ``sl.update(values)`` instead"
@@ -299,7 +305,8 @@ class SortedList[T: SupportsRichComparison](
     def insert(self, index: int, value: T) -> None:
         """Raise not-implemented error.
 
-        :raises NotImplementedError: use ``sl.add(value)`` instead
+        Raises:
+            NotImplementedError: use ``sl.add(value)`` instead
 
         """
         msg = "use ``sl.add(value)`` instead"
@@ -315,13 +322,20 @@ class SortedList[T: SupportsRichComparison](
 
         Runtime complexity: `O(n*log(n))`
 
-        >>> sl1 = SortedList("bat")
-        >>> sl2 = SortedList("cat")
-        >>> sl1 + sl2
-        SortedList(['a', 'a', 'b', 'c', 't', 't'])
+        Args:
+            other (Iterable[T]): other iterable
+        Returns:
+            (Self): new sorted list
 
-        :param other: other iterable
-        :return: new sorted list
+        Examples:
+        ```python
+        from pyochain.collections import SortedList
+
+        sl1 = SortedList("bat")
+        sl2 = SortedList("cat")
+        added = sl1 + sl2
+        assert added == SortedList(["a", "a", "b", "c", "t", "t"])
+        ```
 
         """
         values = self._inner.collapse_lists()
@@ -333,7 +347,7 @@ class SortedList[T: SupportsRichComparison](
 
     @override
     def __iadd__(self, other: Iterable[T]) -> Self:
-        """Update sorted list with values from `other`.
+        """In-place update of the sorted list with values from `other`.
 
         ``sl.__iadd__(other)`` <==> ``sl += other``
 
@@ -341,17 +355,19 @@ class SortedList[T: SupportsRichComparison](
 
         Runtime complexity: `O(k*log(n))` -- approximate.
 
-        >>> sl = SortedList("bat")
-        >>> sl += "cat"
-        >>> sl
-        SortedList(['a', 'a', 'b', 'c', 't', 't'])
-
         Args:
             other (Iterable[T]): other iterable
 
         Returns:
             Self: existing sorted list
+        Examples:
+        ```python
+        from pyochain.collections import SortedList
 
+        sl = SortedList("bat")
+        sl += "cat"
+        assert sl == SortedList(["a", "a", "b", "c", "t", "t"])
+        ```
         """
         self.update(other)
         return self
@@ -364,13 +380,20 @@ class SortedList[T: SupportsRichComparison](
 
         Runtime complexity: `O(n*log(n))`
 
-        >>> sl = SortedList("abc")
-        >>> sl * 3
-        SortedList(['a', 'a', 'a', 'b', 'b', 'b', 'c', 'c', 'c'])
+        Args:
+            num (int): count of shallow copies
 
-        :param int num: count of shallow copies
-        :return: new sorted list
+        Returns:
+            Self: new sorted list
 
+        Examples:
+        ```python
+        from pyochain.collections import SortedList
+
+        sl = SortedList("abc")
+        new = sl * 3
+        assert new == SortedList(["a", "a", "a", "b", "b", "b", "c", "c", "c"])
+        ```
         """
         values = self._inner.collapse_lists().repeat(num)
         return self.__class__(values)
@@ -379,23 +402,25 @@ class SortedList[T: SupportsRichComparison](
         return self.__mul__(num)
 
     def __imul__(self, num: int) -> Self:
-        """Update the sorted list with `num` shallow copies of values.
+        """In-place update of the sorted list with `num` shallow copies of values.
 
         ``sl.__imul__(num)`` <==> ``sl *= num``
 
         Runtime complexity: `O(n*log(n))`
-
-        >>> sl = SortedList("abc")
-        >>> sl *= 3
-        >>> sl
-        SortedList(['a', 'a', 'a', 'b', 'b', 'b', 'c', 'c', 'c'])
 
         Args:
             num (int): count of shallow copies
 
         Returns:
             Self: existing sorted list
+        Examples:
+        ```python
+        from pyochain.collections import SortedList
 
+        sl = SortedList("abc")
+        sl *= 3
+        assert sl == SortedList(["a", "a", "a", "b", "b", "b", "c", "c", "c"])
+        ```
         """
         values = self._inner.collapse_lists().repeat(num)
         self.clear()
@@ -413,7 +438,8 @@ class SortedList[T: SupportsRichComparison](
 
         ``sl.__repr__()`` <==> ``repr(sl)``
 
-        :return: string representation
+        Returns:
+            (str): string representation
 
         """
         return f"{self.__class__.__name__}({list(self)!r})"
