@@ -2216,29 +2216,25 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq
-            >>> data = (1, 2, 3)
-            >>> Iter(data).filter(lambda x: x > 1).collect(Seq)
-            Seq(2, 3)
-            >>> # See the equivalence of next and find:
-            >>> Iter(data).filter(lambda x: x > 1).next()
-            Some(2)
-            >>> Iter(data).find(lambda x: x > 1)
-            Some(2)
-            >>> # Using TypeIs to narrow type:
-            >>> from typing import TypeIs
-            >>> def _is_str(x: object) -> TypeIs[str]:
-            ...     return isinstance(x, str)
-            >>> mixed_data = (1, "two", 3.0, "four")
-            >>> Iter(mixed_data).filter(_is_str).collect(Seq)
-            Seq('two', 'four')
-            >>> maybe_none = (1, None, 3, None)
-            >>> Iter(maybe_none).filter().collect(Seq)
-            Seq(1, 3)
-            >>> maybe_false = (0, 1, False, 2, "", 3, None)
-            >>> Iter(maybe_false).filter().collect(Seq)
-            Seq(1, 2, 3)
+            from pyochain import Iter, Seq, Some
 
+            data = (1, 2, 3)
+            assert Iter(data).filter(lambda x: x > 1).collect(Seq) == Seq((2, 3))
+            # See the equivalence of next and find:
+            assert Iter(data).filter(lambda x: x > 1).next() == Some(2)
+            assert Iter(data).find(lambda x: x > 1) == Some(2)
+            # Using TypeIs to narrow type:
+            from typing import TypeIs
+
+            def _is_str(x: object) -> TypeIs[str]:
+                return isinstance(x, str)
+
+            mixed_data = (1, "two", 3.0, "four")
+            assert Iter(mixed_data).filter(_is_str).collect(Seq) == Seq(("two", "four"))
+            maybe_none = (1, None, 3, None)
+            assert Iter(maybe_none).filter().collect(Seq) == Seq((1, 3))
+            maybe_false = (0, 1, False, 2, "", 3, None)
+            assert Iter(maybe_false).filter().collect(Seq) == Seq((1, 2, 3))
             ```
         """
 
