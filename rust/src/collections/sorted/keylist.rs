@@ -2,7 +2,7 @@ use super::errors;
 use crate::collections::sorted::bisect;
 use crate::collections::sorted::cmp::py_cmp_by_key;
 use crate::collections::sorted::traits::{
-    DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters,
+    DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters, SortedKeyListIter,
 };
 use crate::pyo3_ext::pylibs;
 use pyo3::prelude::*;
@@ -42,6 +42,9 @@ impl InnerKeyLists {
             load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
             offset: AtomicUsize::new(0),
         })
+    }
+    fn iter<'py>(slf: Bound<'_, Self>, py: Python<'py>) -> PyResult<Bound<'py, SortedKeyListIter>> {
+        SortedKeyListIter::new(py, slf.unbind())
     }
     #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true)))]
     fn irange_key(
@@ -216,6 +219,7 @@ impl InnerSorted for InnerKeyLists {
             self.get_idx().clear();
             drop(maxes);
             drop(keys);
+            drop(lists);
 
             self.expand(py, prev)
         } else if len_keys_pos != 0 {
@@ -283,6 +287,7 @@ impl InnerSorted for InnerKeyLists {
             }
             drop(maxes);
             drop(keys);
+            drop(lists);
             self.expand(py, pos)?;
         } else {
             lists.push(vec![value]);
@@ -480,7 +485,6 @@ impl InnerSorted for InnerKeyLists {
         }
 
         stop -= 1;
-        let lists = self.get_lists();
         let keys = self.get_keys();
         let v_left = &keys[pos];
         let mut idx = bisect::left(&v_left, &key)?;
@@ -491,7 +495,7 @@ impl InnerSorted for InnerKeyLists {
             if keys[pos][idx].bind(py).ne(&key)? {
                 return errors::is_not_in_list_err(&value);
             }
-            if lists[pos][idx].bind(py).eq(&value)? {
+            if self.get_lists()[pos][idx].bind(py).eq(&value)? {
                 let loc = self.loc(pos, idx as isize)?;
                 if start <= loc && loc <= stop {
                     return Ok(loc);
@@ -514,7 +518,6 @@ impl InnerSorted for InnerKeyLists {
     }
     fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
-        let mut lists = self.get_lists();
         let key_fn = &self.key.clone_ref(py).into_bound(py);
         let mut values = iterable
             .try_iter()
@@ -525,7 +528,7 @@ impl InnerSorted for InnerKeyLists {
 
         if !self.get_maxes().is_empty() {
             if values.len() * 4 >= self.get_len() {
-                lists.push(values);
+                self.get_lists().push(values);
                 values = self.collapse_lists(py);
                 values.sort_by(|a, b| py_cmp_by_key(a, b, key_fn));
                 self.clear();
@@ -545,6 +548,8 @@ impl InnerSorted for InnerKeyLists {
                 .map(|x| x.clone_ref(py))
                 .collect::<Vec<_>>()
         });
+
+        let mut lists = self.get_lists();
         lists.extend(new_lists);
         let new_keys = lists
             .iter()
@@ -564,13 +569,12 @@ impl InnerSorted for InnerKeyLists {
         Ok(())
     }
     fn update_from_vec(&self, py: Python<'_>, mut iterable: Vec<Py<PyAny>>) -> PyResult<()> {
-        let mut lists = self.get_lists();
         let key_fn = &self.key.clone_ref(py).into_bound(py);
         iterable.sort_by(|a, b| py_cmp_by_key(a, b, key_fn));
 
         if !self.get_maxes().is_empty() {
             if iterable.len() * 4 >= self.get_len() {
-                lists.push(iterable);
+                self.get_lists().push(iterable);
                 iterable = self.collapse_lists(py);
                 iterable.sort_by(|a, b| py_cmp_by_key(a, b, key_fn));
                 self.clear();
@@ -590,6 +594,8 @@ impl InnerSorted for InnerKeyLists {
                 .map(|x| x.clone_ref(py))
                 .collect::<Vec<_>>()
         });
+
+        let mut lists = self.get_lists();
         lists.extend(new_lists);
         let new_keys = lists
             .iter()

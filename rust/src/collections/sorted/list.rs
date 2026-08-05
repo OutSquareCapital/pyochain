@@ -1,5 +1,5 @@
 use crate::collections::sorted::traits::{
-    DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters,
+    DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters, SortedListIter,
 };
 use crate::collections::sorted::{bisect, cmp::py_cmp, errors};
 use crate::pyo3_ext::pylibs;
@@ -28,6 +28,9 @@ impl InnerLists {
             load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
             offset: AtomicUsize::new(0),
         })
+    }
+    fn iter<'py>(slf: Bound<'_, Self>, py: Python<'py>) -> PyResult<Bound<'py, SortedListIter>> {
+        SortedListIter::new(py, slf.unbind())
     }
     #[pyo3(signature = (minimum=None, maximum=None, inclusive=(true, true)))]
     fn irange(
@@ -141,14 +144,10 @@ impl InnerSorted for InnerLists {
         if lists[pos].len().gt(&(load << 1)) {
             let mut maxes = self.get_maxes();
 
-            let half = &lists[pos].drain(load..usize::MAX).collect::<Vec<_>>();
+            let half = lists[pos].split_off(load);
             maxes[pos] = lists[pos].last().unwrap().clone_ref(py);
-            let last = half.last().unwrap();
-            lists.insert(
-                pos + 1,
-                half.iter().map(|x| x.clone_ref(py)).collect::<Vec<_>>(),
-            );
-            maxes.insert(pos + 1, last.clone_ref(py));
+            maxes.insert(pos + 1, half.last().unwrap().clone_ref(py));
+            lists.insert(pos + 1, half);
 
             self.get_idx().clear();
             Ok(())
@@ -206,6 +205,7 @@ impl InnerSorted for InnerLists {
             maxes.remove(pos);
             self.get_idx().clear();
             drop(maxes);
+            drop(lists);
             self.expand(py, prev)
         } else if len_lists_pos != 0 {
             maxes[pos] = lists[pos][len_lists_pos - 1].clone_ref(py);
@@ -232,6 +232,7 @@ impl InnerSorted for InnerLists {
                 lists[pos].insert(res, value.clone_ref(py));
             }
             drop(maxes);
+            drop(lists);
             self.expand(py, pos)?;
         } else {
             lists.push(vec![value.clone_ref(py)]);
@@ -421,7 +422,6 @@ impl InnerSorted for InnerLists {
 
     fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
-        let mut lists = self.get_lists();
         let mut values = iterable
             .try_iter()
             .and_then(|iterator| pylibs::builtins::sorted(&iterator, false))?
@@ -431,7 +431,7 @@ impl InnerSorted for InnerLists {
 
         if !self.get_maxes().is_empty() {
             if values.len() * 4 >= self.get_len() {
-                lists.push(values);
+                self.get_lists().push(values);
                 values = self.collapse_lists(py);
                 values.sort_by(|a, b| py_cmp(py, a, b));
                 self.clear();
@@ -451,6 +451,8 @@ impl InnerSorted for InnerLists {
                 .map(|x| x.clone_ref(py))
                 .collect::<Vec<_>>()
         });
+
+        let mut lists = self.get_lists();
         lists.extend(new_lists);
 
         let mut new_maxes = lists
@@ -464,12 +466,11 @@ impl InnerSorted for InnerLists {
     }
 
     fn update_from_vec(&self, py: Python<'_>, mut iterable: Vec<Py<PyAny>>) -> PyResult<()> {
-        let mut lists = self.get_lists();
         iterable.sort_by(|a, b| py_cmp(py, a, b));
 
         if !self.get_maxes().is_empty() {
             if iterable.len() * 4 >= self.get_len() {
-                lists.push(iterable);
+                self.get_lists().push(iterable);
                 iterable = self.collapse_lists(py);
                 iterable.sort_by(|a, b| py_cmp(py, a, b));
                 self.clear();
@@ -489,6 +490,8 @@ impl InnerSorted for InnerLists {
                 .map(|x| x.clone_ref(py))
                 .collect::<Vec<_>>()
         });
+
+        let mut lists = self.get_lists();
         lists.extend(new_lists);
         self.get_maxes()
             .extend(lists.iter().map(|x| x[x.len() - 1].clone_ref(py)));

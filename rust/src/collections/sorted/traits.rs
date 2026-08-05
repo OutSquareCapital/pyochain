@@ -1,6 +1,7 @@
 use crate::{
+    abc,
     collections::{InnerKeyLists, InnerLists, sorted::errors},
-    iterators,
+    traits::PyoABC,
 };
 use either::Either;
 use pyo3::{
@@ -12,7 +13,7 @@ use pyo3::{
 use pyochain_macros::py_abc;
 use std::{
     cmp::Ordering,
-    sync::{MutexGuard, atomic::Ordering as AtomicOrdering},
+    sync::{Mutex, MutexGuard, atomic::Ordering as AtomicOrdering},
 };
 use tap::prelude::*;
 
@@ -498,6 +499,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         }
 
         if self.get_idx().is_empty() {
+            drop(lists);
             self.build_index()?;
         }
         let pos = self.get_idx().pipe_ref_mut(|index| {
@@ -527,46 +529,33 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         if self.get_len() == 0 {
             let msg = "pop index out of range";
             return Err(PyIndexError::new_err(msg));
-        } else {
+        }
+
+        let (pos, idx) = {
             let lists = self.get_lists();
-
             let len_last = lists[lists.len() - 1].len() as isize;
-            let val = match index {
-                0 => {
-                    let val = &lists[0][0];
-                    self.delete(py, 0, 0)?;
-                    val
-                }
-
+            match index {
+                0 => (0, 0),
                 -1 => {
                     let pos = lists.len() - 1;
-                    let loc = lists[pos].len() - 1;
-                    let val = &lists[pos][loc];
-                    self.delete(py, pos, loc)?;
-                    val
+                    (pos, lists[pos].len() - 1)
                 }
-
-                _ if 0 <= index && index < lists[0].len() as isize => {
-                    let val = &lists[0][index as usize];
-                    self.delete(py, 0, index as usize)?;
-                    val
-                }
+                _ if 0 <= index && index < lists[0].len() as isize => (0, index as usize),
                 _ if -len_last < index && index < 0 => {
                     let pos = lists.len() - 1;
-                    let loc = len_last + index;
-                    let val = &lists[pos][loc as usize];
-                    self.delete(py, pos, loc as usize)?;
-                    val
+                    (pos, (len_last + index) as usize)
                 }
                 _ => {
+                    drop(lists);
                     let (pos, idx) = self.pos(index)?;
-                    let val = &lists[pos][idx as usize];
-                    self.delete(py, pos, idx as usize)?;
-                    val
+                    (pos, idx as usize)
                 }
-            };
-            Ok(val.clone_ref(py).into_bound(py))
-        }
+            }
+        };
+
+        let val = self.get_lists()[pos][idx].clone_ref(py);
+        self.delete(py, pos, idx)?;
+        Ok(val.into_bound(py))
     }
 
     fn getitem<'py>(
@@ -582,7 +571,10 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     fn getitem_from_int<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         let lists = self.get_lists();
         let slf_len = self.get_len();
-        let len_last = lists.last().unwrap().len() as isize;
+        let len_last = lists
+            .last()
+            .ok_or(PyIndexError::new_err("list index out of range"))?
+            .len() as isize;
         match (index, slf_len != 0) {
             (0, true) => lists[0][0].clone_ref(py).into_bound(py).pipe(Ok),
             (-1, true) => lists
@@ -607,8 +599,9 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                 .into_bound(py)
                 .pipe(Ok),
             _ => {
+                drop(lists);
                 let (pos, idx) = self.pos(index)?;
-                lists[pos][idx as usize]
+                self.get_lists()[pos][idx as usize]
                     .clone_ref(py)
                     .into_bound(py)
                     .pipe(Ok)
@@ -620,14 +613,14 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         py: Python<'py>,
         slice: Bound<'py, PySlice>,
     ) -> PyResult<Vec<Py<PyAny>>> {
-        let lists = self.get_lists();
         let slice_result =
             |start_pos: usize, stop_pos: usize, start_idx: usize, stop_idx: usize| {
+                let lists = self.get_lists();
                 let new_items = lists[start_pos + 1..stop_pos]
                     .iter()
                     .flatten()
                     .map(|x| x.clone_ref(py));
-                lists[start_pos][start_idx..usize::MAX]
+                lists[start_pos][start_idx..]
                     .iter()
                     .map(|x| x.clone_ref(py))
                     .chain(new_items)
@@ -645,6 +638,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             (1, Ordering::Less) if start == 0 && stop_eq_len => self.collapse_lists(py).pipe(Ok),
             (1, Ordering::Less) => {
                 let (start_pos, start_idx) = self.pos(start)?;
+                let lists = self.get_lists();
                 let start_list = &lists[start_pos];
                 let stop_idx = start_idx + stop - start;
                 match (start_list.len() as isize >= stop_idx, stop_eq_len) {
@@ -658,9 +652,11 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                     (false, true) => {
                         let stop_pos = lists.len() - 1;
                         let stop_idx = lists[stop_pos].len();
+                        drop(lists);
                         slice_result(start_pos, stop_pos, start_idx as usize, stop_idx)
                     }
                     (false, false) => {
+                        drop(lists);
                         let (stop_pos, stop_idx) = self.pos(stop)?;
                         slice_result(start_pos, stop_pos, start_idx as usize, stop_idx as usize)
                     }
@@ -748,7 +744,6 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         stop: Option<isize>,
     ) -> PyResult<Option<(usize, isize, usize, isize)>> {
         let length = self.get_len() as isize;
-        let lists = self.get_lists();
 
         if length == 0 {
             return Ok(None);
@@ -763,6 +758,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             let (min_pos, min_idx) = self.pos(indices.start)?;
 
             let (max_pos, max_idx) = if indices.stop == length {
+                let lists = self.get_lists();
                 (lists.len() - 1, lists[lists.len() - 1].len() as isize)
             } else {
                 self.pos(indices.stop)?
@@ -771,11 +767,50 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             Ok(Some((min_pos, min_idx, max_pos, max_idx)))
         }
     }
-    /// ref: `self.lists.iter().flatten()`
-    fn iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, iterators::Iter>> {
-        self.get_lists()
-            .iter()
-            .flat_map(|list| list.iter())
-            .pipe(iterators::Iter::new)
-    }
 }
+
+/// ref: `self.lists.iter().flatten()`
+macro_rules! impl_lazy_iter {
+    ($iter_name:ident, $owner:ty) => {
+        #[pyclass(module = "pyochain._iterators", frozen, extends = abc::PyoIterator)]
+        pub struct $iter_name {
+            owner: Py<$owner>,
+            cursor: Mutex<(usize, usize)>, // (outer, inner) — un seul lock, snapshot atomique
+        }
+
+        impl $iter_name {
+            pub fn new(py: Python<'_>, owner: Py<$owner>) -> PyResult<Bound<'_, Self>> {
+                let initializer = abc::PyoIterator::build_init().add_subclass(Self {
+                    owner,
+                    cursor: Mutex::new((0, 0)),
+                });
+                Bound::new(py, initializer)
+            }
+        }
+
+        #[pymethods]
+        impl $iter_name {
+            fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
+                slf
+            }
+            fn __next__(&self, py: Python<'_>) -> Option<Py<PyAny>> {
+                let this = self.owner.bind(py).get(); // frozen -> pas de PyRef nécessaire
+                let mut cursor = self.cursor.lock().unwrap();
+                let lists = this.get_lists(); // un seul lock sur la durée de l'appel
+                loop {
+                    let sub = lists.get(cursor.0)?;
+                    if let Some(item) = sub.get(cursor.1) {
+                        let out = item.clone_ref(py);
+                        cursor.1 += 1;
+                        return Some(out);
+                    }
+                    cursor.0 += 1;
+                    cursor.1 = 0;
+                }
+            }
+        }
+    };
+}
+
+impl_lazy_iter!(SortedListIter, InnerLists);
+impl_lazy_iter!(SortedKeyListIter, InnerKeyLists);
