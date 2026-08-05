@@ -1,4 +1,5 @@
 pub(super) mod bisect;
+mod cmp;
 mod errors;
 mod keylist;
 mod list;

@@ -1,5 +1,6 @@
 use super::errors;
 use crate::collections::sorted::bisect;
+use crate::collections::sorted::cmp::py_cmp_by_key;
 use crate::collections::sorted::traits::{
     DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters,
 };
@@ -526,7 +527,7 @@ impl InnerSorted for InnerKeyLists {
             if values.len() * 4 >= self.get_len() {
                 lists.push(values);
                 values = self.collapse_lists(py);
-                values.sort_by(|x, y| key_fn.call1(x));
+                values.sort_by(|a, b| py_cmp_by_key(a, b, key_fn));
                 self.clear();
             } else {
                 for val in values {
@@ -564,13 +565,13 @@ impl InnerSorted for InnerKeyLists {
     fn update_from_vec(&self, py: Python<'_>, mut iterable: Vec<Py<PyAny>>) -> PyResult<()> {
         let mut lists = self.get_lists();
         let key_fn = &self.key.clone_ref(py).into_bound(py);
-        iterable.sort_by(|x| key_fn.call1(x));
+        iterable.sort_by(|a, b| py_cmp_by_key(a, b, key_fn));
 
         if !self.get_maxes().is_empty() {
             if iterable.len() * 4 >= self.get_len() {
                 lists.push(iterable);
                 iterable = self.collapse_lists(py);
-                iterable.sort_by(|x| key_fn.call1(x));
+                iterable.sort_by(|a, b| py_cmp_by_key(a, b, key_fn));
                 self.clear();
             } else {
                 for val in iterable {

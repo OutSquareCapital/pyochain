@@ -775,8 +775,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     fn iter<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, iterators::Iter>> {
         self.get_lists()
             .iter()
-            .map(|list| list.iter())
-            .flatten()
+            .flat_map(|list| list.iter())
             .pipe(iterators::Iter::new)
     }
 }
