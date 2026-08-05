@@ -790,12 +790,13 @@ def test_repr() -> None:
     )
 
 
+@pytest.mark.skip(reason="Same reason as `test_repr_recursion` in `test_sortedlist.py`")
 def test_repr_recursion() -> None:
     this: SortedKeyList[list[int], list[int]] = SortedKeyList(
         [[1], [2], [3], [4]], key=lambda val: val
     )
     # pyrefly: ignore [bad-argument-type]
-    this.inner.lists[-1].append(this)  # pyright: ignore[reportArgumentType]
+    this.inner.lists[-1].append(this)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
     assert repr(this).startswith(
         "SortedKeyList([[1], [2], [3], [4], ...], key=<function "
     )

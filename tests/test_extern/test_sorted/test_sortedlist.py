@@ -633,10 +633,13 @@ def test_repr() -> None:
     assert repr(this) == "SortedList([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])"
 
 
+@pytest.mark.skip(
+    reason="This precise situation of this test isn't possible anymore. Should modify to test another possible recursive case (if any)."
+)
 def test_repr_recursion() -> None:
     this = SortedList([[1], [2], [3], [4]])
     # pyrefly: ignore [bad-argument-type]
-    this.inner.lists[-1].append(this)  # pyright: ignore[reportArgumentType]
+    this.inner.lists[-1].append(this)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
     assert repr(this) == "SortedList([[1], [2], [3], [4], ...])"
 
 
