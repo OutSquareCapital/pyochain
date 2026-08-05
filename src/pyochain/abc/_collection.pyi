@@ -21,13 +21,12 @@ class PyoContainer[T](Checkable, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Dict
-            >>> data = Dict.from_ref({1: "a", 2: "b"})
-            >>> data.contains(1)
-            True
-            >>> data.contains(3)
-            False
+            from pyochain import Dict
 
+            data = Dict.from_ref({1: "a", 2: "b"})
+
+            assert data.contains(1)
+            assert not data.contains(3)
             ```
         """
 
@@ -45,11 +44,10 @@ class PyoSized(Checkable, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Dict
-            >>> data = Dict.from_ref({1: "a", 2: "b"})
-            >>> data.len()
-            2
+            from pyochain import Dict
 
+            data = Dict.from_ref({1: "a", 2: "b"})
+            assert data.len() == 2
             ```
         """
 
@@ -61,15 +59,12 @@ class PyoSized(Checkable, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Dict
-            >>> d = Dict(())
-            >>> d.is_empty()
-            True
-            >>> d.insert(1, "a")
-            NONE
-            >>> d.is_empty()
-            False
+            from pyochain import Dict
 
+            d = Dict(())
+            assert d.is_empty()
+            d.insert(1, "a")
+            assert not d.is_empty()
             ```
         """
 

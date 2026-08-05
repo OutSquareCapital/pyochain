@@ -86,29 +86,25 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
     Example:
         ```python
-        >>> from pyochain import Seq
-        >>> from pyochain.abc import PyoIterator
-        >>>
-        >>> class Count(PyoIterator[int]):
-        ...     def __init__(self, start: int = 0):
-        ...         self.current = start
-        ...
-        ...     def __iter__(self):
-        ...         return self
-        ...
-        ...     def __next__(self):
-        ...         val = self.current
-        ...         self.current += 1
-        ...         return val
-        >>>
-        >>> counter = Count(5)
-        >>> counter.next()
-        Some(5)
-        >>> counter.next()
-        Some(6)
-        >>> counter.iter().take(3).collect(Seq)
-        Seq(7, 8, 9)
+        from pyochain import Seq, Some
+        from pyochain.abc import PyoIterator
 
+        class Count(PyoIterator[int]):
+            def __init__(self, start: int = 0):
+                self.current = start
+
+            def __iter__(self):
+                return self
+
+            def __next__(self):
+                val = self.current
+                self.current += 1
+                return val
+
+        counter = Count(5)
+        assert counter.next() == Some(5)
+        assert counter.next() == Some(6)
+        assert counter.iter().take(3).collect(Seq) == Seq((7, 8, 9))
         ```
     """
     @abstractmethod
@@ -171,10 +167,9 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter.once(42).collect(Seq)
-            Seq(42,)
+            from pyochain import Iter, Seq
 
+            assert Iter.once(42).collect(Seq) == Seq((42,))
             ```
         """
 
@@ -200,10 +195,9 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter.once_with(lambda: 42).collect(Seq)
-            Seq(42,)
+            from pyochain import Iter, Seq
 
+            assert Iter.once_with(lambda: 42).collect(Seq) == Seq((42,))
             ```
         """
 
