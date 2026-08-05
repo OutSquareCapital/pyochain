@@ -42,26 +42,29 @@ class PyoIterable[T](Checkable, Fluent, Protocol):
         Since it's very straightforward to implement, it can very easily be integrated into business logic classes to provide them with a rich set of methods for free.
 
         ```python
-        >>> from pyochain.abc import PyoIterable
-        >>> from dataclasses import dataclass
-        >>>
-        >>> @dataclass(slots=True)
-        ... class ClientRegistry(PyoIterable[str]):
-        ...     clients: list[str]
-        ...
-        ...     def __iter__(self):
-        ...         return iter(self.clients)
-        >>>
-        >>> registry = ClientRegistry(["Alice", "Bob", "Charlie"])
-        >>> registry.iter().all(lambda name: name.startswith("A"))
-        False
-        >>> registry.iter().join(", ")
-        'Alice, Bob, Charlie'
-        >>> registry.iter().map(str.lower).join(", ")
-        'alice, bob, charlie'
-        >>> registry.ok_or("Registry is empty").map(lambda s: s.iter().join(", "))
-        Ok('Alice, Bob, Charlie')
+        from pyochain.abc import PyoIterable
+        from dataclasses import dataclass
 
+        @dataclass(slots=True)
+        class ClientRegistry(PyoIterable[str]):
+            clients: list[str]
+
+            def __iter__(self):
+                return iter(self.clients)
+
+        registry = ClientRegistry(["Alice", "Bob", "Charlie"])
+
+        assert not registry.iter().all(lambda name: name.startswith("A"))
+        assert registry.iter().join(", ") == "Alice, Bob, Charlie"
+        assert registry.iter().map(str.lower).join(", ") == "alice, bob, charlie"
+
+        x = (
+            registry
+            .ok_or("Registry is empty")
+            .map(lambda s: s.iter().join(", "))
+            .unwrap()
+        )
+        assert x == ("Alice, Bob, Charlie")
         ```
     """
     @abstractmethod
@@ -78,14 +81,15 @@ class PyoIterable[T](Checkable, Fluent, Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> seq = Seq((1, 2, 3))
-            >>> iterator = seq.iter()
-            >>> iterator.collect(Seq)
-            Seq(1, 2, 3)
-            >>> # iterator is now empty
-            >>> iterator.collect(Seq)
-            Seq()
+            from pyochain import Seq
 
+            seq = Seq((1, 2, 3))
+            iterator = seq.iter()
+
+            assert iterator.collect(Seq) == Seq((1, 2, 3))
+
+            # iterator is now empty
+            assert iterator.collect(Seq).is_empty()
+            assert iterator.next().is_none()
             ```
         """
