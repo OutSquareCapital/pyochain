@@ -617,14 +617,8 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
         """
         return self._inner.count(value)
 
-    def _loc(self, pos: int, idx: int) -> int:
-        return self._inner.loc(pos, idx)
-
     def _build_index(self) -> None:
         return self._inner.build_index()
-
-    def _pos(self, idx: int) -> tuple[int, int]:
-        return self._inner.pos(idx)
 
     def pop(self, index: int = -1) -> T:
         """Remove and return value at `index` in sorted list.
