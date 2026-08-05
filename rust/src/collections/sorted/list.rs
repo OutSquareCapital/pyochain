@@ -446,7 +446,7 @@ impl InnerSorted for InnerLists {
         let load = self.get_load();
         let values_len = values.len();
         let new_lists = (0..values_len).step_by(load).map(|pos| {
-            values[pos..pos + load]
+            values[pos..(pos + load).min(values_len)]
                 .iter()
                 .map(|x| x.clone_ref(py))
                 .collect::<Vec<_>>()
@@ -484,7 +484,7 @@ impl InnerSorted for InnerLists {
         let load = self.get_load();
         let values_len = iterable.len();
         let new_lists = (0..values_len).step_by(load).map(|pos| {
-            iterable[pos..pos + load]
+            iterable[pos..(pos + load).min(values_len)]
                 .iter()
                 .map(|x| x.clone_ref(py))
                 .collect::<Vec<_>>()

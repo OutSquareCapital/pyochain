@@ -538,8 +538,9 @@ impl InnerSorted for InnerKeyLists {
         }
 
         let load = self.get_load();
-        let new_lists = (0..values.len()).step_by(load).map(|pos| {
-            values[pos..pos + load]
+        let values_len = values.len();
+        let new_lists = (0..values_len).step_by(load).map(|pos| {
+            values[pos..(pos + load).min(values_len)]
                 .iter()
                 .map(|x| x.clone_ref(py))
                 .collect::<Vec<_>>()
@@ -582,8 +583,9 @@ impl InnerSorted for InnerKeyLists {
         }
 
         let load = self.get_load();
-        let new_lists = (0..iterable.len()).step_by(load).map(|pos| {
-            iterable[pos..pos + load]
+        let values_len = iterable.len();
+        let new_lists = (0..values_len).step_by(load).map(|pos| {
+            iterable[pos..(pos + load).min(values_len)]
                 .iter()
                 .map(|x| x.clone_ref(py))
                 .collect::<Vec<_>>()
@@ -602,7 +604,7 @@ impl InnerSorted for InnerKeyLists {
         keys.extend(new_keys);
         let new_maxes = keys.iter().map(|x| x[x.len() - 1].clone_ref(py));
         self.get_maxes().extend(new_maxes);
-        self.set_len(iterable.len());
+        self.set_len(values_len);
         self.get_idx().clear();
         Ok(())
     }
