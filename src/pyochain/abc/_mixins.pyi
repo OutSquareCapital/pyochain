@@ -27,23 +27,23 @@ class Pipe(Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Seq, Result, Ok, Err
-            >>> from collections.abc import Sequence
-            >>> def check_data(data: Sequence[int]) -> Result[Sequence[int], str]:
-            ...     if len(data) == 0:
-            ...         return Err("Empty data")
-            ...     return Ok(data)
-            >>>
-            >>> def handle_result(res: Result[Sequence[int], str]) -> str:
-            ...     match res:
-            ...         case Ok(data):
-            ...             return f"Data is valid: {data}"
-            ...         case Err(err):
-            ...             return f"Data is invalid: {err}"
-            >>>
-            >>> Seq((1, 2, 3)).pipe(check_data).pipe(handle_result)
-            'Data is valid: Seq(1, 2, 3)'
+            from pyochain import Seq, Result, Ok, Err
+            from collections.abc import Sequence
 
+            def check_data(data: Sequence[int]) -> Result[Sequence[int], str]:
+                if len(data) == 0:
+                    return Err("Empty data")
+                return Ok(data)
+
+            def handle_result(res: Result[Sequence[int], str]) -> str:
+                match res:
+                    case Ok(data):
+                        return f"Data is valid: {data}"
+                    case Err(err):
+                        return f"Data is invalid: {err}"
+
+            x = Seq((1, 2, 3)).pipe(check_data).pipe(handle_result)
+            assert x == "Data is valid: Seq(1, 2, 3)"
             ```
         """
 
@@ -71,11 +71,14 @@ class Tap(Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> Seq((1, 2, 3, 4)).tap(print).last()
-            Seq(1, 2, 3, 4)
-            4
+            from pyochain import Seq, Vec
 
+            v = Vec(())
+
+            x = Seq((1, 2, 3, 4)).tap(v.extend).last()
+
+            assert v == Vec((1, 2, 3, 4))
+            assert x == 4
             ```
         """
 
@@ -108,50 +111,48 @@ class Checkable(Protocol):
     Example:
         Pyochain collections can efficiently check for emptiness and execute code conditionally natively.
         ```python
-        >>> from pyochain import Seq
-        >>> Seq((1, 2, 3)).then(sum)
-        Some(6)
-        >>> Seq(()).then(sum)
-        NONE
+        from pyochain import Seq, Some
 
+        assert Seq((1, 2, 3)).then(sum) == Some(6)
+        assert Seq(()).then(sum).is_none()
         ```
         This can also be extended to any type, not just collections.
         ```python
-        >>> from pyochain.abc import Checkable
-        >>> class MyString(str, Checkable):
-        ...     pass
-        >>> MyString("hello").then(lambda s: s.upper())
-        Some('HELLO')
-        >>> MyString("").then(lambda s: s.upper())
-        NONE
+        from pyochain.abc import Checkable
 
+        class MyString(str, Checkable): ...
+
+        assert MyString("hello").then(lambda s: s.upper()) == Some("HELLO")
+        assert MyString("").then(lambda s: s.upper()).is_none()
         ```
         This means that you can handle complex business logic in the same way.
         ```python
-        >>> from dataclasses import dataclass
-        >>> @dataclass(slots=True)
-        ... class User(Checkable):
-        ...     name: str
-        ...     is_active: bool
-        ...     age: int
-        ...     def __bool__(self) -> bool:
-        ...         return self.is_active and self.age >= 18
-        ...
-        ...     def describe(self) -> str:
-        ...         return f"{self.name} is an active adult"
-        >>>
-        >>> alice = User("Alice", is_active=True, age=30).then(User.describe)
-        >>> bob = (
-        ...     User("Bob", is_active=False, age=24)
-        ...     .then(User.describe)
-        ...     .ok_or("Expected an active adult user")
-        ...     .map_err(ValueError)
-        ... )
-        >>> alice
-        Some('Alice is an active adult')
-        >>> bob
-        Err(ValueError('Expected an active adult user'))
+        from pyochain import Err
+        from dataclasses import dataclass
 
+        @dataclass(slots=True)
+        class User(Checkable):
+            name: str
+            is_active: bool
+            age: int
+            def __bool__(self) -> bool:
+                return self.is_active and self.age >= 18
+
+            def describe(self) -> str:
+                return f"{self.name} is an active adult"
+
+        alice = User("Alice", is_active=True, age=30).then(User.describe)
+        bob = (
+            User("Bob", is_active=False, age=24)
+            .then(User.describe)
+            .ok_or("Expected an active adult user")
+            .map_err(ValueError)
+        )
+        assert alice == Some("Alice is an active adult")
+        assert (
+            bob.map_err(repr).unwrap_err()
+            == "ValueError('Expected an active adult user')"
+        )
         ```
     """
 
@@ -177,12 +178,10 @@ class Checkable(Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> Seq((1, 2, 3)).then(lambda s: s.iter().sum())
-            Some(6)
-            >>> Seq(()).then(lambda s: s.iter().sum())
-            NONE
+            from pyochain import Seq, Some
 
+            assert Seq((1, 2, 3)).then(lambda s: s.iter().sum()) == Some(6)
+            assert Seq(()).then(lambda s: s.iter().sum()).is_none()
             ```
         """
 
@@ -194,12 +193,12 @@ class Checkable(Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> Seq((1, 2, 3)).then_some()
-            Some(Seq(1, 2, 3))
-            >>> Seq(()).then_some()
-            NONE
+            from pyochain import Seq, Some
 
+            data = Seq((1, 2, 3))
+
+            assert data.then_some() == Some(data)
+            assert Seq(()).then_some().is_none()
             ```
         """
     def ok_or[E](self, err: E) -> Result[Self, E]:
@@ -215,12 +214,13 @@ class Checkable(Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> Seq((1, 2, 3)).ok_or("empty")
-            Ok(Seq(1, 2, 3))
-            >>> Seq(()).ok_or("empty")
-            Err('empty')
+            from pyochain import Seq
 
+            data = Seq((1, 2, 3))
+            msg = "empty"
+
+            assert data.ok_or(msg).unwrap() == data
+            assert Seq(()).ok_or(msg).unwrap_err() == msg
             ```
         """
     def err_or[T](self, ok: T) -> Result[T, Self]:
@@ -236,12 +236,13 @@ class Checkable(Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> Seq((1, 2, 3)).err_or("should be empty")
-            Err(Seq(1, 2, 3))
-            >>> Seq(()).err_or("should be empty")
-            Ok('should be empty')
+            from pyochain import Seq
 
+            msg = "should be empty"
+            data = Seq((1, 2, 3))
+
+            assert data.err_or(msg).unwrap_err() == data
+            assert Seq(()).err_or(msg).unwrap() == msg
             ```
         """
 
@@ -267,12 +268,13 @@ class Checkable(Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> Seq((1, 2, 3)).ok_or_else(lambda s: f"empty seq")
-            Ok(Seq(1, 2, 3))
-            >>> Seq(()).ok_or_else(lambda s: f"empty seq")
-            Err('empty seq')
+            from pyochain import Seq
 
+            data = Seq((1, 2, 3))
+            msg = "empty seq"
+
+            assert data.ok_or_else(lambda s: msg).unwrap() == data
+            assert Seq(()).ok_or_else(lambda s: msg).unwrap_err() == msg
             ```
         """
     def err_or_else[**P, T](
@@ -281,28 +283,30 @@ class Checkable(Protocol):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> Result[T, Self]:
-        """Wrap `Self` in a `Result[Self, E]` based on its truthiness.
+        """Wrap `Self` in a `Result[T, Self]` based on its truthiness.
 
-        `E` being the return type of **func**.
+        `T` being the return type of **func**.
 
         The function is only called if self evaluates to False.
 
 
         Args:
-            func (Callable[Concatenate[Self, P], E]): A callable that returns the error value to wrap in Err.
+            func (Callable[Concatenate[Self, P], T]): A callable that returns the error value to wrap in Err.
             *args (P.args): Positional arguments to pass to the function.
             **kwargs (P.kwargs): Keyword arguments to pass to the function.
 
         Returns:
-            Result[Self, E]: Ok(self) if self is truthy, Err(f(...)) otherwise.
+            Result[T, Self]: Ok(f(...)) if self is falsy, Err(self) otherwise.
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> Seq((1, 2, 3)).err_or_else(lambda s: "should be empty")
-            Err(Seq(1, 2, 3))
-            >>> Seq(()).err_or_else(lambda s: "should be empty")
-            Ok('should be empty')
+            from pyochain import Seq
 
+            msg = "should be empty"
+
+            data = Seq((1, 2, 3))
+
+            assert data.err_or_else(lambda s: msg).unwrap_err() == data
+            assert Seq(()).err_or_else(lambda s: msg).unwrap() == msg
             ```
         """
