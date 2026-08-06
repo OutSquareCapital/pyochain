@@ -17,9 +17,8 @@
         "mkdocstrings-python>=1.18.2",
         "pydoclint>=0.8.1",
         "pytest-benchmark>=5.2.3",
-        "pytest-doctest-mkdocstrings>=0.1.1",
-        "pytest-markdown-docs>=0.9.2",
-        "pytest-stubtester",
+        "pytest-cov>=7.0.0",
+        "pytest-external",
         "pytest>=9.0.2",
         "rich>=14.2.0",
         "ruff>=0.14.9",
@@ -41,7 +40,7 @@
     style                                         = "google"
 
 [tool.uv.sources]
-    pytest-stubtester = { git = "https://github.com/OutSquareCapital/pytest-stubtester.git" }
+    pytest-external = { git = "https://github.com/OutSquareCapital/pytest-external.git" }
 
 [build-system]
     build-backend = "maturin"
@@ -57,5 +56,5 @@
     reportMissingSuperCall = false
     typeCheckingMode       = "all"
 [tool.pytest.ini_options]
-    addopts   = "--doctest-modules --markdown-docs --stubs --benchmark-skip"
+    addopts   = "--external --benchmark-skip"
     testpaths = ["README.md", "docs", "src/pyochain", "tests"]
