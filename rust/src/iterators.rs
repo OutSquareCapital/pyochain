@@ -32,9 +32,6 @@ impl MapJuxt {
                 funcs: collected,
             })
     }
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
-    }
     fn __next__(slf: PyRef<'_, Self>) -> PyResult<Option<Bound<'_, PyTuple>>> {
         let py = slf.py();
         match slf.iterator.clone_ref(py).into_bound(py).next() {
@@ -69,10 +66,6 @@ impl UniqueIdentity {
             seen: PySet::empty(py)?.unbind(),
         }
         .pipe(Ok)
-    }
-
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
     }
 
     fn __next__(slf: PyRef<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
@@ -115,10 +108,6 @@ impl UniqueKey {
             seen: PySet::empty(py)?.unbind(),
         }
         .pipe(Ok)
-    }
-
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
     }
 
     fn __next__(slf: PyRef<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
@@ -174,10 +163,6 @@ impl Intersperse {
         .pipe(Ok)
     }
 
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
-    }
-
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
         let py = slf.py();
         if slf.must_process {
@@ -228,10 +213,6 @@ impl MapWindow {
         .pipe(Ok)
     }
 
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
-    }
-
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyTuple>>> {
         let py = slf.py();
         let item = match slf.iter.clone_ref(py).into_bound(py).next() {
@@ -257,9 +238,6 @@ impl FilterMap {
             iter: data.unbind(),
             func: func.unbind(),
         }
-    }
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
     }
 
     fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
@@ -294,10 +272,6 @@ impl FilterMapStar {
             func: func.unbind(),
         }
     }
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
-    }
-
     fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
         let py = slf.py();
         let func = slf.func.bind(py);
@@ -337,10 +311,6 @@ impl Scan {
             func: func.unbind(),
         }
     }
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
-    }
-
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
         let py = slf.py();
         let func = slf.func.bind(py);
@@ -379,10 +349,6 @@ impl MapWhile {
             func: func.unbind(),
         }
     }
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
-    }
-
     fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
         let py = slf.py();
         let mut iter = slf.iter.clone_ref(py).into_bound(py);
@@ -428,10 +394,6 @@ impl FromFn {
             func: func.unbind(),
             strategy: FromFnStrategy::new(args, kwargs),
         }
-    }
-
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
     }
 
     fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
@@ -489,10 +451,6 @@ impl Drain {
             done: false,
         }
         .pipe(Ok)
-    }
-
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
     }
 
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
@@ -573,9 +531,6 @@ impl ExtractIf {
         .pipe(Ok)
     }
 
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
-    }
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
         let py = slf.py();
         let seq = slf.data.clone_ref(py).into_bound(py);
@@ -623,9 +578,6 @@ impl Successors {
             succ: succ.unbind(),
         }
     }
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
-    }
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
         let py = slf.py();
         let curr = slf.current.clone_ref(py);
@@ -653,10 +605,6 @@ impl FilterStar {
             iter: data.unbind(),
             predicate: predicate.unbind(),
         }
-    }
-
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
     }
 
     fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyAny>>> {
@@ -716,9 +664,6 @@ impl WithPosition {
             peeked: None,
         }
     }
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
-    }
     fn __next__(
         mut slf: PyRefMut<'_, Self>,
     ) -> PyResult<Option<(&Bound<'_, PyString>, Bound<'_, PyAny>)>> {
@@ -759,10 +704,6 @@ impl ZipLongest {
         }
     }
 
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
-    }
-
     fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyTuple>>> {
         let py = slf.py();
         let mut iter = slf.iterator.clone_ref(py).into_bound(py);
@@ -799,9 +740,6 @@ impl Unzip {
             n,
         }
     }
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
-    }
     fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
         let py = slf.py();
         match slf.iterator.clone_ref(py).into_bound(py).next() {
@@ -824,9 +762,6 @@ impl GroupBy {
         Self {
             iterator: data.unbind(),
         }
-    }
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
     }
     fn __next__(slf: PyRefMut<'_, Self>) -> PyResult<Option<(Bound<'_, PyAny>, Bound<'_, Iter>)>> {
         let py = slf.py();
@@ -861,9 +796,6 @@ impl OnceWith {
         }
     }
 
-    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
-        slf
-    }
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
         if !slf.yielded {
             slf.yielded = true;
@@ -922,9 +854,6 @@ impl Tail {
         .pipe(Ok)
     }
 
-    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
-        slf
-    }
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
         slf.data
             .pop_front()
@@ -1157,10 +1086,6 @@ impl SequenceIterator {
             sequence: sequence.unbind(),
         }
     }
-    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
-        slf
-    }
-
     fn __next__<'py>(&'py mut self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
         let v = self.sequence.bind(py).get_item(self.i);
         match v {
@@ -1193,10 +1118,6 @@ impl SequenceReverseIterator {
             iterator,
         })
     }
-    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
-        slf
-    }
-
     fn __next__<'py>(&'py mut self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
         self.iterator
             .next()
@@ -1217,9 +1138,6 @@ impl ValuesViewIterator {
             iterator: mapping.try_iter()?.unbind(),
             mapping: mapping.unbind(),
         })
-    }
-    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
-        slf
     }
 
     fn __next__<'py>(&'py mut self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
@@ -1244,9 +1162,6 @@ impl ItemsViewIterator {
             iterator: mapping.try_iter()?.unbind(),
             mapping: mapping.unbind(),
         })
-    }
-    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
-        slf
     }
 
     fn __next__<'py>(

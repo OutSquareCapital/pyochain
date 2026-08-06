@@ -313,7 +313,7 @@ impl SliceView {
     }
 }
 #[pyclass(module = "pyochain._sliceview", generic)]
-struct SliceViewIterator {
+pub(crate) struct SliceViewIterator {
     current_index: usize,
     length: usize,
     range: Py<PyRange>,
@@ -331,10 +331,6 @@ impl SliceViewIterator {
             seq,
         })
     }
-    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
-        slf
-    }
-
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
         if slf.current_index >= slf.length {
             Ok(None)
@@ -353,7 +349,7 @@ impl SliceViewIterator {
 }
 
 #[pyclass(module = "pyochain._sliceview", generic)]
-struct SliceViewReverseIterator {
+pub(crate) struct SliceViewReverseIterator {
     current_index: usize,
     length: usize,
     range: Py<PyRange>,
@@ -370,9 +366,6 @@ impl SliceViewReverseIterator {
             range: range.unbind(),
             seq,
         })
-    }
-    fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
-        slf
     }
 
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Bound<'_, PyAny>>> {
