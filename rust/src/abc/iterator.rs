@@ -519,10 +519,10 @@ impl PyoIterator {
             .and_then(|x| cls.call1((&x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
-    #[pyo3(signature = (n = 0))]
-    fn enumerate<'py>(slf: &Bound<'py, Self>, n: usize) -> PyResult<Bound<'py, Self>> {
+    #[pyo3(signature = (start = 0))]
+    fn enumerate<'py>(slf: &Bound<'py, Self>, start: usize) -> PyResult<Bound<'py, Self>> {
         slf.try_iter()
-            .and_then(|x| pylibs::builtins::enumerate(&x, n))
+            .and_then(|x| pylibs::builtins::enumerate(&x, start))
             .and_then(|x| slf.get_type().call1((x,)))
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
