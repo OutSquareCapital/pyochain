@@ -1,10 +1,13 @@
-use super::errors;
-use crate::collections::sorted::bisect;
-use crate::collections::sorted::cmp::py_cmp_by_key;
-use crate::collections::sorted::traits::{
-    DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters, SortedKeyListIter,
+use crate::{
+    collections::sorted::{
+        bisect,
+        cmp::py_cmp_by_key,
+        errors,
+        iterators::SortedKeyListIter,
+        traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters},
+    },
+    pyo3_ext::pylibs,
 };
-use crate::pyo3_ext::pylibs;
 use pyo3::prelude::*;
 use std::ops::Index;
 use std::sync::{Mutex, atomic::AtomicUsize};

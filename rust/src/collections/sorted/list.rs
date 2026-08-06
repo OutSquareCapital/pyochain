@@ -1,7 +1,10 @@
-use crate::collections::sorted::traits::{
-    DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters, SortedListIter,
+use crate::collections::sorted::{
+    bisect,
+    cmp::py_cmp,
+    errors,
+    iterators::SortedListIter,
+    traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters},
 };
-use crate::collections::sorted::{bisect, cmp::py_cmp, errors};
 use crate::pyo3_ext::pylibs;
 use pyo3::prelude::*;
 use std::sync::{Mutex, atomic::AtomicUsize};

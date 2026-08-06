@@ -35,7 +35,9 @@ pub trait ImplPyoReversible {
     iterators::WithPosition,
     iterators::ZipLongest,
     iterators::Unzip,
-    iterators::GroupBy
+    iterators::GroupBy,
+    collections::sorted::iterators::SortedListIter,
+    collections::sorted::iterators::SortedKeyListIter
 )]
 pub trait ImplPyoIterator: Sized {
     fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
@@ -68,7 +70,8 @@ impl ImplPyoIterator for iterators::WithPosition {}
 impl ImplPyoIterator for iterators::ZipLongest {}
 impl ImplPyoIterator for iterators::Unzip {}
 impl ImplPyoIterator for iterators::GroupBy {}
-
+impl ImplPyoIterator for collections::sorted::iterators::SortedListIter {}
+impl ImplPyoIterator for collections::sorted::iterators::SortedKeyListIter {}
 macro_rules! impl_py_pipe {
     ($type:ty) => {
         #[pymethods]

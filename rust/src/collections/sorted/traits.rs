@@ -1,7 +1,9 @@
 use crate::{
     abc,
-    collections::{InnerKeyLists, InnerLists, sorted::errors},
-    traits::PyoABC,
+    collections::{
+        InnerKeyLists, InnerLists,
+        sorted::{errors, iterators::SliceKind},
+    },
 };
 use either::Either;
 use pyo3::{
@@ -13,7 +15,7 @@ use pyo3::{
 use pyochain_macros::py_abc;
 use std::{
     cmp::Ordering,
-    sync::{Mutex, MutexGuard, atomic::Ordering as AtomicOrdering},
+    sync::{MutexGuard, atomic::Ordering as AtomicOrdering},
 };
 use tap::prelude::*;
 
@@ -737,7 +739,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         }
     }
     #[pyo3(signature = (start = None, stop = None))]
-    fn islice(
+    fn islice_specs(
         &self,
         py: Python<'_>,
         start: Option<isize>,
@@ -767,50 +769,57 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             Ok(Some((min_pos, min_idx, max_pos, max_idx)))
         }
     }
+    #[pyo3(signature = (min_pos, min_idx, max_pos, max_idx, *, reverse))]
+    fn islice_iter(
+        &self,
+        py: Python<'_>,
+        min_pos: usize,
+        min_idx: isize,
+        max_pos: usize,
+        max_idx: isize,
+        reverse: bool,
+    ) -> PyResult<Bound<'_, abc::PyoIterator>> {
+        let lists = self.get_lists();
+        let kind = SliceKind::new(min_pos, max_pos, reverse);
+
+        let next_pos = min_pos + 1;
+        let it = match kind {
+            SliceKind::Empty => std::iter::empty(),
+            SliceKind::MinEqMax => (min_idx..max_idx).map(|x| lists[min_pos][x as usize]),
+            SliceKind::MinEqMaxRev => (min_idx..max_idx).rev().map(|x| lists[min_pos][x as usize]),
+            SliceKind::NextEqMax => (min_idx..lists[min_pos].len() as isize)
+                .map(|x| lists[min_pos][x as usize])
+                .chain((0..max_idx).map(|x| lists[max_pos][x as usize])),
+            SliceKind::NextEqMaxRev => (0..max_idx)
+                .rev()
+                .map(|x| lists[max_pos][x as usize])
+                .chain(
+                    (min_idx..lists[min_pos].len() as isize)
+                        .rev()
+                        .map(|x| lists[min_pos][x as usize]),
+                ),
+            SliceKind::MinLtMax => (min_idx..lists[min_pos].len() as isize)
+                .map(|x| lists[min_pos][x as usize])
+                .chain((next_pos..max_pos).flat_map(|x| lists[x].iter().map(|x| x.clone_ref(py))))
+                .chain((0..max_idx).map(|x| lists[max_pos][x as usize])),
+            SliceKind::MinLtMaxRev => (0..max_idx)
+                .rev()
+                .map(|x| lists[max_pos][x as usize])
+                .chain(
+                    (next_pos..max_pos)
+                        .rev()
+                        .map(|x| lists[x])
+                        .flat_map(|x| x.iter().rev().map(|x| x.clone_ref(py))),
+                )
+                .chain(
+                    (min_idx..lists[min_pos].len() as isize)
+                        .rev()
+                        .map(|x| lists[min_pos][x as usize]),
+                ),
+        };
+        Ok(it)
+    }
+    fn reversed(&self) -> Bound<'_, abc::PyoIterator> {
+        self.get_lists().iter().rev().flat_map(|x| x.iter().rev())
+    }
 }
-
-/// ref: `self.lists.iter().flatten()`
-macro_rules! impl_lazy_iter {
-    ($iter_name:ident, $owner:ty) => {
-        #[pyclass(module = "pyochain._iterators", frozen, extends = abc::PyoIterator)]
-        pub struct $iter_name {
-            owner: Py<$owner>,
-            cursor: Mutex<(usize, usize)>, // (outer, inner) — un seul lock, snapshot atomique
-        }
-
-        impl $iter_name {
-            pub fn new(py: Python<'_>, owner: Py<$owner>) -> PyResult<Bound<'_, Self>> {
-                let initializer = abc::PyoIterator::build_init().add_subclass(Self {
-                    owner,
-                    cursor: Mutex::new((0, 0)),
-                });
-                Bound::new(py, initializer)
-            }
-        }
-
-        #[pymethods]
-        impl $iter_name {
-            fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
-                slf
-            }
-            fn __next__(&self, py: Python<'_>) -> Option<Py<PyAny>> {
-                let this = self.owner.bind(py).get(); // frozen -> pas de PyRef nécessaire
-                let mut cursor = self.cursor.lock().unwrap();
-                let lists = this.get_lists(); // un seul lock sur la durée de l'appel
-                loop {
-                    let sub = lists.get(cursor.0)?;
-                    if let Some(item) = sub.get(cursor.1) {
-                        let out = item.clone_ref(py);
-                        cursor.1 += 1;
-                        return Some(out);
-                    }
-                    cursor.0 += 1;
-                    cursor.1 = 0;
-                }
-            }
-        }
-    };
-}
-
-impl_lazy_iter!(SortedListIter, InnerLists);
-impl_lazy_iter!(SortedKeyListIter, InnerKeyLists);

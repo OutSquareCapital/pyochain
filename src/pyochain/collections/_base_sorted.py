@@ -3,6 +3,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Final, Self, overload, override
 
+from pyochain import Iter
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
     from types import NotImplementedType
@@ -364,6 +366,37 @@ class BaseSortedListSet[T](SortedCollection[T], ABC):
 class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-hash]
     _inner: InnerSorted[T, Any]
 
+    @override
+    def islice(
+        self,
+        start: int | None = None,
+        stop: int | None = None,
+        *,
+        reverse: bool = False,
+    ) -> PyoIterator[T]:
+        match self._inner.islice_specs(start, stop):
+            case None:
+                return Iter(())
+            case (min_pos, min_idx, max_pos, max_idx):
+                return self._islice(min_pos, min_idx, max_pos, max_idx, reverse=reverse)
+
+    def _islice(
+        self, min_pos: int, min_idx: int, max_pos: int, max_idx: int, *, reverse: bool
+    ) -> PyoIterator[T]:
+        """Return an iterator that slices sorted list using two index pairs.
+
+        The index pairs are (min_pos, min_idx) and (max_pos, max_idx), the
+        first inclusive and the latter exclusive. See `_pos` for details on how
+        an index is converted to an index pair.
+
+        When `reverse` is `True`, values are yielded from the iterator in
+        reverse order.
+
+        """
+        return self._inner.islice_iter(
+            min_pos, min_idx, max_pos, max_idx, reverse=reverse
+        )
+
     def __iter__(self) -> PyoIterator[T]:
         """Return an iterator over the sorted list.
 
@@ -579,6 +612,17 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
         ```
         """
         return self._inner.getitem(index)
+
+    def __reversed__(self) -> PyoIterator[T]:
+        """Return a reverse iterator over the sorted list.
+
+        ``sl.__reversed__()`` <==> ``reversed(sl)``
+
+        Iterating the sorted list while adding or deleting values may raise a
+        :exc:`RuntimeError` or fail to iterate over all values.
+
+        """
+        return self._inner.reversed()
 
     @override
     def add(self, value: T) -> None:

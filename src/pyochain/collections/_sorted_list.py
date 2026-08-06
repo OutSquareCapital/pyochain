@@ -2,11 +2,10 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
-from enum import Enum
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Self, overload, override
 
-from pyochain import Iter, Range, Vec
+from pyochain import Iter, Vec
 from pyochain.abc import PyoIterator, PyoMutableSequence
 from pyochain.rs import InnerLists
 
@@ -123,18 +122,6 @@ class SortedList[T: SupportsRichComparison](
         raise NotImplementedError(message)
 
     @override
-    def __reversed__(self) -> PyoIterator[T]:
-        """Return a reverse iterator over the sorted list.
-
-        ``sl.__reversed__()`` <==> ``reversed(sl)``
-
-        Iterating the sorted list while adding or deleting values may raise a
-        :exc:`RuntimeError` or fail to iterate over all values.
-
-        """
-        return Iter(reversed(self._inner.lists)).flat_map(reversed)
-
-    @override
     def reverse(self) -> None:
         """Raise not-implemented error.
 
@@ -153,91 +140,6 @@ class SortedList[T: SupportsRichComparison](
         """
         msg = "use ``reversed(sl)`` instead"
         raise NotImplementedError(msg)
-
-    @override
-    def islice(
-        self,
-        start: int | None = None,
-        stop: int | None = None,
-        *,
-        reverse: bool = False,
-    ) -> PyoIterator[T]:
-        match self._inner.islice(start, stop):
-            case None:
-                return Iter(())
-            case (min_pos, min_idx, max_pos, max_idx):
-                return self._islice(min_pos, min_idx, max_pos, max_idx, reverse=reverse)
-
-    def _islice(  # ruff:ignore[too-many-return-statements]
-        self, min_pos: int, min_idx: int, max_pos: int, max_idx: int, *, reverse: bool
-    ) -> PyoIterator[T]:
-        """Return an iterator that slices sorted list using two index pairs.
-
-        The index pairs are (min_pos, min_idx) and (max_pos, max_idx), the
-        first inclusive and the latter exclusive. See `_pos` for details on how
-        an index is converted to an index pair.
-
-        When `reverse` is `True`, values are yielded from the iterator in
-        reverse order.
-
-        """
-        lists = self._inner.lists
-        kind = SliceKind.new(min_pos, max_pos, reverse=reverse)
-
-        next_pos = min_pos + 1
-        match kind:
-            case SliceKind.Empty:
-                return Iter(())
-            case SliceKind.MinEqMax:
-                return Range(min_idx, max_idx).iter().map(lists[min_pos].__getitem__)
-            case SliceKind.MinEqMaxRev:
-                return Range(min_idx, max_idx).rev().map(lists[min_pos].__getitem__)
-            case SliceKind.NextEqMax:
-                max_indices = Range(0, max_idx).iter().map(lists[max_pos].__getitem__)
-                return (
-                    Range(min_idx, lists[min_pos].__len__())
-                    .iter()
-                    .map(lists[min_pos].__getitem__)
-                    .chain(max_indices)
-                )
-            case SliceKind.NextEqMaxRev:
-                min_indices = (
-                    Range(min_idx, lists[min_pos].__len__())
-                    .rev()
-                    .map(lists[min_pos].__getitem__)
-                )
-                return (
-                    Range(0, max_idx)
-                    .rev()
-                    .map(lists[max_pos].__getitem__)
-                    .chain(min_indices)
-                )
-            case SliceKind.MinLtMax:
-                return (
-                    Range(min_idx, lists[min_pos].__len__())
-                    .iter()
-                    .map(lists[min_pos].__getitem__)
-                    .chain(Range(next_pos, max_pos).iter().flat_map(lists.__getitem__))
-                    .chain(Range(0, max_idx).iter().map(lists[max_pos].__getitem__))
-                )
-            case SliceKind.MinLtMaxRev:
-                sublists = (
-                    Range(next_pos, max_pos)
-                    .rev()
-                    .map(lists.__getitem__)
-                    .flat_map(reversed)
-                )
-                return (
-                    Range(0, max_idx)
-                    .rev()
-                    .map(lists[max_pos].__getitem__)
-                    .chain(sublists)
-                    .chain(
-                        Range(min_idx, lists[min_pos].__len__())
-                        .rev()
-                        .map(lists[min_pos].__getitem__)
-                    )
-                )
 
     @override
     def irange(
@@ -446,34 +348,3 @@ class SortedList[T: SupportsRichComparison](
 
         """
         return f"{self.__class__.__name__}({list(self)!r})"
-
-
-class SliceKind(Enum):
-    Empty = 1
-    MinEqMax = 2
-    MinEqMaxRev = 3
-    NextEqMax = 4
-    NextEqMaxRev = 5
-    MinLtMax = 6
-    MinLtMaxRev = 7
-
-    @classmethod
-    def new(cls, min_pos: int, max_pos: int, *, reverse: bool) -> SliceKind:  # ruff:ignore[too-many-return-statements]
-        next_pos = min_pos + 1
-        if min_pos > max_pos:
-            return cls.Empty
-
-        if min_pos == max_pos:
-            if reverse:
-                return cls.MinEqMaxRev
-            return cls.MinEqMax
-
-        if next_pos == max_pos:
-            if reverse:
-                return cls.NextEqMaxRev
-            return cls.NextEqMax
-
-        if reverse:
-            return cls.MinLtMaxRev
-
-        return cls.MinLtMax
