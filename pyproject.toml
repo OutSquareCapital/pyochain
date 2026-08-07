@@ -18,7 +18,7 @@
         "pydoclint>=0.8.1",
         "pytest-benchmark>=5.2.3",
         "pytest-cov>=7.0.0",
-        "pytest-external",
+        "pytest-docflex",
         "pytest>=9.0.2",
         "rich>=14.2.0",
         "ruff>=0.14.9",
@@ -40,7 +40,7 @@
     style                                         = "google"
 
 [tool.uv.sources]
-    pytest-external = { git = "https://github.com/OutSquareCapital/pytest-external.git" }
+    pytest-docflex = { git = "https://github.com/OutSquareCapital/pytest-docflex.git" }
 
 [build-system]
     build-backend = "maturin"
@@ -58,5 +58,5 @@
     preset      = "strict"
     search-path = [".", "src"]
 [tool.pytest.ini_options]
-    addopts   = "--external --benchmark-skip"
+    addopts   = "--docflex --benchmark-skip"
     testpaths = ["README.md", "docs", "src/pyochain", "tests"]

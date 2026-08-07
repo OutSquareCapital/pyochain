@@ -484,7 +484,7 @@ dev = [
     { name = "pytest" },
     { name = "pytest-benchmark" },
     { name = "pytest-cov" },
-    { name = "pytest-external" },
+    { name = "pytest-docflex" },
     { name = "rich" },
     { name = "ruff" },
     { name = "sdsort" },
@@ -503,7 +503,7 @@ dev = [
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "pytest-benchmark", specifier = ">=5.2.3" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
-    { name = "pytest-external", git = "https://github.com/OutSquareCapital/pytest-external.git" },
+    { name = "pytest-docflex", git = "https://github.com/OutSquareCapital/pytest-docflex.git" },
     { name = "rich", specifier = ">=14.2.0" },
     { name = "ruff", specifier = ">=0.14.9" },
     { name = "sdsort", specifier = ">=0.5.0" },
@@ -555,9 +555,9 @@ wheels = [
 ]
 
 [[package]]
-name = "pytest-external"
+name = "pytest-docflex"
 version = "0.9.0"
-source = { git = "https://github.com/OutSquareCapital/pytest-external.git#02f6d32e95527295fdc94df9474bfa61bd581323" }
+source = { git = "https://github.com/OutSquareCapital/pytest-docflex.git#dd73a357d07913e33ef87af0f75da6e0f4aacfb3" }
 dependencies = [
     { name = "pyochain" },
     { name = "pytest" },
