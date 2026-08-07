@@ -1,7 +1,10 @@
 use super::{InnerKeyLists, InnerLists, traits::RustGetters};
 use crate::{abc, traits::PyoABC};
 use pyo3::prelude::*;
-use std::sync::{Mutex, MutexGuard};
+use std::sync::{
+    Mutex, MutexGuard,
+    atomic::{self, AtomicUsize},
+};
 struct IterIdxs {
     outer: usize,
     inner: usize,
@@ -103,5 +106,78 @@ impl SliceKind {
         }
 
         Self::MinLtMax
+    }
+}
+#[pyclass(module = "pyochain._iterators", frozen, generic, extends = abc::PyoIterator)]
+pub(crate) struct MinEqMaxIter {
+    owner: Py<InnerLists>,
+    min_pos: usize,
+    current: AtomicUsize,
+    max_idx: usize,
+}
+impl MinEqMaxIter {
+    pub fn new(
+        owner: Bound<'_, InnerLists>,
+        min_pos: usize,
+        min_idx: usize,
+        max_idx: usize,
+    ) -> PyResult<Bound<'_, Self>> {
+        let py = owner.py();
+        let slf = abc::PyoIterator::build_init().add_subclass(Self {
+            owner: owner.unbind(),
+            min_pos,
+            current: AtomicUsize::new(min_idx),
+            max_idx,
+        });
+        Bound::new(py, slf)
+    }
+}
+#[pymethods]
+impl MinEqMaxIter {
+    fn __next__(&self, py: Python<'_>) -> Option<Py<PyAny>> {
+        let current = self.current.load(atomic::Ordering::Relaxed);
+        if current < self.max_idx {
+            self.current.store(current + 1, atomic::Ordering::Relaxed);
+            Some(self.owner.get().get_lists()[self.min_pos][current].clone_ref(py))
+        } else {
+            None
+        }
+    }
+}
+
+#[pyclass(module = "pyochain._iterators", frozen, generic, extends = abc::PyoIterator)]
+pub(crate) struct MinEqMaxIterRev {
+    owner: Py<InnerLists>,
+    min_pos: usize,
+    current: AtomicUsize,
+    min_idx: usize,
+}
+impl MinEqMaxIterRev {
+    pub fn new(
+        owner: Bound<'_, InnerLists>,
+        min_pos: usize,
+        min_idx: usize,
+        max_idx: usize,
+    ) -> PyResult<Bound<'_, Self>> {
+        let py = owner.py();
+        let slf = abc::PyoIterator::build_init().add_subclass(Self {
+            owner: owner.unbind(),
+            min_pos,
+            current: AtomicUsize::new(max_idx),
+            min_idx: min_idx,
+        });
+        Bound::new(py, slf)
+    }
+}
+#[pymethods]
+impl MinEqMaxIterRev {
+    fn __next__(&self, py: Python<'_>) -> Option<Py<PyAny>> {
+        let current = self.current.load(atomic::Ordering::Relaxed);
+        if current > self.min_idx {
+            self.current.store(current - 1, atomic::Ordering::Relaxed);
+            Some(self.owner.get().get_lists()[self.min_pos][current].clone_ref(py))
+        } else {
+            None
+        }
     }
 }

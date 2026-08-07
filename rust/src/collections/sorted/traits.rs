@@ -2,8 +2,9 @@ use crate::{
     abc,
     collections::{
         InnerKeyLists, InnerLists,
-        sorted::{errors, iterators::SliceKind},
+        sorted::{self, errors, iterators::SliceKind},
     },
+    iterators,
 };
 use either::Either;
 use pyo3::{
@@ -771,22 +772,34 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     }
     #[pyo3(signature = (min_pos, min_idx, max_pos, max_idx, *, reverse))]
     fn islice_iter(
-        &self,
-        py: Python<'_>,
+        slf: Bound<'_, Self>,
         min_pos: usize,
         min_idx: isize,
         max_pos: usize,
         max_idx: isize,
         reverse: bool,
     ) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        let lists = self.get_lists();
+        let py = slf.py();
+        let lists = slf.get().get_lists();
         let kind = SliceKind::new(min_pos, max_pos, reverse);
 
         let next_pos = min_pos + 1;
         let it = match kind {
-            SliceKind::Empty => std::iter::empty(),
-            SliceKind::MinEqMax => (min_idx..max_idx).map(|x| lists[min_pos][x as usize]),
-            SliceKind::MinEqMaxRev => (min_idx..max_idx).rev().map(|x| lists[min_pos][x as usize]),
+            SliceKind::Empty => iterators::Iter::empty(py)?.as_super(),
+            SliceKind::MinEqMax => sorted::iterators::MinEqMaxIter::new(
+                slf,
+                min_pos,
+                min_idx as usize,
+                max_idx as usize,
+            )?
+            .as_super(),
+            SliceKind::MinEqMaxRev => sorted::iterators::MinEqMaxIterRev::new(
+                slf,
+                min_pos,
+                min_idx as usize,
+                max_idx as usize,
+            )?
+            .as_super(),
             SliceKind::NextEqMax => (min_idx..lists[min_pos].len() as isize)
                 .map(|x| lists[min_pos][x as usize])
                 .chain((0..max_idx).map(|x| lists[max_pos][x as usize])),
@@ -808,8 +821,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                 .chain(
                     (next_pos..max_pos)
                         .rev()
-                        .map(|x| lists[x])
-                        .flat_map(|x| x.iter().rev().map(|x| x.clone_ref(py))),
+                        .flat_map(|x| lists[x].iter().rev().map(|y| y.clone_ref(py))),
                 )
                 .chain(
                     (min_idx..lists[min_pos].len() as isize)
