@@ -53,28 +53,26 @@ class SortedKeysView(PyoKeysView[_K_co], PyoSequence[_K_co], Generic[_K_co]):  #
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> from pyochain.collections import SortedDict
-        >>> sd = SortedDict({"a": 1, "b": 2, "c": 3})
-        >>> skv = sd.keys()
-        >>> skv[0]
-        'a'
-        >>> skv[-1]
-        'c'
-        >>> skv[:]
-        Vec('a', 'b', 'c')
-        >>> skv[100]
-        Traceback (most recent call last):
-          ...
-        IndexError: list index out of range
-
         Args:
             index (int | slice): integer or slice for indexing
 
         Returns:
             _K_co | Vec[_K_co]: key or list of keys
 
-        :raises IndexError: if index out of range
+        Examples:
+            ```python
+            from pyochain import Ok, Err, Vec
+            from pyochain.collections import SortedDict
+            import pytest
 
+            sd = SortedDict({"a": 1, "b": 2, "c": 3})
+            skv = sd.keys()
+            assert skv[0] == "a"
+            assert skv[-1] == "c"
+            assert skv[:] == Vec(("a", "b", "c"))
+            with pytest.raises(IndexError):
+                skv[100]
+            ```
         """
         return self._mapping._list[index]  # pyright: ignore[reportPrivateUsage]
 
@@ -122,25 +120,23 @@ class SortedItemsView(
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> from pyochain.collections import SortedDict
-        >>> sd = SortedDict({"a": 1, "b": 2, "c": 3})
-        >>> siv = sd.items()
-        >>> siv[0]
-        ('a', 1)
-        >>> siv[-1]
-        ('c', 3)
-        >>> siv[:]
-        Vec(('a', 1), ('b', 2), ('c', 3))
-        >>> siv[100]
-        Traceback (most recent call last):
-          ...
-        IndexError: list index out of range
-
         Args:
             index (int | slice): integer or slice for indexing
 
         Returns:
             tuple[_K_co, _V_co] | Vec[tuple[_K_co, _V_co]]: item or list of items
+        Examples:
+            ```python
+            from pyochain.collections import SortedDict
+
+            sd = SortedDict({"a": 1, "b": 2, "c": 3})
+            siv = sd.items()
+            assert siv[0] == ("a", 1)
+            assert siv[-1] == ("c", 3)
+            assert siv[:] == Vec(("a", 1), ("b", 2), ("c", 3))
+            with pytest.raises(IndexError):
+                siv[100]
+            ```
 
         """
         mapping = self._mapping
@@ -185,25 +181,24 @@ class SortedValuesView(PyoValuesView[_V_co], PyoSequence[_V_co], Generic[_V_co])
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> from pyochain.collections import SortedDict
-        >>> sd = SortedDict({"a": 2, "b": 1, "c": 3})
-        >>> svv = sd.values()
-        >>> svv[0]
-        2
-        >>> svv[-1]
-        3
-        >>> svv[:]
-        Vec(2, 1, 3)
-        >>> svv[100]
-        Traceback (most recent call last):
-          ...
-        IndexError: list index out of range
-
         Args:
             index (int | slice): integer or slice for indexing
 
         Returns:
             _V_co | Vec[_V_co]: value or list of values
+
+        Examples:
+            ```python
+            from pyochain.collections import SortedDict
+
+            sd = SortedDict({"a": 2, "b": 1, "c": 3})
+            svv = sd.values()
+            assert svv[0] == 2
+            assert svv[-1] == 3
+            assert svv[:] == Vec(2, 1, 3)
+            with pytest.raises(IndexError):
+                svv[100]
+            ```
         """
         mapping = self._mapping
         mapping_list = mapping._list  # pyright: ignore[reportPrivateUsage]
@@ -235,22 +230,22 @@ def _view_delitem[K: SupportsHashableAndRichComparison, V](
 
     Runtime complexity: `O(log(n))` -- approximate.
 
-    >>> from pyochain.collections import SortedDict
-    >>> sd = SortedDict({"a": 1, "b": 2, "c": 3})
-    >>> view = sd.keys()
-    >>> del view[0]
-    >>> sd
-    SortedDict({'b': 2, 'c': 3})
-    >>> del view[-1]
-    >>> sd
-    SortedDict({'b': 2})
-    >>> del view[:]
-    >>> sd
-    SortedDict({})
-
     :param index: integer or slice for indexing
     :raises IndexError: if index out of range
 
+    Examples:
+        ```python
+        from pyochain.collections import SortedDict
+
+        sd = SortedDict({"a": 1, "b": 2, "c": 3})
+        view = sd.keys()
+        del view[0]
+        assert sd == SortedDict({"b": 2, "c": 3})
+        del view[-1]
+        assert sd == SortedDict({"b": 2})
+        del view[:]
+        assert sd == SortedDict({})
+        ```
     """
     mapping = self._mapping  # pyright: ignore[reportPrivateUsage]
     list_ = mapping._list  # pyright: ignore[reportPrivateUsage]
