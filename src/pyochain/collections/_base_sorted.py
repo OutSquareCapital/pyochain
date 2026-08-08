@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, Final, Self, overload, override
+
+from pyochain.abc import PyoMutableSequence
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -361,7 +364,7 @@ class BaseSortedListSet[T](SortedCollection[T], ABC):
         """
 
 
-class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-hash]
+class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):  # ruff:ignore[eq-without-hash]
     _inner: InnerSorted[T, Any]
 
     @override
@@ -385,6 +388,7 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
     ) -> PyoIterator[T]:
         return self._inner.islice(start, stop, reverse=reverse)
 
+    @override
     def __iter__(self) -> PyoIterator[T]:
         """Return an iterator over the sorted list.
 
@@ -540,6 +544,7 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
         """
         return self._inner.ge(other)
 
+    @override
     def __delitem__(self, index: int | slice) -> None:
         """Remove value at `index` from sorted list.
 
@@ -568,10 +573,23 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
         """
         return self._inner.delitem(index)
 
+    @override
+    def __len__(self) -> int:
+        """Return the size of the sorted list.
+
+        ``sl.__len__()`` <==> ``len(sl)``
+
+        Returns:
+            (int): size of sorted list
+
+        """
+        return self._inner.len
+
     @overload
     def __getitem__(self, index: int) -> T: ...
     @overload
     def __getitem__(self, index: slice) -> Vec[T]: ...
+    @override
     def __getitem__(self, index: int | slice) -> T | Vec[T]:
         """Lookup value at `index` in sorted list.
 
@@ -601,6 +619,68 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
         """
         return self._inner.getitem(index)
 
+    @override
+    def __iadd__(self, other: Iterable[T]) -> Self:
+        """In-place update of the sorted list with values from `other`.
+
+        ``sl.__iadd__(other)`` <==> ``sl += other``
+
+        Values in `other` do not need to be in sorted order.
+
+        Runtime complexity: `O(k*log(n))` -- approximate.
+
+        Args:
+            other (Iterable[T]): other iterable
+
+        Returns:
+            Self: existing sorted list
+
+        Examples:
+        ```python
+        from pyochain.collections import SortedList
+
+        sl = SortedList("bat")
+        sl += "cat"
+        assert sl == SortedList(["a", "a", "b", "c", "t", "t"])
+        ```
+        """
+        self.update(other)
+        return self
+
+    def __imul__(self, num: int) -> Self:
+        """In-place update of the sorted list with `num` shallow copies of values.
+
+        ``sl.__imul__(num)`` <==> ``sl *= num``
+
+        Runtime complexity: `O(n*log(n))`
+
+        Args:
+            num (int): count of shallow copies
+
+        Returns:
+            Self: existing sorted list
+
+        Examples:
+        ```python
+        from pyochain.collections import SortedList
+
+        sl = SortedList("abc")
+        sl *= 3
+        assert sl == SortedList(["a", "a", "a", "b", "b", "b", "c", "c", "c"])
+        ```
+        """
+        values = self._inner.collapse_lists().repeat(num)
+        self.clear()
+        self.update(values)
+        return self
+
+    def __radd__(self, other: Iterable[T]) -> Self:
+        return self.__add__(other)
+
+    def __rmul__(self, num: int) -> Self:
+        return self.__mul__(num)
+
+    @override
     def __reversed__(self) -> PyoIterator[T]:
         """Return a reverse iterator over the sorted list.
 
@@ -612,9 +692,52 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
         """
         return self._inner.reversed()
 
+    @recursive_repr()
+    def __repr__(self) -> str:
+        """Return string representation of sorted list.
+
+        ``sl.__repr__()`` <==> ``repr(sl)``
+
+        Returns:
+            (str): string representation
+
+        """
+        return f"{self.__class__.__name__}({list(self)!r})"
+
+    @overload
+    def __setitem__(self, index: int, value: T) -> None: ...
+    @overload
+    def __setitem__(self, index: slice, value: Iterable[T]) -> None: ...
+    @override
+    def __setitem__(self, index: int | slice, value: T | Iterable[T]) -> None:
+        """Raise not-implemented error.
+
+        ``sl.__setitem__(index, value)`` <==> ``sl[index] = value``
+
+        Raises:
+            NotImplementedError: use ``del sl[index]`` and ``sl.add(value)`` instead
+
+        """
+        message = "use ``del sl[index]`` and ``sl.add(value)`` instead"
+        raise NotImplementedError(message)
+
     @override
     def add(self, value: T) -> None:
         return self._inner.add(value)
+
+    @override
+    def append(self, value: T) -> None:
+        """Raise not-implemented error.
+
+        Implemented to override `MutableSequence.append` which provides an
+        erroneous default implementation.
+
+        Raises:
+            NotImplementedError: use ``sl.add(value)`` instead
+
+        """
+        msg = "use ``sl.add(value)`` instead"
+        raise NotImplementedError(msg)
 
     @override
     def discard(self, value: T) -> None:
@@ -624,6 +747,7 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
     def remove(self, value: T, /) -> None:
         return self._inner.remove(value)
 
+    @override
     def count(self, value: T) -> int:
         """Return number of occurrences of `value` in the sorted list.
 
@@ -649,6 +773,32 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
         """
         return self._inner.count(value)
 
+    @override
+    def extend(self, values: object) -> None:
+        """Raise not-implemented error.
+
+        Implemented to override `MutableSequence.extend` which provides an
+        erroneous default implementation.
+
+        Raises:
+            NotImplementedError: use ``sl.update(values)`` instead
+
+        """
+        msg = "use ``sl.update(values)`` instead"
+        raise NotImplementedError(msg)
+
+    @override
+    def insert(self, index: int, value: T) -> None:
+        """Raise not-implemented error.
+
+        Raises:
+            NotImplementedError: use ``sl.add(value)`` instead
+
+        """
+        msg = "use ``sl.add(value)`` instead"
+        raise NotImplementedError(msg)
+
+    @override
     def pop(self, index: int = -1) -> T:
         """Remove and return value at `index` in sorted list.
 
@@ -718,3 +868,23 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
         ```
         """
         return self._inner.update(iterable)
+
+    @override
+    def reverse(self) -> None:
+        """Raise not-implemented error.
+
+        Sorted list maintains values in ascending sort order. Values may not be
+        reversed in-place.
+
+        Use ``reversed(sl)`` for an iterator over values in descending sort
+        order.
+
+        Implemented to override `MutableSequence.reverse` which provides an
+        erroneous default implementation.
+
+        Raises:
+            NotImplementedError: use ``reversed(sl)`` instead
+
+        """
+        msg = "use ``reversed(sl)`` instead"
+        raise NotImplementedError(msg)

@@ -2,10 +2,8 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
-from reprlib import recursive_repr
-from typing import TYPE_CHECKING, Self, overload, override
+from typing import TYPE_CHECKING, Self, override
 
-from pyochain.abc import PyoMutableSequence
 from pyochain.rs import InnerLists
 
 from ._base_sorted import BaseSortedList, SortedCollection
@@ -18,9 +16,7 @@ if TYPE_CHECKING:
     from pyochain import Vec
 
 
-class SortedList[T: SupportsRichComparison](
-    BaseSortedList[T], SortedCollection[T], PyoMutableSequence[T]
-):
+class SortedList[T: SupportsRichComparison](BaseSortedList[T], SortedCollection[T]):
     """Sorted list is a sorted mutable sequence.
 
     Sorted list values are maintained in sorted order.
@@ -105,100 +101,12 @@ class SortedList[T: SupportsRichComparison](
     def clear(self) -> None:
         self._inner.clear()
 
-    @overload
-    def __setitem__(self, index: int, value: T) -> None: ...
-    @overload
-    def __setitem__(self, index: slice, value: Iterable[T]) -> None: ...
-    @override
-    def __setitem__(self, index: int | slice, value: T | Iterable[T]) -> None:
-        """Raise not-implemented error.
-
-        ``sl.__setitem__(index, value)`` <==> ``sl[index] = value``
-
-        Raises:
-            NotImplementedError: use ``del sl[index]`` and ``sl.add(value)`` instead
-
-        """
-        message = "use ``del sl[index]`` and ``sl.add(value)`` instead"
-        raise NotImplementedError(message)
-
-    @override
-    def reverse(self) -> None:
-        """Raise not-implemented error.
-
-        Sorted list maintains values in ascending sort order. Values may not be
-        reversed in-place.
-
-        Use ``reversed(sl)`` for an iterator over values in descending sort
-        order.
-
-        Implemented to override `MutableSequence.reverse` which provides an
-        erroneous default implementation.
-
-        Raises:
-            NotImplementedError: use ``reversed(sl)`` instead
-
-        """
-        msg = "use ``reversed(sl)`` instead"
-        raise NotImplementedError(msg)
-
-    @override
-    def __len__(self) -> int:
-        """Return the size of the sorted list.
-
-        ``sl.__len__()`` <==> ``len(sl)``
-
-        Returns:
-            (int): size of sorted list
-
-        """
-        return self._inner.len
-
     @override
     def copy(self) -> Self:
         return self.__class__(self)
 
     def __copy__(self) -> Self:
         return self.copy()
-
-    @override
-    def append(self, value: T) -> None:
-        """Raise not-implemented error.
-
-        Implemented to override `MutableSequence.append` which provides an
-        erroneous default implementation.
-
-        Raises:
-            NotImplementedError: use ``sl.add(value)`` instead
-
-        """
-        msg = "use ``sl.add(value)`` instead"
-        raise NotImplementedError(msg)
-
-    @override
-    def extend(self, values: object) -> None:
-        """Raise not-implemented error.
-
-        Implemented to override `MutableSequence.extend` which provides an
-        erroneous default implementation.
-
-        Raises:
-            NotImplementedError: use ``sl.update(values)`` instead
-
-        """
-        msg = "use ``sl.update(values)`` instead"
-        raise NotImplementedError(msg)
-
-    @override
-    def insert(self, index: int, value: T) -> None:
-        """Raise not-implemented error.
-
-        Raises:
-            NotImplementedError: use ``sl.add(value)`` instead
-
-        """
-        msg = "use ``sl.add(value)`` instead"
-        raise NotImplementedError(msg)
 
     @override
     def __add__(self, other: Iterable[T]) -> Self:
@@ -231,37 +139,6 @@ class SortedList[T: SupportsRichComparison](
         values.extend(other)
         return self.__class__(values)
 
-    def __radd__(self, other: Iterable[T]) -> Self:
-        return self.__add__(other)
-
-    @override
-    def __iadd__(self, other: Iterable[T]) -> Self:
-        """In-place update of the sorted list with values from `other`.
-
-        ``sl.__iadd__(other)`` <==> ``sl += other``
-
-        Values in `other` do not need to be in sorted order.
-
-        Runtime complexity: `O(k*log(n))` -- approximate.
-
-        Args:
-            other (Iterable[T]): other iterable
-
-        Returns:
-            Self: existing sorted list
-
-        Examples:
-        ```python
-        from pyochain.collections import SortedList
-
-        sl = SortedList("bat")
-        sl += "cat"
-        assert sl == SortedList(["a", "a", "b", "c", "t", "t"])
-        ```
-        """
-        self.update(other)
-        return self
-
     @override
     def __mul__(self, num: int) -> Self:
         """Return new sorted list with `num` shallow copies of values.
@@ -288,49 +165,7 @@ class SortedList[T: SupportsRichComparison](
         values = self._inner.collapse_lists().repeat(num)
         return self.__class__(values)
 
-    def __rmul__(self, num: int) -> Self:
-        return self.__mul__(num)
-
-    def __imul__(self, num: int) -> Self:
-        """In-place update of the sorted list with `num` shallow copies of values.
-
-        ``sl.__imul__(num)`` <==> ``sl *= num``
-
-        Runtime complexity: `O(n*log(n))`
-
-        Args:
-            num (int): count of shallow copies
-
-        Returns:
-            Self: existing sorted list
-
-        Examples:
-        ```python
-        from pyochain.collections import SortedList
-
-        sl = SortedList("abc")
-        sl *= 3
-        assert sl == SortedList(["a", "a", "a", "b", "b", "b", "c", "c", "c"])
-        ```
-        """
-        values = self._inner.collapse_lists().repeat(num)
-        self.clear()
-        self.update(values)
-        return self
-
     @override
     def __reduce__(self) -> tuple[type[Self], tuple[Vec[T]]]:
         values = self._inner.collapse_lists()
         return (self.__class__, (values,))
-
-    @recursive_repr()
-    def __repr__(self) -> str:
-        """Return string representation of sorted list.
-
-        ``sl.__repr__()`` <==> ``repr(sl)``
-
-        Returns:
-            (str): string representation
-
-        """
-        return f"{self.__class__.__name__}({list(self)!r})"
