@@ -22,6 +22,7 @@
         "subclass-builtin",                          # We know what we do when subclassing builtins
         "subprocess-popen-with-shell-equals-true",
         "subprocess-without-shell-equals-true",
+        "superfluous-else-return",
         "suspicious-eval-usage",                     # We don't care about eval
         "suspicious-non-cryptographic-random-usage", # We don't care about cryptographic security
         "suspicious-pickle-import",                  # We don't care about insecure modules
