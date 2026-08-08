@@ -92,15 +92,13 @@ class Vec[T](PyoMutableSequence[T]):
 
         Example:
             ```python
-            >>> from pyochain import Vec
-            >>> original_list = [1, 2, 3]
-            >>> vec = Vec.from_ref(original_list)
-            >>> vec
-            Vec(1, 2, 3)
-            >>> vec[0] = 10
-            >>> original_list
-            [10, 2, 3]
+            from pyochain import Vec
 
+            original_list = [1, 2, 3]
+            vec = Vec.from_ref(original_list)
+            assert vec == Vec((1, 2, 3))
+            vec[0] = 10
+            assert original_list == [10, 2, 3]
             ```
         """
 
@@ -120,14 +118,12 @@ class Vec[T](PyoMutableSequence[T]):
 
         Example:
             ```python
-            >>> from pyochain import Vec
-            >>> v1 = Vec([1, 2, 3])
-            >>> v2 = v1.copy()
-            >>> v2
-            Vec(1, 2, 3)
-            >>> v1 is v2
-            False
+            from pyochain import Vec
 
+            v1 = Vec([1, 2, 3])
+            v2 = v1.copy()
+            assert v2 == Vec((1, 2, 3))
+            assert v1 is not v2
             ```
         """
 
@@ -147,10 +143,10 @@ class Vec[T](PyoMutableSequence[T]):
 
         Example:
             ```python
-            >>> from pyochain import Vec
-            >>> Vec.from_ref([1, 2, 3]).repeat(2)
-            Vec(1, 2, 3, 1, 2, 3)
+            from pyochain import Vec
 
+            v = Vec.from_ref([1, 2, 3]).repeat(2)
+            assert v == Vec((1, 2, 3, 1, 2, 3))
             ```
         """
 
@@ -173,13 +169,10 @@ class Vec[T](PyoMutableSequence[T]):
 
         Example:
             ```python
-            >>> from pyochain import Vec
-            >>> vec = Vec.from_ref([1, 2, 3])
-            >>> vec.repeat_mut(2)
-            Vec(1, 2, 3, 1, 2, 3)
-            >>> vec
-            Vec(1, 2, 3, 1, 2, 3)
+            from pyochain import Vec
 
+            vec = Vec.from_ref([1, 2, 3]).repeat_mut(2)
+            assert vec == Vec((1, 2, 3, 1, 2, 3))
             ```
         """
 
@@ -193,15 +186,13 @@ class Vec[T](PyoMutableSequence[T]):
 
         Example:
             ```python
-            >>> from pyochain import Vec
-            >>> vec = Vec.from_ref(["a", "b", "c"])
-            >>> vec.insert(1, "d")
-            >>> vec
-            Vec('a', 'd', 'b', 'c')
-            >>> vec.insert(4, "e")
-            >>> vec
-            Vec('a', 'd', 'b', 'c', 'e')
+            from pyochain import Vec
 
+            vec = Vec.from_ref(["a", "b", "c"])
+            vec.insert(1, "d")
+            assert vec == Vec(("a", "d", "b", "c"))
+            vec.insert(4, "e")
+            assert vec == Vec(("a", "d", "b", "c", "e"))
             ```
         """
     def sort[U: SupportsRichComparison](
@@ -220,10 +211,10 @@ class Vec[T](PyoMutableSequence[T]):
 
         Example:
             ```python
-            >>> from pyochain import Vec, Iter
-            >>> Vec.from_ref([3, 1, 2]).sort()
-            Vec(1, 2, 3)
+            from pyochain import Vec, Iter
 
+            x = Vec.from_ref([3, 1, 2]).sort()
+            assert x == Vec((1, 2, 3))
             ```
         """
 
@@ -246,10 +237,11 @@ class Vec[T](PyoMutableSequence[T]):
 
         Example:
             ```python
-            >>> from pyochain import Vec, Iter
-            >>> Vec.from_ref(["3", "1", "2"]).sort_by(int)
-            Vec('1', '2', '3')
+            from pyochain import Vec, Iter
 
+            x = Vec.from_ref(["3", "1", "2"]).sort_by(int)
+            y = Vec(("1", "2", "3"))
+            assert x == y
             ```
         """
 
@@ -270,19 +262,17 @@ class Vec[T](PyoMutableSequence[T]):
 
         Example:
             ```python
-            >>> from pyochain import Vec
-            >>> v1 = Vec.from_ref([1, 2, 3])
-            >>> v2 = [4, 5, 6]  # Can also concatenate a standard list
-            >>> v3 = v1.concat(v2)
-            >>> v3
-            Vec(1, 2, 3, 4, 5, 6)
-            >>> v1.clear()  # Clean up the original vec
-            >>> v1
-            Vec()
-            >>> # New vec remains unaffected
-            >>> v3
-            Vec(1, 2, 3, 4, 5, 6)
+            from pyochain import Vec
 
+            v1 = Vec.from_ref([1, 2, 3])
+            v2 = [4, 5, 6]  # Can also concatenate a standard list
+            expected = Vec((1, 2, 3, 4, 5, 6))
+            v3 = v1.concat(v2)
+            assert v3 == expected
+            v1.clear()  # Clean up the original vec
+            assert v1 == Vec(())
+            # New vec remains unaffected
+            assert v3 == expected
             ```
         """
 
@@ -306,14 +296,13 @@ class Vec[T](PyoMutableSequence[T]):
 
         Example:
             ```python
-            >>> from pyochain import Vec
-            >>> v1 = Vec.from_ref([1, 2, 3])
-            >>> v2 = [4, 5, 6]  # Can also concatenate a standard list
-            >>> v1.concat_mut(v2)
-            Vec(1, 2, 3, 4, 5, 6)
-            >>> v1
-            Vec(1, 2, 3, 4, 5, 6)
+            from pyochain import Vec
 
+            v1 = Vec.from_ref([1, 2, 3])
+            v2 = [4, 5, 6]  # Can also concatenate a standard list
+            expected = Vec((1, 2, 3, 4, 5, 6))
+            assert v1.concat_mut(v2) == expected
+            assert v1 == expected
             ```
         """
 

@@ -119,11 +119,10 @@ class Seq[T](PyoSequence[T]):
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> s = Seq((1, 2, 3))
-            >>> s.repeat(2)
-            Seq(1, 2, 3, 1, 2, 3)
+            from pyochain import Seq
 
+            s = Seq((1, 2, 3))
+            assert s.repeat(2) == Seq((1, 2, 3, 1, 2, 3))
             ```
         """
     def concat[O](self, other: IntoSeq[O]) -> Seq[T | O]:
@@ -139,12 +138,11 @@ class Seq[T](PyoSequence[T]):
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> s1 = Seq((1, 2, 3))
-            >>> s2 = (4, 5, 6)  # Can also concatenate a standard tuple
-            >>> s3 = s1.concat(s2)
-            >>> s3
-            Seq(1, 2, 3, 4, 5, 6)
+            from pyochain import Seq
 
+            s1 = Seq((1, 2, 3))
+            s2 = (4, 5, 6)  # Can also concatenate a standard tuple
+            s3 = s1.concat(s2)
+            assert s3 == Seq((1, 2, 3, 4, 5, 6))
             ```
         """

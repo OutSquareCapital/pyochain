@@ -45,17 +45,15 @@ class OptionType[T](Pipe):
 
     Example:
         ```python
-        >>> from pyochain import Option, Some, Null
-        >>> def divide(a: int, b: int) -> Option[int]:
-        ...     if b == 0:
-        ...         return Null()
-        ...     return Some(a // b)
-        >>>
-        >>> divide(10, 2)
-        Some(5)
-        >>> divide(10, 0)
-        NONE
+        from pyochain import Option, Some, Null
 
+        def divide(a: int, b: int) -> Option[int]:
+            if b == 0:
+                return Null()
+            return Some(a // b)
+
+        assert divide(10, 2) == Some(5)
+        assert divide(10, 0).is_none()
         ```
     """
 
@@ -89,14 +87,11 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> Some(Some(42)).flatten()
-            Some(42)
-            >>> Some(NONE).flatten()
-            NONE
-            >>> NONE.flatten()
-            NONE
+            from pyochain import Some, NONE
 
+            assert Some(Some(42)).flatten() == Some(42)
+            assert Some(NONE).flatten().is_none()
+            assert NONE.flatten().is_none()
             ```
         """
 
@@ -288,20 +283,14 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> Some(42) == Some(42)
-            True
-            >>> Some(42) == Some(21)
-            False
-            >>> Some(42) == NONE
-            False
-            >>> NONE == NONE
-            True
-            >>> NONE == None
-            True
-            >>> Some(42) == 42
-            False
+            from pyochain import Some, NONE
 
+            assert Some(42) == Some(42)
+            assert Some(42) != Some(21)
+            assert Some(42) != NONE
+            assert NONE == NONE
+            assert NONE == None
+            assert Some(42) != 42
             ```
         """
 
@@ -321,16 +310,12 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> Some(42).eq(Some(42))
-            True
-            >>> Some(42).eq(Some(21))
-            False
-            >>> Some(42).eq(NONE)
-            False
-            >>> NONE.eq(NONE)
-            True
+            from pyochain import Some, NONE
 
+            assert Some(42).eq(Some(42))
+            assert not Some(42).eq(Some(21))
+            assert not Some(42).eq(NONE)
+            assert NONE.eq(NONE)
             ```
         """
 
@@ -342,15 +327,10 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>>
-            >>> x = Some(2)
-            >>> x.is_some()
-            True
-            >>> y = NONE
-            >>> y.is_some()
-            False
+            from pyochain import Some, NONE
 
+            assert Some(2).is_some()
+            assert not NONE.is_some()
             ```
         """
 
@@ -941,28 +921,26 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> s12 = Some(12)
-            >>> s17 = Some(17)
-            >>>
-            >>> def add(a: int, b: int) -> int:
-            ...     return a + b
-            >>>
-            >>> s12.reduce(s17, add)
-            Some(29)
-            >>> s12.reduce(NONE, add)
-            Some(12)
-            >>> NONE.reduce(s17, add)
-            Some(17)
-            >>> NONE.reduce(NONE, add)
-            NONE
-            >>> def concat(a: str, b: str) -> str:
-            ...     return a + b
-            >>> Some("Hello, ").reduce(Some("World!"), concat)
-            Some('Hello, World!')
-            >>> Some("I am ").reduce(Some(26), lambda a, b: a + str(b))
-            Some('I am 26')
+            from pyochain import Some, NONE
 
+            s12 = Some(12)
+            s17 = Some(17)
+
+            def add(a: int, b: int) -> int:
+                return a + b
+
+            assert s12.reduce(s17, add) == Some(29)
+            assert s12.reduce(NONE, add) == Some(12)
+            assert NONE.reduce(s17, add) == Some(17)
+            assert NONE.reduce(NONE, add).is_none()
+
+            def concat(a: str, b: str) -> str:
+                return a + b
+
+            a = Some("Hello, ").reduce(Some("World!"), concat)
+            assert a == Some("Hello, World!")
+            b = Some("I am ").reduce(Some(26), lambda a, b: a + str(b))
+            assert b == Some("I am 26")
             ```
         """
 
@@ -1077,22 +1055,20 @@ class Null[T](OptionType[T]):
 
     Example:
         ```python
-        >>> from pyochain import Null, NONE, Some, Option
-        >>> Null() is NONE
-        True
-        >>> def is_none(x: Option[int]) -> bool:
-        ...     match x:
-        ...         case Null():
-        ...             return True
-        ...         case Some(_):
-        ...             return False
-        >>> is_none(NONE)
-        True
-        >>> is_none(Some(42))
-        False
-        >>> is_none(Null())
-        True
+        from pyochain import Null, NONE, Some, Option
 
+        assert Null() is NONE
+
+        def is_none(x: Option[int]) -> bool:
+            match x:
+                case Null():
+                    return True
+                case Some(_):
+                    return False
+
+        assert is_none(NONE)
+        assert not is_none(Some(42))
+        assert is_none(Null())
         ```
     """
 
