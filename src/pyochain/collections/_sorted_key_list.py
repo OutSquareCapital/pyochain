@@ -192,58 +192,12 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
     @override
     def __add__(self, other: Iterable[T]) -> Self:
-        """Return new sorted-key list containing all values in both sequences.
-
-        ``skl.__add__(other)`` <==> ``skl + other``
-
-        Values in `other` do not need to be in sorted-key order.
-
-        Runtime complexity: `O(n*log(n))`
-
-        Args:
-            other (Iterable[T]): other iterable
-        Returns:
-            (Self): new sorted-key list
-
-        Examples:
-        ```python
-        from pyochain.collections import SortedKeyList
-        from operator import neg
-
-        skl1 = SortedKeyList([5, 4, 3], key=neg)
-        skl2 = SortedKeyList([2, 1, 0], key=neg)
-        new = skl1 + skl2
-        assert new == [5, 4, 3, 2, 1, 0]
-        ```
-        """
         values = self._inner.collapse_lists()
         values.extend(other)
         return self.__class__(values, key=self._inner.key)
 
     @override
     def __mul__(self, num: int) -> Self:
-        """Return new sorted-key list with `num` shallow copies of values.
-
-        ``skl.__mul__(num)`` <==> ``skl * num``
-
-        Runtime complexity: `O(n*log(n))`
-
-        Args:
-            num (int): count of shallow copies
-
-        Returns:
-            (Self): new sorted-key list
-
-        Examples:
-        ```python
-        from pyochain.collections import SortedKeyList
-        from operator import neg
-
-        skl = SortedKeyList([3, 2, 1], key=neg)
-        new = skl * 2
-        assert new == [3, 3, 2, 2, 1, 1]
-        ```
-        """
         values = self._inner.collapse_lists().repeat(num)
         return self.__class__(values, key=self._inner.key)
 
@@ -255,13 +209,5 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
     @recursive_repr()
     def __repr__(self) -> str:
-        """Return string representation of sorted-key list.
-
-        ``skl.__repr__()`` <==> ``repr(skl)``
-
-        Returns:
-            (str): string representation
-
-        """
         type_name = self.__class__.__name__
         return f"{type_name}({list(self)!r}, key={self._inner.key!r})"

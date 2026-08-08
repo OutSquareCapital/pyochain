@@ -2,6 +2,7 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
+from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Self, override
 
 from pyochain.rs import InnerLists
@@ -110,58 +111,12 @@ class SortedList[T: SupportsRichComparison](BaseSortedList[T], SortedCollection[
 
     @override
     def __add__(self, other: Iterable[T]) -> Self:
-        """Return new sorted list containing all values in both sequences.
-
-        ``sl.__add__(other)`` <==> ``sl + other``
-
-        Values in `other` do not need to be in sorted order.
-
-        Runtime complexity: `O(n*log(n))`
-
-        Args:
-            other (Iterable[T]): other iterable
-
-        Returns:
-            (Self): new sorted list
-
-        Examples:
-        ```python
-        from pyochain.collections import SortedList
-
-        sl1 = SortedList("bat")
-        sl2 = SortedList("cat")
-        added = sl1 + sl2
-        assert added == SortedList(["a", "a", "b", "c", "t", "t"])
-        ```
-
-        """
         values = self._inner.collapse_lists()
         values.extend(other)
         return self.__class__(values)
 
     @override
     def __mul__(self, num: int) -> Self:
-        """Return new sorted list with `num` shallow copies of values.
-
-        ``sl.__mul__(num)`` <==> ``sl * num``
-
-        Runtime complexity: `O(n*log(n))`
-
-        Args:
-            num (int): count of shallow copies
-
-        Returns:
-            Self: new sorted list
-
-        Examples:
-        ```python
-        from pyochain.collections import SortedList
-
-        sl = SortedList("abc")
-        new = sl * 3
-        assert new == SortedList(["a", "a", "a", "b", "b", "b", "c", "c", "c"])
-        ```
-        """
         values = self._inner.collapse_lists().repeat(num)
         return self.__class__(values)
 
@@ -169,3 +124,7 @@ class SortedList[T: SupportsRichComparison](BaseSortedList[T], SortedCollection[
     def __reduce__(self) -> tuple[type[Self], tuple[Vec[T]]]:
         values = self._inner.collapse_lists()
         return (self.__class__, (values,))
+
+    @recursive_repr()
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({list(self)!r})"

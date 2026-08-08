@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, Final, Self, overload, override
 
 from pyochain.abc import PyoMutableSequence
@@ -430,10 +429,68 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):  # ru
         return self._inner.contains(value)
 
     @abstractmethod
-    def __add__(self, other: Iterable[T]) -> Self: ...
+    def __add__(self, other: Iterable[T]) -> Self:
+        """Return new sorted list containing all values in both sequences.
+
+        ``sl.__add__(other)`` <==> ``sl + other``
+
+        Values in `other` do not need to be in sorted order.
+
+        Runtime complexity: `O(n*log(n))`
+
+        Args:
+            other (Iterable[T]): other iterable
+
+        Returns:
+            (Self): new sorted list
+
+        Examples:
+        ```python
+        from pyochain.collections import SortedList, SortedKeyList
+        from operator import neg
+
+        sl1 = SortedList("bat")
+        sl2 = SortedList("cat")
+        added = sl1 + sl2
+        assert added == SortedList(["a", "a", "b", "c", "t", "t"])
+
+        skl1 = SortedKeyList([5, 4, 3], key=neg)
+        skl2 = SortedKeyList([2, 1, 0], key=neg)
+        new = skl1 + skl2
+        assert new == [5, 4, 3, 2, 1, 0]
+        ```
+        """
+        ...
 
     @abstractmethod
-    def __mul__(self, num: int) -> Self: ...
+    def __mul__(self, num: int) -> Self:
+        """Return new sorted list with `num` shallow copies of values.
+
+        ``sl.__mul__(num)`` <==> ``sl * num``
+
+        Runtime complexity: `O(n*log(n))`
+
+        Args:
+            num (int): count of shallow copies
+
+        Returns:
+            Self: new sorted list
+
+        Examples:
+        ```python
+        from pyochain.collections import SortedList, SortedKeyList
+        from operator import neg
+
+        sl = SortedList("abc")
+        new = sl * 3
+        assert new == SortedList(["a", "a", "a", "b", "b", "b", "c", "c", "c"])
+
+        skl = SortedKeyList([3, 2, 1], key=neg)
+        new = skl * 2
+        assert new == [3, 3, 2, 2, 1, 1]
+        ```
+        """
+        ...
 
     @override
     def __eq__(self, other: object) -> NotImplementedType | bool:
@@ -692,7 +749,8 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):  # ru
         """
         return self._inner.reversed()
 
-    @recursive_repr()
+    @abstractmethod
+    @override
     def __repr__(self) -> str:
         """Return string representation of sorted list.
 
@@ -702,7 +760,6 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):  # ru
             (str): string representation
 
         """
-        return f"{self.__class__.__name__}({list(self)!r})"
 
     @overload
     def __setitem__(self, index: int, value: T) -> None: ...
