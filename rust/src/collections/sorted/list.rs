@@ -284,6 +284,7 @@ impl InnerSorted for InnerLists {
             let idx = bisect::left(&lists[pos], &value)?;
 
             if lists[pos][idx].bind(py).eq(value)? {
+                drop(lists);
                 self.delete(py, pos, idx)
             } else {
                 Ok(())
@@ -308,6 +309,7 @@ impl InnerSorted for InnerLists {
                 let idx = bisect::left(&lists[pos], &value)?;
 
                 if lists[pos][idx].bind(py).eq(&value)? {
+                    drop(lists);
                     self.delete(py, pos, idx)
                 } else {
                     errors::not_in_list_err(value)
@@ -373,7 +375,7 @@ impl InnerSorted for InnerLists {
         if pos_left == pos_right {
             return Ok(idx_right - idx_left);
         }
-
+        drop(lists);
         let right = self.loc(pos_right, idx_right as isize)?;
         let left = self.loc(pos_left, idx_left as isize)?;
         Ok((right - left) as usize)
@@ -426,6 +428,7 @@ impl InnerSorted for InnerLists {
         }
 
         stop -= 1;
+        drop(lists);
         let left = self.loc(pos_left, idx_left as isize)?;
 
         if start <= left {

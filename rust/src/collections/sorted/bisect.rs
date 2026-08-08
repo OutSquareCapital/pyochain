@@ -17,7 +17,7 @@ pub(super) fn right(lst: &Vec<Py<PyAny>>, item: &Bound<'_, PyAny>) -> PyResult<u
 #[inline]
 pub(super) fn left(lst: &Vec<Py<PyAny>>, item: &Bound<'_, PyAny>) -> PyResult<usize> {
     let py = item.py();
-    resolve(lst.len(), |mid| Ok(!item.lt(lst[mid].bind(py))?))
+    resolve(lst.len(), |mid| Ok(!lst[mid].bind(py).lt(item)?))
 }
 
 #[inline(always)]

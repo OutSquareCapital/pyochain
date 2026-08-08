@@ -5,7 +5,9 @@ use crate::{
         cmp::py_cmp_by_key,
         errors,
         iter::{self, IsliceBounds},
-        traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters, try_lock_recover},
+        traits::{
+            DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters, try_lock_recover,
+        },
     },
     iterators,
     pyo3_ext::pylibs,
@@ -360,6 +362,7 @@ impl InnerSorted for InnerKeyLists {
                 }
                 if lists[pos][idx].bind(py).eq(&value)? {
                     drop(keys);
+                    drop(lists);
                     self.delete(py, pos, idx)?;
                     break;
                 } else {
@@ -409,6 +412,7 @@ impl InnerSorted for InnerKeyLists {
                 }
                 if lists[pos][idx].bind(py).eq(&value)? {
                     drop(keys);
+                    drop(lists);
                     self.delete(py, pos, idx)?;
                     break;
                 }
