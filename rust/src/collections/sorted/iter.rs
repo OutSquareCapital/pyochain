@@ -101,18 +101,19 @@ impl<T: InnerSorted> BoundedIter<T> {
 
     pub fn next(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
         if self.start == self.end {
-            return None;
-        }
-        let lists = self.owner.get().get_lists();
-        match self.dir {
-            Dir::Fwd => {
-                let item = lists[self.start.pos][self.start.idx].clone_ref(py);
-                self.start.increment(&lists);
-                Some(item)
-            }
-            Dir::Bwd => {
-                self.end.decrement(&lists);
-                Some(lists[self.end.pos][self.end.idx].clone_ref(py))
+            None
+        } else {
+            let lists = self.owner.get().get_lists();
+            match self.dir {
+                Dir::Fwd => {
+                    let item = lists[self.start.pos][self.start.idx].clone_ref(py);
+                    self.start.increment(&lists);
+                    Some(item)
+                }
+                Dir::Bwd => {
+                    self.end.decrement(&lists);
+                    Some(lists[self.end.pos][self.end.idx].clone_ref(py))
+                }
             }
         }
     }
