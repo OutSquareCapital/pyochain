@@ -16,26 +16,21 @@ class Range(PyoSequence[int]):
 
     Example:
         ```python
-        >>> from pyochain import Range, Dict, Seq
-        >>>
-        >>> r = Range(1, 6, 2)
-        >>> r
-        Range(1, 6, 2)
-        >>> r.iter().collect(Seq)
-        Seq(1, 3, 5)
-        >>> r.rev().collect(Seq)
-        Seq(5, 3, 1)
-        >>> names = ("alice", "bob", "CHARLIE", "dave")
-        >>> indexed_names = (
-        ...     Range(0, 100)
-        ...     .iter()
-        ...     .zip(names)
-        ...     .map_star(lambda i, n: (i, n.title()))
-        ...     .collect(Dict)
-        ... )
-        >>> indexed_names
-        Dict(0: 'Alice', 1: 'Bob', 2: 'Charlie', 3: 'Dave')
+        from pyochain import Range, Dict, Seq
 
+        r = Range(1, 6, 2)
+        assert r == Range(1, 6, 2)
+        assert r.iter().collect(Seq) == Seq((1, 3, 5))
+        assert r.rev().collect(Seq) == Seq((5, 3, 1))
+        names = ("alice", "bob", "CHARLIE", "dave")
+        indexed_names = (
+            Range(0, 100)
+            .iter()
+            .zip(names)
+            .map_star(lambda i, n: (i, n.title()))
+            .collect(Dict)
+        )
+        assert indexed_names == Dict({0: "Alice", 1: "Bob", 2: "Charlie", 3: "Dave"})
         ```
     """
 
