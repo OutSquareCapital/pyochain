@@ -248,16 +248,14 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         :raises IndexError: if index out of range
 
         """
-        set_ = self._set
-        list_ = self._list
         match index:
             case slice():
-                values = list_[index]
-                set_.difference_update(values)
+                values = self._list[index]
+                self._set.difference_update(values)
             case int():
-                value = list_[index]
-                set_.remove(value)
-        del list_[index]
+                value = self._list[index]
+                self._set.remove(value)
+        del self._list[index]
 
     @override
     def __eq__(self, other: object) -> bool | NotImplementedType:
@@ -552,13 +550,11 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
             Self: updated sorted set
 
         """
-        set_ = self._set
-        list_ = self._list
         values = Iter(iterables).flatten().collect(Set)
-        if (4 * values.len()) > set_.len():
-            set_.difference_update(values)
-            list_.clear()
-            list_.update(set_)
+        if (4 * values.len()) > self._set.len():
+            self._set.difference_update(values)
+            self._list.clear()
+            self._list.update(self._set)
         else:
             for value in values:
                 self.discard(value)
@@ -681,11 +677,9 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
             Self: updated sorted set
 
         """
-        set_ = self._set
-        list_ = self._list
-        set_.symmetric_difference_update(other)
-        list_.clear()
-        list_.update(set_)
+        self._set.symmetric_difference_update(other)
+        self._list.clear()
+        self._list.update(self._set)
         return self
 
     @override
@@ -738,13 +732,11 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
             Self: updated sorted set
 
         """
-        list_ = self._list
         values = Iter(iterables).flatten().collect(Set)
         if (4 * values.len()) > self._set.len():
-            list_ = self._list
             self._set.update(values)
-            list_.clear()
-            list_.update(self._set)
+            self._list.clear()
+            self._list.update(self._set)
         else:
             for value in values:
                 self.add(value)
