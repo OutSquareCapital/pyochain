@@ -2,7 +2,7 @@ use crate::collections::sorted::{
     bisect,
     cmp::py_cmp,
     errors,
-    iterators::SortedListIter,
+    iter::SortedListIter,
     traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters},
 };
 use crate::pyo3_ext::pylibs;

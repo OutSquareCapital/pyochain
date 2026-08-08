@@ -2,7 +2,10 @@ use crate::{
     abc,
     collections::{
         InnerKeyLists, InnerLists,
-        sorted::{self, errors, iterators::SliceKind},
+        sorted::{
+            self, errors,
+            iter::{IsliceBounds, SliceKind},
+        },
     },
     iterators,
 };
@@ -774,44 +777,24 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     fn islice_iter(
         slf: Bound<'_, Self>,
         min_pos: usize,
-        min_idx: isize,
+        min_idx: usize,
         max_pos: usize,
-        max_idx: isize,
+        max_idx: usize,
         reverse: bool,
     ) -> PyResult<Bound<'_, abc::PyoIterator>> {
         let py = slf.py();
         let lists = slf.get().get_lists();
         let kind = SliceKind::new(min_pos, max_pos, reverse);
+        let bounds = IsliceBounds::new(min_pos, min_idx, max_pos, max_idx);
 
         let next_pos = min_pos + 1;
         let it = match kind {
             SliceKind::Empty => iterators::Iter::empty(py)?.as_super(),
-            SliceKind::MinEqMax => sorted::iterators::MinEqMaxIter::new(
-                slf,
-                min_pos,
-                min_idx as usize,
-                max_idx as usize,
-            )?
-            .as_super(),
-            SliceKind::MinEqMaxRev => sorted::iterators::MinEqMaxIterRev::new(
-                slf,
-                min_pos,
-                min_idx as usize,
-                max_idx as usize,
-            )?
-            .as_super(),
-            SliceKind::NextEqMax => (min_idx..lists[min_pos].len() as isize)
-                .map(|x| lists[min_pos][x as usize])
-                .chain((0..max_idx).map(|x| lists[max_pos][x as usize])),
-            SliceKind::NextEqMaxRev => (0..max_idx)
-                .rev()
-                .map(|x| lists[max_pos][x as usize])
-                .chain(
-                    (min_idx..lists[min_pos].len() as isize)
-                        .rev()
-                        .map(|x| lists[min_pos][x as usize]),
-                ),
-            SliceKind::MinLtMax => (min_idx..lists[min_pos].len() as isize)
+            SliceKind::MinEqMax => sorted::iter::MinEqMaxIter::new(slf, bounds)?.as_super(),
+            SliceKind::MinEqMaxRev => sorted::iter::MinEqMaxIterRev::new(slf, bounds)?.as_super(),
+            SliceKind::NextEqMax => sorted::iter::NextEqMaxIter::new(slf, bounds)?.as_super(),
+            SliceKind::NextEqMaxRev => sorted::iter::NextEqMaxIterRev::new(slf, bounds)?.as_super(),
+            SliceKind::MinLtMax => (min_idx..lists[min_pos].len())
                 .map(|x| lists[min_pos][x as usize])
                 .chain((next_pos..max_pos).flat_map(|x| lists[x].iter().map(|x| x.clone_ref(py))))
                 .chain((0..max_idx).map(|x| lists[max_pos][x as usize])),
@@ -824,7 +807,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                         .flat_map(|x| lists[x].iter().rev().map(|y| y.clone_ref(py))),
                 )
                 .chain(
-                    (min_idx..lists[min_pos].len() as isize)
+                    (min_idx..lists[min_pos].len())
                         .rev()
                         .map(|x| lists[min_pos][x as usize]),
                 ),

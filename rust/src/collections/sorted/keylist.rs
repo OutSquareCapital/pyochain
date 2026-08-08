@@ -3,7 +3,7 @@ use crate::{
         bisect,
         cmp::py_cmp_by_key,
         errors,
-        iterators::SortedKeyListIter,
+        iter::SortedKeyListIter,
         traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters},
     },
     pyo3_ext::pylibs,

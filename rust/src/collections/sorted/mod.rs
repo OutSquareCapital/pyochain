@@ -1,7 +1,7 @@
 pub(super) mod bisect;
 mod cmp;
 mod errors;
-pub mod iterators;
+pub mod iter;
 mod keylist;
 mod list;
 mod traits;

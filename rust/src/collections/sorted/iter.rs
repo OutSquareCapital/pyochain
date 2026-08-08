@@ -9,6 +9,23 @@ struct IterIdxs {
     outer: usize,
     inner: usize,
 }
+
+pub struct IsliceBounds {
+    pub min_pos: usize,
+    pub max_pos: usize,
+    pub min_idx: usize,
+    pub max_idx: usize,
+}
+impl IsliceBounds {
+    pub fn new(min_pos: usize, min_idx: usize, max_pos: usize, max_idx: usize) -> Self {
+        Self {
+            min_pos,
+            min_idx,
+            max_pos,
+            max_idx,
+        }
+    }
+}
 pub trait SortedIterator: abc::traits::ImplPyoIterator {
     fn get_lists(&self) -> MutexGuard<'_, Vec<Vec<Py<PyAny>>>>;
     fn get_cursor(&self) -> MutexGuard<'_, IterIdxs>;
@@ -78,7 +95,6 @@ pub enum SliceKind {
     MinLtMax,
     MinLtMaxRev,
 }
-
 impl SliceKind {
     #[inline]
     pub fn new(min_pos: usize, max_pos: usize, reverse: bool) -> Self {
@@ -111,23 +127,17 @@ impl SliceKind {
 #[pyclass(module = "pyochain._iterators", frozen, generic, extends = abc::PyoIterator)]
 pub(crate) struct MinEqMaxIter {
     owner: Py<InnerLists>,
-    min_pos: usize,
+    bounds: IsliceBounds,
     current: AtomicUsize,
-    max_idx: usize,
 }
 impl MinEqMaxIter {
-    pub fn new(
-        owner: Bound<'_, InnerLists>,
-        min_pos: usize,
-        min_idx: usize,
-        max_idx: usize,
-    ) -> PyResult<Bound<'_, Self>> {
+    pub fn new(owner: Bound<'_, InnerLists>, bounds: IsliceBounds) -> PyResult<Bound<'_, Self>> {
         let py = owner.py();
+        let current = AtomicUsize::new(bounds.min_idx.clone());
         let slf = abc::PyoIterator::build_init().add_subclass(Self {
             owner: owner.unbind(),
-            min_pos,
-            current: AtomicUsize::new(min_idx),
-            max_idx,
+            bounds,
+            current,
         });
         Bound::new(py, slf)
     }
@@ -136,9 +146,9 @@ impl MinEqMaxIter {
 impl MinEqMaxIter {
     fn __next__(&self, py: Python<'_>) -> Option<Py<PyAny>> {
         let current = self.current.load(atomic::Ordering::Relaxed);
-        if current < self.max_idx {
+        if current < self.bounds.max_idx {
             self.current.store(current + 1, atomic::Ordering::Relaxed);
-            Some(self.owner.get().get_lists()[self.min_pos][current].clone_ref(py))
+            Some(self.owner.get().get_lists()[self.bounds.min_pos][current].clone_ref(py))
         } else {
             None
         }
@@ -148,23 +158,17 @@ impl MinEqMaxIter {
 #[pyclass(module = "pyochain._iterators", frozen, generic, extends = abc::PyoIterator)]
 pub(crate) struct MinEqMaxIterRev {
     owner: Py<InnerLists>,
-    min_pos: usize,
+    bounds: IsliceBounds,
     current: AtomicUsize,
-    min_idx: usize,
 }
 impl MinEqMaxIterRev {
-    pub fn new(
-        owner: Bound<'_, InnerLists>,
-        min_pos: usize,
-        min_idx: usize,
-        max_idx: usize,
-    ) -> PyResult<Bound<'_, Self>> {
+    pub fn new(owner: Bound<'_, InnerLists>, bounds: IsliceBounds) -> PyResult<Bound<'_, Self>> {
         let py = owner.py();
+        let current = AtomicUsize::new(bounds.max_idx.clone());
         let slf = abc::PyoIterator::build_init().add_subclass(Self {
             owner: owner.unbind(),
-            min_pos,
-            current: AtomicUsize::new(max_idx),
-            min_idx: min_idx,
+            bounds,
+            current,
         });
         Bound::new(py, slf)
     }
@@ -173,11 +177,67 @@ impl MinEqMaxIterRev {
 impl MinEqMaxIterRev {
     fn __next__(&self, py: Python<'_>) -> Option<Py<PyAny>> {
         let current = self.current.load(atomic::Ordering::Relaxed);
-        if current > self.min_idx {
+        if current > self.bounds.min_idx {
             self.current.store(current - 1, atomic::Ordering::Relaxed);
-            Some(self.owner.get().get_lists()[self.min_pos][current].clone_ref(py))
+            Some(self.owner.get().get_lists()[self.bounds.min_pos][current].clone_ref(py))
         } else {
             None
         }
+    }
+}
+enum NextMaxIterState {
+    Min,
+    Max,
+    Done,
+}
+#[pyclass(module = "pyochain._iterators", frozen, generic, extends = abc::PyoIterator)]
+pub(crate) struct NextEqMaxIter {
+    owner: Py<InnerLists>,
+    bounds: IsliceBounds,
+    state: NextMaxIterState,
+}
+impl NextEqMaxIter {
+    pub fn new(owner: Bound<'_, InnerLists>, bounds: IsliceBounds) -> PyResult<Bound<'_, Self>> {
+        todo!()
+    }
+}
+impl NextEqMaxIter {
+    fn __next__(&self) -> Option<Py<PyAny>> {
+        let lists = self.owner.get().get_lists();
+        // NOTE: This code make no sense ATM. Placeholder.
+        match self.state {
+            NextMaxIterState::Min => (self.bounds.min_idx..lists[self.bounds.min_pos].len())
+                .map(|x| lists[self.bounds.min_pos][x as usize])
+                .next(),
+            NextMaxIterState::Max => (0..self.bounds.max_idx)
+                .map(|x| lists[self.bounds.max_pos][x as usize])
+                .next(),
+            NextMaxIterState::Done => None,
+        }
+    }
+}
+#[pyclass(module = "pyochain._iterators", frozen, generic, extends = abc::PyoIterator)]
+pub(crate) struct NextEqMaxIterRev {
+    owner: Py<InnerLists>,
+    bounds: IsliceBounds,
+    state: NextMaxIterState,
+}
+impl NextEqMaxIterRev {
+    pub fn new(owner: Bound<'_, InnerLists>, bounds: IsliceBounds) -> PyResult<Bound<'_, Self>> {
+        todo!()
+    }
+}
+#[pymethods]
+impl NextEqMaxIterRev {
+    fn __next__(&self) -> Option<Py<PyAny>> {
+        let lists = self.owner.get().get_lists();
+        (0..max_idx)
+            .rev()
+            .map(|x| lists[max_pos][x as usize])
+            .chain(
+                (min_idx..lists[min_pos].len() as isize)
+                    .rev()
+                    .map(|x| lists[min_pos][x as usize]),
+            )
     }
 }
