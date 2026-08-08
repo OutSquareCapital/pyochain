@@ -1,4 +1,8 @@
-use crate::{abc, collections, dict, iterators, option, pyo3_ext, result, sliceview};
+use crate::{
+    abc,
+    collections::{self, sorted},
+    dict, iterators, option, pyo3_ext, result, sliceview,
+};
 use pyo3::prelude::*;
 use pyochain_macros::py_abc;
 use tap::prelude::*;
@@ -36,7 +40,7 @@ pub trait ImplPyoReversible {
     iterators::ZipLongest,
     iterators::Unzip,
     iterators::GroupBy,
-    collections::sorted::iter::MinEqMaxIter
+    sorted::iter::SortedIter
 )]
 pub trait ImplPyoIterator: Sized {
     fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, Self> {
@@ -69,7 +73,7 @@ impl ImplPyoIterator for iterators::WithPosition {}
 impl ImplPyoIterator for iterators::ZipLongest {}
 impl ImplPyoIterator for iterators::Unzip {}
 impl ImplPyoIterator for iterators::GroupBy {}
-impl ImplPyoIterator for collections::sorted::iter::MinEqMaxIter {}
+impl ImplPyoIterator for sorted::iter::SortedIter {}
 macro_rules! impl_py_pipe {
     ($type:ty) => {
         #[pymethods]

@@ -4,7 +4,7 @@ use crate::{
         InnerKeyLists, InnerLists,
         sorted::{
             errors,
-            iter::{IsliceBounds, SliceKind, SortedIter, SortedIterRev},
+            iter::{IsliceBounds, SliceKind, SortedIter, SortedIterRev, SortedIterator},
         },
     },
     iterators,
@@ -813,13 +813,16 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         bounds: IsliceBounds,
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        SliceKind::new(&bounds, reverse).into_iterator(&self, bounds)
+        let slf = Borrowed::from(self)?;
+        SliceKind::new(&bounds, reverse).into_iterator(py, slf, bounds)
     }
     fn reversed(slf: Bound<'_, Self>) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        SortedIterRev::new(slf)?.into_super().pipe(Ok)
+        let py = slf.py();
+        SortedIterRev::new(slf.unbind()).into_pyoiterator(py)
     }
 
     fn iter(slf: Bound<'_, Self>) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        SortedIter::new(slf)?.into_super().pipe(Ok)
+        let py = slf.py();
+        SortedIter::new(slf.unbind()).into_pyoiterator(py)
     }
 }
