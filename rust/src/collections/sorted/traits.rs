@@ -2,30 +2,38 @@ use crate::{
     abc,
     collections::{
         InnerKeyLists, InnerLists,
-        sorted::{
-            errors,
-            iter::{IsliceBounds, SliceKind, SortedIter, SortedIterRev, SortedIterator},
-        },
+        sorted::{errors, iter},
     },
     iterators,
+    pyovec::PyoVec,
+    traits::IntoPyochain,
 };
 use either::Either;
 use pyo3::{
     PyClass,
     exceptions::PyIndexError,
     prelude::*,
-    types::{PyNotImplemented, PySequence, PySlice, PySliceIndices},
+    types::{PyList, PyNotImplemented, PySequence, PySlice, PySliceIndices},
 };
 use pyochain_macros::py_abc;
 use std::{
     cmp::Ordering,
-    sync::{MutexGuard, atomic::Ordering as AtomicOrdering},
+    sync::{Mutex, MutexGuard, TryLockError, atomic::Ordering as AtomicOrdering},
 };
 use tap::prelude::*;
 
 pub const DEFAULT_LOAD_FACTOR: usize = 1000;
 pub type BoolOrNotImpl<'py> = PyResult<Either<bool, Bound<'py, PyNotImplemented>>>;
 pub type SeqOrAny<'py> = Either<Bound<'py, PySequence>, Bound<'py, PyAny>>;
+
+pub(super) fn try_lock_recover<'a, T>(mutex: &'a Mutex<T>, msg: &str) -> MutexGuard<'a, T> {
+    match mutex.try_lock() {
+        Ok(guard) => guard,
+        //Recover if the guard was poisoned by an earlier panic instead of cascading.
+        Err(TryLockError::Poisoned(poisoned)) => poisoned.into_inner(),
+        Err(TryLockError::WouldBlock) => panic!("{msg}"),
+    }
+}
 
 pub trait RustGetters:
     Sized + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
@@ -42,22 +50,16 @@ macro_rules! impl_rs_getters {
         impl RustGetters for $t {
             #[inline(always)]
             fn get_lists(&self) -> MutexGuard<'_, Vec<Vec<Py<PyAny>>>> {
-                self.lists
-                    .try_lock()
-                    .expect("lists already locked - reentrant bug")
+                try_lock_recover(&self.lists, "lists already locked - reentrant bug")
             }
             #[inline(always)]
             fn get_idx(&self) -> MutexGuard<'_, Vec<usize>> {
-                self.idx
-                    .try_lock()
-                    .expect("idx already locked - reentrant bug")
+                try_lock_recover(&self.idx, "idx already locked - reentrant bug")
             }
 
             #[inline(always)]
             fn get_maxes(&self) -> MutexGuard<'_, Vec<Py<PyAny>>> {
-                self.maxes
-                    .try_lock()
-                    .expect("maxes already locked - reentrant bug")
+                try_lock_recover(&self.maxes, "maxes already locked - reentrant bug")
             }
             #[inline(always)]
             fn get_offset(&self) -> usize {
@@ -257,6 +259,11 @@ impl_inner_sorted_rs!(InnerLists);
 impl_inner_sorted_rs!(InnerKeyLists);
 #[py_abc(InnerLists, InnerKeyLists)]
 pub(super) trait InnerSorted: InnerSortedGetters {
+    #[skip]
+    fn wrap_iter<'py>(
+        py: Python<'py>,
+        inner: iter::BoundedIter<Self>,
+    ) -> PyResult<Bound<'py, abc::PyoIterator>>;
     fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize>;
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize>;
     fn clear(&self) -> ();
@@ -270,8 +277,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
     #[pyo3(signature = (minimum = None, maximum = None, inclusive = (true, true), *, reverse = false))]
     fn irange<'py>(
-        &self,
-        py: Python<'py>,
+        slf: Bound<'py, Self>,
         minimum: Option<Bound<'py, PyAny>>,
         maximum: Option<Bound<'py, PyAny>>,
         inclusive: (bool, bool),
@@ -577,9 +583,14 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         &self,
         py: Python<'py>,
         index: Either<isize, Bound<'py, PySlice>>,
-    ) -> PyResult<Either<Bound<'py, PyAny>, Vec<Py<PyAny>>>> {
+    ) -> PyResult<Either<Bound<'py, PyAny>, Bound<'py, PyoVec>>> {
         match index {
-            Either::Right(slice) => self.getitem_from_slice(py, slice).map(Either::Right),
+            Either::Right(slice) => self
+                .getitem_from_slice(py, slice)?
+                .iter()
+                .pipe(|elements| PyList::new(py, elements))?
+                .into_pyochain()
+                .map(Either::Right),
             Either::Left(index) => self.getitem_from_int(py, index).map(Either::Left),
         }
     }
@@ -753,15 +764,15 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     }
     #[pyo3(signature = (start = None, stop = None, *, reverse = false))]
     fn islice<'py>(
-        &self,
+        slf: Bound<'py, Self>,
         py: Python<'py>,
         start: Option<isize>,
         stop: Option<isize>,
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        match self.islice_specs(py, start, stop)? {
+        match slf.get().islice_specs(py, start, stop)? {
             None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
-            Some(bounds) => self.islice_iter(py, bounds, reverse),
+            Some(bounds) => Self::islice_iter(slf, bounds, reverse),
         }
     }
 
@@ -771,7 +782,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         py: Python<'_>,
         start: Option<isize>,
         stop: Option<isize>,
-    ) -> PyResult<Option<IsliceBounds>> {
+    ) -> PyResult<Option<iter::IsliceBounds>> {
         let length = self.get_len() as isize;
 
         if length == 0 {
@@ -793,7 +804,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                 self.pos(indices.stop)?
             };
 
-            Ok(Some(IsliceBounds::new(
+            Ok(Some(iter::IsliceBounds::new(
                 min_pos,
                 min_idx as usize,
                 max_pos,
@@ -808,21 +819,25 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     /// When `reverse` is `True`, values are yielded from the iterator in reverse order.
     #[skip]
     fn islice_iter<'py>(
-        &self,
-        py: Python<'py>,
-        bounds: IsliceBounds,
+        slf: Bound<'py, Self>,
+        bounds: iter::IsliceBounds,
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        let slf = Borrowed::from(self)?;
-        SliceKind::new(&bounds, reverse).into_iterator(py, slf, bounds)
+        let py = slf.py();
+        let dir = if reverse {
+            iter::Dir::Bwd
+        } else {
+            iter::Dir::Fwd
+        };
+        Self::wrap_iter(py, iter::BoundedIter::new(slf.unbind(), bounds, dir))
     }
     fn reversed(slf: Bound<'_, Self>) -> PyResult<Bound<'_, abc::PyoIterator>> {
         let py = slf.py();
-        SortedIterRev::new(slf.unbind()).into_pyoiterator(py)
+        Self::wrap_iter(py, iter::BoundedIter::full(slf.unbind(), iter::Dir::Bwd))
     }
 
     fn iter(slf: Bound<'_, Self>) -> PyResult<Bound<'_, abc::PyoIterator>> {
         let py = slf.py();
-        SortedIter::new(slf.unbind()).into_pyoiterator(py)
+        Self::wrap_iter(py, iter::BoundedIter::full(slf.unbind(), iter::Dir::Fwd))
     }
 }

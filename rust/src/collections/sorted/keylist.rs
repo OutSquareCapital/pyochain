@@ -4,8 +4,8 @@ use crate::{
         bisect,
         cmp::py_cmp_by_key,
         errors,
-        iter::IsliceBounds,
-        traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters},
+        iter::{self, IsliceBounds},
+        traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters, try_lock_recover},
     },
     iterators,
     pyo3_ext::pylibs,
@@ -28,9 +28,7 @@ pub struct InnerKeyLists {
 }
 impl InnerKeyLists {
     pub(super) fn get_keys(&self) -> std::sync::MutexGuard<'_, Vec<Vec<Py<PyAny>>>> {
-        self.keys
-            .try_lock()
-            .expect("keys already locked - reentrant bug")
+        try_lock_recover(&self.keys, "keys already locked - reentrant bug")
     }
 
     fn irange_key_specs(
@@ -127,32 +125,37 @@ impl InnerKeyLists {
     }
     #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true), *, reverse = false))]
     fn irange_key<'py>(
-        &self,
-        py: Python<'py>,
+        slf: Bound<'py, Self>,
         min_key: Option<Bound<'py, PyAny>>,
         max_key: Option<Bound<'py, PyAny>>,
         inclusive: (bool, bool),
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        match self.irange_key_specs(min_key, max_key, inclusive)? {
+        let py = slf.py();
+        match slf.get().irange_key_specs(min_key, max_key, inclusive)? {
             None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
-            Some(bounds) => self.islice_iter(py, bounds, reverse),
+            Some(bounds) => Self::islice_iter(slf, bounds, reverse),
         }
     }
 }
 impl InnerSorted for InnerKeyLists {
-    fn irange<'py>(
-        &self,
+    fn wrap_iter<'py>(
         py: Python<'py>,
+        inner: iter::BoundedIter<Self>,
+    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        iter::SortedIterKey::build(py, inner)
+    }
+    fn irange<'py>(
+        slf: Bound<'py, Self>,
         minimum: Option<Bound<'py, PyAny>>,
         maximum: Option<Bound<'py, PyAny>>,
         inclusive: (bool, bool),
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        let key_fn = |x| self.key.bind(py).call1((x,));
+        let key_fn = |x| slf.get().key.bind(slf.py()).call1((x,));
         let min_key = minimum.map(key_fn).transpose()?;
         let max_key = maximum.map(key_fn).transpose()?;
-        self.irange_key(py, min_key, max_key, inclusive, reverse)
+        Self::irange_key(slf, min_key, max_key, inclusive, reverse)
     }
 
     fn clear(&self) -> () {

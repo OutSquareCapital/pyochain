@@ -1,5 +1,5 @@
 use crate::abc;
-use crate::collections::sorted::iter::IsliceBounds;
+use crate::collections::sorted::iter::{self, IsliceBounds};
 use crate::pyo3_ext::pylibs;
 use crate::{
     collections::sorted::{
@@ -115,17 +115,22 @@ impl InnerLists {
     }
 }
 impl InnerSorted for InnerLists {
-    fn irange<'py>(
-        &self,
+    fn wrap_iter<'py>(
         py: Python<'py>,
+        inner: iter::BoundedIter<Self>,
+    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        iter::SortedIter::build(py, inner)
+    }
+    fn irange<'py>(
+        slf: Bound<'py, Self>,
         minimum: Option<Bound<'py, PyAny>>,
         maximum: Option<Bound<'py, PyAny>>,
         inclusive: (bool, bool),
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        match self.irange_specs(minimum, maximum, inclusive)? {
-            None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
-            Some(bounds) => self.islice_iter(py, bounds, reverse),
+        match slf.get().irange_specs(minimum, maximum, inclusive)? {
+            None => iterators::Iter::empty(slf.py())?.into_super().pipe(Ok),
+            Some(bounds) => Self::islice_iter(slf, bounds, reverse),
         }
     }
     fn clear(&self) -> () {
