@@ -107,7 +107,7 @@ impl InnerKeyLists {
                 }
             }
         };
-        Ok(Some(IsliceBounds::new(min_pos, min_idx, max_pos, max_idx)))
+        IsliceBounds::from_irange_spec(min_pos, min_idx, max_pos, max_idx).pipe(Ok)
     }
 }
 #[pymethods]

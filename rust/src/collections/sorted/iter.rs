@@ -53,6 +53,19 @@ impl IsliceBounds {
             max_idx,
         }
     }
+    #[inline]
+    pub fn from_irange_spec(
+        min_pos: usize,
+        min_idx: usize,
+        max_pos: usize,
+        max_idx: usize,
+    ) -> Option<Self> {
+        if min_pos > max_pos || (min_pos == max_pos && min_idx >= max_idx) {
+            None
+        } else {
+            Some(Self::new(min_pos, min_idx, max_pos, max_idx))
+        }
+    }
 }
 
 pub(super) struct BoundedIter<T: InnerSorted> {
