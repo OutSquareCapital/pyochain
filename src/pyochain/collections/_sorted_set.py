@@ -431,14 +431,18 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> ss = SortedSet([1, 2, 3, 4, 5])
-        >>> ss.discard(5)
-        >>> ss.discard(0)
-        >>> ss == set([1, 2, 3, 4])
-        True
+        Args:
+            value (T): `value` to discard from sorted set
 
-        :param value: `value` to discard from sorted set
+        Examples:
+            ```python
+            from pyochain.collections import SortedSet
 
+            ss = SortedSet([1, 2, 3, 4, 5])
+            ss.discard(5)
+            ss.discard(0)
+            assert ss == set([1, 2, 3, 4])
+            ```
         """
         set_ = self._set
         if set_.contains(value):
@@ -484,18 +488,20 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> ss = SortedSet([1, 2, 3, 4, 5])
-        >>> ss.remove(5)
-        >>> ss == set([1, 2, 3, 4])
-        True
-        >>> ss.remove(0)
-        Traceback (most recent call last):
-          ...
-        KeyError: 0
+        Args:
+            value (T): `value` to remove from sorted set
 
-        :param value: `value` to remove from sorted set
-        :raises KeyError: if `value` is not in sorted set
+        Examples:
+            ```python
+            from pyochain.collections import SortedSet
+            import pytest
 
+            ss = SortedSet([1, 2, 3, 4, 5])
+            ss.remove(5)
+            assert ss == set([1, 2, 3, 4])
+            with pytest.raises(KeyError):
+                ss.remove(0)
+            ```
         """
         self._set.remove(value)
         self._list.remove(value)

@@ -125,15 +125,18 @@ class SortedItemsView(
 
         Returns:
             tuple[_K_co, _V_co] | Vec[tuple[_K_co, _V_co]]: item or list of items
+
         Examples:
             ```python
+            from pyochain import Vec
             from pyochain.collections import SortedDict
+            import pytest
 
             sd = SortedDict({"a": 1, "b": 2, "c": 3})
             siv = sd.items()
             assert siv[0] == ("a", 1)
             assert siv[-1] == ("c", 3)
-            assert siv[:] == Vec(("a", 1), ("b", 2), ("c", 3))
+            assert siv[:] == Vec([("a", 1), ("b", 2), ("c", 3)])
             with pytest.raises(IndexError):
                 siv[100]
             ```
@@ -189,13 +192,15 @@ class SortedValuesView(PyoValuesView[_V_co], PyoSequence[_V_co], Generic[_V_co])
 
         Examples:
             ```python
+            from pyochain import Vec
             from pyochain.collections import SortedDict
+            import pytest
 
             sd = SortedDict({"a": 2, "b": 1, "c": 3})
             svv = sd.values()
             assert svv[0] == 2
             assert svv[-1] == 3
-            assert svv[:] == Vec(2, 1, 3)
+            assert svv[:] == Vec((2, 1, 3))
             with pytest.raises(IndexError):
                 svv[100]
             ```

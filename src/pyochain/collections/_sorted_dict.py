@@ -205,17 +205,20 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> sd = SortedDict({"a": 1, "b": 2, "c": 3})
-        >>> del sd["b"]
-        >>> sd
-        SortedDict({'a': 1, 'c': 3})
-        >>> del sd["z"]
-        Traceback (most recent call last):
-          ...
-        KeyError: 'z'
+        Args:
+            key (K): `key` for item lookup
 
-        :param key: `key` for item lookup
-        :raises KeyError: if key not found
+        Examples:
+            ```python
+            import pytest
+            from pyochain.collections import SortedDict
+
+            sd = SortedDict({"a": 1, "b": 2, "c": 3})
+            del sd["b"]
+            assert sd == SortedDict({"a": 1, "c": 3})
+            with pytest.raises(KeyError):
+                del sd["z"]
+            ```
 
         """
         self._inner.__delitem__(key)
@@ -380,22 +383,24 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> sd = SortedDict({"a": 1, "b": 2, "c": 3})
-        >>> sd.pop("c")
-        3
-        >>> sd.pop("z", 26)
-        26
-        >>> sd.pop("y")
-        Traceback (most recent call last):
-          ...
-        KeyError: 'y'
-
         Args:
             key (K): `key` for item
             default (T): `default` value if key not found (optional)
 
         Returns:
             V | T: value for item
+
+        Examples:
+            ```python
+            from pyochain.collections import SortedDict
+            import pytest
+
+            sd = SortedDict({"a": 1, "b": 2, "c": 3})
+            assert sd.pop("c") == 3
+            assert sd.pop("z", 26) == 26
+            with pytest.raises(KeyError):
+                sd.pop("y")
+            ```
 
         Raises:
             KeyError: if `key` not found and `default` not given
