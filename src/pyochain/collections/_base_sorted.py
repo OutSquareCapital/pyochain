@@ -3,8 +3,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Final, Self, overload, override
 
-from pyochain import Iter
-
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
     from types import NotImplementedType
@@ -367,6 +365,17 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
     _inner: InnerSorted[T, Any]
 
     @override
+    def irange(
+        self,
+        minimum: T | None = None,
+        maximum: T | None = None,
+        inclusive: tuple[bool, bool] = (True, True),
+        *,
+        reverse: bool = False,
+    ) -> PyoIterator[T]:
+        return self._inner.irange(minimum, maximum, inclusive, reverse=reverse)
+
+    @override
     def islice(
         self,
         start: int | None = None,
@@ -374,28 +383,7 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
         *,
         reverse: bool = False,
     ) -> PyoIterator[T]:
-        match self._inner.islice_specs(start, stop):
-            case None:
-                return Iter(())
-            case (min_pos, min_idx, max_pos, max_idx):
-                return self._islice(min_pos, min_idx, max_pos, max_idx, reverse=reverse)
-
-    def _islice(
-        self, min_pos: int, min_idx: int, max_pos: int, max_idx: int, *, reverse: bool
-    ) -> PyoIterator[T]:
-        """Return an iterator that slices sorted list using two index pairs.
-
-        The index pairs are (min_pos, min_idx) and (max_pos, max_idx), the
-        first inclusive and the latter exclusive. See `_pos` for details on how
-        an index is converted to an index pair.
-
-        When `reverse` is `True`, values are yielded from the iterator in
-        reverse order.
-
-        """
-        return self._inner.islice_iter(
-            min_pos, min_idx, max_pos, max_idx, reverse=reverse
-        )
+        return self._inner.islice(start, stop, reverse=reverse)
 
     def __iter__(self) -> PyoIterator[T]:
         """Return an iterator over the sorted list.
@@ -660,9 +648,6 @@ class BaseSortedList[T](BaseSortedListSet[T], ABC):  # ruff:ignore[eq-without-ha
         ```
         """
         return self._inner.count(value)
-
-    def _build_index(self) -> None:
-        return self._inner.build_index()
 
     def pop(self, index: int = -1) -> T:
         """Remove and return value at `index` in sorted list.

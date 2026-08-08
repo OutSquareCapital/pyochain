@@ -1,11 +1,13 @@
 use crate::{
+    abc,
     collections::sorted::{
         bisect,
         cmp::py_cmp_by_key,
         errors,
-        iter::SortedKeyListIter,
+        iter::IsliceBounds,
         traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters},
     },
+    iterators,
     pyo3_ext::pylibs,
 };
 use pyo3::prelude::*;
@@ -30,32 +32,13 @@ impl InnerKeyLists {
             .try_lock()
             .expect("keys already locked - reentrant bug")
     }
-}
-#[pymethods]
-impl InnerKeyLists {
-    #[new]
-    fn new(key: Bound<'_, PyAny>) -> PyResult<Self> {
-        Ok(Self {
-            key: key.unbind(),
-            keys: Mutex::new(Vec::new()),
-            lists: Mutex::new(Vec::new()),
-            maxes: Mutex::new(Vec::new()),
-            idx: Mutex::new(Vec::new()),
-            len: AtomicUsize::new(0),
-            load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
-            offset: AtomicUsize::new(0),
-        })
-    }
-    fn iter<'py>(slf: Bound<'_, Self>, py: Python<'py>) -> PyResult<Bound<'py, SortedKeyListIter>> {
-        SortedKeyListIter::new(py, slf.unbind())
-    }
-    #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true)))]
-    fn irange_key(
+
+    fn irange_key_specs(
         &self,
         min_key: Option<Bound<'_, PyAny>>,
         max_key: Option<Bound<'_, PyAny>>,
         inclusive: (bool, bool),
-    ) -> PyResult<Option<(usize, usize, usize, usize)>> {
+    ) -> PyResult<Option<IsliceBounds>> {
         let maxes = self.get_maxes();
 
         if maxes.is_empty() {
@@ -124,10 +107,54 @@ impl InnerKeyLists {
                 }
             }
         };
-        Ok(Some((min_pos, min_idx, max_pos, max_idx)))
+        Ok(Some(IsliceBounds::new(min_pos, min_idx, max_pos, max_idx)))
+    }
+}
+#[pymethods]
+impl InnerKeyLists {
+    #[new]
+    fn new(key: Bound<'_, PyAny>) -> PyResult<Self> {
+        Ok(Self {
+            key: key.unbind(),
+            keys: Mutex::new(Vec::new()),
+            lists: Mutex::new(Vec::new()),
+            maxes: Mutex::new(Vec::new()),
+            idx: Mutex::new(Vec::new()),
+            len: AtomicUsize::new(0),
+            load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
+            offset: AtomicUsize::new(0),
+        })
+    }
+    #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true), *, reverse = false))]
+    fn irange_key<'py>(
+        &self,
+        py: Python<'py>,
+        min_key: Option<Bound<'py, PyAny>>,
+        max_key: Option<Bound<'py, PyAny>>,
+        inclusive: (bool, bool),
+        reverse: bool,
+    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        match self.irange_key_specs(min_key, max_key, inclusive)? {
+            None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
+            Some(bounds) => self.islice_iter(py, bounds, reverse),
+        }
     }
 }
 impl InnerSorted for InnerKeyLists {
+    fn irange<'py>(
+        &self,
+        py: Python<'py>,
+        minimum: Option<Bound<'py, PyAny>>,
+        maximum: Option<Bound<'py, PyAny>>,
+        inclusive: (bool, bool),
+        reverse: bool,
+    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        let key_fn = |x| self.key.bind(py).call1((x,));
+        let min_key = minimum.map(key_fn).transpose()?;
+        let max_key = maximum.map(key_fn).transpose()?;
+        self.irange_key(py, min_key, max_key, inclusive, reverse)
+    }
+
     fn clear(&self) -> () {
         self.set_len(0);
         self.get_lists().clear();

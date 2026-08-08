@@ -3,7 +3,6 @@ from __future__ import annotations
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Self, override
 
-from pyochain import Iter, Vec
 from pyochain.rs import InnerKeyLists
 
 from ._sorted_list import SortedList
@@ -13,6 +12,7 @@ if TYPE_CHECKING:
 
     from _typeshed import SupportsRichComparison
 
+    from pyochain import Vec
     from pyochain.abc import PyoIterator
     from pyochain.rs import KeyFunc
 
@@ -87,19 +87,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
     def clear(self) -> None:
         self._inner.clear()
 
-    @override
-    def irange(
-        self,
-        minimum: T | None = None,
-        maximum: T | None = None,
-        inclusive: tuple[bool, bool] = (True, True),
-        *,
-        reverse: bool = False,
-    ) -> PyoIterator[T]:
-        min_key = self._inner.key(minimum) if minimum is not None else None
-        max_key = self._inner.key(maximum) if maximum is not None else None
-        return self.irange_key(min_key, max_key, inclusive, reverse=reverse)
-
     def irange_key(
         self,
         min_key: OT | None = None,
@@ -141,11 +128,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         ```
 
         """
-        match self._inner.irange_key(min_key, max_key, inclusive):
-            case None:
-                return Iter(())
-            case (min_pos, min_idx, max_pos, max_idx):
-                return self._islice(min_pos, min_idx, max_pos, max_idx, reverse=reverse)
+        return self._inner.irange_key(min_key, max_key, inclusive, reverse=reverse)
 
     def bisect_key_left(self, key: OT) -> int:
         """Return an index to insert `key` in the sorted-key list.

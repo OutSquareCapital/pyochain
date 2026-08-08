@@ -1,11 +1,15 @@
-use crate::collections::sorted::{
-    bisect,
-    cmp::py_cmp,
-    errors,
-    iter::SortedListIter,
-    traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters},
-};
+use crate::abc;
+use crate::collections::sorted::iter::IsliceBounds;
 use crate::pyo3_ext::pylibs;
+use crate::{
+    collections::sorted::{
+        bisect,
+        cmp::py_cmp,
+        errors,
+        traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters},
+    },
+    iterators,
+};
 use pyo3::prelude::*;
 use std::sync::{Mutex, atomic::AtomicUsize};
 
@@ -19,29 +23,13 @@ pub struct InnerLists {
     pub(super) load: AtomicUsize,
     pub(super) offset: AtomicUsize,
 }
-#[pymethods]
 impl InnerLists {
-    #[new]
-    fn new() -> PyResult<Self> {
-        Ok(Self {
-            lists: Mutex::new(Vec::new()),
-            maxes: Mutex::new(Vec::new()),
-            idx: Mutex::new(Vec::new()),
-            len: AtomicUsize::new(0),
-            load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
-            offset: AtomicUsize::new(0),
-        })
-    }
-    fn iter<'py>(slf: Bound<'_, Self>, py: Python<'py>) -> PyResult<Bound<'py, SortedListIter>> {
-        SortedListIter::new(py, slf.unbind())
-    }
-    #[pyo3(signature = (minimum=None, maximum=None, inclusive=(true, true)))]
-    fn irange(
+    fn irange_specs<'py>(
         &self,
-        minimum: Option<Bound<'_, PyAny>>,
-        maximum: Option<Bound<'_, PyAny>>,
+        minimum: Option<Bound<'py, PyAny>>,
+        maximum: Option<Bound<'py, PyAny>>,
         inclusive: (bool, bool),
-    ) -> PyResult<Option<(usize, usize, usize, usize)>> {
+    ) -> PyResult<Option<IsliceBounds>> {
         let maxes = self.get_maxes();
 
         if maxes.is_empty() {
@@ -109,10 +97,37 @@ impl InnerLists {
                 Ok((pos, idx))
             })?;
 
-        Ok(Some((min_pos, min_idx, max_pos, max_idx)))
+        Ok(Some(IsliceBounds::new(min_pos, min_idx, max_pos, max_idx)))
+    }
+}
+#[pymethods]
+impl InnerLists {
+    #[new]
+    fn new() -> PyResult<Self> {
+        Ok(Self {
+            lists: Mutex::new(Vec::new()),
+            maxes: Mutex::new(Vec::new()),
+            idx: Mutex::new(Vec::new()),
+            len: AtomicUsize::new(0),
+            load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
+            offset: AtomicUsize::new(0),
+        })
     }
 }
 impl InnerSorted for InnerLists {
+    fn irange<'py>(
+        &self,
+        py: Python<'py>,
+        minimum: Option<Bound<'py, PyAny>>,
+        maximum: Option<Bound<'py, PyAny>>,
+        inclusive: (bool, bool),
+        reverse: bool,
+    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        match self.irange_specs(minimum, maximum, inclusive)? {
+            None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
+            Some(bounds) => self.islice_iter(py, bounds, reverse),
+        }
+    }
     fn clear(&self) -> () {
         self.set_len(0);
         self.get_lists().clear();

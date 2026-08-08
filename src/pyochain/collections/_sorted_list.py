@@ -5,8 +5,7 @@ from __future__ import annotations
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Self, overload, override
 
-from pyochain import Iter, Vec
-from pyochain.abc import PyoIterator, PyoMutableSequence
+from pyochain.abc import PyoMutableSequence
 from pyochain.rs import InnerLists
 
 from ._base_sorted import BaseSortedList, SortedCollection
@@ -15,6 +14,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from _typeshed import SupportsRichComparison
+
+    from pyochain import Vec
 
 
 class SortedList[T: SupportsRichComparison](
@@ -140,21 +141,6 @@ class SortedList[T: SupportsRichComparison](
         """
         msg = "use ``reversed(sl)`` instead"
         raise NotImplementedError(msg)
-
-    @override
-    def irange(
-        self,
-        minimum: T | None = None,
-        maximum: T | None = None,
-        inclusive: tuple[bool, bool] = (True, True),
-        *,
-        reverse: bool = False,
-    ) -> PyoIterator[T]:
-        match self._inner.irange(minimum, maximum, inclusive=inclusive):
-            case None:
-                return Iter(())
-            case (min_pos, min_idx, max_pos, max_idx):
-                return self._islice(min_pos, min_idx, max_pos, max_idx, reverse=reverse)
 
     @override
     def __len__(self) -> int:

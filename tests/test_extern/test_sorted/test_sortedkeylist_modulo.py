@@ -231,7 +231,7 @@ def test_getitem() -> None:
     slt.reset(17)
 
     slt.add(5)
-    slt._build_index()  # pyright: ignore[reportPrivateUsage]
+    slt.inner.build_index()
     check_sorted_key_list(slt.inner)
     slt.clear()
     r = range(100)

@@ -666,7 +666,7 @@ def test_pickle() -> None:
 def test_build_index() -> None:
     slt = SortedList([0])
     slt.reset(4)
-    slt._build_index()  # pyright: ignore[reportPrivateUsage]
+    slt.inner.build_index()
     check_sorted_list(slt.inner)
 
 

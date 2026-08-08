@@ -36,8 +36,6 @@ pub trait ImplPyoReversible {
     iterators::ZipLongest,
     iterators::Unzip,
     iterators::GroupBy,
-    collections::sorted::iter::SortedListIter,
-    collections::sorted::iter::SortedKeyListIter,
     collections::sorted::iter::MinEqMaxIter
 )]
 pub trait ImplPyoIterator: Sized {
@@ -71,8 +69,6 @@ impl ImplPyoIterator for iterators::WithPosition {}
 impl ImplPyoIterator for iterators::ZipLongest {}
 impl ImplPyoIterator for iterators::Unzip {}
 impl ImplPyoIterator for iterators::GroupBy {}
-impl ImplPyoIterator for collections::sorted::iter::SortedListIter {}
-impl ImplPyoIterator for collections::sorted::iter::SortedKeyListIter {}
 impl ImplPyoIterator for collections::sorted::iter::MinEqMaxIter {}
 macro_rules! impl_py_pipe {
     ($type:ty) => {

@@ -3,8 +3,8 @@ use crate::{
     collections::{
         InnerKeyLists, InnerLists,
         sorted::{
-            self, errors,
-            iter::{IsliceBounds, SliceKind},
+            errors,
+            iter::{IsliceBounds, SliceKind, SortedIter, SortedIterRev},
         },
     },
     iterators,
@@ -268,6 +268,15 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize>;
     fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
+    #[pyo3(signature = (minimum = None, maximum = None, inclusive = (true, true), *, reverse = false))]
+    fn irange<'py>(
+        &self,
+        py: Python<'py>,
+        minimum: Option<Bound<'py, PyAny>>,
+        maximum: Option<Bound<'py, PyAny>>,
+        inclusive: (bool, bool),
+        reverse: bool,
+    ) -> PyResult<Bound<'py, abc::PyoIterator>>;
     #[skip]
     fn update_from_vec(&self, py: Python<'_>, iterable: Vec<Py<PyAny>>) -> PyResult<()>;
 
@@ -742,13 +751,27 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             }
         }
     }
-    #[pyo3(signature = (start = None, stop = None))]
+    #[pyo3(signature = (start = None, stop = None, *, reverse = false))]
+    fn islice<'py>(
+        &self,
+        py: Python<'py>,
+        start: Option<isize>,
+        stop: Option<isize>,
+        reverse: bool,
+    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        match self.islice_specs(py, start, stop)? {
+            None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
+            Some(bounds) => self.islice_iter(py, bounds, reverse),
+        }
+    }
+
+    #[skip]
     fn islice_specs(
         &self,
         py: Python<'_>,
         start: Option<isize>,
         stop: Option<isize>,
-    ) -> PyResult<Option<(usize, isize, usize, isize)>> {
+    ) -> PyResult<Option<IsliceBounds>> {
         let length = self.get_len() as isize;
 
         if length == 0 {
@@ -770,51 +793,33 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                 self.pos(indices.stop)?
             };
 
-            Ok(Some((min_pos, min_idx, max_pos, max_idx)))
+            Ok(Some(IsliceBounds::new(
+                min_pos,
+                min_idx as usize,
+                max_pos,
+                max_idx as usize,
+            )))
         }
     }
-    #[pyo3(signature = (min_pos, min_idx, max_pos, max_idx, *, reverse))]
-    fn islice_iter(
-        slf: Bound<'_, Self>,
-        min_pos: usize,
-        min_idx: usize,
-        max_pos: usize,
-        max_idx: usize,
-        reverse: bool,
-    ) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        let py = slf.py();
-        let lists = slf.get().get_lists();
-        let kind = SliceKind::new(min_pos, max_pos, reverse);
-        let bounds = IsliceBounds::new(min_pos, min_idx, max_pos, max_idx);
 
-        let next_pos = min_pos + 1;
-        let it = match kind {
-            SliceKind::Empty => iterators::Iter::empty(py)?.as_super(),
-            SliceKind::MinEqMax => sorted::iter::MinEqMaxIter::new(slf, bounds)?.as_super(),
-            SliceKind::MinEqMaxRev => sorted::iter::MinEqMaxIterRev::new(slf, bounds)?.as_super(),
-            SliceKind::NextEqMax => sorted::iter::NextEqMaxIter::new(slf, bounds)?.as_super(),
-            SliceKind::NextEqMaxRev => sorted::iter::NextEqMaxIterRev::new(slf, bounds)?.as_super(),
-            SliceKind::MinLtMax => (min_idx..lists[min_pos].len())
-                .map(|x| lists[min_pos][x as usize])
-                .chain((next_pos..max_pos).flat_map(|x| lists[x].iter().map(|x| x.clone_ref(py))))
-                .chain((0..max_idx).map(|x| lists[max_pos][x as usize])),
-            SliceKind::MinLtMaxRev => (0..max_idx)
-                .rev()
-                .map(|x| lists[max_pos][x as usize])
-                .chain(
-                    (next_pos..max_pos)
-                        .rev()
-                        .flat_map(|x| lists[x].iter().rev().map(|y| y.clone_ref(py))),
-                )
-                .chain(
-                    (min_idx..lists[min_pos].len())
-                        .rev()
-                        .map(|x| lists[min_pos][x as usize]),
-                ),
-        };
-        Ok(it)
+    /// Return an iterator that slices sorted list using two index pairs.\
+    /// The index pairs are (min_pos, min_idx) and (max_pos, max_idx), the first inclusive and the latter exclusive.\
+    /// See `_pos` for details on how an index is converted to an index pair.\
+    /// When `reverse` is `True`, values are yielded from the iterator in reverse order.
+    #[skip]
+    fn islice_iter<'py>(
+        &self,
+        py: Python<'py>,
+        bounds: IsliceBounds,
+        reverse: bool,
+    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        SliceKind::new(&bounds, reverse).into_iterator(&self, bounds)
     }
-    fn reversed(&self) -> Bound<'_, abc::PyoIterator> {
-        self.get_lists().iter().rev().flat_map(|x| x.iter().rev())
+    fn reversed(slf: Bound<'_, Self>) -> PyResult<Bound<'_, abc::PyoIterator>> {
+        SortedIterRev::new(slf)?.into_super().pipe(Ok)
+    }
+
+    fn iter(slf: Bound<'_, Self>) -> PyResult<Bound<'_, abc::PyoIterator>> {
+        SortedIter::new(slf)?.into_super().pipe(Ok)
     }
 }
