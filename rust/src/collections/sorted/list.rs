@@ -178,7 +178,7 @@ impl InnerSorted for InnerLists {
         let len_lists_pos = lists[pos].len();
 
         if len_lists_pos > (self.get_load() >> 1) {
-            maxes[pos] = lists[pos][len_lists_pos - 1].clone_ref(py);
+            maxes[pos] = lists[pos].last().unwrap().clone_ref(py);
 
             self.get_idx().pipe_ref_mut(|index| {
                 if !index.is_empty() {
@@ -211,7 +211,7 @@ impl InnerSorted for InnerLists {
             drop(lists);
             self.expand(py, prev)
         } else if len_lists_pos != 0 {
-            maxes[pos] = lists[pos][len_lists_pos - 1].clone_ref(py);
+            maxes[pos] = lists[pos].last().unwrap().clone_ref(py);
             Ok(())
         } else {
             lists.remove(pos);
@@ -460,7 +460,7 @@ impl InnerSorted for InnerLists {
 
         let mut new_maxes = lists
             .iter()
-            .map(|x| x[x.len() - 1].clone_ref(py))
+            .map(|x| x.last().unwrap().clone_ref(py))
             .collect::<Vec<_>>();
         self.get_maxes().append(new_maxes.as_mut());
         self.set_len(values_len);
@@ -497,7 +497,7 @@ impl InnerSorted for InnerLists {
         let mut lists = self.get_lists();
         lists.extend(new_lists);
         self.get_maxes()
-            .extend(lists.iter().map(|x| x[x.len() - 1].clone_ref(py)));
+            .extend(lists.iter().map(|x| x.last().unwrap().clone_ref(py)));
         self.set_len(values_len);
         self.get_idx().clear();
         Ok(())

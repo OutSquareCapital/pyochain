@@ -188,7 +188,7 @@ impl InnerSorted for InnerKeyLists {
         let len_keys_pos = keys[pos].len();
 
         if len_keys_pos > (self.get_load() >> 1) {
-            maxes[pos] = keys[pos][len_keys_pos - 1].clone_ref(py);
+            maxes[pos] = keys[pos].last().unwrap().clone_ref(py);
 
             self.get_idx().pipe_ref_mut(|index| {
                 if !index.is_empty() {
@@ -214,7 +214,7 @@ impl InnerSorted for InnerKeyLists {
                 .map(|x| x.clone_ref(py))
                 .collect::<Vec<_>>();
             lists[prev].append(removed.as_mut());
-            maxes[prev] = keys[prev][keys[prev].len() - 1].clone_ref(py);
+            maxes[prev] = keys[prev].last().unwrap().clone_ref(py);
 
             lists.remove(pos);
             keys.remove(pos);
@@ -226,7 +226,7 @@ impl InnerSorted for InnerKeyLists {
 
             self.expand(py, prev)
         } else if len_keys_pos != 0 {
-            maxes[pos] = keys[pos][len_keys_pos - 1].clone_ref(py);
+            maxes[pos] = keys[pos].last().unwrap().clone_ref(py);
             Ok(())
         } else {
             lists.remove(pos);
@@ -246,10 +246,10 @@ impl InnerSorted for InnerKeyLists {
             let keys_pos = &mut keys[pos];
             let half_keys = keys_pos.split_off(load);
             let half = lists[pos].split_off(load);
-            maxes[pos] = keys_pos[keys_pos.len() - 1].clone_ref(py);
+            maxes[pos] = keys_pos.last().unwrap().clone_ref(py);
 
             lists.insert(pos + 1, half);
-            maxes.insert(pos + 1, half_keys[half_keys.len() - 1].clone_ref(py));
+            maxes.insert(pos + 1, half_keys.last().unwrap().clone_ref(py));
             keys.insert(pos + 1, half_keys);
             self.get_idx().clear();
             Ok(())
@@ -565,7 +565,7 @@ impl InnerSorted for InnerKeyLists {
 
         let mut keys = self.get_keys();
         keys.extend(new_keys);
-        let new_maxes = keys.iter().map(|x| x[x.len() - 1].clone_ref(py));
+        let new_maxes = keys.iter().map(|x| x.last().unwrap().clone_ref(py));
         self.get_maxes().extend(new_maxes);
         self.set_len(values.len());
         self.get_idx().clear();
@@ -611,7 +611,7 @@ impl InnerSorted for InnerKeyLists {
 
         let mut keys = self.get_keys();
         keys.extend(new_keys);
-        let new_maxes = keys.iter().map(|x| x[x.len() - 1].clone_ref(py));
+        let new_maxes = keys.iter().map(|x| x.last().unwrap().clone_ref(py));
         self.get_maxes().extend(new_maxes);
         self.set_len(values_len);
         self.get_idx().clear();

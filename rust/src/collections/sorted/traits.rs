@@ -484,8 +484,8 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     fn pos(&self, mut idx: isize) -> PyResult<(usize, isize)> {
         let lists = self.get_lists();
         if idx < 0 {
-            if (-idx) <= lists[lists.len() - 1].len() as isize {
-                return Ok((lists.len() - 1, lists[lists.len() - 1].len() as isize + idx));
+            if (-idx) <= lists.last().unwrap().len() as isize {
+                return Ok((lists.len() - 1, lists.last().unwrap().len() as isize + idx));
             }
 
             idx += self.get_len() as isize;
@@ -536,7 +536,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
 
         let (pos, idx) = {
             let lists = self.get_lists();
-            let len_last = lists[lists.len() - 1].len() as isize;
+            let len_last = lists.last().unwrap().len() as isize;
             match index {
                 0 => (0, 0),
                 -1 => {
@@ -596,7 +596,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                 .clone_ref(py)
                 .into_bound(py)
                 .pipe(Ok),
-            (_, true) if -len_last < index && index < 0 => lists[lists.len() - 1]
+            (_, true) if -len_last < index && index < 0 => lists.last().unwrap()
                 [(len_last + index) as usize]
                 .clone_ref(py)
                 .into_bound(py)
@@ -762,7 +762,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
 
             let (max_pos, max_idx) = if indices.stop == length {
                 let lists = self.get_lists();
-                (lists.len() - 1, lists[lists.len() - 1].len() as isize)
+                (lists.len() - 1, lists.last().unwrap().len() as isize)
             } else {
                 self.pos(indices.stop)?
             };
