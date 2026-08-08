@@ -117,7 +117,7 @@ class SortedList[T: SupportsRichComparison](BaseSortedList[T], SortedCollection[
 
     @override
     def __mul__(self, num: int) -> Self:
-        values = self._inner.collapse_lists().repeat(num)
+        values = self._inner.mul(num)
         return self.__class__(values)
 
     @override

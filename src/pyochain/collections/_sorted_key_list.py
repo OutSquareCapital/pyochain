@@ -198,7 +198,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
 
     @override
     def __mul__(self, num: int) -> Self:
-        values = self._inner.collapse_lists().repeat(num)
+        values = self._inner.mul(num)
         return self.__class__(values, key=self._inner.key)
 
     @override

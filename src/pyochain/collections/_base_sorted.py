@@ -726,7 +726,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):  # ru
         assert sl == SortedList(["a", "a", "a", "b", "b", "b", "c", "c", "c"])
         ```
         """
-        values = self._inner.collapse_lists().repeat(num)
+        values = self._inner.mul(num)
         self.clear()
         self.update(values)
         return self

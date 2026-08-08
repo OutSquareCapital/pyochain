@@ -275,6 +275,13 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize>;
     fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
+    fn mul<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, PyoVec>> {
+        let values = self.collapse_lists(py);
+        (0..num)
+            .flat_map(|_| values.iter())
+            .pipe(|x| PyList::new(py, x))?
+            .into_pyochain()
+    }
     #[pyo3(signature = (minimum = None, maximum = None, inclusive = (true, true), *, reverse = false))]
     fn irange<'py>(
         slf: Bound<'py, Self>,
