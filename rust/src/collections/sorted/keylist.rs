@@ -465,12 +465,17 @@ impl InnerSorted for InnerKeyLists {
     fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
         let key_fn = &self.key.clone_ref(py).into_bound(py);
-        let mut values = iterable
+        let values = iterable
             .try_iter()
             .and_then(|x| pylibs::builtins::sorted_by(&x, false, key_fn))?
             .iter()
             .map(Bound::unbind)
             .collect::<Vec<_>>();
+        self.update_from_vec(py, values)
+    }
+    fn update_from_vec(&self, py: Python<'_>, mut values: Vec<Py<PyAny>>) -> PyResult<()> {
+        let key_fn = &self.key.clone_ref(py).into_bound(py);
+        values.sort_by(|a, b| py_cmp_by_key(a, b, key_fn));
 
         if !self.get_data().maxes.is_empty() {
             if values.len() * 4 >= self.get_len() {
@@ -496,53 +501,6 @@ impl InnerSorted for InnerKeyLists {
                 .map(|x| x.clone_ref(py))
                 .collect::<Vec<_>>()
         });
-        data.lists.extend(new_lists);
-        let new_keys = data
-            .lists
-            .iter()
-            .map(|list| {
-                list.iter()
-                    .map(|x| key_fn.call1((x,)).map(Bound::unbind))
-                    .collect::<PyResult<Vec<_>>>()
-            })
-            .collect::<PyResult<Vec<_>>>()?;
-
-        let mut keys = self.get_keys();
-        keys.extend(new_keys);
-        let new_maxes = keys.iter().map(|x| x.last().unwrap().clone_ref(py));
-        data.maxes.extend(new_maxes);
-        self.set_len(values.len());
-        data.idx.clear();
-        Ok(())
-    }
-    fn update_from_vec(&self, py: Python<'_>, mut iterable: Vec<Py<PyAny>>) -> PyResult<()> {
-        let key_fn = &self.key.clone_ref(py).into_bound(py);
-        let mut data = self.get_data();
-        iterable.sort_by(|a, b| py_cmp_by_key(a, b, key_fn));
-
-        if !data.maxes.is_empty() {
-            if iterable.len() * 4 >= self.get_len() {
-                data.lists.push(iterable);
-                iterable = data.collapse(py);
-                iterable.sort_by(|a, b| py_cmp_by_key(a, b, key_fn));
-                self.clear();
-            } else {
-                for val in iterable {
-                    self.add(py, val)?;
-                }
-                return Ok(());
-            }
-        }
-
-        let load = self.get_load();
-        let values_len = iterable.len();
-        let new_lists = (0..values_len).step_by(load).map(|pos| {
-            iterable[pos..(pos + load).min(values_len)]
-                .iter()
-                .map(|x| x.clone_ref(py))
-                .collect::<Vec<_>>()
-        });
-
         data.lists.extend(new_lists);
         let new_keys = data
             .lists

@@ -356,12 +356,17 @@ impl InnerSorted for InnerLists {
 
     fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
-        let mut values = iterable
+        let values = iterable
             .try_iter()
             .and_then(|iterator| pylibs::builtins::sorted(&iterator, false))?
             .iter()
             .map(Bound::unbind)
             .collect::<Vec<_>>();
+        self.update_from_vec(py, values)
+    }
+
+    fn update_from_vec(&self, py: Python<'_>, mut values: Vec<Py<PyAny>>) -> PyResult<()> {
+        values.sort_by(|a, b| py_cmp(py, a, b));
 
         if !self.get_data().maxes.is_empty() {
             if values.len() * 4 >= self.get_len() {
@@ -379,7 +384,6 @@ impl InnerSorted for InnerLists {
             }
         }
 
-        let mut data = self.get_data();
         let load = self.get_load();
         let values_len = values.len();
         let new_lists = (0..values_len).step_by(load).map(|pos| {
@@ -388,45 +392,7 @@ impl InnerSorted for InnerLists {
                 .map(|x| x.clone_ref(py))
                 .collect::<Vec<_>>()
         });
-        data.lists.extend(new_lists);
-
-        let mut new_maxes = data
-            .lists
-            .iter()
-            .map(|x| x.last().unwrap().clone_ref(py))
-            .collect::<Vec<_>>();
-        data.maxes.append(new_maxes.as_mut());
-        self.set_len(values_len);
-        data.idx.clear();
-        Ok(())
-    }
-
-    fn update_from_vec(&self, py: Python<'_>, mut iterable: Vec<Py<PyAny>>) -> PyResult<()> {
         let mut data = self.get_data();
-        iterable.sort_by(|a, b| py_cmp(py, a, b));
-
-        if !data.maxes.is_empty() {
-            if iterable.len() * 4 >= self.get_len() {
-                data.lists.push(iterable);
-                iterable = data.collapse(py);
-                iterable.sort_by(|a, b| py_cmp(py, a, b));
-                self.clear();
-            } else {
-                for val in iterable {
-                    self.add(py, val)?;
-                }
-                return Ok(());
-            }
-        }
-
-        let load = self.get_load();
-        let values_len = iterable.len();
-        let new_lists = (0..values_len).step_by(load).map(|pos| {
-            iterable[pos..(pos + load).min(values_len)]
-                .iter()
-                .map(|x| x.clone_ref(py))
-                .collect::<Vec<_>>()
-        });
         data.lists.extend(new_lists);
         let mut new_maxes = data
             .lists
