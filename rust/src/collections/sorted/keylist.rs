@@ -117,36 +117,10 @@ impl SortedKeyList {
     }
 
     fn bisect_key_left(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
-        let mut data = self.get_data();
-
-        if data.maxes.is_empty() {
-            return Ok(0);
-        }
-
-        let pos = bisect::left(&data.maxes, &key)?;
-
-        if pos == data.maxes.len() {
-            Ok(data.len as isize)
-        } else {
-            let idx = bisect::left(&self.get_keys()[pos], &key)?;
-            data.loc(pos, idx as isize)
-        }
+        self.get_data().bisect_left(Some(&self.get_keys()), key)
     }
     fn bisect_key_right(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
-        let mut data = self.get_data();
-
-        if data.maxes.is_empty() {
-            return Ok(0);
-        }
-
-        let pos = bisect::right(&data.maxes, &key)?;
-
-        if pos == data.maxes.len() {
-            Ok(data.len as isize)
-        } else {
-            let idx = bisect::right(&self.get_keys()[pos], &key)?;
-            data.loc(pos, idx as isize)
-        }
+        self.get_data().bisect_right(Some(&self.get_keys()), &key)
     }
 }
 impl InnerSorted for SortedKeyList {

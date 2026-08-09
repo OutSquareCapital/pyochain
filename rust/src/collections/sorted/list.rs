@@ -292,35 +292,11 @@ impl InnerSorted for SortedList {
     }
 
     fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
-        let mut data = self.get_data();
-
-        if data.maxes.is_empty() {
-            return Ok(0);
-        }
-
-        let pos = bisect::left(&data.maxes, &value)?;
-
-        if pos == data.maxes.len() {
-            return Ok(data.len as isize);
-        }
-        let idx = bisect::left(&data.lists[pos], &value)?;
-        data.loc(pos, idx as isize)
+        self.get_data().bisect_left(None, value)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        let mut data = self.get_data();
-
-        if data.maxes.is_empty() {
-            return Ok(0);
-        }
-
-        let pos = bisect::right(&data.maxes, &value)?;
-
-        if pos == data.maxes.len() {
-            return Ok(data.len as isize);
-        }
-        let idx = bisect::right(&data.lists[pos], &value)?;
-        data.loc(pos, idx as isize)
+        self.get_data().bisect_right(None, value)
     }
 
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {

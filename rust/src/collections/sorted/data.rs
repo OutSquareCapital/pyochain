@@ -59,6 +59,41 @@ impl ListsData {
         self.len = 0;
         self.offset = 0;
     }
+    pub fn bisect_left(
+        &mut self,
+        lists: Option<&Vec<Vec<Py<PyAny>>>>,
+        value: Bound<'_, PyAny>,
+    ) -> PyResult<isize> {
+        if self.maxes.is_empty() {
+            return Ok(0);
+        }
+
+        let pos = bisect::left(&self.maxes, &value)?;
+
+        if pos == self.maxes.len() {
+            Ok(self.len as isize)
+        } else {
+            let idx = bisect::left(&lists.unwrap_or(&self.lists)[pos], &value)?;
+            self.loc(pos, idx as isize)
+        }
+    }
+    pub fn bisect_right(
+        &mut self,
+        lists: Option<&Vec<Vec<Py<PyAny>>>>,
+        value: &Bound<'_, PyAny>,
+    ) -> PyResult<isize> {
+        if self.maxes.is_empty() {
+            return Ok(0);
+        }
+
+        let pos = bisect::right(&self.maxes, &value)?;
+
+        if pos == self.maxes.len() {
+            return Ok(self.len as isize);
+        }
+        let idx = bisect::right(&lists.unwrap_or(&self.lists)[pos], &value)?;
+        self.loc(pos, idx as isize)
+    }
 
     pub(crate) fn getitem_from_int<'py>(
         &mut self,
