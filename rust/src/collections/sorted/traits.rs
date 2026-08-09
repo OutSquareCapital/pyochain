@@ -97,13 +97,6 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize>;
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>>;
     fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
-    fn mul<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, PyoVec>> {
-        let values = self.collapse_lists(py);
-        (0..num)
-            .flat_map(|_| values.iter())
-            .pipe(|x| PyList::new(py, x))?
-            .into_pyochain()
-    }
     #[pyo3(signature = (minimum = None, maximum = None, inclusive = (true, true), *, reverse = false))]
     fn irange<'py>(
         slf: Bound<'py, Self>,
@@ -290,8 +283,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         Self::wrap_iter(py, iter::BoundedIter::full(slf.unbind(), iter::Dir::Fwd))
     }
 
-    fn __add__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>)
-    -> PyResult<Bound<'py, Self>>;
+    fn __add__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>>;
     fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>>;
     fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
@@ -484,11 +476,10 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     }
 
     fn __radd__<'py>(
-        &self,
-        py: Python<'py>,
+        slf: Bound<'py, Self>,
         other: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
-        self.__add__(py, other)
+        Self::__add__(slf, other)
     }
 
     fn __rmul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
@@ -505,9 +496,9 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     }
 
     fn __imul__(&self, py: Python<'_>, num: usize) -> PyResult<()> {
-        let values = self.mul(py, num)?.into_any();
+        let values = self.get_data().repeat(py, num);
         self.clear();
-        self.update(&values)
+        self.update_from_vec(py, values)
     }
 
     #[allow(unused_variables)]

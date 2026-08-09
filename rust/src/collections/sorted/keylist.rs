@@ -152,27 +152,19 @@ impl SortedKeyList {
     }
 }
 impl InnerSorted for SortedKeyList {
-    fn __add__<'py>(
-        &self,
-        py: Python<'py>,
-        other: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, Self>> {
-        let mut values = self.collapse_lists(py);
-        let mut new_vals = other
-            .try_iter()?
-            .map(|x| x?.unbind().clone_ref(py).pipe(Ok))
-            .collect::<PyResult<Vec<_>>>()?;
-        values.append(new_vals.as_mut());
-        Self::from_vec(py, values, &self.key)
+    fn __add__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        let py = slf.py();
+        let slf_ref = slf.get();
+        if other.is(&slf) {
+            Self::from_vec(py, slf_ref.get_data().repeat(py, 2), &slf_ref.key)
+        } else {
+            let values = slf_ref.get_data().concat(py, other)?;
+            Self::from_vec(py, values, &slf_ref.key)
+        }
     }
 
     fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
-        let values = self.collapse_lists(py);
-        let new_values = (0..num)
-            .flat_map(|_| values.iter())
-            .map(|x| x.clone_ref(py))
-            .collect::<Vec<_>>();
-        Self::from_vec(py, new_values, &self.key)
+        Self::from_vec(py, self.get_data().repeat(py, num), &self.key)
     }
 
     //recursive_repr()

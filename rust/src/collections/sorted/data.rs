@@ -33,6 +33,25 @@ impl ListsData {
             .collect()
     }
     #[inline]
+    pub fn concat(&self, py: Python<'_>, other: Bound<'_, PyAny>) -> PyResult<Vec<Py<PyAny>>> {
+        let mut values = self.collapse(py);
+        let mut new_vals = other
+            .try_iter()?
+            .map(|x| x?.unbind().clone_ref(py).pipe(Ok))
+            .collect::<PyResult<Vec<_>>>()?;
+        values.append(new_vals.as_mut());
+        Ok(values)
+    }
+    #[inline]
+    pub fn repeat(&self, py: Python<'_>, num: usize) -> Vec<Py<PyAny>> {
+        let values = self.collapse(py);
+        (0..num)
+            .flat_map(|_| values.iter())
+            .map(|x| x.clone_ref(py))
+            .collect::<Vec<_>>()
+    }
+
+    #[inline]
     pub fn clear(&mut self) {
         self.lists.clear();
         self.maxes.clear();

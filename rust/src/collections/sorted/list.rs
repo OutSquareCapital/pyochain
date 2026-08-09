@@ -69,28 +69,18 @@ impl SortedList {
     }
 }
 impl InnerSorted for SortedList {
-    fn __add__<'py>(
-        &self,
-        py: Python<'py>,
-        other: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, Self>> {
-        let mut values = self.collapse_lists(py);
-        let mut other_vec = other
-            .try_iter()?
-            .map(|x| x?.unbind().clone_ref(py).pipe(Ok))
-            .collect::<PyResult<Vec<_>>>()?;
-        values.append(other_vec.as_mut());
-        Self::from_vec(py, values)
+    fn __add__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        let py = slf.py();
+        let data = slf.get().get_data();
+        if other.is(&slf) {
+            Self::from_vec(py, data.repeat(py, 2))
+        } else {
+            Self::from_vec(py, data.concat(py, other)?)
+        }
     }
 
     fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
-        let values = self.collapse_lists(py);
-
-        let new_values = (0..num)
-            .flat_map(|_| values.iter())
-            .map(|x| x.clone_ref(py))
-            .collect::<Vec<_>>();
-        Self::from_vec(py, new_values)
+        Self::from_vec(py, self.get_data().repeat(py, num))
     }
 
     // @recursive_repr()
