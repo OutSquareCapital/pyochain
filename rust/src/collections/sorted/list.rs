@@ -9,32 +9,104 @@ use crate::{
     },
     iterators,
     pyo3_ext::pylibs,
+    pyovec::PyoVec,
+    traits::{IntoPyochain, PyoABC},
 };
-use pyo3::prelude::*;
+use pyo3::{
+    PyTypeInfo,
+    prelude::*,
+    types::{PyList, PyType},
+};
 use std::sync::MutexGuard;
 use std::sync::{Mutex, atomic::AtomicUsize};
 
 use tap::prelude::*;
-#[pyclass(module = "pyochain._collections", frozen, generic)]
-pub struct InnerLists {
+#[pyclass(module = "pyochain._collections", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
+pub struct SortedList {
     pub(super) data: Mutex<ListsData>,
     pub(super) load: AtomicUsize,
 }
-#[pymethods]
-impl InnerLists {
-    #[new]
-    fn new() -> PyResult<Self> {
-        Ok(Self {
+impl SortedList {
+    pub(super) fn new() -> Self {
+        Self {
             data: Mutex::new(ListsData::new()),
             load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
-        })
+        }
     }
-    #[getter]
-    fn get_len(&self) -> usize {
-        self.get_data().len
+    pub(super) fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<Bound<'_, Self>> {
+        let new_inst = Self::new();
+        new_inst.update_from_vec(py, values)?;
+        abc::PyoMutableSequence::build_init()
+            .add_subclass(new_inst)
+            .pipe(|x| Bound::new(py, x))
     }
 }
-impl InnerSorted for InnerLists {
+#[pymethods]
+impl SortedList {
+    #[new]
+    #[pyo3(signature = (iterable = None))]
+    fn py_new(iterable: Option<Bound<'_, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
+        let data = Self::new();
+        if let Some(values) = iterable {
+            data.update(&values)?;
+        };
+
+        abc::PyoMutableSequence::build_init()
+            .add_subclass(data)
+            .pipe(Ok)
+    }
+
+    fn __reduce__<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> PyResult<(Bound<'py, PyType>, (Bound<'py, PyoVec>,))> {
+        let values = self
+            .collapse_lists(py)
+            .iter()
+            .pipe(|x| PyList::new(py, x))?
+            .into_pyochain()?;
+        Ok((Self::type_object(py), (values,)))
+    }
+}
+impl InnerSorted for SortedList {
+    fn __add__<'py>(
+        &self,
+        py: Python<'py>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
+        let mut values = self.collapse_lists(py);
+        let mut other_vec = other
+            .try_iter()?
+            .map(|x| x?.unbind().clone_ref(py).pipe(Ok))
+            .collect::<PyResult<Vec<_>>>()?;
+        values.append(other_vec.as_mut());
+        Self::from_vec(py, values)
+    }
+
+    fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
+        let values = self.collapse_lists(py);
+
+        let new_values = (0..num)
+            .flat_map(|_| values.iter())
+            .map(|x| x.clone_ref(py))
+            .collect::<Vec<_>>();
+        Self::from_vec(py, new_values)
+    }
+
+    // @recursive_repr()
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        let cls_name = Self::type_object(py).name()?;
+        self.collapse_lists(py)
+            .iter()
+            .pipe(|x| PyList::new(py, x))?
+            .repr()
+            .map(|repr| format!("{}({})", cls_name, repr))
+    }
+
+    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+        Self::from_vec(py, self.collapse_lists(py))
+    }
+
     fn wrap_iter<'py>(
         py: Python<'py>,
         inner: iter::BoundedIter<Self>,

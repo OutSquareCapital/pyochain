@@ -83,8 +83,8 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<collections::HeapMax>()?;
     m.add_class::<collections::HeapMin>()?;
     // NOTE: Temp utils
-    m.add_class::<collections::InnerLists>()?;
-    m.add_class::<collections::InnerKeyLists>()?;
+    m.add_class::<collections::SortedList>()?;
+    m.add_class::<collections::SortedKeyList>()?;
     m.add_function(wrap_pyfunction!(
         collections::sorted::debug::check_sorted_list,
         m

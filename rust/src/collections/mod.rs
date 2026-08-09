@@ -5,6 +5,6 @@ pub mod stableset;
 pub use deque::Deque;
 pub use heap::{Heap, HeapMax, HeapMin};
 pub use pyocounter::PyoCounter;
-pub use sorted::{InnerKeyLists, InnerLists};
+pub use sorted::{SortedKeyList, SortedList};
 pub use stableset::StableSet;
 pub mod sorted;

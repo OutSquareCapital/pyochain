@@ -9,10 +9,9 @@ from typing import TYPE_CHECKING, Any, Self, overload, override
 
 from pyochain import Iter, Set, SetMut
 from pyochain.abc import PyoIterator, PyoMutableSet, PyoSequence
+from pyochain.rs import SortedKeyList, SortedList
 
 from ._base_sorted import BaseSortedListSet, KeyFunc
-from ._sorted_key_list import SortedKeyList, identity
-from ._sorted_list import SortedList
 
 if TYPE_CHECKING:
     from types import NotImplementedType
@@ -772,6 +771,10 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         """
         type_name = self.__class__.__name__
         return f"{type_name}({list(self)!r})"
+
+
+def identity[T](value: T) -> T:
+    return value
 
 
 class SortedKeySet[T, OT: SupportsHashableAndRichComparison](SortedSet[T]):  # pyright: ignore[reportInvalidTypeArguments]

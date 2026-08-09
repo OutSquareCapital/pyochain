@@ -1,11 +1,11 @@
 use crate::collections::sorted::traits::InnerSortedGetters;
-use crate::collections::{InnerKeyLists, InnerLists};
+use crate::collections::{SortedKeyList, SortedList};
 use either::Either;
 use pyo3::exceptions::PyAssertionError;
 use pyo3::prelude::*;
 use std::ops::Index;
 
-type InnerSorted = Either<Py<InnerLists>, Py<InnerKeyLists>>;
+type InnerSorted = Either<Py<SortedList>, Py<SortedKeyList>>;
 
 macro_rules! pyassert {
     ($cond:expr) => {
@@ -29,7 +29,7 @@ pub fn assert_sorted_list_empty(lst: InnerSorted) -> PyResult<()> {
 #[pyfunction]
 pub fn check_sorted_list(
     py: Python<'_>,
-    data: Either<Py<InnerLists>, Py<InnerKeyLists>>,
+    data: Either<Py<SortedList>, Py<SortedKeyList>>,
 ) -> PyResult<()> {
     fn check_list(x: &impl InnerSortedGetters, py: Python<'_>) -> PyResult<()> {
         run_checks(py, x).inspect_err(move |e| show_list(py, &e, x))
@@ -38,7 +38,7 @@ pub fn check_sorted_list(
         .into_inner()
 }
 #[pyfunction]
-pub fn check_sorted_key_list(py: Python<'_>, data: Py<InnerKeyLists>) -> PyResult<()> {
+pub fn check_sorted_key_list(py: Python<'_>, data: Py<SortedKeyList>) -> PyResult<()> {
     run_key_checks(py, data.get()).inspect_err(move |e| show_key_list(py, &e, data.get()))
 }
 
@@ -149,7 +149,7 @@ fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
     Ok(())
 }
 
-fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
+fn run_key_checks(py: Python<'_>, data: &SortedKeyList) -> PyResult<()> {
     let lst_data = data.get_data();
     let keys = data.get_keys();
     let load = data.get_load();
@@ -247,7 +247,7 @@ fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
     Ok(())
 }
 
-fn show_key_list(py: Python<'_>, err: &PyErr, data: &InnerKeyLists) -> () {
+fn show_key_list(py: Python<'_>, err: &PyErr, data: &SortedKeyList) -> () {
     show_list(py, err, data);
     let keys = data.get_keys();
     let infos = [

@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use super::traits::InnerSorted;
 use crate::{
     abc,
-    collections::{InnerKeyLists, InnerLists},
+    collections::{SortedKeyList, SortedList},
     traits::PyoABC,
 };
 use pyo3::prelude::*;
@@ -121,12 +121,12 @@ impl<T: InnerSorted> BoundedIter<T> {
 
 #[pyclass(module = "pyochain._iterators", frozen, generic, extends=abc::PyoIterator)]
 pub struct SortedIter {
-    inner: Mutex<BoundedIter<InnerLists>>,
+    inner: Mutex<BoundedIter<SortedList>>,
 }
 impl SortedIter {
     pub(super) fn build<'py>(
         py: Python<'py>,
-        inner: BoundedIter<InnerLists>,
+        inner: BoundedIter<SortedList>,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
         abc::PyoIterator::build_init()
             .add_subclass(Self {
@@ -146,12 +146,12 @@ impl SortedIter {
 
 #[pyclass(module = "pyochain._iterators", frozen, generic, extends=abc::PyoIterator)]
 pub struct SortedIterKey {
-    inner: Mutex<BoundedIter<InnerKeyLists>>,
+    inner: Mutex<BoundedIter<SortedKeyList>>,
 }
 impl SortedIterKey {
     pub(super) fn build<'py>(
         py: Python<'py>,
-        inner: BoundedIter<InnerKeyLists>,
+        inner: BoundedIter<SortedKeyList>,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
         abc::PyoIterator::build_init()
             .add_subclass(Self {

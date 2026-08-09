@@ -9,39 +9,60 @@ use crate::{
     },
     iterators,
     pyo3_ext::pylibs,
+    pyovec::PyoVec,
+    traits::{IntoPyochain, PyoABC},
 };
-use pyo3::prelude::*;
+use pyo3::{
+    IntoPyObjectExt, PyTypeInfo,
+    prelude::*,
+    types::{PyList, PyType},
+};
 use std::sync::MutexGuard;
 use std::sync::{Mutex, atomic::AtomicUsize};
 use tap::Pipe;
-#[pyclass(module = "pyochain._collections", frozen, generic)]
-pub struct InnerKeyLists {
+#[pyclass(frozen, generic)]
+struct PyIdentity;
+#[pymethods]
+impl PyIdentity {
+    fn __call__(&self, py: Python<'_>, value: Py<PyAny>) -> Py<PyAny> {
+        value.clone_ref(py)
+    }
+}
+#[pyclass(module = "pyochain._collections", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
+pub struct SortedKeyList {
     #[pyo3(get)]
     pub(super) key: Py<PyAny>,
     pub(super) keys: Mutex<Vec<Vec<Py<PyAny>>>>,
     pub(super) data: Mutex<ListsData>,
     pub(super) load: AtomicUsize,
 }
-impl InnerKeyLists {
+impl SortedKeyList {
     pub(super) fn get_keys(&self) -> std::sync::MutexGuard<'_, Vec<Vec<Py<PyAny>>>> {
         try_lock_recover(&self.keys, "keys already locked - reentrant bug")
     }
-}
-#[pymethods]
-impl InnerKeyLists {
-    #[new]
-    fn new(key: Bound<'_, PyAny>) -> PyResult<Self> {
-        Ok(Self {
-            key: key.unbind(),
+
+    fn new(key: Py<PyAny>) -> Self {
+        Self {
+            key,
             keys: Mutex::new(Vec::new()),
             data: Mutex::new(ListsData::new()),
             load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
-        })
+        }
     }
-    #[getter]
-    fn get_len(&self) -> usize {
-        self.get_data().len
+    fn from_vec<'py>(
+        py: Python<'py>,
+        values: Vec<Py<PyAny>>,
+        key: &Py<PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
+        let new_inst = Self::new(key.clone_ref(py));
+        new_inst.update_from_vec(py, values)?;
+        abc::PyoMutableSequence::build_init()
+            .add_subclass(new_inst)
+            .pipe(|x| Bound::new(py, x))
     }
+}
+#[pymethods]
+impl SortedKeyList {
     #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true), *, reverse = false))]
     fn irange_key<'py>(
         slf: Bound<'py, Self>,
@@ -64,8 +85,111 @@ impl InnerKeyLists {
             Some(bounds) => Self::islice_iter(slf, bounds, reverse),
         }
     }
+    #[new]
+    #[pyo3(signature = (iterable = None, *, key = None))]
+    fn py_new(
+        py: Python<'_>,
+        iterable: Option<Bound<'_, PyAny>>,
+        key: Option<Bound<'_, PyAny>>,
+    ) -> PyResult<PyClassInitializer<Self>> {
+        let slf = Self::new(
+            key.map(Bound::unbind)
+                .unwrap_or_else(|| PyIdentity {}.into_py_any(py).unwrap()),
+        );
+
+        if let Some(iterable) = iterable {
+            slf.update(&iterable)?;
+        }
+        abc::PyoMutableSequence::build_init()
+            .add_subclass(slf)
+            .pipe(Ok)
+    }
+
+    fn __reduce__<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> PyResult<(Bound<'py, PyType>, (Bound<'py, PyoVec>, &Py<PyAny>))> {
+        let values = self
+            .collapse_lists(py)
+            .iter()
+            .map(|x| x.clone_ref(py))
+            .pipe(|v| PyList::new(py, v))?
+            .into_pyochain()?;
+        Ok((Self::type_object(py), (values, &self.key)))
+    }
+
+    fn bisect_key_left(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
+        let mut data = self.get_data();
+
+        if data.maxes.is_empty() {
+            return Ok(0);
+        }
+
+        let pos = bisect::left(&data.maxes, &key)?;
+
+        if pos == data.maxes.len() {
+            Ok(data.len as isize)
+        } else {
+            let idx = bisect::left(&self.get_keys()[pos], &key)?;
+            data.loc(pos, idx as isize)
+        }
+    }
+    fn bisect_key_right(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
+        let mut data = self.get_data();
+
+        if data.maxes.is_empty() {
+            return Ok(0);
+        }
+
+        let pos = bisect::right(&data.maxes, &key)?;
+
+        if pos == data.maxes.len() {
+            Ok(data.len as isize)
+        } else {
+            let idx = bisect::right(&self.get_keys()[pos], &key)?;
+            data.loc(pos, idx as isize)
+        }
+    }
 }
-impl InnerSorted for InnerKeyLists {
+impl InnerSorted for SortedKeyList {
+    fn __add__<'py>(
+        &self,
+        py: Python<'py>,
+        other: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
+        let mut values = self.collapse_lists(py);
+        let mut new_vals = other
+            .try_iter()?
+            .map(|x| x?.unbind().clone_ref(py).pipe(Ok))
+            .collect::<PyResult<Vec<_>>>()?;
+        values.append(new_vals.as_mut());
+        Self::from_vec(py, values, &self.key)
+    }
+
+    fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
+        let values = self.collapse_lists(py);
+        let new_values = (0..num)
+            .flat_map(|_| values.iter())
+            .map(|x| x.clone_ref(py))
+            .collect::<Vec<_>>();
+        Self::from_vec(py, new_values, &self.key)
+    }
+
+    //recursive_repr()
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        let type_name = Self::type_object(py).name()?;
+        let key_repr = self.key.bind(py).repr()?;
+
+        self.collapse_lists(py)
+            .iter()
+            .pipe(|v| PyList::new(py, v))?
+            .repr()
+            .map(|repr| format!("{type_name}({}, key={})", repr, key_repr))
+    }
+
+    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+        Self::from_vec(py, self.collapse_lists(py), &self.key)
+    }
     fn wrap_iter<'py>(
         py: Python<'py>,
         inner: iter::BoundedIter<Self>,
@@ -521,41 +645,5 @@ impl InnerSorted for InnerKeyLists {
         data.len = values_len;
         data.idx.clear();
         Ok(())
-    }
-}
-
-#[pymethods]
-impl InnerKeyLists {
-    fn bisect_key_left(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
-        let mut data = self.get_data();
-
-        if data.maxes.is_empty() {
-            return Ok(0);
-        }
-
-        let pos = bisect::left(&data.maxes, &key)?;
-
-        if pos == data.maxes.len() {
-            Ok(data.len as isize)
-        } else {
-            let idx = bisect::left(&self.get_keys()[pos], &key)?;
-            data.loc(pos, idx as isize)
-        }
-    }
-    fn bisect_key_right(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
-        let mut data = self.get_data();
-
-        if data.maxes.is_empty() {
-            return Ok(0);
-        }
-
-        let pos = bisect::right(&data.maxes, &key)?;
-
-        if pos == data.maxes.len() {
-            Ok(data.len as isize)
-        } else {
-            let idx = bisect::right(&self.get_keys()[pos], &key)?;
-            data.loc(pos, idx as isize)
-        }
     }
 }
