@@ -106,7 +106,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>>;
     #[skip]
-    fn update_from_vec(&self, py: Python<'_>, iterable: Vec<Py<PyAny>>) -> PyResult<()>;
+    fn update_from_vec(&self, py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<()>;
 
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
         let values = self.collapse_lists(py);

@@ -8,7 +8,6 @@ use crate::{
         traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, try_lock_recover},
     },
     iterators,
-    pyo3_ext::pylibs,
     pyovec::PyoVec,
     traits::{IntoPyochain, PyoABC},
 };
@@ -17,8 +16,7 @@ use pyo3::{
     prelude::*,
     types::{PyList, PyType},
 };
-use std::sync::MutexGuard;
-use std::sync::{Mutex, atomic::AtomicUsize};
+use std::sync::{Mutex, MutexGuard, atomic::AtomicUsize};
 use tap::Pipe;
 #[pyclass(frozen, generic)]
 struct PyIdentity;
@@ -582,13 +580,10 @@ impl InnerSorted for SortedKeyList {
     }
     fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
-        let key_fn = &self.key.clone_ref(py).into_bound(py);
         let values = iterable
-            .try_iter()
-            .and_then(|x| pylibs::builtins::sorted_by(&x, false, key_fn))?
-            .iter()
-            .map(Bound::unbind)
-            .collect::<Vec<_>>();
+            .try_iter()?
+            .map(|x| x?.unbind().clone_ref(py).pipe(Ok))
+            .collect::<PyResult<Vec<_>>>()?;
         self.update_from_vec(py, values)
     }
     fn update_from_vec(&self, py: Python<'_>, mut values: Vec<Py<PyAny>>) -> PyResult<()> {

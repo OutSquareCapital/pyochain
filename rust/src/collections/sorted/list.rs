@@ -8,7 +8,6 @@ use crate::{
         traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters},
     },
     iterators,
-    pyo3_ext::pylibs,
     pyovec::PyoVec,
     traits::{IntoPyochain, PyoABC},
 };
@@ -17,8 +16,7 @@ use pyo3::{
     prelude::*,
     types::{PyList, PyType},
 };
-use std::sync::MutexGuard;
-use std::sync::{Mutex, atomic::AtomicUsize};
+use std::sync::{Mutex, MutexGuard, atomic::AtomicUsize};
 
 use tap::prelude::*;
 #[pyclass(module = "pyochain._collections", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
@@ -421,11 +419,9 @@ impl InnerSorted for SortedList {
     fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
         let values = iterable
-            .try_iter()
-            .and_then(|iterator| pylibs::builtins::sorted(&iterator, false))?
-            .iter()
-            .map(Bound::unbind)
-            .collect::<Vec<_>>();
+            .try_iter()?
+            .map(|x| x?.unbind().pipe(Ok))
+            .collect::<PyResult<Vec<_>>>()?;
         self.update_from_vec(py, values)
     }
 
