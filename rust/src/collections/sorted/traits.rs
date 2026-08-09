@@ -5,6 +5,7 @@ use crate::{
         sorted::{data::ListsData, errors, iter},
     },
     iterators,
+    pyo3_ext::prelude::*,
     pyovec::PyoVec,
     traits::IntoPyochain,
 };
@@ -441,7 +442,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             Either::Right(slice) => data
                 .getitem_from_slice(py, slice)?
                 .iter()
-                .pipe(|elements| PyList::new(py, elements))?
+                .collect_bound::<PyList>(py)?
                 .into_pyochain()
                 .map(Either::Right),
             Either::Left(index) => data.getitem_from_int(py, index).map(Either::Left),

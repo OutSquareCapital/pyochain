@@ -9,8 +9,8 @@ use pyo3::{
     prelude::*,
     sync::PyOnceLock,
     types::{
-        PyBool, PyDict, PyDictItems, PyDictKeys, PyFrozenSet, PyFrozenSetBuilder, PyInt,
-        PyIterator, PyList, PyNotImplemented, PyRange, PySequence, PySet, PySlice, PyTuple, PyType,
+        PyBool, PyDict, PyDictItems, PyDictKeys, PyFrozenSet, PyInt, PyIterator, PyList,
+        PyNotImplemented, PyRange, PySequence, PySet, PySlice, PyTuple, PyType,
     },
 };
 use tap::prelude::*;
@@ -33,85 +33,6 @@ impl ABCRegister<'_> for PyAbstractSet {}
 impl ABCRegister<'_> for PyIterable {}
 impl ABCRegister<'_> for PyMutableSet {}
 impl ABCRegister<'_> for PyIterator {}
-/// Trait for Python collection types that can be created from an iterator of `Bound<'_, PYAny>`.
-/// Much more flexible than Pyo3 provided creations, who often require `ExactSizedIterator`, which is quickly limiting.
-pub trait FromBoundIterator<'py>: Sized {
-    fn from_iter_bound<I>(iter: I, py: Python<'py>) -> PyResult<Bound<'py, Self>>
-    where
-        I: IntoIterator<Item = PyResult<Bound<'py, PyAny>>>;
-}
-
-impl<'py> FromBoundIterator<'py> for PyFrozenSet {
-    fn from_iter_bound<I>(iter: I, py: Python<'py>) -> PyResult<Bound<'py, Self>>
-    where
-        I: IntoIterator<Item = PyResult<Bound<'py, PyAny>>>,
-    {
-        let mut builder = PyFrozenSetBuilder::new(py)?;
-        iter.into_iter()
-            .try_for_each(|item| builder.add(item?))
-            .map(|_| builder.finalize())
-    }
-}
-impl<'py> FromBoundIterator<'py> for PySet {
-    fn from_iter_bound<I>(iter: I, py: Python<'py>) -> PyResult<Bound<'py, Self>>
-    where
-        I: IntoIterator<Item = PyResult<Bound<'py, PyAny>>>,
-    {
-        let pyset = PySet::empty(py)?;
-        iter.into_iter()
-            .try_for_each(|item| pyset.add(item?))
-            .map(|_| pyset)
-    }
-}
-impl<'py> FromBoundIterator<'py> for PyList {
-    fn from_iter_bound<I>(iter: I, py: Python<'py>) -> PyResult<Bound<'py, Self>>
-    where
-        I: IntoIterator<Item = PyResult<Bound<'py, PyAny>>>,
-    {
-        let mut iter = iter.into_iter();
-        let (min_len, _) = iter.size_hint();
-
-        let len: ffi::Py_ssize_t = min_len
-            .try_into()
-            .expect("out of range integral type conversion attempted on iterator size_hint");
-
-        let list = unsafe {
-            Bound::from_owned_ptr(py, ffi::PyList_New(len)).cast_into_unchecked::<PyList>()
-        };
-
-        let count = (&mut iter)
-            .take(min_len)
-            .try_fold(0, |count, item| unsafe {
-                ffi::PyList_SET_ITEM(list.as_ptr(), count as ffi::Py_ssize_t, item?.into_ptr());
-                Ok::<_, PyErr>(count + 1)
-            })?;
-
-        debug_assert_eq!(
-            count, min_len,
-            "iterator produced fewer than its size_hint lower bound"
-        );
-
-        iter.try_for_each(|item| list.append(item?))?;
-
-        Ok(list)
-    }
-}
-/// Mirror of std `FromIterator` trait, but for PyO3 `Bound<'_, PyIterator>` instead of std `Iterator`.
-pub trait CollectBoundIterator<'py>:
-    IntoIterator<Item = PyResult<Bound<'py, PyAny>>> + Sized
-{
-    fn collect_bound<B>(self, py: Python<'py>) -> PyResult<Bound<'py, B>>
-    where
-        B: FromBoundIterator<'py>,
-    {
-        B::from_iter_bound(self, py)
-    }
-}
-
-impl<'py, I> CollectBoundIterator<'py> for I where
-    I: IntoIterator<Item = PyResult<Bound<'py, PyAny>>>
-{
-}
 pub trait PySequenceExtMethods<'py> {
     fn count(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
 

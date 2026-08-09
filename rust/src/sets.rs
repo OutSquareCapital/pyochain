@@ -3,7 +3,7 @@ use crate::{
     display::get_repr,
     pyo3_ext::{
         prelude::*,
-        types::{FromBoundIterator, PyAbstractSet, PyCmpOut},
+        types::{PyAbstractSet, PyCmpOut},
     },
     traits::{IntoPyochain, PyWrapper, PyoABC},
 };
@@ -37,14 +37,16 @@ enum SetCmp<'py> {
     SetMut(Bound<'py, SetMut>),
     PyAbstract(Bound<'py, PyAbstractSet>),
 }
-trait SetCmpMethods<'py, T: PyTypeInfo + DerefToPyAny + FromBoundIterator<'py>>:
-    Sized + PyWrapper<T> + PyTypeInfo
+trait SetCmpMethods<
+    'py,
+    T: PyTypeInfo + DerefToPyAny + TryFromBoundIterator<'py, Bound<'py, PyAny>>,
+>: Sized + PyWrapper<T> + PyTypeInfo
 {
     #[inline(always)]
     fn handle_pyabstract_set(pyset: Bound<'py, PyAny>) -> PyResult<Bound<'py, T>> {
         let py = pyset.py();
         match pyset.cast_exact::<T>() {
-            Err(_) => pyset.try_iter()?.collect_bound::<T>(py),
+            Err(_) => pyset.try_iter()?.try_collect_bound::<T>(py),
             Ok(target) => Ok(target.into()),
         }
     }

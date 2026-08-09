@@ -8,6 +8,7 @@ use crate::{
         traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, try_lock_recover},
     },
     iterators,
+    pyo3_ext::prelude::*,
     pyovec::PyoVec,
     traits::{IntoPyochain, PyoABC},
 };
@@ -92,7 +93,7 @@ impl SortedKeyList {
     ) -> PyResult<PyClassInitializer<Self>> {
         let slf = Self::new(
             key.map(Bound::unbind)
-                .unwrap_or_else(|| PyIdentity {}.into_py_any(py).unwrap()),
+                .unwrap_or_else(|| PyIdentity.into_py_any(py).unwrap()),
         );
 
         if let Some(iterable) = iterable {
@@ -110,7 +111,7 @@ impl SortedKeyList {
         let values = self
             .get_data()
             .iter()
-            .pipe(|v| PyList::new(py, v))?
+            .collect_bound::<PyList>(py)?
             .into_pyochain()?;
         Ok((Self::type_object(py), (values, &self.key)))
     }
@@ -145,7 +146,7 @@ impl InnerSorted for SortedKeyList {
 
         self.get_data()
             .iter()
-            .pipe(|v| PyList::new(py, v))?
+            .collect_bound::<PyList>(py)?
             .repr()
             .map(|repr| format!("{type_name}({}, key={})", repr, key_repr))
     }

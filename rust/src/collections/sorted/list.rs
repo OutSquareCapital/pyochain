@@ -8,6 +8,7 @@ use crate::{
         traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters},
     },
     iterators,
+    pyo3_ext::prelude::*,
     pyovec::PyoVec,
     traits::{IntoPyochain, PyoABC},
 };
@@ -61,7 +62,7 @@ impl SortedList {
         let values = self
             .get_data()
             .iter()
-            .pipe(|x| PyList::new(py, x))?
+            .collect_bound::<PyList>(py)?
             .into_pyochain()?;
         Ok((Self::type_object(py), (values,)))
     }
@@ -86,7 +87,7 @@ impl InnerSorted for SortedList {
         let cls_name = Self::type_object(py).name()?;
         self.get_data()
             .iter()
-            .pipe(|x| PyList::new(py, x))?
+            .collect_bound::<PyList>(py)?
             .repr()
             .map(|repr| format!("{}({})", cls_name, repr))
     }

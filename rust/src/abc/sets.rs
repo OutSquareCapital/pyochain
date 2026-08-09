@@ -8,7 +8,7 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
-    BoundObject, IntoPyObjectExt,
+    BoundObject,
     exceptions::PyKeyError,
     intern,
     prelude::*,
@@ -86,9 +86,9 @@ impl PyoSet {
             Ok(iterator) => slf
                 .try_iter()?
                 .chain(iterator)
-                .collect_bound::<PyList>(py)?
-                .into_bound_py_any(py)
-                .and_then(|x| py_from_iterable(slf.as_any(), &x))
+                .try_collect_bound::<PyList>(py)?
+                .into_any()
+                .pipe(|x| py_from_iterable(slf.as_any(), &x))
                 .map(Either::Left),
             Err(_) => PyNotImplemented::get(py)
                 .into_bound()
