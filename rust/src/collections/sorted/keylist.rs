@@ -108,9 +108,8 @@ impl SortedKeyList {
         py: Python<'py>,
     ) -> PyResult<(Bound<'py, PyType>, (Bound<'py, PyoVec>, &Py<PyAny>))> {
         let values = self
-            .collapse_lists(py)
+            .get_data()
             .iter()
-            .map(|x| x.clone_ref(py))
             .pipe(|v| PyList::new(py, v))?
             .into_pyochain()?;
         Ok((Self::type_object(py), (values, &self.key)))
@@ -144,7 +143,7 @@ impl InnerSorted for SortedKeyList {
         let type_name = Self::type_object(py).name()?;
         let key_repr = self.key.bind(py).repr()?;
 
-        self.collapse_lists(py)
+        self.get_data()
             .iter()
             .pipe(|v| PyList::new(py, v))?
             .repr()

@@ -26,11 +26,11 @@ impl ListsData {
     }
     #[inline]
     pub fn collapse(&self, py: Python<'_>) -> Vec<Py<PyAny>> {
-        self.lists
-            .iter()
-            .flatten()
-            .map(|x| x.clone_ref(py))
-            .collect()
+        self.iter().map(|x| x.clone_ref(py)).collect()
+    }
+    #[inline(always)]
+    pub fn iter(&self) -> impl Iterator<Item = &Py<PyAny>> {
+        self.lists.iter().flatten()
     }
     #[inline]
     pub fn concat(&self, py: Python<'_>, other: Bound<'_, PyAny>) -> PyResult<Vec<Py<PyAny>>> {

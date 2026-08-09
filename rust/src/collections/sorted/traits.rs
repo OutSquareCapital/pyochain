@@ -297,9 +297,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                     Either::Left(false).pipe(Ok)
                 } else {
                     let py = seq.py();
-                    data.lists
-                        .iter()
-                        .flat_map(move |x| x.iter())
+                    data.iter()
                         .zip(seq.try_iter()?)
                         .map(|(a, b)| a.bind(py).eq(b?))
                         .find_map(|x| match x {
@@ -324,9 +322,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                     Either::Left(true).pipe(Ok)
                 } else {
                     let py = seq.py();
-                    data.lists
-                        .iter()
-                        .flat_map(move |x| x.iter())
+                    data.iter()
                         .zip(seq.try_iter()?)
                         .map(|(a, b)| a.bind(py).eq(b?))
                         .find_map(|x| match x {
@@ -347,12 +343,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             Either::Left(seq) => {
                 let py = seq.py();
                 let data = self.get_data();
-                for (alpha, beta) in data
-                    .lists
-                    .iter()
-                    .flat_map(move |x| x.iter())
-                    .zip(seq.try_iter()?)
-                {
+                for (alpha, beta) in data.iter().zip(seq.try_iter()?) {
                     let a = alpha.bind(py);
                     let b = beta?;
                     if a.ne(&b)? {
@@ -372,12 +363,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             Either::Left(seq) => {
                 let py = seq.py();
                 let data = self.get_data();
-                for (alpha, beta) in data
-                    .lists
-                    .iter()
-                    .flat_map(move |x| x.iter())
-                    .zip(seq.try_iter()?)
-                {
+                for (alpha, beta) in data.iter().zip(seq.try_iter()?) {
                     let b = beta?;
                     let a = alpha.bind(py);
                     if a.ne(&b)? {
@@ -396,12 +382,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             Either::Left(seq) => {
                 let py = seq.py();
                 let data = self.get_data();
-                for (alpha, beta) in data
-                    .lists
-                    .iter()
-                    .flat_map(move |x| x.iter())
-                    .zip(seq.try_iter()?)
-                {
+                for (alpha, beta) in data.iter().zip(seq.try_iter()?) {
                     let b = beta?;
                     let a = alpha.bind(py);
                     if a.ne(&b)? {
@@ -421,12 +402,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             Either::Left(seq) => {
                 let py = seq.py();
                 let data = self.get_data();
-                for (alpha, beta) in data
-                    .lists
-                    .iter()
-                    .flat_map(move |x| x.iter())
-                    .zip(seq.try_iter()?)
-                {
+                for (alpha, beta) in data.iter().zip(seq.try_iter()?) {
                     let b = beta?;
                     let a = alpha.bind(py);
                     if a.ne(&b)? {

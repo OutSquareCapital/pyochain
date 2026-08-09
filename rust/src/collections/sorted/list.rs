@@ -59,7 +59,7 @@ impl SortedList {
         py: Python<'py>,
     ) -> PyResult<(Bound<'py, PyType>, (Bound<'py, PyoVec>,))> {
         let values = self
-            .collapse_lists(py)
+            .get_data()
             .iter()
             .pipe(|x| PyList::new(py, x))?
             .into_pyochain()?;
@@ -84,7 +84,7 @@ impl InnerSorted for SortedList {
     // @recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let cls_name = Self::type_object(py).name()?;
-        self.collapse_lists(py)
+        self.get_data()
             .iter()
             .pipe(|x| PyList::new(py, x))?
             .repr()
