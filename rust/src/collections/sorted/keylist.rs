@@ -520,7 +520,8 @@ impl InnerSorted for InnerKeyLists {
                 return errors::is_not_in_list_err(&value);
             }
             if data.lists[pos][idx].bind(py).eq(&value)? {
-                let loc = self.loc(&mut data, pos, idx as isize)?;
+                let (loc, offset) = data.loc(pos, idx as isize, self.get_offset())?;
+                self.set_offset(offset);
                 if start <= loc && loc <= stop {
                     return Ok(loc);
                 } else if loc > stop {
@@ -657,7 +658,9 @@ impl InnerKeyLists {
             Ok(self.get_len() as isize)
         } else {
             let idx = bisect::left(&self.get_keys()[pos], &key)?;
-            self.loc(&mut data, pos, idx as isize)
+            let (res, offset) = data.loc(pos, idx as isize, self.get_offset())?;
+            self.set_offset(offset);
+            Ok(res)
         }
     }
     fn bisect_key_right(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
@@ -673,7 +676,9 @@ impl InnerKeyLists {
             Ok(self.get_len() as isize)
         } else {
             let idx = bisect::right(&self.get_keys()[pos], &key)?;
-            self.loc(&mut data, pos, idx as isize)
+            let (res, offset) = data.loc(pos, idx as isize, self.get_offset())?;
+            self.set_offset(offset);
+            Ok(res)
         }
     }
 }

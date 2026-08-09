@@ -320,7 +320,9 @@ impl InnerSorted for InnerLists {
             return Ok(self.get_len() as isize);
         }
         let idx = bisect::left(&data.lists[pos], &value)?;
-        self.loc(&mut data, pos, idx as isize)
+        let (res, offset) = data.loc(pos, idx as isize, self.get_offset())?;
+        self.set_offset(offset);
+        Ok(res)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
@@ -336,7 +338,9 @@ impl InnerSorted for InnerLists {
             return Ok(self.get_len() as isize);
         }
         let idx = bisect::right(&data.lists[pos], &value)?;
-        self.loc(&mut data, pos, idx as isize)
+        let (res, offset) = data.loc(pos, idx as isize, self.get_offset())?;
+        self.set_offset(offset);
+        Ok(res)
     }
 
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
@@ -355,15 +359,19 @@ impl InnerSorted for InnerLists {
         let pos_right = bisect::right(&data.maxes, &value)?;
 
         if pos_right == data.maxes.len() {
-            return Ok(self.get_len() - self.loc(&mut data, pos_left, idx_left as isize)? as usize);
+            let (left, offset) = data.loc(pos_left, idx_left as isize, self.get_offset())?;
+            self.set_offset(offset);
+            return Ok(self.get_len() - left as usize);
         }
         let idx_right = bisect::right(&data.lists[pos_right], &value)?;
 
         if pos_left == pos_right {
             return Ok(idx_right - idx_left);
         }
-        let right = self.loc(&mut data, pos_right, idx_right as isize)?;
-        let left = self.loc(&mut data, pos_left, idx_left as isize)?;
+        let (right, offset) = data.loc(pos_right, idx_right as isize, self.get_offset())?;
+        self.set_offset(offset);
+        let (left, offset) = data.loc(pos_left, idx_left as isize, self.get_offset())?;
+        self.set_offset(offset);
         Ok((right - left) as usize)
     }
 
@@ -412,7 +420,8 @@ impl InnerSorted for InnerLists {
         }
 
         stop -= 1;
-        let left = self.loc(&mut data, pos_left, idx_left as isize)?;
+        let (left, offset) = data.loc(pos_left, idx_left as isize, self.get_offset())?;
+        self.set_offset(offset);
 
         if start <= left {
             if left <= stop {
