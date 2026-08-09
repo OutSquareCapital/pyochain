@@ -6,7 +6,7 @@ use pyo3::{
 use std::cmp::Ordering;
 use tap::prelude::*;
 
-use crate::collections::sorted::errors;
+use crate::collections::sorted::{bisect, errors, iter::IsliceBounds};
 pub(super) struct ListsData {
     pub(super) lists: Vec<Vec<Py<PyAny>>>,
     pub(super) maxes: Vec<Py<PyAny>>,
@@ -413,4 +413,76 @@ fn get_slice(
         )
         .collect::<Vec<_>>()
         .pipe(Ok)
+}
+
+pub(super) fn get_irange_specs(
+    lists: &Vec<Vec<Py<PyAny>>>,
+    maxes: &Vec<Py<PyAny>>,
+    minimum: Option<Bound<'_, PyAny>>,
+    maximum: Option<Bound<'_, PyAny>>,
+    inclusive: (bool, bool),
+) -> PyResult<Option<IsliceBounds>> {
+    if maxes.is_empty() {
+        return Ok(None);
+    }
+
+    // Calculate the minimum (pos, idx) pair. By default this location
+    // will be inclusive in our calculation.
+    let (min_pos, min_idx) = match minimum {
+        None => (0, 0),
+        Some(minimum) => {
+            if inclusive.0 {
+                let min_pos = bisect::left(&maxes, &minimum)?;
+
+                if min_pos == maxes.len() {
+                    return Ok(None);
+                }
+
+                let min_idx = bisect::left(&lists[min_pos], &minimum)?;
+                (min_pos, min_idx)
+            } else {
+                let min_pos = bisect::right(&maxes, &minimum)?;
+
+                if min_pos == maxes.len() {
+                    return Ok(None);
+                }
+
+                let min_idx = bisect::right(&lists[min_pos], &minimum)?;
+                (min_pos, min_idx)
+            }
+        }
+    };
+
+    // Calculate the maximum (pos, idx) pair. By default this location
+    // will be exclusive in our calculation.
+    let (max_pos, max_idx) = maximum
+        .map(|m| {
+            if inclusive.1 {
+                let mut max_pos = bisect::right(&maxes, &m)?;
+
+                let max_idx = if max_pos == maxes.len() {
+                    max_pos -= 1;
+                    lists[max_pos].len()
+                } else {
+                    bisect::right(&lists[max_pos], &m)?
+                };
+                Ok::<_, PyErr>((max_pos, max_idx))
+            } else {
+                let mut max_pos = bisect::left(&maxes, &m)?;
+
+                let max_idx = if max_pos == maxes.len() {
+                    max_pos -= 1;
+                    lists[max_pos].len()
+                } else {
+                    bisect::left(&lists[max_pos], &m)?
+                };
+                Ok((max_pos, max_idx))
+            }
+        })
+        .unwrap_or_else(|| {
+            let max_pos = maxes.len() - 1;
+            let max_idx = lists[max_pos].len();
+            Ok((max_pos, max_idx))
+        })?;
+    IsliceBounds::from_irange_spec(min_pos, min_idx, max_pos, max_idx).pipe(Ok)
 }

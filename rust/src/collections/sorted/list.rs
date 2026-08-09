@@ -3,9 +3,8 @@ use crate::{
     collections::sorted::{
         bisect,
         cmp::py_cmp,
-        data::ListsData,
-        errors,
-        iter::{self, IsliceBounds},
+        data::{ListsData, get_irange_specs},
+        errors, iter,
         traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters},
     },
     iterators,
@@ -21,82 +20,6 @@ pub struct InnerLists {
     pub(super) data: Mutex<ListsData>,
     pub(super) len: AtomicUsize,
     pub(super) load: AtomicUsize,
-}
-impl InnerLists {
-    fn irange_specs<'py>(
-        &self,
-        minimum: Option<Bound<'py, PyAny>>,
-        maximum: Option<Bound<'py, PyAny>>,
-        inclusive: (bool, bool),
-    ) -> PyResult<Option<IsliceBounds>> {
-        let data = self.get_data();
-        let maxes = &data.maxes;
-
-        if maxes.is_empty() {
-            return Ok(None);
-        }
-
-        // Calculate the minimum (pos, idx) pair. By default this location
-        // will be inclusive in our calculation.
-        let (min_pos, min_idx) = match minimum {
-            None => (0, 0),
-            Some(minimum) => {
-                if inclusive.0 {
-                    let min_pos = bisect::left(&maxes, &minimum)?;
-
-                    if min_pos == maxes.len() {
-                        return Ok(None);
-                    }
-
-                    let min_idx = bisect::left(&data.lists[min_pos], &minimum)?;
-                    (min_pos, min_idx)
-                } else {
-                    let min_pos = bisect::right(&maxes, &minimum)?;
-
-                    if min_pos == maxes.len() {
-                        return Ok(None);
-                    }
-
-                    let min_idx = bisect::right(&data.lists[min_pos], &minimum)?;
-                    (min_pos, min_idx)
-                }
-            }
-        };
-
-        // Calculate the maximum (pos, idx) pair. By default this location
-        // will be exclusive in our calculation.
-        let (max_pos, max_idx) = maximum
-            .map(|m| {
-                if inclusive.1 {
-                    let mut pos = bisect::right(&maxes, &m)?;
-
-                    let idx = if pos == maxes.len() {
-                        pos -= 1;
-                        data.lists[pos].len()
-                    } else {
-                        bisect::right(&data.lists[pos], &m)?
-                    };
-                    Ok::<_, PyErr>((pos, idx))
-                } else {
-                    let mut pos = bisect::left(&maxes, &m)?;
-
-                    let idx = if pos == maxes.len() {
-                        pos -= 1;
-                        data.lists[pos].len()
-                    } else {
-                        bisect::left(&data.lists[pos], &m)?
-                    };
-                    Ok((pos, idx))
-                }
-            })
-            .unwrap_or_else(|| {
-                let pos = maxes.len() - 1;
-                let idx = data.lists[pos].len();
-                Ok((pos, idx))
-            })?;
-
-        IsliceBounds::from_irange_spec(min_pos, min_idx, max_pos, max_idx).pipe(Ok)
-    }
 }
 #[pymethods]
 impl InnerLists {
@@ -123,8 +46,14 @@ impl InnerSorted for InnerLists {
         inclusive: (bool, bool),
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        match slf.get().irange_specs(minimum, maximum, inclusive)? {
-            None => iterators::Iter::empty(slf.py())?.into_super().pipe(Ok),
+        let py = slf.py();
+        let specs = slf
+            .get()
+            .get_data()
+            .pipe(|d| get_irange_specs(&d.lists, &d.maxes, minimum, maximum, inclusive));
+
+        match specs? {
+            None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
             Some(bounds) => Self::islice_iter(slf, bounds, reverse),
         }
     }

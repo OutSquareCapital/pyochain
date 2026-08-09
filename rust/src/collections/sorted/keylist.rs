@@ -3,9 +3,8 @@ use crate::{
     collections::sorted::{
         bisect,
         cmp::py_cmp_by_key,
-        data::ListsData,
-        errors,
-        iter::{self, IsliceBounds},
+        data::{ListsData, get_irange_specs},
+        errors, iter,
         traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, try_lock_recover},
     },
     iterators,
@@ -27,83 +26,6 @@ pub struct InnerKeyLists {
 impl InnerKeyLists {
     pub(super) fn get_keys(&self) -> std::sync::MutexGuard<'_, Vec<Vec<Py<PyAny>>>> {
         try_lock_recover(&self.keys, "keys already locked - reentrant bug")
-    }
-
-    fn irange_key_specs(
-        &self,
-        min_key: Option<Bound<'_, PyAny>>,
-        max_key: Option<Bound<'_, PyAny>>,
-        inclusive: (bool, bool),
-    ) -> PyResult<Option<IsliceBounds>> {
-        let maxes = &self.get_data().maxes;
-
-        if maxes.is_empty() {
-            return Ok(None);
-        }
-
-        let keys = self.get_keys();
-
-        // Calculate the minimum (pos, idx) pair. By default this location
-        // will be inclusive in our calculation.
-        let (min_pos, min_idx) = match min_key {
-            None => (0, 0),
-            Some(min_key) => {
-                if inclusive.0 {
-                    let min_pos = bisect::left(&maxes, &min_key)?;
-
-                    if min_pos == maxes.len() {
-                        return Ok(None);
-                    }
-
-                    let min_idx = bisect::left(&keys[min_pos], &min_key)?;
-                    (min_pos, min_idx)
-                } else {
-                    let min_pos = bisect::right(&maxes, &min_key)?;
-
-                    if min_pos == maxes.len() {
-                        return Ok(None);
-                    }
-
-                    let min_idx = bisect::right(&keys[min_pos], &min_key)?;
-                    (min_pos, min_idx)
-                }
-            }
-        };
-
-        // Calculate the maximum (pos, idx) pair. By default this location
-        // will be exclusive in our calculation.
-        let (max_pos, max_idx) = match max_key {
-            None => {
-                let max_pos = maxes.len() - 1;
-                let max_idx = keys[max_pos].len();
-                (max_pos, max_idx)
-            }
-
-            Some(max_key) => {
-                if inclusive.1 {
-                    let mut max_pos = bisect::right(&maxes, &max_key)?;
-
-                    let max_idx = if max_pos == maxes.len() {
-                        max_pos -= 1;
-                        keys[max_pos].len()
-                    } else {
-                        bisect::right(&keys[max_pos], &max_key)?
-                    };
-                    (max_pos, max_idx)
-                } else {
-                    let mut max_pos = bisect::left(&maxes, &max_key)?;
-
-                    let max_idx = if max_pos == maxes.len() {
-                        max_pos -= 1;
-                        keys[max_pos].len()
-                    } else {
-                        bisect::left(&keys[max_pos], &max_key)?
-                    };
-                    (max_pos, max_idx)
-                }
-            }
-        };
-        IsliceBounds::from_irange_spec(min_pos, min_idx, max_pos, max_idx).pipe(Ok)
     }
 }
 #[pymethods]
@@ -127,7 +49,15 @@ impl InnerKeyLists {
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
         let py = slf.py();
-        match slf.get().irange_key_specs(min_key, max_key, inclusive)? {
+        let slf_ref = slf.get();
+        let specs = get_irange_specs(
+            &slf_ref.get_keys(),
+            &slf_ref.get_data().maxes,
+            min_key,
+            max_key,
+            inclusive,
+        );
+        match specs? {
             None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
             Some(bounds) => Self::islice_iter(slf, bounds, reverse),
         }
