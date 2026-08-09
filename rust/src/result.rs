@@ -1,15 +1,17 @@
-use crate::errors::ResultUnwrapError;
-use crate::hasher::hash_fn;
-use crate::iterators;
-use crate::option::{PyNull, PySome};
-use crate::pyo3_ext::prelude::*;
+use crate::{
+    errors::ResultUnwrapError,
+    hasher::hash_fn,
+    iterators,
+    option::{PyNull, PySome},
+};
 use pyderive::*;
-use pyo3::IntoPyObjectExt;
-use pyo3::exceptions::PyBaseException;
 use pyo3::{
+    IntoPyObjectExt,
+    exceptions::PyBaseException,
     prelude::*,
     types::{PyString, PyTuple},
 };
+use pyo3_ext::prelude::*;
 use tap::prelude::*;
 fn format_err_value(error: &Bound<'_, PyAny>) -> PyResult<String> {
     match error.is_instance_of::<PyBaseException>() {

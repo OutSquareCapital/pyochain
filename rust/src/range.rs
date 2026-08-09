@@ -1,6 +1,5 @@
 use crate::{
     abc,
-    pyo3_ext::{prelude::*, pylibs},
     traits::{PyWrapper, PyoABC},
 };
 use pyo3::{
@@ -8,6 +7,7 @@ use pyo3::{
     pyclass_init::PyClassInitializer,
     types::{PyInt, PyIterator, PyRange, PyRangeMethods, PySequence},
 };
+use pyo3_ext::{prelude::*, pylibs};
 use tap::Pipe;
 
 #[pyclass(module = "pyochain._range",frozen, sequence, extends=abc::PyoSequence)]

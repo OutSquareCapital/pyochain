@@ -6,7 +6,6 @@ mod errors;
 mod hasher;
 mod iterators;
 mod option;
-mod pyo3_ext;
 mod pyovec;
 mod range;
 mod result;
@@ -14,14 +13,14 @@ mod seq;
 mod sets;
 mod sliceview;
 mod traits;
-use crate::pyo3_ext::{
-    prelude::*,
-    types::{PyAbstractSet, PyIterable, PyMutableSequence, PyMutableSet},
-};
 use pyo3::{
     PyTypeInfo, intern,
     prelude::*,
     types::{PyIterator, PyMapping, PySequence, PyType},
+};
+use pyo3_ext::{
+    prelude::*,
+    types::{PyAbstractSet, PyIterable, PyMutableSequence, PyMutableSet},
 };
 
 #[pymodule]

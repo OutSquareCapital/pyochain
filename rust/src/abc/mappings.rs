@@ -11,12 +11,12 @@ use tap::Pipe;
 use crate::{
     abc::{PyoCollection, PyoItemsView, PyoKeysView, PyoValuesView},
     option::{PyNull, PySome},
-    pyo3_ext::{
-        args::{Args, Kwargs},
-        types::PyCmpOut,
-    },
     result::{PyoErr, PyoOk},
     traits::PyoABC,
+};
+use pyo3_ext::{
+    args::{Args, Kwargs},
+    types::PyCmpOut,
 };
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, mapping, extends=PyoCollection)]
 pub struct PyoMapping;

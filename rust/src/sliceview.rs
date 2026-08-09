@@ -2,10 +2,6 @@ use std::sync::{Mutex, MutexGuard};
 
 use crate::{
     abc::{self, PyoSequence},
-    pyo3_ext::{
-        prelude::*,
-        types::{PyMutableSequence, PySupportsIndex},
-    },
     traits::{PyWrapper, PyoABC},
 };
 use either::Either;
@@ -15,6 +11,10 @@ use pyo3::{
     exceptions::{PyIndexError, PyTypeError, PyValueError},
     prelude::*,
     types::{PyInt, PyRange, PyRangeMethods, PySequence, PySlice, PyTuple},
+};
+use pyo3_ext::{
+    prelude::*,
+    types::{PyMutableSequence, PySupportsIndex},
 };
 use pyochain_macros::try_cast;
 use tap::prelude::*;

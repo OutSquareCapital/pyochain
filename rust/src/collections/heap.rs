@@ -1,6 +1,5 @@
 use crate::{
     abc, iterators,
-    pyo3_ext::{pylibs, types::PyIterable},
     pyovec::PyoVec,
     traits::{PyWrapper, PyoABC},
 };
@@ -10,6 +9,7 @@ use pyo3::{
     prelude::*,
     types::{PyList, PyNotImplemented, PyTuple},
 };
+use pyo3_ext::{pylibs, types::PyIterable};
 use pyochain_macros::{BoundFromAny, py_abc, try_cast};
 use tap::Pipe;
 /// Enum used to convert various types into a `PyList` for heap operations.

@@ -3,13 +3,17 @@ use std::collections::VecDeque;
 use crate::{
     abc,
     option::{PyNull, PySome, option},
-    pyo3_ext::prelude::*,
     result::{PyoErr, PyoOk},
     traits::{PyWrapper, PyoABC},
 };
-use pyo3::exceptions::PyIndexError;
-use pyo3::types::{PyAny, PyDict, PyIterator, PySequence, PySet, PyString, PyTuple};
-use pyo3::{IntoPyObjectExt, ffi, prelude::*};
+use pyo3::{
+    IntoPyObjectExt,
+    exceptions::PyIndexError,
+    ffi,
+    prelude::*,
+    types::{PyAny, PyDict, PyIterator, PySequence, PySet, PyString, PyTuple},
+};
+use pyo3_ext::prelude::*;
 use tap::prelude::*;
 //TODO: the double collect in `Vec` => `PyTuple` is a performance tax on large Vecs of funcs. Need to optimize.
 #[pyclass(module = "pyochain._iterators")]

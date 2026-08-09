@@ -1,7 +1,9 @@
-use crate::option::{PyNull, PySome};
-use crate::pyo3_ext::prelude::*;
-use crate::result::{PyoErr, PyoOk};
+use crate::{
+    option::{PyNull, PySome},
+    result::{PyoErr, PyoOk},
+};
 use pyo3::{IntoPyObjectExt, prelude::*};
+use pyo3_ext::prelude::*;
 use tap::prelude::*;
 
 #[pyclass(module = "pyochain.abc", frozen, subclass, name = "Pipe")]

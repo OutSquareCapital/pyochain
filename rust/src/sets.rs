@@ -1,10 +1,6 @@
 use crate::{
     abc,
     display::get_repr,
-    pyo3_ext::{
-        prelude::*,
-        types::{PyAbstractSet, PyCmpOut},
-    },
     traits::{IntoPyochain, PyWrapper, PyoABC},
 };
 use either::Either;
@@ -13,6 +9,10 @@ use pyo3::{
     prelude::*,
     pyclass_init::PyClassInitializer,
     types::{DerefToPyAny, PyBool, PyFrozenSet, PyIterator, PyNotImplemented, PySet, PyTuple},
+};
+use pyo3_ext::{
+    prelude::*,
+    types::{PyAbstractSet, PyCmpOut},
 };
 use pyochain_macros::{BoundFromAny, try_cast};
 use tap::Pipe;

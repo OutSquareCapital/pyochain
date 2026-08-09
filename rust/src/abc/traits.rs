@@ -1,9 +1,10 @@
 use crate::{
     abc,
     collections::{self, sorted},
-    dict, iterators, option, pyo3_ext, result, sliceview,
+    dict, iterators, option, result, sliceview,
 };
 use pyo3::prelude::*;
+use pyo3_ext;
 use pyochain_macros::py_abc;
 use tap::prelude::*;
 #[py_abc(dict::Dict, collections::PyoCounter)]

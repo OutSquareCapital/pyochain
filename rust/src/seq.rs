@@ -1,7 +1,6 @@
 use crate::{
     abc,
     display::get_repr,
-    pyo3_ext::prelude::*,
     traits::{IntoPyochain, PyWrapper, PyoABC},
 };
 use pyo3::{
@@ -10,6 +9,7 @@ use pyo3::{
     pyclass_init::PyClassInitializer,
     types::{PyInt, PyIterator, PySequence, PyTuple},
 };
+use pyo3_ext::prelude::*;
 use tap::Pipe;
 
 #[pyclass(module = "pyochain._seq",frozen, generic, sequence, extends=abc::PyoSequence)]

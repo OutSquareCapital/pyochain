@@ -11,11 +11,11 @@ use crate::{
     abc::PyoCollection,
     iterators,
     option::{PyNull, PySome},
-    pyo3_ext::{
-        args::{Args, Kwargs},
-        pylibs,
-    },
     traits::PyoABC,
+};
+use pyo3_ext::{
+    args::{Args, Kwargs},
+    pylibs,
 };
 // TODO: check difference once we had `sequence` to pypub struct macro
 #[pyclass(module = "pyochain.abc",subclass,  frozen, generic, sequence, extends=PyoCollection)]
@@ -100,8 +100,7 @@ impl PyoSequence {
 
     fn get<'py>(slf: Bound<'py, Self>, index: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
         let py = slf.py();
-        let res = slf.get_item(index);
-        match res {
+        match slf.get_item(index) {
             Ok(ok) => ok.unbind().pipe(PySome::new).into_bound_py_any(py),
             Err(err) => {
                 if err.matches(py, PyIndexError::type_object(py)).unwrap() {

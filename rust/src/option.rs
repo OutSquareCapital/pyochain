@@ -1,6 +1,5 @@
 use crate::errors::OptionUnwrapError;
 use crate::hasher::hash_fn;
-use crate::pyo3_ext::prelude::*;
 use crate::result::{PyoErr, PyoOk};
 use crate::{abc, iterators};
 use pyo3::exceptions::PyTypeError;
@@ -10,6 +9,7 @@ use pyo3::{
     sync::PyOnceLock,
     types::{PyString, PyTuple},
 };
+use pyo3_ext::prelude::*;
 use tap::prelude::*;
 
 /// Singleton for NONE - initialized once per Python interpreter
@@ -156,8 +156,8 @@ impl PySome {
             .into_py_any(py)
     }
 
-    fn and_(&self, optb: &Bound<'_, PyAny>) -> Py<PyAny> {
-        optb.to_owned().unbind()
+    fn and_<'py, 'a>(&self, optb: &'a Bound<'py, PyAny>) -> &'a Bound<'py, PyAny> {
+        optb
     }
     fn or_(&self, optb: &Bound<'_, PyAny>) -> Self {
         let py = optb.py();

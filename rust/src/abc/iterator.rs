@@ -1,25 +1,23 @@
-use pyo3::exceptions::{PyStopIteration, PyValueError};
-use pyo3::types::{
-    PyBool, PyFunction, PyInt, PyIterator, PyList, PySequence, PySet, PyString, PyTuple, PyType,
+use pyo3::{
+    BoundObject, IntoPyObjectExt,
+    exceptions::{PyStopIteration, PyValueError},
+    ffi, intern,
+    prelude::*,
+    types::{
+        PyBool, PyFunction, PyInt, PyIterator, PyList, PySequence, PySet, PyString, PyTuple, PyType,
+    },
 };
-use pyo3::{BoundObject, IntoPyObjectExt, ffi, intern, prelude::*};
 use tap::Pipe;
 
 use crate::{
-    ConcatWith,
     abc::PyoIterable,
     iterators,
     option::{PyNull, PySome},
-    pyo3_ext::{
-        args::{Args, Concatenate, Kwargs},
-        pylibs,
-        types::pyitertools,
-    },
     pyovec::PyoVec,
     result::{PyoErr, PyoOk},
     traits::{IntoPyochain, PyoABC},
 };
-
+use pyo3_ext::{prelude::*, pylibs, types::pyitertools};
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoIterable)]
 pub struct PyoIterator;
 

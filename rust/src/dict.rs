@@ -2,7 +2,6 @@ use crate::{
     abc::{self, traits::ImplPyoReversible},
     display::pformat,
     iterators,
-    pyo3_ext::{prelude::*, pylibs},
     traits::{IntoPyochain, PyWrapper, PyoABC},
 };
 use pyo3::{
@@ -11,6 +10,7 @@ use pyo3::{
     pyclass_init::PyClassInitializer,
     types::{PyDict, PyIterator, PyTuple, PyType},
 };
+use pyo3_ext::{prelude::*, pylibs};
 use tap::Pipe;
 
 #[pyclass(module = "pyochain._dict",frozen, generic, extends=abc::PyoMutableMapping)]

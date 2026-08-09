@@ -5,7 +5,6 @@ use crate::{
         sorted::{data::ListsData, errors, iter},
     },
     iterators,
-    pyo3_ext::prelude::*,
     pyovec::PyoVec,
     traits::IntoPyochain,
 };
@@ -16,6 +15,7 @@ use pyo3::{
     prelude::*,
     types::{PyList, PyNotImplemented, PySequence, PySlice, PySliceIndices},
 };
+use pyo3_ext::prelude::*;
 use pyochain_macros::py_abc;
 use std::{
     cmp::Ordering,

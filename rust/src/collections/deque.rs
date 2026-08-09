@@ -1,9 +1,5 @@
 use crate::{
-    abc::{self},
-    pyo3_ext::{
-        prelude::*,
-        types::{PyCmpOut, PyDeque, PySupportsIndex},
-    },
+    abc,
     traits::{PyWrapper, PyoABC},
 };
 use either::Either;
@@ -13,6 +9,10 @@ use pyo3::{
     intern,
     prelude::*,
     types::{PyInt, PyIterator, PyNotImplemented, PyTuple},
+};
+use pyo3_ext::{
+    prelude::*,
+    types::{PyCmpOut, PyDeque, PySupportsIndex},
 };
 use pyochain_macros::try_cast;
 use tap::prelude::*;

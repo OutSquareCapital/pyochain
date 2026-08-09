@@ -8,7 +8,6 @@ use crate::{
         traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters},
     },
     iterators,
-    pyo3_ext::prelude::*,
     pyovec::PyoVec,
     traits::{IntoPyochain, PyoABC},
 };
@@ -17,6 +16,7 @@ use pyo3::{
     prelude::*,
     types::{PyList, PyType},
 };
+use pyo3_ext::prelude::*;
 use std::sync::{Mutex, MutexGuard, atomic::AtomicUsize};
 
 use tap::prelude::*;

@@ -1,9 +1,9 @@
 use crate::{
     abc,
     display::get_repr,
-    pyo3_ext::{prelude::*, pylibs, types::PyCmpOut},
     traits::{IntoPyochain, PyWrapper, PyoABC},
 };
+
 use either::Either;
 use pyo3::{
     BoundObject, PyTypeInfo, intern,
@@ -11,6 +11,7 @@ use pyo3::{
     pyclass_init::PyClassInitializer,
     types::{PyDict, PyInt, PyIterator, PyList, PyNotImplemented, PyTuple},
 };
+use pyo3_ext::{prelude::*, pylibs, types::PyCmpOut};
 use pyochain_macros::try_cast;
 use tap::Pipe;
 #[pyclass(module = "pyochain._vec",frozen, generic, sequence, extends=abc::PyoMutableSequence, name="Vec")]

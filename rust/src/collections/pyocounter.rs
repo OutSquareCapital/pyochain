@@ -1,11 +1,6 @@
 use crate::{
     abc::{self, traits::ImplPyoReversible},
     iterators,
-    pyo3_ext::{
-        prelude::*,
-        pylibs,
-        types::{PyCmpOut, PySupportsItems, pyitertools},
-    },
     traits::{PyWrapper, PyoABC},
 };
 use either::Either;
@@ -15,6 +10,11 @@ use pyo3::{
     intern,
     prelude::*,
     types::{PyDict, PyInt, PyIterator, PyList, PyMapping, PyNotImplemented, PyType},
+};
+use pyo3_ext::{
+    prelude::*,
+    pylibs,
+    types::{PyCmpOut, PySupportsItems, pyitertools},
 };
 use pyochain_macros::{BoundFromAny, try_cast};
 use tap::prelude::*;

@@ -1,11 +1,4 @@
-use crate::{
-    abc::PyoCollection,
-    pyo3_ext::{
-        prelude::*,
-        types::{PyAbstractSet, PyCmpOut, PyIterable, PyMutableSet},
-    },
-    traits::PyoABC,
-};
+use crate::{abc::PyoCollection, traits::PyoABC};
 use either::Either;
 use pyo3::{
     BoundObject,
@@ -13,6 +6,10 @@ use pyo3::{
     intern,
     prelude::*,
     types::{PyList, PyNotImplemented, PyType},
+};
+use pyo3_ext::{
+    prelude::*,
+    types::{PyAbstractSet, PyCmpOut, PyIterable, PyMutableSet},
 };
 use pyochain_macros::BoundFromAny;
 use tap::Pipe;

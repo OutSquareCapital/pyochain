@@ -1,13 +1,13 @@
 use crate::{
     abc::{Checkable, PyoIterable},
     iterators,
-    pyo3_ext::{
-        args::{Args, Kwargs},
-        pylibs,
-    },
     traits::PyoABC,
 };
 use pyo3::prelude::*;
+use pyo3_ext::{
+    args::{Args, Kwargs},
+    pylibs,
+};
 use tap::Pipe;
 
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=Checkable)]

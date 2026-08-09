@@ -11,13 +11,13 @@ use crate::{
     abc, collections,
     dict::Dict,
     iterators::Iter,
-    pyo3_ext::types::PyDeque,
     pyovec::PyoVec,
     range::Range,
     seq::Seq,
     sets::{Set, SetMut},
     sliceview::SliceView,
 };
+use pyo3_ext::types::PyDeque;
 pub trait PyWrapper<T: PyTypeInfo + DerefToPyAny>:
     PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {

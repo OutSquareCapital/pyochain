@@ -1,10 +1,6 @@
 use crate::{
     abc::{self},
     display::get_repr,
-    pyo3_ext::{
-        prelude::*,
-        types::{PyAbstractSet, PyCmpOut},
-    },
     sets::SetMut,
     traits::{IntoPyochain, PyWrapper, PyoABC},
 };
@@ -13,6 +9,10 @@ use pyo3::{
     BoundObject, PyTypeInfo, intern,
     prelude::*,
     types::{PyDict, PyIterator, PyNone, PyNotImplemented, PySet},
+};
+use pyo3_ext::{
+    prelude::*,
+    types::{PyAbstractSet, PyCmpOut},
 };
 use pyochain_macros::try_cast;
 use tap::prelude::*;
