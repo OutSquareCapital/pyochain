@@ -39,8 +39,6 @@ pub trait RustGetters:
     Sized + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {
     fn get_data(&self) -> MutexGuard<'_, ListsData>;
-    fn get_offset(&self) -> usize;
-    fn set_offset(&self, offset: usize);
     fn set_load(&self, load: usize);
 }
 macro_rules! impl_rs_getters {
@@ -49,14 +47,6 @@ macro_rules! impl_rs_getters {
             #[inline(always)]
             fn get_data(&self) -> MutexGuard<'_, ListsData> {
                 try_lock_recover(&self.data, "data already locked - reentrant bug")
-            }
-            #[inline(always)]
-            fn get_offset(&self) -> usize {
-                self.offset.load(AtomicOrdering::Relaxed)
-            }
-            #[inline(always)]
-            fn set_offset(&self, offset: usize) {
-                self.offset.store(offset, AtomicOrdering::Relaxed);
             }
             #[inline(always)]
             fn set_load(&self, load: usize) {
@@ -340,7 +330,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                     (pos, (len_last + index) as usize)
                 }
                 _ => {
-                    let (pos, idx) = data.pos(index, self.get_len(), self)?;
+                    let (pos, idx) = data.pos(index, self.get_len())?;
                     (pos, idx as usize)
                 }
             }
@@ -349,7 +339,6 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         self.delete(py, &mut data, pos, idx)?;
         Ok(val.into_bound(py))
     }
-    //TODO: Refactor this in a new module. get_item_from_slice is way too long and complex.
     fn getitem<'py>(
         &self,
         py: Python<'py>,
@@ -358,13 +347,13 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         let mut data = self.get_data();
         match index {
             Either::Right(slice) => data
-                .getitem_from_slice(py, slice, self.get_len(), self)?
+                .getitem_from_slice(py, slice, self.get_len())?
                 .iter()
                 .pipe(|elements| PyList::new(py, elements))?
                 .into_pyochain()
                 .map(Either::Right),
             Either::Left(index) => data
-                .getitem_from_int(py, index, self.get_len(), self)
+                .getitem_from_int(py, index, self.get_len())
                 .map(Either::Left),
         }
     }
@@ -373,7 +362,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             Either::Right(slice) => self.delitem_from_slice(py, slice),
             Either::Left(index) => {
                 let mut data = self.get_data();
-                let (pos, idx) = data.pos(index, self.get_len(), self)?;
+                let (pos, idx) = data.pos(index, self.get_len())?;
                 self.delete(py, &mut data, pos, idx as usize)
             }
         }
@@ -391,18 +380,13 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             }
             (1, Ordering::Less) if length <= 8 * (stop - start) => {
                 let mut data = self.get_data();
-                let mut values = data.getitem_from_slice(
-                    py,
-                    PySlice::new(py, 0, start, 1),
-                    self.get_len(),
-                    self,
-                )?;
+                let mut values =
+                    data.getitem_from_slice(py, PySlice::new(py, 0, start, 1), self.get_len())?;
                 if stop < length {
                     let new_slice = data.getitem_from_slice(
                         py,
                         PySlice::new(py, stop, length, 1),
                         self.get_len(),
-                        self,
                     )?;
                     values.extend(new_slice);
                 }
@@ -417,7 +401,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                     .step_by(step as usize)
                     .rev()
                     .try_for_each(|idx| {
-                        let (pos, idx) = data.pos(idx, self.get_len(), self)?;
+                        let (pos, idx) = data.pos(idx, self.get_len())?;
                         self.delete(py, &mut data, pos, idx as usize)
                     })
             }
@@ -429,7 +413,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                 // Negative step, `start > stop` guaranteed by the arm above.
                 std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
                     .try_for_each(|idx| {
-                        let (pos, idx) = data.pos(idx, self.get_len(), self)?;
+                        let (pos, idx) = data.pos(idx, self.get_len())?;
                         self.delete(py, &mut data, pos, idx as usize)
                     })
             }
@@ -469,7 +453,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             Ok(None)
         } else {
             let mut data = self.get_data();
-            let (min_pos, min_idx) = data.pos(indices.start, self.get_len(), self)?;
+            let (min_pos, min_idx) = data.pos(indices.start, self.get_len())?;
 
             let (max_pos, max_idx) = if indices.stop == length {
                 (
@@ -477,7 +461,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                     data.lists.last().unwrap().len() as isize,
                 )
             } else {
-                data.pos(indices.stop, self.get_len(), self)?
+                data.pos(indices.stop, self.get_len())?
             };
 
             Ok(Some(iter::IsliceBounds::new(

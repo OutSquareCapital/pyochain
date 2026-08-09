@@ -21,7 +21,6 @@ pub struct InnerLists {
     pub(super) data: Mutex<ListsData>,
     pub(super) len: AtomicUsize,
     pub(super) load: AtomicUsize,
-    pub(super) offset: AtomicUsize,
 }
 impl InnerLists {
     fn irange_specs<'py>(
@@ -107,7 +106,6 @@ impl InnerLists {
             data: Mutex::new(ListsData::new()),
             len: AtomicUsize::new(0),
             load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
-            offset: AtomicUsize::new(0),
         })
     }
 }
@@ -132,8 +130,7 @@ impl InnerSorted for InnerLists {
     }
     fn clear(&self) -> () {
         self.set_len(0);
-        self.get_data().clear();
-        self.set_offset(0);
+        self.get_data().clear()
     }
 
     fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
@@ -171,14 +168,13 @@ impl InnerSorted for InnerLists {
             data.idx.clear();
             Ok(())
         } else if !data.idx.is_empty() {
-            data.idx.pipe_ref_mut(|index| {
-                let mut child = self.get_offset() + pos;
-                while child != 0 {
-                    index[child] = index[child] + 1;
-                    child = (child - 1) >> 1;
-                }
-                index[0] = index[0] + 1;
-            });
+            let mut child = data.offset + pos;
+            while child != 0 {
+                data.idx[child] = data.idx[child] + 1;
+                child = (child - 1) >> 1;
+            }
+            data.idx[0] = data.idx[0] + 1;
+
             Ok(())
         } else {
             Ok(())
@@ -200,16 +196,14 @@ impl InnerSorted for InnerLists {
         if len_lists_pos > (self.get_load() >> 1) {
             data.maxes[pos] = data.lists[pos].last().unwrap().clone_ref(py);
 
-            data.idx.pipe_ref_mut(|index| {
-                if !index.is_empty() {
-                    let mut child = self.get_offset() + pos;
-                    while child > 0 {
-                        index[child] = index[child] - &1;
-                        child = (child - 1) >> 1
-                    }
-                    index[0] = index[0] - &1;
+            if !data.idx.is_empty() {
+                let mut child = data.offset + pos;
+                while child > 0 {
+                    data.idx[child] = data.idx[child] - 1;
+                    child = (child - 1) >> 1
                 }
-            });
+                data.idx[0] = data.idx[0] - 1;
+            }
             Ok(())
         } else if data.lists.len() > 1 {
             if pos == 0 {
@@ -320,9 +314,7 @@ impl InnerSorted for InnerLists {
             return Ok(self.get_len() as isize);
         }
         let idx = bisect::left(&data.lists[pos], &value)?;
-        let (res, offset) = data.loc(pos, idx as isize, self.get_offset())?;
-        self.set_offset(offset);
-        Ok(res)
+        data.loc(pos, idx as isize)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
@@ -338,9 +330,7 @@ impl InnerSorted for InnerLists {
             return Ok(self.get_len() as isize);
         }
         let idx = bisect::right(&data.lists[pos], &value)?;
-        let (res, offset) = data.loc(pos, idx as isize, self.get_offset())?;
-        self.set_offset(offset);
-        Ok(res)
+        data.loc(pos, idx as isize)
     }
 
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
@@ -359,8 +349,7 @@ impl InnerSorted for InnerLists {
         let pos_right = bisect::right(&data.maxes, &value)?;
 
         if pos_right == data.maxes.len() {
-            let (left, offset) = data.loc(pos_left, idx_left as isize, self.get_offset())?;
-            self.set_offset(offset);
+            let left = data.loc(pos_left, idx_left as isize)?;
             return Ok(self.get_len() - left as usize);
         }
         let idx_right = bisect::right(&data.lists[pos_right], &value)?;
@@ -368,10 +357,8 @@ impl InnerSorted for InnerLists {
         if pos_left == pos_right {
             return Ok(idx_right - idx_left);
         }
-        let (right, offset) = data.loc(pos_right, idx_right as isize, self.get_offset())?;
-        self.set_offset(offset);
-        let (left, offset) = data.loc(pos_left, idx_left as isize, self.get_offset())?;
-        self.set_offset(offset);
+        let right = data.loc(pos_right, idx_right as isize)?;
+        let left = data.loc(pos_left, idx_left as isize)?;
         Ok((right - left) as usize)
     }
 
@@ -420,8 +407,7 @@ impl InnerSorted for InnerLists {
         }
 
         stop -= 1;
-        let (left, offset) = data.loc(pos_left, idx_left as isize, self.get_offset())?;
-        self.set_offset(offset);
+        let left = data.loc(pos_left, idx_left as isize)?;
 
         if start <= left {
             if left <= stop {

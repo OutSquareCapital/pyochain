@@ -6,11 +6,12 @@ use pyo3::{
 use std::cmp::Ordering;
 use tap::prelude::*;
 
-use crate::collections::sorted::{errors, traits::InnerSortedGetters};
+use crate::collections::sorted::errors;
 pub(super) struct ListsData {
     pub(super) lists: Vec<Vec<Py<PyAny>>>,
     pub(super) maxes: Vec<Py<PyAny>>,
     pub(super) idx: Vec<usize>,
+    pub(super) offset: usize,
 }
 impl ListsData {
     pub fn new() -> Self {
@@ -18,6 +19,7 @@ impl ListsData {
             lists: Vec::new(),
             maxes: Vec::new(),
             idx: Vec::new(),
+            offset: 0,
         }
     }
     #[inline]
@@ -33,14 +35,14 @@ impl ListsData {
         self.lists.clear();
         self.maxes.clear();
         self.idx.clear();
+        self.offset = 0;
     }
 
-    pub(crate) fn getitem_from_int<'py, T: InnerSortedGetters>(
+    pub(crate) fn getitem_from_int<'py>(
         &mut self,
         py: Python<'py>,
         index: isize,
         length: usize,
-        owner: &T,
     ) -> PyResult<Bound<'py, PyAny>> {
         let len_last = self
             .lists
@@ -73,7 +75,7 @@ impl ListsData {
                 .into_bound(py)
                 .pipe(Ok),
             _ => {
-                let (pos, idx) = self.pos(index, length, owner)?;
+                let (pos, idx) = self.pos(index, length)?;
                 self.lists[pos][idx as usize]
                     .clone_ref(py)
                     .into_bound(py)
@@ -81,12 +83,11 @@ impl ListsData {
             }
         }
     }
-    pub(crate) fn getitem_from_slice<'py, T: InnerSortedGetters>(
+    pub(crate) fn getitem_from_slice<'py>(
         &mut self,
         py: Python<'py>,
         slice: Bound<'py, PySlice>,
         length: usize,
-        owner: &T,
     ) -> PyResult<Vec<Py<PyAny>>> {
         let PySliceIndices {
             start, stop, step, ..
@@ -96,7 +97,7 @@ impl ListsData {
             // Whole slice optimization: start to stop slices the whole sorted list.
             (1, Ordering::Less) if start == 0 && stop_eq_len => self.collapse(py).pipe(Ok),
             (1, Ordering::Less) => {
-                let (start_pos, start_idx) = self.pos(start, length, owner)?;
+                let (start_pos, start_idx) = self.pos(start, length)?;
                 let start_list = &self.lists[start_pos];
                 let stop_idx = start_idx + stop - start;
                 match (start_list.len() as isize >= stop_idx, stop_eq_len) {
@@ -113,7 +114,7 @@ impl ListsData {
                         get_slice(&self, py, start_pos, stop_pos, start_idx as usize, stop_idx)
                     }
                     (false, false) => {
-                        let (stop_pos, stop_idx) = self.pos(stop, length, owner)?;
+                        let (stop_pos, stop_idx) = self.pos(stop, length)?;
                         get_slice(
                             &self,
                             py,
@@ -126,12 +127,8 @@ impl ListsData {
                 }
             }
             (-1, Ordering::Greater) => {
-                let mut result = self.getitem_from_slice(
-                    py,
-                    PySlice::new(py, stop + 1, start + 1, 1),
-                    length,
-                    owner,
-                )?;
+                let mut result =
+                    self.getitem_from_slice(py, PySlice::new(py, stop + 1, start + 1, 1), length)?;
                 result.reverse();
                 Ok(result)
             }
@@ -139,10 +136,7 @@ impl ListsData {
             // of the items and this could be the desired behavior.
             _ if step > 0 => (start..stop)
                 .step_by(step as usize)
-                .map(|i| {
-                    self.getitem_from_int(py, i, length, owner)
-                        .map(Bound::unbind)
-                })
+                .map(|i| self.getitem_from_int(py, i, length).map(Bound::unbind))
                 .collect::<PyResult<Vec<_>>>(),
             // Negative step with nothing to iterate (mirrors Python's `range`,
             // which is empty when `start <= stop` for a negative step).
@@ -150,10 +144,7 @@ impl ListsData {
             _ => {
                 // Negative step, `start > stop` guaranteed by the arm above.
                 std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
-                    .map(|i| {
-                        self.getitem_from_int(py, i, length, owner)
-                            .map(Bound::unbind)
-                    })
+                    .map(|i| self.getitem_from_int(py, i, length).map(Bound::unbind))
                     .collect::<PyResult<Vec<_>>>()
             }
         }
@@ -209,12 +200,7 @@ impl ListsData {
 
     /// The final index pair from our example is (2, 3) which corresponds to
     /// index 8 in the sorted list.
-    pub(crate) fn pos<T: InnerSortedGetters>(
-        &mut self,
-        mut idx: isize,
-        length: usize,
-        owner: &T,
-    ) -> PyResult<(usize, isize)> {
+    pub(crate) fn pos(&mut self, mut idx: isize, length: usize) -> PyResult<(usize, isize)> {
         if idx < 0 {
             if (-idx) <= self.lists.last().unwrap().len() as isize {
                 return Ok((
@@ -237,7 +223,7 @@ impl ListsData {
         }
 
         if self.idx.is_empty() {
-            owner.set_offset(self.build_index()?);
+            self.build_index()?;
         }
         let pos = self.idx.pipe_ref_mut(|index| {
             let mut pos = 0;
@@ -259,7 +245,7 @@ impl ListsData {
             pos
         });
 
-        Ok((pos - owner.get_offset(), idx))
+        Ok((pos - self.offset, idx))
     }
 
     /// Build a positional index for indexing the sorted list.
@@ -290,12 +276,13 @@ impl ListsData {
 
     ///     _offset = 3
     /// When built, the index can be used for efficient indexing into the list.
-    pub(crate) fn build_index(&mut self) -> PyResult<usize> {
+    pub(crate) fn build_index(&mut self) -> PyResult<()> {
         let row0 = self.lists.iter().map(|x| x.len()).collect::<Vec<usize>>();
 
         if row0.len() == 1 {
             self.idx.extend(row0);
-            return Ok(0);
+            self.offset = 0;
+            return Ok(());
         }
 
         let mut row1 = row0
@@ -307,7 +294,8 @@ impl ListsData {
             let combined = row1.into_iter().chain(row0);
             self.idx.clear();
             self.idx.extend(combined);
-            Ok(1)
+            self.offset = 1;
+            Ok(())
         } else {
             let size = 1usize << ((row1.len() - 1).ilog2() + 1);
             row1.resize(size, 0);
@@ -325,7 +313,8 @@ impl ListsData {
 
             let flat = tree.into_iter().rev().flatten();
             self.idx.extend(flat);
-            Ok(size * 2 - 1)
+            self.offset = size * 2 - 1;
+            Ok(())
         }
     }
 
@@ -369,20 +358,15 @@ impl ListsData {
     ///3. Iteration ends at the root.
 
     ///The index is then the sum of the total and sublist index: 5 + 3 = 8.
-    pub(crate) fn loc(
-        &mut self,
-        mut pos: usize,
-        idx: isize,
-        mut offset: usize,
-    ) -> PyResult<(isize, usize)> {
+    pub(crate) fn loc(&mut self, mut pos: usize, idx: isize) -> PyResult<isize> {
         if pos == 0 {
-            Ok((idx, offset))
+            Ok(idx)
         } else {
             if self.idx.is_empty() {
-                offset = self.build_index()?;
+                self.build_index()?;
             }
             // Increment pos to point in the index to len(self.lists[pos]).
-            pos += offset;
+            pos += self.offset;
             // Iterate until reaching the root of the index tree at pos = 0.
             let total = self.idx.pipe_ref_mut(|idx| {
                 let mut total = 0;
@@ -401,7 +385,7 @@ impl ListsData {
                 total
             });
 
-            Ok((total + idx, offset))
+            Ok(total + idx)
         }
     }
 }

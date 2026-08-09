@@ -14,8 +14,8 @@ use crate::{
     pyo3_ext::pylibs,
 };
 use pyo3::prelude::*;
+use std::sync::MutexGuard;
 use std::sync::{Mutex, atomic::AtomicUsize};
-use std::{ops::Index, sync::MutexGuard};
 use tap::Pipe;
 #[pyclass(module = "pyochain._collections", frozen, generic)]
 pub struct InnerKeyLists {
@@ -25,7 +25,6 @@ pub struct InnerKeyLists {
     pub(super) data: Mutex<ListsData>,
     pub(super) len: AtomicUsize,
     pub(super) load: AtomicUsize,
-    pub(super) offset: AtomicUsize,
 }
 impl InnerKeyLists {
     pub(super) fn get_keys(&self) -> std::sync::MutexGuard<'_, Vec<Vec<Py<PyAny>>>> {
@@ -119,7 +118,6 @@ impl InnerKeyLists {
             data: Mutex::new(ListsData::new()),
             len: AtomicUsize::new(0),
             load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
-            offset: AtomicUsize::new(0),
         })
     }
     #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true), *, reverse = false))]
@@ -219,16 +217,14 @@ impl InnerSorted for InnerKeyLists {
         if len_keys_pos > (self.get_load() >> 1) {
             data.maxes[pos] = keys[pos].last().unwrap().clone_ref(py);
 
-            data.idx.pipe_ref_mut(|index| {
-                if !index.is_empty() {
-                    let mut child = self.get_offset() + pos;
-                    while child > 0 {
-                        index[child] = index[child] - 1;
-                        child = (child - 1) >> 1;
-                    }
-                    index[0] = index[0] - 1;
+            if !data.idx.is_empty() {
+                let mut child = data.offset + pos;
+                while child > 0 {
+                    data.idx[child] = data.idx[child] - 1;
+                    child = (child - 1) >> 1;
                 }
-            });
+                data.idx[0] = data.idx[0] - 1;
+            };
             Ok(())
         } else if keys.len() > 1 {
             if pos == 0 {
@@ -285,14 +281,12 @@ impl InnerSorted for InnerKeyLists {
             data.idx.clear();
             Ok(())
         } else if !data.idx.is_empty() {
-            data.idx.pipe_ref_mut(|index| {
-                let mut child = self.get_offset() + pos;
-                while child != 0 {
-                    index[child] = index.index(child) + &1;
-                    child = (child - 1) >> 1;
-                }
-                index[0] = index.index(0) + &1;
-            });
+            let mut child = &data.offset + pos;
+            while child != 0 {
+                data.idx[child] = data.idx[child] + 1;
+                child = (child - 1) >> 1;
+            }
+            data.idx[0] = data.idx[0] + 1;
             Ok(())
         } else {
             Ok(())
@@ -520,8 +514,7 @@ impl InnerSorted for InnerKeyLists {
                 return errors::is_not_in_list_err(&value);
             }
             if data.lists[pos][idx].bind(py).eq(&value)? {
-                let (loc, offset) = data.loc(pos, idx as isize, self.get_offset())?;
-                self.set_offset(offset);
+                let loc = data.loc(pos, idx as isize)?;
                 if start <= loc && loc <= stop {
                     return Ok(loc);
                 } else if loc > stop {
@@ -658,9 +651,7 @@ impl InnerKeyLists {
             Ok(self.get_len() as isize)
         } else {
             let idx = bisect::left(&self.get_keys()[pos], &key)?;
-            let (res, offset) = data.loc(pos, idx as isize, self.get_offset())?;
-            self.set_offset(offset);
-            Ok(res)
+            data.loc(pos, idx as isize)
         }
     }
     fn bisect_key_right(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
@@ -676,9 +667,7 @@ impl InnerKeyLists {
             Ok(self.get_len() as isize)
         } else {
             let idx = bisect::right(&self.get_keys()[pos], &key)?;
-            let (res, offset) = data.loc(pos, idx as isize, self.get_offset())?;
-            self.set_offset(offset);
-            Ok(res)
+            data.loc(pos, idx as isize)
         }
     }
 }
