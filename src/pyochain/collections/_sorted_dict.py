@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
     from _typeshed import SupportsGetItem, SupportsKeysAndGetItem
 
-    from pyochain._types import SupportsHashableAndRichComparison
+    from ._base_sorted import SupportsHashableAndRichComparison
 
     type KeyFunc[K: Hashable, OT: SupportsHashableAndRichComparison] = Callable[[K], OT]
 

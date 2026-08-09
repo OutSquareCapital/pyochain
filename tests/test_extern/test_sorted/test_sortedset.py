@@ -7,14 +7,16 @@ https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_cov
 from __future__ import annotations
 
 import operator
-from typing import override
+from typing import TYPE_CHECKING, override
 
 import pytest
 
-from pyochain._types import SupportsHashableAndRichComparison
 from pyochain.collections import SortedKeySet, SortedSet
 
 from ._utils import check_sorted_set
+
+if TYPE_CHECKING:
+    from pyochain.collections._base_sorted import SupportsHashableAndRichComparison
 
 
 def modulo(value: int) -> int:

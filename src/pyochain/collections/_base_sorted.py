@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Final, Self, override
+from collections.abc import Hashable
+from typing import TYPE_CHECKING, Any, Final, Protocol, Self, override
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -10,6 +11,24 @@ if TYPE_CHECKING:
 
     from pyochain.abc import PyoIterator
 
+
+class SupportsDunderLT[T](Protocol):
+    def __lt__(self, other: T, /) -> bool: ...
+
+
+class SupportsDunderGT[T](Protocol):
+    def __gt__(self, other: T, /) -> bool: ...
+
+
+class SupportsHashableAndDunderGT[T](Hashable, SupportsDunderGT[T], Protocol): ...
+
+
+class SupportsHashableAndDunderLT[T](Hashable, SupportsDunderLT[T], Protocol): ...
+
+
+type SupportsHashableAndRichComparison = (
+    SupportsHashableAndDunderLT[Any] | SupportsHashableAndDunderGT[Any]
+)
 
 type KeyFunc[T, OT: SupportsRichComparison] = Callable[[T], OT]
 DEFAULT_LOAD_FACTOR: Final[int] = 1000

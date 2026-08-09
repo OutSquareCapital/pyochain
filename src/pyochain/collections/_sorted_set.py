@@ -17,7 +17,8 @@ if TYPE_CHECKING:
     from types import NotImplementedType
 
     from pyochain import Vec
-    from pyochain._types import SupportsHashableAndRichComparison
+
+    from ._base_sorted import SupportsHashableAndRichComparison
 
     type SetKeyFunc[T, OT: SupportsHashableAndRichComparison] = KeyFunc[T, OT]
 

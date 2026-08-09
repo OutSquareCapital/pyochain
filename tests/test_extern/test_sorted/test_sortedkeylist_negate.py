@@ -4,6 +4,8 @@ Original source:
 https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_coverage_sortedkeylist_negate.py
 """
 
+from __future__ import annotations
+
 import operator
 import random
 from itertools import chain

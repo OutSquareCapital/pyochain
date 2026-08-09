@@ -4,19 +4,24 @@ Original source:
 https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_coverage_sorteddict.py
 """
 
+from __future__ import annotations
+
 import gc
 import operator
 import platform
 import string
-from collections.abc import ItemsView, KeysView, Mapping
-from typing import override
+from typing import TYPE_CHECKING, override
 
 import pytest
 
-from pyochain._types import SupportsHashableAndRichComparison
 from pyochain.collections import SortedDict, SortedKeyDict
 
 from ._utils import check_sorted_dict
+
+if TYPE_CHECKING:
+    from collections.abc import ItemsView, KeysView, Mapping
+
+    from pyochain.collections._base_sorted import SupportsHashableAndRichComparison
 
 
 def modulo(value: int) -> int:
