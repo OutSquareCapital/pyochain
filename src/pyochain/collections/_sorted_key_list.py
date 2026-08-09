@@ -83,10 +83,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](SortedList[T]):  # pyright: i
         """Function used to extract comparison key from values."""
         return self._inner.key
 
-    @override
-    def clear(self) -> None:
-        self._inner.clear()
-
     def irange_key(
         self,
         min_key: OT | None = None,

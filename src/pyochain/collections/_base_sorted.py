@@ -831,6 +831,10 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):  # ru
         return self._inner.count(value)
 
     @override
+    def clear(self) -> None:
+        self._inner.clear()
+
+    @override
     def extend(self, values: object) -> None:
         """Raise not-implemented error.
 

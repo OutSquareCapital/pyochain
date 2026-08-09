@@ -99,10 +99,6 @@ class SortedList[T: SupportsRichComparison](BaseSortedList[T], SortedCollection[
         return self._inner
 
     @override
-    def clear(self) -> None:
-        self._inner.clear()
-
-    @override
     def copy(self) -> Self:
         return self.__class__(self)
 
