@@ -1,15 +1,15 @@
-use crate::abc;
-use crate::collections::sorted::iter::{self, IsliceBounds};
-use crate::collections::sorted::traits::ListsData;
-use crate::pyo3_ext::pylibs;
 use crate::{
+    abc,
     collections::sorted::{
         bisect,
         cmp::py_cmp,
+        data::ListsData,
         errors,
+        iter::{self, IsliceBounds},
         traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters},
     },
     iterators,
+    pyo3_ext::pylibs,
 };
 use pyo3::prelude::*;
 use std::sync::MutexGuard;
@@ -132,10 +132,7 @@ impl InnerSorted for InnerLists {
     }
     fn clear(&self) -> () {
         self.set_len(0);
-        let mut data = self.get_data();
-        data.lists.clear();
-        data.maxes.clear();
-        data.idx.clear();
+        self.get_data().clear();
         self.set_offset(0);
     }
 

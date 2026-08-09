@@ -1,5 +1,6 @@
 pub(super) mod bisect;
 mod cmp;
+mod data;
 mod errors;
 pub mod iter;
 mod keylist;

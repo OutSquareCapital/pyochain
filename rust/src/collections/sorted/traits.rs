@@ -2,7 +2,7 @@ use crate::{
     abc,
     collections::{
         InnerKeyLists, InnerLists,
-        sorted::{errors, iter},
+        sorted::{data::ListsData, errors, iter},
     },
     iterators,
     pyovec::PyoVec,
@@ -25,29 +25,6 @@ use tap::prelude::*;
 pub const DEFAULT_LOAD_FACTOR: usize = 1000;
 pub type BoolOrNotImpl<'py> = PyResult<Either<bool, Bound<'py, PyNotImplemented>>>;
 pub type SeqOrAny<'py> = Either<Bound<'py, PySequence>, Bound<'py, PyAny>>;
-
-pub(super) struct ListsData {
-    pub(super) lists: Vec<Vec<Py<PyAny>>>,
-    pub(super) maxes: Vec<Py<PyAny>>,
-    pub(super) idx: Vec<usize>,
-}
-impl ListsData {
-    pub fn new() -> Self {
-        Self {
-            lists: Vec::new(),
-            maxes: Vec::new(),
-            idx: Vec::new(),
-        }
-    }
-    #[inline]
-    pub fn collapse(&self, py: Python<'_>) -> Vec<Py<PyAny>> {
-        self.lists
-            .iter()
-            .flatten()
-            .map(|x| x.clone_ref(py))
-            .collect()
-    }
-}
 
 pub(super) fn try_lock_recover<'a, T>(mutex: &'a Mutex<T>, msg: &str) -> MutexGuard<'a, T> {
     match mutex.try_lock() {

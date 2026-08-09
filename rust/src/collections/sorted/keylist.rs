@@ -3,11 +3,11 @@ use crate::{
     collections::sorted::{
         bisect,
         cmp::py_cmp_by_key,
+        data::ListsData,
         errors,
         iter::{self, IsliceBounds},
         traits::{
-            DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, ListsData, RustGetters,
-            try_lock_recover,
+            DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters, try_lock_recover,
         },
     },
     iterators,
@@ -159,11 +159,8 @@ impl InnerSorted for InnerKeyLists {
 
     fn clear(&self) -> () {
         self.set_len(0);
-        let mut data = self.get_data();
-        data.lists.clear();
+        self.get_data().clear();
         self.get_keys().clear();
-        data.maxes.clear();
-        data.idx.clear();
     }
     fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
