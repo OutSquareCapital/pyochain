@@ -162,32 +162,6 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         self.delete(py, &mut data, pos, idx)?;
         Ok(val.into_bound(py))
     }
-    fn getitem<'py>(
-        &self,
-        py: Python<'py>,
-        index: Either<isize, Bound<'py, PySlice>>,
-    ) -> PyResult<Either<Bound<'py, PyAny>, Bound<'py, PyoVec>>> {
-        let mut data = self.get_data();
-        match index {
-            Either::Right(slice) => data
-                .getitem_from_slice(py, slice)?
-                .iter()
-                .pipe(|elements| PyList::new(py, elements))?
-                .into_pyochain()
-                .map(Either::Right),
-            Either::Left(index) => data.getitem_from_int(py, index).map(Either::Left),
-        }
-    }
-    fn delitem(&self, py: Python<'_>, index: Either<isize, Bound<'_, PySlice>>) -> PyResult<()> {
-        match index {
-            Either::Right(slice) => self.delitem_from_slice(py, slice),
-            Either::Left(index) => {
-                let mut data = self.get_data();
-                let (pos, idx) = data.pos(index)?;
-                self.delete(py, &mut data, pos, idx as usize)
-            }
-        }
-    }
     #[skip]
     fn delitem_from_slice(&self, py: Python<'_>, slice: Bound<'_, PySlice>) -> PyResult<()> {
         let mut data = self.get_data();
@@ -305,7 +279,25 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         };
         Self::wrap_iter(py, iter::BoundedIter::new(slf.unbind(), bounds, dir))
     }
-    fn eq<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+
+    fn __reversed__(slf: Bound<'_, Self>) -> PyResult<Bound<'_, abc::PyoIterator>> {
+        let py = slf.py();
+        Self::wrap_iter(py, iter::BoundedIter::full(slf.unbind(), iter::Dir::Bwd))
+    }
+
+    fn __iter__(slf: Bound<'_, Self>) -> PyResult<Bound<'_, abc::PyoIterator>> {
+        let py = slf.py();
+        Self::wrap_iter(py, iter::BoundedIter::full(slf.unbind(), iter::Dir::Fwd))
+    }
+
+    fn __add__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>)
+    -> PyResult<Bound<'py, Self>>;
+    fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>>;
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
+    fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+        self.copy(py)
+    }
+    fn __eq__<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
         let data = self.get_data();
         match other {
             Either::Left(seq) => {
@@ -331,7 +323,8 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             Either::Right(any) => errors::not_impl(any.py()),
         }
     }
-    fn ne<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+
+    fn __ne__<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
         let data = self.get_data();
         match other {
             Either::Left(seq) => {
@@ -357,7 +350,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         }
     }
 
-    fn lt<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+    fn __lt__<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
         match other {
             Either::Left(seq) => {
                 let py = seq.py();
@@ -382,7 +375,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         }
     }
 
-    fn gt<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+    fn __gt__<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
         match other {
             Either::Left(seq) => {
                 let py = seq.py();
@@ -406,7 +399,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         }
     }
 
-    fn le<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+    fn __le__<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
         match other {
             Either::Left(seq) => {
                 let py = seq.py();
@@ -431,7 +424,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         }
     }
 
-    fn ge<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+    fn __ge__<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
         match other {
             Either::Left(seq) => {
                 let py = seq.py();
@@ -455,53 +448,19 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         }
     }
 
-    fn __reversed__(slf: Bound<'_, Self>) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        let py = slf.py();
-        Self::wrap_iter(py, iter::BoundedIter::full(slf.unbind(), iter::Dir::Bwd))
-    }
-
-    fn __iter__(slf: Bound<'_, Self>) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        let py = slf.py();
-        Self::wrap_iter(py, iter::BoundedIter::full(slf.unbind(), iter::Dir::Fwd))
-    }
-
-    fn __add__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>)
-    -> PyResult<Bound<'py, Self>>;
-    fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>>;
-    fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
-    fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        self.copy(py)
-    }
-    fn __eq__<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
-        self.eq(other)
-    }
-
-    fn __ne__<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
-        self.ne(other)
-    }
-
-    fn __lt__<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
-        self.lt(other)
-    }
-
-    fn __gt__<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
-        self.gt(other)
-    }
-
-    fn __le__<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
-        self.le(other)
-    }
-
-    fn __ge__<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
-        self.ge(other)
-    }
-
     fn __delitem__(
         &self,
         py: Python<'_>,
         index: Either<isize, Bound<'_, PySlice>>,
     ) -> PyResult<()> {
-        self.delitem(py, index)
+        match index {
+            Either::Right(slice) => self.delitem_from_slice(py, slice),
+            Either::Left(index) => {
+                let mut data = self.get_data();
+                let (pos, idx) = data.pos(index)?;
+                self.delete(py, &mut data, pos, idx as usize)
+            }
+        }
     }
 
     fn __getitem__<'py>(
@@ -509,7 +468,16 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         py: Python<'py>,
         index: Either<isize, Bound<'py, PySlice>>,
     ) -> PyResult<Either<Bound<'py, PyAny>, Bound<'py, PyoVec>>> {
-        self.getitem(py, index)
+        let mut data = self.get_data();
+        match index {
+            Either::Right(slice) => data
+                .getitem_from_slice(py, slice)?
+                .iter()
+                .pipe(|elements| PyList::new(py, elements))?
+                .into_pyochain()
+                .map(Either::Right),
+            Either::Left(index) => data.getitem_from_int(py, index).map(Either::Left),
+        }
     }
     fn __len__(&self) -> usize {
         self.get_data().len
@@ -532,6 +500,16 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         Err(PyNotImplementedError::new_err(msg))
     }
 
+    fn __iadd__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
+        self.update(&other)
+    }
+
+    fn __imul__(&self, py: Python<'_>, num: usize) -> PyResult<()> {
+        let values = self.mul(py, num)?.into_any();
+        self.clear();
+        self.update(&values)
+    }
+
     #[allow(unused_variables)]
     fn append(&self, _value: Bound<'_, PyAny>) -> PyResult<()> {
         let msg = "use ``sl.add(value)`` instead";
@@ -551,14 +529,5 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     fn reverse(&self) -> PyResult<()> {
         let msg = "use ``reversed(sl)`` instead";
         Err(PyNotImplementedError::new_err(msg))
-    }
-    fn __iadd__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        self.update(&other)
-    }
-
-    fn __imul__(&self, py: Python<'_>, num: usize) -> PyResult<()> {
-        let values = self.mul(py, num)?.into_any();
-        self.clear();
-        self.update(&values)
     }
 }
