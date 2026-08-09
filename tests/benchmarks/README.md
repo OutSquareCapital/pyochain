@@ -79,18 +79,18 @@ To get a table with sorted import times:
 
 ```powershell
 uv run python -X importtime -c "import pyochain" 2>&1 |
->>     Select-String "import time:" |
->>     Where-Object { $_ -notmatch "cumulative" } |
->>     ForEach-Object {
->>         $parts = $_ -split '\|'
->>         [PSCustomObject]@{
->>             Self = [int](($parts[0] -replace '.*:').Trim())
->>             Cumulative = [int]($parts[1].Trim())
->>             Module = $parts[2].Trim()
->>         }
->>     } |
->>     Sort-Object Cumulative -Descending |
->>     Format-Table -AutoSize
+Select-String "import time:" |
+Where-Object { $_ -notmatch "cumulative" } |
+ForEach-Object {
+    $parts = $_ -split '\|'
+    [PSCustomObject]@{
+        Self = [int](($parts[0] -replace '.*:').Trim())
+        Cumulative = [int]($parts[1].Trim())
+        Module = $parts[2].Trim()
+    }
+} |
+Sort-Object Cumulative -Descending |
+Format-Table -AutoSize
 ```
 
 ## Sources
