@@ -44,10 +44,6 @@ pub(super) trait InnerSortedGetters:
     fn set_load(&self, load: usize);
     #[getter]
     fn get_load(&self) -> usize;
-    #[getter]
-    fn get_len(&self) -> usize;
-    #[setter]
-    fn set_len(&self, len: usize);
 }
 macro_rules! impl_inner_sorted_rs {
     ($t:ty) => {
@@ -59,14 +55,6 @@ macro_rules! impl_inner_sorted_rs {
             #[inline(always)]
             fn set_load(&self, load: usize) {
                 self.load.store(load, AtomicOrdering::Relaxed);
-            }
-            #[inline(always)]
-            fn get_len(&self) -> usize {
-                self.len.load(AtomicOrdering::Relaxed)
-            }
-            #[inline(always)]
-            fn set_len(&self, len: usize) {
-                self.len.store(len, AtomicOrdering::Relaxed);
             }
             #[inline(always)]
             fn get_load(&self) -> usize {
@@ -144,12 +132,11 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     }
     #[pyo3(signature = (index = -1))]
     fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        if self.get_len() == 0 {
+        let mut data = self.get_data();
+        if data.len == 0 {
             let msg = "pop index out of range";
             return Err(PyIndexError::new_err(msg));
         }
-
-        let mut data = self.get_data();
 
         let (pos, idx) = {
             let len_last = data.lists.last().unwrap().len() as isize;
@@ -165,7 +152,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                     (pos, (len_last + index) as usize)
                 }
                 _ => {
-                    let (pos, idx) = data.pos(index, self.get_len())?;
+                    let (pos, idx) = data.pos(index)?;
                     (pos, idx as usize)
                 }
             }
@@ -182,14 +169,12 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         let mut data = self.get_data();
         match index {
             Either::Right(slice) => data
-                .getitem_from_slice(py, slice, self.get_len())?
+                .getitem_from_slice(py, slice)?
                 .iter()
                 .pipe(|elements| PyList::new(py, elements))?
                 .into_pyochain()
                 .map(Either::Right),
-            Either::Left(index) => data
-                .getitem_from_int(py, index, self.get_len())
-                .map(Either::Left),
+            Either::Left(index) => data.getitem_from_int(py, index).map(Either::Left),
         }
     }
     fn delitem(&self, py: Python<'_>, index: Either<isize, Bound<'_, PySlice>>) -> PyResult<()> {
@@ -197,32 +182,29 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             Either::Right(slice) => self.delitem_from_slice(py, slice),
             Either::Left(index) => {
                 let mut data = self.get_data();
-                let (pos, idx) = data.pos(index, self.get_len())?;
+                let (pos, idx) = data.pos(index)?;
                 self.delete(py, &mut data, pos, idx as usize)
             }
         }
     }
     #[skip]
     fn delitem_from_slice(&self, py: Python<'_>, slice: Bound<'_, PySlice>) -> PyResult<()> {
-        let length = self.get_len() as isize;
+        let mut data = self.get_data();
+        let length = data.len as isize;
         let PySliceIndices {
             start, stop, step, ..
         } = slice.indices(length)?;
         match (step, start.cmp(&stop)) {
             (1, Ordering::Less) if start == 0 && stop == length => {
+                drop(data);
                 self.clear();
                 Ok(())
             }
             (1, Ordering::Less) if length <= 8 * (stop - start) => {
-                let mut data = self.get_data();
-                let mut values =
-                    data.getitem_from_slice(py, PySlice::new(py, 0, start, 1), self.get_len())?;
+                let mut values = data.getitem_from_slice(py, PySlice::new(py, 0, start, 1))?;
                 if stop < length {
-                    let new_slice = data.getitem_from_slice(
-                        py,
-                        PySlice::new(py, stop, length, 1),
-                        self.get_len(),
-                    )?;
+                    let new_slice =
+                        data.getitem_from_slice(py, PySlice::new(py, stop, length, 1))?;
                     values.extend(new_slice);
                 }
                 drop(data);
@@ -230,25 +212,21 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                 self.update_from_vec(py, values)?;
                 Ok(())
             }
-            _ if step > 0 => {
-                let mut data = self.get_data();
-                (start..stop)
-                    .step_by(step as usize)
-                    .rev()
-                    .try_for_each(|idx| {
-                        let (pos, idx) = data.pos(idx, self.get_len())?;
-                        self.delete(py, &mut data, pos, idx as usize)
-                    })
-            }
+            _ if step > 0 => (start..stop)
+                .step_by(step as usize)
+                .rev()
+                .try_for_each(|idx| {
+                    let (pos, idx) = data.pos(idx)?;
+                    self.delete(py, &mut data, pos, idx as usize)
+                }),
             // Negative step with nothing to delete (mirrors Python's
             // `range`, which is empty when `start <= stop`).
             (_, Ordering::Less | Ordering::Equal) => Ok(()),
             _ => {
-                let mut data = self.get_data();
                 // Negative step, `start > stop` guaranteed by the arm above.
                 std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
                     .try_for_each(|idx| {
-                        let (pos, idx) = data.pos(idx, self.get_len())?;
+                        let (pos, idx) = data.pos(idx)?;
                         self.delete(py, &mut data, pos, idx as usize)
                     })
             }
@@ -275,7 +253,8 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         start: Option<isize>,
         stop: Option<isize>,
     ) -> PyResult<Option<iter::IsliceBounds>> {
-        let length = self.get_len() as isize;
+        let mut data = self.get_data();
+        let length = data.len as isize;
 
         if length == 0 {
             return Ok(None);
@@ -287,8 +266,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         if indices.start >= indices.stop {
             Ok(None)
         } else {
-            let mut data = self.get_data();
-            let (min_pos, min_idx) = data.pos(indices.start, self.get_len())?;
+            let (min_pos, min_idx) = data.pos(indices.start)?;
 
             let (max_pos, max_idx) = if indices.stop == length {
                 (
@@ -296,7 +274,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                     data.lists.last().unwrap().len() as isize,
                 )
             } else {
-                data.pos(indices.stop, self.get_len())?
+                data.pos(indices.stop)?
             };
 
             Ok(Some(iter::IsliceBounds::new(
@@ -337,14 +315,14 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     }
 
     fn eq<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+        let data = self.get_data();
         match other {
             Either::Left(seq) => {
-                if self.get_len().ne(&seq.len()?) {
+                if data.len.ne(&seq.len()?) {
                     Either::Left(false).pipe(Ok)
                 } else {
                     let py = seq.py();
-                    self.get_data()
-                        .lists
+                    data.lists
                         .iter()
                         .flat_map(move |x| x.iter())
                         .zip(seq.try_iter()?)
@@ -363,14 +341,14 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         }
     }
     fn ne<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+        let data = self.get_data();
         match other {
             Either::Left(seq) => {
-                if self.get_len().ne(&seq.len()?) {
+                if data.len.ne(&seq.len()?) {
                     Either::Left(true).pipe(Ok)
                 } else {
                     let py = seq.py();
-                    self.get_data()
-                        .lists
+                    data.lists
                         .iter()
                         .flat_map(move |x| x.iter())
                         .zip(seq.try_iter()?)
@@ -392,8 +370,8 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         match other {
             Either::Left(seq) => {
                 let py = seq.py();
-                for (alpha, beta) in self
-                    .get_data()
+                let data = self.get_data();
+                for (alpha, beta) in data
                     .lists
                     .iter()
                     .flat_map(move |x| x.iter())
@@ -406,7 +384,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                     }
                 }
 
-                self.get_len().lt(&seq.len()?).pipe(Either::Left).pipe(Ok)
+                data.len.lt(&seq.len()?).pipe(Either::Left).pipe(Ok)
             }
 
             Either::Right(any) => errors::not_impl(any.py()),
@@ -417,8 +395,8 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         match other {
             Either::Left(seq) => {
                 let py = seq.py();
-                for (alpha, beta) in self
-                    .get_data()
+                let data = self.get_data();
+                for (alpha, beta) in data
                     .lists
                     .iter()
                     .flat_map(move |x| x.iter())
@@ -430,7 +408,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                         return Either::Left(a.gt(&b)?).pipe(Ok);
                     }
                 }
-                self.get_len().gt(&seq.len()?).pipe(Either::Left).pipe(Ok)
+                data.len.gt(&seq.len()?).pipe(Either::Left).pipe(Ok)
             }
 
             Either::Right(any) => errors::not_impl(any.py()),
@@ -441,8 +419,8 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         match other {
             Either::Left(seq) => {
                 let py = seq.py();
-                for (alpha, beta) in self
-                    .get_data()
+                let data = self.get_data();
+                for (alpha, beta) in data
                     .lists
                     .iter()
                     .flat_map(move |x| x.iter())
@@ -455,7 +433,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                     }
                 }
 
-                self.get_len().le(&seq.len()?).pipe(Either::Left).pipe(Ok)
+                data.len.le(&seq.len()?).pipe(Either::Left).pipe(Ok)
             }
 
             Either::Right(any) => errors::not_impl(any.py()),
@@ -466,8 +444,8 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         match other {
             Either::Left(seq) => {
                 let py = seq.py();
-                for (alpha, beta) in self
-                    .get_data()
+                let data = self.get_data();
+                for (alpha, beta) in data
                     .lists
                     .iter()
                     .flat_map(move |x| x.iter())
@@ -480,7 +458,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                     }
                 }
 
-                self.get_len().ge(&seq.len()?).pipe(Either::Left).pipe(Ok)
+                data.len.ge(&seq.len()?).pipe(Either::Left).pipe(Ok)
             }
             Either::Right(any) => errors::not_impl(any.py()),
         }

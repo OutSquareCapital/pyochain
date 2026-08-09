@@ -671,11 +671,3 @@ def test_build_index() -> None:
     slt.reset(4)
     # slt.inner.build_index()  # ruff: ignore[commented-out-code]
     check_sorted_list(slt.inner)
-
-
-def test_check() -> None:
-    slt = SortedList(range(10))
-    slt.reset(4)
-    slt.inner.len = 5
-    with pytest.raises(AssertionError):
-        check_sorted_list(slt.inner)

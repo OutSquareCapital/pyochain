@@ -18,7 +18,7 @@ macro_rules! pyassert {
 pub fn assert_sorted_list_empty(lst: InnerSorted) -> PyResult<()> {
     fn check_empty(x: &impl InnerSortedGetters) -> PyResult<()> {
         let data = x.get_data();
-        pyassert!(x.get_len() == 0);
+        pyassert!(data.len == 0);
         pyassert!(data.maxes.is_empty());
         pyassert!(data.lists.is_empty());
         Ok(())
@@ -52,7 +52,7 @@ fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
     (lst_data.maxes.len() == lst_data.lists.len())
         .then_some(())
         .ok_or(err("Maxes and lists must have the same length"))?;
-    (data.get_len()
+    (lst_data.len
         == lst_data
             .lists
             .iter()
@@ -111,7 +111,7 @@ fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
     }
 
     if !lst_data.idx.is_empty() {
-        (&data.get_len() == lst_data.idx.index(0))
+        (&lst_data.len == lst_data.idx.index(0))
             .then_some(())
             .ok_or(err("Index root must equal total length"))?;
         (lst_data.idx.len() == lst_data.offset + lst_data.lists.len())
@@ -153,12 +153,11 @@ fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
     let lst_data = data.get_data();
     let keys = data.get_keys();
     let load = data.get_load();
-    let length = data.get_len();
     let key_fn = data.key.bind(py);
     pyassert!(load >= 4);
     pyassert!(lst_data.maxes.len() == lst_data.lists.len() && lst_data.lists.len() == keys.len());
     pyassert!(
-        length
+        lst_data.len
             == lst_data
                 .lists
                 .iter()
@@ -221,7 +220,7 @@ fn run_key_checks(py: Python<'_>, data: &InnerKeyLists) -> PyResult<()> {
     }
 
     if !lst_data.idx.is_empty() {
-        pyassert!(&length == lst_data.idx.index(0));
+        pyassert!(&lst_data.len == lst_data.idx.index(0));
         pyassert!(lst_data.idx.len() == lst_data.offset + lst_data.lists.len());
 
         // Check index leaf nodes equal length of sublists.
@@ -260,7 +259,7 @@ fn show_key_list(py: Python<'_>, err: &PyErr, data: &InnerKeyLists) -> () {
 fn show_list(py: Python<'_>, err: &PyErr, data: &impl InnerSortedGetters) -> () {
     let lst_data = data.get_data();
     let infos = [
-        format!("len: {}", data.get_len()),
+        format!("len: {}", lst_data.len),
         format!("load: {}", data.get_load()),
         format!("offset: {}", lst_data.offset),
         format!("len_index: {}", lst_data.idx.len()),

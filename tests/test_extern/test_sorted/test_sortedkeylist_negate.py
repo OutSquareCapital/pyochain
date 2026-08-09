@@ -665,11 +665,3 @@ def test_pickle() -> None:
     assert alpha.key == beta.key
     assert alpha.inner.load == 500
     assert beta.inner.load == 1000
-
-
-def test_check() -> None:
-    slt = SortedKeyList(range(10), key=operator.neg)
-    slt.reset(4)
-    slt.inner.len = 5
-    with pytest.raises(AssertionError):
-        check_sorted_key_list(slt.inner)

@@ -18,7 +18,6 @@ use tap::prelude::*;
 #[pyclass(module = "pyochain._collections", frozen, generic)]
 pub struct InnerLists {
     pub(super) data: Mutex<ListsData>,
-    pub(super) len: AtomicUsize,
     pub(super) load: AtomicUsize,
 }
 #[pymethods]
@@ -27,9 +26,12 @@ impl InnerLists {
     fn new() -> PyResult<Self> {
         Ok(Self {
             data: Mutex::new(ListsData::new()),
-            len: AtomicUsize::new(0),
             load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
         })
+    }
+    #[getter]
+    fn get_len(&self) -> usize {
+        self.get_data().len
     }
 }
 impl InnerSorted for InnerLists {
@@ -58,7 +60,6 @@ impl InnerSorted for InnerLists {
         }
     }
     fn clear(&self) -> () {
-        self.set_len(0);
         self.get_data().clear()
     }
 
@@ -118,7 +119,7 @@ impl InnerSorted for InnerLists {
         idx: usize,
     ) -> PyResult<()> {
         data.lists[pos].remove(idx);
-        self.set_len(self.get_len() - 1);
+        data.len = data.len - 1;
 
         let len_lists_pos = data.lists[pos].len();
 
@@ -180,7 +181,7 @@ impl InnerSorted for InnerLists {
             data.maxes.push(value);
         }
 
-        self.set_len(self.get_len() + 1);
+        data.len = data.len + 1;
         Ok(())
     }
 
@@ -240,7 +241,7 @@ impl InnerSorted for InnerLists {
         let pos = bisect::left(&data.maxes, &value)?;
 
         if pos == data.maxes.len() {
-            return Ok(self.get_len() as isize);
+            return Ok(data.len as isize);
         }
         let idx = bisect::left(&data.lists[pos], &value)?;
         data.loc(pos, idx as isize)
@@ -256,7 +257,7 @@ impl InnerSorted for InnerLists {
         let pos = bisect::right(&data.maxes, &value)?;
 
         if pos == data.maxes.len() {
-            return Ok(self.get_len() as isize);
+            return Ok(data.len as isize);
         }
         let idx = bisect::right(&data.lists[pos], &value)?;
         data.loc(pos, idx as isize)
@@ -279,7 +280,7 @@ impl InnerSorted for InnerLists {
 
         if pos_right == data.maxes.len() {
             let left = data.loc(pos_left, idx_left as isize)?;
-            return Ok(self.get_len() - left as usize);
+            return Ok(data.len - left as usize);
         }
         let idx_right = bisect::right(&data.lists[pos_right], &value)?;
 
@@ -298,7 +299,9 @@ impl InnerSorted for InnerLists {
         stop: Option<isize>,
     ) -> PyResult<isize> {
         let py = value.py();
-        let len_ = self.get_len() as isize;
+
+        let mut data = self.get_data();
+        let len_ = data.len as isize;
 
         if len_ == 0 {
             return errors::is_not_in_list_err(&value);
@@ -319,7 +322,6 @@ impl InnerSorted for InnerLists {
         if stop <= start {
             return errors::is_not_in_list_err(&value);
         }
-        let mut data = self.get_data();
         let pos_left = data.maxes.pipe_ref(|maxes| {
             let pos_left = bisect::left(&maxes, &value)?;
 
@@ -367,16 +369,16 @@ impl InnerSorted for InnerLists {
 
     fn update_from_vec(&self, py: Python<'_>, mut values: Vec<Py<PyAny>>) -> PyResult<()> {
         values.sort_by(|a, b| py_cmp(py, a, b));
+        let mut data = self.get_data();
 
-        if !self.get_data().maxes.is_empty() {
-            if values.len() * 4 >= self.get_len() {
-                let mut data = self.get_data();
+        if !data.maxes.is_empty() {
+            if values.len() * 4 >= data.len {
                 data.lists.push(values);
                 values = data.collapse(py);
                 values.sort_by(|a, b| py_cmp(py, a, b));
-                drop(data);
-                self.clear();
+                data.clear();
             } else {
+                drop(data);
                 for val in values {
                     self.add(py, val)?;
                 }
@@ -392,7 +394,6 @@ impl InnerSorted for InnerLists {
                 .map(|x| x.clone_ref(py))
                 .collect::<Vec<_>>()
         });
-        let mut data = self.get_data();
         data.lists.extend(new_lists);
         let mut new_maxes = data
             .lists
@@ -400,7 +401,7 @@ impl InnerSorted for InnerLists {
             .map(|x| x.last().unwrap().clone_ref(py))
             .collect::<Vec<_>>();
         data.maxes.append(new_maxes.as_mut());
-        self.set_len(values_len);
+        data.len = values_len;
         data.idx.clear();
         Ok(())
     }

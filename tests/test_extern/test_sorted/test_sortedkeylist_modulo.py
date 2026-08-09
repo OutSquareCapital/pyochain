@@ -812,11 +812,3 @@ def test_repr_subclass() -> None:
     assert repr(this).startswith(
         "CustomSortedKeyList([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], key=<function modulo at "
     )
-
-
-def test_check() -> None:
-    slt = SortedKeyList(range(10), key=modulo)
-    slt.reset(4)
-    slt.inner.len = 5
-    with pytest.raises(AssertionError):
-        check_sorted_key_list(slt.inner)

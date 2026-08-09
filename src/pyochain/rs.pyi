@@ -13,7 +13,7 @@ That way, we can :
 
 from collections.abc import Callable, Iterable
 from types import NotImplementedType
-from typing import Any, Self, overload, type_check_only
+from typing import Any, Final, Self, overload, type_check_only
 
 from _typeshed import SupportsRichComparison
 
@@ -43,7 +43,7 @@ type SliceBounds = tuple[int, int, int, int]
 
 @type_check_only
 class InnerSorted[T, U]:
-    len: int
+    len: Final[int]
     load: int
 
     def __new__(cls) -> Self: ...

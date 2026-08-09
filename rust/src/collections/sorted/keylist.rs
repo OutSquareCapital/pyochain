@@ -20,7 +20,6 @@ pub struct InnerKeyLists {
     pub(super) key: Py<PyAny>,
     pub(super) keys: Mutex<Vec<Vec<Py<PyAny>>>>,
     pub(super) data: Mutex<ListsData>,
-    pub(super) len: AtomicUsize,
     pub(super) load: AtomicUsize,
 }
 impl InnerKeyLists {
@@ -36,9 +35,12 @@ impl InnerKeyLists {
             key: key.unbind(),
             keys: Mutex::new(Vec::new()),
             data: Mutex::new(ListsData::new()),
-            len: AtomicUsize::new(0),
             load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
         })
+    }
+    #[getter]
+    fn get_len(&self) -> usize {
+        self.get_data().len
     }
     #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true), *, reverse = false))]
     fn irange_key<'py>(
@@ -84,7 +86,6 @@ impl InnerSorted for InnerKeyLists {
     }
 
     fn clear(&self) -> () {
-        self.set_len(0);
         self.get_data().clear();
         self.get_keys().clear();
     }
@@ -138,7 +139,7 @@ impl InnerSorted for InnerKeyLists {
 
         keys[pos].remove(idx);
         data.lists[pos].remove(idx);
-        self.set_len(self.get_len() - 1);
+        data.len = data.len - 1;
 
         let len_keys_pos = keys[pos].len();
 
@@ -248,7 +249,7 @@ impl InnerSorted for InnerKeyLists {
             data.maxes.push(key);
         }
 
-        self.set_len(self.get_len() + 1);
+        data.len = data.len + 1;
         Ok(())
     }
 
@@ -401,7 +402,9 @@ impl InnerSorted for InnerKeyLists {
         stop: Option<isize>,
     ) -> PyResult<isize> {
         let py = value.py();
-        let len_ = self.get_len() as isize;
+
+        let mut data = self.get_data();
+        let len_ = data.len as isize;
 
         if len_ == 0 {
             return errors::is_not_in_list_err(&value);
@@ -422,7 +425,6 @@ impl InnerSorted for InnerKeyLists {
         if stop <= start {
             return errors::is_not_in_list_err(&value);
         }
-        let mut data = self.get_data();
         let key = self.key.bind(py).call1((&value,))?;
         let mut pos = bisect::left(&data.maxes, &key)?;
 
@@ -474,25 +476,25 @@ impl InnerSorted for InnerKeyLists {
         self.update_from_vec(py, values)
     }
     fn update_from_vec(&self, py: Python<'_>, mut values: Vec<Py<PyAny>>) -> PyResult<()> {
+        let mut data = self.get_data();
         let key_fn = &self.key.clone_ref(py).into_bound(py);
         values.sort_by(|a, b| py_cmp_by_key(a, b, key_fn));
 
-        if !self.get_data().maxes.is_empty() {
-            if values.len() * 4 >= self.get_len() {
-                let mut data = self.get_data();
+        if !data.maxes.is_empty() {
+            if values.len() * 4 >= data.len {
                 data.lists.push(values);
                 values = data.collapse(py);
                 values.sort_by(|a, b| py_cmp_by_key(a, b, key_fn));
-                drop(data);
-                self.clear();
+                data.clear();
+                self.get_keys().clear();
             } else {
+                drop(data);
                 for val in values {
                     self.add(py, val)?;
                 }
                 return Ok(());
             }
         }
-        let mut data = self.get_data();
         let load = self.get_load();
         let values_len = values.len();
         let new_lists = (0..values_len).step_by(load).map(|pos| {
@@ -516,7 +518,7 @@ impl InnerSorted for InnerKeyLists {
         keys.extend(new_keys);
         let new_maxes = keys.iter().map(|x| x.last().unwrap().clone_ref(py));
         data.maxes.extend(new_maxes);
-        self.set_len(values_len);
+        data.len = values_len;
         data.idx.clear();
         Ok(())
     }
@@ -534,7 +536,7 @@ impl InnerKeyLists {
         let pos = bisect::left(&data.maxes, &key)?;
 
         if pos == data.maxes.len() {
-            Ok(self.get_len() as isize)
+            Ok(data.len as isize)
         } else {
             let idx = bisect::left(&self.get_keys()[pos], &key)?;
             data.loc(pos, idx as isize)
@@ -550,7 +552,7 @@ impl InnerKeyLists {
         let pos = bisect::right(&data.maxes, &key)?;
 
         if pos == data.maxes.len() {
-            Ok(self.get_len() as isize)
+            Ok(data.len as isize)
         } else {
             let idx = bisect::right(&self.get_keys()[pos], &key)?;
             data.loc(pos, idx as isize)
