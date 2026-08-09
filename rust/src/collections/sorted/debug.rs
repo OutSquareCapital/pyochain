@@ -1,4 +1,4 @@
-use crate::collections::sorted::traits::{InnerSortedGetters, RustGetters};
+use crate::collections::sorted::traits::InnerSortedGetters;
 use crate::collections::{InnerKeyLists, InnerLists};
 use either::Either;
 use pyo3::exceptions::PyAssertionError;

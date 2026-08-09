@@ -6,9 +6,7 @@ use crate::{
         data::ListsData,
         errors,
         iter::{self, IsliceBounds},
-        traits::{
-            DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, RustGetters, try_lock_recover,
-        },
+        traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, try_lock_recover},
     },
     iterators,
     pyo3_ext::pylibs,

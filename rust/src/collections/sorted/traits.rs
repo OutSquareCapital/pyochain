@@ -35,15 +35,23 @@ pub(super) fn try_lock_recover<'a, T>(mutex: &'a Mutex<T>, msg: &str) -> MutexGu
     }
 }
 
-pub trait RustGetters:
+#[py_abc(InnerLists, InnerKeyLists)]
+pub(super) trait InnerSortedGetters:
     Sized + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {
+    #[skip]
     fn get_data(&self) -> MutexGuard<'_, ListsData>;
     fn set_load(&self, load: usize);
+    #[getter]
+    fn get_load(&self) -> usize;
+    #[getter]
+    fn get_len(&self) -> usize;
+    #[setter]
+    fn set_len(&self, len: usize);
 }
-macro_rules! impl_rs_getters {
+macro_rules! impl_inner_sorted_rs {
     ($t:ty) => {
-        impl RustGetters for $t {
+        impl InnerSortedGetters for $t {
             #[inline(always)]
             fn get_data(&self) -> MutexGuard<'_, ListsData> {
                 try_lock_recover(&self.data, "data already locked - reentrant bug")
@@ -52,29 +60,6 @@ macro_rules! impl_rs_getters {
             fn set_load(&self, load: usize) {
                 self.load.store(load, AtomicOrdering::Relaxed);
             }
-        }
-    };
-}
-impl_rs_getters!(InnerLists);
-impl_rs_getters!(InnerKeyLists);
-#[py_abc(InnerLists, InnerKeyLists)]
-pub(super) trait InnerSortedGetters: RustGetters {
-    #[getter]
-    fn get_load(&self) -> usize;
-    #[getter]
-    fn get_len(&self) -> usize;
-    #[setter]
-    fn set_len(&self, len: usize);
-    fn eq<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py>;
-    fn ne<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py>;
-    fn lt<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py>;
-    fn gt<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py>;
-    fn le<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py>;
-    fn ge<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py>;
-}
-macro_rules! impl_inner_sorted_rs {
-    ($t:ty) => {
-        impl InnerSortedGetters for $t {
             #[inline(always)]
             fn get_len(&self) -> usize {
                 self.len.load(AtomicOrdering::Relaxed)
@@ -86,156 +71,6 @@ macro_rules! impl_inner_sorted_rs {
             #[inline(always)]
             fn get_load(&self) -> usize {
                 self.load.load(AtomicOrdering::Relaxed)
-            }
-
-            fn eq<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
-                match other {
-                    Either::Left(seq) => {
-                        if self.get_len().ne(&seq.len()?) {
-                            Either::Left(false).pipe(Ok)
-                        } else {
-                            let py = seq.py();
-                            self.get_data()
-                                .lists
-                                .iter()
-                                .flat_map(move |x| x.iter())
-                                .zip(seq.try_iter()?)
-                                .map(|(a, b)| a.bind(py).eq(b?))
-                                .find_map(|x| match x {
-                                    Ok(true) => None,
-                                    Ok(false) => Some(Ok(false)),
-                                    Err(e) => Some(Err(e)),
-                                })
-                                .unwrap_or(Ok(true))
-                                .map(Either::Left)
-                        }
-                    }
-
-                    Either::Right(any) => errors::not_impl(any.py()),
-                }
-            }
-            fn ne<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
-                match other {
-                    Either::Left(seq) => {
-                        if self.get_len().ne(&seq.len()?) {
-                            Either::Left(true).pipe(Ok)
-                        } else {
-                            let py = seq.py();
-                            self.get_data()
-                                .lists
-                                .iter()
-                                .flat_map(move |x| x.iter())
-                                .zip(seq.try_iter()?)
-                                .map(|(a, b)| a.bind(py).eq(b?))
-                                .find_map(|x| match x {
-                                    Ok(true) => None,
-                                    Ok(false) => Some(Ok(true)),
-                                    Err(e) => Some(Err(e)),
-                                })
-                                .unwrap_or(Ok(false))
-                                .map(Either::Left)
-                        }
-                    }
-                    Either::Right(any) => errors::not_impl(any.py()),
-                }
-            }
-
-            fn lt<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
-                match other {
-                    Either::Left(seq) => {
-                        let py = seq.py();
-                        for (alpha, beta) in self
-                            .get_data()
-                            .lists
-                            .iter()
-                            .flat_map(move |x| x.iter())
-                            .zip(seq.try_iter()?)
-                        {
-                            let a = alpha.bind(py);
-                            let b = beta?;
-                            if a.ne(&b)? {
-                                return a.lt(&b).map(Either::Left);
-                            }
-                        }
-
-                        self.get_len().lt(&seq.len()?).pipe(Either::Left).pipe(Ok)
-                    }
-
-                    Either::Right(any) => errors::not_impl(any.py()),
-                }
-            }
-
-            fn gt<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
-                match other {
-                    Either::Left(seq) => {
-                        let py = seq.py();
-                        for (alpha, beta) in self
-                            .get_data()
-                            .lists
-                            .iter()
-                            .flat_map(move |x| x.iter())
-                            .zip(seq.try_iter()?)
-                        {
-                            let b = beta?;
-                            let a = alpha.bind(py);
-                            if a.ne(&b)? {
-                                return Either::Left(a.gt(&b)?).pipe(Ok);
-                            }
-                        }
-                        self.get_len().gt(&seq.len()?).pipe(Either::Left).pipe(Ok)
-                    }
-
-                    Either::Right(any) => errors::not_impl(any.py()),
-                }
-            }
-
-            fn le<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
-                match other {
-                    Either::Left(seq) => {
-                        let py = seq.py();
-                        for (alpha, beta) in self
-                            .get_data()
-                            .lists
-                            .iter()
-                            .flat_map(move |x| x.iter())
-                            .zip(seq.try_iter()?)
-                        {
-                            let b = beta?;
-                            let a = alpha.bind(py);
-                            if a.ne(&b)? {
-                                return a.le(b).map(Either::Left);
-                            }
-                        }
-
-                        self.get_len().le(&seq.len()?).pipe(Either::Left).pipe(Ok)
-                    }
-
-                    Either::Right(any) => errors::not_impl(any.py()),
-                }
-            }
-
-            fn ge<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
-                match other {
-                    Either::Left(seq) => {
-                        let py = seq.py();
-                        for (alpha, beta) in self
-                            .get_data()
-                            .lists
-                            .iter()
-                            .flat_map(move |x| x.iter())
-                            .zip(seq.try_iter()?)
-                        {
-                            let b = beta?;
-                            let a = alpha.bind(py);
-                            if a.ne(&b)? {
-                                return a.ge(b).map(Either::Left);
-                            }
-                        }
-
-                        self.get_len().ge(&seq.len()?).pipe(Either::Left).pipe(Ok)
-                    }
-                    Either::Right(any) => errors::not_impl(any.py()),
-                }
             }
         }
     };
@@ -499,5 +334,155 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     fn iter(slf: Bound<'_, Self>) -> PyResult<Bound<'_, abc::PyoIterator>> {
         let py = slf.py();
         Self::wrap_iter(py, iter::BoundedIter::full(slf.unbind(), iter::Dir::Fwd))
+    }
+
+    fn eq<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+        match other {
+            Either::Left(seq) => {
+                if self.get_len().ne(&seq.len()?) {
+                    Either::Left(false).pipe(Ok)
+                } else {
+                    let py = seq.py();
+                    self.get_data()
+                        .lists
+                        .iter()
+                        .flat_map(move |x| x.iter())
+                        .zip(seq.try_iter()?)
+                        .map(|(a, b)| a.bind(py).eq(b?))
+                        .find_map(|x| match x {
+                            Ok(true) => None,
+                            Ok(false) => Some(Ok(false)),
+                            Err(e) => Some(Err(e)),
+                        })
+                        .unwrap_or(Ok(true))
+                        .map(Either::Left)
+                }
+            }
+
+            Either::Right(any) => errors::not_impl(any.py()),
+        }
+    }
+    fn ne<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+        match other {
+            Either::Left(seq) => {
+                if self.get_len().ne(&seq.len()?) {
+                    Either::Left(true).pipe(Ok)
+                } else {
+                    let py = seq.py();
+                    self.get_data()
+                        .lists
+                        .iter()
+                        .flat_map(move |x| x.iter())
+                        .zip(seq.try_iter()?)
+                        .map(|(a, b)| a.bind(py).eq(b?))
+                        .find_map(|x| match x {
+                            Ok(true) => None,
+                            Ok(false) => Some(Ok(true)),
+                            Err(e) => Some(Err(e)),
+                        })
+                        .unwrap_or(Ok(false))
+                        .map(Either::Left)
+                }
+            }
+            Either::Right(any) => errors::not_impl(any.py()),
+        }
+    }
+
+    fn lt<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+        match other {
+            Either::Left(seq) => {
+                let py = seq.py();
+                for (alpha, beta) in self
+                    .get_data()
+                    .lists
+                    .iter()
+                    .flat_map(move |x| x.iter())
+                    .zip(seq.try_iter()?)
+                {
+                    let a = alpha.bind(py);
+                    let b = beta?;
+                    if a.ne(&b)? {
+                        return a.lt(&b).map(Either::Left);
+                    }
+                }
+
+                self.get_len().lt(&seq.len()?).pipe(Either::Left).pipe(Ok)
+            }
+
+            Either::Right(any) => errors::not_impl(any.py()),
+        }
+    }
+
+    fn gt<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+        match other {
+            Either::Left(seq) => {
+                let py = seq.py();
+                for (alpha, beta) in self
+                    .get_data()
+                    .lists
+                    .iter()
+                    .flat_map(move |x| x.iter())
+                    .zip(seq.try_iter()?)
+                {
+                    let b = beta?;
+                    let a = alpha.bind(py);
+                    if a.ne(&b)? {
+                        return Either::Left(a.gt(&b)?).pipe(Ok);
+                    }
+                }
+                self.get_len().gt(&seq.len()?).pipe(Either::Left).pipe(Ok)
+            }
+
+            Either::Right(any) => errors::not_impl(any.py()),
+        }
+    }
+
+    fn le<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+        match other {
+            Either::Left(seq) => {
+                let py = seq.py();
+                for (alpha, beta) in self
+                    .get_data()
+                    .lists
+                    .iter()
+                    .flat_map(move |x| x.iter())
+                    .zip(seq.try_iter()?)
+                {
+                    let b = beta?;
+                    let a = alpha.bind(py);
+                    if a.ne(&b)? {
+                        return a.le(b).map(Either::Left);
+                    }
+                }
+
+                self.get_len().le(&seq.len()?).pipe(Either::Left).pipe(Ok)
+            }
+
+            Either::Right(any) => errors::not_impl(any.py()),
+        }
+    }
+
+    fn ge<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+        match other {
+            Either::Left(seq) => {
+                let py = seq.py();
+                for (alpha, beta) in self
+                    .get_data()
+                    .lists
+                    .iter()
+                    .flat_map(move |x| x.iter())
+                    .zip(seq.try_iter()?)
+                {
+                    let b = beta?;
+                    let a = alpha.bind(py);
+                    if a.ne(&b)? {
+                        return a.ge(b).map(Either::Left);
+                    }
+                }
+
+                self.get_len().ge(&seq.len()?).pipe(Either::Left).pipe(Ok)
+            }
+            Either::Right(any) => errors::not_impl(any.py()),
+        }
     }
 }
