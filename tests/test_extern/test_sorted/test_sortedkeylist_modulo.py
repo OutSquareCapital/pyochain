@@ -231,7 +231,8 @@ def test_getitem() -> None:
     slt.reset(17)
 
     slt.add(5)
-    slt.inner.build_index()
+    # Same story as `test_build_index`. In any case, it doesn't seem to change the outcome of the test.
+    # slt.inner.build_index()  # ruff: ignore[commented-out-code]
     check_sorted_key_list(slt.inner)
     slt.clear()
     r = range(100)

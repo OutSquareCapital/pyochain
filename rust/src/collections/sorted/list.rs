@@ -1,5 +1,6 @@
 use crate::abc;
 use crate::collections::sorted::iter::{self, IsliceBounds};
+use crate::collections::sorted::traits::ListsData;
 use crate::pyo3_ext::pylibs;
 use crate::{
     collections::sorted::{
@@ -11,14 +12,13 @@ use crate::{
     iterators,
 };
 use pyo3::prelude::*;
+use std::sync::MutexGuard;
 use std::sync::{Mutex, atomic::AtomicUsize};
 
 use tap::prelude::*;
 #[pyclass(module = "pyochain._collections", frozen, generic)]
 pub struct InnerLists {
-    pub(super) lists: Mutex<Vec<Vec<Py<PyAny>>>>,
-    pub(super) maxes: Mutex<Vec<Py<PyAny>>>,
-    pub(super) idx: Mutex<Vec<usize>>,
+    pub(super) data: Mutex<ListsData>,
     pub(super) len: AtomicUsize,
     pub(super) load: AtomicUsize,
     pub(super) offset: AtomicUsize,
@@ -30,13 +30,12 @@ impl InnerLists {
         maximum: Option<Bound<'py, PyAny>>,
         inclusive: (bool, bool),
     ) -> PyResult<Option<IsliceBounds>> {
-        let maxes = self.get_maxes();
+        let data = self.get_data();
+        let maxes = &data.maxes;
 
         if maxes.is_empty() {
             return Ok(None);
         }
-
-        let lists = self.get_lists();
 
         // Calculate the minimum (pos, idx) pair. By default this location
         // will be inclusive in our calculation.
@@ -50,7 +49,7 @@ impl InnerLists {
                         return Ok(None);
                     }
 
-                    let min_idx = bisect::left(&lists[min_pos], &minimum)?;
+                    let min_idx = bisect::left(&data.lists[min_pos], &minimum)?;
                     (min_pos, min_idx)
                 } else {
                     let min_pos = bisect::right(&maxes, &minimum)?;
@@ -59,7 +58,7 @@ impl InnerLists {
                         return Ok(None);
                     }
 
-                    let min_idx = bisect::right(&lists[min_pos], &minimum)?;
+                    let min_idx = bisect::right(&data.lists[min_pos], &minimum)?;
                     (min_pos, min_idx)
                 }
             }
@@ -74,9 +73,9 @@ impl InnerLists {
 
                     let idx = if pos == maxes.len() {
                         pos -= 1;
-                        lists[pos].len()
+                        data.lists[pos].len()
                     } else {
-                        bisect::right(&lists[pos], &m)?
+                        bisect::right(&data.lists[pos], &m)?
                     };
                     Ok::<_, PyErr>((pos, idx))
                 } else {
@@ -84,16 +83,16 @@ impl InnerLists {
 
                     let idx = if pos == maxes.len() {
                         pos -= 1;
-                        lists[pos].len()
+                        data.lists[pos].len()
                     } else {
-                        bisect::left(&lists[pos], &m)?
+                        bisect::left(&data.lists[pos], &m)?
                     };
                     Ok((pos, idx))
                 }
             })
             .unwrap_or_else(|| {
                 let pos = maxes.len() - 1;
-                let idx = lists[pos].len();
+                let idx = data.lists[pos].len();
                 Ok((pos, idx))
             })?;
 
@@ -105,9 +104,7 @@ impl InnerLists {
     #[new]
     fn new() -> PyResult<Self> {
         Ok(Self {
-            lists: Mutex::new(Vec::new()),
-            maxes: Mutex::new(Vec::new()),
-            idx: Mutex::new(Vec::new()),
+            data: Mutex::new(ListsData::new()),
             len: AtomicUsize::new(0),
             load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
             offset: AtomicUsize::new(0),
@@ -135,47 +132,49 @@ impl InnerSorted for InnerLists {
     }
     fn clear(&self) -> () {
         self.set_len(0);
-        self.get_lists().clear();
-        self.get_maxes().clear();
-        self.get_idx().clear();
+        let mut data = self.get_data();
+        data.lists.clear();
+        data.maxes.clear();
+        data.idx.clear();
         self.set_offset(0);
     }
 
     fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
-        let maxes = self.get_maxes();
+        let data = self.get_data();
 
-        if maxes.is_empty() {
+        if data.maxes.is_empty() {
             return Ok(false);
         }
 
-        let pos = bisect::left(&maxes, &value)?;
+        let pos = bisect::left(&data.maxes, &value)?;
 
-        if maxes.len().eq(&pos) {
+        if data.maxes.len().eq(&pos) {
             return Ok(false);
         }
+        let idx = bisect::left(&data.lists[pos], &value)?;
 
-        let lists = self.get_lists();
-        let idx = bisect::left(&lists[pos], &value)?;
-
-        lists[pos][idx].bind(py).eq(value)
+        data.lists[pos][idx].bind(py).eq(value)
     }
-    fn expand(&self, py: Python<'_>, pos: usize) -> PyResult<()> {
+    fn expand(
+        &self,
+        py: Python<'_>,
+        data: &mut MutexGuard<'_, ListsData>,
+        pos: usize,
+    ) -> PyResult<()> {
         let load = self.get_load();
-        let mut lists = self.get_lists();
 
-        if lists[pos].len().gt(&(load << 1)) {
-            let mut maxes = self.get_maxes();
+        if data.lists[pos].len().gt(&(load << 1)) {
+            let half = data.lists[pos].split_off(load);
+            data.maxes[pos] = data.lists[pos].last().unwrap().clone_ref(py);
+            data.maxes
+                .insert(pos + 1, half.last().unwrap().clone_ref(py));
+            data.lists.insert(pos + 1, half);
 
-            let half = lists[pos].split_off(load);
-            maxes[pos] = lists[pos].last().unwrap().clone_ref(py);
-            maxes.insert(pos + 1, half.last().unwrap().clone_ref(py));
-            lists.insert(pos + 1, half);
-
-            self.get_idx().clear();
+            data.idx.clear();
             Ok(())
-        } else if !self.get_idx().is_empty() {
-            self.get_idx().pipe_ref_mut(|index| {
+        } else if !data.idx.is_empty() {
+            data.idx.pipe_ref_mut(|index| {
                 let mut child = self.get_offset() + pos;
                 while child != 0 {
                     index[child] = index[child] + 1;
@@ -189,18 +188,22 @@ impl InnerSorted for InnerLists {
         }
     }
 
-    fn delete(&self, py: Python<'_>, mut pos: usize, idx: usize) -> PyResult<()> {
-        let mut lists = self.get_lists();
-        let mut maxes = self.get_maxes();
-        lists[pos].remove(idx);
+    fn delete(
+        &self,
+        py: Python<'_>,
+        data: &mut MutexGuard<'_, ListsData>,
+        mut pos: usize,
+        idx: usize,
+    ) -> PyResult<()> {
+        data.lists[pos].remove(idx);
         self.set_len(self.get_len() - 1);
 
-        let len_lists_pos = lists[pos].len();
+        let len_lists_pos = data.lists[pos].len();
 
         if len_lists_pos > (self.get_load() >> 1) {
-            maxes[pos] = lists[pos].last().unwrap().clone_ref(py);
+            data.maxes[pos] = data.lists[pos].last().unwrap().clone_ref(py);
 
-            self.get_idx().pipe_ref_mut(|index| {
+            data.idx.pipe_ref_mut(|index| {
                 if !index.is_empty() {
                     let mut child = self.get_offset() + pos;
                     while child > 0 {
@@ -211,55 +214,50 @@ impl InnerSorted for InnerLists {
                 }
             });
             Ok(())
-        } else if lists.len() > 1 {
+        } else if data.lists.len() > 1 {
             if pos == 0 {
                 pos += 1;
             }
 
             let prev = (pos - 1) as usize;
-            let mut removed = lists[pos]
+            let mut removed = data.lists[pos]
                 .iter()
                 .map(|x| x.clone_ref(py))
                 .collect::<Vec<_>>();
-            lists[prev].append(removed.as_mut());
-            maxes[prev] = lists[prev].last().unwrap().clone_ref(py);
+            data.lists[prev].append(removed.as_mut());
+            data.maxes[prev] = data.lists[prev].last().unwrap().clone_ref(py);
 
-            lists.remove(pos);
-            maxes.remove(pos);
-            self.get_idx().clear();
-            drop(maxes);
-            drop(lists);
-            self.expand(py, prev)
+            data.lists.remove(pos);
+            data.maxes.remove(pos);
+            data.idx.clear();
+            self.expand(py, data, prev)
         } else if len_lists_pos != 0 {
-            maxes[pos] = lists[pos].last().unwrap().clone_ref(py);
+            data.maxes[pos] = data.lists[pos].last().unwrap().clone_ref(py);
             Ok(())
         } else {
-            lists.remove(pos);
-            maxes.remove(pos);
-            self.get_idx().clear();
+            data.lists.remove(pos);
+            data.maxes.remove(pos);
+            data.idx.clear();
             Ok(())
         }
     }
     fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
-        let mut lists = self.get_lists();
-        let mut maxes = self.get_maxes();
-        if !maxes.is_empty() {
-            let mut pos = bisect::right(&maxes, &value.bind(py))?;
+        let mut data = self.get_data();
+        if !data.maxes.is_empty() {
+            let mut pos = bisect::right(&data.maxes, &value.bind(py))?;
 
-            if pos == maxes.len() {
+            if pos == data.maxes.len() {
                 pos -= 1;
-                lists[pos].push(value.clone_ref(py));
-                maxes[pos] = value;
+                data.lists[pos].push(value.clone_ref(py));
+                data.maxes[pos] = value;
             } else {
-                let res = bisect::right(&lists[pos], &value.bind(py))?;
-                lists[pos].insert(res, value.clone_ref(py));
+                let res = bisect::right(&data.lists[pos], &value.bind(py))?;
+                data.lists[pos].insert(res, value.clone_ref(py));
             }
-            drop(maxes);
-            drop(lists);
-            self.expand(py, pos)?;
+            self.expand(py, &mut data, pos)?;
         } else {
-            lists.push(vec![value.clone_ref(py)]);
-            maxes.push(value);
+            data.lists.push(vec![value.clone_ref(py)]);
+            data.maxes.push(value);
         }
 
         self.set_len(self.get_len() + 1);
@@ -268,24 +266,21 @@ impl InnerSorted for InnerLists {
 
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
-        let maxes = self.get_maxes();
+        let mut data = self.get_data();
 
-        if maxes.is_empty() {
+        if data.maxes.is_empty() {
             return Ok(());
         }
 
-        let pos = bisect::left(&maxes, &value)?;
+        let pos = bisect::left(&data.maxes, &value)?;
 
-        if pos == maxes.len() {
+        if pos == data.maxes.len() {
             Ok(())
         } else {
-            drop(maxes);
-            let lists = self.get_lists();
-            let idx = bisect::left(&lists[pos], &value)?;
+            let idx = bisect::left(&data.lists[pos], &value)?;
 
-            if lists[pos][idx].bind(py).eq(value)? {
-                drop(lists);
-                self.delete(py, pos, idx)
+            if data.lists[pos][idx].bind(py).eq(value)? {
+                self.delete(py, &mut data, pos, idx)
             } else {
                 Ok(())
             }
@@ -294,23 +289,20 @@ impl InnerSorted for InnerLists {
 
     fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
-        let maxes = self.get_maxes();
+        let mut data = self.get_data();
 
-        if maxes.is_empty() {
+        if data.maxes.is_empty() {
             errors::not_in_list_err(value)
         } else {
-            let pos = bisect::left(&maxes, &value)?;
+            let pos = bisect::left(&data.maxes, &value)?;
 
-            if pos == maxes.len() {
+            if pos == data.maxes.len() {
                 errors::not_in_list_err(value)
             } else {
-                drop(maxes);
-                let lists = self.get_lists();
-                let idx = bisect::left(&lists[pos], &value)?;
+                let idx = bisect::left(&data.lists[pos], &value)?;
 
-                if lists[pos][idx].bind(py).eq(&value)? {
-                    drop(lists);
-                    self.delete(py, pos, idx)
+                if data.lists[pos][idx].bind(py).eq(&value)? {
+                    self.delete(py, &mut data, pos, idx)
                 } else {
                     errors::not_in_list_err(value)
                 }
@@ -319,65 +311,62 @@ impl InnerSorted for InnerLists {
     }
 
     fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
-        let maxes = self.get_maxes();
+        let mut data = self.get_data();
 
-        if maxes.is_empty() {
+        if data.maxes.is_empty() {
             return Ok(0);
         }
 
-        let pos = bisect::left(&maxes, &value)?;
+        let pos = bisect::left(&data.maxes, &value)?;
 
-        if pos == maxes.len() {
+        if pos == data.maxes.len() {
             return Ok(self.get_len() as isize);
         }
-        let idx = bisect::left(&self.get_lists()[pos], &value)?;
-        self.loc(pos, idx as isize)
+        let idx = bisect::left(&data.lists[pos], &value)?;
+        self.loc(&mut data, pos, idx as isize)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        let maxes = self.get_maxes();
+        let mut data = self.get_data();
 
-        if maxes.is_empty() {
+        if data.maxes.is_empty() {
             return Ok(0);
         }
 
-        let pos = bisect::right(&maxes, &value)?;
+        let pos = bisect::right(&data.maxes, &value)?;
 
-        if pos == maxes.len() {
+        if pos == data.maxes.len() {
             return Ok(self.get_len() as isize);
         }
-        let idx = bisect::right(&self.get_lists()[pos], &value)?;
-        self.loc(pos, idx as isize)
+        let idx = bisect::right(&data.lists[pos], &value)?;
+        self.loc(&mut data, pos, idx as isize)
     }
 
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
-        let maxes = self.get_maxes();
+        let mut data = self.get_data();
 
-        if maxes.is_empty() {
+        if data.maxes.is_empty() {
             return Ok(0);
         }
 
-        let pos_left = bisect::left(&maxes, &value)?;
+        let pos_left = bisect::left(&data.maxes, &value)?;
 
-        if pos_left == maxes.len() {
+        if pos_left == data.maxes.len() {
             return Ok(0);
         }
+        let idx_left = bisect::left(&data.lists[pos_left], &value)?;
+        let pos_right = bisect::right(&data.maxes, &value)?;
 
-        let lists = self.get_lists();
-        let idx_left = bisect::left(&lists[pos_left], &value)?;
-        let pos_right = bisect::right(&maxes, &value)?;
-
-        if pos_right == maxes.len() {
-            return Ok(self.get_len() - self.loc(pos_left, idx_left as isize)? as usize);
+        if pos_right == data.maxes.len() {
+            return Ok(self.get_len() - self.loc(&mut data, pos_left, idx_left as isize)? as usize);
         }
-        let idx_right = bisect::right(&lists[pos_right], &value)?;
+        let idx_right = bisect::right(&data.lists[pos_right], &value)?;
 
         if pos_left == pos_right {
             return Ok(idx_right - idx_left);
         }
-        drop(lists);
-        let right = self.loc(pos_right, idx_right as isize)?;
-        let left = self.loc(pos_left, idx_left as isize)?;
+        let right = self.loc(&mut data, pos_right, idx_right as isize)?;
+        let left = self.loc(&mut data, pos_left, idx_left as isize)?;
         Ok((right - left) as usize)
     }
 
@@ -409,8 +398,8 @@ impl InnerSorted for InnerLists {
         if stop <= start {
             return errors::is_not_in_list_err(&value);
         }
-
-        let pos_left = self.get_maxes().pipe(|maxes| {
+        let mut data = self.get_data();
+        let pos_left = data.maxes.pipe_ref(|maxes| {
             let pos_left = bisect::left(&maxes, &value)?;
 
             if pos_left == maxes.len() {
@@ -419,23 +408,21 @@ impl InnerSorted for InnerLists {
                 Ok(pos_left)
             }
         })?;
+        let idx_left = bisect::left(&data.lists[pos_left], &value)?;
 
-        let lists = self.get_lists();
-        let idx_left = bisect::left(&lists[pos_left], &value)?;
-
-        if lists[pos_left][idx_left].bind(py).ne(&value)? {
+        if data.lists[pos_left][idx_left].bind(py).ne(&value)? {
             return errors::is_not_in_list_err(&value);
         }
 
         stop -= 1;
-        drop(lists);
-        let left = self.loc(pos_left, idx_left as isize)?;
+        let left = self.loc(&mut data, pos_left, idx_left as isize)?;
 
         if start <= left {
             if left <= stop {
                 return Ok(left);
             }
         } else {
+            drop(data);
             let right = self.bisect_right(&value)? - 1;
 
             if start <= right {
@@ -455,11 +442,13 @@ impl InnerSorted for InnerLists {
             .map(Bound::unbind)
             .collect::<Vec<_>>();
 
-        if !self.get_maxes().is_empty() {
+        if !self.get_data().maxes.is_empty() {
             if values.len() * 4 >= self.get_len() {
-                self.get_lists().push(values);
-                values = self.collapse_lists(py);
+                let mut data = self.get_data();
+                data.lists.push(values);
+                values = data.collapse(py);
                 values.sort_by(|a, b| py_cmp(py, a, b));
+                drop(data);
                 self.clear();
             } else {
                 for val in values {
@@ -469,6 +458,7 @@ impl InnerSorted for InnerLists {
             }
         }
 
+        let mut data = self.get_data();
         let load = self.get_load();
         let values_len = values.len();
         let new_lists = (0..values_len).step_by(load).map(|pos| {
@@ -477,27 +467,27 @@ impl InnerSorted for InnerLists {
                 .map(|x| x.clone_ref(py))
                 .collect::<Vec<_>>()
         });
+        data.lists.extend(new_lists);
 
-        let mut lists = self.get_lists();
-        lists.extend(new_lists);
-
-        let mut new_maxes = lists
+        let mut new_maxes = data
+            .lists
             .iter()
             .map(|x| x.last().unwrap().clone_ref(py))
             .collect::<Vec<_>>();
-        self.get_maxes().append(new_maxes.as_mut());
+        data.maxes.append(new_maxes.as_mut());
         self.set_len(values_len);
-        self.get_idx().clear();
+        data.idx.clear();
         Ok(())
     }
 
     fn update_from_vec(&self, py: Python<'_>, mut iterable: Vec<Py<PyAny>>) -> PyResult<()> {
+        let mut data = self.get_data();
         iterable.sort_by(|a, b| py_cmp(py, a, b));
 
-        if !self.get_maxes().is_empty() {
+        if !data.maxes.is_empty() {
             if iterable.len() * 4 >= self.get_len() {
-                self.get_lists().push(iterable);
-                iterable = self.collapse_lists(py);
+                data.lists.push(iterable);
+                iterable = data.collapse(py);
                 iterable.sort_by(|a, b| py_cmp(py, a, b));
                 self.clear();
             } else {
@@ -516,13 +506,15 @@ impl InnerSorted for InnerLists {
                 .map(|x| x.clone_ref(py))
                 .collect::<Vec<_>>()
         });
-
-        let mut lists = self.get_lists();
-        lists.extend(new_lists);
-        self.get_maxes()
-            .extend(lists.iter().map(|x| x.last().unwrap().clone_ref(py)));
+        data.lists.extend(new_lists);
+        let mut new_maxes = data
+            .lists
+            .iter()
+            .map(|x| x.last().unwrap().clone_ref(py))
+            .collect::<Vec<_>>();
+        data.maxes.append(new_maxes.as_mut());
         self.set_len(values_len);
-        self.get_idx().clear();
+        data.idx.clear();
         Ok(())
     }
 }

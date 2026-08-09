@@ -92,10 +92,10 @@ impl<T: InnerSorted> BoundedIter<T> {
     }
 
     pub fn full(owner: Py<T>, dir: Dir) -> Self {
-        let lists = owner.get().get_lists();
-        let last = lists.len().saturating_sub(1);
-        let bounds = IsliceBounds::new(0, 0, last, lists.last().map_or(0, |x| x.len()));
-        drop(lists);
+        let data = owner.get().get_data();
+        let last = data.lists.len().saturating_sub(1);
+        let bounds = IsliceBounds::new(0, 0, last, data.lists.last().map_or(0, |x| x.len()));
+        drop(data);
         Self::new(owner, bounds, dir)
     }
 
@@ -103,7 +103,7 @@ impl<T: InnerSorted> BoundedIter<T> {
         if self.start == self.end {
             None
         } else {
-            let lists = self.owner.get().get_lists();
+            let lists = &self.owner.get().get_data().lists;
             match self.dir {
                 Dir::Fwd => {
                     let item = lists[self.start.pos][self.start.idx].clone_ref(py);

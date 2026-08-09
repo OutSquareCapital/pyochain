@@ -663,10 +663,13 @@ def test_pickle() -> None:
     assert beta.inner.load == 1000
 
 
+@pytest.mark.skip(
+    reason="We don't expose build_index() to python anymore, so this test is not relevant. If there's an issue, it should be caught by other tests."
+)
 def test_build_index() -> None:
     slt = SortedList([0])
     slt.reset(4)
-    slt.inner.build_index()
+    # slt.inner.build_index()  # ruff: ignore[commented-out-code]
     check_sorted_list(slt.inner)
 
 

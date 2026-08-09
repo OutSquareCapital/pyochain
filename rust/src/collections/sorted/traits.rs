@@ -26,6 +26,29 @@ pub const DEFAULT_LOAD_FACTOR: usize = 1000;
 pub type BoolOrNotImpl<'py> = PyResult<Either<bool, Bound<'py, PyNotImplemented>>>;
 pub type SeqOrAny<'py> = Either<Bound<'py, PySequence>, Bound<'py, PyAny>>;
 
+pub(super) struct ListsData {
+    pub(super) lists: Vec<Vec<Py<PyAny>>>,
+    pub(super) maxes: Vec<Py<PyAny>>,
+    pub(super) idx: Vec<usize>,
+}
+impl ListsData {
+    pub fn new() -> Self {
+        Self {
+            lists: Vec::new(),
+            maxes: Vec::new(),
+            idx: Vec::new(),
+        }
+    }
+    #[inline]
+    pub fn collapse(&self, py: Python<'_>) -> Vec<Py<PyAny>> {
+        self.lists
+            .iter()
+            .flatten()
+            .map(|x| x.clone_ref(py))
+            .collect()
+    }
+}
+
 pub(super) fn try_lock_recover<'a, T>(mutex: &'a Mutex<T>, msg: &str) -> MutexGuard<'a, T> {
     match mutex.try_lock() {
         Ok(guard) => guard,
@@ -38,9 +61,7 @@ pub(super) fn try_lock_recover<'a, T>(mutex: &'a Mutex<T>, msg: &str) -> MutexGu
 pub trait RustGetters:
     Sized + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {
-    fn get_lists(&self) -> MutexGuard<'_, Vec<Vec<Py<PyAny>>>>;
-    fn get_idx(&self) -> MutexGuard<'_, Vec<usize>>;
-    fn get_maxes(&self) -> MutexGuard<'_, Vec<Py<PyAny>>>;
+    fn get_data(&self) -> MutexGuard<'_, ListsData>;
     fn get_offset(&self) -> usize;
     fn set_offset(&self, offset: usize);
     fn set_load(&self, load: usize);
@@ -49,17 +70,8 @@ macro_rules! impl_rs_getters {
     ($t:ty) => {
         impl RustGetters for $t {
             #[inline(always)]
-            fn get_lists(&self) -> MutexGuard<'_, Vec<Vec<Py<PyAny>>>> {
-                try_lock_recover(&self.lists, "lists already locked - reentrant bug")
-            }
-            #[inline(always)]
-            fn get_idx(&self) -> MutexGuard<'_, Vec<usize>> {
-                try_lock_recover(&self.idx, "idx already locked - reentrant bug")
-            }
-
-            #[inline(always)]
-            fn get_maxes(&self) -> MutexGuard<'_, Vec<Py<PyAny>>> {
-                try_lock_recover(&self.maxes, "maxes already locked - reentrant bug")
+            fn get_data(&self) -> MutexGuard<'_, ListsData> {
+                try_lock_recover(&self.data, "data already locked - reentrant bug")
             }
             #[inline(always)]
             fn get_offset(&self) -> usize {
@@ -116,7 +128,8 @@ macro_rules! impl_inner_sorted_rs {
                             Either::Left(false).pipe(Ok)
                         } else {
                             let py = seq.py();
-                            self.get_lists()
+                            self.get_data()
+                                .lists
                                 .iter()
                                 .flat_map(move |x| x.iter())
                                 .zip(seq.try_iter()?)
@@ -141,7 +154,8 @@ macro_rules! impl_inner_sorted_rs {
                             Either::Left(true).pipe(Ok)
                         } else {
                             let py = seq.py();
-                            self.get_lists()
+                            self.get_data()
+                                .lists
                                 .iter()
                                 .flat_map(move |x| x.iter())
                                 .zip(seq.try_iter()?)
@@ -164,7 +178,8 @@ macro_rules! impl_inner_sorted_rs {
                     Either::Left(seq) => {
                         let py = seq.py();
                         for (alpha, beta) in self
-                            .get_lists()
+                            .get_data()
+                            .lists
                             .iter()
                             .flat_map(move |x| x.iter())
                             .zip(seq.try_iter()?)
@@ -188,7 +203,8 @@ macro_rules! impl_inner_sorted_rs {
                     Either::Left(seq) => {
                         let py = seq.py();
                         for (alpha, beta) in self
-                            .get_lists()
+                            .get_data()
+                            .lists
                             .iter()
                             .flat_map(move |x| x.iter())
                             .zip(seq.try_iter()?)
@@ -211,7 +227,8 @@ macro_rules! impl_inner_sorted_rs {
                     Either::Left(seq) => {
                         let py = seq.py();
                         for (alpha, beta) in self
-                            .get_lists()
+                            .get_data()
+                            .lists
                             .iter()
                             .flat_map(move |x| x.iter())
                             .zip(seq.try_iter()?)
@@ -235,7 +252,8 @@ macro_rules! impl_inner_sorted_rs {
                     Either::Left(seq) => {
                         let py = seq.py();
                         for (alpha, beta) in self
-                            .get_lists()
+                            .get_data()
+                            .lists
                             .iter()
                             .flat_map(move |x| x.iter())
                             .zip(seq.try_iter()?)
@@ -268,8 +286,21 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize>;
     fn clear(&self) -> ();
     fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool>;
-    fn delete(&self, py: Python<'_>, pos: usize, idx: usize) -> PyResult<()>;
-    fn expand(&self, py: Python<'_>, pos: usize) -> PyResult<()>;
+    #[skip]
+    fn delete(
+        &self,
+        py: Python<'_>,
+        data: &mut MutexGuard<'_, ListsData>,
+        pos: usize,
+        idx: usize,
+    ) -> PyResult<()>;
+    #[skip]
+    fn expand(
+        &self,
+        py: Python<'_>,
+        data: &mut MutexGuard<'_, ListsData>,
+        pos: usize,
+    ) -> PyResult<()>;
     fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()>;
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()>;
@@ -307,11 +338,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         stop: Option<isize>,
     ) -> PyResult<isize>;
     fn collapse_lists<'py>(&self, py: Python<'py>) -> Vec<Py<PyAny>> {
-        self.get_lists()
-            .iter()
-            .flatten()
-            .map(|x| x.clone_ref(py))
-            .collect()
+        self.get_data().collapse(py)
     }
     /// Build a positional index for indexing the sorted list.
     /// Indexes are represented as binary trees in a dense array notation similar to a binary heap.
@@ -341,14 +368,12 @@ pub(super) trait InnerSorted: InnerSortedGetters {
 
     ///     _offset = 3
     /// When built, the index can be used for efficient indexing into the list.
-    fn build_index(&self) -> PyResult<()> {
-        let mut idx = self.get_idx();
-        let lists = self.get_lists();
-
-        let row0 = lists.iter().map(|x| x.len()).collect::<Vec<usize>>();
+    #[skip]
+    fn build_index(&self, data: &mut ListsData) -> PyResult<()> {
+        let row0 = data.lists.iter().map(|x| x.len()).collect::<Vec<usize>>();
 
         if row0.len() == 1 {
-            idx.extend(row0);
+            data.idx.extend(row0);
             self.set_offset(0);
             return Ok(());
         }
@@ -360,8 +385,8 @@ pub(super) trait InnerSorted: InnerSortedGetters {
 
         if row1.len() == 1 {
             let combined = row1.into_iter().chain(row0);
-            idx.clear();
-            idx.extend(combined);
+            data.idx.clear();
+            data.idx.extend(combined);
             self.set_offset(1);
             return Ok(());
         }
@@ -381,7 +406,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         }
 
         let flat = tree.into_iter().rev().flatten();
-        idx.extend(flat);
+        data.idx.extend(flat);
         self.set_offset(size * 2 - 1);
         Ok(())
     }
@@ -425,17 +450,23 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     ///3. Iteration ends at the root.
 
     ///The index is then the sum of the total and sublist index: 5 + 3 = 8.
-    fn loc(&self, mut pos: usize, idx: isize) -> PyResult<isize> {
+    #[skip]
+    fn loc(
+        &self,
+        data: &mut MutexGuard<'_, ListsData>,
+        mut pos: usize,
+        idx: isize,
+    ) -> PyResult<isize> {
         if pos == 0 {
             Ok(idx)
         } else {
-            if self.get_idx().is_empty() {
-                self.build_index()?;
+            if data.idx.is_empty() {
+                self.build_index(data)?;
             }
             // Increment pos to point in the index to len(self.lists[pos]).
             pos += self.get_offset();
             // Iterate until reaching the root of the index tree at pos = 0.
-            let total = self.get_idx().pipe_ref_mut(|idx| {
+            let total = data.idx.pipe_ref_mut(|idx| {
                 let mut total = 0;
                 while pos != 0 {
                     // Right-child nodes are at even indices. At such indices
@@ -506,11 +537,14 @@ pub(super) trait InnerSorted: InnerSortedGetters {
 
     /// The final index pair from our example is (2, 3) which corresponds to
     /// index 8 in the sorted list.
-    fn pos(&self, mut idx: isize) -> PyResult<(usize, isize)> {
-        let lists = self.get_lists();
+    #[skip]
+    fn pos(&self, data: &mut ListsData, mut idx: isize) -> PyResult<(usize, isize)> {
         if idx < 0 {
-            if (-idx) <= lists.last().unwrap().len() as isize {
-                return Ok((lists.len() - 1, lists.last().unwrap().len() as isize + idx));
+            if (-idx) <= data.lists.last().unwrap().len() as isize {
+                return Ok((
+                    data.lists.len() - 1,
+                    data.lists.last().unwrap().len() as isize + idx,
+                ));
             }
 
             idx += self.get_len() as isize;
@@ -522,15 +556,14 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             return errors::out_of_range_err();
         }
 
-        if idx < lists[0].len() as isize {
+        if idx < data.lists[0].len() as isize {
             return Ok((0, idx));
         }
 
-        if self.get_idx().is_empty() {
-            drop(lists);
-            self.build_index()?;
+        if data.idx.is_empty() {
+            self.build_index(data)?;
         }
-        let pos = self.get_idx().pipe_ref_mut(|index| {
+        let pos = data.idx.pipe_ref_mut(|index| {
             let mut pos = 0;
             let mut child = 1;
             let len_index = index.len();
@@ -560,57 +593,66 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         }
 
         let (pos, idx) = {
-            let lists = self.get_lists();
-            let len_last = lists.last().unwrap().len() as isize;
+            let mut data = self.get_data();
+            let len_last = data.lists.last().unwrap().len() as isize;
             match index {
                 0 => (0, 0),
                 -1 => {
-                    let pos = lists.len() - 1;
-                    (pos, lists[pos].len() - 1)
+                    let pos = data.lists.len() - 1;
+                    (pos, data.lists[pos].len() - 1)
                 }
-                _ if 0 <= index && index < lists[0].len() as isize => (0, index as usize),
+                _ if 0 <= index && index < data.lists[0].len() as isize => (0, index as usize),
                 _ if -len_last < index && index < 0 => {
-                    let pos = lists.len() - 1;
+                    let pos = data.lists.len() - 1;
                     (pos, (len_last + index) as usize)
                 }
                 _ => {
-                    drop(lists);
-                    let (pos, idx) = self.pos(index)?;
+                    let (pos, idx) = self.pos(&mut data, index)?;
                     (pos, idx as usize)
                 }
             }
         };
-
-        let val = self.get_lists()[pos][idx].clone_ref(py);
-        self.delete(py, pos, idx)?;
+        let mut data = self.get_data();
+        let val = data.lists[pos][idx].clone_ref(py);
+        self.delete(py, &mut data, pos, idx)?;
         Ok(val.into_bound(py))
     }
-
+    //TODO: Refactor this in a new module. get_item_from_slice is way too long and complex.
     fn getitem<'py>(
         &self,
         py: Python<'py>,
         index: Either<isize, Bound<'py, PySlice>>,
     ) -> PyResult<Either<Bound<'py, PyAny>, Bound<'py, PyoVec>>> {
+        let mut data = self.get_data();
         match index {
             Either::Right(slice) => self
-                .getitem_from_slice(py, slice)?
+                .getitem_from_slice(py, &mut data, slice)?
                 .iter()
                 .pipe(|elements| PyList::new(py, elements))?
                 .into_pyochain()
                 .map(Either::Right),
-            Either::Left(index) => self.getitem_from_int(py, index).map(Either::Left),
+            Either::Left(index) => self
+                .getitem_from_int(py, &mut data, index)
+                .map(Either::Left),
         }
     }
-    fn getitem_from_int<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        let lists = self.get_lists();
+    #[skip]
+    fn getitem_from_int<'py>(
+        &self,
+        py: Python<'py>,
+        data: &mut MutexGuard<'_, ListsData>,
+        index: isize,
+    ) -> PyResult<Bound<'py, PyAny>> {
         let slf_len = self.get_len();
-        let len_last = lists
+        let len_last = data
+            .lists
             .last()
             .ok_or(PyIndexError::new_err("list index out of range"))?
             .len() as isize;
         match (index, slf_len != 0) {
-            (0, true) => lists[0][0].clone_ref(py).into_bound(py).pipe(Ok),
-            (-1, true) => lists
+            (0, true) => data.lists[0][0].clone_ref(py).into_bound(py).pipe(Ok),
+            (-1, true) => data
+                .lists
                 .last()
                 .unwrap()
                 .last()
@@ -622,45 +664,53 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                 let msg = "list index out of range";
                 Err(PyIndexError::new_err(msg))
             }
-            (_, true) if 0 <= index && index < lists[0].len() as isize => lists[0][index as usize]
+            (_, true) if 0 <= index && index < data.lists[0].len() as isize => data.lists[0]
+                [index as usize]
                 .clone_ref(py)
                 .into_bound(py)
                 .pipe(Ok),
-            (_, true) if -len_last < index && index < 0 => lists.last().unwrap()
+            (_, true) if -len_last < index && index < 0 => data.lists.last().unwrap()
                 [(len_last + index) as usize]
                 .clone_ref(py)
                 .into_bound(py)
                 .pipe(Ok),
             _ => {
-                drop(lists);
-                let (pos, idx) = self.pos(index)?;
-                self.get_lists()[pos][idx as usize]
+                let (pos, idx) = self.pos(data, index)?;
+                data.lists[pos][idx as usize]
                     .clone_ref(py)
                     .into_bound(py)
                     .pipe(Ok)
             }
         }
     }
+    #[skip]
     fn getitem_from_slice<'py>(
         &self,
         py: Python<'py>,
+        data: &mut MutexGuard<'_, ListsData>,
         slice: Bound<'py, PySlice>,
     ) -> PyResult<Vec<Py<PyAny>>> {
-        let slice_result =
-            |start_pos: usize, stop_pos: usize, start_idx: usize, stop_idx: usize| {
-                let lists = self.get_lists();
-                let new_items = lists[start_pos + 1..stop_pos]
-                    .iter()
-                    .flatten()
-                    .map(|x| x.clone_ref(py));
-                lists[start_pos][start_idx..]
-                    .iter()
-                    .map(|x| x.clone_ref(py))
-                    .chain(new_items)
-                    .chain(lists[stop_pos][0..stop_idx].iter().map(|x| x.clone_ref(py)))
-                    .collect::<Vec<_>>()
-                    .pipe(Ok)
-            };
+        let slice_result = |data: &MutexGuard<'_, ListsData>,
+                            start_pos: usize,
+                            stop_pos: usize,
+                            start_idx: usize,
+                            stop_idx: usize| {
+            let new_items = data.lists[start_pos + 1..stop_pos]
+                .iter()
+                .flatten()
+                .map(|x| x.clone_ref(py));
+            data.lists[start_pos][start_idx..]
+                .iter()
+                .map(|x| x.clone_ref(py))
+                .chain(new_items)
+                .chain(
+                    data.lists[stop_pos][0..stop_idx]
+                        .iter()
+                        .map(|x| x.clone_ref(py)),
+                )
+                .collect::<Vec<_>>()
+                .pipe(Ok)
+        };
 
         let PySliceIndices {
             start, stop, step, ..
@@ -668,11 +718,10 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         let stop_eq_len = stop == self.get_len() as isize;
         match (step, start.cmp(&stop)) {
             // Whole slice optimization: start to stop slices the whole sorted list.
-            (1, Ordering::Less) if start == 0 && stop_eq_len => self.collapse_lists(py).pipe(Ok),
+            (1, Ordering::Less) if start == 0 && stop_eq_len => data.collapse(py).pipe(Ok),
             (1, Ordering::Less) => {
-                let (start_pos, start_idx) = self.pos(start)?;
-                let lists = self.get_lists();
-                let start_list = &lists[start_pos];
+                let (start_pos, start_idx) = self.pos(data, start)?;
+                let start_list = &data.lists[start_pos];
                 let stop_idx = start_idx + stop - start;
                 match (start_list.len() as isize >= stop_idx, stop_eq_len) {
                     // Small slice optimization: start index and stop index are
@@ -683,21 +732,25 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                         .collect::<Vec<_>>()
                         .pipe(Ok),
                     (false, true) => {
-                        let stop_pos = lists.len() - 1;
-                        let stop_idx = lists[stop_pos].len();
-                        drop(lists);
-                        slice_result(start_pos, stop_pos, start_idx as usize, stop_idx)
+                        let stop_pos = data.lists.len() - 1;
+                        let stop_idx = data.lists[stop_pos].len();
+                        slice_result(&data, start_pos, stop_pos, start_idx as usize, stop_idx)
                     }
                     (false, false) => {
-                        drop(lists);
-                        let (stop_pos, stop_idx) = self.pos(stop)?;
-                        slice_result(start_pos, stop_pos, start_idx as usize, stop_idx as usize)
+                        let (stop_pos, stop_idx) = self.pos(data, stop)?;
+                        slice_result(
+                            &data,
+                            start_pos,
+                            stop_pos,
+                            start_idx as usize,
+                            stop_idx as usize,
+                        )
                     }
                 }
             }
             (-1, Ordering::Greater) => {
                 let mut result =
-                    self.getitem_from_slice(py, PySlice::new(py, stop + 1, start + 1, 1))?;
+                    self.getitem_from_slice(py, data, PySlice::new(py, stop + 1, start + 1, 1))?;
                 result.reverse();
                 Ok(result)
             }
@@ -705,7 +758,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             // of the items and this could be the desired behavior.
             _ if step > 0 => (start..stop)
                 .step_by(step as usize)
-                .map(|i| self.getitem_from_int(py, i).map(Bound::unbind))
+                .map(|i| self.getitem_from_int(py, data, i).map(Bound::unbind))
                 .collect::<PyResult<Vec<_>>>(),
             // Negative step with nothing to iterate (mirrors Python's `range`,
             // which is empty when `start <= stop` for a negative step).
@@ -713,7 +766,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
             _ => {
                 // Negative step, `start > stop` guaranteed by the arm above.
                 std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
-                    .map(|i| self.getitem_from_int(py, i).map(Bound::unbind))
+                    .map(|i| self.getitem_from_int(py, data, i).map(Bound::unbind))
                     .collect::<PyResult<Vec<_>>>()
             }
         }
@@ -723,8 +776,9 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         match index {
             Either::Right(slice) => self.delitem_from_slice(py, slice),
             Either::Left(index) => {
-                let (pos, idx) = self.pos(index)?;
-                self.delete(py, pos, idx as usize)
+                let mut data = self.get_data();
+                let (pos, idx) = self.pos(&mut data, index)?;
+                self.delete(py, &mut data, pos, idx as usize)
             }
         }
     }
@@ -739,32 +793,39 @@ pub(super) trait InnerSorted: InnerSortedGetters {
                 Ok(())
             }
             (1, Ordering::Less) if length <= 8 * (stop - start) => {
-                let mut values = self.getitem_from_slice(py, PySlice::new(py, 0, start, 1))?;
+                let mut data = self.get_data();
+                let mut values =
+                    self.getitem_from_slice(py, &mut data, PySlice::new(py, 0, start, 1))?;
                 if stop < length {
                     let new_slice =
-                        self.getitem_from_slice(py, PySlice::new(py, stop, length, 1))?;
+                        self.getitem_from_slice(py, &mut data, PySlice::new(py, stop, length, 1))?;
                     values.extend(new_slice);
                 }
+                drop(data);
                 self.clear();
                 self.update_from_vec(py, values)?;
                 Ok(())
             }
-            _ if step > 0 => (start..stop)
-                .step_by(step as usize)
-                .rev()
-                .try_for_each(|idx| {
-                    let (pos, idx) = self.pos(idx)?;
-                    self.delete(py, pos, idx as usize)
-                }),
+            _ if step > 0 => {
+                let mut data = self.get_data();
+                (start..stop)
+                    .step_by(step as usize)
+                    .rev()
+                    .try_for_each(|idx| {
+                        let (pos, idx) = self.pos(&mut data, idx)?;
+                        self.delete(py, &mut data, pos, idx as usize)
+                    })
+            }
             // Negative step with nothing to delete (mirrors Python's
             // `range`, which is empty when `start <= stop`).
             (_, Ordering::Less | Ordering::Equal) => Ok(()),
             _ => {
+                let mut data = self.get_data();
                 // Negative step, `start > stop` guaranteed by the arm above.
                 std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
                     .try_for_each(|idx| {
-                        let (pos, idx) = self.pos(idx)?;
-                        self.delete(py, pos, idx as usize)
+                        let (pos, idx) = self.pos(&mut data, idx)?;
+                        self.delete(py, &mut data, pos, idx as usize)
                     })
             }
         }
@@ -802,13 +863,16 @@ pub(super) trait InnerSorted: InnerSortedGetters {
         if indices.start >= indices.stop {
             Ok(None)
         } else {
-            let (min_pos, min_idx) = self.pos(indices.start)?;
+            let mut data = self.get_data();
+            let (min_pos, min_idx) = self.pos(&mut data, indices.start)?;
 
             let (max_pos, max_idx) = if indices.stop == length {
-                let lists = self.get_lists();
-                (lists.len() - 1, lists.last().unwrap().len() as isize)
+                (
+                    data.lists.len() - 1,
+                    data.lists.last().unwrap().len() as isize,
+                )
             } else {
-                self.pos(indices.stop)?
+                self.pos(&mut data, indices.stop)?
             };
 
             Ok(Some(iter::IsliceBounds::new(
