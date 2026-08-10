@@ -82,11 +82,11 @@ impl SortedKeySet {
     }
 
     fn bisect_key_left(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_list().bisect_key_left(key)
+        self.get_list().get().bisect_key_left(key)
     }
 
     fn bisect_key_right(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_list().bisect_key_right(key)
+        self.get_list().get().bisect_key_right(key)
     }
 }
 impl SortedCollection for SortedKeySet {
@@ -98,11 +98,11 @@ impl SortedCollection for SortedKeySet {
     }
 
     fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_list().bisect_left(value)
+        self.get_list().get().bisect_left(value)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.get_list().bisect_right(value)
+        self.get_list().get().bisect_right(value)
     }
 
     fn index(
@@ -111,7 +111,7 @@ impl SortedCollection for SortedKeySet {
         start: Option<isize>,
         stop: Option<isize>,
     ) -> PyResult<isize> {
-        self.get_list().index(value, start, stop)
+        self.get_list().get().index(value, start, stop)
     }
     #[allow(unused_variables)]
     fn islice<'py>(
@@ -134,14 +134,14 @@ impl SortedCollection for SortedKeySet {
     }
 
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.get_list().reset(py, load)
+        self.get_list().get().reset(py, load)
     }
     fn clear(&self) -> () {
         // Safety: This is what happen in fact inside every `.bind(py)` call.
         // We use it here to avoid changing the trait method signature just for SortedSet.
         let set: &Bound<'_, PySet> = unsafe { NonNull::from(&self.set).cast().as_ref() };
         set.clear();
-        self.get_list().clear()
+        self.get_list().get().clear()
     }
 }
 impl BaseSortedListSet for SortedKeySet {
@@ -149,7 +149,7 @@ impl BaseSortedListSet for SortedKeySet {
         let set = self.set.bind(py);
         if !set.contains(&value)? {
             set.add(&value)?;
-            self.get_list().add(py, value)?;
+            self.get_list().get().add(py, value)?;
         }
         Ok(())
     }
@@ -157,14 +157,14 @@ impl BaseSortedListSet for SortedKeySet {
         let set = self.set.bind(value.py());
         if set.contains(&value)? {
             set.remove(&value)?;
-            self.get_list().remove(value)?;
+            self.get_list().get().remove(value)?;
         }
         Ok(())
     }
 
     fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.set.bind(value.py()).remove(&value)?;
-        self.get_list().remove(value)
+        self.get_list().get().remove(value)
     }
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         PySet::new(py, self.set.bind(py).iter()).and_then(|x| self.from_set(x))
@@ -173,8 +173,8 @@ impl BaseSortedListSet for SortedKeySet {
 impl BaseSortedSet for SortedKeySet {
     type T = SortedKeyList;
     #[inline(always)]
-    fn get_list(&self) -> &SortedKeyList {
-        &self.list.get()
+    fn get_list(&self) -> &Py<SortedKeyList> {
+        &self.list
     }
     #[inline(always)]
     fn get_set(&self) -> &Py<PySet> {
