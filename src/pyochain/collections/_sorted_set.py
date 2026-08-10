@@ -2,6 +2,7 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable
 from collections.abc import Set as AbstractSet
 from reprlib import recursive_repr
@@ -23,8 +24,8 @@ if TYPE_CHECKING:
     type SetKeyFunc[T, OT: SupportsHashableAndRichComparison] = KeyFunc[T, OT]
 
 
-class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without-hash]
-    PyoMutableSet[T], PyoSequence[T], BaseSortedListSet[T]
+class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without-hash]
+    PyoMutableSet[T], PyoSequence[T], BaseSortedListSet[T], ABC
 ):
     """Sorted set is a sorted mutable set.
 
@@ -123,6 +124,53 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
         if iterable is not None:
             _ = self.update(iterable)
 
+    @abstractmethod
+    def _fromset(self, values: SetMut[T]) -> Self: ...
+    @override
+    @abstractmethod
+    def __repr__(self) -> str:
+        """Return string representation of sorted set.
+
+        ``ss.__repr__()`` <==> ``repr(ss)``
+
+        :return: string representation
+
+        """
+
+    @override
+    @abstractmethod
+    def __reduce__(
+        self,
+    ) -> tuple[type[Self], tuple[AbstractSet[T]]]:
+        """Support for pickle.
+
+        The tricks played with exposing methods in :func:`SortedSet.__init__`
+        confuse pickle so customize the reducer.
+
+        Returns:
+            tuple[type[Self], tuple[AbstractSet[T]]]: tuple of class and arguments
+
+        """
+
+    @override
+    @abstractmethod
+    # pyrefly: ignore [bad-override]
+    def union(self, *iterables: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Return new sorted set with values from itself and all `iterables`.
+
+        The `union` method also corresponds to operator ``|``.
+
+        ``ss.__or__(iterable)`` <==> ``ss | iterable``
+
+        >>> ss = SortedSet([1, 2, 3, 4, 5])
+        >>> ss.union([4, 5, 6, 7])
+        SortedSet([1, 2, 3, 4, 5, 6, 7])
+
+        :param iterables: iterable arguments
+        :return: new sorted set
+
+        """
+
     @override
     def reset(self, load: int) -> None:
         return self._list.reset(load)
@@ -171,12 +219,6 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
     @override
     def is_superset(self, other: Iterable[object]) -> bool:
         return self._set.is_superset(other)
-
-    def _fromset(self, values: SetMut[T]) -> Self:
-        sorted_set = self.__new__(self.__class__)
-        sorted_set._set = values
-        sorted_set.__init__()
-        return sorted_set
 
     @override
     def __contains__(self, value: object) -> bool:
@@ -260,7 +302,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
     @override
     def __eq__(self, other: object) -> bool | NotImplementedType:
         match other:
-            case SortedSet():
+            case BaseSortedSet():
                 return self._set == other._set
             case AbstractSet():
                 return self._set == other
@@ -270,7 +312,7 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
     @override
     def __ne__(self, other: object) -> bool | NotImplementedType:
         match other:
-            case SortedSet():
+            case BaseSortedSet():
                 return self._set != other._set
             case AbstractSet():
                 return self._set != other
@@ -279,10 +321,10 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
 
     @override
     def __lt__(
-        self, other: AbstractSet[object] | SortedSet[T] | object
+        self, other: AbstractSet[object] | Self | object
     ) -> bool | NotImplementedType:
         match other:
-            case SortedSet():
+            case BaseSortedSet():
                 return self._set < other._set
             case AbstractSet():
                 return self._set < other
@@ -291,10 +333,10 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
 
     @override
     def __gt__(
-        self, other: AbstractSet[object] | SortedSet[T] | object
+        self, other: AbstractSet[object] | Self | object
     ) -> bool | NotImplementedType:
         match other:
-            case SortedSet():
+            case BaseSortedSet():
                 return self._set > other._set
             case AbstractSet():
                 return self._set > other
@@ -303,10 +345,10 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
 
     @override
     def __le__(
-        self, other: AbstractSet[object] | SortedSet[T] | object
+        self, other: AbstractSet[object] | Self | object
     ) -> bool | NotImplementedType:
         match other:
-            case SortedSet():
+            case BaseSortedSet():
                 return self._set <= other._set
             case AbstractSet():
                 return self._set <= other
@@ -315,10 +357,10 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
 
     @override
     def __ge__(
-        self, other: AbstractSet[object] | SortedSet[T] | object
+        self, other: AbstractSet[object] | Self | object
     ) -> bool | NotImplementedType:
         match other:
-            case SortedSet():
+            case BaseSortedSet():
                 return self._set >= other._set
             case AbstractSet():
                 return self._set >= other
@@ -688,25 +730,6 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
 
     @override
     # pyrefly: ignore [bad-override]
-    def union(self, *iterables: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
-        """Return new sorted set with values from itself and all `iterables`.
-
-        The `union` method also corresponds to operator ``|``.
-
-        ``ss.__or__(iterable)`` <==> ``ss | iterable``
-
-        >>> ss = SortedSet([1, 2, 3, 4, 5])
-        >>> ss.union([4, 5, 6, 7])
-        SortedSet([1, 2, 3, 4, 5, 6, 7])
-
-        :param iterables: iterable arguments
-        :return: new sorted set
-
-        """
-        return self.__class__(self.iter().chain(*iterables))
-
-    @override
-    # pyrefly: ignore [bad-override]
     def __or__(self, other: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
         return self.union(other)
 
@@ -746,39 +769,137 @@ class SortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without
     def __ior__(self, other: Iterable[T]) -> Self:
         return self.update(other)
 
+
+class SortedSet[T: SupportsHashableAndRichComparison](BaseSortedSet[T]):
+    """Sorted set is a sorted mutable set.
+
+    Sorted set values are maintained in sorted order. The design of sorted set
+    is simple: sorted set uses a set for set-operations and maintains a sorted
+    list of values.
+
+    Sorted set values must be hashable and comparable. The hash and total
+    ordering of values must not change while they are stored in the sorted set.
+
+    Mutable set methods:
+
+    * :func:`SortedSet.__contains__`
+    * :func:`SortedSet.__iter__`
+    * :func:`SortedSet.__len__`
+    * :func:`SortedSet.add`
+    * :func:`SortedSet.discard`
+
+    Sequence methods:
+
+    * :func:`SortedSet.__getitem__`
+    * :func:`SortedSet.__delitem__`
+    * :func:`SortedSet.__reversed__`
+
+    Methods for removing values:
+
+    * :func:`SortedSet.clear`
+    * :func:`SortedSet.pop`
+    * :func:`SortedSet.remove`
+
+    Set-operation methods:
+
+    * :func:`SortedSet.difference`
+    * :func:`SortedSet.difference_update`
+    * :func:`SortedSet.intersection`
+    * :func:`SortedSet.intersection_update`
+    * :func:`SortedSet.symmetric_difference`
+    * :func:`SortedSet.symmetric_difference_update`
+    * :func:`SortedSet.union`
+    * :func:`SortedSet.update`
+
+    Methods for miscellany:
+
+    * :func:`SortedSet.copy`
+    * :func:`SortedSet.count`
+    * :func:`SortedSet.__repr__`
+    * :func:`SortedSet._check`
+
+    Sorted list methods available:
+
+    * :func:`SortedList.bisect_left`
+    * :func:`SortedList.bisect_right`
+    * :func:`SortedList.index`
+    * :func:`SortedList.irange`
+    * :func:`SortedList.islice`
+    * :func:`SortedList.reset`
+
+    Additional sorted list methods available, if key-function used:
+
+    * :func:`SortedKeyList.bisect_key_left`
+    * :func:`SortedKeyList.bisect_key_right`
+    * :func:`SortedKeyList.irange_key`
+
+    Sorted set comparisons use subset and superset relations. Two sorted sets
+    are equal if and only if every element of each sorted set is contained in
+    the other (each is a subset of the other). A sorted set is less than
+    another sorted set if and only if the first sorted set is a proper subset
+    of the second sorted set (is a subset, but is not equal). A sorted set is
+    greater than another sorted set if and only if the first sorted set is a
+    proper superset of the second sorted set (is a superset, but is not equal).
+
+    Optional `iterable` argument provides an initial iterable of values to
+    initialize the sorted set.
+
+    Runtime complexity: `O(n*log(n))`
+
+    >>> ss = SortedSet([3, 1, 2, 5, 4])
+    >>> ss
+    SortedSet([1, 2, 3, 4, 5])
+
+    Args:
+        iterable (Iterable[T] | None): initial values (optional)
+
+    """
+
+    def __init__(self, iterable: Iterable[T] | None = None) -> None:
+        # SortedSet._fromset calls SortedSet.__init__ after initializing the
+        # _set attribute. So only create a new set if the _set attribute is not
+        # already present.
+
+        if not hasattr(self, "_set"):
+            self._set: SetMut[T] = SetMut[T](())
+
+        self._list: SortedList[T] = SortedList(self._set)
+
+        if iterable is not None:
+            _ = self.update(iterable)
+
+    @override
+    def _fromset(self, values: SetMut[T]) -> Self:
+        sorted_set = self.__new__(self.__class__)
+        sorted_set._set = values
+        sorted_set.__init__()
+        return sorted_set
+
+    @recursive_repr()
+    def __repr__(self) -> str:
+        type_name = self.__class__.__name__
+        return f"{type_name}({list(self)!r})"
+
     @override
     def __reduce__(
         self,
     ) -> tuple[type[Self], tuple[AbstractSet[T]]]:
-        """Support for pickle.
-
-        The tricks played with exposing methods in :func:`SortedSet.__init__`
-        confuse pickle so customize the reducer.
-
-        Returns:
-            tuple[type[Self], tuple[AbstractSet[T]]]: tuple of class and arguments
-
-        """
         return (self.__class__, (self._set,))
 
-    @recursive_repr()
-    def __repr__(self) -> str:
-        """Return string representation of sorted set.
+    @override
+    def union(self, *iterables: Iterable[T]) -> Self:
+        return self.__class__(self.iter().chain(*iterables))
 
-        ``ss.__repr__()`` <==> ``repr(ss)``
-
-        :return: string representation
-
-        """
-        type_name = self.__class__.__name__
-        return f"{type_name}({list(self)!r})"
+    @override
+    def copy(self) -> Self:
+        return self._fromset(SetMut(self._set))
 
 
 def identity[T](value: T) -> T:
     return value
 
 
-class SortedKeySet[T, OT: SupportsHashableAndRichComparison](SortedSet[T]):  # pyright: ignore[reportInvalidTypeArguments]
+class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]):  # pyright: ignore[reportInvalidTypeArguments]
     _set: SetMut[T]
     _list: SortedKeyList[T, OT]
 
@@ -838,13 +959,6 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](SortedSet[T]):  # p
 
     @recursive_repr()
     def __repr__(self) -> str:
-        """Return string representation of sorted set.
-
-        ``ss.__repr__()`` <==> ``repr(ss)``
-
-        :return: string representation
-
-        """
         key_ = self._key
         key = f", key={key_!r}"
         type_name = self.__class__.__name__
@@ -875,21 +989,6 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](SortedSet[T]):  # p
     @override
     def union(self, *iterables: Iterable[T]) -> Self:
         return self.__class__(self.iter().chain(*iterables), key=self._key)
-
-    @override
-    def symmetric_difference(self, other: Iterable[T]) -> Self:
-        diff = self._set.symmetric_difference(other)
-        return self._fromset(diff)
-
-    @override
-    def intersection(self, *iterables: Iterable[Any]) -> Self:
-        intersect = self._set.intersection(*iterables)
-        return self._fromset(intersect)
-
-    @override
-    def difference(self, *iterables: Iterable[Any]) -> Self:
-        diff = self._set.difference(*iterables)
-        return self._fromset(diff)
 
     @override
     def copy(self) -> Self:
