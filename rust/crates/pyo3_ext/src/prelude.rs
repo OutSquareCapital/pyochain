@@ -1,8 +1,11 @@
 pub use super::args::{Args, ConcatWith, Concatenate, Kwargs};
+pub use super::ext_methods::{
+    ABCRegister, IntoPyMappingView, PyListExtMethods, PyRangeExtMethods, PySequenceExtMethods,
+    PySetExtMethods, PySetExtMethodsMut,
+};
 pub use super::iter::{CollectBoundIterator, TryCollectBoundIterator, TryFromBoundIterator};
 pub use super::pyany::PyAnyInPlaceMethods;
 pub use super::types::{
-    ABCRegister, IntoPyMappingView, PyDequeMethods, PyListExtMethods, PyMutableSequenceMethods,
-    PyMutableSetMethods, PyRangeExtMethods, PySequenceExtMethods, PySetExtMethods,
-    PySetExtMethodsMut, PySupportsIndexMethods, PySupportsItemsMethods,
+    PyDequeMethods, PyMutableSequenceMethods, PyMutableSetMethods, PySupportsIndexMethods,
+    PySupportsItemsMethods,
 };
