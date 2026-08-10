@@ -1,0 +1,171 @@
+use std::ptr::NonNull;
+
+use pyo3::{
+    PyTypeInfo,
+    prelude::*,
+    types::{PyList, PySet, PyTuple},
+};
+use pyo3_ext::prelude::*;
+
+use tap::Pipe;
+
+use crate::{
+    abc,
+    collections::sorted::{
+        SortedList,
+        traits::{BaseSortedListSet, BaseSortedSet, Reduced, SortedCollection, SortedListGetters},
+    },
+    traits::PyoABC,
+};
+
+#[pyclass(module = "pyochain._collections", frozen, generic, extends = abc::PyoMutableSet)]
+pub struct SortedSet {
+    set: Py<PySet>,
+    list: SortedList,
+}
+impl SortedSet {
+    fn new(set: Py<PySet>, list: SortedList) -> Self {
+        Self { set, list }
+    }
+    fn empty(py: Python<'_>) -> Self {
+        Self::new(PySet::empty(py).unwrap().unbind(), SortedList::new())
+    }
+    fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
+        abc::PyoMutableSet::build_init()
+            .add_subclass(self)
+            .pipe(|x| Bound::new(py, x))
+    }
+}
+#[pymethods]
+impl SortedSet {
+    #[new]
+    #[pyo3(signature = (iterable = None))]
+    fn py_new(
+        py: Python<'_>,
+        iterable: Option<Bound<'_, PyAny>>,
+    ) -> PyResult<PyClassInitializer<Self>> {
+        let init = Self::new(PySet::empty(py).unwrap().unbind(), SortedList::new());
+        if let Some(iterable) = iterable {
+            init.update(iterable)?;
+        }
+        abc::PyoMutableSet::build_init().add_subclass(init).pipe(Ok)
+    }
+}
+impl SortedCollection for SortedSet {
+    fn __contains__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+        self.set.bind(value.py()).contains(value)
+    }
+    fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
+        PyTuple::new(py, [self.set.clone_ref(py)]).map(|tup| (Self::type_object(py), tup))
+    }
+
+    fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
+        self.list.bisect_left(value)
+    }
+
+    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
+        self.list.bisect_right(value)
+    }
+
+    fn index(
+        &self,
+        value: Bound<'_, PyAny>,
+        start: Option<isize>,
+        stop: Option<isize>,
+    ) -> PyResult<isize> {
+        self.list.index(value, start, stop)
+    }
+    fn islice<'py>(
+        slf: Bound<'py, Self>,
+        start: Option<isize>,
+        stop: Option<isize>,
+        reverse: bool,
+    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        todo!()
+    }
+    fn irange<'py>(
+        slf: Bound<'py, Self>,
+        minimum: Option<Bound<'py, PyAny>>,
+        maximum: Option<Bound<'py, PyAny>>,
+        inclusive: (bool, bool),
+        reverse: bool,
+    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        todo!()
+    }
+
+    fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
+        self.list.reset(py, load)
+    }
+    fn clear(&self) -> () {
+        // Safety: This is what happen in fact inside every `.bind(py)` call.
+        // We use it here to avoid changing the trait method signature just for SortedSet.
+        let set: &Bound<'_, PySet> = unsafe { NonNull::from(&self.set).cast().as_ref() };
+        set.clear();
+        self.list.clear()
+    }
+}
+impl BaseSortedListSet for SortedSet {
+    fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
+        let set = self.set.bind(py);
+        if !set.contains(&value)? {
+            set.add(&value)?;
+            self.list.add(py, value)?;
+        }
+        Ok(())
+    }
+    fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        let set = self.set.bind(value.py());
+        if set.contains(&value)? {
+            set.remove(&value)?;
+            self.list.remove(value)?;
+        }
+        Ok(())
+    }
+
+    fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
+        self.set.bind(value.py()).remove(&value)?;
+        self.list.remove(value)
+    }
+    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+        PySet::new(py, self.set.bind(py).iter()).and_then(|x| self._fromset(x))
+    }
+}
+impl BaseSortedSet for SortedSet {
+    type T = SortedList;
+    fn _list(&self) -> &SortedList {
+        &self.list
+    }
+    fn _set(&self) -> &Py<PySet> {
+        &self.set
+    }
+    //@recursive_repr()
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        let type_name = Self::type_object(py).name()?;
+        let self_repr = self
+            .list
+            .get_data()
+            .iter()
+            .collect_bound::<PyList>(py)?
+            .repr()?;
+        Ok(format!("{}({})", type_name, self_repr))
+    }
+
+    fn _fromset<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
+        let py = values.py();
+        let list = SortedList::from_vec(py, values.iter().map(Bound::unbind).collect())?;
+        Self::new(values.unbind(), list).into_bound(py)
+    }
+
+    fn union<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
+        let py = iterables.py();
+        self.list
+            .get_data()
+            .iter()
+            .map(|x| x.clone_ref(py))
+            .chain(iterables.iter().map(Bound::unbind))
+            .collect::<Vec<_>>()
+            .pipe(|v| SortedList::from_vec(py, v))
+            .map(|list| Self::new(PySet::empty(py).unwrap().unbind(), list))
+            .and_then(|x| x.into_bound(py))
+    }
+}

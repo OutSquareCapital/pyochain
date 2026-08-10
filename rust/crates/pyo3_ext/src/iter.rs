@@ -65,6 +65,15 @@ impl<'py, T: IntoPyObject<'py>> FromBoundIterator<'py, T> for PyList {
         PyList::new(py, iter)
     }
 }
+impl<'py, T: IntoPyObject<'py>> FromBoundIterator<'py, T> for PySet {
+    #[inline(always)]
+    fn from_iter_bound<I>(iter: I, py: Python<'py>) -> PyResult<Bound<'py, Self>>
+    where
+        I: IntoIterator<Item = T>,
+    {
+        PySet::new(py, iter)
+    }
+}
 impl<'py, T: IntoPyObject<'py>> TryFromBoundIterator<'py, T> for PyFrozenSet {
     fn try_from_iter_bound<I>(iter: I, py: Python<'py>) -> PyResult<Bound<'py, Self>>
     where
@@ -87,6 +96,7 @@ impl<'py, T: IntoPyObject<'py>> TryFromBoundIterator<'py, T> for PySet {
             .map(|_| pyset)
     }
 }
+
 impl<'py, T: IntoPyObject<'py>> TryFromBoundIterator<'py, T> for PyList {
     fn try_from_iter_bound<I: IntoIterator<Item = PyResult<T>>>(
         iter: I,

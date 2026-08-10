@@ -157,7 +157,7 @@ impl ListsData {
     pub(crate) fn getitem_from_slice<'py>(
         &mut self,
         py: Python<'py>,
-        slice: Bound<'py, PySlice>,
+        slice: &Bound<'py, PySlice>,
     ) -> PyResult<Vec<Py<PyAny>>> {
         let PySliceIndices {
             start, stop, step, ..
@@ -198,7 +198,7 @@ impl ListsData {
             }
             (-1, Ordering::Greater) => {
                 let mut result =
-                    self.getitem_from_slice(py, PySlice::new(py, stop + 1, start + 1, 1))?;
+                    self.getitem_from_slice(py, &PySlice::new(py, stop + 1, start + 1, 1))?;
                 result.reverse();
                 Ok(result)
             }

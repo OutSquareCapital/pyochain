@@ -2,20 +2,23 @@ use crate::{
     abc,
     collections::{
         SortedKeyList, SortedList,
-        sorted::{data::ListsData, errors, iter},
+        sorted::{data::ListsData, errors, iter, keyset::SortedKeySet, set::SortedSet},
     },
     pyovec::PyoVec,
     traits::IntoPyochain,
 };
 use either::Either;
 use pyo3::{
-    PyClass,
+    BoundObject, PyClass,
     exceptions::{PyIndexError, PyNotImplementedError},
     prelude::*,
-    types::{PyList, PyNotImplemented, PySequence, PySlice, PySliceIndices, PyTuple, PyType},
+    types::{
+        PyBool, PyList, PyNotImplemented, PySequence, PySet, PySlice, PySliceIndices, PyTuple,
+        PyType,
+    },
 };
-use pyo3_ext::prelude::*;
-use pyochain_macros::py_abc;
+use pyo3_ext::{prelude::*, types::PyAbstractSet};
+use pyochain_macros::{BoundFromAny, py_abc};
 use std::{
     cmp::Ordering,
     sync::{Mutex, MutexGuard, TryLockError, atomic::Ordering as AtomicOrdering},
@@ -45,7 +48,7 @@ impl PyIdentity {
         value.clone_ref(py)
     }
 }
-#[py_abc(SortedList, SortedKeyList)]
+#[py_abc(SortedList, SortedKeyList, SortedSet, SortedKeySet)]
 pub(super) trait SortedCollection:
     Sized + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {
@@ -79,7 +82,7 @@ pub(super) trait SortedCollection:
     fn clear(&self) -> ();
 }
 
-#[py_abc(SortedList, SortedKeyList)]
+#[py_abc(SortedList, SortedKeyList, SortedSet, SortedKeySet)]
 pub(super) trait BaseSortedListSet: SortedCollection {
     fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()>;
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()>;
@@ -190,10 +193,10 @@ pub(super) trait BaseSortedList: SortedListGetters {
                 Ok(())
             }
             (1, Ordering::Less) if length <= 8 * (stop - start) => {
-                let mut values = data.getitem_from_slice(py, PySlice::new(py, 0, start, 1))?;
+                let mut values = data.getitem_from_slice(py, &PySlice::new(py, 0, start, 1))?;
                 if stop < length {
                     let new_slice =
-                        data.getitem_from_slice(py, PySlice::new(py, stop, length, 1))?;
+                        data.getitem_from_slice(py, &PySlice::new(py, stop, length, 1))?;
                     values.extend(new_slice);
                 }
                 drop(data);
@@ -220,6 +223,11 @@ pub(super) trait BaseSortedList: SortedListGetters {
                     })
             }
         }
+    }
+    fn delitem_from_int(&self, py: Python<'_>, index: isize) -> PyResult<()> {
+        let mut data = self.get_data();
+        let (pos, idx) = data.pos(index)?;
+        self.delete(py, &mut data, pos, idx as usize)
     }
     /// Return an iterator that slices sorted list using two index pairs.\
     /// The index pairs are (min_pos, min_idx) and (max_pos, max_idx), the first inclusive and the latter exclusive.\
@@ -390,11 +398,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
     ) -> PyResult<()> {
         match index {
             Either::Right(slice) => self.delitem_from_slice(py, slice),
-            Either::Left(index) => {
-                let mut data = self.get_data();
-                let (pos, idx) = data.pos(index)?;
-                self.delete(py, &mut data, pos, idx as usize)
-            }
+            Either::Left(index) => self.delitem_from_int(py, index),
         }
     }
 
@@ -402,7 +406,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
         let mut data = self.get_data();
         match index {
             Either::Right(slice) => data
-                .getitem_from_slice(py, slice)?
+                .getitem_from_slice(py, &slice)?
                 .iter()
                 .collect_bound::<PyList>(py)?
                 .into_pyochain()
@@ -459,5 +463,317 @@ pub(super) trait BaseSortedList: SortedListGetters {
     fn reverse(&self) -> PyResult<()> {
         let msg = "use ``reversed(sl)`` instead";
         Err(PyNotImplementedError::new_err(msg))
+    }
+}
+
+#[derive(BoundFromAny)]
+enum SortedSetCmp<'py> {
+    PySet(Bound<'py, PyAbstractSet>),
+    SortedSet(Bound<'py, SortedSet>),
+    SortedKeySet(Bound<'py, SortedKeySet>),
+    Any(Bound<'py, PyAny>),
+}
+
+#[py_abc(SortedSet, SortedKeySet)]
+pub(super) trait BaseSortedSet: BaseSortedListSet {
+    type T: BaseSortedList;
+    #[skip]
+    fn _set(&self) -> &Py<PySet>;
+    #[skip]
+    fn _list(&self) -> &Self::T;
+
+    fn _fromset<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>>;
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
+
+    #[pyo3(signature= (*iterables))]
+    fn union<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>>;
+
+    fn is_disjoint<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
+        self._set().bind(other.py()).isdisjoint(other)
+    }
+
+    fn is_subset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
+        self._set().bind(other.py()).issubset(other)
+    }
+
+    fn is_superset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
+        self._set().bind(other.py()).issuperset(other)
+    }
+
+    fn __getitem__<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
+        self._list().__getitem__(py, index)
+    }
+    fn __delitem__<'py>(&self, py: Python<'_>, index: IntOrSlice<'py>) -> PyResult<()> {
+        let mut list = self._list().get_data();
+        match index {
+            Either::Right(slice) => {
+                let values = list
+                    .getitem_from_slice(py, &slice)?
+                    .iter()
+                    .collect_bound::<PySet>(py)?;
+                self._set().bind(py).difference_update((values,))?;
+                self._list().delitem_from_slice(py, slice)?;
+            }
+            Either::Left(int) => {
+                let value = list.getitem_from_int(py, int)?;
+                self._set().bind(py).remove(&value)?;
+                self._list().delitem_from_int(py, int)?;
+            }
+        };
+        Ok(())
+    }
+
+    fn __eq__<'py>(&self, py: Python<'py>, other: SortedSetCmp<'py>) -> BoolOrNotImpl<'py> {
+        match other {
+            SortedSetCmp::SortedSet(o) => self
+                ._set()
+                .bind(py)
+                .eq(o.get()._set().bind(py))
+                .map(Either::Left),
+            SortedSetCmp::SortedKeySet(o) => self
+                ._set()
+                .bind(py)
+                .eq(o.get()._set().bind(py))
+                .map(Either::Left),
+            SortedSetCmp::PySet(pyset) => self._set().bind(py).eq(pyset).map(Either::Left),
+            _ => PyNotImplemented::get(py)
+                .into_bound()
+                .pipe(Ok)
+                .map(Either::Right),
+        }
+    }
+
+    fn __ne__<'py>(&self, py: Python<'py>, other: SortedSetCmp<'py>) -> BoolOrNotImpl<'py> {
+        match other {
+            SortedSetCmp::SortedSet(o) => self
+                ._set()
+                .bind(py)
+                .ne(o.get()._set().bind(py))
+                .map(Either::Left),
+            SortedSetCmp::SortedKeySet(o) => self
+                ._set()
+                .bind(py)
+                .ne(o.get()._set().bind(py))
+                .map(Either::Left),
+            SortedSetCmp::PySet(pyset) => self._set().bind(py).ne(pyset).map(Either::Left),
+            _ => PyNotImplemented::get(py)
+                .into_bound()
+                .pipe(Ok)
+                .map(Either::Right),
+        }
+    }
+
+    fn __lt__<'py>(&self, py: Python<'py>, other: SortedSetCmp<'py>) -> BoolOrNotImpl<'py> {
+        match other {
+            SortedSetCmp::SortedSet(o) => self
+                ._set()
+                .bind(py)
+                .lt(o.get()._set().bind(py))
+                .map(Either::Left),
+            SortedSetCmp::SortedKeySet(o) => self
+                ._set()
+                .bind(py)
+                .lt(o.get()._set().bind(py))
+                .map(Either::Left),
+            SortedSetCmp::PySet(pyset) => self._set().bind(py).lt(pyset).map(Either::Left),
+            _ => PyNotImplemented::get(py)
+                .into_bound()
+                .pipe(Ok)
+                .map(Either::Right),
+        }
+    }
+
+    fn __gt__<'py>(&self, py: Python<'py>, other: SortedSetCmp<'py>) -> BoolOrNotImpl<'py> {
+        match other {
+            SortedSetCmp::SortedSet(o) => self
+                ._set()
+                .bind(py)
+                .gt(o.get()._set().bind(py))
+                .map(Either::Left),
+            SortedSetCmp::SortedKeySet(o) => self
+                ._set()
+                .bind(py)
+                .gt(o.get()._set().bind(py))
+                .map(Either::Left),
+            SortedSetCmp::PySet(pyset) => self._set().bind(py).gt(pyset).map(Either::Left),
+            _ => PyNotImplemented::get(py)
+                .into_bound()
+                .pipe(Ok)
+                .map(Either::Right),
+        }
+    }
+
+    fn __le__<'py>(&self, py: Python<'py>, other: SortedSetCmp<'py>) -> BoolOrNotImpl<'py> {
+        match other {
+            SortedSetCmp::SortedSet(o) => self
+                ._set()
+                .bind(py)
+                .le(o.get()._set().bind(py))
+                .map(Either::Left),
+            SortedSetCmp::SortedKeySet(o) => self
+                ._set()
+                .bind(py)
+                .le(o.get()._set().bind(py))
+                .map(Either::Left),
+            SortedSetCmp::PySet(pyset) => self._set().bind(py).le(pyset).map(Either::Left),
+            _ => PyNotImplemented::get(py)
+                .into_bound()
+                .pipe(Ok)
+                .map(Either::Right),
+        }
+    }
+
+    fn __ge__<'py>(&self, py: Python<'py>, other: SortedSetCmp<'py>) -> BoolOrNotImpl<'py> {
+        match other {
+            SortedSetCmp::SortedSet(o) => self
+                ._set()
+                .bind(py)
+                .ge(o.get()._set().bind(py))
+                .map(Either::Left),
+            SortedSetCmp::SortedKeySet(o) => self
+                ._set()
+                .bind(py)
+                .ge(o.get()._set().bind(py))
+                .map(Either::Left),
+            SortedSetCmp::PySet(pyset) => self._set().bind(py).ge(pyset).map(Either::Left),
+            _ => PyNotImplemented::get(py)
+                .into_bound()
+                .pipe(Ok)
+                .map(Either::Right),
+        }
+    }
+
+    fn __len__(&self, py: Python<'_>) -> usize {
+        self._set().bind(py).len()
+    }
+
+    fn __iter__(&self) -> PyResult<Bound<'_, abc::PyoIterator>> {
+        self._list().iter()
+    }
+
+    fn __reversed__(&self) -> PyResult<Bound<'_, abc::PyoIterator>> {
+        self._list().rev()
+    }
+
+    fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+        self.copy(py)
+    }
+
+    fn count(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
+        if self._set().bind(value.py()).contains(value)? {
+            Ok(1)
+        } else {
+            Ok(0)
+        }
+    }
+
+    #[pyo3(signature = (index = -1))]
+    fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
+        let value = self._list().pop(py, index)?;
+        self._set().bind(py).remove(&value)?;
+        Ok(value)
+    }
+    #[pyo3(signature = (*iterables))]
+    fn difference<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
+        let diff = self._set().bind(iterables.py()).difference(iterables)?;
+        self._fromset(diff)
+    }
+    fn __sub__(&self, other: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
+        self.difference(other)
+    }
+    #[pyo3(signature = (*iterables))]
+    fn difference_update(&self, iterables: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
+        let py = iterables.py();
+        let set = self._set().bind(py);
+        let values = iterables
+            .iter()
+            .flat_map(|x| x.try_iter().unwrap())
+            .try_collect_bound::<PySet>(py)?;
+        if (4 * values.len()) > set.len() {
+            set.difference_update((values,))?;
+            self._list().clear();
+            self._list().update(set)?;
+        } else {
+            for value in values {
+                self.discard(value)?
+            }
+        }
+        Ok(self)
+    }
+    fn __isub__(&self, other: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
+        self.difference_update(other)
+    }
+    #[pyo3(signature = (*iterables))]
+    fn intersection<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
+        let intersect = self._set().bind(iterables.py()).intersection(iterables)?;
+        self._fromset(intersect)
+    }
+
+    fn __and__(&self, other: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
+        self.intersection(other)
+    }
+    fn __rand__(&self, other: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
+        self.intersection(other)
+    }
+    #[pyo3(signature = (*iterables))]
+    fn intersection_update(&self, iterables: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
+        let set = self._set().bind(iterables.py());
+        set.intersection_update(iterables)?;
+        self._list().clear();
+        self._list().update(set)?;
+        Ok(self)
+    }
+
+    fn __iand__(&self, other: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
+        self.intersection_update(other)
+    }
+    fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        let diff = self._set().bind(other.py()).symmetric_difference(other)?;
+        self._fromset(diff)
+    }
+    fn __xor__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.symmetric_difference(other)
+    }
+    fn __rxor__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        self.symmetric_difference(other)
+    }
+    fn symmetric_difference_update(&self, other: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
+        let set = self._set().bind(other.py());
+        set.symmetric_difference_update(other)?;
+        self._list().clear();
+        self._list().update(set)?;
+        Ok(self)
+    }
+    fn __ixor__(&self, other: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
+        self.symmetric_difference_update(other)
+    }
+    fn __or__(&self, other: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
+        self.union(other)
+    }
+    fn __ror__(&self, other: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
+        self.union(other)
+    }
+    #[pyo3(signature = (*iterables))]
+    fn update(&self, iterables: Bound<'_, PyTuple>) -> PyResult<Bound<'_, Self>> {
+        let py = iterables.py();
+        let set = self._set().bind(py);
+        let values = iterables
+            .iter()
+            .flat_map(|x| x.try_iter().unwrap())
+            .try_collect_bound::<PySet>(py)?;
+        if (4 * values.len()) > set.len() {
+            set.update((values,))?;
+            self._list().clear();
+            self._list().update(set)?;
+        } else {
+            for value in values.iter().map(Bound::unbind) {
+                self.add(py, value)?;
+            }
+        }
+        Ok(self)
+    }
+
+    fn __ior__(&self, other: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
+        self.update(other)
     }
 }
