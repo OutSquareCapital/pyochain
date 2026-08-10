@@ -16,21 +16,16 @@ from typing import Any
 
 from _typeshed import SupportsRichComparison
 
-from pyochain._collections._sorted_list import BaseSortedList
-from pyochain._collections._sorted_set import BaseSortedSet
-
-from ._collections import (
-    Deque,
-    Heap,
-    HeapMax,
-    HeapMin,
-    PyoCounter,
+from pyochain._collections._sorted import (
+    BaseSortedList,
+    BaseSortedSet,
     SortedKeyList,
     SortedKeySet,
     SortedList,
     SortedSet,
-    StableSet,
 )
+
+from ._collections import Deque, Heap, HeapMax, HeapMin, PyoCounter, StableSet
 from ._dict import Dict
 from ._iterators import Iter, Peekable
 from ._option import NONE, Null, Option, OptionType, OptionUnwrapError, Some, option

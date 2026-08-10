@@ -10,10 +10,9 @@ from _typeshed import SupportsRichComparison
 
 from pyochain import Vec
 from pyochain.abc import PyoIterator, PyoMutableSequence
-from pyochain.collections._base_sorted import (  # ruff: ignore[import-private-name]
-    BaseSortedListSet,
-)
 from pyochain.rs import KeyFunc
+
+from ._core import BaseSortedListSet
 
 @type_check_only
 class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
