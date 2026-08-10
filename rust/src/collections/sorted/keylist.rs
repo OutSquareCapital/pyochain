@@ -114,7 +114,7 @@ impl SortedCollection for SortedKeyList {
             .and_then(|x| PyTuple::new(py, [x.as_any(), &self.key.bind(py)]))
             .map(|tup| (Self::type_object(py), tup))
     }
-    fn __contains__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
         let data = self.get_data();
 

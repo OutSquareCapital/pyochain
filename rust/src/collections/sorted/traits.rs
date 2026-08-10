@@ -11,11 +11,12 @@ use either::Either;
 use pyo3::{
     BoundObject, PyClass, PyTypeInfo,
     call::PyCallArgs,
-    exceptions::{PyIndexError, PyNotImplementedError},
+    exceptions::{PyIndexError, PyKeyError, PyNotImplementedError},
+    intern,
     prelude::*,
     types::{
-        PyBool, PyList, PyNotImplemented, PySequence, PySet, PySlice, PySliceIndices, PyTuple,
-        PyType,
+        PyBool, PyDict, PyList, PyMapping, PyNotImplemented, PySequence, PySet, PySlice,
+        PySliceIndices, PyTuple, PyType,
     },
 };
 use pyo3_ext::prelude::*;
@@ -54,7 +55,7 @@ pub(super) trait SortedCollection:
     Sized + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py>;
-    fn __contains__(&self, value: Bound<'_, PyAny>) -> PyResult<bool>;
+    fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool>;
     fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize>;
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize>;
     #[pyo3(signature = (minimum = None, maximum = None, inclusive = (true, true), *, reverse = false))]
@@ -874,7 +875,7 @@ impl<'py> IntoUpdate<'py> {
 macro_rules! impl_sorted_collection_for_set {
     ($set:ty, $list:ty) => {
         impl SortedCollection for $set {
-            fn __contains__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+            fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
                 self.get_set().bind(value.py()).contains(value)
             }
             fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
@@ -960,3 +961,235 @@ macro_rules! impl_sorted_collection_for_set {
 }
 impl_sorted_collection_for_set!(SortedSet, SortedList);
 impl_sorted_collection_for_set!(SortedKeySet, SortedKeyList);
+#[py_abc]
+pub(super) trait BaseSortedDict: SortedCollection {
+    type T: BaseSortedList;
+
+    fn get_list(&self) -> &Py<Self::T>;
+    fn get_inner(&self) -> &Py<PyDict>;
+
+    fn __or__(&self, value: PyMapping) -> Self;
+
+    fn __ror__(&self, value: PyMapping) -> Self;
+    fn __reduce__(&self) -> Reduced<'_>;
+
+    fn __repr__(self) -> PyResult<String>;
+    fn __len__(&self, py: Python<'_>) -> usize {
+        self.get_inner().bind(py).len()
+    }
+
+    fn __getitem__<'py>(&self, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+        self.get_inner().bind(key.py()).as_any().get_item(key)
+    }
+
+    fn reset(self, py: Python<'_>, load: usize) -> PyResult<()> {
+        self.get_list().get().reset(py, load)
+    }
+
+    fn bisect_left(self, value: Bound<'_, PyAny>) -> PyResult<isize> {
+        self.get_list().get().bisect_left(value)
+    }
+
+    fn bisect_right(self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
+        self.get_list().get().bisect_right(value)
+    }
+
+    #[pyo3(signature = (value, start = None, stop = None))]
+    fn index(
+        &self,
+        value: Bound<'_, PyAny>,
+        start: Option<isize>,
+        stop: Option<isize>,
+    ) -> PyResult<isize> {
+        self.get_list().get().index(value, start, stop)
+    }
+
+    #[pyo3(signature = (start = None, stop = None, *, reverse = false))]
+    fn islice<'py>(
+        slf: Bound<'py, Self>,
+        start: Option<isize>,
+        stop: Option<isize>,
+        reverse: bool,
+    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        slf.get()
+            .get_list()
+            .bind(slf.py())
+            .islice(start, stop, reverse = reverse)
+    }
+
+    #[pyo3(signature = (minimum = None, maximum = None, inclusive = (true, true), *, reverse = false))]
+    fn irange<'py>(
+        slf: Bound<'py, Self>,
+        minimum: Option<Bound<'py, PyAny>>,
+        maximum: Option<Bound<'py, PyAny>>,
+        inclusive: (bool, bool),
+        reverse: bool,
+    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        slf.get()
+            .get_list()
+            .bind(slf.py())
+            .irange(minimum, maximum, inclusive, reverse = reverse)
+    }
+
+    fn clear(&self) -> () {
+        Python::attach(|py| {
+            self.get_inner().bind(py).clear();
+            self.get_list().get().clear();
+        })
+    }
+
+    fn __delitem__(&self, key: Bound<'_, PyAny>) -> PyResult<()> {
+        self.get_inner().bind(key.py()).as_any().del_item(&key);
+        self.get_list().get().remove(key)
+    }
+
+    fn __iter__(&self) -> PyResult<Bound<'_, abc::PyoIterator>> {
+        self.get_list().get().iter()
+    }
+
+    fn __reversed__(&self) -> PyResult<Bound<'_, abc::PyoIterator>> {
+        self.get_list().get().rev()
+    }
+
+    fn __setitem__(&self, key: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
+        let py = key.py();
+        if !self.__contains__(&key)? {
+            self.get_list().get().add(py, key.unbind())
+        } else {
+            self.get_inner().bind(py).set_item(key, value)
+        }
+    }
+
+    fn __ior__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
+        self.update(other.py(), Some(other), None)
+    }
+
+    fn copy(&self) -> Self {
+        return self.__class__(self.items());
+    }
+
+    fn __copy__(&self) -> Self {
+        return self.copy();
+    }
+
+    #[classmethod]
+    #[pyo3(signature = (iterable, value = None, /))]
+    fn from_keys(
+        cls: Bound<'_, PyType>,
+        iterable: Bound<'_, PyAny>,
+        value: Option<Bound<'_, PyAny>>,
+    ) -> PyResult<Self> {
+        iterable
+            .try_iter()?
+            .map(|key| (key, value))
+            .collect(SortedDict)
+    }
+
+    fn keys(&self) -> SortedKeysView {
+        return SortedKeysView(self);
+    }
+
+    fn items(&self) -> SortedItemsView {
+        return SortedItemsView(self);
+    }
+
+    fn values(&self) -> SortedValuesView {
+        return SortedValuesView(self);
+    }
+
+    fn pop(
+        &self,
+        key: Bound<'_, PyAny>,
+        default: Option<Bound<'_, PyAny>>,
+    ) -> PyResult<Bound<'_, PyAny>> {
+        if self.__contains__(&key)? {
+            self.get_list().get().remove(key);
+            return Ok(self.get_inner().bind(key.py()).pop(key));
+        }
+        if default.is(self.__not_given) {
+            return Err(PyKeyError::new_err(key));
+        }
+        return Ok(default);
+    }
+
+    #[pyo3(signature = (index = -1))]
+    fn popitem(
+        &self,
+        py: Python<'_>,
+        index: isize,
+    ) -> PyResult<(Bound<'_, PyAny>, Bound<'_, PyAny>)> {
+        if self.__len__(py) == 0 {
+            let msg = "popitem(): dictionary is empty";
+            return Err(PyKeyError::new_err(msg));
+        };
+
+        let key = self.get_list().get().pop(py, index)?;
+        let value = self.get_inner().bind(py).pop(key);
+        Ok((key, value))
+    }
+    #[pyo3(signature = (index = -1))]
+    fn peekitem<'py>(
+        &self,
+        py: Python<'py>,
+        index: isize,
+    ) -> PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
+        let key = self
+            .get_list()
+            .get()
+            .get_data()
+            .getitem_from_int(py, index)?;
+        self.__getitem__(&key).map(|value| (key, value))
+    }
+    #[pyo3(signature = (key, default = None, /))]
+    fn setdefault<'py>(
+        &self,
+        key: Bound<'py, PyAny>,
+        default: Option<Bound<'py, PyAny>>,
+    ) -> PyResult<Option<Bound<'py, PyAny>>> {
+        let py = key.py();
+        if self.__contains__(&key)? {
+            self.__getitem__(&key).map(Some)
+        } else {
+            self.get_inner().bind(py).set_item(&key, default);
+            self.get_list().get().add(py, key.unbind());
+            Ok(default)
+        }
+    }
+    #[pyo3(signature = (m = None, /, **kwargs))]
+    fn update(
+        &self,
+        py: Python<'_>,
+        m: Option<Bound<'_, PyAny>>,
+        kwargs: Option<Bound<'_, PyDict>>,
+    ) -> PyResult<()> {
+        let update_method = intern!(py, "update");
+        let list = self.get_list().get();
+        if self.__len__(py) == 0 {
+            let slf_dict = self.get_inner().bind(py);
+            m.map(|m| slf_dict.call_method1(update_method, (m,)).unwrap());
+            kwargs.map(|kwargs| slf_dict.update(kwargs.as_mapping()));
+            list.update(self.get_inner().bind(py).keys_view().as_any());
+            return Ok(());
+        }
+        let pairs = match (m, &kwargs) {
+            (Some(py_dict), None) => py_dict,
+            _ => {
+                let d = PyDict::new(py);
+                d.call_method1(update_method, (&m,))?;
+                kwargs.map(|kw| d.call_method1(update_method, (kw.as_mapping(),)));
+                &d
+            }
+        };
+        if (10 * pairs.len()) > self.__len__(py) {
+            self.get_inner().bind(py).update(pairs.as_mapping());
+            list.clear();
+            list.update(&self.get_inner().bind(py).keys_view());
+        } else {
+            for key in pairs.items_view().try_iter().unwrap() {
+                let k = key?;
+                self.__setitem__(k, pairs.as_any().get_item(k)?);
+            }
+        }
+        Ok(())
+    }
+}

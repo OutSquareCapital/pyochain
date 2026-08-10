@@ -63,7 +63,7 @@ impl SortedList {
     }
 }
 impl SortedCollection for SortedList {
-    fn __contains__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
         let data = self.get_data();
 
