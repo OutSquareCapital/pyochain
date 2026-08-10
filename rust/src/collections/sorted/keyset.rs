@@ -162,7 +162,7 @@ impl BaseSortedListSet for SortedKeySet {
         self.list.remove(value)
     }
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        PySet::new(py, self.set.bind(py).iter()).and_then(|x| self._fromset(x))
+        PySet::new(py, self.set.bind(py).iter()).and_then(|x| self.from_set(x))
     }
 }
 impl BaseSortedSet for SortedKeySet {
@@ -197,7 +197,7 @@ impl BaseSortedSet for SortedKeySet {
         Ok(format!("{}({}{})", type_name, list_repr, key))
     }
 
-    fn _fromset<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
+    fn from_set<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
         let py = values.py();
         let list =
             SortedKeyList::from_vec(py, values.iter().map(Bound::unbind).collect(), &self.key)?;

@@ -129,7 +129,7 @@ impl BaseSortedListSet for SortedSet {
         self.list.remove(value)
     }
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        PySet::new(py, self.set.bind(py).iter()).and_then(|x| self._fromset(x))
+        PySet::new(py, self.set.bind(py).iter()).and_then(|x| self.from_set(x))
     }
 }
 impl BaseSortedSet for SortedSet {
@@ -157,7 +157,7 @@ impl BaseSortedSet for SortedSet {
         Ok(format!("{}({})", type_name, self_repr))
     }
 
-    fn _fromset<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
+    fn from_set<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
         let py = values.py();
         let list = SortedList::from_vec(py, values.iter().map(Bound::unbind).collect())?;
         Self::new(values.unbind(), list).into_bound(py)

@@ -472,11 +472,10 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
     type T: BaseSortedList;
     #[skip]
     fn _list(&self) -> &Self::T;
-
+    #[skip]
+    fn from_set<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>>;
     #[getter]
     fn get_set(&self) -> &Py<PySet>;
-
-    fn _fromset<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>>;
     fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
     #[skip]
     fn from_vec<'py>(&self, py: Python<'py>, v: Vec<Py<PyAny>>) -> PyResult<Bound<'py, Self>>;
@@ -716,11 +715,10 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
         intersection_update_sorted_set(slf, (other,)).map(|_| ())
     }
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        let diff = self
-            .get_set()
+        self.get_set()
             .bind(other.py())
-            .symmetric_difference(other)?;
-        self._fromset(diff)
+            .symmetric_difference(other)
+            .and_then(|diff| self.from_set(diff))
     }
     fn __xor__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.symmetric_difference(other)
@@ -846,7 +844,7 @@ fn difference_sorted_set<'py, T: BaseSortedSet, O: PyCallArgs<'py>>(
     slf.get_set()
         .bind(py)
         .difference(iterables)
-        .and_then(|diff| slf._fromset(diff))
+        .and_then(|diff| slf.from_set(diff))
 }
 fn intersection_sorted_set<'py, T: BaseSortedSet, O: PyCallArgs<'py>>(
     slf: &T,
@@ -856,7 +854,7 @@ fn intersection_sorted_set<'py, T: BaseSortedSet, O: PyCallArgs<'py>>(
     slf.get_set()
         .bind(py)
         .intersection(iterables)
-        .and_then(|intersect| slf._fromset(intersect))
+        .and_then(|intersect| slf.from_set(intersect))
 }
 fn union_sorted_set<'py, T: BaseSortedSet, I: IntoIterator<Item = PyResult<Bound<'py, PyAny>>>>(
     slf: &T,

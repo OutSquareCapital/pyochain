@@ -10,7 +10,6 @@ from typing import Any, Final, Self, final, overload, override
 from pyochain import SetMut, Vec
 from pyochain.abc import PyoIterator, PyoMutableSet, PyoSequence
 from pyochain.collections._base_sorted import SupportsHashableAndRichComparison
-from pyochain.rs import SortedList
 
 from ._sorted_list import BaseSortedListSet, KeyFunc
 
@@ -20,10 +19,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
     PyoMutableSet[T], PyoSequence[T], BaseSortedListSet[T], ABC
 ):
     set: Final[SetMut[T]]
-    _list: SortedList[T]
-
-    @abstractmethod
-    def _fromset(self, values: SetMut[T]) -> Self: ...
     @override
     @abstractmethod
     def __reduce__(
@@ -585,8 +580,6 @@ class SortedSet[T: SupportsHashableAndRichComparison](BaseSortedSet[T]):
 
     def __init__(self, iterable: Iterable[T] | None = None) -> None: ...
     @override
-    def _fromset(self, values: SetMut[T]) -> Self: ...
-    @override
     def __reduce__(
         self,
     ) -> tuple[type[Self], tuple[AbstractSet[T]]]: ...
@@ -618,8 +611,6 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]): 
         :param key: function used to extract comparison key
 
         """
-    @override
-    def _fromset(self, values: SetMut[T]) -> Self: ...
     @property
     def key(self) -> SetKeyFunc[T, OT]:
         """Function used to extract comparison key from values.
