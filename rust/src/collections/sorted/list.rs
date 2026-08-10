@@ -5,7 +5,7 @@ use crate::{
         cmp::py_cmp,
         data::{ListsData, get_irange_specs},
         errors, iter,
-        traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters},
+        traits::{DEFAULT_LOAD_FACTOR, InnerSorted, SortedListGetters},
     },
     iterators,
     pyovec::PyoVec,
@@ -124,7 +124,7 @@ impl InnerSorted for SortedList {
         self.get_data().clear()
     }
 
-    fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __contains__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
         let data = self.get_data();
 

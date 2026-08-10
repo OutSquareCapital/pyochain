@@ -5,7 +5,7 @@ use crate::{
         cmp::py_cmp_by_key,
         data::{ListsData, get_irange_specs},
         errors, iter,
-        traits::{DEFAULT_LOAD_FACTOR, InnerSorted, InnerSortedGetters, try_lock_recover},
+        traits::{DEFAULT_LOAD_FACTOR, InnerSorted, SortedListGetters, try_lock_recover},
     },
     iterators,
     pyovec::PyoVec,
@@ -177,7 +177,7 @@ impl InnerSorted for SortedKeyList {
         self.get_data().clear();
         self.get_keys().clear();
     }
-    fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __contains__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
         let data = self.get_data();
 

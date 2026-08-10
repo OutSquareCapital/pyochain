@@ -37,7 +37,7 @@ pub(super) fn try_lock_recover<'a, T>(mutex: &'a Mutex<T>, msg: &str) -> MutexGu
 }
 
 #[py_abc(SortedList, SortedKeyList)]
-pub(super) trait InnerSortedGetters:
+pub(super) trait SortedListGetters:
     Sized + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {
     #[skip]
@@ -48,7 +48,7 @@ pub(super) trait InnerSortedGetters:
 }
 macro_rules! impl_inner_sorted_rs {
     ($t:ty) => {
-        impl InnerSortedGetters for $t {
+        impl SortedListGetters for $t {
             #[inline(always)]
             fn get_data(&self) -> MutexGuard<'_, ListsData> {
                 try_lock_recover(&self.data, "data already locked - reentrant bug")
@@ -67,7 +67,7 @@ macro_rules! impl_inner_sorted_rs {
 impl_inner_sorted_rs!(SortedList);
 impl_inner_sorted_rs!(SortedKeyList);
 #[py_abc(SortedList, SortedKeyList)]
-pub(super) trait InnerSorted: InnerSortedGetters {
+pub(super) trait InnerSorted: SortedListGetters {
     #[skip]
     fn wrap_iter<'py>(
         py: Python<'py>,
@@ -76,7 +76,6 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize>;
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize>;
     fn clear(&self) -> ();
-    fn contains(&self, value: Bound<'_, PyAny>) -> PyResult<bool>;
     #[skip]
     fn delete(
         &self,
@@ -290,6 +289,7 @@ pub(super) trait InnerSorted: InnerSortedGetters {
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.copy(py)
     }
+    fn __contains__(&self, value: Bound<'_, PyAny>) -> PyResult<bool>;
     fn __eq__<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
         let data = self.get_data();
         match other {

@@ -1,8 +1,6 @@
-use crate::collections::sorted::traits::InnerSortedGetters;
-use crate::collections::{SortedKeyList, SortedList};
+use crate::collections::{SortedKeyList, SortedList, sorted::traits::SortedListGetters};
 use either::Either;
-use pyo3::exceptions::PyAssertionError;
-use pyo3::prelude::*;
+use pyo3::{exceptions::PyAssertionError, prelude::*};
 use std::ops::Index;
 
 type InnerSorted = Either<Py<SortedList>, Py<SortedKeyList>>;
@@ -16,7 +14,7 @@ macro_rules! pyassert {
 }
 #[pyfunction]
 pub fn assert_sorted_list_empty(lst: InnerSorted) -> PyResult<()> {
-    fn check_empty(x: &impl InnerSortedGetters) -> PyResult<()> {
+    fn check_empty(x: &impl SortedListGetters) -> PyResult<()> {
         let data = x.get_data();
         pyassert!(data.len == 0);
         pyassert!(data.maxes.is_empty());
@@ -31,7 +29,7 @@ pub fn check_sorted_list(
     py: Python<'_>,
     data: Either<Py<SortedList>, Py<SortedKeyList>>,
 ) -> PyResult<()> {
-    fn check_list(x: &impl InnerSortedGetters, py: Python<'_>) -> PyResult<()> {
+    fn check_list(x: &impl SortedListGetters, py: Python<'_>) -> PyResult<()> {
         run_checks(py, x).inspect_err(move |e| show_list(py, &e, x))
     }
     data.map_either(|x| check_list(x.get(), py), |x| check_list(x.get(), py))
@@ -42,7 +40,7 @@ pub fn check_sorted_key_list(py: Python<'_>, data: Py<SortedKeyList>) -> PyResul
     run_key_checks(py, data.get()).inspect_err(move |e| show_key_list(py, &e, data.get()))
 }
 
-fn run_checks(py: Python<'_>, data: &impl InnerSortedGetters) -> PyResult<()> {
+fn run_checks(py: Python<'_>, data: &impl SortedListGetters) -> PyResult<()> {
     let lst_data = data.get_data();
     let err = |x| PyAssertionError::new_err(x);
 
@@ -256,7 +254,7 @@ fn show_key_list(py: Python<'_>, err: &PyErr, data: &SortedKeyList) -> () {
     ];
     err.add_note(py, infos.join("\n")).unwrap()
 }
-fn show_list(py: Python<'_>, err: &PyErr, data: &impl InnerSortedGetters) -> () {
+fn show_list(py: Python<'_>, err: &PyErr, data: &impl SortedListGetters) -> () {
     let lst_data = data.get_data();
     let infos = [
         format!("len: {}", lst_data.len),
