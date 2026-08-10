@@ -59,7 +59,7 @@ impl SortedKeyList {
 #[pymethods]
 impl SortedKeyList {
     #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true), *, reverse = false))]
-    fn irange_key<'py>(
+    pub(super) fn irange_key<'py>(
         slf: Bound<'py, Self>,
         min_key: Option<Bound<'py, PyAny>>,
         max_key: Option<Bound<'py, PyAny>>,

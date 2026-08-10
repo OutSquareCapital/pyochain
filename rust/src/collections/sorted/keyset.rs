@@ -78,7 +78,9 @@ impl SortedKeySet {
         inclusive: (bool, bool),
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        todo!()
+        slf.get()
+            .get_list_bound(slf.py())
+            .pipe(|list| SortedKeyList::irange_key(list, min_key, max_key, inclusive, reverse))
     }
 
     fn bisect_key_left(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
@@ -120,7 +122,9 @@ impl SortedCollection for SortedKeySet {
         stop: Option<isize>,
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        todo!()
+        slf.get()
+            .get_list_bound(slf.py())
+            .pipe(|list| SortedKeyList::islice(list, start, stop, reverse))
     }
     #[allow(unused_variables)]
     fn irange<'py>(
@@ -130,7 +134,9 @@ impl SortedCollection for SortedKeySet {
         inclusive: (bool, bool),
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        todo!()
+        slf.get()
+            .get_list_bound(slf.py())
+            .pipe(|list| SortedKeyList::irange(list, minimum, maximum, inclusive, reverse))
     }
 
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {

@@ -92,7 +92,9 @@ impl SortedCollection for SortedSet {
         stop: Option<isize>,
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        todo!()
+        slf.get()
+            .get_list_bound(slf.py())
+            .pipe(|list| SortedList::islice(list, start, stop, reverse))
     }
     #[allow(unused_variables)]
     fn irange<'py>(
@@ -102,7 +104,9 @@ impl SortedCollection for SortedSet {
         inclusive: (bool, bool),
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        todo!()
+        slf.get()
+            .get_list_bound(slf.py())
+            .pipe(|list| SortedList::irange(list, minimum, maximum, inclusive, reverse))
     }
 
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {

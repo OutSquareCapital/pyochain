@@ -472,6 +472,11 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
     type T: BaseSortedList;
     #[skip]
     fn get_list(&self) -> &Py<Self::T>;
+    #[inline(always)]
+    #[skip]
+    fn get_list_bound<'py>(&self, py: Python<'py>) -> Bound<'py, Self::T> {
+        self.get_list().clone_ref(py).into_bound(py)
+    }
     #[skip]
     fn from_set<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>>;
     #[getter]
@@ -611,14 +616,12 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
         self.get_set().bind(py).len()
     }
 
-    fn __iter__(&self) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        // self.get_list().iter()
-        todo!()
+    fn __iter__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        self.get_list_bound(py).pipe(Self::T::__iter__)
     }
 
-    fn __reversed__(&self) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        // self.get_list().rev()
-        todo!()
+    fn __reversed__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        self.get_list_bound(py).pipe(Self::T::__reversed__)
     }
 
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
