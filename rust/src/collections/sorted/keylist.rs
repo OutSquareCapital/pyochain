@@ -6,8 +6,8 @@ use crate::{
         data::{ListsData, get_irange_specs, islice_list, reset_list},
         errors, iter,
         traits::{
-            BaseSortedList, BaseSortedListSet, DEFAULT_LOAD_FACTOR, Reduced, SortedCollection,
-            SortedListGetters, try_lock_recover,
+            BaseSortedList, BaseSortedListSet, DEFAULT_LOAD_FACTOR, PyIdentity, Reduced,
+            SortedCollection, SortedListGetters, try_lock_recover,
         },
     },
     iterators,
@@ -21,14 +21,6 @@ use pyo3::{
 use pyo3_ext::prelude::*;
 use std::sync::{Mutex, MutexGuard, atomic::AtomicUsize};
 use tap::Pipe;
-#[pyclass(frozen, generic)]
-struct PyIdentity;
-#[pymethods]
-impl PyIdentity {
-    fn __call__(&self, py: Python<'_>, value: Py<PyAny>) -> Py<PyAny> {
-        value.clone_ref(py)
-    }
-}
 #[pyclass(module = "pyochain._collections", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
 pub struct SortedKeyList {
     #[pyo3(get)]
@@ -42,7 +34,7 @@ impl SortedKeyList {
         try_lock_recover(&self.keys, "keys already locked - reentrant bug")
     }
 
-    fn new(key: Py<PyAny>) -> Self {
+    pub(super) fn new(key: Py<PyAny>) -> Self {
         Self {
             key,
             keys: Mutex::new(Vec::new()),
@@ -50,15 +42,17 @@ impl SortedKeyList {
             load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
         }
     }
-    fn from_vec<'py>(
+    pub(super) fn from_vec<'py>(
         py: Python<'py>,
         values: Vec<Py<PyAny>>,
         key: &Py<PyAny>,
-    ) -> PyResult<Bound<'py, Self>> {
+    ) -> PyResult<Self> {
         let new_inst = Self::new(key.clone_ref(py));
-        new_inst.update_from_vec(py, values)?;
+        new_inst.update_from_vec(py, values).map(|_| new_inst)
+    }
+    fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
         abc::PyoMutableSequence::build_init()
-            .add_subclass(new_inst)
+            .add_subclass(self)
             .pipe(|x| Bound::new(py, x))
     }
 }
@@ -106,10 +100,10 @@ impl SortedKeyList {
             .pipe(Ok)
     }
 
-    fn bisect_key_left(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
+    pub(super) fn bisect_key_left(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
         self.get_data().bisect_left(Some(&self.get_keys()), key)
     }
-    fn bisect_key_right(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
+    pub(super) fn bisect_key_right(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
         self.get_data().bisect_right(Some(&self.get_keys()), &key)
     }
 }
@@ -395,23 +389,23 @@ impl BaseSortedListSet for SortedKeyList {
     }
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        Self::from_vec(py, self.collapse_lists(py), &self.key)
+        Self::from_vec(py, self.collapse_lists(py), &self.key)?.into_bound(py)
     }
 }
 impl BaseSortedList for SortedKeyList {
     fn __add__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = slf.py();
         let slf_ref = slf.get();
-        if other.is(&slf) {
-            Self::from_vec(py, slf_ref.get_data().repeat(py, 2), &slf_ref.key)
+        let out = if other.is(&slf) {
+            slf_ref.get_data().repeat(py, 2)
         } else {
-            let values = slf_ref.get_data().concat(py, other)?;
-            Self::from_vec(py, values, &slf_ref.key)
-        }
+            slf_ref.get_data().concat(py, other)?
+        };
+        Self::from_vec(py, out, &slf_ref.key)?.into_bound(py)
     }
 
     fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
-        Self::from_vec(py, self.get_data().repeat(py, num), &self.key)
+        Self::from_vec(py, self.get_data().repeat(py, num), &self.key)?.into_bound(py)
     }
 
     //recursive_repr()

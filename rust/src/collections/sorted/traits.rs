@@ -27,6 +27,7 @@ pub type BoolOrNotImpl<'py> = PyResult<Either<bool, Bound<'py, PyNotImplemented>
 pub type SeqOrAny<'py> = Either<Bound<'py, PySequence>, Bound<'py, PyAny>>;
 pub(crate) type Reduced<'py> = PyResult<(Bound<'py, PyType>, Bound<'py, PyTuple>)>;
 pub(crate) type IntOrSlice<'py> = Either<isize, Bound<'py, PySlice>>;
+pub(crate) type ObjOrVec<'py> = PyResult<Either<Bound<'py, PyAny>, Bound<'py, PyoVec>>>;
 pub(super) fn try_lock_recover<'a, T>(mutex: &'a Mutex<T>, msg: &str) -> MutexGuard<'a, T> {
     match mutex.try_lock() {
         Ok(guard) => guard,
@@ -36,6 +37,14 @@ pub(super) fn try_lock_recover<'a, T>(mutex: &'a Mutex<T>, msg: &str) -> MutexGu
     }
 }
 
+#[pyclass(frozen, generic)]
+pub(super) struct PyIdentity;
+#[pymethods]
+impl PyIdentity {
+    fn __call__(&self, py: Python<'_>, value: Py<PyAny>) -> Py<PyAny> {
+        value.clone_ref(py)
+    }
+}
 #[py_abc(SortedList, SortedKeyList)]
 pub(super) trait SortedCollection:
     Sized + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
@@ -390,11 +399,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
         }
     }
 
-    fn __getitem__<'py>(
-        &self,
-        py: Python<'py>,
-        index: IntOrSlice<'py>,
-    ) -> PyResult<Either<Bound<'py, PyAny>, Bound<'py, PyoVec>>> {
+    fn __getitem__<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
         let mut data = self.get_data();
         match index {
             Either::Right(slice) => data

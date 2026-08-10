@@ -796,10 +796,6 @@ class SortedSet[T: SupportsHashableAndRichComparison](BaseSortedSet[T]):
     def union(self, *iterables: Iterable[T]) -> Self:
         return self.__class__(self.iter().chain(*iterables))
 
-    @override
-    def copy(self) -> Self:
-        return self._fromset(SetMut(self._set))
-
 
 def identity[T](value: T) -> T:
     return value
@@ -814,7 +810,6 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]): 
         iterable: Iterable[T] | None = None,
         key: SetKeyFunc[T, OT] = identity,  # pyright: ignore[reportArgumentType]
     ) -> None:
-        self._key: SetKeyFunc[T, OT] = key
         """Initialize sorted set instance based on a key function.
 
         Optional `iterable` argument provides an initial iterable of values to
@@ -839,6 +834,7 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]): 
         # _set attribute. So only create a new set if the _set attribute is not
         # already present.
 
+        self._key: SetKeyFunc[T, OT] = key
         if not hasattr(self, "_set"):
             self._set = SetMut[T](())
 
@@ -895,7 +891,3 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]): 
     @override
     def union(self, *iterables: Iterable[T]) -> Self:
         return self.__class__(self.iter().chain(*iterables), key=self._key)
-
-    @override
-    def copy(self) -> Self:
-        return self._fromset(SetMut(self._set))

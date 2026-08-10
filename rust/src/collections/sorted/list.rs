@@ -34,11 +34,13 @@ impl SortedList {
             load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
         }
     }
-    pub(super) fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<Bound<'_, Self>> {
+    pub(super) fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<Self> {
         let new_inst = Self::new();
-        new_inst.update_from_vec(py, values)?;
+        new_inst.update_from_vec(py, values).map(|_| new_inst)
+    }
+    fn into_bound<'py>(self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         abc::PyoMutableSequence::build_init()
-            .add_subclass(new_inst)
+            .add_subclass(self)
             .pipe(|x| Bound::new(py, x))
     }
 }
@@ -260,22 +262,23 @@ impl BaseSortedListSet for SortedList {
     }
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        Self::from_vec(py, self.collapse_lists(py))
+        Self::from_vec(py, self.collapse_lists(py))?.into_bound(py)
     }
 }
 impl BaseSortedList for SortedList {
     fn __add__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = slf.py();
         let data = slf.get().get_data();
-        if other.is(&slf) {
-            Self::from_vec(py, data.repeat(py, 2))
+        let out = if other.is(&slf) {
+            data.repeat(py, 2)
         } else {
-            Self::from_vec(py, data.concat(py, other)?)
-        }
+            data.concat(py, other)?
+        };
+        Self::from_vec(py, out)?.into_bound(py)
     }
 
     fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
-        Self::from_vec(py, self.get_data().repeat(py, num))
+        Self::from_vec(py, self.get_data().repeat(py, num))?.into_bound(py)
     }
 
     // @recursive_repr()
