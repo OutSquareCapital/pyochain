@@ -11,7 +11,7 @@ use crate::{
     abc,
     collections::sorted::{
         SortedList,
-        traits::{BaseSortedSet, IntoUpdate, SortedListGetters, update_sorted_set},
+        traits::{BaseSortedSet, IntoUpdate, SortedListGetters},
     },
     traits::PyoABC,
 };
@@ -51,7 +51,7 @@ impl SortedSet {
     ) -> PyResult<PyClassInitializer<Self>> {
         let init = Self::new(PySet::empty(py).unwrap(), SortedList::new());
         if let Some(iterable) = iterable {
-            update_sorted_set(&init, py, IntoUpdate::from_any(iterable))?;
+            init.update(py, IntoUpdate::from_any(iterable))?;
         }
         abc::PyoMutableSet::build_init().add_subclass(init).pipe(Ok)
     }

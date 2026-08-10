@@ -10,9 +10,7 @@ use crate::{
     abc,
     collections::{
         SortedKeyList,
-        sorted::traits::{
-            BaseSortedSet, IntoUpdate, PyIdentity, SortedListGetters, update_sorted_set,
-        },
+        sorted::traits::{BaseSortedSet, IntoUpdate, PyIdentity, SortedListGetters},
     },
     traits::PyoABC,
 };
@@ -58,7 +56,7 @@ impl SortedKeySet {
         let init = Self::new(PySet::empty(py).unwrap(), list, key_fn);
 
         if let Some(iterable) = iterable {
-            update_sorted_set(&init, py, IntoUpdate::from_any(iterable))?;
+            init.update(py, IntoUpdate::from_any(iterable))?;
         }
         abc::PyoMutableSet::build_init().add_subclass(init).pipe(Ok)
     }

@@ -486,6 +486,88 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
     #[skip]
     fn from_vec<'py>(&self, py: Python<'py>, v: Vec<Py<PyAny>>) -> PyResult<Bound<'py, Self>>;
 
+    #[skip]
+    fn update<'py>(&self, py: Python<'py>, other: IntoUpdate<'py>) -> PyResult<()> {
+        let set = self.get_set().bind(py);
+
+        let values = other.into_set(py)?;
+        if (4 * values.len()) > set.len() {
+            set.update((values,))?;
+            let list = self.get_list().get();
+            list.clear();
+            list.update(set)?;
+        } else {
+            for value in values.iter().map(Bound::unbind) {
+                self.add(py, value)?;
+            }
+        };
+        Ok(())
+    }
+    #[skip]
+    fn difference<'py, O: PyCallArgs<'py>>(
+        &self,
+        py: Python<'py>,
+        iterables: O,
+    ) -> PyResult<Bound<'py, Self>> {
+        self.get_set()
+            .bind(py)
+            .difference(iterables)
+            .and_then(|diff| self.from_set(diff))
+    }
+    #[skip]
+    fn intersection<'py, O: PyCallArgs<'py>>(
+        &self,
+        py: Python<'py>,
+        iterables: O,
+    ) -> PyResult<Bound<'py, Self>> {
+        self.get_set()
+            .bind(py)
+            .intersection(iterables)
+            .and_then(|intersect| self.from_set(intersect))
+    }
+    #[skip]
+    fn union<'py, I: IntoIterator<Item = PyResult<Bound<'py, PyAny>>>>(
+        &self,
+        py: Python<'py>,
+        iterables: I,
+    ) -> PyResult<Bound<'py, Self>> {
+        self.get_list()
+            .get()
+            .get_data()
+            .iter()
+            .map(|x| x.clone_ref(py).pipe(Ok))
+            .chain(iterables.into_iter().map(|x| x.map(Bound::unbind)))
+            .collect::<PyResult<Vec<_>>>()
+            .and_then(|v| self.from_vec(py, v))
+    }
+    #[skip]
+    fn difference_update<'py>(&self, py: Python<'_>, iterables: IntoUpdate<'py>) -> PyResult<()> {
+        let set = self.get_set().bind(py);
+        let values = iterables.into_set(py)?;
+        if (4 * values.len()) > set.len() {
+            set.difference_update((values,))?;
+            let list = self.get_list().get();
+            list.clear();
+            list.update(set)?;
+        } else {
+            for value in values {
+                self.discard(value)?
+            }
+        }
+        Ok(())
+    }
+    #[skip]
+    fn intersection_update<'py, O: PyCallArgs<'py>>(
+        &self,
+        py: Python<'py>,
+        iterables: O,
+    ) -> PyResult<()> {
+        let set = self.get_set().bind(py);
+        set.intersection_update(iterables)?;
+        let list = self.get_list().get();
+        list.clear();
+        list.update(set)
+    }
     fn __getitem__<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
         self.get_list().get().__getitem__(py, index)
     }
@@ -629,21 +711,32 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
         self.copy(py)
     }
     fn __sub__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        difference_sorted_set(self, other.py(), (other,))
+        self.difference(other.py(), (other,))
     }
     fn __isub__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<()> {
-        difference_update_sorted_set(slf, IntoUpdate::from_any(other)).map(|_| ())
+        slf.get()
+            .difference_update(slf.py(), IntoUpdate::from_any(other))
+            .map(|_| ())
     }
 
     fn __and__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        intersection_sorted_set(self, other.py(), (other,))
+        self.intersection(other.py(), (other,))
     }
     fn __rand__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.__and__(other)
     }
 
+    fn __iand__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<()> {
+        slf.get()
+            .intersection_update(slf.py(), (other,))
+            .map(|_| ())
+    }
+
+    fn __ior__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<()> {
+        slf.get().update(slf.py(), IntoUpdate::from_any(other))
+    }
     fn __or__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        union_sorted_set(self, other.py(), other.try_iter()?)
+        self.union(other.py(), other.try_iter()?)
     }
     fn __ror__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.__or__(other)
@@ -675,13 +768,13 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
         self.get_set().bind(py).remove(&value)?;
         Ok(value)
     }
-    #[pyo3(signature = (*iterables))]
-    fn difference<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        difference_sorted_set(self, iterables.py(), iterables)
+    #[pyo3(name ="difference", signature = (*iterables))]
+    fn py_difference<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
+        self.difference(iterables.py(), iterables)
     }
 
-    #[pyo3(signature = (*iterables))]
-    fn difference_update<'py>(
+    #[pyo3(name = "difference_update", signature = (*iterables))]
+    fn py_difference_update<'py>(
         slf: Bound<'py, Self>,
         iterables: Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
@@ -704,22 +797,21 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
         }
         Ok(slf)
     }
-    #[pyo3(signature = (*iterables))]
-    fn intersection<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        intersection_sorted_set(self, iterables.py(), iterables)
+    #[pyo3(name= "intersection", signature = (*iterables))]
+    fn py_intersection<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
+        self.intersection(iterables.py(), iterables)
     }
 
-    #[pyo3(signature = (*iterables))]
-    fn intersection_update<'py>(
+    #[pyo3(name = "intersection_update", signature = (*iterables))]
+    fn py_intersection_update<'py>(
         slf: Bound<'py, Self>,
         iterables: Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
-        intersection_update_sorted_set(slf, iterables)
+        slf.get()
+            .intersection_update(slf.py(), iterables)
+            .map(|_| slf)
     }
 
-    fn __iand__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<()> {
-        intersection_update_sorted_set(slf, (other,)).map(|_| ())
-    }
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.get_set()
             .bind(other.py())
@@ -747,26 +839,19 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
     fn __ixor__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<()> {
         Self::symmetric_difference_update(slf, other).map(|_| ())
     }
-    #[pyo3(signature= (*iterables))]
-    fn union<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
+    #[pyo3(name = "union", signature= (*iterables))]
+    fn py_union<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
         let py = iterables.py();
-        union_sorted_set(
-            self,
-            py,
-            iterables.iter().flat_map(|x| x.try_iter().unwrap()),
-        )
+        self.union(py, iterables.iter().flat_map(|x| x.try_iter().unwrap()))
     }
-    #[pyo3(signature = (*iterables))]
-    fn update<'py>(
+    #[pyo3(name ="update", signature = (*iterables))]
+    fn py_update<'py>(
         slf: Bound<'py, Self>,
         iterables: Bound<'py, PyTuple>,
     ) -> PyResult<Bound<'py, Self>> {
-        update_sorted_set(slf.get(), slf.py(), IntoUpdate::Tuple(iterables))?;
-        Ok(slf)
-    }
-
-    fn __ior__(slf: Bound<'_, Self>, other: Bound<'_, PyAny>) -> PyResult<()> {
-        update_sorted_set(slf.get(), slf.py(), IntoUpdate::from_any(other))
+        slf.get()
+            .update(slf.py(), IntoUpdate::Tuple(iterables))
+            .map(|_| slf)
     }
 }
 pub(super) enum IntoUpdate<'py> {
@@ -793,93 +878,7 @@ impl<'py> IntoUpdate<'py> {
         }
     }
 }
-pub(super) fn update_sorted_set<'py, T: BaseSortedSet>(
-    slf: &T,
-    py: Python<'py>,
-    other: IntoUpdate<'py>,
-) -> PyResult<()> {
-    let set = slf.get_set().bind(py);
 
-    let values = other.into_set(py)?;
-    if (4 * values.len()) > set.len() {
-        set.update((values,))?;
-        let list = slf.get_list().get();
-        list.clear();
-        list.update(set)?;
-    } else {
-        for value in values.iter().map(Bound::unbind) {
-            slf.add(py, value)?;
-        }
-    };
-    Ok(())
-}
-fn difference_update_sorted_set<'py, T: BaseSortedSet>(
-    slf: Bound<'py, T>,
-    iterables: IntoUpdate<'py>,
-) -> PyResult<Bound<'py, T>> {
-    let slf_ref = slf.get();
-    let py = slf.py();
-    let set = slf_ref.get_set().bind(py);
-    let values = iterables.into_set(py)?;
-    if (4 * values.len()) > set.len() {
-        set.difference_update((values,))?;
-        let list = slf_ref.get_list().get();
-        list.clear();
-        list.update(set)?;
-    } else {
-        for value in values {
-            slf_ref.discard(value)?
-        }
-    }
-    Ok(slf)
-}
-fn intersection_update_sorted_set<'py, T: BaseSortedSet, O: PyCallArgs<'py>>(
-    slf: Bound<'py, T>,
-    iterables: O,
-) -> PyResult<Bound<'py, T>> {
-    let slf_ref = slf.get();
-    let py = slf.py();
-    let set = slf_ref.get_set().bind(py);
-    set.intersection_update(iterables)?;
-    let list = slf_ref.get_list().get();
-    list.clear();
-    list.update(set)?;
-    Ok(slf)
-}
-fn difference_sorted_set<'py, T: BaseSortedSet, O: PyCallArgs<'py>>(
-    slf: &T,
-    py: Python<'py>,
-    iterables: O,
-) -> PyResult<Bound<'py, T>> {
-    slf.get_set()
-        .bind(py)
-        .difference(iterables)
-        .and_then(|diff| slf.from_set(diff))
-}
-fn intersection_sorted_set<'py, T: BaseSortedSet, O: PyCallArgs<'py>>(
-    slf: &T,
-    py: Python<'py>,
-    iterables: O,
-) -> PyResult<Bound<'py, T>> {
-    slf.get_set()
-        .bind(py)
-        .intersection(iterables)
-        .and_then(|intersect| slf.from_set(intersect))
-}
-fn union_sorted_set<'py, T: BaseSortedSet, I: IntoIterator<Item = PyResult<Bound<'py, PyAny>>>>(
-    slf: &T,
-    py: Python<'py>,
-    iterables: I,
-) -> PyResult<Bound<'py, T>> {
-    slf.get_list()
-        .get()
-        .get_data()
-        .iter()
-        .map(|x| x.clone_ref(py).pipe(Ok))
-        .chain(iterables.into_iter().map(|x| x.map(Bound::unbind)))
-        .collect::<PyResult<Vec<_>>>()
-        .and_then(|v| slf.from_vec(py, v))
-}
 macro_rules! impl_sorted_collection_for_set {
     ($set:ty, $list:ty) => {
         impl SortedCollection for $set {
