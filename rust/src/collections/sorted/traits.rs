@@ -20,7 +20,6 @@ use pyo3::{
 };
 use pyo3_ext::prelude::*;
 use pyochain_macros::{py_abc, try_cast};
-use std::ptr::NonNull;
 use std::{
     cmp::Ordering,
     sync::{Mutex, MutexGuard, TryLockError, atomic::Ordering as AtomicOrdering},
@@ -934,11 +933,7 @@ macro_rules! impl_sorted_collection_for_set {
                 self.get_list().get().reset(py, load)
             }
             fn clear(&self) -> () {
-                // Safety: This is what happen in fact inside every `.bind(py)` call.
-                // We use it here to avoid changing the trait method signature just for SortedSet.
-                let set: &Bound<'_, PySet> =
-                    unsafe { NonNull::from(&self.get_set()).cast().as_ref() };
-                set.clear();
+                Python::attach(|py| self.get_set().bind(py).clear());
                 self.get_list().get().clear()
             }
         }
