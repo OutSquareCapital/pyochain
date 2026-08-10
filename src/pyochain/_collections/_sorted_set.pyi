@@ -26,8 +26,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
     ) -> tuple[type[Self], tuple[AbstractSet[T]]]:
         """Support for pickle.
 
-        The tricks played with exposing methods in :func:`SortedSet.__init__`
-        confuse pickle so customize the reducer.
+        The tricks played with exposing methods in `SortedSet.__init__` confuse pickle so customize the reducer.
 
         Returns:
             tuple[type[Self], tuple[AbstractSet[T]]]: tuple of class and arguments
@@ -44,12 +43,19 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         ``ss.__or__(iterable)`` <==> ``ss | iterable``
 
-        >>> ss = SortedSet([1, 2, 3, 4, 5])
-        >>> ss.union([4, 5, 6, 7])
-        SortedSet([1, 2, 3, 4, 5, 6, 7])
+        Args:
+            *iterables (Iterable[T]): iterable arguments
 
-        :param iterables: iterable arguments
-        :return: new sorted set
+        Returns:
+            Self: new sorted set
+
+        Examples:
+            ```python
+            from pyochain.collections import SortedSet
+
+            ss = SortedSet([1, 2, 3, 4, 5])
+            assert ss.union([4, 5, 6, 7]) == SortedSet([1, 2, 3, 4, 5, 6, 7])
+            ```
 
         """
 
@@ -94,13 +100,20 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         Runtime complexity: `O(1)`
 
-        >>> ss = SortedSet([1, 2, 3, 4, 5])
-        >>> 3 in ss
-        True
+        Args:
+            value: search for value in sorted set
 
-        :param value: search for value in sorted set
-        :return: true if `value` in sorted set
+        Returns:
+            bool: `True` if `value` in sorted set
 
+        Examples:
+            ```python
+            from pyochain.collections import SortedSet
+
+            ss = SortedSet([1, 2, 3, 4, 5])
+            assert 3 in ss
+            assert not 6 in ss
+            ```
         """
 
     @overload
@@ -117,13 +130,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> ss = SortedSet("abcde")
-        >>> ss[2]
-        'c'
-        >>> ss[-1]
-        'e'
-        >>> ss[2:5]
-        Vec('c', 'd', 'e')
 
         Args:
             index (int | slice): integer or slice for indexing
@@ -131,6 +137,16 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
         Returns:
             T | Vec[T]: value or list of values
 
+        Examples:
+            ```python
+            from pyochain.collections import SortedSet
+            from pyochain import Vec
+
+            ss = SortedSet("abcde")
+            assert ss[2] == "c"
+            assert ss[-1] == "e"
+            assert ss[2:5] == Vec(("c", "d", "e"))
+            ```
         """
     def __delitem__(self, index: int | slice) -> None:
         """Remove value at `index` from sorted set.
@@ -141,17 +157,20 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> ss = SortedSet("abcde")
-        >>> del ss[2]
-        >>> ss
-        SortedSet(['a', 'b', 'd', 'e'])
-        >>> del ss[:2]
-        >>> ss
-        SortedSet(['d', 'e'])
-
-        :param index: integer or slice for indexing
+        Args:
+            index: integer or slice for indexing
         :raises IndexError: if index out of range
 
+        Examples:
+            ```python
+            from pyochain.collections import SortedSet
+
+            ss = SortedSet("abcde")
+            del ss[2]
+            assert ss == SortedSet(["a", "b", "d", "e"])
+            del ss[:2]
+            assert ss == SortedSet(["d", "e"])
+            ```
         """
 
     @override
@@ -180,7 +199,8 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         ``ss.__len__()`` <==> ``len(ss)``
 
-        :return: size of sorted set
+        Returns:
+            int: size of sorted set
 
         """
 
@@ -190,8 +210,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         ``ss.__iter__()`` <==> ``iter(ss)``
 
-        Iterating the sorted set while adding or deleting values may raise a
-        :exc:`RuntimeError` or fail to iterate over all values.
+        Iterating the sorted set while adding or deleting values may raise a `RuntimeError` or fail to iterate over all values.
 
         """
 
@@ -201,8 +220,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         ``ss.__reversed__()`` <==> ``reversed(ss)``
 
-        Iterating the sorted set while adding or deleting values may raise a
-        :exc:`RuntimeError` or fail to iterate over all values.
+        Iterating the sorted set while adding or deleting values may raise a `RuntimeError` or fail to iterate over all values.
 
         """
     @override
@@ -211,14 +229,18 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> ss = SortedSet()
-        >>> ss.add(3)
-        >>> ss.add(1)
-        >>> ss.add(2)
-        >>> ss
-        SortedSet([1, 2, 3])
+        Args:
+            value (T): value to add to sorted set
+        Examples:
+            ```python
+            from pyochain.collections import SortedSet
 
-        :param value: value to add to sorted set
+            ss = SortedSet()
+            ss.add(3)
+            ss.add(1)
+            ss.add(2)
+            assert ss == SortedSet([1, 2, 3])
+            ```
 
         """
 
@@ -235,7 +257,8 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         Runtime complexity: `O(n)`
 
-        :return: new sorted set
+        Returns:
+            Self: new sorted set
 
         """
     def __copy__(self) -> Self: ...
@@ -245,12 +268,19 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         Runtime complexity: `O(1)`
 
-        >>> ss = SortedSet([1, 2, 3, 4, 5])
-        >>> ss.count(3)
-        1
+        Args:
+            value: value to count in sorted set
 
-        :param value: value to count in sorted set
-        :return: count
+        Returns:
+            int: number of occurrences of `value` in the sorted set
+
+        Examples:
+            ```python
+            from pyochain.collections import SortedSet
+
+            ss = SortedSet([1, 2, 3, 4, 5])
+            assert ss.count(3) == 1
+            ```
 
         """
     @override
@@ -278,20 +308,9 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
     def pop(self, index: int = -1) -> T:
         """Remove and return value at `index` in sorted set.
 
-        Raise :exc:`IndexError` if the sorted set is empty or index is out of
-        range.
-
         Negative indices are supported.
 
         Runtime complexity: `O(log(n))` -- approximate.
-
-        >>> ss = SortedSet("abcde")
-        >>> ss.pop()
-        'e'
-        >>> ss.pop(2)
-        'c'
-        >>> ss
-        SortedSet(['a', 'b', 'd'])
 
         Args:
             index (int): index of value (default -1)
@@ -299,6 +318,15 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
         Returns:
             T: value at `index`
 
+        Examples:
+            ```python
+            from pyochain.collections import SortedSet
+
+            ss = SortedSet("abcde")
+            assert ss.pop() == "e"
+            assert ss.pop(2) == "c"
+            assert ss == SortedSet(["a", "b", "d"])
+            ```
         """
 
     @override
@@ -333,15 +361,21 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         ``ss.__sub__(iterable)`` <==> ``ss - iterable``
 
-        The difference is all values that are in this sorted set but not the
-        other `iterables`.
+        The difference is all values that are in this sorted set but not the other `iterables`.
 
-        >>> ss = SortedSet([1, 2, 3, 4, 5])
-        >>> ss.difference([4, 5, 6, 7])
-        SortedSet([1, 2, 3])
+        Args:
+            *iterables (Iterable[Any]): iterable arguments
 
-        :param iterables: iterable arguments
-        :return: new sorted set
+        Returns:
+            Self: new sorted set
+
+        Examples:
+            ```python
+            from pyochain.collections import SortedSet
+
+            ss = SortedSet([1, 2, 3, 4, 5])
+            assert ss.difference([4, 5, 6, 7]) == SortedSet([1, 2, 3])
+            ```
 
         """
     @override
@@ -353,17 +387,20 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         ``ss.__isub__(iterable)`` <==> ``ss -= iterable``
 
-        >>> ss = SortedSet([1, 2, 3, 4, 5])
-        >>> _ = ss.difference_update([4, 5, 6, 7])
-        >>> ss
-        SortedSet([1, 2, 3])
-
         Args:
             *iterables (Iterable[T]): iterable arguments
 
         Returns:
             Self: updated sorted set
 
+        Examples:
+            ```python
+            from pyochain.collections import SortedSet
+
+            ss = SortedSet([1, 2, 3, 4, 5])
+            ss.difference_update([4, 5, 6, 7])
+            assert ss == SortedSet([1, 2, 3])
+            ```
         """
 
     @override
@@ -380,19 +417,26 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
         The intersection is all values that are in this sorted set and each of
         the other `iterables`.
 
-        >>> ss = SortedSet([1, 2, 3, 4, 5])
-        >>> ss.intersection([4, 5, 6, 7])
-        SortedSet([4, 5])
+        Args:
+            *iterables (Iterable[Any]): iterable arguments
 
-        :param iterables: iterable arguments
-        :return: new sorted set
+        Returns:
+            Self: new sorted set
+
+        Examples:
+            ```python
+            from pyochain.collections import SortedSet
+
+            ss = SortedSet([1, 2, 3, 4, 5])
+            assert ss.intersection([4, 5, 6, 7]) == SortedSet([4, 5])
+            ```
 
         """
     @override
     def __and__(self, other: Iterable[Any]) -> Self: ...
     def __rand__(self, other: Iterable[Any]) -> Self: ...
     def intersection_update(self, *iterables: Iterable[Any]) -> Self:
-        """Update the sorted set with the intersection of `iterables`.
+        """In-place update of the sorted set with the intersection of `iterables`.
 
         The `intersection_update` method also corresponds to operator ``&=``.
 
@@ -400,16 +444,20 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         Keep only values found in itself and all `iterables`.
 
-        >>> ss = SortedSet([1, 2, 3, 4, 5])
-        >>> _ = ss.intersection_update([4, 5, 6, 7])
-        >>> ss
-        SortedSet([4, 5])
-
         Args:
             *iterables (Iterable[Any]): iterable arguments
 
         Returns:
             Self: updated sorted set
+
+        Examples:
+            ```python
+            from pyochain.collections import SortedSet
+
+            ss = SortedSet([1, 2, 3, 4, 5])
+            ss.intersection_update([4, 5, 6, 7])
+            assert ss == SortedSet([4, 5])
+            ```
 
         """
     @override
@@ -426,12 +474,19 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
         The symmetric difference is all values tha are in exactly one of the
         sets.
 
-        >>> ss = SortedSet([1, 2, 3, 4, 5])
-        >>> ss.symmetric_difference([4, 5, 6, 7])
-        SortedSet([1, 2, 3, 6, 7])
+        Args:
+            other (Iterable[T]): `other` iterable
 
-        :param other: `other` iterable
-        :return: new sorted set
+        Returns:
+            Self: new sorted set
+
+        Examples:
+            ```python
+            from pyochain.collections import SortedSet
+
+            ss = SortedSet([1, 2, 3, 4, 5])
+            assert ss.symmetric_difference([4, 5, 6, 7]) == SortedSet([1, 2, 3, 6, 7])
+            ```
 
         """
     @override
@@ -440,7 +495,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
         ...
     def __rxor__(self, other: Iterable[T]) -> Self: ...
     def symmetric_difference_update(self, other: Iterable[T]) -> Self:
-        """Update the sorted set with the symmetric difference with `other`.
+        """In-place update of the sorted set with the symmetric difference with `other`.
 
         The `symmetric_difference_update` method also corresponds to operator
         ``^=``.
@@ -449,17 +504,20 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 
         Keep only values found in exactly one of itself and `other`.
 
-        >>> ss = SortedSet([1, 2, 3, 4, 5])
-        >>> _ = ss.symmetric_difference_update([4, 5, 6, 7])
-        >>> ss
-        SortedSet([1, 2, 3, 6, 7])
-
         Args:
             other (Iterable[T]): `other` iterable
 
         Returns:
             Self: updated sorted set
 
+        Examples:
+            ```python
+            from pyochain.collections import SortedSet
+
+            ss = SortedSet([1, 2, 3, 4, 5])
+            ss.symmetric_difference_update([4, 5, 6, 7])
+            assert ss == SortedSet([1, 2, 3, 6, 7])
+            ```
         """
 
     @override
@@ -470,16 +528,12 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
         ...
     def __ror__(self, other: Iterable[T]) -> Self: ...
     def update(self, *iterables: Iterable[T]) -> Self:
-        """Update the sorted set adding values from all `iterables`.
+        """In-place update of the sorted set, adding values from all `iterables`.
 
         The `update` method also corresponds to operator ``|=``.
 
         ``ss.__ior__(iterable)`` <==> ``ss |= iterable``
 
-        >>> ss = SortedSet([1, 2, 3, 4, 5])
-        >>> _ = ss.update([4, 5, 6, 7])
-        >>> ss
-        SortedSet([1, 2, 3, 4, 5, 6, 7])
 
         Args:
             *iterables (Iterable[T]): iterable arguments
@@ -487,6 +541,14 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
         Returns:
             Self: updated sorted set
 
+        Examples:
+            ```python
+            from pyochain.collections import SortedSet
+
+            ss = SortedSet([1, 2, 3, 4, 5])
+            ss.update([4, 5, 6, 7])
+            assert ss == SortedSet([1, 2, 3, 4, 5, 6, 7])
+            ```
         """
 
     @override
@@ -496,12 +558,13 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
 class SortedSet[T: SupportsHashableAndRichComparison](BaseSortedSet[T]):
     """Sorted set is a sorted mutable set.
 
-    Sorted set values are maintained in sorted order. The design of sorted set
-    is simple: sorted set uses a set for set-operations and maintains a sorted
-    list of values.
+    Sorted set values are maintained in sorted order.
 
-    Sorted set values must be hashable and comparable. The hash and total
-    ordering of values must not change while they are stored in the sorted set.
+    The design of sorted set is simple: sorted set uses a set for set-operations and maintains a sorted list of values.
+
+    Sorted set values must be hashable and comparable.
+
+    The hash and total ordering of values must not change while they are stored in the sorted set.
 
     Mutable set methods:
 
@@ -556,22 +619,25 @@ class SortedSet[T: SupportsHashableAndRichComparison](BaseSortedSet[T]):
     * :func:`SortedKeyList.bisect_key_right`
     * :func:`SortedKeyList.irange_key`
 
-    Sorted set comparisons use subset and superset relations. Two sorted sets
-    are equal if and only if every element of each sorted set is contained in
-    the other (each is a subset of the other). A sorted set is less than
-    another sorted set if and only if the first sorted set is a proper subset
-    of the second sorted set (is a subset, but is not equal). A sorted set is
-    greater than another sorted set if and only if the first sorted set is a
-    proper superset of the second sorted set (is a superset, but is not equal).
+    Sorted set comparisons use subset and superset relations.
 
-    Optional `iterable` argument provides an initial iterable of values to
-    initialize the sorted set.
+    Two sorted sets are equal if and only if every element of each sorted set is contained in the other (each is a subset of the other).
+
+    A sorted set is less than another sorted set if and only if the first sorted set is a proper subset
+    of the second sorted set (is a subset, but is not equal).
+
+    A sorted set is greater than another sorted set if and only if the first sorted set is a proper superset of the second sorted set (is a superset, but is not equal).
+
+    Optional `iterable` argument provides an initial iterable of values to initialize the sorted set.
 
     Runtime complexity: `O(n*log(n))`
 
-    >>> ss = SortedSet([3, 1, 2, 5, 4])
-    >>> ss
-    SortedSet([1, 2, 3, 4, 5])
+    ```python
+    from pyochain.collections import SortedSet
+
+    ss = SortedSet([3, 1, 2, 5, 4])
+    assert repr(ss) == "SortedSet([1, 2, 3, 4, 5])"
+    ```
 
     Args:
         iterable (Iterable[T] | None): initial values (optional)
@@ -593,22 +659,31 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]): 
     ) -> Self:
         """Initialize sorted set instance based on a key function.
 
-        Optional `iterable` argument provides an initial iterable of values to
-        initialize the sorted key set.
+        Optional `iterable` argument provides an initial iterable of values to initialize the sorted key set.
 
-        The `key` argument defines a callable that, like the `key`
-        argument to Python's `sorted` function, extracts a comparison key from
-        each value. The default, none, compares values directly.
+        The `key` argument defines a `Callable` that, like the `key` argument to Python's `sorted` function,
+        extracts a comparison key from each value.
+
+        The default, `None`, compares values directly.
 
         Runtime complexity: `O(n*log(n))`
 
-        >>> from operator import neg
-        >>> ss = SortedKeySet([3, 1, 2, 5, 4], neg)
-        >>> ss
-        SortedKeySet([5, 4, 3, 2, 1], key=<built-in function neg>)
+        Args:
+            iterable (Iterable[T] | None): initial values (optional)
 
-        :param iterable: initial values (optional)
-        :param key: function used to extract comparison key
+        Args:
+            key (SetKeyFunc[T, OT] | None): function used to extract comparison key
+
+        Examples:
+            ```python
+            from pyochain.collections import SortedKeySet
+            from operator import neg
+
+            ss = SortedKeySet([3, 1, 2, 5, 4], neg)
+            assert (
+                repr(ss) == "SortedKeySet([5, 4, 3, 2, 1], key=<built-in function neg>)"
+            )
+            ```
 
         """
     @property

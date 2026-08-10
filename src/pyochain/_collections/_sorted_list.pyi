@@ -253,17 +253,17 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
             index: integer or slice for indexing
 
         Examples:
-        ```python
-        from pyochain.collections import SortedList
+            ```python
+            from pyochain.collections import SortedList
 
-        sl = SortedList("abcde")
+            sl = SortedList("abcde")
 
-        del sl[2]
-        assert sl == ["a", "b", "d", "e"]
+            del sl[2]
+            assert sl == ["a", "b", "d", "e"]
 
-        del sl[:2]
-        assert sl == ["d", "e"]
-        ```
+            del sl[:2]
+            assert sl == ["d", "e"]
+            ```
         """
 
     @override
@@ -500,19 +500,19 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
             iterable (Iterable[T]): iterable of values to add
 
         Examples:
-        ```python
-        from pyochain.collections import SortedList, SortedKeyList
+            ```python
+            from pyochain.collections import SortedList, SortedKeyList
 
-        sl = SortedList()
-        sl.update([3, 1, 2])
-        assert sl == SortedList([1, 2, 3])
+            sl = SortedList()
+            sl.update([3, 1, 2])
+            assert sl == SortedList([1, 2, 3])
 
-        from operator import neg
+            from operator import neg
 
-        skl = SortedKeyList(key=neg)
-        skl.update([3, 1, 2])
-        assert skl == [3, 2, 1]
-        ```
+            skl = SortedKeyList(key=neg)
+            skl.update([3, 1, 2])
+            assert skl == [3, 2, 1]
+            ```
         """
 
     @override
@@ -751,7 +751,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
             key (OT): insertion index of key in sorted-key list
 
         Returns:
-            (int): index
+            int: index
 
         Examples:
         ```python
