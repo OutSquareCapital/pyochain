@@ -471,7 +471,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
 pub(super) trait BaseSortedSet: BaseSortedListSet {
     type T: BaseSortedList;
     #[skip]
-    fn _list(&self) -> &Self::T;
+    fn get_list(&self) -> &Self::T;
     #[skip]
     fn from_set<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>>;
     #[getter]
@@ -481,10 +481,10 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
     fn from_vec<'py>(&self, py: Python<'py>, v: Vec<Py<PyAny>>) -> PyResult<Bound<'py, Self>>;
 
     fn __getitem__<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
-        self._list().__getitem__(py, index)
+        self.get_list().__getitem__(py, index)
     }
     fn __delitem__<'py>(&self, py: Python<'_>, index: IntOrSlice<'py>) -> PyResult<()> {
-        let mut list = self._list().get_data();
+        let mut list = self.get_list().get_data();
         match index {
             Either::Right(slice) => {
                 let values = list
@@ -492,13 +492,13 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
                     .iter()
                     .collect_bound::<PySet>(py)?;
                 self.get_set().bind(py).difference_update((values,))?;
-                self._list().delitem_from_slice(py, slice)?;
+                self.get_list().delitem_from_slice(py, slice)?;
             }
             Either::Left(int) => {
                 let value = list.getitem_from_int(py, int)?;
                 drop(list);
                 self.get_set().bind(py).remove(&value)?;
-                self._list().delitem_from_int(py, int)?;
+                self.get_list().delitem_from_int(py, int)?;
             }
         };
         Ok(())
@@ -611,12 +611,12 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
     }
 
     fn __iter__(&self) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        // self._list().iter()
+        // self.get_list().iter()
         todo!()
     }
 
     fn __reversed__(&self) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        // self._list().rev()
+        // self.get_list().rev()
         todo!()
     }
 
@@ -666,7 +666,7 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
 
     #[pyo3(signature = (index = -1))]
     fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
-        let value = self._list().pop(py, index)?;
+        let value = self.get_list().pop(py, index)?;
         self.get_set().bind(py).remove(&value)?;
         Ok(value)
     }
@@ -689,8 +689,8 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
             .try_collect_bound::<PySet>(py)?;
         if (4 * values.len()) > set.len() {
             set.difference_update((values,))?;
-            slf_ref._list().clear();
-            slf_ref._list().update(set)?;
+            slf_ref.get_list().clear();
+            slf_ref.get_list().update(set)?;
         } else {
             for value in values {
                 slf_ref.discard(value)?
@@ -733,8 +733,8 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
         let slf_ref = slf.get();
         let set = slf_ref.get_set().bind(other.py());
         set.symmetric_difference_update(other)?;
-        slf_ref._list().clear();
-        slf_ref._list().update(set)?;
+        slf_ref.get_list().clear();
+        slf_ref.get_list().update(set)?;
         Ok(slf)
     }
     fn __ixor__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<()> {
@@ -796,8 +796,8 @@ pub(super) fn update_sorted_set<'py, T: BaseSortedSet>(
     let values = other.into_set(py)?;
     if (4 * values.len()) > set.len() {
         set.update((values,))?;
-        slf._list().clear();
-        slf._list().update(set)?;
+        slf.get_list().clear();
+        slf.get_list().update(set)?;
     } else {
         for value in values.iter().map(Bound::unbind) {
             slf.add(py, value)?;
@@ -815,8 +815,8 @@ fn difference_update_sorted_set<'py, T: BaseSortedSet>(
     let values = iterables.into_set(py)?;
     if (4 * values.len()) > set.len() {
         set.difference_update((values,))?;
-        slf_ref._list().clear();
-        slf_ref._list().update(set)?;
+        slf_ref.get_list().clear();
+        slf_ref.get_list().update(set)?;
     } else {
         for value in values {
             slf_ref.discard(value)?
@@ -832,8 +832,8 @@ fn intersection_update_sorted_set<'py, T: BaseSortedSet, O: PyCallArgs<'py>>(
     let py = slf.py();
     let set = slf_ref.get_set().bind(py);
     set.intersection_update(iterables)?;
-    slf_ref._list().clear();
-    slf_ref._list().update(set)?;
+    slf_ref.get_list().clear();
+    slf_ref.get_list().update(set)?;
     Ok(slf)
 }
 fn difference_sorted_set<'py, T: BaseSortedSet, O: PyCallArgs<'py>>(
@@ -861,7 +861,7 @@ fn union_sorted_set<'py, T: BaseSortedSet, I: IntoIterator<Item = PyResult<Bound
     py: Python<'py>,
     iterables: I,
 ) -> PyResult<Bound<'py, T>> {
-    slf._list()
+    slf.get_list()
         .get_data()
         .iter()
         .map(|x| x.clone_ref(py).pipe(Ok))

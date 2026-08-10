@@ -134,9 +134,11 @@ impl BaseSortedListSet for SortedSet {
 }
 impl BaseSortedSet for SortedSet {
     type T = SortedList;
-    fn _list(&self) -> &SortedList {
+    #[inline(always)]
+    fn get_list(&self) -> &SortedList {
         &self.list
     }
+    #[inline(always)]
     fn get_set(&self) -> &Py<PySet> {
         &self.set
     }
@@ -144,6 +146,12 @@ impl BaseSortedSet for SortedSet {
         SortedList::from_vec(py, v)
             .map(|list| Self::new(PySet::empty(py).unwrap().unbind(), list))
             .and_then(|x| x.into_bound(py))
+    }
+
+    fn from_set<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
+        let py = values.py();
+        let list = SortedList::from_vec(py, values.iter().map(Bound::unbind).collect())?;
+        Self::new(values.unbind(), list).into_bound(py)
     }
     //@recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
@@ -155,11 +163,5 @@ impl BaseSortedSet for SortedSet {
             .collect_bound::<PyList>(py)?
             .repr()?;
         Ok(format!("{}({})", type_name, self_repr))
-    }
-
-    fn from_set<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
-        let py = values.py();
-        let list = SortedList::from_vec(py, values.iter().map(Bound::unbind).collect())?;
-        Self::new(values.unbind(), list).into_bound(py)
     }
 }

@@ -27,9 +27,9 @@ pub fn check_sorted_set(
         run_checks(py, x).inspect_err(move |e| show_list(py, &e, x))
     }
     fn check_len(x: &impl BaseSortedSet, py: Python<'_>) -> PyResult<()> {
-        check_list(x._list(), py)?;
+        check_list(x.get_list(), py)?;
         let set = x.get_set().bind(py);
-        let data = x._list().get_data();
+        let data = x.get_list().get_data();
         pyassert!(set.len() == data.len);
         pyassert!(
             data.iter()

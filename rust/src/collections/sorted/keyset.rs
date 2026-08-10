@@ -22,12 +22,21 @@ use crate::{
 #[pyclass(module = "pyochain._collections", frozen, generic, extends = abc::PyoMutableSet)]
 pub struct SortedKeySet {
     set: Py<PySet>,
-    list: SortedKeyList,
+    list: Py<SortedKeyList>,
     key: Py<PyAny>,
 }
 impl SortedKeySet {
-    fn new(set: Py<PySet>, list: SortedKeyList, key: Py<PyAny>) -> Self {
-        Self { set, list, key }
+    fn new(set: Bound<'_, PySet>, list: SortedKeyList, key: Py<PyAny>) -> Self {
+        let py = set.py();
+        let list = abc::PyoMutableSequence::build_init()
+            .add_subclass(list)
+            .pipe(|cls| Py::new(py, cls))
+            .expect("Failed to create SortedKeyList instance from PyClassInitializer in SortedKeySet::new");
+        Self {
+            set: set.unbind(),
+            list,
+            key,
+        }
     }
 
     fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
@@ -49,16 +58,12 @@ impl SortedKeySet {
             .map(Bound::unbind)
             .unwrap_or_else(|| PyIdentity.into_py_any(py).unwrap());
         let list = SortedKeyList::new(key_fn.clone_ref(py));
-        let init = Self::new(PySet::empty(py).unwrap().unbind(), list, key_fn);
+        let init = Self::new(PySet::empty(py).unwrap(), list, key_fn);
 
         if let Some(iterable) = iterable {
             update_sorted_set(&init, py, IntoUpdate::from_any(iterable))?;
         }
         abc::PyoMutableSet::build_init().add_subclass(init).pipe(Ok)
-    }
-    #[getter]
-    fn get_set(&self, py: Python<'_>) -> Py<PySet> {
-        self.set.clone_ref(py)
     }
     #[getter]
     fn get_key<'py>(&self, py: Python<'py>) -> &Bound<'py, PyAny> {
@@ -77,11 +82,11 @@ impl SortedKeySet {
     }
 
     fn bisect_key_left(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
-        self.list.bisect_key_left(key)
+        self.get_list().bisect_key_left(key)
     }
 
     fn bisect_key_right(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
-        self.list.bisect_key_right(key)
+        self.get_list().bisect_key_right(key)
     }
 }
 impl SortedCollection for SortedKeySet {
@@ -93,11 +98,11 @@ impl SortedCollection for SortedKeySet {
     }
 
     fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
-        self.list.bisect_left(value)
+        self.get_list().bisect_left(value)
     }
 
     fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.list.bisect_right(value)
+        self.get_list().bisect_right(value)
     }
 
     fn index(
@@ -106,7 +111,7 @@ impl SortedCollection for SortedKeySet {
         start: Option<isize>,
         stop: Option<isize>,
     ) -> PyResult<isize> {
-        self.list.index(value, start, stop)
+        self.get_list().index(value, start, stop)
     }
     #[allow(unused_variables)]
     fn islice<'py>(
@@ -129,14 +134,14 @@ impl SortedCollection for SortedKeySet {
     }
 
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        self.list.reset(py, load)
+        self.get_list().reset(py, load)
     }
     fn clear(&self) -> () {
         // Safety: This is what happen in fact inside every `.bind(py)` call.
         // We use it here to avoid changing the trait method signature just for SortedSet.
         let set: &Bound<'_, PySet> = unsafe { NonNull::from(&self.set).cast().as_ref() };
         set.clear();
-        self.list.clear()
+        self.get_list().clear()
     }
 }
 impl BaseSortedListSet for SortedKeySet {
@@ -144,7 +149,7 @@ impl BaseSortedListSet for SortedKeySet {
         let set = self.set.bind(py);
         if !set.contains(&value)? {
             set.add(&value)?;
-            self.list.add(py, value)?;
+            self.get_list().add(py, value)?;
         }
         Ok(())
     }
@@ -152,14 +157,14 @@ impl BaseSortedListSet for SortedKeySet {
         let set = self.set.bind(value.py());
         if set.contains(&value)? {
             set.remove(&value)?;
-            self.list.remove(value)?;
+            self.get_list().remove(value)?;
         }
         Ok(())
     }
 
     fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         self.set.bind(value.py()).remove(&value)?;
-        self.list.remove(value)
+        self.get_list().remove(value)
     }
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         PySet::new(py, self.set.bind(py).iter()).and_then(|x| self.from_set(x))
@@ -167,22 +172,24 @@ impl BaseSortedListSet for SortedKeySet {
 }
 impl BaseSortedSet for SortedKeySet {
     type T = SortedKeyList;
-    fn _list(&self) -> &SortedKeyList {
-        &self.list
+    #[inline(always)]
+    fn get_list(&self) -> &SortedKeyList {
+        &self.list.get()
     }
+    #[inline(always)]
     fn get_set(&self) -> &Py<PySet> {
         &self.set
     }
     fn from_vec<'py>(&self, py: Python<'py>, v: Vec<Py<PyAny>>) -> PyResult<Bound<'py, Self>> {
         SortedKeyList::from_vec(py, v, &self.key)
-            .map(|list| {
-                Self::new(
-                    PySet::empty(py).unwrap().unbind(),
-                    list,
-                    self.key.clone_ref(py),
-                )
-            })
+            .map(|list| Self::new(PySet::empty(py).unwrap(), list, self.key.clone_ref(py)))
             .and_then(|x| x.into_bound(py))
+    }
+    fn from_set<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
+        let py = values.py();
+        let list =
+            SortedKeyList::from_vec(py, values.iter().map(Bound::unbind).collect(), &self.key)?;
+        Self::new(values, list, self.key.clone_ref(py)).into_bound(py)
     }
     //@recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
@@ -190,17 +197,11 @@ impl BaseSortedSet for SortedKeySet {
         let type_name = Self::type_object(py).name()?;
         let list_repr = self
             .list
+            .get()
             .get_data()
             .iter()
             .collect_bound::<PyList>(py)?
             .repr()?;
         Ok(format!("{}({}{})", type_name, list_repr, key))
-    }
-
-    fn from_set<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>> {
-        let py = values.py();
-        let list =
-            SortedKeyList::from_vec(py, values.iter().map(Bound::unbind).collect(), &self.key)?;
-        Self::new(values.unbind(), list, self.key.clone_ref(py)).into_bound(py)
     }
 }
