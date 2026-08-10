@@ -556,12 +556,14 @@ pub(super) fn get_irange_specs(
         })?;
     IsliceBounds::from_irange_spec(min_pos, min_idx, max_pos, max_idx).pipe(Ok)
 }
+#[inline]
 pub(super) fn reset_list<T: BaseSortedList>(slf: &T, py: Python<'_>, load: usize) -> PyResult<()> {
     let values = slf.collapse_lists(py);
     slf.clear();
     slf.set_load(load);
     slf.update_from_vec(py, values)
 }
+#[inline(always)]
 pub(super) fn islice_list<'py, T: BaseSortedList>(
     slf: Bound<'py, T>,
     py: Python<'py>,
