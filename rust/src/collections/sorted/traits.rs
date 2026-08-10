@@ -26,6 +26,7 @@ pub const DEFAULT_LOAD_FACTOR: usize = 1000;
 pub type BoolOrNotImpl<'py> = PyResult<Either<bool, Bound<'py, PyNotImplemented>>>;
 pub type SeqOrAny<'py> = Either<Bound<'py, PySequence>, Bound<'py, PyAny>>;
 pub(crate) type Reduced<'py> = PyResult<(Bound<'py, PyType>, Bound<'py, PyTuple>)>;
+pub(crate) type IntOrSlice<'py> = Either<isize, Bound<'py, PySlice>>;
 pub(super) fn try_lock_recover<'a, T>(mutex: &'a Mutex<T>, msg: &str) -> MutexGuard<'a, T> {
     match mutex.try_lock() {
         Ok(guard) => guard,
@@ -392,7 +393,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
     fn __getitem__<'py>(
         &self,
         py: Python<'py>,
-        index: Either<isize, Bound<'py, PySlice>>,
+        index: IntOrSlice<'py>,
     ) -> PyResult<Either<Bound<'py, PyAny>, Bound<'py, PyoVec>>> {
         let mut data = self.get_data();
         match index {
