@@ -50,10 +50,6 @@ impl SortedSet {
         }
         abc::PyoMutableSet::build_init().add_subclass(init).pipe(Ok)
     }
-    #[getter]
-    fn get_set(&self, py: Python<'_>) -> Py<PySet> {
-        self.set.clone_ref(py)
-    }
 }
 impl SortedCollection for SortedSet {
     fn __contains__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
@@ -141,7 +137,7 @@ impl BaseSortedSet for SortedSet {
     fn _list(&self) -> &SortedList {
         &self.list
     }
-    fn _set(&self) -> &Py<PySet> {
+    fn get_set(&self) -> &Py<PySet> {
         &self.set
     }
     fn from_vec<'py>(&self, py: Python<'py>, v: Vec<Py<PyAny>>) -> PyResult<Bound<'py, Self>> {

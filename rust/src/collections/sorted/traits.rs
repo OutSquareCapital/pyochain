@@ -471,9 +471,10 @@ pub(super) trait BaseSortedList: SortedListGetters {
 pub(super) trait BaseSortedSet: BaseSortedListSet {
     type T: BaseSortedList;
     #[skip]
-    fn _set(&self) -> &Py<PySet>;
-    #[skip]
     fn _list(&self) -> &Self::T;
+
+    #[getter]
+    fn get_set(&self) -> &Py<PySet>;
 
     fn _fromset<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>>;
     fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
@@ -491,13 +492,13 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
                     .getitem_from_slice(py, &slice)?
                     .iter()
                     .collect_bound::<PySet>(py)?;
-                self._set().bind(py).difference_update((values,))?;
+                self.get_set().bind(py).difference_update((values,))?;
                 self._list().delitem_from_slice(py, slice)?;
             }
             Either::Left(int) => {
                 let value = list.getitem_from_int(py, int)?;
                 drop(list);
-                self._set().bind(py).remove(&value)?;
+                self.get_set().bind(py).remove(&value)?;
                 self._list().delitem_from_int(py, int)?;
             }
         };
@@ -508,11 +509,11 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
         try_cast! {
             match other {
                 SortedSet | SortedKeySet => self
-                    ._set()
+                    .get_set()
                     .bind(py)
-                    .eq(other.get()._set().bind(py))
+                    .eq(other.get().get_set().bind(py))
                     .map(Either::Left),
-                PySet => self._set().bind(py).eq(other).map(Either::Left),
+                PySet => self.get_set().bind(py).eq(other).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)
@@ -525,11 +526,11 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
         try_cast! {
             match other {
                 SortedSet | SortedKeySet => self
-                    ._set()
+                    .get_set()
                     .bind(py)
-                    .ne(other.get()._set().bind(py))
+                    .ne(other.get().get_set().bind(py))
                     .map(Either::Left),
-                PySet => self._set().bind(py).ne(other).map(Either::Left),
+                PySet => self.get_set().bind(py).ne(other).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)
@@ -542,11 +543,11 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
         try_cast! {
             match other {
                 SortedSet | SortedKeySet => self
-                    ._set()
+                    .get_set()
                     .bind(py)
-                    .lt(other.get()._set().bind(py))
+                    .lt(other.get().get_set().bind(py))
                     .map(Either::Left),
-                PySet => self._set().bind(py).lt(other).map(Either::Left),
+                PySet => self.get_set().bind(py).lt(other).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)
@@ -559,11 +560,11 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
         try_cast! {
             match other {
                 SortedSet | SortedKeySet => self
-                    ._set()
+                    .get_set()
                     .bind(py)
-                    .gt(other.get()._set().bind(py))
+                    .gt(other.get().get_set().bind(py))
                     .map(Either::Left),
-                PySet => self._set().bind(py).gt(other).map(Either::Left),
+                PySet => self.get_set().bind(py).gt(other).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)
@@ -576,11 +577,11 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
         try_cast! {
             match other {
                 SortedSet | SortedKeySet => self
-                    ._set()
+                    .get_set()
                     .bind(py)
-                    .le(other.get()._set().bind(py))
+                    .le(other.get().get_set().bind(py))
                     .map(Either::Left),
-                PySet => self._set().bind(py).le(other).map(Either::Left),
+                PySet => self.get_set().bind(py).le(other).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)
@@ -593,11 +594,11 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
         try_cast! {
             match other {
                 SortedSet | SortedKeySet => self
-                    ._set()
+                    .get_set()
                     .bind(py)
-                    .ge(other.get()._set().bind(py))
+                    .ge(other.get().get_set().bind(py))
                     .map(Either::Left),
-                PySet => self._set().bind(py).ge(other).map(Either::Left),
+                PySet => self.get_set().bind(py).ge(other).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)
@@ -607,7 +608,7 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
     }
 
     fn __len__(&self, py: Python<'_>) -> usize {
-        self._set().bind(py).len()
+        self.get_set().bind(py).len()
     }
 
     fn __iter__(&self) -> PyResult<Bound<'_, abc::PyoIterator>> {
@@ -645,19 +646,19 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
     }
 
     fn is_disjoint<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self._set().bind(other.py()).isdisjoint(other)
+        self.get_set().bind(other.py()).isdisjoint(other)
     }
 
     fn is_subset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self._set().bind(other.py()).issubset(other)
+        self.get_set().bind(other.py()).issubset(other)
     }
 
     fn is_superset<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyBool>> {
-        self._set().bind(other.py()).issuperset(other)
+        self.get_set().bind(other.py()).issuperset(other)
     }
 
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
-        if self._set().bind(value.py()).contains(value)? {
+        if self.get_set().bind(value.py()).contains(value)? {
             Ok(1)
         } else {
             Ok(0)
@@ -667,7 +668,7 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
     #[pyo3(signature = (index = -1))]
     fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         let value = self._list().pop(py, index)?;
-        self._set().bind(py).remove(&value)?;
+        self.get_set().bind(py).remove(&value)?;
         Ok(value)
     }
     #[pyo3(signature = (*iterables))]
@@ -682,7 +683,7 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
     ) -> PyResult<Bound<'py, Self>> {
         let slf_ref = slf.get();
         let py = iterables.py();
-        let set = slf_ref._set().bind(py);
+        let set = slf_ref.get_set().bind(py);
         let values = iterables
             .iter()
             .flat_map(|x| x.try_iter().unwrap())
@@ -715,7 +716,10 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
         intersection_update_sorted_set(slf, (other,)).map(|_| ())
     }
     fn symmetric_difference<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        let diff = self._set().bind(other.py()).symmetric_difference(other)?;
+        let diff = self
+            .get_set()
+            .bind(other.py())
+            .symmetric_difference(other)?;
         self._fromset(diff)
     }
     fn __xor__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
@@ -729,7 +733,7 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
         other: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
         let slf_ref = slf.get();
-        let set = slf_ref._set().bind(other.py());
+        let set = slf_ref.get_set().bind(other.py());
         set.symmetric_difference_update(other)?;
         slf_ref._list().clear();
         slf_ref._list().update(set)?;
@@ -789,7 +793,7 @@ pub(super) fn update_sorted_set<'py, T: BaseSortedSet>(
     py: Python<'py>,
     other: IntoUpdate<'py>,
 ) -> PyResult<()> {
-    let set = slf._set().bind(py);
+    let set = slf.get_set().bind(py);
 
     let values = other.into_set(py)?;
     if (4 * values.len()) > set.len() {
@@ -809,7 +813,7 @@ fn difference_update_sorted_set<'py, T: BaseSortedSet>(
 ) -> PyResult<Bound<'py, T>> {
     let slf_ref = slf.get();
     let py = slf.py();
-    let set = slf_ref._set().bind(py);
+    let set = slf_ref.get_set().bind(py);
     let values = iterables.into_set(py)?;
     if (4 * values.len()) > set.len() {
         set.difference_update((values,))?;
@@ -828,7 +832,7 @@ fn intersection_update_sorted_set<'py, T: BaseSortedSet, O: PyCallArgs<'py>>(
 ) -> PyResult<Bound<'py, T>> {
     let slf_ref = slf.get();
     let py = slf.py();
-    let set = slf_ref._set().bind(py);
+    let set = slf_ref.get_set().bind(py);
     set.intersection_update(iterables)?;
     slf_ref._list().clear();
     slf_ref._list().update(set)?;
@@ -839,7 +843,7 @@ fn difference_sorted_set<'py, T: BaseSortedSet, O: PyCallArgs<'py>>(
     py: Python<'py>,
     iterables: O,
 ) -> PyResult<Bound<'py, T>> {
-    slf._set()
+    slf.get_set()
         .bind(py)
         .difference(iterables)
         .and_then(|diff| slf._fromset(diff))
@@ -849,7 +853,7 @@ fn intersection_sorted_set<'py, T: BaseSortedSet, O: PyCallArgs<'py>>(
     py: Python<'py>,
     iterables: O,
 ) -> PyResult<Bound<'py, T>> {
-    slf._set()
+    slf.get_set()
         .bind(py)
         .intersection(iterables)
         .and_then(|intersect| slf._fromset(intersect))

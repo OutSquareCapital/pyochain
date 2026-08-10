@@ -170,7 +170,7 @@ impl BaseSortedSet for SortedKeySet {
     fn _list(&self) -> &SortedKeyList {
         &self.list
     }
-    fn _set(&self) -> &Py<PySet> {
+    fn get_set(&self) -> &Py<PySet> {
         &self.set
     }
     fn from_vec<'py>(&self, py: Python<'py>, v: Vec<Py<PyAny>>) -> PyResult<Bound<'py, Self>> {
