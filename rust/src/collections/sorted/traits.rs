@@ -9,7 +9,7 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
-    BoundObject, PyClass,
+    BoundObject, PyClass, PyTypeInfo,
     call::PyCallArgs,
     exceptions::{PyIndexError, PyNotImplementedError},
     prelude::*,
@@ -20,6 +20,7 @@ use pyo3::{
 };
 use pyo3_ext::prelude::*;
 use pyochain_macros::{py_abc, try_cast};
+use std::ptr::NonNull;
 use std::{
     cmp::Ordering,
     sync::{Mutex, MutexGuard, TryLockError, atomic::Ordering as AtomicOrdering},
@@ -879,3 +880,96 @@ fn union_sorted_set<'py, T: BaseSortedSet, I: IntoIterator<Item = PyResult<Bound
         .collect::<PyResult<Vec<_>>>()
         .and_then(|v| slf.from_vec(py, v))
 }
+macro_rules! impl_sorted_collection_for_set {
+    ($set:ty, $list:ty) => {
+        impl SortedCollection for $set {
+            fn __contains__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
+                self.get_set().bind(value.py()).contains(value)
+            }
+            fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
+                PyTuple::new(py, [self.get_set().clone_ref(py)])
+                    .map(|tup| (Self::type_object(py), tup))
+            }
+
+            fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
+                self.get_list().get().bisect_left(value)
+            }
+
+            fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
+                self.get_list().get().bisect_right(value)
+            }
+
+            fn index(
+                &self,
+                value: Bound<'_, PyAny>,
+                start: Option<isize>,
+                stop: Option<isize>,
+            ) -> PyResult<isize> {
+                self.get_list().get().index(value, start, stop)
+            }
+            #[allow(unused_variables)]
+            fn islice<'py>(
+                slf: Bound<'py, Self>,
+                start: Option<isize>,
+                stop: Option<isize>,
+                reverse: bool,
+            ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+                slf.get()
+                    .get_list_bound(slf.py())
+                    .pipe(|list| <$list>::islice(list, start, stop, reverse))
+            }
+            #[allow(unused_variables)]
+            fn irange<'py>(
+                slf: Bound<'py, Self>,
+                minimum: Option<Bound<'py, PyAny>>,
+                maximum: Option<Bound<'py, PyAny>>,
+                inclusive: (bool, bool),
+                reverse: bool,
+            ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+                slf.get()
+                    .get_list_bound(slf.py())
+                    .pipe(|list| <$list>::irange(list, minimum, maximum, inclusive, reverse))
+            }
+
+            fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
+                self.get_list().get().reset(py, load)
+            }
+            fn clear(&self) -> () {
+                // Safety: This is what happen in fact inside every `.bind(py)` call.
+                // We use it here to avoid changing the trait method signature just for SortedSet.
+                let set: &Bound<'_, PySet> =
+                    unsafe { NonNull::from(&self.get_set()).cast().as_ref() };
+                set.clear();
+                self.get_list().get().clear()
+            }
+        }
+        impl BaseSortedListSet for $set {
+            fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
+                let set = self.get_set().bind(py);
+                if !set.contains(&value)? {
+                    set.add(&value)?;
+                    self.get_list().get().add(py, value)?;
+                }
+                Ok(())
+            }
+            fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
+                let set = self.get_set().bind(value.py());
+                if set.contains(&value)? {
+                    set.remove(&value)?;
+                    self.get_list().get().remove(value)?;
+                }
+                Ok(())
+            }
+
+            fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
+                self.get_set().bind(value.py()).remove(&value)?;
+                self.get_list().get().remove(value)
+            }
+            fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+                PySet::new(py, self.get_set().bind(py).iter()).and_then(|x| self.from_set(x))
+            }
+        }
+    };
+}
+impl_sorted_collection_for_set!(SortedSet, SortedList);
+impl_sorted_collection_for_set!(SortedKeySet, SortedKeyList);
