@@ -13,7 +13,10 @@ use crate::{
     abc,
     collections::sorted::{
         SortedList,
-        traits::{BaseSortedListSet, BaseSortedSet, Reduced, SortedCollection, SortedListGetters},
+        traits::{
+            BaseSortedListSet, BaseSortedSet, IntoUpdate, Reduced, SortedCollection,
+            SortedListGetters, update_sorted_set,
+        },
     },
     traits::PyoABC,
 };
@@ -26,9 +29,6 @@ pub struct SortedSet {
 impl SortedSet {
     fn new(set: Py<PySet>, list: SortedList) -> Self {
         Self { set, list }
-    }
-    fn empty(py: Python<'_>) -> Self {
-        Self::new(PySet::empty(py).unwrap().unbind(), SortedList::new())
     }
     fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
         abc::PyoMutableSet::build_init()
@@ -46,7 +46,7 @@ impl SortedSet {
     ) -> PyResult<PyClassInitializer<Self>> {
         let init = Self::new(PySet::empty(py).unwrap().unbind(), SortedList::new());
         if let Some(iterable) = iterable {
-            init.update(iterable)?;
+            update_sorted_set(&init, py, IntoUpdate::from_any(iterable))?;
         }
         abc::PyoMutableSet::build_init().add_subclass(init).pipe(Ok)
     }
@@ -75,6 +75,7 @@ impl SortedCollection for SortedSet {
     ) -> PyResult<isize> {
         self.list.index(value, start, stop)
     }
+    #[allow(unused_variables)]
     fn islice<'py>(
         slf: Bound<'py, Self>,
         start: Option<isize>,
@@ -83,6 +84,7 @@ impl SortedCollection for SortedSet {
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
         todo!()
     }
+    #[allow(unused_variables)]
     fn irange<'py>(
         slf: Bound<'py, Self>,
         minimum: Option<Bound<'py, PyAny>>,
@@ -138,6 +140,11 @@ impl BaseSortedSet for SortedSet {
     fn _set(&self) -> &Py<PySet> {
         &self.set
     }
+    fn from_vec<'py>(&self, py: Python<'py>, v: Vec<Py<PyAny>>) -> PyResult<Bound<'py, Self>> {
+        SortedList::from_vec(py, v)
+            .map(|list| Self::new(PySet::empty(py).unwrap().unbind(), list))
+            .and_then(|x| x.into_bound(py))
+    }
     //@recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let type_name = Self::type_object(py).name()?;
@@ -154,18 +161,5 @@ impl BaseSortedSet for SortedSet {
         let py = values.py();
         let list = SortedList::from_vec(py, values.iter().map(Bound::unbind).collect())?;
         Self::new(values.unbind(), list).into_bound(py)
-    }
-
-    fn union<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        let py = iterables.py();
-        self.list
-            .get_data()
-            .iter()
-            .map(|x| x.clone_ref(py))
-            .chain(iterables.iter().map(Bound::unbind))
-            .collect::<Vec<_>>()
-            .pipe(|v| SortedList::from_vec(py, v))
-            .map(|list| Self::new(PySet::empty(py).unwrap().unbind(), list))
-            .and_then(|x| x.into_bound(py))
     }
 }

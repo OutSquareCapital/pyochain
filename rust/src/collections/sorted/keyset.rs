@@ -13,8 +13,8 @@ use crate::{
     collections::{
         SortedKeyList,
         sorted::traits::{
-            BaseSortedListSet, BaseSortedSet, PyIdentity, Reduced, SortedCollection,
-            SortedListGetters,
+            BaseSortedListSet, BaseSortedSet, IntoUpdate, PyIdentity, Reduced, SortedCollection,
+            SortedListGetters, update_sorted_set,
         },
     },
     traits::PyoABC,
@@ -30,13 +30,6 @@ impl SortedKeySet {
         Self { set, list, key }
     }
 
-    fn empty(py: Python<'_>, key: &Py<PyAny>) -> Self {
-        Self {
-            set: PySet::empty(py).unwrap().unbind(),
-            list: SortedKeyList::new(key.clone_ref(py)),
-            key: key.clone_ref(py),
-        }
-    }
     fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
         abc::PyoMutableSet::build_init()
             .add_subclass(self)
@@ -59,7 +52,7 @@ impl SortedKeySet {
         let init = Self::new(PySet::empty(py).unwrap().unbind(), list, key_fn);
 
         if let Some(iterable) = iterable {
-            init.update(iterable)?;
+            update_sorted_set(&init, py, IntoUpdate::from_any(iterable))?;
         }
         abc::PyoMutableSet::build_init().add_subclass(init).pipe(Ok)
     }
@@ -68,6 +61,7 @@ impl SortedKeySet {
     fn get_key<'py>(&self, py: Python<'py>) -> &Bound<'py, PyAny> {
         self.key.bind(py)
     }
+    #[allow(unused_variables)]
     #[pyo3(signature = (min_key = None, max_key = None, inclusive = (true, true), *, reverse = false))]
     fn irange_key<'py>(
         slf: Bound<'py, Self>,
@@ -111,6 +105,7 @@ impl SortedCollection for SortedKeySet {
     ) -> PyResult<isize> {
         self.list.index(value, start, stop)
     }
+    #[allow(unused_variables)]
     fn islice<'py>(
         slf: Bound<'py, Self>,
         start: Option<isize>,
@@ -119,6 +114,7 @@ impl SortedCollection for SortedKeySet {
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
         todo!()
     }
+    #[allow(unused_variables)]
     fn irange<'py>(
         slf: Bound<'py, Self>,
         minimum: Option<Bound<'py, PyAny>>,
@@ -174,6 +170,17 @@ impl BaseSortedSet for SortedKeySet {
     fn _set(&self) -> &Py<PySet> {
         &self.set
     }
+    fn from_vec<'py>(&self, py: Python<'py>, v: Vec<Py<PyAny>>) -> PyResult<Bound<'py, Self>> {
+        SortedKeyList::from_vec(py, v, &self.key)
+            .map(|list| {
+                Self::new(
+                    PySet::empty(py).unwrap().unbind(),
+                    list,
+                    self.key.clone_ref(py),
+                )
+            })
+            .and_then(|x| x.into_bound(py))
+    }
     //@recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let key = format!(", key={}", self.key.bind(py).repr()?);
@@ -192,24 +199,5 @@ impl BaseSortedSet for SortedKeySet {
         let list =
             SortedKeyList::from_vec(py, values.iter().map(Bound::unbind).collect(), &self.key)?;
         Self::new(values.unbind(), list, self.key.clone_ref(py)).into_bound(py)
-    }
-
-    fn union<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        let py = iterables.py();
-        self.list
-            .get_data()
-            .iter()
-            .map(|x| x.clone_ref(py))
-            .chain(iterables.iter().map(Bound::unbind))
-            .collect::<Vec<_>>()
-            .pipe(|v| SortedKeyList::from_vec(py, v, &self.key))
-            .map(|list| {
-                Self::new(
-                    PySet::empty(py).unwrap().unbind(),
-                    list,
-                    self.key.clone_ref(py),
-                )
-            })
-            .and_then(|x| x.into_bound(py))
     }
 }
