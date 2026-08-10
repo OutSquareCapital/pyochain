@@ -482,8 +482,6 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
     #[getter]
     fn get_set(&self) -> &Py<PySet>;
     fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
-    #[skip]
-    fn from_vec<'py>(&self, py: Python<'py>, v: Vec<Py<PyAny>>) -> PyResult<Bound<'py, Self>>;
 
     #[skip]
     fn update<'py>(&self, py: Python<'py>, other: IntoUpdate<'py>) -> PyResult<()> {
@@ -525,19 +523,15 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
             .and_then(|intersect| self.from_set(intersect))
     }
     #[skip]
-    fn union<'py, I: IntoIterator<Item = PyResult<Bound<'py, PyAny>>>>(
+    fn union<'py, O: PyCallArgs<'py>>(
         &self,
         py: Python<'py>,
-        iterables: I,
+        iterables: O,
     ) -> PyResult<Bound<'py, Self>> {
-        self.get_list()
-            .get()
-            .get_data()
-            .iter()
-            .map(|x| x.clone_ref(py).pipe(Ok))
-            .chain(iterables.into_iter().map(|x| x.map(Bound::unbind)))
-            .collect::<PyResult<Vec<_>>>()
-            .and_then(|v| self.from_vec(py, v))
+        self.get_set()
+            .bind(py)
+            .union(iterables)
+            .and_then(|u| self.from_set(u))
     }
     #[skip]
     fn difference_update<'py>(&self, py: Python<'_>, iterables: IntoUpdate<'py>) -> PyResult<()> {
@@ -735,7 +729,7 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
         slf.get().update(slf.py(), IntoUpdate::from_any(other))
     }
     fn __or__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        self.union(other.py(), other.try_iter()?)
+        self.union(other.py(), (other,))
     }
     fn __ror__<'py>(&self, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         self.__or__(other)
@@ -840,8 +834,7 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
     }
     #[pyo3(name = "union", signature= (*iterables))]
     fn py_union<'py>(&self, iterables: Bound<'py, PyTuple>) -> PyResult<Bound<'py, Self>> {
-        let py = iterables.py();
-        self.union(py, iterables.iter().flat_map(|x| x.try_iter().unwrap()))
+        self.union(iterables.py(), iterables)
     }
     #[pyo3(name ="update", signature = (*iterables))]
     fn py_update<'py>(
