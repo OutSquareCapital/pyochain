@@ -566,11 +566,11 @@ pub(super) fn reset_list<T: BaseSortedList>(slf: &T, py: Python<'_>, load: usize
 #[inline(always)]
 pub(super) fn islice_list<'py, T: BaseSortedList>(
     slf: Bound<'py, T>,
-    py: Python<'py>,
     start: Option<isize>,
     stop: Option<isize>,
     reverse: bool,
 ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+    let py = slf.py();
     let specs = get_islice_specs(&mut slf.get().get_data(), py, start, stop)?;
     match specs {
         None => iterators::Iter::empty(py)?.into_super().pipe(Ok),

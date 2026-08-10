@@ -28,17 +28,20 @@ pub struct SortedList {
     pub(super) load: AtomicUsize,
 }
 impl SortedList {
+    #[inline]
     pub(super) fn new() -> Self {
         Self {
             data: Mutex::new(ListsData::new()),
             load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
         }
     }
+    #[inline]
     pub(super) fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<Self> {
         let new_inst = Self::new();
         new_inst.update_from_vec(py, values).map(|_| new_inst)
     }
-    fn into_bound<'py>(self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+    #[inline]
+    pub(super) fn into_bound<'py>(self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         abc::PyoMutableSequence::build_init()
             .add_subclass(self)
             .pipe(|x| Bound::new(py, x))
@@ -183,12 +186,11 @@ impl SortedCollection for SortedList {
 
     fn islice<'py>(
         slf: Bound<'py, Self>,
-        py: Python<'py>,
         start: Option<isize>,
         stop: Option<isize>,
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        islice_list(slf, py, start, stop, reverse)
+        islice_list(slf, start, stop, reverse)
     }
 }
 impl BaseSortedListSet for SortedList {

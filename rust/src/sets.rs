@@ -422,7 +422,7 @@ impl SetMut {
         self.inner_bind(other.py()).issuperset(other)
     }
 
-    fn remove(&self, element: Bound<'_, PyAny>) -> PyResult<()> {
+    fn remove(&self, element: &Bound<'_, PyAny>) -> PyResult<()> {
         self.inner_bind(element.py()).remove(element)
     }
 

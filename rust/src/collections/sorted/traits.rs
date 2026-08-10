@@ -64,7 +64,6 @@ pub(super) trait SortedCollection:
     #[pyo3(signature = (start = None, stop = None, *, reverse = false))]
     fn islice<'py>(
         slf: Bound<'py, Self>,
-        py: Python<'py>,
         start: Option<isize>,
         stop: Option<isize>,
         reverse: bool,

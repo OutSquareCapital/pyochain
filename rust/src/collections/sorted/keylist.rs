@@ -50,7 +50,7 @@ impl SortedKeyList {
         let new_inst = Self::new(key.clone_ref(py));
         new_inst.update_from_vec(py, values).map(|_| new_inst)
     }
-    fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
+    pub(super) fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
         abc::PyoMutableSequence::build_init()
             .add_subclass(self)
             .pipe(|x| Bound::new(py, x))
@@ -254,12 +254,11 @@ impl SortedCollection for SortedKeyList {
     }
     fn islice<'py>(
         slf: Bound<'py, Self>,
-        py: Python<'py>,
         start: Option<isize>,
         stop: Option<isize>,
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        islice_list(slf, py, start, stop, reverse)
+        islice_list(slf, start, stop, reverse)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
         reset_list(self, py, load)
