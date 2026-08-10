@@ -2,6 +2,7 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from functools import partial
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, Self, overload, override
@@ -23,119 +24,43 @@ if TYPE_CHECKING:
     type KeyFunc[K: Hashable, OT: SupportsHashableAndRichComparison] = Callable[[K], OT]
 
 
-class SortedDict[K: SupportsHashableAndRichComparison, V](
-    PyoMutableMapping[K, V], SortedCollection[K], PyoReversible[K]
+class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
+    PyoMutableMapping[K, V], SortedCollection[K], PyoReversible[K], ABC
 ):
-    """Sorted dict is a sorted mutable mapping.
+    _list: SortedList[K]
+    _inner: Dict[K, V]
 
-    Sorted dict keys are maintained in sorted order. The design of sorted dict
-    is simple: sorted dict inherits from dict to store items and maintains a
-    sorted list of keys.
-
-    Sorted dict keys must be hashable and comparable. The hash and total
-    ordering of keys must not change while they are stored in the sorted dict.
-
-    Mutable mapping methods:
-
-    * :func:`SortedDict.__getitem__` (inherited from dict)
-    * :func:`SortedDict.__setitem__`
-    * :func:`SortedDict.__delitem__`
-    * :func:`SortedDict.__iter__`
-    * :func:`SortedDict.__len__` (inherited from dict)
-
-    Methods for adding items:
-
-    * :func:`SortedDict.setdefault`
-    * :func:`SortedDict.update`
-
-    Methods for removing items:
-
-    * :func:`SortedDict.clear`
-    * :func:`SortedDict.pop`
-    * :func:`SortedDict.popitem`
-
-    Methods for looking up items:
-
-    * :func:`SortedDict.__contains__` (inherited from dict)
-    * :func:`SortedDict.get` (inherited from dict)
-    * :func:`SortedDict.peekitem`
-
-    Methods for views:
-
-    * :func:`SortedDict.keys`
-    * :func:`SortedDict.items`
-    * :func:`SortedDict.values`
-
-    Methods for miscellany:
-
-    * :func:`SortedDict.copy`
-    * :func:`SortedDict.from_keys`
-    * :func:`SortedDict.__reversed__`
-    * :func:`SortedDict.__eq__` (inherited from dict)
-    * :func:`SortedDict.__ne__` (inherited from dict)
-    * :func:`SortedDict.__repr__`
-    * :func:`SortedDict._check`
-
-    Sorted list methods available (applies to keys):
-
-    * :func:`SortedList.bisect_left`
-    * :func:`SortedList.bisect_right`
-    * :func:`SortedList.index`
-    * :func:`SortedList.irange`
-    * :func:`SortedList.islice`
-    * :func:`SortedList.reset`
-
-    Additional sorted list methods available, if key-function used:
-
-    * :func:`SortedKeyList.bisect_key_left`
-    * :func:`SortedKeyList.bisect_key_right`
-    * :func:`SortedKeyList.irange_key`
-
-    Sorted dicts may only be compared for equality and inequality.
-
-
-    Optional key-function argument defines a callable that, like the `key`
-    argument to the built-in `sorted` function, extracts a comparison key
-    from each dictionary key. If no function is specified, the default
-    compares the dictionary keys directly. The key-function argument must
-    be provided as a positional argument and must come before all other
-    arguments.
-
-    Optional iterable argument provides an initial sequence of pairs to
-    initialize the sorted dict. Each pair in the sequence defines the key
-    and corresponding value. If a key is seen more than once, the last
-    value associated with it is stored in the new sorted dict.
-
-    Optional mapping argument provides an initial mapping of items to
-    initialize the sorted dict.
-
-    If keyword arguments are given, the keywords themselves, with their
-    associated values, are added as items to the dictionary. If a key is
-    specified both in the positional argument and as a keyword argument,
-    the value associated with the keyword is stored in the
-    sorted dict.
-
-    Sorted dict keys must be hashable, per the requirement for Python's
-    dictionaries. Keys (or the result of the key-function) must also be
-    comparable, per the requirement for sorted lists.
-
-    >>> d = {"alpha": 1, "beta": 2}
-    >>> SortedDict([("alpha", 1), ("beta", 2)]) == d
-    True
-    >>> SortedDict({"alpha": 1, "beta": 2}) == d
-    True
-    >>> SortedDict(alpha=1, beta=2) == d
-    True
-
-    """
-
+    @abstractmethod
     def __init__(
         self, iterable: Iterable[tuple[K, V]] | Mapping[K, V] = (), **kwargs: V
-    ) -> None:
-        self._list: SortedList[K] = SortedList()
-        self._inner: Dict[K, V] = Dict[K, V](())
+    ) -> None: ...
+    @abstractmethod
+    def __or__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]: ...
+    @abstractmethod
+    def __ror__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]: ...
+    @override
+    @abstractmethod
+    def __reduce__(self) -> tuple[type[Self], tuple[Dict[K, V]]]:
+        """Support for pickle.
 
-        self.update(iterable, **kwargs)
+        The tricks played with caching references in
+        :func:`SortedDict.__init__` confuse pickle so customize the reducer.
+
+        Returns:
+            tuple[type[Self], tuple[Dict[K, V]]]: class and arguments for reconstruction
+
+        """
+
+    @override
+    @abstractmethod
+    def __repr__(self) -> str:
+        """Return string representation of sorted dict.
+
+        ``sd.__repr__()`` <==> ``repr(sd)``
+
+        :return: string representation
+
+        """
 
     @property
     def inner(self) -> Dict[K, V]:
@@ -269,14 +194,6 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
         if key not in self:
             self._list.add(key)
         self._inner.__setitem__(key, value)
-
-    def __or__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]:
-        items = self.items().iter().chain(value.items())
-        return SortedDict(items)
-
-    def __ror__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]:
-        items = Iter(value.items()).chain(self.items())
-        return SortedDict(items)
 
     def __ior__(
         self, other: Iterable[tuple[K, V]] | SupportsKeysAndGetItem[K, V]
@@ -572,29 +489,136 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](
             for key in pairs:
                 self[key] = pairs[key]
 
+
+class SortedDict[K: SupportsHashableAndRichComparison, V](BaseSortedDict[K, V]):
+    """Sorted dict is a sorted mutable mapping.
+
+    Sorted dict keys are maintained in sorted order. The design of sorted dict
+    is simple: sorted dict inherits from dict to store items and maintains a
+    sorted list of keys.
+
+    Sorted dict keys must be hashable and comparable. The hash and total
+    ordering of keys must not change while they are stored in the sorted dict.
+
+    Mutable mapping methods:
+
+    * :func:`SortedDict.__getitem__` (inherited from dict)
+    * :func:`SortedDict.__setitem__`
+    * :func:`SortedDict.__delitem__`
+    * :func:`SortedDict.__iter__`
+    * :func:`SortedDict.__len__` (inherited from dict)
+
+    Methods for adding items:
+
+    * :func:`SortedDict.setdefault`
+    * :func:`SortedDict.update`
+
+    Methods for removing items:
+
+    * :func:`SortedDict.clear`
+    * :func:`SortedDict.pop`
+    * :func:`SortedDict.popitem`
+
+    Methods for looking up items:
+
+    * :func:`SortedDict.__contains__` (inherited from dict)
+    * :func:`SortedDict.get` (inherited from dict)
+    * :func:`SortedDict.peekitem`
+
+    Methods for views:
+
+    * :func:`SortedDict.keys`
+    * :func:`SortedDict.items`
+    * :func:`SortedDict.values`
+
+    Methods for miscellany:
+
+    * :func:`SortedDict.copy`
+    * :func:`SortedDict.from_keys`
+    * :func:`SortedDict.__reversed__`
+    * :func:`SortedDict.__eq__` (inherited from dict)
+    * :func:`SortedDict.__ne__` (inherited from dict)
+    * :func:`SortedDict.__repr__`
+    * :func:`SortedDict._check`
+
+    Sorted list methods available (applies to keys):
+
+    * :func:`SortedList.bisect_left`
+    * :func:`SortedList.bisect_right`
+    * :func:`SortedList.index`
+    * :func:`SortedList.irange`
+    * :func:`SortedList.islice`
+    * :func:`SortedList.reset`
+
+    Additional sorted list methods available, if key-function used:
+
+    * :func:`SortedKeyList.bisect_key_left`
+    * :func:`SortedKeyList.bisect_key_right`
+    * :func:`SortedKeyList.irange_key`
+
+    Sorted dicts may only be compared for equality and inequality.
+
+
+    Optional key-function argument defines a callable that, like the `key`
+    argument to the built-in `sorted` function, extracts a comparison key
+    from each dictionary key. If no function is specified, the default
+    compares the dictionary keys directly. The key-function argument must
+    be provided as a positional argument and must come before all other
+    arguments.
+
+    Optional iterable argument provides an initial sequence of pairs to
+    initialize the sorted dict. Each pair in the sequence defines the key
+    and corresponding value. If a key is seen more than once, the last
+    value associated with it is stored in the new sorted dict.
+
+    Optional mapping argument provides an initial mapping of items to
+    initialize the sorted dict.
+
+    If keyword arguments are given, the keywords themselves, with their
+    associated values, are added as items to the dictionary. If a key is
+    specified both in the positional argument and as a keyword argument,
+    the value associated with the keyword is stored in the
+    sorted dict.
+
+    Sorted dict keys must be hashable, per the requirement for Python's
+    dictionaries. Keys (or the result of the key-function) must also be
+    comparable, per the requirement for sorted lists.
+
+    >>> d = {"alpha": 1, "beta": 2}
+    >>> SortedDict([("alpha", 1), ("beta", 2)]) == d
+    True
+    >>> SortedDict({"alpha": 1, "beta": 2}) == d
+    True
+    >>> SortedDict(alpha=1, beta=2) == d
+    True
+
+    """
+
+    def __init__(
+        self, iterable: Iterable[tuple[K, V]] | Mapping[K, V] = (), **kwargs: V
+    ) -> None:
+        self._list: SortedList[K] = SortedList()
+        self._inner: Dict[K, V] = Dict[K, V](())
+
+        self.update(iterable, **kwargs)
+
+    @override
+    def __or__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]:
+        items = self.items().iter().chain(value.items())
+        return SortedDict(items)
+
+    @override
+    def __ror__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]:
+        items = Iter(value.items()).chain(self.items())
+        return SortedDict(items)
+
     @override
     def __reduce__(self) -> tuple[type[Self], tuple[Dict[K, V]]]:
-        """Support for pickle.
-
-        The tricks played with caching references in
-        :func:`SortedDict.__init__` confuse pickle so customize the reducer.
-
-        Returns:
-            tuple[type[Self], tuple[Dict[K, V]]]: class and arguments for reconstruction
-
-        """
         items = self._inner.copy()
         return (self.__class__, (items,))
 
     @recursive_repr()
     def __repr__(self) -> str:
-        """Return string representation of sorted dict.
-
-        ``sd.__repr__()`` <==> ``repr(sd)``
-
-        :return: string representation
-
-        """
         type_name = self.__class__.__name__
         item_format = "{!r}: {!r}".format
         items = (
@@ -607,7 +631,7 @@ class SortedKeyDict[
     K: SupportsHashableAndRichComparison,
     V,
     OT: SupportsHashableAndRichComparison,
-](SortedDict[K, V]):
+](BaseSortedDict[K, V]):
     """Sorted dict with key-function for sorting keys.
 
     Optional key-function argument defines a callable that, like the `key`
@@ -688,12 +712,12 @@ class SortedKeyDict[
         return self._list.bisect_key_right(key)
 
     @override
-    def __ror__[T1, T2](self, value: Mapping[K, T2], /) -> SortedKeyDict[K, V | T2, OT]:
+    def __ror__[T1, T2](self, value: Mapping[K, T2], /) -> SortedKeyDict[K, V | T2, OT]:  # pyright: ignore[reportIncompatibleMethodOverride]
         items = Iter(value.items()).chain(self.items())
         return SortedKeyDict(items, key=self._key)
 
     @override
-    def __or__[T1, T2](self, value: Mapping[K, T2], /) -> SortedKeyDict[K, V | T2, OT]:
+    def __or__[T1, T2](self, value: Mapping[K, T2], /) -> SortedKeyDict[K, V | T2, OT]:  # pyright: ignore[reportIncompatibleMethodOverride]
         items = Iter(self.items()).chain(value.items())
         return SortedKeyDict(items, key=self._key)
 
@@ -705,13 +729,6 @@ class SortedKeyDict[
 
     @recursive_repr()
     def __repr__(self) -> str:
-        """Return string representation of sorted dict.
-
-        ``sd.__repr__()`` <==> ``repr(sd)``
-
-        :return: string representation
-
-        """
         key = self._key
         type_name = self.__class__.__name__
         key_arg = "" if key is None else f"{key!r}, "

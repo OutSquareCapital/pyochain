@@ -244,11 +244,6 @@ def test_values() -> None:
     assert list(temp.values()) == [pos for _, pos in mapping]
 
 
-def test_notgiven() -> None:
-    # pyrefly: ignore [missing-attribute]
-    assert repr(SortedDict._SortedDict__not_given) == "<not-given>"  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
-
-
 def test_pop() -> None:
     mapping = [(val, pos) for pos, val in enumerate(string.ascii_lowercase)]
     temp = SortedDict(mapping)
