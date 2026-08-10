@@ -6,12 +6,15 @@ use syn::{
 use tap::prelude::*;
 
 use crate::types::SynResult;
+use proc_macro2::TokenTree;
 const PYO3: &str = "pyo3";
 const NEW: &str = "new";
 const SKIP: &str = "skip";
 const SETTER: &str = "setter";
 const GETTER: &str = "getter";
 const DELETER: &str = "deleter";
+
+const NAME: &str = "name";
 
 // TODO: this code is frankly speaking ugly as fuck, but it works.
 // Time-sink to make it pretty but also time-sink when I have issues with it.
@@ -59,8 +62,10 @@ enum AttrKind {
     New(Vec<proc_macro2::TokenStream>),
     /// just #[new]
     NewNoSignature,
-    /// #[pyo3(...)] and other attributes
+    /// #[pyo3(...)] and other attributes, without an explicit `name = ...`
     Signed(Vec<proc_macro2::TokenStream>),
+    /// #[pyo3(...)] and other attributes, already carrying an explicit `name = ...`
+    SignedNamed(Vec<proc_macro2::TokenStream>),
 }
 fn generate_method(
     trait_ident: &Ident,
@@ -85,6 +90,10 @@ fn generate_method(
                 AttrKind::Signed(ref tokens) => Some(match &property {
                     Some((prop, name)) => quote! { #[#prop(#name)] #[pyo3(#(#tokens),*)] },
                     None => quote! { #[pyo3(name = #python_name, #(#tokens),*)] },
+                }),
+                AttrKind::SignedNamed(ref tokens) => Some(match &property {
+                    Some((prop, name)) => quote! { #[#prop(#name)] #[pyo3(#(#tokens),*)] },
+                    None => quote! { #[pyo3(#(#tokens),*)] },
                 }),
             };
             (tokens, other_attrs)
@@ -155,20 +164,38 @@ fn drop_mut_and_ref_from_pattern(inputs: &mut Punctuated<FnArg, Comma>) {
             pattern.by_ref = None;
         })
 }
+#[derive(Default)]
+struct Classifier {
+    has_new: bool,
+    has_name: bool,
+    property_kind: Option<Ident>,
+    pyo3: Vec<proc_macro2::TokenStream>,
+    other: Vec<Attribute>,
+}
+impl Classifier {
+    fn finalize(self) -> (AttrKind, Vec<Attribute>, Option<Ident>) {
+        let pyo3_attrs = match (self.has_new, self.pyo3.is_empty(), self.has_name) {
+            (true, true, _) => AttrKind::NewNoSignature,
+            (false, true, _) => AttrKind::BasicMethod,
+            (true, false, _) => AttrKind::New(self.pyo3),
+            (false, false, true) => AttrKind::SignedNamed(self.pyo3),
+            (false, false, false) => AttrKind::Signed(self.pyo3),
+        };
+
+        (pyo3_attrs, self.other, self.property_kind)
+    }
+}
 fn classify_attrs(attrs: Vec<Attribute>) -> SynResult<(AttrKind, Vec<Attribute>, Option<Ident>)> {
-    let mut has_new = false;
-    let mut property_kind = None;
-    let mut pyo3 = Vec::new();
-    let mut other = Vec::new();
+    let mut classifier = Classifier::default();
     for attr in attrs {
         let path = &attr.path();
 
         if path.is_ident(SKIP) {
-            other.clear();
-            return Ok((AttrKind::Skipped, other, None));
+            classifier.other.clear();
+            return Ok((AttrKind::Skipped, classifier.other, None));
         } else {
             if path.is_ident(NEW) {
-                has_new = true;
+                classifier.has_new = true;
             }
             if path.is_ident(PYO3) {
                 let arg = match attr.meta {
@@ -178,21 +205,18 @@ fn classify_attrs(attrs: Vec<Attribute>) -> SynResult<(AttrKind, Vec<Attribute>,
                         "expected #[pyo3(...)] on a #[py_methods] trait method",
                     )),
                 }?;
-                pyo3.push(arg);
+                if arg.clone().pipe(has_name_key) {
+                    classifier.has_name = true;
+                }
+                classifier.pyo3.push(arg);
             } else if path.is_ident(GETTER) || path.is_ident(SETTER) || path.is_ident(DELETER) {
-                property_kind = Some(path.get_ident().expect("checked above").clone());
+                classifier.property_kind = Some(path.get_ident().expect("checked above").clone());
             } else {
-                other.push(attr);
+                classifier.other.push(attr);
             }
         }
     }
-    let pyo3_attrs = match (has_new, pyo3.is_empty()) {
-        (true, true) => AttrKind::NewNoSignature,
-        (false, true) => AttrKind::BasicMethod,
-        (true, false) => AttrKind::New(pyo3),
-        (false, false) => AttrKind::Signed(pyo3),
-    };
-    Ok((pyo3_attrs, other, property_kind))
+    Ok(classifier.finalize())
 }
 fn property_python_name(original_ident: &Ident, prop: &Ident) -> LitStr {
     let name = original_ident.to_string();
@@ -223,4 +247,25 @@ fn get_method_args(method: &syn::TraitItemFn) -> SynResult<Vec<syn::Ident>> {
             }),
         })
         .collect::<SynResult<Vec<_>>>()
+}
+
+/// Scan the top-level `key = value` entries of a `#[pyo3(...)]` token list for a `name = ...` entry.\
+fn has_name_key(tokens: proc_macro2::TokenStream) -> bool {
+    // An ident is only ever immediately followed by `=` when it's a key; a value is always followed by `,` or nothing.
+    tokens
+        .into_iter()
+        .scan(false, |pending_name, tt| {
+            Some(match tt {
+                TokenTree::Ident(ident) => {
+                    *pending_name = ident == NAME;
+                    false
+                }
+                TokenTree::Punct(p) if p.as_char() == '=' => std::mem::take(pending_name),
+                _ => {
+                    *pending_name = false;
+                    false
+                }
+            })
+        })
+        .any(|found| found)
 }
