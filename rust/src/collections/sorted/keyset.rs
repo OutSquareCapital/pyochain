@@ -56,7 +56,10 @@ impl SortedKeySet {
         }
         abc::PyoMutableSet::build_init().add_subclass(init).pipe(Ok)
     }
-
+    #[getter]
+    fn get_set(&self, py: Python<'_>) -> Py<PySet> {
+        self.set.clone_ref(py)
+    }
     #[getter]
     fn get_key<'py>(&self, py: Python<'py>) -> &Bound<'py, PyAny> {
         self.key.bind(py)

@@ -17,6 +17,7 @@ from typing import Any
 from _typeshed import SupportsRichComparison
 
 from pyochain._collections._sorted_list import BaseSortedList
+from pyochain._collections._sorted_set import BaseSortedSet
 
 from ._collections import (
     Deque,
@@ -25,7 +26,9 @@ from ._collections import (
     HeapMin,
     PyoCounter,
     SortedKeyList,
+    SortedKeySet,
     SortedList,
+    SortedSet,
     StableSet,
 )
 from ._dict import Dict
@@ -50,6 +53,7 @@ type KeyFunc[T, OT: SupportsRichComparison] = Callable[[T], OT]
 type SliceBounds = tuple[int, int, int, int]
 
 def check_sorted_list(data: BaseSortedList[Any]) -> None: ...
+def check_sorted_set(data: BaseSortedSet[Any]) -> None: ...
 def check_sorted_key_list(data: SortedKeyList[Any, Any]) -> None: ...
 def assert_sorted_list_empty(lst: BaseSortedList[Any]) -> None: ...
 
@@ -79,7 +83,9 @@ __all__ = [
     "SliceView",
     "Some",
     "SortedKeyList",
+    "SortedKeySet",
     "SortedList",
+    "SortedSet",
     "StableSet",
     "Vec",
     "option",

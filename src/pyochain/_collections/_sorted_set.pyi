@@ -1,48 +1,29 @@
 # Adapted from python-sortedcontainers (https://github.com/grantjenks/python-sortedcontainers)
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
-from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable
 from collections.abc import Set as AbstractSet
-from reprlib import recursive_repr
-from typing import TYPE_CHECKING, Any, Self, overload, override
+from types import NotImplementedType
+from typing import Any, Final, Self, final, overload, override
 
-from pyochain import Iter, Set, SetMut
+from pyochain import SetMut, Vec
 from pyochain.abc import PyoIterator, PyoMutableSet, PyoSequence
-from pyochain.rs import SortedKeyList, SortedList
+from pyochain.collections._base_sorted import SupportsHashableAndRichComparison
+from pyochain.rs import SortedList
 
-from ._base_sorted import BaseSortedListSet, KeyFunc
+from ._sorted_list import BaseSortedListSet, KeyFunc
 
-if TYPE_CHECKING:
-    from types import NotImplementedType
+type SetKeyFunc[T, OT: SupportsHashableAndRichComparison] = KeyFunc[T, OT]
 
-    from pyochain import Vec
-
-    from ._base_sorted import SupportsHashableAndRichComparison
-
-    type SetKeyFunc[T, OT: SupportsHashableAndRichComparison] = KeyFunc[T, OT]
-
-
-class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-without-hash]
+class BaseSortedSet[T: SupportsHashableAndRichComparison](
     PyoMutableSet[T], PyoSequence[T], BaseSortedListSet[T], ABC
 ):
-    _set: SetMut[T]
+    set: Final[SetMut[T]]
     _list: SortedList[T]
 
     @abstractmethod
     def _fromset(self, values: SetMut[T]) -> Self: ...
-    @override
-    @abstractmethod
-    def __repr__(self) -> str:
-        """Return string representation of sorted set.
-
-        ``ss.__repr__()`` <==> ``repr(ss)``
-
-        :return: string representation
-
-        """
-
     @override
     @abstractmethod
     def __reduce__(
@@ -78,21 +59,15 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
         """
 
     @override
-    def reset(self, load: int) -> None:
-        return self._list.reset(load)
-
+    def reset(self, load: int) -> None: ...
     @override
-    def bisect_left(self, value: T) -> int:
-        return self._list.bisect_left(value)
-
+    def bisect_left(self, value: T) -> int: ...
     @override
-    def bisect_right(self, value: T) -> int:
-        return self._list.bisect_right(value)
-
+    def bisect_right(self, value: T) -> int: ...
     @override
-    def index(self, value: T, start: int | None = None, stop: int | None = None) -> int:
-        return self._list.index(value, start, stop)
-
+    def index(
+        self, value: T, start: int | None = None, stop: int | None = None
+    ) -> int: ...
     @override
     def islice(
         self,
@@ -100,9 +75,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
         stop: int | None = None,
         *,
         reverse: bool = False,
-    ) -> PyoIterator[T]:
-        return self._list.islice(start, stop, reverse=reverse)
-
+    ) -> PyoIterator[T]: ...
     @override
     def irange(
         self,
@@ -111,21 +84,13 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
         inclusive: tuple[bool, bool] = (True, True),
         *,
         reverse: bool = False,
-    ) -> PyoIterator[T]:
-        return self._list.irange(minimum, maximum, inclusive, reverse=reverse)
-
+    ) -> PyoIterator[T]: ...
     @override
-    def is_disjoint(self, other: Iterable[object]) -> bool:
-        return self._set.isdisjoint(other)
-
+    def is_disjoint(self, other: Iterable[object]) -> bool: ...
     @override
-    def is_subset(self, other: Iterable[object]) -> bool:
-        return self._set.is_subset(other)
-
+    def is_subset(self, other: Iterable[object]) -> bool: ...
     @override
-    def is_superset(self, other: Iterable[object]) -> bool:
-        return self._set.is_superset(other)
-
+    def is_superset(self, other: Iterable[object]) -> bool: ...
     @override
     def __contains__(self, value: object) -> bool:
         """Return true if `value` is an element of the sorted set.
@@ -142,7 +107,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
         :return: true if `value` in sorted set
 
         """
-        return self._set.contains(value)
 
     @overload
     def __getitem__(self, index: int) -> T: ...
@@ -173,8 +137,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
             T | Vec[T]: value or list of values
 
         """
-        return self._list[index]
-
     def __delitem__(self, index: int | slice) -> None:
         """Remove value at `index` from sorted set.
 
@@ -196,83 +158,27 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
         :raises IndexError: if index out of range
 
         """
-        match index:
-            case slice():
-                values = self._list[index]
-                self._set.difference_update(values)
-            case int():
-                value = self._list[index]
-                self._set.remove(value)
-        del self._list[index]
 
     @override
-    def __eq__(self, other: object) -> bool | NotImplementedType:
-        match other:
-            case BaseSortedSet():
-                return self._set == other._set
-            case AbstractSet():
-                return self._set == other
-            case _:
-                return NotImplemented
-
+    def __eq__(self, other: object) -> bool | NotImplementedType: ...
     @override
-    def __ne__(self, other: object) -> bool | NotImplementedType:
-        match other:
-            case BaseSortedSet():
-                return self._set != other._set
-            case AbstractSet():
-                return self._set != other
-            case _:
-                return NotImplemented
-
+    def __ne__(self, other: object) -> bool | NotImplementedType: ...
     @override
     def __lt__(
         self, other: AbstractSet[object] | Self | object
-    ) -> bool | NotImplementedType:
-        match other:
-            case BaseSortedSet():
-                return self._set < other._set
-            case AbstractSet():
-                return self._set < other
-            case _:
-                return NotImplemented
-
+    ) -> bool | NotImplementedType: ...
     @override
     def __gt__(
         self, other: AbstractSet[object] | Self | object
-    ) -> bool | NotImplementedType:
-        match other:
-            case BaseSortedSet():
-                return self._set > other._set
-            case AbstractSet():
-                return self._set > other
-            case _:
-                return NotImplemented
-
+    ) -> bool | NotImplementedType: ...
     @override
     def __le__(
         self, other: AbstractSet[object] | Self | object
-    ) -> bool | NotImplementedType:
-        match other:
-            case BaseSortedSet():
-                return self._set <= other._set
-            case AbstractSet():
-                return self._set <= other
-            case _:
-                return NotImplemented
-
+    ) -> bool | NotImplementedType: ...
     @override
     def __ge__(
         self, other: AbstractSet[object] | Self | object
-    ) -> bool | NotImplementedType:
-        match other:
-            case BaseSortedSet():
-                return self._set >= other._set
-            case AbstractSet():
-                return self._set >= other
-            case _:
-                return NotImplemented
-
+    ) -> bool | NotImplementedType: ...
     @override
     def __len__(self) -> int:
         """Return the size of the sorted set.
@@ -282,7 +188,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
         :return: size of sorted set
 
         """
-        return self._set.len()
 
     @override
     def __iter__(self) -> PyoIterator[T]:
@@ -294,7 +199,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
         :exc:`RuntimeError` or fail to iterate over all values.
 
         """
-        return self._list.iter()
 
     @override
     def __reversed__(self) -> PyoIterator[T]:
@@ -306,8 +210,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
         :exc:`RuntimeError` or fail to iterate over all values.
 
         """
-        return self._list.rev()
-
     @override
     def add(self, value: T) -> None:
         """Add `value` to sorted set.
@@ -324,10 +226,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
         :param value: value to add to sorted set
 
         """
-        set_ = self._set
-        if not set_.contains(value):
-            set_.add(value)
-            self._list.add(value)
 
     @override
     def clear(self) -> None:
@@ -336,9 +234,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
         Runtime complexity: `O(n)`
 
         """
-        self._set.clear()
-        self._list.clear()
-
     @override
     def copy(self) -> Self:
         """Return a shallow copy of the sorted set.
@@ -348,11 +243,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
         :return: new sorted set
 
         """
-        return self._fromset(SetMut(self._set))
-
-    def __copy__(self) -> Self:
-        return self.copy()
-
+    def __copy__(self) -> Self: ...
     @override
     def count(self, value: T) -> int:
         """Return number of occurrences of `value` in the sorted set.
@@ -367,8 +258,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
         :return: count
 
         """
-        return 1 if self._set.contains(value) else 0
-
     @override
     def discard(self, value: T) -> None:
         """Remove `value` from sorted set if it is a member.
@@ -390,11 +279,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
             assert ss == set([1, 2, 3, 4])
             ```
         """
-        set_ = self._set
-        if set_.contains(value):
-            set_.remove(value)
-            self._list.remove(value)
-
     @override
     def pop(self, index: int = -1) -> T:
         """Remove and return value at `index` in sorted set.
@@ -421,10 +305,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
             T: value at `index`
 
         """
-        # pylint: disable=arguments-differ
-        value = self._list.pop(index)
-        self._set.remove(value)
-        return value
 
     @override
     def remove(self, value: T) -> None:
@@ -449,9 +329,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
                 ss.remove(0)
             ```
         """
-        self._set.remove(value)
-        self._list.remove(value)
-
     @override
     # pyrefly: ignore [bad-override]
     def difference(self, *iterables: Iterable[Any]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -472,13 +349,8 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
         :return: new sorted set
 
         """
-        diff = self._set.difference(*iterables)
-        return self._fromset(diff)
-
     @override
-    def __sub__(self, other: Iterable[Any]) -> Self:
-        return self.difference(other)
-
+    def __sub__(self, other: Iterable[Any]) -> Self: ...
     def difference_update(self, *iterables: Iterable[T]) -> Self:
         """Remove all values of `iterables` from this sorted set.
 
@@ -498,20 +370,9 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
             Self: updated sorted set
 
         """
-        values = Iter(iterables).flatten().collect(Set)
-        if (4 * values.len()) > self._set.len():
-            self._set.difference_update(values)
-            self._list.clear()
-            self._list.update(self._set)
-        else:
-            for value in values:
-                self.discard(value)
-        return self
 
     @override
-    def __isub__(self, other: Iterable[Any]) -> Self:
-        return self.difference_update(other)
-
+    def __isub__(self, other: Iterable[Any]) -> Self: ...
     @override
     # pyrefly: ignore [bad-override]
     def intersection(self, *iterables: Iterable[Any]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -532,16 +393,9 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
         :return: new sorted set
 
         """
-        intersect = self._set.intersection(*iterables)
-        return self._fromset(intersect)
-
     @override
-    def __and__(self, other: Iterable[Any]) -> Self:
-        return self.intersection(other)
-
-    def __rand__(self, other: Iterable[Any]) -> Self:
-        return self.intersection(other)
-
+    def __and__(self, other: Iterable[Any]) -> Self: ...
+    def __rand__(self, other: Iterable[Any]) -> Self: ...
     def intersection_update(self, *iterables: Iterable[Any]) -> Self:
         """Update the sorted set with the intersection of `iterables`.
 
@@ -563,15 +417,8 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
             Self: updated sorted set
 
         """
-        self._set.intersection_update(*iterables)
-        self._list.clear()
-        self._list.update(self._set)
-        return self
-
     @override
-    def __iand__(self, other: Iterable[Any]) -> Self:
-        return self.intersection_update(other)
-
+    def __iand__(self, other: Iterable[Any]) -> Self: ...
     @override
     # pyrefly: ignore [bad-override]
     def symmetric_difference(self, other: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -592,17 +439,11 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
         :return: new sorted set
 
         """
-        diff = self._set.symmetric_difference(other)
-        return self._fromset(diff)
-
     @override
     # pyrefly: ignore [bad-override]
     def __xor__(self, other: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
-        return self.symmetric_difference(other)
-
-    def __rxor__(self, other: Iterable[T]) -> Self:
-        return self.symmetric_difference(other)
-
+        ...
+    def __rxor__(self, other: Iterable[T]) -> Self: ...
     def symmetric_difference_update(self, other: Iterable[T]) -> Self:
         """Update the sorted set with the symmetric difference with `other`.
 
@@ -625,23 +466,14 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
             Self: updated sorted set
 
         """
-        self._set.symmetric_difference_update(other)
-        self._list.clear()
-        self._list.update(self._set)
-        return self
 
     @override
-    def __ixor__(self, other: Iterable[T]) -> Self:
-        return self.symmetric_difference_update(other)
-
+    def __ixor__(self, other: Iterable[T]) -> Self: ...
     @override
     # pyrefly: ignore [bad-override]
     def __or__(self, other: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
-        return self.union(other)
-
-    def __ror__(self, other: Iterable[T]) -> Self:
-        return self.union(other)
-
+        ...
+    def __ror__(self, other: Iterable[T]) -> Self: ...
     def update(self, *iterables: Iterable[T]) -> Self:
         """Update the sorted set adding values from all `iterables`.
 
@@ -661,21 +493,11 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](  # ruff:ignore[eq-wit
             Self: updated sorted set
 
         """
-        values = Iter(iterables).flatten().collect(Set)
-        if (4 * values.len()) > self._set.len():
-            self._set.update(values)
-            self._list.clear()
-            self._list.update(self._set)
-        else:
-            for value in values:
-                self.add(value)
-        return self
 
     @override
-    def __ior__(self, other: Iterable[T]) -> Self:
-        return self.update(other)
+    def __ior__(self, other: Iterable[T]) -> Self: ...
 
-
+@final
 class SortedSet[T: SupportsHashableAndRichComparison](BaseSortedSet[T]):
     """Sorted set is a sorted mutable set.
 
@@ -761,55 +583,21 @@ class SortedSet[T: SupportsHashableAndRichComparison](BaseSortedSet[T]):
 
     """
 
-    def __init__(self, iterable: Iterable[T] | None = None) -> None:
-        # SortedSet._fromset calls SortedSet.__init__ after initializing the
-        # _set attribute. So only create a new set if the _set attribute is not
-        # already present.
-
-        if not hasattr(self, "_set"):
-            self._set: SetMut[T] = SetMut[T](())
-
-        self._list: SortedList[T] = SortedList(self._set)
-
-        if iterable is not None:
-            _ = self.update(iterable)
-
+    def __init__(self, iterable: Iterable[T] | None = None) -> None: ...
     @override
-    def _fromset(self, values: SetMut[T]) -> Self:
-        sorted_set = self.__new__(self.__class__)
-        sorted_set._set = values
-        sorted_set.__init__()
-        return sorted_set
-
-    @recursive_repr()
-    def __repr__(self) -> str:
-        type_name = self.__class__.__name__
-        return f"{type_name}({list(self)!r})"
-
+    def _fromset(self, values: SetMut[T]) -> Self: ...
     @override
     def __reduce__(
         self,
-    ) -> tuple[type[Self], tuple[AbstractSet[T]]]:
-        return (self.__class__, (self._set,))
-
+    ) -> tuple[type[Self], tuple[AbstractSet[T]]]: ...
     @override
-    def union(self, *iterables: Iterable[T]) -> Self:
-        return self.__class__(self.iter().chain(*iterables))
+    def union(self, *iterables: Iterable[T]) -> Self: ...
 
-
-def identity[T](value: T) -> T:
-    return value
-
-
+@final
 class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]):  # pyright: ignore[reportInvalidTypeArguments]
-    _set: SetMut[T]
-    _list: SortedKeyList[T, OT]
-
-    def __init__(
-        self,
-        iterable: Iterable[T] | None = None,
-        key: SetKeyFunc[T, OT] = identity,  # pyright: ignore[reportArgumentType]
-    ) -> None:
+    def __new__(
+        cls, iterable: Iterable[T] | None = None, key: SetKeyFunc[T, OT] | None = None
+    ) -> Self:
         """Initialize sorted set instance based on a key function.
 
         Optional `iterable` argument provides an initial iterable of values to
@@ -830,26 +618,8 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]): 
         :param key: function used to extract comparison key
 
         """
-        # SortedSet._fromset calls SortedSet.__init__ after initializing the
-        # _set attribute. So only create a new set if the _set attribute is not
-        # already present.
-
-        self._key: SetKeyFunc[T, OT] = key
-        if not hasattr(self, "_set"):
-            self._set = SetMut[T](())
-
-        self._list = SortedKeyList(self._set, key=key)  # pyright: ignore[reportIncompatibleVariableOverride]
-
-        if iterable is not None:
-            _ = self.update(iterable)
-
     @override
-    def _fromset(self, values: SetMut[T]) -> Self:
-        sorted_set = self.__new__(self.__class__)
-        sorted_set._set = values
-        sorted_set.__init__(key=self._key)
-        return sorted_set
-
+    def _fromset(self, values: SetMut[T]) -> Self: ...
     @property
     def key(self) -> SetKeyFunc[T, OT]:
         """Function used to extract comparison key from values.
@@ -857,21 +627,11 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]): 
         Sorted set compares values directly when the key function is none.
 
         """
-        return self._key
-
-    @recursive_repr()
-    def __repr__(self) -> str:
-        key_ = self._key
-        key = f", key={key_!r}"
-        type_name = self.__class__.__name__
-        return f"{type_name}({list(self)!r}{key})"
 
     @override
     def __reduce__(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
-    ) -> tuple[type[Self], tuple[AbstractSet[T], Callable[[T], Any]]]:
-        return (self.__class__, (self._set, self._key))
-
+    ) -> tuple[type[Self], tuple[AbstractSet[T], Callable[[T], Any]]]: ...
     def irange_key(
         self,
         min_key: OT | None = None,
@@ -879,15 +639,8 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]): 
         inclusive: tuple[bool, bool] = (True, True),
         *,
         reverse: bool = False,
-    ) -> PyoIterator[T]:
-        return self._list.irange_key(min_key, max_key, inclusive, reverse=reverse)
-
-    def bisect_key_left(self, key: OT) -> int:
-        return self._list.bisect_key_left(key)
-
-    def bisect_key_right(self, key: OT) -> int:
-        return self._list.bisect_key_right(key)
-
+    ) -> PyoIterator[T]: ...
+    def bisect_key_left(self, key: OT) -> int: ...
+    def bisect_key_right(self, key: OT) -> int: ...
     @override
-    def union(self, *iterables: Iterable[T]) -> Self:
-        return self.__class__(self.iter().chain(*iterables), key=self._key)
+    def union(self, *iterables: Iterable[T]) -> Self: ...

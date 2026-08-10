@@ -11,3 +11,5 @@ mod traits;
 pub use keylist::SortedKeyList;
 pub use list::SortedList;
 pub mod debug;
+pub use keyset::SortedKeySet;
+pub use set::SortedSet;

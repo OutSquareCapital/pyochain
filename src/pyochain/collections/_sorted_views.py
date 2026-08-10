@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload, override
 
 from pyochain import Vec
 from pyochain.abc import PyoItemsView, PyoKeysView, PyoSequence, PyoValuesView
+from pyochain.collections import SortedSet
 
 from ._base_sorted import SupportsHashableAndRichComparison
-from ._sorted_set import SortedSet
 
 if TYPE_CHECKING:
     from collections.abc import Iterable

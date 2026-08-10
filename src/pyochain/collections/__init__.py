@@ -7,11 +7,12 @@ from ..rs import (
     HeapMin,
     PyoCounter,
     SortedKeyList,
+    SortedKeySet,
     SortedList,
+    SortedSet,
     StableSet,
 )
 from ._sorted_dict import SortedDict, SortedKeyDict
-from ._sorted_set import SortedKeySet, SortedSet
 
 __all__ = [
     "Deque",

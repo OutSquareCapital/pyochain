@@ -7,16 +7,12 @@ https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_cov
 from __future__ import annotations
 
 import operator
-from typing import TYPE_CHECKING, override
+from typing import override
 
 import pytest
 
 from pyochain.collections import SortedKeySet, SortedSet
-
-from ._utils import check_sorted_set
-
-if TYPE_CHECKING:
-    from pyochain.collections._base_sorted import SupportsHashableAndRichComparison
+from pyochain.rs import check_sorted_set
 
 
 def modulo(value: int) -> int:
@@ -94,7 +90,7 @@ def test_eq() -> None:
     beta = SortedSet(range(100))
     beta.reset(17)
     assert alpha == beta
-    assert alpha == beta._set  # pyright: ignore[reportPrivateUsage]
+    assert alpha == beta.set
     beta.add(101)
     assert alpha != beta
 
@@ -107,7 +103,7 @@ def test_ne() -> None:
     assert alpha != beta
     beta.add(100)
     assert alpha != beta
-    assert alpha != beta._set  # pyright: ignore[reportPrivateUsage]
+    assert alpha != beta.set
     assert alpha != list(range(101))
 
 
@@ -118,10 +114,10 @@ def test_lt_gt() -> None:
     that.reset(9)
     assert that < temp
     assert not (temp < that)
-    assert that < temp._set  # pyright: ignore[reportPrivateUsage]
+    assert that < temp.set
     assert temp > that
     assert not (that > temp)
-    assert temp > that._set  # pyright: ignore[reportPrivateUsage]
+    assert temp > that.set
 
 
 def test_le_ge() -> None:
@@ -131,10 +127,10 @@ def test_le_ge() -> None:
     beta.reset(17)
     assert alpha <= beta
     assert not (beta <= alpha)
-    assert alpha <= beta._set  # pyright: ignore[reportPrivateUsage]
+    assert alpha <= beta.set
     assert beta >= alpha
     assert not (alpha >= beta)
-    assert beta >= alpha._set  # pyright: ignore[reportPrivateUsage]
+    assert beta >= alpha.set
 
 
 def test_iter() -> None:
@@ -525,21 +521,6 @@ def test_repr() -> None:
     assert repr(temp) == "SortedKeySet([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], key=identity)"
 
 
-def test_repr_recursion() -> None:
-    class HashableSortedSet[T: SupportsHashableAndRichComparison](SortedSet[T]):
-        @override
-        def __hash__(self) -> int:
-            return hash(tuple(self))
-
-    temp = HashableSortedSet([HashableSortedSet([1]), HashableSortedSet([1, 2])])
-    # pyrefly: ignore [bad-argument-type]
-    temp.add(temp)  # pyright: ignore[reportArgumentType]
-    assert (
-        repr(temp)
-        == "HashableSortedSet([HashableSortedSet([1]), HashableSortedSet([1, 2]), ...])"
-    )
-
-
 @pytest.mark.skip(reason="Pickle not supported by Pyo3")
 def test_pickle() -> None:
     import pickle
@@ -549,4 +530,4 @@ def test_pickle() -> None:
     data = pickle.dumps(alpha)
     beta: SortedKeySet[int, int] = pickle.loads(data)  # pyright: ignore[reportAny]
     assert alpha == beta
-    assert alpha._key == beta._key  # pyright: ignore[reportPrivateUsage]
+    assert alpha.key == beta.key

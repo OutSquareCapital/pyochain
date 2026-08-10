@@ -1,8 +1,14 @@
-use crate::collections::{SortedKeyList, SortedList, sorted::traits::SortedListGetters};
+use crate::collections::{
+    SortedKeyList, SortedList,
+    sorted::{
+        keyset::SortedKeySet,
+        set::SortedSet,
+        traits::{BaseSortedSet, SortedListGetters},
+    },
+};
 use either::Either;
 use pyo3::{exceptions::PyAssertionError, prelude::*};
 use std::ops::Index;
-
 type InnerSorted = Either<Py<SortedList>, Py<SortedKeyList>>;
 
 macro_rules! pyassert {
@@ -12,6 +18,30 @@ macro_rules! pyassert {
         }
     };
 }
+#[pyfunction]
+pub fn check_sorted_set(
+    py: Python<'_>,
+    data: Either<Py<SortedSet>, Py<SortedKeySet>>,
+) -> PyResult<()> {
+    fn check_list(x: &impl SortedListGetters, py: Python<'_>) -> PyResult<()> {
+        run_checks(py, x).inspect_err(move |e| show_list(py, &e, x))
+    }
+    fn check_len(x: &impl BaseSortedSet, py: Python<'_>) -> PyResult<()> {
+        check_list(x._list(), py)?;
+        let set = x._set().bind(py);
+        let data = x._list().get_data();
+        pyassert!(set.len() == data.len);
+        pyassert!(
+            data.iter()
+                .all(|x| set.contains(x).expect("Failed to check set membership"))
+        );
+        Ok(())
+    }
+    data.map_either(|x| check_len(x.get(), py), |x| check_len(x.get(), py))
+        .into_inner()?;
+    Ok(())
+}
+
 #[pyfunction]
 pub fn assert_sorted_list_empty(lst: InnerSorted) -> PyResult<()> {
     fn check_empty(x: &impl SortedListGetters) -> PyResult<()> {

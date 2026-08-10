@@ -5,15 +5,7 @@ from typing import TYPE_CHECKING, Any
 from pyochain.rs import check_sorted_list
 
 if TYPE_CHECKING:
-    from pyochain.collections import SortedDict, SortedSet
-
-
-def check_sorted_set(data: SortedSet[Any]) -> None:
-    set_ = data._set  # pyright: ignore[reportPrivateUsage]
-    list_ = data._list  # pyright: ignore[reportPrivateUsage]
-    check_sorted_list(list_)
-    assert set_.len() == list_.len()
-    assert list_.iter().all(set_.contains)
+    from pyochain.collections import SortedDict
 
 
 def check_sorted_dict(data: SortedDict[Any, Any]) -> None:

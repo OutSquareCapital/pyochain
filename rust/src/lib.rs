@@ -84,6 +84,8 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // NOTE: Temp utils
     m.add_class::<collections::SortedList>()?;
     m.add_class::<collections::SortedKeyList>()?;
+    m.add_class::<collections::SortedSet>()?;
+    m.add_class::<collections::SortedKeySet>()?;
     m.add_function(wrap_pyfunction!(
         collections::sorted::debug::check_sorted_list,
         m
@@ -94,6 +96,10 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     )?)?;
     m.add_function(wrap_pyfunction!(
         collections::sorted::debug::assert_sorted_list_empty,
+        m
+    )?)?;
+    m.add_function(wrap_pyfunction!(
+        collections::sorted::debug::check_sorted_set,
         m
     )?)?;
     let sys_mods = py.import("sys")?.getattr("modules")?;

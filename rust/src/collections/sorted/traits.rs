@@ -496,6 +496,7 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
             }
             Either::Left(int) => {
                 let value = list.getitem_from_int(py, int)?;
+                drop(list);
                 self._set().bind(py).remove(&value)?;
                 self._list().delitem_from_int(py, int)?;
             }
@@ -768,8 +769,6 @@ impl<'py> IntoUpdate<'py> {
     pub(super) fn from_any(other: Bound<'py, PyAny>) -> Self {
         if other.is_exact_instance_of::<PySet>() {
             Self::Set(unsafe { other.cast_into_unchecked::<PySet>() })
-        } else if other.is_exact_instance_of::<PyTuple>() {
-            Self::Tuple(unsafe { other.cast_into_unchecked::<PyTuple>() })
         } else {
             Self::Any(other)
         }
