@@ -297,7 +297,7 @@ impl BaseSortedList for SortedList {
         py: Python<'py>,
         inner: iter::BoundedIter<Self>,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        iter::SortedIter::build(py, inner)
+        iter::SortedIter::new(py, inner)
     }
     fn expand(
         &self,

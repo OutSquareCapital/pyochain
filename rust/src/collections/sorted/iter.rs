@@ -6,7 +6,7 @@ use crate::{
     collections::{SortedKeyList, SortedList},
     traits::PyoABC,
 };
-use pyo3::prelude::*;
+use pyo3::{PyClass, PyTypeInfo, prelude::*};
 use tap::Pipe;
 
 #[derive(PartialEq, Eq)]
@@ -124,17 +124,12 @@ pub struct SortedIter {
     inner: Mutex<BoundedIter<SortedList>>,
 }
 impl SortedIter {
-    pub(super) fn build<'py>(
+    pub(super) fn new<'py>(
         py: Python<'py>,
         inner: BoundedIter<SortedList>,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        abc::PyoIterator::build_init()
-            .add_subclass(Self {
-                inner: Mutex::new(inner),
-            })
-            .pipe(|x| Bound::new(py, x))?
-            .into_super()
-            .pipe(Ok)
+        let inner = Mutex::new(inner);
+        build_iter(py, Self { inner })
     }
 }
 #[pymethods]
@@ -149,17 +144,12 @@ pub struct SortedIterKey {
     inner: Mutex<BoundedIter<SortedKeyList>>,
 }
 impl SortedIterKey {
-    pub(super) fn build<'py>(
+    pub(super) fn new<'py>(
         py: Python<'py>,
         inner: BoundedIter<SortedKeyList>,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        abc::PyoIterator::build_init()
-            .add_subclass(Self {
-                inner: Mutex::new(inner),
-            })
-            .pipe(|x| Bound::new(py, x))?
-            .into_super()
-            .pipe(Ok)
+        let inner = Mutex::new(inner);
+        build_iter(py, Self { inner })
     }
 }
 #[pymethods]
@@ -167,4 +157,14 @@ impl SortedIterKey {
     fn __next__(&self, py: Python<'_>) -> Option<Py<PyAny>> {
         self.inner.lock().expect("poisoned").next(py)
     }
+}
+fn build_iter<S: PyClass<BaseType = abc::PyoIterator> + PyTypeInfo>(
+    py: Python<'_>,
+    s: S,
+) -> PyResult<Bound<'_, abc::PyoIterator>> {
+    abc::PyoIterator::build_init()
+        .add_subclass(s)
+        .pipe(|x| Bound::new(py, x))?
+        .into_super()
+        .pipe(Ok)
 }

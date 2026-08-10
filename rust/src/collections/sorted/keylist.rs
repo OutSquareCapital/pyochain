@@ -423,7 +423,7 @@ impl BaseSortedList for SortedKeyList {
         py: Python<'py>,
         inner: iter::BoundedIter<Self>,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        iter::SortedIterKey::build(py, inner)
+        iter::SortedIterKey::new(py, inner)
     }
     fn delete(
         &self,
