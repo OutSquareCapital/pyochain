@@ -4,7 +4,6 @@ use crate::{
         SortedKeyList, SortedList,
         sorted::{data::ListsData, errors, iter},
     },
-    iterators,
     pyovec::PyoVec,
     traits::IntoPyochain,
 };
@@ -13,7 +12,7 @@ use pyo3::{
     PyClass,
     exceptions::{PyIndexError, PyNotImplementedError},
     prelude::*,
-    types::{PyList, PyNotImplemented, PySequence, PySlice, PySliceIndices},
+    types::{PyList, PyNotImplemented, PySequence, PySlice, PySliceIndices, PyTuple, PyType},
 };
 use pyo3_ext::prelude::*;
 use pyochain_macros::py_abc;
@@ -26,7 +25,7 @@ use tap::prelude::*;
 pub const DEFAULT_LOAD_FACTOR: usize = 1000;
 pub type BoolOrNotImpl<'py> = PyResult<Either<bool, Bound<'py, PyNotImplemented>>>;
 pub type SeqOrAny<'py> = Either<Bound<'py, PySequence>, Bound<'py, PyAny>>;
-
+pub(crate) type Reduced<'py> = PyResult<(Bound<'py, PyType>, Bound<'py, PyTuple>)>;
 pub(super) fn try_lock_recover<'a, T>(mutex: &'a Mutex<T>, msg: &str) -> MutexGuard<'a, T> {
     match mutex.try_lock() {
         Ok(guard) => guard,
@@ -37,9 +36,50 @@ pub(super) fn try_lock_recover<'a, T>(mutex: &'a Mutex<T>, msg: &str) -> MutexGu
 }
 
 #[py_abc(SortedList, SortedKeyList)]
-pub(super) trait SortedListGetters:
+pub(super) trait SortedCollection:
     Sized + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {
+    fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py>;
+    fn __contains__(&self, value: Bound<'_, PyAny>) -> PyResult<bool>;
+    fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize>;
+    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize>;
+    #[pyo3(signature = (minimum = None, maximum = None, inclusive = (true, true), *, reverse = false))]
+    fn irange<'py>(
+        slf: Bound<'py, Self>,
+        minimum: Option<Bound<'py, PyAny>>,
+        maximum: Option<Bound<'py, PyAny>>,
+        inclusive: (bool, bool),
+        reverse: bool,
+    ) -> PyResult<Bound<'py, abc::PyoIterator>>;
+    #[pyo3(signature = (start = None, stop = None, *, reverse = false))]
+    fn islice<'py>(
+        slf: Bound<'py, Self>,
+        py: Python<'py>,
+        start: Option<isize>,
+        stop: Option<isize>,
+        reverse: bool,
+    ) -> PyResult<Bound<'py, abc::PyoIterator>>;
+    #[pyo3(signature = (value, start = None, stop = None))]
+    fn index(
+        &self,
+        value: Bound<'_, PyAny>,
+        start: Option<isize>,
+        stop: Option<isize>,
+    ) -> PyResult<isize>;
+    fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()>;
+    fn clear(&self) -> ();
+}
+
+#[py_abc(SortedList, SortedKeyList)]
+pub(super) trait BaseSortedListSet: SortedCollection {
+    fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()>;
+    fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()>;
+    fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()>;
+    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>>;
+}
+
+#[py_abc(SortedList, SortedKeyList)]
+pub(super) trait SortedListGetters: BaseSortedListSet {
     #[skip]
     fn get_data(&self) -> MutexGuard<'_, ListsData>;
     fn set_load(&self, load: usize);
@@ -67,15 +107,12 @@ macro_rules! impl_inner_sorted_rs {
 impl_inner_sorted_rs!(SortedList);
 impl_inner_sorted_rs!(SortedKeyList);
 #[py_abc(SortedList, SortedKeyList)]
-pub(super) trait InnerSorted: SortedListGetters {
+pub(super) trait BaseSortedList: SortedListGetters {
     #[skip]
     fn wrap_iter<'py>(
         py: Python<'py>,
         inner: iter::BoundedIter<Self>,
     ) -> PyResult<Bound<'py, abc::PyoIterator>>;
-    fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize>;
-    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize>;
-    fn clear(&self) -> ();
     #[skip]
     fn delete(
         &self,
@@ -91,36 +128,11 @@ pub(super) trait InnerSorted: SortedListGetters {
         data: &mut MutexGuard<'_, ListsData>,
         pos: usize,
     ) -> PyResult<()>;
-    fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()>;
-    fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()>;
-    fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()>;
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize>;
-    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>>;
     fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
-    #[pyo3(signature = (minimum = None, maximum = None, inclusive = (true, true), *, reverse = false))]
-    fn irange<'py>(
-        slf: Bound<'py, Self>,
-        minimum: Option<Bound<'py, PyAny>>,
-        maximum: Option<Bound<'py, PyAny>>,
-        inclusive: (bool, bool),
-        reverse: bool,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>>;
     #[skip]
     fn update_from_vec(&self, py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<()>;
 
-    fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
-        let values = self.collapse_lists(py);
-        self.clear();
-        self.set_load(load);
-        self.update_from_vec(py, values)
-    }
-    #[pyo3(signature = (value, start = None, stop = None))]
-    fn index(
-        &self,
-        value: Bound<'_, PyAny>,
-        start: Option<isize>,
-        stop: Option<isize>,
-    ) -> PyResult<isize>;
     fn collapse_lists<'py>(&self, py: Python<'py>) -> Vec<Py<PyAny>> {
         self.get_data().collapse(py)
     }
@@ -200,60 +212,6 @@ pub(super) trait InnerSorted: SortedListGetters {
             }
         }
     }
-    #[pyo3(signature = (start = None, stop = None, *, reverse = false))]
-    fn islice<'py>(
-        slf: Bound<'py, Self>,
-        py: Python<'py>,
-        start: Option<isize>,
-        stop: Option<isize>,
-        reverse: bool,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        match slf.get().islice_specs(py, start, stop)? {
-            None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
-            Some(bounds) => Self::islice_iter(slf, bounds, reverse),
-        }
-    }
-
-    #[skip]
-    fn islice_specs(
-        &self,
-        py: Python<'_>,
-        start: Option<isize>,
-        stop: Option<isize>,
-    ) -> PyResult<Option<iter::IsliceBounds>> {
-        let mut data = self.get_data();
-        let length = data.len as isize;
-
-        if length == 0 {
-            return Ok(None);
-        }
-        //NOTE: Need to investiguate why we need to use PySlice at all. Same pattern in SliceView original code.
-        let indices =
-            PySlice::new(py, start.unwrap_or(0), stop.unwrap_or(length), 1).indices(length)?;
-
-        if indices.start >= indices.stop {
-            Ok(None)
-        } else {
-            let (min_pos, min_idx) = data.pos(indices.start)?;
-
-            let (max_pos, max_idx) = if indices.stop == length {
-                (
-                    data.lists.len() - 1,
-                    data.lists.last().unwrap().len() as isize,
-                )
-            } else {
-                data.pos(indices.stop)?
-            };
-
-            Ok(Some(iter::IsliceBounds::new(
-                min_pos,
-                min_idx as usize,
-                max_pos,
-                max_idx as usize,
-            )))
-        }
-    }
-
     /// Return an iterator that slices sorted list using two index pairs.\
     /// The index pairs are (min_pos, min_idx) and (max_pos, max_idx), the first inclusive and the latter exclusive.\
     /// See `_pos` for details on how an index is converted to an index pair.\
@@ -289,7 +247,6 @@ pub(super) trait InnerSorted: SortedListGetters {
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.copy(py)
     }
-    fn __contains__(&self, value: Bound<'_, PyAny>) -> PyResult<bool>;
     fn __eq__<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
         let data = self.get_data();
         match other {

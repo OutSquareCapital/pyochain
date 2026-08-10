@@ -1,12 +1,23 @@
 use pyo3::{
     exceptions::PyIndexError,
     prelude::*,
-    types::{PySlice, PySliceIndices},
+    types::{PyList, PySlice, PySliceIndices},
 };
+use pyo3_ext::iter::CollectBoundIterator;
 use std::cmp::Ordering;
 use tap::prelude::*;
 
-use crate::collections::sorted::{bisect, errors, iter::IsliceBounds};
+use crate::{
+    abc,
+    collections::sorted::{
+        bisect, errors,
+        iter::{self, IsliceBounds},
+        traits::BaseSortedList,
+    },
+    iterators,
+    pyovec::PyoVec,
+    traits::IntoPyochain,
+};
 pub(super) struct ListsData {
     pub(super) lists: Vec<Vec<Py<PyAny>>>,
     pub(super) maxes: Vec<Py<PyAny>>,
@@ -58,6 +69,10 @@ impl ListsData {
         self.idx.clear();
         self.len = 0;
         self.offset = 0;
+    }
+    #[inline]
+    pub fn as_pyovec<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyoVec>> {
+        self.iter().collect_bound::<PyList>(py)?.into_pyochain()
     }
     pub fn bisect_left(
         &mut self,
@@ -540,4 +555,61 @@ pub(super) fn get_irange_specs(
             Ok((max_pos, max_idx))
         })?;
     IsliceBounds::from_irange_spec(min_pos, min_idx, max_pos, max_idx).pipe(Ok)
+}
+pub(super) fn reset_list<T: BaseSortedList>(slf: &T, py: Python<'_>, load: usize) -> PyResult<()> {
+    let values = slf.collapse_lists(py);
+    slf.clear();
+    slf.set_load(load);
+    slf.update_from_vec(py, values)
+}
+pub(super) fn islice_list<'py, T: BaseSortedList>(
+    slf: Bound<'py, T>,
+    py: Python<'py>,
+    start: Option<isize>,
+    stop: Option<isize>,
+    reverse: bool,
+) -> PyResult<Bound<'py, abc::PyoIterator>> {
+    let specs = get_islice_specs(&mut slf.get().get_data(), py, start, stop)?;
+    match specs {
+        None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
+        Some(bounds) => T::islice_iter(slf, bounds, reverse),
+    }
+}
+fn get_islice_specs(
+    data: &mut ListsData,
+    py: Python<'_>,
+    start: Option<isize>,
+    stop: Option<isize>,
+) -> PyResult<Option<iter::IsliceBounds>> {
+    let length = data.len as isize;
+
+    if length == 0 {
+        Ok(None)
+    } else {
+        //NOTE: Need to investiguate why we need to use PySlice at all. Same pattern in SliceView original code.
+        let indices =
+            PySlice::new(py, start.unwrap_or(0), stop.unwrap_or(length), 1).indices(length)?;
+
+        if indices.start >= indices.stop {
+            Ok(None)
+        } else {
+            let (min_pos, min_idx) = data.pos(indices.start)?;
+
+            let (max_pos, max_idx) = if indices.stop == length {
+                (
+                    data.lists.len() - 1,
+                    data.lists.last().unwrap().len() as isize,
+                )
+            } else {
+                data.pos(indices.stop)?
+            };
+
+            Ok(Some(iter::IsliceBounds::new(
+                min_pos,
+                min_idx as usize,
+                max_pos,
+                max_idx as usize,
+            )))
+        }
+    }
 }

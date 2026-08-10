@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use super::traits::InnerSorted;
+use super::traits::BaseSortedList;
 use crate::{
     abc,
     collections::{SortedKeyList, SortedList},
@@ -68,14 +68,14 @@ impl IsliceBounds {
     }
 }
 
-pub(super) struct BoundedIter<T: InnerSorted> {
+pub(super) struct BoundedIter<T: BaseSortedList> {
     owner: Py<T>,
     start: Pos,
     end: Pos,
     dir: Dir,
 }
 
-impl<T: InnerSorted> BoundedIter<T> {
+impl<T: BaseSortedList> BoundedIter<T> {
     pub fn new(owner: Py<T>, bounds: IsliceBounds, dir: Dir) -> Self {
         Self {
             owner,

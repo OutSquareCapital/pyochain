@@ -3,18 +3,20 @@ use crate::{
     collections::sorted::{
         bisect,
         cmp::py_cmp_by_key,
-        data::{ListsData, get_irange_specs},
+        data::{ListsData, get_irange_specs, islice_list, reset_list},
         errors, iter,
-        traits::{DEFAULT_LOAD_FACTOR, InnerSorted, SortedListGetters, try_lock_recover},
+        traits::{
+            BaseSortedList, BaseSortedListSet, DEFAULT_LOAD_FACTOR, Reduced, SortedCollection,
+            SortedListGetters, try_lock_recover,
+        },
     },
     iterators,
-    pyovec::PyoVec,
-    traits::{IntoPyochain, PyoABC},
+    traits::PyoABC,
 };
 use pyo3::{
     IntoPyObjectExt, PyTypeInfo,
     prelude::*,
-    types::{PyList, PyType},
+    types::{PyList, PyTuple},
 };
 use pyo3_ext::prelude::*;
 use std::sync::{Mutex, MutexGuard, atomic::AtomicUsize};
@@ -104,18 +106,6 @@ impl SortedKeyList {
             .pipe(Ok)
     }
 
-    fn __reduce__<'py>(
-        &self,
-        py: Python<'py>,
-    ) -> PyResult<(Bound<'py, PyType>, (Bound<'py, PyoVec>, &Py<PyAny>))> {
-        let values = self
-            .get_data()
-            .iter()
-            .collect_bound::<PyList>(py)?
-            .into_pyochain()?;
-        Ok((Self::type_object(py), (values, &self.key)))
-    }
-
     fn bisect_key_left(&self, key: Bound<'_, PyAny>) -> PyResult<isize> {
         self.get_data().bisect_left(Some(&self.get_keys()), key)
     }
@@ -123,59 +113,12 @@ impl SortedKeyList {
         self.get_data().bisect_right(Some(&self.get_keys()), &key)
     }
 }
-impl InnerSorted for SortedKeyList {
-    fn __add__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
-        let py = slf.py();
-        let slf_ref = slf.get();
-        if other.is(&slf) {
-            Self::from_vec(py, slf_ref.get_data().repeat(py, 2), &slf_ref.key)
-        } else {
-            let values = slf_ref.get_data().concat(py, other)?;
-            Self::from_vec(py, values, &slf_ref.key)
-        }
-    }
-
-    fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
-        Self::from_vec(py, self.get_data().repeat(py, num), &self.key)
-    }
-
-    //recursive_repr()
-    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let type_name = Self::type_object(py).name()?;
-        let key_repr = self.key.bind(py).repr()?;
-
+impl SortedCollection for SortedKeyList {
+    fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
         self.get_data()
-            .iter()
-            .collect_bound::<PyList>(py)?
-            .repr()
-            .map(|repr| format!("{type_name}({}, key={})", repr, key_repr))
-    }
-
-    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        Self::from_vec(py, self.collapse_lists(py), &self.key)
-    }
-    fn wrap_iter<'py>(
-        py: Python<'py>,
-        inner: iter::BoundedIter<Self>,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        iter::SortedIterKey::build(py, inner)
-    }
-    fn irange<'py>(
-        slf: Bound<'py, Self>,
-        minimum: Option<Bound<'py, PyAny>>,
-        maximum: Option<Bound<'py, PyAny>>,
-        inclusive: (bool, bool),
-        reverse: bool,
-    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        let key_fn = |x| slf.get().key.bind(slf.py()).call1((x,));
-        let min_key = minimum.map(key_fn).transpose()?;
-        let max_key = maximum.map(key_fn).transpose()?;
-        Self::irange_key(slf, min_key, max_key, inclusive, reverse)
-    }
-
-    fn clear(&self) -> () {
-        self.get_data().clear();
-        self.get_keys().clear();
+            .as_pyovec(py)
+            .and_then(|x| PyTuple::new(py, [x.as_any(), &self.key.bind(py)]))
+            .map(|tup| (Self::type_object(py), tup))
     }
     fn __contains__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
@@ -216,99 +159,119 @@ impl InnerSorted for SortedKeyList {
             }
         }
     }
-    fn delete(
+
+    fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
+        self.key
+            .bind(value.py())
+            .call1((value,))
+            .and_then(|x| self.bisect_key_left(x))
+    }
+
+    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
+        self.key
+            .bind(value.py())
+            .call1((value,))
+            .and_then(|x| self.bisect_key_right(x))
+    }
+    fn clear(&self) -> () {
+        self.get_data().clear();
+        self.get_keys().clear();
+    }
+    fn index(
         &self,
-        py: Python<'_>,
-        data: &mut MutexGuard<'_, ListsData>,
-        mut pos: usize,
-        idx: usize,
-    ) -> PyResult<()> {
-        let mut keys = self.get_keys();
+        value: Bound<'_, PyAny>,
+        start: Option<isize>,
+        stop: Option<isize>,
+    ) -> PyResult<isize> {
+        let py = value.py();
 
-        keys[pos].remove(idx);
-        data.lists[pos].remove(idx);
-        data.len = data.len - 1;
+        let mut data = self.get_data();
+        let len_ = data.len as isize;
 
-        let len_keys_pos = keys[pos].len();
+        if len_ == 0 {
+            return errors::is_not_in_list_err(&value);
+        }
 
-        if len_keys_pos > (self.get_load() >> 1) {
-            data.maxes[pos] = keys[pos].last().unwrap().clone_ref(py);
+        let mut start = start.unwrap_or(0);
+        if start < 0 {
+            start += len_;
+        }
+        start = start.max(0);
 
-            if !data.idx.is_empty() {
-                let mut child = data.offset + pos;
-                while child > 0 {
-                    data.idx[child] = data.idx[child] - 1;
-                    child = (child - 1) >> 1;
+        let mut stop = stop.unwrap_or(len_);
+        if stop < 0 {
+            stop += len_;
+        }
+        stop = stop.min(len_);
+
+        if stop <= start {
+            return errors::is_not_in_list_err(&value);
+        }
+        let key = self.key.bind(py).call1((&value,))?;
+        let mut pos = bisect::left(&data.maxes, &key)?;
+
+        if pos == data.maxes.len() {
+            return errors::is_not_in_list_err(&value);
+        }
+
+        stop -= 1;
+        let keys = self.get_keys();
+        let v_left = &keys[pos];
+        let mut idx = bisect::left(&v_left, &key)?;
+        let len_keys = keys.len();
+        let mut len_sublist = v_left.len();
+
+        loop {
+            if keys[pos][idx].bind(py).ne(&key)? {
+                return errors::is_not_in_list_err(&value);
+            }
+            if data.lists[pos][idx].bind(py).eq(&value)? {
+                let loc = data.loc(pos, idx as isize)?;
+                if start <= loc && loc <= stop {
+                    return Ok(loc);
+                } else if loc > stop {
+                    break;
                 }
-                data.idx[0] = data.idx[0] - 1;
-            };
-            Ok(())
-        } else if keys.len() > 1 {
-            if pos == 0 {
-                pos += 1
             }
-
-            let prev = pos - 1;
-            let (left, right) = keys.split_at_mut(pos);
-            left[prev].extend(right[0].drain(..));
-            let mut removed = data.lists[pos]
-                .iter()
-                .map(|x| x.clone_ref(py))
-                .collect::<Vec<_>>();
-            data.lists[prev].append(removed.as_mut());
-            data.maxes[prev] = keys[prev].last().unwrap().clone_ref(py);
-
-            data.lists.remove(pos);
-            keys.remove(pos);
-            data.maxes.remove(pos);
-            data.idx.clear();
-            drop(keys);
-
-            self.expand(py, data, prev)
-        } else if len_keys_pos != 0 {
-            data.maxes[pos] = keys[pos].last().unwrap().clone_ref(py);
-            Ok(())
-        } else {
-            data.lists.remove(pos);
-            keys.remove(pos);
-            data.maxes.remove(pos);
-            data.idx.clear();
-            Ok(())
-        }
-    }
-    fn expand(
-        &self,
-        py: Python<'_>,
-        data: &mut MutexGuard<'_, ListsData>,
-        pos: usize,
-    ) -> PyResult<()> {
-        let mut keys = self.get_keys();
-
-        if keys[pos].len() > self.get_load() << 1 {
-            let load = self.get_load();
-            let keys_pos = &mut keys[pos];
-            let half_keys = keys_pos.split_off(load);
-            let half = data.lists[pos].split_off(load);
-            data.maxes[pos] = keys_pos.last().unwrap().clone_ref(py);
-
-            data.lists.insert(pos + 1, half);
-            data.maxes
-                .insert(pos + 1, half_keys.last().unwrap().clone_ref(py));
-            keys.insert(pos + 1, half_keys);
-            data.idx.clear();
-            Ok(())
-        } else if !data.idx.is_empty() {
-            let mut child = &data.offset + pos;
-            while child != 0 {
-                data.idx[child] = data.idx[child] + 1;
-                child = (child - 1) >> 1;
+            idx += 1;
+            if idx == len_sublist {
+                pos += 1;
+                if pos == len_keys {
+                    return errors::is_not_in_list_err(&value);
+                }
+                len_sublist = keys[pos].len();
+                idx = 0;
             }
-            data.idx[0] = data.idx[0] + 1;
-            Ok(())
-        } else {
-            Ok(())
         }
+
+        errors::is_not_in_list_err(&value)
     }
+    fn irange<'py>(
+        slf: Bound<'py, Self>,
+        minimum: Option<Bound<'py, PyAny>>,
+        maximum: Option<Bound<'py, PyAny>>,
+        inclusive: (bool, bool),
+        reverse: bool,
+    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        let key_fn = |x| slf.get().key.bind(slf.py()).call1((x,));
+        let min_key = minimum.map(key_fn).transpose()?;
+        let max_key = maximum.map(key_fn).transpose()?;
+        Self::irange_key(slf, min_key, max_key, inclusive, reverse)
+    }
+    fn islice<'py>(
+        slf: Bound<'py, Self>,
+        py: Python<'py>,
+        start: Option<isize>,
+        stop: Option<isize>,
+        reverse: bool,
+    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        islice_list(slf, py, start, stop, reverse)
+    }
+    fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
+        reset_list(self, py, load)
+    }
+}
+impl BaseSortedListSet for SortedKeyList {
     fn add(&self, py: Python<'_>, value: Py<PyAny>) -> PyResult<()> {
         let key = self.key.bind(py).call1((&value,))?.unbind();
         let key_binded = key.bind(py);
@@ -430,20 +393,138 @@ impl InnerSorted for SortedKeyList {
             Ok(())
         }
     }
-    fn bisect_left(&self, value: Bound<'_, PyAny>) -> PyResult<isize> {
-        self.key
-            .bind(value.py())
-            .call1((value,))
-            .and_then(|x| self.bisect_key_left(x))
+
+    fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
+        Self::from_vec(py, self.collapse_lists(py), &self.key)
+    }
+}
+impl BaseSortedList for SortedKeyList {
+    fn __add__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
+        let py = slf.py();
+        let slf_ref = slf.get();
+        if other.is(&slf) {
+            Self::from_vec(py, slf_ref.get_data().repeat(py, 2), &slf_ref.key)
+        } else {
+            let values = slf_ref.get_data().concat(py, other)?;
+            Self::from_vec(py, values, &slf_ref.key)
+        }
     }
 
-    fn bisect_right(&self, value: &Bound<'_, PyAny>) -> PyResult<isize> {
-        self.key
-            .bind(value.py())
-            .call1((value,))
-            .and_then(|x| self.bisect_key_right(x))
+    fn __mul__<'py>(&self, py: Python<'py>, num: usize) -> PyResult<Bound<'py, Self>> {
+        Self::from_vec(py, self.get_data().repeat(py, num), &self.key)
     }
 
+    //recursive_repr()
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        let type_name = Self::type_object(py).name()?;
+        let key_repr = self.key.bind(py).repr()?;
+
+        self.get_data()
+            .iter()
+            .collect_bound::<PyList>(py)?
+            .repr()
+            .map(|repr| format!("{type_name}({}, key={})", repr, key_repr))
+    }
+
+    fn wrap_iter<'py>(
+        py: Python<'py>,
+        inner: iter::BoundedIter<Self>,
+    ) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        iter::SortedIterKey::build(py, inner)
+    }
+    fn delete(
+        &self,
+        py: Python<'_>,
+        data: &mut MutexGuard<'_, ListsData>,
+        mut pos: usize,
+        idx: usize,
+    ) -> PyResult<()> {
+        let mut keys = self.get_keys();
+
+        keys[pos].remove(idx);
+        data.lists[pos].remove(idx);
+        data.len = data.len - 1;
+
+        let len_keys_pos = keys[pos].len();
+
+        if len_keys_pos > (self.get_load() >> 1) {
+            data.maxes[pos] = keys[pos].last().unwrap().clone_ref(py);
+
+            if !data.idx.is_empty() {
+                let mut child = data.offset + pos;
+                while child > 0 {
+                    data.idx[child] = data.idx[child] - 1;
+                    child = (child - 1) >> 1;
+                }
+                data.idx[0] = data.idx[0] - 1;
+            };
+            Ok(())
+        } else if keys.len() > 1 {
+            if pos == 0 {
+                pos += 1
+            }
+
+            let prev = pos - 1;
+            let (left, right) = keys.split_at_mut(pos);
+            left[prev].extend(right[0].drain(..));
+            let mut removed = data.lists[pos]
+                .iter()
+                .map(|x| x.clone_ref(py))
+                .collect::<Vec<_>>();
+            data.lists[prev].append(removed.as_mut());
+            data.maxes[prev] = keys[prev].last().unwrap().clone_ref(py);
+
+            data.lists.remove(pos);
+            keys.remove(pos);
+            data.maxes.remove(pos);
+            data.idx.clear();
+            drop(keys);
+
+            self.expand(py, data, prev)
+        } else if len_keys_pos != 0 {
+            data.maxes[pos] = keys[pos].last().unwrap().clone_ref(py);
+            Ok(())
+        } else {
+            data.lists.remove(pos);
+            keys.remove(pos);
+            data.maxes.remove(pos);
+            data.idx.clear();
+            Ok(())
+        }
+    }
+    fn expand(
+        &self,
+        py: Python<'_>,
+        data: &mut MutexGuard<'_, ListsData>,
+        pos: usize,
+    ) -> PyResult<()> {
+        let mut keys = self.get_keys();
+
+        if keys[pos].len() > self.get_load() << 1 {
+            let load = self.get_load();
+            let keys_pos = &mut keys[pos];
+            let half_keys = keys_pos.split_off(load);
+            let half = data.lists[pos].split_off(load);
+            data.maxes[pos] = keys_pos.last().unwrap().clone_ref(py);
+
+            data.lists.insert(pos + 1, half);
+            data.maxes
+                .insert(pos + 1, half_keys.last().unwrap().clone_ref(py));
+            keys.insert(pos + 1, half_keys);
+            data.idx.clear();
+            Ok(())
+        } else if !data.idx.is_empty() {
+            let mut child = &data.offset + pos;
+            while child != 0 {
+                data.idx[child] = data.idx[child] + 1;
+                child = (child - 1) >> 1;
+            }
+            data.idx[0] = data.idx[0] + 1;
+            Ok(())
+        } else {
+            Ok(())
+        }
+    }
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize> {
         let py = value.py();
         let data = self.get_data();
@@ -483,75 +564,7 @@ impl InnerSorted for SortedKeyList {
             }
         }
     }
-    fn index(
-        &self,
-        value: Bound<'_, PyAny>,
-        start: Option<isize>,
-        stop: Option<isize>,
-    ) -> PyResult<isize> {
-        let py = value.py();
 
-        let mut data = self.get_data();
-        let len_ = data.len as isize;
-
-        if len_ == 0 {
-            return errors::is_not_in_list_err(&value);
-        }
-
-        let mut start = start.unwrap_or(0);
-        if start < 0 {
-            start += len_;
-        }
-        start = start.max(0);
-
-        let mut stop = stop.unwrap_or(len_);
-        if stop < 0 {
-            stop += len_;
-        }
-        stop = stop.min(len_);
-
-        if stop <= start {
-            return errors::is_not_in_list_err(&value);
-        }
-        let key = self.key.bind(py).call1((&value,))?;
-        let mut pos = bisect::left(&data.maxes, &key)?;
-
-        if pos == data.maxes.len() {
-            return errors::is_not_in_list_err(&value);
-        }
-
-        stop -= 1;
-        let keys = self.get_keys();
-        let v_left = &keys[pos];
-        let mut idx = bisect::left(&v_left, &key)?;
-        let len_keys = keys.len();
-        let mut len_sublist = v_left.len();
-
-        loop {
-            if keys[pos][idx].bind(py).ne(&key)? {
-                return errors::is_not_in_list_err(&value);
-            }
-            if data.lists[pos][idx].bind(py).eq(&value)? {
-                let loc = data.loc(pos, idx as isize)?;
-                if start <= loc && loc <= stop {
-                    return Ok(loc);
-                } else if loc > stop {
-                    break;
-                }
-            }
-            idx += 1;
-            if idx == len_sublist {
-                pos += 1;
-                if pos == len_keys {
-                    return errors::is_not_in_list_err(&value);
-                }
-                len_sublist = keys[pos].len();
-                idx = 0;
-            }
-        }
-
-        errors::is_not_in_list_err(&value)
-    }
     fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
         let values = iterable
