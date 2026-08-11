@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, override
 import pytest
 
 from pyochain.collections import SortedDict, SortedKeyDict
-from pyochain.rs import check_sorted_dict
+from pyochain.collections._sorted import check_sorted_dict
 
 if TYPE_CHECKING:
     from collections.abc import ItemsView, KeysView, Mapping

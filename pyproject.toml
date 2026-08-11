@@ -47,9 +47,8 @@
     requires      = ["maturin>=1.8,<2.0"]
 
 [tool.maturin]
-    manifest-path = "rust/Cargo.toml"
-    module-name   = "pyochain.rs"
-    python-source = "src"
+    manifest-path = "Cargo.toml"
+    module-name   = "pyochain"
 [tool.basedpyright]
     reportExplicitAny      = false # As a library we have no choice but to use `Any` in some places, so we disable this check.
     reportImportCycles     = false
@@ -57,4 +56,4 @@
     typeCheckingMode       = "all"
 [tool.pytest.ini_options]
     addopts   = "--docflex --benchmark-skip"
-    testpaths = ["README.md", "docs", "src/pyochain", "tests"]
+    testpaths = ["README.md", "docs", "pyochain", "tests"]

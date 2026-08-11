@@ -12,7 +12,7 @@ from typing import override
 import pytest
 
 from pyochain.collections import SortedKeySet, SortedSet
-from pyochain.rs import check_sorted_set
+from pyochain.collections._sorted import check_sorted_set
 
 
 def modulo(value: int) -> int:

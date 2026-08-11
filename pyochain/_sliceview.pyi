@@ -1,14 +1,9 @@
 """sliceview — Zero-copy slice views for Python sequences."""
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    MutableSequence,
-    Sequence,
-)
+from collections.abc import Iterable, Iterator, MutableSequence, Sequence
 from typing import Final, Self, SupportsIndex, overload, override
 
-from .abc import PyoSequence
+from pyochain.abc import PyoSequence
 
 class SliceView[T](PyoSequence[T]):
     """A zero-copy, composable slice view over any `collections::abc::Sequence`.

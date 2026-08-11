@@ -13,7 +13,7 @@ import pytest
 
 from pyochain.abc import PyoMutableSequence
 from pyochain.collections import SortedKeyList, SortedList
-from pyochain.rs import assert_sorted_list_empty, check_sorted_key_list
+from pyochain.collections._sorted import assert_sorted_list_empty, check_sorted_key_list
 
 if TYPE_CHECKING:
     from _typeshed import SupportsRichComparison

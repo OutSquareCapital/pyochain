@@ -1,11 +1,5 @@
 from abc import abstractmethod
-from collections.abc import (
-    Callable,
-    Collection,
-    Iterable,
-    Iterator,
-    MutableSequence,
-)
+from collections.abc import Callable, Collection, Iterable, Iterator, MutableSequence
 from typing import (
     Any,
     Concatenate,
@@ -20,10 +14,8 @@ from typing import (
 
 from _typeshed import SupportsRichComparison
 
-from pyochain._iterators import Peekable
-from pyochain._vec import Vec
+from pyochain import Option, Peekable, Result, Vec
 from pyochain.abc import PyoIterable, PyoMutableSequence
-from pyochain.rs import Option, Result
 
 from .._types import (
     LiteralInteger,

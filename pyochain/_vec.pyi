@@ -3,7 +3,7 @@ from typing import Self, SupportsIndex, final, overload, override
 
 from _typeshed import SupportsRichComparison
 
-from .abc import PyoMutableSequence
+from pyochain.abc import PyoMutableSequence
 
 type IntoVec[T] = Vec[T] | list[T]
 

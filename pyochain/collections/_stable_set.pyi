@@ -2,8 +2,7 @@ from collections.abc import Iterable, Iterator
 from typing import Any, override
 
 from pyochain import SetMut
-
-from ..abc import PyoMutableSet
+from pyochain.abc import PyoMutableSet
 
 class StableSet[T](PyoMutableSet[T]):
     """A mutable collection of unique elements which remember their insertion order.

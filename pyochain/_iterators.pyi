@@ -1,8 +1,8 @@
 from collections.abc import Callable, Iterable, Iterator
 from typing import Self, final, overload, override
 
-from .abc import PyoIterator
-from .rs import Option, Result
+from pyochain import Option, Result
+from pyochain.abc import PyoIterator
 
 @overload
 def no_doctest[T](obj: type[T], /) -> type[T]: ...

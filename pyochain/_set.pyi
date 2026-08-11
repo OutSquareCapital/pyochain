@@ -2,7 +2,7 @@ from collections.abc import Iterable, Iterator
 from collections.abc import Set as AbstractSet
 from typing import Self, override
 
-from .abc import PyoMutableSet, PyoSet
+from pyochain.abc import PyoMutableSet, PyoSet
 
 # TODO: address the following note from official python docs regarding Set performance, with benchmarks:
 # To override the comparisons (presumably for speed, as the semantics are fixed),

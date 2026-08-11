@@ -2,7 +2,7 @@ from collections import deque
 from collections.abc import Iterable, Iterator
 from typing import Final, Self, SupportsIndex, final, overload, override
 
-from ..abc import PyoMutableSequence
+from pyochain.abc import PyoMutableSequence
 
 type IntoDeque[T] = deque[T] | Deque[T]
 

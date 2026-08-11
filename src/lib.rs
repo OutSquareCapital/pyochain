@@ -24,7 +24,7 @@ use pyo3_ext::{
 };
 
 #[pymodule]
-fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn pyochain(m: &Bound<'_, PyModule>) -> PyResult<()> {
     debug_backtrace();
     let py = m.py();
     option::PyNull::init(py)?;
@@ -111,6 +111,7 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
         m
     )?)?;
     let sys_mods = py.import("sys")?.getattr("modules")?;
+    sys_mods.set_item("pyochain", m)?;
     sys_mods.set_item("pyochain.abc", abc_mod)?;
     sys_mods.set_item("pyochain.collections", collections_mod)?;
     register_all(py)

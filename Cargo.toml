@@ -5,12 +5,12 @@
 [package]
     edition = "2024"
     license = "MIT"
-    name    = "rs"
+    name    = "pyochain"
     version = "0.1.0"
 
 [lib]
     crate-type = ["cdylib"]
-    name       = "rs"
+    name       = "pyochain"
 
 [dependencies]
     color-eyre = "0.6.5"

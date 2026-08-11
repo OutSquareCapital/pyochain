@@ -13,7 +13,7 @@ from itertools import chain
 import pytest
 
 from pyochain.collections import SortedKeyList
-from pyochain.rs import assert_sorted_list_empty, check_sorted_key_list
+from pyochain.collections._sorted import assert_sorted_list_empty, check_sorted_key_list
 
 
 def test_identity() -> None:

@@ -3,7 +3,7 @@ from typing import Self, overload, override
 
 from _typeshed import SupportsGetItem, SupportsKeysAndGetItem
 
-from .abc import PyoMutableMapping, PyoReversible
+from pyochain.abc import PyoMutableMapping, PyoReversible
 
 type DictConvertible[K, V] = (
     Mapping[K, V] | Iterable[tuple[K, V]] | SupportsKeysAndGetItem[K, V]
