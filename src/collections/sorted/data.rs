@@ -559,7 +559,7 @@ pub(super) fn get_irange_specs(
 #[inline]
 pub(super) fn reset_list<T: BaseSortedList>(slf: &T, py: Python<'_>, load: usize) -> PyResult<()> {
     let values = slf.collapse_lists(py);
-    slf.clear();
+    slf.clear(py);
     slf.set_load(load);
     slf.update(py, values)
 }

@@ -167,7 +167,7 @@ impl SortedCollection for SortedKeyList {
             .call1((value,))
             .and_then(|x| self.bisect_key_right(x))
     }
-    fn clear(&self) -> () {
+    fn clear(&self, _py: Python<'_>) -> () {
         self.get_data().clear();
         self.get_keys().clear();
     }

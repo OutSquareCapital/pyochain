@@ -87,7 +87,7 @@ pub(super) trait SortedCollection:
         stop: Option<isize>,
     ) -> PyResult<isize>;
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()>;
-    fn clear(&self) -> ();
+    fn clear(&self, py: Python<'_>) -> ();
 }
 
 #[py_abc(SortedList, SortedKeyList, SortedSet, SortedKeySet)]
@@ -198,7 +198,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
         match (step, start.cmp(&stop)) {
             (1, Ordering::Less) if start == 0 && stop == length => {
                 drop(data);
-                self.clear();
+                self.clear(py);
                 Ok(())
             }
             (1, Ordering::Less) if length <= 8 * (stop - start) => {
@@ -209,7 +209,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
                     values.extend(new_slice);
                 }
                 drop(data);
-                self.clear();
+                self.clear(py);
                 self.update(py, values)?;
                 Ok(())
             }
@@ -449,7 +449,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
 
     fn __imul__(&self, py: Python<'_>, num: usize) -> PyResult<()> {
         let values = self.get_data().repeat(py, num);
-        self.clear();
+        self.clear(py);
         self.update(py, values)
     }
 
@@ -500,7 +500,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         if (4 * values.len()) > set.len() {
             set.update((values,))?;
             let list = self.get_list().get();
-            list.clear();
+            list.clear(py);
             list.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
         } else {
             for value in values.iter().map(Bound::unbind) {
@@ -549,7 +549,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         if (4 * values.len()) > set.len() {
             set.difference_update((values,))?;
             let list = self.get_list().get();
-            list.clear();
+            list.clear(py);
             list.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
         } else {
             for value in values {
@@ -567,7 +567,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         let set = self.get_set().bind(py);
         set.intersection_update(iterables)?;
         let list = self.get_list().get();
-        list.clear();
+        list.clear(py);
         list.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())
     }
     fn __getitem__<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
@@ -790,7 +790,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         if (4 * values.len()) > set.len() {
             set.difference_update((values,))?;
             let list = slf_ref.get_list().get();
-            list.clear();
+            list.clear(py);
             list.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
         } else {
             for value in values {
@@ -835,7 +835,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         let set = slf_ref.get_set().bind(other.py());
         set.symmetric_difference_update(other)?;
         let list = slf_ref.get_list().get();
-        list.clear();
+        list.clear(py);
         list.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
         Ok(slf)
     }
@@ -935,9 +935,9 @@ macro_rules! impl_sorted_collection_for_set {
             fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
                 self.get_list().get().reset(py, load)
             }
-            fn clear(&self) -> () {
-                Python::attach(|py| self.get_set().bind(py).clear());
-                self.get_list().get().clear()
+            fn clear(&self, py: Python<'_>) -> () {
+                self.get_set().bind(py).clear();
+                self.get_list().get().clear(py)
             }
         }
         impl BaseSortedListSet for $set {
@@ -1174,7 +1174,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
             }};
             if (10 * pairs.len()) > self.len(py) {
                 inner.update(pairs.as_mapping())?;
-                list.clear();
+                list.clear(py);
                 inner
                     .iter()
                     .map(|(k, _)| k.unbind())

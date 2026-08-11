@@ -87,7 +87,7 @@ impl SortedCollection for SortedList {
             .and_then(|x| PyTuple::new(py, [x]))
             .map(|tup| (Self::type_object(py), tup))
     }
-    fn clear(&self) -> () {
+    fn clear(&self, _py: Python<'_>) -> () {
         self.get_data().clear()
     }
 

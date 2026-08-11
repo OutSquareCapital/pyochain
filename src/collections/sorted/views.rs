@@ -58,19 +58,23 @@ pub trait BaseSortedView: Sized + PyClass + PyTypeInfo + Send + Sync {
     }
 }
 
+#[pyclass(frozen, generic, extends = abc::PyoSet, sequence)]
+pub struct SortedKeysView(Py<SortedDict>);
+
+#[pyclass(frozen, generic, extends = abc::PyoSet, sequence)]
+pub struct SortedByKeyKeysView(Py<SortedKeyDict>);
+
+#[pyclass(frozen, generic, extends = abc::PyoSequence, sequence)]
+pub struct SortedValuesView(Py<SortedDict>);
+
+#[pyclass(frozen, generic, extends = abc::PyoSequence, sequence)]
+pub struct SortedByKeyValuesView(Py<SortedKeyDict>);
+
 #[pyclass(frozen, generic, extends = abc::PyoSet)]
 pub struct SortedItemsView(Py<SortedDict>);
 
 #[pyclass(frozen, generic, extends = abc::PyoSet)]
-pub struct SortedKeysView(Py<SortedDict>);
-#[pyclass(frozen, generic, extends = abc::PyoCollection)]
-pub struct SortedValuesView(Py<SortedDict>);
-#[pyclass(frozen, generic, extends = abc::PyoSet)]
 pub struct SortedByKeyItemsView(Py<SortedKeyDict>);
-#[pyclass(frozen, generic, extends = abc::PyoSet)]
-pub struct SortedByKeyKeysView(Py<SortedKeyDict>);
-#[pyclass(frozen, generic, extends = abc::PyoCollection)]
-pub struct SortedByKeyValuesView(Py<SortedKeyDict>);
 
 // Implement BaseSortedView for all types at once using a macro to avoid repetition
 // HOw to create a macro that take a varable number of types and implement a trait for all of them?
@@ -131,7 +135,7 @@ macro_rules! impl_base_sorted_view_for_values {
                     &self.0
                 }
                 fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
-                    abc::PyoCollection::build_init()
+                    abc::PyoSequence::build_init()
                         .add_subclass(self)
                         .pipe(|initializer| Bound::new(py, initializer))
                 }
