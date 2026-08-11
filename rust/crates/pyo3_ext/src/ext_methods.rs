@@ -196,12 +196,13 @@ impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
 }
 
 #[allow(unused)]
-pub trait IntoPyMappingView<'py> {
+pub trait PyDictExtMethods<'py> {
     fn items_view(&self) -> Bound<'py, PyDictItems>;
     fn keys_view(&self) -> Bound<'py, PyDictKeys>;
+    fn pop(&self, key: &Bound<'py, PyAny>) -> PyResult<Option<Bound<'py, PyAny>>>;
     fn values_view(&self) -> Bound<'py, PyDictValues>;
 }
-impl<'py> IntoPyMappingView<'py> for Bound<'py, PyDict> {
+impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
     fn items_view(&self) -> Bound<'py, PyDictItems> {
         self.call_method0(intern!(self.py(), "items"))
             .unwrap()
@@ -211,6 +212,18 @@ impl<'py> IntoPyMappingView<'py> for Bound<'py, PyDict> {
         self.call_method0(intern!(self.py(), "keys"))
             .unwrap()
             .pipe(|x| unsafe { x.cast_into_unchecked::<PyDictKeys>() })
+    }
+    /// Remove *key* from the dictionary, and optionally return the removed value.\
+    /// Do not raise `KeyError` if the *key* is missing (unlike calling `.call_method1("pop", key)`).\
+    /// If the *key* is present, set *result to a new reference to the removed value if result is not NULL, and return `Some(value)`.\
+    /// If the *key* is missing, return `None`.
+    fn pop(&self, key: &Bound<'py, PyAny>) -> PyResult<Option<Bound<'py, PyAny>>> {
+        let mut result = core::ptr::null_mut();
+        match unsafe { ffi::PyDict_Pop(self.as_ptr(), key.as_ptr(), &mut result) } {
+            code if code < 0 => Err(PyErr::fetch(self.py())),
+            0 => Ok(None),
+            _ => Ok(Some(unsafe { Bound::from_owned_ptr(self.py(), result) })),
+        }
     }
     fn values_view(&self) -> Bound<'py, PyDictValues> {
         self.call_method0(intern!(self.py(), "values"))

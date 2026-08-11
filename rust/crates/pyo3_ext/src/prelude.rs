@@ -1,6 +1,6 @@
 pub use super::args::{Args, ConcatWith, Concatenate, Kwargs};
 pub use super::ext_methods::{
-    ABCRegister, IntoPyMappingView, PyListExtMethods, PyRangeExtMethods, PySequenceExtMethods,
+    ABCRegister, PyDictExtMethods, PyListExtMethods, PyRangeExtMethods, PySequenceExtMethods,
     PySetExtMethods, PySetExtMethodsMut,
 };
 pub use super::iter::{CollectBoundIterator, TryCollectBoundIterator, TryFromBoundIterator};
