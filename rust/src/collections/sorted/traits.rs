@@ -595,12 +595,12 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __eq__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> BoolOrNotImpl<'py> {
         try_cast! {
             match other {
-                SortedSet::exact(sorted) | SortedKeySet::exact(sorted) => self
+                CaseExact::SortedSet(sorted) | CaseExact::SortedKeySet(sorted) => self
                     .get_set()
                     .bind(py)
                     .eq(sorted.get().get_set().bind(py))
                     .map(Either::Left),
-                PySet(pyset) => self.get_set().bind(py).eq(pyset).map(Either::Left),
+                Case::PySet(pyset) => self.get_set().bind(py).eq(pyset).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)
@@ -612,12 +612,12 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __ne__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> BoolOrNotImpl<'py> {
         try_cast! {
             match other {
-                SortedSet::exact(sorted) | SortedKeySet::exact(sorted) => self
+                CaseExact::SortedSet(sorted) | CaseExact::SortedKeySet(sorted) => self
                     .get_set()
                     .bind(py)
                     .ne(sorted.get().get_set().bind(py))
                     .map(Either::Left),
-                PySet(pyset) => self.get_set().bind(py).ne(pyset).map(Either::Left),
+                Case::PySet(pyset) => self.get_set().bind(py).ne(pyset).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)
@@ -629,12 +629,12 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __lt__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> BoolOrNotImpl<'py> {
         try_cast! {
             match other {
-                SortedSet::exact(sorted) | SortedKeySet::exact(sorted) => self
+                CaseExact::SortedSet(sorted) | CaseExact::SortedKeySet(sorted) => self
                     .get_set()
                     .bind(py)
                     .lt(sorted.get().get_set().bind(py))
                     .map(Either::Left),
-                PySet(pyset) => self.get_set().bind(py).lt(pyset).map(Either::Left),
+                Case::PySet(pyset) => self.get_set().bind(py).lt(pyset).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)
@@ -646,12 +646,12 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __gt__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> BoolOrNotImpl<'py> {
         try_cast! {
             match other {
-                SortedSet::exact(sorted) | SortedKeySet::exact(sorted) => self
+                CaseExact::SortedSet(sorted) | CaseExact::SortedKeySet(sorted) => self
                     .get_set()
                     .bind(py)
                     .gt(sorted.get().get_set().bind(py))
                     .map(Either::Left),
-                PySet(pyset) => self.get_set().bind(py).gt(pyset).map(Either::Left),
+                Case::PySet(pyset) => self.get_set().bind(py).gt(pyset).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)
@@ -663,12 +663,12 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __le__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> BoolOrNotImpl<'py> {
         try_cast! {
             match other {
-                SortedSet::exact(sorted) | SortedKeySet::exact(sorted) => self
+                CaseExact::SortedSet(sorted) | CaseExact::SortedKeySet(sorted) => self
                     .get_set()
                     .bind(py)
                     .le(sorted.get().get_set().bind(py))
                     .map(Either::Left),
-                PySet(pyset) => self.get_set().bind(py).le(pyset).map(Either::Left),
+                Case::PySet(pyset) => self.get_set().bind(py).le(pyset).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)
@@ -680,12 +680,12 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __ge__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> BoolOrNotImpl<'py> {
         try_cast! {
             match other {
-                SortedSet::exact(sorted) | SortedKeySet::exact(sorted) => self
+                CaseExact::SortedSet(sorted) | CaseExact::SortedKeySet(sorted) => self
                     .get_set()
                     .bind(py)
                     .ge(sorted.get().get_set().bind(py))
                     .map(Either::Left),
-                PySet(pyset) => self.get_set().bind(py).ge(pyset).map(Either::Left),
+                Case::PySet(pyset) => self.get_set().bind(py).ge(pyset).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)
@@ -1071,11 +1071,11 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
     }
 
     fn copy(&self) -> Self {
-        return self.__class__(self.items());
+        self.__class__(self.items())
     }
 
     fn __copy__(&self) -> Self {
-        return self.copy();
+        self.copy()
     }
 
     #[classmethod]
@@ -1088,19 +1088,19 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         iterable
             .try_iter()?
             .map(|key| (key, value))
-            .collect(SortedDict)
+            .pipe(SortedDict::new)
     }
 
     fn keys(&self) -> SortedKeysView {
-        SortedKeysView(self)
+        SortedKeysView::new(self)
     }
 
     fn items(&self) -> SortedItemsView {
-        SortedItemsView(self)
+        SortedItemsView::new(self)
     }
 
     fn values(&self) -> SortedValuesView {
-        SortedValuesView(self)
+        SortedValuesView::new(self)
     }
 
     fn pop(&self, key: Bound<'_, PyAny>, default: Bound<'_, PyAny>) -> PyResult<Bound<'_, PyAny>> {
@@ -1181,9 +1181,9 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
             Ok(())
         } else {
             let pairs = try_cast! {match (m, kwargs) {
-                (PyDict(d), None) => d,
-                (PyDict(d), Some(kw)) => {
-                    d.update(kw)?;
+                (CaseExact::PyDict(d), None) => d,
+                (CaseExact::PyDict(d), Some(kw)) => {
+                    d.update(kw.as_mapping())?;
                     d
                 }
                 (iterable, Some(kw)) => {
@@ -1203,7 +1203,9 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
                 Ok(())
             } else {
                 for key in pairs.keys_view().try_iter().unwrap() {
-                    self.__setitem__(key?, pairs.as_any().get_item(key)?)?;
+                    let k = key?;
+                    let new = pairs.as_any().get_item(&k)?;
+                    self.__setitem__(k, new)?;
                 }
                 Ok(())
             }

@@ -63,8 +63,8 @@ impl PyoVec {
         let inner = self.inner_bind(py);
         try_cast! {
             match other {
-                PyList(list) => inner.eq(&list).map(Either::Left),
-                PyoVec::exact(vec) => inner.eq(&vec.get().inner_bind(py)).map(Either::Left),
+                Case::PyList(list) => inner.eq(&list).map(Either::Left),
+                CaseExact::PyoVec(vec) => inner.eq(&vec.get().inner_bind(py)).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)

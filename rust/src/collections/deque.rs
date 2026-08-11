@@ -99,12 +99,12 @@ impl Deque {
         let inner = self.inner_bind(py);
         try_cast! {
             match value {
-                Deque::exact(d) => inner
+                CaseExact::Deque(d) => inner
                     .as_sequence()
                     .concat(d.get().inner_bind(py).as_sequence())
                     .map(|x| unsafe { x.cast_into_unchecked::<PyDeque>() })
                     .and_then(Self::from_ref),
-                PyDeque(pyd) => inner
+                Case::PyDeque(pyd) => inner
                     .as_sequence()
                     .concat(pyd.as_sequence())
                     .map(|x| unsafe { x.cast_into_unchecked::<PyDeque>() })
@@ -133,8 +133,8 @@ impl Deque {
         let inner = self.inner_bind(py);
         try_cast! {
             match value {
-                Deque::exact(d) => inner.lt(d.get().inner_bind(py)),
-                PyDeque(pyd) => inner.lt(pyd),
+                CaseExact::Deque(d) => inner.lt(d.get().inner_bind(py)),
+                Case::PyDeque(pyd) => inner.lt(pyd),
                 _ => Err(PyTypeError::new_err("")),
             }
         }
@@ -145,8 +145,8 @@ impl Deque {
         let inner = self.inner_bind(py);
         try_cast! {
             match value {
-                Deque::exact(d) => inner.le(d.get().inner_bind(py)),
-                PyDeque(pyd) => inner.le(pyd),
+                CaseExact::Deque(d) => inner.le(d.get().inner_bind(py)),
+                Case::PyDeque(pyd) => inner.le(pyd),
                 _ => Err(PyTypeError::new_err("")),
             }
         }
@@ -157,8 +157,8 @@ impl Deque {
         let inner = self.inner_bind(py);
         try_cast! {
             match value {
-                Deque::exact(d) => inner.gt(d.get().inner_bind(py)),
-                PyDeque(pyd) => inner.gt(pyd),
+                CaseExact::Deque(d) => inner.gt(d.get().inner_bind(py)),
+                Case::PyDeque(pyd) => inner.gt(pyd),
                 _ => Err(PyTypeError::new_err("")),
             }
         }
@@ -169,8 +169,8 @@ impl Deque {
         let inner = self.inner_bind(py);
         try_cast! {
             match value {
-                Deque::exact(d) => inner.ge(d.get().inner_bind(value.py())),
-                PyDeque(pyd) => inner.ge(pyd),
+                CaseExact::Deque(d) => inner.ge(d.get().inner_bind(d.py())),
+                Case::PyDeque(pyd) => inner.ge(pyd),
                 _ => Err(PyTypeError::new_err("")),
             }
         }
@@ -181,8 +181,8 @@ impl Deque {
         let inner = self.inner_bind(py);
         try_cast! {
             match value {
-                Deque::exact(d) => inner.eq(d.get().inner_bind(py)).map(Either::Left),
-                PyDeque(pyd) => inner.eq(pyd).map(Either::Left),
+                CaseExact::Deque(d) => inner.eq(d.get().inner_bind(py)).map(Either::Left),
+                Case::PyDeque(pyd) => inner.eq(pyd).map(Either::Left),
                 _ => PyNotImplemented::get(py).into_bound().pipe(Ok).map(Either::Right),
             }
         }

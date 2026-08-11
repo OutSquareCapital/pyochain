@@ -80,10 +80,7 @@ trait HeapType: Sized + PyWrapper<PyList> {
     }
 
     fn __setitem__(&self, index: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner()
-            .bind(index.py())
-            .as_any()
-            .set_item(index, value)
+        self.inner_bind(index.py()).as_any().set_item(index, value)
     }
 
     fn __delitem__(&self, index: Bound<'_, PyAny>) -> PyResult<()> {
@@ -98,8 +95,8 @@ trait HeapType: Sized + PyWrapper<PyList> {
         let inner = self.inner_bind(py);
         try_cast! {
             match other {
-                HeapMax::exact(x) | HeapMin::exact(x) | PyoVec::exact(x) => inner.eq(x.get().inner().clone_ref(py)).map(Either::Left),
-                PyList(_) => inner.eq(other).map(Either::Left),
+                CaseExact::HeapMax(x) | CaseExact::HeapMin(x) | CaseExact::PyoVec(x) => inner.eq(x.get().inner().clone_ref(py)).map(Either::Left),
+                Case::PyList(list) => inner.eq(list).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)

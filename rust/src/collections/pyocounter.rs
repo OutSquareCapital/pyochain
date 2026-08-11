@@ -362,7 +362,7 @@ impl PyoCounter {
         let inner = self.inner_bind(py);
         try_cast! {
             match other {
-                PyoCounter::exact(counter) => {
+                CaseExact::PyoCounter(counter) => {
                     let o = counter.get();
                     for c in [self, o] {
                         for elem in c.inner_bind(py).try_iter().unwrap() {
@@ -377,7 +377,7 @@ impl PyoCounter {
                     Ok(true).map(Either::Left)
 
                 },
-                PyDict(d) => inner.eq(d).map(Either::Left),
+                Case::PyDict(d) => inner.eq(d).map(Either::Left),
                 _ => Ok(PyNotImplemented::get(py).into_bound()).map(Either::Right),
             }
         }

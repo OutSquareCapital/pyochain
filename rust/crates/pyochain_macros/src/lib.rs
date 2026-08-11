@@ -73,7 +73,9 @@ pub fn py_abc(attr: TokenStream, item: TokenStream) -> TokenStream {
         .into()
 }
 
-/// Ergonomic "flat" match of one or more `Bound<'_, PyAny>`-like values against concrete pyo3 types, using [`Bound::cast`].\
+/// Ergonomic "flat" match of one or more `Bound<'_, PyAny>`-like values against concrete pyo3 types.\
+/// Use `Case::Type(binding)` for an `is_instance_of` check or `CaseExact::Type(binding)` for an `is_exact_instance_of` check.\
+/// Matching bindings are borrowed `&Bound<'_, Type>` values obtained with `cast_unchecked` after their guard succeeds.\
 /// This avoids awkward nested `match` statements, or verbose `if let` chains.\
 /// Unfortunately, we still have to use `match` keyword systematically, otherwise rustfmt will completely skip the code inside the macro.
 ///
@@ -90,9 +92,9 @@ pub fn py_abc(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// fn foo(value: Bound<'_, PyAny>) -> PyResult<isize> {
 ///   try_cast! {match value {
-///     PyList(_) | PyTuple::exact(_) => { Ok(0) }
-///     PyDict(x) => { Ok(x.len()) }
-///     _ => { Err(PyTypeError::new_err("Invalid type")) }
+///     Case::PyList(_) | CaseExact::PyTuple(_) => { Ok(0) }
+///     Case::PyDict(x) => Ok(x.len()),
+///     _ => Err(PyTypeError::new_err("Invalid type")),
 ///    }}
 ///  }
 /// ```

@@ -240,7 +240,7 @@ impl SliceView {
         let cr = self.current_range(py)?;
         try_cast! {
             match (inner, index) {
-                (PyMutableSequence(seq), PySlice(slice)) => {
+                (Case::PyMutableSequence(seq), Case::PySlice(slice)) => {
                     let tr = cr
                         .get_item(slice)
                         .map(|r| unsafe { r.cast_into_unchecked::<PyRange>() })?;
@@ -266,7 +266,7 @@ impl SliceView {
                         seq.set_slice_with_step(tr.start()?, tr.stop()?, tr.step()?, &value)
                     }
                 }
-                (PyMutableSequence(seq), PySupportsIndex(support_index)) => {
+                (Case::PyMutableSequence(seq), Case::PySupportsIndex(support_index)) => {
                     let length = cr.len()? as isize;
 
                     let mut idx = support_index.index()?.extract::<isize>()?;
