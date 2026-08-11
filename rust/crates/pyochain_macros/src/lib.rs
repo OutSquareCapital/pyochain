@@ -90,22 +90,11 @@ pub fn py_abc(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// fn foo(value: Bound<'_, PyAny>) -> PyResult<isize> {
 ///   try_cast! {match value {
-///     PyList | PyTuple => { Ok(0) }
-///     PyDict => { Ok(1) }
+///     PyList(_) | PyTuple::exact(_) => { Ok(0) }
+///     PyDict(x) => { Ok(x.len()) }
 ///     _ => { Err(PyTypeError::new_err("Invalid type")) }
 ///    }}
 ///  }
-/// fn foo_no_macro(value: Bound<'_, PyAny>) -> PyResult<()> {
-///   match value.cast::<PyList>() {
-///     Ok(_) => Ok(0),
-///     Err(_) => match value.cast::<PyTuple>() {
-///         Ok(_) => Ok(1),
-///         Err(_) => match value.cast::<PyDict>() {
-///             Ok(_) => Ok(2),
-///             Err(_) => Err(PyTypeError::new_err("Invalid type")),
-///         }
-///     }
-/// }
 /// ```
 #[proc_macro]
 pub fn try_cast(input: TokenStream) -> TokenStream {

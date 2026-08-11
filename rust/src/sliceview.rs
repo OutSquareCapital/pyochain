@@ -240,9 +240,9 @@ impl SliceView {
         let cr = self.current_range(py)?;
         try_cast! {
             match (inner, index) {
-                (PyMutableSequence, PySlice) => {
+                (PyMutableSequence(seq), PySlice(slice)) => {
                     let tr = cr
-                        .get_item(index)
+                        .get_item(slice)
                         .map(|r| unsafe { r.cast_into_unchecked::<PyRange>() })?;
                     if tr.step()?.abs() != 1 {
                         let values = PyTuple::type_object(py)
@@ -258,18 +258,18 @@ impl SliceView {
                             Err(PyValueError::new_err(msg))
                         } else {
                             tr.try_iter()?.zip(values).try_for_each(|(i, v)| {
-                                inner.set_item(i?.extract::<usize>()?, v)?;
+                                seq.set_item(i?.extract::<usize>()?, v)?;
                                 Ok::<(), PyErr>(())
                             })
                         }
                     } else {
-                        inner.set_slice_with_step(tr.start()?, tr.stop()?, tr.step()?, &value)
+                        seq.set_slice_with_step(tr.start()?, tr.stop()?, tr.step()?, &value)
                     }
                 }
-                (PyMutableSequence, PySupportsIndex) => {
+                (PyMutableSequence(seq), PySupportsIndex(support_index)) => {
                     let length = cr.len()? as isize;
 
-                    let mut idx = index.index()?.extract::<isize>()?;
+                    let mut idx = support_index.index()?.extract::<isize>()?;
                     if idx < 0 {
                         idx += length
                     };
@@ -277,7 +277,7 @@ impl SliceView {
                         let msg = "SliceView index out of range";
                         Err(PyIndexError::new_err(msg))
                     } else {
-                        inner.set_item(
+                        seq.set_item(
                             cr.get_item(PyInt::new(py, idx).into_any())?
                                 .extract::<usize>()?,
                             value,

@@ -56,13 +56,13 @@ impl StableSet {
         let inner = self.inner_bind(py);
         try_cast! {
             match other {
-                PyAbstractSet => inner.keys_view().eq(other).map(Either::Left),
-                StableSet => other
+                PyAbstractSet(abc_set) => inner.keys_view().eq(abc_set).map(Either::Left),
+                Self::exact(stable) => stable
                     .get()
                     .inner_bind(py)
                     .pipe(|set| inner.keys_view().eq(set))
                     .map(Either::Left),
-                PySet => inner.keys_view().eq(other).map(Either::Left),
+                PySet(py_set) => inner.keys_view().eq(py_set).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)

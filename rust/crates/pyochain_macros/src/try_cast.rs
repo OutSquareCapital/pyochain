@@ -1,17 +1,158 @@
 use crate::types::{SynResult, TokensVec};
 use proc_macro::TokenStream;
-use quote::quote;
-use syn::{ExprMatch, Pat};
+use proc_macro2::TokenStream as TokenStream2;
+use quote::{format_ident, quote};
+use syn::{Expr, ExprMatch, Pat};
 
-const INVALID_PATTERN_MSG: &str =
-    "Invalid pattern in try_cast! macro. Use `Type`, `var: Type`, `T1 | T2`, `(T1, T2)` or `_`";
+const INVALID_PATTERN_MSG: &str = "Invalid pattern in try_cast! macro. Use `Type(pat)`, `Type::exact(pat)`, `Some(pat)`, `None`, `(P1, P2, ...)`, an identifier to bind, or `_`";
 
-enum ParsedArm {
-    Check {
-        check: proc_macro2::TokenStream,
-        ty_name: String,
+#[derive(Clone)]
+enum Matcher {
+    Wild,
+    Bind {
+        target: TokenStream2,
+        name: syn::Ident,
     },
-    Fallback(proc_macro2::TokenStream),
+    Cast {
+        target: TokenStream2,
+        ty: syn::Path,
+        exact: bool,
+        inner: Box<Matcher>,
+    },
+    OptionSome {
+        target: TokenStream2,
+        inner: Box<Matcher>,
+    },
+    OptionNone {
+        target: TokenStream2,
+    },
+    Tuple {
+        target: TokenStream2,
+        children: Vec<Matcher>,
+    },
+}
+
+impl Matcher {
+    fn type_name(&self) -> String {
+        match self {
+            Matcher::Wild => "_".to_string(),
+            Matcher::Bind { name, .. } => name.to_string(),
+            Matcher::Cast { ty, exact, .. } => {
+                let base = quote!(#ty).to_string();
+                if *exact {
+                    format!("{base}::exact")
+                } else {
+                    base
+                }
+            }
+            Matcher::OptionSome { inner, .. } => format!("Some({})", inner.type_name()),
+            Matcher::OptionNone { .. } => "None".to_string(),
+            Matcher::Tuple { children, .. } => format!(
+                "({})",
+                children
+                    .iter()
+                    .map(Matcher::type_name)
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+        }
+    }
+
+    fn wrap(&self, inner: TokenStream2) -> TokenStream2 {
+        match self {
+            Matcher::Wild => inner,
+
+            Matcher::Bind { target, name } => {
+                quote! {
+                    let #name = #target;
+                    #inner
+                }
+            }
+
+            Matcher::Cast {
+                target,
+                ty,
+                exact,
+                inner: sub,
+            } => {
+                let val = format_ident!("__cast_val");
+                let call = if *exact {
+                    quote!((#target).cast_exact::<#ty>())
+                } else {
+                    quote!((#target).cast::<#ty>())
+                };
+                let rebased = sub.rebase_target(quote!(#val));
+                let body = rebased.wrap(inner);
+                quote! {
+                    if let ::std::result::Result::Ok(#val) = #call {
+                        #body
+                    }
+                }
+            }
+
+            Matcher::OptionSome { target, inner: sub } => {
+                let val = format_ident!("__opt_val");
+                let rebased = sub.rebase_target(quote!(#val));
+                let body = rebased.wrap(inner);
+                quote! {
+                    if let ::std::option::Option::Some(#val) = &#target {
+                        #body
+                    }
+                }
+            }
+
+            Matcher::OptionNone { target } => {
+                quote! {
+                    if ::std::option::Option::is_none(&#target) {
+                        #inner
+                    }
+                }
+            }
+
+            Matcher::Tuple { target, children } => {
+                let names: Vec<syn::Ident> = (0..children.len())
+                    .map(|i| format_ident!("__tuple_{}", i))
+                    .collect();
+                let rebased: Vec<Matcher> = children
+                    .iter()
+                    .zip(&names)
+                    .map(|(c, n)| c.rebase_target(quote!(#n)))
+                    .collect();
+                let body = rebased.iter().rev().fold(inner, |acc, c| c.wrap(acc));
+                quote! {
+                    let (#(#names),*) = #target;
+                    #body
+                }
+            }
+        }
+    }
+
+    fn rebase_target(&self, new_target: TokenStream2) -> Matcher {
+        match self {
+            Matcher::Wild => Matcher::Wild,
+            Matcher::Bind { name, .. } => Matcher::Bind {
+                target: new_target,
+                name: name.clone(),
+            },
+            Matcher::Cast {
+                ty, exact, inner, ..
+            } => Matcher::Cast {
+                target: new_target,
+                ty: ty.clone(),
+                exact: *exact,
+                inner: inner.clone(),
+            },
+            Matcher::OptionSome { inner, .. } => Matcher::OptionSome {
+                target: new_target,
+                inner: inner.clone(),
+            },
+            Matcher::OptionNone { .. } => Matcher::OptionNone { target: new_target },
+            Matcher::Tuple { children, .. } => Matcher::Tuple {
+                target: new_target,
+                children: children.clone(),
+            },
+        }
+    }
 }
 
 pub(crate) fn generate_from_expr(match_expr: ExprMatch) -> TokenStream {
@@ -23,13 +164,14 @@ pub(crate) fn generate_from_expr(match_expr: ExprMatch) -> TokenStream {
         .map(|arms| {
             arms.into_iter().flatten().fold(
                 (TokensVec::new(), Vec::<String>::new(), None),
-                |(mut checks, mut expected_types, fallback), arm| match arm {
-                    ParsedArm::Check { check, ty_name } => {
-                        checks.push(check);
-                        expected_types.push(ty_name);
+                |(mut checks, mut expected_types, fallback), (matcher, body)| {
+                    if matches!(matcher, Matcher::Wild) {
+                        (checks, expected_types, Some(body))
+                    } else {
+                        expected_types.push(matcher.type_name());
+                        checks.push(matcher.wrap(quote!(return #body;)));
                         (checks, expected_types, fallback)
                     }
-                    ParsedArm::Fallback(body) => (checks, expected_types, Some(quote!(#body))),
                 },
             )
         })
@@ -39,17 +181,14 @@ pub(crate) fn generate_from_expr(match_expr: ExprMatch) -> TokenStream {
                 {
                     #(#checks)*
                     #default_err
-            }
+                }
             }
         })
         .unwrap_or_else(syn::Error::into_compile_error)
         .into()
 }
 
-fn get_default_err(
-    fallback: Option<proc_macro2::TokenStream>,
-    expected_types: Vec<String>,
-) -> proc_macro2::TokenStream {
+fn get_default_err(fallback: Option<TokenStream2>, expected_types: Vec<String>) -> TokenStream2 {
     fallback.unwrap_or_else(|| {
         let err_msg = format!("expected one of: {}", expected_types.join(" | "));
         quote! {
@@ -60,101 +199,91 @@ fn get_default_err(
     })
 }
 
-fn parse_arm(arm: &syn::Arm, target: &syn::Expr) -> SynResult<Vec<ParsedArm>> {
-    let body = &(*arm).body;
-
+fn parse_arm(arm: &syn::Arm, target: &Expr) -> SynResult<Vec<(Matcher, TokenStream2)>> {
+    let body = &arm.body;
+    let target = match target {
+        Expr::Tuple(tuple) => {
+            let values = tuple.elems.iter().map(|value| quote!(&#value));
+            quote!((#(#values),*))
+        }
+        _ => quote!(#target),
+    };
     match &arm.pat {
-        Pat::Wild(_) => Ok(vec![ParsedArm::Fallback(quote!(#body))]),
-
+        Pat::Wild(_) => Ok(vec![(Matcher::Wild, quote!(#body))]),
         Pat::Or(pat_or) => pat_or
             .cases
             .iter()
-            .map(|case| parse_single_pat(case, target, body))
+            .map(|case| compile_pat(case, target.clone()).map(|m| (m, quote!(#body))))
             .collect(),
-
-        pat => parse_single_pat(pat, target, body).map(|check| vec![check]),
+        pat => Ok(vec![(compile_pat(pat, target)?, quote!(#body))]),
     }
 }
 
-fn parse_single_pat(pat: &syn::Pat, target: &syn::Expr, body: &syn::Expr) -> SynResult<ParsedArm> {
+fn compile_pat(pat: &Pat, target: TokenStream2) -> SynResult<Matcher> {
     match pat {
-        Pat::Tuple(pat_tuple) => match target {
-            syn::Expr::Tuple(expr_tuple) => (pat_tuple.elems.len() == expr_tuple.elems.len())
-                .then(|| {
-                    let mut current_check = quote!(return #body;);
-                    let type_names = pat_tuple
-                        .elems
-                        .iter()
-                        .zip(expr_tuple.elems.iter())
-                        .rev()
-                        .map(|(p, t)| {
-                            extract_cast_info(p, t).map(|(var, ty, ty_str)| {
-                                current_check = quote! {
-                                    if let ::std::result::Result::Ok(#var) = #t.cast::<#ty>() {
-                                        #current_check
-                                    }
-                                };
+        Pat::Wild(_) => Ok(Matcher::Wild),
 
-                                ty_str
-                            })
-                        })
-                        .rev()
-                        .collect::<SynResult<Vec<_>>>()?
-                        .join(", ");
-                    let ty_name = format!("({})", type_names);
+        Pat::Paren(pp) => compile_pat(&pp.pat, target),
 
-                    Ok(ParsedArm::Check {
-                        check: current_check,
-                        ty_name,
-                    })
-                })
-                .ok_or_else(|| {
-                    syn::Error::new_spanned(
-                        pat_tuple,
-                        "Incorrect number of elements in tuple pattern",
-                    )
-                })?,
-            _ => Err(syn::Error::new_spanned(
+        Pat::Ident(pi) if pi.subpat.is_none() => Ok(Matcher::Bind {
+            target,
+            name: pi.ident.clone(),
+        }),
+
+        Pat::Path(p) if p.path.is_ident("None") => Ok(Matcher::OptionNone { target }),
+
+        Pat::Tuple(pt) => {
+            let children = pt
+                .elems
+                .iter()
+                .map(|p| compile_pat(p, quote!(__pending__)))
+                .collect::<SynResult<Vec<_>>>()?;
+            Ok(Matcher::Tuple { target, children })
+        }
+
+        Pat::TupleStruct(ts) if ts.path.is_ident("Some") => {
+            if ts.elems.len() != 1 {
+                return Err(syn::Error::new_spanned(
+                    ts,
+                    "`Some` takes exactly one pattern",
+                ));
+            }
+            let inner = compile_pat(&ts.elems[0], quote!(__pending__))?;
+            Ok(Matcher::OptionSome {
                 target,
-                "Tuple pattern does not match a tuple target",
-            )),
-        },
-
-        // Motifs simples (Ident, Path, Type, Paren)
-        _ => {
-            let (var, ty, ty_str) = extract_cast_info(pat, target)?;
-            Ok(ParsedArm::Check {
-                check: quote! {
-                    if let ::std::result::Result::Ok(#var) = #target.cast::<#ty>() {
-                        return #body;
-                    }
-                },
-                ty_name: ty_str,
+                inner: Box::new(inner),
             })
         }
+
+        Pat::TupleStruct(ts) => {
+            if ts.elems.len() != 1 {
+                return Err(syn::Error::new_spanned(
+                    ts,
+                    "Type cast pattern takes exactly one inner pattern, e.g. `Type(x)` or `Type(_)`",
+                ));
+            }
+            let (ty, exact) = strip_exact_path(&ts.path);
+            let inner = compile_pat(&ts.elems[0], quote!(__pending__))?;
+            Ok(Matcher::Cast {
+                target,
+                ty,
+                exact,
+                inner: Box::new(inner),
+            })
+        }
+
+        _ => Err(syn::Error::new_spanned(pat, INVALID_PATTERN_MSG)),
     }
 }
 
-fn extract_cast_info(
-    pat: &syn::Pat,
-    target: &syn::Expr,
-) -> SynResult<(proc_macro2::TokenStream, proc_macro2::TokenStream, String)> {
-    match pat {
-        Pat::Ident(pat_ident) => {
-            let ty = &pat_ident.ident;
-            Ok((quote!(#target), quote!(#ty), quote!(#ty).to_string()))
-        }
-        Pat::Path(pat_path) => Ok((
-            quote!(#target),
-            quote!(#pat_path),
-            quote!(#pat_path).to_string(),
-        )),
-        Pat::Type(pat_type) => {
-            let var = &pat_type.pat;
-            let ty = &pat_type.ty;
-            Ok((quote!(#var), quote!(#ty), quote!(#ty).to_string()))
-        }
-        Pat::Paren(pat_paren) => extract_cast_info(&pat_paren.pat, target),
-        _ => Err(syn::Error::new_spanned(pat, INVALID_PATTERN_MSG)),
+fn strip_exact_path(path: &syn::Path) -> (syn::Path, bool) {
+    let mut segments = path.segments.clone();
+    let exact = segments.len() >= 2 && segments.last().map(|s| s.ident == "exact").unwrap_or(false);
+    if exact {
+        segments.pop();
+        segments.pop_punct();
     }
+    let mut p = path.clone();
+    p.segments = segments;
+    (p, exact)
 }

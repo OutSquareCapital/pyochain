@@ -595,12 +595,12 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __eq__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> BoolOrNotImpl<'py> {
         try_cast! {
             match other {
-                SortedSet | SortedKeySet => self
+                SortedSet::exact(sorted) | SortedKeySet::exact(sorted) => self
                     .get_set()
                     .bind(py)
-                    .eq(other.get().get_set().bind(py))
+                    .eq(sorted.get().get_set().bind(py))
                     .map(Either::Left),
-                PySet => self.get_set().bind(py).eq(other).map(Either::Left),
+                PySet(pyset) => self.get_set().bind(py).eq(pyset).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)
@@ -612,12 +612,12 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __ne__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> BoolOrNotImpl<'py> {
         try_cast! {
             match other {
-                SortedSet | SortedKeySet => self
+                SortedSet::exact(sorted) | SortedKeySet::exact(sorted) => self
                     .get_set()
                     .bind(py)
-                    .ne(other.get().get_set().bind(py))
+                    .ne(sorted.get().get_set().bind(py))
                     .map(Either::Left),
-                PySet => self.get_set().bind(py).ne(other).map(Either::Left),
+                PySet(pyset) => self.get_set().bind(py).ne(pyset).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)
@@ -629,12 +629,12 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __lt__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> BoolOrNotImpl<'py> {
         try_cast! {
             match other {
-                SortedSet | SortedKeySet => self
+                SortedSet::exact(sorted) | SortedKeySet::exact(sorted) => self
                     .get_set()
                     .bind(py)
-                    .lt(other.get().get_set().bind(py))
+                    .lt(sorted.get().get_set().bind(py))
                     .map(Either::Left),
-                PySet => self.get_set().bind(py).lt(other).map(Either::Left),
+                PySet(pyset) => self.get_set().bind(py).lt(pyset).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)
@@ -646,12 +646,12 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __gt__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> BoolOrNotImpl<'py> {
         try_cast! {
             match other {
-                SortedSet | SortedKeySet => self
+                SortedSet::exact(sorted) | SortedKeySet::exact(sorted) => self
                     .get_set()
                     .bind(py)
-                    .gt(other.get().get_set().bind(py))
+                    .gt(sorted.get().get_set().bind(py))
                     .map(Either::Left),
-                PySet => self.get_set().bind(py).gt(other).map(Either::Left),
+                PySet(pyset) => self.get_set().bind(py).gt(pyset).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)
@@ -663,12 +663,12 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __le__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> BoolOrNotImpl<'py> {
         try_cast! {
             match other {
-                SortedSet | SortedKeySet => self
+                SortedSet::exact(sorted) | SortedKeySet::exact(sorted) => self
                     .get_set()
                     .bind(py)
-                    .le(other.get().get_set().bind(py))
+                    .le(sorted.get().get_set().bind(py))
                     .map(Either::Left),
-                PySet => self.get_set().bind(py).le(other).map(Either::Left),
+                PySet(pyset) => self.get_set().bind(py).le(pyset).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)
@@ -680,12 +680,12 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
     fn __ge__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> BoolOrNotImpl<'py> {
         try_cast! {
             match other {
-                SortedSet | SortedKeySet => self
+                SortedSet::exact(sorted) | SortedKeySet::exact(sorted) => self
                     .get_set()
                     .bind(py)
-                    .ge(other.get().get_set().bind(py))
+                    .ge(sorted.get().get_set().bind(py))
                     .map(Either::Left),
-                PySet => self.get_set().bind(py).ge(other).map(Either::Left),
+                PySet(pyset) => self.get_set().bind(py).ge(pyset).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)
@@ -1180,18 +1180,18 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
             );
             Ok(())
         } else {
-            let pairs: Bound<'_, PyDict> = try_cast! {match (m, kwargs) {
-                (PyDict, None) => m,
-                (PyDict, Some(kw)) => {
-                    m.update(kw);
-                    m
+            let pairs = try_cast! {match (m, kwargs) {
+                (PyDict(d), None) => d,
+                (PyDict(d), Some(kw)) => {
+                    d.update(kw)?;
+                    d
                 }
-                (_, Some(kw)) => {
-                    let d = PyDict::from_sequence(&m)?;
+                (iterable, Some(kw)) => {
+                    let d = PyDict::from_sequence(&iterable)?;
                     d.update(kw.as_mapping())?;
                     d
                 }
-                (_, None) => PyDict::from_sequence(&m)?,
+                (iterable, None) => PyDict::from_sequence(&iterable)?,
             }};
             if (10 * pairs.len()) > self.len(py) {
                 inner.update(pairs.as_mapping())?;

@@ -56,8 +56,8 @@ trait SetCmpMethods<
         let inner = self.inner().bind(py);
         try_cast! {
             match right {
-                Set | SetMut => inner.eq(right.get().inner_bind(py)).map(Either::Left),
-                PySet | PyFrozenSet => inner.eq(right).map(Either::Left),
+                Set::exact(set) | SetMut::exact(set) => inner.eq(set.get().inner_bind(py)).map(Either::Left),
+                PySet(pyset) | PyFrozenSet(pyset) => inner.eq(pyset).map(Either::Left),
                 _ => PyNotImplemented::get(py).into_bound().pipe(Ok).map(Either::Right),
             }
         }

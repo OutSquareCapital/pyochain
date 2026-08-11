@@ -98,8 +98,8 @@ trait HeapType: Sized + PyWrapper<PyList> {
         let inner = self.inner_bind(py);
         try_cast! {
             match other {
-                HeapMax | HeapMin | PyoVec => inner.eq(other.get().inner().clone_ref(py)).map(Either::Left),
-                PyList => inner.eq(other).map(Either::Left),
+                HeapMax::exact(x) | HeapMin::exact(x) | PyoVec::exact(x) => inner.eq(x.get().inner().clone_ref(py)).map(Either::Left),
+                PyList(_) => inner.eq(other).map(Either::Left),
                 _ => PyNotImplemented::get(py)
                     .into_bound()
                     .pipe(Ok)
