@@ -103,7 +103,7 @@ fn pyochain(m: &Bound<'_, PyModule>) -> PyResult<()> {
     sys_mods.set_item("pyochain", m)?;
     sys_mods.set_item("pyochain.abc", abc_mod)?;
     sys_mods.set_item("pyochain.collections", collections_mod)?;
-    sys_mods.set_item("pyochain._sorted", sorted_mod)?;
+    sys_mods.set_item("pyochain.collections._sorted", sorted_mod)?;
     register_all(py)
 }
 fn register_all(py: Python<'_>) -> PyResult<()> {
