@@ -13,6 +13,7 @@ mod seq;
 mod sets;
 mod sliceview;
 mod traits;
+use crate::collections::sorted::debug;
 use pyo3::{
     PyTypeInfo, intern,
     prelude::*,
@@ -22,7 +23,6 @@ use pyo3_ext::{
     prelude::*,
     types::{PyAbstractSet, PyIterable, PyMutableSequence, PyMutableSet},
 };
-
 #[pymodule]
 fn pyochain(m: &Bound<'_, PyModule>) -> PyResult<()> {
     debug_backtrace();
@@ -90,30 +90,20 @@ fn pyochain(m: &Bound<'_, PyModule>) -> PyResult<()> {
     collections_mod.add_class::<collections::sorted::SortedKeysView>()?;
     collections_mod.add_class::<collections::sorted::SortedValuesView>()?;
     collections_mod.add_class::<collections::sorted::SortedItemsView>()?;
-    m.add_function(wrap_pyfunction!(
-        collections::sorted::debug::check_sorted_list,
-        m
+    let sorted_mod = PyModule::new(py, "_sorted")?;
+    sorted_mod.add_function(wrap_pyfunction!(debug::check_sorted_list, &sorted_mod)?)?;
+    sorted_mod.add_function(wrap_pyfunction!(debug::check_sorted_key_list, &sorted_mod)?)?;
+    sorted_mod.add_function(wrap_pyfunction!(
+        debug::assert_sorted_list_empty,
+        &sorted_mod
     )?)?;
-    m.add_function(wrap_pyfunction!(
-        collections::sorted::debug::check_sorted_key_list,
-        m
-    )?)?;
-    m.add_function(wrap_pyfunction!(
-        collections::sorted::debug::assert_sorted_list_empty,
-        m
-    )?)?;
-    m.add_function(wrap_pyfunction!(
-        collections::sorted::debug::check_sorted_set,
-        m
-    )?)?;
-    m.add_function(wrap_pyfunction!(
-        collections::sorted::debug::check_sorted_dict,
-        m
-    )?)?;
+    sorted_mod.add_function(wrap_pyfunction!(debug::check_sorted_set, &sorted_mod)?)?;
+    sorted_mod.add_function(wrap_pyfunction!(debug::check_sorted_dict, &sorted_mod)?)?;
     let sys_mods = py.import("sys")?.getattr("modules")?;
     sys_mods.set_item("pyochain", m)?;
     sys_mods.set_item("pyochain.abc", abc_mod)?;
     sys_mods.set_item("pyochain.collections", collections_mod)?;
+    sys_mods.set_item("pyochain._sorted", sorted_mod)?;
     register_all(py)
 }
 fn register_all(py: Python<'_>) -> PyResult<()> {
