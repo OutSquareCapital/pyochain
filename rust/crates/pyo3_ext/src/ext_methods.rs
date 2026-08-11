@@ -203,6 +203,7 @@ pub trait PyDictExtMethods<'py> {
     fn pop(&self, key: &Bound<'py, PyAny>) -> PyResult<Option<Bound<'py, PyAny>>>;
     fn pop_or_err(&self, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>>;
     fn values_view(&self) -> Bound<'py, PyDictValues>;
+    fn update_from_sequence(&self, seq: &Bound<'py, PyAny>) -> PyResult<&Self>;
 }
 impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
     fn items_view(&self) -> Bound<'py, PyDictItems> {
@@ -222,7 +223,7 @@ impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
     fn pop(&self, key: &Bound<'py, PyAny>) -> PyResult<Option<Bound<'py, PyAny>>> {
         let mut result = core::ptr::null_mut();
         match unsafe { ffi::PyDict_Pop(self.as_ptr(), key.as_ptr(), &mut result) } {
-            code if code < 0 => Err(PyErr::fetch(self.py())),
+            code if code == -1 => Err(PyErr::fetch(self.py())),
             0 => Ok(None),
             _ => Ok(Some(unsafe { Bound::from_owned_ptr(self.py(), result) })),
         }
@@ -232,7 +233,7 @@ impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
     fn pop_or_err(&self, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
         let mut result = core::ptr::null_mut();
         match unsafe { ffi::PyDict_Pop(self.as_ptr(), key.as_ptr(), &mut result) } {
-            code if code < 0 => Err(PyErr::fetch(self.py())),
+            code if code == -1 => Err(PyErr::fetch(self.py())),
             0 => Err(PyKeyError::new_err(key.to_string())),
             _ => Ok(unsafe { Bound::from_owned_ptr(self.py(), result) }),
         }
@@ -241,5 +242,11 @@ impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
         self.call_method0(intern!(self.py(), "values"))
             .unwrap()
             .pipe(|x| unsafe { x.cast_into_unchecked::<PyDictValues>() })
+    }
+    fn update_from_sequence(&self, seq: &Bound<'py, PyAny>) -> PyResult<&Self> {
+        match unsafe { ffi::PyDict_MergeFromSeq2(self.as_ptr(), seq.as_ptr(), 1) } {
+            code if code == -1 => Err(PyErr::fetch(seq.py())),
+            _ => Ok(self),
+        }
     }
 }
