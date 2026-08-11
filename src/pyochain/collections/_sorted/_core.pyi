@@ -1,7 +1,12 @@
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from typing import Any, Self, override
 
+from _typeshed import SupportsRichComparison
+
 from pyochain.abc import PyoIterator
+
+type KeyFunc[T, OT: SupportsRichComparison] = Callable[[T], OT]
 
 class SortedCollection[T](ABC):
     """Base class for sorted collections."""

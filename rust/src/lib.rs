@@ -74,23 +74,22 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     abc_mod.add_class::<abc::PyoItemsView>()?;
     abc_mod.add_class::<abc::PyoMutableMapping>()?;
     m.add_submodule(&abc_mod)?;
-    //TODO: Don't forget to add `collections` module once the rust migration is complete.
-    m.add_class::<collections::StableSet>()?;
-    m.add_class::<collections::Deque>()?;
-    m.add_class::<collections::PyoCounter>()?;
-    m.add_class::<collections::Heap>()?;
-    m.add_class::<collections::HeapMax>()?;
-    m.add_class::<collections::HeapMin>()?;
-    // NOTE: Temp utils
-    m.add_class::<collections::SortedList>()?;
-    m.add_class::<collections::SortedKeyList>()?;
-    m.add_class::<collections::SortedSet>()?;
-    m.add_class::<collections::SortedKeySet>()?;
-    m.add_class::<collections::SortedDict>()?;
-    m.add_class::<collections::SortedKeyDict>()?;
-    m.add_class::<collections::sorted::SortedKeysView>()?;
-    m.add_class::<collections::sorted::SortedValuesView>()?;
-    m.add_class::<collections::sorted::SortedItemsView>()?;
+    let collections_mod = PyModule::new(py, "collections")?;
+    collections_mod.add_class::<collections::StableSet>()?;
+    collections_mod.add_class::<collections::Deque>()?;
+    collections_mod.add_class::<collections::PyoCounter>()?;
+    collections_mod.add_class::<collections::Heap>()?;
+    collections_mod.add_class::<collections::HeapMax>()?;
+    collections_mod.add_class::<collections::HeapMin>()?;
+    collections_mod.add_class::<collections::SortedList>()?;
+    collections_mod.add_class::<collections::SortedKeyList>()?;
+    collections_mod.add_class::<collections::SortedSet>()?;
+    collections_mod.add_class::<collections::SortedKeySet>()?;
+    collections_mod.add_class::<collections::SortedDict>()?;
+    collections_mod.add_class::<collections::SortedKeyDict>()?;
+    collections_mod.add_class::<collections::sorted::SortedKeysView>()?;
+    collections_mod.add_class::<collections::sorted::SortedValuesView>()?;
+    collections_mod.add_class::<collections::sorted::SortedItemsView>()?;
     m.add_function(wrap_pyfunction!(
         collections::sorted::debug::check_sorted_list,
         m
@@ -113,6 +112,7 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     )?)?;
     let sys_mods = py.import("sys")?.getattr("modules")?;
     sys_mods.set_item("pyochain.abc", abc_mod)?;
+    sys_mods.set_item("pyochain.collections", collections_mod)?;
     register_all(py)
 }
 fn register_all(py: Python<'_>) -> PyResult<()> {

@@ -150,9 +150,9 @@ trait HeapType: Sized + PyWrapper<PyList> {
     }
 }
 /// Present for typing purposes only.
-#[pyclass(module = "pyochain._collections",frozen, generic, sequence, extends = abc::PyoMutableSequence, subclass)]
+#[pyclass(module = "pyochain.collections",frozen, generic, sequence, extends = abc::PyoMutableSequence, subclass)]
 pub struct Heap;
-#[pyclass(module = "pyochain._collections",frozen, generic, sequence, extends = Heap)]
+#[pyclass(module = "pyochain.collections",frozen, generic, sequence, extends = Heap)]
 pub struct HeapMin(pub Py<PyList>);
 #[pymethods]
 impl Heap {
@@ -190,7 +190,7 @@ impl HeapType for HeapMin {
     }
 }
 
-#[pyclass(module = "pyochain._collections",frozen, generic, sequence, extends = Heap)]
+#[pyclass(module = "pyochain.collections",frozen, generic, sequence, extends = Heap)]
 pub struct HeapMax(pub Py<PyList>);
 impl HeapType for HeapMax {
     fn new(data: IntoHeap<'_>) -> PyResult<PyClassInitializer<Self>> {

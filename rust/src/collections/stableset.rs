@@ -16,7 +16,7 @@ use pyo3_ext::{
 };
 use pyochain_macros::try_cast;
 use tap::prelude::*;
-#[pyclass(module = "pyochain._collections",frozen, generic, extends=abc::PyoMutableSet)]
+#[pyclass(module = "pyochain.collections",frozen, generic, extends=abc::PyoMutableSet)]
 pub struct StableSet(pub Py<PyDict>);
 #[pymethods]
 impl StableSet {

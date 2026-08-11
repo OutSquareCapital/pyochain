@@ -10,7 +10,8 @@ from typing import Any, Final, Self, final, overload, override
 from pyochain import SetMut, Vec
 from pyochain.abc import PyoIterator, PyoMutableSet, PyoSequence
 
-from ._sorted_list import BaseSortedListSet, KeyFunc
+from ._core import KeyFunc
+from ._sorted_list import BaseSortedListSet
 from ._sorted_views import SupportsHashableAndRichComparison
 
 type SetKeyFunc[T, OT: SupportsHashableAndRichComparison] = KeyFunc[T, OT]

@@ -1,3 +1,5 @@
+"""Additional collection types."""
+
 from ._counter import PyoCounter
 from ._deque import Deque
 from ._heapq import Heap, HeapMax, HeapMin

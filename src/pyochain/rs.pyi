@@ -11,24 +11,15 @@ That way, we can :
 - Handle partially migrated modules (python -> rust) without breaking the public API
 """
 
-from collections.abc import Callable
 from typing import Any
 
-from _typeshed import SupportsRichComparison
-
-from pyochain._collections._sorted import (
+from pyochain.collections._sorted import (
     BaseSortedDict,
     BaseSortedList,
     BaseSortedSet,
-    SortedDict,
-    SortedKeyDict,
     SortedKeyList,
-    SortedKeySet,
-    SortedList,
-    SortedSet,
 )
 
-from ._collections import Deque, Heap, HeapMax, HeapMin, PyoCounter, StableSet
 from ._dict import Dict
 from ._iterators import Iter, Peekable
 from ._option import NONE, Null, Option, OptionType, OptionUnwrapError, Some, option
@@ -47,9 +38,6 @@ from ._set import Set, SetMut
 from ._sliceview import SliceView
 from ._vec import Vec
 
-type KeyFunc[T, OT: SupportsRichComparison] = Callable[[T], OT]
-type SliceBounds = tuple[int, int, int, int]
-
 def check_sorted_list(data: BaseSortedList[Any]) -> None: ...
 def check_sorted_set(data: BaseSortedSet[Any]) -> None: ...
 def check_sorted_key_list(data: SortedKeyList[Any, Any]) -> None: ...
@@ -58,12 +46,8 @@ def check_sorted_dict(data: BaseSortedDict[Any, Any]) -> None: ...
 
 __all__ = [
     "NONE",
-    "Deque",
     "Dict",
     "Err",
-    "Heap",
-    "HeapMax",
-    "HeapMin",
     "Iter",
     "Null",
     "Ok",
@@ -71,7 +55,6 @@ __all__ = [
     "OptionType",
     "OptionUnwrapError",
     "Peekable",
-    "PyoCounter",
     "Range",
     "Result",
     "ResultType",
@@ -81,13 +64,6 @@ __all__ = [
     "SetMut",
     "SliceView",
     "Some",
-    "SortedDict",
-    "SortedKeyDict",
-    "SortedKeyList",
-    "SortedKeySet",
-    "SortedList",
-    "SortedSet",
-    "StableSet",
     "Vec",
     "option",
     "then_if_some",

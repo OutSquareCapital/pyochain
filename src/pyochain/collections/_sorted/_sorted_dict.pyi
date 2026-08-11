@@ -10,7 +10,7 @@ from _typeshed import SupportsGetItem, SupportsKeysAndGetItem
 
 from pyochain import Dict
 from pyochain.abc import PyoIterator, PyoMutableMapping, PyoReversible
-from pyochain.rs import SortedList
+from pyochain.collections import SortedList
 
 from ._core import SortedCollection
 from ._sorted_views import (

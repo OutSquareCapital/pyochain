@@ -16,7 +16,7 @@ use pyo3_ext::{
 };
 use pyochain_macros::try_cast;
 use tap::prelude::*;
-#[pyclass(module = "pyochain._collections",frozen, generic, sequence, extends = abc::PyoMutableSequence)]
+#[pyclass(module = "pyochain.collections",frozen, generic, sequence, extends = abc::PyoMutableSequence)]
 pub struct Deque(pub Py<PyDeque>);
 #[pymethods]
 impl Deque {

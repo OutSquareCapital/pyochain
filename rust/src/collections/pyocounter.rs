@@ -24,7 +24,7 @@ enum IntoUpdate<'py> {
     Mapping(Bound<'py, PyMapping>),
     Iterable(Bound<'py, PyAny>),
 }
-#[pyclass(module = "pyochain._collections",frozen, generic, mapping, extends = abc::PyoMutableMapping)]
+#[pyclass(module = "pyochain.collections",frozen, generic, mapping, extends = abc::PyoMutableMapping)]
 pub struct PyoCounter(pub Py<PyDict>);
 #[pymethods]
 impl PyoCounter {
