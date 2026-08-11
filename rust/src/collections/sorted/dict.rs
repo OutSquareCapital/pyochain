@@ -2,8 +2,10 @@ use crate::{
     abc,
     collections::{
         SortedKeyList, SortedList,
-        sorted::traits::{
-            BaseSortedDict, ListGetter, Reduced, SortedCollection, SortedListGetters,
+        sorted::{
+            SortedItemsView, SortedKeysView, SortedValuesView,
+            traits::{BaseSortedDict, ListGetter, Reduced, SortedCollection, SortedListGetters},
+            views::{SortedByKeyItemsView, SortedByKeyKeysView, SortedByKeyValuesView},
         },
     },
     traits::PyoABC,
@@ -76,6 +78,9 @@ impl SortedDict {
     }
 }
 impl BaseSortedDict for SortedDict {
+    type IView = SortedItemsView;
+    type KView = SortedKeysView;
+    type VView = SortedValuesView;
     fn get_inner(&self) -> &Py<PyDict> {
         &self.inner
     }
@@ -212,6 +217,9 @@ impl ListGetter for SortedKeyDict {
     }
 }
 impl BaseSortedDict for SortedKeyDict {
+    type IView = SortedByKeyItemsView;
+    type KView = SortedByKeyKeysView;
+    type VView = SortedByKeyValuesView;
     fn get_inner(&self) -> &Py<PyDict> {
         &self.inner
     }

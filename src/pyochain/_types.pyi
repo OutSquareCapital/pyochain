@@ -1,9 +1,20 @@
-from collections.abc import Iterable
+from collections.abc import Callable, Hashable, Iterable
 from typing import Any, Literal, Protocol
+
+from _typeshed import SupportsRichComparison
 
 # TODO: Theses types are manually extracted from typeshed and rewritten in modern python style
 # This is error prone, because we can very easily miss overloads, as well as being tedious¨
 # We should handle this automatically with a dedicated script, if possible.
+
+type SupportsHashableAndRichComparison = (
+    SupportsHashableAndDunderLT[Any] | SupportsHashableAndDunderGT[Any]
+)
+
+type KeyFunc[T, OT: SupportsRichComparison] = Callable[[T], OT]
+
+class SupportsHashableAndDunderGT[T](Hashable, SupportsDunderGT[T], Protocol): ...
+class SupportsHashableAndDunderLT[T](Hashable, SupportsDunderLT[T], Protocol): ...
 
 class SupportsDunderLT[T](Protocol):
     def __lt__(self, other: T, /) -> bool: ...
@@ -39,7 +50,6 @@ type SupportsComparison[T] = (
     | SupportsDunderGT[T]
     | SupportsDunderLT[T]
 )
-type SupportsRichComparison[T] = SupportsDunderLT[T] | SupportsDunderGT[T]
 
 type PositiveInteger = Literal[
     1,

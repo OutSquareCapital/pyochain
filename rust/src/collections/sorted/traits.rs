@@ -8,6 +8,7 @@ use crate::{
             errors, iter,
             keyset::SortedKeySet,
             set::SortedSet,
+            views::BaseSortedView,
         },
     },
     pyovec::PyoVec,
@@ -971,8 +972,23 @@ impl_sorted_collection_for_set!(SortedSet, SortedList);
 impl_sorted_collection_for_set!(SortedKeySet, SortedKeyList);
 #[py_abc(SortedDict, SortedKeyDict)]
 pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
+    type KView: BaseSortedView<M = Self>;
+    type VView: BaseSortedView<M = Self>;
+    type IView: BaseSortedView<M = Self>;
     #[getter]
     fn get_inner(&self) -> &Py<PyDict>;
+    fn keys(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self::KView>> {
+        let py = slf.py();
+        Self::KView::new(slf).into_bound(py)
+    }
+    fn items(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self::IView>> {
+        let py = slf.py();
+        Self::IView::new(slf).into_bound(py)
+    }
+    fn values(slf: Bound<'_, Self>) -> PyResult<Bound<'_, Self::VView>> {
+        let py = slf.py();
+        Self::VView::new(slf).into_bound(py)
+    }
     fn __or__<'py>(&self, value: Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>>;
     fn __ror__<'py>(&self, value: Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>>;
     fn __repr__(&self, py: Python<'_>) -> PyResult<String>;
@@ -1054,18 +1070,6 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
             .collect::<PyResult<Vec<_>>>()
             .and_then(|v| SortedDict::from_vec(py, v))?
             .into_bound(py)
-    }
-
-    fn keys(slf: Bound<'_, Self>) {
-        todo!()
-    }
-
-    fn items(slf: Bound<'_, Self>) {
-        todo!()
-    }
-
-    fn values(slf: Bound<'_, Self>) {
-        todo!()
     }
     #[pyo3(signature = (key, default=None))]
     fn pop<'py>(

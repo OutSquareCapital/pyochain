@@ -20,7 +20,9 @@ from pyochain.rs import check_sorted_dict
 if TYPE_CHECKING:
     from collections.abc import ItemsView, KeysView, Mapping
 
-    from pyochain.collections._sorted_views import SupportsHashableAndRichComparison
+    from pyochain._types import (  # pyright: ignore[reportMissingModuleSource]
+        SupportsHashableAndRichComparison,
+    )
 
 
 def modulo(value: int) -> int:

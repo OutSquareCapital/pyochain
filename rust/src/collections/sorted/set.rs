@@ -35,7 +35,14 @@ impl SortedSet {
             list,
         }
     }
-    fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
+
+    pub fn from_iterable(iterable: Bound<'_, PyAny>) -> PyResult<Self> {
+        let py = iterable.py();
+        let init = Self::new(PySet::empty(py).unwrap(), SortedList::new());
+        init.update(py, IntoUpdate::from_any(iterable))?;
+        Ok(init)
+    }
+    pub fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
         abc::PyoMutableSet::build_init()
             .add_subclass(self)
             .pipe(|x| Bound::new(py, x))
@@ -45,7 +52,7 @@ impl SortedSet {
 impl SortedSet {
     #[new]
     #[pyo3(signature = (iterable = None))]
-    fn py_new(
+    pub fn py_new(
         py: Python<'_>,
         iterable: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyClassInitializer<Self>> {

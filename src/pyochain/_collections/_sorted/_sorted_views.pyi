@@ -1,56 +1,54 @@
 # Adapted from python-sortedcontainers (https://github.com/grantjenks/python-sortedcontainers)
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
-from __future__ import annotations
 
-from collections.abc import Callable, Hashable
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Generic,
-    Protocol,
-    TypeVar,
-    overload,
-    override,
-)
+from collections.abc import Iterable
+from typing import Any, Generic, TypeVar, overload, override
 
 from pyochain import Vec
 from pyochain.abc import PyoItemsView, PyoKeysView, PyoSequence, PyoValuesView
-from pyochain.collections import SortedSet
+from pyochain.collections import SortedDict, SortedSet
 
-if TYPE_CHECKING:
-    from collections.abc import Iterable
-
-    from _typeshed import SupportsRichComparison
-
-    from pyochain.collections import SortedDict
-
-type SupportsHashableAndRichComparison = (
-    SupportsHashableAndDunderLT[Any] | SupportsHashableAndDunderGT[Any]
-)
-
-
-type KeyFunc[T, OT: SupportsRichComparison] = Callable[[T], OT]
-
-
-class SupportsDunderLT[T](Protocol):
-    def __lt__(self, other: T, /) -> bool: ...
-
-
-class SupportsDunderGT[T](Protocol):
-    def __gt__(self, other: T, /) -> bool: ...
-
-
-class SupportsHashableAndDunderGT[T](Hashable, SupportsDunderGT[T], Protocol): ...
-
-
-class SupportsHashableAndDunderLT[T](Hashable, SupportsDunderLT[T], Protocol): ...
-
+from ..._types import SupportsHashableAndRichComparison
 
 _K_co = TypeVar("_K_co", covariant=True, bound=SupportsHashableAndRichComparison)
 _V_co = TypeVar("_V_co", covariant=True)
 
+class BaseSortedView(Generic[_K_co, _V_co]):  # ruff: ignore[non-pep695-generic-class]
+    def __delitem__[K: SupportsHashableAndRichComparison, V](
+        self, index: int | slice
+    ) -> None:
+        """Remove item at `index` from sorted dict.
 
-class SortedKeysView(PyoKeysView[_K_co], PyoSequence[_K_co], Generic[_K_co]):  # ruff:ignore[non-pep695-generic-class]
+        ``view.__delitem__(index)`` <==> ``del view[index]``
+
+        Supports slicing.
+
+        Runtime complexity: `O(log(n))` -- approximate.
+
+        :param index: integer or slice for indexing
+        :raises IndexError: if index out of range
+
+        Examples:
+            ```python
+            from pyochain.collections import SortedDict
+
+            sd = SortedDict({"a": 1, "b": 2, "c": 3})
+            view = sd.keys()
+            del view[0]
+            assert sd == SortedDict({"b": 2, "c": 3})
+            del view[-1]
+            assert sd == SortedDict({"b": 2})
+            del view[:]
+            assert sd == SortedDict({})
+            ```
+        """
+
+class SortedKeysView(
+    BaseSortedView[_K_co, Any],
+    PyoKeysView[_K_co],
+    PyoSequence[_K_co],
+    Generic[_K_co],  # ruff: ignore[non-pep695-generic-class]
+):
     """Sorted keys view is a dynamic view of the sorted dict's keys.
 
     When the sorted dict's keys change, the view reflects those changes.
@@ -59,17 +57,11 @@ class SortedKeysView(PyoKeysView[_K_co], PyoSequence[_K_co], Generic[_K_co]):  #
 
     """
 
-    # pyrefly: ignore [bad-override-mutable-attribute]
-    _mapping: SortedDict[_K_co, Any]  # pyright: ignore[reportIncompatibleVariableOverride]
-
-    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
-
     @classmethod
     @override
     # pyrefly: ignore [bad-override]
     def _from_iterable(cls, it: Iterable[_K_co]) -> SortedSet[_K_co]:  # pyright: ignore[reportIncompatibleMethodOverride]
-        return SortedSet(it)
-
+        ...
     @overload
     def __getitem__(self, index: int) -> _K_co: ...
     @overload
@@ -105,13 +97,9 @@ class SortedKeysView(PyoKeysView[_K_co], PyoSequence[_K_co], Generic[_K_co]):  #
                 skv[100]
             ```
         """
-        return self._mapping._list[index]
-
-    def __delitem__(self, index: int | slice) -> None:
-        return _view_delitem(self, index)
-
 
 class SortedItemsView(
+    BaseSortedView[_K_co, _V_co],
     PyoItemsView[_K_co, _V_co],
     PyoSequence[tuple[_K_co, _V_co]],
     Generic[_K_co, _V_co],  # ruff:ignore[non-pep695-generic-class]
@@ -124,17 +112,12 @@ class SortedItemsView(
 
     """
 
-    _mapping: SortedDict[_K_co, _V_co]  # pyright: ignore[reportIncompatibleVariableOverride]
-    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
-
     @classmethod
     @override
     # pyrefly: ignore [bad-override]
     def _from_iterable(  # pyright: ignore[reportIncompatibleMethodOverride]
         cls, it: Iterable[tuple[_K_co, _V_co]]
-    ) -> SortedSet[tuple[_K_co, _V_co]]:
-        return SortedSet(it)
-
+    ) -> SortedSet[tuple[_K_co, _V_co]]: ...
     @overload
     def __getitem__(self, index: int) -> tuple[_K_co, _V_co]: ...
     @overload
@@ -173,22 +156,13 @@ class SortedItemsView(
             ```
 
         """
-        mapping = self._mapping
-        mapping_list = mapping._list
 
-        match index:
-            case slice():
-                keys = mapping_list[index]
-                return keys.iter().map(lambda key: (key, mapping[key])).collect(Vec)
-            case int():
-                key = mapping_list[index]
-                return key, mapping[key]
-
-    def __delitem__(self, index: int | slice) -> None:
-        return _view_delitem(self, index)
-
-
-class SortedValuesView(PyoValuesView[_V_co], PyoSequence[_V_co], Generic[_V_co]):  # ruff:ignore[non-pep695-generic-class]
+class SortedValuesView(
+    BaseSortedView[Any, _V_co],
+    PyoValuesView[_V_co],
+    PyoSequence[_V_co],
+    Generic[_V_co],  # ruff: ignore[non-pep695-generic-class]
+):
     """Sorted values view is a dynamic view of the sorted dict's values.
 
     When the sorted dict's values change, the view reflects those changes.
@@ -236,61 +210,3 @@ class SortedValuesView(PyoValuesView[_V_co], PyoSequence[_V_co], Generic[_V_co])
                 svv[100]
             ```
         """
-        mapping = self._mapping
-        mapping_list = mapping._list
-
-        match index:
-            case slice():
-                return (
-                    mapping_list[index]
-                    .iter()
-                    .map(lambda key: mapping[key])  # pyright: ignore[reportAny]
-                    .collect(Vec)
-                )
-            case int():
-                return mapping[mapping_list[index]]
-
-    def __delitem__(self, index: int | slice) -> None:
-        return _view_delitem(self, index)
-
-
-def _view_delitem[K: SupportsHashableAndRichComparison, V](
-    self: SortedKeysView[K] | SortedValuesView[V] | SortedItemsView[K, V],
-    index: int | slice,
-) -> None:
-    """Remove item at `index` from sorted dict.
-
-    ``view.__delitem__(index)`` <==> ``del view[index]``
-
-    Supports slicing.
-
-    Runtime complexity: `O(log(n))` -- approximate.
-
-    :param index: integer or slice for indexing
-    :raises IndexError: if index out of range
-
-    Examples:
-        ```python
-        from pyochain.collections import SortedDict
-
-        sd = SortedDict({"a": 1, "b": 2, "c": 3})
-        view = sd.keys()
-        del view[0]
-        assert sd == SortedDict({"b": 2, "c": 3})
-        del view[-1]
-        assert sd == SortedDict({"b": 2})
-        del view[:]
-        assert sd == SortedDict({})
-        ```
-    """
-    mapping = self._mapping  # pyright: ignore[reportPrivateUsage]
-    list_ = mapping._list
-    match index:
-        case slice():
-            keys = list_[index]
-            del list_[index]
-            for key in keys:
-                del mapping.inner[key]
-        case int():
-            key = list_.pop(index)
-            del mapping.inner[key]

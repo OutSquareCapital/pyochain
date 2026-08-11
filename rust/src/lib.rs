@@ -88,6 +88,9 @@ fn rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<collections::SortedKeySet>()?;
     m.add_class::<collections::SortedDict>()?;
     m.add_class::<collections::SortedKeyDict>()?;
+    m.add_class::<collections::sorted::SortedKeysView>()?;
+    m.add_class::<collections::sorted::SortedValuesView>()?;
+    m.add_class::<collections::sorted::SortedItemsView>()?;
     m.add_function(wrap_pyfunction!(
         collections::sorted::debug::check_sorted_list,
         m
