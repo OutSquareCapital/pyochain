@@ -1,3 +1,3 @@
 # SortedList
 
-::: pyochain.collections._sorted_list.SortedList
+::: pyochain.collections.SortedList

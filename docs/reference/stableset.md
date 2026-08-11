@@ -1,3 +1,3 @@
 # StableSet
 
-::: pyochain._collections.StableSet
+::: pyochain.collections.StableSet
