@@ -49,13 +49,22 @@ def _write(name: str, cls: type) -> None:
     cls_path = f"{cls.__module__}.{name}".replace(".rs.", ".")
 
     path = Paths.DOCS_REF.value.joinpath(f"{name.lower()}.md")
+    existed = True
+    if not path.exists():
+        existed = False
+        path.touch(exist_ok=True)
     old_content = path.read_text(encoding="utf-8")
     new_content = _finalize_md(cls_path, name)
-    if old_content == new_content:
-        Color.INFO.show(f"Skipping {path!s} (no changes)")
-    else:
-        _ = path.write_text(new_content, encoding="utf-8")
-        Color.SUCCESS.show(f"Generated {path!s}")
+    modified = False if not existed else old_content != new_content
+    match (existed, modified):
+        case (False, _):
+            Color.INFO.show(f"Generated {path!s} (new file)")
+            _ = path.write_text(new_content, encoding="utf-8")
+        case (True, False):
+            Color.INFO.show(f"Skipping {path!s} (no changes)")
+        case (True, True):
+            Color.INFO.show(f"Updating {path!s} (content changed)")
+            _ = path.write_text(new_content, encoding="utf-8")
 
 
 def _finalize_md(full_path: str, class_name: str) -> str:
