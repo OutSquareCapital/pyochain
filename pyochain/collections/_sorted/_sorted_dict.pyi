@@ -511,13 +511,15 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](BaseSortedDict[K, V]):
     dictionaries. Keys (or the result of the key-function) must also be
     comparable, per the requirement for sorted lists.
 
-    >>> d = {"alpha": 1, "beta": 2}
-    >>> SortedDict([("alpha", 1), ("beta", 2)]) == d
-    True
-    >>> SortedDict({"alpha": 1, "beta": 2}) == d
-    True
-    >>> SortedDict(alpha=1, beta=2) == d
-    True
+    ```python
+    from pyochain.collections import SortedDict
+
+    d = {"alpha": 1, "beta": 2}
+
+    assert SortedDict([("alpha", 1), ("beta", 2)]) == d
+    assert SortedDict({"alpha": 1, "beta": 2}) == d
+    assert SortedDict(alpha=1, beta=2) == d
+    ```
 
     """
 
@@ -565,13 +567,14 @@ class SortedKeyDict[
     dictionaries. Keys (or the result of the key-function) must also be
     comparable, per the requirement for sorted lists.
 
-    >>> d = {"alpha": 1, "beta": 2}
-    >>> SortedDict([("alpha", 1), ("beta", 2)]) == d
-    True
-    >>> SortedDict({"alpha": 1, "beta": 2}) == d
-    True
-    >>> SortedDict(alpha=1, beta=2) == d
-    True
+    ```python
+    from pyochain.collections import SortedDict
+
+    d = {"alpha": 1, "beta": 2}
+    assert SortedDict([("alpha", 1), ("beta", 2)]) == d
+    assert SortedDict({"alpha": 1, "beta": 2}) == d
+    assert SortedDict(alpha=1, beta=2) == d
+    ```
     """
 
     def __init__(

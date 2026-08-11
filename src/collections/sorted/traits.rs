@@ -56,7 +56,14 @@ impl PyIdentity {
         value.clone_ref(py)
     }
 }
-#[py_abc(SortedList, SortedKeyList, SortedSet, SortedKeySet)]
+#[py_abc(
+    SortedList,
+    SortedKeyList,
+    SortedSet,
+    SortedKeySet,
+    SortedDict,
+    SortedKeyDict
+)]
 pub(super) trait SortedCollection:
     Sized + PyClass + PyClass<Frozen = pyo3::pyclass::boolean_struct::True> + Sync
 {
@@ -1041,10 +1048,9 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
     fn __setitem__(&self, key: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = key.py();
         if !self.__contains__(&key)? {
-            self.get_list().get().add(py, key.unbind())
-        } else {
-            self.get_inner().bind(py).set_item(key, value)
+            self.get_list().get().add(py, key.clone().unbind())?;
         }
+        self.get_inner().bind(py).set_item(key, value)
     }
 
     fn __ior__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
