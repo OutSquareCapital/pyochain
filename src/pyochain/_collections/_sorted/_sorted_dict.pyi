@@ -1,28 +1,27 @@
 # Adapted from python-sortedcontainers (https://github.com/grantjenks/python-sortedcontainers)
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
-from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Callable, Hashable, Iterable, Mapping, MutableMapping
 from functools import partial
-from reprlib import recursive_repr
-from typing import TYPE_CHECKING, Any, Self, overload, override
+from typing import Any, Self, overload, override
 
-from pyochain import Dict, Iter
+from _typeshed import SupportsGetItem, SupportsKeysAndGetItem
+
+from pyochain import Dict
 from pyochain.abc import PyoIterator, PyoMutableMapping, PyoReversible
-from pyochain.rs import SortedKeyList, SortedList
+from pyochain.collections._base_sorted import (  # ruff: ignore[import-private-name]
+    SortedCollection,
+    SupportsHashableAndRichComparison,
+)
+from pyochain.collections._sorted_views import (
+    SortedItemsView,
+    SortedKeysView,
+    SortedValuesView,
+)
+from pyochain.rs import SortedList
 
-from ._base_sorted import SortedCollection
-from ._sorted_views import SortedItemsView, SortedKeysView, SortedValuesView
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Hashable, Iterable, Mapping, MutableMapping
-
-    from _typeshed import SupportsGetItem, SupportsKeysAndGetItem
-
-    from ._base_sorted import SupportsHashableAndRichComparison
-
-    type KeyFunc[K: Hashable, OT: SupportsHashableAndRichComparison] = Callable[[K], OT]
-
+type KeyFunc[K: Hashable, OT: SupportsHashableAndRichComparison] = Callable[[K], OT]
 
 class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
     PyoMutableMapping[K, V], SortedCollection[K], PyoReversible[K], ABC
@@ -51,45 +50,22 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
 
         """
 
-    @override
-    @abstractmethod
-    def __repr__(self) -> str:
-        """Return string representation of sorted dict.
-
-        ``sd.__repr__()`` <==> ``repr(sd)``
-
-        :return: string representation
-
-        """
-
     @property
-    def inner(self) -> Dict[K, V]:
-        return self._inner
-
+    def inner(self) -> Dict[K, V]: ...
     @override
-    def __len__(self) -> int:
-        return len(self._inner)
-
+    def __len__(self) -> int: ...
     @override
-    def __getitem__(self, key: K) -> V:
-        return self._inner.__getitem__(key)
-
+    def __getitem__(self, key: K) -> V: ...
     @override
-    def reset(self, load: int) -> None:
-        return self._list.reset(load)
-
+    def reset(self, load: int) -> None: ...
     @override
-    def bisect_left(self, value: K) -> int:
-        return self._list.bisect_left(value)
-
+    def bisect_left(self, value: K) -> int: ...
     @override
-    def bisect_right(self, value: K) -> int:
-        return self._list.bisect_right(value)
-
+    def bisect_right(self, value: K) -> int: ...
     @override
-    def index(self, value: K, start: int | None = None, stop: int | None = None) -> int:
-        return self._list.index(value, start, stop)
-
+    def index(
+        self, value: K, start: int | None = None, stop: int | None = None
+    ) -> int: ...
     @override
     def islice(
         self,
@@ -97,9 +73,7 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
         stop: int | None = None,
         *,
         reverse: bool = False,
-    ) -> PyoIterator[K]:
-        return self._list.islice(start, stop, reverse=reverse)
-
+    ) -> PyoIterator[K]: ...
     @override
     def irange(
         self,
@@ -108,9 +82,7 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
         inclusive: tuple[bool, bool] = (True, True),
         *,
         reverse: bool = False,
-    ) -> PyoIterator[K]:
-        return self._list.irange(minimum, maximum, inclusive, reverse=reverse)
-
+    ) -> PyoIterator[K]: ...
     @override
     def clear(self) -> None:
         """Remove all items from sorted dict.
@@ -118,8 +90,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
         Runtime complexity: `O(n)`
 
         """
-        self._inner.clear()
-        self._list.clear()
 
     @override
     def __delitem__(self, key: K) -> None:
@@ -145,9 +115,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
             ```
 
         """
-        self._inner.__delitem__(key)
-        self._list.remove(key)
-
     @override
     def __iter__(self) -> PyoIterator[K]:
         """Return an iterator over the keys of the sorted dict.
@@ -158,7 +125,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
         :exc:`RuntimeError` or fail to iterate over all keys.
 
         """
-        return self._list.iter()
 
     @override
     def __reversed__(self) -> PyoIterator[K]:
@@ -170,7 +136,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
         :exc:`RuntimeError` or fail to iterate over all keys.
 
         """
-        return self._list.rev()
 
     @override
     def __setitem__(self, key: K, value: V) -> None:
@@ -191,16 +156,11 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
         :param value: value for item
 
         """
-        if key not in self:
-            self._list.add(key)
-        self._inner.__setitem__(key, value)
 
     def __ior__(
         self, other: Iterable[tuple[K, V]] | SupportsKeysAndGetItem[K, V]
-    ) -> Self:
-        self.update(other)
-        return self
-
+    ) -> Self: ...
+    @abstractmethod
     def copy(self) -> Self:
         """Return a shallow copy of the sorted dict.
 
@@ -209,17 +169,13 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
         :return: new sorted dict
 
         """
-        return self.__class__(self.items())
 
-    def __copy__(self) -> Self:
-        return self.copy()
-
+    def __copy__(self) -> Self: ...
     @classmethod
     @overload
     def from_keys[OT: SupportsHashableAndRichComparison](
         cls, iterable: Iterable[OT], value: None = None, /
     ) -> SortedDict[OT, Any | None]: ...
-
     @classmethod
     @overload
     def from_keys[OT: SupportsHashableAndRichComparison, S](
@@ -239,7 +195,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
         :return: new sorted dict
 
         """
-        return Iter(iterable).map(lambda key: (key, value)).collect(SortedDict)
 
     @override
     def keys(self) -> SortedKeysView[K]:
@@ -250,7 +205,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
         :return: new sorted keys view
 
         """
-        return SortedKeysView(self)
 
     @override
     def items(self) -> SortedItemsView[K, V]:
@@ -261,7 +215,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
         :return: new sorted items view
 
         """
-        return SortedItemsView(self)
 
     @override
     def values(self) -> SortedValuesView[V]:
@@ -274,15 +227,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
         :return: new sorted values view
 
         """
-        return SortedValuesView(self)
-
-    class _NotGiven:
-        # pylint: disable=too-few-public-methods
-        @override
-        def __repr__(self) -> str:
-            return "<not-given>"
-
-    __not_given = _NotGiven()
 
     @overload
     def pop(self, key: K, /) -> V: ...
@@ -291,7 +235,7 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
     @overload
     def pop[T](self, key: K, /, default: T) -> V | T: ...
     @override
-    def pop[T](self, key: K, default: T = __not_given) -> V | T:
+    def pop[T](self, key: K, default: T = ...) -> V | T:
         """Remove and return value for item identified by `key`.
 
         If the `key` is not found then return `default` if given. If `default`
@@ -322,13 +266,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
             KeyError: if `key` not found and `default` not given
 
         """
-        if self.contains(key):
-            self._list.remove(key)
-            return self._inner.pop(key)
-        if default is self.__not_given:
-            raise KeyError(key)
-        else:
-            return default
 
     @override
     def popitem(self, index: int = -1) -> tuple[K, V]:
@@ -364,13 +301,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
 
 
         """
-        if not self:
-            msg = "popitem(): dictionary is empty"
-            raise KeyError(msg)
-
-        key = self._list.pop(index)
-        value = self._inner.pop(key)
-        return (key, value)
 
     def peekitem(self, index: int = -1) -> tuple[K, V]:
         """Return ``(key, value)`` pair at `index` in sorted dict.
@@ -399,8 +329,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
         :raises IndexError: if `index` out of range
 
         """
-        key = self._list[index]
-        return key, self[key]
 
     @overload
     def setdefault[T](
@@ -433,13 +361,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
         :return: value for item identified by `key`
 
         """
-        if self.contains(key):
-            return self[key]
-        # pyrefly: ignore [unsupported-operation]
-        self._inner[key] = default  # pyright: ignore[reportArgumentType]
-        self._list.add(key)
-        return default
-
     @overload
     def update(self, m: SupportsKeysAndGetItem[K, V], /) -> None: ...
     @overload
@@ -455,7 +376,7 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
     @overload
     def update(self: SupportsGetItem[str, V], /, **kwargs: V) -> None: ...
     @override
-    def update(  # pyright: ignore[reportIncompatibleMethodOverride, reportInconsistentOverload]
+    def update(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         m: SupportsKeysAndGetItem[K, V] | Iterable[tuple[K, V]] = (),
         /,
@@ -473,23 +394,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
         :param kwargs: keyword arguments mapping
 
         """
-        if self.is_empty():
-            self._inner.update(m, **kwargs)
-            self._list.update(self._inner.iter())
-        else:
-            match m, kwargs:
-                case dict(), {}:
-                    pairs: dict[K, V] = m  # pyright: ignore[reportAssignmentType, reportUnknownVariableType]
-                case _:
-                    pairs = dict(m, **kwargs)
-            if (10 * len(pairs)) > self.len():
-                self._inner.update(pairs)
-                self._list.clear()
-                self._list.update(self._inner.iter())
-            else:
-                for key in pairs:
-                    self[key] = pairs[key]
-
 
 class SortedDict[K: SupportsHashableAndRichComparison, V](BaseSortedDict[K, V]):
     """Sorted dict is a sorted mutable mapping.
@@ -597,36 +501,15 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](BaseSortedDict[K, V]):
 
     def __init__(
         self, iterable: Iterable[tuple[K, V]] | Mapping[K, V] = (), **kwargs: V
-    ) -> None:
-        self._list: SortedList[K] = SortedList()
-        self._inner: Dict[K, V] = Dict[K, V](())
-
-        self.update(iterable, **kwargs)
-
+    ) -> None: ...
     @override
-    def __or__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]:
-        items = self.items().iter().chain(value.items())
-        return SortedDict(items)
-
+    def __or__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]: ...
     @override
-    def __ror__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]:
-        items = Iter(value.items()).chain(self.items())
-        return SortedDict(items)
-
+    def __ror__[T1, T2](self, value: Mapping[K, T2], /) -> SortedDict[K, V | T2]: ...
     @override
-    def __reduce__(self) -> tuple[type[Self], tuple[Dict[K, V]]]:
-        items = self._inner.copy()
-        return (self.__class__, (items,))
-
-    @recursive_repr()
-    def __repr__(self) -> str:
-        type_name = self.__class__.__name__
-        item_format = "{!r}: {!r}".format
-        items = (
-            self._list.iter().map(lambda key: item_format(key, self[key])).join(", ")
-        )
-        return f"{type_name}({{{items}}})"
-
+    def __reduce__(self) -> tuple[type[Self], tuple[Dict[K, V]]]: ...
+    @override
+    def copy(self) -> Self: ...
 
 class SortedKeyDict[
     K: SupportsHashableAndRichComparison,
@@ -675,14 +558,7 @@ class SortedKeyDict[
         *,
         key: KeyFunc[K, OT],
         **kwargs: V,
-    ) -> None:
-        self._key: KeyFunc[K, OT] = key
-
-        self._list: SortedKeyList[K, OT] = SortedKeyList(key=self._key)  # pyright: ignore[reportIncompatibleVariableOverride]
-        self._inner: Dict[K, V] = Dict[K, V](())
-
-        self.update(iterable, **kwargs)
-
+    ) -> None: ...
     @property
     def key(self) -> KeyFunc[K, OT]:
         """Function used to extract comparison key from keys.
@@ -690,12 +566,9 @@ class SortedKeyDict[
         Sorted dict compares keys directly when the key function is none.
 
         """
-        return self._key
 
     @override
-    def copy(self) -> Self:
-        return self.__class__(self.items(), key=self._key)
-
+    def copy(self) -> Self: ...
     def irange_key(
         self,
         min_key: OT | None = None,
@@ -703,38 +576,17 @@ class SortedKeyDict[
         inclusive: tuple[bool, bool] = (True, True),
         *,
         reverse: bool = False,
-    ) -> PyoIterator[K]:
-        return self._list.irange_key(min_key, max_key, inclusive, reverse=reverse)
-
-    def bisect_key_left(self, key: OT) -> int:
-        return self._list.bisect_key_left(key)
-
-    def bisect_key_right(self, key: OT) -> int:
-        return self._list.bisect_key_right(key)
-
+    ) -> PyoIterator[K]: ...
+    def bisect_key_left(self, key: OT) -> int: ...
+    def bisect_key_right(self, key: OT) -> int: ...
     @override
-    def __ror__[T1, T2](self, value: Mapping[K, T2], /) -> SortedKeyDict[K, V | T2, OT]:  # pyright: ignore[reportIncompatibleMethodOverride]
-        items = Iter(value.items()).chain(self.items())
-        return SortedKeyDict(items, key=self._key)
-
+    def __ror__[T1, T2](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self, value: Mapping[K, T2], /
+    ) -> SortedKeyDict[K, V | T2, OT]: ...
     @override
-    def __or__[T1, T2](self, value: Mapping[K, T2], /) -> SortedKeyDict[K, V | T2, OT]:  # pyright: ignore[reportIncompatibleMethodOverride]
-        items = Iter(self.items()).chain(value.items())
-        return SortedKeyDict(items, key=self._key)
-
+    def __or__[T1, T2](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self, value: Mapping[K, T2], /
+    ) -> SortedKeyDict[K, V | T2, OT]: ...
     @override
     # pyrefly: ignore [bad-override]
-    def __reduce__(self) -> tuple[partial[Self], tuple[Dict[K, V]]]:  # pyright: ignore[reportIncompatibleMethodOverride]
-        items = self._inner.copy()
-        return (partial(self.__class__, key=self._key), (items,))
-
-    @recursive_repr()
-    def __repr__(self) -> str:
-        key = self._key
-        type_name = self.__class__.__name__
-        key_arg = "" if key is None else f"{key!r}, "
-        item_format = "{!r}: {!r}".format
-        items = (
-            self._list.iter().map(lambda key: item_format(key, self[key])).join(", ")
-        )
-        return f"{type_name}({key_arg}{{{items}}})"
+    def __reduce__(self) -> tuple[partial[Self], tuple[Dict[K, V]]]: ...  # pyright: ignore[reportIncompatibleMethodOverride]

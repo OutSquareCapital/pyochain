@@ -15,8 +15,7 @@ from typing import TYPE_CHECKING, override
 import pytest
 
 from pyochain.collections import SortedDict, SortedKeyDict
-
-from ._utils import check_sorted_dict
+from pyochain.rs import check_sorted_dict
 
 if TYPE_CHECKING:
     from collections.abc import ItemsView, KeysView, Mapping
@@ -522,7 +521,7 @@ def test_pickle() -> None:
     alpha.reset(500)
     beta: SortedKeyDict[int, int, int] = pickle.loads(pickle.dumps(alpha))  # pyright: ignore[reportAny]
     assert alpha == beta
-    assert alpha._key == beta._key  # pyright: ignore[reportPrivateUsage]
+    assert alpha.key == beta.key
 
 
 if platform.python_implementation() == "CPython":

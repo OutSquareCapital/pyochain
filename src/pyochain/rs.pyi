@@ -17,8 +17,11 @@ from typing import Any
 from _typeshed import SupportsRichComparison
 
 from pyochain._collections._sorted import (
+    BaseSortedDict,
     BaseSortedList,
     BaseSortedSet,
+    SortedDict,
+    SortedKeyDict,
     SortedKeyList,
     SortedKeySet,
     SortedList,
@@ -51,6 +54,7 @@ def check_sorted_list(data: BaseSortedList[Any]) -> None: ...
 def check_sorted_set(data: BaseSortedSet[Any]) -> None: ...
 def check_sorted_key_list(data: SortedKeyList[Any, Any]) -> None: ...
 def assert_sorted_list_empty(lst: BaseSortedList[Any]) -> None: ...
+def check_sorted_dict(data: BaseSortedDict[Any, Any]) -> None: ...
 
 __all__ = [
     "NONE",
@@ -77,6 +81,8 @@ __all__ = [
     "SetMut",
     "SliceView",
     "Some",
+    "SortedDict",
+    "SortedKeyDict",
     "SortedKeyList",
     "SortedKeySet",
     "SortedList",

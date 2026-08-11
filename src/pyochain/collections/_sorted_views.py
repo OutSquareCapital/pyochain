@@ -74,7 +74,7 @@ class SortedKeysView(PyoKeysView[_K_co], PyoSequence[_K_co], Generic[_K_co]):  #
                 skv[100]
             ```
         """
-        return self._mapping._list[index]  # pyright: ignore[reportPrivateUsage]
+        return self._mapping._list[index]
 
     def __delitem__(self, index: int | slice) -> None:
         return _view_delitem(self, index)
@@ -143,7 +143,7 @@ class SortedItemsView(
 
         """
         mapping = self._mapping
-        mapping_list = mapping._list  # pyright: ignore[reportPrivateUsage]
+        mapping_list = mapping._list
 
         match index:
             case slice():
@@ -206,7 +206,7 @@ class SortedValuesView(PyoValuesView[_V_co], PyoSequence[_V_co], Generic[_V_co])
             ```
         """
         mapping = self._mapping
-        mapping_list = mapping._list  # pyright: ignore[reportPrivateUsage]
+        mapping_list = mapping._list
 
         match index:
             case slice():
@@ -253,7 +253,7 @@ def _view_delitem[K: SupportsHashableAndRichComparison, V](
         ```
     """
     mapping = self._mapping  # pyright: ignore[reportPrivateUsage]
-    list_ = mapping._list  # pyright: ignore[reportPrivateUsage]
+    list_ = mapping._list
     match index:
         case slice():
             keys = list_[index]

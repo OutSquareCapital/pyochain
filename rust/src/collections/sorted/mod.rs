@@ -1,6 +1,7 @@
 pub(super) mod bisect;
 mod cmp;
 mod data;
+mod dict;
 mod errors;
 pub mod iter;
 mod keylist;
@@ -11,5 +12,6 @@ mod traits;
 pub use keylist::SortedKeyList;
 pub use list::SortedList;
 pub mod debug;
+pub use dict::{SortedDict, SortedKeyDict};
 pub use keyset::SortedKeySet;
 pub use set::SortedSet;

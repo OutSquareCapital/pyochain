@@ -240,7 +240,7 @@ impl BaseSortedListSet for SortedList {
         }
     }
 
-    fn remove(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
+    fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
         let mut data = self.get_data();
 

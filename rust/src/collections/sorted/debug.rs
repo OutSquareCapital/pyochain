@@ -1,14 +1,15 @@
 use crate::collections::{
-    SortedKeyList, SortedList,
+    SortedDict, SortedKeyDict, SortedKeyList, SortedList,
     sorted::{
         keyset::SortedKeySet,
         set::SortedSet,
-        traits::{BaseSortedSet, SortedListGetters},
+        traits::{BaseSortedDict, BaseSortedSet, SortedListGetters},
     },
 };
 use either::Either;
 use pyo3::{exceptions::PyAssertionError, prelude::*};
 use std::ops::Index;
+use tap::prelude::*;
 type InnerSorted = Either<Py<SortedList>, Py<SortedKeyList>>;
 
 macro_rules! pyassert {
@@ -18,6 +19,29 @@ macro_rules! pyassert {
         }
     };
 }
+
+#[pyfunction]
+pub fn check_sorted_dict(
+    py: Python<'_>,
+    data: Either<Py<SortedDict>, Py<SortedKeyDict>>,
+) -> PyResult<()> {
+    fn check_dict(x: &impl BaseSortedDict, py: Python<'_>) -> PyResult<()> {
+        x.get_list()
+            .get()
+            .pipe(|list| run_checks(py, list).inspect_err(move |e| show_list(py, &e, list)))?;
+        let data = x.get_list().get().get_data();
+        pyassert!(x.len(py) == data.len);
+        pyassert!(data.iter().all(|item| {
+            x.contains(item.bind(py))
+                .expect("Failed to check dict membership")
+        }));
+        Ok(())
+    }
+
+    data.map_either(|x| check_dict(x.get(), py), |x| check_dict(x.get(), py))
+        .into_inner()
+}
+
 #[pyfunction]
 pub fn check_sorted_set(
     py: Python<'_>,
