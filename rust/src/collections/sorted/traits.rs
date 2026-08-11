@@ -19,7 +19,7 @@ use pyo3::{
     },
 };
 use pyo3_ext::prelude::*;
-use pyochain_macros::{py_abc, try_cast};
+use pyochain_macros::{py_abc, try_cast, try_cast_into};
 use std::{
     cmp::Ordering,
     sync::{Mutex, MutexGuard, TryLockError, atomic::Ordering as AtomicOrdering},
@@ -1180,7 +1180,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
             );
             Ok(())
         } else {
-            let pairs = try_cast! {match (m, kwargs) {
+            let pairs = try_cast_into! {match (m, kwargs) {
                 (CaseExact::PyDict(d), None) => d,
                 (CaseExact::PyDict(d), Some(kw)) => {
                     d.update(kw.as_mapping())?;

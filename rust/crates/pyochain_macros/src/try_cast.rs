@@ -2,23 +2,39 @@ use crate::types::SynResult;
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
-use syn::{Arm, ExprMatch, Pat, PatIdent, PatTuple, PatTupleStruct, Path, punctuated::Punctuated};
+use syn::{
+    Arm, ExprMatch, Ident, Pat, PatIdent, PatTuple, PatTupleStruct, Path, punctuated::Punctuated,
+};
 use tap::prelude::*;
 const INVALID_PATTERN_MSG: &str = "use `Case::Type(binding)` or `CaseExact::Type(binding)`";
 const CASE: &str = "Case";
 const CASE_EXACT: &str = "CaseExact";
-pub(crate) fn generate_from_expr(match_expr: ExprMatch) -> TokenStream {
-    run_pipeline(match_expr)
-        .unwrap_or_else(syn::Error::into_compile_error)
-        .into()
+/// Main enum for the two variants of `try_cast` macro: borrowed and owned.
+pub(super) enum Cast {
+    Borrowed,
+    Owned,
+}
+/// Generate `Case` and `CaseExact` bindings for a given pattern, returning the rewritten pattern and a list of cases.
+struct Case {
+    binding: Ident,
+    output: Ident,
+    ty: Path,
+    exact: bool,
+}
+impl Cast {
+    pub(super) fn generate(self, match_expr: ExprMatch) -> TokenStream {
+        run_pipeline(match_expr, self)
+            .unwrap_or_else(syn::Error::into_compile_error)
+            .into()
+    }
 }
 
-fn run_pipeline(match_expr: ExprMatch) -> SynResult<TokenStream2> {
+fn run_pipeline(match_expr: ExprMatch, mode: Cast) -> SynResult<TokenStream2> {
     let subject = &match_expr.expr;
     match_expr
         .arms
         .iter()
-        .map(generate_match_arm)
+        .map(|arm| generate_match_arm(arm, &mode))
         .collect::<SynResult<Vec<Vec<_>>>>()?
         .into_iter()
         .flatten()
@@ -26,7 +42,7 @@ fn run_pipeline(match_expr: ExprMatch) -> SynResult<TokenStream2> {
         .pipe(Ok)
 }
 
-fn generate_match_arm(arm: &Arm) -> SynResult<Vec<TokenStream2>> {
+fn generate_match_arm(arm: &Arm, mode: &Cast) -> SynResult<Vec<TokenStream2>> {
     match &arm.pat {
         Pat::Or(pattern) => {
             let rewritten = pattern
@@ -35,37 +51,30 @@ fn generate_match_arm(arm: &Arm) -> SynResult<Vec<TokenStream2>> {
                 .map(rewrite_pattern)
                 .collect::<SynResult<Vec<_>>>()?;
             if rewritten.iter().all(|(_, cases)| cases.is_empty()) {
-                generate_match_pattern(&arm.pat, &arm.body).map(|arm| vec![arm])
+                generate_match_pattern(&arm.pat, &arm.body, mode).map(|arm| vec![arm])
             } else {
                 rewritten
                     .iter()
-                    .map(|(pattern, cases)| generate_rewritten_arm(pattern, cases, &arm.body))
+                    .map(|(pattern, cases)| generate_rewritten_arm(pattern, cases, &arm.body, mode))
                     .collect()
             }
         }
-        pattern => generate_match_pattern(pattern, &arm.body).map(|arm| vec![arm]),
+        pattern => generate_match_pattern(pattern, &arm.body, mode).map(|arm| vec![arm]),
     }
 }
 
-fn generate_match_pattern(pattern: &Pat, body: &syn::Expr) -> SynResult<TokenStream2> {
+fn generate_match_pattern(pattern: &Pat, body: &syn::Expr, mode: &Cast) -> SynResult<TokenStream2> {
     let (pattern, cases) = rewrite_pattern(pattern)?;
-    generate_rewritten_arm(&pattern, &cases, body)
+    generate_rewritten_arm(&pattern, &cases, body, mode)
 }
 
 fn generate_rewritten_arm(
     pattern: &TokenStream2,
     cases: &[Case],
     body: &syn::Expr,
+    mode: &Cast,
 ) -> SynResult<TokenStream2> {
-    let casts = cases.iter().map(|case| {
-        let binding = &case.binding;
-        let output = &case.output;
-        let ty = &case.ty;
-        quote! {
-            // SAFETY: this arm's guard proves the concrete Python type.
-            let #output = unsafe { #binding.cast_unchecked::<#ty>() };
-        }
-    });
+    let casts = cases.iter().map(|case| mode.new_arm(case));
     let checks = cases.iter().map(|case| {
         let binding = &case.binding;
         let ty = &case.ty;
@@ -79,6 +88,24 @@ fn generate_rewritten_arm(
     match checks.len() {
         0 => Ok(quote!(#pattern => #body,)),
         _ => Ok(quote!(#pattern if #(#checks)&&* => { #(#casts)* #body },)),
+    }
+}
+
+impl Cast {
+    fn new_arm(&self, case: &Case) -> TokenStream2 {
+        let binding = &case.binding;
+        let output = &case.output;
+        let ty = &case.ty;
+        match self {
+            Self::Borrowed => quote! {
+                // SAFETY: this arm's guard proves the concrete Python type.
+                let #output = unsafe { #binding.cast_unchecked::<#ty>() };
+            },
+            Self::Owned => quote! {
+                // SAFETY: this arm's guard proves the concrete Python type.
+                let #output = unsafe { #binding.cast_into_unchecked::<#ty>() };
+            },
+        }
     }
 }
 
@@ -135,11 +162,4 @@ fn rewrite_case(pattern: &PatTupleStruct) -> SynResult<(TokenStream2, Vec<Case>)
             exact,
         }],
     ))
-}
-
-struct Case {
-    binding: syn::Ident,
-    output: syn::Ident,
-    ty: Path,
-    exact: bool,
 }

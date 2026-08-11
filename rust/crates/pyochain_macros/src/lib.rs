@@ -101,5 +101,14 @@ pub fn py_abc(attr: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn try_cast(input: TokenStream) -> TokenStream {
     let match_expr = parse_macro_input!(input as ExprMatch);
-    try_cast::generate_from_expr(match_expr)
+    try_cast::Cast::Borrowed.generate(match_expr)
+}
+
+/// Owned variant of [`try_cast`].\
+/// `Case` and `CaseExact` bindings are owned `Bound<'_, Type>` values obtained with `cast_into_unchecked`.\
+/// The matched subject must therefore be owned.
+#[proc_macro]
+pub fn try_cast_into(input: TokenStream) -> TokenStream {
+    let match_expr = parse_macro_input!(input as ExprMatch);
+    try_cast::Cast::Owned.generate(match_expr)
 }
