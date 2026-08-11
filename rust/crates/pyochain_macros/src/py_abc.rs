@@ -1,7 +1,11 @@
 use quote::{format_ident, quote};
 use syn::{
-    Attribute, FnArg, Ident, ItemTrait, LitStr, Meta, Pat, TraitItem, Type, parse::ParseStream,
-    punctuated::Punctuated, token::Comma,
+    Attribute, FnArg, Ident, ItemTrait, LitStr, Meta, Pat, QSelf, TraitItem, Type, TypePath,
+    parse::ParseStream,
+    parse_quote,
+    punctuated::Punctuated,
+    token::Comma,
+    visit_mut::{self, VisitMut},
 };
 use tap::prelude::*;
 
@@ -123,6 +127,7 @@ fn get_quote(
 ) -> SynResult<proc_macro2::TokenStream> {
     let mut signature = method.sig.clone();
     signature.ident = format_ident!("py_{original_ident}");
+    QualifySelfAssocType { trait_ident }.visit_signature_mut(&mut signature);
 
     signature.inputs.pipe_ref_mut(drop_mut_and_ref_from_pattern);
 
@@ -268,4 +273,38 @@ fn has_name_key(tokens: proc_macro2::TokenStream) -> bool {
             })
         })
         .any(|found| found)
+}
+/// Handle recursive associated types
+struct QualifySelfAssocType<'a> {
+    trait_ident: &'a Ident,
+}
+impl VisitMut for QualifySelfAssocType<'_> {
+    fn visit_type_mut(&mut self, ty: &mut Type) {
+        visit_mut::visit_type_mut(self, ty);
+        let Type::Path(TypePath {
+            qself: None, path, ..
+        }) = ty
+        else {
+            return;
+        };
+        if path.segments.len() < 2 || path.segments[0].ident != "Self" {
+            return;
+        }
+        let trait_ident = self.trait_ident;
+        let mut qualified_path: syn::Path = parse_quote!(#trait_ident);
+        qualified_path
+            .segments
+            .extend(path.segments.iter().skip(1).cloned());
+        *ty = Type::Path(TypePath {
+            attrs: Vec::new(),
+            qself: Some(QSelf {
+                lt_token: Default::default(),
+                ty: Box::new(parse_quote!(Self)),
+                position: 1,
+                as_token: Some(Default::default()),
+                gt_token: Default::default(),
+            }),
+            path: qualified_path,
+        });
+    }
 }
