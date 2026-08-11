@@ -327,7 +327,8 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
             return self._inner.pop(key)
         if default is self.__not_given:
             raise KeyError(key)
-        return default
+        else:
+            return default
 
     @override
     def popitem(self, index: int = -1) -> tuple[K, V]:
