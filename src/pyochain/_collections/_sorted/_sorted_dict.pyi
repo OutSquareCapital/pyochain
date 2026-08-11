@@ -144,15 +144,21 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> sd = SortedDict()
-        >>> sd["c"] = 3
-        >>> sd["a"] = 1
-        >>> sd["b"] = 2
-        >>> sd
-        SortedDict({'a': 1, 'b': 2, 'c': 3})
 
-        :param key: key for item
-        :param value: value for item
+        Args:
+            key (K): key for item
+            value (V): value for item
+
+        Examples:
+            ```python
+            from pyochain.collections import SortedDict
+
+            sd = SortedDict()
+            sd["c"] = 3
+            sd["a"] = 1
+            sd["b"] = 2
+            assert sd == SortedDict({"a": 1, "b": 2, "c": 3})
+            ```
 
         """
 
@@ -270,8 +276,9 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
     def popitem(self, index: int = -1) -> tuple[K, V]:
         """Remove and return ``(key, value)`` pair at `index` from sorted dict.
 
-        Optional argument `index` defaults to -1, the last item in the sorted
-        dict. Specify ``index=0`` for the first item in the sorted dict.
+        Optional argument `index` defaults to -1, the last item in the sorted dict.
+
+        Specify ``index=0`` for the first item in the sorted dict.
 
         If the sorted dict is empty, raises :exc:`KeyError`.
 
@@ -279,15 +286,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
 
         Runtime complexity: `O(log(n))`
 
-        >>> sd = SortedDict({"a": 1, "b": 2, "c": 3})
-        >>> sd.popitem()
-        ('c', 3)
-        >>> sd.popitem(0)
-        ('a', 1)
-        >>> sd.popitem(100)
-        Traceback (most recent call last):
-          ...
-        IndexError: list index out of range
 
         Args:
             index (int): `index` of item (default -1)
@@ -298,6 +296,17 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
         Raises:
             KeyError: if sorted dict is empty
 
+        Examples:
+            ```python
+            from pyochain.collections import SortedDict
+            import pytest
+
+            sd = SortedDict({"a": 1, "b": 2, "c": 3})
+            assert sd.popitem() == ("c", 3)
+            assert sd.popitem(0) == ("a", 1)
+            with pytest.raises(IndexError):
+                sd.popitem(100)
+            ```
 
         """
 
@@ -312,21 +321,26 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
         If the `index` is out of range, raises :exc:`IndexError`.
 
         Runtime complexity: `O(log(n))`
+        Args:
+            index (int): index of item (default -1)
 
-        >>> sd = SortedDict({"a": 1, "b": 2, "c": 3})
-        >>> sd.peekitem()
-        ('c', 3)
-        >>> sd.peekitem(0)
-        ('a', 1)
-        >>> sd.peekitem(100)
-        Traceback (most recent call last):
-          ...
-        IndexError: list index out of range
+        Returns:
+            tuple[K, V]: key and value pair
 
-        :param int index: index of item (default -1)
-        :return: key and value pair
-        :raises IndexError: if `index` out of range
+        Raises:
+            IndexError: if `index` out of range
 
+        Examples:
+            ```python
+            from pyochain.collections import SortedDict
+            import pytest
+
+            sd = SortedDict({"a": 1, "b": 2, "c": 3})
+            assert sd.peekitem() == ("c", 3)
+            assert sd.peekitem(0) == ("a", 1)
+            with pytest.raises(IndexError):
+                sd.peekitem(100)
+            ```
         """
 
     @overload
@@ -339,26 +353,30 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
     def setdefault[T](self, key: K, default: V | T | None = None, /) -> V | T | None:
         """Return value for item identified by `key` in sorted dict.
 
-        If `key` is in the sorted dict then return its value. If `key` is not
-        in the sorted dict then insert `key` with value `default` and return
-        `default`.
+        If `key` is in the sorted dict then return its value.
+
+        If `key` is not in the sorted dict then insert `key` with value `default` and return `default`.
 
         Optional argument `default` defaults to none.
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        >>> sd = SortedDict()
-        >>> sd.setdefault("a", 1)
-        1
-        >>> sd.setdefault("a", 10)
-        1
-        >>> sd
-        SortedDict({'a': 1})
+        Args:
+            key (K): key for item
+            default (T | V | None): value for item (default None)
 
-        :param key: key for item
-        :param default: value for item (default None)
-        :return: value for item identified by `key`
+        Returns:
+            V | T | None: value for item identified by `key`
 
+        Examples:
+            ```python
+            from pyochain.collections import SortedDict
+
+            sd = SortedDict()
+            assert sd.setdefault("a", 1) == 1
+            assert sd.setdefault("a", 10) == 1
+            assert sd == SortedDict({"a": 1})
+            ```
         """
     @overload
     def update(self, m: SupportsKeysAndGetItem[K, V], /) -> None: ...
@@ -381,16 +399,21 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
         /,
         **kwargs: V,
     ) -> None:
-        """Update sorted dict with items from `args` and `kwargs`.
+        """In-place update sorted dict with items from `args` and `kwargs`.
 
         Overwrites existing items.
 
-        Optional arguments `args` and `kwargs` may be a mapping, an iterable of
-        pairs or keyword arguments. See :func:`SortedDict.__init__` for
-        details.
+        Optional arguments `args` and `kwargs` may be:
 
-        :param args: mapping or iterable of pairs
-        :param kwargs: keyword arguments mapping
+        - a `Mapping` object
+        - an `Iterable` of pairs
+        - keyword arguments of value `V`, converting to a `dict[str, V]`.
+
+        See :func:`SortedDict.__init__` for details.
+
+        Args:
+            m: mapping or iterable of pairs
+            **kwargs (V): keyword arguments mapping
 
         """
 
