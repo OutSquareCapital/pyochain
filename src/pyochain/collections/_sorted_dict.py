@@ -476,19 +476,19 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
         if self.is_empty():
             self._inner.update(m, **kwargs)
             self._list.update(self._inner.iter())
-            return
-        match m, kwargs:
-            case dict(), {}:
-                pairs: dict[K, V] = m  # pyright: ignore[reportAssignmentType, reportUnknownVariableType]
-            case _:
-                pairs = dict(m, **kwargs)
-        if (10 * len(pairs)) > self.len():
-            self._inner.update(pairs)
-            self._list.clear()
-            self._list.update(self._inner.iter())
         else:
-            for key in pairs:
-                self[key] = pairs[key]
+            match m, kwargs:
+                case dict(), {}:
+                    pairs: dict[K, V] = m  # pyright: ignore[reportAssignmentType, reportUnknownVariableType]
+                case _:
+                    pairs = dict(m, **kwargs)
+            if (10 * len(pairs)) > self.len():
+                self._inner.update(pairs)
+                self._list.clear()
+                self._list.update(self._inner.iter())
+            else:
+                for key in pairs:
+                    self[key] = pairs[key]
 
 
 class SortedDict[K: SupportsHashableAndRichComparison, V](BaseSortedDict[K, V]):
