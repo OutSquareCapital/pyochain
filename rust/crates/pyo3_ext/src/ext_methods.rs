@@ -2,6 +2,7 @@
 use pyo3::{
     PyTypeInfo,
     call::PyCallArgs,
+    exceptions::PyKeyError,
     ffi, intern,
     prelude::*,
     types::{
@@ -200,6 +201,7 @@ pub trait PyDictExtMethods<'py> {
     fn items_view(&self) -> Bound<'py, PyDictItems>;
     fn keys_view(&self) -> Bound<'py, PyDictKeys>;
     fn pop(&self, key: &Bound<'py, PyAny>) -> PyResult<Option<Bound<'py, PyAny>>>;
+    fn pop_or_err(&self, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>>;
     fn values_view(&self) -> Bound<'py, PyDictValues>;
 }
 impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
@@ -223,6 +225,16 @@ impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
             code if code < 0 => Err(PyErr::fetch(self.py())),
             0 => Ok(None),
             _ => Ok(Some(unsafe { Bound::from_owned_ptr(self.py(), result) })),
+        }
+    }
+    /// Remove *key* from the dictionary, and return the removed value.\
+    /// Raise `KeyError` if the *key* is missing, just like python's `dict.pop(key)` method.\
+    fn pop_or_err(&self, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+        let mut result = core::ptr::null_mut();
+        match unsafe { ffi::PyDict_Pop(self.as_ptr(), key.as_ptr(), &mut result) } {
+            code if code < 0 => Err(PyErr::fetch(self.py())),
+            0 => Err(PyKeyError::new_err(key.to_string())),
+            _ => Ok(unsafe { Bound::from_owned_ptr(self.py(), result) }),
         }
     }
     fn values_view(&self) -> Bound<'py, PyDictValues> {
