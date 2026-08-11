@@ -123,8 +123,27 @@ fn rewrite_tuple(tuple: &PatTuple) -> SynResult<(TokenStream2, Vec<Case>)> {
 fn rewrite_pattern(pattern: &Pat) -> SynResult<(TokenStream2, Vec<Case>)> {
     match pattern {
         Pat::Tuple(tuple) => rewrite_tuple(tuple),
-        Pat::TupleStruct(tuple_struct) => rewrite_case(tuple_struct),
+        Pat::TupleStruct(tuple_struct) => rewrite_tuple_struct(tuple_struct),
         _ => Ok((quote!(#pattern), Vec::new())),
+    }
+}
+
+fn rewrite_tuple_struct(
+    tuple_struct: &PatTupleStruct,
+) -> SynResult<(TokenStream2, Vec<Case>)> {
+    match rewrite_case(tuple_struct)? {
+        (pattern, cases) if !cases.is_empty() => Ok((pattern, cases)),
+        _ => {
+            let rewritten = tuple_struct
+                .elems
+                .iter()
+                .map(rewrite_pattern)
+                .collect::<SynResult<Vec<_>>>()?;
+            let (patterns, cases): (Vec<_>, Vec<_>) = rewritten.into_iter().unzip();
+            let cases = cases.into_iter().flatten().collect::<Vec<_>>();
+            let path = &tuple_struct.path;
+            Ok((quote!(#path(#(#patterns),*)), cases))
+        }
     }
 }
 
