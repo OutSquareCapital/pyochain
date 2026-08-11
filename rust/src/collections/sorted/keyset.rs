@@ -10,7 +10,7 @@ use crate::{
     abc,
     collections::{
         SortedKeyList,
-        sorted::traits::{BaseSortedSet, IntoUpdate, PyIdentity, SortedListGetters},
+        sorted::traits::{BaseSortedSet, IntoUpdate, ListGetter, PyIdentity, SortedListGetters},
     },
     traits::PyoABC,
 };
@@ -86,12 +86,14 @@ impl SortedKeySet {
         self.get_list().get().bisect_key_right(key)
     }
 }
-impl BaseSortedSet for SortedKeySet {
+impl ListGetter for SortedKeySet {
     type T = SortedKeyList;
     #[inline(always)]
     fn get_list(&self) -> &Py<SortedKeyList> {
         &self.list
     }
+}
+impl BaseSortedSet for SortedKeySet {
     #[inline(always)]
     fn get_set(&self) -> &Py<PySet> {
         &self.set

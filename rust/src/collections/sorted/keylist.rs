@@ -48,7 +48,7 @@ impl SortedKeyList {
         key: &Py<PyAny>,
     ) -> PyResult<Self> {
         let new_inst = Self::new(key.clone_ref(py));
-        new_inst.update_from_vec(py, values).map(|_| new_inst)
+        new_inst.update(py, values).map(|_| new_inst)
     }
     pub(super) fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
         abc::PyoMutableSequence::build_init()
@@ -93,7 +93,7 @@ impl SortedKeyList {
         );
 
         if let Some(iterable) = iterable {
-            slf.update(&iterable)?;
+            slf.py_update(&iterable)?;
         }
         abc::PyoMutableSequence::build_init()
             .add_subclass(slf)
@@ -558,15 +558,15 @@ impl BaseSortedList for SortedKeyList {
         }
     }
 
-    fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
+    fn py_update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
         let values = iterable
             .try_iter()?
             .map(|x| x?.unbind().clone_ref(py).pipe(Ok))
             .collect::<PyResult<Vec<_>>>()?;
-        self.update_from_vec(py, values)
+        self.update(py, values)
     }
-    fn update_from_vec(&self, py: Python<'_>, mut values: Vec<Py<PyAny>>) -> PyResult<()> {
+    fn update(&self, py: Python<'_>, mut values: Vec<Py<PyAny>>) -> PyResult<()> {
         let mut data = self.get_data();
         let key_fn = &self.key.clone_ref(py).into_bound(py);
         values.sort_by(|a, b| py_cmp_by_key(a, b, key_fn));

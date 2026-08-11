@@ -38,7 +38,7 @@ impl SortedList {
     #[inline]
     pub(super) fn from_vec(py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<Self> {
         let new_inst = Self::new();
-        new_inst.update_from_vec(py, values).map(|_| new_inst)
+        new_inst.update(py, values).map(|_| new_inst)
     }
     #[inline]
     pub(super) fn into_bound<'py>(self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
@@ -54,7 +54,7 @@ impl SortedList {
     fn py_new(iterable: Option<Bound<'_, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
         let data = Self::new();
         if let Some(values) = iterable {
-            data.update(&values)?;
+            data.py_update(&values)?;
         };
 
         abc::PyoMutableSequence::build_init()
@@ -410,16 +410,16 @@ impl BaseSortedList for SortedList {
         Ok((right - left) as usize)
     }
 
-    fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
+    fn py_update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = iterable.py();
         let values = iterable
             .try_iter()?
             .map(|x| x?.unbind().pipe(Ok))
             .collect::<PyResult<Vec<_>>>()?;
-        self.update_from_vec(py, values)
+        self.update(py, values)
     }
 
-    fn update_from_vec(&self, py: Python<'_>, mut values: Vec<Py<PyAny>>) -> PyResult<()> {
+    fn update(&self, py: Python<'_>, mut values: Vec<Py<PyAny>>) -> PyResult<()> {
         values.sort_by(|a, b| py_cmp(py, a, b));
         let mut data = self.get_data();
 

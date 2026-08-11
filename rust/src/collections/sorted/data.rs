@@ -561,7 +561,7 @@ pub(super) fn reset_list<T: BaseSortedList>(slf: &T, py: Python<'_>, load: usize
     let values = slf.collapse_lists(py);
     slf.clear();
     slf.set_load(load);
-    slf.update_from_vec(py, values)
+    slf.update(py, values)
 }
 #[inline(always)]
 pub(super) fn islice_list<'py, T: BaseSortedList>(

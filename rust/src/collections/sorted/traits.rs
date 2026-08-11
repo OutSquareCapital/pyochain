@@ -12,7 +12,6 @@ use pyo3::{
     BoundObject, PyClass, PyTypeInfo,
     call::PyCallArgs,
     exceptions::{PyIndexError, PyKeyError, PyNotImplementedError},
-    intern,
     prelude::*,
     types::{
         PyBool, PyDict, PyList, PyMapping, PyNotImplemented, PySequence, PySet, PySlice,
@@ -143,9 +142,10 @@ pub(super) trait BaseSortedList: SortedListGetters {
         pos: usize,
     ) -> PyResult<()>;
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize>;
-    fn update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
+    #[pyo3(name = "update")]
+    fn py_update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
     #[skip]
-    fn update_from_vec(&self, py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<()>;
+    fn update(&self, py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<()>;
 
     fn collapse_lists<'py>(&self, py: Python<'py>) -> Vec<Py<PyAny>> {
         self.get_data().collapse(py)
@@ -203,7 +203,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
                 }
                 drop(data);
                 self.clear();
-                self.update_from_vec(py, values)?;
+                self.update(py, values)?;
                 Ok(())
             }
             _ if step > 0 => (start..stop)
@@ -437,13 +437,13 @@ pub(super) trait BaseSortedList: SortedListGetters {
     }
 
     fn __iadd__(&self, other: Bound<'_, PyAny>) -> PyResult<()> {
-        self.update(&other)
+        self.py_update(&other)
     }
 
     fn __imul__(&self, py: Python<'_>, num: usize) -> PyResult<()> {
         let values = self.get_data().repeat(py, num);
         self.clear();
-        self.update_from_vec(py, values)
+        self.update(py, values)
     }
 
     #[allow(unused_variables)]
@@ -467,17 +467,22 @@ pub(super) trait BaseSortedList: SortedListGetters {
         Err(PyNotImplementedError::new_err(msg))
     }
 }
-
-#[py_abc(SortedSet, SortedKeySet)]
-pub(super) trait BaseSortedSet: BaseSortedListSet {
+pub(super) trait ListGetter {
     type T: BaseSortedList;
-    #[skip]
     fn get_list(&self) -> &Py<Self::T>;
     #[inline(always)]
-    #[skip]
     fn get_list_bound<'py>(&self, py: Python<'py>) -> Bound<'py, Self::T> {
         self.get_list().clone_ref(py).into_bound(py)
     }
+    #[inline(always)]
+    fn get_list_bind<'py>(&self, py: Python<'py>) -> &Bound<'py, Self::T> {
+        self.get_list().bind(py)
+    }
+}
+
+#[py_abc(SortedSet, SortedKeySet)]
+pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
+    #[inline(always)]
     #[skip]
     fn from_set<'py>(&self, values: Bound<'py, PySet>) -> PyResult<Bound<'py, Self>>;
     #[getter]
@@ -493,7 +498,7 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
             set.update((values,))?;
             let list = self.get_list().get();
             list.clear();
-            list.update(set)?;
+            list.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
         } else {
             for value in values.iter().map(Bound::unbind) {
                 self.add(py, value)?;
@@ -542,7 +547,7 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
             set.difference_update((values,))?;
             let list = self.get_list().get();
             list.clear();
-            list.update(set)?;
+            list.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
         } else {
             for value in values {
                 self.discard(value)?
@@ -560,7 +565,7 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
         set.intersection_update(iterables)?;
         let list = self.get_list().get();
         list.clear();
-        list.update(set)
+        list.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())
     }
     fn __getitem__<'py>(&self, py: Python<'py>, index: IntOrSlice<'py>) -> ObjOrVec<'py> {
         self.get_list().get().__getitem__(py, index)
@@ -783,7 +788,7 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
             set.difference_update((values,))?;
             let list = slf_ref.get_list().get();
             list.clear();
-            list.update(set)?;
+            list.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
         } else {
             for value in values {
                 slf_ref.discard(value)?
@@ -822,12 +827,13 @@ pub(super) trait BaseSortedSet: BaseSortedListSet {
         slf: Bound<'py, Self>,
         other: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, Self>> {
+        let py = other.py();
         let slf_ref = slf.get();
         let set = slf_ref.get_set().bind(other.py());
         set.symmetric_difference_update(other)?;
         let list = slf_ref.get_list().get();
         list.clear();
-        list.update(set)?;
+        list.update(py, set.iter().map(Bound::unbind).collect::<Vec<_>>())?;
         Ok(slf)
     }
     fn __ixor__<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<()> {
@@ -962,11 +968,11 @@ macro_rules! impl_sorted_collection_for_set {
 impl_sorted_collection_for_set!(SortedSet, SortedList);
 impl_sorted_collection_for_set!(SortedKeySet, SortedKeyList);
 #[py_abc]
-pub(super) trait BaseSortedDict: SortedCollection {
-    type T: BaseSortedList;
-
-    fn get_list(&self) -> &Py<Self::T>;
+pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
     fn get_inner(&self) -> &Py<PyDict>;
+    fn len(&self, py: Python<'_>) -> usize {
+        self.__len__(py)
+    }
 
     fn __or__(&self, value: PyMapping) -> Self;
 
@@ -1011,10 +1017,7 @@ pub(super) trait BaseSortedDict: SortedCollection {
         stop: Option<isize>,
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        slf.get()
-            .get_list()
-            .bind(slf.py())
-            .islice(start, stop, reverse = reverse)
+        Self::T::islice(slf.get().get_list_bound(slf.py()), start, stop, reverse)
     }
 
     #[pyo3(signature = (minimum = None, maximum = None, inclusive = (true, true), *, reverse = false))]
@@ -1025,10 +1028,13 @@ pub(super) trait BaseSortedDict: SortedCollection {
         inclusive: (bool, bool),
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
-        slf.get()
-            .get_list()
-            .bind(slf.py())
-            .irange(minimum, maximum, inclusive, reverse = reverse)
+        Self::T::irange(
+            slf.get().get_list_bound(slf.py()),
+            minimum,
+            maximum,
+            inclusive,
+            reverse,
+        )
     }
 
     fn clear(&self) -> () {
@@ -1039,16 +1045,16 @@ pub(super) trait BaseSortedDict: SortedCollection {
     }
 
     fn __delitem__(&self, key: Bound<'_, PyAny>) -> PyResult<()> {
-        self.get_inner().bind(key.py()).as_any().del_item(&key);
+        self.get_inner().bind(key.py()).as_any().del_item(&key)?;
         self.get_list().get().remove(key)
     }
 
-    fn __iter__(&self) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        self.get_list().get().iter()
+    fn __iter__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        self.get_list_bound(py).pipe(Self::T::__iter__)
     }
 
-    fn __reversed__(&self) -> PyResult<Bound<'_, abc::PyoIterator>> {
-        self.get_list().get().rev()
+    fn __reversed__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, abc::PyoIterator>> {
+        self.get_list_bound(py).pipe(Self::T::__reversed__)
     }
 
     fn __setitem__(&self, key: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {
@@ -1086,46 +1092,44 @@ pub(super) trait BaseSortedDict: SortedCollection {
     }
 
     fn keys(&self) -> SortedKeysView {
-        return SortedKeysView(self);
+        SortedKeysView(self)
     }
 
     fn items(&self) -> SortedItemsView {
-        return SortedItemsView(self);
+        SortedItemsView(self)
     }
 
     fn values(&self) -> SortedValuesView {
-        return SortedValuesView(self);
+        SortedValuesView(self)
     }
 
-    fn pop(
-        &self,
-        key: Bound<'_, PyAny>,
-        default: Option<Bound<'_, PyAny>>,
-    ) -> PyResult<Bound<'_, PyAny>> {
+    fn pop(&self, key: Bound<'_, PyAny>, default: Bound<'_, PyAny>) -> PyResult<Bound<'_, PyAny>> {
         if self.__contains__(&key)? {
-            self.get_list().get().remove(key);
-            return Ok(self.get_inner().bind(key.py()).pop(key));
+            self.get_list().get().remove(key)?;
+            self.get_inner().bind(key.py()).pop_or_err(&key)
+        } else {
+            if default.is(self.__not_given) {
+                Err(PyKeyError::new_err(key.to_string()))
+            } else {
+                Ok(default)
+            }
         }
-        if default.is(self.__not_given) {
-            return Err(PyKeyError::new_err(key));
-        }
-        return Ok(default);
     }
 
     #[pyo3(signature = (index = -1))]
-    fn popitem(
+    fn popitem<'py>(
         &self,
-        py: Python<'_>,
+        py: Python<'py>,
         index: isize,
-    ) -> PyResult<(Bound<'_, PyAny>, Bound<'_, PyAny>)> {
-        if self.__len__(py) == 0 {
+    ) -> PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
+        if self.len(py) == 0 {
             let msg = "popitem(): dictionary is empty";
-            return Err(PyKeyError::new_err(msg));
-        };
-
-        let key = self.get_list().get().pop(py, index)?;
-        let value = self.get_inner().bind(py).pop(key);
-        Ok((key, value))
+            Err(PyKeyError::new_err(msg))
+        } else {
+            let key = self.get_list().get().pop(py, index)?;
+            let value = self.get_inner().bind(py).pop_or_err(&key)?;
+            Ok((key, value))
+        }
     }
     #[pyo3(signature = (index = -1))]
     fn peekitem<'py>(
@@ -1150,8 +1154,8 @@ pub(super) trait BaseSortedDict: SortedCollection {
         if self.__contains__(&key)? {
             self.__getitem__(&key).map(Some)
         } else {
-            self.get_inner().bind(py).set_item(&key, default);
-            self.get_list().get().add(py, key.unbind());
+            self.get_inner().bind(py).set_item(&key, &default)?;
+            self.get_list().get().add(py, key.unbind())?;
             Ok(default)
         }
     }
@@ -1162,34 +1166,47 @@ pub(super) trait BaseSortedDict: SortedCollection {
         m: Option<Bound<'_, PyAny>>,
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let update_method = intern!(py, "update");
+        let m = m.unwrap_or_else(|| PyTuple::empty(py).into_any());
         let list = self.get_list().get();
-        if self.__len__(py) == 0 {
-            let slf_dict = self.get_inner().bind(py);
-            m.map(|m| slf_dict.call_method1(update_method, (m,)).unwrap());
-            kwargs.map(|kwargs| slf_dict.update(kwargs.as_mapping()));
-            list.update(self.get_inner().bind(py).keys_view().as_any());
-            return Ok(());
-        }
-        let pairs = match (m, &kwargs) {
-            (Some(py_dict), None) => py_dict,
-            _ => {
-                let d = PyDict::new(py);
-                d.call_method1(update_method, (&m,))?;
-                kwargs.map(|kw| d.call_method1(update_method, (kw.as_mapping(),)));
-                &d
+        let inner = self.get_inner().bind(py);
+        if self.len(py) == 0 {
+            inner.update_from_sequence(&m)?;
+            if let Some(kw) = kwargs {
+                inner.update(kw.as_mapping())?;
             }
-        };
-        if (10 * pairs.len()) > self.__len__(py) {
-            self.get_inner().bind(py).update(pairs.as_mapping());
-            list.clear();
-            list.update(&self.get_inner().bind(py).keys_view());
+            list.update(
+                py,
+                inner.iter().map(|(k, _)| k.unbind()).collect::<Vec<_>>(),
+            );
+            Ok(())
         } else {
-            for key in pairs.items_view().try_iter().unwrap() {
-                let k = key?;
-                self.__setitem__(k, pairs.as_any().get_item(k)?);
+            let pairs: Bound<'_, PyDict> = try_cast! {match (m, kwargs) {
+                (PyDict, None) => m,
+                (PyDict, Some(kw)) => {
+                    m.update(kw);
+                    m
+                }
+                (_, Some(kw)) => {
+                    let d = PyDict::from_sequence(&m)?;
+                    d.update(kw.as_mapping())?;
+                    d
+                }
+                (_, None) => PyDict::from_sequence(&m)?,
+            }};
+            if (10 * pairs.len()) > self.len(py) {
+                inner.update(pairs.as_mapping())?;
+                list.clear();
+                list.update(
+                    py,
+                    inner.iter().map(|(k, _)| k.unbind()).collect::<Vec<_>>(),
+                );
+                Ok(())
+            } else {
+                for key in pairs.keys_view().try_iter().unwrap() {
+                    self.__setitem__(key?, pairs.as_any().get_item(key)?)?;
+                }
+                Ok(())
             }
         }
-        Ok(())
     }
 }

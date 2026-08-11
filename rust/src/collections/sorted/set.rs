@@ -11,7 +11,7 @@ use crate::{
     abc,
     collections::sorted::{
         SortedList,
-        traits::{BaseSortedSet, IntoUpdate, SortedListGetters},
+        traits::{BaseSortedSet, IntoUpdate, ListGetter, SortedListGetters},
     },
     traits::PyoABC,
 };
@@ -56,12 +56,14 @@ impl SortedSet {
         abc::PyoMutableSet::build_init().add_subclass(init).pipe(Ok)
     }
 }
-impl BaseSortedSet for SortedSet {
+impl ListGetter for SortedSet {
     type T = SortedList;
     #[inline(always)]
     fn get_list(&self) -> &Py<SortedList> {
         &self.list
     }
+}
+impl BaseSortedSet for SortedSet {
     #[inline(always)]
     fn get_set(&self) -> &Py<PySet> {
         &self.set
