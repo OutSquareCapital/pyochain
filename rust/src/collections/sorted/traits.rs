@@ -1132,40 +1132,50 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         m: Option<Bound<'_, PyAny>>,
         kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let m = m.unwrap_or_else(|| PyTuple::empty(py).into_any());
         let list = self.get_list().get();
         let inner = self.get_inner().bind(py);
         if self.len(py) == 0 {
-            inner.update_from_sequence(&m)?;
+            if let Some(it) = m {
+                try_cast! {match it {
+                    CaseExact::PyDict(d) => inner.update(d.as_mapping())?,
+                    Case::PyMapping(m) => inner.update(m)?,
+                    iterable => {inner.update_from_sequence(&iterable)?;}
+                }}
+            }
             if let Some(kw) = kwargs {
                 inner.update(kw.as_mapping())?;
             }
-            list.update(
-                py,
-                inner.iter().map(|(k, _)| k.unbind()).collect::<Vec<_>>(),
-            )?;
+
+            inner
+                .iter()
+                .map(|(k, _)| k.unbind())
+                .collect::<Vec<_>>()
+                .pipe(|v| list.update(py, v))?;
             Ok(())
         } else {
             let pairs = try_cast_into! {match (m, kwargs) {
-                (CaseExact::PyDict(d), None) => d,
-                (CaseExact::PyDict(d), Some(kw)) => {
+                (Some(CaseExact::PyDict(d)), None) => d,
+                (Some(CaseExact::PyDict(d)), Some(kw)) => {
                     d.update(kw.as_mapping())?;
                     d
                 }
-                (iterable, Some(kw)) => {
+                (Some(iterable), Some(kw)) => {
                     let d = PyDict::from_sequence(&iterable)?;
                     d.update(kw.as_mapping())?;
                     d
                 }
-                (iterable, None) => PyDict::from_sequence(&iterable)?,
+                (Some(iterable), None) => PyDict::from_sequence(&iterable)?,
+                (None, Some(kw)) => kw,
+                (None, None) => PyDict::new(py),
             }};
             if (10 * pairs.len()) > self.len(py) {
                 inner.update(pairs.as_mapping())?;
                 list.clear();
-                list.update(
-                    py,
-                    inner.iter().map(|(k, _)| k.unbind()).collect::<Vec<_>>(),
-                )?;
+                inner
+                    .iter()
+                    .map(|(k, _)| k.unbind())
+                    .collect::<Vec<_>>()
+                    .pipe(|v| list.update(py, v))?;
                 Ok(())
             } else {
                 for key in pairs.keys_view().try_iter().unwrap() {
