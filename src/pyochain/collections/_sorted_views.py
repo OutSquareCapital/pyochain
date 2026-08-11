@@ -2,18 +2,49 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload, override
+from collections.abc import Callable, Hashable
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generic,
+    Protocol,
+    TypeVar,
+    overload,
+    override,
+)
 
 from pyochain import Vec
 from pyochain.abc import PyoItemsView, PyoKeysView, PyoSequence, PyoValuesView
 from pyochain.collections import SortedSet
 
-from ._base_sorted import SupportsHashableAndRichComparison
-
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from _typeshed import SupportsRichComparison
+
     from pyochain.collections import SortedDict
+
+type SupportsHashableAndRichComparison = (
+    SupportsHashableAndDunderLT[Any] | SupportsHashableAndDunderGT[Any]
+)
+
+
+type KeyFunc[T, OT: SupportsRichComparison] = Callable[[T], OT]
+
+
+class SupportsDunderLT[T](Protocol):
+    def __lt__(self, other: T, /) -> bool: ...
+
+
+class SupportsDunderGT[T](Protocol):
+    def __gt__(self, other: T, /) -> bool: ...
+
+
+class SupportsHashableAndDunderGT[T](Hashable, SupportsDunderGT[T], Protocol): ...
+
+
+class SupportsHashableAndDunderLT[T](Hashable, SupportsDunderLT[T], Protocol): ...
+
 
 _K_co = TypeVar("_K_co", covariant=True, bound=SupportsHashableAndRichComparison)
 _V_co = TypeVar("_V_co", covariant=True)
