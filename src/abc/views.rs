@@ -7,44 +7,34 @@ use pyo3::{
 use tap::Pipe;
 
 use crate::{
-    abc::{Checkable, PyoSet, PyoSized},
+    abc::{Checkable, PyoSet, PyoSized, traits::MappingView},
     iterators,
     sets::SetMut,
     traits::{IntoPyochain, PyoABC},
 };
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSized)]
-pub struct PyoMappingView {
-    #[pyo3(get)]
-    pub _mapping: Py<PyAny>,
-}
+pub struct PyoMappingView(pub Py<PyAny>);
 #[pymethods]
 impl PyoMappingView {
     #[new]
     fn new(mapping: Bound<'_, PyAny>) -> PyClassInitializer<Self> {
         PyClassInitializer::from(Checkable)
             .add_subclass(PyoSized)
-            .add_subclass(Self {
-                _mapping: mapping.unbind(),
-            })
+            .add_subclass(Self(mapping.unbind()))
     }
 }
 
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSet)]
-pub struct PyoValuesView {
-    #[pyo3(get)]
-    pub _mapping: Py<PyAny>,
-}
+pub struct PyoValuesView(pub Py<PyAny>);
 #[pymethods]
 impl PyoValuesView {
     #[new]
     fn new(mapping: Bound<'_, PyAny>) -> PyClassInitializer<Self> {
-        PyoSet::build_init().add_subclass(Self {
-            _mapping: mapping.unbind(),
-        })
+        PyoSet::build_init().add_subclass(Self(mapping.unbind()))
     }
 
     fn __contains__(&self, value: Bound<'_, PyAny>) -> PyResult<bool> {
-        let mapping = self._mapping.bind(value.py());
+        let mapping = self.mapping().bind(value.py());
         mapping
             .try_iter()?
             .map(|key| mapping.get_item(&key?))
@@ -60,7 +50,7 @@ impl PyoValuesView {
     fn __iter__(slf: Bound<'_, Self>) -> PyResult<iterators::ValuesViewIterator> {
         let py = slf.py();
         slf.get()
-            ._mapping
+            .mapping()
             .clone_ref(py)
             .into_bound(py)
             .pipe(iterators::ValuesViewIterator::new)
@@ -68,17 +58,12 @@ impl PyoValuesView {
 }
 
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSet)]
-pub struct PyoKeysView {
-    #[pyo3(get)]
-    pub _mapping: Py<PyAny>,
-}
+pub struct PyoKeysView(pub Py<PyAny>);
 #[pymethods]
 impl PyoKeysView {
     #[new]
     fn new(mapping: Bound<'_, PyAny>) -> PyClassInitializer<Self> {
-        PyoSet::build_init().add_subclass(Self {
-            _mapping: mapping.unbind(),
-        })
+        PyoSet::build_init().add_subclass(Self(mapping.unbind()))
     }
 
     #[classmethod]
@@ -93,11 +78,11 @@ impl PyoKeysView {
     }
 
     fn __contains__(&self, key: Bound<'_, PyAny>) -> PyResult<bool> {
-        self._mapping.bind(key.py()).contains(key)
+        self.mapping().bind(key.py()).contains(key)
     }
 
     fn __iter__(slf: Bound<'_, Self>) -> PyResult<Bound<'_, PyIterator>> {
-        slf.get()._mapping.bind(slf.py()).try_iter()
+        slf.get().mapping().bind(slf.py()).try_iter()
     }
 
     fn intersection<'py>(
@@ -131,17 +116,12 @@ impl PyoKeysView {
 }
 
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSet)]
-pub struct PyoItemsView {
-    #[pyo3(get)]
-    pub _mapping: Py<PyAny>,
-}
+pub struct PyoItemsView(pub Py<PyAny>);
 #[pymethods]
 impl PyoItemsView {
     #[new]
     fn new(mapping: Bound<'_, PyAny>) -> PyClassInitializer<Self> {
-        PyoSet::build_init().add_subclass(Self {
-            _mapping: mapping.unbind(),
-        })
+        PyoSet::build_init().add_subclass(Self(mapping.unbind()))
     }
 
     #[classmethod]
@@ -165,7 +145,7 @@ impl PyoItemsView {
         match item.extract::<(Bound<'_, PyAny>, Bound<'_, PyAny>)>() {
             Ok((key, value)) => {
                 let py = key.py();
-                self._mapping
+                self.mapping()
                     .bind(py)
                     .get_item(&key)
                     .and_then(|v| Ok(v.is(&value) || v.eq(&value)?))
@@ -183,7 +163,7 @@ impl PyoItemsView {
     fn __iter__(slf: Bound<'_, Self>) -> PyResult<iterators::ItemsViewIterator> {
         let py = slf.py();
         slf.get()
-            ._mapping
+            .mapping()
             .clone_ref(py)
             .into_bound(py)
             .pipe(iterators::ItemsViewIterator::new)

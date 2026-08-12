@@ -3,7 +3,7 @@ use crate::{
     collections::{self, sorted},
     dict, iterators, option, result, sliceview,
 };
-use pyo3::prelude::*;
+use pyo3::{PyClass, PyTypeInfo, prelude::*, types::DerefToPyAny};
 use pyo3_ext;
 use pyochain_macros::py_abc;
 use tap::prelude::*;
@@ -116,28 +116,37 @@ macro_rules! impl_tap {
         impl_tap!($($rest),+);
     };
 }
-
-macro_rules! impl_mapping_view {
-    ($type:ty) => {
-        #[pymethods]
-        impl $type {
-
+#[py_abc(
+    abc::PyoMappingView,
+    abc::PyoKeysView,
+    abc::PyoValuesView,
+    abc::PyoItemsView,
+    collections::sorted::SortedItemsView,
+    collections::sorted::SortedKeysView,
+    collections::sorted::SortedValuesView,
+    collections::sorted::SortedByKeyItemsView,
+    collections::sorted::SortedByKeyKeysView,
+    collections::sorted::SortedByKeyValuesView
+)]
+pub trait MappingView:
+    Sized
+    + PyTypeInfo
+    + PyClass<Frozen = pyo3::pyclass::boolean_struct::True>
+    + Send
+    + Sync
+    + DerefToPyAny
+{
+    type M: Sized;
+    #[skip]
+    fn mapping(&self) -> &Py<Self::M>;
     fn __repr__(slf: Bound<'_, Self>) -> PyResult<String> {
         Ok(format!(
             "{}({:?})",
             slf.get_type().name()?,
-            slf.get()._mapping.bind(slf.py())
+            slf.get().mapping().bind(slf.py())
         ))
     }
-
-    fn __len__(slf: Bound<'_, Self>) -> PyResult<usize> {
-        slf.get()._mapping.bind(slf.py()).len()
-    }}
-    };
-    ($first:ty, $($rest:ty),+ $(,)?) => {
-        impl_mapping_view!($first);
-        impl_mapping_view!($($rest),+);
-    };
+    fn __len__(&self, py: Python<'_>) -> usize;
 }
 impl_tap!(abc::Fluent, abc::PyoTap, abc::PyoIterable);
 impl_py_pipe!(
@@ -150,9 +159,26 @@ impl_py_pipe!(
     abc::PyoIterable,
     abc::PyoIterator
 );
+
+macro_rules! impl_mapping_view {
+    ($($t:ty),* $(,)?) => {
+        $(
+            impl MappingView for $t {
+                type M = PyAny;
+                fn mapping(&self) -> &Py<Self::M> {
+                    &self.0
+                }
+                fn __len__(&self, py: Python<'_>) -> usize {
+                    self.mapping().bind(py).len().expect("Mapping should have a length")
+                }
+            }
+        )*
+    };
+}
+
 impl_mapping_view!(
     abc::PyoMappingView,
     abc::PyoKeysView,
     abc::PyoValuesView,
-    abc::PyoItemsView
+    abc::PyoItemsView,
 );

@@ -1,6 +1,6 @@
 use either::Either;
 use pyo3::{
-    PyClass, PyTypeInfo,
+    PyClass,
     prelude::*,
     types::{PyList, PySlice, PyTuple, PyType},
 };
@@ -8,7 +8,7 @@ use pyo3_ext::iter::{CollectBoundIterator, TryCollectBoundIterator};
 use pyochain_macros::{py_abc, try_cast_into};
 
 use crate::{
-    abc,
+    abc::{self, traits::MappingView},
     collections::{
         SortedDict, SortedKeyDict, SortedSet,
         sorted::traits::{BaseSortedDict, BaseSortedList, ListGetter, ObjOrVec, SortedListGetters},
@@ -25,11 +25,10 @@ use tap::prelude::*;
     SortedByKeyValuesView
 )]
 pub trait BaseSortedView:
-    Sized + PyClass<BaseType = abc::PyoSequence> + PyTypeInfo + Send + Sync
+    Sized + PyClass<BaseType = abc::PyoSequence> + abc::traits::MappingView + Send + Sync
+where
+    Self::M: BaseSortedDict + PyClass,
 {
-    type M: BaseSortedDict;
-    #[skip]
-    fn mapping(&self) -> &Py<Self::M>;
     #[skip]
     fn new(mapping: Bound<'_, Self::M>) -> Self;
     #[skip]
@@ -37,9 +36,6 @@ pub trait BaseSortedView:
         abc::PyoSequence::build_init()
             .add_subclass(self)
             .pipe(|initializer| Bound::new(py, initializer))
-    }
-    fn __len__(&self, py: Python<'_>) -> usize {
-        self.mapping().get().len(py)
     }
     fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py>;
     fn __delitem__(&self, index: Bound<'_, PyAny>) -> PyResult<()> {
@@ -85,20 +81,27 @@ pub struct SortedItemsView(Py<SortedDict>);
 #[pyclass(frozen, generic, extends = abc::PyoSequence, sequence)]
 pub struct SortedByKeyItemsView(Py<SortedKeyDict>);
 
-// Implement BaseSortedView for all types at once using a macro to avoid repetition
-// HOw to create a macro that take a varable number of types and implement a trait for all of them?
-// like that:
-
-macro_rules! impl_base_sorted_view_for_items {
+macro_rules! impl_mapping_view_for_sorted_view {
     ($($t:ty => $i:ty),*) => {
         $(
-            impl BaseSortedView for $t {
+            impl abc::traits::MappingView for $t {
                 type M = $i;
+                fn mapping(&self) -> &Py<Self::M> {
+                    &self.0
+                }
+                fn __len__(&self, py: Python<'_>) -> usize {
+                    self.mapping().get().len(py)
+                }
+            }
+        )*
+    };
+}
+macro_rules! impl_base_sorted_view_for_items {
+    ($($t:ty),*) => {
+        $(
+            impl BaseSortedView for $t {
                 fn new(mapping: Bound<'_, Self::M>) -> Self {
                     Self(mapping.unbind())
-                }
-                fn mapping(&self) -> &Py<$i> {
-                    &self.0
                 }
                 fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
                     let py = index.py();
@@ -128,15 +131,11 @@ macro_rules! impl_base_sorted_view_for_items {
     };
 }
 macro_rules! impl_base_sorted_view_for_values {
-    ($($t:ty => $i:ty),*) => {
+    ($($t:ty),*) => {
         $(
             impl BaseSortedView for $t {
-                type M = $i;
                 fn new(mapping: Bound<'_, Self::M>) -> Self {
                     Self(mapping.unbind())
-                }
-                fn mapping(&self) -> &Py<$i> {
-                    &self.0
                 }
                 fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
                     abc::PyoSequence::build_init()
@@ -166,15 +165,11 @@ macro_rules! impl_base_sorted_view_for_values {
     };
 }
 macro_rules! impl_base_sorted_view_for_keys {
-    ($($t:ty => $i:ty),*) => {
+    ($($t:ty),*) => {
         $(
             impl BaseSortedView for $t {
-                type M = $i;
                 fn new(mapping: Bound<'_, Self::M>) -> Self {
                     Self(mapping.unbind())
-                }
-                fn mapping(&self) -> &Py<$i> {
-                    &self.0
                 }
                 fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
                     let py = index.py();
@@ -202,18 +197,17 @@ macro_rules! impl_base_sorted_view_for_keys {
         )*
     };
 }
-impl_base_sorted_view_for_items!(
+impl_mapping_view_for_sorted_view!(
     SortedItemsView => SortedDict,
-    SortedByKeyItemsView => SortedKeyDict
-);
-impl_base_sorted_view_for_values!(
+    SortedKeysView => SortedDict,
     SortedValuesView => SortedDict,
+    SortedByKeyItemsView => SortedKeyDict,
+    SortedByKeyKeysView => SortedKeyDict,
     SortedByKeyValuesView => SortedKeyDict
 );
-impl_base_sorted_view_for_keys!(
-    SortedKeysView => SortedDict,
-    SortedByKeyKeysView => SortedKeyDict
-);
+impl_base_sorted_view_for_items!(SortedItemsView, SortedByKeyItemsView);
+impl_base_sorted_view_for_values!(SortedValuesView, SortedByKeyValuesView);
+impl_base_sorted_view_for_keys!(SortedKeysView, SortedByKeyKeysView);
 macro_rules! impl_from_iterable {
     ($($t:ty),*) => {
         $(

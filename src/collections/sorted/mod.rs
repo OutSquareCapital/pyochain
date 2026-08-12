@@ -16,4 +16,7 @@ pub mod debug;
 pub use dict::{SortedDict, SortedKeyDict};
 pub use keyset::SortedKeySet;
 pub use set::SortedSet;
-pub use views::{SortedItemsView, SortedKeysView, SortedValuesView};
+pub use views::{
+    SortedByKeyItemsView, SortedByKeyKeysView, SortedByKeyValuesView, SortedItemsView,
+    SortedKeysView, SortedValuesView,
+};
