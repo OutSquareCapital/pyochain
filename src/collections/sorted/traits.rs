@@ -159,7 +159,14 @@ pub(super) trait BaseSortedList: SortedListGetters {
     ) -> PyResult<()>;
     fn count(&self, value: Bound<'_, PyAny>) -> PyResult<usize>;
     #[pyo3(name = "update")]
-    fn py_update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
+    fn py_update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
+        let py = iterable.py();
+        let values = iterable
+            .try_iter()?
+            .map(|x| x?.unbind().pipe(Ok))
+            .collect::<PyResult<Vec<_>>>()?;
+        self.update(py, values)
+    }
     #[skip]
     fn update(&self, py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<()>;
     #[pyo3(signature = (index = -1))]

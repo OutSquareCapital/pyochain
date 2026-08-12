@@ -8,6 +8,7 @@ pub mod iter;
 mod keylist;
 mod keyset;
 mod list;
+mod ops;
 mod set;
 mod traits;
 mod views;

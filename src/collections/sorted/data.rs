@@ -304,8 +304,39 @@ impl ListsData {
         self.maxes.remove(bound.pos);
         self.idx.clear();
     }
-}
+    pub(super) fn expand_at_pos(
+        &mut self,
+        pos: usize,
+        half: Vec<Py<PyAny>>,
+        last_max: Py<PyAny>,
+        new_max_at_pos: Py<PyAny>,
+    ) {
+        self.maxes[pos] = new_max_at_pos;
+        self.maxes.insert(pos + 1, last_max);
+        self.lists.insert(pos + 1, half);
+        self.idx.clear();
+    }
+    pub(super) fn set_prev_from_removed(&mut self, py: Python<'_>, bounds: &Pos, prev: usize) {
+        let mut removed = (self.lists)[bounds.pos]
+            .iter()
+            .map(|x| x.clone_ref(py))
+            .collect::<Vec<_>>();
+        self.lists[prev].append(removed.as_mut());
+        self.remove_pos(bounds);
+    }
+    pub(super) fn delete_on_idx(&mut self, bounds: &Pos, max_at_pos: Py<PyAny>) -> () {
+        self.maxes[bounds.pos] = max_at_pos;
 
+        if !self.idx.is_empty() {
+            let mut child = self.offset + bounds.pos;
+            while child > 0 {
+                self.idx[child] = self.idx[child] - 1;
+                child = (child - 1) >> 1;
+            }
+            self.idx[0] = self.idx[0] - 1;
+        }
+    }
+}
 fn get_slice<'a>(data: &'a ListsData, bounds: Bounds) -> impl Iterator<Item = &'a Py<PyAny>> + 'a {
     data.lists[bounds.min.pos][bounds.min.idx..]
         .iter()
