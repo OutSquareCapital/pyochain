@@ -389,7 +389,7 @@ impl BaseSortedListSet for SortedKeyList {
     }
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        Self::from_vec(py, self.collapse_lists(py), &self.key)?.into_bound(py)
+        Self::from_vec(py, self.get_data().collapse(py), &self.key)?.into_bound(py)
     }
 }
 impl BaseSortedList for SortedKeyList {

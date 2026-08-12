@@ -263,7 +263,7 @@ impl BaseSortedListSet for SortedList {
     }
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        Self::from_vec(py, self.collapse_lists(py))?.into_bound(py)
+        Self::from_vec(py, self.get_data().collapse(py))?.into_bound(py)
     }
 }
 impl BaseSortedList for SortedList {

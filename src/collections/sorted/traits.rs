@@ -162,10 +162,6 @@ pub(super) trait BaseSortedList: SortedListGetters {
     fn py_update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
     #[skip]
     fn update(&self, py: Python<'_>, values: Vec<Py<PyAny>>) -> PyResult<()>;
-
-    fn collapse_lists<'py>(&self, py: Python<'py>) -> Vec<Py<PyAny>> {
-        self.get_data().collapse(py)
-    }
     #[pyo3(signature = (index = -1))]
     fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         let mut data = self.get_data();

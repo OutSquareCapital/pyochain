@@ -46,13 +46,10 @@ impl ListsData {
     }
     #[inline]
     pub fn concat(&self, py: Python<'_>, other: Bound<'_, PyAny>) -> PyResult<Vec<Py<PyAny>>> {
-        let mut values = self.collapse(py);
-        let mut new_vals = other
-            .try_iter()?
-            .map(|x| x?.unbind().clone_ref(py).pipe(Ok))
-            .collect::<PyResult<Vec<_>>>()?;
-        values.append(new_vals.as_mut());
-        Ok(values)
+        self.iter()
+            .map(|x| x.clone_ref(py).pipe(Ok))
+            .chain(other.try_iter()?.map(|x| x?.unbind().pipe(Ok)))
+            .collect::<PyResult<Vec<_>>>()
     }
     #[inline]
     pub fn repeat(&self, py: Python<'_>, num: usize) -> Vec<Py<PyAny>> {
@@ -308,7 +305,7 @@ fn get_slice<'a>(data: &'a ListsData, bounds: Bounds) -> impl Iterator<Item = &'
 
 #[inline]
 pub(super) fn reset_list<T: BaseSortedList>(slf: &T, py: Python<'_>, load: usize) -> PyResult<()> {
-    let values = slf.collapse_lists(py);
+    let values = slf.get_data().collapse(py);
     slf.clear(py);
     slf.set_load(load);
     slf.update(py, values)
