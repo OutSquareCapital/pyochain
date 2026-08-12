@@ -24,14 +24,23 @@ use tap::prelude::*;
     SortedByKeyKeysView,
     SortedByKeyValuesView
 )]
-pub trait BaseSortedView: Sized + PyClass + PyTypeInfo + Send + Sync {
+pub trait BaseSortedView:
+    Sized + PyClass<BaseType = abc::PyoSequence> + PyTypeInfo + Send + Sync
+{
     type M: BaseSortedDict;
     #[skip]
     fn mapping(&self) -> &Py<Self::M>;
     #[skip]
     fn new(mapping: Bound<'_, Self::M>) -> Self;
     #[skip]
-    fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>>;
+    fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
+        abc::PyoSequence::build_init()
+            .add_subclass(self)
+            .pipe(|initializer| Bound::new(py, initializer))
+    }
+    fn __len__(&self, py: Python<'_>) -> usize {
+        self.mapping().get().len(py)
+    }
     fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py>;
     fn __delitem__(&self, index: Bound<'_, PyAny>) -> PyResult<()> {
         let py = index.py();
@@ -58,10 +67,10 @@ pub trait BaseSortedView: Sized + PyClass + PyTypeInfo + Send + Sync {
     }
 }
 
-#[pyclass(frozen, generic, extends = abc::PyoSet, sequence)]
+#[pyclass(frozen, generic, extends = abc::PyoSequence, sequence)]
 pub struct SortedKeysView(Py<SortedDict>);
 
-#[pyclass(frozen, generic, extends = abc::PyoSet, sequence)]
+#[pyclass(frozen, generic, extends = abc::PyoSequence, sequence)]
 pub struct SortedByKeyKeysView(Py<SortedKeyDict>);
 
 #[pyclass(frozen, generic, extends = abc::PyoSequence, sequence)]
@@ -70,10 +79,10 @@ pub struct SortedValuesView(Py<SortedDict>);
 #[pyclass(frozen, generic, extends = abc::PyoSequence, sequence)]
 pub struct SortedByKeyValuesView(Py<SortedKeyDict>);
 
-#[pyclass(frozen, generic, extends = abc::PyoSet)]
+#[pyclass(frozen, generic, extends = abc::PyoSequence, sequence)]
 pub struct SortedItemsView(Py<SortedDict>);
 
-#[pyclass(frozen, generic, extends = abc::PyoSet)]
+#[pyclass(frozen, generic, extends = abc::PyoSequence, sequence)]
 pub struct SortedByKeyItemsView(Py<SortedKeyDict>);
 
 // Implement BaseSortedView for all types at once using a macro to avoid repetition
@@ -90,11 +99,6 @@ macro_rules! impl_base_sorted_view_for_items {
                 }
                 fn mapping(&self) -> &Py<$i> {
                     &self.0
-                }
-                fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
-                    abc::PyoSet::build_init()
-                        .add_subclass(self)
-                        .pipe(|initializer| Bound::new(py, initializer))
                 }
                 fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
                     let py = index.py();
@@ -171,11 +175,6 @@ macro_rules! impl_base_sorted_view_for_keys {
                 }
                 fn mapping(&self) -> &Py<$i> {
                     &self.0
-                }
-                fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
-                    abc::PyoSet::build_init()
-                        .add_subclass(self)
-                        .pipe(|initializer| Bound::new(py, initializer))
                 }
                 fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
                     let py = index.py();
