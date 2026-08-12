@@ -169,34 +169,29 @@ pub(super) trait BaseSortedList: SortedListGetters {
     #[pyo3(signature = (index = -1))]
     fn pop<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, PyAny>> {
         let mut data = self.get_data();
+        let mut bounds = Pos::default();
         if data.len == 0 {
             let msg = "pop index out of range";
             return Err(PyIndexError::new_err(msg));
         }
-
-        let mut bounds = {
-            let len_last = data.lists.last().unwrap().len() as isize;
-            match index {
-                0 => Pos::default(),
-                -1 => {
-                    let pos = data.lists.len() - 1;
-                    Pos::new(pos, data.lists[pos].len() - 1 as usize)
-                }
-                _ if 0 <= index && index < data.lists[0].len() as isize => {
-                    Pos::new(0, index as usize)
-                }
-                _ if -len_last < index && index < 0 => {
-                    let pos = data.lists.len() - 1;
-                    Pos::new(pos, (len_last + index) as usize)
-                }
-                _ => {
-                    let mut p = Pos::default();
-                    p.set_from_pos(index, &mut data)?;
-                    p
-                }
+        let len_last = data.lists.last().unwrap().len() as isize;
+        match index {
+            -1 => {
+                bounds.pos = data.lists.len() - 1;
+                bounds.idx = data.lists[bounds.pos].len() - 1 as usize;
+            }
+            _ if 0 <= index && index < data.lists[0].len() as isize => {
+                bounds.idx = index as usize;
+            }
+            _ if -len_last < index && index < 0 => {
+                bounds.pos = data.lists.len() - 1;
+                bounds.idx = (len_last + index) as usize;
+            }
+            _ => {
+                bounds.set_from_pos(index, &mut data)?;
             }
         };
-        let val = data.lists[bounds.pos][bounds.idx].clone_ref(py);
+        let val = data.get_value(&bounds).clone_ref(py);
         self.delete(py, &mut data, &mut bounds)?;
         Ok(val.into_bound(py))
     }

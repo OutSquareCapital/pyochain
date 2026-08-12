@@ -4,7 +4,7 @@ use pyo3::{
     types::{PyList, PySlice, PySliceIndices, PyString},
 };
 use pyo3_ext::iter::CollectBoundIterator;
-use std::{cmp::Ordering, ops::Deref};
+use std::cmp::Ordering;
 use tap::prelude::*;
 
 use crate::{
@@ -18,13 +18,8 @@ use crate::{
     pyovec::PyoVec,
     traits::IntoPyochain,
 };
-struct Lists(Vec<Vec<Py<PyAny>>>);
-impl Deref for Lists {
-    type Target = Vec<Vec<Py<PyAny>>>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
+
+#[derive(Default)]
 pub(super) struct ListsData {
     pub(super) lists: Vec<Vec<Py<PyAny>>>,
     pub(super) maxes: Vec<Py<PyAny>>,
@@ -33,14 +28,9 @@ pub(super) struct ListsData {
     pub(super) offset: usize,
 }
 impl ListsData {
-    pub fn new() -> Self {
-        Self {
-            lists: Vec::new(),
-            maxes: Vec::new(),
-            idx: Vec::new(),
-            len: 0,
-            offset: 0,
-        }
+    #[inline]
+    pub fn get_value(&self, pos: &Pos) -> &Py<PyAny> {
+        &self.lists[pos.pos][pos.idx]
     }
     #[inline]
     pub fn collapse(&self, py: Python<'_>) -> Vec<Py<PyAny>> {

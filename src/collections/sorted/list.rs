@@ -27,7 +27,7 @@ impl SortedList {
     #[inline]
     pub(super) fn new() -> Self {
         Self {
-            data: Mutex::new(ListsData::new()),
+            data: Mutex::new(ListsData::default()),
             load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
         }
     }
@@ -75,7 +75,7 @@ impl SortedCollection for SortedList {
         }
         bound.idx = bisect::left(&data.lists[bound.pos], &value)?;
 
-        data.lists[bound.pos][bound.idx].bind(py).eq(value)
+        data.get_value(&bound).bind(py).eq(value)
     }
 
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
@@ -137,7 +137,7 @@ impl SortedCollection for SortedList {
             }
         })?;
         bound.idx = bisect::left(&data.lists[bound.pos], &value)?;
-        if data.lists[bound.pos][bound.idx].bind(py).ne(&value)? {
+        if data.get_value(&bound).bind(py).ne(&value)? {
             return errors::is_not_in_list_err(&value);
         }
 
@@ -230,7 +230,7 @@ impl BaseSortedListSet for SortedList {
         } else {
             bound.idx = bisect::left(&data.lists[bound.pos], &value)?;
 
-            if data.lists[bound.pos][bound.idx].bind(py).eq(&value)? {
+            if data.get_value(&bound).bind(py).eq(&value)? {
                 self.delete(py, &mut data, &mut bound)
             } else {
                 Ok(())
@@ -253,7 +253,7 @@ impl BaseSortedListSet for SortedList {
             } else {
                 bound.idx = bisect::left(&data.lists[bound.pos], &value)?;
 
-                if data.lists[bound.pos][bound.idx].bind(py).eq(&value)? {
+                if data.get_value(&bound).bind(py).eq(&value)? {
                     self.delete(py, &mut data, &mut bound)
                 } else {
                     errors::not_in_list_err(value)

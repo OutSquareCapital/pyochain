@@ -34,7 +34,7 @@ impl SortedKeyList {
         Self {
             key,
             keys: Mutex::new(Vec::new()),
-            data: Mutex::new(ListsData::new()),
+            data: Mutex::new(ListsData::default()),
             load: AtomicUsize::new(DEFAULT_LOAD_FACTOR),
         }
     }
@@ -136,7 +136,7 @@ impl SortedCollection for SortedKeyList {
             if keys[bound.pos][bound.idx].bind(py).ne(&key)? {
                 return Ok(false);
             }
-            if data.lists[bound.pos][bound.idx].bind(py).eq(&value)? {
+            if data.get_value(&bound).bind(py).eq(&value)? {
                 return Ok(true);
             }
             bound.idx += 1;
@@ -217,7 +217,7 @@ impl SortedCollection for SortedKeyList {
             if keys[bound.pos][bound.idx].bind(py).ne(&key)? {
                 return errors::is_not_in_list_err(&value);
             }
-            if data.lists[bound.pos][bound.idx].bind(py).eq(&value)? {
+            if data.get_value(&bound).bind(py).eq(&value)? {
                 let loc = bound.loc(&mut data)?;
                 if start <= loc && loc <= stop {
                     return Ok(loc);
@@ -321,7 +321,7 @@ impl BaseSortedListSet for SortedKeyList {
                 if keys[bound.pos][bound.idx].bind(py).ne(&key)? {
                     break;
                 }
-                if data.lists[bound.pos][bound.idx].bind(py).eq(&value)? {
+                if data.get_value(&bound).bind(py).eq(&value)? {
                     drop(keys);
                     self.delete(py, &mut data, &mut bound)?;
                     break;
@@ -369,7 +369,7 @@ impl BaseSortedListSet for SortedKeyList {
                 if keys[bound.pos][bound.idx].bind(py).ne(&key)? {
                     return errors::not_in_list_err(value);
                 }
-                if data.lists[bound.pos][bound.idx].bind(py).eq(&value)? {
+                if data.get_value(&bound).bind(py).eq(&value)? {
                     drop(keys);
                     self.delete(py, &mut data, &mut bound)?;
                     break;
