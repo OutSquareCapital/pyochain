@@ -465,10 +465,8 @@ impl BaseSortedList for SortedKeyList {
             data.lists[prev].append(removed.as_mut());
             data.maxes[prev] = keys[prev].last().unwrap().clone_ref(py);
 
-            data.lists.remove(bounds.pos);
+            data.remove_pos(bounds);
             keys.remove(bounds.pos);
-            data.maxes.remove(bounds.pos);
-            data.idx.clear();
             drop(keys);
 
             self.expand(py, data, prev)
@@ -476,10 +474,8 @@ impl BaseSortedList for SortedKeyList {
             data.maxes[bounds.pos] = keys[bounds.pos].last().unwrap().clone_ref(py);
             Ok(())
         } else {
-            data.lists.remove(bounds.pos);
+            data.remove_pos(bounds);
             keys.remove(bounds.pos);
-            data.maxes.remove(bounds.pos);
-            data.idx.clear();
             Ok(())
         }
     }
@@ -505,13 +501,7 @@ impl BaseSortedList for SortedKeyList {
             data.idx.clear();
             Ok(())
         } else if !data.idx.is_empty() {
-            let mut child = &data.offset + pos;
-            while child != 0 {
-                data.idx[child] = data.idx[child] + 1;
-                child = (child - 1) >> 1;
-            }
-            data.idx[0] = data.idx[0] + 1;
-            Ok(())
+            data.expand_on_empty_idx(pos)
         } else {
             Ok(())
         }

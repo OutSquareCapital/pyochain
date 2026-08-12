@@ -290,6 +290,20 @@ impl ListsData {
             Ok(())
         }
     }
+    pub(super) fn expand_on_empty_idx(&mut self, pos: usize) -> PyResult<()> {
+        let mut child = self.offset + pos;
+        while child != 0 {
+            self.idx[child] = self.idx[child] + 1;
+            child = (child - 1) >> 1;
+        }
+        self.idx[0] = self.idx[0] + 1;
+        Ok(())
+    }
+    pub(super) fn remove_pos(&mut self, bound: &Pos) {
+        self.lists.remove(bound.pos);
+        self.maxes.remove(bound.pos);
+        self.idx.clear();
+    }
 }
 
 fn get_slice<'a>(data: &'a ListsData, bounds: Bounds) -> impl Iterator<Item = &'a Py<PyAny>> + 'a {
