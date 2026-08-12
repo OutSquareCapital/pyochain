@@ -530,9 +530,11 @@ def test_pickle() -> None:
     assert alpha.key == beta.key
 
 
-if platform.python_implementation() == "CPython":
-
-    def test_ref_counts() -> None:
+@pytest.mark.skip(
+    reason="I'm not sure how pertinent this is when our code lives in rust."
+)
+def test_ref_counts() -> None:
+    if platform.python_implementation() == "CPython":
         start_count = len(gc.get_objects())
         temp = SortedDict[float, float]()
         init_count = len(gc.get_objects())

@@ -8,7 +8,7 @@ use pyo3_ext::iter::{CollectBoundIterator, TryCollectBoundIterator};
 use pyochain_macros::{py_abc, try_cast_into};
 
 use crate::{
-    abc::{self, traits::MappingView},
+    abc,
     collections::{
         SortedDict, SortedKeyDict, SortedSet,
         sorted::traits::{BaseSortedDict, BaseSortedList, ListGetter, ObjOrVec, SortedListGetters},
@@ -104,27 +104,7 @@ macro_rules! impl_base_sorted_view_for_items {
                     Self(mapping.unbind())
                 }
                 fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
-                    let py = index.py();
-                    let mapping = self.mapping().get();
-                    let dict = mapping.get_inner().bind(index.py()).as_any();
-                    let mut mapping_list = mapping.get_list().get().get_data();
-
-                    try_cast_into! {
-                        match index {
-                            Case::PySlice(slice) => mapping_list
-                                .getitem_from_slice(py, &slice)?
-                                .iter()
-                                .map(|key| PyTuple::new(py, [key.bind(py), &dict.get_item(key)?]).map(Bound::into_any))
-                                .try_collect_bound::<PyList>(py)?
-                                .into_pyochain()
-                                .map(Either::Right),
-                            int => {
-                                let key = mapping_list.getitem_from_int(py, int.extract::<isize>()?)?;
-                                let value = dict.get_item(&key)?;
-                                PyTuple::new(py, [key, value]).map(Bound::into_any).map(Either::Left)
-                            },
-                        }
-                    }
+                    get_item_for_items_view(self, index)
                 }
             }
         )*
@@ -143,22 +123,7 @@ macro_rules! impl_base_sorted_view_for_values {
                         .pipe(|initializer| Bound::new(py, initializer))
                 }
             fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
-                let py = index.py();
-                let mut mapping_list = self.mapping().get().get_list().get().get_data();
-
-                try_cast_into! {
-                    match index {
-                        Case::PySlice(slice) => mapping_list
-                            .getitem_from_slice(py, &slice)?
-                            .iter()
-                            .collect_bound::<PyList>(py)?
-                            .into_pyochain()
-                            .map(Either::Right),
-                        int => mapping_list
-                            .getitem_from_int(py, int.extract::<isize>()?)
-                            .map(Either::Left),
-                    }
-                }
+                get_item_for_values_view(self, index)
             }
             }
         )*
@@ -172,28 +137,8 @@ macro_rules! impl_base_sorted_view_for_keys {
                     Self(mapping.unbind())
                 }
                 fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> ObjOrVec<'py> {
-                    let py = index.py();
-                    let mapping = self.mapping().get();
-                    let dict = mapping.get_inner().bind(index.py()).as_any();
-                    let mut mapping_list = mapping.get_list().get().get_data();
-
-                    try_cast_into! {
-                        match index {
-                            Case::PySlice(slice) => mapping_list
-                                .getitem_from_slice(py, &slice)?
-                                .iter()
-                                .map(|key| dict.get_item(key))
-                                .try_collect_bound::<PyList>(py)?
-                                .into_pyochain()
-                                .map(Either::Right),
-                            int => mapping_list
-                                .getitem_from_int(py, int.extract::<isize>()?)
-                                .and_then(|key| dict.get_item(key))
-                                .map(Either::Left),
-                        }
-                    }
-                }
-            }
+                    get_item_for_key_view(self, index)
+            }}
         )*
     };
 }
@@ -230,3 +175,81 @@ impl_from_iterable!(
     SortedByKeyItemsView,
     SortedByKeyKeysView
 );
+#[inline(always)]
+fn get_item_for_items_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
+    slf: &T,
+    index: Bound<'py, PyAny>,
+) -> ObjOrVec<'py> {
+    let py = index.py();
+    let mapping = slf.mapping().get();
+    let dict = mapping.get_inner().bind(index.py()).as_any();
+    let mut mapping_list = mapping.get_list().get().get_data();
+
+    try_cast_into! {
+        match index {
+            Case::PySlice(slice) => mapping_list
+                .getitem_from_slice(py, &slice)?
+                .iter()
+                .map(|key| {
+                    PyTuple::new(py, [key.bind(py), &dict.get_item(key)?]).map(Bound::into_any)
+                })
+                .try_collect_bound::<PyList>(py)?
+                .into_pyochain()
+                .map(Either::Right),
+            int => {
+                let key = mapping_list.getitem_from_int(py, int.extract::<isize>()?)?;
+                let value = dict.get_item(&key)?;
+                PyTuple::new(py, [key, value])
+                    .map(Bound::into_any)
+                    .map(Either::Left)
+            }
+        }
+    }
+}
+#[inline(always)]
+fn get_item_for_values_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
+    slf: &T,
+    index: Bound<'py, PyAny>,
+) -> ObjOrVec<'py> {
+    let py = index.py();
+    let mapping = slf.mapping().get();
+    let dict = mapping.get_inner().bind(py).as_any();
+    let mut mapping_list = mapping.get_list().get().get_data();
+
+    try_cast_into! {
+        match index {
+            Case::PySlice(slice) => mapping_list
+                .getitem_from_slice(py, &slice)?
+                .iter()
+                .map(|key| dict.get_item(key))
+                .try_collect_bound::<PyList>(py)?
+                .into_pyochain()
+                .map(Either::Right),
+            int => dict
+                .get_item(mapping_list.getitem_from_int(py, int.extract::<isize>()?)?)
+                .map(Either::Left),
+        }
+    }
+}
+#[inline(always)]
+fn get_item_for_key_view<'py, T: BaseSortedView<M: BaseSortedDict>>(
+    slf: &T,
+    index: Bound<'py, PyAny>,
+) -> ObjOrVec<'py> {
+    let py = index.py();
+    let mut mapping_list = slf.mapping().get().get_list().get().get_data();
+
+    try_cast_into! {
+        match index {
+            Case::PySlice(slice) => mapping_list
+                .getitem_from_slice(py, &slice)?
+                .iter()
+                .collect_bound::<PyList>(py)?
+                .into_pyochain()
+                .map(Either::Right),
+            int => mapping_list
+                .getitem_from_int(py, int.extract::<isize>()?)
+                .map(Either::Left),
+        }
+    }
+}
