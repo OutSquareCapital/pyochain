@@ -3,6 +3,27 @@ use tap::Pipe;
 
 use crate::collections::sorted::{bisect, data::ListsData, errors};
 
+pub(super) struct Indexes {
+    pub start: isize,
+    pub stop: isize,
+}
+impl Indexes {
+    #[inline]
+    pub fn new(start: Option<isize>, stop: Option<isize>, length: isize) -> Self {
+        let mut start = start.unwrap_or(0);
+        let mut stop = stop.unwrap_or(length);
+        if start < 0 {
+            start += length;
+        }
+        start = start.max(0);
+        if stop < 0 {
+            stop += length;
+        }
+        stop = stop.min(length);
+        Self { start, stop }
+    }
+}
+
 #[derive(PartialEq, Eq, Default)]
 pub(super) struct Pos {
     pub pos: usize,

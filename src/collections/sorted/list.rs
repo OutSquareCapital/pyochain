@@ -2,7 +2,7 @@ use crate::{
     abc,
     collections::sorted::{
         bisect,
-        bounds::{Bounds, Pos},
+        bounds::{Bounds, Indexes, Pos},
         cmp::py_cmp,
         data::{ListsData, islice_list, reset_list},
         errors, iter, ops,
@@ -104,18 +104,8 @@ impl SortedCollection for SortedList {
         if len_ == 0 {
             errors::not_in_list_err(&value)
         } else {
-            let mut start = start.unwrap_or(0);
-            let mut stop = stop.unwrap_or(len_);
-            if start < 0 {
-                start += len_;
-            }
-            start = start.max(0);
-            if stop < 0 {
-                stop += len_;
-            }
-            stop = stop.min(len_);
-
-            if stop <= start {
+            let mut indexes = Indexes::new(start, stop, len_);
+            if indexes.stop <= indexes.start {
                 errors::not_in_list_err(&value)
             } else {
                 let mut bound = Pos::default();
@@ -127,22 +117,21 @@ impl SortedCollection for SortedList {
                     if data.get_value(&bound).bind(py).ne(&value)? {
                         errors::not_in_list_err(&value)
                     } else {
-                        stop -= 1;
+                        indexes.stop -= 1;
                         let left = bound.loc(&mut data)?;
 
-                        if start <= left {
-                            if left <= stop {
+                        if indexes.start <= left {
+                            if left <= indexes.stop {
                                 return Ok(left);
                             }
                         } else {
                             drop(data);
                             let right = self.bisect_right(&value)? - 1;
 
-                            if start <= right {
-                                return Ok(start);
+                            if indexes.start <= right {
+                                return Ok(indexes.start);
                             }
                         }
-
                         errors::not_in_list_err(&value)
                     }
                 }

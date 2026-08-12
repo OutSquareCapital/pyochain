@@ -2,7 +2,7 @@ use crate::{
     abc,
     collections::sorted::{
         bisect,
-        bounds::{Bounds, Pos},
+        bounds::{Bounds, Indexes, Pos},
         cmp::py_cmp_by_key,
         data::{ListsData, islice_list, reset_list},
         errors, iter, ops,
@@ -169,36 +169,22 @@ impl SortedCollection for SortedKeyList {
         stop: Option<isize>,
     ) -> PyResult<isize> {
         let py = value.py();
-
         let mut data = self.get_data();
-        let len_ = data.len as isize;
-
-        if len_ == 0 {
+        let length = data.len as isize;
+        if length == 0 {
             errors::not_in_list_err(&value)
         } else {
-            let mut start = start.unwrap_or(0);
-            if start < 0 {
-                start += len_;
-            }
-            start = start.max(0);
-
-            let mut stop = stop.unwrap_or(len_);
-            if stop < 0 {
-                stop += len_;
-            }
-            stop = stop.min(len_);
-
-            if stop <= start {
+            let mut indexes = Indexes::new(start, stop, length);
+            if indexes.stop <= indexes.start {
                 errors::not_in_list_err(&value)
             } else {
                 let key = self.key.bind(py).call1((&value,))?;
                 let mut bound = Pos::default();
                 bound.pos = bisect::left(&data.maxes, &key)?;
-
                 if bound.pos == data.maxes.len() {
                     errors::not_in_list_err(&value)
                 } else {
-                    stop -= 1;
+                    indexes.stop -= 1;
                     let keys = self.get_keys();
                     let v_left = &keys[bound.pos];
                     bound.idx = bisect::left(&v_left, &key)?;
@@ -211,9 +197,9 @@ impl SortedCollection for SortedKeyList {
                         }
                         if data.get_value(&bound).bind(py).eq(&value)? {
                             let loc = bound.loc(&mut data)?;
-                            if start <= loc && loc <= stop {
+                            if indexes.start <= loc && loc <= indexes.stop {
                                 return Ok(loc);
-                            } else if loc > stop {
+                            } else if loc > indexes.stop {
                                 break;
                             }
                         }
