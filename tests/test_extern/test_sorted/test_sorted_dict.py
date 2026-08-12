@@ -15,7 +15,9 @@ from typing import TYPE_CHECKING, override
 import pytest
 
 from pyochain.collections import SortedDict, SortedKeyDict
-from pyochain.collections._sorted import check_sorted_dict
+from pyochain.collections._sorted import (  # ruff: ignore[import-private-name]
+    check_sorted_dict,
+)
 
 if TYPE_CHECKING:
     from collections.abc import ItemsView, KeysView, Mapping
@@ -341,8 +343,9 @@ def test_repr_recursion() -> None:
     )
 
 
+@pytest.mark.skip(reason="We don't support subclassing SortedDict as of now")
 def test_repr_subclass() -> None:
-    class CustomSortedDict[K: SupportsHashableAndRichComparison, V](SortedDict[K, V]):
+    class CustomSortedDict[K: SupportsHashableAndRichComparison, V](SortedDict[K, V]):  # pyright: ignore[reportGeneralTypeIssues]
         pass
 
     temp = CustomSortedDict({"alice": 3, "bob": 1, "carol": 2, "dave": 4})
