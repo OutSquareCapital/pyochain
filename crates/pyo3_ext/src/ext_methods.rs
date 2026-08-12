@@ -12,7 +12,9 @@ use pyo3::{
 };
 use tap::prelude::*;
 
-use crate::types::{PyAbstractSet, PyDeque, PyIterable, PyMutableSequence, PyMutableSet};
+use crate::types::{
+    PyAbstractSet, PyDeque, PyIterable, PyMappingView, PyMutableSequence, PyMutableSet,
+};
 /// All ABCs have a `register` method that can be used to register a type as a virtual subclass of the ABC.\
 /// This trait factorize the implementation for all ABCs.\
 /// The code is strictly identical from what's already available for `pyo3::types::PySequence` for example.
@@ -29,6 +31,7 @@ impl ABCRegister<'_> for PyAbstractSet {}
 impl ABCRegister<'_> for PyIterable {}
 impl ABCRegister<'_> for PyMutableSet {}
 impl ABCRegister<'_> for PyIterator {}
+impl ABCRegister<'_> for PyMappingView {}
 pub trait PySequenceExtMethods<'py> {
     fn count(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
 

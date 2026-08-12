@@ -21,7 +21,7 @@ use pyo3::{
 };
 use pyo3_ext::{
     prelude::*,
-    types::{PyAbstractSet, PyIterable, PyMutableSequence, PyMutableSet},
+    types::{PyAbstractSet, PyIterable, PyMappingView, PyMutableSequence, PyMutableSet},
 };
 #[pymodule]
 fn pyochain(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -117,11 +117,7 @@ fn register_all(py: Python<'_>) -> PyResult<()> {
     register(&abc_mod, "Collection", &abc::PyoCollection::type_object(py))?;
     register(&abc_mod, "Reversible", &abc::PyoReversible::type_object(py))?;
     register(&abc_mod, "Reversible", &abc::PyoSequence::type_object(py))?;
-    register(
-        &abc_mod,
-        "MappingView",
-        &abc::PyoMappingView::type_object(py),
-    )?;
+    PyMappingView::register::<abc::PyoMappingView>(py)?;
     PyMutableSequence::register::<abc::PyoMutableSequence>(py)?;
     PyAbstractSet::register::<abc::PyoSet>(py)?;
     PyMutableSet::register::<abc::PyoMutableSet>(py)?;

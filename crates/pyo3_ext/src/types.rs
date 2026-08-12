@@ -7,8 +7,8 @@ use pyo3::{
     prelude::*,
     sync::PyOnceLock,
     types::{
-        PyFrozenSet, PyInt, PyIterator, PyList, PyNotImplemented, PySequence, PySet, PySlice,
-        PyType,
+        PyDictItems, PyDictKeys, PyFrozenSet, PyInt, PyIterator, PyList, PyNotImplemented,
+        PySequence, PySet, PySlice, PyType,
     },
 };
 use tap::prelude::*;
@@ -48,6 +48,34 @@ unsafe impl PyTypeInfo for PySupportsIndex {
                 })
     }
 }
+#[repr(transparent)]
+pub struct PyMappingView(PyAny);
+pyobject_native_type_named!(PyMappingView);
+unsafe impl PyTypeInfo for PyMappingView {
+    const NAME: &'static str = "MappingView";
+    const MODULE: Option<&'static str> = Some(COLLECTIONS_ABC);
+    #[inline]
+    fn type_object_raw(py: Python<'_>) -> *mut ffi::PyTypeObject {
+        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
+        TYPE.import(py, COLLECTIONS_ABC, "MappingView")
+            .unwrap()
+            .as_type_ptr()
+    }
+
+    #[inline]
+    fn is_type_of(object: &Bound<'_, PyAny>) -> bool {
+        let py = object.py();
+        PyDictItems::is_type_of(object)
+            || PyDictKeys::is_type_of(object)
+            || object
+                .is_instance(&Self::type_object(py).into_any())
+                .unwrap_or_else(|err| {
+                    err.write_unraisable(py, Some(object));
+                    false
+                })
+    }
+}
+
 pub trait PySupportsIndexMethods<'py> {
     fn index(&self) -> PyResult<Bound<'py, PyInt>>;
 }
