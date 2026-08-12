@@ -1,57 +1,24 @@
-use crate::{abc::PyoCollection, hasher, traits::PyoABC};
+use crate::{abc::PyoCollection, collections::sorted, hasher, traits::PyoABC};
 use either::Either;
 use pyo3::{
-    PyTypeInfo,
-    exceptions::PyKeyError,
-    intern,
+    PyClass, PyTypeInfo, intern,
     prelude::*,
     types::{DerefToPyAny, PyList, PyNotImplemented, PyType},
 };
 use pyo3_ext::{
     prelude::*,
-    types::{FromCmp, PyAbstractSet, PyCmpOut, PyIterable, PyMutableSet},
+    types::{FromCmp, PyAbstractSet, PyCmpOut, PyIterable},
 };
-use pyochain_macros::{BoundFromAny, try_cast};
+use pyochain_macros::{BoundFromAny, py_abc};
 use tap::Pipe;
-#[allow(unused)]
-#[derive(BoundFromAny)]
-enum IntoSetComp<'py> {
-    Set(Bound<'py, PyAbstractSet>),
-    Iterable(Bound<'py, PyIterable>),
-    Other(Bound<'py, PyAny>),
-}
-fn py_from_iterable<'py, T: DerefToPyAny, U: DerefToPyAny + PyTypeInfo>(
-    slf: &Bound<'py, T>,
-    it: &Bound<'py, U>,
-) -> PyResult<Bound<'py, PyAbstractSet>> {
-    slf.call_method1(intern!(slf.py(), "_from_iterable"), (it,))
-        .map(|x| unsafe { x.cast_into_unchecked::<PyAbstractSet>() })
-}
-#[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoCollection)]
-pub struct PyoSet;
-#[pymethods]
-impl PyoSet {
-    #[pyo3(signature = (*_args, **_kwargs))]
-    #[new]
-    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
-        Self::build_init()
-    }
-    #[classmethod]
-    fn _from_iterable<'py>(
-        cls: &Bound<'py, PyType>,
-        it: Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, Self>> {
-        cls.call1((it,))
-            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
-            .map_err(|e| {
-                let name = cls.name().unwrap();
-                let msg = format!("hint: As a `PyoSet` subclass, `{}::__init__` must accept a single `Iterable` argument.\n
-                If you override it, make sure to override `PyoSet::_from_iterable` as well.", name);
-                e.add_note(cls.py(), msg).unwrap();
-                e
-            })
-    }
-
+#[py_abc(
+    PyoSet,
+    sorted::SortedKeysView,
+    sorted::SortedByKeyKeysView,
+    sorted::SortedItemsView,
+    sorted::SortedByKeyItemsView
+)]
+pub trait PyoSetMethods: PyClass + PyTypeInfo + DerefToPyAny {
     fn __and__<'py>(
         slf: Bound<'py, Self>,
         other: Bound<'py, PyAny>,
@@ -281,125 +248,49 @@ impl PyoSet {
             .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
     }
 }
+impl PyoSetMethods for PyoSet {}
+impl PyoSetMethods for sorted::SortedKeysView {}
+impl PyoSetMethods for sorted::SortedByKeyKeysView {}
+impl PyoSetMethods for sorted::SortedItemsView {}
+impl PyoSetMethods for sorted::SortedByKeyItemsView {}
 
-#[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSet)]
-pub struct PyoMutableSet;
-
+#[allow(unused)]
+#[derive(BoundFromAny)]
+pub enum IntoSetComp<'py> {
+    Set(Bound<'py, PyAbstractSet>),
+    Iterable(Bound<'py, PyIterable>),
+    Other(Bound<'py, PyAny>),
+}
+#[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoCollection)]
+pub struct PyoSet;
 #[pymethods]
-impl PyoMutableSet {
+impl PyoSet {
     #[pyo3(signature = (*_args, **_kwargs))]
     #[new]
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
         Self::build_init()
     }
-    fn into_mutable_set(slf: Bound<'_, Self>) -> Bound<'_, PyMutableSet> {
-        unsafe { slf.cast_into_unchecked::<PyMutableSet>() }
-    }
-
-    fn as_mutable_set<'a, 'py>(slf: &'a Bound<'py, Self>) -> &'a Bound<'py, PyMutableSet> {
-        unsafe { slf.cast_unchecked::<PyMutableSet>() }
-    }
-
-    fn __ior__<'py>(slf: Bound<'py, Self>, it: Bound<'py, PyAny>) -> PyResult<()> {
-        let slf = Self::into_mutable_set(slf);
-        it.try_iter()?.try_for_each(|value| slf.add(&value?))
-    }
-
-    fn __iand__<'py>(slf: Bound<'py, Self>, it: Bound<'py, PyAny>) -> PyResult<()> {
-        let slf = Self::into_mutable_set(slf);
-        slf.sub(&it)?
-            .try_iter()?
-            .try_for_each(|value| slf.discard(&value?))
-    }
-
-    fn __isub__<'py>(slf: Bound<'py, Self>, it: Bound<'py, PyAny>) -> PyResult<()> {
-        let py = slf.py();
-        if it.is(&slf) {
-            slf.call_method0(intern!(py, "clear"))?;
-        } else {
-            let slf = Self::into_mutable_set(slf);
-            for value in it.try_iter()? {
-                slf.discard(&value?)?;
-            }
-        }
-        Ok(())
-    }
-
-    fn __ixor__<'py>(slf: Bound<'py, Self>, it: Bound<'py, PyAny>) -> PyResult<()> {
-        let py = slf.py();
-        if it.is(&slf) {
-            slf.call_method0(intern!(py, "clear"))?;
-        } else {
-            let pyset = try_cast! {
-                match it {
-                    Case::PyAbstractSet(x) => py_from_iterable(&slf, &x)?.into_any(),
-                    iterable => iterable,
-                }
-            };
-            let slf = Self::into_mutable_set(slf);
-            for value in pyset.try_iter()? {
-                let v = value?;
-                if slf.contains(&v)? {
-                    slf.discard(&v)?;
-                } else {
-                    slf.add(&v)?;
-                }
-            }
-        }
-
-        Ok(())
-    }
-
-    fn remove(slf: Bound<'_, Self>, value: Bound<'_, PyAny>) -> PyResult<()> {
-        if !slf.contains(&value)? {
-            Err(PyKeyError::new_err(format!("{}", value)))
-        } else {
-            Self::into_mutable_set(slf).discard(&value)?;
-            Ok(())
-        }
-    }
-
-    fn pop(slf: Bound<'_, Self>) -> PyResult<Bound<'_, PyAny>> {
-        match PopResult::new(slf.as_any()) {
-            PopResult::KeyStop => Err(PyKeyError::new_err("")),
-            PopResult::Value(value) => {
-                Self::into_mutable_set(slf).discard(&value)?;
-                Ok(value)
-            }
-            PopResult::Error(e) => Err(e),
-        }
-    }
-
-    fn clear(slf: Bound<'_, Self>) -> PyResult<()> {
-        let any = slf.as_any();
-        let slf = Self::as_mutable_set(&slf);
-        loop {
-            match PopResult::new(any) {
-                PopResult::Error(e) => {
-                    return Err(e);
-                }
-                PopResult::KeyStop => break Ok(()),
-                PopResult::Value(v) => {
-                    slf.discard(&v)?;
-                    continue;
-                }
-            }
-        }
-    }
-}
-enum PopResult<'py> {
-    Value(Bound<'py, PyAny>),
-    KeyStop,
-    Error(PyErr),
-}
-impl<'py> PopResult<'py> {
-    fn new(slf: &Bound<'py, PyAny>) -> Self {
-        slf.try_iter()
-            .map(|mut x| match x.next() {
-                None => PopResult::KeyStop,
-                Some(Ok(v)) => PopResult::Value(v),
-                Some(Err(e)) => PopResult::Error(e),
+    #[classmethod]
+    fn _from_iterable<'py>(
+        cls: &Bound<'py, PyType>,
+        it: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, Self>> {
+        cls.call1((it,))
+            .map(|x| unsafe { x.cast_into_unchecked::<Self>() })
+            .map_err(|e| {
+                let name = cls.name().unwrap();
+                let msg = format!("hint: As a `PyoSet` subclass, `{}::__init__` must accept a single `Iterable` argument.\n
+                If you override it, make sure to override `PyoSet::_from_iterable` as well.", name);
+                e.add_note(cls.py(), msg).unwrap();
+                e
             })
-            .unwrap_or_else(|e| PopResult::Error(e))
     }
+}
+
+pub(super) fn py_from_iterable<'py, T: DerefToPyAny, U: DerefToPyAny + PyTypeInfo>(
+    slf: &Bound<'py, T>,
+    it: &Bound<'py, U>,
+) -> PyResult<Bound<'py, PyAbstractSet>> {
+    slf.call_method1(intern!(slf.py(), "_from_iterable"), (it,))
+        .map(|x| unsafe { x.cast_into_unchecked::<PyAbstractSet>() })
 }
