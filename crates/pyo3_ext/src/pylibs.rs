@@ -18,7 +18,7 @@ pub mod builtins {
     use pyo3::{call::PyCallArgs, ffi};
 
     const BUILTINS: &str = "builtins";
-
+    const ID: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     const OBJECT: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     const ALL: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
     const ABS: PyOnceLock<Py<PyAny>> = PyOnceLock::new();
@@ -35,6 +35,12 @@ pub mod builtins {
     #[inline(always)]
     pub fn sentinel(py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
         OBJECT.import(py, BUILTINS, "object")?.call0()
+    }
+    #[inline(always)]
+    pub fn id<'py>(obj: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>> {
+        ID.import(obj.py(), BUILTINS, "id")?
+            .call1((obj,))
+            .map(|x| unsafe { x.cast_into_unchecked::<PyInt>() })
     }
     #[inline(always)]
     pub fn all<'py>(iterator: &Bound<'py, PyIterator>) -> PyResult<Bound<'py, PyBool>> {
