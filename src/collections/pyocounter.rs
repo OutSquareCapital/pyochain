@@ -5,7 +5,7 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
-    BoundObject, PyTypeInfo,
+    PyTypeInfo,
     exceptions::{PyKeyError, PyTypeError},
     intern,
     prelude::*,
@@ -14,7 +14,7 @@ use pyo3::{
 use pyo3_ext::{
     prelude::*,
     pylibs,
-    types::{PyCmpOut, PySupportsItems, pyitertools},
+    types::{FromCmp, PyCmpOut, PySupportsItems, pyitertools},
 };
 use pyochain_macros::{BoundFromAny, try_cast};
 use tap::prelude::*;
@@ -378,17 +378,14 @@ impl PyoCounter {
 
                 },
                 Case::PyDict(d) => inner.eq(d).map(Either::Left),
-                _ => Ok(PyNotImplemented::get(py).into_bound()).map(Either::Right),
+                _ => PyNotImplemented::from_cmp(py),
             }
         }
     }
 
     fn __ne__<'py>(&self, other: &Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         if !other.is_instance_of::<PyoCounter>() {
-            PyNotImplemented::get(other.py())
-                .into_bound()
-                .pipe(Ok)
-                .map(Either::Right)
+            PyNotImplemented::from_cmp(other.py())
         } else {
             self.__eq__(other)?.map_left(|x| !x).pipe(Ok)
         }

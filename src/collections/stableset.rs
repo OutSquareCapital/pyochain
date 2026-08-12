@@ -6,13 +6,13 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
-    BoundObject, PyTypeInfo, intern,
+    PyTypeInfo, intern,
     prelude::*,
     types::{PyDict, PyIterator, PyNone, PyNotImplemented, PySet},
 };
 use pyo3_ext::{
     prelude::*,
-    types::{PyAbstractSet, PyCmpOut},
+    types::{FromCmp, PyAbstractSet, PyCmpOut},
 };
 use pyochain_macros::try_cast;
 use tap::prelude::*;
@@ -63,10 +63,7 @@ impl StableSet {
                     .pipe(|set| inner.keys_view().eq(set))
                     .map(Either::Left),
                 Case::PySet(py_set) => inner.keys_view().eq(py_set).map(Either::Left),
-                _ => PyNotImplemented::get(py)
-                    .into_bound()
-                    .pipe(Ok)
-                    .map(Either::Right),
+                _ => PyNotImplemented::from_cmp(py),
             }
         }
     }

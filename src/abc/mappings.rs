@@ -1,6 +1,6 @@
 use either::Either;
 use pyo3::{
-    BoundObject, IntoPyObjectExt, PyTypeInfo,
+    IntoPyObjectExt, PyTypeInfo,
     exceptions::PyKeyError,
     intern,
     prelude::*,
@@ -16,7 +16,7 @@ use crate::{
 };
 use pyo3_ext::{
     args::{Args, Kwargs},
-    types::PyCmpOut,
+    types::{FromCmp, PyCmpOut},
 };
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, mapping, extends=PyoCollection)]
 pub struct PyoMapping;
@@ -47,10 +47,7 @@ impl PyoMapping {
                     .call_method0(intern!(py, "items"))?
                     .pipe_ref(PyDict::from_sequence)?)
                 .map(Either::Left),
-            Err(_) => PyNotImplemented::get(py)
-                .into_bound()
-                .pipe(Ok)
-                .map(Either::Right),
+            Err(_) => PyNotImplemented::from_cmp(py),
         }
     }
 

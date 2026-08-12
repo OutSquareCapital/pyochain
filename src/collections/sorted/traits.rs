@@ -5,7 +5,7 @@ use crate::{
         sorted::{
             data::ListsData,
             dict::{SortedDict, SortedKeyDict},
-            errors, iter,
+            iter,
             keyset::SortedKeySet,
             set::SortedSet,
             views::BaseSortedView,
@@ -16,7 +16,7 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
-    BoundObject, PyClass, PyTypeInfo,
+    PyClass, PyTypeInfo,
     call::PyCallArgs,
     exceptions::{PyIndexError, PyKeyError, PyNotImplementedError},
     prelude::*,
@@ -25,7 +25,10 @@ use pyo3::{
         PySliceIndices, PyTuple, PyType,
     },
 };
-use pyo3_ext::prelude::*;
+use pyo3_ext::{
+    prelude::*,
+    types::{FromCmp, PyCmpOut},
+};
 use pyochain_macros::{py_abc, try_cast, try_cast_into};
 use std::{
     cmp::Ordering,
@@ -34,7 +37,6 @@ use std::{
 use tap::prelude::*;
 
 pub const DEFAULT_LOAD_FACTOR: usize = 1000;
-pub type BoolOrNotImpl<'py> = PyResult<Either<bool, Bound<'py, PyNotImplemented>>>;
 pub type SeqOrAny<'py> = Either<Bound<'py, PySequence>, Bound<'py, PyAny>>;
 pub(crate) type Reduced<'py> = PyResult<(Bound<'py, PyType>, Bound<'py, PyTuple>)>;
 pub(crate) type IntOrSlice<'py> = Either<isize, Bound<'py, PySlice>>;
@@ -280,7 +282,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
     fn __copy__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
         self.copy(py)
     }
-    fn __eq__<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+    fn __eq__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
         let data = self.get_data();
         match other {
             Either::Left(seq) => {
@@ -301,11 +303,11 @@ pub(super) trait BaseSortedList: SortedListGetters {
                 }
             }
 
-            Either::Right(any) => errors::not_impl(any.py()),
+            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
         }
     }
 
-    fn __ne__<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+    fn __ne__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
         let data = self.get_data();
         match other {
             Either::Left(seq) => {
@@ -325,11 +327,11 @@ pub(super) trait BaseSortedList: SortedListGetters {
                         .map(Either::Left)
                 }
             }
-            Either::Right(any) => errors::not_impl(any.py()),
+            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
         }
     }
 
-    fn __lt__<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+    fn __lt__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
         match other {
             Either::Left(seq) => {
                 let py = seq.py();
@@ -345,11 +347,11 @@ pub(super) trait BaseSortedList: SortedListGetters {
                 data.len.lt(&seq.len()?).pipe(Either::Left).pipe(Ok)
             }
 
-            Either::Right(any) => errors::not_impl(any.py()),
+            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
         }
     }
 
-    fn __gt__<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+    fn __gt__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
         match other {
             Either::Left(seq) => {
                 let py = seq.py();
@@ -364,11 +366,11 @@ pub(super) trait BaseSortedList: SortedListGetters {
                 data.len.gt(&seq.len()?).pipe(Either::Left).pipe(Ok)
             }
 
-            Either::Right(any) => errors::not_impl(any.py()),
+            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
         }
     }
 
-    fn __le__<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+    fn __le__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
         match other {
             Either::Left(seq) => {
                 let py = seq.py();
@@ -384,11 +386,11 @@ pub(super) trait BaseSortedList: SortedListGetters {
                 data.len.le(&seq.len()?).pipe(Either::Left).pipe(Ok)
             }
 
-            Either::Right(any) => errors::not_impl(any.py()),
+            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
         }
     }
 
-    fn __ge__<'py>(&self, other: SeqOrAny<'py>) -> BoolOrNotImpl<'py> {
+    fn __ge__<'py>(&self, other: SeqOrAny<'py>) -> PyCmpOut<bool, 'py> {
         match other {
             Either::Left(seq) => {
                 let py = seq.py();
@@ -403,7 +405,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
 
                 data.len.ge(&seq.len()?).pipe(Either::Left).pipe(Ok)
             }
-            Either::Right(any) => errors::not_impl(any.py()),
+            Either::Right(any) => PyNotImplemented::from_cmp(any.py()),
         }
     }
 
@@ -602,7 +604,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
         Ok(())
     }
 
-    fn __eq__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> BoolOrNotImpl<'py> {
+    fn __eq__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         try_cast! {
             match other {
                 CaseExact::SortedSet(sorted) | CaseExact::SortedKeySet(sorted) => self
@@ -611,15 +613,12 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
                     .eq(sorted.get().get_set().bind(py))
                     .map(Either::Left),
                 Case::PySet(pyset) => self.get_set().bind(py).eq(pyset).map(Either::Left),
-                _ => PyNotImplemented::get(py)
-                    .into_bound()
-                    .pipe(Ok)
-                    .map(Either::Right),
+                _ => PyNotImplemented::from_cmp(py),
             }
         }
     }
 
-    fn __ne__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> BoolOrNotImpl<'py> {
+    fn __ne__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         try_cast! {
             match other {
                 CaseExact::SortedSet(sorted) | CaseExact::SortedKeySet(sorted) => self
@@ -628,15 +627,12 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
                     .ne(sorted.get().get_set().bind(py))
                     .map(Either::Left),
                 Case::PySet(pyset) => self.get_set().bind(py).ne(pyset).map(Either::Left),
-                _ => PyNotImplemented::get(py)
-                    .into_bound()
-                    .pipe(Ok)
-                    .map(Either::Right),
+                _ => PyNotImplemented::from_cmp(py),
             }
         }
     }
 
-    fn __lt__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> BoolOrNotImpl<'py> {
+    fn __lt__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         try_cast! {
             match other {
                 CaseExact::SortedSet(sorted) | CaseExact::SortedKeySet(sorted) => self
@@ -645,15 +641,12 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
                     .lt(sorted.get().get_set().bind(py))
                     .map(Either::Left),
                 Case::PySet(pyset) => self.get_set().bind(py).lt(pyset).map(Either::Left),
-                _ => PyNotImplemented::get(py)
-                    .into_bound()
-                    .pipe(Ok)
-                    .map(Either::Right),
+                _ => PyNotImplemented::from_cmp(py),
             }
         }
     }
 
-    fn __gt__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> BoolOrNotImpl<'py> {
+    fn __gt__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         try_cast! {
             match other {
                 CaseExact::SortedSet(sorted) | CaseExact::SortedKeySet(sorted) => self
@@ -662,15 +655,12 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
                     .gt(sorted.get().get_set().bind(py))
                     .map(Either::Left),
                 Case::PySet(pyset) => self.get_set().bind(py).gt(pyset).map(Either::Left),
-                _ => PyNotImplemented::get(py)
-                    .into_bound()
-                    .pipe(Ok)
-                    .map(Either::Right),
+                _ => PyNotImplemented::from_cmp(py),
             }
         }
     }
 
-    fn __le__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> BoolOrNotImpl<'py> {
+    fn __le__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         try_cast! {
             match other {
                 CaseExact::SortedSet(sorted) | CaseExact::SortedKeySet(sorted) => self
@@ -679,15 +669,12 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
                     .le(sorted.get().get_set().bind(py))
                     .map(Either::Left),
                 Case::PySet(pyset) => self.get_set().bind(py).le(pyset).map(Either::Left),
-                _ => PyNotImplemented::get(py)
-                    .into_bound()
-                    .pipe(Ok)
-                    .map(Either::Right),
+                _ => PyNotImplemented::from_cmp(py),
             }
         }
     }
 
-    fn __ge__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> BoolOrNotImpl<'py> {
+    fn __ge__<'py>(&self, py: Python<'py>, other: Bound<'py, PyAny>) -> PyCmpOut<bool, 'py> {
         try_cast! {
             match other {
                 CaseExact::SortedSet(sorted) | CaseExact::SortedKeySet(sorted) => self
@@ -696,10 +683,7 @@ pub(super) trait BaseSortedSet: ListGetter + BaseSortedListSet {
                     .ge(sorted.get().get_set().bind(py))
                     .map(Either::Left),
                 Case::PySet(pyset) => self.get_set().bind(py).ge(pyset).map(Either::Left),
-                _ => PyNotImplemented::get(py)
-                    .into_bound()
-                    .pipe(Ok)
-                    .map(Either::Right),
+                _ => PyNotImplemented::from_cmp(py),
             }
         }
     }

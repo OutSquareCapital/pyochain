@@ -1,7 +1,7 @@
 use crate::pyobject_native_type_named;
 use either::Either;
 use pyo3::{
-    PyTypeInfo,
+    BoundObject, PyTypeInfo,
     exceptions::PyTypeError,
     ffi, intern,
     prelude::*,
@@ -15,6 +15,17 @@ use tap::prelude::*;
 const COLLECTIONS_ABC: &str = "collections.abc";
 /// Return type from python comparison dunders, returning either `T` in case of success, or `NotImplemented`.
 pub type PyCmpOut<'py, T> = PyResult<Either<T, Bound<'py, PyNotImplemented>>>;
+/// Small extension trait for PyNotImplemented to allow for easy conversion to `PyCmpOut`.
+pub trait FromCmp<'py, T> {
+    fn from_cmp(py: Python<'py>) -> PyCmpOut<'py, T>;
+}
+
+impl<'py, T> FromCmp<'py, T> for PyNotImplemented {
+    fn from_cmp(py: Python<'py>) -> PyCmpOut<'py, T> {
+        Ok(PyNotImplemented::get(py).into_bound().pipe(Either::Right))
+    }
+}
+
 /// Type representing the `typing.SupportsIndex` protocol.
 #[repr(transparent)]
 pub struct PySupportsIndex(PyAny);

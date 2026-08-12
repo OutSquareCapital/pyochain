@@ -5,14 +5,14 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
-    BoundObject, PyTypeInfo, intern,
+    PyTypeInfo, intern,
     prelude::*,
     pyclass_init::PyClassInitializer,
     types::{DerefToPyAny, PyBool, PyFrozenSet, PyIterator, PyNotImplemented, PySet, PyTuple},
 };
 use pyo3_ext::{
     prelude::*,
-    types::{PyAbstractSet, PyCmpOut},
+    types::{FromCmp, PyAbstractSet, PyCmpOut},
 };
 use pyochain_macros::{BoundFromAny, try_cast};
 use tap::Pipe;
@@ -58,7 +58,7 @@ trait SetCmpMethods<
             match right {
                 CaseExact::Set(set) | CaseExact::SetMut(set) => inner.eq(set.get().inner_bind(py)).map(Either::Left),
                 Case::PySet(pyset) | Case::PyFrozenSet(pyset) => inner.eq(pyset).map(Either::Left),
-                _ => PyNotImplemented::get(py).into_bound().pipe(Ok).map(Either::Right),
+                _ => PyNotImplemented::from_cmp(py),
             }
         }
     }

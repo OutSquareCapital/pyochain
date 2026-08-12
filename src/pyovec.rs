@@ -6,12 +6,16 @@ use crate::{
 
 use either::Either;
 use pyo3::{
-    BoundObject, PyTypeInfo, intern,
+    PyTypeInfo, intern,
     prelude::*,
     pyclass_init::PyClassInitializer,
     types::{PyDict, PyInt, PyIterator, PyList, PyNotImplemented, PyTuple},
 };
-use pyo3_ext::{prelude::*, pylibs, types::PyCmpOut};
+use pyo3_ext::{
+    prelude::*,
+    pylibs,
+    types::{FromCmp, PyCmpOut},
+};
 use pyochain_macros::try_cast;
 use tap::Pipe;
 #[pyclass(module = "pyochain._vec",frozen, generic, sequence, extends=abc::PyoMutableSequence, name="Vec")]
@@ -65,10 +69,7 @@ impl PyoVec {
             match other {
                 Case::PyList(list) => inner.eq(&list).map(Either::Left),
                 CaseExact::PyoVec(vec) => inner.eq(&vec.get().inner_bind(py)).map(Either::Left),
-                _ => PyNotImplemented::get(py)
-                    .into_bound()
-                    .pipe(Ok)
-                    .map(Either::Right),
+                _ => PyNotImplemented::from_cmp(py),
             }
         }
     }

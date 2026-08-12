@@ -5,11 +5,14 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
-    BoundObject, PyTypeInfo, intern,
+    PyTypeInfo, intern,
     prelude::*,
     types::{PyList, PyNotImplemented, PyTuple},
 };
-use pyo3_ext::{pylibs, types::PyIterable};
+use pyo3_ext::{
+    pylibs,
+    types::{FromCmp, PyIterable},
+};
 use pyochain_macros::{BoundFromAny, py_abc, try_cast};
 use tap::Pipe;
 /// Enum used to convert various types into a `PyList` for heap operations.
@@ -97,10 +100,7 @@ trait HeapType: Sized + PyWrapper<PyList> {
             match other {
                 CaseExact::HeapMax(x) | CaseExact::HeapMin(x) | CaseExact::PyoVec(x) => inner.eq(x.get().inner().clone_ref(py)).map(Either::Left),
                 Case::PyList(list) => inner.eq(list).map(Either::Left),
-                _ => PyNotImplemented::get(py)
-                    .into_bound()
-                    .pipe(Ok)
-                    .map(Either::Right),
+                _ => PyNotImplemented::from_cmp(py),
             }
         }
     }

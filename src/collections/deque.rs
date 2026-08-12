@@ -4,7 +4,6 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
-    BoundObject,
     exceptions::PyTypeError,
     intern,
     prelude::*,
@@ -12,7 +11,7 @@ use pyo3::{
 };
 use pyo3_ext::{
     prelude::*,
-    types::{PyCmpOut, PyDeque, PySupportsIndex},
+    types::{FromCmp, PyCmpOut, PyDeque, PySupportsIndex},
 };
 use pyochain_macros::try_cast;
 use tap::prelude::*;
@@ -183,7 +182,7 @@ impl Deque {
             match value {
                 CaseExact::Deque(d) => inner.eq(d.get().inner_bind(py)).map(Either::Left),
                 Case::PyDeque(pyd) => inner.eq(pyd).map(Either::Left),
-                _ => PyNotImplemented::get(py).into_bound().pipe(Ok).map(Either::Right),
+                _ => PyNotImplemented::from_cmp(py),
             }
         }
     }
