@@ -5,32 +5,47 @@ nchmarks.
 
 ## Repository overview
 
-pyochain is a **mixed Python/Rust project**:
+### Python API and typing
 
-### Python structure ([src/pyochain/](src/pyochain))
+- [pyochain/](pyochain/) — Python stubs for the public API. They match their Rust modules 1:1 once your strip their "_" prefix.
+Only the two following files do not have a corresponding Rust module
+- [pyochain/_types.pyi](pyochain/_types.pyi) — shared typing protocols and type aliases.
+- [pyochain/pyochain.pyi](pyochain/pyochain.pyi) — public re-exports. You could maybe say it corresponds to the `src/lib.rs` Rust module.
 
-- [src/pyochain/**init**.py](src/pyochain/__init__.py) — public API entrypoint and re-exports.
-- [src/pyochain/abc/](src/pyochain/abc) — abstract collections and iterator ABCs shared across the Python layer.
-- [src/pyochain/collections/](src/pyochain/collections) — non-core collection implementations.
-- [src/pyochain/_seq.pyi](src/pyochain/_seq.pyi) — `Seq` stubs.
-- [src/pyochain/_dict.pyi](src/pyochain/_dict.pyi) — `Dict` implementation and mapping-specific methods.
-- [src/pyochain/_range.pyi](src/pyochain/_range.pyi) — `Range` stubs.
-- [src/pyochain/_set.pyi](src/pyochain/_set.pyi) — `Set`, `SetMut`, `PyoKeysView`, `PyoValuesView`, and `PyoItemsView` implementations.
-- [src/pyochain/_vec.pyi](src/pyochain/_vec.pyi) — `Vec` implementation.
-- [src/pyochain/rs.pyi](src/pyochain/rs.pyi) — stubs for the Rust-compiled public bindings.
-- [src/pyochain/_iterators.pyi](src/pyochain/_iterators.pyi) — `Iter` and other internal iterators.
-- [src/pyochain/_types.py](src/pyochain/_types.py) — shared typing protocols and support types.
+### Rust and PyO3 implementation
 
-### Rust structure ([rust/src/](rust/src))
+- [src/lib.rs](src/lib.rs) — initializes the `pyochain` PyO3 module and registers its public classes, functions, ABCs, and collection submodules.
+- [src/dict.rs](src/dict.rs) — implements `Dict`.
+- [src/display.rs](src/display.rs) — formats Python objects for `repr` output.
+- [src/errors.rs](src/errors.rs) — defines the Python exceptions raised by failed `Option` and `Result` unwraps.
+- [src/hasher.rs](src/hasher.rs) — provides the hash helper used by `Option` and `Result` values.
+- [src/iterators.rs](src/iterators.rs) — implements `Iter`, `Peekable`, and the iterator adapters exposed by `pyochain._iterators`.
+- [src/option.rs](src/option.rs) — implements `Option`, `Some`, `Null`, `NONE`, and the related helper functions.
+- [src/pyovec.rs](src/pyovec.rs) — implements `Vec`.
+- [src/range.rs](src/range.rs) — implements `Range`.
+- [src/result.rs](src/result.rs) — implements `Result`, `Ok`, and `Err`.
+- [src/seq.rs](src/seq.rs) — implements `Seq`.
+- [src/sets.rs](src/sets.rs) — implements `Set` and `SetMut`.
+- [src/sliceview.rs](src/sliceview.rs) — implements `SliceView` and its slice iterators.
+- [src/traits.rs](src/traits.rs) — defines the shared wrapper, conversion, and ABC initialization traits.
+- [src/abc/](src/abc/) — abstract base classes, traits, and mixins.
+- [src/collections/](src/collections/) — concrete collection implementations, including sorted collections.
 
-- [rust/src/lib.rs](rust/src/lib.rs) — PyO3 module root; exposes the `Option`/`Result` family, mixins, helper functions, the `NONE` constant, and the `_tools` submodule.
-- [rust/src/option.rs](rust/src/option.rs) — `Option[T]`, `Some`, `Null`, `NONE`, and helper constructors.
-- [rust/src/result.rs](rust/src/result.rs) — `Result[T, E]`, `Ok`, and `Err` implementations.
-- [rust/src/errors.rs](rust/src/errors.rs) — unwrap error types exposed to Python.
-- [rust/src/abc/mixins.rs](rust/src/abc/mixins.rs) — mixin types `Checkable`, `Pipe`, `Tap`, and `Fluent`.
-- [rust/src/iterators.rs](rust/src/iterators.rs) — iteration function and structs exposed through `pyochain._iterators`.
-- [rust/src/pyo3_ext/](rust/src/pyo3_ext/) - internal utilities for traits, macros and functions extending Pyo3's functionality.
-- [rust/crates/pyochain_macros](rust/crates/pyochain_macros) - procedural macros for type checking helpers.
+### Internal crates
+
+- [crates/pyo3_ext/](crates/pyo3_ext/) — internal PyO3 extensions and utility traits.
+- [crates/pyochain_macros/](crates/pyochain_macros/) — procedural macros used by the Rust implementation.
+
+### Tests, documentation, and tooling
+
+- [tests/](tests/) — Python tests, ABC tests, external integration tests, and benchmarks.
+- [docs/](docs/) — documentation sources and API reference pages.
+- [scripts/](scripts/) — documentation generation and repository validation scripts.
+- [Cargo.toml](Cargo.toml) — Rust workspace and dependency configuration.
+- [pyproject.toml](pyproject.toml) — Python package metadata, maturin configuration, and development dependencies.
+- [pyrefly.toml](pyrefly.toml) — Pyrefly configuration.
+- [ruff.toml](ruff.toml) — Ruff linting and formatting configuration.
+- [zensical.toml](zensical.toml) — documentation site configuration.
 
 ## Coding and documentation guidelines
 

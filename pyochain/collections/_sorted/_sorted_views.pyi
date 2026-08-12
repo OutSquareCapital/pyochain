@@ -6,7 +6,7 @@ from typing import Any, Generic, TypeVar, overload, override
 
 from pyochain import Vec
 from pyochain.abc import PyoItemsView, PyoKeysView, PyoSequence, PyoValuesView
-from pyochain.collections import SortedDict, SortedSet
+from pyochain.collections import SortedSet
 
 from ..._types import SupportsHashableAndRichComparison
 
@@ -170,10 +170,6 @@ class SortedValuesView(
     The values view implements the sequence abstract base class.
 
     """
-
-    # pyrefly: ignore [bad-override-mutable-attribute]
-    _mapping: SortedDict[Any, _V_co]  # pyright: ignore[reportIncompatibleVariableOverride]
-    __slots__ = ()  # pyright: ignore[reportUnannotatedClassAttribute, reportIncompatibleUnannotatedOverride]
 
     @overload
     def __getitem__(self, index: int) -> _V_co: ...

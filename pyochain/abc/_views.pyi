@@ -24,8 +24,6 @@ class PyoMappingView(MappingView, PyoSized):
 
     Is the base class shared by the views returned by `PyoMapping` methods.
     """
-
-    _mapping: Sized
     def __init__(self, mapping: Sized) -> None: ...
     @override
     def __len__(self) -> int: ...
