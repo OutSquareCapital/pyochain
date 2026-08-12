@@ -14,9 +14,9 @@ impl Pos {
     }
     pub(super) fn set_from_pos(&mut self, mut idx: isize, data: &mut ListsData) -> PyResult<()> {
         if idx < 0 {
-            if (-idx) <= data.lists.last().unwrap().len() as isize {
+            if idx >= -(data.lists.last().unwrap().len() as isize) {
                 self.pos = data.lists.len() - 1;
-                self.idx = data.lists.last().unwrap().len() + idx as usize;
+                self.idx = (data.lists.last().unwrap().len() as isize + idx) as usize;
                 return Ok(());
             }
 
