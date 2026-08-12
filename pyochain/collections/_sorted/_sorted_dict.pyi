@@ -4,7 +4,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Hashable, Iterable, Mapping, MutableMapping
 from functools import partial
-from typing import Any, Self, overload, override
+from typing import Any, Self, final, overload, override
 
 from _typeshed import SupportsGetItem, SupportsKeysAndGetItem
 
@@ -417,6 +417,7 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
 
         """
 
+@final
 class SortedDict[K: SupportsHashableAndRichComparison, V](BaseSortedDict[K, V]):
     """Sorted dict is a sorted mutable mapping.
 
@@ -535,6 +536,7 @@ class SortedDict[K: SupportsHashableAndRichComparison, V](BaseSortedDict[K, V]):
     @override
     def copy(self) -> Self: ...
 
+@final
 class SortedKeyDict[
     K: SupportsHashableAndRichComparison,
     V,
