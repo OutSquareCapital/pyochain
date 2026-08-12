@@ -3,6 +3,7 @@ use crate::{
     collections::{
         SortedKeyList, SortedList,
         sorted::{
+            bounds::{Bounds, Pos},
             data::ListsData,
             dict::{SortedDict, SortedKeyDict},
             iter,
@@ -147,8 +148,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
         &self,
         py: Python<'_>,
         data: &mut MutexGuard<'_, ListsData>,
-        pos: usize,
-        idx: usize,
+        bounds: &mut Pos,
     ) -> PyResult<()>;
     #[skip]
     fn expand(
@@ -174,33 +174,37 @@ pub(super) trait BaseSortedList: SortedListGetters {
             return Err(PyIndexError::new_err(msg));
         }
 
-        let (pos, idx) = {
+        let mut bounds = {
             let len_last = data.lists.last().unwrap().len() as isize;
             match index {
-                0 => (0, 0),
+                0 => Pos::default(),
                 -1 => {
                     let pos = data.lists.len() - 1;
-                    (pos, data.lists[pos].len() - 1)
+                    Pos::new(pos, data.lists[pos].len() - 1 as usize)
                 }
-                _ if 0 <= index && index < data.lists[0].len() as isize => (0, index as usize),
+                _ if 0 <= index && index < data.lists[0].len() as isize => {
+                    Pos::new(0, index as usize)
+                }
                 _ if -len_last < index && index < 0 => {
                     let pos = data.lists.len() - 1;
-                    (pos, (len_last + index) as usize)
+                    Pos::new(pos, (len_last + index) as usize)
                 }
                 _ => {
-                    let (pos, idx) = data.pos(index)?;
-                    (pos, idx as usize)
+                    let mut p = Pos::default();
+                    p.set_from_pos(index, &mut data)?;
+                    p
                 }
             }
         };
-        let val = data.lists[pos][idx].clone_ref(py);
-        self.delete(py, &mut data, pos, idx)?;
+        let val = data.lists[bounds.pos][bounds.idx].clone_ref(py);
+        self.delete(py, &mut data, &mut bounds)?;
         Ok(val.into_bound(py))
     }
     #[skip]
     fn delitem_from_slice(&self, py: Python<'_>, slice: Bound<'_, PySlice>) -> PyResult<()> {
         let mut data = self.get_data();
         let length = data.len as isize;
+        let mut bounds = Pos::default();
         let PySliceIndices {
             start, stop, step, ..
         } = slice.indices(length)?;
@@ -226,8 +230,8 @@ pub(super) trait BaseSortedList: SortedListGetters {
                 .step_by(step as usize)
                 .rev()
                 .try_for_each(|idx| {
-                    let (pos, idx) = data.pos(idx)?;
-                    self.delete(py, &mut data, pos, idx as usize)
+                    bounds.set_from_pos(idx, &mut data)?;
+                    self.delete(py, &mut data, &mut bounds)
                 }),
             // Negative step with nothing to delete (mirrors Python's
             // `range`, which is empty when `start <= stop`).
@@ -236,16 +240,17 @@ pub(super) trait BaseSortedList: SortedListGetters {
                 // Negative step, `start > stop` guaranteed by the arm above.
                 std::iter::successors(Some(start), move |&i| (i + step > stop).then_some(i + step))
                     .try_for_each(|idx| {
-                        let (pos, idx) = data.pos(idx)?;
-                        self.delete(py, &mut data, pos, idx as usize)
+                        bounds.set_from_pos(idx, &mut data)?;
+                        self.delete(py, &mut data, &mut bounds)
                     })
             }
         }
     }
     fn delitem_from_int(&self, py: Python<'_>, index: isize) -> PyResult<()> {
         let mut data = self.get_data();
-        let (pos, idx) = data.pos(index)?;
-        self.delete(py, &mut data, pos, idx as usize)
+        let mut bounds = Pos::default();
+        bounds.set_from_pos(index, &mut data)?;
+        self.delete(py, &mut data, &mut bounds)
     }
     /// Return an iterator that slices sorted list using two index pairs.\
     /// The index pairs are (min_pos, min_idx) and (max_pos, max_idx), the first inclusive and the latter exclusive.\
@@ -254,7 +259,7 @@ pub(super) trait BaseSortedList: SortedListGetters {
     #[skip]
     fn islice_iter<'py>(
         slf: Bound<'py, Self>,
-        bounds: iter::IsliceBounds,
+        bounds: Bounds,
         reverse: bool,
     ) -> PyResult<Bound<'py, abc::PyoIterator>> {
         let py = slf.py();

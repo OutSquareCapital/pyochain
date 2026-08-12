@@ -4,20 +4,27 @@ use pyo3::{
     types::{PyList, PySlice, PySliceIndices, PyString},
 };
 use pyo3_ext::iter::CollectBoundIterator;
-use std::cmp::Ordering;
+use std::{cmp::Ordering, ops::Deref};
 use tap::prelude::*;
 
 use crate::{
     abc,
     collections::sorted::{
-        bisect, errors,
-        iter::{self, IsliceBounds},
+        bisect,
+        bounds::{Bounds, Pos},
         traits::BaseSortedList,
     },
     iterators,
     pyovec::PyoVec,
     traits::IntoPyochain,
 };
+struct Lists(Vec<Vec<Py<PyAny>>>);
+impl Deref for Lists {
+    type Target = Vec<Vec<Py<PyAny>>>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 pub(super) struct ListsData {
     pub(super) lists: Vec<Vec<Py<PyAny>>>,
     pub(super) maxes: Vec<Py<PyAny>>,
@@ -86,14 +93,15 @@ impl ListsData {
         if self.maxes.is_empty() {
             return Ok(0);
         }
+        let mut bound = Pos::new(0, 0);
 
-        let pos = bisect::left(&self.maxes, &value)?;
+        bound.pos = bisect::left(&self.maxes, &value)?;
 
-        if pos == self.maxes.len() {
+        if bound.pos == self.maxes.len() {
             Ok(self.len as isize)
         } else {
-            let idx = bisect::left(&lists.unwrap_or(&self.lists)[pos], &value)?;
-            self.loc(pos, idx as isize)
+            bound.idx = bisect::left(&lists.unwrap_or(&self.lists)[bound.pos], &value)?;
+            bound.loc(self)
         }
     }
     pub fn bisect_right(
@@ -104,14 +112,15 @@ impl ListsData {
         if self.maxes.is_empty() {
             return Ok(0);
         }
+        let mut bound = Pos::new(0, 0);
 
-        let pos = bisect::right(&self.maxes, &value)?;
+        bound.pos = bisect::right(&self.maxes, &value)?;
 
-        if pos == self.maxes.len() {
+        if bound.pos == self.maxes.len() {
             return Ok(self.len as isize);
         }
-        let idx = bisect::right(&lists.unwrap_or(&self.lists)[pos], &value)?;
-        self.loc(pos, idx as isize)
+        bound.idx = bisect::right(&lists.unwrap_or(&self.lists)[bound.pos], &value)?;
+        bound.loc(self)
     }
 
     pub(crate) fn getitem_from_int<'py>(
@@ -119,6 +128,7 @@ impl ListsData {
         py: Python<'py>,
         index: isize,
     ) -> PyResult<Bound<'py, PyAny>> {
+        let mut bounds = Bounds::default();
         let len_last = self
             .lists
             .last()
@@ -150,8 +160,8 @@ impl ListsData {
                 .into_bound(py)
                 .pipe(Ok),
             _ => {
-                let (pos, idx) = self.pos(index)?;
-                self.lists[pos][idx as usize]
+                bounds.min.set_from_pos(index, self)?;
+                self.lists[bounds.min.pos][bounds.min.idx]
                     .clone_ref(py)
                     .into_bound(py)
                     .pipe(Ok)
@@ -167,36 +177,36 @@ impl ListsData {
             start, stop, step, ..
         } = slice.indices(self.len as isize)?;
         let stop_eq_len = stop == self.len as isize;
+        let mut bounds = Bounds::default();
         match (step, start.cmp(&stop)) {
             // Whole slice optimization: start to stop slices the whole sorted list.
             (1, Ordering::Less) if start == 0 && stop_eq_len => self.collapse(py).pipe(Ok),
             (1, Ordering::Less) => {
-                let (start_pos, start_idx) = self.pos(start)?;
-                let start_list = &self.lists[start_pos];
-                let stop_idx = start_idx + stop - start;
-                match (start_list.len() as isize >= stop_idx, stop_eq_len) {
+                bounds.min.set_from_pos(start, self)?;
+                let start_list = &self.lists[bounds.min.pos];
+                bounds.max.idx = bounds.min.idx + (stop - start) as usize;
+                match (start_list.len() >= bounds.max.idx, stop_eq_len) {
                     // Small slice optimization: start index and stop index are
                     // within the start list.
-                    (true, _) => start_list[start_idx as usize..stop_idx as usize]
+                    (true, _) => start_list[bounds.min.idx..bounds.max.idx]
                         .iter()
                         .map(|x| x.clone_ref(py))
                         .collect::<Vec<_>>()
                         .pipe(Ok),
                     (false, true) => {
-                        let stop_pos = self.lists.len() - 1;
-                        let stop_idx = (&self.lists)[stop_pos].len();
-                        get_slice(&self, py, start_pos, stop_pos, start_idx as usize, stop_idx)
+                        bounds.max.pos = self.lists.len() - 1;
+                        bounds.max.idx = (&self.lists)[bounds.max.pos].len();
+                        get_slice(&self, bounds)
+                            .map(|x| x.clone_ref(py))
+                            .collect::<Vec<_>>()
+                            .pipe(Ok)
                     }
                     (false, false) => {
-                        let (stop_pos, stop_idx) = self.pos(stop)?;
-                        get_slice(
-                            &self,
-                            py,
-                            start_pos,
-                            stop_pos,
-                            start_idx as usize,
-                            stop_idx as usize,
-                        )
+                        bounds.max.set_from_pos(stop, self)?;
+                        get_slice(&self, bounds)
+                            .map(|x| x.clone_ref(py))
+                            .collect::<Vec<_>>()
+                            .pipe(Ok)
                     }
                 }
             }
@@ -222,104 +232,6 @@ impl ListsData {
                     .collect::<PyResult<Vec<_>>>()
             }
         }
-    }
-
-    /// Convert an index into an index pair (lists index, sublist index).
-
-    /// This pair can be used to access the corresponding lists position.
-
-    /// Many queries require the index be built. Details of the index are
-    /// described in ``SortedList._build_index``.
-
-    /// Indexing requires traversing the tree to a leaf node. Each node has two
-    /// children which are easily computable. Given an index, pos, the
-    /// left-child is at ``pos * 2 + 1`` and the right-child is at ``pos * 2 +
-    /// 2``.
-
-    /// When the index is less than the left-child, traversal moves to the
-    /// left sub-tree. Otherwise, the index is decremented by the left-child
-    /// and traversal moves to the right sub-tree.
-
-    /// At a child node, the indexing pair is computed from the relative
-    /// position of the child node as compared with the offset and the remaining
-    /// index.
-
-    /// For example, using the index from ``SortedList._build_index``::
-
-    ///            _index = 14 5 9 3 2 4 5
-    ///            _offset = 3
-
-    /// Tree::
-
-    ///                 14
-    ///              5      9
-    ///            3   2  4   5
-
-    /// Indexing position 8 involves iterating like so:
-
-    /// 1. Starting at the root, position 0, 8 is compared with the left-child
-    ///    node (5) which it is greater than. When greater the index is
-    ///    decremented and the position is updated to the right child node.
-
-    /// 2. At node 9 with index 3, we again compare the index to the left-child
-    ///    node with value 4. Because the index is the less than the left-child
-    ///    node, we simply traverse to the left.
-
-    /// 3. At node 4 with index 3, we recognize that we are at a leaf node and
-    ///    stop iterating.
-
-    /// 4. To compute the sublist index, we subtract the offset from the index
-    ///    of the leaf node: 5 - 3 = 2. To compute the index in the sublist, we
-    ///    simply use the index remaining from iteration. In this case, 3.
-
-    /// The final index pair from our example is (2, 3) which corresponds to
-    /// index 8 in the sorted list.
-    pub(crate) fn pos(&mut self, mut idx: isize) -> PyResult<(usize, isize)> {
-        if idx < 0 {
-            if (-idx) <= self.lists.last().unwrap().len() as isize {
-                return Ok((
-                    self.lists.len() - 1,
-                    self.lists.last().unwrap().len() as isize + idx,
-                ));
-            }
-
-            idx += self.len as isize;
-
-            if idx < 0 {
-                return errors::out_of_range_err();
-            }
-        } else if idx >= self.len as isize {
-            return errors::out_of_range_err();
-        }
-
-        if idx < self.lists[0].len() as isize {
-            return Ok((0, idx));
-        }
-
-        if self.idx.is_empty() {
-            self.build_index()?;
-        }
-        let pos = self.idx.pipe_ref_mut(|index| {
-            let mut pos = 0;
-            let mut child = 1;
-            let len_index = index.len();
-
-            while child < len_index {
-                let index_child = index[child] as isize;
-
-                if idx < index_child {
-                    pos = child;
-                } else {
-                    idx -= index_child;
-                    pos = child + 1;
-                }
-
-                child = (pos << 1) + 1
-            }
-            pos
-        });
-
-        Ok((pos - self.offset, idx))
     }
 
     /// Build a positional index for indexing the sorted list.
@@ -391,175 +303,19 @@ impl ListsData {
             Ok(())
         }
     }
-
-    ///Convert an index pair (lists index, sublist index) into a single index number.
-
-    ///This number corresponds to the position of the value in the sorted list.
-
-    ///Many queries require the index be built.
-    /// Details of the index are described in ``SortedList._build_index``.
-
-    ///Indexing requires traversing the tree from a leaf node to the root.
-    ///The parent of each node is easily computable at ``(pos - 1) // 2``.
-
-    ///Left-child nodes are always at odd indices and right-child nodes are always at even indices.
-
-    ///When traversing up from a right-child node, increment the total by the left-child node.
-
-    ///The final index is the sum from traversal and the index in the sublist.
-
-    ///For example, using the index from `SortedList._build_index`:
-
-    ///    _index = 14 5 9 3 2 4 5
-    ///    _offset = 3
-
-    ///Tree::
-
-    ///            14
-    ///        5      9
-    ///    3   2  4   5
-
-    ///Converting an index pair (2, 3) into a single index involves iterating like so:
-
-    ///1. Starting at the leaf node: offset + alpha = 3 + 2 = 5. We identify
-    ///    the node as a left-child node. At such nodes, we simply traverse to
-    ///    the parent.
-
-    ///2. At node 9, position 2, we recognize the node as a right-child node
-    ///    and accumulate the left-child in our total. Total is now 5 and we
-    ///    traverse to the parent at position 0.
-
-    ///3. Iteration ends at the root.
-
-    ///The index is then the sum of the total and sublist index: 5 + 3 = 8.
-    pub(crate) fn loc(&mut self, mut pos: usize, idx: isize) -> PyResult<isize> {
-        if pos == 0 {
-            Ok(idx)
-        } else {
-            if self.idx.is_empty() {
-                self.build_index()?;
-            }
-            // Increment pos to point in the index to len(self.lists[pos]).
-            pos += self.offset;
-            // Iterate until reaching the root of the index tree at pos = 0.
-            let total = self.idx.pipe_ref_mut(|idx| {
-                let mut total = 0;
-                while pos != 0 {
-                    // Right-child nodes are at even indices. At such indices
-                    // account the total below the left child node.
-
-                    if pos % 2 == 0 {
-                        total += idx[pos - 1] as isize;
-                    }
-
-                    // Advance pos to the parent node.
-
-                    pos = (pos - 1) >> 1;
-                }
-                total
-            });
-
-            Ok(total + idx)
-        }
-    }
 }
 
-fn get_slice(
-    data: &ListsData,
-    py: Python<'_>,
-    start_pos: usize,
-    stop_pos: usize,
-    start_idx: usize,
-    stop_idx: usize,
-) -> PyResult<Vec<Py<PyAny>>> {
-    let new_items = data.lists[start_pos + 1..stop_pos]
+fn get_slice<'a>(data: &'a ListsData, bounds: Bounds) -> impl Iterator<Item = &'a Py<PyAny>> + 'a {
+    data.lists[bounds.min.pos][bounds.min.idx..]
         .iter()
-        .flatten()
-        .map(|x| x.clone_ref(py));
-    data.lists[start_pos][start_idx..]
-        .iter()
-        .map(|x| x.clone_ref(py))
-        .chain(new_items)
         .chain(
-            data.lists[stop_pos][0..stop_idx]
+            data.lists[bounds.min.pos + 1..bounds.max.pos]
                 .iter()
-                .map(|x| x.clone_ref(py)),
+                .flatten(),
         )
-        .collect::<Vec<_>>()
-        .pipe(Ok)
+        .chain(data.lists[bounds.max.pos][0..bounds.max.idx].iter())
 }
 
-pub(super) fn get_irange_specs(
-    lists: &Vec<Vec<Py<PyAny>>>,
-    maxes: &Vec<Py<PyAny>>,
-    minimum: Option<Bound<'_, PyAny>>,
-    maximum: Option<Bound<'_, PyAny>>,
-    inclusive: (bool, bool),
-) -> PyResult<Option<IsliceBounds>> {
-    if maxes.is_empty() {
-        return Ok(None);
-    }
-
-    // Calculate the minimum (pos, idx) pair. By default this location
-    // will be inclusive in our calculation.
-    let (min_pos, min_idx) = match minimum {
-        None => (0, 0),
-        Some(minimum) => {
-            if inclusive.0 {
-                let min_pos = bisect::left(&maxes, &minimum)?;
-
-                if min_pos == maxes.len() {
-                    return Ok(None);
-                }
-
-                let min_idx = bisect::left(&lists[min_pos], &minimum)?;
-                (min_pos, min_idx)
-            } else {
-                let min_pos = bisect::right(&maxes, &minimum)?;
-
-                if min_pos == maxes.len() {
-                    return Ok(None);
-                }
-
-                let min_idx = bisect::right(&lists[min_pos], &minimum)?;
-                (min_pos, min_idx)
-            }
-        }
-    };
-
-    // Calculate the maximum (pos, idx) pair. By default this location
-    // will be exclusive in our calculation.
-    let (max_pos, max_idx) = maximum
-        .map(|m| {
-            if inclusive.1 {
-                let mut max_pos = bisect::right(&maxes, &m)?;
-
-                let max_idx = if max_pos == maxes.len() {
-                    max_pos -= 1;
-                    lists[max_pos].len()
-                } else {
-                    bisect::right(&lists[max_pos], &m)?
-                };
-                Ok::<_, PyErr>((max_pos, max_idx))
-            } else {
-                let mut max_pos = bisect::left(&maxes, &m)?;
-
-                let max_idx = if max_pos == maxes.len() {
-                    max_pos -= 1;
-                    lists[max_pos].len()
-                } else {
-                    bisect::left(&lists[max_pos], &m)?
-                };
-                Ok((max_pos, max_idx))
-            }
-        })
-        .unwrap_or_else(|| {
-            let max_pos = maxes.len() - 1;
-            let max_idx = lists[max_pos].len();
-            Ok((max_pos, max_idx))
-        })?;
-    IsliceBounds::from_irange_spec(min_pos, min_idx, max_pos, max_idx).pipe(Ok)
-}
 #[inline]
 pub(super) fn reset_list<T: BaseSortedList>(slf: &T, py: Python<'_>, load: usize) -> PyResult<()> {
     let values = slf.collapse_lists(py);
@@ -575,47 +331,9 @@ pub(super) fn islice_list<'py, T: BaseSortedList>(
     reverse: bool,
 ) -> PyResult<Bound<'py, abc::PyoIterator>> {
     let py = slf.py();
-    let specs = get_islice_specs(&mut slf.get().get_data(), py, start, stop)?;
+    let specs = Bounds::get_islice_specs(&mut slf.get().get_data(), py, start, stop)?;
     match specs {
         None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
         Some(bounds) => T::islice_iter(slf, bounds, reverse),
-    }
-}
-fn get_islice_specs(
-    data: &mut ListsData,
-    py: Python<'_>,
-    start: Option<isize>,
-    stop: Option<isize>,
-) -> PyResult<Option<iter::IsliceBounds>> {
-    let length = data.len as isize;
-
-    if length == 0 {
-        Ok(None)
-    } else {
-        //NOTE: Need to investiguate why we need to use PySlice at all. Same pattern in SliceView original code.
-        let indices =
-            PySlice::new(py, start.unwrap_or(0), stop.unwrap_or(length), 1).indices(length)?;
-
-        if indices.start >= indices.stop {
-            Ok(None)
-        } else {
-            let (min_pos, min_idx) = data.pos(indices.start)?;
-
-            let (max_pos, max_idx) = if indices.stop == length {
-                (
-                    data.lists.len() - 1,
-                    data.lists.last().unwrap().len() as isize,
-                )
-            } else {
-                data.pos(indices.stop)?
-            };
-
-            Ok(Some(iter::IsliceBounds::new(
-                min_pos,
-                min_idx as usize,
-                max_pos,
-                max_idx as usize,
-            )))
-        }
     }
 }

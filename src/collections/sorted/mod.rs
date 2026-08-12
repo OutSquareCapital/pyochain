@@ -1,4 +1,5 @@
 pub(super) mod bisect;
+mod bounds;
 mod cmp;
 mod data;
 mod dict;

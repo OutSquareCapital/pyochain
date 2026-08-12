@@ -2,8 +2,9 @@ use crate::{
     abc,
     collections::sorted::{
         bisect,
+        bounds::{Bounds, Pos},
         cmp::py_cmp,
-        data::{ListsData, get_irange_specs, islice_list, reset_list},
+        data::{ListsData, islice_list, reset_list},
         errors, iter,
         traits::{
             BaseSortedList, BaseSortedListSet, DEFAULT_LOAD_FACTOR, Reduced, SortedCollection,
@@ -61,19 +62,20 @@ impl SortedCollection for SortedList {
     fn __contains__(&self, value: &Bound<'_, PyAny>) -> PyResult<bool> {
         let py = value.py();
         let data = self.get_data();
+        let mut bound = Pos::default();
 
         if data.maxes.is_empty() {
             return Ok(false);
         }
 
-        let pos = bisect::left(&data.maxes, &value)?;
+        bound.pos = bisect::left(&data.maxes, &value)?;
 
-        if data.maxes.len().eq(&pos) {
+        if data.maxes.len().eq(&bound.pos) {
             return Ok(false);
         }
-        let idx = bisect::left(&data.lists[pos], &value)?;
+        bound.idx = bisect::left(&data.lists[bound.pos], &value)?;
 
-        data.lists[pos][idx].bind(py).eq(value)
+        data.lists[bound.pos][bound.idx].bind(py).eq(value)
     }
 
     fn __reduce__<'py>(&self, py: Python<'py>) -> Reduced<'py> {
@@ -124,7 +126,8 @@ impl SortedCollection for SortedList {
         if stop <= start {
             return errors::is_not_in_list_err(&value);
         }
-        let pos_left = data.maxes.pipe_ref(|maxes| {
+        let mut bound = Pos::default();
+        bound.pos = data.maxes.pipe_ref(|maxes| {
             let pos_left = bisect::left(&maxes, &value)?;
 
             if pos_left == maxes.len() {
@@ -133,14 +136,13 @@ impl SortedCollection for SortedList {
                 Ok(pos_left)
             }
         })?;
-        let idx_left = bisect::left(&data.lists[pos_left], &value)?;
-
-        if data.lists[pos_left][idx_left].bind(py).ne(&value)? {
+        bound.idx = bisect::left(&data.lists[bound.pos], &value)?;
+        if data.lists[bound.pos][bound.idx].bind(py).ne(&value)? {
             return errors::is_not_in_list_err(&value);
         }
 
         stop -= 1;
-        let left = data.loc(pos_left, idx_left as isize)?;
+        let left = bound.loc(&mut data)?;
 
         if start <= left {
             if left <= stop {
@@ -171,7 +173,7 @@ impl SortedCollection for SortedList {
         let specs = slf
             .get()
             .get_data()
-            .pipe(|d| get_irange_specs(&d.lists, &d.maxes, minimum, maximum, inclusive));
+            .pipe(|d| Bounds::get_irange_specs(&d.lists, &d.maxes, minimum, maximum, inclusive));
 
         match specs? {
             None => iterators::Iter::empty(py)?.into_super().pipe(Ok),
@@ -215,20 +217,21 @@ impl BaseSortedListSet for SortedList {
     fn discard(&self, value: Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
         let mut data = self.get_data();
+        let mut bound = Pos::default();
 
         if data.maxes.is_empty() {
             return Ok(());
         }
 
-        let pos = bisect::left(&data.maxes, &value)?;
+        bound.pos = bisect::left(&data.maxes, &value)?;
 
-        if pos == data.maxes.len() {
+        if bound.pos == data.maxes.len() {
             Ok(())
         } else {
-            let idx = bisect::left(&data.lists[pos], &value)?;
+            bound.idx = bisect::left(&data.lists[bound.pos], &value)?;
 
-            if data.lists[pos][idx].bind(py).eq(value)? {
-                self.delete(py, &mut data, pos, idx)
+            if data.lists[bound.pos][bound.idx].bind(py).eq(&value)? {
+                self.delete(py, &mut data, &mut bound)
             } else {
                 Ok(())
             }
@@ -238,19 +241,20 @@ impl BaseSortedListSet for SortedList {
     fn remove(&self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = value.py();
         let mut data = self.get_data();
+        let mut bound = Pos::default();
 
         if data.maxes.is_empty() {
             errors::not_in_list_err(value)
         } else {
-            let pos = bisect::left(&data.maxes, &value)?;
+            bound.pos = bisect::left(&data.maxes, &value)?;
 
-            if pos == data.maxes.len() {
+            if bound.pos == data.maxes.len() {
                 errors::not_in_list_err(value)
             } else {
-                let idx = bisect::left(&data.lists[pos], &value)?;
+                bound.idx = bisect::left(&data.lists[bound.pos], &value)?;
 
-                if data.lists[pos][idx].bind(py).eq(&value)? {
-                    self.delete(py, &mut data, pos, idx)
+                if data.lists[bound.pos][bound.idx].bind(py).eq(&value)? {
+                    self.delete(py, &mut data, &mut bound)
                 } else {
                     errors::not_in_list_err(value)
                 }
@@ -327,19 +331,18 @@ impl BaseSortedList for SortedList {
         &self,
         py: Python<'_>,
         data: &mut MutexGuard<'_, ListsData>,
-        mut pos: usize,
-        idx: usize,
+        bounds: &mut Pos,
     ) -> PyResult<()> {
-        data.lists[pos].remove(idx);
+        data.lists[bounds.pos].remove(bounds.idx);
         data.len = data.len - 1;
 
-        let len_lists_pos = data.lists[pos].len();
+        let len_lists_pos = data.lists[bounds.pos].len();
 
         if len_lists_pos > (self.get_load() >> 1) {
-            data.maxes[pos] = data.lists[pos].last().unwrap().clone_ref(py);
+            data.maxes[bounds.pos] = data.lists[bounds.pos].last().unwrap().clone_ref(py);
 
             if !data.idx.is_empty() {
-                let mut child = data.offset + pos;
+                let mut child = data.offset + bounds.pos;
                 while child > 0 {
                     data.idx[child] = data.idx[child] - 1;
                     child = (child - 1) >> 1
@@ -348,28 +351,28 @@ impl BaseSortedList for SortedList {
             }
             Ok(())
         } else if data.lists.len() > 1 {
-            if pos == 0 {
-                pos += 1;
+            if bounds.pos == 0 {
+                bounds.pos += 1;
             }
 
-            let prev = (pos - 1) as usize;
-            let mut removed = data.lists[pos]
+            let prev = (bounds.pos - 1) as usize;
+            let mut removed = data.lists[bounds.pos]
                 .iter()
                 .map(|x| x.clone_ref(py))
                 .collect::<Vec<_>>();
             data.lists[prev].append(removed.as_mut());
             data.maxes[prev] = data.lists[prev].last().unwrap().clone_ref(py);
 
-            data.lists.remove(pos);
-            data.maxes.remove(pos);
+            data.lists.remove(bounds.pos);
+            data.maxes.remove(bounds.pos);
             data.idx.clear();
             self.expand(py, data, prev)
         } else if len_lists_pos != 0 {
-            data.maxes[pos] = data.lists[pos].last().unwrap().clone_ref(py);
+            data.maxes[bounds.pos] = data.lists[bounds.pos].last().unwrap().clone_ref(py);
             Ok(())
         } else {
-            data.lists.remove(pos);
-            data.maxes.remove(pos);
+            data.lists.remove(bounds.pos);
+            data.maxes.remove(bounds.pos);
             data.idx.clear();
             Ok(())
         }
@@ -380,27 +383,29 @@ impl BaseSortedList for SortedList {
         if data.maxes.is_empty() {
             return Ok(0);
         }
+        let mut left = Pos::default();
+        let mut right = Pos::default();
 
-        let pos_left = bisect::left(&data.maxes, &value)?;
+        left.pos = bisect::left(&data.maxes, &value)?;
 
-        if pos_left == data.maxes.len() {
+        if left.pos == data.maxes.len() {
             return Ok(0);
         }
-        let idx_left = bisect::left(&data.lists[pos_left], &value)?;
-        let pos_right = bisect::right(&data.maxes, &value)?;
+        left.idx = bisect::left(&data.lists[left.pos], &value)?;
+        right.pos = bisect::right(&data.maxes, &value)?;
 
-        if pos_right == data.maxes.len() {
-            let left = data.loc(pos_left, idx_left as isize)?;
-            return Ok(data.len - left as usize);
+        if right.pos == data.maxes.len() {
+            let left_loc = left.loc(&mut data)?;
+            return Ok(data.len - left_loc as usize);
         }
-        let idx_right = bisect::right(&data.lists[pos_right], &value)?;
+        right.idx = bisect::right(&data.lists[right.pos], &value)?;
 
-        if pos_left == pos_right {
-            return Ok(idx_right - idx_left);
+        if left.pos == right.pos {
+            return Ok(right.idx - left.idx);
         }
-        let right = data.loc(pos_right, idx_right as isize)?;
-        let left = data.loc(pos_left, idx_left as isize)?;
-        Ok((right - left) as usize)
+        let right_loc = right.loc(&mut data)?;
+        let left_loc = left.loc(&mut data)?;
+        Ok((right_loc - left_loc) as usize)
     }
 
     fn py_update(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
