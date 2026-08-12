@@ -13,12 +13,7 @@ use crate::{
     iterators,
     traits::PyoABC,
 };
-use pyo3::{
-    PyTypeInfo,
-    prelude::*,
-    types::{PyList, PyTuple},
-};
-use pyo3_ext::prelude::*;
+use pyo3::{PyTypeInfo, prelude::*, types::PyTuple};
 use std::sync::{Mutex, MutexGuard, atomic::AtomicUsize};
 
 use tap::prelude::*;
@@ -287,9 +282,7 @@ impl BaseSortedList for SortedList {
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let cls_name = Self::type_object(py).name()?;
         self.get_data()
-            .iter()
-            .collect_bound::<PyList>(py)?
-            .repr()
+            .py_repr(py)
             .map(|repr| format!("{}({})", cls_name, repr))
     }
 

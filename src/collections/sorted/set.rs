@@ -1,9 +1,4 @@
-use pyo3::{
-    PyTypeInfo,
-    prelude::*,
-    types::{PyList, PySet},
-};
-use pyo3_ext::prelude::*;
+use pyo3::{PyTypeInfo, prelude::*, types::PySet};
 
 use tap::Pipe;
 
@@ -83,13 +78,7 @@ impl BaseSortedSet for SortedSet {
     //@recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let type_name = Self::type_object(py).name()?;
-        let self_repr = self
-            .get_list()
-            .get()
-            .get_data()
-            .iter()
-            .collect_bound::<PyList>(py)?
-            .repr()?;
+        let self_repr = self.get_list().get().get_data().py_repr(py)?;
         Ok(format!("{}({})", type_name, self_repr))
     }
 }

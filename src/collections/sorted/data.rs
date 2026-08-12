@@ -1,7 +1,7 @@
 use pyo3::{
     exceptions::PyIndexError,
     prelude::*,
-    types::{PyList, PySlice, PySliceIndices},
+    types::{PyList, PySlice, PySliceIndices, PyString},
 };
 use pyo3_ext::iter::CollectBoundIterator;
 use std::cmp::Ordering;
@@ -42,6 +42,10 @@ impl ListsData {
     #[inline(always)]
     pub fn iter(&self) -> impl Iterator<Item = &Py<PyAny>> {
         self.lists.iter().flatten()
+    }
+    #[inline]
+    pub fn py_repr<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyString>> {
+        self.iter().collect_bound::<PyList>(py)?.repr()
     }
     #[inline]
     pub fn concat(&self, py: Python<'_>, other: Bound<'_, PyAny>) -> PyResult<Vec<Py<PyAny>>> {

@@ -13,12 +13,7 @@ use crate::{
     iterators,
     traits::PyoABC,
 };
-use pyo3::{
-    IntoPyObjectExt, PyTypeInfo,
-    prelude::*,
-    types::{PyList, PyTuple},
-};
-use pyo3_ext::prelude::*;
+use pyo3::{IntoPyObjectExt, PyTypeInfo, prelude::*, types::PyTuple};
 use std::sync::{Mutex, MutexGuard, atomic::AtomicUsize};
 use tap::Pipe;
 #[pyclass(module = "pyochain.collections", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
@@ -413,9 +408,7 @@ impl BaseSortedList for SortedKeyList {
         let key_repr = self.key.bind(py).repr()?;
 
         self.get_data()
-            .iter()
-            .collect_bound::<PyList>(py)?
-            .repr()
+            .py_repr(py)
             .map(|repr| format!("{type_name}({}, key={})", repr, key_repr))
     }
 
