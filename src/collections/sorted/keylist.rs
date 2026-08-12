@@ -180,7 +180,7 @@ impl SortedCollection for SortedKeyList {
         let len_ = data.len as isize;
 
         if len_ == 0 {
-            return errors::is_not_in_list_err(&value);
+            return errors::not_in_list_err(&value);
         }
 
         let mut start = start.unwrap_or(0);
@@ -196,14 +196,14 @@ impl SortedCollection for SortedKeyList {
         stop = stop.min(len_);
 
         if stop <= start {
-            return errors::is_not_in_list_err(&value);
+            return errors::not_in_list_err(&value);
         }
         let key = self.key.bind(py).call1((&value,))?;
         let mut bound = Pos::default();
         bound.pos = bisect::left(&data.maxes, &key)?;
 
         if bound.pos == data.maxes.len() {
-            return errors::is_not_in_list_err(&value);
+            return errors::not_in_list_err(&value);
         }
 
         stop -= 1;
@@ -215,7 +215,7 @@ impl SortedCollection for SortedKeyList {
 
         loop {
             if keys[bound.pos][bound.idx].bind(py).ne(&key)? {
-                return errors::is_not_in_list_err(&value);
+                return errors::not_in_list_err(&value);
             }
             if data.get_value(&bound).bind(py).eq(&value)? {
                 let loc = bound.loc(&mut data)?;
@@ -229,14 +229,14 @@ impl SortedCollection for SortedKeyList {
             if bound.idx == len_sublist {
                 bound.pos += 1;
                 if bound.pos == len_keys {
-                    return errors::is_not_in_list_err(&value);
+                    return errors::not_in_list_err(&value);
                 }
                 len_sublist = keys[bound.pos].len();
                 bound.idx = 0;
             }
         }
 
-        errors::is_not_in_list_err(&value)
+        errors::not_in_list_err(&value)
     }
     fn irange<'py>(
         slf: Bound<'py, Self>,

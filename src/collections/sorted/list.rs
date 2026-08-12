@@ -108,7 +108,7 @@ impl SortedCollection for SortedList {
         let len_ = data.len as isize;
 
         if len_ == 0 {
-            return errors::is_not_in_list_err(&value);
+            return errors::not_in_list_err(&value);
         }
 
         let mut start = start.unwrap_or(0);
@@ -124,21 +124,21 @@ impl SortedCollection for SortedList {
         stop = stop.min(len_);
 
         if stop <= start {
-            return errors::is_not_in_list_err(&value);
+            return errors::not_in_list_err(&value);
         }
         let mut bound = Pos::default();
         bound.pos = data.maxes.pipe_ref(|maxes| {
             let pos_left = bisect::left(&maxes, &value)?;
 
             if pos_left == maxes.len() {
-                errors::is_not_in_list_err(&value)
+                errors::not_in_list_err(&value)
             } else {
                 Ok(pos_left)
             }
         })?;
         bound.idx = bisect::left(&data.lists[bound.pos], &value)?;
         if data.get_value(&bound).bind(py).ne(&value)? {
-            return errors::is_not_in_list_err(&value);
+            return errors::not_in_list_err(&value);
         }
 
         stop -= 1;
@@ -157,7 +157,7 @@ impl SortedCollection for SortedList {
             }
         }
 
-        errors::is_not_in_list_err(&value)
+        errors::not_in_list_err(&value)
     }
     fn reset(&self, py: Python<'_>, load: usize) -> PyResult<()> {
         reset_list(self, py, load)

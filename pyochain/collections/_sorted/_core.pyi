@@ -64,16 +64,16 @@ class SortedCollection[T](ABC):
             int: insertion index of value in `SortedCollection`.
 
         Examples:
-        ```python
-        from pyochain.collections import SortedList, SortedKeyList
-        from operator import neg
+            ```python
+            from pyochain.collections import SortedList, SortedKeyList
+            from operator import neg
 
-        sl = SortedList([10, 11, 12, 13, 14])
-        assert sl.bisect_right(12) == 3
+            sl = SortedList([10, 11, 12, 13, 14])
+            assert sl.bisect_right(12) == 3
 
-        skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
-        assert skl.bisect_right(1) == 5
-        ```
+            skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
+            assert skl.bisect_right(1) == 5
+            ```
         """
 
     @abstractmethod
@@ -103,24 +103,20 @@ class SortedCollection[T](ABC):
             ValueError: if value is not present
 
         Examples:
-        ```python
-        from pyochain.collections import SortedList, SortedKeyList
-        from operator import neg
+            ```python
+            from pyochain.collections import SortedList, SortedKeyList
+            from operator import neg
+            import pytest
 
-        sl = SortedList("abcde")
-        assert sl.index("d") == 3
-        try:
-            sl.index("z")
-        except ValueError as e:
-            assert str(e) == "'z' is not in list"
-
-        skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
-        assert skl.index(2) == 3
-        try:
-            skl.index(0)
-        except ValueError as e:
-            assert str(e) == "0 is not in list"
-        ```
+            sl = SortedList("abcde")
+            assert sl.index("d") == 3
+            with pytest.raises(ValueError):
+                sl.index("z")
+            skl = SortedKeyList([5, 4, 3, 2, 1], key=neg)
+            assert skl.index(2) == 3
+            with pytest.raises(ValueError):
+                skl.index(0)
+            ```
         """
 
     @abstractmethod
@@ -156,18 +152,18 @@ class SortedCollection[T](ABC):
             PyoIterator[T]: an iterator of values between `minimum` and `maximum`
 
         Examples:
-        ```python
-        from pyochain.collections import SortedList, SortedKeyList
-        from operator import neg
+            ```python
+            from pyochain.collections import SortedList, SortedKeyList
+            from operator import neg
 
-        sl = SortedList("abcdefghij")
-        it = sl.irange("c", "f")
-        assert list(it) == ["c", "d", "e", "f"]
+            sl = SortedList("abcdefghij")
+            it = sl.irange("c", "f")
+            assert list(it) == ["c", "d", "e", "f"]
 
-        skl = SortedKeyList([11, 12, 13, 14, 15], key=neg)
-        it = skl.irange(14.5, 11.5)
-        assert list(it) == [14, 13, 12]
-        ```
+            skl = SortedKeyList([11, 12, 13, 14, 15], key=neg)
+            it = skl.irange(14.5, 11.5)
+            assert list(it) == [14, 13, 12]
+            ```
         """
 
     @abstractmethod
@@ -198,13 +194,13 @@ class SortedCollection[T](ABC):
             PyoIterator[T]: iterator
 
         Examples:
-        ```python
-        from pyochain.collections import SortedList
+            ```python
+            from pyochain.collections import SortedList
 
-        sl = SortedList("abcdefghij")
-        it = sl.islice(2, 6)
-        assert list(it) == ["c", "d", "e", "f"]
-        ```
+            sl = SortedList("abcdefghij")
+            it = sl.islice(2, 6)
+            assert list(it) == ["c", "d", "e", "f"]
+            ```
         """
 
     @abstractmethod
