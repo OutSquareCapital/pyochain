@@ -6,7 +6,7 @@ use std::{
 };
 
 use owo_colors::OwoColorize;
-use syn::{Expr, Item, Lit, Meta, spanned::Spanned};
+use syn::{Expr, Item, Lit, Meta, spanned::Spanned, visit::Visit};
 use tap::Pipe;
 struct Failure {
     kind: FailureKind,
@@ -63,7 +63,8 @@ fn run_stub_check() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let source_root = root.join("src");
     let stub_root = root.join("pyochain");
-    let pyclasses = get_pyclasses(&source_root);
+    let registered_classes = get_registered_classes(&source_root.join("lib.rs"));
+    let pyclasses = get_pyclasses(&source_root, &registered_classes);
     let stubs = get_stubs(&stub_root);
     let failures = get_failures(&pyclasses, &stubs, &stub_root);
     show_output(&failures, &pyclasses);
@@ -114,60 +115,52 @@ fn show_output(failures: &[Failure], pyclasses: &[PyClass]) {
 fn get_failures(pyclasses: &[PyClass], stubs: &[Stub], stub_root: &Path) -> Vec<Failure> {
     pyclasses
         .iter()
-        .flat_map(|pyclass| {
-            let matching_stubs = stubs
-                .iter()
-                .filter_map(|stub| {
-                    stub.classes
-                        .iter()
-                        .find(|(name, _)| name == &pyclass.python_name)
-                        .map(|(_, line)| StubMatch { stub, line: *line })
-                })
-                .collect::<Vec<_>>();
-            let mut failures = Vec::new();
-
+        .filter_map(|pyclass| {
             if pyclass.module.is_none() {
-                failures.push(Failure::missing_module(pyclass))
-            }
-
-            if matching_stubs.is_empty() {
-                failures.push(Failure::missing_stub_class_declaration(pyclass, stub_root));
-                failures
+                Some(Failure::missing_module(pyclass))
             } else {
-                if matching_stubs.len() > 1 {
-                    let paths = matching_stubs
-                        .iter()
-                        .map(|stub_match| {
-                            format!("{}:{}", stub_match.stub.path.display(), stub_match.line)
-                        })
-                        .collect::<Vec<_>>()
-                        .join(", ");
-                    failures.push(Failure::duplicate_stub_class_declaration(pyclass, &paths));
-                }
-
-                matching_stubs.iter().for_each(|stub_match| {
-                    if !(pyclass.normalized_path == stub_match.stub.normalized_path) {
-                        failures.push(Failure::source_stub_mismatch(pyclass, stub_match));
-                    }
-
-                    if let Some(module) = &pyclass.module {
-                        if module != &stub_match.stub.module {
-                            failures.push(Failure::module_mismatch(
-                                pyclass,
-                                module,
-                                stub_match,
-                                &stub_match.stub.module,
-                            ));
+                let matching_stubs = stubs
+                    .iter()
+                    .filter_map(|stub| {
+                        stub.classes
+                            .iter()
+                            .find(|(name, _)| name == &pyclass.python_name)
+                            .map(|(_, line)| StubMatch { stub, line: *line })
+                    })
+                    .collect::<Vec<_>>();
+                if matching_stubs.is_empty() {
+                    Some(Failure::missing_stub_class_declaration(pyclass, stub_root))
+                } else {
+                    if matching_stubs.len() > 1 {
+                        let paths = matching_stubs
+                            .iter()
+                            .map(|stub_match| {
+                                format!("{}:{}", stub_match.stub.path.display(), stub_match.line)
+                            })
+                            .collect::<Vec<_>>()
+                            .join(", ");
+                        Some(Failure::duplicate_stub_class_declaration(pyclass, &paths))
+                    } else {
+                        let stub_match = matching_stubs.first().unwrap();
+                        if pyclass.normalized_path != stub_match.stub.normalized_path {
+                            Some(Failure::source_stub_mismatch(pyclass, stub_match))
+                        } else {
+                            let module = pyclass.module.as_ref().unwrap();
+                            (module != &stub_match.stub.module).then(|| {
+                                Failure::module_mismatch(
+                                    pyclass,
+                                    module,
+                                    stub_match,
+                                    &stub_match.stub.module,
+                                )
+                            })
                         }
                     }
-                });
-
-                failures
+                }
             }
         })
         .collect::<Vec<_>>()
 }
-
 fn normalized_path(path: &Path, root: &Path) -> NormalizedPath {
     let relative = path.strip_prefix(root).unwrap();
     NormalizedPath {
@@ -183,7 +176,36 @@ fn normalized_path(path: &Path, root: &Path) -> NormalizedPath {
 fn normalize_os_str(os_str: &std::ffi::OsStr) -> String {
     os_str.to_str().unwrap().trim_start_matches('_').to_string()
 }
-fn get_pyclasses(source_root: &Path) -> Vec<PyClass> {
+fn get_registered_classes(lib_path: &Path) -> Vec<String> {
+    let source = fs::read_to_string(lib_path).unwrap();
+    let mut visitor = RegisteredClassVisitor::default();
+    visitor.visit_file(&syn::parse_file(&source).unwrap());
+    visitor.classes
+}
+
+#[derive(Default)]
+struct RegisteredClassVisitor {
+    classes: Vec<String>,
+}
+
+impl<'ast> Visit<'ast> for RegisteredClassVisitor {
+    fn visit_expr_method_call(&mut self, expression: &'ast syn::ExprMethodCall) {
+        if expression.method == "add_class" {
+            if let Some(syn::GenericArgument::Type(syn::Type::Path(path))) = expression
+                .turbofish
+                .as_ref()
+                .and_then(|turbofish| turbofish.args.first())
+            {
+                if let Some(segment) = path.path.segments.last() {
+                    self.classes.push(segment.ident.to_string());
+                }
+            }
+        }
+        syn::visit::visit_expr_method_call(self, expression);
+    }
+}
+
+fn get_pyclasses(source_root: &Path, registered_classes: &[String]) -> Vec<PyClass> {
     files_with_extension(&source_root, "rs")
         .into_iter()
         .flat_map(|path| {
@@ -193,6 +215,7 @@ fn get_pyclasses(source_root: &Path) -> Vec<PyClass> {
                 .items
                 .into_iter()
                 .filter_map(|item| PyClass::from_item(item, &path, source_root))
+                .filter(|pyclass| registered_classes.contains(&pyclass.rust_name))
                 .collect::<Vec<_>>()
         })
         .collect::<Vec<_>>()
