@@ -54,7 +54,7 @@ impl<'py> PyInit<'py, PySlice, SliceArgs<'py>> for PySlice {
     }
 }
 
-#[pyclass(module = "pyochain._sliceview",frozen, generic, sequence, extends=abc::PyoSequence)]
+#[pyclass(module = "pyochain.core",frozen, generic, sequence, extends=abc::PyoSequence)]
 pub struct SliceView {
     #[pyo3(get)]
     pub inner: Py<PySequence>,

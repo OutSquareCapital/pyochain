@@ -866,7 +866,7 @@ impl Tail {
     }
 }
 
-#[pyclass(module = "pyochain._iterators",frozen, generic, extends=abc::PyoIterator)]
+#[pyclass(module = "pyochain.core",frozen, generic, extends=abc::PyoIterator)]
 pub struct Iter(pub Py<PyIterator>);
 impl Iter {
     /// New constructor for `Iter` in rust.
@@ -950,7 +950,7 @@ impl<'py> Iterator for PyUnsafeIterator<'py> {
         }
     }
 }
-#[pyclass(module = "pyochain._iterators",generic, extends=abc::PyoIterator)]
+#[pyclass(module = "pyochain.core",generic, extends=abc::PyoIterator)]
 pub struct Peekable {
     iterator: Py<PyIterator>,
     peeked: Option<Py<PyAny>>,

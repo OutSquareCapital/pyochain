@@ -10,7 +10,7 @@ use pyo3::{
 use pyo3_ext::{prelude::*, pylibs};
 use tap::Pipe;
 
-#[pyclass(module = "pyochain._range",frozen, sequence, extends=abc::PyoSequence)]
+#[pyclass(module = "pyochain.core",frozen, sequence, extends=abc::PyoSequence)]
 pub struct Range(pub Py<PyRange>);
 impl Range {
     pub fn new(py: Python<'_>, start: isize, stop: isize) -> PyResult<Self> {

@@ -12,7 +12,7 @@ use pyo3::{
 use pyo3_ext::prelude::*;
 use tap::Pipe;
 
-#[pyclass(module = "pyochain._seq",frozen, generic, sequence, extends=abc::PyoSequence)]
+#[pyclass(module = "pyochain.core",frozen, generic, sequence, extends=abc::PyoSequence)]
 pub struct Seq(pub Py<PyTuple>);
 #[pymethods]
 impl Seq {

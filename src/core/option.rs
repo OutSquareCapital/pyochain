@@ -1,8 +1,7 @@
 use crate::abc;
 use crate::core::{PyoErr, PyoOk, iterators};
-use crate::errors::OptionUnwrapError;
 use crate::hasher::hash_fn;
-use pyo3::exceptions::PyTypeError;
+use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::{IntoPyObjectExt, PyTypeInfo};
 use pyo3::{
     prelude::*,
@@ -29,7 +28,7 @@ impl IsNull<'_> for &Bound<'_, PyAny> {
     }
 }
 /// Option[T] - Generic Option type with Some and None variants for Python typing
-#[pyclass(module = "pyochain._option", frozen, name = "Option", generic)]
+#[pyclass(module = "pyochain.core", frozen, name = "Option", generic)]
 pub struct PyochainOption;
 
 impl PyochainOption {
@@ -63,7 +62,19 @@ impl PyochainOption {
     }
 }
 
-#[pyclass(module = "pyochain._option", frozen, name = "OptionType", generic)]
+/// Exception raised when unwrapping fails on Option types
+#[pyclass(module = "pyochain.core",frozen, extends = PyValueError)]
+pub struct OptionUnwrapError;
+
+#[pymethods]
+impl OptionUnwrapError {
+    #[new]
+    fn new(_exc_arg: &Bound<'_, PyAny>) -> Self {
+        OptionUnwrapError
+    }
+}
+
+#[pyclass(module = "pyochain.core", frozen, name = "OptionType", generic)]
 pub struct PyochainOptionType;
 #[pyfunction(name = "option")]
 pub fn new_option(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
@@ -80,7 +91,7 @@ pub fn then_if_true(value: &Bound<'_, PyAny>, predicate: &Bound<'_, PyAny>) -> P
     PyochainOption::then_if_true(value, predicate)
 }
 
-#[pyclass(module = "pyochain._option", frozen, name = "Some", generic)]
+#[pyclass(module = "pyochain.core", frozen, name = "Some", generic)]
 pub struct PySome {
     #[pyo3(get)]
     pub value: Py<PyAny>,
@@ -372,7 +383,7 @@ impl PySome {
     }
 }
 
-#[pyclass(module = "pyochain._option", frozen, name = "Null")]
+#[pyclass(module = "pyochain.core", frozen, name = "Null")]
 pub struct PyNull;
 
 impl PyNull {
