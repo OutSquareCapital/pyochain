@@ -2,7 +2,7 @@
 
 from ._counter import PyoCounter
 from ._deque import Deque
-from ._heapq import Heap, HeapMax, HeapMin
+from ._heap import Heap, HeapMax, HeapMin
 from ._sorted import (
     SortedDict,
     SortedItemsView,

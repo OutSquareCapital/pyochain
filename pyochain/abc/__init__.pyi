@@ -18,11 +18,12 @@ The mixins are simple, implementation-agnostic classes that can be added to any 
 from ._collection import PyoCollection, PyoContainer, PyoSized
 from ._iterable import PyoIterable
 from ._iterator import PyoIterator
-from ._mappings import PyoMapping, PyoMappingView, PyoMutableMapping
+from ._mappings import PyoMapping, PyoMutableMapping
 from ._mixins import Checkable, Fluent, Pipe, Tap
+from ._mutable_set import PyoMutableSet
 from ._sequences import PyoMutableSequence, PyoReversible, PyoSequence
-from ._sets import PyoMutableSet, PyoSet
-from ._views import PyoItemsView, PyoKeysView, PyoValuesView
+from ._sets import PyoSet
+from ._views import PyoItemsView, PyoKeysView, PyoMappingView, PyoValuesView
 
 __all__ = [
     "Checkable",

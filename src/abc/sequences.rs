@@ -8,7 +8,7 @@ use pyo3::{
 use tap::Pipe;
 
 use crate::{
-    abc::PyoCollection,
+    abc::{PyoCollection, PyoIterable},
     core::{PyNull, PySome, iterators},
     traits::PyoABC,
 };
@@ -16,7 +16,24 @@ use pyo3_ext::{
     args::{Args, Kwargs},
     pylibs,
 };
-// TODO: check difference once we had `sequence` to pypub struct macro
+
+#[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoIterable)]
+pub struct PyoReversible;
+
+#[pymethods]
+impl PyoReversible {
+    #[pyo3(signature = (*_args, **_kwargs))]
+    #[new]
+    fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
+        PyoIterable::build_init().add_subclass(Self)
+    }
+    /// We use unsafe code here because calling `reversed` with `PyOnceLock` pattern is 2x slower than pure python for some reason.
+    fn rev(slf: Bound<'_, Self>) -> PyResult<Bound<'_, iterators::Iter>> {
+        slf.as_any()
+            .pipe(pylibs::builtins::reversed)
+            .pipe(iterators::Iter::new)
+    }
+}
 #[pyclass(module = "pyochain.abc",subclass,  frozen, generic, sequence, extends=PyoCollection)]
 pub struct PyoSequence;
 #[pymethods]

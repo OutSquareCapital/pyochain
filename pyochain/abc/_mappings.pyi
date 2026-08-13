@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from collections.abc import Iterable, Mapping, MappingView, MutableMapping, Sized
+from collections.abc import Iterable, Mapping, MutableMapping
 from typing import Generic, TypeVar, overload, override
 
 from _typeshed import SupportsGetItem, SupportsKeysAndGetItem
@@ -9,20 +9,8 @@ from pyochain.abc import (
     PyoCollection,
     PyoItemsView,
     PyoKeysView,
-    PyoSized,
     PyoValuesView,
 )
-
-class PyoMappingView(MappingView, PyoSized):
-    """Extends both `MappingView` from `collections.abc` and `PyoCollection[T]`.
-
-    Is the base class shared by the views returned by `PyoMapping` methods.
-    """
-
-    _mapping: Sized
-    def __init__(self, mapping: Sized) -> None: ...
-    @override
-    def __len__(self) -> int: ...
 
 # NOTE: We are forced to use legacy `TypeVar` syntax here due to concrete limitations of the typing system. Typeshed explicitely ignore some typing warnings.
 # https://github.com/python/typing/pull/273
