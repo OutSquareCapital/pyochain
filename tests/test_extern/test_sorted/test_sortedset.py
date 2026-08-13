@@ -1,5 +1,7 @@
 """Adapted from `sortedcontainers` test suite.
 
+Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
+
 Original source:
 https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_coverage_sortedset.py
 """
@@ -12,7 +14,9 @@ from typing import override
 import pytest
 
 from pyochain.collections import SortedKeySet, SortedSet
-from pyochain.collections._sorted import check_sorted_set
+from pyochain.collections._sorted import (  # ruff: ignore[import-private-name]
+    check_sorted_set,
+)
 
 
 def modulo(value: int) -> int:

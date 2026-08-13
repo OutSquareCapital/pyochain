@@ -1,5 +1,7 @@
 """Adapted from `sortedcontainers` test suite.
 
+Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
+
 Original source:
 https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_coverage_sorteddict.py
 """

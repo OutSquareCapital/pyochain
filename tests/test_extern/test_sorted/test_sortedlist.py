@@ -1,5 +1,7 @@
 """Adapted from `sortedcontainers` test suite.
 
+Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
+
 Original source:
 https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_coverage_sortedlist.py
 """
@@ -13,7 +15,10 @@ from typing import TYPE_CHECKING
 import pytest
 
 from pyochain.collections import SortedList
-from pyochain.collections._sorted import assert_sorted_list_empty, check_sorted_list
+from pyochain.collections._sorted import (  # ruff: ignore[import-private-name]
+    assert_sorted_list_empty,
+    check_sorted_list,
+)
 
 if TYPE_CHECKING:
     from _typeshed import SupportsRichComparison

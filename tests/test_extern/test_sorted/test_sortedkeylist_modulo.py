@@ -1,5 +1,7 @@
 """Adapted from `sortedcontainers` test suite.
 
+Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
+
 Original source:
 https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_coverage_sortedkeylist_modulo.py
 """
@@ -13,7 +15,10 @@ import pytest
 
 from pyochain.abc import PyoMutableSequence
 from pyochain.collections import SortedKeyList, SortedList
-from pyochain.collections._sorted import assert_sorted_list_empty, check_sorted_key_list
+from pyochain.collections._sorted import (  # ruff: ignore[import-private-name]
+    assert_sorted_list_empty,
+    check_sorted_key_list,
+)
 
 if TYPE_CHECKING:
     from _typeshed import SupportsRichComparison
