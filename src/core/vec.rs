@@ -6,7 +6,7 @@ use crate::{
 
 use either::Either;
 use pyo3::{
-    PyTypeInfo, intern,
+    PyTypeInfo, ffi, intern,
     prelude::*,
     pyclass_init::PyClassInitializer,
     types::{PyDict, PyInt, PyIterator, PyList, PyNotImplemented, PySlice, PyTuple},
@@ -218,8 +218,13 @@ impl PyoVec {
         Ok(slf)
     }
 
-    pub fn insert(&self, index: usize, value: &Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner_bind(value.py()).insert(index, value)
+    pub fn insert(&self, index: isize, value: &Bound<'_, PyAny>) -> PyResult<()> {
+        let py = value.py();
+        let list = self.inner_bind(value.py()).as_ptr();
+        match unsafe { ffi::PyList_Insert(list, index as ffi::Py_ssize_t, value.as_ptr()) } {
+            -1 => Err(PyErr::fetch(py)),
+            _ => Ok(()),
+        }
     }
 
     pub fn clear(&self, py: Python<'_>) -> () {
