@@ -76,39 +76,23 @@ fn show_output(failures: &[Failure], pyclasses: &[PyClass]) {
             pyclasses.len()
         )
     } else {
-        anstream::eprintln!("\n============================================================");
+        let add_sep = || {
+            anstream::eprintln!("\n============================================================");
+        };
+        add_sep();
+        failures
+            .iter()
+            .enumerate()
+            .for_each(|(index, failure)| failure.show(index));
+        add_sep();
         anstream::eprintln!(
             "{}: {} issue(s) found in {} pyclass declaration(s).",
             "Pyclass / stub consistency check failed".red().bold(),
             failures.len().red().bold(),
             pyclasses.len().cyan(),
         );
-        anstream::eprintln!("============================================================");
-        failures.iter().enumerate().for_each(|(index, failure)| {
-            anstream::eprintln!(
-                "\n{:>3}. {}",
-                index + 1,
-                failure.kind.to_string().yellow().bold(),
-            );
-            anstream::eprintln!(
-                "     Rust declaration: `{}`",
-                failure.pyclass.rust_name.cyan()
-            );
-            anstream::eprintln!(
-                "     Python class:      `{}`",
-                failure.pyclass.python_name.cyan()
-            );
-            anstream::eprintln!(
-                "     Rust location:     {}:{}",
-                failure.pyclass.source.display().to_string().yellow(),
-                failure.pyclass.line.to_string().yellow(),
-            );
-            failure
-                .message
-                .lines()
-                .for_each(|line| anstream::eprintln!("     {line}"));
-        });
-        anstream::eprintln!("\n============================================================");
+
+        add_sep();
         process::exit(1);
     }
 }
@@ -254,18 +238,13 @@ fn get_stubs(stub_root: &Path) -> Vec<Stub> {
 }
 
 fn stub_module(path: &Path, stub_root: &Path) -> String {
-    let components = path
+    let module_parts = path
         .strip_prefix(stub_root)
+        .unwrap()
+        .parent()
         .unwrap()
         .components()
         .map(|component| component.as_os_str().to_str().unwrap())
-        .collect::<Vec<_>>();
-    let module_parts = components[..components.len() - 1]
-        .iter()
-        .chain(std::iter::once(
-            &components[components.len() - 1].trim_end_matches(".pyi"),
-        ))
-        .copied()
         .collect::<Vec<_>>()
         .join(".");
     format!("pyochain.{module_parts}")
@@ -408,5 +387,25 @@ impl Failure {
                 stub_match.line,
             ),
         )
+    }
+    fn show(&self, index: usize) {
+        anstream::eprintln!(
+            "\n{:>3}. {}",
+            index + 1,
+            self.kind.to_string().yellow().bold(),
+        );
+        anstream::eprintln!("     Rust declaration: `{}`", self.pyclass.rust_name.cyan());
+        anstream::eprintln!(
+            "     Python class:      `{}`",
+            self.pyclass.python_name.cyan()
+        );
+        anstream::eprintln!(
+            "     Rust location:     {}:{}",
+            self.pyclass.source.display().to_string().yellow(),
+            self.pyclass.line.to_string().yellow(),
+        );
+        self.message
+            .lines()
+            .for_each(|line| anstream::eprintln!("     {line}"));
     }
 }
