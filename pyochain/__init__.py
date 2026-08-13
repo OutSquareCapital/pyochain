@@ -1,6 +1,6 @@
 """pyochain - A functional programming library for Python."""
 
-from .core import (
+from .pyochain import (
     NONE,
     Dict,
     Err,
