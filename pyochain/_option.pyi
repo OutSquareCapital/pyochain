@@ -542,21 +542,18 @@ class OptionType[T](Pipe):
 
         Args:
             optb (Option[U]): The option to return if the original option is `NONE`
+
         Returns:
             Option[U]: `NONE` if the original option is `NONE`, otherwise `optb`.
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> Some(2).and_(NONE)
-            NONE
-            >>> NONE.and_(Some("foo"))
-            NONE
-            >>> Some(2).and_(Some("foo"))
-            Some('foo')
-            >>> NONE.and_(NONE)
-            NONE
+            from pyochain import Some, NONE
 
+            assert Some(2).and_(NONE).is_none()
+            assert NONE.and_(Some("foo")).is_none()
+            assert Some(2).and_(Some("foo")) == Some("foo")
+            assert NONE.and_(NONE).is_none()
             ```
         """
     def or_[S](self, optb: Option[S]) -> Option[T | S]:
