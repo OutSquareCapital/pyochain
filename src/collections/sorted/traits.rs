@@ -1143,6 +1143,17 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
                     d.update(kw.as_mapping())?;
                     d
                 }
+                (Some(Case::PyMapping(m)), None) => {
+                    let d = PyDict::new(py);
+                    d.update(&m)?;
+                    d
+                }
+                (Some(Case::PyMapping(m)), Some(kw)) => {
+                    let d = PyDict::new(py);
+                    d.update(&m)?;
+                    d.update(kw.as_mapping())?;
+                    d
+                }
                 (Some(iterable), Some(kw)) => {
                     let d = PyDict::from_sequence(&iterable)?;
                     d.update(kw.as_mapping())?;
