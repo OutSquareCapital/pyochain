@@ -63,22 +63,22 @@ where
     }
 }
 
-#[pyclass(frozen, generic, extends = abc::PyoSequence, sequence)]
+#[pyclass(module = "pyochain.collections", frozen, generic, extends = abc::PyoSequence, sequence)]
 pub struct SortedKeysView(Py<SortedDict>);
 
-#[pyclass(frozen, generic, extends = abc::PyoSequence, sequence)]
+#[pyclass(module = "pyochain.collections", frozen, generic, extends = abc::PyoSequence, sequence)]
 pub struct SortedByKeyKeysView(Py<SortedKeyDict>);
 
-#[pyclass(frozen, generic, extends = abc::PyoSequence, sequence)]
+#[pyclass(module = "pyochain.collections", frozen, generic, extends = abc::PyoSequence, sequence)]
 pub struct SortedValuesView(Py<SortedDict>);
 
-#[pyclass(frozen, generic, extends = abc::PyoSequence, sequence)]
+#[pyclass(module = "pyochain.collections", frozen, generic, extends = abc::PyoSequence, sequence)]
 pub struct SortedByKeyValuesView(Py<SortedKeyDict>);
 
-#[pyclass(frozen, generic, extends = abc::PyoSequence, sequence)]
+#[pyclass(module = "pyochain.collections", frozen, generic, extends = abc::PyoSequence, sequence)]
 pub struct SortedItemsView(Py<SortedDict>);
 
-#[pyclass(frozen, generic, extends = abc::PyoSequence, sequence)]
+#[pyclass(module = "pyochain.collections", frozen, generic, extends = abc::PyoSequence, sequence)]
 pub struct SortedByKeyItemsView(Py<SortedKeyDict>);
 
 macro_rules! impl_mapping_view_for_sorted_view {
