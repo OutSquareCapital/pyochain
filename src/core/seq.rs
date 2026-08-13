@@ -40,7 +40,7 @@ impl Seq {
     }
 
     fn __iter__<'py>(&self, py: Python<'py>) -> Bound<'py, PyIterator> {
-        self.inner_bind(py).try_iter().unwrap()
+        self.inner_bind(py).iter_py()
     }
 
     fn __len__(&self, py: Python) -> usize {

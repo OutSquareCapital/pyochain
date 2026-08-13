@@ -55,7 +55,7 @@ impl Dict {
     }
 
     fn __iter__(slf: Bound<'_, Self>) -> Bound<'_, PyIterator> {
-        slf.get().inner_bind(slf.py()).try_iter().unwrap()
+        slf.get().inner_bind(slf.py()).iter_py()
     }
 
     fn __contains__(&self, key: Bound<'_, PyAny>) -> PyResult<bool> {

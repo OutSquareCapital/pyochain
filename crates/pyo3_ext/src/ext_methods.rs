@@ -7,7 +7,7 @@ use pyo3::{
     prelude::*,
     types::{
         PyBool, PyDict, PyDictItems, PyDictKeys, PyDictValues, PyFrozenSet, PyInt, PyIterator,
-        PyList, PyRange, PySet, PyTuple,
+        PyList, PyRange, PySequence, PySet, PyTuple,
     },
 };
 use tap::prelude::*;
@@ -32,6 +32,41 @@ impl ABCRegister<'_> for PyIterable {}
 impl ABCRegister<'_> for PyMutableSet {}
 impl ABCRegister<'_> for PyIterator {}
 impl ABCRegister<'_> for PyMappingView {}
+
+/// Trait for types that we know can safely be converted into a `PyIterator` (i.e. they implement the `__iter__` method in Python).
+pub trait IntoPyIterator<'py> {
+    /// Returns a `PyIterator` with `unwrap_unchecked`, as we know that the type implements `__iter__` and thus can be safely converted into a `PyIterator`.
+    fn iter_py(&self) -> Bound<'py, PyIterator>;
+}
+impl<'py> IntoPyIterator<'py> for Bound<'py, PyIterator> {
+    fn iter_py(&self) -> Bound<'py, PyIterator> {
+        self.to_owned()
+    }
+}
+macro_rules! impl_into_py_iterator_for_iterable {
+    ($($t:ty),* $(,)?) => {
+        $(
+            impl<'py> IntoPyIterator<'py> for Bound<'py, $t> {
+                fn iter_py(&self) -> Bound<'py, PyIterator> {
+                    unsafe { self.try_iter().unwrap_unchecked() }
+                }
+            }
+        )*
+    };
+}
+impl_into_py_iterator_for_iterable!(
+    PyTuple,
+    PyList,
+    PySet,
+    PyDict,
+    PyFrozenSet,
+    PyRange,
+    PyDeque,
+    PyDictKeys,
+    PyDictValues,
+    PyDictItems,
+    PySequence,
+);
 pub trait PySequenceExtMethods<'py> {
     fn count(&self, value: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyInt>>;
 

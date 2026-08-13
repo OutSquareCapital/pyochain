@@ -158,8 +158,7 @@ impl SliceView {
             .map(|o| {
                 let elem_eq = self
                     .current_range(py)?
-                    .try_iter()
-                    .unwrap()
+                    .iter_py()
                     .map(|x| seq.get_item(x?.extract::<usize>()?))
                     .zip(o.try_iter().unwrap())
                     .map(|(a, b)| a?.eq(b?))
@@ -257,7 +256,7 @@ impl SliceView {
                             );
                             Err(PyValueError::new_err(msg))
                         } else {
-                            tr.try_iter()?.zip(values).try_for_each(|(i, v)| {
+                            tr.iter_py().zip(values).try_for_each(|(i, v)| {
                                 seq.set_item(i?.extract::<usize>()?, v)?;
                                 Ok::<(), PyErr>(())
                             })
