@@ -50,6 +50,11 @@ enum FailureKind {
     ModuleMismatch,
 }
 fn main() {
+    if std::env::var_os("CARGO_FEATURE_STUB_CHECK").is_some() {
+        run_stub_check();
+    }
+}
+fn run_stub_check() {
     anstream::ColorChoice::Always.write_global();
 
     println!("cargo:rerun-if-changed=src");
@@ -63,7 +68,6 @@ fn main() {
     let failures = get_failures(&pyclasses, &stubs, &stub_root);
     show_output(&failures, &pyclasses);
 }
-
 fn show_output(failures: &[Failure], pyclasses: &[PyClass]) {
     if failures.is_empty() {
         println!(
@@ -203,7 +207,10 @@ fn get_stubs(stub_root: &Path) -> Vec<Stub> {
                 .lines()
                 .enumerate()
                 .filter_map(|(line_index, line)| {
-                    let declaration = line.trim_start().strip_prefix("class ")?;
+                    let declaration = line
+                        .trim_start()
+                        .strip_prefix("class ")
+                        .or_else(|| line.trim_start().strip_prefix("type "))?;
                     let name = declaration
                         .chars()
                         .take_while(|character| {

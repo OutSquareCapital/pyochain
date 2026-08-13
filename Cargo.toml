@@ -12,6 +12,9 @@
     crate-type = ["cdylib"]
     name       = "pyochain"
 
+[features]
+    stub-check = []
+
 [dependencies]
     color-eyre = "0.6.5"
     either = "1.16.0"
