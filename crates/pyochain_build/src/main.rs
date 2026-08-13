@@ -1,5 +1,4 @@
 use std::path::PathBuf;
-
 fn main() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     match std::env::args().nth(1).as_deref() {
