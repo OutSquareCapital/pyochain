@@ -10,8 +10,7 @@ use tap::Pipe;
 
 use crate::{
     abc::{PyoCollection, PyoItemsView, PyoKeysView, PyoValuesView},
-    option::{PyNull, PySome},
-    result::{PyoErr, PyoOk},
+    core::{PyNull, PySome, PyoErr, PyoOk},
     traits::PyoABC,
 };
 use pyo3_ext::{

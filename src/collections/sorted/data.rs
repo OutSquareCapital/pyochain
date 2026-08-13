@@ -14,8 +14,7 @@ use crate::{
         bounds::{Bounds, Pos},
         traits::BaseSortedList,
     },
-    iterators,
-    pyovec::PyoVec,
+    core::{PyoVec, iterators},
     traits::IntoPyochain,
 };
 

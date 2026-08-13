@@ -1,8 +1,10 @@
 use crate::{
+    core::{
+        iterators,
+        option::{PyNull, PySome},
+    },
     errors::ResultUnwrapError,
     hasher::hash_fn,
-    iterators,
-    option::{PyNull, PySome},
 };
 use pyderive::*;
 use pyo3::{

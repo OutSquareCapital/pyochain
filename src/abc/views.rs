@@ -8,8 +8,7 @@ use tap::Pipe;
 
 use crate::{
     abc::{Checkable, PyoSet, PyoSized, traits::MappingView},
-    iterators,
-    sets::SetMut,
+    core::{SetMut, iterators},
     traits::{IntoPyochain, PyoABC},
 };
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSized)]

@@ -1,7 +1,7 @@
 use crate::{
     abc::{self},
+    core::SetMut,
     display::get_repr,
-    sets::SetMut,
     traits::{IntoPyochain, PyWrapper, PyoABC},
 };
 use either::Either;

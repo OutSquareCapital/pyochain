@@ -1,13 +1,15 @@
 use crate::{
     abc,
     collections::{self, sorted},
-    dict, iterators, option, result, sliceview,
+    core::{
+        Dict, PyNull, PySome, PyoErr, PyoOk, SliceViewIterator, SliceViewReverseIterator, iterators,
+    },
 };
 use pyo3::{PyClass, PyTypeInfo, prelude::*, types::DerefToPyAny};
 use pyo3_ext;
 use pyochain_macros::py_abc;
 use tap::prelude::*;
-#[py_abc(dict::Dict, collections::PyoCounter)]
+#[py_abc(Dict, collections::PyoCounter)]
 pub trait ImplPyoReversible {
     fn rev<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, iterators::Iter>>;
     fn __reversed__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, iterators::Iter>> {
@@ -15,8 +17,8 @@ pub trait ImplPyoReversible {
     }
 }
 #[py_abc(
-    sliceview::SliceViewIterator,
-    sliceview::SliceViewReverseIterator,
+    SliceViewIterator,
+    SliceViewReverseIterator,
     iterators::OnceWith,
     iterators::Tail,
     iterators::SequenceIterator,
@@ -48,8 +50,8 @@ pub trait ImplPyoIterator: Sized {
         slf
     }
 }
-impl ImplPyoIterator for sliceview::SliceViewIterator {}
-impl ImplPyoIterator for sliceview::SliceViewReverseIterator {}
+impl ImplPyoIterator for SliceViewIterator {}
+impl ImplPyoIterator for SliceViewReverseIterator {}
 impl ImplPyoIterator for iterators::OnceWith {}
 impl ImplPyoIterator for iterators::Tail {}
 impl ImplPyoIterator for iterators::SequenceIterator {}
@@ -150,10 +152,10 @@ pub trait MappingView:
 }
 impl_tap!(abc::Fluent, abc::PyoTap, abc::PyoIterable);
 impl_py_pipe!(
-    option::PySome,
-    option::PyNull,
-    result::PyoOk,
-    result::PyoErr,
+    PySome,
+    PyNull,
+    PyoOk,
+    PyoErr,
     abc::Fluent,
     abc::PyoPipe,
     abc::PyoIterable,

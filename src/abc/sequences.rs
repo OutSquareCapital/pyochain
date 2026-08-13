@@ -9,8 +9,7 @@ use tap::Pipe;
 
 use crate::{
     abc::PyoCollection,
-    iterators,
-    option::{PyNull, PySome},
+    core::{PyNull, PySome, iterators},
     traits::PyoABC,
 };
 use pyo3_ext::{

@@ -1,6 +1,6 @@
 use crate::{
     abc::{self, traits::ImplPyoReversible},
-    iterators,
+    core::iterators,
     traits::{PyWrapper, PyoABC},
 };
 use either::Either;

@@ -1,17 +1,9 @@
 mod abc;
 mod collections;
-mod dict;
+mod core;
 mod display;
 mod errors;
 mod hasher;
-mod iterators;
-mod option;
-mod pyovec;
-mod range;
-mod result;
-mod seq;
-mod sets;
-mod sliceview;
 mod traits;
 use crate::collections::sorted::debug;
 use pyo3::{
@@ -45,30 +37,30 @@ fn pyochain(m: &Bound<'_, PyModule>) -> PyResult<()> {
     register_all(py)
 }
 fn populate_core(m: &Bound<'_, PyModule>, py: Python<'_>) -> PyResult<()> {
-    option::PyNull::init(py)?;
-    m.add_class::<option::PyochainOption>()?;
-    m.add_class::<option::PyochainOptionType>()?;
-    m.add_class::<option::PySome>()?;
-    m.add_class::<option::PyNull>()?;
-    m.add_function(wrap_pyfunction!(option::then_if_some, m)?)?;
-    m.add_function(wrap_pyfunction!(option::then_if_true, m)?)?;
-    m.add_function(wrap_pyfunction!(option::option, m)?)?;
-    m.add("NONE", option::PyNull::get(py))?;
-    m.add_class::<result::PyoOk>()?;
-    m.add_class::<result::PyoErr>()?;
+    core::PyNull::init(py)?;
+    m.add_class::<core::PyochainOption>()?;
+    m.add_class::<core::PyochainOptionType>()?;
+    m.add_class::<core::PySome>()?;
+    m.add_class::<core::PyNull>()?;
+    m.add_function(wrap_pyfunction!(core::then_if_some, m)?)?;
+    m.add_function(wrap_pyfunction!(core::then_if_true, m)?)?;
+    m.add_function(wrap_pyfunction!(core::new_option, m)?)?;
+    m.add("NONE", core::PyNull::get(py))?;
+    m.add_class::<core::PyoOk>()?;
+    m.add_class::<core::PyoErr>()?;
     m.add_class::<errors::OptionUnwrapError>()?;
     m.add_class::<errors::ResultUnwrapError>()?;
-    m.add_class::<result::PyochainResult>()?;
-    m.add_class::<result::PyochainResultType>()?;
-    m.add_class::<range::Range>()?;
-    m.add_class::<seq::Seq>()?;
-    m.add_class::<pyovec::PyoVec>()?;
-    m.add_class::<sets::Set>()?;
-    m.add_class::<sets::SetMut>()?;
-    m.add_class::<dict::Dict>()?;
-    m.add_class::<iterators::Iter>()?;
-    m.add_class::<iterators::Peekable>()?;
-    m.add_class::<sliceview::SliceView>()
+    m.add_class::<core::PyochainResult>()?;
+    m.add_class::<core::PyochainResultType>()?;
+    m.add_class::<core::Range>()?;
+    m.add_class::<core::Seq>()?;
+    m.add_class::<core::PyoVec>()?;
+    m.add_class::<core::Set>()?;
+    m.add_class::<core::SetMut>()?;
+    m.add_class::<core::Dict>()?;
+    m.add_class::<core::iterators::Iter>()?;
+    m.add_class::<core::iterators::Peekable>()?;
+    m.add_class::<core::SliceView>()
 }
 fn populate_abc(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<abc::Checkable>()?;

@@ -2,8 +2,7 @@ use std::collections::VecDeque;
 
 use crate::{
     abc,
-    option::{PyNull, PySome, option},
-    result::{PyoErr, PyoOk},
+    core::{PyNull, PySome, PyoErr, PyoOk, PyochainOption},
     traits::{PyWrapper, PyoABC},
 };
 use pyo3::{
@@ -717,7 +716,7 @@ impl ZipLongest {
                 // SAFETY: we know the passed `PyIterator` is from `itertools::zip_longest`, which yields tuples, so we can safely cast the result to a `PyTuple`.
                 .map(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })?
                 .iter()
-                .map(|x| option(&x))
+                .map(|x| PyochainOption::new(&x))
                 .collect::<PyResult<Vec<_>>>()
                 .and_then(|v| PyTuple::new(py, v))
                 .map(Bound::unbind)

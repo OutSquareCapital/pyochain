@@ -1,7 +1,7 @@
+use crate::abc;
+use crate::core::{PyoErr, PyoOk, iterators};
 use crate::errors::OptionUnwrapError;
 use crate::hasher::hash_fn;
-use crate::result::{PyoErr, PyoOk};
-use crate::{abc, iterators};
 use pyo3::exceptions::PyTypeError;
 use pyo3::{IntoPyObjectExt, PyTypeInfo};
 use pyo3::{
@@ -31,36 +31,53 @@ impl IsNull<'_> for &Bound<'_, PyAny> {
 /// Option[T] - Generic Option type with Some and None variants for Python typing
 #[pyclass(module = "pyochain._option", frozen, name = "Option", generic)]
 pub struct PyochainOption;
+
+impl PyochainOption {
+    pub fn new(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+        let py = value.py();
+        if value.is_none() {
+            PyNull::get_any_ok(py)
+        } else {
+            value.to_owned().unbind().pipe(PySome::new).into_py_any(py)
+        }
+    }
+
+    pub fn then_if_some(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+        let py = value.py();
+        if value.is_truthy()? {
+            value.to_owned().unbind().pipe(PySome::new).into_py_any(py)
+        } else {
+            PyNull::get_any_ok(py)
+        }
+    }
+    pub fn then_if_true(
+        value: &Bound<'_, PyAny>,
+        predicate: &Bound<'_, PyAny>,
+    ) -> PyResult<Py<PyAny>> {
+        let py = value.py();
+        if predicate.call1((value,))?.is_truthy()? {
+            value.to_owned().unbind().pipe(PySome::new).into_py_any(py)
+        } else {
+            PyNull::get_any_ok(py)
+        }
+    }
+}
+
 #[pyclass(module = "pyochain._option", frozen, name = "OptionType", generic)]
 pub struct PyochainOptionType;
-#[pyfunction]
-pub fn option(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-    let py = value.py();
-    if value.is_none() {
-        PyNull::get_any_ok(py)
-    } else {
-        value.to_owned().unbind().pipe(PySome::new).into_py_any(py)
-    }
+#[pyfunction(name = "option")]
+pub fn new_option(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+    PyochainOption::new(value)
 }
 
 #[pyfunction]
 pub fn then_if_some(value: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-    let py = value.py();
-    if value.is_truthy()? {
-        value.to_owned().unbind().pipe(PySome::new).into_py_any(py)
-    } else {
-        PyNull::get_any_ok(py)
-    }
+    PyochainOption::then_if_some(value)
 }
 
 #[pyfunction(signature = (value, *, predicate))]
 pub fn then_if_true(value: &Bound<'_, PyAny>, predicate: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
-    let py = value.py();
-    if predicate.call1((value,))?.is_truthy()? {
-        value.to_owned().unbind().pipe(PySome::new).into_py_any(py)
-    } else {
-        PyNull::get_any_ok(py)
-    }
+    PyochainOption::then_if_true(value, predicate)
 }
 
 #[pyclass(module = "pyochain._option", frozen, name = "Some", generic)]

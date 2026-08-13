@@ -11,7 +11,7 @@ use crate::{
             SortedCollection, SortedListGetters, try_lock_recover,
         },
     },
-    iterators,
+    core::iterators,
     traits::PyoABC,
 };
 use pyo3::{IntoPyObjectExt, PyTypeInfo, prelude::*, types::PyTuple};

@@ -1,6 +1,6 @@
 use crate::{
-    abc, iterators,
-    pyovec::PyoVec,
+    abc,
+    core::{PyoVec, iterators},
     traits::{PyWrapper, PyoABC},
 };
 use either::Either;

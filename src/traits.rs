@@ -9,13 +9,7 @@ use pyo3::{
 
 use crate::{
     abc, collections,
-    dict::Dict,
-    iterators::Iter,
-    pyovec::PyoVec,
-    range::Range,
-    seq::Seq,
-    sets::{Set, SetMut},
-    sliceview::SliceView,
+    core::{Dict, PyoVec, Range, Seq, Set, SetMut, SliceView, iterators::Iter},
 };
 use pyo3_ext::types::PyDeque;
 pub trait PyWrapper<T: PyTypeInfo + DerefToPyAny>:

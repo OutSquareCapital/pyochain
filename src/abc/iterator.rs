@@ -11,10 +11,7 @@ use tap::Pipe;
 
 use crate::{
     abc::PyoIterable,
-    iterators,
-    option::{PyNull, PySome},
-    pyovec::PyoVec,
-    result::{PyoErr, PyoOk},
+    core::{PyNull, PySome, PyoErr, PyoOk, PyoVec, iterators},
     traits::{IntoPyochain, PyoABC},
 };
 use pyo3_ext::{prelude::*, pylibs, types::pyitertools};

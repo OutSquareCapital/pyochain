@@ -12,7 +12,7 @@ use crate::{
             views::BaseSortedView,
         },
     },
-    pyovec::PyoVec,
+    core::PyoVec,
     traits::IntoPyochain,
 };
 use either::Either;

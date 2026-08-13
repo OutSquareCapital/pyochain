@@ -1,6 +1,6 @@
 use crate::{
     abc::{Checkable, PyoIterable},
-    iterators,
+    core::iterators,
     traits::PyoABC,
 };
 use pyo3::prelude::*;

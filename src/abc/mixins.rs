@@ -1,7 +1,4 @@
-use crate::{
-    option::{PyNull, PySome},
-    result::{PyoErr, PyoOk},
-};
+use crate::core::{PyNull, PySome, PyoErr, PyoOk};
 use pyo3::{IntoPyObjectExt, prelude::*};
 use pyo3_ext::prelude::*;
 use tap::prelude::*;
