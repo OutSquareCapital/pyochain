@@ -2,14 +2,13 @@ mod abc;
 mod collections;
 mod core;
 mod display;
-mod errors;
 mod hasher;
 mod traits;
 use crate::collections::sorted::debug;
 use pyo3::{
     PyTypeInfo, intern,
     prelude::*,
-    types::{PyIterator, PyMapping, PySequence, PyType},
+    types::{PyDict, PyIterator, PyMapping, PySequence, PyType},
 };
 use pyo3_ext::{
     prelude::*,
@@ -19,25 +18,36 @@ use pyo3_ext::{
 fn pyochain(m: &Bound<'_, PyModule>) -> PyResult<()> {
     debug_backtrace();
     let py = m.py();
+    core::PyNull::init(py)?;
+    let core_mod = PyModule::new(py, "core")?;
     let abc_mod = PyModule::new(py, "abc")?;
     let collections_mod = PyModule::new(py, "collections")?;
     let sorted_mod = PyModule::new(py, "_sorted")?;
-    let sys_mods = py.import("sys")?.getattr("modules")?;
+    let modules = sys_modules(py)?;
+    m.add_submodule(&core_mod)?;
     m.add_submodule(&abc_mod)?;
     m.add_submodule(&collections_mod)?;
     collections_mod.add_submodule(&sorted_mod)?;
-    populate_core(m, py)?;
+    // NOTE: We need to do this two times to handle both relative imports, e.g `from pyochain import Vec` and direct import paths, e.g `import pyochain.core.Vec`
+    populate_core(&m, py)?;
+    populate_core(&core_mod, py)?;
     populate_abc(&abc_mod)?;
     populate_collections(&collections_mod)?;
     populate_sorted(&sorted_mod)?;
-    sys_mods.set_item("pyochain", m)?;
-    sys_mods.set_item("pyochain.abc", abc_mod)?;
-    sys_mods.set_item("pyochain.collections", collections_mod)?;
-    sys_mods.set_item("pyochain.collections._sorted", sorted_mod)?;
+    modules.set_item("pyochain", m)?;
+    modules.set_item("pyochain.core", core_mod)?;
+    modules.set_item("pyochain.abc", abc_mod)?;
+    modules.set_item("pyochain.collections", collections_mod)?;
+    modules.set_item("pyochain.collections._sorted", sorted_mod)?;
     register_all(py)
 }
+fn sys_modules(py: Python<'_>) -> PyResult<Bound<'_, PyDict>> {
+    py.import(intern!(py, "sys"))?
+        .getattr(intern!(py, "modules"))
+        .map(|x| unsafe { x.cast_into_unchecked::<PyDict>() })
+}
+
 fn populate_core(m: &Bound<'_, PyModule>, py: Python<'_>) -> PyResult<()> {
-    core::PyNull::init(py)?;
     m.add_class::<core::PyochainOption>()?;
     m.add_class::<core::PyochainOptionType>()?;
     m.add_class::<core::PySome>()?;
@@ -48,8 +58,8 @@ fn populate_core(m: &Bound<'_, PyModule>, py: Python<'_>) -> PyResult<()> {
     m.add("NONE", core::PyNull::get(py))?;
     m.add_class::<core::PyoOk>()?;
     m.add_class::<core::PyoErr>()?;
-    m.add_class::<errors::OptionUnwrapError>()?;
-    m.add_class::<errors::ResultUnwrapError>()?;
+    m.add_class::<core::OptionUnwrapError>()?;
+    m.add_class::<core::ResultUnwrapError>()?;
     m.add_class::<core::PyochainResult>()?;
     m.add_class::<core::PyochainResultType>()?;
     m.add_class::<core::Range>()?;

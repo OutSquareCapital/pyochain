@@ -46,7 +46,7 @@ def _generate_mds(module: ModuleType) -> None:
 
 
 def _write(name: str, cls: type) -> None:
-    cls_path = f"{cls.__module__}.{name}".replace(".rs.", ".")
+    cls_path = f"{cls.__module__}.{name}"
 
     path = Paths.DOCS_REF.value.joinpath(f"{name.lower()}.md")
     existed = True
