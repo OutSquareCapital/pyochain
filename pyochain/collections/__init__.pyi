@@ -5,11 +5,14 @@ from ._deque import Deque
 from ._heapq import Heap, HeapMax, HeapMin
 from ._sorted import (
     SortedDict,
+    SortedItemsView,
     SortedKeyDict,
     SortedKeyList,
     SortedKeySet,
+    SortedKeysView,
     SortedList,
     SortedSet,
+    SortedValuesView,
 )
 from ._stable_set import StableSet
 
@@ -20,10 +23,13 @@ __all__ = [
     "HeapMin",
     "PyoCounter",
     "SortedDict",
+    "SortedItemsView",
     "SortedKeyDict",
     "SortedKeyList",
     "SortedKeySet",
+    "SortedKeysView",
     "SortedList",
     "SortedSet",
+    "SortedValuesView",
     "StableSet",
 ]

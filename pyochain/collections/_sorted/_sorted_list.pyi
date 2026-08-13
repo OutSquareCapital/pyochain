@@ -638,10 +638,6 @@ class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
 
     Runtime complexity: `O(n*log(n))`
 
-    Args:
-        iterable (Iterable[T] | None): initial values (optional)
-        key (KeyFunc[T, OT]): function used to extract comparison key (optional)
-
     ```python
     from pyochain.collections import SortedKeyList
     from operator import neg
@@ -662,7 +658,16 @@ class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
     ) -> Self: ...
     def __new__(
         cls, iterable: Iterable[T] | None = None, key: KeyFunc[T, OT] | None = None
-    ) -> Self: ...
+    ) -> Self:
+        """Create a new sorted-key list.
+
+        Args:
+            iterable (Iterable[T] | None): initial values (optional)
+            key (KeyFunc[T, OT]): function used to extract comparison key (optional)
+
+        Returns:
+            Self: new sorted-key list
+        """
     @property
     def key(self) -> KeyFunc[T, OT]:
         """Function used to extract comparison key from values."""

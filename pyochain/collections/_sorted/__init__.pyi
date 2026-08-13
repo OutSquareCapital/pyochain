@@ -4,6 +4,7 @@ from ._core import BaseSortedListSet
 from ._sorted_dict import BaseSortedDict, SortedDict, SortedKeyDict
 from ._sorted_list import BaseSortedList, SortedKeyList, SortedList
 from ._sorted_set import BaseSortedSet, SortedKeySet, SortedSet
+from ._sorted_views import SortedItemsView, SortedKeysView, SortedValuesView
 
 def check_sorted_list(data: BaseSortedList[Any]) -> None: ...
 def check_sorted_set(data: BaseSortedSet[Any]) -> None: ...
@@ -17,11 +18,14 @@ __all__ = [
     "BaseSortedListSet",
     "BaseSortedSet",
     "SortedDict",
+    "SortedItemsView",
     "SortedKeyDict",
     "SortedKeyList",
     "SortedKeySet",
+    "SortedKeysView",
     "SortedList",
     "SortedSet",
+    "SortedValuesView",
     "assert_sorted_list_empty",
     "check_sorted_dict",
     "check_sorted_key_list",
