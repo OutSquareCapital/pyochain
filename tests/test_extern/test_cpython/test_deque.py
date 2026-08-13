@@ -30,11 +30,6 @@ if TYPE_CHECKING:
 BIG = 1_000
 
 
-def fail() -> Never:
-    raise SyntaxError
-    yield 1  # pyright: ignore[reportUnreachable]
-
-
 class BadCmp:  # ruff:ignore[eq-without-hash]
     @override
     def __eq__(self, other: object) -> Never:
@@ -300,6 +295,11 @@ def test_extend_left() -> None:
     assert list(d) == list(reversed(range(100)))
     with pytest.raises(SyntaxError):
         d.extend_left(fail())
+
+
+def fail() -> Never:
+    raise SyntaxError
+    yield 1  # pyright: ignore[reportUnreachable]
 
 
 def test_getitem() -> None:
