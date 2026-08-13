@@ -230,7 +230,7 @@ def test_setslice() -> None:
             assert a2 == a
 
     # pyrefly: ignore [unbound-name]
-    aa2: list[int] = a2[:]  # pyright: ignore[reportPossiblyUnboundVariable, reportUnknownVariableType]
+    aa2: Vec[int] = a2[:]  # pyright: ignore[reportPossiblyUnboundVariable, reportUnknownVariableType]
     aa2[:0] = [-2, -1]
     assert aa2 == [-2, -1, 0, 1]
     aa2[0:] = []

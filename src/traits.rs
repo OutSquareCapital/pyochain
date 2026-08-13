@@ -108,6 +108,14 @@ impl<'py> IntoPyochain<'py, PyoVec> for Bound<'py, PyList> {
         Bound::new(py, initializer)
     }
 }
+impl<'py> IntoPyochain<'py, Range> for Bound<'py, PyRange> {
+    #[inline]
+    fn into_pyochain(self) -> PyResult<Bound<'py, Range>> {
+        let py = self.py();
+        let initializer = abc::PyoSequence::build_init().add_subclass(Range(self.unbind()));
+        Bound::new(py, initializer)
+    }
+}
 impl<'py> IntoPyochain<'py, Set> for Bound<'py, PyFrozenSet> {
     #[inline]
     fn into_pyochain(self) -> PyResult<Bound<'py, Set>> {

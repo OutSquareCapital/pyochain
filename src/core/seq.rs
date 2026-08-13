@@ -3,13 +3,15 @@ use crate::{
     display::get_repr,
     traits::{IntoPyochain, PyWrapper, PyoABC},
 };
+use either::Either;
 use pyo3::{
     PyTypeInfo,
     prelude::*,
     pyclass_init::PyClassInitializer,
-    types::{PyInt, PyIterator, PySequence, PyTuple},
+    types::{PyInt, PyIterator, PySequence, PySlice, PyTuple},
 };
 use pyo3_ext::prelude::*;
+use pyochain_macros::try_cast;
 use tap::Pipe;
 
 #[pyclass(module = "pyochain.core",frozen, generic, sequence, extends=abc::PyoSequence)]
@@ -47,9 +49,21 @@ impl Seq {
         self.inner_bind(py).len()
     }
 
-    fn __getitem__<'py>(&self, index: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
-        let py = index.py();
-        self.inner_bind(py).as_any().get_item(index)
+    fn __getitem__<'py>(
+        &self,
+        index: Bound<'py, PyAny>,
+    ) -> PyResult<Either<Bound<'py, Self>, Bound<'py, PyAny>>> {
+        let tuple = self.inner_bind(index.py()).as_any();
+        try_cast! {
+            match index {
+                Case::PySlice(slice) => tuple
+                    .get_item(slice)
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyTuple>() })?
+                    .into_pyochain()
+                    .map(Either::Left),
+                object => tuple.get_item(object).map(Either::Right),
+            }
+        }
     }
 
     fn __eq__(&self, other: Bound<'_, PyAny>) -> bool {

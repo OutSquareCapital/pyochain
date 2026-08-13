@@ -1,6 +1,6 @@
 use crate::{
     abc::{self, traits::ImplPyoReversible},
-    core::iterators,
+    core::{PyoVec, iterators},
     traits::{IntoPyochain, PyWrapper, PyoABC},
 };
 use either::Either;
@@ -114,18 +114,19 @@ impl PyoCounter {
         &self,
         py: Python<'py>,
         n: Option<Bound<'py, PyInt>>,
-    ) -> PyResult<Bound<'py, PyList>> {
+    ) -> PyResult<Bound<'py, PyoVec>> {
         let items = self.inner_bind(py).items_view().iter_py();
         let getter = pylibs::operator::itemgetter(py, 1)?;
         match n {
-            None => pylibs::builtins::sorted_by(&items, true, &getter),
+            None => pylibs::builtins::sorted_by(&items, true, &getter)?.into_pyochain(),
             Some(n) => {
                 let kwargs = PyDict::new(py);
                 kwargs.set_item(intern!(py, "key"), getter)?;
                 py.import(intern!(py, "heapq"))?
                     .getattr(intern!(py, "nlargest"))?
                     .call((n, items), Some(&kwargs))
-                    .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?
+                    .into_pyochain()
             }
         }
     }

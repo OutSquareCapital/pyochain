@@ -7,7 +7,7 @@ use either::Either;
 use pyo3::{
     PyTypeInfo, intern,
     prelude::*,
-    types::{PyList, PyNotImplemented, PyTuple},
+    types::{PyList, PyNotImplemented, PySlice, PyTuple},
 };
 use pyo3_ext::{
     pylibs,
@@ -78,8 +78,21 @@ trait HeapType: Sized + PyWrapper<PyList> {
         self.inner_bind(py).len()
     }
 
-    fn __getitem__<'py>(&self, index: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
-        self.inner_bind(index.py()).as_any().get_item(index)
+    fn __getitem__<'py>(
+        &self,
+        index: Bound<'py, PyAny>,
+    ) -> PyResult<Either<Bound<'py, PyoVec>, Bound<'py, PyAny>>> {
+        let list = self.inner_bind(index.py()).as_any();
+        try_cast! {
+            match index {
+                Case::PySlice(slice) => list
+                    .get_item(slice)
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?
+                    .into_pyochain()
+                    .map(Either::Left),
+                object => list.get_item(object).map(Either::Right),
+            }
+        }
     }
 
     fn __setitem__(&self, index: Bound<'_, PyAny>, value: Bound<'_, PyAny>) -> PyResult<()> {

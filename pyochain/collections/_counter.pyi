@@ -3,6 +3,7 @@ from typing import Any, Self, final, overload, override
 
 from _typeshed import SupportsItems, SupportsKeysAndGetItem
 
+from pyochain import Vec
 from pyochain.abc import PyoIterator, PyoMutableMapping, PyoReversible
 
 # TODO: once in stubs, add overload to new when kwargs is passed to infer PyoCounter[str]
@@ -128,7 +129,7 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
             int: The sum of all counts in the PyoCounter.
         """
 
-    def most_common(self, n: int | None = None) -> list[tuple[T, int]]:
+    def most_common(self, n: int | None = None) -> Vec[tuple[T, int]]:
         """List the n most common elements and their counts from the most common to the least.
 
         ```python
@@ -142,7 +143,7 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
             n (int | None): The number of most common elements to return. If `None`, return all elements.
 
         Returns:
-            list[tuple[T, int]]: A list of tuples containing the n most common elements and their counts.
+            Vec[tuple[T, int]]: A list of tuples containing the n most common elements and their counts.
         """
     def elements(self) -> PyoIterator[T]:
         """Iterator over elements repeating each as many times as its count.

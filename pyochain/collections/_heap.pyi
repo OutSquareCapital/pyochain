@@ -4,6 +4,7 @@ from typing import Self, SupportsIndex, overload, override
 
 from _typeshed import SupportsRichComparison
 
+from pyochain import Vec
 from pyochain.abc import PyoIterator, PyoMutableSequence
 
 class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):
@@ -27,11 +28,11 @@ class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):
     @overload
     def __getitem__(self, i: SupportsIndex, /) -> T: ...
     @overload
-    def __getitem__(self, s: slice[SupportsIndex | None], /) -> list[T]: ...
+    def __getitem__(self, s: slice[SupportsIndex | None], /) -> Vec[T]: ...
     @override
     def __getitem__(
         self, index: SupportsIndex | slice[SupportsIndex | None]
-    ) -> T | list[T]: ...
+    ) -> T | Vec[T]: ...
     @overload
     def __setitem__(self, index: int, value: T) -> None: ...
     @overload

@@ -1,13 +1,15 @@
 use crate::{
     abc,
-    traits::{PyWrapper, PyoABC},
+    traits::{IntoPyochain, PyWrapper, PyoABC},
 };
+use either::Either;
 use pyo3::{
     prelude::*,
     pyclass_init::PyClassInitializer,
-    types::{PyInt, PyIterator, PyRange, PyRangeMethods, PySequence},
+    types::{PyInt, PyIterator, PyRange, PyRangeMethods, PySequence, PySlice},
 };
 use pyo3_ext::{prelude::*, pylibs};
+use pyochain_macros::try_cast;
 use tap::Pipe;
 
 #[pyclass(module = "pyochain.core",frozen, sequence, extends=abc::PyoSequence)]
@@ -47,9 +49,22 @@ impl Range {
             .unwrap()
     }
 
-    fn __getitem__<'py>(&self, index: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+    fn __getitem__<'py>(
+        &self,
+        index: &Bound<'py, PyAny>,
+    ) -> PyResult<Either<Bound<'py, Self>, Bound<'py, PyAny>>> {
         let py = index.py();
-        self.inner_bind(py).get_item(index)
+        let range = self.inner_bind(py);
+        try_cast! {
+            match index {
+                Case::PySlice(slice) => range
+                    .get_item(slice)
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyRange>() })?
+                    .into_pyochain()
+                    .map(Either::Left),
+                object => range.get_item(object).map(Either::Right),
+            }
+        }
     }
 
     fn __repr__(slf: Bound<'_, Self>) -> String {

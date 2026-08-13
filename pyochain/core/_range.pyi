@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from typing import SupportsIndex, final, overload, override
+from typing import Self, SupportsIndex, final, overload, override
 
 from pyochain.abc import PyoSequence
 
@@ -42,10 +42,10 @@ class Range(PyoSequence[int]):
     @overload
     def __getitem__(self, key: SupportsIndex, /) -> int: ...
     @overload
-    def __getitem__(self, key: slice[SupportsIndex | None], /) -> range: ...
+    def __getitem__(self, key: slice[SupportsIndex | None], /) -> Self: ...
     @override
     def __getitem__(
         self, index: SupportsIndex | slice[SupportsIndex | None]
-    ) -> int | range: ...
+    ) -> int | Self: ...
     @override
     def __reversed__(self) -> Iterator[int]: ...

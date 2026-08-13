@@ -9,7 +9,7 @@ use pyo3::{
     PyTypeInfo, intern,
     prelude::*,
     pyclass_init::PyClassInitializer,
-    types::{PyDict, PyInt, PyIterator, PyList, PyNotImplemented, PyTuple},
+    types::{PyDict, PyInt, PyIterator, PyList, PyNotImplemented, PySlice, PyTuple},
 };
 use pyo3_ext::{
     prelude::*,
@@ -150,10 +150,20 @@ impl PyoVec {
     }
 
     fn __getitem__<'py>(
-        slf: Bound<'py, Self>,
+        &self,
         index: &Bound<'py, PyAny>,
-    ) -> PyResult<Bound<'py, PyAny>> {
-        slf.get().inner_bind(slf.py()).as_any().get_item(index)
+    ) -> PyResult<Either<Bound<'py, Self>, Bound<'py, PyAny>>> {
+        let list = self.inner_bind(index.py()).as_any();
+        try_cast! {
+            match index {
+                Case::PySlice(slice) => list
+                    .get_item(slice)
+                    .map(|x| unsafe { x.cast_into_unchecked::<PyList>() })?
+                    .into_pyochain()
+                    .map(Either::Left),
+                object => list.get_item(object).map(Either::Right),
+            }
+        }
     }
     fn __setitem__(
         slf: Bound<'_, Self>,
