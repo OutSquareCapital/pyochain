@@ -996,20 +996,8 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         self.__len__(py)
     }
     #[skip]
-    fn into_vec<'py>(
-        &self,
-        py: Python<'py>,
-    ) -> PyResult<Vec<(Bound<'py, PyAny>, Bound<'py, PyAny>)>> {
-        let mapping = self.get_inner().bind(py).as_any();
-        let mut mapping_list = self.get_list().get().get_data();
-        (0..mapping_list.len as isize)
-            .into_iter()
-            .map(|index| {
-                let key = &mapping_list.getitem_from_int(py, index)?;
-                let value = mapping.get_item(&key)?;
-                Ok((key.clone(), value))
-            })
-            .collect::<PyResult<Vec<_>>>()
+    fn iter<'py>(&self, py: Python<'py>) -> SortedDictIter<'_, 'py> {
+        SortedDictIter::new(self, py)
     }
     fn __len__(&self, py: Python<'_>) -> usize {
         self.get_inner().bind(py).len()
@@ -1060,8 +1048,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         iterable
             .try_iter()?
             .map(|key| Ok((key?, value.clone())))
-            .collect::<PyResult<Vec<_>>>()
-            .and_then(|v| SortedDict::from_vec(py, v))?
+            .pipe(|v| SortedDict::try_from_iter(py, v))?
             .into_bound(py)
     }
     #[pyo3(signature = (key, default=None))]
@@ -1182,6 +1169,46 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
                 }
                 Ok(())
             }
+        }
+    }
+}
+
+pub(super) struct SortedDictIter<'a, 'py> {
+    py: Python<'py>,
+    mapping: Bound<'py, PyAny>,
+    mapping_list: MutexGuard<'a, ListsData>,
+    range: std::ops::Range<isize>,
+}
+impl<'a, 'py> SortedDictIter<'a, 'py> {
+    fn new<D: BaseSortedDict>(owner: &'a D, py: Python<'py>) -> Self {
+        let mapping = owner.get_inner().clone_ref(py).into_bound(py).into_any();
+        let mapping_list = owner.get_list().get().get_data();
+        let range = 0..mapping_list.len as isize;
+        Self {
+            py,
+            mapping,
+            mapping_list,
+            range,
+        }
+    }
+}
+impl<'a, 'py> Iterator for SortedDictIter<'a, 'py> {
+    type Item = PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)>;
+    fn next(&mut self) -> Option<PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)>> {
+        let index = match self.range.next() {
+            Some(i) => i,
+            None => return None,
+        };
+        // NOTE: I tried to avoid double match here, but the `get_item` error caused reference issues.
+        match self.mapping_list.getitem_from_int(self.py, index) {
+            Ok(key) => {
+                let value = self.mapping.get_item(&key);
+                match value {
+                    Ok(v) => Some(Ok((key, v))),
+                    Err(e) => Some(Err(e)),
+                }
+            }
+            Err(e) => Some(Err(e)),
         }
     }
 }

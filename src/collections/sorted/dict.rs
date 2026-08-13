@@ -16,6 +16,8 @@ use pyo3::{
     types::{PyDict, PyMapping, PyTuple},
 };
 use tap::prelude::*;
+/// Key-value pair type from a Python `Mapping`
+type DictItem<'py> = (Bound<'py, PyAny>, Bound<'py, PyAny>);
 #[pyclass(module = "pyochain.collections", frozen, generic, extends= abc::PyoMutableMapping, mapping)]
 pub struct SortedDict {
     list: Py<SortedList>,
@@ -27,25 +29,20 @@ impl SortedDict {
             .add_subclass(self)
             .pipe(|init| Bound::new(py, init))
     }
-    pub fn from_vec(
-        py: Python<'_>,
-        v: Vec<(Bound<'_, PyAny>, Bound<'_, PyAny>)>,
+    pub fn try_from_iter<'py, I: IntoIterator<Item = PyResult<DictItem<'py>>>>(
+        py: Python<'py>,
+        v: I,
     ) -> PyResult<Self> {
         let inner = PyDict::new(py);
+        let unbounded = v
+            .into_iter()
+            .map(|x| x.and_then(|(key, value)| fill_dict(&inner, py, key, value)))
+            .map(|res| res.map(|(key, _)| key.unbind()))
+            .collect::<PyResult<Vec<_>>>()?;
 
-        for (key, value) in v.iter() {
-            match unsafe { ffi::PyDict_SetItem(inner.as_ptr(), key.as_ptr(), value.as_ptr()) } {
-                -1 => return Err(PyErr::fetch(py)),
-                _ => (),
-            }
-        }
-
-        let list = SortedList::from_vec(
-            py,
-            v.into_iter().map(|(k, _)| k.unbind()).collect::<Vec<_>>(),
-        )?
-        .into_bound(py)?
-        .unbind();
+        let list = SortedList::from_vec(py, unbounded)?
+            .into_bound(py)?
+            .unbind();
         Ok(Self {
             list,
             inner: inner.unbind(),
@@ -86,30 +83,28 @@ impl BaseSortedDict for SortedDict {
     }
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        Self::from_vec(py, self.into_vec(py)?)?.into_bound(py)
+        self.iter(py)
+            .pipe(|v| Self::try_from_iter(py, v))?
+            .into_bound(py)
     }
     fn __or__<'py>(&self, value: Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
-        let mut items = self.into_vec(py)?;
-        items.append(&mut value.pipe(iter_mapping)?.collect::<PyResult<Vec<_>>>()?);
-        Self::from_vec(py, items)?.into_bound(py)
+        let items = self.iter(py).chain(value.pipe(iter_mapping)?);
+        Self::try_from_iter(py, items)?.into_bound(py)
     }
 
     fn __ror__<'py>(&self, value: Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
-        let mut items = value.pipe(iter_mapping)?.collect::<PyResult<Vec<_>>>()?;
-
-        items.append(&mut self.into_vec(py)?);
-        Self::from_vec(py, items)?.into_bound(py)
+        let items = value.pipe(iter_mapping)?.chain(self.iter(py));
+        Self::try_from_iter(py, items)?.into_bound(py)
     }
 
     // @recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let type_name = Self::type_object(py).name()?;
         let items = self
-            .into_vec(py)?
-            .into_iter()
-            .map(|(k, v)| Ok(format!("{}: {}", k.repr()?, v.repr()?)))
+            .iter(py)
+            .map(|x| x.and_then(|(k, v)| Ok(format!("{}: {}", k.repr()?, v.repr()?))))
             .collect::<PyResult<Vec<_>>>()?
             .join(", ");
         Ok(format!("{}({{{}}})", type_name, items))
@@ -128,27 +123,21 @@ impl SortedKeyDict {
             .add_subclass(self)
             .pipe(|init| Bound::new(py, init))
     }
-    pub fn from_vec(
-        py: Python<'_>,
-        v: Vec<(Bound<'_, PyAny>, Bound<'_, PyAny>)>,
+    pub fn try_from_iter<'py, I: IntoIterator<Item = PyResult<DictItem<'py>>>>(
+        py: Python<'py>,
+        v: I,
         key: Py<PyAny>,
     ) -> PyResult<Self> {
         let inner = PyDict::new(py);
+        let unbounded = v
+            .into_iter()
+            .map(|res| res.and_then(|(key, value)| fill_dict(&inner, py, key, value)))
+            .map(|x| x.map(|(k, _)| k.unbind()))
+            .collect::<PyResult<Vec<_>>>()?;
 
-        for (key, value) in v.iter() {
-            match unsafe { ffi::PyDict_SetItem(inner.as_ptr(), key.as_ptr(), value.as_ptr()) } {
-                -1 => return Err(PyErr::fetch(py)),
-                _ => (),
-            }
-        }
-
-        let list = SortedKeyList::from_vec(
-            py,
-            v.into_iter().map(|(k, _)| k.unbind()).collect::<Vec<_>>(),
-            &key,
-        )?
-        .into_bound(py)?
-        .unbind();
+        let list = SortedKeyList::from_vec(py, unbounded, &key)?
+            .into_bound(py)?
+            .unbind();
         Ok(Self {
             key,
             list,
@@ -225,7 +214,9 @@ impl BaseSortedDict for SortedKeyDict {
     }
 
     fn copy<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, Self>> {
-        Self::from_vec(py, self.into_vec(py)?, self.key.clone_ref(py))?.into_bound(py)
+        self.iter(py)
+            .pipe(|v| Self::try_from_iter(py, v, self.key.clone_ref(py)))?
+            .into_bound(py)
     }
     // @recursive_repr()
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
@@ -247,16 +238,14 @@ impl BaseSortedDict for SortedKeyDict {
     }
     fn __ror__<'py>(&self, value: Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
-        let mut items = value.pipe(iter_mapping)?.collect::<PyResult<Vec<_>>>()?;
-        items.append(&mut self.into_vec(py)?);
-        Self::from_vec(py, items, self.key.clone_ref(py))?.into_bound(py)
+        let items = value.pipe(iter_mapping)?.chain(self.iter(py));
+        Self::try_from_iter(py, items, self.key.clone_ref(py))?.into_bound(py)
     }
 
     fn __or__<'py>(&self, value: Bound<'py, PyMapping>) -> PyResult<Bound<'py, Self>> {
         let py = value.py();
-        let mut items = self.into_vec(py)?;
-        items.append(&mut value.pipe(iter_mapping)?.collect::<PyResult<Vec<_>>>()?);
-        Self::from_vec(py, items, self.key.clone_ref(py))?.into_bound(py)
+        let items = self.iter(py).chain(value.pipe(iter_mapping)?);
+        Self::try_from_iter(py, items, self.key.clone_ref(py))?.into_bound(py)
     }
 }
 impl SortedCollection for SortedDict {
@@ -388,10 +377,21 @@ impl SortedCollection for SortedKeyDict {
 }
 fn iter_mapping<'py>(
     mapping: Bound<'py, PyMapping>,
-) -> PyResult<impl Iterator<Item = PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)>>> {
+) -> PyResult<impl Iterator<Item = PyResult<DictItem<'py>>>> {
     mapping
         .call_method0("items")?
         .try_iter()?
         .map(|iter| iter.and_then(|item| item.extract::<(Bound<'py, PyAny>, Bound<'py, PyAny>)>()))
         .pipe(Ok)
+}
+fn fill_dict<'py>(
+    inner: &Bound<'py, PyDict>,
+    py: Python<'py>,
+    key: Bound<'py, PyAny>,
+    value: Bound<'py, PyAny>,
+) -> PyResult<DictItem<'py>> {
+    match unsafe { ffi::PyDict_SetItem(inner.as_ptr(), key.as_ptr(), value.as_ptr()) } {
+        -1 => Err(PyErr::fetch(py)),
+        _ => Ok((key, value)),
+    }
 }
