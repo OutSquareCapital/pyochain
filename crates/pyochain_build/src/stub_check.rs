@@ -42,51 +42,6 @@ fn get_failures(pyclasses: &[PyClass], stub_root: &Path) -> Vec<(usize, Failure)
         .enumerate()
         .collect::<Vec<_>>()
 }
-fn get_matching_stubs(pyclass: &PyClass, stub_root: &Path) -> Vec<Stub> {
-    parse::files_with_extension(stub_root, "pyi")
-        .into_iter()
-        .filter(|path| path.file_stem().and_then(|stem| stem.to_str()) != Some("__init__"))
-        .filter_map(|path| {
-            fs::read_to_string(&path)
-                .unwrap()
-                .lines()
-                .enumerate()
-                .filter_map(|(line_index, line)| {
-                    let name = line
-                        .trim_start()
-                        .strip_prefix("class ")
-                        .or_else(|| line.trim_start().strip_prefix("type "))?
-                        .chars()
-                        .take_while(|character| {
-                            character.is_ascii_alphanumeric() || *character == '_'
-                        })
-                        .collect::<String>();
-                    (!name.is_empty()).then_some((name, line_index + 1))
-                })
-                .find(|(name, _)| name == &pyclass.python_name)
-                .map(|(_, line)| Stub {
-                    path: path.to_path_buf(),
-                    normalized_path: parse::normalized_path(&path, stub_root),
-                    module: stub_module(&path, stub_root),
-                    line,
-                })
-        })
-        .collect::<Vec<_>>()
-}
-
-fn stub_module(path: &Path, stub_root: &Path) -> String {
-    let module_parts = path
-        .strip_prefix(stub_root)
-        .unwrap()
-        .parent()
-        .unwrap()
-        .components()
-        .map(|component| component.as_os_str().to_str().unwrap())
-        .collect::<Vec<_>>()
-        .join(".");
-    format!("pyochain.{module_parts}")
-}
-
 enum StubResult<'a> {
     MissingModule(&'a PyClass),
     NoMatchingStub(&'a PyClass, &'a Path),
@@ -139,6 +94,51 @@ impl<'a> StubResult<'a> {
             }
         }
     }
+}
+
+fn get_matching_stubs(pyclass: &PyClass, stub_root: &Path) -> Vec<Stub> {
+    parse::files_with_extension(stub_root, "pyi")
+        .into_iter()
+        .filter(|path| path.file_stem().and_then(|stem| stem.to_str()) != Some("__init__"))
+        .filter_map(|path| {
+            fs::read_to_string(&path)
+                .unwrap()
+                .lines()
+                .enumerate()
+                .filter_map(|(line_index, line)| {
+                    let name = line
+                        .trim_start()
+                        .strip_prefix("class ")
+                        .or_else(|| line.trim_start().strip_prefix("type "))?
+                        .chars()
+                        .take_while(|character| {
+                            character.is_ascii_alphanumeric() || *character == '_'
+                        })
+                        .collect::<String>();
+                    (!name.is_empty()).then_some((name, line_index + 1))
+                })
+                .find(|(name, _)| name == &pyclass.python_name)
+                .map(|(_, line)| Stub {
+                    path: path.to_path_buf(),
+                    normalized_path: parse::normalized_path(&path, stub_root),
+                    module: stub_module(&path, stub_root),
+                    line,
+                })
+        })
+        .collect::<Vec<_>>()
+}
+
+fn stub_module(path: &Path, stub_root: &Path) -> String {
+    let module_parts = path
+        .strip_prefix(stub_root)
+        .unwrap()
+        .parent()
+        .unwrap()
+        .components()
+        .map(|component| component.as_os_str().to_str().unwrap())
+        .collect::<Vec<_>>()
+        .join(".");
+    format!("pyochain.{module_parts}")
 }
 
 enum FailureKind {

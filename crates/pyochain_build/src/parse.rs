@@ -63,26 +63,34 @@ pub(super) fn files_with_extension(root: &Path, extension: &str) -> Vec<PathBuf>
     fs::read_dir(root)
         .unwrap()
         .map(|entry| entry.unwrap().path())
-        .flat_map(|path| {
+        .filter_map(|path| {
             if path.is_dir() {
-                files_with_extension(&path, extension)
+                Some(files_with_extension(&path, extension))
             } else if path.extension().and_then(|value| value.to_str()) == Some(extension) {
-                vec![path]
+                Some(vec![path])
             } else {
-                Vec::new()
+                None
             }
         })
+        .flatten()
         .collect()
 }
 
 impl PyClass {
     fn from_item(item: Item, path: &Path, root: &Path) -> Option<Self> {
-        let (attrs, ident, span) = match item {
-            Item::Struct(item) => (item.attrs.clone(), item.ident.clone(), item.span()),
-            Item::Enum(item) => (item.attrs.clone(), item.ident.clone(), item.span()),
+        let (name, module, ident, span) = match item {
+            Item::Struct(item) => {
+                let span = item.span();
+                let (name, module) = get_name_and_module_from_attrs(item.attrs)?;
+                (name, module, item.ident.clone(), span)
+            }
+            Item::Enum(item) => {
+                let span = item.span();
+                let (name, module) = get_name_and_module_from_attrs(item.attrs)?;
+                (name, module, item.ident.clone(), span)
+            }
             _ => return None,
         };
-        let (name, module) = get_name_and_module_from_attrs(attrs)?;
         Some(Self {
             source: path.to_path_buf(),
             normalized_path: normalized_path(path, root),
