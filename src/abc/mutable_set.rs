@@ -6,7 +6,7 @@ use pyo3_ext::{
 use pyochain_macros::try_cast;
 
 use crate::{
-    abc::{PyoSet, sets::py_from_iterable},
+    abc::{PyoSet, set::py_from_iterable},
     traits::PyoABC,
 };
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=PyoSet)]

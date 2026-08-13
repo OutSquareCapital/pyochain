@@ -22,7 +22,7 @@ from ._mappings import PyoMapping, PyoMutableMapping
 from ._mixins import Checkable, Fluent, Pipe, Tap
 from ._mutable_set import PyoMutableSet
 from ._sequences import PyoMutableSequence, PyoReversible, PyoSequence
-from ._sets import PyoSet
+from ._set import PyoSet
 from ._views import PyoItemsView, PyoKeysView, PyoMappingView, PyoValuesView
 
 __all__ = [
