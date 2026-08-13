@@ -1,35 +1,30 @@
 # Contributing to pyochain
 
 Thank you for your interest in contributing to pyochain! This document outlines the repository structure, coding standards, and contribution workflow to help you get started.
-nchmarks.
 
 ## Repository overview
 
 ### Python API and typing
 
-- [pyochain/](pyochain/) — Python stubs for the public API. They match their Rust modules 1:1 once your strip their "_" prefix.
-Only the two following files do not have a corresponding Rust module
-- [pyochain/_types.pyi](pyochain/_types.pyi) — shared typing protocols and type aliases.
-- [pyochain/pyochain.pyi](pyochain/pyochain.pyi) — public re-exports. You could maybe say it corresponds to the `src/lib.rs` Rust module.
+- [pyochain/](pyochain/) — runtime package shim, public `.pyi` stubs, and typing metadata.
+- [pyochain/_types.pyi](pyochain/_types.pyi) — shared typing protocols and type aliases; it has no direct Rust module.
+- [pyochain/pyochain.pyi](pyochain/pyochain.pyi) — top-level public re-exports for the extension initialized by [src/lib.rs](src/lib.rs).
+- [pyochain/core/](pyochain/core/) — stubs for the core Rust types in [src/core/](src/core/).
+- [pyochain/abc/](pyochain/abc/) — stubs for the ABCs and mixins in [src/abc/](src/abc/).
+- [pyochain/collections/](pyochain/collections/) — stubs for the concrete collections in [src/collections/](src/collections/), including sorted collections.
+
+The stub packages follow the public Rust module hierarchy, but the mapping is not strictly one-to-one: package initializers, grouped stubs, and private Rust helper modules do not always have a matching file.
 
 ### Rust and PyO3 implementation
 
-- [src/lib.rs](src/lib.rs) — initializes the `pyochain` PyO3 module and registers its public classes, functions, ABCs, and collection submodules.
-- [src/dict.rs](src/dict.rs) — implements `Dict`.
+- [src/lib.rs](src/lib.rs) — initializes the `pyochain` PyO3 module and registers the `core`, `abc`, `collections`, and `collections._sorted` submodules.
+- [src/core/](src/core/) — implements the core types: `Dict`, `Iter`, `Peekable`, `Option`, `Result`, `Range`, `Seq`, `Set`, `SetMut`, `SliceView`, and `Vec`.
+- [src/abc/](src/abc/) — implements the abstract base classes, mixins, and shared ABC traits.
+- [src/collections/](src/collections/) — implements concrete collections such as `Deque`, `Heap`, `HeapMax`, `HeapMin`, `PyoCounter`, and `StableSet`.
+- [src/collections/sorted/](src/collections/sorted/) — implements sorted collections, views, iterators, and their internal support modules.
 - [src/display.rs](src/display.rs) — formats Python objects for `repr` output.
-- [src/errors.rs](src/errors.rs) — defines the Python exceptions raised by failed `Option` and `Result` unwraps.
-- [src/hasher.rs](src/hasher.rs) — provides the hash helper used by `Option` and `Result` values.
-- [src/iterators.rs](src/iterators.rs) — implements `Iter`, `Peekable`, and the iterator adapters exposed by `pyochain._iterators`.
-- [src/option.rs](src/option.rs) — implements `Option`, `Some`, `Null`, `NONE`, and the related helper functions.
-- [src/pyovec.rs](src/pyovec.rs) — implements `Vec`.
-- [src/range.rs](src/range.rs) — implements `Range`.
-- [src/result.rs](src/result.rs) — implements `Result`, `Ok`, and `Err`.
-- [src/seq.rs](src/seq.rs) — implements `Seq`.
-- [src/sets.rs](src/sets.rs) — implements `Set` and `SetMut`.
-- [src/sliceview.rs](src/sliceview.rs) — implements `SliceView` and its slice iterators.
-- [src/traits.rs](src/traits.rs) — defines the shared wrapper, conversion, and ABC initialization traits.
-- [src/abc/](src/abc/) — abstract base classes, traits, and mixins.
-- [src/collections/](src/collections/) — concrete collection implementations, including sorted collections.
+- [src/hasher.rs](src/hasher.rs) — provides shared hashing helpers.
+- [src/traits.rs](src/traits.rs) — defines shared wrapper, conversion, and initialization traits.
 
 ### Internal crates
 
