@@ -201,8 +201,11 @@ impl PyoVec {
         self.inner_bind(value.py()).append(value)
     }
 
-    pub fn extend(&self, iterable: Bound<'_, PyAny>) -> PyResult<()> {
-        self.inner_bind(iterable.py()).extend(iterable)
+    pub fn extend(slf: Bound<'_, Self>, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
+        let py = iterable.py();
+        let inner = slf.get().inner_bind(py);
+        let other = if iterable.is(&slf) { inner } else { iterable };
+        inner.extend(other)
     }
 
     fn repeat<'py>(&self, n: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {

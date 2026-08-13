@@ -205,7 +205,7 @@ impl_sequence_ext_methods!(PySet, PyFrozenSet);
 #[allow(unused)]
 pub trait PyListExtMethods<'py> {
     fn clear(&self) -> ();
-    fn extend(&self, iterable: Bound<'_, PyAny>) -> PyResult<()>;
+    fn extend(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
     fn last(&self) -> PyResult<Bound<'py, PyAny>>;
     fn sort_by(&self, key: &Bound<'_, PyAny>, reverse: bool) -> PyResult<()>;
 }
@@ -214,11 +214,11 @@ impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
         unsafe { ffi::PyList_Clear(self.as_ptr()) };
     }
 
-    fn extend(&self, iterable: Bound<'_, PyAny>) -> PyResult<()> {
-        iterable
-            .try_iter()
-            .map(|_| unsafe { ffi::PyList_Extend(self.as_ptr(), iterable.as_ptr()) })?;
-        Ok(())
+    fn extend(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
+        match unsafe { ffi::PyList_Extend(self.as_ptr(), iterable.as_ptr()) } {
+            -1 => Err(PyErr::fetch(self.py())),
+            _ => Ok(()),
+        }
     }
     fn last(&self) -> PyResult<Bound<'py, PyAny>> {
         self.as_any().get_item(-1)
