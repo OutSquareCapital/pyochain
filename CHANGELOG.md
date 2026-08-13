@@ -2,16 +2,14 @@
 
 ## [Unreleased]
 
-TODO: rerun benchmark before release by finding a way to create a branch with "tests" up to latest commits, but "src" and "rust" at the last release tag.
-TODO: check how to setup a "blog" section in the website for major releases, to avoid bloating the changelog with too much text.
-
 ### 🏆 Highlights
 
-- `abc` classes, `Iter`, `Peekable`, `Seq`, `Range`, and `Vec` have been fully moved to Rust.
+- **Full** migration of the whole codebase to Rust
 - `abc::PyoIterator::peekable` has been completely refactored and now aligns with Rust std `Iterator`, with the methods `peek`, `next_if`, `next_if_eq`, and `next_if_map`, all implemented in Rust.
 - **typing**: The variance of generics for immutable classes (abstract and concrete) is now correctly handled and align with python stdlib. For example, `PyoMapping`, `Seq` or `Set` are now covariant, whilst `Dict` or `Vec` stay invariant.
 - `collections::PyoCounter`, pyochain version of python stdlib `collections::Counter`. Herit from `PyoMutableMapping` instead of `dict`, but behaves the same way.
 - `collections::{HeapMax, HeapMin}`, pyochain version of python stdlib `heapq` module.
+- **Full** port of the `sortedcontainers` library to pyochain, rewritten with native rust data structures.  Credits to Grant Jenks for the original implementation, as well as the maintainers of [the corresponding stubs package](https://github.com/h4l/sortedcontainers-stubs).
 
 #### sortedcontainers
 
@@ -42,7 +40,7 @@ The classes from the `sortedcontainers` library have been ported to pyochain, wi
 - **Removal**: Original `PyoIterator::repeat` has been removed, and `PyoIterator::from_repeat` renamed to `repeat`, i.e `from_repeat` replaces the old `repeat`. The original had complex semantics, niche use cases, without a real performance/memory benefit. To get the same behavior, use something like `my_iter.collect(Seq).pipe(lambda it: Iter.repeat(it, n)).map(lambda x: x.iter())`. This also better align with rust `Iterator::repeat` semantics and naming.
 - **Removal**: `Iter::__bool__` has been removed. Use `PyoIterator::peekable::__bool__` instead. This avoid implicit `tee` use.
 - **Removal**: `Iter::{from_ref, cloned}` have been removed. Use `a, b = x.tee()` instead (for `cloned`), or `a, b = Iter(x).tee()` (for `from_ref`), where *a* is the original `Iterator`, and *b* the cloned one.
-- `{Vec, Seq}` dunders (like `__add__`, `__mul__`, etc...) now return new instances of the same class, instead of the underlying data structure, i.e `Vec + Vec` returns a `Vec`, not a `list`. The only exception as of now remain for `__getitem__` when a `slice` is used.
+- Dunders methods (like `__add__`, `__mul__`, `__getitem__`, etc...) now return new instances of the same class, instead of the underlying data structure when applicable, i.e `Vec + Vec` returns a `Vec` instead of `list`.
 - **imports**: views-like classes are now back to being only imported from `abc` module, to stay consistent with python stdlib.
 - **Removal**: `inner` attribute is now a private implementation detail of pyochain, rather than something accessible from the public API. If you are confronted by code that refuses to handle, say, a `MutableSequence` instead of a `list`, 99% of the time, it's a good time to change it (or raise an issue to the author of the code). Python is meant to use duck typing, and `def foo(x: list):` is, again, not a valid pattern, at runtime or for static typing, 99% of the time. In any case, you can simply do `x.pipe(list)` if needed, for example.
 

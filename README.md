@@ -2,9 +2,6 @@
 
 `pyochain` is a python library that provides various classes with a **fluent API**, to work with **iterations**, **collections**, **handle optional values**, **manage errors**, and more!
 
-Note:
-    This document is up to date with the branch dev and may contains features not yet released in the latest stable version.
-
 ## Table of Contents
 
 - [Key Features](#key-features)
@@ -23,8 +20,11 @@ Note:
 
 - `Option[T]` to handle optional values instead of `T | None`.
 - `Result[T, E]` to handle success and error paths instead of `try.. except` blocks.
-- `Iterator` types for python builtins (`zip`, `map`, ...) and `itertools`, as well as many methods from Rust's `Iterator`, and libraries like `toolz` or `more-itertools`.
-- `Collection` types covering python builtins (`list`, `deque`, `set`, ...), additional ones like no-copy slice views, and reimplementation of `heapq` module in two dedicated types (`HeapMax` and `HeapMin`).
+- `Iterator` types covering python builtins (`zip`, `map`, ...), `itertools`,many methods from Rust's `Iterator`, and libraries like `toolz` or `more-itertools`.
+- `Collection` types covering python builtins (`list`, `deque`, `set`, `Counter`, ...)
+- **Reimplementation of `heapq`** module with an OOP API, with `HeapMin` and `HeapMax` types.
+- **No-copy views** slices, with `SliceView` type, on any `Sequence`.
+- **Sorted** data structures (mappings, set, sequences), adapted from the [sortedcontainers](https://github.com/grantjenks/python-sortedcontainers) library.
 - `ABC`'s hierarchy mimicking `collections.abc`, for duck typing, shared methods, and the possibility to implement your own subclasses.
 - `Mixin`'s addable to any class, to provide a fluent API with `pipe` and `tap`, or `Option`/`Result` conversions on truthiness evaluation.
 
@@ -64,12 +64,6 @@ This speed-up is only exacerbated for `Iterator` methods and classes, often up t
 
 Even when the source code was still mostly python, great care had been taken to optimize performance, which is probably why it was already ranked as the fastest library in its category in [this comparison](https://www.reddit.com/r/Python/comments/1rj3ct7/a_comparison_of_rustlike_fluent_iterator_libraries/) (at this point, only `Result` and `Option` were compiled, which were not relevant for this benchmark).
 
-### 🌍 Rich ecosystem
-
-Made to act as a drop-in replacement for many built-in types and functions, Pyochain provides a wide range of features designed to interact with each other and the wider Python ecosystem seamlessly.
-
-There's many additional functionalities planned for the future, including `Array`, sorted collections, unique mutable sequences, and more.
-
 ### 🛡️ 100% type-safe
 
 IDE autocompletion is a primary concern, and pyochain brings exhaustive overloads and generics support for all its constructs.
@@ -90,9 +84,9 @@ Even this README is tested!
 
 ### Mixin's
 
-`Pipe`, `Tap`, `Checkable`, and other mixins are addable to any class to add new methods, regardless of the underlying implementation.
+`Pipe`, `Tap`, `Checkable`, and other mixins are simple mixins providing fluent API's for method chaining and Option/Result conversions.
 
-They don't depend on internal state except `__bool__`, thus making them universally applicable to any subclass, including your own.
+They don't depend on internal state except `__bool__`, thus making them universally applicable to any subclass.n.
 
 Users of `pandas`, `polars` or the Rust crate `tap` will feel right at home with `pipe()` and `tap`, while Rust developers will appreciate the `Checkable` type, providing methods like `then`, `then_some`, or `ok_or_else`, evaluating the instance truthiness to return corresponding `Option` or `Result` types, just like the `bool` methods in Rust.
 
@@ -112,11 +106,7 @@ They can be used to build complex pipelines of transformations, filters, and agg
 
 Many methods act just like their Rust counterparts: `filter_map` filter the `Option` returned by a closure, `find` return the first element matching a predicate wrapped in an `Option`, etc...
 
-All the source code related to iterators is implemented in Rust and call either in-house implementations or CPython builtins.
-
-This garantee no trade-offs in performance, from the iterator instanciation in itself, to the actual iteration.
-
-Below is an example of how to use `Iter`, and how it compares to a pure Python implementation using `itertools`:
+Below is an example of how to use `Iter`, the generic iterator type, and how it compares to a pure Python implementation using `itertools`:
 
 ```python
 from pyochain import Iter, Seq
