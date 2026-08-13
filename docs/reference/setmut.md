@@ -1,3 +1,3 @@
 # SetMut
 
-::: pyochain._set.SetMut
+::: pyochain.core.SetMut

@@ -1,3 +1,3 @@
 # Option
 
-::: pyochain._option.Option
+::: pyochain.core.Option

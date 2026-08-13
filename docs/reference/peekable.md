@@ -1,3 +1,3 @@
 # Peekable
 
-::: pyochain._iterators.Peekable
+::: pyochain.core.Peekable

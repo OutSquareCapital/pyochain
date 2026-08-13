@@ -1,3 +1,3 @@
 # Some
 
-::: pyochain._option.Some
+::: pyochain.core.Some
