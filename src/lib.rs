@@ -90,6 +90,7 @@ fn pyochain(m: &Bound<'_, PyModule>) -> PyResult<()> {
     collections_mod.add_class::<collections::sorted::SortedKeysView>()?;
     collections_mod.add_class::<collections::sorted::SortedValuesView>()?;
     collections_mod.add_class::<collections::sorted::SortedItemsView>()?;
+    m.add_submodule(&collections_mod)?;
     let sorted_mod = PyModule::new(py, "_sorted")?;
     sorted_mod.add_function(wrap_pyfunction!(debug::check_sorted_list, &sorted_mod)?)?;
     sorted_mod.add_function(wrap_pyfunction!(debug::check_sorted_key_list, &sorted_mod)?)?;
