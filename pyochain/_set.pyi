@@ -556,12 +556,11 @@ class SetMut[T](PyoMutableSet[T]):
 
         Example:
             ```python
-            >>> from pyochain import SetMut
-            >>> s = SetMut(("a", "b", "c"))
-            >>> s.discard("b")
-            >>> s.iter().sort()
-            Vec('a', 'c')
+            from pyochain import SetMut, Vec
 
+            s = SetMut(("a", "b", "c"))
+            s.discard("b")
+            assert s.iter().sort() == Vec(("a", "c"))
             ```
         """
 

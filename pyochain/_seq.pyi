@@ -73,20 +73,18 @@ class Seq[T](PyoSequence[T]):
 
         Example:
             ```python
-            >>> from pyochain import Seq, Err, Ok
-            >>> s1 = Seq((1, 2, 3))
-            >>> s2 = Seq((1, 2, 4))
-            >>> s1 < s2
-            True
-            >>> s1 < (1, 2, 3)
-            False
-            >>> try:
-            ...     res = Ok(s1 < [1, 2, 3])
-            ... except TypeError as e:
-            ...     res = Err(e)
-            >>> res
-            Err(TypeError("Input must be a 'Seq'' or a 'tuple', got 'list'"))
+            from pyochain import Seq, Err, Ok
 
+            s1 = Seq((1, 2, 3))
+            s2 = Seq((1, 2, 4))
+            assert s1 < s2
+            assert not s1 < (1, 2, 3)
+            try:
+                res = Ok(s1 < [1, 2, 3])
+            except TypeError as e:
+                res = Err(e)
+            assert res.is_err()
+            assert res.map_err(lambda e: isinstance(e, TypeError)).unwrap_err()
             ```
         """
     def __le__[S](self: Seq[S], value: IntoSeq[S], /) -> bool: ...

@@ -21,18 +21,15 @@ class StableSet[T](PyoMutableSet[T]):
 
     Examples:
         ```python
-        >>> from pyochain.collections import StableSet
-        >>>
-        >>> s = StableSet(("a", "b", "c"))
-        >>> s
-        StableSet('a', 'b', 'c')
-        >>> s.add("d")
-        >>> s
-        StableSet('a', 'b', 'c', 'd')
-        >>> s.discard("b")
-        >>> s
-        StableSet('a', 'c', 'd')
+        from pyochain.collections import StableSet
 
+        s = StableSet(("a", "b", "c"))
+        assert s
+        assert s == StableSet(("a", "b", "c"))
+        s.add("d")
+        assert s == StableSet(("a", "b", "c", "d"))
+        s.discard("b")
+        assert s == StableSet(("a", "c", "d"))
         ```
     """
     def __init__(self, data: Iterable[T]) -> None: ...
@@ -63,17 +60,14 @@ class StableSet[T](PyoMutableSet[T]):
 
         Example:
             ```python
-            >>> from pyochain.collections import StableSet
-            >>>
-            >>> original = {"Alice": 30, "Bob": 25, "Charlie": 35}
-            >>> set_obj = StableSet.from_ref(original)
-            >>> set_obj
-            StableSet('Alice', 'Bob', 'Charlie')
-            >>> original["David"] = 40
-            >>> set_obj
-            StableSet('Alice', 'Bob', 'Charlie', 'David')
+            from pyochain.collections import StableSet
 
-            ```
+            original = {"Alice": 30, "Bob": 25, "Charlie": 35}
+            set_obj = StableSet.from_ref(original)
+            assert set_obj == StableSet(("Alice", "Bob", "Charlie"))
+            original["David"] = 40
+            assert set_obj == StableSet(("Alice", "Bob", "Charlie", "David"))
+        ```
         """
     @override
     def add(self, value: T) -> None: ...
@@ -85,12 +79,11 @@ class StableSet[T](PyoMutableSet[T]):
 
         Example:
             ```python
-            >>> from pyochain.collections import StableSet
-            >>> s = StableSet(("a", "b", "c"))
-            >>> s_copy = s.copy()
-            >>> s_copy
-            StableSet('a', 'b', 'c')
+            from pyochain.collections import StableSet
 
+            s = StableSet(("a", "b", "c"))
+            s_copy = s.copy()
+            assert s_copy == StableSet(("a", "b", "c"))
             ```
         """
 

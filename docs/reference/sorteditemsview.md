@@ -1,3 +1,3 @@
 # SortedItemsView
 
-::: builtins.SortedItemsView
+::: pyochain.collections.SortedItemsView
