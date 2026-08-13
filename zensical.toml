@@ -11,6 +11,12 @@
     nav = [
         { "API Reference" = [
             { "ABCs" = [
+                { "Mixins" = [
+                    { "Checkable" = "reference/checkable.md" },
+                    { "Fluent" = "reference/fluent.md" },
+                    { "Pipe" = "reference/pipe.md" },
+                    { "Tap" = "reference/tap.md" },
+                ] },
                 { "PyoCollection" = "reference/pyocollection.md" },
                 { "PyoContainer" = "reference/pyocontainer.md" },
                 { "PyoIterable" = "reference/pyoiterable.md" },
@@ -47,15 +53,7 @@
                 ] },
                 { "Iterators" = [
                     { "Iter" = "reference/iter.md" },
-                ] },
-                { "Miscellaneous" = [
-                    { "Position" = "reference/position.md" },
-                ] },
-                { "Mixins" = [
-                    { "Checkable" = "reference/checkable.md" },
-                    { "Fluent" = "reference/fluent.md" },
-                    { "Pipe" = "reference/pipe.md" },
-                    { "Tap" = "reference/tap.md" },
+                    { "Peekable" = "reference/peekable.md" },
                 ] },
                 { "Optional Values" = [
                     { "None" = "reference/null.md" },
@@ -68,6 +66,19 @@
             { "Overview" = "api-reference.md" },
             { "collections" = [
                 { "Deque" = "reference/deque.md" },
+                { "Heap" = "reference/heap.md" },
+                { "HeapMax" = "reference/heapmax.md" },
+                { "HeapMin" = "reference/heapmin.md" },
+                { "PyoCounter" = "reference/pyocounter.md" },
+                { "SortedDict" = "reference/sorteddict.md" },
+                { "SortedItemsView" = "reference/sorteditemsview.md" },
+                { "SortedKeyDict" = "reference/sortedkeydict.md" },
+                { "SortedKeyList" = "reference/sortedkeylist.md" },
+                { "SortedKeySet" = "reference/sortedkeyset.md" },
+                { "SortedKeysView" = "reference/sortedkeysview.md" },
+                { "SortedList" = "reference/sortedlist.md" },
+                { "SortedSet" = "reference/sortedset.md" },
+                { "SortedValuesView" = "reference/sortedvaluesview.md" },
                 { "StableSet" = "reference/stableset.md" },
             ] },
         ] },

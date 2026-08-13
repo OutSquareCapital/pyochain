@@ -1,3 +1,3 @@
 # Fluent
 
-::: pyochain.rs.Fluent
+::: pyochain.abc.Fluent

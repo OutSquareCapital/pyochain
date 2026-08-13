@@ -1,0 +1,674 @@
+"""Adapted from `sortedcontainers` test suite.
+
+Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
+
+Original source:
+https://github.com/grantjenks/python-sortedcontainers/blob/master/tests/test_coverage_sortedkeylist_negate.py
+"""
+
+from __future__ import annotations
+
+import operator
+import random
+from itertools import chain
+
+import pytest
+
+from pyochain.collections import SortedKeyList
+from pyochain.collections._sorted import (  # ruff: ignore[import-private-name]
+    assert_sorted_list_empty,
+    check_sorted_key_list,
+)
+
+
+def test_identity() -> None:
+    slt = SortedKeyList(range(100))
+    slt.reset(7)
+    check_sorted_key_list(slt)
+
+
+def test_init() -> None:
+    slt = SortedKeyList[float, float](key=operator.neg)
+    check_sorted_key_list(slt)
+
+    slt = SortedKeyList[float, float](key=operator.neg)
+    slt.reset(10000)
+    assert slt.load == 10000
+    check_sorted_key_list(slt)
+
+    slt = SortedKeyList(range(100), key=operator.neg)
+    assert all(tup[0] == tup[1] for tup in zip(slt, reversed(range(100)), strict=False))
+
+    slt.clear()
+    assert_sorted_list_empty(slt)
+    check_sorted_key_list(slt)
+
+
+def test_key() -> None:
+    slt = SortedKeyList(range(100), key=lambda val: val % 10)
+    check_sorted_key_list(slt)
+
+    values = sorted(range(100), key=lambda val: (val % 10, val))
+    assert slt == values
+    assert all(val in slt for val in range(100))
+
+
+def test_add() -> None:
+    random.seed(0)
+    slt = SortedKeyList[float, float](key=operator.neg)
+    for val in range(100):
+        slt.add(val)
+        check_sorted_key_list(slt)
+
+    slt = SortedKeyList[float, float](key=operator.neg)
+    for val in range(100, 0, -1):
+        slt.add(val)
+        check_sorted_key_list(slt)
+
+    slt = SortedKeyList[float, float](key=operator.neg)
+    for _ in range(100):
+        slt.add(random.random())
+        check_sorted_key_list(slt)
+
+
+def test_update() -> None:
+    slt = SortedKeyList[float, float](key=operator.neg)
+
+    slt.update(range(1000))
+    assert len(slt) == 1000
+    check_sorted_key_list(slt)
+
+    slt.update(range(100))
+    assert len(slt) == 1100
+    check_sorted_key_list(slt)
+
+    slt.update(range(10000))
+    assert len(slt) == 11100
+    check_sorted_key_list(slt)
+
+    values = sorted(
+        (val for val in chain(range(100), range(1000), range(10000))), key=operator.neg
+    )
+    assert all(tup[0] == tup[1] for tup in zip(slt, values, strict=False))
+
+
+def test_contains() -> None:
+    slt = SortedKeyList[float, float](key=operator.neg)
+    assert 0 not in slt
+
+    slt.update(range(100))
+
+    for val in range(100):
+        assert val in slt
+
+    assert 10000 not in slt
+    assert -1 not in slt
+
+    check_sorted_key_list(slt)
+
+
+def test_discard() -> None:
+    slt = SortedKeyList[float, float](key=operator.neg)
+
+    assert slt.discard(0) is None
+    assert len(slt) == 0
+    check_sorted_key_list(slt)
+
+    slt = SortedKeyList([1, 2, 2, 2, 3, 3, 5], key=operator.neg)
+    slt.reset(4)
+
+    slt.discard(6)
+    check_sorted_key_list(slt)
+    slt.discard(4)
+    check_sorted_key_list(slt)
+    slt.discard(2)
+    check_sorted_key_list(slt)
+
+    assert all(
+        tup[0] == tup[1] for tup in zip(slt, reversed([1, 2, 2, 3, 3, 5]), strict=False)
+    )
+
+
+def test_remove() -> None:
+    slt = SortedKeyList[float, float](key=operator.neg)
+
+    assert slt.discard(0) is None
+    assert len(slt) == 0
+    check_sorted_key_list(slt)
+
+    slt = SortedKeyList([1, 2, 2, 2, 3, 3, 5], key=operator.neg)
+    slt.reset(4)
+
+    slt.remove(2)
+    check_sorted_key_list(slt)
+
+    assert all(
+        tup[0] == tup[1] for tup in zip(slt, reversed([1, 2, 2, 3, 3, 5]), strict=False)
+    )
+
+
+def test_remove_valueerror1() -> None:
+    slt = SortedKeyList[float, float](key=operator.neg)
+    with pytest.raises(ValueError):
+        slt.remove(0)
+
+
+def test_remove_valueerror2() -> None:
+    slt = SortedKeyList(range(100), key=operator.neg)
+    slt.reset(10)
+    with pytest.raises(ValueError):
+        slt.remove(100)
+
+
+def test_remove_valueerror3() -> None:
+    slt = SortedKeyList([1, 2, 2, 2, 3, 3, 5], key=operator.neg)
+    with pytest.raises(ValueError):
+        slt.remove(4)
+
+
+def test_delete() -> None:
+    slt = SortedKeyList(range(20), key=operator.neg)
+    slt.reset(4)
+    check_sorted_key_list(slt)
+    for val in range(20):
+        slt.remove(val)
+        check_sorted_key_list(slt)
+    assert_sorted_list_empty(slt)
+
+
+def test_getitem() -> None:
+    random.seed(0)
+    slt = SortedKeyList[float, float](key=operator.neg)
+    slt.reset(17)
+
+    slt.add(5)
+    assert slt[0] == 5
+    slt.clear()
+
+    lst: list[float] = []
+
+    for _rpt in range(100):
+        val = random.random()
+        slt.add(val)
+        lst.append(val)
+
+    lst.sort(reverse=True)
+
+    assert all(slt[idx] == lst[idx] for idx in range(100))
+    assert all(slt[idx - 99] == lst[idx - 99] for idx in range(100))
+
+
+def test_getitem_slice() -> None:
+    random.seed(0)
+    slt = SortedKeyList[float, float](key=operator.neg)
+    slt.reset(17)
+
+    lst: list[float] = []
+
+    for _rpt in range(100):
+        val = random.random()
+        slt.add(val)
+        lst.append(val)
+
+    lst.sort(reverse=True)
+
+    assert all(slt[start:] == lst[start:] for start in [-75, -25, 0, 25, 75])
+
+    assert all(slt[:stop] == lst[:stop] for stop in [-75, -25, 0, 25, 75])
+
+    assert all(slt[::step] == lst[::step] for step in [-5, -1, 1, 5])
+
+    assert all(
+        slt[start:stop] == lst[start:stop]
+        for start in [-75, -25, 0, 25, 75]
+        for stop in [-75, -25, 0, 25, 75]
+    )
+
+    assert all(
+        slt[:stop:step] == lst[:stop:step]
+        for stop in [-75, -25, 0, 25, 75]
+        for step in [-5, -1, 1, 5]
+    )
+
+    assert all(
+        slt[start::step] == lst[start::step]
+        for start in [-75, -25, 0, 25, 75]
+        for step in [-5, -1, 1, 5]
+    )
+
+    assert all(
+        slt[start:stop:step] == lst[start:stop:step]
+        for start in [-75, -25, 0, 25, 75]
+        for stop in [-75, -25, 0, 25, 75]
+        for step in [-5, -1, 1, 5]
+    )
+
+
+def test_getitem_slice_big() -> None:
+    slt = SortedKeyList(range(4), key=operator.neg)
+    lst = list(reversed(range(4)))
+
+    itr = (
+        (start, stop, step)
+        for start in [-6, -4, -2, 0, 2, 4, 6]
+        for stop in [-6, -4, -2, 0, 2, 4, 6]
+        for step in [-3, -2, -1, 1, 2, 3]
+    )
+
+    for start, stop, step in itr:
+        assert slt[start:stop:step] == lst[start:stop:step]
+
+
+def test_getitem_slicezero() -> None:
+    slt = SortedKeyList(range(100), key=operator.neg)
+    slt.reset(17)
+    with pytest.raises(ValueError):
+        slt[::0]
+
+
+def test_getitem_indexerror1() -> None:
+    slt = SortedKeyList[float, float](key=operator.neg)
+    with pytest.raises(IndexError):
+        slt[5]
+
+
+def test_getitem_indexerror2() -> None:
+    slt = SortedKeyList(range(100), key=operator.neg)
+    with pytest.raises(IndexError):
+        slt[200]
+
+
+def test_getitem_indexerror3() -> None:
+    slt = SortedKeyList(range(100), key=operator.neg)
+    with pytest.raises(IndexError):
+        slt[-101]
+
+
+def test_delitem() -> None:
+    random.seed(0)
+    slt = SortedKeyList(range(100), key=operator.neg)
+    slt.reset(17)
+    while len(slt) > 0:
+        del slt[random.randrange(len(slt))]
+        check_sorted_key_list(slt)
+
+
+def test_delitem_slice() -> None:
+    slt = SortedKeyList(range(100), key=operator.neg)
+    slt.reset(17)
+    del slt[10:40:1]
+    del slt[10:40:-1]
+    del slt[10:40:2]
+    del slt[10:40:-2]
+
+
+def test_iter() -> None:
+    slt = SortedKeyList(range(100), key=operator.neg)
+    itr = iter(slt)
+    assert all(tup[0] == tup[1] for tup in zip(range(99, -1, -1), itr, strict=False))
+
+
+def test_reversed() -> None:
+    slt = SortedKeyList(range(100), key=operator.neg)
+    rev = reversed(slt)
+    assert all(tup[0] == tup[1] for tup in zip(range(100), rev, strict=False))
+
+
+def test_reverse() -> None:
+    slt = SortedKeyList(range(100), key=operator.neg)
+    with pytest.raises(NotImplementedError):
+        slt.reverse()
+
+
+def test_islice() -> None:
+    slt = SortedKeyList[float, float](key=operator.neg)
+    slt.reset(7)
+
+    assert list(slt.islice()) == []
+
+    values = sorted(range(53), key=operator.neg)
+    slt.update(values)
+
+    for start in range(53):
+        for stop in range(53):
+            assert list(slt.islice(start, stop)) == values[start:stop]
+
+    for start in range(53):
+        for stop in range(53):
+            assert (
+                list(slt.islice(start, stop, reverse=True)) == values[start:stop][::-1]
+            )
+
+    for start in range(53):
+        assert list(slt.islice(start=start)) == values[start:]
+        assert list(slt.islice(start=start, reverse=True)) == values[start:][::-1]
+
+    for stop in range(53):
+        assert list(slt.islice(stop=stop)) == values[:stop]
+        assert list(slt.islice(stop=stop, reverse=True)) == values[:stop][::-1]
+
+
+def test_irange() -> None:  # ruff:ignore[complex-structure]
+    slt = SortedKeyList[float, float](key=operator.neg)
+    slt.reset(7)
+
+    assert list(slt.irange()) == []
+
+    values = list(range(53))
+    slt.update(values)
+
+    for start in range(53):
+        for end in range(start, 53):
+            assert list(slt.irange(end, start)) == values[start : (end + 1)][::-1]
+            assert (
+                list(slt.irange(end, start, reverse=True)) == values[start : (end + 1)]
+            )
+
+    for start in range(53):
+        for end in range(start, 53):
+            assert (
+                list(slt.irange(end, start, (True, False)))
+                == values[(start + 1) : (end + 1)][::-1]
+            )
+
+    for start in range(53):
+        for end in range(start, 53):
+            assert (
+                list(slt.irange(end, start, (False, True))) == values[start:end][::-1]
+            )
+
+    for start in range(53):
+        for end in range(start, 53):
+            assert (
+                list(slt.irange(end, start, (False, False)))
+                == values[(start + 1) : end][::-1]
+            )
+
+    for start in range(53):
+        assert list(slt.irange(start)) == values[: (start + 1)][::-1]
+
+    for end in range(53):
+        assert list(slt.irange(None, end, (True, False))) == values[(end + 1) :][::-1]
+
+    assert list(slt.irange(inclusive=(False, False))) == values[::-1]
+
+    assert list(slt.irange(-1)) == []
+    assert list(slt.irange(None, -1, (True, False))) == values[::-1]
+
+
+def test_len() -> None:
+    slt = SortedKeyList[float, float](key=operator.neg)
+
+    for val in range(100):
+        slt.add(val)
+        assert len(slt) == (val + 1)
+
+
+def test_bisect_left() -> None:
+    slt = SortedKeyList[float, float](key=operator.neg)
+    assert slt.bisect_left(0) == 0
+    slt = SortedKeyList(range(100), key=operator.neg)
+    slt.reset(17)
+    slt.update(range(100))
+    check_sorted_key_list(slt)
+    assert slt.bisect_left(50) == 98
+    assert slt.bisect_left(0) == 198
+    assert slt.bisect_left(-1) == 200
+
+
+def test_bisect_right() -> None:
+    slt = SortedKeyList[float, float](key=operator.neg)
+    assert slt.bisect_right(10) == 0
+    slt = SortedKeyList(range(100), key=operator.neg)
+    slt.reset(17)
+    slt.update(range(100))
+    check_sorted_key_list(slt)
+    assert slt.bisect_right(10) == 180
+    assert slt.bisect_right(0) == 200
+
+
+def test_copy() -> None:
+    slt = SortedKeyList(range(100), key=operator.neg)
+    slt.reset(7)
+    two = slt.copy()
+    slt.add(100)
+    assert len(slt) == 101
+    assert len(two) == 100
+
+
+def test_copy_copy() -> None:
+    import copy
+
+    slt = SortedKeyList(range(100), key=operator.neg)
+    slt.reset(7)
+    two = copy.copy(slt)
+    slt.add(100)
+    assert len(slt) == 101
+    assert len(two) == 100
+
+
+def test_count() -> None:
+    slt = SortedKeyList[float, float](key=operator.neg)
+    slt.reset(7)
+
+    assert slt.count(0) == 0
+
+    for iii in range(100):
+        for _jjj in range(iii):
+            slt.add(iii)
+        check_sorted_key_list(slt)
+
+    for iii in range(100):
+        assert slt.count(iii) == iii
+
+
+def test_pop() -> None:
+    slt = SortedKeyList(range(10), key=operator.neg)
+    slt.reset(4)
+    check_sorted_key_list(slt)
+    assert slt.pop() == 0
+    check_sorted_key_list(slt)
+    assert slt.pop(0) == 9
+    check_sorted_key_list(slt)
+    assert slt.pop(-2) == 2
+    check_sorted_key_list(slt)
+    assert slt.pop(4) == 4
+    check_sorted_key_list(slt)
+
+
+def test_pop_indexerror1() -> None:
+    slt = SortedKeyList(range(10), key=operator.neg)
+    slt.reset(4)
+    with pytest.raises(IndexError):
+        _ = slt.pop(-11)
+
+
+def test_pop_indexerror2() -> None:
+    slt = SortedKeyList(range(10), key=operator.neg)
+    slt.reset(4)
+    with pytest.raises(IndexError):
+        _ = slt.pop(10)
+
+
+def test_index() -> None:
+    slt = SortedKeyList(range(100), key=operator.neg)
+    slt.reset(17)
+
+    for pos, val in enumerate(range(99, -1, -1)):
+        assert val == slt.index(pos)
+
+    assert slt.index(99, 0, 1000) == 0
+
+    slt = SortedKeyList((0 for _ in range(100)), key=operator.neg)
+    slt.reset(17)
+
+    for start in range(100):
+        for stop in range(start, 100):
+            assert slt.index(0, start, stop + 1) == start
+
+    for start in range(100):
+        assert slt.index(0, -(100 - start)) == start
+
+    assert slt.index(0, -1000) == 0
+
+
+def test_index_valueerror1() -> None:
+    slt = SortedKeyList([0] * 10, key=operator.neg)
+    slt.reset(4)
+    with pytest.raises(ValueError):
+        _ = slt.index(0, 10)
+
+
+def test_index_valueerror2() -> None:
+    slt = SortedKeyList([0] * 10, key=operator.neg)
+    slt.reset(4)
+    with pytest.raises(ValueError):
+        _ = slt.index(0, 0, -10)
+
+
+def test_index_valueerror3() -> None:
+    slt = SortedKeyList([0] * 10, key=operator.neg)
+    slt.reset(4)
+    with pytest.raises(ValueError):
+        _ = slt.index(0, 7, 3)
+
+
+def test_index_valueerror4() -> None:
+    slt = SortedKeyList([0] * 10, key=operator.neg)
+    slt.reset(4)
+    with pytest.raises(ValueError):
+        _ = slt.index(1)
+
+
+def test_index_valueerror5() -> None:
+    slt = SortedKeyList[float, float](key=operator.neg)
+    with pytest.raises(ValueError):
+        _ = slt.index(1)
+
+
+def test_index_valueerror6() -> None:
+    slt = SortedKeyList(range(10), key=operator.neg)
+    slt.reset(4)
+    with pytest.raises(ValueError):
+        _ = slt.index(6, 5)
+
+
+def test_mul() -> None:
+    this = SortedKeyList(range(10), key=operator.neg)
+    this.reset(4)
+    that = this * 5
+    check_sorted_key_list(this)
+    check_sorted_key_list(that)
+    assert this == list(reversed(range(10)))
+    assert that == sorted(list(range(10)) * 5, reverse=True)
+    assert this != that
+
+
+def test_imul() -> None:
+    this = SortedKeyList(range(10), key=operator.neg)
+    this.reset(4)
+    this *= 5
+    check_sorted_key_list(this)
+    assert this == sorted(list(range(10)) * 5, reverse=True)
+
+
+def test_op_add() -> None:
+    this = SortedKeyList(range(10), key=operator.neg)
+    this.reset(4)
+    assert (this + this + this) == (this * 3)
+
+    that = SortedKeyList(range(10), key=operator.neg)
+    that.reset(4)
+    that += that
+    that += that
+    assert that == (this * 4)
+
+
+def test_eq() -> None:
+    this = SortedKeyList(range(10), key=operator.neg)
+    this.reset(4)
+    that = SortedKeyList(range(20), key=operator.neg)
+    that.reset(4)
+    assert this != that
+    that.clear()
+    that.update(range(10))
+    assert this == that
+
+
+def test_lt() -> None:
+    this = SortedKeyList(range(10), key=operator.neg)
+    this.reset(4)
+    that = SortedKeyList(range(10, 20), key=operator.neg)
+    that.reset(5)
+    assert this < that
+    assert not (that < this)
+    that = SortedKeyList(range(1, 20), key=operator.neg)
+    that.reset(6)
+    assert this < that
+    that = SortedKeyList(range(1, 10), key=operator.neg)
+    that.reset(4)
+    assert not (this < that)
+
+
+def test_lte() -> None:
+    this = SortedKeyList(range(10), key=operator.neg)
+    this.reset(4)
+    that = SortedKeyList(range(10), key=operator.neg)
+    that.reset(5)
+    assert this <= that
+    assert that <= this
+    del this[-1]
+    assert this <= that
+    assert not (that <= this)
+
+
+def test_gt() -> None:
+    this = SortedKeyList(range(10), key=operator.neg)
+    this.reset(4)
+    that = SortedKeyList(range(10, 20), key=operator.neg)
+    that.reset(5)
+    assert that > this
+    assert not (this > that)
+    that = SortedKeyList(range(1, 20), key=operator.neg)
+    that.reset(6)
+    assert that > this
+    that = SortedKeyList(range(1, 10), key=operator.neg)
+    that.reset(4)
+    assert not (that > this)
+
+
+def test_gte() -> None:
+    this = SortedKeyList(range(10), key=operator.neg)
+    this.reset(4)
+    that = SortedKeyList(range(10), key=operator.neg)
+    that.reset(5)
+    assert this >= that
+    assert that >= this
+    del this[-1]
+    assert that >= this
+    assert not (this >= that)
+
+
+def negate(val: int) -> int:  # ruff:ignore[reimplemented-operator]
+    return -val
+
+
+def test_repr() -> None:
+    this = SortedKeyList(range(10), key=negate)
+    this.reset(4)
+    assert repr(this).startswith(
+        "SortedKeyList([9, 8, 7, 6, 5, 4, 3, 2, 1, 0], key=<function negate at "
+    )
+
+
+@pytest.mark.skip(reason="Pyo3 doesn't support pickling yet")
+def test_pickle() -> None:
+    import pickle
+
+    alpha = SortedKeyList(range(100), key=operator.neg)
+    alpha.reset(500)
+    beta: SortedKeyList[int, int] = pickle.loads(pickle.dumps(alpha))  # pyright: ignore[reportAny]
+    assert alpha == beta
+    assert alpha.key == beta.key
+    assert alpha.load == 500
+    assert beta.load == 1000

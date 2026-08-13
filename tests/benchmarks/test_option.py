@@ -7,7 +7,7 @@ import pytest
 
 from pyochain import NONE, Err, Null, Ok, Option, Range, Some, option
 
-from ._utils import VariantGroups
+from ._utils import SIZES, VariantGroups
 
 if TYPE_CHECKING:
     from ._utils import BenchFixture
@@ -66,10 +66,10 @@ def test_match_case_some(benchmark: BenchFixture) -> None:
 @pytest.mark.benchmark(group="option_convert")
 @pytest.mark.parametrize(
     "fn",
-    [
+    (
         pytest.param(Some(10).ok_or, id="some"),
         pytest.param(NONE.ok_or, id="none"),
-    ],
+    ),
 )
 def test_ok_or(benchmark: BenchFixture, fn: BenchCallWithInt) -> None:
     def run() -> None:
@@ -91,11 +91,11 @@ def test_flatten_nested_none(benchmark: BenchFixture) -> None:
 @pytest.mark.benchmark(group="option_transpose")
 @pytest.mark.parametrize(
     "fn",
-    [
-        pytest.param(Some(Ok(10)).transpose, id="ok"),  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownArgumentType]
+    (
+        pytest.param(Some(Ok(10)).transpose, id="ok"),
         pytest.param(Some(Err(10)).transpose, id="err"),
         pytest.param(NONE.transpose, id="none"),
-    ],
+    ),
 )
 def test_transpose(benchmark: BenchFixture, fn: BenchCall) -> None:
     def run() -> None:
@@ -111,3 +111,23 @@ def test_call_none(benchmark: BenchFixture) -> None:
         return data.iter().map(lambda _: NONE).last()
 
     assert benchmark(fn) is NONE
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_iter_some(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    opt = Some(0)
+    assert benchmark(_iter, data, opt).is_some()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_iter_none(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    opt = NONE
+    assert benchmark(_iter, data, opt).is_none()
+
+
+def _iter(data: Range, opt: Option[int]) -> Option[int]:
+    for _ in data:
+        _ = opt.iter()
+    return opt.iter().next()

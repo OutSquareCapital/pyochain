@@ -28,7 +28,7 @@ from pyochain.abc import PyoIterator
 from ._utils import CONSOLE, Color, Paths
 
 CODE_BLOCK_PATTERN = re.compile(r"^```(\w*)", re.MULTILINE)
-SKIP_DECORATORS = SetMut.from_ref({"overload", "override", "no_doctest", "wraps"})
+SKIP_DECORATORS = SetMut.from_ref({"overload", "override", "wraps", "property"})
 type DocumentableNode = ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef
 type MethodNode = ast.FunctionDef | ast.AsyncFunctionDef
 

@@ -1,3 +1,3 @@
 # PyoKeysView
 
-::: pyochain._views.PyoKeysView
+::: pyochain.abc.PyoKeysView

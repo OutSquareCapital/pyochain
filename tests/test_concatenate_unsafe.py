@@ -18,7 +18,7 @@ def test_pipe_basic_callable() -> None:
 
 
 def test_args_no_kwargs() -> None:
-    def add(a: int, b: int) -> int:  # noqa: FURB118
+    def add(a: int, b: int) -> int:  # ruff:ignore[reimplemented-operator]
         return a + b
 
     assert Some(3).map(add, 5).unwrap() == 8
@@ -34,7 +34,7 @@ def test_mixed_args_and_kwargs() -> None:
 
 
 def test_map_supports_high_arity_callable() -> None:
-    def many_args(a: int, b: int, c: int, d: int, e: int, f: int) -> int:  # noqa: PLR0913, PLR0917
+    def many_args(a: int, b: int, c: int, d: int, e: int, f: int) -> int:  # ruff:ignore[too-many-arguments, too-many-positional-arguments]
         return a + b + c + d + e + f
 
     assert Some(1).map(many_args, 2, 3, 4, 5, 6).unwrap() == 21
@@ -64,13 +64,13 @@ def _raise_lookup_error(_x: Option[int]) -> int:
 
 @pytest.mark.parametrize(
     ("runner", "exception", "message"),
-    [
+    (
         pytest.param(_raise_value_error, ValueError, "map error", id="map"),
         pytest.param(
             _raise_runtime_error, RuntimeError, "and_then error", id="and-then"
         ),
         pytest.param(_raise_lookup_error, LookupError, "into error", id="into"),
-    ],
+    ),
 )
 def test_exceptions_are_forwarded_unchanged(
     runner: Callable[[int], object], exception: type[Exception], message: str

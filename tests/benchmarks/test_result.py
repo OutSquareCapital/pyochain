@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from pyochain import NONE, Err, Ok, Result, Some
+from pyochain import NONE, Err, Ok, Option, Range, Result, Some
 
-from ._utils import VariantGroups
+from ._utils import SIZES, VariantGroups
 
 if TYPE_CHECKING:
     from ._utils import BenchFixture
@@ -42,8 +42,10 @@ def test_map_star(benchmark: BenchFixture) -> None:
     def combine(_a: int, _b: int, _c: int) -> int:
         return 1
 
+    res = Ok((1, 2, 3))
+
     def fn() -> Result[int, int]:
-        return Ok((1, 2, 3)).map_star(combine)
+        return res.map_star(combine)
 
     assert benchmark(fn).unwrap() == 1
 
@@ -74,10 +76,10 @@ def test_match_case(benchmark: BenchFixture) -> None:
 @pytest.mark.benchmark(group="result_convert")
 @pytest.mark.parametrize(
     "fn",
-    [
+    (
         pytest.param(Ok(10).ok, id="ok_to_option"),
         pytest.param(Err(10).err, id="err_to_option"),
-    ],
+    ),
 )
 def test_convert(benchmark: BenchFixture, fn: BenchCall) -> None:
     def run() -> None:
@@ -89,10 +91,10 @@ def test_convert(benchmark: BenchFixture, fn: BenchCall) -> None:
 @pytest.mark.benchmark(group="result_flatten")
 @pytest.mark.parametrize(
     "fn",
-    [
+    (
         pytest.param(Ok(Ok(10)).flatten, id="ok"),
         pytest.param(Ok(Err(10)).flatten, id="err"),
-    ],
+    ),
 )
 def test_flatten(benchmark: BenchFixture, fn: BenchCall) -> None:
     def run() -> None:
@@ -104,11 +106,11 @@ def test_flatten(benchmark: BenchFixture, fn: BenchCall) -> None:
 @pytest.mark.benchmark(group="result_transpose")
 @pytest.mark.parametrize(
     "fn",
-    [
-        pytest.param(Ok(Some(10)).transpose, id="some"),  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownArgumentType]
+    (
+        pytest.param(Ok(Some(10)).transpose, id="some"),
         pytest.param(Ok(NONE).transpose, id="none"),
         pytest.param(Err(10).transpose, id="err"),
-    ],
+    ),
 )
 def test_transpose(benchmark: BenchFixture, fn: BenchCall) -> None:
     def run() -> None:
@@ -120,13 +122,33 @@ def test_transpose(benchmark: BenchFixture, fn: BenchCall) -> None:
 @pytest.mark.benchmark(group="result_swap")
 @pytest.mark.parametrize(
     "fn",
-    [
+    (
         pytest.param(Ok(10).swap, id="ok"),
         pytest.param(Err(10).swap, id="err"),
-    ],
+    ),
 )
 def test_swap(benchmark: BenchFixture, fn: BenchCall) -> None:
     def run() -> None:
         _ = fn()
 
     assert benchmark(run) is None
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_iter_ok(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    opt = Ok(1)
+    assert benchmark(_iter, data, opt).is_some()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_iter_err(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    opt = Err(0)
+    assert benchmark(_iter, data, opt).is_none()
+
+
+def _iter(data: Range, opt: Result[int, int]) -> Option[int]:
+    for _ in data:
+        _ = opt.iter()
+    return opt.iter().next()

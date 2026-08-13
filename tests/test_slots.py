@@ -1,6 +1,41 @@
-"""Tests for slot usage in pyochain classes."""
+import re
+from collections.abc import (
+    Collection,
+    Container,
+    Iterable,
+    Iterator,
+    Mapping,
+    MappingView,
+    MutableMapping,
+    MutableSequence,
+    MutableSet,
+    Reversible,
+    Sequence,
+    Sized,
+)
+from collections.abc import (
+    Set as AbstractSet,
+)
+from functools import partial
+
+import pytest
 
 import pyochain as pc
+from pyochain.abc import (
+    PyoCollection,
+    PyoContainer,
+    PyoIterable,
+    PyoIterator,
+    PyoMapping,
+    PyoMappingView,
+    PyoMutableMapping,
+    PyoMutableSequence,
+    PyoMutableSet,
+    PyoReversible,
+    PyoSequence,
+    PyoSet,
+    PyoSized,
+)
 
 
 def test_slots() -> None:
@@ -20,6 +55,142 @@ def test_slots() -> None:
 def _check_slots(obj: object) -> bool:
     try:
         _x = obj.__dict__
-        return False  # noqa: TRY300
+        return False  # ruff:ignore[try-consider-else]
     except AttributeError:
         return True
+
+
+check_other = partial(pytest.mark.parametrize, "other")
+
+PYOITERATOR_PARENTS = [Iterable, PyoIterable, Iterator]
+COLLECTION_PARENTS = [PyoIterable, PyoContainer, PyoSized, Collection, Container, Sized]
+SET_PARENTS = [*COLLECTION_PARENTS, PyoSet, Collection, AbstractSet]
+SEQUENCE_PARENTS = [*COLLECTION_PARENTS, PyoReversible, Reversible, Sequence]
+MUTABLE_SET_PARENTS = [*SET_PARENTS, PyoMutableSet, MutableSet]
+MUTABLE_SEQUENCE_PARENTS = [
+    *SEQUENCE_PARENTS,
+    PyoSequence,
+    PyoMutableSequence,
+    MutableSequence,
+]
+MAPPING_PARENTS = [*COLLECTION_PARENTS, Mapping]
+MUTABLE_MAPPING_PARENTS = [
+    *MAPPING_PARENTS,
+    PyoMutableMapping,
+    PyoMapping,
+    MutableMapping,
+]
+
+FAILING_PARENTS = pc.Set[type]((PyoSized, PyoContainer, PyoReversible))
+
+CURRENTLY_FAILING = re.compile(
+    rf"({FAILING_PARENTS.iter().map(lambda x: x.__name__).join('|')})"
+)
+"""`PyoSized` and `PyoContainer` are currently failing due to pyo3 limitations for multiple inheritance."""
+IGNORE_RAISE = pytest.raises(AssertionError, match=CURRENTLY_FAILING)
+
+
+@check_other(PYOITERATOR_PARENTS)
+def test_pyoiterator(other: type) -> None:
+    assert issubclass(PyoIterator, other)
+
+
+@check_other(COLLECTION_PARENTS)
+def test_collection(other: type) -> None:
+    match other:
+        case _ if other in FAILING_PARENTS:
+            with IGNORE_RAISE:
+                assert issubclass(PyoCollection, other)
+        case _:
+            assert issubclass(PyoCollection, other)
+
+
+@check_other(SEQUENCE_PARENTS)
+def test_sequence(other: type) -> None:
+    match other:
+        case _ if other in FAILING_PARENTS:
+            with IGNORE_RAISE:
+                assert issubclass(PyoSequence, other)
+        case _:
+            assert issubclass(PyoSequence, other)
+
+
+@check_other(MUTABLE_SEQUENCE_PARENTS)
+def test_mutable_sequence(other: type) -> None:
+    match other:
+        case _ if other in FAILING_PARENTS:
+            with IGNORE_RAISE:
+                assert issubclass(PyoMutableSequence, other)
+        case _:
+            assert issubclass(PyoMutableSequence, other)
+
+
+@check_other(SET_PARENTS)
+def test_set(other: type) -> None:
+    match other:
+        case _ if other in FAILING_PARENTS:
+            with IGNORE_RAISE:
+                assert issubclass(pc.Set, other)
+        case _:
+            assert issubclass(pc.Set, other)
+
+
+@check_other(MUTABLE_SET_PARENTS)
+def test_setmut(other: type) -> None:
+    match other:
+        case _ if other in FAILING_PARENTS:
+            with IGNORE_RAISE:
+                assert issubclass(pc.SetMut, other)
+        case _:
+            assert issubclass(pc.SetMut, other)
+
+
+@check_other([PyoIterator, *PYOITERATOR_PARENTS])
+def test_iter(other: type) -> None:
+    assert issubclass(pc.Iter, other)
+
+
+@pytest.mark.parametrize("slf", (pc.Seq, pc.Range, pc.SliceView))
+@check_other([PyoSequence, *SEQUENCE_PARENTS])
+def test_concrete_sequences(slf: type, other: type) -> None:
+    match other:
+        case _ if other in FAILING_PARENTS:
+            with IGNORE_RAISE:
+                assert issubclass(slf, other)
+        case _:
+            assert issubclass(slf, other)
+
+
+@check_other([PyoMutableSequence, *MUTABLE_SEQUENCE_PARENTS])
+def test_vec(other: type) -> None:
+    match other:
+        case _ if other in FAILING_PARENTS:
+            with IGNORE_RAISE:
+                assert issubclass(pc.Vec, other)
+        case _:
+            assert issubclass(pc.Vec, other)
+
+
+@check_other(MUTABLE_MAPPING_PARENTS)
+def test_dict(other: type) -> None:
+    match other:
+        case _ if other in FAILING_PARENTS:
+            with IGNORE_RAISE:
+                assert issubclass(pc.Dict, other)
+        case _:
+            assert issubclass(pc.Dict, other)
+
+
+@pytest.mark.parametrize(
+    "classes",
+    (
+        (PyoIterable, Iterable),
+        (PyoContainer, Container),
+        (PyoSized, Sized),
+        (PyoReversible, Reversible),
+        (PyoMappingView, MappingView),
+        (PyoMappingView, Sized),
+    ),
+)
+def test_simple_abcs(classes: tuple[type, type]) -> None:
+    assert issubclass(classes[0], classes[1])

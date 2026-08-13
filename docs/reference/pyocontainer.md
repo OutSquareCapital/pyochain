@@ -1,3 +1,3 @@
 # PyoContainer
 
-::: pyochain.abc._collection.PyoContainer
+::: pyochain.abc.PyoContainer

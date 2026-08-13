@@ -1,22 +1,47 @@
 from __future__ import annotations
 
 import operator
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING
 
 import pytest
 
-from pyochain import Iter, Null, Option, Range, Seq, Some, Vec
-from pyochain.abc import PyoSequence
+from pyochain import NONE, Iter, Null, Option, Range, Seq, Some, Vec
 
 from ._utils import SIZES, Sizes
 
 if TYPE_CHECKING:
+    from pyochain.abc import PyoIterable, PyoIterator, PyoSequence
+
     from ._utils import BenchFixture
 
 
+@pytest.mark.parametrize("size", SIZES)
+def test_init(benchmark: BenchFixture, size: int) -> None:
+    assert benchmark(_init, size).next().is_none()
+
+
+def _init(size: int) -> PyoIterator[int]:
+    data = ()
+    for _ in range(size):
+        _ = Iter(data)
+    return Iter(data)
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_iter(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_iter, data) == Some(0)
+
+
+def _iter(data: Range) -> Option[int]:
+    for _ in data:
+        _ = data.iter()
+    return data.iter().next()
+
+
 @pytest.mark.benchmark(group="filter_map")
-@pytest.mark.parametrize("size", [64, 256, 1024, 4096])
+@pytest.mark.parametrize("size", (64, 256, 1024, 4096))
 def test_filter_map(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size)
     assert benchmark(_filter_map, data) == size - 2
@@ -26,7 +51,7 @@ def _filter_map(data: Range) -> int:
     return data.iter().filter_map(lambda i: Some(i) if i % 2 == 0 else Null()).last()
 
 
-@pytest.mark.parametrize("size", [64, 256, 1024, 4096])
+@pytest.mark.parametrize("size", (64, 256, 1024, 4096))
 def test_filter_map_star(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size).iter().enumerate().collect(Seq)
     assert benchmark(_filter_map_star, data) == size - 2
@@ -41,7 +66,6 @@ def _filter_map_star(data: Seq[tuple[int, int]]) -> int:
     )
 
 
-@pytest.mark.benchmark(group="try_collect")
 @pytest.mark.parametrize("size", SIZES)
 def test_try_collect(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size)
@@ -89,20 +113,28 @@ def _for_each_args_and_kwargs(data: Range) -> None:
 type ForEachFn[T] = Callable[[PyoSequence[T]], None]
 
 
-@pytest.mark.benchmark(group="for_each")
 @pytest.mark.parametrize("size", SIZES)
-@pytest.mark.parametrize(
-    "fn",
-    [
-        pytest.param(_for_each, id="for_each"),
-        pytest.param(_for_each_args, id="for_each_args"),
-        pytest.param(_for_each_kwargs, id="for_each_kwargs"),
-        pytest.param(_for_each_args_and_kwargs, id="for_each_args_and_kwargs"),
-    ],
-)
-def test_for_each(benchmark: BenchFixture, fn: ForEachFn[int], size: int) -> None:
+def test_for_each(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size)
-    assert benchmark(fn, data) is None
+    assert benchmark(_for_each, data) is None
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_for_each_args(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_for_each_args, data) is None
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_for_each_kwargs(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_for_each_kwargs, data) is None
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_for_each_args_and_kwargs(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_for_each_args_and_kwargs, data) is None
 
 
 @pytest.mark.benchmark(group="for_each_star")
@@ -152,17 +184,16 @@ def _intersperse(data: Range) -> Seq[int]:
     return data.iter().intersperse(1).collect(Seq)
 
 
-@pytest.mark.benchmark(group="map_juxt")
-@pytest.mark.parametrize("size", [1, 2, 4, 8, 16, 32, 64])
+@pytest.mark.parametrize("size", (1, 4, 16, 64))
 def test_map_juxt(benchmark: BenchFixture, size: int) -> None:
 
     data = Range(0, 4096)
     funcs = Range(0, size).iter().map(_create_fn).collect(Seq)
-    assert benchmark(_map_juxt, data, funcs).last() is not None
+    assert benchmark(_map_juxt, data, funcs) is not None
 
 
-def _map_juxt(data: Range, funcs: Seq[Callable[[int], int]]) -> Seq[tuple[int, ...]]:
-    return data.iter().map_juxt(*funcs).collect(Seq)
+def _map_juxt(data: Range, funcs: Seq[Callable[[int], int]]) -> tuple[int, ...]:
+    return data.iter().map_juxt(*funcs).last()
 
 
 def _create_fn(i: int) -> Callable[[int], int]:
@@ -219,12 +250,12 @@ def _from_fn_args_and_kwargs() -> int:
 
 @pytest.mark.parametrize(
     "fn",
-    [
+    (
         pytest.param(_from_fn, id="from_fn"),
         pytest.param(_from_fn_args, id="from_fn_args"),
         pytest.param(_from_fn_kwargs, id="from_fn_kwargs"),
         pytest.param(_from_fn_args_and_kwargs, id="from_fn_args_and_kwargs"),
-    ],
+    ),
 )
 def test_from_fn(benchmark: BenchFixture, fn: Callable[[], int]) -> None:
     assert benchmark(fn) is not None
@@ -251,6 +282,16 @@ def _all(data: Range) -> bool:
     return data.iter().all(lambda x: x < 20_000)
 
 
+@pytest.mark.parametrize("size", SIZES)
+def test_all_no_closure(benchmark: BenchFixture, size: int) -> None:
+    data = Range(1, size)
+    assert benchmark(_all_no_closure, data) is True
+
+
+def _all_no_closure(data: Range) -> bool:
+    return data.iter().all()
+
+
 def test_any(benchmark: BenchFixture) -> None:
     data = Range(0, 20_000)
     assert benchmark(_any, data) is True
@@ -260,39 +301,37 @@ def _any(data: Range) -> bool:
     return data.iter().any(lambda x: x == 19_999)
 
 
-def test_all_equal(benchmark: BenchFixture) -> None:
-    data = Iter.from_repeat(1).take(Sizes.SIZE_4096).collect(Seq)
-    assert benchmark(_all_equal, data) is True
+@pytest.mark.parametrize("size", SIZES)
+def test_any_no_closure(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).iter().map(lambda _: False).collect(Seq)
+    assert benchmark(_any_no_closure, data) is False
 
 
-def _all_equal(data: Seq[int]) -> bool:
-    return data.iter().all_equal()
+def _any_no_closure(data: Seq[bool]) -> bool:
+    return data.iter().any()
 
 
-def test_bool(benchmark: BenchFixture) -> None:
-    data = Seq((1, 2, 3))
-    assert benchmark(lambda: bool(data.iter())) is True
-
-
-def test_reduce(benchmark: BenchFixture) -> None:
-    data = Range(0, 20_000)
-    assert benchmark(_reduce, data) == 19999 * 20000 // 2
+@pytest.mark.parametrize("size", SIZES)
+def test_reduce(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_reduce, data) == size * (size - 1) // 2
 
 
 def _reduce(data: Range) -> int:
     return data.iter().reduce(operator.add)
 
 
-def test_find(benchmark: BenchFixture) -> None:
-    data = Range(0, 20_000)
-    assert benchmark(_find, data) == Some(19_999)
+@pytest.mark.parametrize("size", SIZES)
+def test_find(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_find, data) == Some(size - 1)
 
 
 def _find(data: Range) -> Option[int]:
-    return data.iter().find(lambda x: x == 19_999)
+    return data.iter().find(lambda x: x == data.last())
 
 
-@pytest.mark.parametrize("size", [1, 2, 4096])
+@pytest.mark.parametrize("size", (1, 2, 4096))
 def test_with_position(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size)
     assert benchmark(_with_position, data) is not None
@@ -300,3 +339,323 @@ def test_with_position(benchmark: BenchFixture, size: int) -> None:
 
 def _with_position(data: Range) -> str:
     return data.iter().with_position().last()[0]
+
+
+def test_fold_star(benchmark: BenchFixture) -> None:
+    data = Range(0, 4096).iter().enumerate().collect(Seq)
+    assert benchmark(_fold_star, data) is not None
+
+
+def _fold_star(data: Seq[tuple[int, int]]) -> int:
+    return data.iter().fold_star(0, lambda acc, x, y: acc + x + y)
+
+
+def test_fold_star_args_and_kwargs(benchmark: BenchFixture) -> None:
+    data = Range(0, 4096).iter().enumerate().collect(Seq)
+    assert benchmark(_fold_star_args_and_kwargs, data) is not None
+
+
+def _fold_star_args_and_kwargs(data: Seq[tuple[int, int]]) -> int:
+    def f(acc: int, x: int, y: int, offset: int, additional: int) -> int:
+        return acc + x + y + offset + additional
+
+    return data.iter().fold_star(0, f, 10, additional=5)
+
+
+def test_nth(benchmark: BenchFixture) -> None:
+    size = 1_000_000
+    data = Range(0, size)
+    assert benchmark(_nth, data, size + 1).is_none()
+
+
+def _nth(data: Range, n: int) -> Option[int]:
+    return data.iter().nth(n)
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_arg_min(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).iter().map(lambda x: size - x).collect(Seq)
+    assert benchmark(_arg_min, data) == size - 1
+
+
+def _arg_min(data: Seq[int]) -> int:
+    return data.iter().arg_min()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_arg_max(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).iter().map(lambda x: size + x).collect(Seq)
+    assert benchmark(_arg_max, data) == size - 1
+
+
+def _arg_max(data: Seq[int]) -> int:
+    return data.iter().arg_max()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_arg_max_by(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).iter().enumerate().collect(Seq)
+    assert benchmark(_arg_max_by, data) == size - 1
+
+
+def _arg_max_by(data: Seq[tuple[int, int]]) -> int:
+    return data.iter().arg_max_by(operator.itemgetter(1))
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_arg_min_by(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).iter().map(lambda x: (x, size - x)).collect(Seq)
+    assert benchmark(_arg_min_by, data) == size - 1
+
+
+def _arg_min_by(data: Seq[tuple[int, int]]) -> int:
+    return data.iter().arg_min_by(operator.itemgetter(1))
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_unpack_into(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_unpack_into, data) == size * (size - 1) // 2
+
+
+def _unpack_into(data: Range) -> int:
+    def func(*args: int) -> int:
+        return sum(args)
+
+    return data.iter().unpack_into(func)
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_zip_longest(benchmark: BenchFixture, size: int) -> None:
+    data1 = Range(0, size)
+    data2 = Range(0, size // 2)
+    assert benchmark(_zip_longest, data1, data2) == (Some(size - 1), NONE)
+
+
+def _zip_longest(data1: Range, data2: Range) -> tuple[Option[int], Option[int]]:
+    return data1.iter().zip_longest(data2).last()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_unzip(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).iter().enumerate().collect(Seq)
+    expected = size - 1
+    assert benchmark(_unzip, data) == (expected, expected)
+
+
+def _unzip(data: Seq[tuple[int, int]]) -> tuple[int, int]:
+    left, right = data.iter().unzip()
+    return left.last(), right.last()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_all_equal(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).iter().map(lambda _: 1).collect(Vec)
+    data.append(2)
+    assert benchmark(_all_equal, data) is False
+
+
+def _all_equal(data: PyoIterable[int]) -> bool:
+    return data.iter().all_equal()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_partition(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, stop=size)
+    assert benchmark(_partition, data) == (size // 2, size - size // 2)
+
+
+def _partition(data: Range) -> tuple[int, int]:
+    x, y = data.iter().partition(lambda x: x % 2 == 0)
+    return x.len(), y.len()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_is_sorted(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_is_sorted, data) is True
+
+
+def _is_sorted(data: Range) -> bool:
+    return data.iter().is_sorted()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_group_by(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_group_by, data) is not None
+
+
+def _group_by(data: Range) -> tuple[int, PyoIterator[int]]:
+    return data.iter().group_by(lambda x: x % 2).last()
+
+
+@pytest.mark.parametrize("size", (2, 8, 32, 128))
+def test_map_windows(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, 4096)
+    assert benchmark(_map_windows, data, size) is not None
+
+
+def _map_windows(data: Range, size: int) -> tuple[int, ...]:
+    return data.iter().map_windows(size, lambda x: x).last()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_map(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_map, data) == size - 1
+
+
+def _map(data: Range) -> int:
+    return data.iter().map(lambda x: x).last()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_accumulate(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_accumulate, data) == size * (size - 1) // 2
+
+
+def _accumulate(data: Range) -> int:
+    return data.iter().accumulate(operator.add, 0).last()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_product(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, 2)
+    others = data.iter().map(lambda _: Range(0, size)).collect(Seq)
+    # Invariance issue here
+    assert benchmark(_product, data, others) is not None
+
+
+def _product(data: Range, others: Seq[Iterable[int]]) -> tuple[int, ...]:
+    return data.iter().product(*others, repeat=4).take(10).last()
+
+
+def test_once(benchmark: BenchFixture) -> None:
+    assert benchmark(lambda: Iter.once(1)) is not None
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_once_with(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+
+    def fn() -> int:
+        return 1
+
+    assert benchmark(_once_with, data, fn) == 1
+
+
+def _once_with(data: Range, fn: Callable[[], int]) -> int:
+    for _ in data:
+        _ = next(Iter.once_with(fn))
+    return Iter.once_with(fn).next().unwrap()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_collect(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_collect, data)[-1] == size - 1
+
+
+def _collect(data: Range) -> tuple[int, ...]:
+    return data.iter().collect(tuple)
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_find_map(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_find_map, data) == Some(size - 1)
+
+
+def _find_map(data: Range) -> Option[int]:
+    return data.iter().find_map(lambda x: Some(x) if x == data.last() else Null())
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_join(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size).iter().map(str).collect(Seq)
+    assert benchmark(_join, data)[-1] == "9"
+
+
+def _join(data: Seq[str]) -> str:
+    return data.iter().join(", ")
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_collect_into(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    collector = Vec[int](())
+    assert benchmark(_collect_into, data, collector).last() == size - 1
+
+
+def _collect_into(data: Range, collector: Vec[int]) -> Vec[int]:
+    return data.iter().collect_into(collector)
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_take(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, SIZES.iter().max())
+    assert benchmark(_take, data, size) == size - 1
+
+
+def _take(data: Range, size: int) -> int:
+    return data.iter().take(size).last()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_slice(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, SIZES.iter().max())
+    assert benchmark(_slice, data, size) == size - 1
+
+
+def _slice(data: Range, size: int) -> int:
+    return data.iter().slice(0, size).last()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_chain(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, 2)
+    others = data.iter().map(lambda _: Range(0, size)).collect(Seq)
+    assert benchmark(_chain, data, others) == others.last().last()
+
+
+def _chain(data: Range, others: Iterable[Iterable[int]]) -> int:
+    return data.iter().chain(*others).last()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_map_with(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    others = Range(0, 7).iter().map(lambda _: data).collect(Seq)
+    assert benchmark(_map_with, data, others) is not None
+
+
+def _map_with(data: PyoIterable[int], others: Iterable[Iterable[int]]) -> int:
+    def f(*args: int) -> int:
+        return sum(args)
+
+    return data.iter().map_with(f, *others).last()
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_next(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_next, data) == 1
+
+
+def _next(data: Range) -> int:
+    iterator = data.iter()
+    for _ in data:
+        _ = iterator.next()
+    return 1
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_tail(benchmark: BenchFixture, size: int) -> None:
+    data = Range(0, size)
+    assert benchmark(_tail, data, 10) == size - 1
+
+
+def _tail(data: Range, n: int) -> int:
+    return data.iter().tail(n).iter().last()

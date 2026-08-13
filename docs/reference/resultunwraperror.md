@@ -1,3 +1,3 @@
 # ResultUnwrapError
 
-::: pyochain.rs.ResultUnwrapError
+::: pyochain.core.ResultUnwrapError

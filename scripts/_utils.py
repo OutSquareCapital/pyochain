@@ -11,7 +11,7 @@ CONSOLE = Console()
 
 class Paths(Enum):
     ROOT = Path()
-    SRC_DIR = ROOT.joinpath("src", "pyochain")
+    SRC_DIR = ROOT.joinpath("pyochain")
     DOCS = ROOT.joinpath("docs")
     DOCS_REF = DOCS.joinpath("reference")
     ZENSICAL = ROOT.joinpath("zensical.toml")

@@ -2,7 +2,165 @@
 
 ## [Unreleased]
 
--
+TODO: rerun benchmark before release by finding a way to create a branch with "tests" up to latest commits, but "src" and "rust" at the last release tag.
+TODO: check how to setup a "blog" section in the website for major releases, to avoid bloating the changelog with too much text.
+
+### 🏆 Highlights
+
+- `abc` classes, `Iter`, `Peekable`, `Seq`, `Range`, and `Vec` have been fully moved to Rust.
+- `abc::PyoIterator::peekable` has been completely refactored and now aligns with Rust std `Iterator`, with the methods `peek`, `next_if`, `next_if_eq`, and `next_if_map`, all implemented in Rust.
+- **typing**: The variance of generics for immutable classes (abstract and concrete) is now correctly handled and align with python stdlib. For example, `PyoMapping`, `Seq` or `Set` are now covariant, whilst `Dict` or `Vec` stay invariant.
+- `collections::PyoCounter`, pyochain version of python stdlib `collections::Counter`. Herit from `PyoMutableMapping` instead of `dict`, but behaves the same way.
+- `collections::{HeapMax, HeapMin}`, pyochain version of python stdlib `heapq` module.
+
+#### sortedcontainers
+
+The classes from the `sortedcontainers` library have been ported to pyochain, with the same functionnalities, only with a few differences:
+
+- No dynamic dispatch of classes for `SortedList` to `SortedKeyList` if a *key* argument is provided, call the wanted class explicitely. Same behavior for `SortedSet` and `SortedDict`, with, respectively, new, explicit, corresponding `SortedKeySet`, and `SortedKeyDict` classes.
+- `_reset` method is public (i.e it's called `reset`).
+- `_check` method is deleted from classes, and is defined as pure functions only for tests.
+- `bisect` method alias is deleted, use `bisect_right` instead.
+- `update` and `__init__` methods arguments are explicit instead of `*args`.
+- `__or__` and `__ror__` don't return `NotImplemented` if the provided *value* is not a `Mapping`.
+
+#### abc's
+
+- Due to Pyo3 current limitations, no `TypeError` is raised on program launch (i.e when `__subclasshook__` is called). Rely on type checkers to ensure all `abstractmethod`s are implemented.
+- Again, due to current limitations, some subclasses relationship don't work. `PyoSized`, `PyoContainer` and `PyoReversible` are not actual parents of their expected subclasses, thus `isinstance` checks will fail.
+
+### 💥 Breaking changes
+
+`PyoIterable` is now only here for the `iter` method, and doesn't provide methods that implicitely convert the `Iterable` into a `PyoIterator` anymore. `last` and `first`, depending on the concrete subclass, were either redundant (`first` for `PyoIterator` who already has `next`) or not really useful (`last` for non-ordered `Collection`s).
+
+- **API change**: `PyoIterable::first` has been deleted. This impacts all non-sequence types (`PyoSequence` is unchanged). If you need the old behavior on an `Iterator` or a `Collection`, call `.iter().next().unwrap()` instead.
+- **API change**: `PyoIterable::last` has been moved to `PyoIterator` and `PyoSequence` as separate methods without class inheritance. This impacts all custom `PyoIterable` subclasses who aren't `Iterator`s nor `Sequences`. If you need the old behavior (e.g calling `last` on a `set`-like collection), call `iter().last()` instead.
+- **API change**: `PyoIterator::batch` has been renamed to `PyoIterator::batched`.
+- **Method removal**: `PyoIterator::array_chunks` has been removed. Use `PyoIterator::batched` instead.
+- **API change**: `PyoIterator::map_with` *function* argument now need to be the **first** argument, followed by the various iterables. It was previously a kword only argument at the end. Swap the order at call sites to migrate your code.
+- **Removal**: `PyoIterator::insert` has been removed. Replace `y.insert(x)` by `Iter.once(x).chain(y)` to migrate your code. This makes thing clearer at both reading-order level, and semantics level, as this avoid treating an `Iterator` as "sort of" mutable collection.
+- **Removal**: Original `PyoIterator::repeat` has been removed, and `PyoIterator::from_repeat` renamed to `repeat`, i.e `from_repeat` replaces the old `repeat`. The original had complex semantics, niche use cases, without a real performance/memory benefit. To get the same behavior, use something like `my_iter.collect(Seq).pipe(lambda it: Iter.repeat(it, n)).map(lambda x: x.iter())`. This also better align with rust `Iterator::repeat` semantics and naming.
+- **Removal**: `Iter::__bool__` has been removed. Use `PyoIterator::peekable::__bool__` instead. This avoid implicit `tee` use.
+- **Removal**: `Iter::{from_ref, cloned}` have been removed. Use `a, b = x.tee()` instead (for `cloned`), or `a, b = Iter(x).tee()` (for `from_ref`), where *a* is the original `Iterator`, and *b* the cloned one.
+- `{Vec, Seq}` dunders (like `__add__`, `__mul__`, etc...) now return new instances of the same class, instead of the underlying data structure, i.e `Vec + Vec` returns a `Vec`, not a `list`. The only exception as of now remain for `__getitem__` when a `slice` is used.
+- **imports**: views-like classes are now back to being only imported from `abc` module, to stay consistent with python stdlib.
+- **Removal**: `inner` attribute is now a private implementation detail of pyochain, rather than something accessible from the public API. If you are confronted by code that refuses to handle, say, a `MutableSequence` instead of a `list`, 99% of the time, it's a good time to change it (or raise an issue to the author of the code). Python is meant to use duck typing, and `def foo(x: list):` is, again, not a valid pattern, at runtime or for static typing, 99% of the time. In any case, you can simply do `x.pipe(list)` if needed, for example.
+
+### 🆕 New features
+
+- `{Dict, SetMut, StableSet, Vec}::copy` to create shallow copies of the instance, just like `x.copy()` for their respective underlying builtins.
+- `PyoSized`, `PyoReversible`, and `PyoContainer` now inerhit from `Checkable`, instead of relying on mixins heritance.
+- `get_item` is now a `PyoMapping` method instead of a `PyoMutableMapping` one.
+- `Dict`, `Set` and `SetMut` are now fully compliant with their underlying data structure regarding the methods available.
+- `SetMut::difference_update`.
+
+### ✨ Enhancements
+
+- **typing**: added overloads to `PyoIterator::batched` to return precise tuple types for batch sizes up to 5 if *strict* is `True`.
+- **typing**: added overloads to `PyoIterator::product` to return precise tuple types for up to 10 iterables.
+- **API**: `PyoIterator::accumulate` is now aligned with `itertools`, with the possibility to not provide a function, in which case the default is to use addition.
+- **API**: `PyoIterator::product` missed it's `repeat` argument. This is now fixed.
+- **typing**: `Iter`, `Option`, `Result`, `Peekable`, `Seq`, `Set`, and `abc::{PyoIterable, PyoIterator, PyoCollection, PyoSequence, PyoSet}` types are now covariant in their generic type.
+- **typing**: `PyoSequence::get` now has correct generic types for slice overload.
+- **typing**: fixed overloads of `__get_item__` for `Vec`, `Seq` and `Range`.
+- **typing**: added overloads to `PyoIterator::filter_star` to return precise tuple types for up to 3 elements when provided with a closure returning a TypeIs or TypeGuard specifying the narrowed tuple.
+- **typing**: relaxed closure return type for `PyoIterator::{filter, filter_star, filter_false}` to `object`, since all python objects can be evaluated for truthiness.
+- **typing**: The variance of generics for immutable classes (abstract and concrete) is now correctly handled and align with python stdlib. For example, `PyoMapping`, `Seq` or `Set` are now covariant, whilst `Dict` or `Vec` stay invariant.
+- **typing**: `Dict::from_object` now returns `Dict[str, object]` instead of `Dict[str, Any]` to avoid silencing errors with strict type checkers (e.g Pyrefly, Basedpyright) who forbid the use of `Any` in generic types. You can always use `typing::cast` if you need specific attribute access without runtime check AND no type checker errors.
+- **typing**: `Result` and `Option` method `transpose` give less false positives now.
+- **typing**: Thanks to covariance, `PyoIterator::flatten` should not give false positives anymore, since it seems there's no need anymore to manually maintain various overloads for nested `PyoIterator` types.
+- **typing**: `PyoIterator::chain` now has overloads to return precise tuple types for up to 5 iterables, and handle covariance in all cases.
+- No-copy behavior for `Seq` when created from an already existing `Seq`, matching Python `tuple` behavior. No more need to use `Seq(seq.inner)` to keep the same object, `Seq(seq)` is enough. Note that this doesn't impact performance much, since the underlying `tuple`, where the data is stored, wasn't copied anyway, and the `Seq` wrapper is very lightweight in itself. This however help to make `Seq` behave more like `tuple`, and avoid confusion when using `is` operator on two `Seq` instances created from the same underlying data.
+
+### 🐞 Bug fixes
+
+- Aligned `abc::PyoMappingView` heritance and generics logic with python builtins.
+- `PyoIterator::all_equal` without `key` argument didn't have a default `None` value altough present in stubs, causing unexpected `TypeError`.
+- Deleted `PyoIterator::_from_iterable`class constructor, which caused issues for subclassing. As of now, Each method return an `Iter` upcasted to `PyoIterator`. Expect NO change in behavior. In a future release, each Iterator will have a dedicated struct (as long as it's faster than python builtins), hopefully allowing further performance improvements.
+
+### 🚀 Performance improvements
+
+#### Underlying structure delegations
+
+Instead of relying on automatic ABCs implementations, concrete classes now delegate to their underlying structure systematically.
+
+- `abc::Reversible::rev` got huge performance gains on concrete classes (`Range`, `Vec`, etc...), up to **28x** faster, by implementing `__reversed__` dunder, which now return the C level `Iterator` directly, instead of relying on the `abc` auto implementation.
+- `Vec::__iter__` has received the same type of optimization as `rev`. A quick benchmark with timeit show improvements between **25x** to **45x** faster on sizes ranging between 10k to 100k items. `Dict::__contains__` has received the same changes, but the performance isn't really changed, as the default ABC implementation is not that different from an optimized one (at least with a `dict`).
+- `append`, `clear` and `extend` received the same optimization on `Vec` and `Deque`.
+
+#### `PyoIterator` methods
+
+Many methods have been migrated to Rust.
+
+See the table below for the performance improvements, with the number of items processed in each `Iterator` when testing.
+
+Note that for `unpack_into`, even if it's worse on a relative basis on small `Iterator`'s, the median absolute speed improvement on larger ones more than makes up for it, since on 10 items, it's **2.6 us (new)** vs **2.42 us (old)**, while on 10k items, it's **229 us (new)** vs **253 us (old)**.
+
+What was observed is that the upper values outliers are much less frequent, especially on smaller sizes, where they have been reduced by a factor of 4.
+
+The performance improvements on small Iterators are expected, but the slowdown (albeit minor) on large Iterators is very surprising.
+
+There's less outliers, but their magnitude is worse, which can't be explained easily.
+
+Name                | 10 items | 100 items  | 1_000 items| 10_000 items| Note
+--------------------|----------|------------|------------|-------------| ----
+`arg_max`           | **1.26x**| **1.78x**  | **3.40x**  | **4.15x**   | Low items counts are likely higher after full Rust migration
+`arg_min`           | **1.25x**| **1.73x**  | **3.37x**  | **4.18x**   | Low items counts are likely higher after full Rust migration
+`arg_max_by`        | **1.24x**| **1.58x**  | **2.70x**  | **3.10x**   | Low items counts are likely higher after full Rust migration
+`arg_min_by`        | **1.29x**| **1.62x**  | **2.59x**  | **3.03x**   | Low items counts are likely higher after full Rust migration
+`unpack_into`       | **0.93x**| **0.99x**  | **1.09x**  | **1.11x**   | Low items counts are likely higher after full Rust migration
+`zip_longest`       | **2.83x**| **4.57x**  | **4.64x**  | **4.46x**   | Due to option creation in Rust
+`unzip`             | **1.61** | **2.80x**  | **3.82x**  | **4.09x**   | Due to tuple access in Rust
+`all_equal`         | **0.99x**| **1.02x**  | **0.98x**  | **1.01x**   | Identical perf, Low items counts are likely higher after full Rust migration
+`try_collect`       | **1.26x**| **1.08x**  | **1.01x**  | **1.00x**   | Due to `Vec` creation in Rust, Low items counts are likely higher after full Rust migration
+`partition`         | **1.24x**| **1.05x**  | **1.02x**  | **1.02x**   | Due to `Vec` creation in Rust, Low items counts are likely higher after full Rust migration
+`is_sorted`         | **1.12x**| **1.07x**  | **1.01x**  | **1.00x**   | Due to default param now in Rust.
+`group_by`          | **1.70x**| **2.30x**  | **2.39x**  | **2.37x**   | -
+`map`               | **1.08x**| **1.03x**  | **1.00x**  | **1.04x**   | -
+`accumulate`        | **1.11x**| **1.05x**  | **1.04x**  | **1.00x**   | -
+`reduce`            | **1.05x**| **1.01x**  | **1.00x**  | **1.00x**   | -
+`find_map`          | **1.16x**| **1.02x**  | **0.98x**  | **0.99x**   | -
+`take`              | **1.12x**| **1.09x**  | **1.01x**  | **1.00x**   | -
+`slice`             | **1.12x**| **1.09x**  | **1.01x**  | **0.97x**   | -
+`chain`             | **1.14x**| **1.04x**  | **1.02x**  | **1.02x**   | The items here are the nb of `Iterable` arguments, not the total number of items in the base `PyoIterator`.
+`product`           | **1.03x**| **1.01x**  | **1.01x**  | **0.99x**   | The items here are the nb of `Iterable` arguments, not the total number of items in the base `PyoIterator`.
+`next`              | **1.31x**| **1.45x**  | **1.47x**  | **1.47x**   | The items here are the nb of calls to `next` in a loop.
+`once_with`         | **1.75x**| **1.83x**  | **1.84x**  | **1.84x**   | The items here are the nb of time we create a `PyoIterator` with `once_with()`, and then call `next` on it.
+`map_with`          | **0.97x**| **0.98x**  | **0.97x**  | **0.99x**   | Slight regressions -> we must reconstruct the tuple args for each call (func, self, others).
+`tail`              | **1.20x**| **1.24x**  | **1.23x**  | **1.19x**   | -
+`Some::iter`        | **4.66x**| **5.28x**  | **5.28x**  | **5.20x**   | `Iter` is directly created from `new` constructor, no `getattr` pattern.
+`Null::iter`        | **5.87x**| **7.13x**  | **7.07x**  | **6.96x**   | `Iter` is directly created from `new` constructor, no `getattr` pattern.
+`Err::iter`         | **5.75x**| **6.95x**  | **6.92x**  | **6.89x**   | `Iter` is directly created from `new` constructor, no `getattr` pattern.
+`Ok::iter`          | **7.16x**| **8.62x**  | **8.71x**  | **8.67x**   | It was calling `self.ok()` before internally.
+`PyoIterable::iter` | **1.16x**| **1.19x**  | **1.18x**  | **1.17x**   | -
+`Iter::__init__`    | **1.82x**| **1.93x**  | **1.93x**  | **1.92x**   | Also impact `PyoMutableSequence::{extract_if, drain}` and `PyoReversible::rev`
+`Reversible::rev`   | **5.23x**| **28.99x** | **28.08x** | **25.88x**  | For `Range`, `Vec` and `Seq` types. ABC's in itself is 2-3% faster on small iterators after Rust migration.
+`Seq::__init__`     | **1.29x**| **1.14x**  | **1.01x**  | **1.01x**   | -
+`Range::__init__`   | **1.62x**| **1.61x**  | **1.58x**  | **1.54x**   | -
+`Seq::concat`       | **2.58x**| **1.78x**  | **1.10x**  | **1.02x**   | -
+
+---
+
+- **Rust migration and logic optimization**: `PyoIterator::fold_star` args/kwargs truthiness are now matched to check if they are actually needed, and each case passes an optimized function to `itertools::reduce`. Without both for example, the method is was **1.2x** faster. Once migrated to Rust, this case is now **2.23x** faster. With args, the *relative* improvement is of **2.08x**. With args AND kwargs, **1.87x**.
+- **Rust migration and logic optimization**: `PyoIterator::map_juxt` is now fully in Rust as a "real" `Iterator` instead of a `Callable` used on `builtin::map`. Performance gains on small funcs tuples, performance regressions on large funcs tuples => **1.16x** faster for 1 func, **1.08x** for 4 funcs, **1.02x** faster for 16 funcs, and **0.95x** slower for 64 funcs. Optimizing the latter is on the roadmap, but all considered, I doubt most ppl will be using `map_juxt` with more than 16 funcs, so It's acceptable in the meantime.
+- **Rust migration**: `PyoIterator::once` is now **1.26x** faster.
+- **Logic optimization**: `PyoIterator::chain` doesn't call `from_iterable` needlessly anymore. Unchanged on small iterators, but around **1.06x** faster on 1k and 10k items when provided with a single `Iterable` argument.
+
+- `PyoSequence::{first, last, get}` are now around **1.7x** (`Range`) to **2.1x** (`Seq`) faster, after having both the ABC and the concrete classes migrated to Rust.
+
+### ⚠️ Performance regressions
+
+- `PyoIterator::{all, any}` with no predicate is now fully in Rust. unfortunately, a constant ~100 ns performance regression has been observed on benchmarks. On a relative basis, this is a 7 to 8% performance hit on small iterators(10 to 100 items). On 1000 items, a 2% hit, and on 10k it's barely noticeable (absolute time  is 35 us for reference on 10k items).
+
+### 🛠️ Other improvements
+
+- Various minor docstring improvements.
+- Code readability and privacy management improvements in Rust source code.
+- `PyoIterator::find` has been moved to Rust, performance is identical as before.
+
+### 🔗 Dependencies
+
+- Removed `pytest-cov` from dev dependencies.
 
 ## [0.26.0] - 2026-06-16
 

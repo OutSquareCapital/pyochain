@@ -1,10 +1,8 @@
 # Pyochain Library: Overview of the API
 
-Pyochain provides various types and utilities designed to work together in a cohesive and intuitive way.
-
 Below is a diagram showing the pyochain API, and the relationships between its core types.
 
-the colors represent the different categories:
+The colors represent the different categories:
   
 - **Purple**: small mixins classes
 - **Green**: abstract collection protocols, mirroring `collections.abc`
@@ -18,22 +16,23 @@ config:
   layout: elk
 ---
 flowchart TB
+    Pipe["Pipe"] --> Fluent
+    Tap["Tap"] --> Fluent
     Fluent["Fluent"] ==> PyoIterable["PyoIterable[T]"] & Result["Result[T, E]"] & Option["Option[T]"]
     Checkable["Checkable"] ==> PyoIterable
     PyoIterable --> PyoIterator["PyoIterator[T]"] & PyoCollection["PyoCollection[T]"]
-    PyoIterator ==> Iter["Iter[T]"]
+    PyoIterator ==> Iter["Iter[T]"] & Peekable["Peekable[T]"]
     PyoCollection --> PyoSequence["PyoSequence[T]"] & PyoSet["PyoSet[T]"] & PyoMappingView["PyoMappingView[T]"] & PyoMapping["PyoMapping[K,V]"]
     PyoSequence --> PyoMutableSequence["PyoMutableSequence[T]"]
-    PyoSequence ==> Seq["Seq[T]"]
-    PyoMutableSequence ==> Vec["Vec[T]"]
-    PyoSet ==> Set["Set[T]"] & PyoKeysView["PyoKeysView[K]"] & PyoItemsView["PyoItemsView[K,V]"]
+    PyoSequence ==> Seq["Seq[T]"] & SliceView["SliceView[T]"] & Range["Range"]
+    PyoMutableSequence ==> Vec["Vec[T]"] & Deque["Deque[T]"]
+    PyoSet ==> PyoMutableSet["PyoMutableSet[T]"] & Set["Set[T]"] & PyoKeysView["PyoKeysView[K]"] & PyoItemsView["PyoItemsView[K,V]"]
+    PyoMutableSet ==>  SetMut["SetMut[T]"] & StableSet["StableSet[T]"]
     PyoMappingView ==> PyoKeysView & PyoValuesView["PyoValuesView[V]"] & PyoItemsView
     PyoMapping ==> PyoMutableMapping["PyoMutableMapping[K,V]"]
     PyoMutableMapping ==> Dict["Dict[K,V]"]
     Result ==> Ok["Ok[T]"] & Err["Err[E]"]
-    Option ==> Some["Some[T]"] & NONE["NONE"]
-    Set ==> SetMut["SetMut[T]"]
-    Seq ==> Vec
+    Option ==> Some["Some[T]"] & Null["Null"]
 
     style Fluent stroke:#9C27B0,stroke-width:2px
     style PyoIterable stroke:#00C853,stroke-width:2px
@@ -43,12 +42,15 @@ flowchart TB
     style PyoIterator stroke:#00C853,stroke-width:2px
     style PyoCollection stroke:#00C853,stroke-width:2px
     style Iter stroke:#1E88E5,stroke-width:2px
+    style Peekable stroke:#1E88E5,stroke-width:2px
     style PyoSequence stroke:#00C853,stroke-width:2px
     style PyoSet stroke:#00C853,stroke-width:2px
     style PyoMappingView stroke:#00C853,stroke-width:2px
     style PyoMapping stroke:#00C853,stroke-width:2px
     style PyoMutableSequence stroke:#00C853,stroke-width:2px
     style Seq stroke:#1E88E5,stroke-width:2px
+    style SliceView stroke:#1E88E5,stroke-width:2px
+    style Range stroke:#1E88E5,stroke-width:2px
     style Vec stroke:#1E88E5,stroke-width:2px
     style Set stroke:#1E88E5,stroke-width:2px
     style PyoKeysView stroke:#1E88E5,stroke-width:2px
@@ -60,7 +62,7 @@ flowchart TB
     style Ok stroke:#E53935,stroke-width:2px
     style Err stroke:#E53935,stroke-width:2px
     style Some stroke:#FDD835,stroke-width:2px
-    style NONE stroke:#FDD835,stroke-width:2px
+    style Null stroke:#FDD835,stroke-width:2px
     linkStyle 0 stroke:#9C27B0,stroke-width:2px,fill:none
     linkStyle 1 stroke:#9C27B0,stroke-width:2px,fill:none
     linkStyle 2 stroke:#AA00FF,stroke-width:2px,fill:none
@@ -91,38 +93,17 @@ flowchart TB
     linkStyle 27 stroke:#2962FF,fill:none,stroke-width:2px
 ```
 
-See the sections below for an overview of each category, and the types they contain.
-
-## Fluent mixins
-
-Fluent mixins are standalone classes that can be subclassed to enable functional method composition.
-
-They depend only on `Self` for their implementation, making them universally applicable.
-
-| Mixin       | Purpose                | Main Capabilities               |
-| ----------- | ---------------------- | ------------------------------- |
-| `Fluent`    | Functional chaining    | `into()`, `inspect()`           |
-| `Checkable` | Conditional operations | `then()`, `ok_or()`, `err_or()` |
-
 ## Abstract Collection protocols
 
 Abstract collection protocols form a hierarchy that mirrors Python's `collections.abc` module.
 
-Each protocol extends the corresponding one from `collections.abc`, inheriting its interface while adding pyochain-specific functionality.
+They expose the same API as their Python counterparts (required dunders and provided default implementations), with the additional pyochain-specific methods.
 
-Concrete types must implement the required methods (dunders) to satisfy the protocol contract.
+To see how each ABC must be implemented and what it offers, please refer to the [related official Python documentation](https://docs.python.org/3/library/collections.abc.html#collections-abstract-base-classes).
 
-| **ABC**             | **Extends**                      | **Required Methods**                   |
-| ------------------- | -------------------------------- | -------------------------------------- |
-| `PyoIterable`       | `Fluent`, `Checkable`, `Iterable`| `__iter__`                             |
-| `PyoIterator`       | `PyoIterable`, `Iterator`        | `__iter__`, `__next__`                 |
-| `PyoCollection`     | `PyoIterable`, `Collection`      | `__iter__`,`__contains__`, `__len__`   |
-| `PyoSequence`       | `PyoCollection`, `Sequence`      | `__getitem__`, `__len__`               |
-| `PyoMutableSequence`| `PyoSequence`, `MutableSequence` | `__setitem__`, `__delitem__`, `insert` |
-| `PyoSet`            | `PyoCollection`, `Set`           |  `__iter__`, `__contains__`, `__len__` |
-| `PyoMappingView`    | `PyoCollection`, `MappingView`   | `__len__`                              |
-| `PyoMapping`        | `PyoCollection`, `Mapping`       | `__iter__`, `__getitem__`, `__len__`   |
-| `PyoMutableMapping` | `PyoMapping`, `MutableMapping`   | `__setitem__`, `__delitem__`           |
+Simply add `Pyo` as a prefix to the Python ABC name to get the corresponding pyochain ABC.
+
+Note that in the current version at the time of writing this (**v.0.26.0**), they are not all implemented yet.
 
 ## Concrete Collections & Iterators
 
@@ -130,35 +111,20 @@ Pyochain provides concrete collection types that implement the abstract protocol
 
 All collections can be created from any object implementing Python's `Iterable` protocol.
 
-Since these types fully implement their corresponding `collections.abc` protocols , they can act as drop-in replacements for their Python standard library counterparts.
+Since these types fully implement their corresponding interface, they can act as drop-in replacements for their Python standard library counterparts.
 
 ### Concrete Collection Types
 
-| Type                | Underlying Structure | Implements `collections.abc`        | Ordered | Uniqueness | Mutability |
-|---------------------|----------------------|-------------------------------------|---------|------------|------------|
-| `Iter[T]`           | `Iterator[T]`        | `Iterator[T]`                       | N/A     | N/A        | N/A        |
-| `Seq[T]`            | `tuple[T]`           | `Sequence[T]`                       | Yes     | No         | No         |
-| `Vec[T]`            | `list[T]`            | `MutableSequence[T]`                | Yes     | No         | Yes        |
-| `Set[T]`            | `frozenset[T]`       | `Set[T]`                            | No      | Yes        | No         |
-| `SetMut[T]`         | `set[T]`             | `MutableSet[T]`                     | No      | Yes        | Yes        |
-| `Dict[K,V]`         | `dict[K, V]`         | `MutableMapping[K, V]`              | Yes     | Keys       | Yes        |
-| `PyoKeysView[K]`    | `KeysView[K]`        | `KeysView[K]`, `Set[K]`             | No      | Yes        | No         |
-| `PyoValuesView[V]`  | `ValuesView[V]`      | `ValuesView[V]`                     | No      | No         | No         |
-| `PyoItemsView[K,V]` | `ItemsView[K,V]`     | `ItemsView[K,V]`, `Set[tuple[K,V]]` | No      | Yes        | No         |
-| `Range`             | `range`              | `Sequence[int]`                     | Yes     | No         | No         |
-
-## Option & Result Types
-
-Pyochain provides two fundamental types for explicit handling of nullable values and errors: `Option[T]` and `Result[T, E]`.
-
-### Option
-
-`Option[T]` represents values that may or may not be present, serving as a type-safe alternative to using `None`.
-
-### Result
-
-`Result[T, E]` represents the outcome of operations that can succeed or fail, promoting explicit error handling without exceptions.
-
-A `Result[T, E]` is either `Ok(value)` for successful operations, or `Err(error)` for failures.
-
-Using `Result` as a return type clearly signals to callers that error handling is required.
+| Type                | Underlying Structure | Ordered | Uniqueness | Mutability |
+|---------------------|----------------------|---------|------------|------------|
+| `Iter[T]`           | `Iterator[T]`        | N/A     | N/A        | N/A        |
+| `Peekable[T]`       | `Iterator[T]`        | N/A     | N/A        | N/A        |
+| `Seq[T]`            | `tuple[T]`           | Yes     | No         | No         |
+| `Vec[T]`            | `list[T]`            | Yes     | No         | Yes        |
+| `Set[T]`            | `frozenset[T]`       | No      | Yes        | No         |
+| `SetMut[T]`         | `set[T]`             | No      | Yes        | Yes        |
+| `Dict[K,V]`         | `dict[K, V]`         | Yes     | Keys       | Yes        |
+| `PyoKeysView[K]`    | `KeysView[K]`        | No      | Yes        | No         |
+| `PyoValuesView[V]`  | `ValuesView[V]`      | No      | No         | No         |
+| `PyoItemsView[K,V]` | `ItemsView[K,V]`     | No      | Yes        | No         |
+| `Range`             | `range`              | Yes     | No         | No         |

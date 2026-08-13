@@ -1,3 +1,3 @@
 # PyoSequence
 
-::: pyochain.abc._sequences.PyoSequence
+::: pyochain.abc.PyoSequence

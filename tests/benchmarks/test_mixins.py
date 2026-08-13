@@ -59,10 +59,10 @@ def _with_args_and_kwargs(
 
 compared = pytest.mark.parametrize(
     "foo",
-    [
+    (
         pytest.param(FooRust(10), id="native"),
         pytest.param(FooPy(10), id="python"),
-    ],
+    ),
 )
 
 

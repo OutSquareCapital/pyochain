@@ -18,7 +18,7 @@ def test_retain(benchmark: BenchFixture, size: int) -> None:
     assert benchmark(_retain, data.pipe(Vec)) is None
     canary = data.pipe(Vec)
     canary.retain(lambda i: i < 5)
-    assert canary.inner == [0, 1, 2, 3, 4]
+    assert canary == [0, 1, 2, 3, 4]
 
 
 def _retain(data: Vec[int]) -> None:
@@ -29,7 +29,7 @@ def test_from_ref(benchmark: BenchFixture) -> None:
     data = [1, 2, 3]
     assert benchmark(Vec.from_ref, data) is not None
     canary = Vec.from_ref(data)
-    assert canary.inner == [1, 2, 3]
+    assert canary == [1, 2, 3]
 
 
 def test_truncate(benchmark: BenchFixture) -> None:

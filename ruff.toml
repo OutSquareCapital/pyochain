@@ -1,35 +1,65 @@
 [lint]
     external = ["DOC"]
     ignore = [
-        "C417",
-        "COM812",
-        "COM812",
-        "CPY001",
-        "D401",
-        "E501",
-        "FIX002",
-        "FIX004",
-        "PLC0415",
-        "PLR0904",
-        "PLR2004",
-        "PYI021",
-        "S101",
-        "S608",
-        "SLF001",
-        "T201",
-        "TC006",
-        "TD002",
-        "TD003",
-        "TID252",
+        "assert",
+        "docstring-in-stub",
+        "hardcoded-sql-expression",
+        "import-outside-top-level",
+        "line-contains-hack",
+        "line-contains-todo",
+        "line-too-long",
+        "magic-value-comparison",
+        "missing-copyright-notice",
+        "missing-todo-author",
+        "missing-todo-link",
+        "missing-trailing-comma",
+        "non-imperative-mood",
+        "print",
+        "private-member-access",
+        "pytest-raises-too-broad",                   # We don't care about pytest raises too broad
+        "relative-imports",
+        "runtime-cast-value",
+        "subclass-builtin",                          # We know what we do when subclassing builtins
+        "subprocess-popen-with-shell-equals-true",
+        "subprocess-without-shell-equals-true",
+        "superfluous-else-raise",
+        "superfluous-else-return",
+        "suspicious-eval-usage",                     # We don't care about eval
+        "suspicious-non-cryptographic-random-usage", # We don't care about cryptographic security
+        "suspicious-pickle-import",                  # We don't care about insecure modules
+        "suspicious-pickle-usage",                   # We don't care about cryptographic security
+        "suspicious-subprocess-import",
+        "too-many-public-methods",
+        "unnecessary-call-around-sorted",            # Can be a behavioral change who introduce subtle bugs
+        "unnecessary-dunder-call",
+        "unnecessary-map",
     ]
 
     preview = true
     select  = ["ALL"]
+
+    [lint.flake8-pytest-style]
+        parametrize-values-type = "tuple"
 [format]
     docstring-code-format = true
     preview               = true
     [lint.pydocstyle]
         convention = "google"
     [lint.per-file-ignores]
-        "t.py"    = ["ANN201", "D100", "D101", "D102", "D103"]
-        "tests/*" = ["D100", "D101", "D102", "D103", "D104", "DTZ001", "FBT001"]
+        "t.py" = [
+            "missing-return-type-undocumented-public-function",
+            "undocumented-magic-method",
+            "undocumented-public-class",
+            "undocumented-public-function",
+            "undocumented-public-method",
+            "undocumented-public-module",
+        ]
+        "tests/*" = [
+            "D",                                     # We don't want to document tests
+            "DOC",                                   # We don't want to document tests
+            "boolean-type-hint-positional-argument",
+            "call-datetime-without-tzinfo",
+            "comparison-with-itself",
+            "docstring-missing-returns",
+            "unnecessary-dunder-call",               # Dunders calls are more convenients in tests
+        ]

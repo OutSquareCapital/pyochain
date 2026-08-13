@@ -13,9 +13,7 @@ from pyochain import Dict, Iter, Set, SetMut
 from ._utils import Color, Paths
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
-
-    from pyochain.abc import PyoSet
+    from pyochain.abc import PyoIterator, PyoSet
 
 FENCED_CODE_BLOCK = re.compile(r"```.*?```", re.DOTALL)
 MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
@@ -38,13 +36,15 @@ def main(config_path: Paths = Paths.ZENSICAL) -> None:
     config: ZensicalConfig = tomllib.loads(txt)["project"]  # pyright: ignore[reportAny]
     docs_dir = config_path.value.parent.joinpath(config["docs_dir"])
     nav_paths = _collect_nav_paths(config["nav"])
-    missing = _missing_paths(
-        docs_dir.joinpath("reference").glob("*.md"), nav_paths, docs_dir
+    missing = Iter(docs_dir.joinpath("reference").glob("*.md")).pipe(
+        _missing_paths, nav_paths, docs_dir
     )
     if missing:
         msg = f"⚠️  Missing generated files in {Paths.ZENSICAL.value.as_posix()}:\n {missing}"
         Color.WARNING.show(msg)
-    invalid_nav_paths = _invalid_paths(docs_dir.rglob("*.md"), nav_paths, docs_dir)
+    invalid_nav_paths = Iter(docs_dir.rglob("*.md")).pipe(
+        _invalid_paths, nav_paths, docs_dir
+    )
     if invalid_nav_paths:
         Color.WARNING.show(f"⚠️  Invalid nav links:\n {invalid_nav_paths}")
 
@@ -74,11 +74,11 @@ def _collect_nav_paths(item: JsonData) -> SetMut[str]:
 
 
 def _missing_paths(
-    docs_ref: Iterator[Path], nav_paths: PyoSet[str], docs_dir: Path
+    docs_ref: PyoIterator[Path], nav_paths: PyoSet[str], docs_dir: Path
 ) -> str:
 
     return (
-        Iter(docs_ref)
+        docs_ref
         .map(lambda path: path.relative_to(docs_dir).as_posix())
         .collect(Set)
         .difference(nav_paths)
@@ -88,14 +88,10 @@ def _missing_paths(
 
 
 def _invalid_paths(
-    docs_dir_mds: Iterator[Path], nav_paths: SetMut[str], docs_dir: Path
+    docs_dir_mds: PyoIterator[Path], nav_paths: SetMut[str], docs_dir: Path
 ) -> str:
 
-    docs_paths = (
-        Iter(docs_dir_mds)
-        .map(lambda path: path.relative_to(docs_dir).as_posix())
-        .collect(Set)
-    )
+    docs_paths = docs_dir_mds.map(lambda path: path.relative_to(docs_dir).as_posix())
     return nav_paths.difference(docs_paths).iter().join("\n")
 
 

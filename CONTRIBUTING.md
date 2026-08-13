@@ -1,37 +1,46 @@
 # Contributing to pyochain
 
 Thank you for your interest in contributing to pyochain! This document outlines the repository structure, coding standards, and contribution workflow to help you get started.
-nchmarks.
 
 ## Repository overview
 
-pyochain is a **mixed Python/Rust project**:
+### Python API and typing
 
-### Python structure ([src/pyochain/](src/pyochain))
+- [pyochain/](pyochain/) — runtime package shim, public `.pyi` stubs, and typing metadata.
+- [pyochain/_types.pyi](pyochain/_types.pyi) — shared typing protocols and type aliases; it has no direct Rust module.
+- [pyochain/pyochain.pyi](pyochain/pyochain.pyi) — top-level public re-exports for the extension initialized by [src/lib.rs](src/lib.rs).
+- [pyochain/core/](pyochain/core/) — stubs for the core Rust types in [src/core/](src/core/).
+- [pyochain/abc/](pyochain/abc/) — stubs for the ABCs and mixins in [src/abc/](src/abc/).
+- [pyochain/collections/](pyochain/collections/) — stubs for the concrete collections in [src/collections/](src/collections/), including sorted collections.
 
-- [src/pyochain/**init**.py](src/pyochain/__init__.py) — public API entrypoint and re-exports.
-- [src/pyochain/abc/](src/pyochain/abc) — abstract collections and iterator ABCs shared across the Python layer.
-- [src/pyochain/collections/](src/pyochain/collections) — non-core collection implementations.
-- [src/pyochain/_iter.py](src/pyochain/_iter.py) — `Iter` implementation.
-- [src/pyochain/_seq.py](src/pyochain/_seq.py) — `Seq` implementation.
-- [src/pyochain/_dict.py](src/pyochain/_dict.py) — `Dict` implementation and mapping-specific methods.
-- [src/pyochain/_range.py](src/pyochain/_range.py) — `Range` implementation.
-- [src/pyochain/_set.py](src/pyochain/_set.py) — `Set`, `SetMut`, `PyoKeysView`, `PyoValuesView`, and `PyoItemsView` implementations.
-- [src/pyochain/_vec.py](src/pyochain/_vec.py) — `Vec` implementation.
-- [src/pyochain/_utils.py](src/pyochain/_utils.py) — internal utilities used across the Python package.
-- [src/pyochain/rs.pyi](src/pyochain/rs.pyi) — stubs for the Rust-compiled public bindings.
-- [src/pyochain/_tools.pyi](src/pyochain/_tools.pyi) — stubs for the internal Rust helper module exposed as `pyochain._tools`.
-- [src/pyochain/_types.py](src/pyochain/_types.py) — shared typing protocols and support types.
+The stub packages follow the public Rust module hierarchy, but the mapping is not strictly one-to-one: package initializers, grouped stubs, and private Rust helper modules do not always have a matching file.
 
-### Rust structure ([rust/src/](rust/src))
+### Rust and PyO3 implementation
 
-- [rust/src/lib.rs](rust/src/lib.rs) — PyO3 module root; exposes the `Option`/`Result` family, mixins, helper functions, the `NONE` constant, and the `_tools` submodule.
-- [rust/src/option.rs](rust/src/option.rs) — `Option[T]`, `Some`, `Null`, `NONE`, and helper constructors.
-- [rust/src/result.rs](rust/src/result.rs) — `Result[T, E]`, `Ok`, and `Err` implementations.
-- [rust/src/errors.rs](rust/src/errors.rs) — unwrap error types exposed to Python.
-- [rust/src/mixins.rs](rust/src/mixins.rs) — mixin types `Checkable`, `Pipe`, `Tap`, and `Fluent`.
-- [rust/src/tools.rs](rust/src/tools.rs) — iteration function and structs exposed through `pyochain._tools`.
-- [rust/src/args.rs](rust/src/args.rs) and [rust/src/hasher.rs](rust/src/hasher.rs) — internal argument parsing and hashing utilities used by the extension.
+- [src/lib.rs](src/lib.rs) — initializes the `pyochain` PyO3 module and registers the `core`, `abc`, `collections`, and `collections._sorted` submodules.
+- [src/core/](src/core/) — implements the core types: `Dict`, `Iter`, `Peekable`, `Option`, `Result`, `Range`, `Seq`, `Set`, `SetMut`, `SliceView`, and `Vec`.
+- [src/abc/](src/abc/) — implements the abstract base classes, mixins, and shared ABC traits.
+- [src/collections/](src/collections/) — implements concrete collections such as `Deque`, `Heap`, `HeapMax`, `HeapMin`, `PyoCounter`, and `StableSet`.
+- [src/collections/sorted/](src/collections/sorted/) — implements sorted collections, views, iterators, and their internal support modules.
+- [src/display.rs](src/display.rs) — formats Python objects for `repr` output.
+- [src/hasher.rs](src/hasher.rs) — provides shared hashing helpers.
+- [src/traits.rs](src/traits.rs) — defines shared wrapper, conversion, and initialization traits.
+
+### Internal crates
+
+- [crates/pyo3_ext/](crates/pyo3_ext/) — internal PyO3 extensions and utility traits.
+- [crates/pyochain_macros/](crates/pyochain_macros/) — procedural macros used by the Rust implementation.
+
+### Tests, documentation, and tooling
+
+- [tests/](tests/) — Python tests, ABC tests, external integration tests, and benchmarks.
+- [docs/](docs/) — documentation sources and API reference pages.
+- [scripts/](scripts/) — documentation generation and repository validation scripts.
+- [Cargo.toml](Cargo.toml) — Rust workspace and dependency configuration.
+- [pyproject.toml](pyproject.toml) — Python package metadata, maturin configuration, and development dependencies.
+- [pyrefly.toml](pyrefly.toml) — Pyrefly configuration.
+- [ruff.toml](ruff.toml) — Ruff linting and formatting configuration.
+- [zensical.toml](zensical.toml) — documentation site configuration.
 
 ## Coding and documentation guidelines
 
@@ -102,8 +111,7 @@ def my_function(param1: int, param2: str) -> bool:
 
     Examples:
         ```python
-        >>> my_function(5, "test")
-        True
+        assert my_function(5, "test")
 
         ```
     """
@@ -132,12 +140,24 @@ For benchmarking (optimized, slower compile):
 uv run maturin develop --release --uv
 ```
 
+Prior to a release, to check documentation generation and stubs:
+
+```bash
+uv run maturin develop --uv --features generate-docs,stub-check
+```
+
+The build tools can also be run directly:
+
+```bash
+cargo run -p pyochain-build -- generate-docs
+cargo run -p pyochain-build -- stub-check
+cargo run -p pyochain-build -- all
+```
+
 To force a complete rebuild (clears all Rust artifacts):
 
 ```bash
-cd rust
 cargo clean
-cd ..
 uv run maturin develop --uv
 ```
 
@@ -153,7 +173,6 @@ uv run ruff format . --preview;
 uv run basedpyright src/pyochain;
 uv run -m scripts.check_docstrings;
 uv run pydoclint src/pyochain;
-uv run -m scripts.generate_docs
 uv run -m scripts.check_nav
 ```
 
@@ -164,8 +183,6 @@ The workaround is to temporarily remove them, run `Ruff` and then put them back.
 For multiple sections, you can use your IDE to replace both of them by dummy text, run `Ruff` and then replace the dummy text by the original backticks.
 
 ### tests
-
-Add `--cov=src --cov-report=term-missing` to the pytest command below to include coverage reports.
 
 ```bash
 uv run pytest

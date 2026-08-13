@@ -1,0 +1,14 @@
+[package]
+    edition = "2024"
+    name    = "pyochain-build"
+    version = "0.1.0"
+
+[lib]
+    name = "pyochain_build"
+
+[dependencies]
+    anstream    = "1.0"
+    owo-colors  = "4.3.0"
+    proc-macro2 = { version = "1", features = ["span-locations"] }
+    syn         = { version = "3.0.1", features = ["full", "visit"] }
+    tap         = "1.0.1"

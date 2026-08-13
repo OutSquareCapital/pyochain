@@ -1,3 +1,3 @@
 # ResultType
 
-::: pyochain.rs.ResultType
+::: pyochain.core.ResultType
