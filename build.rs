@@ -72,7 +72,7 @@ fn run_stub_check() {
 fn show_output(failures: &[Failure], pyclasses: &[PyClass]) {
     if failures.is_empty() {
         println!(
-            "cargo:warning=pyclass stub check passed ({} declarations)",
+            "cargo:info=pyclass stub check passed ({} declarations)",
             pyclasses.len()
         )
     } else {

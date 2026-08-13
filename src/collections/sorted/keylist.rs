@@ -17,7 +17,7 @@ use crate::{
 use pyo3::{IntoPyObjectExt, PyTypeInfo, prelude::*, types::PyTuple};
 use std::sync::{Mutex, MutexGuard, atomic::AtomicUsize};
 use tap::Pipe;
-#[pyclass(module = "pyochain.collections", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
+#[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
 pub struct SortedKeyList {
     #[pyo3(get)]
     pub(super) key: Py<PyAny>,

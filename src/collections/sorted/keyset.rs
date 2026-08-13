@@ -9,7 +9,7 @@ use crate::{
     },
     traits::PyoABC,
 };
-#[pyclass(module = "pyochain.collections", frozen, generic, extends = abc::PyoMutableSet)]
+#[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
 pub struct SortedKeySet {
     set: Py<PySet>,
     list: Py<SortedKeyList>,

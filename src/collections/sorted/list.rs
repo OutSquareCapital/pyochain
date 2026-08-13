@@ -18,7 +18,7 @@ use pyo3::{PyTypeInfo, prelude::*, types::PyTuple};
 use std::sync::{Mutex, MutexGuard, atomic::AtomicUsize};
 
 use tap::prelude::*;
-#[pyclass(module = "pyochain.collections", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
+#[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSequence, sequence)]
 pub struct SortedList {
     pub(super) data: Mutex<ListsData>,
     pub(super) load: AtomicUsize,

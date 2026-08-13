@@ -18,7 +18,7 @@ use pyo3::{
 use tap::prelude::*;
 /// Key-value pair type from a Python `Mapping`
 type DictItem<'py> = (Bound<'py, PyAny>, Bound<'py, PyAny>);
-#[pyclass(module = "pyochain.collections", frozen, generic, extends= abc::PyoMutableMapping, mapping)]
+#[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends= abc::PyoMutableMapping, mapping)]
 pub struct SortedDict {
     list: Py<SortedList>,
     inner: Py<PyDict>,
@@ -110,7 +110,7 @@ impl BaseSortedDict for SortedDict {
         Ok(format!("{}({{{}}})", type_name, items))
     }
 }
-#[pyclass(module = "pyochain.collections", frozen, generic, extends = abc::PyoMutableMapping, mapping)]
+#[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableMapping, mapping)]
 
 pub struct SortedKeyDict {
     key: Py<PyAny>,

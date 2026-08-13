@@ -1,3 +1,3 @@
 # SortedKeySet
 
-::: pyochain.collections.SortedKeySet
+::: pyochain.collections._sorted.SortedKeySet

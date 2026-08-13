@@ -2,8 +2,10 @@ from typing import Any
 
 from ._core import BaseSortedListSet
 from ._dict import BaseSortedDict, SortedDict, SortedKeyDict
-from ._list import BaseSortedList, SortedKeyList, SortedList
-from ._set import BaseSortedSet, SortedKeySet, SortedSet
+from ._keylist import SortedKeyList
+from ._keyset import SortedKeySet
+from ._list import BaseSortedList, SortedList
+from ._set import BaseSortedSet, SortedSet
 from ._views import SortedItemsView, SortedKeysView, SortedValuesView
 
 def check_sorted_list(data: BaseSortedList[Any]) -> None: ...

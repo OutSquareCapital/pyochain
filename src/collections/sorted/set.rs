@@ -11,7 +11,7 @@ use crate::{
     traits::PyoABC,
 };
 
-#[pyclass(module = "pyochain.collections", frozen, generic, extends = abc::PyoMutableSet)]
+#[pyclass(module = "pyochain.collections._sorted", frozen, generic, extends = abc::PyoMutableSet)]
 pub struct SortedSet {
     set: Py<PySet>,
     list: Py<SortedList>,

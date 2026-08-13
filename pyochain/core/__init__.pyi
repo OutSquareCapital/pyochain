@@ -1,34 +1,28 @@
-"""Re-export to allow to make it work with both package layouts, LSPs, etc...
-
-Duplication of import here and in `__init__.py` is unfortunately necessary.
-"""
-
-from . import abc, collections
-from .core import (
+from ._dict import Dict
+from ._iterators import Iter, Peekable
+from ._option import (
     NONE,
-    Dict,
-    Err,
-    Iter,
     Null,
-    Ok,
     Option,
     OptionType,
     OptionUnwrapError,
-    Peekable,
-    Range,
+    Some,
+    option,
+)
+from ._range import Range
+from ._result import (
+    Err,
+    Ok,
     Result,
     ResultType,
     ResultUnwrapError,
-    Seq,
-    Set,
-    SetMut,
-    SliceView,
-    Some,
-    Vec,
-    option,
     then_if_some,
     then_if_true,
 )
+from ._seq import Seq
+from ._set import Set, SetMut
+from ._sliceview import SliceView
+from ._vec import Vec
 
 __all__ = [
     "NONE",
@@ -51,8 +45,6 @@ __all__ = [
     "SliceView",
     "Some",
     "Vec",
-    "abc",
-    "collections",
     "option",
     "then_if_some",
     "then_if_true",

@@ -1,3 +1,3 @@
 # SortedKeysView
 
-::: pyochain.collections.SortedKeysView
+::: pyochain.collections._sorted.SortedKeysView

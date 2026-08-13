@@ -1,3 +1,3 @@
 # SortedDict
 
-::: pyochain.collections.SortedDict
+::: pyochain.collections._sorted.SortedDict

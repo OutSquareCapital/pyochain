@@ -1,3 +1,3 @@
 # SortedKeyList
 
-::: pyochain.collections.SortedKeyList
+::: pyochain.collections._sorted.SortedKeyList

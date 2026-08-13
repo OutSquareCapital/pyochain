@@ -2,7 +2,7 @@
 # Copyright 2014-2024 Grant Jenks — Licensed under the Apache License 2.0
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from collections.abc import Set as AbstractSet
 from types import NotImplementedType
 from typing import Any, Final, Self, final, overload, override
@@ -10,11 +10,8 @@ from typing import Any, Final, Self, final, overload, override
 from pyochain import SetMut, Vec
 from pyochain.abc import PyoIterator, PyoMutableSet, PyoSequence
 
-from ._core import KeyFunc
 from ._list import BaseSortedListSet
 from ._views import SupportsHashableAndRichComparison
-
-type SetKeyFunc[T, OT: SupportsHashableAndRichComparison] = KeyFunc[T, OT]
 
 class BaseSortedSet[T: SupportsHashableAndRichComparison](
     PyoMutableSet[T], PyoSequence[T], BaseSortedListSet[T], ABC
@@ -650,64 +647,5 @@ class SortedSet[T: SupportsHashableAndRichComparison](BaseSortedSet[T]):
     def __reduce__(
         self,
     ) -> tuple[type[Self], tuple[AbstractSet[T]]]: ...
-    @override
-    def union(self, *iterables: Iterable[T]) -> Self: ...
-
-@final
-class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]):  # pyright: ignore[reportInvalidTypeArguments]
-    def __new__(
-        cls, iterable: Iterable[T] | None = None, key: SetKeyFunc[T, OT] | None = None
-    ) -> Self:
-        """Initialize sorted set instance based on a key function.
-
-        Optional `iterable` argument provides an initial iterable of values to initialize the sorted key set.
-
-        The `key` argument defines a `Callable` that, like the `key` argument to Python's `sorted` function,
-        extracts a comparison key from each value.
-
-        The default, `None`, compares values directly.
-
-        Runtime complexity: `O(n*log(n))`
-
-        Args:
-            iterable (Iterable[T] | None): initial values (optional)
-
-        Args:
-            key (SetKeyFunc[T, OT] | None): function used to extract comparison key
-
-        Examples:
-            ```python
-            from pyochain.collections import SortedKeySet
-            from operator import neg
-
-            ss = SortedKeySet([3, 1, 2, 5, 4], neg)
-            assert (
-                repr(ss) == "SortedKeySet([5, 4, 3, 2, 1], key=<built-in function neg>)"
-            )
-            ```
-
-        """
-    @property
-    def key(self) -> SetKeyFunc[T, OT]:
-        """Function used to extract comparison key from values.
-
-        Sorted set compares values directly when the key function is none.
-
-        """
-
-    @override
-    def __reduce__(  # pyright: ignore[reportIncompatibleMethodOverride]
-        self,
-    ) -> tuple[type[Self], tuple[AbstractSet[T], Callable[[T], Any]]]: ...
-    def irange_key(
-        self,
-        min_key: OT | None = None,
-        max_key: OT | None = None,
-        inclusive: tuple[bool, bool] = (True, True),
-        *,
-        reverse: bool = False,
-    ) -> PyoIterator[T]: ...
-    def bisect_key_left(self, key: OT) -> int: ...
-    def bisect_key_right(self, key: OT) -> int: ...
     @override
     def union(self, *iterables: Iterable[T]) -> Self: ...
