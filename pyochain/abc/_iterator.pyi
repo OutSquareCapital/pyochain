@@ -104,46 +104,6 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     @override
     def __iter__(self) -> Iterator[T]: ...
     @classmethod
-    def _from_iterable[I](cls, iterable: Iterable[I]) -> PyoIterator[I]:
-        """Internal constructor.
-
-        Since some methods returns a new `PyoIterator`, we use this, with the assumption that the concrete subclass has an `__init__` that can accept an `Iterable[T]`.
-
-        If you want to implement a different constructor, you will need to override this method with one that can construct new instances from an iterable argument.
-
-        Args:
-            iterable (Iterable[I]): An `Iterable` to create the new `PyoIterator` from.
-
-        Returns:
-            PyoIterator[I]: A new instance of the concrete `PyoIterator` subclass.
-
-        See Also:
-            This is how python standard library handle `collections::abc::Set`, see the first point below `Notes on using Set [...]`:
-
-            https://docs.python.org/3/library/collections.abc.html#examples-and-recipes
-
-        Example:
-            ```python
-            >>> from pyochain.abc import PyoIterator
-            >>> from pyochain import Seq
-            >>> from collections.abc import Iterable, Iterator
-            >>>
-            >>> class MyIter(PyoIterator[int]):
-            ...     def __init__(self, iterable: Iterable[int]):
-            ...         self._iterable = iter(iterable)
-            ...     def __next__(self) -> int:
-            ...         return next(self._iterable)
-            ...     def __iter__(self) -> Iterator[int]:
-            ...         return self
-
-            >>> MyIter._from_iterable(Seq((1, 2, 3))).collect(Seq)
-            Seq(1, 2, 3)
-
-            ```
-
-        """
-
-    @classmethod
     def once[V](cls, value: V) -> PyoIterator[V]:
         """Create an `Iterator` that yields a single value.
 

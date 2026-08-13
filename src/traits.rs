@@ -134,6 +134,7 @@ impl<'py> IntoPyochain<'py, Dict> for Bound<'py, PyDict> {
 }
 impl<'py> IntoPyochain<'py, Iter> for Bound<'py, PyIterator> {
     #[inline]
+    /// Convert a generic `PyIterator` into `Iter`, the generic wrapper for arbitrary iterators.
     fn into_pyochain(self) -> PyResult<Bound<'py, Iter>> {
         let py = self.py();
         let initializer = abc::PyoIterator::build_init().add_subclass(Iter(self.unbind()));

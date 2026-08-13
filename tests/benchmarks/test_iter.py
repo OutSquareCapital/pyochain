@@ -470,15 +470,6 @@ def _partition(data: Range) -> tuple[int, int]:
     return x.len(), y.len()
 
 
-def test_from_iterable(benchmark: BenchFixture) -> None:
-    data = [1, 2, 3, 4, 5]
-    assert benchmark(_from_iterable, data) is not None
-
-
-def _from_iterable(data: list[int]) -> PyoIterator[int]:
-    return Iter._from_iterable(data)
-
-
 @pytest.mark.parametrize("size", SIZES)
 def test_is_sorted(benchmark: BenchFixture, size: int) -> None:
     data = Range(0, size)

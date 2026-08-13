@@ -76,6 +76,7 @@ The classes from the `sortedcontainers` library have been ported to pyochain, wi
 
 - Aligned `abc::PyoMappingView` heritance and generics logic with python builtins.
 - `PyoIterator::all_equal` without `key` argument didn't have a default `None` value altough present in stubs, causing unexpected `TypeError`.
+- Deleted `PyoIterator::_from_iterable`class constructor, which caused issues for subclassing. As of now, Each method return an `Iter` upcasted to `PyoIterator`. Expect NO change in behavior. In a future release, each Iterator will have a dedicated struct (as long as it's faster than python builtins), hopefully allowing further performance improvements.
 
 ### 🚀 Performance improvements
 
