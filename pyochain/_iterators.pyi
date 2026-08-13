@@ -1,15 +1,8 @@
 from collections.abc import Callable, Iterable, Iterator
-from typing import Self, final, overload, override
+from typing import Self, final, override
 
 from pyochain import Option, Result
 from pyochain.abc import PyoIterator
-
-@overload
-def no_doctest[T](obj: type[T], /) -> type[T]: ...
-@overload
-def no_doctest[**P, R](obj: Callable[P, R], /) -> Callable[P, R]: ...
-def no_doctest(obj: object, /) -> object:
-    """Dummy decorator to mark classes/functions that should skip doctest checks."""
 
 @final
 class Iter[T](PyoIterator[T]):
