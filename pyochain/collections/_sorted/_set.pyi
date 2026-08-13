@@ -11,8 +11,8 @@ from pyochain import SetMut, Vec
 from pyochain.abc import PyoIterator, PyoMutableSet, PyoSequence
 
 from ._core import KeyFunc
-from ._sorted_list import BaseSortedListSet
-from ._sorted_views import SupportsHashableAndRichComparison
+from ._list import BaseSortedListSet
+from ._views import SupportsHashableAndRichComparison
 
 type SetKeyFunc[T, OT: SupportsHashableAndRichComparison] = KeyFunc[T, OT]
 

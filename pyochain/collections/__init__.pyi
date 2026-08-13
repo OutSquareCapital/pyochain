@@ -14,7 +14,7 @@ from ._sorted import (
     SortedSet,
     SortedValuesView,
 )
-from ._stable_set import StableSet
+from ._stableset import StableSet
 
 __all__ = [
     "Deque",

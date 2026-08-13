@@ -10,15 +10,15 @@ from _typeshed import SupportsGetItem, SupportsKeysAndGetItem
 
 from pyochain import Dict
 from pyochain.abc import PyoIterator, PyoMutableMapping, PyoReversible
-from pyochain.collections import SortedList
-
-from ._core import SortedCollection
-from ._sorted_views import (
+from pyochain.collections import (
     SortedItemsView,
     SortedKeysView,
+    SortedList,
     SortedValuesView,
-    SupportsHashableAndRichComparison,
 )
+
+from ..._types import SupportsHashableAndRichComparison
+from ._core import SortedCollection
 
 type KeyFunc[K: Hashable, OT: SupportsHashableAndRichComparison] = Callable[[K], OT]
 
