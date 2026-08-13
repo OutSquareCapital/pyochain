@@ -1,4 +1,8 @@
-use crate::{abc::Checkable, core::iterators, traits::PyoABC};
+use crate::{
+    abc::Checkable,
+    core::iterators,
+    traits::{IntoPyochain, PyoABC},
+};
 use pyo3::prelude::*;
 use pyo3_ext::prelude::*;
 #[pyclass(module = "pyochain.abc",subclass, frozen, generic, extends=Checkable)]
@@ -12,6 +16,6 @@ impl PyoIterable {
         Self::build_init()
     }
     fn iter<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, iterators::Iter>> {
-        slf.try_iter().and_then(iterators::Iter::new)
+        slf.try_iter()?.into_pyochain()
     }
 }

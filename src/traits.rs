@@ -85,6 +85,10 @@ impl PyWrapper<PySequence> for SliceView {
 /// Useful for no-copy conversions, when the type is known at compile time.\
 /// For example, this avoid checking the type of a `PyTuple` at runtime to convert it into a `Seq`.
 pub trait IntoPyochain<'py, T: PyTypeInfo> {
+    /// Convert a given Python type `T` (wrapped in a `Py` or `Bound`) into the corresponding pyochain wrapper type.\
+    /// This will create the class and bind it to the python interpreter.\
+    /// As such, prefer using `new` (or alike) methods if you simply want to use the struct in Rust.\
+    /// That being said, prefer using the underlying Python type, as pyochain wrapper are, well, wrappers. There's not much to gain from using them in Rust.
     fn into_pyochain(self) -> PyResult<Bound<'py, T>>;
 }
 
@@ -125,6 +129,14 @@ impl<'py> IntoPyochain<'py, Dict> for Bound<'py, PyDict> {
     fn into_pyochain(self) -> PyResult<Bound<'py, Dict>> {
         let py = self.py();
         let initializer = abc::PyoMutableMapping::build_init().add_subclass(Dict(self.unbind()));
+        Bound::new(py, initializer)
+    }
+}
+impl<'py> IntoPyochain<'py, Iter> for Bound<'py, PyIterator> {
+    #[inline]
+    fn into_pyochain(self) -> PyResult<Bound<'py, Iter>> {
+        let py = self.py();
+        let initializer = abc::PyoIterator::build_init().add_subclass(Iter(self.unbind()));
         Bound::new(py, initializer)
     }
 }

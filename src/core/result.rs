@@ -164,9 +164,8 @@ impl PyoOk {
         self.value
             .clone_ref(py)
             .pipe(|x| PyTuple::new(py, &[x]))?
-            .try_iter()
-            .unwrap()
-            .pipe(iterators::Iter::new)
+            .pipe(iterators::Iter::from_tuple)
+            .into_bound(py)
     }
 
     fn map_star(&self, func: &Bound<'_, PyAny>) -> PyResult<Self> {

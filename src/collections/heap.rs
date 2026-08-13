@@ -1,7 +1,7 @@
 use crate::{
     abc,
     core::{PyoVec, iterators},
-    traits::{PyWrapper, PyoABC},
+    traits::{IntoPyochain, PyWrapper, PyoABC},
 };
 use either::Either;
 use pyo3::{
@@ -126,7 +126,7 @@ trait HeapType: Sized + PyWrapper<PyList> {
             .chain(others.iter())
             .collect::<Vec<_>>()
             .pipe(|x| PyTuple::new(py, x))?;
-        pylibs::heapq::merge(py, args, key, reverse).and_then(iterators::Iter::new)
+        pylibs::heapq::merge(py, args, key, reverse)?.into_pyochain()
     }
     #[pyo3(signature = (n, key=None))]
     fn n_smallest<'py>(

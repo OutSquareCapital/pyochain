@@ -204,6 +204,6 @@ impl ImplPyoReversible for Dict {
         self.inner_bind(py)
             .as_any()
             .pipe(pylibs::builtins::reversed)
-            .pipe(iterators::Iter::new)
+            .into_pyochain()
     }
 }

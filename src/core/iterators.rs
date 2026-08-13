@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use crate::{
     abc,
     core::{PyNull, PySome, PyoErr, PyoOk, PyochainOption},
-    traits::{PyWrapper, PyoABC},
+    traits::{IntoPyochain, PyWrapper, PyoABC},
 };
 use pyo3::{
     IntoPyObjectExt,
@@ -773,7 +773,7 @@ impl GroupBy {
                 let tup = item?.cast_into_unchecked::<PyTuple>();
                 let (key, group) = (tup.get_item_unchecked(0), tup.get_item_unchecked(1));
 
-                Ok(Some((key, Iter::new(group.try_iter().unwrap())?)))
+                Ok(Some((key, group.try_iter().unwrap().into_pyochain()?)))
             },
             None => Ok(None),
         }
@@ -869,15 +869,18 @@ impl Tail {
 #[pyclass(module = "pyochain.core",frozen, generic, extends=abc::PyoIterator)]
 pub struct Iter(pub Py<PyIterator>);
 impl Iter {
-    /// New constructor for `Iter` in rust.
-    /// We do this because `PyClassInitializer` can't be converted to pyobject directly, so we need to wrap it in a `Py` first.
-    pub fn new(data: Bound<'_, PyIterator>) -> PyResult<Bound<'_, Self>> {
-        let py = data.py();
-        let initializer = abc::PyoIterator::build_init().add_subclass(Self(data.unbind()));
+    #[inline(always)]
+    pub fn from_tuple(data: Bound<'_, PyTuple>) -> Self {
+        Self(data.try_iter().unwrap().unbind())
+    }
+    #[inline(always)]
+    pub fn into_bound(self, py: Python<'_>) -> PyResult<Bound<'_, Self>> {
+        let initializer = abc::PyoIterator::build_init().add_subclass(self);
         Bound::new(py, initializer)
     }
+
     pub fn empty(py: Python<'_>) -> PyResult<Bound<'_, Self>> {
-        PyTuple::empty(py).try_iter().unwrap().pipe(Self::new)
+        PyTuple::empty(py).pipe(Self::from_tuple).into_bound(py)
     }
 }
 #[pymethods]

@@ -10,7 +10,7 @@ use tap::Pipe;
 use crate::{
     abc::{PyoCollection, PyoIterable},
     core::{PyNull, PySome, iterators},
-    traits::PyoABC,
+    traits::{IntoPyochain, PyoABC},
 };
 use pyo3_ext::{
     args::{Args, Kwargs},
@@ -31,7 +31,7 @@ impl PyoReversible {
     fn rev(slf: Bound<'_, Self>) -> PyResult<Bound<'_, iterators::Iter>> {
         slf.as_any()
             .pipe(pylibs::builtins::reversed)
-            .pipe(iterators::Iter::new)
+            .into_pyochain()
     }
 }
 #[pyclass(module = "pyochain.abc",subclass,  frozen, generic, sequence, extends=PyoCollection)]
@@ -130,7 +130,7 @@ impl PyoSequence {
     fn rev<'py>(slf: Bound<'py, Self>) -> PyResult<Bound<'py, iterators::Iter>> {
         slf.as_any()
             .pipe(pylibs::builtins::reversed)
-            .pipe(iterators::Iter::new)
+            .into_pyochain()
     }
 }
 
@@ -233,8 +233,8 @@ impl PyoMutableSequence {
         unsafe { slf.cast_into_unchecked::<PySequence>() }
             .pipe(|x| iterators::ExtractIf::new(x, predicate, start, end))?
             .into_bound_py_any(py)?
-            .try_iter()
-            .and_then(iterators::Iter::new)
+            .try_iter()?
+            .into_pyochain()
     }
     #[pyo3(signature = (start=None, end=None))]
     fn drain<'py>(
@@ -246,7 +246,7 @@ impl PyoMutableSequence {
         unsafe { slf.cast_into_unchecked::<PySequence>() }
             .pipe(|x| iterators::Drain::new(x, start, end))?
             .into_bound_py_any(py)?
-            .try_iter()
-            .and_then(iterators::Iter::new)
+            .try_iter()?
+            .into_pyochain()
     }
 }

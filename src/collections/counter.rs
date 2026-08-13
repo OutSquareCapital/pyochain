@@ -1,7 +1,7 @@
 use crate::{
     abc::{self, traits::ImplPyoReversible},
     core::iterators,
-    traits::{PyWrapper, PyoABC},
+    traits::{IntoPyochain, PyWrapper, PyoABC},
 };
 use either::Either;
 use pyo3::{
@@ -137,8 +137,8 @@ impl PyoCounter {
             pyitertools::PyRepeat::type_object(py).into_any(),
             self.inner_bind(py).items_view().try_iter().unwrap(),
         )?
-        .pipe_ref(pylibs::itertools::chain::from_iterable)
-        .and_then(iterators::Iter::new)
+        .pipe_ref(pylibs::itertools::chain::from_iterable)?
+        .into_pyochain()
     }
     #[pyo3(signature = (iterable=None, /, **kwargs))]
     fn update(
@@ -461,7 +461,7 @@ impl ImplPyoReversible for PyoCounter {
         self.inner_bind(py)
             .as_any()
             .pipe(pylibs::builtins::reversed)
-            .pipe(iterators::Iter::new)
+            .into_pyochain()
     }
 }
 #[inline(always)]
