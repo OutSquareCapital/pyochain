@@ -25,9 +25,6 @@ impl PyoIterator {
     fn new(_args: &Args<'_>, _kwargs: Option<&Kwargs<'_>>) -> PyClassInitializer<Self> {
         Self::build_init()
     }
-    fn __iter__<'py>(slf: Bound<'py, Self>) -> Bound<'py, Self> {
-        slf
-    }
     #[classmethod]
     fn _from_iterable<'py>(
         cls: &Bound<'py, PyType>,

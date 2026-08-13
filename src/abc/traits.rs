@@ -19,6 +19,7 @@ pub trait ImplPyoReversible {
 #[py_abc(
     SliceViewIterator,
     SliceViewReverseIterator,
+    abc::PyoIterator,
     iterators::OnceWith,
     iterators::Tail,
     iterators::SequenceIterator,
@@ -77,6 +78,7 @@ impl ImplPyoIterator for iterators::ZipLongest {}
 impl ImplPyoIterator for iterators::Unzip {}
 impl ImplPyoIterator for iterators::GroupBy {}
 impl ImplPyoIterator for sorted::iter::SortedIter {}
+impl ImplPyoIterator for abc::PyoIterator {}
 macro_rules! impl_py_pipe {
     ($type:ty) => {
         #[pymethods]
