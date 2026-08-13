@@ -140,12 +140,24 @@ For benchmarking (optimized, slower compile):
 uv run maturin develop --release --uv
 ```
 
+Prior to a release, to check documentation generation and stubs:
+
+```bash
+uv run maturin develop --uv --features generate-docs,stub-check
+```
+
+The build tools can also be run directly:
+
+```bash
+cargo run -p pyochain-build -- generate-docs
+cargo run -p pyochain-build -- stub-check
+cargo run -p pyochain-build -- all
+```
+
 To force a complete rebuild (clears all Rust artifacts):
 
 ```bash
-cd rust
 cargo clean
-cd ..
 uv run maturin develop --uv
 ```
 
@@ -161,7 +173,6 @@ uv run ruff format . --preview;
 uv run basedpyright src/pyochain;
 uv run -m scripts.check_docstrings;
 uv run pydoclint src/pyochain;
-uv run -m scripts.generate_docs
 uv run -m scripts.check_nav
 ```
 

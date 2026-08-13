@@ -339,16 +339,24 @@ dependencies = [
 name = "pyochain"
 version = "0.1.0"
 dependencies = [
- "anstream",
  "color-eyre",
  "either",
- "owo-colors",
- "proc-macro2",
  "pyderive",
  "pyo3",
  "pyo3_ext",
+ "pyochain-build",
  "pyochain_macros",
  "smallvec",
+ "tap",
+]
+
+[[package]]
+name = "pyochain-build"
+version = "0.1.0"
+dependencies = [
+ "anstream",
+ "owo-colors",
+ "proc-macro2",
  "syn 3.0.1",
  "tap",
 ]

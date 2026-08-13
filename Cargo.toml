@@ -1,5 +1,5 @@
 [workspace]
-    members = [".", "./crates/pyochain_macros"]
+    members = [".", "./crates/pyochain_build", "./crates/pyochain_macros"]
 
 
 [package]
@@ -13,7 +13,8 @@
     name       = "pyochain"
 
 [features]
-    stub-check = []
+    generate-docs = []
+    stub-check    = []
 
 [dependencies]
     color-eyre = "0.6.5"
@@ -31,11 +32,7 @@
     tap = "1.0.1"
 
 [build-dependencies]
-    anstream    = "1.0"
-    owo-colors  = "4.3.0"
-    proc-macro2 = { version = "1", features = ["span-locations"] }
-    syn         = { version = "3.0.1", features = ["full", "visit"] }
-    tap         = "1.0.1"
+    pyochain_build = { package = "pyochain-build", path = "crates/pyochain_build" }
 
 [profile.release]
     codegen-units = 1
