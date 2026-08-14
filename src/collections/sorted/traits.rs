@@ -1060,7 +1060,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
         let py = key.py();
         if self.__contains__(&key)? {
             self.get_list().get().remove(&key)?;
-            self.get_inner().bind(py).pop_or_err(&key)
+            self.get_inner().bind(py).pop_or_err(&key).into_pyresult()
         } else {
             default.ok_or_else(|| PyKeyError::new_err(key.to_string()))
         }
@@ -1077,7 +1077,7 @@ pub(super) trait BaseSortedDict: ListGetter + SortedCollection {
             Err(PyKeyError::new_err(msg))
         } else {
             let key = self.get_list().get().pop(py, index)?;
-            let value = self.get_inner().bind(py).pop_or_err(&key)?;
+            let value = self.get_inner().bind(py).pop_or_err(&key).into_pyresult()?;
             Ok((key, value))
         }
     }

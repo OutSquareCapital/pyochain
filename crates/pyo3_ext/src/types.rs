@@ -2,7 +2,7 @@ use crate::pyobject_native_type_named;
 use either::Either;
 use pyo3::{
     BoundObject, PyTypeInfo,
-    exceptions::PyTypeError,
+    exceptions::{PyKeyError, PyTypeError},
     ffi, intern,
     prelude::*,
     sync::PyOnceLock,
@@ -23,6 +23,26 @@ pub trait FromCmp<'py, T> {
 impl<'py, T> FromCmp<'py, T> for PyNotImplemented {
     fn from_cmp(py: Python<'py>) -> PyCmpOut<'py, T> {
         Ok(PyNotImplemented::get(py).into_bound().pipe(Either::Right))
+    }
+}
+/// Output of a `pop` operation on a mutable data structure, e.g a `set` or a `dict`.
+pub enum PopResult<'py> {
+    /// Succes, code `1`.
+    Ok(Bound<'py, PyAny>),
+    /// Key missing, code `0`.
+    KeyMissing,
+    /// Error, code `-1`.
+    Err(PyErr),
+}
+impl<'py> PopResult<'py> {
+    /// Converts a `PopResult` into a `PyResult`.\
+    /// `Ok` => `Ok`, `KeyMissing` => `Err(PyKeyError(""))`, `Err` => `Err`.
+    pub fn into_pyresult(self) -> PyResult<Bound<'py, PyAny>> {
+        match self {
+            PopResult::Ok(v) => Ok(v),
+            PopResult::Err(e) => Err(e),
+            PopResult::KeyMissing => Err(PyKeyError::new_err("")),
+        }
     }
 }
 

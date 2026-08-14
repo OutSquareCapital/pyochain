@@ -5,11 +5,12 @@ use crate::{
 };
 use either::Either;
 use pyo3::{
-    PyTypeInfo, intern,
+    PyTypeInfo,
     prelude::*,
     types::{PyList, PyNotImplemented, PySlice, PyTuple},
 };
 use pyo3_ext::{
+    prelude::*,
     pylibs,
     types::{FromCmp, PyIterable},
 };
@@ -226,7 +227,7 @@ impl HeapType for HeapMax {
         _index: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>> {
         let inner = self.inner_bind(py);
-        let lastelt = inner.call_method0(intern!(py, "pop"))?;
+        let lastelt = inner.pop(inner.len().saturating_sub(1))?;
         if !(inner.is_empty()) {
             let returnitem = inner.get_item(0)?;
             inner.set_item(0, lastelt)?;

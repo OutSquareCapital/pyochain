@@ -1,7 +1,7 @@
 use pyo3::{exceptions::PyKeyError, intern, prelude::*};
 use pyo3_ext::{
     prelude::*,
-    types::{PyAbstractSet, PyMutableSet},
+    types::{PopResult, PyAbstractSet, PyMutableSet},
 };
 use pyochain_macros::try_cast;
 
@@ -87,26 +87,24 @@ impl PyoMutableSet {
     }
 
     fn pop(slf: Bound<'_, Self>) -> PyResult<Bound<'_, PyAny>> {
-        match PopResult::new(slf.as_any()) {
-            PopResult::KeyStop => Err(PyKeyError::new_err("")),
-            PopResult::Value(value) => {
+        new_pop_result(slf.as_any())
+            .into_pyresult()
+            .and_then(|value| {
                 Self::into_mutable_set(slf).discard(&value)?;
                 Ok(value)
-            }
-            PopResult::Error(e) => Err(e),
-        }
+            })
     }
 
     fn clear(slf: Bound<'_, Self>) -> PyResult<()> {
         let any = slf.as_any();
         let slf = Self::as_mutable_set(&slf);
         loop {
-            match PopResult::new(any) {
-                PopResult::Error(e) => {
+            match new_pop_result(any) {
+                PopResult::Err(e) => {
                     return Err(e);
                 }
-                PopResult::KeyStop => break Ok(()),
-                PopResult::Value(v) => {
+                PopResult::KeyMissing => break Ok(()),
+                PopResult::Ok(v) => {
                     slf.discard(&v)?;
                     continue;
                 }
@@ -114,19 +112,13 @@ impl PyoMutableSet {
         }
     }
 }
-enum PopResult<'py> {
-    Value(Bound<'py, PyAny>),
-    KeyStop,
-    Error(PyErr),
-}
-impl<'py> PopResult<'py> {
-    fn new(slf: &Bound<'py, PyAny>) -> Self {
-        slf.try_iter()
-            .map(|mut x| match x.next() {
-                None => PopResult::KeyStop,
-                Some(Ok(v)) => PopResult::Value(v),
-                Some(Err(e)) => PopResult::Error(e),
-            })
-            .unwrap_or_else(|e| PopResult::Error(e))
-    }
+#[inline]
+fn new_pop_result<'py>(slf: &Bound<'py, PyAny>) -> PopResult<'py> {
+    slf.try_iter()
+        .map(|mut x| match x.next() {
+            None => PopResult::KeyMissing,
+            Some(Ok(v)) => PopResult::Ok(v),
+            Some(Err(e)) => PopResult::Err(e),
+        })
+        .unwrap_or_else(|e| PopResult::Err(e))
 }

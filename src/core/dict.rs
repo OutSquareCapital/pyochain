@@ -5,12 +5,14 @@ use crate::{
     traits::{IntoPyochain, PyWrapper, PyoABC},
 };
 use pyo3::{
-    PyTypeInfo, intern,
+    PyTypeInfo,
+    exceptions::PyKeyError,
+    intern,
     prelude::*,
     pyclass_init::PyClassInitializer,
     types::{PyDict, PyIterator, PyTuple, PyType},
 };
-use pyo3_ext::{prelude::*, pylibs};
+use pyo3_ext::{prelude::*, pylibs, types::PopResult};
 use tap::Pipe;
 
 #[pyclass(module = "pyochain.core",frozen, generic, extends=abc::PyoMutableMapping)]
@@ -136,8 +138,14 @@ impl Dict {
         default: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>> {
         let py = key.py();
-        self.inner_bind(py)
-            .call_method1(intern!(py, "pop"), (key, default))
+        match self.inner_bind(py).pop_or_err(&key) {
+            PopResult::Ok(v) => Ok(v),
+            PopResult::Err(e) => Err(e),
+            PopResult::KeyMissing => match default {
+                Some(d) => Ok(d),
+                None => Err(PyKeyError::new_err(key.to_string())),
+            },
+        }
     }
 
     fn union<'py>(slf: Bound<'py, Self>, other: Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {

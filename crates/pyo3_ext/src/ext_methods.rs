@@ -2,7 +2,6 @@
 use pyo3::{
     PyTypeInfo,
     call::PyCallArgs,
-    exceptions::PyKeyError,
     ffi, intern,
     prelude::*,
     types::{
@@ -10,10 +9,9 @@ use pyo3::{
         PyList, PyRange, PySequence, PySet, PyTuple,
     },
 };
-use tap::prelude::*;
 
 use crate::types::{
-    PyAbstractSet, PyDeque, PyIterable, PyMappingView, PyMutableSequence, PyMutableSet,
+    PopResult, PyAbstractSet, PyDeque, PyIterable, PyMappingView, PyMutableSequence, PyMutableSet,
 };
 /// All ABCs have a `register` method that can be used to register a type as a virtual subclass of the ABC.\
 /// This trait factorize the implementation for all ABCs.\
@@ -35,7 +33,6 @@ impl ABCRegister<'_> for PyMappingView {}
 
 /// Trait for types that we know can safely be converted into a `PyIterator` (i.e. they implement the `__iter__` method in Python).
 pub trait IntoPyIterator<'py> {
-    /// Returns a `PyIterator` with `unwrap_unchecked`, as we know that the type implements `__iter__` and thus can be safely converted into a `PyIterator`.
     fn iter_py(&self) -> Bound<'py, PyIterator>;
 }
 impl<'py> IntoPyIterator<'py> for Bound<'py, PyIterator> {
@@ -47,6 +44,7 @@ macro_rules! impl_into_py_iterator_for_iterable {
     ($($t:ty),* $(,)?) => {
         $(
             impl<'py> IntoPyIterator<'py> for Bound<'py, $t> {
+                /// Returns a `PyIterator` with `unwrap_unchecked`, as we know that the type implements `__iter__` and thus can be safely converted into a `PyIterator`.
                 fn iter_py(&self) -> Bound<'py, PyIterator> {
                     unsafe { self.try_iter().unwrap_unchecked() }
                 }
@@ -207,17 +205,23 @@ pub trait PyListExtMethods<'py> {
     fn clear(&self) -> ();
     fn extend(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()>;
     fn last(&self) -> PyResult<Bound<'py, PyAny>>;
+    fn pop(&self, index: usize) -> PyResult<Bound<'py, PyAny>>;
     fn sort_by(&self, key: &Bound<'_, PyAny>, reverse: bool) -> PyResult<()>;
 }
 impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
+    fn pop(&self, index: usize) -> PyResult<Bound<'py, PyAny>> {
+        let v = self.get_item(index)?;
+        self.del_item(index)?;
+        Ok(v)
+    }
     fn clear(&self) -> () {
         unsafe { ffi::PyList_Clear(self.as_ptr()) };
     }
 
     fn extend(&self, iterable: &Bound<'_, PyAny>) -> PyResult<()> {
         match unsafe { ffi::PyList_Extend(self.as_ptr(), iterable.as_ptr()) } {
-            -1 => Err(PyErr::fetch(self.py())),
-            _ => Ok(()),
+            0 => Ok(()),
+            _ => Err(PyErr::fetch(self.py())),
         }
     }
     fn last(&self) -> PyResult<Bound<'py, PyAny>> {
@@ -236,23 +240,37 @@ impl<'py> PyListExtMethods<'py> for Bound<'py, PyList> {
 
 #[allow(unused)]
 pub trait PyDictExtMethods<'py> {
+    /// Return a view of the dictionnary items, just like calling `dict.items()` in Python
     fn items_view(&self) -> Bound<'py, PyDictItems>;
+    /// Return a view of the dictionnary keys, just like calling `dict.keys()` in Python
     fn keys_view(&self) -> Bound<'py, PyDictKeys>;
-    fn pop(&self, key: &Bound<'py, PyAny>) -> PyResult<Option<Bound<'py, PyAny>>>;
-    fn pop_or_err(&self, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>>;
+    /// Return a view of the dictionnary values, just like calling `dict.values()` in Python
     fn values_view(&self) -> Bound<'py, PyDictValues>;
+    fn pop(&self, key: &Bound<'py, PyAny>) -> PyResult<Option<Bound<'py, PyAny>>>;
+    fn pop_or_err(&self, key: &Bound<'py, PyAny>) -> PopResult<'py>;
     fn update_from_sequence(&self, seq: &Bound<'py, PyAny>) -> PyResult<&Self>;
 }
 impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
     fn items_view(&self) -> Bound<'py, PyDictItems> {
-        self.call_method0(intern!(self.py(), "items"))
-            .unwrap()
-            .pipe(|x| unsafe { x.cast_into_unchecked::<PyDictItems>() })
+        unsafe {
+            self.call_method0(intern!(self.py(), "items"))
+                .unwrap_unchecked()
+                .cast_into_unchecked::<PyDictItems>()
+        }
     }
     fn keys_view(&self) -> Bound<'py, PyDictKeys> {
-        self.call_method0(intern!(self.py(), "keys"))
-            .unwrap()
-            .pipe(|x| unsafe { x.cast_into_unchecked::<PyDictKeys>() })
+        unsafe {
+            self.call_method0(intern!(self.py(), "keys"))
+                .unwrap_unchecked()
+                .cast_into_unchecked::<PyDictKeys>()
+        }
+    }
+    fn values_view(&self) -> Bound<'py, PyDictValues> {
+        unsafe {
+            self.call_method0(intern!(self.py(), "values"))
+                .unwrap_unchecked()
+                .cast_into_unchecked::<PyDictValues>()
+        }
     }
     /// Remove *key* from the dictionary, and optionally return the removed value.\
     /// Do not raise `KeyError` if the *key* is missing (unlike calling `.call_method1("pop", key)`).\
@@ -261,30 +279,28 @@ impl<'py> PyDictExtMethods<'py> for Bound<'py, PyDict> {
     fn pop(&self, key: &Bound<'py, PyAny>) -> PyResult<Option<Bound<'py, PyAny>>> {
         let mut result = core::ptr::null_mut();
         match unsafe { ffi::PyDict_Pop(self.as_ptr(), key.as_ptr(), &mut result) } {
-            code if code == -1 => Err(PyErr::fetch(self.py())),
+            1 => Ok(Some(unsafe { Bound::from_owned_ptr(self.py(), result) })),
             0 => Ok(None),
-            _ => Ok(Some(unsafe { Bound::from_owned_ptr(self.py(), result) })),
+            // Return code is -1 here, hence error
+            _ => Err(PyErr::fetch(self.py())),
         }
     }
     /// Remove *key* from the dictionary, and return the removed value.\
     /// Raise `KeyError` if the *key* is missing, just like python's `dict.pop(key)` method.\
-    fn pop_or_err(&self, key: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+    fn pop_or_err(&self, key: &Bound<'py, PyAny>) -> PopResult<'py> {
         let mut result = core::ptr::null_mut();
         match unsafe { ffi::PyDict_Pop(self.as_ptr(), key.as_ptr(), &mut result) } {
-            code if code == -1 => Err(PyErr::fetch(self.py())),
-            0 => Err(PyKeyError::new_err(key.to_string())),
-            _ => Ok(unsafe { Bound::from_owned_ptr(self.py(), result) }),
+            1 => PopResult::Ok(unsafe { Bound::from_owned_ptr(self.py(), result) }),
+            0 => PopResult::KeyMissing,
+            // Return code is -1 here, hence error
+            _ => PopResult::Err(PyErr::fetch(self.py())),
         }
-    }
-    fn values_view(&self) -> Bound<'py, PyDictValues> {
-        self.call_method0(intern!(self.py(), "values"))
-            .unwrap()
-            .pipe(|x| unsafe { x.cast_into_unchecked::<PyDictValues>() })
     }
     fn update_from_sequence(&self, seq: &Bound<'py, PyAny>) -> PyResult<&Self> {
         match unsafe { ffi::PyDict_MergeFromSeq2(self.as_ptr(), seq.as_ptr(), 1) } {
-            code if code == -1 => Err(PyErr::fetch(seq.py())),
-            _ => Ok(self),
+            0 => Ok(self),
+            // Return code is -1 here, hence error
+            _ => Err(PyErr::fetch(seq.py())),
         }
     }
 }
