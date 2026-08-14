@@ -1,4 +1,5 @@
-use crate::parse::{NormalizedPath, PyClass, Root};
+use crate::parse::PyClass;
+use crate::paths;
 use owo_colors::OwoColorize;
 use std::{
     fmt::{self, Display},
@@ -9,7 +10,7 @@ use std::{
 };
 use tap::Pipe;
 
-pub(super) fn run(stub_root: &Root, pyclasses: &[PyClass]) {
+pub(super) fn run(stub_root: &paths::Root, pyclasses: &[PyClass]) {
     let mut failures = get_failures(&pyclasses, &stub_root);
     if failures.peek().is_none() {
         let msg = "pyclass stub check passed!";
@@ -39,7 +40,7 @@ fn show_failures<'a>(
 }
 fn get_failures<'a>(
     pyclasses: &'a [PyClass],
-    stub_root: &'a Root,
+    stub_root: &'a paths::Root,
 ) -> Peekable<impl Iterator<Item = (usize, (&'a PyClass, CheckErr))> + 'a> {
     pyclasses
         .iter()
@@ -82,7 +83,7 @@ enum CheckErr {
 }
 
 impl CheckErr {
-    fn new(pyclass: &PyClass, stub_root: &Root) -> Option<Self> {
+    fn new(pyclass: &PyClass, stub_root: &paths::Root) -> Option<Self> {
         match pyclass.module.as_ref() {
             None => Some(Self::MissingModule),
             Some(module) => {
@@ -158,7 +159,7 @@ impl CheckErr {
     }
 }
 struct Stub {
-    path: NormalizedPath,
+    path: paths::Normalized,
     module: String,
     line: usize,
 }
@@ -177,7 +178,7 @@ fn show_detail(detail: impl Display) {
     anstream::eprintln!("     {detail}");
 }
 
-fn get_matching_stubs(pyclass: &PyClass, stub_root: &Root) -> Vec<Stub> {
+fn get_matching_stubs(pyclass: &PyClass, stub_root: &paths::Root) -> Vec<Stub> {
     stub_root
         .iter_on_extension("pyi")
         .filter(|path| path.file_stem().and_then(|stem| stem.to_str()) != Some("__init__"))
@@ -196,7 +197,7 @@ fn get_matching_stubs(pyclass: &PyClass, stub_root: &Root) -> Vec<Stub> {
         .collect::<Vec<_>>()
 }
 
-fn stub_module(path: &Path, root: &Root) -> String {
+fn stub_module(path: &Path, root: &paths::Root) -> String {
     let module_parts = root
         .make_relative(path)
         .components()

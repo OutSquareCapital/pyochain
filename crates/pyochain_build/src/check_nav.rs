@@ -1,4 +1,4 @@
-use crate::parse::Root;
+use crate::paths::Root;
 use owo_colors::OwoColorize;
 use regex::Regex;
 use std::{collections::HashSet, fs, path::Path, sync::LazyLock};

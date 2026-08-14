@@ -146,13 +146,10 @@ Prior to a release, to check correct documentation generation, run the build wit
 uv run maturin develop --uv --features build-docs
 ```
 
-The build tools can also be run directly:
+The build tool can also be run directly:
 
 ```bash
-cargo run -p pyochain-build -- generate-docs
-cargo run -p pyochain-build -- check-nav
-cargo run -p pyochain-build -- stub-check
-cargo run -p pyochain-build -- all
+cargo run -p pyochain-build
 ```
 
 To force a complete rebuild (clears all Rust artifacts):

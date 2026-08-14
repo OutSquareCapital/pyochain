@@ -1,4 +1,4 @@
-use crate::parse::Root;
+use crate::paths::Root;
 use std::fs;
 use std::path::{Display, Path, PathBuf};
 
