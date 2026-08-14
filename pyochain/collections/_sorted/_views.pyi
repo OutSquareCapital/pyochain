@@ -31,6 +31,7 @@ class BaseSortedView(Generic[_K_co, _V_co]):  # ruff: ignore[non-pep695-generic-
         Examples:
             ```python
             from pyochain.collections import SortedDict
+            import pytest
 
             sd = SortedDict({"a": 1, "b": 2, "c": 3})
             view = sd.keys()
