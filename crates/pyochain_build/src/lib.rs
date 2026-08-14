@@ -1,9 +1,9 @@
-mod check_nav;
 mod generate_docs;
 mod parse;
 mod paths;
 mod stub_check;
 mod write;
+use owo_colors::OwoColorize;
 use std::path::PathBuf;
 
 use tap::prelude::*;
@@ -14,6 +14,9 @@ pub fn run(root: PathBuf) {
     let src = root.join("src").pipe(paths::Root::new);
     parse::get_pyclasses(&src, "lib.rs")
         .tap(|pyclasses| stub_check::run(&stubs, pyclasses))
-        .pipe_ref(|pyclasses| generate_docs::run(docs, pyclasses))
-        .pipe(|docs_paths| check_nav::run(root, docs_paths));
+        .pipe_ref(|pyclasses| generate_docs::run(&root, docs, pyclasses))
+        .pipe(|result| match result {
+            Ok(msg) => msg.green().bold().to_string().pipe(|msg| println!("{msg}")),
+            Err(err) => err.red().bold().to_string().pipe(|err| println!("{err}")),
+        });
 }
