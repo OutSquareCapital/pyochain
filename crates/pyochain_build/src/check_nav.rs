@@ -23,7 +23,7 @@ pub(super) fn run(root: &Root) {
 
 fn check_all(project: &Table, docs_dir: &Path, root: &Root) {
     let mut nav_paths = HashSet::new();
-    collect_nav_paths(&project["nav"], &mut nav_paths);
+    get_references(project).pipe(|references| collect_nav_paths(references, &mut nav_paths));
     let missing_paths = missing_paths(&docs_dir, &nav_paths);
     let invalid_nav_paths = invalid_nav_paths(&docs_dir, &nav_paths);
     let invalid_markdown_links = invalid_markdown_links(root, &docs_dir);
@@ -67,6 +67,16 @@ fn get_project(root: &Root) -> toml::value::Table {
         Value::Table(table) => table,
         _ => panic!("Invalid zensical.toml: 'project' should be a table"),
     }
+}
+fn get_references(project: &Table) -> &Value {
+    project
+        .get("nav")
+        .expect("Failed to get nav")
+        .as_array()
+        .expect("Failed to get nav as array")
+        .iter()
+        .find_map(|item| item.get("API reference"))
+        .expect("Failed to get API reference")
 }
 fn collect_nav_paths(value: &Value, paths: &mut HashSet<String>) {
     match value {
