@@ -17,12 +17,10 @@ class PyoReversible[T](PyoIterable[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Seq, Range
-            >>> Seq((1, 2, 3)).rev().collect(Seq)
-            Seq(3, 2, 1)
-            >>> Range(0, 5).rev().collect(Seq)
-            Seq(4, 3, 2, 1, 0)
+            from pyochain import Seq, Range
 
+            assert Seq((1, 2, 3)).rev().collect(Seq) == Seq((3, 2, 1))
+            assert Range(0, 5).rev().collect(Seq) == Seq((4, 3, 2, 1, 0))
             ```
         """
 
@@ -42,32 +40,28 @@ class PyoSequence[T](PyoReversible[T], PyoCollection[T], Sequence[T]):  # pyrigh
 
     Example:
         ```python
-        >>> from collections.abc import Iterator
-        >>> from pyochain.abc import PyoSequence
-        >>> from pyochain import Seq
-        >>>
-        >>> class MySeq(PyoSequence[int]):
-        ...     def __init__(self, data: list[int]):
-        ...         self._data = data
-        ...
-        ...     def __getitem__(self, index: int) -> int:
-        ...         return self._data[index]
-        ...
-        ...     def __len__(self) -> int:
-        ...         return len(self._data)
-        ...
-        ...     def __contains__(self, item: int) -> bool:
-        ...         return item in self._data
-        ...
-        ...     def __iter__(self) -> Iterator[int]:
-        ...         return iter(self._data)
-        >>>
-        >>> my_seq = MySeq([10, 20, 30])
-        >>> my_seq.first()
-        10
-        >>> my_seq.get(2)
-        Some(30)
+        from collections.abc import Iterator
+        from pyochain.abc import PyoSequence
+        from pyochain import Seq, Some
 
+        class MySeq(PyoSequence[int]):
+            def __init__(self, data: list[int]):
+                self._data = data
+            def __getitem__(self, index: int) -> int:
+                return self._data[index]
+
+            def __len__(self) -> int:
+                return len(self._data)
+
+            def __contains__(self, item: int) -> bool:
+                return item in self._data
+
+            def __iter__(self) -> Iterator[int]:
+                return iter(self._data)
+
+        my_seq = MySeq([10, 20, 30])
+        assert my_seq.first() == 10
+        assert my_seq.get(2) == Some(30)
         ```
     """
     @overload
@@ -96,15 +90,13 @@ class PyoSequence[T](PyoReversible[T], PyoCollection[T], Sequence[T]):  # pyrigh
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> from pyochain.collections import StableSet
-            >>> data = Seq((1, 2))
-            >>> data.first()
-            1
-            >>> # With an Iterator, the equivalent would be:
-            >>> data.iter().next().unwrap()
-            1
+            from pyochain import Seq
+            from pyochain.collections import StableSet
 
+            data = Seq((1, 2))
+            assert data.first() == 1
+            # With an Iterator, the equivalent would be:
+            assert data.iter().next().unwrap() == 1
             ```
         """
 
@@ -118,10 +110,9 @@ class PyoSequence[T](PyoReversible[T], PyoCollection[T], Sequence[T]):  # pyrigh
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> Seq((1, 2, 3)).last()
-            3
+            from pyochain import Seq
 
+            assert Seq((1, 2, 3)).last() == 3
             ```
         """
 
@@ -140,13 +131,11 @@ class PyoSequence[T](PyoReversible[T], PyoCollection[T], Sequence[T]):  # pyrigh
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> data = Seq((10, 20, 30))
-            >>> data.get(1)
-            Some(20)
-            >>> data.get(5)
-            NONE
+            from pyochain import Seq, Some
 
+            data = Seq((10, 20, 30))
+            assert data.get(1) == Some(20)
+            assert data.get(5).is_none()
             ```
         """
 
@@ -155,6 +144,8 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):  # pyright: ign
 
     This ABC is the base class for mutable sequence types in pyochain, such as `Vec`.
 
+    This class notably provides various methods inspired from Rust's `Vec` type, which provides memory-efficient in-place operations.
+
     Any concrete subclass must implement the required `MutableSequence` dunder methods:
 
     - `__getitem__`
@@ -162,10 +153,6 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):  # pyright: ign
     - `__delitem__`
     - `__len__`
     - `insert`
-
-    This class notably provides various methods inspired from Rust's `Vec` type, which provides memory-efficient in-place operations.
-
-    They are slower than simple `.extend()`, slices and `clear()` calls, but avoids all intermediate allocations, making them suitable for large collections where memory usage is a concern.
     """
 
     @overload
@@ -227,22 +214,19 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):  # pyright: ign
 
         Example:
             ```python
-            >>> from pyochain import Vec, Seq
-            >>> vec = Vec((1, 2, 3, 4))
-            >>> vec.retain(lambda x: x % 2 == 0)
-            >>> vec
-            Vec(2, 4)
+            from pyochain import Vec, Seq
 
+            vec = Vec((1, 2, 3, 4))
+            assert vec.retain(lambda x: x % 2 == 0) is None
+            assert vec == Vec((2, 4))
             ```
             External state may be used to decide which elements to keep.
 
             ```python
-            >>> vec = Vec((1, 2, 3, 4, 5))
-            >>> keep = Seq((False, True, True, False, True)).iter()
-            >>> vec.retain(lambda _: next(keep))
-            >>> vec
-            Vec(2, 3, 5)
-
+            vec = Vec((1, 2, 3, 4, 5))
+            keep = Seq((False, True, True, False, True)).iter()
+            vec.retain(lambda _: next(keep))
+            assert vec == Vec((2, 3, 5))
             ```
         """
 
@@ -260,31 +244,24 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):  # pyright: ign
 
         Example:
             ```python
-            >>> from pyochain import Vec
-            >>> # Truncating a five element vector to two elements:
-            >>> vec = Vec((1, 2, 3, 4, 5))
-            >>> vec.truncate(2)
-            >>> vec
-            Vec(1, 2)
+            from pyochain import Vec
 
+            # Truncating a five element vector to two elements:
+            vec = Vec((1, 2, 3, 4, 5))
+            vec.truncate(2)
+            assert vec == Vec((1, 2))
             ```
             No truncation occurs when len is greater than the `MutableSequence` current length:
             ```python
-            >>> from pyochain import Vec
-            >>> vec = Vec((1, 2, 3))
-            >>> vec.truncate(8)
-            >>> vec
-            Vec(1, 2, 3)
-
+            vec = Vec((1, 2, 3))
+            vec.truncate(8)
+            assert vec == Vec((1, 2, 3))
             ```
             Truncating when len == 0 is equivalent to calling the clear method.
             ```python
-            >>> from pyochain import Vec
-            >>> vec = Vec((1, 2, 3))
-            >>> vec.truncate(0)
-            >>> vec
-            Vec()
-
+            vec = Vec((1, 2, 3))
+            vec.truncate(0)
+            assert vec.is_empty()
             ```
         """
     def extract_if(
@@ -310,24 +287,18 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):  # pyright: ign
 
         Example:
             ```python
-            >>> from pyochain import Vec
-            >>> data = (1, 2, 3, 4, 5)
-            >>> vec = Vec(data)
-            >>> extracted = vec.extract_if(lambda x: x % 2 == 0).collect(Vec)
-            >>> extracted
-            Vec(2, 4)
-            >>> vec
-            Vec(1, 3, 5)
-            >>> # Extracting with a range
-            >>> vec = Vec(data)
-            >>> extracted = vec.extract_if(
-            ...     lambda x: x % 2 == 0, start=1, end=4
-            ... ).collect(Vec)
-            >>> extracted
-            Vec(2, 4)
-            >>> vec
-            Vec(1, 3, 5)
+            from pyochain import Vec
 
+            data = (1, 2, 3, 4, 5)
+            vec = Vec(data)
+            extracted = vec.extract_if(lambda x: x % 2 == 0).collect(Vec)
+            assert extracted == Vec((2, 4))
+            assert vec == Vec((1, 3, 5))
+            # Extracting with a range
+            vec = Vec(data)
+            extracted = vec.extract_if(lambda x: x % 2 == 0, 1, 4).collect(Vec)
+            assert extracted == Vec((2, 4))
+            assert vec == Vec((1, 3, 5))
             ```
         """
 
@@ -345,32 +316,24 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):  # pyright: ign
 
         Example:
             ```python
-            >>> from pyochain import Vec
-            >>> v = Vec([1, 2, 3])
-            >>> u = v.drain(1).collect(Vec)
-            >>> v
-            Vec(1)
-            >>> u
-            Vec(2, 3)
+            from pyochain import Vec
 
+            v = Vec([1, 2, 3])
+            u = v.drain(1).collect(Vec)
+            assert v == Vec((1,))
+            assert u == Vec((2, 3))
             ```
             Fully consuming the `Iterator` removes all drained elements
             ```python
-            >>> from pyochain import Vec
-            >>> v = Vec([1, 2, 3])
-            >>> _ = v.drain().collect(Vec)
-            >>> v
-            Vec()
-
+            v = Vec([1, 2, 3])
+            v.drain().collect(Vec)
+            assert v.is_empty()
             ```
             Deleting the `Iterator` will also remove all drained elements.
             ```python
-            >>> from pyochain import Vec
-            >>> vec = Vec([1, 2, 3])
-            >>> iterator = vec.drain()
-            >>> del iterator
-            >>> vec
-            Vec()
-
+            vec = Vec([1, 2, 3])
+            iterator = vec.drain()
+            del iterator
+            assert vec.is_empty()
             ```
         """

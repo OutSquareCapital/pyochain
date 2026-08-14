@@ -368,67 +368,6 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    @overload
-    def chain[S, O1](
-        self: PyoIterator[S], o1: Iterable[O1], /
-    ) -> PyoIterator[S | O1]: ...
-    @overload
-    def chain[S, O1, O2](
-        self: PyoIterator[S], o1: Iterable[O1], o2: Iterable[O2], /
-    ) -> PyoIterator[S | O1 | O2]: ...
-    @overload
-    def chain[S, O1, O2, O3](
-        self: PyoIterator[S], o1: Iterable[O1], o2: Iterable[O2], o3: Iterable[O3], /
-    ) -> PyoIterator[S | O1 | O2 | O3]: ...
-    @overload
-    def chain[S, O1, O2, O3, O4](
-        self: PyoIterator[S],
-        o1: Iterable[O1],
-        o2: Iterable[O2],
-        o3: Iterable[O3],
-        o4: Iterable[O4],
-        /,
-    ) -> PyoIterator[S | O1 | O2 | O3 | O4]: ...
-    @overload
-    def chain[S, O1, O2, O3, O4, O5](
-        self: PyoIterator[S],
-        o1: Iterable[O1],
-        o2: Iterable[O2],
-        o3: Iterable[O3],
-        o4: Iterable[O4],
-        o5: Iterable[O5],
-        /,
-    ) -> PyoIterator[S | O1 | O2 | O3 | O4 | O5]: ...
-    def chain[S, O](self: PyoIterator[S], *others: Iterable[O]) -> PyoIterator[S | O]:
-        """Concatenate **self** with one or more `Iterables`, any of which may be infinite.
-
-        In other words, it links **self** and **others** together, in a chain. 🔗
-
-        An infinite `Iterable` will prevent the rest of the arguments from being included.
-
-        This is equivalent to `list.extend()`, except it is fully lazy and works with any `Iterable`.
-
-        See Also:
-            [`PyoIterator::insert`][insert] to add a single element at the beginning of the `Iterator`.
-
-        Args:
-            *others (Iterable[O]): Other iterables to concatenate.
-
-        Returns:
-            PyoIterator[S | O]: A new `Iterator` which will first iterate over values from the original `Iterator` and then over values from the **others** `Iterable`s.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq, Iter
-            >>> data = Seq((1, 2))
-            >>> data.iter().chain((3, 4), [5]).collect(Seq)
-            Seq(1, 2, 3, 4, 5)
-            >>> data.iter().chain(Iter.from_count(3), Iter.from_count(2)).take(5).collect(Seq)
-            Seq(1, 2, 3, 4, 5)
-
-            ```
-        """
-
     def last(self) -> T:
         """Consume the `Iterator` and return it's last element.
 
@@ -1780,13 +1719,15 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         func: Callable[[S, S], S] | None = None,
         initial: S | None = None,
     ) -> PyoIterator[S]:
-        """Return an `Iterator` of accumulated binary function results.
+        """Return an `Iterator` of accumulated binary **function** results.
 
         In principle, `PyoIterator::accumulate` is similar to `PyoIterator::fold` if you provide it with the same binary function.
 
         However, instead of returning the final accumulated result, it returns an `Iterator` that yields the current value `T` of the accumulator for each iteration.
 
         In other words, the last element yielded by `PyoIterator::accumulate` is what would have been returned by `PyoIterator::fold` if it had been used instead.
+
+        **function** should accept two arguments, an accumulated total and a value from the `Iterator`.
 
         Args:
             func (Callable[[S, S], S] | None): Optional binary function to apply cumulatively. If `None`, the default is to use addition (`operator.add`).
@@ -1797,35 +1738,41 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> data = Seq((1, 2, 3))
-            >>> data.iter().accumulate(lambda a, b: a + b, 0).collect(Seq)
-            Seq(0, 1, 3, 6)
-            >>> # The final accumulated result is the same as fold:
-            >>> data.iter().fold(0, lambda a, b: a + b)
-            6
-            >>> data.iter().accumulate(lambda a, b: a * b).collect(Seq)
-            Seq(1, 2, 6)
-            >>> data.iter().accumulate().collect(Seq)
-            Seq(1, 3, 6)
+            import operator as op
+            from pyochain import Seq
 
+            s = Seq((1, 2, 3))
+            assert s.iter().accumulate().collect(tuple) == (1, 3, 6)
+            assert s.iter().accumulate(initial=10).collect(tuple) == (10, 11, 13, 16)
+            assert s.iter().accumulate(op.mul).collect(tuple) == (1, 2, 6)
+            assert s.iter().accumulate(op.add, 0).collect(Seq) == (0, 1, 3, 6)
+            # The final accumulated result is the same as fold:
+            assert s.iter().fold(0, op.add) == 6
+            assert s.iter().accumulate(op.mul).collect(Seq) == (1, 2, 6)
+            assert s.iter().accumulate().collect(Seq) == (1, 3, 6)
             ```
-        """
-    def compress(self, *selectors: bool) -> PyoIterator[T]:
-        """Filter elements using a boolean selector iterable.
+            To compute a running minimum, set function to `min()`.
 
-        Args:
-            *selectors (bool): Boolean values indicating which elements to keep.
+            For a running maximum, set function to `max()`.
 
-        Returns:
-            PyoIterator[T]: An `Iterator` of the items selected by the boolean selectors.
+            Or for a running product, set function to `operator.mul()`.
 
-        Example:
+            To build an amortization table, accumulate the interest and apply payments:
             ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter("ABCDEF").compress(1, 0, 1, 0, 1, 1).collect(Seq)
-            Seq('A', 'C', 'E', 'F')
+            from pyochain import Iter
+            import operator
 
+            data = Seq((3, 4, 6, 2, 1, 9, 0, 7, 5, 8))
+            running_max = data.iter().accumulate(max).collect(Seq)
+            assert running_max == (3, 4, 6, 6, 6, 9, 9, 9, 9, 9)
+
+            running_product = data.iter().accumulate(operator.mul).collect(Seq)
+            assert running_product == (3, 12, 72, 144, 144, 1296, 0, 0, 0, 0)
+
+            # Amortize a 5% loan of 1000 with 10 annual payments of 90
+            update = lambda balance, payment: round(balance * 1.05) - payment
+            res = Iter.repeat(90, 10).accumulate(update, initial=1_000).collect(list)
+            assert res == [1000, 960, 918, 874, 828, 779, 728, 674, 618, 559, 497]
             ```
         """
 
@@ -1858,11 +1805,11 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         self, n: int, *, strict: bool = False
     ) -> PyoIterator[tuple[T, ...]]: ...
     def batched(self, n: int, *, strict: bool = False) -> PyoIterator[tuple[T, ...]]:
-        """Batch elements into tuples of length n and return a new Iter.
+        """Batch elements into tuples of length n and return a new `Iterator`.
 
         - The last batch may be shorter than n.
         - The data is consumed lazily, just enough to fill a batch.
-        - The result is yielded as soon as a batch is full or when the input iterable is exhausted.
+        - The result is yielded as soon as a batch is full or when the `Iterator` is exhausted.
 
         Note:
             This is the closest equivalent to `Iterator::array_chunks` in Rust.
@@ -1876,14 +1823,240 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> Seq("ABCDEFG").iter().batched(3).collect(Seq)
-            Seq(('A', 'B', 'C'), ('D', 'E', 'F'), ('G',))
-            >>> data = Seq((1, 1, 2, -2, 6, 0, 3, 1, 0))
-            >>> #           ^-----^  ^------^  ^-----^
-            >>> data.iter().batched(3, strict=True).map(sum).all(lambda x: x == 4)
-            True
+            from pyochain import Seq
 
+            a = Seq("ABCDEFG").iter().batched(3).collect(Seq)
+            b = (("A", "B", "C"), ("D", "E", "F"), ("G",))
+            assert a == b
+            data = Seq((1, 1, 2, -2, 6, 0, 3, 1, 0))
+            #           ^-----^  ^------^  ^-----^
+            assert data.iter().batched(3, strict=True).map(sum).all(lambda x: x == 4)
+            ```
+            You can use it to group elements into fixed-size groups.
+            ```python
+            from pyochain import Vec
+
+            flattened_data = Vec(["roses", "red", "violets", "blue", "sugar", "sweet"])
+            unflattened = flattened_data.iter().batched(2).collect(Vec)
+            assert unflattened == [
+                ("roses", "red"),
+                ("violets", "blue"),
+                ("sugar", "sweet"),
+            ]
+            ```
+        """
+
+    @overload
+    def chain[S, O1](
+        self: PyoIterator[S], o1: Iterable[O1], /
+    ) -> PyoIterator[S | O1]: ...
+    @overload
+    def chain[S, O1, O2](
+        self: PyoIterator[S], o1: Iterable[O1], o2: Iterable[O2], /
+    ) -> PyoIterator[S | O1 | O2]: ...
+    @overload
+    def chain[S, O1, O2, O3](
+        self: PyoIterator[S], o1: Iterable[O1], o2: Iterable[O2], o3: Iterable[O3], /
+    ) -> PyoIterator[S | O1 | O2 | O3]: ...
+    @overload
+    def chain[S, O1, O2, O3, O4](
+        self: PyoIterator[S],
+        o1: Iterable[O1],
+        o2: Iterable[O2],
+        o3: Iterable[O3],
+        o4: Iterable[O4],
+        /,
+    ) -> PyoIterator[S | O1 | O2 | O3 | O4]: ...
+    @overload
+    def chain[S, O1, O2, O3, O4, O5](
+        self: PyoIterator[S],
+        o1: Iterable[O1],
+        o2: Iterable[O2],
+        o3: Iterable[O3],
+        o4: Iterable[O4],
+        o5: Iterable[O5],
+        /,
+    ) -> PyoIterator[S | O1 | O2 | O3 | O4 | O5]: ...
+    def chain[S, O](self: PyoIterator[S], *others: Iterable[O]) -> PyoIterator[S | O]:
+        """Concatenate **self** with one or more `Iterables`, any of which may be infinite.
+
+        In other words, it links **self** and **others** together, in a chain. 🔗
+
+        An infinite `Iterable` will prevent the rest of the arguments from being included.
+
+        This is equivalent to `list.extend()`, except it is fully lazy and works with any `Iterable`.
+
+        Tip:
+            You can use `Iter.once()` with `chain()` for lazily prepending values to an already existing `Iterator`.
+
+        Args:
+            *others (Iterable[O]): Other iterables to concatenate.
+
+        Returns:
+            PyoIterator[S | O]: A new `Iterator` which will first iterate over values from the original `Iterator` and then over values from the **others** `Iterable`s.
+
+        Example:
+            ```python
+            from pyochain import Seq, Iter, Range
+
+            data = Seq((1, 2))
+            # Multiple iterables of different types can be chained together:
+            mixed = data.iter().chain((3, 4), [True], "hi").collect(Seq)
+            assert mixed == (1, 2, 3, 4, True, "h", "i")
+            # You can also chain infinite iterators,
+            chained = (
+                data
+                .iter()
+                .chain(Iter.from_count(3))
+                .chain(Iter.from_count(2).map(lambda _: "unreachable"))
+                .take(5)
+                .collect(Seq)
+            )
+            assert chained == (1, 2, 3, 4, 5)
+            ```
+        """
+
+    @overload
+    def combinations(self, r: Literal[2]) -> PyoIterator[tuple[T, T]]: ...
+    @overload
+    def combinations(self, r: Literal[3]) -> PyoIterator[tuple[T, T, T]]: ...
+    @overload
+    def combinations(self, r: Literal[4]) -> PyoIterator[tuple[T, T, T, T]]: ...
+    @overload
+    def combinations(self, r: Literal[5]) -> PyoIterator[tuple[T, T, T, T, T]]: ...
+    def combinations(self, r: int) -> PyoIterator[tuple[T, ...]]:
+        """Return an `Iterator` of `tuple` with **r** elements of type `T`.
+
+        The output is a subsequence of `product()`, keeping only entries that are subsequences of the `Iterator`.
+
+        The length of the output is given by `math.comb()` which computes the following:
+
+        `n! / r! / (n - r)!` when `0 ≤ r ≤ n` or zero when `r > n`.
+
+        The combination `tuples` are emitted in lexicographic order according to the order of the `Iterator`.
+
+        If the latter is sorted, the output tuples will be produced in sorted order.
+
+        Args:
+            r (int): Length of each combination.
+
+        Returns:
+            PyoIterator[tuple[T, ...]]: An `Iterator` of combinations.
+
+        Example:
+            ```python
+            from pyochain import Seq, Iter, Range
+
+            a = Iter("ABCD").combinations(2).collect(Seq)
+            assert a == (
+                ("A", "B"),
+                ("A", "C"),
+                ("A", "D"),
+                ("B", "C"),
+                ("B", "D"),
+                ("C", "D"),
+            )
+            b = Range(0, 4).iter().combinations(3).collect(Seq)
+            assert b == (
+                (0, 1, 2),
+                (0, 1, 3),
+                (0, 2, 3),
+                (1, 2, 3),
+            )
+
+            combined = Seq((1, 2, 3)).iter().combinations(2).collect(Seq)
+            assert combined == ((1, 2), (1, 3), (2, 3))
+            ```
+        """
+
+    @overload
+    def combinations_with_replacement(
+        self, r: Literal[2]
+    ) -> PyoIterator[tuple[T, T]]: ...
+    @overload
+    def combinations_with_replacement(
+        self, r: Literal[3]
+    ) -> PyoIterator[tuple[T, T, T]]: ...
+    @overload
+    def combinations_with_replacement(
+        self,
+        r: Literal[4],
+    ) -> PyoIterator[tuple[T, T, T, T]]: ...
+    @overload
+    def combinations_with_replacement(
+        self,
+        r: Literal[5],
+    ) -> PyoIterator[tuple[T, T, T, T, T]]: ...
+    def combinations_with_replacement(self, r: int) -> PyoIterator[tuple[T, ...]]:
+        """Return r length subsequences of elements from the `Iterator`, allowing individual elements to be repeated more than once.
+
+        The output is a subsequence of `product()` that keeps only entries that are subsequences (with possible repeated elements) of the iterable.
+
+        The number of subsequence returned is:
+
+        `(n + r - 1)! / r! / (n - 1)!` when `n > 0`.
+
+        The combination tuples are emitted in lexicographic order according to the order of the `Iterator`.
+
+        If the `Iterator` is sorted, the output tuples will be produced in sorted order.
+
+        Elements are treated as unique based on their position, not on their value.
+
+        If the input elements are unique, the generated combinations will also be unique.
+
+        Args:
+            r (int): Length of each combination.
+
+        Returns:
+            PyoIterator[tuple[T, ...]]: An `Iterator` of combinations with replacement.
+
+        Example:
+            ```python
+            from pyochain import Range, Seq, Iter
+
+            a = Seq((1, 2, 3)).iter().combinations_with_replacement(2).collect(Seq)
+            assert a == ((1, 1), (1, 2), (1, 3), (2, 2), (2, 3), (3, 3))
+            b = Iter("ABC").combinations_with_replacement(2).collect(Seq)
+            assert b == (
+                ("A", "A"),
+                ("A", "B"),
+                ("A", "C"),
+                ("B", "B"),
+                ("B", "C"),
+                ("C", "C"),
+            )
+            ```
+        """
+    def compress(self, *selectors: bool) -> PyoIterator[T]:
+        """Filter elements using a boolean selector iterable.
+
+        Stops when either the `Iterator` or selectors iterables have been exhausted
+
+        Args:
+            *selectors (bool): Boolean values indicating which elements to keep.
+
+        Returns:
+            PyoIterator[T]: An `Iterator` of the items selected by the boolean selectors.
+
+        Example:
+            ```python
+            from pyochain import Iter, Seq
+
+            data = Seq("ABCDEF")
+            selectors = (1, 0, 1, 0, 1, 1)
+            expected = ("A", "C", "E", "F")
+            a = data.iter().compress(*selectors).collect(Seq)
+            assert a == expected
+            # Roughly equivalent to:
+            b = (
+                data
+                .iter()
+                .zip(selectors)
+                .filter_star(lambda _, selector: selector)
+                .map_star(lambda x, _: x)
+                .collect(Seq)
+            )
+            assert b == expected
             ```
         """
     def cycle(self) -> PyoIterator[T]:
@@ -2025,67 +2198,6 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    @overload
-    def combinations(self, r: Literal[2]) -> PyoIterator[tuple[T, T]]: ...
-    @overload
-    def combinations(self, r: Literal[3]) -> PyoIterator[tuple[T, T, T]]: ...
-    @overload
-    def combinations(self, r: Literal[4]) -> PyoIterator[tuple[T, T, T, T]]: ...
-    @overload
-    def combinations(self, r: Literal[5]) -> PyoIterator[tuple[T, T, T, T, T]]: ...
-    def combinations(self, r: int) -> PyoIterator[tuple[T, ...]]:
-        """Return all combinations of length r.
-
-        Args:
-            r (int): Length of each combination.
-
-        Returns:
-            PyoIterator[tuple[T, ...]]: An iterable of combinations.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2, 3)).combinations(2).collect(Seq)
-            Seq((1, 2), (1, 3), (2, 3))
-
-            ```
-        """
-
-    @overload
-    def combinations_with_replacement(
-        self, r: Literal[2]
-    ) -> PyoIterator[tuple[T, T]]: ...
-    @overload
-    def combinations_with_replacement(
-        self, r: Literal[3]
-    ) -> PyoIterator[tuple[T, T, T]]: ...
-    @overload
-    def combinations_with_replacement(
-        self,
-        r: Literal[4],
-    ) -> PyoIterator[tuple[T, T, T, T]]: ...
-    @overload
-    def combinations_with_replacement(
-        self,
-        r: Literal[5],
-    ) -> PyoIterator[tuple[T, T, T, T, T]]: ...
-    def combinations_with_replacement(self, r: int) -> PyoIterator[tuple[T, ...]]:
-        """Return all combinations with replacement of length r.
-
-        Args:
-            r (int): Length of each combination.
-
-        Returns:
-            PyoIterator[tuple[T, ...]]: An iterable of combinations with replacement.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2, 3)).combinations_with_replacement(2).collect(Seq)
-            Seq((1, 1), (1, 2), (1, 3), (2, 2), (2, 3), (3, 3))
-
-            ```
-        """
     @overload
     def permutations(self, r: Literal[2]) -> PyoIterator[tuple[T, T]]: ...
     @overload
