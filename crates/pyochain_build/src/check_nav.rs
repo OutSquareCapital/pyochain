@@ -1,23 +1,17 @@
+use crate::generate_docs::DocsPaths;
 use crate::paths::Root;
 use owo_colors::OwoColorize;
-use std::{collections::HashSet, fs, path::Path};
+use std::{collections::HashSet, fs};
 use tap::Pipe;
 use toml::{Table, Value};
 
-pub(super) fn run(root: &Root) {
+pub(super) fn run(root: Root, docs_paths: DocsPaths) {
     anstream::eprintln!("{}", "Checking navigation completeness...".cyan().bold());
-    let project = get_project(root);
-    let docs_dirs = project["docs_dir"]
-        .as_str()
-        .expect("Failed to get `docs_dir` from zensical.toml");
-    check_all(&project, &root.join(docs_dirs));
-}
-
-fn check_all(project: &Table, docs_dir: &Path) {
+    let project = get_project(&root);
     let mut nav_paths = HashSet::new();
-    get_references(project).pipe(|references| collect_nav_paths(references, &mut nav_paths));
-    let missing_paths = missing_paths(&docs_dir, &nav_paths);
-    let invalid_nav_paths = invalid_nav_paths(&docs_dir, &nav_paths);
+    get_references(&project).pipe(|references| collect_nav_paths(references, &mut nav_paths));
+    let missing_paths = docs_paths.generated.difference(&nav_paths).pipe(join_paths);
+    let invalid_nav_paths = nav_paths.difference(&docs_paths.all).pipe(join_paths);
 
     if !missing_paths.is_empty() {
         show_warning(format_args!(
@@ -76,35 +70,6 @@ fn collect_nav_paths(value: &Value, paths: &mut HashSet<String>) {
         }
         _ => {}
     }
-}
-
-fn missing_paths(docs_dir: &Path, nav_paths: &HashSet<String>) -> String {
-    docs_dir
-        .join("reference")
-        .pipe(fs::read_dir)
-        .expect("Failed to read reference directory")
-        .filter_map(Result::ok)
-        .map(|entry| entry.path())
-        .filter(|path| path.extension().and_then(|extension| extension.to_str()) == Some("md"))
-        .map(|path| relative_path(&path, docs_dir))
-        .collect::<HashSet<_>>()
-        .difference(nav_paths)
-        .pipe(join_paths)
-}
-
-fn invalid_nav_paths(docs_dir: &Path, nav_paths: &HashSet<String>) -> String {
-    let docs_paths = Root::new(docs_dir.to_path_buf())
-        .iter_on_extension("md")
-        .map(|path| relative_path(&path, docs_dir))
-        .collect::<HashSet<_>>();
-    nav_paths.difference(&docs_paths).pipe(join_paths)
-}
-
-fn relative_path(path: &Path, root: &Path) -> String {
-    path.strip_prefix(root)
-        .expect("Failed to strip root prefix from path")
-        .to_string_lossy()
-        .replace('\\', "/")
 }
 
 fn join_paths<'a>(paths: impl Iterator<Item = &'a String>) -> String {

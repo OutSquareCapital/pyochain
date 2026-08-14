@@ -33,7 +33,7 @@ impl Root {
     pub(super) fn iter_on_extension(&self, extension: &str) -> impl Iterator<Item = PathBuf> {
         WalkDir::new(&self.0)
             .into_iter()
-            .filter_map(Result::ok)
+            .map(|file| file.expect("Failed to read file entry"))
             .filter(|entry| entry.file_type().is_file())
             .filter(|entry| {
                 entry.path().extension().and_then(|value| value.to_str()) == Some(extension)
@@ -47,7 +47,7 @@ impl Root {
 }
 
 /// Only relative path can be normalized
-pub(super) struct Relative<'a>(&'a Path);
+pub(super) struct Relative<'a>(pub &'a Path);
 impl<'a> Relative<'a> {
     pub(super) fn normalize(self) -> Normalized {
         fn normalize_os_str(os_str: &std::ffi::OsStr) -> String {

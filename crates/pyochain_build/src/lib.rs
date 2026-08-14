@@ -3,18 +3,17 @@ mod generate_docs;
 mod parse;
 mod paths;
 mod stub_check;
+mod write;
 use std::path::PathBuf;
 
-use tap::Pipe;
-
+use tap::prelude::*;
 pub fn run(root: PathBuf) {
     let root = paths::Root::new(root);
-    let stub_root = root.join("pyochain").pipe(paths::Root::new);
-    let pyclasses = root
-        .join("src")
-        .pipe(paths::Root::new)
-        .pipe(|r| parse::get_pyclasses(&r, "lib.rs"));
-    stub_check::run(&stub_root, &pyclasses);
-    generate_docs::run(&root, &pyclasses);
-    check_nav::run(&root);
+    let stubs = root.join("pyochain").pipe(paths::Root::new);
+    let docs = root.join("docs").pipe(paths::Root::new);
+    let src = root.join("src").pipe(paths::Root::new);
+    parse::get_pyclasses(&src, "lib.rs")
+        .tap(|pyclasses| stub_check::run(&stubs, pyclasses))
+        .pipe_ref(|pyclasses| generate_docs::run(docs, pyclasses))
+        .pipe(|docs_paths| check_nav::run(root, docs_paths));
 }
