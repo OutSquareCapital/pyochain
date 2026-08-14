@@ -338,6 +338,6 @@ class BaseSortedListSet[T](SortedCollection[T], ABC):
         Runtime complexity: `O(n)`
 
         Returns:
-            (Self): new sorted-key list
+            Self: new sorted-key list
 
         """

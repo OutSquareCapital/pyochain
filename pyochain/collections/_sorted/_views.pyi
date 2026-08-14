@@ -25,8 +25,8 @@ class BaseSortedView(Generic[_K_co, _V_co]):  # ruff: ignore[non-pep695-generic-
 
         Runtime complexity: `O(log(n))` -- approximate.
 
-        :param index: integer or slice for indexing
-        :raises IndexError: if index out of range
+        Args:
+            index (int | slice): integer or slice for indexing
 
         Examples:
             ```python
@@ -40,6 +40,8 @@ class BaseSortedView(Generic[_K_co, _V_co]):  # ruff: ignore[non-pep695-generic-
             assert sd == SortedDict({"b": 2})
             del view[:]
             assert sd == SortedDict({})
+            with pytest.raises(IndexError):
+                del view[10]
             ```
         """
 

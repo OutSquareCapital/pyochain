@@ -412,10 +412,10 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             [`PyoIterator::insert`][insert] to add a single element at the beginning of the `Iterator`.
 
         Args:
-            *others (Iterable[T]): Other iterables to concatenate.
+            *others (Iterable[O]): Other iterables to concatenate.
 
         Returns:
-            PyoIterator[T]: A new `Iterator` which will first iterate over values from the original `Iterator` and then over values from the **others** `Iterable`s.
+            PyoIterator[S | O]: A new `Iterator` which will first iterate over values from the original `Iterator` and then over values from the **others** `Iterable`s.
 
         Example:
             ```python
@@ -1661,7 +1661,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         This is useful when you have an `Iterator` of `Iterable` and you want to remove one level of indirection.
 
         Returns:
-            PyoIterator[Any]: An `Iterator` of flattened elements.
+            PyoIterator[U]: An `Iterator` of flattened elements.
 
         Example:
             Basic usage:
@@ -1789,11 +1789,11 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         In other words, the last element yielded by `PyoIterator::accumulate` is what would have been returned by `PyoIterator::fold` if it had been used instead.
 
         Args:
-            func (Callable[[T, T], T] | None): Optional binary function to apply cumulatively. If `None`, the default is to use addition (`operator.add`).
-            initial (T | None): Optional initial value to start the accumulation.
+            func (Callable[[S, S], S] | None): Optional binary function to apply cumulatively. If `None`, the default is to use addition (`operator.add`).
+            initial (S | None): Optional initial value to start the accumulation.
 
         Returns:
-            PyoIterator[T]: A new `Iterator` with accumulated results.
+            PyoIterator[S]: A new `Iterator` with accumulated results.
 
         Example:
             ```python
@@ -3091,7 +3091,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         In order to retrieve the next element, `next` is called on the underlying `Iterator`, hence any side effects (i.e. anything other than fetching the next value) of the `next` method will occur.
 
         Returns:
-            Peekable[T]: A new `Iterator` that allows peeking at the next element.
+            Peekable[S]: A new `Iterator` that allows peeking at the next element.
 
         Examples:
             Basic usage:

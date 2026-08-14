@@ -31,9 +31,10 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]): 
 
         Args:
             iterable (Iterable[T] | None): initial values (optional)
-
-        Args:
             key (SetKeyFunc[T, OT] | None): function used to extract comparison key
+
+        Returns:
+            Self: new sorted-key set
 
         Examples:
             ```python

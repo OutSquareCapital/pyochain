@@ -62,7 +62,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
 
         Args:
             iterable (Iterable[T] | None): initial values (optional)
-            key (KeyFunc[T, OT]): function used to extract comparison key (optional)
+            key (KeyFunc[T, OT] | None): function used to extract comparison key (optional)
 
         Returns:
             Self: new sorted-key list
@@ -126,7 +126,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
             key (OT): insertion index of key in sorted-key list
 
         Returns:
-            (int): index
+            int: index
 
         Examples:
         ```python

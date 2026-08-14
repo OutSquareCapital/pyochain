@@ -99,7 +99,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
         Runtime complexity: `O(1)`
 
         Args:
-            value: search for value in sorted set
+            value (object): search for value in sorted set
 
         Returns:
             bool: `True` if `value` in sorted set
@@ -156,18 +156,20 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
         Runtime complexity: `O(log(n))` -- approximate.
 
         Args:
-            index: integer or slice for indexing
-        :raises IndexError: if index out of range
+            index (int | slice): integer or slice for indexing
 
         Examples:
             ```python
             from pyochain.collections import SortedSet
+            import pytest
 
             ss = SortedSet("abcde")
             del ss[2]
             assert ss == SortedSet(["a", "b", "d", "e"])
             del ss[:2]
             assert ss == SortedSet(["d", "e"])
+            with pytest.raises(IndexError):
+                del ss[10]
             ```
         """
 
@@ -267,7 +269,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
         Runtime complexity: `O(1)`
 
         Args:
-            value: value to count in sorted set
+            value (T): value to count in sorted set
 
         Returns:
             int: number of occurrences of `value` in the sorted set

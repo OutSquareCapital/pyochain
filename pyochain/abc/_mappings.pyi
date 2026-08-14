@@ -116,10 +116,10 @@ class PyoMapping(PyoCollection[_K], Mapping[_K, _V_co], Generic[_K, _V_co]):  # 
         Returns `Some(value)` if the **key** exists, or `None` if it does not.
 
         Args:
-            key (K): The key to look up.
+            key (_K): The key to look up.
 
         Returns:
-            Option[V]: `Some(value)` that is associated with the **key**, or `None` if not found.
+            Option[_V_co]: `Some(value)` that is associated with the **key**, or `None` if not found.
 
         Example:
             ```python
@@ -225,7 +225,7 @@ class PyoMutableMapping[K, V](PyoMapping[K, V], MutableMapping[K, V]):  # pyrigh
         If a given key is present in both *m* and *kwargs*, the value from the latter will be the one effectively present in the resulting `Dict`.
 
         Args:
-            m (SupportsKeysAndGetItem[K, V] | Iterable[tuple[K, V]] | None): The `Mapping` or `Iterable` to update *self* from.
+            m (object): The `Mapping` or `Iterable` to update *self* from.
             **kwargs (V): Additional key-value pairs to update *self* with.
 
         Example:

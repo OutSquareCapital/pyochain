@@ -138,12 +138,12 @@ class ResultType[T, E](Pipe, Protocol):
     def flatten[T1, E1, E2](self: ResultType[Result[T1, E1], E2]) -> Result[T1, E1]:
         """Flattens a nested `Result`.
 
-        Converts from `Result[Result[T, E], E]` to `Result[T, E]`.
+        Converts from `Result[Result[T1, E1], E2]` to `Result[T1, E1]`.
 
         Equivalent to calling `Result.and_then(lambda x: x)`, but more convenient when there's no need to process the inner `Ok` value.
 
         Returns:
-            Result[T, E]: The flattened result.
+            Result[T1, E1]: The flattened result.
 
         Example:
             ```python
@@ -367,11 +367,10 @@ class ResultType[T, E](Pipe, Protocol):
     def unwrap(self) -> T:
         """Returns the contained `Ok` value.
 
+        raises `ResultUnwrapError` if the result is `Err`.
+
         Returns:
             T: The contained `Ok` value.
-
-        Raises:
-            ResultUnwrapError: If the result is `Err`.
 
         Example:
             ```python
@@ -389,11 +388,10 @@ class ResultType[T, E](Pipe, Protocol):
     def unwrap_err(self) -> E:
         """Returns the contained `Err` value.
 
+        raises `ResultUnwrapError` if the result is `Ok`.
+
         Returns:
             E: The contained `Err` value.
-
-        Raises:
-            ResultUnwrapError: If the result is `Ok`.
 
         Example:
             ```python
@@ -438,16 +436,13 @@ class ResultType[T, E](Pipe, Protocol):
     def expect(self, msg: str) -> T:
         """Returns the contained `Ok` value.
 
-        Raises an exception with a provided message if the value is an `Err`.
+        raises `ResultUnwrapError` with a provided message if the value is an `Err`.
 
         Args:
             msg (str): The message to include in the exception if the result is `Err`.
 
         Returns:
             T: The contained `Ok` value.
-
-        Raises:
-            ResultUnwrapError: If the result is `Err`.
 
         Example:
             ```python
@@ -464,16 +459,13 @@ class ResultType[T, E](Pipe, Protocol):
     def expect_err(self, msg: str) -> E:
         """Returns the contained `Err` value.
 
-        Raises an exception with a provided message if the value is an `Ok`.
+        raises `ResultUnwrapError` with a provided message if the value is an `Ok`.
 
         Args:
             msg (str): The message to include in the exception if the result is `Ok`.
 
         Returns:
             E: The contained `Err` value.
-
-        Raises:
-            ResultUnwrapError: If the result is `Ok`.
 
         Example:
             ```python
@@ -492,10 +484,10 @@ class ResultType[T, E](Pipe, Protocol):
         """Returns the contained `Ok` value or a provided default.
 
         Args:
-            default (T): The value to return if the result is `Err`.
+            default (D): The value to return if the result is `Err`.
 
         Returns:
-            T: The contained `Ok` value or the provided default.
+            T | D: The contained `Ok` value or the provided default.
 
         Example:
             ```python
@@ -718,12 +710,12 @@ class ResultType[T, E](Pipe, Protocol):
         This is often used for handling errors by trying an alternative operation.
 
         Args:
-            fn (Callable[Concatenate[E, P], Result[T, E]]): The function to call with the `Err` value.
+            fn (Callable[Concatenate[E, P], Result[object, R]]): The function to call with the `Err` value.
             *args (P.args): Additional positional arguments to pass to fn.
             **kwargs (P.kwargs): Additional keyword arguments to pass to fn.
 
         Returns:
-            Result[T, E]: The original `Ok` value, or the result of the function if `Err`.
+            Result[T, R]: The original `Ok` value, or the result of the function if `Err`.
 
         Example:
             ```python
@@ -869,7 +861,7 @@ class ResultType[T, E](Pipe, Protocol):
         - `Err(e)` becomes `Some(Err(e))`
 
         Returns:
-            Option[Result[T, E]]: Option containing a Result or NONE.
+            Option[Result[S, E]]: Option containing a Result or NONE.
 
         Example:
             ```python
@@ -915,13 +907,12 @@ class Ok[T, E](ResultType[T, E]):
     One of the two variants of `Result[T, E]`, where `T` is the type of the value in `Ok`.
 
     For more documentation, see the `ResultType[T, E]` Protocol.
-
-    Attributes:
-        value (T): The contained successful value.
     """
 
-    __match_args__ = ("value",)
     value: Final[T]
+    """Final[T]: The contained successful value."""
+
+    __match_args__ = ("value",)
     # NOTE: this is an hack to avoid errors by immediatly casting `E` as `Any`, thus avoiding any type errors with incompatible types.
     @overload
     def __new__(cls, value: Result[T, E]) -> Result[Result[T, E], Any]: ...
@@ -937,13 +928,11 @@ class Err[T, E](ResultType[T, E]):
     One of the two variants of `Result[T, E]`, where `E` is the type of the value in `Err`.
 
     For more documentation, see the `ResultType[T, E]` Protocol.
-
-    Attributes:
-        error (E): The contained error value.
     """
 
-    __match_args__ = ("error",)
     error: Final[E]
+    """Final[E]: The contained error value."""
+    __match_args__ = ("error",)
     # NOTE: same hack as in `Ok` for type errors
     @overload
     def __new__(cls, error: Result[T, E]) -> Result[Any, Result[T, E]]: ...

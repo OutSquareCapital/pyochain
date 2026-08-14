@@ -38,6 +38,7 @@
     require-return-section-when-returning-nothing = false
     skip-checking-short-docstrings                = true
     style                                         = "google"
+    require-inline-class-var-docs = true
 
 [tool.uv.sources]
     pytest-docflex = { git = "https://github.com/OutSquareCapital/pytest-docflex.git" }

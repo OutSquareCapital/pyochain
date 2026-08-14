@@ -62,14 +62,13 @@ class Seq[T](PyoSequence[T]):
     def __lt__[S](self: Seq[S], value: IntoSeq[S], /) -> bool:
         """Return True if *self* is less than value, False otherwise.
 
+        Raises `TypeError` if value is not a `Seq` or a `tuple`.
+
         Args:
             value (IntoSeq[S]): The value to compare against. Can be a `Seq` or a `tuple`.
 
         Returns:
             bool: True if *self* is less than value, False otherwise.
-
-        Raises:
-            TypeError: If value is not a `Seq` or a `tuple`.
 
         Example:
             ```python

@@ -60,18 +60,20 @@ class OptionType[T](Pipe):
     def __bool__(self) -> None:
         """Prevent implicit `Some|None` value checking in boolean contexts.
 
-        Raises:
-            TypeError: Always, to prevent implicit `Some|None` value checking.
+        Always raises `TypeError` to prevent implicit `Some|None` value checking, as the `Option` truthiness is ambiguous.
+
+        Are we checking the presence or absence of the value, or the truthiness of the contained value?
+
+        Use `Option::{is_some, is_none, filter, map_if, or_else}`, and others alike for combining control flow with `Option` values.
 
         Example:
             ```python
-            >>> from pyochain import Some
-            >>> x = Some(42)
-            >>> bool(x)
-            Traceback (most recent call last):
-            ...
-            TypeError: Option instances cannot be used in boolean contexts for implicit `Some|None` value checking. Use is_some() or is_none() instead.
+            from pyochain import Some
+            import pytest
 
+            x = Some(42)
+            with pytest.raises(TypeError):
+                bool(x)
             ```
         """
 
@@ -303,7 +305,7 @@ class OptionType[T](Pipe):
             This avoids runtime isinstance checks (we check for boolean `is_some()`, which is a simple function call), and is more type-safe.
 
         Args:
-            other (Option[T]): The other `Option[T]` instance to compare with.
+            other (Option[object]): The other `Option[T]` instance to compare with.
 
         Returns:
             bool: `True` if both instances are equal, `False` otherwise.
@@ -421,11 +423,10 @@ class OptionType[T](Pipe):
     def unwrap(self) -> T:
         """Returns the contained `Some` value.
 
+        raises `OptionUnwrapError` if the option is `None`.
+
         Returns:
             T: The contained `Some` value.
-
-        Raises:
-            OptionUnwrapError: If the option is `None`.
 
         Example:
             ```python
@@ -450,9 +451,6 @@ class OptionType[T](Pipe):
 
         Returns:
             T: The contained `Some` value.
-
-        Raises:
-            OptionUnwrapError: If the result is `None`.
 
         Example:
             ```python
@@ -620,10 +618,10 @@ class OptionType[T](Pipe):
         """Returns the `Option[T]` if it contains a value, otherwise calls a function and returns the result.
 
         Args:
-            f (Callable[[], Option[T]]): The function to call if the option is `None`.
+            f (Callable[[], Option[S]]): The function to call if the option is `None`.
 
         Returns:
-            Option[T]: The original `Option` if it is `Some`, otherwise the result of the function.
+            Option[T | S]: The original `Option` if it is `Some`, otherwise the result of the function.
 
         Example:
             ```python
@@ -951,7 +949,7 @@ class OptionType[T](Pipe):
         - `NONE` is mapped to `Ok(NONE)`
 
         Returns:
-            Result[Option[T], E]: The transposed result.
+            Result[Option[S], E]: The transposed result.
 
         Example:
             ```python
@@ -1020,19 +1018,23 @@ class Some[T](OptionType[T]):
 
     For more documentation, see the `Option[T]` class.
 
-    Attributes:
-        value (T): The contained value.
-
     Example:
         ```python
-        >>> from pyochain import Some
-        >>> Some(42)
-        Some(42)
+        from pyochain import Some
 
+        assert Some(42).pipe(repr) == "Some(42)"
+        assert Some("hello").pipe(repr) == "Some('hello')"
+
+        match Some(42):
+            case Some(value):
+                assert value == 42
+            case Null():
+                assert False, "This should never happen"
         ```
     """
 
     value: Final[T]
+    """Final[T]: The contained value."""
     __match_args__ = ("value",)
     # Hack to immediately handle it as an "enum".
     @overload

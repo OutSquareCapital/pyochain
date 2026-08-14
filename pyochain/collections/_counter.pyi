@@ -169,7 +169,7 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
         number, elements() will ignore it.
 
         Returns:
-            Iterator[T]: An iterator over elements repeating each as many times as its count.
+            PyoIterator[T]: An iterator over elements repeating each as many times as its count.
         """
 
     @overload

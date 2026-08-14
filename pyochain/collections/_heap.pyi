@@ -18,10 +18,10 @@ class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):
         Assumes that the provided list already satisfies the corresponding heap invariant.
 
         Args:
-            data (list[T]): A `list` that already satisfies the corresponding heap invariant.
+            data (list[S]): A `list` that already satisfies the corresponding heap invariant.
 
         Returns:
-            Self: A new `Heap` instance.
+            Heap[S]: A new `Heap` instance.
         """
     @override
     def __len__(self) -> int: ...

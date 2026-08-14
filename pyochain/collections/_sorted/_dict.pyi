@@ -266,10 +266,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
             with pytest.raises(KeyError):
                 sd.pop("y")
             ```
-
-        Raises:
-            KeyError: if `key` not found and `default` not given
-
         """
 
     @override
@@ -292,9 +288,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
 
         Returns:
             tuple[K, V]: key and value pair
-
-        Raises:
-            KeyError: if sorted dict is empty
 
         Examples:
             ```python
@@ -326,9 +319,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
 
         Returns:
             tuple[K, V]: key and value pair
-
-        Raises:
-            IndexError: if `index` out of range
 
         Examples:
             ```python
@@ -363,7 +353,7 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
 
         Args:
             key (K): key for item
-            default (T | V | None): value for item (default None)
+            default (V | T | None): value for item (default None)
 
         Returns:
             V | T | None: value for item identified by `key`
@@ -412,9 +402,8 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
         See :func:`SortedDict.__init__` for details.
 
         Args:
-            m: mapping or iterable of pairs
+            m (SupportsKeysAndGetItem[K, V] | Iterable[tuple[K, V]]): mapping or iterable of pairs
             **kwargs (V): keyword arguments mapping
-
         """
 
 @final

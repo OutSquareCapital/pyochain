@@ -77,7 +77,7 @@ class PyoIterable[T](Checkable, Fluent, Protocol):
         This method is the pyochain equivalent of the `__iter__` dunder method.
 
         Returns:
-            PyoIterator[T]: An `Iterator` over the `Iterable`.
+            PyoIterator[I]: An `Iterator` over the `Iterable`.
 
         Example:
             ```python

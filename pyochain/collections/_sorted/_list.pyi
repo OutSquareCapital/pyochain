@@ -86,7 +86,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
             other (Iterable[T]): other iterable
 
         Returns:
-            (Self): new sorted list
+            Self: new sorted list
 
         Examples:
         ```python
@@ -148,7 +148,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
             other (object): `other` sequence
 
         Returns:
-            (NotImplementedType | bool): true if sorted list is equal to `other`
+            NotImplementedType | bool: true if sorted list is equal to `other`
 
         """
 
@@ -166,7 +166,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
             other (object): `other` sequence
 
         Returns:
-            (NotImplementedType | bool): true if sorted list is not equal to `other`
+            NotImplementedType | bool: true if sorted list is not equal to `other`
 
         """
 
@@ -182,7 +182,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         Args:
             other (object): `other` sequence
         Returns:
-            (NotImplementedType | bool): true if sorted list is less than `other`
+            NotImplementedType | bool: true if sorted list is less than `other`
 
         """
 
@@ -199,7 +199,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
             other (object): `other` sequence
 
         Returns:
-            (NotImplementedType | bool): true if sorted list is greater than `other`
+            NotImplementedType | bool: true if sorted list is greater than `other`
 
         """
 
@@ -216,7 +216,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
             other (object): `other` sequence
 
         Returns:
-            (NotImplementedType | bool): true if sorted list is less than or equal to `other`
+            NotImplementedType | bool: true if sorted list is less than or equal to `other`
 
         """
     def __ge__(self, other: object) -> NotImplementedType | bool:
@@ -232,7 +232,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
             other (object): `other` sequence
 
         Returns:
-            (NotImplementedType | bool): true if sorted list is greater than or equal to `other`
+            NotImplementedType | bool: true if sorted list is greater than or equal to `other`
 
         """
 
@@ -248,7 +248,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
 
 
         Args:
-            index: integer or slice for indexing
+            index (int | slice): integer or slice for indexing
 
         Examples:
             ```python
@@ -271,7 +271,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         ``sl.__len__()`` <==> ``len(sl)``
 
         Returns:
-            (int): size of sorted list
+            int: size of sorted list
 
         """
 
@@ -376,25 +376,28 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
     def __setitem__(self, index: slice, value: Iterable[T]) -> None: ...
     @override
     def __setitem__(self, index: int | slice, value: T | Iterable[T]) -> None:
-        """Raise not-implemented error.
+        """Warning: Raise not-implemented error.
+
+        use ``del sl[index]`` and ``sl.add(value)`` instead.
 
         ``sl.__setitem__(index, value)`` <==> ``sl[index] = value``
 
-        Raises:
-            NotImplementedError: use ``del sl[index]`` and ``sl.add(value)`` instead
-
+        Args:
+            index (int | slice): integer or slice for indexing
+            value (T | Iterable[T]): value or iterable of values
         """
     @override
     def add(self, value: T) -> None: ...
     @override
     def append(self, value: T) -> None:
-        """Raise not-implemented error.
+        """Warning: Raise not-implemented error.
 
-        Implemented to override `MutableSequence.append` which provides an
-        erroneous default implementation.
+        use ``sl.add(value)`` instead
 
-        Raises:
-            NotImplementedError: use ``sl.add(value)`` instead
+        Implemented to override `MutableSequence.append` which provides an erroneous default implementation.
+
+        Args:
+            value (T): value to append to sorted list
 
         """
 
@@ -431,23 +434,25 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
     def clear(self) -> None: ...
     @override
     def extend(self, values: object) -> None:
-        """Raise not-implemented error.
+        """Warning: raise not-implemented error.
 
-        Implemented to override `MutableSequence.extend` which provides an
-        erroneous default implementation.
+        use ``sl.update(values)`` instead
 
-        Raises:
-            NotImplementedError: use ``sl.update(values)`` instead
+        Implemented to override `MutableSequence.extend` which provides an erroneous default implementation.
 
+        Args:
+            values (object): values to extend sorted list with
         """
 
     @override
     def insert(self, index: int, value: T) -> None:
-        """Raise not-implemented error.
+        """Warning: raise not-implemented error.
 
-        Raises:
-            NotImplementedError: use ``sl.add(value)`` instead
+        use ``sl.add(value)`` instead
 
+        Args:
+            index (int): index to insert value at
+            value (T): value to insert
         """
 
     @override
@@ -515,20 +520,15 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
 
     @override
     def reverse(self) -> None:
-        """Raise not-implemented error.
+        """Warning: raise not-implemented error.
 
-        Sorted list maintains values in ascending sort order. Values may not be
-        reversed in-place.
+        Sorted list maintains values in ascending sort order.
 
-        Use ``reversed(sl)`` for an iterator over values in descending sort
-        order.
+        Values may not be reversed in-place.
 
-        Implemented to override `MutableSequence.reverse` which provides an
-        erroneous default implementation.
+        Use ``reversed(sl)`` for an iterator over values in descending sort order.
 
-        Raises:
-            NotImplementedError: use ``reversed(sl)`` instead
-
+        Implemented to override `MutableSequence.reverse` which provides an erroneous default implementation.
         """
 
 class SortedList[T: SupportsRichComparison](BaseSortedList[T]):

@@ -170,7 +170,7 @@ uv run ruff check . --fix --unsafe-fixes;
 uv run ruff format . --preview;
 uv run basedpyright src/pyochain;
 uv run -m scripts.check_docstrings;
-uv run pydoclint src/pyochain;
+uv run pydoclint pyochain/**/*.pyi
 ```
 
 Unfortunately, `Ruff` doesn't work well when doctests are mixed with backticks sections in docstrings to format code examples.

@@ -24,12 +24,6 @@ class SliceView[T](PyoSequence[T]):
 
         And of course the pyochain integration with `PyoSequence`.
 
-    Args:
-        base (Sequence[T]): The underlying sequence.
-        start (slice |int | None): Starting index of the view (inclusive). Defaults to 0.
-        stop (int | None): Ending index of the view (exclusive). Has no effect if **start** is a `slice`.
-        step (int | None): Step size for the view. Has no effect if **start** is a `slice`.
-
     Examples:
         ```python
         >>> from pyochain import SliceView, Seq
@@ -46,26 +40,38 @@ class SliceView[T](PyoSequence[T]):
     """
 
     inner: Final[Sequence[T] | MutableSequence[T]]
+    """Final[Sequence[T] | MutableSequence[T]]: The underlying sequence that this view is based on."""
 
     @overload
-    def __init__(self, base: Sequence[T]) -> None: ...
+    def __new__(cls, base: Sequence[T]) -> Self: ...
     @overload
-    def __init__(self, base: Sequence[T], start: slice) -> None: ...
+    def __new__(cls, base: Sequence[T], start: slice) -> Self: ...
     @overload
-    def __init__(
-        self,
+    def __new__(
+        cls,
         base: Sequence[T],
         start: int | None = None,
         stop: int | None = None,
         step: int | None = None,
-    ) -> None: ...
-    def __init__(
-        self,
+    ) -> Self: ...
+    def __new__(
+        cls,
         base: Sequence[T],
         start: slice | int | None = None,
         stop: int | None = None,
         step: int | None = None,
-    ) -> None: ...
+    ) -> Self:
+        """Create a new `SliceView` over the given sequence.
+
+        Args:
+            base (Sequence[T]): The underlying sequence.
+            start (slice |int | None): Starting index of the view (inclusive). Defaults to 0.
+            stop (int | None): Ending index of the view (exclusive). Has no effect if **start** is a `slice`.
+            step (int | None): Step size for the view. Has no effect if **start** is a `slice`.
+
+        Returns:
+            Self: A new `SliceView` instance.
+        """
     @override
     def __iter__(self) -> Iterator[T]: ...
     @override

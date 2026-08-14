@@ -8,9 +8,7 @@ type IntoDeque[T] = deque[T] | Deque[T]
 
 @final
 class Deque[T](PyoMutableSequence[T]):
-    """Returns a new `Deque` object initialized left-to-right (using append()) from `data`.
-
-    Deques are a generalization of stacks and queues (the name is pronounced “deck” and is short for “double-ended queue”).
+    """Deques are a generalization of stacks and queues (the name is pronounced “deck” and is short for “double-ended queue”).
 
     Deques support thread-safe, memory efficient appends and pops from either side of the deque with approximately the same O(1) performance in either direction.
 
@@ -26,10 +24,6 @@ class Deque[T](PyoMutableSequence[T]):
 
     They are also useful for tracking transactions and other pools of data where only the most recent activity is of interest.
 
-    Args:
-        data (Iterable[T]): the elements to initialize the `Deque` with. If not specified, the `Deque` is initialized empty.
-        max_length (int | None): the maximum length of the `Deque`. If not specified or None, the `Deque` is unbounded.
-
     Note:
         Adapted from Python Software Foundation documentation for `collections.deque`.
 
@@ -39,14 +33,25 @@ class Deque[T](PyoMutableSequence[T]):
     """
 
     max_length: Final[int | None]
+    """Final[int | None]: the maximum length of the `Deque`.
+
+    If not specified or None, the `Deque` is unbounded."""
 
     @overload
-    def __init__(self, *, max_length: int | None = None) -> None: ...
+    def __new__(cls, *, max_length: int | None = None) -> Self: ...
     @overload
-    def __init__(self, data: Iterable[T], max_length: int | None = None) -> None: ...
-    def __init__(
-        self, data: Iterable[T] = (), max_length: int | None = None
-    ) -> None: ...
+    def __new__(cls, data: Iterable[T], max_length: int | None = None) -> Self: ...
+    def __new__(cls, data: Iterable[T] = (), max_length: int | None = None) -> Self:
+        """Returns a new `Deque` object initialized left-to-right (using append()) from `data`.
+
+        Args:
+            data (Iterable[T]): The initial data to populate the `Deque`. Defaults to an empty `Iterable`.
+            max_length (int | None): The maximum length of the `Deque`. If not specified or `None`, the `Deque` is unbounded.
+
+        Returns:
+            Self: A new `Deque` instance.
+        """
+
     @staticmethod
     def from_ref[T1](data: deque[T1]) -> Deque[T1]:
         """Create a `Deque` from a reference to an existing `deque`.

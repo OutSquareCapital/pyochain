@@ -133,7 +133,7 @@ class PyoSequence[T](PyoReversible[T], PyoCollection[T], Sequence[T]):  # pyrigh
         """Return the element at the specified index as `Some(value)`, or `None` if the index is out of bounds.
 
         Args:
-            index (int | slice): The index or slice of the element to retrieve.
+            index (int | slice[int | None]): The index or slice of the element to retrieve.
 
         Returns:
             Option[T] | Option[Sequence[T]]: `Some(value)` if the index is valid, otherwise `None`.
