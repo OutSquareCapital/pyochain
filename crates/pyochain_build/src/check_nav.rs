@@ -3,7 +3,7 @@ use owo_colors::OwoColorize;
 use regex::Regex;
 use std::{collections::HashSet, fs, path::Path, sync::LazyLock};
 use tap::Pipe;
-use toml::Value;
+use toml::{Table, Value};
 use url::Url;
 
 const DOCS_SITE_URL: &str = "https://outsquarecapital.github.io/pyochain/";
@@ -15,26 +15,27 @@ static MARKDOWN_LINK: LazyLock<Regex> =
 pub(super) fn run(root: &Root) {
     anstream::eprintln!("{}", "Checking navigation completeness...".cyan().bold());
     let project = get_project(root);
-    let docs_dir = project["docs_dir"]
+    let docs_dirs = project["docs_dir"]
         .as_str()
-        .expect("Failed to get `docs_dir` from zensical.toml")
-        .pipe(|p| root.join(p));
+        .expect("Failed to get `docs_dir` from zensical.toml");
+    check_all(&project, &root.join(docs_dirs), root);
+}
+
+fn check_all(project: &Table, docs_dir: &Path, root: &Root) {
     let mut nav_paths = HashSet::new();
     collect_nav_paths(&project["nav"], &mut nav_paths);
-
     let missing_paths = missing_paths(&docs_dir, &nav_paths);
+    let invalid_nav_paths = invalid_nav_paths(&docs_dir, &nav_paths);
+    let invalid_markdown_links = invalid_markdown_links(root, &docs_dir);
+
     if !missing_paths.is_empty() {
         show_warning(format_args!(
             "⚠️  Missing generated files in zensical.toml:\n {missing_paths}"
         ));
     }
-
-    let invalid_nav_paths = invalid_nav_paths(&docs_dir, &nav_paths);
     if !invalid_nav_paths.is_empty() {
         show_warning(format_args!("⚠️  Invalid nav links:\n {invalid_nav_paths}"));
     }
-
-    let invalid_markdown_links = invalid_markdown_links(root, &docs_dir);
     if !invalid_markdown_links.is_empty() {
         show_warning(format_args!(
             "⚠️  Invalid markdown links:\n {invalid_markdown_links}"
