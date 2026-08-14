@@ -157,7 +157,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
     def from_fn[**P, R](
         cls, f: Callable[P, Option[R]], *args: P.args, **kwargs: P.kwargs
     ) -> PyoIterator[R]:
-        """Create an `Iterator` from a generator function.
+        r"""Create an `Iterator` from a generator function.
 
         The `Callable` must return:
 
@@ -186,54 +186,36 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         Example:
             Closure with captured local variable:
             ```python
-            >>> from pyochain import Iter, Some, NONE, Seq, Option
-            >>>
-            >>> def make_counter(max_val: int):
-            ...     counter = 0
-            ...
-            ...     def gen() -> Option[int]:
-            ...         nonlocal counter
-            ...         counter += 1
-            ...         return Some(counter) if counter <= max_val else NONE
-            ...
-            ...     return gen
-            >>>
-            >>> Iter.from_fn(make_counter(5)).collect(Seq)
-            Seq(1, 2, 3, 4, 5)
+            from pyochain import Iter, Some, NONE, Option
 
+            def make_counter(max_val: int):
+                counter = 0
+
+                def gen() -> Option[int]:
+                    nonlocal counter
+                    counter += 1
+                    return Some(counter) if counter <= max_val else NONE
+
+                return gen
+
+            x = Iter.from_fn(make_counter(5)).collect(tuple)
+            assert x == (1, 2, 3, 4, 5)
             ```
-            Stateful callable class:
+            Reading records from a text stream:
             ```python
-            >>> from pyochain import Iter, Some, NONE, Option, Seq
-            >>> from dataclasses import dataclass
-            >>> @dataclass
-            ... class Counter:
-            ...     max: int
-            ...     count: int = 0
-            ...
-            ...     def __call__(self) -> Option[int]:
-            ...         self.count += 1
-            ...         return Some(self.count) if self.count <= self.max else NONE
-            >>>
-            >>> Iter.from_fn(Counter(5)).collect(Seq)
-            Seq(1, 2, 3, 4, 5)
+            from io import StringIO
 
-            ```
-            Simulated file/queue reader:
-            ```python
-            >>> from pyochain import Iter, Some, NONE, Option, Seq
-            >>> from pyochain.collections import Deque
-            >>> from collections.abc import Callable
-            >>>
-            >>> def queue_consumer(items: Deque[int]) -> Callable[[], Option[int]]:
-            ...     def consume() -> Option[int]:
-            ...         return Some(items.pop_left()) if items else NONE
-            ...
-            ...     return consume
-            >>>
-            >>> Iter.from_fn(Deque([1, 2, 3]).pipe(queue_consumer)).collect(Seq)
-            Seq(1, 2, 3)
+            stream = StringIO("Alice\nBob\nCharlie\n")
 
+            def read_name() -> Option[str]:
+                line = stream.readline()
+                return Some(line.rstrip("\n")) if line else NONE
+
+            iterator = Iter.from_fn(read_name)
+            assert iterator.next() == Some("Alice")
+            assert iterator.next() == Some("Bob")
+            assert iterator.next() == Some("Charlie")
+            assert iterator.next().is_none()
             ```
         """
 
