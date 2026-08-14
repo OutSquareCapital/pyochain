@@ -1,6 +1,6 @@
 [project]
     site_author      = "Thibaud Wilson Stettler"
-    site_description = "A modern Python library for functional programming with chainable operations"
+    site_description = "A fast, memory-efficient Python library for fluent iterators, monadic result and option types, and data structures."
     site_name        = "pyochain"
     site_url         = "https://outsquarecapital.github.io/pyochain/"
 
@@ -9,8 +9,8 @@
     site_dir         = "site"
 
     nav = [
-        { "API Reference" = [
-            { "ABCs" = [
+        { "API reference" = [
+            { "ABC" = [
                 { "Mixins" = [
                     { "Checkable" = "reference/checkable.md" },
                     { "Fluent" = "reference/fluent.md" },
@@ -31,7 +31,24 @@
                 { "PyoSet" = "reference/pyoset.md" },
                 { "PyoSized" = "reference/pyosized.md" },
             ] },
-            { "Core API" = [
+            { "Collections" = [
+                { "Deque" = "reference/deque.md" },
+                { "Heap" = "reference/heap.md" },
+                { "HeapMax" = "reference/heapmax.md" },
+                { "HeapMin" = "reference/heapmin.md" },
+                { "PyoCounter" = "reference/pyocounter.md" },
+                { "SortedDict" = "reference/sorteddict.md" },
+                { "SortedItemsView" = "reference/sorteditemsview.md" },
+                { "SortedKeyDict" = "reference/sortedkeydict.md" },
+                { "SortedKeyList" = "reference/sortedkeylist.md" },
+                { "SortedKeySet" = "reference/sortedkeyset.md" },
+                { "SortedKeysView" = "reference/sortedkeysview.md" },
+                { "SortedList" = "reference/sortedlist.md" },
+                { "SortedSet" = "reference/sortedset.md" },
+                { "SortedValuesView" = "reference/sortedvaluesview.md" },
+                { "StableSet" = "reference/stableset.md" },
+            ] },
+            { "Core" = [
                 { "Collections" = [
                     { "Dict" = "reference/dict.md" },
                     { "PyoItemsView" = "reference/pyoitemsview.md" },
@@ -64,23 +81,6 @@
                 ] },
             ] },
             { "Overview" = "api-reference.md" },
-            { "collections" = [
-                { "Deque" = "reference/deque.md" },
-                { "Heap" = "reference/heap.md" },
-                { "HeapMax" = "reference/heapmax.md" },
-                { "HeapMin" = "reference/heapmin.md" },
-                { "PyoCounter" = "reference/pyocounter.md" },
-                { "SortedDict" = "reference/sorteddict.md" },
-                { "SortedItemsView" = "reference/sorteditemsview.md" },
-                { "SortedKeyDict" = "reference/sortedkeydict.md" },
-                { "SortedKeyList" = "reference/sortedkeylist.md" },
-                { "SortedKeySet" = "reference/sortedkeyset.md" },
-                { "SortedKeysView" = "reference/sortedkeysview.md" },
-                { "SortedList" = "reference/sortedlist.md" },
-                { "SortedSet" = "reference/sortedset.md" },
-                { "SortedValuesView" = "reference/sortedvaluesview.md" },
-                { "StableSet" = "reference/stableset.md" },
-            ] },
         ] },
         { "Core Types Overview" = "overview.md" },
         { "Home" = "index.md" },
