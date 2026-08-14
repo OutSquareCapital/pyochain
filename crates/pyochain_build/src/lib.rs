@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use crate::parse::Root;
 
+mod check_nav;
 mod generate_docs;
 mod parse;
 mod stub_check;
@@ -18,13 +19,17 @@ pub fn run(root: PathBuf) {
     };
     match std::env::args().nth(1).as_deref() {
         Some("generate-docs") => gen_doc(),
+        Some("check-nav") => check_nav::run(&root),
         Some("stub-check") => stub_check(),
         Some("all") => {
             gen_doc();
             stub_check();
+            check_nav::run(&root);
         }
         _ => {
-            eprintln!("Usage: cargo run -p pyochain-build -- <generate-docs|stub-check|all>");
+            eprintln!(
+                "Usage: cargo run -p pyochain-build -- <generate-docs|check-nav|stub-check|all>"
+            );
             std::process::exit(2);
         }
     }
@@ -36,4 +41,5 @@ pub fn run_all(root: PathBuf) {
     let pyclasses = source_root.get_pyclasses("lib.rs");
     generate_docs::run(&root, &pyclasses);
     stub_check::run(&stub_root, &pyclasses);
+    check_nav::run(&root);
 }

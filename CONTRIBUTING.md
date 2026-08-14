@@ -150,6 +150,7 @@ The build tools can also be run directly:
 
 ```bash
 cargo run -p pyochain-build -- generate-docs
+cargo run -p pyochain-build -- check-nav
 cargo run -p pyochain-build -- stub-check
 cargo run -p pyochain-build -- all
 ```
@@ -173,7 +174,6 @@ uv run ruff format . --preview;
 uv run basedpyright src/pyochain;
 uv run -m scripts.check_docstrings;
 uv run pydoclint src/pyochain;
-uv run -m scripts.check_nav
 ```
 
 Unfortunately, `Ruff` doesn't work well when doctests are mixed with backticks sections in docstrings to format code examples.

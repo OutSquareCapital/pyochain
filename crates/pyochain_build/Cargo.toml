@@ -10,6 +10,9 @@
     anstream    = "1.0"
     owo-colors  = "4.3.0"
     proc-macro2 = { version = "1", features = ["span-locations"] }
+    regex       = "1.13.1"
     syn         = { version = "3.0.1", features = ["full", "visit"] }
     tap         = "1.0.1"
+    toml        = "1.1.0"
+    url         = "2.5.8"
     walkdir     = "2.5.0"

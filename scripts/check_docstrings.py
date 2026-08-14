@@ -6,7 +6,9 @@ from enum import StrEnum
 from pathlib import Path
 from typing import NamedTuple, TypeIs
 
+from rich.console import Console
 from rich.table import Table
+from rich.text import Text
 
 from pyochain import (
     NONE,
@@ -25,12 +27,29 @@ from pyochain import (
 )
 from pyochain.abc import PyoIterator
 
-from ._utils import CONSOLE, Color, Paths
-
 CODE_BLOCK_PATTERN = re.compile(r"^```(\w*)", re.MULTILINE)
 SKIP_DECORATORS = SetMut.from_ref({"overload", "override", "wraps", "property"})
-type DocumentableNode = ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef
 type MethodNode = ast.FunctionDef | ast.AsyncFunctionDef
+type DocumentableNode = MethodNode | ast.ClassDef
+
+
+ROOT = Path()
+SRC_DIR = ROOT.joinpath("pyochain")
+CONSOLE = Console()
+
+
+class Color(StrEnum):
+    """Enum for consistent console message styling."""
+
+    SUCCESS = "green"
+    INFO = "cyan bold"
+    WARNING = "yellow"
+    ERROR = "red bold"
+    BLANK = "white"
+
+    def show(self, msg: str) -> None:
+        """Print a message with the color."""
+        CONSOLE.print(Text(msg, style=self.value))
 
 
 class DocstringInfo(NamedTuple):
@@ -92,12 +111,10 @@ def main() -> None:
 
 
 def _get_files(pattern: str) -> Seq[Path]:
-    return (
-        Paths.SRC_DIR
-        .iter_rglob(f"*.{pattern}")
-        .collect(Seq)
-        .tap(lambda p: Color.INFO.show(f"Checking {p.len()} {pattern} files..."))
-    )
+    files = Seq(SRC_DIR.rglob(f"*.{pattern}"))
+    Color.INFO.show(f"Checking {files.len()} {pattern} files...")
+
+    return files
 
 
 def _handle_errors(all_errors: Seq[DocstringError]) -> None:
@@ -108,7 +125,7 @@ def _handle_errors(all_errors: Seq[DocstringError]) -> None:
 
 def _show_table(all_errors: Seq[DocstringError]) -> None:
     def _add_row(error: DocstringError) -> None:
-        file = f"{error.file_path.relative_to(Paths.ROOT.value)}:{error.error_line_no}"
+        file = f"{error.file_path.relative_to(ROOT)}:{error.error_line_no}"
         table.add_row(
             file, error.func_name, error.errors.iter().map(lambda e: e.value).join("\n")
         )
@@ -219,7 +236,7 @@ def _should_report_missing_docstring(
 
 
 def _check_code_blocks(
-    docstring: str, start_line: int, func_name: str, *, skip_doctest: bool = False
+    docstring: str, start_line: int, fn_name: str, *, skip_doctest: bool = False
 ) -> Result[tuple[()], Vec[ErrorDetail]]:
     def _process_line(state: State, line_num: int, line: str) -> State:
         marker = "```"
@@ -253,9 +270,7 @@ def _check_code_blocks(
         )
         .collect(Vec)
     )
-    doctest_errors = lines.pipe(
-        _check_errs, func_name, start_line, has_no_doctest_flag=skip_doctest
-    )
+    doctest_errors = _check_errs(lines, fn_name, start_line, skip_doctest=skip_doctest)
 
     match doctest_errors:
         case Ok(_) if block_errors.is_empty():
@@ -286,12 +301,12 @@ def _has_skip_decorator(node: DocumentableNode) -> bool:
 
 
 def _check_errs(
-    lines: Vec[str], func_name: str, start_line: int, *, has_no_doctest_flag: bool
+    lines: Vec[str], fn_name: str, start_line: int, *, skip_doctest: bool
 ) -> Result[tuple[()], Vec[ErrorDetail]]:
     should_skip = (
-        func_name.startswith("_")
-        or func_name.istitle()
-        or has_no_doctest_flag
+        fn_name.startswith("_")
+        or fn_name.istitle()
+        or skip_doctest
         or lines.iter().any(
             lambda line: bool(
                 CODE_BLOCK_PATTERN.search(line.lstrip()) and "python" in line
