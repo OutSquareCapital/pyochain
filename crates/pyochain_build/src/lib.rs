@@ -1,21 +1,39 @@
-use std::path::Path;
+use std::path::PathBuf;
 
-use anstream::ColorChoice;
+use crate::parse::Root;
 
 mod generate_docs;
 mod parse;
 mod stub_check;
-
-pub fn run(root: &Path, stub_check_task: bool, generate_docs_task: bool) {
-    ColorChoice::Always.write_global();
-
-    let source_root = root.join("src");
-    let stub_root = root.join("pyochain");
-    let pyclasses = parse::get_pyclasses(&source_root, &source_root.join("lib.rs"));
-    if stub_check_task {
+pub fn run(root: PathBuf) {
+    let root = Root::new(root);
+    let source_root = Root::new(root.join("src"));
+    let stub_root = Root::new(root.join("pyochain"));
+    let pyclasses = source_root.get_pyclasses("lib.rs");
+    let gen_doc = || {
+        generate_docs::run(&root, &pyclasses);
+    };
+    let stub_check = || {
         stub_check::run(&stub_root, &pyclasses);
+    };
+    match std::env::args().nth(1).as_deref() {
+        Some("generate-docs") => gen_doc(),
+        Some("stub-check") => stub_check(),
+        Some("all") => {
+            gen_doc();
+            stub_check();
+        }
+        _ => {
+            eprintln!("Usage: cargo run -p pyochain-build -- <generate-docs|stub-check|all>");
+            std::process::exit(2);
+        }
     }
-    if generate_docs_task {
-        generate_docs::run(root, &pyclasses);
-    }
+}
+pub fn run_all(root: PathBuf) {
+    let root = Root::new(root);
+    let source_root = Root::new(root.join("src"));
+    let stub_root = Root::new(root.join("pyochain"));
+    let pyclasses = source_root.get_pyclasses("lib.rs");
+    generate_docs::run(&root, &pyclasses);
+    stub_check::run(&stub_root, &pyclasses);
 }

@@ -13,8 +13,7 @@
     name       = "pyochain"
 
 [features]
-    generate-docs = []
-    stub-check    = []
+    build-docs = []
 
 [dependencies]
     color-eyre = "0.6.5"

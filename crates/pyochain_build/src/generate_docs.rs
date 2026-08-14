@@ -1,19 +1,25 @@
+use crate::parse::Root;
 use std::fs;
-use std::path::{Display, Path};
+use std::path::{Display, Path, PathBuf};
 
 use crate::parse::PyClass;
 use owo_colors::OwoColorize;
+use tap::Pipe;
 
-pub(super) fn run(root: &Path, pyclasses: &[PyClass]) {
+pub(super) fn run(root: &Root, pyclasses: &[PyClass]) {
     anstream::eprintln!("{}", "Generating pyochain documentation...".cyan().bold());
-    let docs_ref = root.join("docs").join("reference");
-    fs::create_dir_all(&docs_ref).unwrap();
-    pyclasses
-        .iter()
-        .for_each(|pyclass| handle_class(&docs_ref, pyclass));
+    root.join("docs")
+        .join("reference")
+        .pipe(|docs_ref| generate_all(docs_ref, pyclasses));
     anstream::eprintln!("{}", "✅ All files generated!".green());
 }
-
+fn generate_all(path: PathBuf, pyclasses: &[PyClass]) {
+    path.pipe_ref(fs::create_dir_all).unwrap();
+    pyclasses
+        .iter()
+        .for_each(|pyclass| handle_class(&path, pyclass));
+}
+#[inline]
 fn handle_class(docs_ref: &Path, pyclass: &PyClass) {
     let name = &pyclass.python_name;
     let path = docs_ref.join(format!("{}.md", name.to_lowercase()));

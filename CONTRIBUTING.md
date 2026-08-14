@@ -140,10 +140,10 @@ For benchmarking (optimized, slower compile):
 uv run maturin develop --release --uv
 ```
 
-Prior to a release, to check documentation generation and stubs:
+Prior to a release, to check correct documentation generation, run the build with the `build-docs` feature:
 
 ```bash
-uv run maturin develop --uv --features generate-docs,stub-check
+uv run maturin develop --uv --features build-docs
 ```
 
 The build tools can also be run directly:
