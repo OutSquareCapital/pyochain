@@ -2,6 +2,7 @@ use crate::parse::Root;
 use owo_colors::OwoColorize;
 use regex::Regex;
 use std::{collections::HashSet, fs, path::Path, sync::LazyLock};
+use tap::Pipe;
 use toml::Value;
 use url::Url;
 
@@ -13,12 +14,11 @@ static MARKDOWN_LINK: LazyLock<Regex> =
 
 pub(super) fn run(root: &Root) {
     anstream::eprintln!("{}", "Checking navigation completeness...".cyan().bold());
-    let config = fs::read_to_string(root.join("zensical.toml"))
-        .unwrap()
-        .parse::<toml::Table>()
-        .unwrap();
-    let project = config["project"].as_table().unwrap();
-    let docs_dir = root.join(project["docs_dir"].as_str().unwrap());
+    let project = get_project(root);
+    let docs_dir = project["docs_dir"]
+        .as_str()
+        .expect("Failed to get `docs_dir` from zensical.toml")
+        .pipe(|p| root.join(p));
     let mut nav_paths = HashSet::new();
     collect_nav_paths(&project["nav"], &mut nav_paths);
 
@@ -53,7 +53,20 @@ pub(super) fn run(root: &Root) {
         );
     }
 }
-
+fn get_project(root: &Root) -> toml::value::Table {
+    let project = root
+        .join("zensical.toml")
+        .pipe(fs::read_to_string)
+        .expect("Failed to read zensical.toml")
+        .parse::<toml::Table>()
+        .expect("Failed to parse zensical.toml")
+        .remove("project")
+        .expect("Failed to get `project` key from parsed file");
+    match project {
+        Value::Table(table) => table,
+        _ => panic!("Invalid zensical.toml: 'project' should be a table"),
+    }
+}
 fn collect_nav_paths(value: &Value, paths: &mut HashSet<String>) {
     match value {
         Value::Table(table) => table
@@ -70,14 +83,17 @@ fn collect_nav_paths(value: &Value, paths: &mut HashSet<String>) {
 }
 
 fn missing_paths(docs_dir: &Path, nav_paths: &HashSet<String>) -> String {
-    let reference_paths = fs::read_dir(docs_dir.join("reference"))
-        .unwrap()
+    docs_dir
+        .join("reference")
+        .pipe(fs::read_dir)
+        .expect("Failed to read reference directory")
         .filter_map(Result::ok)
         .map(|entry| entry.path())
         .filter(|path| path.extension().and_then(|extension| extension.to_str()) == Some("md"))
         .map(|path| relative_path(&path, docs_dir))
-        .collect::<HashSet<_>>();
-    join_paths(reference_paths.difference(nav_paths))
+        .collect::<HashSet<_>>()
+        .difference(nav_paths)
+        .pipe(join_paths)
 }
 
 fn invalid_nav_paths(docs_dir: &Path, nav_paths: &HashSet<String>) -> String {
@@ -85,14 +101,16 @@ fn invalid_nav_paths(docs_dir: &Path, nav_paths: &HashSet<String>) -> String {
         .iter_on_extension("md")
         .map(|path| relative_path(&path, docs_dir))
         .collect::<HashSet<_>>();
-    join_paths(nav_paths.difference(&docs_paths))
+    nav_paths.difference(&docs_paths).pipe(join_paths)
 }
 
 fn invalid_markdown_links(root: &Root, docs_dir: &Path) -> String {
     [root.join("README.md"), root.join("CONTRIBUTING.md")]
         .into_iter()
         .flat_map(|doc_path| {
-            let content = fs::read_to_string(&doc_path).unwrap();
+            let content = doc_path
+                .pipe_ref(fs::read_to_string)
+                .expect("Failed to read file");
             let content = FENCED_CODE_BLOCK.replace_all(&content, "");
             MARKDOWN_LINK
                 .captures_iter(&content)
@@ -121,7 +139,7 @@ fn is_valid_markdown_link(doc_path: &Path, target: &str, docs_dir: &Path) -> boo
 }
 
 fn is_valid_docs_site_link(target: &str, docs_dir: &Path) -> bool {
-    let parsed_target = Url::parse(target).unwrap();
+    let parsed_target = Url::parse(target).expect("Failed to parse URL");
     let relative_path = parsed_target
         .path()
         .strip_prefix("/pyochain/")
@@ -144,7 +162,7 @@ fn normalize_link_target(target: &str) -> String {
 
 fn relative_path(path: &Path, root: &Path) -> String {
     path.strip_prefix(root)
-        .unwrap()
+        .expect("Failed to strip root prefix from path")
         .to_string_lossy()
         .replace('\\', "/")
 }
