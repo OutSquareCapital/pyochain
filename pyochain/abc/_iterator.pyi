@@ -99,276 +99,79 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         assert counter.iter().take(3).collect(Seq) == Seq((7, 8, 9))
         ```
     """
-    @abstractmethod
-    def __next__(self) -> T: ...
     @override
     def __iter__(self) -> Iterator[T]: ...
-    @classmethod
-    def once[V](cls, value: V) -> PyoIterator[V]:
-        """Create an `Iterator` that yields a single value.
+    @abstractmethod
+    def __next__(self) -> T: ...
+    @overload
+    def accumulate[S](
+        self: PyoIterator[S], func: None = None, initial: S | None = None
+    ) -> PyoIterator[S]: ...
+    @overload
+    def accumulate[I, N](
+        self: PyoIterator[N],
+        func: Callable[[I, N], I],
+        initial: I | None = None,
+    ) -> PyoIterator[I]: ...
+    def accumulate[S](
+        self: PyoIterator[S],
+        func: Callable[[S, S], S] | None = None,
+        initial: S | None = None,
+    ) -> PyoIterator[S]:
+        """Return an `Iterator` of accumulated binary **function** results.
 
-        If you have a function which works on iterators, but you only need to process one value, you can use this method rather than doing something like `Iter([value])`.
+        In principle, `PyoIterator::accumulate` is similar to `PyoIterator::fold` if you provide it with the same binary function.
 
-        This can be considered the equivalent of `.insert()` but as a constructor.
+        However, instead of returning the final accumulated result, it returns an `Iterator` that yields the current value `T` of the accumulator for each iteration.
 
-        Args:
-            value (V): The single value to yield.
+        In other words, the last element yielded by `PyoIterator::accumulate` is what would have been returned by `PyoIterator::fold` if it had been used instead.
 
-        Returns:
-            PyoIterator[V]: An `Iterator` yielding the specified value.
-
-        Example:
-            ```python
-            from pyochain import Iter, Seq
-
-            assert Iter.once(42).collect(Seq) == Seq((42,))
-            ```
-        """
-
-    @classmethod
-    def once_with[**P, R](
-        cls, func: Callable[P, R], *args: P.args, **kwargs: P.kwargs
-    ) -> PyoIterator[R]:
-        """Create an `Iterator`  that lazily generates a value exactly once by invoking the provided closure.
-
-        If you have a function which works on iterators, but you only need to process one value, you can use this method rather than doing something like `Iter([value])`.
-
-        This can be considered the equivalent of [`PyoIterator::insert`][PyoIterator.insert] but as a constructor.
-
-        Unlike `PyoIterator::once`, this function will lazily generate the value on request.
+        **function** should accept two arguments, an accumulated total and a value from the `Iterator`.
 
         Args:
-            func (Callable[P, R]): The single value to yield.
-            *args (P.args): Positional arguments to pass to **func**.
-            **kwargs (P.kwargs): Keyword arguments to pass to **func**.
+            func (Callable[[S, S], S] | None): Optional binary function to apply cumulatively. If `None`, the default is to use addition (`operator.add`).
+            initial (S | None): Optional initial value to start the accumulation.
 
         Returns:
-            PyoIterator[R]: An `Iterator` yielding the specified value.
+            PyoIterator[S]: A new `Iterator` with accumulated results.
 
         Example:
             ```python
-            from pyochain import Iter, Seq
+            import operator as op
+            from pyochain import Seq
 
-            assert Iter.once_with(lambda: 42).collect(Seq) == Seq((42,))
+            s = Seq((1, 2, 3))
+            assert s.iter().accumulate().collect(tuple) == (1, 3, 6)
+            assert s.iter().accumulate(initial=10).collect(tuple) == (10, 11, 13, 16)
+            assert s.iter().accumulate(op.mul).collect(tuple) == (1, 2, 6)
+            assert s.iter().accumulate(op.add, 0).collect(Seq) == (0, 1, 3, 6)
+            # The final accumulated result is the same as fold:
+            assert s.iter().fold(0, op.add) == 6
+            assert s.iter().accumulate(op.mul).collect(Seq) == (1, 2, 6)
+            assert s.iter().accumulate().collect(Seq) == (1, 3, 6)
             ```
-        """
+            To compute a running minimum, set function to `min()`.
 
-    @classmethod
-    def from_fn[**P, R](
-        cls, f: Callable[P, Option[R]], *args: P.args, **kwargs: P.kwargs
-    ) -> PyoIterator[R]:
-        r"""Create an `Iterator` from a generator function.
+            For a running maximum, set function to `max()`.
 
-        The `Callable` must return:
+            Or for a running product, set function to `operator.mul()`.
 
-        - `Some(value)` to yield a value
-        - `NONE` to stop the iteration
-
-        You could consider this as a way to create an `Iterator` where the `__next__()` is the `__call__()` method.
-
-        As such, you can either provide lambdas, partials, closures, or pre-existing classes where `__call__()` is implemented, but a `__next__()` is not desired.
-
-        If you do have an `Iterator` class, simply pass it to the regular constructor, as this will be more efficient, ergonomic and idiomatic.
-
-        Args:
-            f (Callable[P, Option[R]]): `Callable` that returns the next item wrapped in `Option`.
-            *args (P.args): Positional arguments to pass to **f**.
-            **kwargs (P.kwargs): Keyword arguments to pass to **f**.
-
-        Returns:
-            PyoIterator[R]: An `Iterator` yielding values produced by **f**.
-
-        Note:
-            In Rust, this avoids defining a full struct and implementing `Iterator` for it when you have simple logic to generate values.
-
-            This is implemented for "Rust API compliance", but in Python, generators comprehensions/functions with `yield` statements are the ergonomic equivalent.
-
-        Example:
-            Closure with captured local variable:
+            To build an amortization table, accumulate the interest and apply payments:
             ```python
-            from pyochain import Iter, Some, NONE, Option
+            from pyochain import Iter
+            import operator
 
-            def make_counter(max_val: int):
-                counter = 0
+            data = Seq((3, 4, 6, 2, 1, 9, 0, 7, 5, 8))
+            running_max = data.iter().accumulate(max).collect(Seq)
+            assert running_max == (3, 4, 6, 6, 6, 9, 9, 9, 9, 9)
 
-                def gen() -> Option[int]:
-                    nonlocal counter
-                    counter += 1
-                    return Some(counter) if counter <= max_val else NONE
+            running_product = data.iter().accumulate(operator.mul).collect(Seq)
+            assert running_product == (3, 12, 72, 144, 144, 1296, 0, 0, 0, 0)
 
-                return gen
-
-            x = Iter.from_fn(make_counter(5)).collect(tuple)
-            assert x == (1, 2, 3, 4, 5)
-            ```
-            Reading records from a text stream:
-            ```python
-            from io import StringIO
-
-            stream = StringIO("Alice\nBob\nCharlie\n")
-
-            def read_name() -> Option[str]:
-                line = stream.readline()
-                return Some(line.rstrip("\n")) if line else NONE
-
-            iterator = Iter.from_fn(read_name)
-            assert iterator.next() == Some("Alice")
-            assert iterator.next() == Some("Bob")
-            assert iterator.next() == Some("Charlie")
-            assert iterator.next().is_none()
-            ```
-        """
-
-    @classmethod
-    def from_count(cls, start: int = 0, step: int = 1) -> PyoIterator[int]:
-        """Create an `Iterator` of evenly spaced values.
-
-        Warning:
-            The `Iterator` returned is **infinite**, meaning it will never stop yielding elements.
-
-            Be sure to use `PyoIterator::take` or `PyoIterator::slice` to limit the number of items taken.
-
-            Otherwise you could quickly run out of memory, if you try to collect it into a collection.
-
-        Args:
-            start (int): Starting value of the `Iterator`.
-            step (int): Difference between consecutive values.
-
-        Returns:
-            PyoIterator[int]: An `Iterator` of integers starting from **start** and increasing by **step**.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter.from_count(10, 2).take(3).collect(Seq)
-            Seq(10, 12, 14)
-            >>> Iter.from_count(-5, 5).take(4).collect(Seq)
-            Seq(-5, 0, 5, 10)
-            >>> Iter.from_count(0, -1).take(5).collect(Seq)
-            Seq(0, -1, -2, -3, -4)
-
-            ```
-        """
-    @classmethod
-    def successors[U](
-        cls, first: Option[U], succ: Callable[[U], Option[U]]
-    ) -> PyoIterator[U]:
-        """Create an iterator of successive values computed from the previous one.
-
-        The iterator yields `first` (if it is `Some`), then repeatedly applies **succ** to the
-        previous yielded value until it returns `NONE`.
-
-        Args:
-            first (Option[U]): Initial item.
-            succ (Callable[[U], Option[U]]): Successor function.
-
-        Returns:
-            PyoIterator[U]: `Iterator` yielding `first` and its successors.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Some, NONE, Option, Seq
-            >>>
-            >>> def next_pow10(x: int) -> Option[int]:
-            ...     return Some(x * 10) if x < 10_000 else NONE
-            >>>
-            >>> Iter.successors(Some(1), next_pow10).collect(Seq)
-            Seq(1, 10, 100, 1000, 10000)
-            >>> Iter.successors(NONE, next_pow10).collect(Seq)
-            Seq()
-
-            ```
-        """
-
-    @classmethod
-    def repeat[O](cls, obj: O, n: int | None = None) -> PyoIterator[O]:
-        """Repeat the provided object **n** times as elements of an `Iterator`.
-
-        If **n** is `None`, this will create an infinite `Iterator`.
-
-        Be sure to use [`PyoIterator::take`][PyoIterator.take] or [`PyoIterator::slice`][PyoIterator.slice] to limit the number of items taken.
-
-        Warning:
-            Each repetition is a reference to the same object, not a copy.
-
-            This means that if the object is mutable and you modify one of the repetitions, all next repetitions will reflect that change.
-
-        Args:
-            obj (O): The object to repeat.
-            n (int | None): Optional number of repetitions.
-
-        Returns:
-            PyoIterator[O]: An `Iterator` of repeated **obj**.
-
-        See Also:
-            [`PyoIterator::cycle`][cycle] to repeat the **elements** of the `Iterator`.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq, Iter
-            >>> Iter.repeat(1, 3).collect(Seq)
-            Seq(1, 1, 1)
-            >>> Iter.repeat(("a", "b"), 2).collect(Seq)
-            Seq(('a', 'b'), ('a', 'b'))
-
-            ```
-            Shared reference behavior:
-            ```python
-            >>> from pyochain import Vec
-            >>>
-            >>> base = ["Alice", "Bob", "Charlie"]
-            >>>
-            >>> first, second = Iter.repeat(base).take(2).collect(tuple)
-            >>> first.append("Joe")
-            >>> first
-            ['Alice', 'Bob', 'Charlie', 'Joe']
-            >>> base
-            ['Alice', 'Bob', 'Charlie', 'Joe']
-            >>> second
-            ['Alice', 'Bob', 'Charlie', 'Joe']
-            >>> first is second and first is base and second is base
-            True
-
-            ```
-        """
-    def count(self) -> int:
-        """Consume the `Iterator` and return the number of elements it contained.
-
-        Returns:
-            int: The count of elements.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter
-            >>> data = Iter((1, 2, 3))
-            >>> data.count()
-            3
-            >>> # data is now empty
-            >>> data.count()
-            0
-
-            ```
-        """
-
-    def last(self) -> T:
-        """Consume the `Iterator` and return it's last element.
-
-        Warning:
-            This will never return if the `Iterator` is infinite.
-
-        Returns:
-            T: The last element of the `Iterator`.
-
-        Example:
-            ```python
-            >>> from pyochain import Dict, Seq
-            >>> data = Dict({"a": 1, "b": 2, "c": 3})
-            >>> data.iter().last()
-            'c'
-            >>> # If you have a `Sequence`, you can use `PyoSequence::last` instead, which is more efficient.
-            >>> data.pipe(Seq).last()
-            'c'
-
+            # Amortize a 5% loan of 1000 with 10 annual payments of 90
+            update = lambda balance, payment: round(balance * 1.05) - payment
+            res = Iter.repeat(90, 10).accumulate(update, initial=1_000).collect(list)
+            assert res == [1000, 960, 918, 874, 828, 779, 728, 674, 618, 559, 497]
             ```
         """
 
@@ -407,358 +210,6 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             False
             >>> Seq((1, None, 3)).iter().all()
             False
-
-            ```
-        """
-
-    def any(self, predicate: Callable[[T], bool] | None = None) -> bool:
-        """Tests if any element of the `Iterator` is truthy.
-
-        `PyoIterator::.any` can optionally take a closure that returns true or false.
-
-        It applies this closure to each element of the `Iterator`, and if any of them return true, then so does `PyoIterator::.any`.
-
-        If they all return false, it returns false.
-
-        An empty `Iterator` returns false.
-
-        Args:
-            predicate (Callable[[T], bool] | None): Optional function to evaluate each item.
-
-        Returns:
-            bool: True if any element matches the predicate, False otherwise.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq, Range
-            >>> Seq((0, 1)).iter().any()
-            True
-            >>> Range(0, 0).iter().any()
-            False
-            >>> def is_even(x: int) -> bool:
-            ...     return x % 2 == 0
-            >>> Seq((1, 3, 4)).iter().any(is_even)
-            True
-
-            ```
-        """
-    def eq(self, other: Iterable[object]) -> bool:
-        """Return `True` if **self** and *other* contain the same items in the same order.
-
-        Comparison is performed element by element.
-
-        Two `Iterable`s are equal only if:
-
-        - every compared pair of elements is equal
-        - and both iterables are exhausted at the same time
-
-        Note:
-            This consumes any `Iterator` instances involved in the comparison,
-            including **self** and *other* when *other* is itself an `Iterator`.
-
-        Args:
-            other (Iterable[object]): Another `Iterable` to compare against.
-
-        Returns:
-            bool: `True` when both iterables yield the same sequence of values.
-
-        Example:
-            ```python
-            >>> from pyochain import Range, Seq
-            >>> data = Range(1, 4)
-            >>> data.iter().eq((1, 2, 3)) and data.iter().eq(data)
-            True
-            >>> data.iter().eq((1, 2, 4))
-            False
-            >>> data.iter().eq((1, 2))
-            False
-
-            ```
-        """
-
-    def ne(self, other: Iterable[object]) -> bool:
-        """Return `True` if **self** and *other* differ in value or length.
-
-        This is the logical opposite of `eq()`.
-
-        The result becomes `True` as soon as:
-
-        - a pair of compared elements is not equal
-        - or one iterable ends before the other
-
-        Note:
-            This consumes any `Iterator` instances involved in the comparison,
-            including **self** and *other* when *other* is itself an `Iterator`.
-
-        Args:
-            other (Iterable[object]): Another `Iterable` to compare against.
-
-        Returns:
-            bool: `True` when the two iterables are not equal.
-
-        Example:
-            ```python
-            >>> from pyochain import Range
-            >>> data = Range(1, 4)
-            >>> data.iter().ne((1, 2, 3))
-            False
-            >>> data.iter().ne((1, 2, 4))
-            True
-            >>> data.iter().ne((1, 2))
-            True
-
-            ```
-        """
-
-    def le(self, other: Iterable[object]) -> bool:
-        """Return `True` if **self** is lexicographically less than or equal to *other*.
-
-        Comparison is performed element by element, like Python sequence ordering.
-
-        The first differing pair decides the result.
-
-        If all compared elements are equal and one iterable ends first, the shorter iterable is considered smaller.
-
-        Note:
-            This consumes any `Iterator` instances involved in the comparison,
-            including **self** and *other* when *other* is itself an `Iterator`.
-
-        Args:
-            other (Iterable[object]): Another `Iterable` to compare against.
-
-        Returns:
-            bool: `True` if **self** is smaller than *other*, or equal to it.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2)).le((1, 2, 3))
-            True
-            >>> Iter((1, 2, 3)).le((1, 2, 3))
-            True
-            >>> Iter((1, 3)).le((1, 2, 9))
-            False
-
-            ```
-        """
-
-    def lt(self, other: Iterable[object]) -> bool:
-        """Return `True` if **self** is lexicographically strictly less than *other*.
-
-        The first differing pair of elements decides the result.
-
-        If all compared elements are equal, a shorter iterable is strictly smaller than a longer one.
-
-        Note:
-            This consumes any `Iterator` instances involved in the comparison,
-            including **self** and *other* when *other* is itself an `Iterator`.
-
-        Args:
-            other (Iterable[object]): Another `Iterable` to compare against.
-
-        Returns:
-            bool: `True` if **self** compares strictly before *other*.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2)).lt((1, 2, 3))
-            True
-            >>> Iter((1, 2, 3)).lt((1, 2, 3))
-            False
-            >>> Iter((1, 2, 3)).lt((1, 3))
-            True
-
-            ```
-        """
-
-    def gt(self, other: Iterable[object]) -> bool:
-        """Return `True` if **self** is lexicographically strictly greater than *other*.
-
-        The first differing pair of elements decides the result.
-
-        If all compared elements are equal, the longer iterable is strictly greater than the shorter one.
-
-        Note:
-            This consumes any `Iterator` instances involved in the comparison,
-            including **self** and *other* when *other* is itself an `Iterator`.
-
-        Args:
-            other (Iterable[object]): Another `Iterable` to compare against.
-
-        Returns:
-            bool: `True` if **self** compares strictly after *other*.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2, 3)).gt((1, 2))
-            True
-            >>> Iter((1, 3)).gt((1, 2, 9))
-            True
-            >>> Iter((1, 2)).gt((1, 2, 3))
-            False
-
-            ```
-        """
-
-    def ge(self, other: Iterable[object]) -> bool:
-        """Return `True` if **self** is lexicographically greater than or equal to *other*.
-
-        Comparison is performed element by element, like Python sequence ordering.
-
-        The first differing pair decides the result.
-
-        If all compared elements are equal and one iterable ends first, the longer iterable is considered
-        greater.
-
-        Note:
-            This consumes any `Iterator` instances involved in the comparison,
-            including **self** and *other* when *other* is itself an `Iterator`.
-
-        Args:
-            other (Iterable[object]): Another `Iterable` to compare against.
-
-        Returns:
-            bool: `True` if **self** is greater than *other*, or equal to it.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2, 3)).ge((1, 2))
-            True
-            >>> Iter((1, 2, 3)).ge((1, 2, 3))
-            True
-            >>> Iter((1, 2)).ge((1, 2, 3))
-            False
-
-            ```
-        """
-
-    def arg_max(self) -> int:
-        """Index of the first occurrence of a maximum value in the `Iterator`.
-
-        Credits to more-itertools for the implementation.
-
-        Returns:
-            int: The index of the maximum value.
-
-        Example:
-            Basic usage:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter("abcdefghabcd").arg_max()
-            7
-            >>> Iter((0, 1, 2, 3, 3, 2, 1, 0)).arg_max()
-            3
-
-            ```
-            Identify the best machine learning model:
-            ```python
-            >>> models = Seq(("svm", "random forest", "knn", "naïve bayes"))
-            >>> accuracy = Seq((68, 61, 84, 72))
-            >>> # Most accurate model
-            >>> models.get(accuracy.iter().arg_max()).unwrap()
-            'knn'
-            >>> # Best accuracy
-            >>> accuracy.iter().max()
-            84
-
-            ```
-        """
-
-    def arg_max_by[U](self, key: Callable[[T], U]) -> int:
-        """Index of the first occurrence of a maximum value in the `Iterator` based on a *key* function.
-
-        The *key* function must accept a single argument and return a transformed, comparable version of each input item.
-
-        Credits to more-itertools for the implementation.
-
-        Args:
-            key (Callable[[T], U]): Function to determine the value for comparison.
-
-        Returns:
-            int: The index of the maximum value.
-
-        Example:
-            Basic usage:
-            ```python
-            >>> from pyochain import Seq
-            >>> Seq(("a", "bbb", "cc")).iter().arg_max_by(len)
-            1
-            >>> Seq(("Alice", "bob", "charlie")).iter().arg_max_by(str.lower)
-            2
-
-            ```
-            Identify the best machine learning model:
-            ```python
-            >>> models = Seq(("svm", "random forest", "knn", "naïve bayes"))
-            >>> accuracy = Seq(("68", "61", "84", "72"))
-            >>> # Most accurate model
-            >>> models.get(accuracy.iter().arg_max_by(int)).unwrap()
-            'knn'
-            >>> # Best accuracy
-            >>> accuracy.iter().max_by(int)
-            '84'
-
-            ```
-        """
-
-    def arg_min(self) -> int:
-        """Index of the first occurrence of a minimum value in the `Iterator`.
-
-        Credits to **more-itertools** for the examples.
-
-        Returns:
-            int: The index of the minimum value.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq
-            >>> Seq("efghabcdijkl").iter().arg_min()
-            4
-            >>> Seq((3, 2, 1, 0, 4, 2, 1, 0)).iter().arg_min()
-            3
-
-            ```
-        """
-    def arg_min_by[U](self, key: Callable[[T], U]) -> int:
-        """Index of the first occurrence of a minimum value in the `Iterator` based on a *key* function.
-
-        The *key* function must accept a single argument and return a transformed, comparable version of each input item.
-
-        Credits to more-itertools for the implementation.
-
-        Args:
-            key (Callable[[T], U]): Function to determine the value for comparison.
-
-        Returns:
-            int: The index of the minimum value.
-
-        Example:
-            Basic usage:
-            ```python
-            >>> from pyochain import Seq
-            >>> Seq(("aaa", "b", "cc")).iter().arg_min_by(len)
-            1
-            >>> Seq(("Alice", "bob", "Charlie")).iter().arg_min_by(str.lower)
-            0
-
-            ```
-            Identify the best machine learning model:
-            ```python
-            >>> def cost(x: int) -> float:
-            ...     "Days for a wound to heal given a subject's age."
-            ...     return x**2 - 20 * x + 150
-            >>>
-            >>> labels = Seq(("homer", "marge", "bart", "lisa", "maggie"))
-            >>> ages = Seq((35, 30, 10, 9, 1))
-            >>> # Fastest healing family member
-            >>> labels.get(ages.iter().arg_min_by(cost)).unwrap()
-            'bart'
-            >>> # Age with fastest healing
-            >>> ages.iter().min_by(key=cost)
-            10
 
             ```
         """
@@ -851,910 +302,164 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    @overload
-    def collect_into[S](self: PyoIterator[S], collection: Vec[S]) -> Vec[S]: ...
-    @overload
-    def collect_into[S](
-        self: PyoIterator[S], collection: PyoMutableSequence[S]
-    ) -> PyoMutableSequence[S]: ...
-    @overload
-    def collect_into[S](self: PyoIterator[S], collection: list[S]) -> list[S]: ...
-    def collect_into(self, collection: MutableSequence[T]) -> MutableSequence[T]:
-        """Collects all the items from the `Iterator` into a `MutableSequence`.
+    def any(self, predicate: Callable[[T], bool] | None = None) -> bool:
+        """Tests if any element of the `Iterator` is truthy.
 
-        The `MutableSequence` is then returned, so the call chain can be continued.
+        `PyoIterator::.any` can optionally take a closure that returns true or false.
 
-        This is useful when you already have a `MutableSequence` and want to add the `Iterator` items to it.
+        It applies this closure to each element of the `Iterator`, and if any of them return true, then so does `PyoIterator::.any`.
 
-        This method is a convenience method to call `MutableSequence.extend()`, but instead of being called on a `MutableSequence`, it's called on an `Iterator`.
+        If they all return false, it returns false.
+
+        An empty `Iterator` returns false.
 
         Args:
-            collection (MutableSequence[T]): A mutable collection to collect items into.
+            predicate (Callable[[T], bool] | None): Optional function to evaluate each item.
 
         Returns:
-            MutableSequence[T]: The same mutable collection passed as argument, now containing the collected items.
+            bool: True if any element matches the predicate, False otherwise.
 
         Example:
-            Basic usage:
             ```python
-            >>> from pyochain import Seq, Iter, Vec
-            >>> a = Seq((1, 2, 3))
-            >>> vec = Vec([0, 1])
-            >>> a.iter().map(lambda x: x * 2).collect_into(vec)
-            Vec(0, 1, 2, 4, 6)
-            >>> a.iter().map(lambda x: x * 10).collect_into(vec)
-            Vec(0, 1, 2, 4, 6, 10, 20, 30)
-
-            ```
-            The returned mutable sequence can be used to continue the call chain:
-            ```python
-            >>> from pyochain import Seq, Vec
-            >>> a = Seq((1, 2, 3))
-            >>> vec = Vec(())
-            >>> a.iter().collect_into(vec).len() == vec.len()
+            >>> from pyochain import Seq, Range
+            >>> Seq((0, 1)).iter().any()
             True
-            >>> a.iter().collect_into(vec).len() == vec.len()
+            >>> Range(0, 0).iter().any()
+            False
+            >>> def is_even(x: int) -> bool:
+            ...     return x % 2 == 0
+            >>> Seq((1, 3, 4)).iter().any(is_even)
             True
 
             ```
         """
-    def for_each[**P](
-        self,
-        func: Callable[Concatenate[T, P], Any],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None:
-        """Consume the `Iterator` by applying a function to each element in the `Iterable`.
 
-        Is a terminal operation, and is useful for functions that have side effects,
-        or when you want to force evaluation of a lazy iterable.
+    def arg_max(self) -> int:
+        """Index of the first occurrence of a maximum value in the `Iterator`.
 
-        Args:
-            func (Callable[Concatenate[T, P], Any]): Function to apply to each element.
-            *args (P.args): Positional arguments for the function.
-            **kwargs (P.kwargs): Keyword arguments for the function.
+        Credits to more-itertools for the implementation.
+
+        Returns:
+            int: The index of the maximum value.
 
         Example:
+            Basic usage:
             ```python
-            >>> from pyochain import Range
-            >>> Range(1, 4).iter().for_each(lambda x: print(x + 1))
-            2
+            >>> from pyochain import Iter, Seq
+            >>> Iter("abcdefghabcd").arg_max()
+            7
+            >>> Iter((0, 1, 2, 3, 3, 2, 1, 0)).arg_max()
             3
-            4
+
+            ```
+            Identify the best machine learning model:
+            ```python
+            >>> models = Seq(("svm", "random forest", "knn", "naïve bayes"))
+            >>> accuracy = Seq((68, 61, 84, 72))
+            >>> # Most accurate model
+            >>> models.get(accuracy.iter().arg_max()).unwrap()
+            'knn'
+            >>> # Best accuracy
+            >>> accuracy.iter().max()
+            84
 
             ```
         """
 
-    def is_sorted[U: SupportsComparison[Any]](
-        self: PyoIterator[U], *, reverse: bool = False, strict: bool = False
-    ) -> bool:
-        """Returns `True` if the items of the `Iterator` are in sorted order.
+    def arg_max_by[U](self, key: Callable[[T], U]) -> int:
+        """Index of the first occurrence of a maximum value in the `Iterator` based on a *key* function.
 
-        The elements of the `Iterator` must support comparison operations.
+        The *key* function must accept a single argument and return a transformed, comparable version of each input item.
 
-        The function returns `False` after encountering the first out-of-order item.
-
-        If there are no out-of-order items, the `Iterator` is exhausted.
-
-        Credits to **more-itertools** for the implementation.
-
-        See Also:
-            [`PyoIterator::is_sorted_by`][is_sorted_by] if your elements do not support comparison operations directly, or you want to sort based on a specific attribute or transformation.
+        Credits to more-itertools for the implementation.
 
         Args:
-            reverse (bool): Whether to check for descending order.
-            strict (bool): Whether to enforce strict sorting (no equal elements).
+            key (Callable[[T], U]): Function to determine the value for comparison.
 
         Returns:
-            bool: `True` if items are sorted according to the criteria, `False` otherwise.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter
-            >>> Iter((1, 2, 3, 4, 5)).is_sorted()
-            True
-
-            ```
-            If strict, tests for strict sorting, that is, returns False if equal elements are found:
-            ```python
-            >>> from pyochain import Seq
-            >>> data = Seq((1, 2, 2))
-            >>> data.iter().is_sorted()
-            True
-            >>> data.iter().is_sorted(strict=True)
-            False
-
-            ```
-        """
-    def is_sorted_by(
-        self,
-        key: Callable[[T], SupportsComparison[Any]],
-        *,
-        reverse: bool = False,
-        strict: bool = False,
-    ) -> bool:
-        """Returns `True` if the items of the `Iterator` are in sorted order according to the key function.
-
-        The function returns `False` after encountering the first out-of-order item.
-
-        If there are no out-of-order items, the `Iterator` is exhausted.
-
-        Credits to **more-itertools** for the implementation.
-
-        Args:
-            key (Callable[[T], SupportsComparison[Any]]): Function to extract a comparison key from each element.
-            reverse (bool): Whether to check for descending order.
-            strict (bool): Whether to enforce strict sorting (no equal elements).
-
-        Returns:
-            bool: `True` if items are sorted according to the criteria, `False` otherwise.
-
-        Example:
-            ```python
-            >>> from pyochain import Range, Seq
-            >>> Range(1, 6).iter().map(str).is_sorted_by(int)
-            True
-            >>> Seq((5, 4, 3, 1, 2)).iter().map(str).is_sorted_by(int, reverse=True)
-            False
-
-            ```
-            If strict, tests for strict sorting, that is, returns False if equal elements are found:
-            ```python
-            >>> from pyochain import Seq
-            >>> data = Seq(("1", "2", "2"))
-            >>> data.iter().is_sorted_by(int)
-            True
-            >>> data.iter().is_sorted_by(int, strict=True)
-            False
-
-            ```
-        """
-
-    def enumerate(self, start: int = 0) -> PyoIterator[tuple[int, T]]:
-        """Return a `Iterator` of (index, value) pairs.
-
-        Each value in the `Iterator` is paired with its index, starting from 0.
-
-        Tip:
-            `PyoIterator::map_star` can then be used for subsequent operations on the index and value, in a destructuring manner.
-            This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.
-
-        Args:
-            start (int): The starting index.
-
-        Returns:
-            PyoIterator[tuple[int, T]]: An `Iterator` of (index, value) pairs.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> data = ("apple", "banana", "cherry")
-            >>> output = Iter(data).enumerate().collect(Seq)
-            >>> output
-            Seq((0, 'apple'), (1, 'banana'), (2, 'cherry'))
-            >>> output = (
-            ...     Iter(data)
-            ...     .enumerate()
-            ...     .map_star(lambda idx, val: (idx, val.upper()))
-            ...     .collect(Seq)
-            ... )
-            >>> output
-            Seq((0, 'APPLE'), (1, 'BANANA'), (2, 'CHERRY'))
-
-            ```
-        """
-    @overload
-    def for_each_star[T1, T2, **P, R](
-        self: PyoIterator[tuple[T1, T2]],
-        func: Callable[Concatenate[T1, T2, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star[T1, T2, T3, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3]],
-        func: Callable[Concatenate[T1, T2, T3, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star[T1, T2, T3, T4, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4]],
-        func: Callable[Concatenate[T1, T2, T3, T4, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star[T1, T2, T3, T4, T5, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
-        func: Callable[Concatenate[T1, T2, T3, T4, T5, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star[T1, T2, T3, T4, T5, T6, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
-        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star[T1, T2, T3, T4, T5, T6, T7, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
-        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
-        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
-        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, T9, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    @overload
-    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, **P, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
-        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None: ...
-    def for_each_star[U: tuple[Any, ...], **P, R](
-        self: PyoIterator[U],
-        func: Callable[..., R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> None:
-        """Consume the `Iterator` by applying a function to each unpacked item in the `Iterable` element.
-
-        Is a terminal operation, and is useful for functions that have side effects,
-        or when you want to force evaluation of a lazy iterable.
-
-        Each item yielded by the `Iterator` is expected to be an `Iterable` itself (e.g., a tuple or list),
-        and its elements are unpacked as arguments to the provided function.
-
-        This is often used after methods like `zip()` or `enumerate()` that yield tuples.
-
-        Args:
-            func (Callable[..., R]): Function to apply to each unpacked element.
-            *args (P.args): Positional arguments for the function.
-            **kwargs (P.kwargs): Keyword arguments for the function.
-
-        Example:
-            ```python
-            from pyochain import Range, Vec
-
-            vec = Vec(())
-            Range(1, 5).iter().batched(2).for_each_star(lambda x, y: vec.append(x + y))
-            assert vec == Vec((3, 7))
-            ```
-        """
-    def try_for_each[E](self, f: Callable[[T], Result[Any, E]]) -> Result[tuple[()], E]:
-        """Applies a fallible function to each item in the `Iterator`, stopping at the first error and returning that error.
-
-        This can also be thought of as the fallible form of `.for_each()`.
-
-        Args:
-            f (Callable[[T], Result[Any, E]]): A function that takes an item of type `T` and returns a `Result`.
-
-        Returns:
-            Result[tuple[()], E]: Returns `Ok(())` if all applications of **f** were successful (i.e., returned `Ok`), or the first error `E` encountered.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Result, Ok, Err
-            >>> def validate_positive(n: int) -> Result[tuple[()], str]:
-            ...     if n > 0:
-            ...         return Ok("success")
-            ...     return Err(f"Value {n} is not positive")
-            >>>
-            >>> Iter((1, 2, 3, 4, 5)).try_for_each(validate_positive)
-            Ok(())
-            >>> # Short-circuit on first error:
-            >>> Iter((1, 2, -1, 4)).try_for_each(validate_positive)
-            Err('Value -1 is not positive')
-
-            ```
-        """
-
-    def try_find[E](
-        self, predicate: Callable[[T], Result[bool, E]]
-    ) -> Result[Option[T], E]:
-        """Applies a function returning `Result[bool, E]` to find first matching element.
-
-        Short-circuits: stops at the first successful `True` or on the first error.
-
-        Args:
-            predicate (Callable[[T], Result[bool, E]]): Function returning a `Result[bool, E]`.
-
-        Returns:
-            Result[Option[T], E]: The first matching element, or the first error.
-
-        Example:
-            ```python
-            >>> from pyochain import Ok, Result, Err, Range
-            >>>
-            >>> def is_even(x: int) -> Result[bool, str]:
-            ...     return Ok(x % 2 == 0) if x >= 0 else Err("negative number")
-            >>>
-            >>> Range(1, 6).iter().try_find(is_even)
-            Ok(Some(2))
-
-            ```
-        """
-
-    def try_fold[B, E](
-        self, init: B, func: Callable[[B, T], Result[B, E]]
-    ) -> Result[B, E]:
-        """Folds every element into an accumulator, short-circuiting on error.
-
-        Applies **func** cumulatively to items and the accumulator.
-
-        If **func** returns an error, stops and returns that error.
-
-        Args:
-            init (B): Initial accumulator value.
-            func (Callable[[B, T], Result[B, E]]): Function that takes the accumulator and element, returns a `Result[B, E]`.
-
-        Returns:
-            Result[B, E]: Final accumulator or the first error.
-
-        Example:
-            ```python
-            >>> from pyochain import Ok, Err, Result, Range, Iter, Seq
-            >>>
-            >>> def checked_add(acc: int, x: int) -> Result[int, str]:
-            ...     new_val = acc + x
-            ...     if new_val > 100:
-            ...         return Err("overflow")
-            ...     return Ok(new_val)
-            >>>
-            >>> Range(1, 4).iter().try_fold(0, checked_add)
-            Ok(6)
-            >>> Iter.from_count(50, -10).take(5).try_fold(0, checked_add)
-            Err('overflow')
-            >>> Seq(()).iter().try_fold(0, checked_add)
-            Ok(0)
-
-            ```
-        """
-
-    def try_reduce[S, E](
-        self: PyoIterator[S], func: Callable[[S, S], Result[S, E]]
-    ) -> Result[Option[S], E]:
-        """Reduces elements to a single one, short-circuiting on error.
-
-        Uses the first element as the initial accumulator. If **func** returns an error, stops immediately.
-
-        Args:
-            func (Callable[[S, S], Result[S, E]]): Function that reduces two items, returns a `Result[S, E]`.
-
-        Returns:
-            Result[Option[S], E]: Final accumulated value or the first error. Returns `Ok(NONE)` for empty iterable.
-
-        Example:
-            ```python
-            >>> from pyochain import Ok, Err, Result, Range, Seq
-            >>>
-            >>> def checked_add(x: int, y: int) -> Result[int, str]:
-            ...     if x + y > 100:
-            ...         return Err("overflow")
-            ...     return Ok(x + y)
-            >>>
-            >>> Range(1, 4).iter().try_reduce(checked_add)
-            Ok(Some(6))
-            >>> Seq((50, 60)).iter().try_reduce(checked_add)
-            Err('overflow')
-            >>> Range(0, 0).iter().try_reduce(checked_add)
-            Ok(NONE)
-
-            ```
-        """
-
-    @overload
-    def try_collect[U](self: PyoIterator[Option[U]]) -> Option[Vec[U]]: ...
-    @overload
-    def try_collect[U, E](self: PyoIterator[Result[U, E]]) -> Option[Vec[U]]: ...
-    def try_collect[U](
-        self: PyoIterator[Option[U]] | PyoIterator[Result[U, Any]],
-    ) -> Option[Vec[U]]:
-        """Fallibly transforms **self** into a `Vec`, short circuiting if a failure is encountered.
-
-        `try_collect()` is a variation of `collect()` that allows fallible conversions during collection.
-
-        Its main use case is simplifying conversions from iterators yielding `Option[T]` or `Result[T, E]` into `Option[Vec[T]]`.
-
-        Also, if a failure is encountered during `try_collect()`, the `Iterator` is still valid and may continue to be used, in which case it will continue iterating starting after the element that triggered the failure.
-
-        See the last example below for an example of how this works.
-
-        Note:
-            This method return `Vec[U]` instead of being customizable, because the underlying data structure must be mutable in order to build up the collection.
-
-        Returns:
-            Option[Vec[U]]: `Some[Vec[U]]` if all elements were successfully collected, or `NONE` if a failure was encountered.
-
-        Example:
-            ```python
-            >>> from pyochain import Range, Some, Ok, Err, NONE, Vec, Option, Seq, Iter
-            >>> # Successfully collecting an iterator of Option[int] into Option[Vec[int]]:
-            >>> Range(1, 4).iter().map(Some).try_collect()
-            Some(Vec(1, 2, 3))
-            >>> # Failing to collect in the same way:
-            >>> Seq((Some(1), Some(2), NONE, Some(3))).iter().try_collect()
-            NONE
-            >>> # A similar example, but with Result:
-            >>> Range(1, 4).iter().map(Ok).try_collect()
-            Some(Vec(1, 2, 3))
-            >>> Seq((Ok(1), Err("error"), Ok(3))).iter().try_collect()
-            NONE
-            >>> def external_fn(x: int) -> Option[int]:
-            ...     if x % 2 == 0:
-            ...         return Some(x)
-            ...     return NONE
-            >>>
-            >>> Range(1, 5).iter().map(external_fn).try_collect()
-            NONE
-            >>> # Demonstrating that the iterator remains usable after a failure:
-            >>> it = Iter((Some(1), NONE, Some(3), Some(4)))
-            >>> it.try_collect()
-            NONE
-            >>> it.try_collect()
-            Some(Vec(3, 4))
-
-            ```
-        """
-
-    def collect[R: Collection[Any]](self, collector: Callable[[Iterator[T]], R]) -> R:
-        """Transforms the `Iterator` into a collection.
-
-        The most basic pattern in which `collect()` is used is to turn one collection into another.
-
-        You take a collection, call `iter()` on it, do a bunch of transformations, and then `collect()` at the end.
-
-        You specify the target `Collection` type by providing a **collector** function or type.
-
-        This can be any `Callable` that takes an `Iterator[T]` and returns a `Collection[T]` of those types.
-
-        This is equivalent to `Pipe::pipe` at runtime, but with a few differences:
-
-            - A narrower constraint (`Collection[Any]`) to specify the intent
-            - Better performance (no args/kwargs unpacking).
-
-        If you need to pass additional arguments, you can use [`Pipe::pipe`][Pipe.pipe] instead.
-
-        Args:
-            collector (Callable[[Iterator[T]], R]): Function|type that defines the target collection.
-
-        Returns:
-            R: A materialized `Collection` containing the collected elements.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Range, Vec, Dict
-            >>> data = Range(0, 5)
-            >>> data.iter().collect(list)
-            [0, 1, 2, 3, 4]
-            >>> data.iter().collect(Vec)
-            Vec(0, 1, 2, 3, 4)
-            >>> data.iter().map(str).enumerate().collect(Dict)
-            Dict(0: '0', 1: '1', 2: '2', 3: '3', 4: '4')
-
-            ```
-            Sometimes type checkers can't infer the type of the collector, in which case you can use an explicit type annotation to help them out.
-
-            In the example below, without the annotation in `collect()`,
-
-            BasedPyright infer `data` as `Seq[Result[int, Any] | Result[Any, int]]` because of the conditional expression in the `map()`, which is not very useful.
-            ```python
-            >>> from pyochain import Range, Seq, Ok, Err, Result
-            >>> data = (
-            ...     Range(0, 5)
-            ...     .iter()
-            ...     .map(lambda x: Ok(x) if x % 2 == 0 else Err(x))
-            ...     .collect(Seq[Result[int, int]])
-            ... )
-            >>> data
-            Seq(Ok(0), Err(1), Ok(2), Err(3), Ok(4))
-
-            ```
-            Strictly speaking, this is equivalent to annotating the variable at the beginning, but some may prefer this style to keep the type information close to the actual collection operation.
-
-            This notably avoid repetition if you collect anything else than the default `Seq` type.
-        """
-    @overload
-    def fold_star[**P, B](
-        self: PyoIterator[tuple[Any]],
-        init: B,
-        func: Callable[[Any], B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B: ...
-    @overload
-    def fold_star[T1, T2, **P, B](
-        self: PyoIterator[tuple[T1, T2]],
-        init: B,
-        func: Callable[Concatenate[B, T1, T2, P], B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B: ...
-    @overload
-    def fold_star[T1, T2, T3, **P, B](
-        self: PyoIterator[tuple[T1, T2, T3]],
-        init: B,
-        func: Callable[Concatenate[B, T1, T2, T3, P], B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B: ...
-    @overload
-    def fold_star[T1, T2, T3, T4, **P, B](
-        self: PyoIterator[tuple[T1, T2, T3, T4]],
-        init: B,
-        func: Callable[Concatenate[B, T1, T2, T3, T4, P], B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B: ...
-    @overload
-    def fold_star[T1, T2, T3, T4, T5, **P, B](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
-        init: B,
-        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, P], B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B: ...
-    @overload
-    def fold_star[T1, T2, T3, T4, T5, T6, **P, B](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
-        init: B,
-        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, P], B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B: ...
-    @overload
-    def fold_star[T1, T2, T3, T4, T5, T6, T7, **P, B](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
-        init: B,
-        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, P], B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B: ...
-    @overload
-    def fold_star[T1, T2, T3, T4, T5, T6, T7, T8, **P, B](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
-        init: B,
-        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, T8, P], B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B: ...
-    @overload
-    def fold_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, **P, B](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
-        init: B,
-        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, T8, T9, P], B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B: ...
-    @overload
-    def fold_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, **P, B](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
-        init: B,
-        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, P], B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B: ...
-    def fold_star[U: Iterable[Any], **P, B](
-        self: PyoIterator[U],
-        init: B,
-        func: Callable[..., B],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> B:
-        """Fold every element of the `Iterator` into an accumulator by applying an operation, returning the final result.
-
-        Use this when the items of the `Iterator` are themselves iterables (e.g., tuples), and you want to unpack them as arguments to the folding function.
-
-        Args:
-            init (B): Initial value for the accumulator.
-            func (Callable[..., B]): Function that takes the accumulator and current element, returning the new accumulator value.
-            *args (P.args): Additional positional arguments to pass to **func**.
-            **kwargs (P.kwargs): Additional keyword arguments to pass to **func**.
-
-        Returns:
-            B: The final accumulated value.
-
-        Note:
-            This is similar to `PyoIterator::reduce` but with an initial value.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>>
-            >>> data = Seq(((1, 2), (3, 4)))
-            >>> data.iter().fold_star(0, lambda acc, x, y: acc + x + y)
-            10
-            >>> data = Seq((("a", "b"), ("c", "d")))
-            >>> data.iter().fold_star("", lambda acc, x, y: acc + x + y)
-            'abcd'
-
-            ```
-            You can also pass additional arguments to the folding function:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>>
-            >>> data = Seq(((1, 2), (3, 4)))
-            >>> def add_with_offset(acc: int, x: int, y: int, offset: int) -> int:
-            ...     return acc + x + y + offset
-            >>>
-            >>> data.iter().fold_star(0, add_with_offset, 10)
-            30
-
-            ```
-        """
-
-    def find(self, predicate: Callable[[T], bool]) -> Option[T]:
-        """Searches for an element of an iterator that satisfies a `predicate`.
-
-        Takes a closure that returns true or false as `predicate`, and applies it to each element of the iterator.
-
-        Args:
-            predicate (Callable[[T], bool]): Function to evaluate each item.
-
-        Returns:
-            Option[T]: The first element satisfying the predicate. `Some(value)` if found, `NONE` otherwise.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Range
-            >>>
-            >>> def gt_five(x: int) -> bool:
-            ...     return x > 5
-            >>>
-            >>> def gt_nine(x: int) -> bool:
-            ...     return x > 9
-            >>> data = Range(0, 10)
-            >>> data.iter().find(predicate=gt_five)
-            Some(6)
-            >>> data.iter().find(predicate=gt_nine).unwrap_or("missing")
-            'missing'
-
-            ```
-        """
-
-    def find_map[R](self, func: Callable[[T], Option[R]]) -> Option[R]:
-        """Applies function to the elements of the `Iterator` and returns the first Some(R) result.
-
-        `Iter.find_map(f)` is equivalent to `Iter.filter_map(f).next()`.
-
-        Args:
-            func (Callable[[T], Option[R]]): Function to apply to each element, returning an `Option[R]`.
-
-        Returns:
-            Option[R]: The first `Some(R)` result from applying `func`, or `NONE` if no such result is found.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq, Some, NONE, Option
-            >>>
-            >>> def _parse(s: str) -> Option[int]:
-            ...     try:
-            ...         return Some(int(s))
-            ...     except ValueError:
-            ...         return NONE
-            >>>
-            >>> Seq(("lol", "NaN", "2", "5")).iter().find_map(_parse)
-            Some(2)
-
-            ```
-        """
-
-    def flat_map[R](self, func: Callable[[T], Iterable[R]]) -> PyoIterator[R]:
-        """Creates an iterator that applies a function to each element of the original iterator and flattens the result.
-
-        This is useful when the **func** you want to pass to `.map()` itself returns an iterable, and you want to avoid having nested iterables in the output.
-
-        This is equivalent to calling `.map(func).flatten()`.
-
-        Args:
-            func (Callable[[T], Iterable[R]]): Function to apply to each element.
-
-        Returns:
-            PyoIterator[R]: An iterable of flattened transformed elements.
-
-        Example:
-            ```python
-            >>> from pyochain import Range, Seq
-            >>> Range(1, 4).iter().flat_map(range).collect(Seq)
-            Seq(0, 0, 1, 0, 1, 2)
-
-            ```
-        """
-
-    def flatten[U](self: PyoIterator[Iterable[U]]) -> PyoIterator[U]:
-        """Creates an `Iterator` that flattens nested structures.
-
-        This is useful when you have an `Iterator` of `Iterable` and you want to remove one level of indirection.
-
-        Returns:
-            PyoIterator[U]: An `Iterator` of flattened elements.
+            int: The index of the maximum value.
 
         Example:
             Basic usage:
             ```python
-            >>> from pyochain import Iter, Seq
-            >>> data = ((1, 2, 3, 4), (5, 6))
-            >>> flattened = Iter(data).flatten().collect(Seq)
-            >>> flattened
-            Seq(1, 2, 3, 4, 5, 6)
-
-            ```
-            Mapping and then flattening:
-            ```python
             >>> from pyochain import Seq
-            >>> words = Seq(("alpha", "beta", "gamma"))
-            >>> merged = words.iter().flatten().collect(Seq)
-            >>> merged
-            Seq('a', 'l', 'p', 'h', 'a', 'b', 'e', 't', 'a', 'g', 'a', 'm', 'm', 'a')
+            >>> Seq(("a", "bbb", "cc")).iter().arg_max_by(len)
+            1
+            >>> Seq(("Alice", "bob", "charlie")).iter().arg_max_by(str.lower)
+            2
 
             ```
-            Flattening only removes one level of nesting at a time:
+            Identify the best machine learning model:
             ```python
-            >>> from pyochain import Seq
-            >>> d3 = Seq((((1, 2), (3, 4)), ((5, 6), (7, 8))))
-            >>> d2 = d3.iter().flatten().collect(Seq)
-            >>> d2
-            Seq((1, 2), (3, 4), (5, 6), (7, 8))
-            >>> d1 = d3.iter().flatten().flatten().collect(Seq)
-            >>> d1
-            Seq(1, 2, 3, 4, 5, 6, 7, 8)
-
-            ```
-            Here we see that `flatten()` does not perform a “deep” flatten.
-
-            Instead, only **one** level of nesting is removed.
-
-            That is, if you `flatten()` a three-dimensional array, the result will be two-dimensional and not one-dimensional.
-
-            To get a one-dimensional structure, you have to `flatten()` again.
-
-        """
-
-    def intersperse[S](self: PyoIterator[S], element: S) -> PyoIterator[S]:
-        """Creates a new `Iterator` which places a copy of separator between adjacent items of the original iterator.
-
-        Args:
-            element (S): The element to interpose between items.
-
-        Returns:
-            PyoIterator[S]: A new `Iterator` with the element interposed.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> # Simple example with numbers
-            >>> Iter((1, 2, 3)).intersperse(0).collect(Seq)
-            Seq(1, 0, 2, 0, 3)
-            >>> # Useful when chaining with other operations
-            >>> Iter([10, 20, 30]).intersperse(5).sum()
-            70
-            >>> # Inserting separators between groups, then flattening
-            >>> Iter(((1, 2), (3, 4), (5, 6))).intersperse([-1]).flatten().collect(Seq)
-            Seq(1, 2, -1, 3, 4, -1, 5, 6)
+            >>> models = Seq(("svm", "random forest", "knn", "naïve bayes"))
+            >>> accuracy = Seq(("68", "61", "84", "72"))
+            >>> # Most accurate model
+            >>> models.get(accuracy.iter().arg_max_by(int)).unwrap()
+            'knn'
+            >>> # Best accuracy
+            >>> accuracy.iter().max_by(int)
+            '84'
 
             ```
         """
 
-    def take_while(self, predicate: Callable[[T], bool]) -> PyoIterator[T]:
-        """Take items while predicate holds.
+    def arg_min(self) -> int:
+        """Index of the first occurrence of a minimum value in the `Iterator`.
 
-        Args:
-            predicate (Callable[[T], bool]): Function to evaluate each item.
-
-        Returns:
-            PyoIterator[T]: An `Iterator` of the items taken while the predicate is true.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2, 0)).take_while(lambda x: x > 0).collect(Seq)
-            Seq(1, 2)
-
-            ```
-        """
-    def skip_while(self, predicate: Callable[[T], bool]) -> PyoIterator[T]:
-        """Drop items while predicate holds.
-
-        Args:
-            predicate (Callable[[T], bool]): Function to evaluate each item.
+        Credits to **more-itertools** for the examples.
 
         Returns:
-            PyoIterator[T]: An `Iterator` of the items after skipping those for which the predicate is true.
+            int: The index of the minimum value.
 
         Example:
             ```python
             >>> from pyochain import Seq
-            >>> out = Seq((1, 2, 0, -1)).iter().skip_while(lambda x: x > 0).collect(Seq)
-            >>> out
-            Seq(0, -1)
+            >>> Seq("efghabcdijkl").iter().arg_min()
+            4
+            >>> Seq((3, 2, 1, 0, 4, 2, 1, 0)).iter().arg_min()
+            3
 
             ```
         """
 
-    @overload
-    def accumulate[S](
-        self: PyoIterator[S], func: None = None, initial: S | None = None
-    ) -> PyoIterator[S]: ...
-    @overload
-    def accumulate[I, N](
-        self: PyoIterator[N],
-        func: Callable[[I, N], I],
-        initial: I | None = None,
-    ) -> PyoIterator[I]: ...
-    def accumulate[S](
-        self: PyoIterator[S],
-        func: Callable[[S, S], S] | None = None,
-        initial: S | None = None,
-    ) -> PyoIterator[S]:
-        """Return an `Iterator` of accumulated binary **function** results.
+    def arg_min_by[U](self, key: Callable[[T], U]) -> int:
+        """Index of the first occurrence of a minimum value in the `Iterator` based on a *key* function.
 
-        In principle, `PyoIterator::accumulate` is similar to `PyoIterator::fold` if you provide it with the same binary function.
+        The *key* function must accept a single argument and return a transformed, comparable version of each input item.
 
-        However, instead of returning the final accumulated result, it returns an `Iterator` that yields the current value `T` of the accumulator for each iteration.
-
-        In other words, the last element yielded by `PyoIterator::accumulate` is what would have been returned by `PyoIterator::fold` if it had been used instead.
-
-        **function** should accept two arguments, an accumulated total and a value from the `Iterator`.
+        Credits to more-itertools for the implementation.
 
         Args:
-            func (Callable[[S, S], S] | None): Optional binary function to apply cumulatively. If `None`, the default is to use addition (`operator.add`).
-            initial (S | None): Optional initial value to start the accumulation.
+            key (Callable[[T], U]): Function to determine the value for comparison.
 
         Returns:
-            PyoIterator[S]: A new `Iterator` with accumulated results.
+            int: The index of the minimum value.
 
         Example:
+            Basic usage:
             ```python
-            import operator as op
-            from pyochain import Seq
+            >>> from pyochain import Seq
+            >>> Seq(("aaa", "b", "cc")).iter().arg_min_by(len)
+            1
+            >>> Seq(("Alice", "bob", "Charlie")).iter().arg_min_by(str.lower)
+            0
 
-            s = Seq((1, 2, 3))
-            assert s.iter().accumulate().collect(tuple) == (1, 3, 6)
-            assert s.iter().accumulate(initial=10).collect(tuple) == (10, 11, 13, 16)
-            assert s.iter().accumulate(op.mul).collect(tuple) == (1, 2, 6)
-            assert s.iter().accumulate(op.add, 0).collect(Seq) == (0, 1, 3, 6)
-            # The final accumulated result is the same as fold:
-            assert s.iter().fold(0, op.add) == 6
-            assert s.iter().accumulate(op.mul).collect(Seq) == (1, 2, 6)
-            assert s.iter().accumulate().collect(Seq) == (1, 3, 6)
             ```
-            To compute a running minimum, set function to `min()`.
-
-            For a running maximum, set function to `max()`.
-
-            Or for a running product, set function to `operator.mul()`.
-
-            To build an amortization table, accumulate the interest and apply payments:
+            Identify the best machine learning model:
             ```python
-            from pyochain import Iter
-            import operator
+            >>> def cost(x: int) -> float:
+            ...     "Days for a wound to heal given a subject's age."
+            ...     return x**2 - 20 * x + 150
+            >>>
+            >>> labels = Seq(("homer", "marge", "bart", "lisa", "maggie"))
+            >>> ages = Seq((35, 30, 10, 9, 1))
+            >>> # Fastest healing family member
+            >>> labels.get(ages.iter().arg_min_by(cost)).unwrap()
+            'bart'
+            >>> # Age with fastest healing
+            >>> ages.iter().min_by(key=cost)
+            10
 
-            data = Seq((3, 4, 6, 2, 1, 9, 0, 7, 5, 8))
-            running_max = data.iter().accumulate(max).collect(Seq)
-            assert running_max == (3, 4, 6, 6, 6, 9, 9, 9, 9, 9)
-
-            running_product = data.iter().accumulate(operator.mul).collect(Seq)
-            assert running_product == (3, 12, 72, 144, 144, 1296, 0, 0, 0, 0)
-
-            # Amortize a 5% loan of 1000 with 10 annual payments of 90
-            update = lambda balance, payment: round(balance * 1.05) - payment
-            res = Iter.repeat(90, 10).accumulate(update, initial=1_000).collect(list)
-            assert res == [1000, 960, 918, 874, 828, 779, 728, 674, 618, 559, 497]
             ```
         """
 
@@ -1898,6 +603,112 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
+    def collect[R: Collection[Any]](self, collector: Callable[[Iterator[T]], R]) -> R:
+        """Transforms the `Iterator` into a collection.
+
+        The most basic pattern in which `collect()` is used is to turn one collection into another.
+
+        You take a collection, call `iter()` on it, do a bunch of transformations, and then `collect()` at the end.
+
+        You specify the target `Collection` type by providing a **collector** function or type.
+
+        This can be any `Callable` that takes an `Iterator[T]` and returns a `Collection[T]` of those types.
+
+        This is equivalent to `Pipe::pipe` at runtime, but with a few differences:
+
+            - A narrower constraint (`Collection[Any]`) to specify the intent
+            - Better performance (no args/kwargs unpacking).
+
+        If you need to pass additional arguments, you can use [`Pipe::pipe`][Pipe.pipe] instead.
+
+        Args:
+            collector (Callable[[Iterator[T]], R]): Function|type that defines the target collection.
+
+        Returns:
+            R: A materialized `Collection` containing the collected elements.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Range, Vec, Dict
+            >>> data = Range(0, 5)
+            >>> data.iter().collect(list)
+            [0, 1, 2, 3, 4]
+            >>> data.iter().collect(Vec)
+            Vec(0, 1, 2, 3, 4)
+            >>> data.iter().map(str).enumerate().collect(Dict)
+            Dict(0: '0', 1: '1', 2: '2', 3: '3', 4: '4')
+
+            ```
+            Sometimes type checkers can't infer the type of the collector, in which case you can use an explicit type annotation to help them out.
+
+            In the example below, without the annotation in `collect()`,
+
+            BasedPyright infer `data` as `Seq[Result[int, Any] | Result[Any, int]]` because of the conditional expression in the `map()`, which is not very useful.
+            ```python
+            >>> from pyochain import Range, Seq, Ok, Err, Result
+            >>> data = (
+            ...     Range(0, 5)
+            ...     .iter()
+            ...     .map(lambda x: Ok(x) if x % 2 == 0 else Err(x))
+            ...     .collect(Seq[Result[int, int]])
+            ... )
+            >>> data
+            Seq(Ok(0), Err(1), Ok(2), Err(3), Ok(4))
+
+            ```
+            Strictly speaking, this is equivalent to annotating the variable at the beginning, but some may prefer this style to keep the type information close to the actual collection operation.
+
+            This notably avoid repetition if you collect anything else than the default `Seq` type.
+        """
+
+    @overload
+    def collect_into[S](self: PyoIterator[S], collection: Vec[S]) -> Vec[S]: ...
+    @overload
+    def collect_into[S](
+        self: PyoIterator[S], collection: PyoMutableSequence[S]
+    ) -> PyoMutableSequence[S]: ...
+    @overload
+    def collect_into[S](self: PyoIterator[S], collection: list[S]) -> list[S]: ...
+    def collect_into(self, collection: MutableSequence[T]) -> MutableSequence[T]:
+        """Collects all the items from the `Iterator` into a `MutableSequence`.
+
+        The `MutableSequence` is then returned, so the call chain can be continued.
+
+        This is useful when you already have a `MutableSequence` and want to add the `Iterator` items to it.
+
+        This method is a convenience method to call `MutableSequence.extend()`, but instead of being called on a `MutableSequence`, it's called on an `Iterator`.
+
+        Args:
+            collection (MutableSequence[T]): A mutable collection to collect items into.
+
+        Returns:
+            MutableSequence[T]: The same mutable collection passed as argument, now containing the collected items.
+
+        Example:
+            Basic usage:
+            ```python
+            >>> from pyochain import Seq, Iter, Vec
+            >>> a = Seq((1, 2, 3))
+            >>> vec = Vec([0, 1])
+            >>> a.iter().map(lambda x: x * 2).collect_into(vec)
+            Vec(0, 1, 2, 4, 6)
+            >>> a.iter().map(lambda x: x * 10).collect_into(vec)
+            Vec(0, 1, 2, 4, 6, 10, 20, 30)
+
+            ```
+            The returned mutable sequence can be used to continue the call chain:
+            ```python
+            >>> from pyochain import Seq, Vec
+            >>> a = Seq((1, 2, 3))
+            >>> vec = Vec(())
+            >>> a.iter().collect_into(vec).len() == vec.len()
+            True
+            >>> a.iter().collect_into(vec).len() == vec.len()
+            True
+
+            ```
+        """
+
     @overload
     def combinations(self, r: Literal[2]) -> PyoIterator[tuple[T, T]]: ...
     @overload
@@ -2009,6 +820,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             )
             ```
         """
+
     def compress(self, *selectors: bool) -> PyoIterator[T]:
         """Filter elements using a boolean selector iterable.
 
@@ -2041,6 +853,26 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             assert b == expected
             ```
         """
+
+    def count(self) -> int:
+        """Consume the `Iterator` and return the number of elements it contained.
+
+        Returns:
+            int: The count of elements.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> data = Iter((1, 2, 3))
+            >>> data.count()
+            3
+            >>> # data is now empty
+            >>> data.count()
+            0
+
+            ```
+        """
+
     def cycle(self) -> PyoIterator[T]:
         """Repeat the `Iterator` indefinitely.
 
@@ -2063,159 +895,71 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             ```
         """
-    @overload
-    def group_by(self, key: None = None) -> PyoIterator[tuple[T, PyoIterator[T]]]: ...
-    @overload
-    def group_by[K](
-        self, key: Callable[[T], K]
-    ) -> PyoIterator[tuple[K, PyoIterator[T]]]: ...
-    @overload
-    def group_by[K](
-        self, key: Callable[[T], K] | None = None
-    ) -> PyoIterator[tuple[K, PyoIterator[T]] | tuple[T, PyoIterator[T]]]: ...
-    def group_by(
-        self,
-        key: Callable[[T], Any] | None = None,
-    ) -> PyoIterator[tuple[Any | T, PyoIterator[T]]]:
-        """Make an `Iterator` that returns consecutive keys and groups from the iterable.
 
-        The values yielded are `(K, PyoIterator[T])` tuples, where the first element is the group key and the second element is an `Iterator` of type `T` over the group values.
+    def enumerate(self, start: int = 0) -> PyoIterator[tuple[int, T]]:
+        """Return a `Iterator` of (index, value) pairs.
 
-        The `Iterator` needs to already be sorted on the same key function.
+        Each value in the `Iterator` is paired with its index, starting from 0.
 
-        This is due to the fact that it generates a new `Group` every time the value of the **key** function changes.
-
-        That behavior differs from SQL's `GROUP BY` which aggregates common elements regardless of their input order.
-
-        Warning:
-            You must materialize the second element of the tuple immediately when iterating over groups.
-
-            Because `.group_by()` uses Python's `itertools::groupby` under the hood, each group's iterator shares internal state.
-
-            When you advance to the next group, the previous group's iterator becomes invalid and will yield empty results.
+        Tip:
+            `PyoIterator::map_star` can then be used for subsequent operations on the index and value, in a destructuring manner.
+            This keep the code clean and readable, without index access like `[0]` and `[1]` for inline lambdas.
 
         Args:
-            key (Callable[[T], Any] | None): Function computing a key value for each element. If `None`, this defaults to an identity function and returns the element unchanged.
+            start (int): The starting index.
 
         Returns:
-            PyoIterator[tuple[Any | T, PyoIterator[T]]]: An `Iterator` of `(key, value)` tuples.
-
-        Example:
-            `group_by` can let you compute complex operations very easily and efficiently.
-
-            For example, if we want to group even and odd numbers, we can do it like this:
-            ```python
-            >>> from pyochain import Iter, Dict, Seq
-            >>> from operator import itemgetter
-            >>> # Example 1: Group even and odd numbers
-            >>> res = (
-            ...     Iter
-            ...     .from_count()  # create an infinite iterator of integers
-            ...     .take(8)  # take the first 8
-            ...     .map(lambda x: (x % 2 == 0, x))  # map to (is_even, value)
-            ...     .sort_by(itemgetter(0))  # sort by is_even
-            ...     .iter()  # Since sort collect to a Vec, we need to convert back to Iter
-            ...     .group_by(itemgetter(0))  # group by is_even
-            ...     # extract values from groups, discarding keys, and materializing them
-            ...     .map_star(
-            ...         lambda g, vals: (g, vals.map_star(lambda _, y: y).collect(Seq))
-            ...     )
-            ...     .collect(Dict)
-            ... )
-            >>> res
-            Dict(False: Seq(1, 3, 5, 7), True: Seq(0, 2, 4, 6))
-
-            ```
-            If we have a dataset who's items have a common key and who's already sorted by that key, we can easily perform grouped operations on it, like this:
-            ```python
-            >>> from pyochain import Seq
-            >>> data = Seq((
-            ...     {"name": "Alice", "gender": "F"},
-            ...     {"name": "Bob", "gender": "M"},
-            ...     {"name": "Charlie", "gender": "M"},
-            ...     {"name": "Dan", "gender": "M"},
-            ... ))
-            >>> # group by the gender key, and count the number of people in each group
-            >>> output = (
-            ...     data
-            ...     .iter()
-            ...     .group_by(lambda x: x["gender"])
-            ...     .map_star(lambda g, vals: (g, vals.count()))
-            ...     .collect(Seq)
-            ... )
-            >>> output
-            Seq(('F', 1), ('M', 3))
-
-            ```
-            However, you must be careful to materialize the group values immediately when iterating over groups, see below how the values of the groups are empty::
-            ```python
-            >>> from pyochain import Seq
-            >>> groups = (
-            ...     Seq(("a1", "a2", "b1"))
-            ...     .iter()
-            ...     .group_by(lambda x: x[0])
-            ...     .collect(Seq)
-            ...     .iter()
-            ...     .map_star(lambda g, vals: (g, vals.collect(Seq)))
-            ...     .collect(Seq)
-            ... )
-            >>> groups
-            Seq(('a', Seq()), ('b', Seq()))
-
-            ```
-            As such, the correct pattern is the following:
-            ```python
-            >>> from pyochain import Seq
-            >>> groups = (
-            ...     Seq(("a1", "a2", "b1", "b2"))
-            ...     .iter()
-            ...     .group_by(lambda x: x[0])
-            ...     # ✅ Materialize NOW
-            ...     .map_star(lambda g, vals: (g, vals.collect(Seq)))
-            ...     .collect(Seq)
-            ... )
-            >>> groups
-            Seq(('a', Seq('a1', 'a2')), ('b', Seq('b1', 'b2')))
-
-            ```
-        """
-
-    @overload
-    def permutations(self, r: Literal[2]) -> PyoIterator[tuple[T, T]]: ...
-    @overload
-    def permutations(self, r: Literal[3]) -> PyoIterator[tuple[T, T, T]]: ...
-    @overload
-    def permutations(self, r: Literal[4]) -> PyoIterator[tuple[T, T, T, T]]: ...
-    @overload
-    def permutations(self, r: Literal[5]) -> PyoIterator[tuple[T, T, T, T, T]]: ...
-    def permutations(self, r: int | None = None) -> PyoIterator[tuple[T, ...]]:
-        """Return all permutations of length r.
-
-        Args:
-            r (int | None): Length of each permutation. Defaults to the length of the iterable.
-
-        Returns:
-            PyoIterator[tuple[T, ...]]: An iterable of permutations.
+            PyoIterator[tuple[int, T]]: An `Iterator` of (index, value) pairs.
 
         Example:
             ```python
             >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2, 3)).permutations(2).collect(Seq)
-            Seq((1, 2), (1, 3), (2, 1), (2, 3), (3, 1), (3, 2))
+            >>> data = ("apple", "banana", "cherry")
+            >>> output = Iter(data).enumerate().collect(Seq)
+            >>> output
+            Seq((0, 'apple'), (1, 'banana'), (2, 'cherry'))
+            >>> output = (
+            ...     Iter(data)
+            ...     .enumerate()
+            ...     .map_star(lambda idx, val: (idx, val.upper()))
+            ...     .collect(Seq)
+            ... )
+            >>> output
+            Seq((0, 'APPLE'), (1, 'BANANA'), (2, 'CHERRY'))
 
             ```
         """
-    def pairwise(self) -> PyoIterator[tuple[T, T]]:
-        """Return an iterator over pairs of consecutive elements.
+
+    def eq(self, other: Iterable[object]) -> bool:
+        """Return `True` if **self** and *other* contain the same items in the same order.
+
+        Comparison is performed element by element.
+
+        Two `Iterable`s are equal only if:
+
+        - every compared pair of elements is equal
+        - and both iterables are exhausted at the same time
+
+        Note:
+            This consumes any `Iterator` instances involved in the comparison,
+            including **self** and *other* when *other* is itself an `Iterator`.
+
+        Args:
+            other (Iterable[object]): Another `Iterable` to compare against.
 
         Returns:
-            PyoIterator[tuple[T, T]]: An iterable of pairs of consecutive elements.
+            bool: `True` when both iterables yield the same sequence of values.
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> Seq((1, 2, 3)).iter().pairwise().collect(Seq)
-            Seq((1, 2), (2, 3))
+            >>> from pyochain import Range, Seq
+            >>> data = Range(1, 4)
+            >>> data.iter().eq((1, 2, 3)) and data.iter().eq(data)
+            True
+            >>> data.iter().eq((1, 2, 4))
+            False
+            >>> data.iter().eq((1, 2))
+            False
 
             ```
         """
@@ -2279,117 +1023,6 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         """
 
     @overload
-    def filter_star[T1, R](
-        self: PyoIterator[tuple[T1]], func: Callable[[T1], TypeIs[R]]
-    ) -> PyoIterator[tuple[R]]: ...
-    @overload
-    def filter_star[T1, R](
-        self: PyoIterator[tuple[T1]], func: Callable[[T1], TypeGuard[R]]
-    ) -> PyoIterator[tuple[R]]: ...
-    @overload
-    def filter_star[T1](
-        self: PyoIterator[tuple[T1]], func: Callable[[T1], object]
-    ) -> PyoIterator[tuple[T1]]: ...
-    @overload
-    def filter_star[T1, T2, R, R2](
-        self: PyoIterator[tuple[T1, T2]], func: Callable[[T1, T2], TypeIs[tuple[R, R2]]]
-    ) -> PyoIterator[tuple[R, R2]]: ...
-    @overload
-    def filter_star[T1, T2, R, R2](
-        self: PyoIterator[tuple[T1, T2]],
-        func: Callable[[T1, T2], TypeGuard[tuple[R, R2]]],
-    ) -> PyoIterator[tuple[R, R2]]: ...
-    @overload
-    def filter_star[T1, T2](
-        self: PyoIterator[tuple[T1, T2]],
-        func: Callable[[T1, T2], object],
-    ) -> PyoIterator[tuple[T1, T2]]: ...
-    @overload
-    def filter_star[T1, T2, T3, R, R2, R3](
-        self: PyoIterator[tuple[T1, T2, T3]],
-        func: Callable[[T1, T2, T3], TypeIs[tuple[R, R2, R3]]],
-    ) -> PyoIterator[tuple[R, R2, R3]]: ...
-    @overload
-    def filter_star[T1, T2, T3, R, R2, R3](
-        self: PyoIterator[tuple[T1, T2, T3]],
-        func: Callable[[T1, T2, T3], TypeGuard[tuple[R, R2, R3]]],
-    ) -> PyoIterator[tuple[R, R2, R3]]: ...
-    @overload
-    def filter_star[T1, T2, T3](
-        self: PyoIterator[tuple[T1, T2, T3]],
-        func: Callable[[T1, T2, T3], object],
-    ) -> PyoIterator[tuple[T1, T2, T3]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4](
-        self: PyoIterator[tuple[T1, T2, T3, T4]],
-        func: Callable[[T1, T2, T3, T4], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4, T5](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
-        func: Callable[[T1, T2, T3, T4, T5], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4, T5, T6](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
-        func: Callable[[T1, T2, T3, T4, T5, T6], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4, T5, T6, T7](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4, T5, T6, T7, T8](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4, T5, T6, T7, T8, T9](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]]: ...
-    @overload
-    def filter_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], object],
-    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]]: ...
-    def filter_star[U: tuple[Any, ...]](
-        self: PyoIterator[U], func: Callable[..., object]
-    ) -> PyoIterator[U]:
-        """Creates an `Iterator` which uses a closure **func** to determine if an element should be yielded, where each element is an iterable.
-
-        Unlike `.filter()`, which passes each element as a single argument, `.filter_star()` unpacks each element into positional arguments for the **func**.
-
-        In short, for each element in the `Iterator`, it computes `func(*element)``.
-
-        This is useful after using methods like `.zip()`, `.product()`, or `.enumerate()` that yield tuples.
-
-        Args:
-            func (Callable[..., object]): Function to evaluate unpacked elements.
-
-        Returns:
-            PyoIterator[U]: An `Iterator` of the items that satisfy the predicate.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq
-            >>> data = Seq(("apple", "banana", "cherry", "date"))
-            >>> output = (
-            ...     data
-            ...     .iter()
-            ...     .enumerate()
-            ...     .filter_star(lambda index, _: index % 2 == 0)
-            ...     .map_star(lambda _, fruit: fruit.title())
-            ...     .collect(Seq)
-            ... )
-            >>> output
-            Seq('Apple', 'Cherry')
-
-            ```
-        """
-
-    @overload
     def filter_false[N](
         self: PyoIterator[N | None], func: None = None
     ) -> PyoIterator[None]: ...
@@ -2422,6 +1055,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             ```
         """
+
     def filter_map[R](self, func: Callable[[T], Option[R]]) -> PyoIterator[R]:
         """Creates an iterator that both filters and maps.
 
@@ -2556,6 +1190,910 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
+    @overload
+    def filter_star[T1, R](
+        self: PyoIterator[tuple[T1]], func: Callable[[T1], TypeIs[R]]
+    ) -> PyoIterator[tuple[R]]: ...
+    @overload
+    def filter_star[T1, R](
+        self: PyoIterator[tuple[T1]], func: Callable[[T1], TypeGuard[R]]
+    ) -> PyoIterator[tuple[R]]: ...
+    @overload
+    def filter_star[T1](
+        self: PyoIterator[tuple[T1]], func: Callable[[T1], object]
+    ) -> PyoIterator[tuple[T1]]: ...
+    @overload
+    def filter_star[T1, T2, R, R2](
+        self: PyoIterator[tuple[T1, T2]], func: Callable[[T1, T2], TypeIs[tuple[R, R2]]]
+    ) -> PyoIterator[tuple[R, R2]]: ...
+    @overload
+    def filter_star[T1, T2, R, R2](
+        self: PyoIterator[tuple[T1, T2]],
+        func: Callable[[T1, T2], TypeGuard[tuple[R, R2]]],
+    ) -> PyoIterator[tuple[R, R2]]: ...
+    @overload
+    def filter_star[T1, T2](
+        self: PyoIterator[tuple[T1, T2]],
+        func: Callable[[T1, T2], object],
+    ) -> PyoIterator[tuple[T1, T2]]: ...
+    @overload
+    def filter_star[T1, T2, T3, R, R2, R3](
+        self: PyoIterator[tuple[T1, T2, T3]],
+        func: Callable[[T1, T2, T3], TypeIs[tuple[R, R2, R3]]],
+    ) -> PyoIterator[tuple[R, R2, R3]]: ...
+    @overload
+    def filter_star[T1, T2, T3, R, R2, R3](
+        self: PyoIterator[tuple[T1, T2, T3]],
+        func: Callable[[T1, T2, T3], TypeGuard[tuple[R, R2, R3]]],
+    ) -> PyoIterator[tuple[R, R2, R3]]: ...
+    @overload
+    def filter_star[T1, T2, T3](
+        self: PyoIterator[tuple[T1, T2, T3]],
+        func: Callable[[T1, T2, T3], object],
+    ) -> PyoIterator[tuple[T1, T2, T3]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4](
+        self: PyoIterator[tuple[T1, T2, T3, T4]],
+        func: Callable[[T1, T2, T3, T4], object],
+    ) -> PyoIterator[tuple[T1, T2, T3, T4]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4, T5](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
+        func: Callable[[T1, T2, T3, T4, T5], object],
+    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4, T5, T6](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
+        func: Callable[[T1, T2, T3, T4, T5, T6], object],
+    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4, T5, T6, T7](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7], object],
+    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4, T5, T6, T7, T8](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], object],
+    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4, T5, T6, T7, T8, T9](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], object],
+    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]]: ...
+    @overload
+    def filter_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], object],
+    ) -> PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]]: ...
+    def filter_star[U: tuple[Any, ...]](
+        self: PyoIterator[U], func: Callable[..., object]
+    ) -> PyoIterator[U]:
+        """Creates an `Iterator` which uses a closure **func** to determine if an element should be yielded, where each element is an iterable.
+
+        Unlike `.filter()`, which passes each element as a single argument, `.filter_star()` unpacks each element into positional arguments for the **func**.
+
+        In short, for each element in the `Iterator`, it computes `func(*element)``.
+
+        This is useful after using methods like `.zip()`, `.product()`, or `.enumerate()` that yield tuples.
+
+        Args:
+            func (Callable[..., object]): Function to evaluate unpacked elements.
+
+        Returns:
+            PyoIterator[U]: An `Iterator` of the items that satisfy the predicate.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> data = Seq(("apple", "banana", "cherry", "date"))
+            >>> output = (
+            ...     data
+            ...     .iter()
+            ...     .enumerate()
+            ...     .filter_star(lambda index, _: index % 2 == 0)
+            ...     .map_star(lambda _, fruit: fruit.title())
+            ...     .collect(Seq)
+            ... )
+            >>> output
+            Seq('Apple', 'Cherry')
+
+            ```
+        """
+
+    def find(self, predicate: Callable[[T], bool]) -> Option[T]:
+        """Searches for an element of an iterator that satisfies a `predicate`.
+
+        Takes a closure that returns true or false as `predicate`, and applies it to each element of the iterator.
+
+        Args:
+            predicate (Callable[[T], bool]): Function to evaluate each item.
+
+        Returns:
+            Option[T]: The first element satisfying the predicate. `Some(value)` if found, `NONE` otherwise.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Range
+            >>>
+            >>> def gt_five(x: int) -> bool:
+            ...     return x > 5
+            >>>
+            >>> def gt_nine(x: int) -> bool:
+            ...     return x > 9
+            >>> data = Range(0, 10)
+            >>> data.iter().find(predicate=gt_five)
+            Some(6)
+            >>> data.iter().find(predicate=gt_nine).unwrap_or("missing")
+            'missing'
+
+            ```
+        """
+
+    def find_map[R](self, func: Callable[[T], Option[R]]) -> Option[R]:
+        """Applies function to the elements of the `Iterator` and returns the first Some(R) result.
+
+        `Iter.find_map(f)` is equivalent to `Iter.filter_map(f).next()`.
+
+        Args:
+            func (Callable[[T], Option[R]]): Function to apply to each element, returning an `Option[R]`.
+
+        Returns:
+            Option[R]: The first `Some(R)` result from applying `func`, or `NONE` if no such result is found.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq, Some, NONE, Option
+            >>>
+            >>> def _parse(s: str) -> Option[int]:
+            ...     try:
+            ...         return Some(int(s))
+            ...     except ValueError:
+            ...         return NONE
+            >>>
+            >>> Seq(("lol", "NaN", "2", "5")).iter().find_map(_parse)
+            Some(2)
+
+            ```
+        """
+
+    def flat_map[R](self, func: Callable[[T], Iterable[R]]) -> PyoIterator[R]:
+        """Creates an iterator that applies a function to each element of the original iterator and flattens the result.
+
+        This is useful when the **func** you want to pass to `.map()` itself returns an iterable, and you want to avoid having nested iterables in the output.
+
+        This is equivalent to calling `.map(func).flatten()`.
+
+        Args:
+            func (Callable[[T], Iterable[R]]): Function to apply to each element.
+
+        Returns:
+            PyoIterator[R]: An iterable of flattened transformed elements.
+
+        Example:
+            ```python
+            >>> from pyochain import Range, Seq
+            >>> Range(1, 4).iter().flat_map(range).collect(Seq)
+            Seq(0, 0, 1, 0, 1, 2)
+
+            ```
+        """
+
+    def flatten[U](self: PyoIterator[Iterable[U]]) -> PyoIterator[U]:
+        """Creates an `Iterator` that flattens nested structures.
+
+        This is useful when you have an `Iterator` of `Iterable` and you want to remove one level of indirection.
+
+        Returns:
+            PyoIterator[U]: An `Iterator` of flattened elements.
+
+        Example:
+            Basic usage:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> data = ((1, 2, 3, 4), (5, 6))
+            >>> flattened = Iter(data).flatten().collect(Seq)
+            >>> flattened
+            Seq(1, 2, 3, 4, 5, 6)
+
+            ```
+            Mapping and then flattening:
+            ```python
+            >>> from pyochain import Seq
+            >>> words = Seq(("alpha", "beta", "gamma"))
+            >>> merged = words.iter().flatten().collect(Seq)
+            >>> merged
+            Seq('a', 'l', 'p', 'h', 'a', 'b', 'e', 't', 'a', 'g', 'a', 'm', 'm', 'a')
+
+            ```
+            Flattening only removes one level of nesting at a time:
+            ```python
+            >>> from pyochain import Seq
+            >>> d3 = Seq((((1, 2), (3, 4)), ((5, 6), (7, 8))))
+            >>> d2 = d3.iter().flatten().collect(Seq)
+            >>> d2
+            Seq((1, 2), (3, 4), (5, 6), (7, 8))
+            >>> d1 = d3.iter().flatten().flatten().collect(Seq)
+            >>> d1
+            Seq(1, 2, 3, 4, 5, 6, 7, 8)
+
+            ```
+            Here we see that `flatten()` does not perform a “deep” flatten.
+
+            Instead, only **one** level of nesting is removed.
+
+            That is, if you `flatten()` a three-dimensional array, the result will be two-dimensional and not one-dimensional.
+
+            To get a one-dimensional structure, you have to `flatten()` again.
+
+        """
+
+    def fold[B](self, init: B, func: Callable[[B, T], B]) -> B:
+        """Fold every element of the `Iterator` into an accumulator by applying an operation, returning the final result.
+
+        Args:
+            init (B): Initial value for the accumulator.
+            func (Callable[[B, T], B]): Function that takes the accumulator and current element,
+                returning the new accumulator value.
+
+        Returns:
+            B: The final accumulated value.
+
+        Note:
+            This is similar to `reduce()` but with an initial value.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> data = (1, 2, 3)
+            >>> Iter(data).fold(0, lambda acc, x: acc + x)
+            6
+            >>> Iter(data).fold(10, lambda acc, x: acc + x)
+            16
+            >>> Iter(("a", "b", "c")).fold("", lambda acc, x: acc + x)
+            'abc'
+
+            ```
+        """
+
+    @overload
+    def fold_star[**P, B](
+        self: PyoIterator[tuple[Any]],
+        init: B,
+        func: Callable[[Any], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, **P, B](
+        self: PyoIterator[tuple[T1, T2]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, T5, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, T5, T6, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, T5, T6, T7, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, T5, T6, T7, T8, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, T8, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, T8, T9, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    @overload
+    def fold_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, **P, B](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        init: B,
+        func: Callable[Concatenate[B, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, P], B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B: ...
+    def fold_star[U: Iterable[Any], **P, B](
+        self: PyoIterator[U],
+        init: B,
+        func: Callable[..., B],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> B:
+        """Fold every element of the `Iterator` into an accumulator by applying an operation, returning the final result.
+
+        Use this when the items of the `Iterator` are themselves iterables (e.g., tuples), and you want to unpack them as arguments to the folding function.
+
+        Args:
+            init (B): Initial value for the accumulator.
+            func (Callable[..., B]): Function that takes the accumulator and current element, returning the new accumulator value.
+            *args (P.args): Additional positional arguments to pass to **func**.
+            **kwargs (P.kwargs): Additional keyword arguments to pass to **func**.
+
+        Returns:
+            B: The final accumulated value.
+
+        Note:
+            This is similar to `PyoIterator::reduce` but with an initial value.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>>
+            >>> data = Seq(((1, 2), (3, 4)))
+            >>> data.iter().fold_star(0, lambda acc, x, y: acc + x + y)
+            10
+            >>> data = Seq((("a", "b"), ("c", "d")))
+            >>> data.iter().fold_star("", lambda acc, x, y: acc + x + y)
+            'abcd'
+
+            ```
+            You can also pass additional arguments to the folding function:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>>
+            >>> data = Seq(((1, 2), (3, 4)))
+            >>> def add_with_offset(acc: int, x: int, y: int, offset: int) -> int:
+            ...     return acc + x + y + offset
+            >>>
+            >>> data.iter().fold_star(0, add_with_offset, 10)
+            30
+
+            ```
+        """
+
+    def for_each[**P](
+        self,
+        func: Callable[Concatenate[T, P], Any],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None:
+        """Consume the `Iterator` by applying a function to each element in the `Iterable`.
+
+        Is a terminal operation, and is useful for functions that have side effects,
+        or when you want to force evaluation of a lazy iterable.
+
+        Args:
+            func (Callable[Concatenate[T, P], Any]): Function to apply to each element.
+            *args (P.args): Positional arguments for the function.
+            **kwargs (P.kwargs): Keyword arguments for the function.
+
+        Example:
+            ```python
+            >>> from pyochain import Range
+            >>> Range(1, 4).iter().for_each(lambda x: print(x + 1))
+            2
+            3
+            4
+
+            ```
+        """
+
+    @overload
+    def for_each_star[T1, T2, **P, R](
+        self: PyoIterator[tuple[T1, T2]],
+        func: Callable[Concatenate[T1, T2, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, **P, R](
+        self: PyoIterator[tuple[T1, T2, T3]],
+        func: Callable[Concatenate[T1, T2, T3, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, **P, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4]],
+        func: Callable[Concatenate[T1, T2, T3, T4, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, T5, **P, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
+        func: Callable[Concatenate[T1, T2, T3, T4, T5, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, T5, T6, **P, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
+        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, T5, T6, T7, **P, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, **P, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, **P, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, T9, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None: ...
+    @overload
+    def for_each_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, **P, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        func: Callable[Concatenate[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None: ...
+    def for_each_star[U: tuple[Any, ...], **P, R](
+        self: PyoIterator[U],
+        func: Callable[..., R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None:
+        """Consume the `Iterator` by applying a function to each unpacked item in the `Iterable` element.
+
+        Is a terminal operation, and is useful for functions that have side effects,
+        or when you want to force evaluation of a lazy iterable.
+
+        Each item yielded by the `Iterator` is expected to be an `Iterable` itself (e.g., a tuple or list),
+        and its elements are unpacked as arguments to the provided function.
+
+        This is often used after methods like `zip()` or `enumerate()` that yield tuples.
+
+        Args:
+            func (Callable[..., R]): Function to apply to each unpacked element.
+            *args (P.args): Positional arguments for the function.
+            **kwargs (P.kwargs): Keyword arguments for the function.
+
+        Example:
+            ```python
+            from pyochain import Range, Vec
+
+            vec = Vec(())
+            Range(1, 5).iter().batched(2).for_each_star(lambda x, y: vec.append(x + y))
+            assert vec == Vec((3, 7))
+            ```
+        """
+
+    @classmethod
+    def from_count(cls, start: int = 0, step: int = 1) -> PyoIterator[int]:
+        """Create an `Iterator` of evenly spaced values.
+
+        Warning:
+            The `Iterator` returned is **infinite**, meaning it will never stop yielding elements.
+
+            Be sure to use `PyoIterator::take` or `PyoIterator::slice` to limit the number of items taken.
+
+            Otherwise you could quickly run out of memory, if you try to collect it into a collection.
+
+        Args:
+            start (int): Starting value of the `Iterator`.
+            step (int): Difference between consecutive values.
+
+        Returns:
+            PyoIterator[int]: An `Iterator` of integers starting from **start** and increasing by **step**.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> Iter.from_count(10, 2).take(3).collect(Seq)
+            Seq(10, 12, 14)
+            >>> Iter.from_count(-5, 5).take(4).collect(Seq)
+            Seq(-5, 0, 5, 10)
+            >>> Iter.from_count(0, -1).take(5).collect(Seq)
+            Seq(0, -1, -2, -3, -4)
+
+            ```
+        """
+
+    @classmethod
+    def from_fn[**P, R](
+        cls, f: Callable[P, Option[R]], *args: P.args, **kwargs: P.kwargs
+    ) -> PyoIterator[R]:
+        r"""Create an `Iterator` from a generator function.
+
+        The `Callable` must return:
+
+        - `Some(value)` to yield a value
+        - `NONE` to stop the iteration
+
+        You could consider this as a way to create an `Iterator` where the `__next__()` is the `__call__()` method.
+
+        As such, you can either provide lambdas, partials, closures, or pre-existing classes where `__call__()` is implemented, but a `__next__()` is not desired.
+
+        If you do have an `Iterator` class, simply pass it to the regular constructor, as this will be more efficient, ergonomic and idiomatic.
+
+        Args:
+            f (Callable[P, Option[R]]): `Callable` that returns the next item wrapped in `Option`.
+            *args (P.args): Positional arguments to pass to **f**.
+            **kwargs (P.kwargs): Keyword arguments to pass to **f**.
+
+        Returns:
+            PyoIterator[R]: An `Iterator` yielding values produced by **f**.
+
+        Note:
+            In Rust, this avoids defining a full struct and implementing `Iterator` for it when you have simple logic to generate values.
+
+            This is implemented for "Rust API compliance", but in Python, generators comprehensions/functions with `yield` statements are the ergonomic equivalent.
+
+        Example:
+            Closure with captured local variable:
+            ```python
+            from pyochain import Iter, Some, NONE, Option
+
+            def make_counter(max_val: int):
+                counter = 0
+
+                def gen() -> Option[int]:
+                    nonlocal counter
+                    counter += 1
+                    return Some(counter) if counter <= max_val else NONE
+
+                return gen
+
+            x = Iter.from_fn(make_counter(5)).collect(tuple)
+            assert x == (1, 2, 3, 4, 5)
+            ```
+            Reading records from a text stream:
+            ```python
+            from io import StringIO
+
+            stream = StringIO("Alice\nBob\nCharlie\n")
+
+            def read_name() -> Option[str]:
+                line = stream.readline()
+                return Some(line.rstrip("\n")) if line else NONE
+
+            iterator = Iter.from_fn(read_name)
+            assert iterator.next() == Some("Alice")
+            assert iterator.next() == Some("Bob")
+            assert iterator.next() == Some("Charlie")
+            assert iterator.next().is_none()
+            ```
+        """
+
+    def ge(self, other: Iterable[object]) -> bool:
+        """Return `True` if **self** is lexicographically greater than or equal to *other*.
+
+        Comparison is performed element by element, like Python sequence ordering.
+
+        The first differing pair decides the result.
+
+        If all compared elements are equal and one iterable ends first, the longer iterable is considered
+        greater.
+
+        Note:
+            This consumes any `Iterator` instances involved in the comparison,
+            including **self** and *other* when *other* is itself an `Iterator`.
+
+        Args:
+            other (Iterable[object]): Another `Iterable` to compare against.
+
+        Returns:
+            bool: `True` if **self** is greater than *other*, or equal to it.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3)).ge((1, 2))
+            True
+            >>> Iter((1, 2, 3)).ge((1, 2, 3))
+            True
+            >>> Iter((1, 2)).ge((1, 2, 3))
+            False
+
+            ```
+        """
+
+    @overload
+    def group_by(self, key: None = None) -> PyoIterator[tuple[T, PyoIterator[T]]]: ...
+    @overload
+    def group_by[K](
+        self, key: Callable[[T], K]
+    ) -> PyoIterator[tuple[K, PyoIterator[T]]]: ...
+    @overload
+    def group_by[K](
+        self, key: Callable[[T], K] | None = None
+    ) -> PyoIterator[tuple[K, PyoIterator[T]] | tuple[T, PyoIterator[T]]]: ...
+    def group_by(
+        self,
+        key: Callable[[T], Any] | None = None,
+    ) -> PyoIterator[tuple[Any | T, PyoIterator[T]]]:
+        """Make an `Iterator` that returns consecutive keys and groups from the iterable.
+
+        The values yielded are `(K, PyoIterator[T])` tuples, where the first element is the group key and the second element is an `Iterator` of type `T` over the group values.
+
+        The `Iterator` needs to already be sorted on the same key function.
+
+        This is due to the fact that it generates a new `Group` every time the value of the **key** function changes.
+
+        That behavior differs from SQL's `GROUP BY` which aggregates common elements regardless of their input order.
+
+        Warning:
+            You must materialize the second element of the tuple immediately when iterating over groups.
+
+            Because `.group_by()` uses Python's `itertools::groupby` under the hood, each group's iterator shares internal state.
+
+            When you advance to the next group, the previous group's iterator becomes invalid and will yield empty results.
+
+        Args:
+            key (Callable[[T], Any] | None): Function computing a key value for each element. If `None`, this defaults to an identity function and returns the element unchanged.
+
+        Returns:
+            PyoIterator[tuple[Any | T, PyoIterator[T]]]: An `Iterator` of `(key, value)` tuples.
+
+        Example:
+            `group_by` can let you compute complex operations very easily and efficiently.
+
+            For example, if we want to group even and odd numbers, we can do it like this:
+            ```python
+            >>> from pyochain import Iter, Dict, Seq
+            >>> from operator import itemgetter
+            >>> # Example 1: Group even and odd numbers
+            >>> res = (
+            ...     Iter
+            ...     .from_count()  # create an infinite iterator of integers
+            ...     .take(8)  # take the first 8
+            ...     .map(lambda x: (x % 2 == 0, x))  # map to (is_even, value)
+            ...     .sort_by(itemgetter(0))  # sort by is_even
+            ...     .iter()  # Since sort collect to a Vec, we need to convert back to Iter
+            ...     .group_by(itemgetter(0))  # group by is_even
+            ...     # extract values from groups, discarding keys, and materializing them
+            ...     .map_star(
+            ...         lambda g, vals: (g, vals.map_star(lambda _, y: y).collect(Seq))
+            ...     )
+            ...     .collect(Dict)
+            ... )
+            >>> res
+            Dict(False: Seq(1, 3, 5, 7), True: Seq(0, 2, 4, 6))
+
+            ```
+            If we have a dataset who's items have a common key and who's already sorted by that key, we can easily perform grouped operations on it, like this:
+            ```python
+            >>> from pyochain import Seq
+            >>> data = Seq((
+            ...     {"name": "Alice", "gender": "F"},
+            ...     {"name": "Bob", "gender": "M"},
+            ...     {"name": "Charlie", "gender": "M"},
+            ...     {"name": "Dan", "gender": "M"},
+            ... ))
+            >>> # group by the gender key, and count the number of people in each group
+            >>> output = (
+            ...     data
+            ...     .iter()
+            ...     .group_by(lambda x: x["gender"])
+            ...     .map_star(lambda g, vals: (g, vals.count()))
+            ...     .collect(Seq)
+            ... )
+            >>> output
+            Seq(('F', 1), ('M', 3))
+
+            ```
+            However, you must be careful to materialize the group values immediately when iterating over groups, see below how the values of the groups are empty::
+            ```python
+            >>> from pyochain import Seq
+            >>> groups = (
+            ...     Seq(("a1", "a2", "b1"))
+            ...     .iter()
+            ...     .group_by(lambda x: x[0])
+            ...     .collect(Seq)
+            ...     .iter()
+            ...     .map_star(lambda g, vals: (g, vals.collect(Seq)))
+            ...     .collect(Seq)
+            ... )
+            >>> groups
+            Seq(('a', Seq()), ('b', Seq()))
+
+            ```
+            As such, the correct pattern is the following:
+            ```python
+            >>> from pyochain import Seq
+            >>> groups = (
+            ...     Seq(("a1", "a2", "b1", "b2"))
+            ...     .iter()
+            ...     .group_by(lambda x: x[0])
+            ...     # ✅ Materialize NOW
+            ...     .map_star(lambda g, vals: (g, vals.collect(Seq)))
+            ...     .collect(Seq)
+            ... )
+            >>> groups
+            Seq(('a', Seq('a1', 'a2')), ('b', Seq('b1', 'b2')))
+
+            ```
+        """
+
+    def gt(self, other: Iterable[object]) -> bool:
+        """Return `True` if **self** is lexicographically strictly greater than *other*.
+
+        The first differing pair of elements decides the result.
+
+        If all compared elements are equal, the longer iterable is strictly greater than the shorter one.
+
+        Note:
+            This consumes any `Iterator` instances involved in the comparison,
+            including **self** and *other* when *other* is itself an `Iterator`.
+
+        Args:
+            other (Iterable[object]): Another `Iterable` to compare against.
+
+        Returns:
+            bool: `True` if **self** compares strictly after *other*.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3)).gt((1, 2))
+            True
+            >>> Iter((1, 3)).gt((1, 2, 9))
+            True
+            >>> Iter((1, 2)).gt((1, 2, 3))
+            False
+
+            ```
+        """
+
+    def intersperse[S](self: PyoIterator[S], element: S) -> PyoIterator[S]:
+        """Creates a new `Iterator` which places a copy of separator between adjacent items of the original iterator.
+
+        Args:
+            element (S): The element to interpose between items.
+
+        Returns:
+            PyoIterator[S]: A new `Iterator` with the element interposed.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> # Simple example with numbers
+            >>> Iter((1, 2, 3)).intersperse(0).collect(Seq)
+            Seq(1, 0, 2, 0, 3)
+            >>> # Useful when chaining with other operations
+            >>> Iter([10, 20, 30]).intersperse(5).sum()
+            70
+            >>> # Inserting separators between groups, then flattening
+            >>> Iter(((1, 2), (3, 4), (5, 6))).intersperse([-1]).flatten().collect(Seq)
+            Seq(1, 2, -1, 3, 4, -1, 5, 6)
+
+            ```
+        """
+
+    def is_sorted[U: SupportsComparison[Any]](
+        self: PyoIterator[U], *, reverse: bool = False, strict: bool = False
+    ) -> bool:
+        """Returns `True` if the items of the `Iterator` are in sorted order.
+
+        The elements of the `Iterator` must support comparison operations.
+
+        The function returns `False` after encountering the first out-of-order item.
+
+        If there are no out-of-order items, the `Iterator` is exhausted.
+
+        Credits to **more-itertools** for the implementation.
+
+        See Also:
+            [`PyoIterator::is_sorted_by`][is_sorted_by] if your elements do not support comparison operations directly, or you want to sort based on a specific attribute or transformation.
+
+        Args:
+            reverse (bool): Whether to check for descending order.
+            strict (bool): Whether to enforce strict sorting (no equal elements).
+
+        Returns:
+            bool: `True` if items are sorted according to the criteria, `False` otherwise.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2, 3, 4, 5)).is_sorted()
+            True
+
+            ```
+            If strict, tests for strict sorting, that is, returns False if equal elements are found:
+            ```python
+            >>> from pyochain import Seq
+            >>> data = Seq((1, 2, 2))
+            >>> data.iter().is_sorted()
+            True
+            >>> data.iter().is_sorted(strict=True)
+            False
+
+            ```
+        """
+
+    def is_sorted_by(
+        self,
+        key: Callable[[T], SupportsComparison[Any]],
+        *,
+        reverse: bool = False,
+        strict: bool = False,
+    ) -> bool:
+        """Returns `True` if the items of the `Iterator` are in sorted order according to the key function.
+
+        The function returns `False` after encountering the first out-of-order item.
+
+        If there are no out-of-order items, the `Iterator` is exhausted.
+
+        Credits to **more-itertools** for the implementation.
+
+        Args:
+            key (Callable[[T], SupportsComparison[Any]]): Function to extract a comparison key from each element.
+            reverse (bool): Whether to check for descending order.
+            strict (bool): Whether to enforce strict sorting (no equal elements).
+
+        Returns:
+            bool: `True` if items are sorted according to the criteria, `False` otherwise.
+
+        Example:
+            ```python
+            >>> from pyochain import Range, Seq
+            >>> Range(1, 6).iter().map(str).is_sorted_by(int)
+            True
+            >>> Seq((5, 4, 3, 1, 2)).iter().map(str).is_sorted_by(int, reverse=True)
+            False
+
+            ```
+            If strict, tests for strict sorting, that is, returns False if equal elements are found:
+            ```python
+            >>> from pyochain import Seq
+            >>> data = Seq(("1", "2", "2"))
+            >>> data.iter().is_sorted_by(int)
+            True
+            >>> data.iter().is_sorted_by(int, strict=True)
+            False
+
+            ```
+        """
+
     def join(self: PyoIterable[str], sep: str) -> str:
         """Join all elements of the `Iterator` into a single `str`, with a specified separator.
 
@@ -2575,6 +2113,91 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             ```
         """
+
+    def last(self) -> T:
+        """Consume the `Iterator` and return it's last element.
+
+        Warning:
+            This will never return if the `Iterator` is infinite.
+
+        Returns:
+            T: The last element of the `Iterator`.
+
+        Example:
+            ```python
+            >>> from pyochain import Dict, Seq
+            >>> data = Dict({"a": 1, "b": 2, "c": 3})
+            >>> data.iter().last()
+            'c'
+            >>> # If you have a `Sequence`, you can use `PyoSequence::last` instead, which is more efficient.
+            >>> data.pipe(Seq).last()
+            'c'
+
+            ```
+        """
+
+    def le(self, other: Iterable[object]) -> bool:
+        """Return `True` if **self** is lexicographically less than or equal to *other*.
+
+        Comparison is performed element by element, like Python sequence ordering.
+
+        The first differing pair decides the result.
+
+        If all compared elements are equal and one iterable ends first, the shorter iterable is considered smaller.
+
+        Note:
+            This consumes any `Iterator` instances involved in the comparison,
+            including **self** and *other* when *other* is itself an `Iterator`.
+
+        Args:
+            other (Iterable[object]): Another `Iterable` to compare against.
+
+        Returns:
+            bool: `True` if **self** is smaller than *other*, or equal to it.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2)).le((1, 2, 3))
+            True
+            >>> Iter((1, 2, 3)).le((1, 2, 3))
+            True
+            >>> Iter((1, 3)).le((1, 2, 9))
+            False
+
+            ```
+        """
+
+    def lt(self, other: Iterable[object]) -> bool:
+        """Return `True` if **self** is lexicographically strictly less than *other*.
+
+        The first differing pair of elements decides the result.
+
+        If all compared elements are equal, a shorter iterable is strictly smaller than a longer one.
+
+        Note:
+            This consumes any `Iterator` instances involved in the comparison,
+            including **self** and *other* when *other* is itself an `Iterator`.
+
+        Args:
+            other (Iterable[object]): Another `Iterable` to compare against.
+
+        Returns:
+            bool: `True` if **self** compares strictly before *other*.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((1, 2)).lt((1, 2, 3))
+            True
+            >>> Iter((1, 2, 3)).lt((1, 2, 3))
+            False
+            >>> Iter((1, 2, 3)).lt((1, 3))
+            True
+
+            ```
+        """
+
     def map[R](self, func: Callable[[T], R]) -> PyoIterator[R]:
         """Apply a function **func** to each element of the `Iterator`.
 
@@ -2607,92 +2230,6 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             Seq('A', 'B', 'C')
             >>> data.iter().map(lambda s: s.upper()).collect(Seq)
             Seq('A', 'B', 'C')
-
-            ```
-        """
-
-    @overload
-    def map_star[T1, R](
-        self: PyoIterator[tuple[T1]], func: Callable[[T1], R]
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, R](
-        self: PyoIterator[tuple[T1, T2]], func: Callable[[T1, T2], R]
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, R](
-        self: PyoIterator[tuple[T1, T2, T3]], func: Callable[[T1, T2, T3], R]
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4]], func: Callable[[T1, T2, T3, T4], R]
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
-        func: Callable[[T1, T2, T3, T4, T5], R],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
-        func: Callable[[T1, T2, T3, T4, T5, T6], R],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, T7, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7], R],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], R],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], R],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
-        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
-        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
-    ) -> PyoIterator[R]: ...
-    @overload
-    def map_star[R](
-        self: PyoIterator[tuple[Any, ...]],
-        func: Callable[..., R],
-    ) -> PyoIterator[R]: ...
-    def map_star[U: Iterable[Any], R](
-        self: PyoIterator[U], func: Callable[..., R]
-    ) -> PyoIterator[R]:
-        """Applies a function to each element.where each element is an iterable.
-
-        Unlike `.map()`, which passes each element as a single argument, `.starmap()` unpacks each element into positional arguments for the function.
-
-        In short, for each element in the `Iterator`, it computes `func(*element)`.
-
-        Note:
-            Always prefer using `.map_star()` over `.map()` when working with `Iterator` of `tuple` elements.
-
-            Not only it is more readable, but it's also much more performant (up to 30% faster in benchmarks).
-
-        Args:
-            func (Callable[..., R]): Function to apply to unpacked elements.
-
-        Returns:
-            PyoIterator[R]: An iterable of results from applying the function to unpacked elements.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq
-            >>> def make_sku(color: str, size: str) -> str:
-            ...     return f"{color}-{size}"
-            >>> data = Seq(("blue", "red"))
-            >>> data.iter().product(["S", "M"]).map_star(make_sku).collect(Seq)
-            Seq('blue-S', 'blue-M', 'red-S', 'red-M')
-            >>> # This is equivalent to:
-            >>> data.iter().product(["S", "M"]).map(lambda x: make_sku(*x)).collect(Seq)
-            Seq('blue-S', 'blue-M', 'red-S', 'red-M')
 
             ```
         """
@@ -2862,6 +2399,92 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ... )
             >>> res
             Seq((0, 0), (2, 1))
+
+            ```
+        """
+
+    @overload
+    def map_star[T1, R](
+        self: PyoIterator[tuple[T1]], func: Callable[[T1], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star[T1, T2, R](
+        self: PyoIterator[tuple[T1, T2]], func: Callable[[T1, T2], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star[T1, T2, T3, R](
+        self: PyoIterator[tuple[T1, T2, T3]], func: Callable[[T1, T2, T3], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4]], func: Callable[[T1, T2, T3, T4], R]
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5]],
+        func: Callable[[T1, T2, T3, T4, T5], R],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6]],
+        func: Callable[[T1, T2, T3, T4, T5, T6], R],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, T7, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7], R],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], R],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9], R],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R](
+        self: PyoIterator[tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]],
+        func: Callable[[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], R],
+    ) -> PyoIterator[R]: ...
+    @overload
+    def map_star[R](
+        self: PyoIterator[tuple[Any, ...]],
+        func: Callable[..., R],
+    ) -> PyoIterator[R]: ...
+    def map_star[U: Iterable[Any], R](
+        self: PyoIterator[U], func: Callable[..., R]
+    ) -> PyoIterator[R]:
+        """Applies a function to each element.where each element is an iterable.
+
+        Unlike `.map()`, which passes each element as a single argument, `.starmap()` unpacks each element into positional arguments for the function.
+
+        In short, for each element in the `Iterator`, it computes `func(*element)`.
+
+        Note:
+            Always prefer using `.map_star()` over `.map()` when working with `Iterator` of `tuple` elements.
+
+            Not only it is more readable, but it's also much more performant (up to 30% faster in benchmarks).
+
+        Args:
+            func (Callable[..., R]): Function to apply to unpacked elements.
+
+        Returns:
+            PyoIterator[R]: An iterable of results from applying the function to unpacked elements.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> def make_sku(color: str, size: str) -> str:
+            ...     return f"{color}-{size}"
+            >>> data = Seq(("blue", "red"))
+            >>> data.iter().product(["S", "M"]).map_star(make_sku).collect(Seq)
+            Seq('blue-S', 'blue-M', 'red-S', 'red-M')
+            >>> # This is equivalent to:
+            >>> data.iter().product(["S", "M"]).map(lambda x: make_sku(*x)).collect(Seq)
+            Seq('blue-S', 'blue-M', 'red-S', 'red-M')
 
             ```
         """
@@ -3153,103 +2776,63 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    def next(self) -> Option[T]:
-        """Return the next element in the `Iterator`.
+    def max[U: SupportsRichComparison](self: PyoIterable[U]) -> U:
+        """Return the maximum element of the `Iterator`.
 
-        The actual `__next__()` method must be conform to the Python `Iterator` Protocol, and is what will be actually called if you iterate over the `PyoIterator` instance.
+        The elements of the `Iterator` must support comparison operations.
 
-        `PyoIterator::next` is a convenience method that wraps the result in an `Option` to handle exhaustion gracefully, for custom use cases.
+        For comparing elements using a custom **key** function, use [`max_by`][max_by] instead.
+
+        If multiple elements are tied for the maximum value, the first one encountered is returned.
 
         Returns:
-            Option[T]: The next element in the iterator. `Some[T]`, or `NONE` if the iterator is exhausted.
+            U: The maximum value.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter
+            >>> Iter((3, 1, 2)).max()
+            3
+
+            ```
+        """
+
+    def max_by[U: SupportsRichComparison](self, key: Callable[[T], U]) -> T:
+        """Return the maximum element of the `Iterator` using a custom **key** function.
+
+        If multiple elements are tied for the maximum value, the first one encountered is returned.
+
+        Args:
+            key (Callable[[T], U]): Function to extract a comparison key from each element.
+
+        Returns:
+            T: The element with the maximum key value.
 
         Example:
             ```python
             >>> from pyochain import Seq
-            >>> it = Seq((1, 2, 3)).iter()
-            >>> it.next().unwrap()
-            1
-            >>> it.next().unwrap()
-            2
-
-            ```
-        """
-
-    def peekable[S](self: PyoIterator[S]) -> Peekable[S]:
-        """Creates an iterator which can use the peek and peek_mut methods to look at the next element of the `Iterator` without consuming it.
-
-        See their documentation for more information.
-
-        Note that the underlying `Iterator` is still advanced when peek or peek_mut are called for the first time.
-
-        In order to retrieve the next element, `next` is called on the underlying `Iterator`, hence any side effects (i.e. anything other than fetching the next value) of the `next` method will occur.
-
-        Returns:
-            Peekable[S]: A new `Iterator` that allows peeking at the next element.
-
-        Examples:
-            Basic usage:
-            ```python
-            >>> from pyochain import Range
-            >>> xs = Range(1, 4)
-            >>> iterator = xs.iter().peekable()
-            >>> # peek() lets us see into the future
-            >>> iterator.peek()
-            Some(1)
-            >>> iterator.next()
-            Some(1)
-            >>> iterator.next()
-            Some(2)
-            >>> # we can peek() multiple times, the iterator won't advance
-            >>> iterator.peek()
-            Some(3)
-            >>> iterator.peek()
-            Some(3)
-            >>> iterator.next()
-            Some(3)
-            >>> # after the iterator is finished, so is peek()
-            >>> iterator.peek()
-            NONE
-            >>> iterator.next()
-            NONE
-
-            ```
-        """
-    @overload
-    def sum(self: PyoIterator[bool], start: int = 0) -> int: ...
-    @overload
-    def sum(self: PyoIterator[LiteralInteger], start: int = 0) -> int: ...
-    @overload
-    def sum[T1: SupportsSumWithNoDefaultGiven](
-        self: PyoIterator[T1],
-    ) -> T1 | Literal[0]: ...
-    @overload
-    def sum[A1: SupportsAnyAdd, A2: SupportsAnyAdd](
-        self: PyoIterator[A1], start: A2
-    ) -> A1 | A2: ...
-    def sum[T1: SupportsSumWithNoDefaultGiven, A1: SupportsAnyAdd, A2: SupportsAnyAdd](
-        self: PyoIterator[bool | LiteralInteger] | PyoIterator[T1] | PyoIterator[A1],
-        start: int | T1 | A2 = 0,
-    ) -> int | T1 | A1 | A2:
-        """Return the sum of the `Iterator`.
-
-        If the `Iterator` is empty (i.e., yields no elements), return the value of `start` (which defaults to `0`).
-
-        Args:
-            start (int | T1 | A2): The value to return if the `Iterator` is empty.
-
-        Returns:
-            int | T1 | A1 | A2: The sum of all elements.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter((1, 2, 3)).sum()
-            6
-            >>> Iter(()).sum()
-            0
-            >>> Iter(()).sum(10)
-            10
+            >>> from dataclasses import dataclass
+            >>>
+            >>> @dataclass
+            ... class Person:
+            ...     name: str
+            ...     age: int
+            ...     is_student: bool
+            ...
+            ...     def get_discount(self) -> float:
+            ...         return 0.1 if self.is_student else 0.0
+            >>>
+            >>> alice = Person("Alice", 30, False)
+            >>> bob = Person("Bob", 22, True)
+            >>> charlie = Person("Charlie", 25, False)
+            >>> persons = Seq((alice, bob, charlie))
+            >>>
+            >>> persons.iter().max_by(lambda p: p.age).name
+            'Alice'
+            >>> persons.iter().max_by(lambda p: p.name).name
+            'Charlie'
+            >>> persons.iter().max_by(Person.get_discount).name
+            'Bob'
 
             ```
         """
@@ -3315,63 +2898,58 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    def max[U: SupportsRichComparison](self: PyoIterable[U]) -> U:
-        """Return the maximum element of the `Iterator`.
+    def ne(self, other: Iterable[object]) -> bool:
+        """Return `True` if **self** and *other* differ in value or length.
 
-        The elements of the `Iterator` must support comparison operations.
+        This is the logical opposite of `eq()`.
 
-        For comparing elements using a custom **key** function, use [`max_by`][max_by] instead.
+        The result becomes `True` as soon as:
 
-        If multiple elements are tied for the maximum value, the first one encountered is returned.
+        - a pair of compared elements is not equal
+        - or one iterable ends before the other
+
+        Note:
+            This consumes any `Iterator` instances involved in the comparison,
+            including **self** and *other* when *other* is itself an `Iterator`.
+
+        Args:
+            other (Iterable[object]): Another `Iterable` to compare against.
 
         Returns:
-            U: The maximum value.
+            bool: `True` when the two iterables are not equal.
 
         Example:
             ```python
-            >>> from pyochain import Iter
-            >>> Iter((3, 1, 2)).max()
-            3
+            >>> from pyochain import Range
+            >>> data = Range(1, 4)
+            >>> data.iter().ne((1, 2, 3))
+            False
+            >>> data.iter().ne((1, 2, 4))
+            True
+            >>> data.iter().ne((1, 2))
+            True
 
             ```
         """
 
-    def max_by[U: SupportsRichComparison](self, key: Callable[[T], U]) -> T:
-        """Return the maximum element of the `Iterator` using a custom **key** function.
+    def next(self) -> Option[T]:
+        """Return the next element in the `Iterator`.
 
-        If multiple elements are tied for the maximum value, the first one encountered is returned.
+        The actual `__next__()` method must be conform to the Python `Iterator` Protocol, and is what will be actually called if you iterate over the `PyoIterator` instance.
 
-        Args:
-            key (Callable[[T], U]): Function to extract a comparison key from each element.
+        `PyoIterator::next` is a convenience method that wraps the result in an `Option` to handle exhaustion gracefully, for custom use cases.
 
         Returns:
-            T: The element with the maximum key value.
+            Option[T]: The next element in the iterator. `Some[T]`, or `NONE` if the iterator is exhausted.
 
         Example:
             ```python
             >>> from pyochain import Seq
-            >>> from dataclasses import dataclass
-            >>>
-            >>> @dataclass
-            ... class Person:
-            ...     name: str
-            ...     age: int
-            ...     is_student: bool
-            ...
-            ...     def get_discount(self) -> float:
-            ...         return 0.1 if self.is_student else 0.0
-            >>>
-            >>> alice = Person("Alice", 30, False)
-            >>> bob = Person("Bob", 22, True)
-            >>> charlie = Person("Charlie", 25, False)
-            >>> persons = Seq((alice, bob, charlie))
-            >>>
-            >>> persons.iter().max_by(lambda p: p.age).name
-            'Alice'
-            >>> persons.iter().max_by(lambda p: p.name).name
-            'Charlie'
-            >>> persons.iter().max_by(Person.get_discount).name
-            'Bob'
+            >>> it = Seq((1, 2, 3)).iter()
+            >>> it.next().unwrap()
+            1
+            >>> it.next().unwrap()
+            2
 
             ```
         """
@@ -3401,6 +2979,71 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
+    @classmethod
+    def once[V](cls, value: V) -> PyoIterator[V]:
+        """Create an `Iterator` that yields a single value.
+
+        If you have a function which works on iterators, but you only need to process one value, you can use this method rather than doing something like `Iter([value])`.
+
+        This can be considered the equivalent of `.insert()` but as a constructor.
+
+        Args:
+            value (V): The single value to yield.
+
+        Returns:
+            PyoIterator[V]: An `Iterator` yielding the specified value.
+
+        Example:
+            ```python
+            from pyochain import Iter, Seq
+
+            assert Iter.once(42).collect(Seq) == Seq((42,))
+            ```
+        """
+
+    @classmethod
+    def once_with[**P, R](
+        cls, func: Callable[P, R], *args: P.args, **kwargs: P.kwargs
+    ) -> PyoIterator[R]:
+        """Create an `Iterator`  that lazily generates a value exactly once by invoking the provided closure.
+
+        If you have a function which works on iterators, but you only need to process one value, you can use this method rather than doing something like `Iter([value])`.
+
+        This can be considered the equivalent of [`PyoIterator::insert`][PyoIterator.insert] but as a constructor.
+
+        Unlike `PyoIterator::once`, this function will lazily generate the value on request.
+
+        Args:
+            func (Callable[P, R]): The single value to yield.
+            *args (P.args): Positional arguments to pass to **func**.
+            **kwargs (P.kwargs): Keyword arguments to pass to **func**.
+
+        Returns:
+            PyoIterator[R]: An `Iterator` yielding the specified value.
+
+        Example:
+            ```python
+            from pyochain import Iter, Seq
+
+            assert Iter.once_with(lambda: 42).collect(Seq) == Seq((42,))
+            ```
+        """
+
+    def pairwise(self) -> PyoIterator[tuple[T, T]]:
+        """Return an iterator over pairs of consecutive elements.
+
+        Returns:
+            PyoIterator[tuple[T, T]]: An iterable of pairs of consecutive elements.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> Seq((1, 2, 3)).iter().pairwise().collect(Seq)
+            Seq((1, 2), (2, 3))
+
+            ```
+        """
+
     def partition[S](
         self: PyoIterable[S], predicate: Callable[[S], bool]
     ) -> tuple[Vec[S], Vec[S]]:
@@ -3421,6 +3064,73 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             >>> from pyochain import Iter
             >>> Iter((1, 2, 3, 4, 5)).partition(lambda x: x % 2 == 0)
             (Vec(2, 4), Vec(1, 3, 5))
+
+            ```
+        """
+
+    def peekable[S](self: PyoIterator[S]) -> Peekable[S]:
+        """Creates an iterator which can use the peek and peek_mut methods to look at the next element of the `Iterator` without consuming it.
+
+        See their documentation for more information.
+
+        Note that the underlying `Iterator` is still advanced when peek or peek_mut are called for the first time.
+
+        In order to retrieve the next element, `next` is called on the underlying `Iterator`, hence any side effects (i.e. anything other than fetching the next value) of the `next` method will occur.
+
+        Returns:
+            Peekable[S]: A new `Iterator` that allows peeking at the next element.
+
+        Examples:
+            Basic usage:
+            ```python
+            >>> from pyochain import Range
+            >>> xs = Range(1, 4)
+            >>> iterator = xs.iter().peekable()
+            >>> # peek() lets us see into the future
+            >>> iterator.peek()
+            Some(1)
+            >>> iterator.next()
+            Some(1)
+            >>> iterator.next()
+            Some(2)
+            >>> # we can peek() multiple times, the iterator won't advance
+            >>> iterator.peek()
+            Some(3)
+            >>> iterator.peek()
+            Some(3)
+            >>> iterator.next()
+            Some(3)
+            >>> # after the iterator is finished, so is peek()
+            >>> iterator.peek()
+            NONE
+            >>> iterator.next()
+            NONE
+
+            ```
+        """
+
+    @overload
+    def permutations(self, r: Literal[2]) -> PyoIterator[tuple[T, T]]: ...
+    @overload
+    def permutations(self, r: Literal[3]) -> PyoIterator[tuple[T, T, T]]: ...
+    @overload
+    def permutations(self, r: Literal[4]) -> PyoIterator[tuple[T, T, T, T]]: ...
+    @overload
+    def permutations(self, r: Literal[5]) -> PyoIterator[tuple[T, T, T, T, T]]: ...
+    def permutations(self, r: int | None = None) -> PyoIterator[tuple[T, ...]]:
+        """Return all permutations of length r.
+
+        Args:
+            r (int | None): Length of each permutation. Defaults to the length of the iterable.
+
+        Returns:
+            PyoIterator[tuple[T, ...]]: An iterable of permutations.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> Iter((1, 2, 3)).permutations(2).collect(Seq)
+            Seq((1, 2), (1, 3), (2, 1), (2, 3), (3, 1), (3, 2))
 
             ```
         """
@@ -3573,6 +3283,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             ```
         """
+
     def reduce[S](self: PyoIterator[S], func: Callable[[S, S], S]) -> S:
         """Apply a function of two arguments cumulatively to the items of an iterable, from left to right.
 
@@ -3596,61 +3307,55 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             ```
         """
-    def skip(self, n: int) -> PyoIterator[T]:
-        """Create an `Iterator` that skips the first n elements.
 
-        skip(**n**) skips elements until n elements are skipped or the end of the `Iterator` is reached (whichever happens first).
+    @classmethod
+    def repeat[O](cls, obj: O, n: int | None = None) -> PyoIterator[O]:
+        """Repeat the provided object **n** times as elements of an `Iterator`.
 
-        After that, all the remaining elements are yielded.
+        If **n** is `None`, this will create an infinite `Iterator`.
 
-        In particular, if the original `Iterator` is too short, then the returned `Iterator` is empty.
+        Be sure to use [`PyoIterator::take`][PyoIterator.take] or [`PyoIterator::slice`][PyoIterator.slice] to limit the number of items taken.
 
-        If **n** is negative or zero, the original `Iterator` is returned unchanged.
+        Warning:
+            Each repetition is a reference to the same object, not a copy.
+
+            This means that if the object is mutable and you modify one of the repetitions, all next repetitions will reflect that change.
 
         Args:
-            n (int): Number of elements to skip.
+            obj (O): The object to repeat.
+            n (int | None): Optional number of repetitions.
 
         Returns:
-            PyoIterator[T]: An `Iterator` of the remaining elements.
+            PyoIterator[O]: An `Iterator` of repeated **obj**.
+
+        See Also:
+            [`PyoIterator::cycle`][cycle] to repeat the **elements** of the `Iterator`.
 
         Example:
             ```python
-            >>> from pyochain import Seq
-            >>> data = Seq((1, 2, 3))
-            >>> data.iter().skip(1).collect(Seq)
-            Seq(2, 3)
-            >>> data.iter().skip(5).collect(Seq)
-            Seq()
-            >>> data.iter().skip(0).collect(Seq)
-            Seq(1, 2, 3)
+            >>> from pyochain import Seq, Iter
+            >>> Iter.repeat(1, 3).collect(Seq)
+            Seq(1, 1, 1)
+            >>> Iter.repeat(("a", "b"), 2).collect(Seq)
+            Seq(('a', 'b'), ('a', 'b'))
 
             ```
-        """
-
-    def fold[B](self, init: B, func: Callable[[B, T], B]) -> B:
-        """Fold every element of the `Iterator` into an accumulator by applying an operation, returning the final result.
-
-        Args:
-            init (B): Initial value for the accumulator.
-            func (Callable[[B, T], B]): Function that takes the accumulator and current element,
-                returning the new accumulator value.
-
-        Returns:
-            B: The final accumulated value.
-
-        Note:
-            This is similar to `reduce()` but with an initial value.
-
-        Example:
+            Shared reference behavior:
             ```python
-            >>> from pyochain import Iter
-            >>> data = (1, 2, 3)
-            >>> Iter(data).fold(0, lambda acc, x: acc + x)
-            6
-            >>> Iter(data).fold(10, lambda acc, x: acc + x)
-            16
-            >>> Iter(("a", "b", "c")).fold("", lambda acc, x: acc + x)
-            'abc'
+            >>> from pyochain import Vec
+            >>>
+            >>> base = ["Alice", "Bob", "Charlie"]
+            >>>
+            >>> first, second = Iter.repeat(base).take(2).collect(tuple)
+            >>> first.append("Joe")
+            >>> first
+            ['Alice', 'Bob', 'Charlie', 'Joe']
+            >>> base
+            ['Alice', 'Bob', 'Charlie', 'Joe']
+            >>> second
+            ['Alice', 'Bob', 'Charlie', 'Joe']
+            >>> first is second and first is base and second is base
+            True
 
             ```
         """
@@ -3695,6 +3400,56 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
+    def skip(self, n: int) -> PyoIterator[T]:
+        """Create an `Iterator` that skips the first n elements.
+
+        skip(**n**) skips elements until n elements are skipped or the end of the `Iterator` is reached (whichever happens first).
+
+        After that, all the remaining elements are yielded.
+
+        In particular, if the original `Iterator` is too short, then the returned `Iterator` is empty.
+
+        If **n** is negative or zero, the original `Iterator` is returned unchanged.
+
+        Args:
+            n (int): Number of elements to skip.
+
+        Returns:
+            PyoIterator[T]: An `Iterator` of the remaining elements.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> data = Seq((1, 2, 3))
+            >>> data.iter().skip(1).collect(Seq)
+            Seq(2, 3)
+            >>> data.iter().skip(5).collect(Seq)
+            Seq()
+            >>> data.iter().skip(0).collect(Seq)
+            Seq(1, 2, 3)
+
+            ```
+        """
+
+    def skip_while(self, predicate: Callable[[T], bool]) -> PyoIterator[T]:
+        """Drop items while predicate holds.
+
+        Args:
+            predicate (Callable[[T], bool]): Function to evaluate each item.
+
+        Returns:
+            PyoIterator[T]: An `Iterator` of the items after skipping those for which the predicate is true.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+            >>> out = Seq((1, 2, 0, -1)).iter().skip_while(lambda x: x > 0).collect(Seq)
+            >>> out
+            Seq(0, -1)
+
+            ```
+        """
+
     def slice(
         self,
         start: int | None = None,
@@ -3724,6 +3479,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             ```
         """
+
     def sort[U: SupportsRichComparison](
         self: PyoIterator[U], *, reverse: bool = False
     ) -> Vec[U]:
@@ -3825,6 +3581,76 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
+    @classmethod
+    def successors[U](
+        cls, first: Option[U], succ: Callable[[U], Option[U]]
+    ) -> PyoIterator[U]:
+        """Create an iterator of successive values computed from the previous one.
+
+        The iterator yields `first` (if it is `Some`), then repeatedly applies **succ** to the
+        previous yielded value until it returns `NONE`.
+
+        Args:
+            first (Option[U]): Initial item.
+            succ (Callable[[U], Option[U]]): Successor function.
+
+        Returns:
+            PyoIterator[U]: `Iterator` yielding `first` and its successors.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Some, NONE, Option, Seq
+            >>>
+            >>> def next_pow10(x: int) -> Option[int]:
+            ...     return Some(x * 10) if x < 10_000 else NONE
+            >>>
+            >>> Iter.successors(Some(1), next_pow10).collect(Seq)
+            Seq(1, 10, 100, 1000, 10000)
+            >>> Iter.successors(NONE, next_pow10).collect(Seq)
+            Seq()
+
+            ```
+        """
+
+    @overload
+    def sum(self: PyoIterator[bool], start: int = 0) -> int: ...
+    @overload
+    def sum(self: PyoIterator[LiteralInteger], start: int = 0) -> int: ...
+    @overload
+    def sum[T1: SupportsSumWithNoDefaultGiven](
+        self: PyoIterator[T1],
+    ) -> T1 | Literal[0]: ...
+    @overload
+    def sum[A1: SupportsAnyAdd, A2: SupportsAnyAdd](
+        self: PyoIterator[A1], start: A2
+    ) -> A1 | A2: ...
+    def sum[T1: SupportsSumWithNoDefaultGiven, A1: SupportsAnyAdd, A2: SupportsAnyAdd](
+        self: PyoIterator[bool | LiteralInteger] | PyoIterator[T1] | PyoIterator[A1],
+        start: int | T1 | A2 = 0,
+    ) -> int | T1 | A1 | A2:
+        """Return the sum of the `Iterator`.
+
+        If the `Iterator` is empty (i.e., yields no elements), return the value of `start` (which defaults to `0`).
+
+        Args:
+            start (int | T1 | A2): The value to return if the `Iterator` is empty.
+
+        Returns:
+            int | T1 | A1 | A2: The sum of all elements.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> Iter((1, 2, 3)).sum()
+            6
+            >>> Iter(()).sum()
+            0
+            >>> Iter(()).sum(10)
+            10
+
+            ```
+        """
+
     def tail(self, n: int) -> PyoIterator[T]:
         """Return an `Iterator` of the last **n** elements of the `Iterator`.
 
@@ -3842,6 +3668,7 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             ```
         """
+
     def take(self, n: int) -> PyoIterator[T]:
         """Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner.
 
@@ -3866,6 +3693,24 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             Seq(1, 2)
             >>> data.iter().take(5).collect(Seq)
             Seq(1, 2, 3)
+
+            ```
+        """
+
+    def take_while(self, predicate: Callable[[T], bool]) -> PyoIterator[T]:
+        """Take items while predicate holds.
+
+        Args:
+            predicate (Callable[[T], bool]): Function to evaluate each item.
+
+        Returns:
+            PyoIterator[T]: An `Iterator` of the items taken while the predicate is true.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> Iter((1, 2, 0)).take_while(lambda x: x > 0).collect(Seq)
+            Seq(1, 2)
 
             ```
         """
@@ -3895,41 +3740,179 @@ class PyoIterator[T](PyoIterable[T], Protocol):
 
             ```
         """
-    def unpack_into[**P, R](
-        self,
-        func: Callable[Concatenate[T, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> R:
-        """Unpack the `Iterator` in the provided *func*, and return the result.
 
-        This is similar to `Pipe::pipe`, but instead of passing `PyoIterator[T]`, we pass the elements inside `PyoIterator[T]`.
+    @overload
+    def try_collect[U](self: PyoIterator[Option[U]]) -> Option[Vec[U]]: ...
+    @overload
+    def try_collect[U, E](self: PyoIterator[Result[U, E]]) -> Option[Vec[U]]: ...
+    def try_collect[U](
+        self: PyoIterator[Option[U]] | PyoIterator[Result[U, Any]],
+    ) -> Option[Vec[U]]:
+        """Fallibly transforms **self** into a `Vec`, short circuiting if a failure is encountered.
 
-        This avoids you to do `iterator.pipe(lambda x: (*x))`, improving performance and readability.
+        `try_collect()` is a variation of `collect()` that allows fallible conversions during collection.
+
+        Its main use case is simplifying conversions from iterators yielding `Option[T]` or `Result[T, E]` into `Option[Vec[T]]`.
+
+        Also, if a failure is encountered during `try_collect()`, the `Iterator` is still valid and may continue to be used, in which case it will continue iterating starting after the element that triggered the failure.
+
+        See the last example below for an example of how this works.
 
         Note:
-            This method will consume the `Iterator`.
-
-        Args:
-            func (Callable[Concatenate[T, P], R]): Function to call with the unpacked elements of the `Iterator`.
-            *args (P.args): Additional positional arguments to pass to *func*
-            **kwargs (P.kwargs): Additional keyword arguments to pass to *func*
+            This method return `Vec[U]` instead of being customizable, because the underlying data structure must be mutable in order to build up the collection.
 
         Returns:
-            R: The result of calling *func* with the unpacked elements of the `Iterator` and any additional arguments.
+            Option[Vec[U]]: `Some[Vec[U]]` if all elements were successfully collected, or `NONE` if a failure was encountered.
 
         Example:
             ```python
-            >>> from pyochain import Seq
+            >>> from pyochain import Range, Some, Ok, Err, NONE, Vec, Option, Seq, Iter
+            >>> # Successfully collecting an iterator of Option[int] into Option[Vec[int]]:
+            >>> Range(1, 4).iter().map(Some).try_collect()
+            Some(Vec(1, 2, 3))
+            >>> # Failing to collect in the same way:
+            >>> Seq((Some(1), Some(2), NONE, Some(3))).iter().try_collect()
+            NONE
+            >>> # A similar example, but with Result:
+            >>> Range(1, 4).iter().map(Ok).try_collect()
+            Some(Vec(1, 2, 3))
+            >>> Seq((Ok(1), Err("error"), Ok(3))).iter().try_collect()
+            NONE
+            >>> def external_fn(x: int) -> Option[int]:
+            ...     if x % 2 == 0:
+            ...         return Some(x)
+            ...     return NONE
+            >>>
+            >>> Range(1, 5).iter().map(external_fn).try_collect()
+            NONE
+            >>> # Demonstrating that the iterator remains usable after a failure:
+            >>> it = Iter((Some(1), NONE, Some(3), Some(4)))
+            >>> it.try_collect()
+            NONE
+            >>> it.try_collect()
+            Some(Vec(3, 4))
 
-            >>> data = Seq((1, 2, 3))
-            >>> def foo(*a: int, x: str) -> str:
-            ...     return x + str(sum(a))
-            >>> data.iter().unpack_into(foo, x="Result: ")
-            'Result: 6'
-            >>> # The example below will work, but is not type safe, as the unpacked elements are passed as explicit positional arguments.
-            >>> data.iter().unpack_into(lambda a, b, c: a + b + c)
-            6
+            ```
+        """
+
+    def try_find[E](
+        self, predicate: Callable[[T], Result[bool, E]]
+    ) -> Result[Option[T], E]:
+        """Applies a function returning `Result[bool, E]` to find first matching element.
+
+        Short-circuits: stops at the first successful `True` or on the first error.
+
+        Args:
+            predicate (Callable[[T], Result[bool, E]]): Function returning a `Result[bool, E]`.
+
+        Returns:
+            Result[Option[T], E]: The first matching element, or the first error.
+
+        Example:
+            ```python
+            >>> from pyochain import Ok, Result, Err, Range
+            >>>
+            >>> def is_even(x: int) -> Result[bool, str]:
+            ...     return Ok(x % 2 == 0) if x >= 0 else Err("negative number")
+            >>>
+            >>> Range(1, 6).iter().try_find(is_even)
+            Ok(Some(2))
+
+            ```
+        """
+
+    def try_fold[B, E](
+        self, init: B, func: Callable[[B, T], Result[B, E]]
+    ) -> Result[B, E]:
+        """Folds every element into an accumulator, short-circuiting on error.
+
+        Applies **func** cumulatively to items and the accumulator.
+
+        If **func** returns an error, stops and returns that error.
+
+        Args:
+            init (B): Initial accumulator value.
+            func (Callable[[B, T], Result[B, E]]): Function that takes the accumulator and element, returns a `Result[B, E]`.
+
+        Returns:
+            Result[B, E]: Final accumulator or the first error.
+
+        Example:
+            ```python
+            >>> from pyochain import Ok, Err, Result, Range, Iter, Seq
+            >>>
+            >>> def checked_add(acc: int, x: int) -> Result[int, str]:
+            ...     new_val = acc + x
+            ...     if new_val > 100:
+            ...         return Err("overflow")
+            ...     return Ok(new_val)
+            >>>
+            >>> Range(1, 4).iter().try_fold(0, checked_add)
+            Ok(6)
+            >>> Iter.from_count(50, -10).take(5).try_fold(0, checked_add)
+            Err('overflow')
+            >>> Seq(()).iter().try_fold(0, checked_add)
+            Ok(0)
+
+            ```
+        """
+
+    def try_for_each[E](self, f: Callable[[T], Result[Any, E]]) -> Result[tuple[()], E]:
+        """Applies a fallible function to each item in the `Iterator`, stopping at the first error and returning that error.
+
+        This can also be thought of as the fallible form of `.for_each()`.
+
+        Args:
+            f (Callable[[T], Result[Any, E]]): A function that takes an item of type `T` and returns a `Result`.
+
+        Returns:
+            Result[tuple[()], E]: Returns `Ok(())` if all applications of **f** were successful (i.e., returned `Ok`), or the first error `E` encountered.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Result, Ok, Err
+            >>> def validate_positive(n: int) -> Result[tuple[()], str]:
+            ...     if n > 0:
+            ...         return Ok("success")
+            ...     return Err(f"Value {n} is not positive")
+            >>>
+            >>> Iter((1, 2, 3, 4, 5)).try_for_each(validate_positive)
+            Ok(())
+            >>> # Short-circuit on first error:
+            >>> Iter((1, 2, -1, 4)).try_for_each(validate_positive)
+            Err('Value -1 is not positive')
+
+            ```
+        """
+
+    def try_reduce[S, E](
+        self: PyoIterator[S], func: Callable[[S, S], Result[S, E]]
+    ) -> Result[Option[S], E]:
+        """Reduces elements to a single one, short-circuiting on error.
+
+        Uses the first element as the initial accumulator. If **func** returns an error, stops immediately.
+
+        Args:
+            func (Callable[[S, S], Result[S, E]]): Function that reduces two items, returns a `Result[S, E]`.
+
+        Returns:
+            Result[Option[S], E]: Final accumulated value or the first error. Returns `Ok(NONE)` for empty iterable.
+
+        Example:
+            ```python
+            >>> from pyochain import Ok, Err, Result, Range, Seq
+            >>>
+            >>> def checked_add(x: int, y: int) -> Result[int, str]:
+            ...     if x + y > 100:
+            ...         return Err("overflow")
+            ...     return Ok(x + y)
+            >>>
+            >>> Range(1, 4).iter().try_reduce(checked_add)
+            Ok(Some(6))
+            >>> Seq((50, 60)).iter().try_reduce(checked_add)
+            Err('overflow')
+            >>> Range(0, 0).iter().try_reduce(checked_add)
+            Ok(NONE)
 
             ```
         """
@@ -3975,6 +3958,45 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             >>> data = Seq(("cat", "mouse", "dog", "hen"))
             >>> data.iter().unique_by(key=len).collect(Seq)
             Seq('cat', 'mouse')
+
+            ```
+        """
+
+    def unpack_into[**P, R](
+        self,
+        func: Callable[Concatenate[T, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> R:
+        """Unpack the `Iterator` in the provided *func*, and return the result.
+
+        This is similar to `Pipe::pipe`, but instead of passing `PyoIterator[T]`, we pass the elements inside `PyoIterator[T]`.
+
+        This avoids you to do `iterator.pipe(lambda x: (*x))`, improving performance and readability.
+
+        Note:
+            This method will consume the `Iterator`.
+
+        Args:
+            func (Callable[Concatenate[T, P], R]): Function to call with the unpacked elements of the `Iterator`.
+            *args (P.args): Additional positional arguments to pass to *func*
+            **kwargs (P.kwargs): Additional keyword arguments to pass to *func*
+
+        Returns:
+            R: The result of calling *func* with the unpacked elements of the `Iterator` and any additional arguments.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq
+
+            >>> data = Seq((1, 2, 3))
+            >>> def foo(*a: int, x: str) -> str:
+            ...     return x + str(sum(a))
+            >>> data.iter().unpack_into(foo, x="Result: ")
+            'Result: 6'
+            >>> # The example below will work, but is not type safe, as the unpacked elements are passed as explicit positional arguments.
+            >>> data.iter().unpack_into(lambda a, b, c: a + b + c)
+            6
 
             ```
         """
