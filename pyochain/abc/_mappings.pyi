@@ -100,6 +100,7 @@ class PyoMapping(PyoCollection[_K], Mapping[_K, _V_co], Generic[_K, _V_co]):  # 
     @overload
     def get(self, key: _K, /) -> _V_co | None: ...
     @overload
+    # pyrefly: ignore [invalid-variance]
     def get(
         self,
         key: _K,

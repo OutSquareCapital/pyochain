@@ -14,6 +14,7 @@ from ._views import SupportsHashableAndRichComparison
 type SetKeyFunc[T, OT: SupportsHashableAndRichComparison] = KeyFunc[T, OT]
 
 @final
+# pyrefly: ignore [bad-specialization]
 class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]):  # pyright: ignore[reportInvalidTypeArguments]
     def __new__(
         cls, iterable: Iterable[T] | None = None, key: SetKeyFunc[T, OT] | None = None
@@ -57,6 +58,7 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]): 
         """
 
     @override
+    # pyrefly: ignore [bad-override]
     def __reduce__(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
     ) -> tuple[type[Self], tuple[AbstractSet[T], Callable[[T], Any]]]: ...

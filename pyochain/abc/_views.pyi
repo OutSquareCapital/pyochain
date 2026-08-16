@@ -40,26 +40,35 @@ class PyoKeysView(PyoMappingView, PyoSet[_K_co], KeysView[_K_co]):  # pyright: i
     def __init__(self, mapping: Viewable[_K_co]) -> None: ...
     @classmethod
     @override
+    # pyrefly: ignore [bad-override]
     def _from_iterable[S](cls, it: Iterable[S], /) -> SetMut[S]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
     def __contains__(self, key: object, /) -> bool: ...
     @override
     def __iter__(self) -> Iterator[_K_co]: ...
     @override
+    # pyrefly: ignore [bad-override]
     def __and__(self, other: Iterable[Any], /) -> SetMut[_K_co]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
+    # pyrefly: ignore [bad-override]
     def __rand__[T](self, other: Iterable[T], /) -> SetMut[T]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
+    # pyrefly: ignore [bad-override]
     def __or__[T](self, other: Iterable[T], /) -> SetMut[_K_co | T]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
+    # pyrefly: ignore [bad-override]
     def __ror__[T](self, other: Iterable[T], /) -> SetMut[_K_co | T]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
+    # pyrefly: ignore [bad-override]
     def __sub__[T](self, other: Iterable[Any], /) -> SetMut[_K_co]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
+    # pyrefly: ignore [bad-override]
     def __rsub__[T](self, other: Iterable[T], /) -> SetMut[T]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
+    # pyrefly: ignore [bad-override]
     def __xor__[T](self, other: Iterable[T], /) -> SetMut[_K_co | T]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
+    # pyrefly: ignore [bad-override]
     def __rxor__[T](self, other: Iterable[T], /) -> SetMut[_K_co | T]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
     def intersection(self, other: Iterable[Any]) -> SetMut[_K_co]: ...
@@ -107,20 +116,28 @@ class PyoItemsView(  # pyright: ignore[reportUnsafeMultipleInheritance]
     @override
     def __iter__(self) -> Iterator[tuple[_K_co, _V_co]]: ...
     @override
+    # pyrefly: ignore [bad-override]
     def __and__(self, other: Iterable[Any], /) -> SetMut[tuple[_K_co, _V_co]]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
+    # pyrefly: ignore [bad-override]
     def __rand__[T](self, other: Iterable[T], /) -> SetMut[T]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
+    # pyrefly: ignore [bad-override]
     def __or__[T](self, other: Iterable[T], /) -> SetMut[tuple[_K_co, _V_co] | T]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
+    # pyrefly: ignore [bad-override]
     def __ror__[T](self, other: Iterable[T], /) -> SetMut[tuple[_K_co, _V_co] | T]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
+    # pyrefly: ignore [bad-override]
     def __sub__[T](self, other: Iterable[Any], /) -> SetMut[tuple[_K_co, _V_co]]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
+    # pyrefly: ignore [bad-override]
     def __rsub__[T](self, other: Iterable[T], /) -> SetMut[T]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
+    # pyrefly: ignore [bad-override]
     def __xor__[T](self, other: Iterable[T], /) -> SetMut[tuple[_K_co, _V_co] | T]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
+    # pyrefly: ignore [bad-override]
     def __rxor__[T](self, other: Iterable[T], /) -> SetMut[tuple[_K_co, _V_co] | T]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
     def intersection(self, other: Iterable[Any]) -> SetMut[tuple[_K_co, _V_co]]: ...

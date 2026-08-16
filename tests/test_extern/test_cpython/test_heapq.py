@@ -156,7 +156,7 @@ def test_nbest_with_pushpop() -> None:
 def heapiter[T: SupportsRichComparison](heap: HeapMin[T]) -> Iterator[T]:
     # An iterator returning a heap's elements, smallest-first.
     try:
-        while 1:
+        while True:
             yield heap.pop()
     except IndexError:
         pass
@@ -211,7 +211,7 @@ def test_nworst_with_pushpop() -> None:
 def heapiter_max[T: SupportsRichComparison](heap: HeapMax[T]) -> Iterator[T]:
     # An iterator returning a max-heap's elements, largest-first.
     try:
-        while 1:
+        while True:
             yield heap.pop()
     except IndexError:
         pass
