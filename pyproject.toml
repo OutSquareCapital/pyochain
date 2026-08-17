@@ -22,7 +22,7 @@
         "pytest>=9.1.1",
         "rich>=15.0.0",
         "ruff>=0.16.1",
-        "sdsort>=1.1.0",
+        "sdsort",
         "toml>=0.10.2",
         "zensical>=0.0.53",
 ]
@@ -42,6 +42,7 @@
 
 [tool.uv.sources]
     pytest-docflex = { git = "https://github.com/OutSquareCapital/pytest-docflex.git" }
+    sdsort = { git = "https://github.com/OutSquareCapital/sdsort.git", branch = "decorators-kind" }
 
 [build-system]
     build-backend = "maturin"
@@ -50,6 +51,7 @@
 [tool.maturin]
     manifest-path = "Cargo.toml"
     module-name   = "pyochain"
+    editable-profile = "dev"
 [tool.basedpyright]
     reportExplicitAny      = false # As a library we have no choice but to use `Any` in some places, so we disable this check.
     reportImportCycles     = false

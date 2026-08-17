@@ -506,7 +506,7 @@ dev = [
     { name = "pytest-docflex", git = "https://github.com/OutSquareCapital/pytest-docflex.git" },
     { name = "rich", specifier = ">=15.0.0" },
     { name = "ruff", specifier = ">=0.16.1" },
-    { name = "sdsort", specifier = ">=1.1.0" },
+    { name = "sdsort", git = "https://github.com/OutSquareCapital/sdsort.git?branch=decorators-kind" },
     { name = "toml", specifier = ">=0.10.2" },
     { name = "zensical", specifier = ">=0.0.53" },
 ]
@@ -664,13 +664,9 @@ wheels = [
 [[package]]
 name = "sdsort"
 version = "1.2.0"
-source = { registry = "https://pypi.org/simple" }
+source = { git = "https://github.com/OutSquareCapital/sdsort.git?branch=decorators-kind#1a0bf3321084d288c966e8cb29ae4b8fa033a3b4" }
 dependencies = [
     { name = "click" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/f5/2d/5f5fa69a0e6a7a962a22af403bcfe517dee013966112a75c6eb364879538/sdsort-1.2.0.tar.gz", hash = "sha256:df51ebdc89e9683078d8828bb80eefda9418856877abf375f69950139c5f5b82", size = 11839, upload-time = "2026-08-08T15:33:38.741Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f8/51/7a4ac7387d5e5b5b46160c9a4b37e88e7d8c674a0c47b40c2b62835e9b66/sdsort-1.2.0-py3-none-any.whl", hash = "sha256:4604f09fdc2b5e789c4299716f64dd913d7d299ff0c400d539c7cd97e5f9c85e", size = 15490, upload-time = "2026-08-08T15:33:37.594Z" },
 ]
 
 [[package]]
