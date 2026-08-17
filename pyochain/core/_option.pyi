@@ -163,12 +163,10 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> Some((2, 3)).map_star(lambda x, y: x + y)
-            Some(5)
-            >>> NONE.map_star(lambda x, y: x + y)
-            NONE
+            from pyochain import Some, NONE
 
+            assert Some((2, 3)).map_star(lambda x, y: x + y) == Some(5)
+            assert NONE.map_star(lambda x, y: x + y) == NONE
             ```
         """
 
@@ -235,12 +233,10 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> Some((2, 3)).and_then_star(lambda x, y: Some(x + y))
-            Some(5)
-            >>> NONE.and_then_star(lambda x, y: Some(x + y))
-            NONE
+            from pyochain import Some, NONE
 
+            assert Some((2, 3)).and_then_star(lambda x, y: Some(x + y)) == Some(5)
+            assert NONE.and_then_star(lambda x, y: Some(x + y)) == NONE
             ```
         """
 
@@ -255,16 +251,12 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> Some(42).ne(Some(21))
-            True
-            >>> Some(42).ne(Some(42))
-            False
-            >>> Some(42).ne(NONE)
-            True
-            >>> NONE.ne(NONE)
-            False
+            from pyochain import Some, NONE
 
+            assert Some(42).ne(Some(21)) == True
+            assert Some(42).ne(Some(42)) == False
+            assert Some(42).ne(NONE) == True
+            assert NONE.ne(NONE) == False
             ```
         """
 
@@ -354,21 +346,19 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> x = Some(2)
-            >>> x.is_some_and(lambda x: x > 1)
-            True
+            from pyochain import Some, NONE
 
-            >>> x = Some(0)
-            >>> x.is_some_and(lambda x: x > 1)
-            False
-            >>> x = NONE
-            >>> x.is_some_and(lambda x: x > 1)
-            False
-            >>> x = Some("hello")
-            >>> x.is_some_and(lambda x: len(x) > 1)
-            True
+            x = Some(2)
+            assert x.is_some_and(lambda x: x > 1) == True
 
+            x = Some(0)
+            assert x.is_some_and(lambda x: x > 1) == False
+
+            x = NONE
+            assert x.is_some_and(lambda x: x > 1) == False
+
+            x = Some("hello")
+            assert x.is_some_and(lambda x: len(x) > 1) == True
             ```
         """
 
@@ -380,15 +370,13 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>>
-            >>> x = Some(2)
-            >>> x.is_none()
-            False
-            >>> y = NONE
-            >>> y.is_none()
-            True
+            from pyochain import Some, NONE
 
+            x = Some(2)
+            assert x.is_none() == False
+            y = NONE
+
+            assert y.is_none() == True
             ```
         """
 
@@ -407,16 +395,12 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> Some(2).is_none_or(lambda x: x > 1)
-            True
-            >>> Some(0).is_none_or(lambda x: x > 1)
-            False
-            >>> NONE.is_none_or(lambda x: x > 1)
-            True
-            >>> Some("hello").is_none_or(lambda x: len(x) > 1)
-            True
+            from pyochain import Some, NONE
 
+            assert Some(2).is_none_or(lambda x: x > 1) == True
+            assert Some(0).is_none_or(lambda x: x > 1) == False
+            assert NONE.is_none_or(lambda x: x > 1) == True
+            assert Some("hello").is_none_or(lambda x: len(x) > 1) == True
             ```
         """
 
@@ -476,12 +460,10 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> Some("car").unwrap_or("bike")
-            'car'
-            >>> NONE.unwrap_or("bike")
-            'bike'
+            from pyochain import Some, NONE
 
+            assert Some("car").unwrap_or("bike") == "car"
+            assert NONE.unwrap_or("bike") == "bike"
             ```
         """
 
@@ -496,13 +478,12 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> k = 10
-            >>> Some(4).unwrap_or_else(lambda: 2 * k)
-            4
-            >>> NONE.unwrap_or_else(lambda: 2 * k)
-            20
+            from pyochain import Some, NONE
 
+            k = 10
+
+            assert Some(4).unwrap_or_else(lambda: 2 * k) == 4
+            assert NONE.unwrap_or_else(lambda: 2 * k) == 20
             ```
         """
 
@@ -524,12 +505,10 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> Some("Hello, World!").map(len)
-            Some(13)
-            >>> NONE.map(len)
-            NONE
+            from pyochain import Some, NONE
 
+            assert Some("Hello, World!").map(len) == Some(13)
+            assert NONE.map(len) == NONE
             ```
         """
 
@@ -565,16 +544,12 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> Some(2).or_(NONE)
-            Some(2)
-            >>> NONE.or_(Some(100))
-            Some(100)
-            >>> Some(2).or_(Some(100))
-            Some(2)
-            >>> NONE.or_(NONE)
-            NONE
+            from pyochain import Some, NONE
 
+            assert Some(2).or_(NONE) == Some(2)
+            assert NONE.or_(Some(100)) == Some(100)
+            assert Some(2).or_(Some(100)) == Some(2)
+            assert NONE.or_(NONE) == NONE
             ```
         """
 
@@ -596,21 +571,18 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE, Option
-            >>>
-            >>> def sq(x: int) -> Option[int]:
-            ...     return Some(x * x)
-            >>> def nope(x: int) -> Option[int]:
-            ...     return NONE
-            >>> Some(2).and_then(sq).and_then(sq)
-            Some(16)
-            >>> Some(2).and_then(sq).and_then(nope)
-            NONE
-            >>> Some(2).and_then(nope).and_then(sq)
-            NONE
-            >>> NONE.and_then(sq).and_then(sq)
-            NONE
+            from pyochain import Some, NONE, Option
 
+            def sq(x: int) -> Option[int]:
+                return Some(x * x)
+
+            def nope(x: int) -> Option[int]:
+                return NONE
+
+            assert Some(2).and_then(sq).and_then(sq) == Some(16)
+            assert Some(2).and_then(sq).and_then(nope) == NONE
+            assert Some(2).and_then(nope).and_then(sq) == NONE
+            assert NONE.and_then(sq).and_then(sq) == NONE
             ```
         """
 
@@ -625,18 +597,17 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE, Option
-            >>> def nobody() -> Option[str]:
-            ...     return NONE
-            >>> def vikings() -> Option[str]:
-            ...     return Some("vikings")
-            >>> Some("barbarians").or_else(vikings)
-            Some('barbarians')
-            >>> NONE.or_else(vikings)
-            Some('vikings')
-            >>> NONE.or_else(nobody)
-            NONE
+            from pyochain import Some, NONE, Option
 
+            def nobody() -> Option[str]:
+                return NONE
+
+            def vikings() -> Option[str]:
+                return Some("vikings")
+
+            assert Some("barbarians").or_else(vikings) == Some("barbarians")
+            assert NONE.or_else(vikings) == Some("vikings")
+            assert NONE.or_else(nobody) == NONE
             ```
         """
 
@@ -651,12 +622,10 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> Some(1).ok_or("fail")
-            Ok(1)
-            >>> NONE.ok_or("fail")
-            Err('fail')
+            from pyochain import Some, NONE, Ok
 
+            assert Some(1).ok_or("fail").unwrap() == 1
+            assert NONE.ok_or("fail").unwrap_err() == "fail"
             ```
         """
 
@@ -671,12 +640,10 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> Some(1).ok_or_else(lambda: "fail")
-            Ok(1)
-            >>> NONE.ok_or_else(lambda: "fail")
-            Err('fail')
+            from pyochain import Some, NONE, Ok, Err
 
+            assert Some(1).ok_or_else(lambda: "fail").unwrap() == 1
+            assert NONE.ok_or_else(lambda: "fail").unwrap_err() == "fail"
             ```
         """
 
@@ -700,12 +667,10 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> Some(2).map_or(0, lambda x: x * 10)
-            20
-            >>> NONE.map_or(0, lambda x: x * 10)
-            0
+            from pyochain import Some, NONE
 
+            assert Some(2).map_or(0, lambda x: x * 10) == 20
+            assert NONE.map_or(0, lambda x: x * 10) == 0
             ```
         """
 
@@ -721,12 +686,10 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> Some(2).map_or_else(lambda: 0, lambda x: x * 10)
-            20
-            >>> NONE.map_or_else(lambda: 0, lambda x: x * 10)
-            0
+            from pyochain import Some, NONE
 
+            assert Some(2).map_or_else(lambda: 0, lambda x: x * 10) == 20
+            assert NONE.map_or_else(lambda: 0, lambda x: x * 10) == 0
             ```
         """
 
@@ -753,18 +716,14 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>>
-            >>> def is_even(n: int) -> bool:
-            ...     return n % 2 == 0
-            >>>
-            >>> NONE.filter(is_even)
-            NONE
-            >>> Some(3).filter(is_even)
-            NONE
-            >>> Some(4).filter(is_even)
-            Some(4)
+            from pyochain import Some, NONE
 
+            def is_even(n: int) -> bool:
+                return n % 2 == 0
+
+            assert NONE.filter(is_even) == NONE
+            assert Some(3).filter(is_even) == NONE
+            assert Some(4).filter(is_even) == Some(4)
             ```
         """
 
@@ -781,12 +740,10 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> Some(42).iter().next()
-            Some(42)
-            >>> NONE.iter().next()
-            NONE
+            from pyochain import Some, NONE
 
+            assert Some(42).iter().next() == Some(42)
+            assert NONE.iter().next() == NONE
             ```
         """
     def inspect[**P](
@@ -806,17 +763,15 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE, Vec
-            >>> seen = Vec[int](())
-            >>> Some(2).inspect(lambda x: seen.append(x))
-            Some(2)
-            >>> seen
-            Vec(2)
-            >>> NONE.inspect(lambda x: seen.append(x))
-            NONE
-            >>> seen
-            Vec(2)
+            from pyochain import Some, NONE, Vec
 
+            seen = Vec[int]([])
+
+            assert Some(2).inspect(lambda x: seen.append(x)) == Some(2)
+            assert seen == Vec([2])
+
+            assert NONE.inspect(lambda x: seen.append(x)) == NONE
+            assert seen == Vec([2])
             ```
         """
 
@@ -831,12 +786,10 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> Some((1, "a")).unzip()
-            (Some(1), Some('a'))
-            >>> NONE.unzip()
-            (NONE, NONE)
+            from pyochain import Some, NONE
 
+            assert Some((1, "a")).unzip() == (Some(1), Some("a"))
+            assert NONE.unzip() == (NONE, NONE)
             ```
         """
 
@@ -851,14 +804,11 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> Some(1).zip(Some("a"))
-            Some((1, 'a'))
-            >>> Some(1).zip(NONE)
-            NONE
-            >>> NONE.zip(Some("a"))
-            NONE
+            from pyochain import Some, NONE
 
+            assert Some(1).zip(Some("a")) == Some((1, "a"))
+            assert Some(1).zip(NONE) == NONE
+            assert NONE.zip(Some("a")) == NONE
             ```
         """
 
@@ -878,23 +828,20 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from dataclasses import dataclass
-            >>> from pyochain import Some, NONE
-            >>>
-            >>> @dataclass
-            ... class Point:
-            ...     x: float
-            ...     y: float
-            >>>
-            >>> x = Some(17.5)
-            >>> y = Some(42.7)
-            >>> x.zip_with(y, Point)
-            Some(Point(x=17.5, y=42.7))
-            >>> x.zip_with(NONE, Point)
-            NONE
-            >>> NONE.zip_with(y, Point)
-            NONE
+            from dataclasses import dataclass
+            from pyochain import Some, NONE
 
+            @dataclass
+            class Point:
+                x: float
+                y: float
+
+            x = Some(17.5)
+            y = Some(42.7)
+
+            assert x.zip_with(y, Point) == Some(Point(x=17.5, y=42.7))
+            assert x.zip_with(NONE, Point) == NONE
+            assert NONE.zip_with(y, Point) == NONE
             ```
         """
 
@@ -953,14 +900,11 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, Ok, Err, NONE
-            >>> Some(Ok(5)).transpose()
-            Ok(Some(5))
-            >>> NONE.transpose()
-            Ok(NONE)
-            >>> Some(Err("error")).transpose()
-            Err('error')
+            from pyochain import Some, Ok, Err, NONE
 
+            assert Some(Ok(5)).transpose().unwrap().unwrap() == 5
+            assert NONE.transpose().unwrap() == NONE
+            assert Some(Err("error")).transpose().unwrap_err() == "error"
             ```
         """
 
@@ -975,18 +919,13 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Some, NONE
-            >>> Some(2).xor(NONE)
-            Some(2)
-            >>> NONE.xor(Some(2))
-            Some(2)
-            >>> Some(2).xor(Some(2))
-            NONE
-            >>> NONE.xor(NONE)
-            NONE
-            >>> Some("hello").xor(Some(1))
-            NONE
+            from pyochain import Some, NONE
 
+            assert Some(2).xor(NONE).unwrap() == 2
+            assert NONE.xor(Some(2)).unwrap() == 2
+            assert Some(2).xor(Some(2)) == NONE
+            assert NONE.xor(NONE) == NONE
+            assert Some("hello").xor(Some(1)) == NONE
             ```
         """
     def unwrap_or_none(self) -> T | None:
@@ -1003,12 +942,10 @@ class OptionType[T](Pipe):
 
         Example:
             ```python
-            >>> from pyochain import Option, Some, NONE
-            >>> NONE.unwrap_or_none() is None
-            True
-            >>> Some(42).unwrap_or_none()
-            42
+            from pyochain import Option, Some, NONE
 
+            assert NONE.unwrap_or_none() is None
+            assert Some(42).unwrap_or_none() == 42
             ```
         """
 
@@ -1097,11 +1034,9 @@ def option[T](value: T | None) -> Option[T]:
 
     Example:
         ```python
-        >>> from pyochain import option
-        >>> option(42)
-        Some(42)
-        >>> option(None)
-        NONE
+        from pyochain import option, Some, NONE
 
+        assert option(42) == Some(42)
+        assert option(None) == NONE
         ```
     """
