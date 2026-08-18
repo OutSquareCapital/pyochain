@@ -65,4 +65,4 @@
     "sort-by-name" = true
     visibility-order = ["dunder", "protected", "private", "public"]
     behavior-order = ["classmethod", "staticmethod", "property", "instancemethod"]
-    contract-order = ["abstractmethod", "abstract_override", "override", "none"]
+    contract-order = ["abstractmethod", "abstract_override"]

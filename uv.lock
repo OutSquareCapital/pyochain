@@ -664,7 +664,7 @@ wheels = [
 [[package]]
 name = "sdsort"
 version = "1.2.0"
-source = { git = "https://github.com/OutSquareCapital/sdsort.git?branch=decorators-kind#af2a292d49c3e7b82f3dbf2659d80193d6dffcf8" }
+source = { git = "https://github.com/OutSquareCapital/sdsort.git?branch=decorators-kind#16ec93fb9156d8e2a28004ccaf12e98e5ebec200" }
 dependencies = [
     { name = "click" },
 ]
