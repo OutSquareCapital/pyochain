@@ -60,3 +60,9 @@
 [tool.pytest.ini_options]
     addopts   = "--docflex --benchmark-skip"
     testpaths = ["README.md", "docs", "pyochain", "tests"]
+[tool.sdsort]
+    method-order = ["visibility", "behavior", "contract"]
+    "sort-by-name" = true
+    visibility-order = ["dunder", "protected", "private", "public"]
+    behavior-order = ["classmethod", "staticmethod", "property", "instancemethod"]
+    contract-order = ["abstractmethod", "abstract_override", "override", "none"]
