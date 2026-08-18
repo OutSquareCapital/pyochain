@@ -110,140 +110,15 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
         Returns:
             int: The count of the missing element, which is always zero.
         """
+
     @override
     def __reversed__(self) -> Iterator[T]: ...
-    @overload
-    def get(self, key: T, /) -> int | None: ...
-    @overload
-    def get(self, key: T, default: int, /) -> int: ...
-    @overload
-    def get[D](self, key: T, default: D, /) -> int | D: ...
-    @override
-    def get[D](self, key: T, default: D | None = None, /) -> int | D | None: ...
-    @override
-    def setdefault(self, key: T, default: int, /) -> int: ...
-    def total(self) -> int:
-        """Sum of the counts.
-
-        Returns:
-            int: The sum of all counts in the PyoCounter.
-        """
-
-    def most_common(self, n: int | None = None) -> Vec[tuple[T, int]]:
-        """List the n most common elements and their counts from the most common to the least.
-
-        ```python
-        from pyochain.collections import PyoCounter
-
-        most_commons = PyoCounter("abracadabra").most_common(3)
-        assert most_commons == [("a", 5), ("b", 2), ("r", 2)]
-        ```
-
-        Args:
-            n (int | None): The number of most common elements to return. If `None`, return all elements.
-
-        Returns:
-            Vec[tuple[T, int]]: A list of tuples containing the n most common elements and their counts.
-        """
-    def elements(self) -> PyoIterator[T]:
-        """Iterator over elements repeating each as many times as its count.
-
-        ```python
-        from pyochain.collections import PyoCounter
-
-        c = PyoCounter("ABCABC")
-        assert sorted(c.elements()) == ["A", "A", "B", "B", "C", "C"]
-        ```
-
-        Knuth's example for prime factors of 1836:  2**2 * 3**3 * 17**1
-
-        ```python
-        from pyochain.collections import PyoCounter
-        import math
-
-        prime_factors = PyoCounter({2: 2, 3: 3, 17: 1})
-        assert math.prod(prime_factors.elements()) == 1836
-        ```
-
-        Note, if an element's count has been set to zero or is a negative
-        number, elements() will ignore it.
-
-        Returns:
-            PyoIterator[T]: An iterator over elements repeating each as many times as its count.
-        """
-
-    @overload
-    def update(self, iterable: None = None, /, **kwargs: int) -> None: ...
-    @overload
-    def update(self, iterable: Mapping[T, int], /, **kwargs: int) -> None: ...
-    @overload
-    def update(self, iterable: Iterable[T], /, **kwargs: int) -> None: ...
-    @override
-    def update(
-        self, iterable: Mapping[T, int] | Iterable[T] | None = None, /, **kwargs: int
-    ) -> None:
-        """Like dict.update() but add counts instead of replacing them.
-
-        Source can be an iterable, a dictionary, or another PyoCounter instance.
-
-        Note:
-            The regular dict.update() operation makes no sense here because the
-            replace behavior results in some of the original untouched counts
-            being mixed-in with all of the other counts for a mismash that
-            doesn't have a straight-forward interpretation in most counting
-            contexts.
-            Instead, we implement straight-addition.
-            Both the inputs and outputs are allowed to contain zero and negative counts.
-        ```python
-        from pyochain.collections import PyoCounter
-
-        c = PyoCounter("which")
-        c.update("witch")  # add elements from another iterable
-        d = PyoCounter("watch")
-        c.update(d)  # add elements from another counter
-        # four 'h' in which, witch, and watch
-        assert c["h"] == 4
-        ```
-
-        """
-    @overload
-    def subtract(self, iterable: None = None, /, **kwargs: int) -> None: ...
-    @overload
-    def subtract(self, mapping: Mapping[T, int], /, **kwargs: int) -> None: ...
-    @overload
-    def subtract(self, iterable: Iterable[T], /, **kwargs: int) -> None: ...
-    def subtract(
-        self, iterable: Mapping[T, int] | Iterable[T] | None = None, /, **kwargs: int
-    ) -> None:
-        """Like dict.update() but subtracts counts instead of replacing them.
-
-        Counts can be reduced below zero.  Both the inputs and outputs are
-        allowed to contain zero and negative counts.
-
-        Source can be an iterable, a dictionary, or another PyoCounter instance.
-
-
-        ```python
-        from pyochain.collections import PyoCounter
-
-        c = PyoCounter("which")
-        c.subtract("witch")  # subtract elements from another iterable
-        c.subtract(PyoCounter("watch"))  # subtract elements from another counter
-        # 2 in which, minus 1 in witch, minus 1 in watch
-        assert c["h"] == 0
-        # 1 in which, minus 1 in witch, minus 1 in watch
-        assert c["w"] == -1
-        ```
-
-        """
-    def copy(self) -> Self:
-        """Return a shallow copy."""
-
     @override
     def __reduce__(self) -> tuple[type[Self], tuple[dict[T, int]]]: ...
     @override
     def __delitem__(self, elem: T) -> None:
         """Like dict.__delitem__() but does not raise KeyError for missing values."""
+
     def __add__[S](self, other: PyoCounter[S]) -> PyoCounter[T | S]:
         """Add counts from two counters.
 
@@ -295,6 +170,7 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
         Returns:
             PyoCounter[T]: A new counter with the union of counts.
         """
+
     def __and__(self, other: PyoCounter[T]) -> PyoCounter[T]:
         """Intersection is the minimum of corresponding counts.
 
@@ -422,6 +298,7 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
         Returns:
             bool: True if any counts disagree, False otherwise. If `other` is not a PyoCounter or dict, returns NotImplemented.
         """
+
     def __le__(self, other: PyoCounter[Any]) -> bool:
         """True if all counts in self are a subset of those in other.
 
@@ -509,3 +386,133 @@ class PyoCounter[T](PyoMutableMapping[T, int], PyoReversible[T]):
             assert c == PyoCounter({"a": 4, "c": 3, "d": 2, "e": 1})
             ```
         """
+
+    @overload
+    def get(self, key: T, /) -> int | None: ...
+    @overload
+    def get(self, key: T, default: int, /) -> int: ...
+    @overload
+    def get[D](self, key: T, default: D, /) -> int | D: ...
+    @override
+    def get[D](self, key: T, default: D | None = None, /) -> int | D | None: ...
+    @override
+    def setdefault(self, key: T, default: int, /) -> int: ...
+    def total(self) -> int:
+        """Sum of the counts.
+
+        Returns:
+            int: The sum of all counts in the PyoCounter.
+        """
+
+    def most_common(self, n: int | None = None) -> Vec[tuple[T, int]]:
+        """List the n most common elements and their counts from the most common to the least.
+
+        ```python
+        from pyochain.collections import PyoCounter
+
+        most_commons = PyoCounter("abracadabra").most_common(3)
+        assert most_commons == [("a", 5), ("b", 2), ("r", 2)]
+        ```
+
+        Args:
+            n (int | None): The number of most common elements to return. If `None`, return all elements.
+
+        Returns:
+            Vec[tuple[T, int]]: A list of tuples containing the n most common elements and their counts.
+        """
+
+    def elements(self) -> PyoIterator[T]:
+        """Iterator over elements repeating each as many times as its count.
+
+        ```python
+        from pyochain.collections import PyoCounter
+
+        c = PyoCounter("ABCABC")
+        assert sorted(c.elements()) == ["A", "A", "B", "B", "C", "C"]
+        ```
+
+        Knuth's example for prime factors of 1836:  2**2 * 3**3 * 17**1
+
+        ```python
+        from pyochain.collections import PyoCounter
+        import math
+
+        prime_factors = PyoCounter({2: 2, 3: 3, 17: 1})
+        assert math.prod(prime_factors.elements()) == 1836
+        ```
+
+        Note, if an element's count has been set to zero or is a negative
+        number, elements() will ignore it.
+
+        Returns:
+            PyoIterator[T]: An iterator over elements repeating each as many times as its count.
+        """
+
+    @overload
+    def update(self, iterable: None = None, /, **kwargs: int) -> None: ...
+    @overload
+    def update(self, iterable: Mapping[T, int], /, **kwargs: int) -> None: ...
+    @overload
+    def update(self, iterable: Iterable[T], /, **kwargs: int) -> None: ...
+    @override
+    def update(
+        self, iterable: Mapping[T, int] | Iterable[T] | None = None, /, **kwargs: int
+    ) -> None:
+        """Like dict.update() but add counts instead of replacing them.
+
+        Source can be an iterable, a dictionary, or another PyoCounter instance.
+
+        Note:
+            The regular dict.update() operation makes no sense here because the
+            replace behavior results in some of the original untouched counts
+            being mixed-in with all of the other counts for a mismash that
+            doesn't have a straight-forward interpretation in most counting
+            contexts.
+            Instead, we implement straight-addition.
+            Both the inputs and outputs are allowed to contain zero and negative counts.
+        ```python
+        from pyochain.collections import PyoCounter
+
+        c = PyoCounter("which")
+        c.update("witch")  # add elements from another iterable
+        d = PyoCounter("watch")
+        c.update(d)  # add elements from another counter
+        # four 'h' in which, witch, and watch
+        assert c["h"] == 4
+        ```
+
+        """
+
+    @overload
+    def subtract(self, iterable: None = None, /, **kwargs: int) -> None: ...
+    @overload
+    def subtract(self, mapping: Mapping[T, int], /, **kwargs: int) -> None: ...
+    @overload
+    def subtract(self, iterable: Iterable[T], /, **kwargs: int) -> None: ...
+    def subtract(
+        self, iterable: Mapping[T, int] | Iterable[T] | None = None, /, **kwargs: int
+    ) -> None:
+        """Like dict.update() but subtracts counts instead of replacing them.
+
+        Counts can be reduced below zero.  Both the inputs and outputs are
+        allowed to contain zero and negative counts.
+
+        Source can be an iterable, a dictionary, or another PyoCounter instance.
+
+
+        ```python
+        from pyochain.collections import PyoCounter
+
+        c = PyoCounter("which")
+        c.subtract("witch")  # subtract elements from another iterable
+        c.subtract(PyoCounter("watch"))  # subtract elements from another counter
+        # 2 in which, minus 1 in witch, minus 1 in watch
+        assert c["h"] == 0
+        # 1 in which, minus 1 in witch, minus 1 in watch
+        assert c["w"] == -1
+        ```
+
+        """
+
+    def copy(self) -> Self:
+        """Return a shallow copy."""

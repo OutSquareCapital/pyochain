@@ -67,9 +67,17 @@ class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
         Returns:
             Self: new sorted-key list
         """
+
+    @override
+    def __add__(self, other: Iterable[T]) -> Self: ...
+    @override
+    def __mul__(self, num: int) -> Self: ...
+    @override
+    def __reduce__(self) -> tuple[type[Self], tuple[Vec[T], KeyFunc[T, OT]]]: ...
     @property
     def key(self) -> KeyFunc[T, OT]:
         """Function used to extract comparison key from values."""
+
     def irange_key(
         self,
         min_key: OT | None = None,
@@ -111,6 +119,7 @@ class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
         ```
 
         """
+
     def bisect_key_left(self, key: OT) -> int:
         """Return an index to insert `key` in the sorted-key list.
 
@@ -167,9 +176,3 @@ class SortedKeyList[T, OT: SupportsRichComparison](BaseSortedList[T]):
 
     @override
     def copy(self) -> Self: ...
-    @override
-    def __add__(self, other: Iterable[T]) -> Self: ...
-    @override
-    def __mul__(self, num: int) -> Self: ...
-    @override
-    def __reduce__(self) -> tuple[type[Self], tuple[Vec[T], KeyFunc[T, OT]]]: ...

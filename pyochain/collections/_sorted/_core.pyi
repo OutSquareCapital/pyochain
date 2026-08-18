@@ -15,10 +15,10 @@ class SortedCollection[T](ABC):
     """Base class for sorted collections."""
 
     @abstractmethod
+    def __contains__(self, value: object) -> bool: ...
+    @abstractmethod
     @override
     def __reduce__(self) -> tuple[type[Self], tuple[Any, ...]]: ...
-    @abstractmethod
-    def __contains__(self, value: object) -> bool: ...
     @abstractmethod
     def bisect_left(self, value: T) -> int:
         """Return an index to insert *value* in the `SortedCollection`.

@@ -11,18 +11,6 @@ class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):
     """Abstract base class for heaps."""
 
     def __init__(self, data: Iterable[T]) -> None: ...
-    @staticmethod
-    def from_ref[S: SupportsRichComparison](data: list[S]) -> Heap[S]:
-        """Create a `Heap` instance from an existing `list` without copying.
-
-        Assumes that the provided list already satisfies the corresponding heap invariant.
-
-        Args:
-            data (list[S]): A `list` that already satisfies the corresponding heap invariant.
-
-        Returns:
-            Heap[S]: A new `Heap` instance.
-        """
     @override
     def __len__(self) -> int: ...
     @overload
@@ -43,28 +31,22 @@ class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):
     def __delitem__(self, index: int | slice) -> None: ...
     @override
     def __eq__(self, other: object) -> bool: ...
-    @override
-    def insert(self, index: SupportsIndex, value: T) -> None: ...
+    @staticmethod
+    def from_ref[S: SupportsRichComparison](data: list[S]) -> Heap[S]:
+        """Create a `Heap` instance from an existing `list` without copying.
+
+        Assumes that the provided list already satisfies the corresponding heap invariant.
+
+        Args:
+            data (list[S]): A `list` that already satisfies the corresponding heap invariant.
+
+        Returns:
+            Heap[S]: A new `Heap` instance.
+        """
+
     @abstractmethod
     def push(self, item: T) -> None:
         """Push item onto heap, maintaining the heap invariant."""
-
-    @abstractmethod
-    @override
-    def pop(self, _index: int = -1, /) -> T:
-        """Pop the smallest item off the heap, maintaining the heap invariant.
-
-        Warning:
-            *index* is kept to maintain compatibility with the `collections.abc.MutableSequence` interface, but it is ignored.
-
-            The smallest item is always popped.
-
-        Args:
-            _index (int): Ignored.
-
-        Returns:
-            T: The smallest item from the heap.
-        """
 
     @abstractmethod
     def replace(self, item: T) -> T:
@@ -105,6 +87,25 @@ class Heap[T: SupportsRichComparison](PyoMutableSequence[T], ABC):
             T: The smallest item from the `Heap`.
         """
 
+    @abstractmethod
+    @override
+    def pop(self, _index: int = -1, /) -> T:
+        """Pop the smallest item off the heap, maintaining the heap invariant.
+
+        Warning:
+            *index* is kept to maintain compatibility with the `collections.abc.MutableSequence` interface, but it is ignored.
+
+            The smallest item is always popped.
+
+        Args:
+            _index (int): Ignored.
+
+        Returns:
+            T: The smallest item from the heap.
+        """
+
+    @override
+    def insert(self, index: SupportsIndex, value: T) -> None: ...
     def merge[S: SupportsRichComparison](
         self,
         *others: Iterable[S],

@@ -49,6 +49,12 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]): 
             ```
 
         """
+
+    @override
+    # pyrefly: ignore [bad-override]
+    def __reduce__(  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+    ) -> tuple[type[Self], tuple[AbstractSet[T], Callable[[T], Any]]]: ...
     @property
     def key(self) -> SetKeyFunc[T, OT]:
         """Function used to extract comparison key from values.
@@ -57,11 +63,6 @@ class SortedKeySet[T, OT: SupportsHashableAndRichComparison](BaseSortedSet[T]): 
 
         """
 
-    @override
-    # pyrefly: ignore [bad-override]
-    def __reduce__(  # pyright: ignore[reportIncompatibleMethodOverride]
-        self,
-    ) -> tuple[type[Self], tuple[AbstractSet[T], Callable[[T], Any]]]: ...
     def irange_key(
         self,
         min_key: OT | None = None,

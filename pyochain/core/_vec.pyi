@@ -72,7 +72,7 @@ class Vec[T](PyoMutableSequence[T]):
     def __lt__(self, value: IntoVec[T], /) -> bool: ...
     def __le__(self, value: IntoVec[T], /) -> bool: ...
     @override
-    def reverse(self) -> None: ...
+    def __reversed__(self) -> Iterator[T]: ...
     @staticmethod
     def from_ref[V](data: list[V]) -> Vec[V]:
         """Create a `Vec` from a reference to an existing `list`.
@@ -102,6 +102,8 @@ class Vec[T](PyoMutableSequence[T]):
             ```
         """
 
+    @override
+    def reverse(self) -> None: ...
     @override
     def append(self, value: T) -> None: ...
     @override
@@ -195,6 +197,7 @@ class Vec[T](PyoMutableSequence[T]):
             assert vec == Vec(("a", "d", "b", "c", "e"))
             ```
         """
+
     def sort[U: SupportsRichComparison](
         self: Vec[U], *, reverse: bool = False
     ) -> Vec[U]:
@@ -305,6 +308,3 @@ class Vec[T](PyoMutableSequence[T]):
             assert v1 == expected
             ```
         """
-
-    @override
-    def __reversed__(self) -> Iterator[T]: ...

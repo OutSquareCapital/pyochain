@@ -60,11 +60,6 @@ class SortedKeysView(
 
     """
 
-    @classmethod
-    @override
-    # pyrefly: ignore [bad-override]
-    def _from_iterable(cls, it: Iterable[_K_co]) -> SortedSet[_K_co]:  # pyright: ignore[reportIncompatibleMethodOverride]
-        ...
     @overload
     def __getitem__(self, index: int) -> _K_co: ...
     @overload
@@ -101,6 +96,12 @@ class SortedKeysView(
             ```
         """
 
+    @classmethod
+    @override
+    # pyrefly: ignore [bad-override]
+    def _from_iterable(cls, it: Iterable[_K_co]) -> SortedSet[_K_co]:  # pyright: ignore[reportIncompatibleMethodOverride]
+        ...
+
 class SortedItemsView(
     BaseSortedView[_K_co, _V_co],
     PyoItemsView[_K_co, _V_co],
@@ -115,12 +116,6 @@ class SortedItemsView(
 
     """
 
-    @classmethod
-    @override
-    # pyrefly: ignore [bad-override]
-    def _from_iterable(  # pyright: ignore[reportIncompatibleMethodOverride]
-        cls, it: Iterable[tuple[_K_co, _V_co]]
-    ) -> SortedSet[tuple[_K_co, _V_co]]: ...
     @overload
     def __getitem__(self, index: int) -> tuple[_K_co, _V_co]: ...
     @overload
@@ -159,6 +154,13 @@ class SortedItemsView(
             ```
 
         """
+
+    @classmethod
+    @override
+    # pyrefly: ignore [bad-override]
+    def _from_iterable(  # pyright: ignore[reportIncompatibleMethodOverride]
+        cls, it: Iterable[tuple[_K_co, _V_co]]
+    ) -> SortedSet[tuple[_K_co, _V_co]]: ...
 
 class SortedValuesView(
     BaseSortedView[Any, _V_co],

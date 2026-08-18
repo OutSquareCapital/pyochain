@@ -70,18 +70,16 @@ class PyoSequence[T](PyoReversible[T], PyoCollection[T], Sequence[T]):  # pyrigh
     @overload
     @abstractmethod
     def __getitem__(self, index: slice[int | None], /) -> Sequence[T]: ...
-
-    # Mixin methods
-    @override
-    def index(self, value: Any, start: int = 0, stop: int = ..., /) -> int: ...  # pyright: ignore[reportAny]
-    @override
-    def count(self, value: Any, /) -> int: ...  # pyright: ignore[reportAny]
     @override
     def __contains__(self, value: object, /) -> bool: ...
     @override
     def __iter__(self) -> Iterator[T]: ...
     @override
     def __reversed__(self) -> Iterator[T]: ...
+    @override
+    def index(self, value: Any, start: int = 0, stop: int = ..., /) -> int: ...  # pyright: ignore[reportAny]
+    @override
+    def count(self, value: Any, /) -> int: ...  # pyright: ignore[reportAny]
     def first(self) -> T:
         """Return the first element of the `Sequence`.
 
@@ -264,6 +262,7 @@ class PyoMutableSequence[T](PyoSequence[T], MutableSequence[T]):  # pyright: ign
             assert vec.is_empty()
             ```
         """
+
     def extract_if(
         self, predicate: Callable[[T], bool], start: int = 0, end: int | None = None
     ) -> PyoIterator[T]:

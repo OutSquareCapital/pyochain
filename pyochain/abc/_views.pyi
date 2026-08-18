@@ -38,10 +38,6 @@ class PyoKeysView(PyoMappingView, PyoSet[_K_co], KeysView[_K_co]):  # pyright: i
     """
 
     def __init__(self, mapping: Viewable[_K_co]) -> None: ...
-    @classmethod
-    @override
-    # pyrefly: ignore [bad-override]
-    def _from_iterable[S](cls, it: Iterable[S], /) -> SetMut[S]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
     def __contains__(self, key: object, /) -> bool: ...
     @override
@@ -70,6 +66,10 @@ class PyoKeysView(PyoMappingView, PyoSet[_K_co], KeysView[_K_co]):  # pyright: i
     @override
     # pyrefly: ignore [bad-override]
     def __rxor__[T](self, other: Iterable[T], /) -> SetMut[_K_co | T]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    @classmethod
+    @override
+    # pyrefly: ignore [bad-override]
+    def _from_iterable[S](cls, it: Iterable[S], /) -> SetMut[S]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
     def intersection(self, other: Iterable[Any]) -> SetMut[_K_co]: ...
     @override
@@ -107,9 +107,6 @@ class PyoItemsView(  # pyright: ignore[reportUnsafeMultipleInheritance]
         `PyoMapping::items`: Method that returns this view.
     """
     def __new__(cls, mapping: SupportsGetItemViewable[_K_co, _V_co]) -> Self: ...  # pyright: ignore[reportInconsistentConstructor]
-    @classmethod
-    @override
-    def _from_iterable[S](cls, it: Iterable[S], /) -> set[S]: ...
     @override
     # pyrefly: ignore [bad-override]
     def __contains__(self, item: tuple[object, object], /) -> bool: ...  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -139,6 +136,9 @@ class PyoItemsView(  # pyright: ignore[reportUnsafeMultipleInheritance]
     @override
     # pyrefly: ignore [bad-override]
     def __rxor__[T](self, other: Iterable[T], /) -> SetMut[tuple[_K_co, _V_co] | T]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    @classmethod
+    @override
+    def _from_iterable[S](cls, it: Iterable[S], /) -> set[S]: ...
     @override
     def intersection(self, other: Iterable[Any]) -> SetMut[tuple[_K_co, _V_co]]: ...
     @override

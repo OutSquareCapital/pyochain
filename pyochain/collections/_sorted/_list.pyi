@@ -16,62 +16,6 @@ from ._core import BaseSortedListSet
 @type_check_only
 class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
     load: int
-    @override
-    def irange(
-        self,
-        minimum: T | None = None,
-        maximum: T | None = None,
-        inclusive: tuple[bool, bool] = (True, True),
-        *,
-        reverse: bool = False,
-    ) -> PyoIterator[T]: ...
-    @override
-    def islice(
-        self,
-        start: int | None = None,
-        stop: int | None = None,
-        *,
-        reverse: bool = False,
-    ) -> PyoIterator[T]: ...
-    @override
-    def __iter__(self) -> PyoIterator[T]:
-        """Return an iterator over the sorted list.
-
-        ``sl.__iter__()`` <==> ``iter(sl)``
-
-        Iterating the sorted list while adding or deleting values may raise a
-        :exc:`RuntimeError` or fail to iterate over all values.
-
-        """
-
-    @override
-    def __contains__(self, value: object) -> bool:
-        """Return true if `value` is an element of the sorted list.
-
-        ``sl.__contains__(value)`` <==> ``value in sl``
-
-        Runtime complexity: `O(log(n))`
-
-        Args:
-            value (object): search for value in sorted list
-
-        Returns:
-            bool: `True` if `value` in sorted list.
-
-        Examples:
-        ```python
-        from pyochain.collections import SortedList, SortedKeyList
-        from operator import neg
-
-        sl = SortedList([1, 2, 3, 4, 5])
-        assert 3 in sl
-
-        skl = SortedKeyList([1, 2, 3, 4, 5], key=neg)
-        assert 3 in skl
-        ```
-
-        """
-
     @abstractmethod
     def __add__(self, other: Iterable[T]) -> Self:
         """Return new sorted list containing all values in both sequences.
@@ -132,6 +76,45 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
         new = skl * 2
         assert new == [3, 3, 2, 2, 1, 1]
         ```
+        """
+
+    @override
+    def __iter__(self) -> PyoIterator[T]:
+        """Return an iterator over the sorted list.
+
+        ``sl.__iter__()`` <==> ``iter(sl)``
+
+        Iterating the sorted list while adding or deleting values may raise a
+        :exc:`RuntimeError` or fail to iterate over all values.
+
+        """
+
+    @override
+    def __contains__(self, value: object) -> bool:
+        """Return true if `value` is an element of the sorted list.
+
+        ``sl.__contains__(value)`` <==> ``value in sl``
+
+        Runtime complexity: `O(log(n))`
+
+        Args:
+            value (object): search for value in sorted list
+
+        Returns:
+            bool: `True` if `value` in sorted list.
+
+        Examples:
+        ```python
+        from pyochain.collections import SortedList, SortedKeyList
+        from operator import neg
+
+        sl = SortedList([1, 2, 3, 4, 5])
+        assert 3 in sl
+
+        skl = SortedKeyList([1, 2, 3, 4, 5], key=neg)
+        assert 3 in skl
+        ```
+
         """
 
     @override
@@ -219,6 +202,7 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
             NotImplementedType | bool: true if sorted list is less than or equal to `other`
 
         """
+
     def __ge__(self, other: object) -> NotImplementedType | bool:
         """Return true if and only if sorted list is greater than or equal to `other`.
 
@@ -386,6 +370,24 @@ class BaseSortedList[T](BaseSortedListSet[T], PyoMutableSequence[T], ABC):
             index (int | slice): integer or slice for indexing
             value (T | Iterable[T]): value or iterable of values
         """
+
+    @override
+    def irange(
+        self,
+        minimum: T | None = None,
+        maximum: T | None = None,
+        inclusive: tuple[bool, bool] = (True, True),
+        *,
+        reverse: bool = False,
+    ) -> PyoIterator[T]: ...
+    @override
+    def islice(
+        self,
+        start: int | None = None,
+        stop: int | None = None,
+        *,
+        reverse: bool = False,
+    ) -> PyoIterator[T]: ...
     @override
     def add(self, value: T) -> None: ...
     @override
@@ -603,8 +605,6 @@ class SortedList[T: SupportsRichComparison](BaseSortedList[T]):
     """
 
     def __new__(cls, iterable: Iterable[T] | None = None) -> Self: ...
-    @override
-    def copy(self) -> Self: ...
     def __copy__(self) -> Self: ...
     @override
     def __add__(self, other: Iterable[T]) -> Self: ...
@@ -612,3 +612,5 @@ class SortedList[T: SupportsRichComparison](BaseSortedList[T]):
     def __mul__(self, num: int) -> Self: ...
     @override
     def __reduce__(self) -> tuple[type[Self], tuple[Vec[T]]]: ...
+    @override
+    def copy(self) -> Self: ...

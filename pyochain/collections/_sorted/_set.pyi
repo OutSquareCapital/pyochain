@@ -32,65 +32,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
         """
 
     @override
-    @abstractmethod
-    # pyrefly: ignore [bad-override]
-    def union(self, *iterables: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
-        """Return new sorted set with values from itself and all `iterables`.
-
-        The `union` method also corresponds to operator ``|``.
-
-        ``ss.__or__(iterable)`` <==> ``ss | iterable``
-
-        Args:
-            *iterables (Iterable[T]): iterable arguments
-
-        Returns:
-            Self: new sorted set
-
-        Examples:
-            ```python
-            from pyochain.collections import SortedSet
-
-            ss = SortedSet([1, 2, 3, 4, 5])
-            assert ss.union([4, 5, 6, 7]) == SortedSet([1, 2, 3, 4, 5, 6, 7])
-            ```
-
-        """
-
-    @override
-    def reset(self, load: int) -> None: ...
-    @override
-    def bisect_left(self, value: T) -> int: ...
-    @override
-    def bisect_right(self, value: T) -> int: ...
-    @override
-    def index(
-        self, value: T, start: int | None = None, stop: int | None = None
-    ) -> int: ...
-    @override
-    def islice(
-        self,
-        start: int | None = None,
-        stop: int | None = None,
-        *,
-        reverse: bool = False,
-    ) -> PyoIterator[T]: ...
-    @override
-    def irange(
-        self,
-        minimum: T | None = None,
-        maximum: T | None = None,
-        inclusive: tuple[bool, bool] = (True, True),
-        *,
-        reverse: bool = False,
-    ) -> PyoIterator[T]: ...
-    @override
-    def is_disjoint(self, other: Iterable[object]) -> bool: ...
-    @override
-    def is_subset(self, other: Iterable[object]) -> bool: ...
-    @override
-    def is_superset(self, other: Iterable[object]) -> bool: ...
-    @override
     def __contains__(self, value: object) -> bool:
         """Return true if `value` is an element of the sorted set.
 
@@ -146,6 +87,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
             assert ss[2:5] == Vec(("c", "d", "e"))
             ```
         """
+
     def __delitem__(self, index: int | slice) -> None:
         """Remove value at `index` from sorted set.
 
@@ -223,6 +165,90 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
         Iterating the sorted set while adding or deleting values may raise a `RuntimeError` or fail to iterate over all values.
 
         """
+
+    def __copy__(self) -> Self: ...
+    @override
+    def __sub__(self, other: Iterable[Any]) -> Self: ...
+    @override
+    def __isub__(self, other: Iterable[Any]) -> Self: ...
+    @override
+    def __and__(self, other: Iterable[Any]) -> Self: ...
+    def __rand__(self, other: Iterable[Any]) -> Self: ...
+    @override
+    def __iand__(self, other: Iterable[Any]) -> Self: ...
+    @override
+    # pyrefly: ignore [bad-override]
+    def __xor__(self, other: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
+        ...
+    def __rxor__(self, other: Iterable[T]) -> Self: ...
+    @override
+    def __ixor__(self, other: Iterable[T]) -> Self: ...
+    @override
+    # pyrefly: ignore [bad-override]
+    def __or__(self, other: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
+        ...
+    def __ror__(self, other: Iterable[T]) -> Self: ...
+    @override
+    def __ior__(self, other: Iterable[T]) -> Self: ...
+    @override
+    @abstractmethod
+    # pyrefly: ignore [bad-override]
+    def union(self, *iterables: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Return new sorted set with values from itself and all `iterables`.
+
+        The `union` method also corresponds to operator ``|``.
+
+        ``ss.__or__(iterable)`` <==> ``ss | iterable``
+
+        Args:
+            *iterables (Iterable[T]): iterable arguments
+
+        Returns:
+            Self: new sorted set
+
+        Examples:
+            ```python
+            from pyochain.collections import SortedSet
+
+            ss = SortedSet([1, 2, 3, 4, 5])
+            assert ss.union([4, 5, 6, 7]) == SortedSet([1, 2, 3, 4, 5, 6, 7])
+            ```
+
+        """
+
+    @override
+    def reset(self, load: int) -> None: ...
+    @override
+    def bisect_left(self, value: T) -> int: ...
+    @override
+    def bisect_right(self, value: T) -> int: ...
+    @override
+    def index(
+        self, value: T, start: int | None = None, stop: int | None = None
+    ) -> int: ...
+    @override
+    def islice(
+        self,
+        start: int | None = None,
+        stop: int | None = None,
+        *,
+        reverse: bool = False,
+    ) -> PyoIterator[T]: ...
+    @override
+    def irange(
+        self,
+        minimum: T | None = None,
+        maximum: T | None = None,
+        inclusive: tuple[bool, bool] = (True, True),
+        *,
+        reverse: bool = False,
+    ) -> PyoIterator[T]: ...
+    @override
+    def is_disjoint(self, other: Iterable[object]) -> bool: ...
+    @override
+    def is_subset(self, other: Iterable[object]) -> bool: ...
+    @override
+    def is_superset(self, other: Iterable[object]) -> bool: ...
     @override
     def add(self, value: T) -> None:
         """Add `value` to sorted set.
@@ -251,6 +277,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
         Runtime complexity: `O(n)`
 
         """
+
     @override
     def copy(self) -> Self:
         """Return a shallow copy of the sorted set.
@@ -261,7 +288,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
             Self: new sorted set
 
         """
-    def __copy__(self) -> Self: ...
+
     @override
     def count(self, value: T) -> int:
         """Return number of occurrences of `value` in the sorted set.
@@ -283,6 +310,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
             ```
 
         """
+
     @override
     def discard(self, value: T) -> None:
         """Remove `value` from sorted set if it is a member.
@@ -304,6 +332,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
             assert ss == set([1, 2, 3, 4])
             ```
         """
+
     @override
     def pop(self, index: int = -1) -> T:
         """Remove and return value at `index` in sorted set.
@@ -352,6 +381,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
                 ss.remove(0)
             ```
         """
+
     @override
     # pyrefly: ignore [bad-override]
     def difference(self, *iterables: Iterable[Any]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -378,8 +408,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
             ```
 
         """
-    @override
-    def __sub__(self, other: Iterable[Any]) -> Self: ...
+
     def difference_update(self, *iterables: Iterable[T]) -> Self:
         """Remove all values of `iterables` from this sorted set.
 
@@ -403,8 +432,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
             ```
         """
 
-    @override
-    def __isub__(self, other: Iterable[Any]) -> Self: ...
     @override
     # pyrefly: ignore [bad-override]
     def intersection(self, *iterables: Iterable[Any]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -432,9 +459,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
             ```
 
         """
-    @override
-    def __and__(self, other: Iterable[Any]) -> Self: ...
-    def __rand__(self, other: Iterable[Any]) -> Self: ...
+
     def intersection_update(self, *iterables: Iterable[Any]) -> Self:
         """In-place update of the sorted set with the intersection of `iterables`.
 
@@ -460,8 +485,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
             ```
 
         """
-    @override
-    def __iand__(self, other: Iterable[Any]) -> Self: ...
+
     @override
     # pyrefly: ignore [bad-override]
     def symmetric_difference(self, other: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -489,11 +513,7 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
             ```
 
         """
-    @override
-    # pyrefly: ignore [bad-override]
-    def __xor__(self, other: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
-        ...
-    def __rxor__(self, other: Iterable[T]) -> Self: ...
+
     def symmetric_difference_update(self, other: Iterable[T]) -> Self:
         """In-place update of the sorted set with the symmetric difference with `other`.
 
@@ -520,13 +540,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
             ```
         """
 
-    @override
-    def __ixor__(self, other: Iterable[T]) -> Self: ...
-    @override
-    # pyrefly: ignore [bad-override]
-    def __or__(self, other: Iterable[T]) -> Self:  # pyright: ignore[reportIncompatibleMethodOverride]
-        ...
-    def __ror__(self, other: Iterable[T]) -> Self: ...
     def update(self, *iterables: Iterable[T]) -> Self:
         """In-place update of the sorted set, adding values from all `iterables`.
 
@@ -550,9 +563,6 @@ class BaseSortedSet[T: SupportsHashableAndRichComparison](
             assert ss == SortedSet([1, 2, 3, 4, 5, 6, 7])
             ```
         """
-
-    @override
-    def __ior__(self, other: Iterable[T]) -> Self: ...
 
 @final
 class SortedSet[T: SupportsHashableAndRichComparison](BaseSortedSet[T]):

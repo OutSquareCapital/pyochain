@@ -49,47 +49,10 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
 
         """
 
-    @property
-    def inner(self) -> Dict[K, V]: ...
     @override
     def __len__(self) -> int: ...
     @override
     def __getitem__(self, key: K) -> V: ...
-    @override
-    def reset(self, load: int) -> None: ...
-    @override
-    def bisect_left(self, value: K) -> int: ...
-    @override
-    def bisect_right(self, value: K) -> int: ...
-    @override
-    def index(
-        self, value: K, start: int | None = None, stop: int | None = None
-    ) -> int: ...
-    @override
-    def islice(
-        self,
-        start: int | None = None,
-        stop: int | None = None,
-        *,
-        reverse: bool = False,
-    ) -> PyoIterator[K]: ...
-    @override
-    def irange(
-        self,
-        minimum: K | None = None,
-        maximum: K | None = None,
-        inclusive: tuple[bool, bool] = (True, True),
-        *,
-        reverse: bool = False,
-    ) -> PyoIterator[K]: ...
-    @override
-    def clear(self) -> None:
-        """Remove all items from sorted dict.
-
-        Runtime complexity: `O(n)`
-
-        """
-
     @override
     def __delitem__(self, key: K) -> None:
         """Remove item from sorted dict identified by `key`.
@@ -114,6 +77,7 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
             ```
 
         """
+
     @override
     def __iter__(self) -> PyoIterator[K]:
         """Return an iterator over the keys of the sorted dict.
@@ -165,16 +129,6 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
     def __ior__(
         self, other: Iterable[tuple[K, V]] | SupportsKeysAndGetItem[K, V]
     ) -> Self: ...
-    @abstractmethod
-    def copy(self) -> Self:
-        """Return a shallow copy of the sorted dict.
-
-        Runtime complexity: `O(n)`
-
-        :return: new sorted dict
-
-        """
-
     def __copy__(self) -> Self: ...
     @classmethod
     @overload
@@ -198,6 +152,53 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
         Runtime complexity: `O(n*log(n))`
 
         :return: new sorted dict
+
+        """
+
+    @property
+    def inner(self) -> Dict[K, V]: ...
+    @abstractmethod
+    def copy(self) -> Self:
+        """Return a shallow copy of the sorted dict.
+
+        Runtime complexity: `O(n)`
+
+        :return: new sorted dict
+
+        """
+
+    @override
+    def reset(self, load: int) -> None: ...
+    @override
+    def bisect_left(self, value: K) -> int: ...
+    @override
+    def bisect_right(self, value: K) -> int: ...
+    @override
+    def index(
+        self, value: K, start: int | None = None, stop: int | None = None
+    ) -> int: ...
+    @override
+    def islice(
+        self,
+        start: int | None = None,
+        stop: int | None = None,
+        *,
+        reverse: bool = False,
+    ) -> PyoIterator[K]: ...
+    @override
+    def irange(
+        self,
+        minimum: K | None = None,
+        maximum: K | None = None,
+        inclusive: tuple[bool, bool] = (True, True),
+        *,
+        reverse: bool = False,
+    ) -> PyoIterator[K]: ...
+    @override
+    def clear(self) -> None:
+        """Remove all items from sorted dict.
+
+        Runtime complexity: `O(n)`
 
         """
 
@@ -368,6 +369,7 @@ class BaseSortedDict[K: SupportsHashableAndRichComparison, V](
             assert sd == SortedDict({"a": 1})
             ```
         """
+
     @overload
     def update(self, m: SupportsKeysAndGetItem[K, V], /) -> None: ...
     @overload
@@ -575,6 +577,19 @@ class SortedKeyDict[
         key: KeyFunc[K, OT],
         **kwargs: V,
     ) -> None: ...
+    @override
+    # pyrefly: ignore [bad-override]
+    def __ror__[T1, T2](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self, value: Mapping[K, T2], /
+    ) -> SortedKeyDict[K, V | T2, OT]: ...
+    @override
+    # pyrefly: ignore [bad-override]
+    def __or__[T1, T2](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self, value: Mapping[K, T2], /
+    ) -> SortedKeyDict[K, V | T2, OT]: ...
+    @override
+    # pyrefly: ignore [bad-override]
+    def __reduce__(self) -> tuple[partial[Self], tuple[Dict[K, V]]]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @property
     def key(self) -> KeyFunc[K, OT]:
         """Function used to extract comparison key from keys.
@@ -595,16 +610,3 @@ class SortedKeyDict[
     ) -> PyoIterator[K]: ...
     def bisect_key_left(self, key: OT) -> int: ...
     def bisect_key_right(self, key: OT) -> int: ...
-    @override
-    # pyrefly: ignore [bad-override]
-    def __ror__[T1, T2](  # pyright: ignore[reportIncompatibleMethodOverride]
-        self, value: Mapping[K, T2], /
-    ) -> SortedKeyDict[K, V | T2, OT]: ...
-    @override
-    # pyrefly: ignore [bad-override]
-    def __or__[T1, T2](  # pyright: ignore[reportIncompatibleMethodOverride]
-        self, value: Mapping[K, T2], /
-    ) -> SortedKeyDict[K, V | T2, OT]: ...
-    @override
-    # pyrefly: ignore [bad-override]
-    def __reduce__(self) -> tuple[partial[Self], tuple[Dict[K, V]]]: ...  # pyright: ignore[reportIncompatibleMethodOverride]

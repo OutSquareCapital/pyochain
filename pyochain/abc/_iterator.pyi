@@ -99,10 +99,240 @@ class PyoIterator[T](PyoIterable[T], Protocol):
         assert counter.iter().take(3).collect(Seq) == Seq((7, 8, 9))
         ```
     """
-    @override
-    def __iter__(self) -> Iterator[T]: ...
     @abstractmethod
     def __next__(self) -> T: ...
+    @override
+    def __iter__(self) -> Iterator[T]: ...
+    @classmethod
+    def from_count(cls, start: int = 0, step: int = 1) -> PyoIterator[int]:
+        """Create an `Iterator` of evenly spaced values.
+
+        Warning:
+            The `Iterator` returned is **infinite**, meaning it will never stop yielding elements.
+
+            Be sure to use `PyoIterator::take` or `PyoIterator::slice` to limit the number of items taken.
+
+            Otherwise you could quickly run out of memory, if you try to collect it into a collection.
+
+        Args:
+            start (int): Starting value of the `Iterator`.
+            step (int): Difference between consecutive values.
+
+        Returns:
+            PyoIterator[int]: An `Iterator` of integers starting from **start** and increasing by **step**.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Seq
+            >>> Iter.from_count(10, 2).take(3).collect(Seq)
+            Seq(10, 12, 14)
+            >>> Iter.from_count(-5, 5).take(4).collect(Seq)
+            Seq(-5, 0, 5, 10)
+            >>> Iter.from_count(0, -1).take(5).collect(Seq)
+            Seq(0, -1, -2, -3, -4)
+
+            ```
+        """
+
+    @classmethod
+    def from_fn[**P, R](
+        cls, f: Callable[P, Option[R]], *args: P.args, **kwargs: P.kwargs
+    ) -> PyoIterator[R]:
+        r"""Create an `Iterator` from a generator function.
+
+        The `Callable` must return:
+
+        - `Some(value)` to yield a value
+        - `NONE` to stop the iteration
+
+        You could consider this as a way to create an `Iterator` where the `__next__()` is the `__call__()` method.
+
+        As such, you can either provide lambdas, partials, closures, or pre-existing classes where `__call__()` is implemented, but a `__next__()` is not desired.
+
+        If you do have an `Iterator` class, simply pass it to the regular constructor, as this will be more efficient, ergonomic and idiomatic.
+
+        Args:
+            f (Callable[P, Option[R]]): `Callable` that returns the next item wrapped in `Option`.
+            *args (P.args): Positional arguments to pass to **f**.
+            **kwargs (P.kwargs): Keyword arguments to pass to **f**.
+
+        Returns:
+            PyoIterator[R]: An `Iterator` yielding values produced by **f**.
+
+        Note:
+            In Rust, this avoids defining a full struct and implementing `Iterator` for it when you have simple logic to generate values.
+
+            This is implemented for "Rust API compliance", but in Python, generators comprehensions/functions with `yield` statements are the ergonomic equivalent.
+
+        Example:
+            Closure with captured local variable:
+            ```python
+            from pyochain import Iter, Some, NONE, Option
+
+            def make_counter(max_val: int):
+                counter = 0
+
+                def gen() -> Option[int]:
+                    nonlocal counter
+                    counter += 1
+                    return Some(counter) if counter <= max_val else NONE
+
+                return gen
+
+            x = Iter.from_fn(make_counter(5)).collect(tuple)
+            assert x == (1, 2, 3, 4, 5)
+            ```
+            Reading records from a text stream:
+            ```python
+            from io import StringIO
+
+            stream = StringIO("Alice\nBob\nCharlie\n")
+
+            def read_name() -> Option[str]:
+                line = stream.readline()
+                return Some(line.rstrip("\n")) if line else NONE
+
+            iterator = Iter.from_fn(read_name)
+            assert iterator.next() == Some("Alice")
+            assert iterator.next() == Some("Bob")
+            assert iterator.next() == Some("Charlie")
+            assert iterator.next().is_none()
+            ```
+        """
+
+    @classmethod
+    def once[V](cls, value: V) -> PyoIterator[V]:
+        """Create an `Iterator` that yields a single value.
+
+        If you have a function which works on iterators, but you only need to process one value, you can use this method rather than doing something like `Iter([value])`.
+
+        This can be considered the equivalent of `.insert()` but as a constructor.
+
+        Args:
+            value (V): The single value to yield.
+
+        Returns:
+            PyoIterator[V]: An `Iterator` yielding the specified value.
+
+        Example:
+            ```python
+            from pyochain import Iter, Seq
+
+            assert Iter.once(42).collect(Seq) == Seq((42,))
+            ```
+        """
+
+    @classmethod
+    def once_with[**P, R](
+        cls, func: Callable[P, R], *args: P.args, **kwargs: P.kwargs
+    ) -> PyoIterator[R]:
+        """Create an `Iterator`  that lazily generates a value exactly once by invoking the provided closure.
+
+        If you have a function which works on iterators, but you only need to process one value, you can use this method rather than doing something like `Iter([value])`.
+
+        This can be considered the equivalent of [`PyoIterator::insert`][PyoIterator.insert] but as a constructor.
+
+        Unlike `PyoIterator::once`, this function will lazily generate the value on request.
+
+        Args:
+            func (Callable[P, R]): The single value to yield.
+            *args (P.args): Positional arguments to pass to **func**.
+            **kwargs (P.kwargs): Keyword arguments to pass to **func**.
+
+        Returns:
+            PyoIterator[R]: An `Iterator` yielding the specified value.
+
+        Example:
+            ```python
+            from pyochain import Iter, Seq
+
+            assert Iter.once_with(lambda: 42).collect(Seq) == Seq((42,))
+            ```
+        """
+
+    @classmethod
+    def repeat[O](cls, obj: O, n: int | None = None) -> PyoIterator[O]:
+        """Repeat the provided object **n** times as elements of an `Iterator`.
+
+        If **n** is `None`, this will create an infinite `Iterator`.
+
+        Be sure to use [`PyoIterator::take`][PyoIterator.take] or [`PyoIterator::slice`][PyoIterator.slice] to limit the number of items taken.
+
+        Warning:
+            Each repetition is a reference to the same object, not a copy.
+
+            This means that if the object is mutable and you modify one of the repetitions, all next repetitions will reflect that change.
+
+        Args:
+            obj (O): The object to repeat.
+            n (int | None): Optional number of repetitions.
+
+        Returns:
+            PyoIterator[O]: An `Iterator` of repeated **obj**.
+
+        See Also:
+            [`PyoIterator::cycle`][cycle] to repeat the **elements** of the `Iterator`.
+
+        Example:
+            ```python
+            >>> from pyochain import Seq, Iter
+            >>> Iter.repeat(1, 3).collect(Seq)
+            Seq(1, 1, 1)
+            >>> Iter.repeat(("a", "b"), 2).collect(Seq)
+            Seq(('a', 'b'), ('a', 'b'))
+
+            ```
+            Shared reference behavior:
+            ```python
+            >>> from pyochain import Vec
+            >>>
+            >>> base = ["Alice", "Bob", "Charlie"]
+            >>>
+            >>> first, second = Iter.repeat(base).take(2).collect(tuple)
+            >>> first.append("Joe")
+            >>> first
+            ['Alice', 'Bob', 'Charlie', 'Joe']
+            >>> base
+            ['Alice', 'Bob', 'Charlie', 'Joe']
+            >>> second
+            ['Alice', 'Bob', 'Charlie', 'Joe']
+            >>> first is second and first is base and second is base
+            True
+
+            ```
+        """
+
+    @classmethod
+    def successors[U](
+        cls, first: Option[U], succ: Callable[[U], Option[U]]
+    ) -> PyoIterator[U]:
+        """Create an iterator of successive values computed from the previous one.
+
+        The iterator yields `first` (if it is `Some`), then repeatedly applies **succ** to the
+        previous yielded value until it returns `NONE`.
+
+        Args:
+            first (Option[U]): Initial item.
+            succ (Callable[[U], Option[U]]): Successor function.
+
+        Returns:
+            PyoIterator[U]: `Iterator` yielding `first` and its successors.
+
+        Example:
+            ```python
+            >>> from pyochain import Iter, Some, NONE, Option, Seq
+            >>>
+            >>> def next_pow10(x: int) -> Option[int]:
+            ...     return Some(x * 10) if x < 10_000 else NONE
+            >>>
+            >>> Iter.successors(Some(1), next_pow10).collect(Seq)
+            Seq(1, 10, 100, 1000, 10000)
+            >>> Iter.successors(NONE, next_pow10).collect(Seq)
+            Seq()
+
+            ```
+        """
+
     @overload
     def accumulate[S](
         self: PyoIterator[S], func: None = None, initial: S | None = None
@@ -1706,103 +1936,6 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    @classmethod
-    def from_count(cls, start: int = 0, step: int = 1) -> PyoIterator[int]:
-        """Create an `Iterator` of evenly spaced values.
-
-        Warning:
-            The `Iterator` returned is **infinite**, meaning it will never stop yielding elements.
-
-            Be sure to use `PyoIterator::take` or `PyoIterator::slice` to limit the number of items taken.
-
-            Otherwise you could quickly run out of memory, if you try to collect it into a collection.
-
-        Args:
-            start (int): Starting value of the `Iterator`.
-            step (int): Difference between consecutive values.
-
-        Returns:
-            PyoIterator[int]: An `Iterator` of integers starting from **start** and increasing by **step**.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Seq
-            >>> Iter.from_count(10, 2).take(3).collect(Seq)
-            Seq(10, 12, 14)
-            >>> Iter.from_count(-5, 5).take(4).collect(Seq)
-            Seq(-5, 0, 5, 10)
-            >>> Iter.from_count(0, -1).take(5).collect(Seq)
-            Seq(0, -1, -2, -3, -4)
-
-            ```
-        """
-
-    @classmethod
-    def from_fn[**P, R](
-        cls, f: Callable[P, Option[R]], *args: P.args, **kwargs: P.kwargs
-    ) -> PyoIterator[R]:
-        r"""Create an `Iterator` from a generator function.
-
-        The `Callable` must return:
-
-        - `Some(value)` to yield a value
-        - `NONE` to stop the iteration
-
-        You could consider this as a way to create an `Iterator` where the `__next__()` is the `__call__()` method.
-
-        As such, you can either provide lambdas, partials, closures, or pre-existing classes where `__call__()` is implemented, but a `__next__()` is not desired.
-
-        If you do have an `Iterator` class, simply pass it to the regular constructor, as this will be more efficient, ergonomic and idiomatic.
-
-        Args:
-            f (Callable[P, Option[R]]): `Callable` that returns the next item wrapped in `Option`.
-            *args (P.args): Positional arguments to pass to **f**.
-            **kwargs (P.kwargs): Keyword arguments to pass to **f**.
-
-        Returns:
-            PyoIterator[R]: An `Iterator` yielding values produced by **f**.
-
-        Note:
-            In Rust, this avoids defining a full struct and implementing `Iterator` for it when you have simple logic to generate values.
-
-            This is implemented for "Rust API compliance", but in Python, generators comprehensions/functions with `yield` statements are the ergonomic equivalent.
-
-        Example:
-            Closure with captured local variable:
-            ```python
-            from pyochain import Iter, Some, NONE, Option
-
-            def make_counter(max_val: int):
-                counter = 0
-
-                def gen() -> Option[int]:
-                    nonlocal counter
-                    counter += 1
-                    return Some(counter) if counter <= max_val else NONE
-
-                return gen
-
-            x = Iter.from_fn(make_counter(5)).collect(tuple)
-            assert x == (1, 2, 3, 4, 5)
-            ```
-            Reading records from a text stream:
-            ```python
-            from io import StringIO
-
-            stream = StringIO("Alice\nBob\nCharlie\n")
-
-            def read_name() -> Option[str]:
-                line = stream.readline()
-                return Some(line.rstrip("\n")) if line else NONE
-
-            iterator = Iter.from_fn(read_name)
-            assert iterator.next() == Some("Alice")
-            assert iterator.next() == Some("Bob")
-            assert iterator.next() == Some("Charlie")
-            assert iterator.next().is_none()
-            ```
-        """
-
     def ge(self, other: Iterable[object]) -> bool:
         """Return `True` if **self** is lexicographically greater than or equal to *other*.
 
@@ -2979,56 +3112,6 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    @classmethod
-    def once[V](cls, value: V) -> PyoIterator[V]:
-        """Create an `Iterator` that yields a single value.
-
-        If you have a function which works on iterators, but you only need to process one value, you can use this method rather than doing something like `Iter([value])`.
-
-        This can be considered the equivalent of `.insert()` but as a constructor.
-
-        Args:
-            value (V): The single value to yield.
-
-        Returns:
-            PyoIterator[V]: An `Iterator` yielding the specified value.
-
-        Example:
-            ```python
-            from pyochain import Iter, Seq
-
-            assert Iter.once(42).collect(Seq) == Seq((42,))
-            ```
-        """
-
-    @classmethod
-    def once_with[**P, R](
-        cls, func: Callable[P, R], *args: P.args, **kwargs: P.kwargs
-    ) -> PyoIterator[R]:
-        """Create an `Iterator`  that lazily generates a value exactly once by invoking the provided closure.
-
-        If you have a function which works on iterators, but you only need to process one value, you can use this method rather than doing something like `Iter([value])`.
-
-        This can be considered the equivalent of [`PyoIterator::insert`][PyoIterator.insert] but as a constructor.
-
-        Unlike `PyoIterator::once`, this function will lazily generate the value on request.
-
-        Args:
-            func (Callable[P, R]): The single value to yield.
-            *args (P.args): Positional arguments to pass to **func**.
-            **kwargs (P.kwargs): Keyword arguments to pass to **func**.
-
-        Returns:
-            PyoIterator[R]: An `Iterator` yielding the specified value.
-
-        Example:
-            ```python
-            from pyochain import Iter, Seq
-
-            assert Iter.once_with(lambda: 42).collect(Seq) == Seq((42,))
-            ```
-        """
-
     def pairwise(self) -> PyoIterator[tuple[T, T]]:
         """Return an iterator over pairs of consecutive elements.
 
@@ -3308,58 +3391,6 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             ```
         """
 
-    @classmethod
-    def repeat[O](cls, obj: O, n: int | None = None) -> PyoIterator[O]:
-        """Repeat the provided object **n** times as elements of an `Iterator`.
-
-        If **n** is `None`, this will create an infinite `Iterator`.
-
-        Be sure to use [`PyoIterator::take`][PyoIterator.take] or [`PyoIterator::slice`][PyoIterator.slice] to limit the number of items taken.
-
-        Warning:
-            Each repetition is a reference to the same object, not a copy.
-
-            This means that if the object is mutable and you modify one of the repetitions, all next repetitions will reflect that change.
-
-        Args:
-            obj (O): The object to repeat.
-            n (int | None): Optional number of repetitions.
-
-        Returns:
-            PyoIterator[O]: An `Iterator` of repeated **obj**.
-
-        See Also:
-            [`PyoIterator::cycle`][cycle] to repeat the **elements** of the `Iterator`.
-
-        Example:
-            ```python
-            >>> from pyochain import Seq, Iter
-            >>> Iter.repeat(1, 3).collect(Seq)
-            Seq(1, 1, 1)
-            >>> Iter.repeat(("a", "b"), 2).collect(Seq)
-            Seq(('a', 'b'), ('a', 'b'))
-
-            ```
-            Shared reference behavior:
-            ```python
-            >>> from pyochain import Vec
-            >>>
-            >>> base = ["Alice", "Bob", "Charlie"]
-            >>>
-            >>> first, second = Iter.repeat(base).take(2).collect(tuple)
-            >>> first.append("Joe")
-            >>> first
-            ['Alice', 'Bob', 'Charlie', 'Joe']
-            >>> base
-            ['Alice', 'Bob', 'Charlie', 'Joe']
-            >>> second
-            ['Alice', 'Bob', 'Charlie', 'Joe']
-            >>> first is second and first is base and second is base
-            True
-
-            ```
-        """
-
     def scan[U](self, initial: U, func: Callable[[U, T], Option[U]]) -> PyoIterator[U]:
         """Transform elements by sharing state between iterations.
 
@@ -3577,37 +3608,6 @@ class PyoIterator[T](PyoIterable[T], Protocol):
             >>> from pyochain import Seq
             >>> Seq((0, 1, 2, 3, 4, 5)).iter().step_by(2).collect(Seq)
             Seq(0, 2, 4)
-
-            ```
-        """
-
-    @classmethod
-    def successors[U](
-        cls, first: Option[U], succ: Callable[[U], Option[U]]
-    ) -> PyoIterator[U]:
-        """Create an iterator of successive values computed from the previous one.
-
-        The iterator yields `first` (if it is `Some`), then repeatedly applies **succ** to the
-        previous yielded value until it returns `NONE`.
-
-        Args:
-            first (Option[U]): Initial item.
-            succ (Callable[[U], Option[U]]): Successor function.
-
-        Returns:
-            PyoIterator[U]: `Iterator` yielding `first` and its successors.
-
-        Example:
-            ```python
-            >>> from pyochain import Iter, Some, NONE, Option, Seq
-            >>>
-            >>> def next_pow10(x: int) -> Option[int]:
-            ...     return Some(x * 10) if x < 10_000 else NONE
-            >>>
-            >>> Iter.successors(Some(1), next_pow10).collect(Seq)
-            Seq(1, 10, 100, 1000, 10000)
-            >>> Iter.successors(NONE, next_pow10).collect(Seq)
-            Seq()
 
             ```
         """

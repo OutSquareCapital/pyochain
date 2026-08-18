@@ -65,23 +65,21 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
     @override
     def __contains__(self, x: object, /) -> bool: ...
     @override
-    def _hash(self) -> int: ...
-    # Mixin methods
-    @classmethod
-    @override
-    def _from_iterable[S](cls, it: Iterable[S], /) -> AbstractSet[S]: ...
-    @override
     def __le__(self, other: AbstractSet[Any], /) -> bool:
         """Return self<=value."""
+
     @override
     def __lt__(self, other: AbstractSet[Any], /) -> bool:
         """Return self<value."""
+
     @override
     def __gt__(self, other: AbstractSet[Any], /) -> bool:
         """Return self>value."""
+
     @override
     def __ge__(self, other: AbstractSet[Any], /) -> bool:
         """Return self>=value."""
+
     # NOTE: This is different from typeshed,
     # they actually have too narrow type definitions for set operations on set ABCs.
     # TODO: add precise overloads for `Set` and `SetMut` to handle the fact that an `AbstractSet` will fall back to these operations (and not the underlying `set` or `frozenset` ones)
@@ -96,6 +94,11 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
     @override
     def __eq__(self, other: object, /) -> bool:
         """Return self==value."""
+    @classmethod
+    @override
+    def _from_iterable[S](cls, it: Iterable[S], /) -> AbstractSet[S]: ...
+    @override
+    def _hash(self) -> int: ...
     @override
     def isdisjoint(self, other: Iterable[Any], /) -> bool: ...
     def is_subset(self, other: AbstractSet[Any]) -> bool:
@@ -175,6 +178,7 @@ class PyoSet[T](PyoCollection[T], AbstractSet[T]):  # pyright: ignore[reportImpl
             assert Set((1, 2)).eq({1, 2})  # Identical
             ```
         """
+
     def is_superset(self, other: AbstractSet[Any]) -> bool:
         """Test whether all elements of `other` are in this set (including equality).
 
